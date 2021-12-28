@@ -224,6 +224,26 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
+- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
+                                  width:(int)width
+                            linesOffset:(long long)linesOffset {
+    VT100GridCoord start = range.start;
+    VT100GridCoord end = range.end;
+    long long si = start.y;
+    si += linesOffset;
+    si *= (width + 1);
+    si += start.x;
+    long long ei = end.y;
+    ei += linesOffset;
+    ei *= (width + 1);
+    ei += end.x;
+    if (ei < si) {
+        long long temp = ei;
+        ei = si;
+        si = temp;
+    }
+    return [Interval intervalWithLocation:si length:ei - si];
+}
 
 #pragma mark - Combined Grid And Scrollback
 

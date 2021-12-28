@@ -55,9 +55,6 @@ VT100ScreenSideEffectPerforming> {
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers;
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range;
 - (VT100GridCoordRange)commandRange;
-- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
-                                  width:(int)width
-                            linesOffset:(long long)linesOffset;
 - (const screen_char_t *)getLineAtIndex:(int)theIndex;
 - (void)commandDidStartAt:(VT100GridAbsCoord)coord;
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord;

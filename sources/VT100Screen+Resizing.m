@@ -193,9 +193,9 @@
             DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(objectRange), numLinesDroppedFromTop);
             [_mutableState.savedIntervalTree removeObject:object];
             if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
-                Interval *newInterval = [self intervalForGridCoordRange:newRange
-                                                                  width:newSize.width
-                                                            linesOffset:0];
+                Interval *newInterval = [_mutableState intervalForGridCoordRange:newRange
+                                                                           width:newSize.width
+                                                                     linesOffset:0];
                 [replacementTree addObject:object withInterval:newInterval];
             } else {
                 DLog(@"Failed to convert");
@@ -553,9 +553,9 @@
                      tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
                 assert(noteRange.start.y >= 0);
                 assert(noteRange.end.y >= 0);
-                Interval *newInterval = [self intervalForGridCoordRange:newRange
-                                                                  width:newWidth
-                                                            linesOffset:_mutableState.cumulativeScrollbackOverflow];
+                Interval *newInterval = [_mutableState intervalForGridCoordRange:newRange
+                                                                           width:newWidth
+                                                                     linesOffset:_mutableState.cumulativeScrollbackOverflow];
                 [[note retain] autorelease];
                 [_mutableState.intervalTree removeObject:note];
                 [replacementTree addObject:note withInterval:newInterval];
@@ -629,9 +629,9 @@
                                          linesMovedUp:linesMovedUp];
         if (ok) {
             DLog(@"  New range=%@", VT100GridCoordRangeDescription(newRange));
-            Interval *interval = [self intervalForGridCoordRange:newRange
-                                                           width:newSize.width
-                                                     linesOffset:_mutableState.cumulativeScrollbackOverflow];
+            Interval *interval = [_mutableState intervalForGridCoordRange:newRange
+                                                                    width:newSize.width
+                                                              linesOffset:_mutableState.cumulativeScrollbackOverflow];
             [_mutableState.intervalTree addObject:note withInterval:interval];
         } else {
             DLog(@"  *FAILED TO CONVERT*");
