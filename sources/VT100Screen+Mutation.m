@@ -1005,7 +1005,7 @@
                     externalAttributeIndex:externalAttributeIndex];
     if (continuation.code == EOL_HARD) {
         [self mutCarriageReturn];
-        [self mutLinefeed];
+        [_mutableState appendLineFeed];
     }
 }
 
@@ -1628,31 +1628,12 @@
 }
 
 - (void)mutCrlf {
-    [self mutLinefeed];
+    [_mutableState appendLineFeed];
     _mutableState.currentGrid.cursorX = 0;
 }
 
 - (void)mutLinefeed {
-    LineBuffer *lineBufferToUse = _mutableState.linebuffer;
-    const BOOL noScrollback = (_mutableState.currentGrid == _mutableState.altGrid && !_mutableState.saveToScrollbackInAlternateScreen);
-    if (noScrollback) {
-        // In alt grid but saving to scrollback in alt-screen is off, so pass in a nil linebuffer.
-        lineBufferToUse = nil;
-    }
-    [_mutableState incrementOverflowBy:[_mutableState.currentGrid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
-                                                                                           unlimitedScrollback:_mutableState.unlimitedScrollback
-                                                                                       useScrollbackWithRegion:_mutableState.appendToScrollbackWithStatusBar
-                                                                                                    willScroll:^{
-        if (noScrollback) {
-            [_mutableState addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-                // This isn't really necessary, although it has been this way for a very long time.
-                // In theory we could truncate the selection to not begin in scrollback history.
-                // Note that this happens in alternate screen mode when not adding to history.
-                // Regardless of what we do the behavior is going to be strange.
-                [delegate_ screenRemoveSelection];
-            }];
-        }
-    }]];
+    [_mutableState appendLineFeed];
 }
 
 - (BOOL)cursorOutsideTopBottomMargin {

@@ -34,6 +34,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)incrementOverflowBy:(int)overflowCount;
 
+#pragma mark - Terminal Fundamentals
+
+- (void)appendLineFeed;
+
 @end
 
 NS_ASSUME_NONNULL_END
