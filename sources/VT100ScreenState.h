@@ -216,14 +216,5 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)init NS_UNAVAILABLE;
 @end
 
-@interface VT100ScreenMutableState: VT100ScreenState<VT100ScreenMutableState, NSCopying>
-@property (nonatomic, strong, readwrite) iTermOrderEnforcer *currentDirectoryDidChangeOrderEnforcer;
-@property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
-@property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
-
-- (id<VT100ScreenState>)copy;
-- (instancetype)init NS_DESIGNATED_INITIALIZER;
-
-@end
 
 NS_ASSUME_NONNULL_END

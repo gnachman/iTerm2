@@ -1874,6 +1874,9 @@
 		A667C26227799447006B4DEF /* PTYNoteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F4094183B398C003A6A6D /* PTYNoteViewController.m */; };
 		A667C265277A3B29006B4DEF /* PTYTriggerEvaluator.h in Headers */ = {isa = PBXBuildFile; fileRef = A667C263277A3B29006B4DEF /* PTYTriggerEvaluator.h */; };
 		A667C266277A3B29006B4DEF /* PTYTriggerEvaluator.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C264277A3B29006B4DEF /* PTYTriggerEvaluator.m */; };
+		A667C26A277B8DE2006B4DEF /* VT100ScreenMutableState.h in Headers */ = {isa = PBXBuildFile; fileRef = A667C268277B8DE2006B4DEF /* VT100ScreenMutableState.h */; };
+		A667C26B277B8DE2006B4DEF /* VT100ScreenMutableState.h in Headers */ = {isa = PBXBuildFile; fileRef = A667C268277B8DE2006B4DEF /* VT100ScreenMutableState.h */; };
+		A667C26F277B8F1F006B4DEF /* VT100ScreenMutableState.m in Sources */ = {isa = PBXBuildFile; fileRef = A667C269277B8DE2006B4DEF /* VT100ScreenMutableState.m */; };
 		A667EF9C243935AE0055CF3F /* iTermSwipeHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */; };
 		A667F3881B48671B00705186 /* libiTerm2Shared.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C760501B45C4CF00E3C992 /* libiTerm2Shared.a */; };
 		A667F38B1B48AEF200705186 /* NSApplication+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A667F3891B48AEF200705186 /* NSApplication+iTerm.h */; };
@@ -5587,6 +5590,9 @@
 		A667C263277A3B29006B4DEF /* PTYTriggerEvaluator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PTYTriggerEvaluator.h; sourceTree = "<group>"; };
 		A667C264277A3B29006B4DEF /* PTYTriggerEvaluator.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PTYTriggerEvaluator.m; sourceTree = "<group>"; };
 		A667C267277AEDB2006B4DEF /* PTYSession+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYSession+Private.h"; sourceTree = "<group>"; };
+		A667C268277B8DE2006B4DEF /* VT100ScreenMutableState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100ScreenMutableState.h; sourceTree = "<group>"; };
+		A667C269277B8DE2006B4DEF /* VT100ScreenMutableState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = VT100ScreenMutableState.m; sourceTree = "<group>"; };
+		A667C26E277B8E19006B4DEF /* VT100ScreenState+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100ScreenState+Private.h"; sourceTree = "<group>"; };
 		A667EF9A243935AE0055CF3F /* iTermSwipeHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSwipeHandler.h; sourceTree = "<group>"; };
 		A667F3861B48615900705186 /* iTermToolbeltTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermToolbeltTest.m; sourceTree = "<group>"; };
 		A667F3891B48AEF200705186 /* NSApplication+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSApplication+iTerm.h"; sourceTree = "<group>"; };
@@ -8918,6 +8924,9 @@
 				A667C263277A3B29006B4DEF /* PTYTriggerEvaluator.h */,
 				A667C264277A3B29006B4DEF /* PTYTriggerEvaluator.m */,
 				A667C267277AEDB2006B4DEF /* PTYSession+Private.h */,
+				A667C268277B8DE2006B4DEF /* VT100ScreenMutableState.h */,
+				A667C269277B8DE2006B4DEF /* VT100ScreenMutableState.m */,
+				A667C26E277B8E19006B4DEF /* VT100ScreenState+Private.h */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -11511,6 +11520,7 @@
 				532F942B215DFEF600D509E4 /* iTermCacheableImage.h in Headers */,
 				A61A85A924F23C9B00B03880 /* iTermGlobalSearchOutlineView.h in Headers */,
 				A65429AF20C492F000CE71B1 /* iTermParameterPanelWindowController.h in Headers */,
+				A667C26B277B8DE2006B4DEF /* VT100ScreenMutableState.h in Headers */,
 				535EA50420D1869800FC81E0 /* iTermSwiftyStringParser.h in Headers */,
 				A66719351DCE36C3000CE608 /* iTermClearView.h in Headers */,
 				A69D559B232A0CF3002E0F99 /* iTermSessionLauncher.h in Headers */,
@@ -11865,6 +11875,7 @@
 				A67778B41CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.h in Headers */,
 				A667F3971B4F71AE00705186 /* iTermSavePanel.h in Headers */,
 				A6C7604A1B45C4CF00E3C992 /* NSTableColumn+iTerm.h in Headers */,
+				A667C26A277B8DE2006B4DEF /* VT100ScreenMutableState.h in Headers */,
 				A6936B551D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.h in Headers */,
 				A6A802ED226EEAE900BC70DC /* PTYTask+MRR.h in Headers */,
 				A6FEA2881CF4B9AB00376F28 /* iTermHotkeyPreferencesWindowController.h in Headers */,
@@ -14132,6 +14143,7 @@
 				A653F68724CF4EC70062377E /* FMDatabaseAdditions.m in Sources */,
 				A666D5E9221A191600D6184A /* iTermVariableScope+Session.m in Sources */,
 				A666D5ED221A1D9D00D6184A /* iTermVariableScope+Tab.m in Sources */,
+				A667C26F277B8F1F006B4DEF /* VT100ScreenMutableState.m in Sources */,
 				A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */,
 				A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */,
 				A6BCAADA21F6F53E0000CD29 /* iTermTextPopoverViewController.m in Sources */,

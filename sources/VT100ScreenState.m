@@ -6,6 +6,7 @@
 //
 
 #import "VT100ScreenState.h"
+#import "VT100ScreenState+Private.h"
 
 #import "IntervalTree.h"
 #import "iTermOrderEnforcer.h"
@@ -14,8 +15,6 @@
 
 static const int kDefaultMaxScrollbackLines = 1000;
 
-@interface VT100ScreenState() <VT100ScreenMutableState>
-@end
 
 @implementation VT100ScreenState
 
@@ -176,23 +175,3 @@ static const int kDefaultMaxScrollbackLines = 1000;
 
 @end
 
-@implementation VT100ScreenMutableState
-
-- (instancetype)init {
-    self = [super initForMutation];
-    if (self) {
-        _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
-        _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
-    }
-    return self;
-}
-
-- (id)copyWithZone:(NSZone *)zone {
-    return [[VT100ScreenState alloc] initWithState:self];
-}
-
-- (id<VT100ScreenState>)copy {
-    return [self copyWithZone:nil];
-}
-
-@end

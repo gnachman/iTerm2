@@ -10,7 +10,7 @@
 #import "LineBuffer.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
-#import "VT100ScreenState.h"
+#import "VT100ScreenMutableState.h"
 #import "VT100Terminal.h"
 
 extern NSString *const kScreenStateKey;
