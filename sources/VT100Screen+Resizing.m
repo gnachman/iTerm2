@@ -33,7 +33,7 @@
             if (![object isKindOfClass:[PTYAnnotation class]]) {
                 continue;
             }
-            DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:object.entry.interval]));
+            DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([_mutableState coordRangeForInterval:object.entry.interval]));
         }
         DLog(@"------------ end -----------");
     }
@@ -177,7 +177,7 @@
     _mutableState.currentGrid = _mutableState.altGrid;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
     IntervalTree *replacementTree = [[[IntervalTree alloc] init] autorelease];
     for (id<IntervalTreeObject> object in [_state.savedIntervalTree allObjects]) {
-        VT100GridCoordRange objectRange = [self coordRangeForInterval:object.entry.interval];
+        VT100GridCoordRange objectRange = [_mutableState coordRangeForInterval:object.entry.interval];
         DLog(@"Found object at %@", VT100GridCoordRangeDescription(objectRange));
         VT100GridCoordRange newRange;
         if ([self convertRange:objectRange toWidth:newSize.width to:&newRange inLineBuffer:altScreenLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:object]]) {
@@ -484,7 +484,7 @@
     NSMutableArray *triples = [NSMutableArray array];
 
     for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
-        VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
+        VT100GridCoordRange range = [_mutableState coordRangeForInterval:note.entry.interval];
         [[note retain] autorelease];
         [_mutableState.intervalTree removeObject:note];
         LineBufferPositionRange *positionRange =
@@ -540,7 +540,7 @@
     // Convert ranges of notes to their new coordinates and replace the interval tree.
     IntervalTree *replacementTree = [[[IntervalTree alloc] init] autorelease];
     for (id<IntervalTreeObject> note in [_mutableState.intervalTree allObjects]) {
-        VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
+        VT100GridCoordRange noteRange = [_mutableState coordRangeForInterval:note.entry.interval];
         VT100GridCoordRange newRange;
         if (noteRange.end.x < 0 && noteRange.start.y == 0 && noteRange.end.y < 0) {
             // note has scrolled off top

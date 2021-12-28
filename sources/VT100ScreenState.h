@@ -227,6 +227,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) int numberOfScrollbackLines;
 
+#pragma mark - Interval Tree
+
+- (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
+
 @end
 
 

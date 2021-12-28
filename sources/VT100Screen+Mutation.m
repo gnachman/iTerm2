@@ -326,7 +326,7 @@
             // odd.
             //
             // Intervals aren't removed while part of them is on screen, so this works fine.
-            VT100GridCoordRange range = [self coordRangeForInterval:previousWorkingDirectory.entry.interval];
+            VT100GridCoordRange range = [_mutableState coordRangeForInterval:previousWorkingDirectory.entry.interval];
             [_mutableState.intervalTree removeObject:previousWorkingDirectory];
             range.end = VT100GridCoordMake(_mutableState.width, line);
             DLog(@"Extending the previous directory to %@", VT100GridCoordRangeDescription(range));
@@ -413,7 +413,7 @@
     [_mutableState.markCache removeAllObjects];
     for (id<IntervalTreeObject> obj in [_mutableState.intervalTree allObjects]) {
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-            VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
+            VT100GridCoordRange range = [_mutableState coordRangeForInterval:obj.entry.interval];
             VT100ScreenMark *mark = (VT100ScreenMark *)obj;
             _mutableState.markCache[@(totalScrollbackOverflow + range.end.y)] = mark;
         }
@@ -438,7 +438,7 @@
     if (screenMark) {
         DLog(@"Removing last command mark %@", screenMark);
         [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:screenMark]
-                                                              onLine:[self coordRangeForInterval:screenMark.entry.interval].start.y + self.totalScrollbackOverflow];
+                                                              onLine:[_mutableState coordRangeForInterval:screenMark.entry.interval].start.y + self.totalScrollbackOverflow];
         [_mutableState.intervalTree removeObject:screenMark];
     }
     [self mutInvalidateCommandStartCoordWithoutSideEffects];
@@ -450,7 +450,7 @@
     long long totalScrollbackOverflow = _mutableState.cumulativeScrollbackOverflow;
     if ([obj isKindOfClass:[VT100ScreenMark class]]) {
         long long theKey = (totalScrollbackOverflow +
-                            [self coordRangeForInterval:obj.entry.interval].end.y);
+                            [_mutableState coordRangeForInterval:obj.entry.interval].end.y);
         [_mutableState.markCache removeObjectForKey:@(theKey)];
         _mutableState.lastCommandMark = nil;
     }
@@ -461,7 +461,7 @@
     [_mutableState.intervalTree removeObject:obj];
     iTermIntervalTreeObjectType type = [self intervalTreeObserverTypeForObject:obj];
     if (type != iTermIntervalTreeObjectTypeUnknown) {
-        VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
+        VT100GridCoordRange range = [_mutableState coordRangeForInterval:obj.entry.interval];
         [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:type
                                                               onLine:range.start.y + self.totalScrollbackOverflow];
     }
@@ -473,7 +473,7 @@
         return;
     }
 
-    VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];
+    VT100GridCoordRange range = [_mutableState coordRangeForInterval:mark.entry.interval];
     while (range.start.y >= line) {
         if (mark == self.lastCommandMark) {
             _mutableState.lastCommandMark = nil;
@@ -483,7 +483,7 @@
         if (!mark) {
             return;
         }
-        range = [self coordRangeForInterval:mark.entry.interval];
+        range = [_mutableState coordRangeForInterval:mark.entry.interval];
     }
 }
 
@@ -493,7 +493,7 @@
         [[annotation retain] autorelease];
         [_mutableState.intervalTree removeObject:annotation];
         [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:annotation]
-                                                              onLine:[self coordRangeForInterval:annotation.entry.interval].start.y + self.totalScrollbackOverflow];
+                                                              onLine:[_mutableState coordRangeForInterval:annotation.entry.interval].start.y + self.totalScrollbackOverflow];
     } else if ([_state.savedIntervalTree containsObject:annotation]) {
         _mutableState.lastCommandMark = nil;
         [_mutableState.savedIntervalTree removeObject:annotation];
@@ -562,7 +562,7 @@
         return 1;
     }
 
-    VT100GridCoordRange lastCommandMarkRange = [self coordRangeForInterval:lastCommandMark.entry.interval];
+    VT100GridCoordRange lastCommandMarkRange = [_mutableState coordRangeForInterval:lastCommandMark.entry.interval];
     int cursorLine = _mutableState.cursorY - 1 + _mutableState.numberOfScrollbackLines;
     int cursorMarkOffset = cursorLine - lastCommandMarkRange.start.y;
     return 1 + cursorMarkOffset;
@@ -616,7 +616,7 @@
     Interval *intervalToClear = [self intervalForGridCoordRange:coordRange];
     NSMutableArray<id<IntervalTreeObject>> *marksToMove = [NSMutableArray array];
     for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:intervalToClear]) {
-        const VT100GridCoordRange markRange = [self coordRangeForInterval:obj.entry.interval];
+        const VT100GridCoordRange markRange = [_mutableState coordRangeForInterval:obj.entry.interval];
         if (VT100GridCoordRangeContainsCoord(coordRangeToSave, markRange.start)) {
             [marksToMove addObject:obj];
         } else {
@@ -718,7 +718,7 @@
         if (numberOfLinesRemoved > 0) {
             [marksToMove enumerateObjectsUsingBlock:^(id<IntervalTreeObject>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                 // Make an interval shifted up by `numberOfLinesRemoved`
-                VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
+                VT100GridCoordRange range = [_mutableState coordRangeForInterval:obj.entry.interval];
                 range.start.y -= numberOfLinesRemoved;
                 range.end.y -= numberOfLinesRemoved;
                 Interval *interval = [self intervalForGridCoordRange:range];
@@ -1413,7 +1413,7 @@
                 if (![object isKindOfClass:[PTYAnnotation class]]) {
                     continue;
                 }
-                DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:object.entry.interval]));
+                DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([_mutableState coordRangeForInterval:object.entry.interval]));
             }
             DLog(@"------------ end -----------");
         }
@@ -4276,7 +4276,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     VT100ScreenMark *mark = [[self.lastCommandMark retain] autorelease];
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
-        const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.totalScrollbackOverflow;
+        const NSInteger line = [_mutableState coordRangeForInterval:mark.entry.interval].start.y + self.totalScrollbackOverflow;
         [_state.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:mark]
                                                                 onLine:line];
         mark.code = returnCode;

@@ -238,8 +238,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)commandDidStartAt:(VT100GridAbsCoord)coord;
 - (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord;
 
-- (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
-
 - (BOOL)confirmBigDownloadWithBeforeSize:(NSInteger)sizeBefore
                                afterSize:(NSInteger)afterSize
                                     name:(NSString *)name;
