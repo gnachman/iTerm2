@@ -186,7 +186,6 @@ NS_ASSUME_NONNULL_BEGIN
                          token:(id<iTermOrderedToken> _Nullable)token;
 - (void)mutSetRemoteHost:(NSString *)remoteHost;
 - (void)mutCurrentDirectoryDidChangeTo:(NSString *)dir;
-- (void)mutIncrementOverflowBy:(int)overflowCount;
 - (void)mutReloadMarkCache;
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutSwapNotes;
