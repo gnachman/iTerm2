@@ -59,18 +59,6 @@
     _config = [_nextConfig retain];
 }
 
-- (void)setNeedsRedraw {
-    if (_mutableState.needsRedraw) {
-        return;
-    }
-    _mutableState.needsRedraw = YES;
-    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        _mutableState.needsRedraw = NO;
-        [delegate screenNeedsRedraw];
-#warning TODO: When a general syncing mechanism is developed, the assignment should occur there. This is kinda racey.
-    }];
-}
-
 #pragma mark - FinalTerm
 
 - (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord {
@@ -401,7 +389,7 @@
         [observer intervalTreeDidAddObjectOfType:objectType
                                           onLine:absLine];
     }];
-    [self setNeedsRedraw];
+    [_mutableState setNeedsRedraw];
     return mark;
 }
 
@@ -495,7 +483,7 @@
         _mutableState.lastCommandMark = nil;
         [_mutableState.savedIntervalTree removeObject:annotation];
     }
-    [self setNeedsRedraw];
+    [_mutableState setNeedsRedraw];
 }
 
 #pragma mark - Clearing

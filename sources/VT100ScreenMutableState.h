@@ -32,6 +32,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect;
 
+- (void)setNeedsRedraw;
+
 #pragma mark - Scrollback
 
 - (void)incrementOverflowBy:(int)overflowCount;

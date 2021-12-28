@@ -58,6 +58,19 @@
                      intervalTreeObserver:self.sideEffectPerformer.sideEffectPerformingIntervalTreeObserver];
 }
 
+- (void)setNeedsRedraw {
+    if (self.needsRedraw) {
+        return;
+    }
+    self.needsRedraw = YES;
+    __weak __typeof(self) weakSelf = self;
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+#warning TODO: When a general syncing mechanism is developed, the assignment should occur there. This is kinda racey.
+        weakSelf.needsRedraw = NO;
+        [delegate screenNeedsRedraw];
+    }];
+}
+
 #pragma mark - Scrollback
 
 - (void)incrementOverflowBy:(int)overflowCount {
