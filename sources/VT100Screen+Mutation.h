@@ -194,7 +194,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetLastPromptLine:(long long)value;
 - (id<iTermMark>)mutAddMarkOnLine:(int)line ofClass:(Class)markClass;
 - (void)mutSetShouldExpectPromptMarks:(BOOL)value;
-- (void)mutDidUpdatePromptLocation;
 - (void)mutCommandDidEndWithRange:(VT100GridCoordRange)range;
 - (void)mutSaveCursorLine;
 - (void)mutRestorePreferredCursorPositionIfPossible;

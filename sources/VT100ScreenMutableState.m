@@ -191,6 +191,10 @@
     return newMark;
 }
 
+- (void)didUpdatePromptLocation {
+    DLog(@"didUpdatePromptLocation %@", self);
+    self.shouldExpectPromptMarks = YES;
+}
 
 #pragma mark - Annotations
 
