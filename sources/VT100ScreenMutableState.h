@@ -56,6 +56,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)assignCurrentCommandEndDate;
 
+// This is like addMarkStartingAtAbsoluteLine:oneLine:ofClass: but it notifies the delegate of a new mark.
+- (id<iTermMark>)addMarkOnLine:(int)line ofClass:(Class)markClass;
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation;
