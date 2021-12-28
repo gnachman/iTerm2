@@ -28,7 +28,7 @@
     [self.mutableLineBuffer endResizing];
 
     if (gDebugLogging) {
-        DLog(@"Notes after resizing to width=%@", @(self.width));
+        DLog(@"Notes after resizing to width=%@", @(_mutableState.width));
         for (id<IntervalTreeObject> object in _mutableState.intervalTree.allObjects) {
             if (![object isKindOfClass:[PTYAnnotation class]]) {
                 continue;
@@ -427,7 +427,7 @@
     if (selection.live) {
         [selection endLiveSelection];
     }
-    [selection removeWindowsWithWidth:self.width];
+    [selection removeWindowsWithWidth:_mutableState.width];
 }
 
 - (NSArray *)subSelectionTuplesWithUsedHeight:(int)usedHeight
@@ -598,7 +598,7 @@
                                           0, 0);
             iTermSubSelection *theSub = [iTermSubSelection subSelectionWithAbsRange:theRange
                                                                                mode:originalSub.selectionMode
-                                                                              width:self.width];
+                                                                              width:_mutableState.width];
             theSub.connected = originalSub.connected;
             [newSubSelections addObject:theSub];
         }
@@ -745,7 +745,7 @@ static void SwapInt(int *a, int *b) {
 
     BOOL endExtends = NO;
     // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
-    if (range.end.x == [self width]) {
+    if (range.end.x == _mutableState.width) {
         const screen_char_t *line = [self getLineAtIndex:range.end.y];
         if (line[range.end.x - 1].code == 0 && line[range.end.x].code == EOL_HARD) {
             // The selection goes all the way to the end of the line and there is a null at the
@@ -758,7 +758,7 @@ static void SwapInt(int *a, int *b) {
     range.end.x--;
     if (range.end.x < 0) {
         range.end.y--;
-        range.end.x = [self width] - 1;
+        range.end.x = _mutableState.width - 1;
         if (range.end.y < 0) {
             return nil;
         }

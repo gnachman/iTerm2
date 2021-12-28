@@ -220,6 +220,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) int cursorY;
 @property (nonatomic, readonly) int cursorX;
+@property (nonatomic, readonly) int width;
+@property (nonatomic, readonly) int height;
 
 #pragma mark - Scollback
 

@@ -375,7 +375,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (range.end.y - range.start.y > kMaxLines) {
         range.end.y = range.start.y + kMaxLines;
     }
-    const int width = self.width;
+    const int width = _state.width;
     range.end.x = MIN(range.end.x, width - 1);
     range.start.x = MIN(range.start.x, width - 1);
 
@@ -417,7 +417,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     NSInteger i = range.location;
     const NSInteger lastLine = NSMaxRange(range);
     const NSInteger numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
-    const int width = self.width;
+    const int width = _state.width;
     while (i < lastLine) {
         if (i < numLinesInLineBuffer) {
             [_state.linebuffer enumerateLinesInRange:NSMakeRange(i, lastLine - i)
@@ -444,15 +444,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (line < numLinesInLineBuffer) {
         const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1 &&
                                      [_state.currentGrid screenCharsAtLineNumber:0][1].code == DWC_RIGHT);
-        return [[_state.linebuffer wrappedLineAtIndex:line width:self.width continuation:NULL] paddedToLength:self.width
-                                                                                               eligibleForDWC:eligibleForDWC];
+        return [[_state.linebuffer wrappedLineAtIndex:line width:_state.width continuation:NULL] paddedToLength:_state.width
+                                                                                                 eligibleForDWC:eligibleForDWC];
     }
     return [self screenCharArrayAtScreenIndex:line - numLinesInLineBuffer];
 }
 
 - (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
     const screen_char_t *line = [_state.currentGrid screenCharsAtLineNumber:index];
-    const int width = self.width;
+    const int width = _state.width;
     ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:line
                                                              length:width
                                                        continuation:line[width]] autorelease];
@@ -585,12 +585,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (long long)absoluteLineNumberOfCursor
 {
-    return _state.cumulativeScrollbackOverflow + [self numberOfLines] - [self height] + _state.currentGrid.cursorY;
+    return _state.cumulativeScrollbackOverflow + [self numberOfLines] - _state.height + _state.currentGrid.cursorY;
 }
 
 - (int)lineNumberOfCursor
 {
-    return [self numberOfLines] - [self height] + _state.currentGrid.cursorY;
+    return [self numberOfLines] - _state.height + _state.currentGrid.cursorY;
 }
 
 - (BOOL)continueFindAllResults:(NSMutableArray<SearchResult *> *)results
@@ -618,7 +618,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)compactLineDumpWithHistory {
-    NSMutableString *string = [NSMutableString stringWithString:[_state.linebuffer compactLineDumpWithWidth:[self width]
+    NSMutableString *string = [NSMutableString stringWithString:[_state.linebuffer compactLineDumpWithWidth:_state.width
                                                                                        andContinuationMarks:NO]];
     if ([string length]) {
         [string appendString:@"\n"];
@@ -628,7 +628,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarks {
-    NSMutableString *string = [NSMutableString stringWithString:[_state.linebuffer compactLineDumpWithWidth:[self width]
+    NSMutableString *string = [NSMutableString stringWithString:[_state.linebuffer compactLineDumpWithWidth:_state.width
                                                                                        andContinuationMarks:YES]];
     if ([string length]) {
         [string appendString:@"\n"];
@@ -643,7 +643,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers {
     NSMutableString *string =
-        [NSMutableString stringWithString:[_state.linebuffer compactLineDumpWithWidth:self.width andContinuationMarks:YES]];
+        [NSMutableString stringWithString:[_state.linebuffer compactLineDumpWithWidth:_state.width andContinuationMarks:YES]];
     NSMutableArray *lines = [[[string componentsSeparatedByString:@"\n"] mutableCopy] autorelease];
     long long absoluteLineNumber = self.totalScrollbackOverflow;
     for (int i = 0; i < lines.count; i++) {
@@ -754,13 +754,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range {
     return [self intervalForGridCoordRange:range
-                                     width:self.width
+                                     width:_state.width
                                linesOffset:_state.cumulativeScrollbackOverflow];
 }
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval {
     VT100GridCoordRange result;
-    const int w = self.width + 1;
+    const int w = _state.width + 1;
     result.start.y = interval.location / w - _state.cumulativeScrollbackOverflow;
     result.start.x = interval.location % w;
     result.end.y = interval.limit / w - _state.cumulativeScrollbackOverflow;
@@ -770,7 +770,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         result.start.y = 0;
         result.start.x = 0;
     }
-    if (result.start.x == self.width) {
+    if (result.start.x == _state.width) {
         result.start.y += 1;
         result.start.x = 0;
     }
@@ -780,7 +780,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord {
     coord.x--;
     while (coord.x < 0) {
-        coord.x += self.width;
+        coord.x += _state.width;
         coord.y--;
         if (coord.y < 0) {
             coord.y = 0;
@@ -886,7 +886,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)removeInaccessibleNotes {
-    long long lastDeadLocation = _state.cumulativeScrollbackOverflow * (self.width + 1);
+    long long lastDeadLocation = _state.cumulativeScrollbackOverflow * (_state.width + 1);
     if (lastDeadLocation > 0) {
         Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
         for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:deadInterval]) {
@@ -928,7 +928,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 gridRange.location = range.start.x;
             }
             if (range.end.y > line) {
-                gridRange.length = self.width + 1 - gridRange.location;
+                gridRange.length = _state.width + 1 - gridRange.location;
             } else {
                 gridRange.length = range.end.x - gridRange.location;
             }
@@ -1261,7 +1261,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     range.start.x = 0;
     range.start.y++;
     range.end.x = 0;
-    range.end.y = self.numberOfLines - self.height + [_state.currentGrid numberOfLinesUsed];
+    range.end.y = self.numberOfLines - _state.height + [_state.currentGrid numberOfLinesUsed];
     return range;
 }
 
@@ -1288,14 +1288,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     BOOL foundStart = NO;
     for (i = lineNumber - 1; i >= 0 && i >= lineNumber - kMaxRadius; i--) {
         const screen_char_t *line = [self getLineAtIndex:i];
-        if (line[self.width].code == EOL_HARD) {
+        if (line[_state.width].code == EOL_HARD) {
             *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
             foundStart = YES;
             break;
         }
         [data replaceBytesInRange:NSMakeRange(0, 0)
                         withBytes:line
-                           length:self.width * sizeof(screen_char_t)];
+                           length:_state.width * sizeof(screen_char_t)];
     }
     if (!foundStart) {
         *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
@@ -1303,7 +1303,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     BOOL done = NO;
     for (i = lineNumber; !done && i < self.numberOfLines && i < lineNumber + kMaxRadius; i++) {
         const screen_char_t *line = [self getLineAtIndex:i];
-        int length = self.width;
+        int length = _state.width;
         done = line[length].code == EOL_HARD;
         if (done) {
             // Remove trailing newlines
@@ -1352,7 +1352,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     ITBetaAssert(y >= 0, @"Negative y to runByTrimmingNullsFromRun");
     const screen_char_t *line = [self getLineAtIndex:y];
     int numberOfLines = [self numberOfLines];
-    int width = [self width];
+    int width = _state.width;
     if (x > 0) {
         while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
             x++;
@@ -1490,7 +1490,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (int)numberOfLinesDroppedWhenEncodingLegacyFormatWithEncoder:(id<iTermEncoderAdapter>)encoder
                                                 intervalOffset:(long long *)intervalOffsetPtr {
     if (gDebugLogging) {
-        DLog(@"Saving state with width=%@", @(self.width));
+        DLog(@"Saving state with width=%@", @(_state.width));
         for (id<IntervalTreeObject> object in _state.intervalTree.allObjects) {
             if (![object isKindOfClass:[PTYAnnotation class]]) {
                 continue;
