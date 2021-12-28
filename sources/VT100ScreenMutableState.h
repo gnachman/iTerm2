@@ -39,6 +39,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)appendLineFeed;
 - (void)appendCarriageReturnLineFeed;
 
+#pragma mark - Shell Integration
+
+- (void)assignCurrentCommandEndDate;
+
 @end
 
 NS_ASSUME_NONNULL_END

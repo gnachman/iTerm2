@@ -190,21 +190,13 @@
     return newMark;
 }
 
-- (void)assignCurrentCommandEndDate {
-    VT100ScreenMark *screenMark = _mutableState.lastCommandMark;
-    if (!screenMark.endDate) {
-#warning TODO: This mutates a shared object.
-        screenMark.endDate = [NSDate date];
-    }
-}
-
 - (void)mutSetPromptStartLine:(int)line {
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
     // Reset this in case it's taking the "real" shell integration path.
     _mutableState.fakePromptDetectedAbsLine = -1;
     const long long lastPromptLine = (long long)line + _mutableState.cumulativeScrollbackOverflow;
     _mutableState.lastPromptLine = lastPromptLine;
-    [self assignCurrentCommandEndDate];
+    [_mutableState assignCurrentCommandEndDate];
     VT100ScreenMark *mark = [self mutAddMarkOnLine:line ofClass:[VT100ScreenMark class]];
     [mark setIsPrompt:YES];
     mark.promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
