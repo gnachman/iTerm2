@@ -3245,7 +3245,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // comment where preferredCursorPosition is set for more details.
     for (PTYSession *session in self.allSessions) {
         DLog(@"restore preferred cursor position for %@", session);
-        [session.screen.mutableCurrentGrid restorePreferredCursorPositionIfPossible];
+        [session.screen restorePreferredCursorPositionIfPossible];
     }
     [_contentView updateToolbeltForWindow:self.window];
     [self updateTouchBarFunctionKeyLabels];
