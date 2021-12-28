@@ -224,6 +224,12 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
+- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range {
+    return [self intervalForGridCoordRange:range
+                                     width:self.width
+                               linesOffset:self.cumulativeScrollbackOverflow];
+}
+
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
                                   width:(int)width
                             linesOffset:(long long)linesOffset {

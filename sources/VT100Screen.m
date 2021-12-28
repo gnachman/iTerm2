@@ -731,12 +731,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [NSDate dateWithTimeIntervalSinceReferenceDate:interval];
 }
 
-- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range {
-    return [_state intervalForGridCoordRange:range
-                                       width:_state.width
-                                 linesOffset:_state.cumulativeScrollbackOverflow];
-}
-
 - (VT100GridCoord)predecessorOfCoord:(VT100GridCoord)coord {
     coord.x--;
     while (coord.x < 0) {
@@ -758,10 +752,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
-    long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
-                                                                            line + 1,
-                                                                            0,
-                                                                            line + 1)].location;
+    long long pos = [_state intervalForGridCoordRange:VT100GridCoordRangeMake(0,
+                                                                              line + 1,
+                                                                              0,
+                                                                              line + 1)].location;
     if (pos < 0) {
         return nil;
     }
@@ -873,10 +867,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (NSArray *)charactersWithNotesOnLine:(int)line {
     NSMutableArray *result = [NSMutableArray array];
-    Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
-                                                                                 line,
-                                                                                 0,
-                                                                                 line + 1)];
+    Interval *interval = [_state intervalForGridCoordRange:VT100GridCoordRangeMake(0,
+                                                                                   line,
+                                                                                   0,
+                                                                                   line + 1)];
     NSArray *objects = [_state.intervalTree objectsInInterval:interval];
     for (id<IntervalTreeObject> object in objects) {
         if ([object isKindOfClass:[PTYAnnotation class]]) {
@@ -899,7 +893,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSArray<PTYAnnotation *> *)annotationsInRange:(VT100GridCoordRange)range {
-    Interval *interval = [self intervalForGridCoordRange:range];
+    Interval *interval = [_state intervalForGridCoordRange:range];
     NSArray *objects = [_state.intervalTree objectsInInterval:interval];
     NSMutableArray *notes = [NSMutableArray array];
     for (id<IntervalTreeObject> o in objects) {
@@ -1091,7 +1085,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (line < 0 || line > INT_MAX) {
         return -1;
     }
-    Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, line, 0, line)];
+    Interval *interval = [_state intervalForGridCoordRange:VT100GridCoordRangeMake(0, line, 0, line)];
     NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumeratorAt:interval.limit];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
@@ -1112,7 +1106,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (line < 0 || line > INT_MAX) {
         return -1;
     }
-    Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, line + 1, 0, line + 1)];
+    Interval *interval = [_state intervalForGridCoordRange:VT100GridCoordRangeMake(0, line + 1, 0, line + 1)];
     NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumeratorAt:interval.limit];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
