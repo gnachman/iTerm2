@@ -1388,32 +1388,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100ScreenMark *)lastCommandMark {
-    DLog(@"Searching for last command mark...");
-    if (_state.lastCommandMark) {
-        DLog(@"Return cached mark %@", _state.lastCommandMark);
-        return _state.lastCommandMark;
-    }
-    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
-    NSArray *objects = [enumerator nextObject];
-    int numChecked = 0;
-    while (objects && numChecked < 500) {
-        for (id<IntervalTreeObject> obj in objects) {
-            if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-                VT100ScreenMark *mark = (VT100ScreenMark *)obj;
-                if (mark.command) {
-                    DLog(@"Found mark %@ in line number range %@", mark,
-                         VT100GridRangeDescription([_state lineNumberRangeOfInterval:obj.entry.interval]));
-                    [self mutSetLastCommandMark:mark];
-                    return mark;
-                }
-            }
-            ++numChecked;
-        }
-        objects = [enumerator nextObject];
-    }
-
-    DLog(@"No last command mark found");
-    return nil;
+    return [_state lastCommandMark];
 }
 
 - (id<iTermMark>)markAddedAtCursorOfClass:(Class)theClass {

@@ -191,7 +191,7 @@
 }
 
 - (void)assignCurrentCommandEndDate {
-    VT100ScreenMark *screenMark = self.lastCommandMark;
+    VT100ScreenMark *screenMark = _mutableState.lastCommandMark;
     if (!screenMark.endDate) {
 #warning TODO: This mutates a shared object.
         screenMark.endDate = [NSDate date];
@@ -434,7 +434,7 @@
 }
 
 - (void)mutCommandWasAborted {
-    VT100ScreenMark *screenMark = [self lastCommandMark];
+    VT100ScreenMark *screenMark = [_mutableState lastCommandMark];
     if (screenMark) {
         DLog(@"Removing last command mark %@", screenMark);
         [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:[self intervalTreeObserverTypeForObject:screenMark]
@@ -475,7 +475,7 @@
 
     VT100GridCoordRange range = [_mutableState coordRangeForInterval:mark.entry.interval];
     while (range.start.y >= line) {
-        if (mark == self.lastCommandMark) {
+        if (mark == _mutableState.lastCommandMark) {
             _mutableState.lastCommandMark = nil;
         }
         [self mutRemoveObjectFromIntervalTree:mark];
@@ -2829,10 +2829,6 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     delegate_ = delegate;
 }
 
-- (void)mutSetLastCommandMark:(VT100ScreenMark *)mark {
-    _mutableState.lastCommandMark = mark;
-}
-
 - (void)mutSetIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver {
     _mutableState.intervalTreeObserver = intervalTreeObserver;
 }
@@ -4273,7 +4269,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)mutSetReturnCodeOfLastCommand:(int)returnCode {
     DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
-    VT100ScreenMark *mark = [[self.lastCommandMark retain] autorelease];
+    VT100ScreenMark *mark = [[_mutableState.lastCommandMark retain] autorelease];
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
         const NSInteger line = [_mutableState coordRangeForInterval:mark.entry.interval].start.y + self.totalScrollbackOverflow;
@@ -4777,8 +4773,8 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 #pragma mark - iTermMarkDelegate
 
 - (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
-    if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
-        [self mutSetLastCommandMark:mark];
+    if (mark.entry.interval.location > _mutableState.lastCommandMark.entry.interval.location) {
+        _mutableState.lastCommandMark = mark;
     }
 }
 

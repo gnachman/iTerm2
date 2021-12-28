@@ -127,6 +127,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL appendToScrollbackWithStatusBar;
 @property (nonatomic, readonly) iTermUnicodeNormalization normalization;
 @property (nonatomic, weak, readonly) id<iTermIntervalTreeObserver> intervalTreeObserver;
+// Note that the ivar for lastCommandMark *is* mutable because it is used as a cache.
 @property (nullable, nonatomic, strong, readonly) VT100ScreenMark *lastCommandMark;
 @property (nonatomic, strong, readonly) id<iTermColorMapReading> colorMap;
 @property (nonatomic, strong, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;

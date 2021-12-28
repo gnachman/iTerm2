@@ -8,6 +8,7 @@
 #import "VT100ScreenState.h"
 #import "VT100ScreenState+Private.h"
 
+#import "DebugLogging.h"
 #import "IntervalTree.h"
 #import "iTermOrderEnforcer.h"
 #import "LineBuffer.h"
@@ -221,6 +222,37 @@ static const int kDefaultMaxScrollbackLines = 1000;
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval {
     VT100GridCoordRange range = [self coordRangeForInterval:interval];
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
+}
+
+#pragma mark - Shell Integration
+
+- (VT100ScreenMark *)lastCommandMark {
+    DLog(@"Searching for last command mark...");
+    if (_lastCommandMark) {
+        DLog(@"Return cached mark %@", _lastCommandMark);
+        return _lastCommandMark;
+    }
+    NSEnumerator *enumerator = [self.intervalTree reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    int numChecked = 0;
+    while (objects && numChecked < 500) {
+        for (id<IntervalTreeObject> obj in objects) {
+            if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+                VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+                if (mark.command) {
+                    DLog(@"Found mark %@ in line number range %@", mark,
+                         VT100GridRangeDescription([self lineNumberRangeOfInterval:obj.entry.interval]));
+                    _lastCommandMark = mark;
+                    return mark;
+                }
+            }
+            ++numChecked;
+        }
+        objects = [enumerator nextObject];
+    }
+
+    DLog(@"No last command mark found");
+    return nil;
 }
 
 @end
