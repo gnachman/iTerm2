@@ -394,8 +394,13 @@
         _mutableState.markCache[@(_mutableState.cumulativeScrollbackOverflow + range.end.y)] = mark;
     }
     [_mutableState.intervalTree addObject:mark withInterval:[_mutableState intervalForGridCoordRange:range]];
-    [self.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
-                                                       onLine:range.start.y + self.totalScrollbackOverflow];
+
+    const iTermIntervalTreeObjectType objectType = [self intervalTreeObserverTypeForObject:mark];
+    const long long absLine = range.start.y + self.totalScrollbackOverflow;
+    [_mutableState addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+        [observer intervalTreeDidAddObjectOfType:objectType
+                                          onLine:absLine];
+    }];
     [self setNeedsRedraw];
     return mark;
 }
