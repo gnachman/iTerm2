@@ -80,8 +80,8 @@
     }
     _mutableState.shellIntegrationInstalled = YES;
 
-    _mutableState.lastCommandOutputRange = VT100GridAbsCoordRangeMake(_state.startOfRunningCommandOutput.x,
-                                                                      _state.startOfRunningCommandOutput.y,
+    _mutableState.lastCommandOutputRange = VT100GridAbsCoordRangeMake(_mutableState.startOfRunningCommandOutput.x,
+                                                                      _mutableState.startOfRunningCommandOutput.y,
                                                                       coord.x,
                                                                       coord.y);
     _mutableState.currentPromptRange = VT100GridAbsCoordRangeMake(coord.x,
