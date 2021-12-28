@@ -41,12 +41,21 @@
     });
 }
 
+- (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect {
+    [self.sideEffects addIntervalTreeSideEffect:sideEffect];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf performSideEffects];
+    });
+}
+
 - (void)performSideEffects {
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
     if (!delegate) {
         return;
     }
-    [self.sideEffects executeWithDelegate:delegate];
+    [self.sideEffects executeWithDelegate:delegate
+                     intervalTreeObserver:self.sideEffectPerformer.sideEffectPerformingIntervalTreeObserver];
 }
 
 #pragma mark - Scrollback

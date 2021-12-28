@@ -1945,5 +1945,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return self.delegate;
 }
 
+- (id<iTermIntervalTreeObserver>)sideEffectPerformingIntervalTreeObserver {
+    return _state.intervalTreeObserver;
+}
+
 @end
 

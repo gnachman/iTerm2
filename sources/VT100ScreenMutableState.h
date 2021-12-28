@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol VT100ScreenSideEffectPerforming<NSObject>
 - (id<VT100ScreenDelegate>)sideEffectPerformingScreenDelegate;
+- (id<iTermIntervalTreeObserver>)sideEffectPerformingIntervalTreeObserver;
 @end
 
 @interface VT100ScreenMutableState: VT100ScreenState<VT100ScreenMutableState, NSCopying>
@@ -29,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 // is the only way for it to call delegate methods. It will be performed asynchronously at some
 // later time.
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
+- (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect;
 
 #pragma mark - Scrollback
 
