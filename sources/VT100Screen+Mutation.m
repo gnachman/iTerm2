@@ -372,7 +372,7 @@
         screenMark.sessionGuid = _config.sessionGuid;
     }
     long long totalOverflow = _mutableState.cumulativeScrollbackOverflow;
-    if (line < totalOverflow || line > totalOverflow + self.numberOfLines) {
+    if (line < totalOverflow || line > totalOverflow + _mutableState.numberOfLines) {
         return nil;
     }
     int nonAbsoluteLine = line - totalOverflow;
@@ -1057,7 +1057,7 @@
 - (void)mutSetContentsFromLineBuffer:(LineBuffer *)lineBuffer {
     [self mutClearBuffer];
     [self.mutableLineBuffer appendContentsOfLineBuffer:lineBuffer width:_state.currentGrid.size.width];
-    const int numberOfLines = [self numberOfLines];
+    const int numberOfLines = _mutableState.numberOfLines;
     [_mutableState.currentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
                                            withDefaultChar:[self.currentGrid defaultChar]
                                          maxLinesToRestore:MIN(numberOfLines, _mutableState.height)];
@@ -3712,7 +3712,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)setHost:(NSString *)host user:(NSString *)user {
     DLog(@"setHost:%@ user:%@ %@", host, user, self);
-    VT100RemoteHost *currentHost = [self remoteHostOnLine:[self numberOfLines]];
+    VT100RemoteHost *currentHost = [self remoteHostOnLine:_mutableState.numberOfLines];
     if (!host || !user) {
         // A trigger can set the host and user alone. If remoteHost looks like example.com or
         // user@, then preserve the previous host/user. Also ensure neither value is nil; the
@@ -3726,7 +3726,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         }
     }
 
-    int cursorLine = [self numberOfLines] - _mutableState.height + _state.currentGrid.cursorY;
+    int cursorLine = _mutableState.numberOfLines - _mutableState.height + _state.currentGrid.cursorY;
     VT100RemoteHost *remoteHostObj = [self setRemoteHost:host user:user onLine:cursorLine];
 
     if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
@@ -3809,7 +3809,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     DLog(@"%p: terminalCurrentDirectoryDidChangeTo:%@", self, dir);
     [delegate_ screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
 
-    int cursorLine = [self numberOfLines] - _mutableState.height + _state.currentGrid.cursorY;
+    int cursorLine = _mutableState.numberOfLines - _mutableState.height + _state.currentGrid.cursorY;
     if (dir.length) {
         [self currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
         return;
@@ -4270,7 +4270,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         mark.code = returnCode;
         [_state.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
                                                              onLine:line];
-        VT100RemoteHost *remoteHost = [self remoteHostOnLine:[self numberOfLines]];
+        VT100RemoteHost *remoteHost = [self remoteHostOnLine:_mutableState.numberOfLines];
         [[iTermShellHistoryController sharedInstance] setStatusOfCommandAtMark:mark
                                                                         onHost:remoteHost
                                                                             to:returnCode];
