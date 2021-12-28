@@ -335,6 +335,15 @@ NS_ASSUME_NONNULL_BEGIN
     return [[iTermVariableDesignator alloc] initWithVariables:owner path:terminal];
 }
 
+- (iTermVariableScope *)variableScopeByAddingBackreferences:(NSArray<NSString *> *)backreferences
+                                                      owner:(id<iTermObject>)owner {
+    iTermVariables *matchesFrame = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone owner:owner];
+    iTermVariableScope *myScope = [self copy];
+    [myScope addVariables:matchesFrame toScopeNamed:nil];
+    [myScope setValue:backreferences forVariableNamed:@"matches"];
+    return myScope;
+}
+
 @end
 
 @implementation iTermVariableRecordingScope {

@@ -28,22 +28,23 @@
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
+    // Need to stop the world to get scope, provided it is needed. This will be a modest performance issue at most.
     [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                               count:captureCount
-                                              scope:aSession.variablesScope
+                                              scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *message) {
-                                             if (!message) {
-                                                 return;
-                                             }
-                                             [aSession writeTaskNoBroadcast:message];
-                                         }];
+        if (!message) {
+            return;
+        }
+        [aSession triggerSession:self writeText:message];
+    }];
     return YES;
 }
 

@@ -7,21 +7,20 @@
 //
 
 #import "SetHostnameTrigger.h"
-#import "PTYSession.h"
 #import "VT100Screen+Mutation.h"
 
 @implementation SetHostnameTrigger
 
 + (NSString *)title {
-  return @"Report User & Host";
+    return @"Report User & Host";
 }
 
 - (BOOL)takesParameter{
-  return YES;
+    return YES;
 }
 
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
-  return @"username@hostname";
+    return @"username@hostname";
 }
 
 - (BOOL)isIdempotent {
@@ -31,21 +30,22 @@
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
+    // Need to stop the world to get scope, provided it is needed. Hostname changes are slow & rare that this is ok.
     [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                               count:captureCount
-                                              scope:aSession.variablesScope
+                                              scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *remoteHost) {
-                                             if (remoteHost.length) {
-                                                 [aSession.screen mutSetRemoteHost:remoteHost];
-                                             }
-                                         }];
+        if (remoteHost.length) {
+            [aSession triggerSession:self setRemoteHostName:remoteHost];
+        }
+    }];
     return YES;
 }
 

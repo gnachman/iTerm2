@@ -9,7 +9,6 @@
 #import "iTermSetTitleTrigger.h"
 
 #import "iTermSessionNameController.h"
-#import "PTYSession.h"
 
 @implementation iTermSetTitleTrigger
 
@@ -34,21 +33,22 @@
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
+    // Need to stop the world to get scope, provided it is needed. Title changes are slow & rare that this is ok.
     [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                               count:captureCount
-                                              scope:aSession.variablesScope
+                                              scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *newName) {
-                                             if (newName) {
-                                                 [aSession triggerDidChangeNameTo:newName];
-                                             }
-                                         }];
+        if (newName) {
+            [aSession triggerSession:self didChangeNameTo:newName];
+        }
+    }];
     return YES;
 }
 

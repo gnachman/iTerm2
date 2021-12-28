@@ -64,6 +64,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (iTermVariableDesignator *)designatorForPath:(NSString *)path;
 
+- (iTermVariableScope *)variableScopeByAddingBackreferences:(NSArray<NSString *> *)backreferences
+                                                      owner:(id<iTermObject>)owner;
 @end
 
 // A scope that remembers which variables were referred to.

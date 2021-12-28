@@ -6,6 +6,7 @@
 //
 
 #import "PTYSession+ARC.h"
+#import "PTYSession+Private.h"
 
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
@@ -168,17 +169,17 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     }
     __weak __typeof(self) weakSelf = self;
     self.pasteBracketingOopsieExpectation =
-    [self.expect expectRegularExpression:[NSString stringWithFormat:@"(%@)?%@", redflag, prefix.it_escapedForRegex]
-                              completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
+    [_triggerEvaluator.expect expectRegularExpression:[NSString stringWithFormat:@"(%@)?%@", redflag, prefix.it_escapedForRegex]
+                                           completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
         if ([captureGroups[1] isEqualToString:redflag]) {
             [weakSelf didFindPasteBracketingOopsie];
         }
     }];
-    [self.expect setTimeout:0.5 forExpectation:self.pasteBracketingOopsieExpectation];
+    [_triggerEvaluator.expect setTimeout:0.5 forExpectation:self.pasteBracketingOopsieExpectation];
 }
 
 - (void)didFindPasteBracketingOopsie {
-    [self.expect cancelExpectation:self.pasteBracketingOopsieExpectation];
+    [_triggerEvaluator.expect cancelExpectation:self.pasteBracketingOopsieExpectation];
     [self offerToTurnOffBracketedPasteOnHostChange];
  }
 

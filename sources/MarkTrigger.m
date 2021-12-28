@@ -8,7 +8,6 @@
 
 #import "MarkTrigger.h"
 #import "PTYScrollView.h"
-#import "PTYSession.h"
 #import "SessionView.h"
 
 // Whether to stop scrolling.
@@ -75,15 +74,12 @@ typedef enum {
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-    [aSession.screen terminalSaveScrollPositionWithArgument:@"saveCursorLine"];
-    if ([self shouldStopScrolling]) {
-        [[aSession.view.scrollview ptyVerticalScroller] setUserScroll:YES];
-    }
+    [aSession triggerSession:self saveCursorLineAndStopScrolling:[self shouldStopScrolling]];
     return YES;
 }
 

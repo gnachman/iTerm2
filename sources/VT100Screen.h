@@ -3,8 +3,10 @@
 #import "iTermEncoderAdapter.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMetadata.h"
+#import "HighlightTrigger.h"
 #import "PTYAnnotation.h"
 #import "PTYTextViewDataSource.h"
+#import "PTYTriggerEvaluator.h"
 #import "SCPPath.h"
 #import "ScreenCharArray.h"
 #import "VT100ScreenDelegate.h"
@@ -28,10 +30,6 @@
 @protocol iTermFilterDestination;
 @protocol iTermMark;
 
-// Dictionary keys for -highlightTextInRange:basedAtAbsoluteLineNumber:absoluteLineNumber:color:
-extern NSString * const kHighlightForegroundColor;
-extern NSString * const kHighlightBackgroundColor;
-
 // Key into dictionaryValue to get screen state.
 extern NSString *const kScreenStateKey;
 
@@ -41,6 +39,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 @interface VT100Screen : NSObject <
     PTYTextViewDataSource,
+    PTYTriggerEvaluatorDataSource,
     VT100GridDelegate>
 
 @property(nonatomic, retain) VT100Terminal *terminal;
@@ -263,6 +262,9 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
+- (void)saveCursorLine;
+- (void)setRemoteHostName:(NSString *)remoteHostName;
+- (void)currentDirectoryDidChangeTo:(NSString *)dir;
 
 @end
 

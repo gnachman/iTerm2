@@ -8,10 +8,11 @@
 #import "HighlightTrigger.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
-#import "PTYSession.h"
-#import "PTYTab.h"
-#import "PseudoTerminal.h"
-#import "VT100Screen.h"
+#import "ScreenChar.h"
+
+NSString * const kHighlightForegroundColor = @"kHighlightForegroundColor";
+NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
+
 
 // Preserve these values - they are the tags and are saved in preferences.
 enum {
@@ -61,8 +62,7 @@ enum {
     NSDictionary *_cachedColors;
 }
 
-+ (NSString *)title
-{
++ (NSString *)title {
     return @"Highlight Text…";
 }
 
@@ -87,8 +87,7 @@ enum {
     return YES;
 }
 
-- (NSDictionary *)menuItemsForPoupupButton
-{
+- (NSDictionary *)menuItemsForPoupupButton {
     return [NSDictionary dictionaryWithObjectsAndKeys:
             @"Yellow on Black", [NSNumber numberWithInt:(int)kYellowOnBlackHighlight],
             @"Black on Yellow", [NSNumber numberWithInt:(int)kBlackOnYellowHighlight],
@@ -220,18 +219,15 @@ enum {
 }
 
 - (NSDictionary *)dictionaryWithForegroundColor:(NSColor *)foreground
-                                backgroundColor:(NSColor *)background
-{
+                                backgroundColor:(NSColor *)background {
     return [NSDictionary dictionaryWithObjectsAndKeys:foreground, kHighlightForegroundColor, background, kHighlightBackgroundColor, nil];
 }
 
-- (NSDictionary *)dictionaryWithForegroundColor:(NSColor *)foreground
-{
+- (NSDictionary *)dictionaryWithForegroundColor:(NSColor *)foreground {
     return [NSDictionary dictionaryWithObjectsAndKeys:foreground, kHighlightForegroundColor, nil];
 }
 
-- (NSDictionary *)dictionaryWithBackgroundColor:(NSColor *)background
-{
+- (NSDictionary *)dictionaryWithBackgroundColor:(NSColor *)background {
     return [NSDictionary dictionaryWithObjectsAndKeys:background, kHighlightBackgroundColor, nil];
 }
 
@@ -303,12 +299,12 @@ enum {
 }
 
 // Returns a dictionary with text and background color from the self.param string.
-- (NSDictionary *)colors {
+- (NSDictionary<NSString *, NSColor *> *)colors {
     if (_cachedColors) {
         return _cachedColors;
     }
     NSArray *parts = [self stringsForColors];
-    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSString *, NSColor *> *dict = [NSMutableDictionary dictionary];
     NSColor *textColor = nil;
     NSColor *backgroundColor = nil;
     if (parts.count == 2) {
@@ -441,16 +437,18 @@ enum {
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     NSRange rangeInString = capturedRanges[0];
     NSRange rangeInScreenChars = [stringLine rangeOfScreenCharsForRangeInString:rangeInString];
-    [[aSession screen] highlightTextInRange:rangeInScreenChars
-                  basedAtAbsoluteLineNumber:lineNumber
-                                     colors:[self colors]];
+
+    [aSession triggerSession:self
+        highlightTextInRange:rangeInScreenChars
+                absoluteLine:lineNumber
+                      colors:[self colors]];
     return YES;
 }
 

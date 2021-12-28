@@ -45,7 +45,6 @@ extern NSString *const iTermSessionWillTerminateNotification;
 @class iTermAnnouncementViewController;
 @protocol iTermContentSubscriber;
 @class iTermEchoProbe;
-@class iTermExpect;
 @class iTermImageWrapper;
 @class iTermKeyBindingAction;
 @class iTermScriptHistoryEntry;
@@ -561,7 +560,6 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, retain) NSNumber *cursorTypeOverride;
 @property(nonatomic, readonly) NSDictionary *environment;
 @property(nonatomic, readonly) BOOL hasNontrivialJob;
-@property(nonatomic, readonly) iTermExpect *expect;
 @property(nonatomic, readonly) BOOL tmuxPaused;
 @property(nonatomic, readonly) NSString *userShell;  // Something like "/bin/bash".
 @property(nonatomic, copy) NSString *filter;
@@ -890,9 +888,6 @@ backgroundColor:(NSColor *)backgroundColor;
 
 - (void)setColorsFromPresetNamed:(NSString *)presetName;
 
-- (void)triggerDidDetectStartOfPromptAt:(VT100GridAbsCoord)coord;
-- (void)triggerDidDetectEndOfPromptAt:(VT100GridAbsCoord)coord;
-
 // Burys a session
 - (void)bury;
 
@@ -911,7 +906,6 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Call this when a session moves to a different tab or window to update the session ID.
 - (void)didMoveSession;
-- (void)triggerDidChangeNameTo:(NSString *)newName;
 - (void)didInitializeSessionWithName:(NSString *)name;
 - (void)profileNameDidChangeTo:(NSString *)name;
 - (void)profileDidChangeToProfileWithName:(NSString *)name;

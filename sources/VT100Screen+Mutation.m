@@ -3825,10 +3825,14 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     if ([argument isEqualToString:@"saveScrollPosition"]) {
         [delegate_ screenSaveScrollPosition];
     } else {  // implicitly "saveCursorLine"
-        const int scrollbackLines = [_mutableState.linebuffer numLinesWithWidth:_mutableState.currentGrid.size.width];
-        [self mutAddMarkOnLine:scrollbackLines + _mutableState.currentGrid.cursor.y
-                       ofClass:[VT100ScreenMark class]];
+        [self mutSaveCursorLine];
     }
+}
+
+- (void)mutSaveCursorLine {
+    const int scrollbackLines = [_mutableState.linebuffer numLinesWithWidth:_mutableState.currentGrid.size.width];
+    [self mutAddMarkOnLine:scrollbackLines + _mutableState.currentGrid.cursor.y
+                   ofClass:[VT100ScreenMark class]];
 }
 
 - (void)terminalStealFocus {

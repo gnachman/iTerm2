@@ -8,6 +8,10 @@
 #import <Cocoa/Cocoa.h>
 #import "Trigger.h"
 
+// Dictionary keys for -highlightTextInRange:basedAtAbsoluteLineNumber:absoluteLineNumber:color:
+extern NSString * const kHighlightForegroundColor;
+extern NSString * const kHighlightBackgroundColor;
+
 @protocol iTermColorSettable<NSObject>
 - (void)setTextColor:(NSColor *)textColor;
 - (void)setBackgroundColor:(NSColor *)backgroundColor;

@@ -10,9 +10,7 @@
 #import "iTermTextExtractor.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
-#import "PTYSession.h"
 #import "ScreenChar.h"
-#import "VT100Screen.h"
 
 @implementation iTermHighlightLineTrigger
 
@@ -119,34 +117,18 @@
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     NSRange rangeInString = capturedRanges[0];
     NSRange rangeInScreenChars = [stringLine rangeOfScreenCharsForRangeInString:rangeInString];
-    iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:aSession.screen];
     const VT100GridAbsCoord absCoord = VT100GridAbsCoordMake(rangeInScreenChars.location,
                                                              lineNumber);
-    BOOL ok = NO;
-    const VT100GridCoord coord = VT100GridCoordFromAbsCoord(absCoord, aSession.screen.totalScrollbackOverflow, &ok);
-    if (!ok) {
-        return YES;
-    }
-    const VT100GridWindowedRange wrappedRange =
-    [extractor rangeForWrappedLineEncompassing:coord
-                          respectContinuations:NO
-                                      maxChars:aSession.screen.width * 10];
-
-    const long long lineLength = VT100GridCoordRangeLength(wrappedRange.coordRange,
-                                                           aSession.screen.width);
-    const int width = aSession.screen.width;
-    const long long lengthToHighlight = ceil((double)lineLength / (double)width);
-    const NSRange range = NSMakeRange(0, lengthToHighlight * width);
-    [[aSession screen] highlightTextInRange:range
-                  basedAtAbsoluteLineNumber:lineNumber
-                                     colors:[self colors]];
+    [aSession triggerSession:self
+             highlightLineAt:absCoord
+                      colors:[self colors]];
     return YES;
 }
 

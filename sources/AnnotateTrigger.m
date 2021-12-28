@@ -6,7 +6,7 @@
 //
 
 #import "AnnotateTrigger.h"
-#import "PTYSession.h"
+#import "ScreenChar.h"
 
 @implementation AnnotateTrigger
 
@@ -28,7 +28,7 @@
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
@@ -39,22 +39,21 @@
     if (length == 0) {
         return YES;
     }
-    const long long width = aSession.screen.width;
-    VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeMake(rangeInScreenChars.location,
-                                                                 lineNumber,
-                                                                 (rangeInScreenChars.location + length) % width,
-                                                                 lineNumber + (rangeInScreenChars.location + length - 1) / width);
+    // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
     [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                               count:captureCount
-                                              scope:aSession.variablesScope
+                                              scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *annotation) {
-                                             if (!annotation.length) {
-                                                 return;
-                                             }
-                                             [aSession addNoteWithText:annotation inAbsoluteRange:absRange];
-                                         }];
+        if (!annotation.length) {
+            return;
+        }
+        [aSession triggerSession:self
+                   setAnnotation:annotation
+                           range:rangeInScreenChars
+                            line:lineNumber];
+    }];
     return YES;
 }
 

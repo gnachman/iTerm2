@@ -74,9 +74,6 @@ int kVT100ScreenMinRows = 2;
 static const int kDefaultScreenColumns = 80;
 static const int kDefaultScreenRows = 25;
 
-NSString * const kHighlightForegroundColor = @"kHighlightForegroundColor";
-NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
-
 const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 
@@ -1693,6 +1690,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Mutation Wrappers
+
+- (void)currentDirectoryDidChangeTo:(NSString *)dir {
+    [self mutCurrentDirectoryDidChangeTo:dir];
+}
+
+- (void)setRemoteHostName:(NSString *)remoteHostName {
+    [self mutSetRemoteHost:remoteHostName];
+}
+
+- (void)saveCursorLine {
+    [self mutSaveCursorLine];
+}
 
 - (long long)lastPromptLine {
     return _state.lastPromptLine;

@@ -30,13 +30,11 @@
     return [NSSet setWithObject:@"GrowlTrigger"];
 }
 
-+ (NSString *)title
-{
++ (NSString *)title {
     return @"Post Notification…";
 }
 
-- (BOOL)takesParameter
-{
+- (BOOL)takesParameter {
     return YES;
 }
 
@@ -47,14 +45,16 @@
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
+    // Need to stop the world to get scope, provided it is needed. Notifs are so slow & rare that this is ok.
     [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                               count:captureCount
-                                              scope:aSession.variablesScope
+#warning Variable scope will need an immutable copy :(
+                                              scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *notificationText) {
@@ -73,7 +73,7 @@
 }
 
 - (void)postNotificationWithText:(NSString *)notificationText
-                       inSession:(PTYSession *)aSession {
+                       inSession:(id<iTermTriggerSession>)aSession {
     if (!notificationText) {
         return;
     }
@@ -84,16 +84,8 @@
 }
 
 - (void)reallyPostNotificationWithText:(NSString *)notificationText
-                             inSession:(PTYSession *)aSession {
-    iTermNotificationController *notificationController = [iTermNotificationController sharedInstance];
-    [notificationController notify:notificationText
-                   withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
-                                    [[aSession name] removingHTMLFromTabTitleIfNeeded]
-                                    ,
-                                    aSession.delegate.tabNumber]
-                       windowIndex:[aSession screenWindowIndex]
-                          tabIndex:[aSession screenTabIndex]
-                         viewIndex:[aSession screenViewIndex]];
+                             inSession:(id<iTermTriggerSession>)aSession {
+    [aSession triggerSession:self postUserNotificationWithMessage:notificationText];
 }
 
 @end

@@ -7,7 +7,6 @@
 
 #import "Trigger.h"
 #import "DebugLogging.h"
-#import "iTermObject.h"
 #import "iTermSwiftyString.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
@@ -23,7 +22,7 @@ NSString * const kTriggerParameterKey = @"parameter";
 NSString * const kTriggerPartialLineKey = @"partial";
 NSString * const kTriggerDisabledKey = @"disabled";
 
-@interface Trigger()<iTermObject>
+@interface Trigger()
 @end
 
 @implementation Trigger {
@@ -136,7 +135,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
@@ -150,7 +149,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
 }
 
 - (BOOL)tryString:(iTermStringLine *)stringLine
-        inSession:(PTYSession *)aSession
+        inSession:(id<iTermTriggerSession>)aSession
       partialLine:(BOOL)partialLine
        lineNumber:(long long)lineNumber
  useInterpolation:(BOOL)useInterpolation {
@@ -251,11 +250,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
 }
 
 - (iTermVariableScope *)variableScope:(iTermVariableScope *)scope byAddingBackreferences:(NSArray<NSString *> *)backreferences {
-    iTermVariables *matchesFrame = [[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone owner:self];
-    iTermVariableScope *myScope = [scope copy];
-    [myScope addVariables:matchesFrame toScopeNamed:nil];
-    [myScope setValue:backreferences forVariableNamed:@"matches"];
-    return myScope;
+    return [scope variableScopeByAddingBackreferences:backreferences owner:self];
 }
 
 - (void)evaluateSwiftyStringParameter:(NSString *)expression

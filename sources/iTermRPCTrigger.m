@@ -10,7 +10,7 @@
 #import "iTermScriptFunctionCall.h"
 #import "iTermVariableScope.h"
 #import "NSArray+iTerm.h"
-#import "PTYSession.h"
+#import "ScreenChar.h"
 
 static NSString *const iTermRPCTriggerPathCapturedStrings = @"trigger.captured_strings";
 static NSString *const iTermRPCTriggerPathCapturedRanges = @"trigger.captured_ranges";
@@ -42,7 +42,7 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
@@ -60,10 +60,8 @@ static NSString *const iTermRPCTriggerPathLineNumber = @"trigger.line_number";
                                           iTermRPCTriggerPathCapturedRanges: captureRangeArray,
                                           iTermRPCTriggerPathInput: stringLine.stringValue ?: @"",
                                           iTermRPCTriggerPathLineNumber: @(lineNumber) };
-    iTermVariableScope *scope = [self variableScope:aSession.variablesScope
-                             byAddingBackreferences:captureStringArray];
-    [scope setValuesFromDictionary:temporaryVariables];
-    [aSession invokeFunctionCall:invocation scope:scope origin:@"Trigger"];
+    [aSession triggerSession:self invoke:invocation withVariables:temporaryVariables captures:captureStringArray];
+
 
     return YES;
 }

@@ -7,10 +7,8 @@
 //
 
 #import "PasswordTrigger.h"
-#import "iTermApplicationDelegate.h"
 #import "iTermPasswordManagerWindowController.h"
 #import "NSArray+iTerm.h"
-#import "PTYSession.h"
 
 @interface PasswordTrigger ()
 @property(nonatomic, copy) NSArray *accountNames;
@@ -40,15 +38,15 @@
 }
 
 - (NSString *)triggerOptionalParameterPlaceholderWithInterpolation:(BOOL)interpolation {
-  return @"";
+    return @"";
 }
 
 - (BOOL)takesParameter {
-  return YES;
+    return YES;
 }
 
 - (BOOL)paramIsPopupButton {
-  return YES;
+    return YES;
 }
 
 - (NSArray *)sortedAccountNames {
@@ -83,23 +81,22 @@
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
+    // Need to stop the world to get scope, provided it is needed. Password manager opens are so slow & rare that this is ok.
     [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                               count:captureCount
-                                              scope:aSession.variablesScope
+                                              scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *accountName) {
-                                             if (accountName) {
-                                                 iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-                                                 [itad openPasswordManagerToAccountName:accountName
-                                                                                  inSession:aSession];
-                                             }
-                                         }];
+        if (accountName) {
+            [aSession triggerSession:self openPasswordManagerToAccountName:accountName];
+        }
+    }];
     return YES;
 }
 

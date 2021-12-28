@@ -34,7 +34,7 @@
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
@@ -42,9 +42,10 @@
     if (disabled_) {
         return YES;
     }
+    // Need to stop the world to get scope, provided it is needed. Alerts are so slow & rare that this is ok.
     [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                               count:captureCount
-                                              scope:aSession.variablesScope
+                                              scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *message) {
@@ -62,7 +63,7 @@
     return _rateLimit;
 }
 
-- (void)showAlertWithMessage:(NSString *)message inSession:(PTYSession *)aSession {
+- (void)showAlertWithMessage:(NSString *)message inSession:(id<iTermTriggerSession>)aSession {
     if (!message) {
         return;
     }
@@ -71,7 +72,7 @@
     }];
 }
 
-- (void)reallyShowAlertWithMessage:(NSString *)message inSession:(PTYSession *)aSession {
+- (void)reallyShowAlertWithMessage:(NSString *)message inSession:(id<iTermTriggerSession>)aSession {
     NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = message ?: @"";
     [alert addButtonWithTitle:@"OK"];
@@ -82,10 +83,7 @@
             break;
 
         case NSAlertSecondButtonReturn: {
-            NSWindowController<iTermWindowController> * term = [[aSession delegate] realParentWindow];
-            [[term window] makeKeyAndOrderFront:nil];
-            [aSession.delegate sessionSelectContainingTab];
-            [aSession.delegate setActiveSession:aSession];
+            [aSession triggerSessionReveal:self];
             break;
         }
 

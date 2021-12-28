@@ -14,13 +14,11 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
 
 @implementation CoprocessTrigger
 
-+ (NSString *)title
-{
++ (NSString *)title {
     return @"Run Coprocess…";
 }
 
-- (BOOL)takesParameter
-{
+- (BOOL)takesParameter {
     return YES;
 }
 
@@ -28,68 +26,42 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
     return @"Enter coprocess command to run";
 }
 
-- (void)executeCommand:(NSString *)command inSession:(PTYSession *)aSession
-{
-    [aSession launchCoprocessWithCommand:command];
-}
-
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-    if ([aSession hasCoprocess]) {
-        [self.class showCoprocessAnnouncementInSession:aSession];
-    } else {
-        [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                  count:captureCount
-                                                  scope:aSession.variablesScope
-                                                  owner:aSession
-                                       useInterpolation:useInterpolation
-                                             completion:^(NSString *command) {
-                                                 if (command) {
-                                                     [self executeCommand:command inSession:aSession];
-                                                 }
-                                             }];
-    }
+    // Need to stop the world to get scope, provided it is needed. Coprocesses are so slow & rare that this is ok.
+    [self paramWithBackreferencesReplacedWithValues:capturedStrings
+                                              count:captureCount
+                                              scope:[aSession triggerSessionVariableScope:self]
+                                              owner:aSession
+                                   useInterpolation:useInterpolation
+                                         completion:^(NSString *command) {
+        [aSession triggerSession:self
+      launchCoprocessWithCommand:command
+                      identifier:kSuppressCoprocessTriggerWarning
+                          silent:self.isSilent];
+    }];
     return YES;
 }
 
-+ (void)showCoprocessAnnouncementInSession:(PTYSession *)aSession {
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCoprocessTriggerWarning]) {
-        void (^completion)(int selection) = ^(int selection) {
-            switch (selection) {
-                case 0:
-                    [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                            forKey:kSuppressCoprocessTriggerWarning];
-                    break;
-            }
-        };
-        NSString *title = @"A Coprocess trigger fired but could not run because a coprocess is already running.";
-        iTermAnnouncementViewController *announcement =
-            [iTermAnnouncementViewController announcementWithTitle:title
-                                                             style:kiTermAnnouncementViewStyleWarning
-                                                       withActions:@[ @"Silence Warning" ]
-                                                        completion:completion];
-        [aSession queueAnnouncement:announcement
-                         identifier:kSuppressCoprocessTriggerWarning];
-    }
+- (BOOL)isSilent {
+    return NO;
 }
 
 @end
 
 @implementation MuteCoprocessTrigger
 
-+ (NSString *)title
-{
++ (NSString *)title {
     return @"Run Silent Coprocess…";
 }
 
-- (BOOL)takesParameter
-{
+- (BOOL)takesParameter {
     return YES;
 }
 
@@ -97,33 +69,7 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
     return @"Enter coprocess command to run";
 }
 
-- (void)executeCommand:(NSString *)command inSession:(PTYSession *)aSession
-{
-    [aSession launchSilentCoprocessWithCommand:command];
-}
-
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
-                          capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
-                                onString:(iTermStringLine *)stringLine
-                    atAbsoluteLineNumber:(long long)lineNumber
-                        useInterpolation:(BOOL)useInterpolation
-                                    stop:(BOOL *)stop {
-    if ([aSession hasCoprocess]) {
-        [CoprocessTrigger showCoprocessAnnouncementInSession:aSession];
-    } else {
-        [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                                  count:captureCount
-                                                  scope:aSession.variablesScope
-                                                  owner:aSession
-                                       useInterpolation:useInterpolation
-                                             completion:^(NSString *command) {
-                                                 if (command) {
-                                                     [self executeCommand:command inSession:aSession];
-                                                 }
-                                             }];
-    }
+- (BOOL)isSilent {
     return YES;
 }
 

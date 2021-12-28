@@ -1,5 +1,6 @@
 #import "PTYSession.h"
 #import "PTYSession+ARC.h"
+#import "PTYSession+Private.h"
 
 #import "CapturedOutput.h"
 #import "Coprocess.h"
@@ -18,11 +19,13 @@
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermAutomaticProfileSwitcher.h"
+#import "iTermBackgroundCommandRunner.h"
 #import "iTermBackgroundDrawingHelper.h"
 #import "iTermBadgeLabel.h"
 #import "iTermBuriedSessions.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermCacheableImage.h"
+#import "iTermCapturedOutputMark.h"
 #import "iTermCarbonHotKeyController.h"
 #import "iTermCharacterSource.h"
 #import "iTermColorMap.h"
@@ -112,6 +115,8 @@
 #import "iTermTmuxStatusBarMonitor.h"
 #import "iTermTmuxOptionMonitor.h"
 #import "iTermUpdateCadenceController.h"
+#import "iTermURLMark.h"
+#import "iTermURLStore.h"
 #import "iTermUserDefaultsObserver.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
@@ -153,6 +158,7 @@
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PTYTextView+ARC.h"
+#import "PTYTriggerEvaluator.h"
 #import "PTYWindow.h"
 #import "RegexKitLite.h"
 #import "SCPFile.h"
@@ -207,9 +213,6 @@ static NSString *const kTurnOffFocusReportingOnHostChangeAnnouncementIdentifier 
 
 static NSString *const kShellIntegrationOutOfDateAnnouncementIdentifier =
     @"kShellIntegrationOutOfDateAnnouncementIdentifier";
-
-static NSString *const PTYSessionSlownessEventExecute = @"execute";
-static NSString *const PTYSessionSlownessEventTriggers = @"triggers";
 
 static NSString *TERM_ENVNAME = @"TERM";
 static NSString *COLORFGBG_ENVNAME = @"COLORFGBG";
@@ -305,9 +308,6 @@ static NSString *PTYSessionAnnouncementIdentifierTmuxPaused = @"tmuxPaused";
 // and the end of startup activities.
 static NSMutableDictionary *gRegisteredSessionContents;
 
-// Rate limit for checking instant (partial-line) triggers, in seconds.
-static NSTimeInterval kMinimumPartialLineTriggerCheckInterval = 0.5;
-
 // Grace period to avoid failing to write anti-idle code when timer runs just before when the code
 // should be sent.
 static const NSTimeInterval kAntiIdleGracePeriod = 0.1;
@@ -319,71 +319,19 @@ static const NSUInteger kMaxCommands = 100;
 static const NSUInteger kMaxHosts = 100;
 static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
 
+static NSString *const kSuppressCaptureOutputRequiresShellIntegrationWarning =
+    @"NoSyncSuppressCaptureOutputRequiresShellIntegrationWarning";
+static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
+    @"NoSyncSuppressCaptureOutputToolNotVisibleWarning";
+
+// This one cannot be suppressed.
+static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
+    @"NoSyncTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
+
 @interface NSWindow (SessionPrivate)
 - (void)_moveToScreen:(NSScreen *)sender;
 @end
 
-@interface PTYSession () <
-    iTermAutomaticProfileSwitcherDelegate,
-    iTermBackgroundDrawingHelperDelegate,
-    iTermBadgeLabelDelegate,
-    iTermColorMapDelegate,
-    iTermCoprocessDelegate,
-    iTermCopyModeHandlerDelegate,
-    iTermComposerManagerDelegate,
-    iTermFilterDestination,
-    iTermHotKeyNavigableSession,
-    iTermIntervalTreeObserver,
-    iTermLogging,
-    iTermMetaFrustrationDetector,
-    iTermMetalGlueDelegate,
-    iTermModifyOtherKeysMapperDelegate,
-    iTermNaggingControllerDelegate,
-    iTermObject,
-    iTermPasteHelperDelegate,
-    iTermSessionNameControllerDelegate,
-    iTermSessionViewDelegate,
-    iTermStandardKeyMapperDelegate,
-    iTermStatusBarViewControllerDelegate,
-    iTermTermkeyKeyMapperDelegate,
-    iTermTriggersDataSource,
-    iTermTmuxControllerSession,
-    iTermUpdateCadenceControllerDelegate,
-    iTermWorkingDirectoryPollerDelegate,
-    TriggerDelegate>
-@property(nonatomic, retain) Interval *currentMarkOrNotePosition;
-@property(nonatomic, retain) TerminalFileDownload *download;
-@property(nonatomic, retain) TerminalFileUpload *upload;
-
-// Time since reference date when last output was received. New output in a brief period after the
-// session is resized is ignored to avoid making the spinner spin due to resizing.
-@property(nonatomic) NSTimeInterval lastOutputIgnoringOutputAfterResizing;
-
-// Time the window was last resized at.
-@property(nonatomic) NSTimeInterval lastResize;
-@property(atomic, assign) PTYSessionTmuxMode tmuxMode;
-@property(nonatomic, copy) NSString *lastDirectory;
-@property(nonatomic, copy) NSString *lastLocalDirectory;
-@property(nonatomic) BOOL lastLocalDirectoryWasPushed;  // was lastLocalDirectory from shell integration?
-@property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
-@property(nonatomic, retain) NSColor *cursorGuideColor;
-@property(nonatomic, copy) NSString *badgeFormat;
-
-// Info about what happens when the program is run so it can be restarted after
-// a broken pipe if the user so chooses. Contains $$MACROS$$ pre-substitution.
-@property(nonatomic, copy) NSString *program;
-@property(nonatomic, copy) NSString *customShell;
-@property(nonatomic, copy) NSDictionary *environment;
-@property(nonatomic, assign) BOOL isUTF8;
-@property(nonatomic, copy) NSDictionary *substitutions;
-@property(nonatomic, copy) NSString *guid;
-@property(nonatomic, retain) iTermPasteHelper *pasteHelper;
-@property(nonatomic, copy) NSString *lastCommand;
-@property(nonatomic, retain) iTermAutomaticProfileSwitcher *automaticProfileSwitcher;
-@property(nonatomic, retain) VT100RemoteHost *currentHost;
-@property(nonatomic, retain) iTermExpectation *pasteBracketingOopsieExpectation;
-@property(nonatomic, copy) NSString *cookie;
-@end
 
 @implementation PTYSession {
     // Terminal processes vt100 codes.
@@ -435,12 +383,6 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
     // updated when this is set to nil.
     NSString *_pasteboard;
     NSMutableData *_pbtext;
-
-    // The absolute line number of the next line to apply triggers to.
-    long long _triggerLineNumber;
-
-    // The current triggers.
-    NSMutableArray *_triggers;
 
     // Does the terminal think this session is focused?
     BOOL _focused;
@@ -498,10 +440,6 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
     // Has the user or an escape code change the cursor guide setting?
     // If so, then the profile setting will be disregarded.
     BOOL _cursorGuideSettingHasChanged;
-
-    // The last time at which a partial-line trigger check occurred. This keeps us from wasting CPU
-    // checking long lines over and over.
-    NSTimeInterval _lastPartialLineTriggerCheck;
 
     // Maps announcement identifiers to view controllers.
     NSMutableDictionary *_announcements;
@@ -632,13 +570,6 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
     iTermActivityInfo _activityInfo;
     TriggerController *_triggerWindowController;
 
-    // Measures time spent in triggers and executing tokens while in interactive apps.
-    // nil when not in soft alternate screen mode.
-    iTermSlownessDetector *_triggersSlownessDetector;
-
-    iTermRateLimitedUpdate *_idempotentTriggerRateLimit;
-    BOOL _shouldUpdateIdempotentTriggers;
-
     // If positive focus reports will not be sent.
     NSInteger _disableFocusReporting;
 
@@ -700,7 +631,7 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         _useAdaptiveFrameRate = [iTermAdvancedSettingsModel useAdaptiveFrameRate];
         _adaptiveFrameRateThroughputThreshold = [iTermAdvancedSettingsModel adaptiveFrameRateThroughputThreshold];
         _idleTime = [iTermAdvancedSettingsModel idleTimeSeconds];
-        _triggerLineNumber = -1;
+
         // The new session won't have the move-pane overlay, so just exit move pane
         // mode.
         [[MovePaneController sharedInstance] exitMovePaneMode];
@@ -731,6 +662,9 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         _screen = [[VT100Screen alloc] initWithTerminal:_terminal
                                                darkMode:self.view.effectiveAppearance.it_isDark
                                           configuration:_config];
+        _triggerEvaluator = [[PTYTriggerEvaluator alloc] initWithNaggingController:self.naggingController
+                                                                          delegate:self
+                                                                        dataSource:_screen];
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
 
         _overriddenFields = [[NSMutableSet alloc] init];
@@ -809,13 +743,11 @@ static const CGFloat PTYSessionMaximumMetalViewSize = 16384;
         _pwdPoller = [[iTermWorkingDirectoryPoller alloc] init];
         _pwdPoller.delegate = self;
         _graphicSource = [[iTermGraphicSource alloc] init];
-        _triggersSlownessDetector = [[iTermSlownessDetector alloc] init];
 
         // This is a placeholder. When the profile is set it will get updated.
         iTermStandardKeyMapper *standardKeyMapper = [[iTermStandardKeyMapper alloc] init];
         standardKeyMapper.delegate = self;
         _keyMapper = standardKeyMapper;
-        _expect = [[iTermExpect alloc] init];
         _disableTransparencyInKeyWindowObserver = [[iTermUserDefaultsObserver alloc] init];
         [_disableTransparencyInKeyWindowObserver observeKey:kPreferenceKeyDisableTransparencyForKeyWindow block:^{
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -922,7 +854,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
     dispatch_release(_executionSemaphore);
-    [_triggers release];
+    [_triggerEvaluator release];
     [_pasteboard release];
     [_pbtext release];
     [_creationDate release];
@@ -1029,7 +961,6 @@ ITERM_WEAKLY_REFERENCEABLE
     _logging.cookedLogger = nil;
     [_logging release];
     [_naggingController release];
-    [_expect release];
     [_pasteBracketingOopsieExpectation release];
     if (_cookie) {
         [[iTermWebSocketCookieJar sharedInstance] removeCookie:_cookie];
@@ -1039,8 +970,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tmuxClientWritePipe release];
     [_arrangementGUID release];
     [_triggerWindowController release];
-    [_triggersSlownessDetector release];
-    [_idempotentTriggerRateLimit release];
     [_filter release];
     [_asyncFilter cancel];
     [_asyncFilter release];
@@ -1836,7 +1765,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                  reattached:(BOOL)reattached {
     [_screen restoreFromDictionary:dict
           includeRestorationBanner:includeRestorationBanner
-                     knownTriggers:_triggers
+                     knownTriggers:_triggerEvaluator.triggers
                         reattached:reattached];
     [self screenSoftAlternateScreenModeDidChange];
     // Do this to force the hostname variable to be updated.
@@ -2236,12 +2165,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setTermIDIfPossible];
 }
 
-- (void)triggerDidChangeNameTo:(NSString *)newName {
-    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionTriggerName: newName,
-                                                    iTermVariableKeySessionAutoNameFormat: newName }];
-    if (newName.length > 0) {
-        [self enableSessionNameTitleComponentIfPossible];
-    }
+- (BOOL)triggerParametersUseInterpolatedStrings {
+    return _triggerEvaluator.triggerParametersUseInterpolatedStrings;
+}
+
+- (void)setTriggerParametersUseInterpolatedStrings:(BOOL)triggerParametersUseInterpolatedStrings {
+    _triggerEvaluator.triggerParametersUseInterpolatedStrings = triggerParametersUseInterpolatedStrings;
 }
 
 - (void)didInitializeSessionWithName:(NSString *)name {
@@ -2647,7 +2576,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     DLog(@"  terminate: exited = YES");
-    _exited = YES;
+    [self setExited:YES];
     [_view retain];  // hardstop and revive will release this.
     if (undoable) {
         // TODO: executeTokens:bytesHandled: should queue up tokens to avoid a race condition.
@@ -2678,6 +2607,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [[_delegate realParentWindow] sessionDidTerminate:self];
 
     _delegate = nil;
+}
+
+- (void)setExited:(BOOL)exited {
+    _exited = exited;
+    _triggerEvaluator.sessionExited = exited;
 }
 
 - (void)makeTerminationUndoable {
@@ -2735,7 +2669,7 @@ ITERM_WEAKLY_REFERENCEABLE
             }
         } else {
             DLog(@"  revive: exited=NO");
-            _exited = NO;
+            [self setExited:NO];
         }
         _textview.dataSource = _screen;
         _textview.delegate = self;
@@ -3073,7 +3007,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self recycleQueuedTokens];
     }
 
-    [_triggersSlownessDetector measureEvent:PTYSessionSlownessEventExecute block:^{
+    [_triggerEvaluator.triggersSlownessDetector measureEvent:PTYSessionSlownessEventExecute block:^{
         for (int i = 0; i < n; i++) {
             if (![self shouldExecuteToken]) {
                 break;
@@ -3120,128 +3054,11 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)checkTriggers {
-    if (_triggerLineNumber == -1) {
-        return;
-    }
-
-    long long startAbsLineNumber;
-    iTermStringLine *stringLine = [_screen stringLineAsStringAtAbsoluteLineNumber:_triggerLineNumber
-                                                                         startPtr:&startAbsLineNumber];
-    [self checkTriggersOnPartialLine:NO
-                          stringLine:stringLine
-                          lineNumber:startAbsLineNumber];
-}
-
-- (void)checkPartialLineTriggers {
-    if (_triggerLineNumber == -1) {
-        return;
-    }
-    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    if (now - _lastPartialLineTriggerCheck < kMinimumPartialLineTriggerCheckInterval) {
-        return;
-    }
-    _lastPartialLineTriggerCheck = now;
-    long long startAbsLineNumber;
-    iTermStringLine *stringLine = [_screen stringLineAsStringAtAbsoluteLineNumber:_triggerLineNumber
-                                                                         startPtr:&startAbsLineNumber];
-    [self checkTriggersOnPartialLine:YES
-                          stringLine:stringLine
-                          lineNumber:startAbsLineNumber];
-}
-
-- (BOOL)shouldUseTriggers {
+- (BOOL)triggerEvaluatorShouldUseTriggers:(PTYTriggerEvaluator *)evaluator {
     if (![self.terminal softAlternateScreenMode]) {
         return YES;
     }
     return [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS inProfile:self.profile];
-}
-
-- (void)checkTriggersOnPartialLine:(BOOL)partial
-                        stringLine:(iTermStringLine *)stringLine
-                        lineNumber:(long long)startAbsLineNumber {
-    DLog(@"partial=%@ startAbsLineNumber=%@", @(partial), @(startAbsLineNumber));
-
-    if (![self shouldUseTriggers]) {
-        DLog(@"Triggers disabled in interactive apps. Return early.");
-        return;
-    }
-
-    // If the trigger causes the session to get released, don't crash.
-    [[self retain] autorelease];
-    [self reallyCheckTriggersOnPartialLine:partial
-                                stringLine:stringLine
-                                lineNumber:startAbsLineNumber
-                        requireIdempotency:NO];
-}
-
-
-- (void)reallyCheckTriggersOnPartialLine:(BOOL)partial
-                              stringLine:(iTermStringLine *)stringLine
-                              lineNumber:(long long)startAbsLineNumber
-                      requireIdempotency:(BOOL)requireIdempotency {
-    for (iTermExpectation *expectation in [[_expect.expectations copy] autorelease]) {
-        NSArray<NSString *> *capture = [stringLine.stringValue captureComponentsMatchedByRegex:expectation.regex];
-        if (capture.count) {
-            [expectation didMatchWithCaptureGroups:capture];
-        }
-    }
-
-    // If a trigger changes the current profile then _triggers gets released and we should stop
-    // processing triggers. This can happen with automatic profile switching.
-    NSArray<Trigger *> *triggers = [[_triggers retain] autorelease];
-
-    DLog(@"Start checking triggers");
-    [_triggersSlownessDetector measureEvent:PTYSessionSlownessEventTriggers block:^{
-        for (Trigger *trigger in triggers) {
-            if (requireIdempotency && !trigger.isIdempotent) {
-                continue;
-            }
-            BOOL stop = [trigger tryString:stringLine
-                                 inSession:self
-                               partialLine:partial
-                                lineNumber:startAbsLineNumber
-                          useInterpolation:_triggerParametersUseInterpolatedStrings];
-            if (stop || _exited || (_triggers != triggers)) {
-                break;
-            }
-        }
-    }];
-    [self maybeWarnAboutSlowTriggers];
-    DLog(@"Finished checking triggers");
-}
-
-- (void)maybeWarnAboutSlowTriggers {
-    if (!_triggersSlownessDetector.enabled) {
-        return;
-    }
-    NSDictionary<NSString *, NSNumber *> *dist = [_triggersSlownessDetector timeDistribution];
-    const NSTimeInterval totalTime = _triggersSlownessDetector.timeSinceReset;
-    if (totalTime > 1) {
-        const NSTimeInterval timeInTriggers = [dist[PTYSessionSlownessEventTriggers] doubleValue] / totalTime;
-        const NSTimeInterval timeExecuting = [dist[PTYSessionSlownessEventExecute] doubleValue] / totalTime;
-        DLog(@"For session %@ time executing=%@ time in triggers=%@", self, @(timeExecuting), @(timeInTriggers));
-        if (timeInTriggers > timeExecuting * 0.5 && (timeExecuting + timeInTriggers) > 0.1) {
-            // We were CPU bound for at least 10% of the sample time and
-            // triggers were at least half as expensive as token execution.
-            [self.naggingController offerToDisableTriggersInInteractiveApps];
-        }
-        [_triggersSlownessDetector reset];
-    }
-}
-
-- (void)appendStringToTriggerLine:(NSString *)s {
-    if (_triggerLineNumber == -1) {
-        _triggerLineNumber = _screen.numberOfScrollbackLines + _screen.cursorY - 1 + _screen.totalScrollbackOverflow;
-    }
-
-    // We used to build up the string so you could write triggers that included bells. That doesn't
-    // really make sense, especially in the new model, but it's so useful to be able to customize
-    // the bell that I'll add this special case.
-    if ([s isEqualToString:@"\a"]) {
-        iTermStringLine *stringLine = [iTermStringLine stringLineWithString:s];
-        [self checkTriggersOnPartialLine:YES stringLine:stringLine lineNumber:_triggerLineNumber];
-    }
 }
 
 - (void)setAllTriggersEnabled:(BOOL)enabled {
@@ -3283,13 +3100,6 @@ ITERM_WEAKLY_REFERENCEABLE
     const BOOL disabled = [triggerDict[kTriggerDisabledKey] boolValue];
     mutableTriggers[index] = [triggerDict dictionaryBySettingObject:@(!disabled) forKey:kTriggerDisabledKey];
     [self setSessionSpecificProfileValues:@{ KEY_TRIGGERS: mutableTriggers }];
-}
-
-- (void)clearTriggerLine {
-    if ([_triggers count] || _expect.expectations.count) {
-        [self checkTriggers];
-        _triggerLineNumber = -1;
-    }
 }
 
 - (void)appendBrokenPipeMessage:(NSString *)unpaddedMessage {
@@ -3361,7 +3171,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_exited) {
         return;
     }
-    _exited = YES;
+    [self setExited:YES];
     [self cleanUpAfterBrokenPipe];
     [self appendBrokenPipeMessage:@"tmux detached"];
     switch (self.endAction) {
@@ -3386,7 +3196,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)cleanUpAfterBrokenPipe {
-    _exited = YES;
+    [self setExited:YES];
     [_logging stop];
     [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionTerminatedNotification object:self];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
@@ -3490,7 +3300,7 @@ ITERM_WEAKLY_REFERENCEABLE
     assert(_exited);
     _shouldRestart = NO;
     DLog(@"  replaceTerminatedShellWithNewInstance: exited <- NO");
-    _exited = NO;
+    [self setExited:NO];
     [_shell release];
     [_logging stop];
 
@@ -4218,16 +4028,9 @@ ITERM_WEAKLY_REFERENCEABLE
     if (currentTab == nil || [_delegate sessionBelongsToVisibleTab]) {
         [_delegate recheckBlur];
     }
-    [_triggers release];
-    _triggers = [[NSMutableArray alloc] init];
-    for (NSDictionary *triggerDict in aDict[KEY_TRIGGERS]) {
-        Trigger *trigger = [Trigger triggerFromDict:triggerDict];
-        if (trigger) {
-            [_triggers addObject:trigger];
-        }
-    }
-    _triggerParametersUseInterpolatedStrings = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
-                                                                         inProfile:aDict];
+    [_triggerEvaluator loadFromProfileArray:aDict[KEY_TRIGGERS]];
+    _triggerEvaluator.triggerParametersUseInterpolatedStrings = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
+                                                                                          inProfile:aDict];
 
     [_textview setSmartSelectionRules:aDict[KEY_SMART_SELECTION_RULES]];
     [_textview setSemanticHistoryPrefs:aDict[KEY_SEMANTIC_HISTORY]];
@@ -5310,7 +5113,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self stopTailFind];
     }
 
-    [self checkPartialLineTriggers];
+    [_triggerEvaluator checkPartialLineTriggers];
     const BOOL passwordInput = _shell.passwordInput;
     DLog(@"passwordInput=%@", @(passwordInput));
     if (passwordInput != _passwordInput) {
@@ -5320,20 +5123,8 @@ ITERM_WEAKLY_REFERENCEABLE
             [self didBeginPasswordInput];
         }
     }
+    [_triggerEvaluator checkIdempotentTriggersIfAllowed];
 
-    if (![self shouldUseTriggers] && [iTermAdvancedSettingsModel allowIdempotentTriggers]) {
-        const NSTimeInterval interval = [iTermAdvancedSettingsModel idempotentTriggerModeRateLimit];
-        if (!_idempotentTriggerRateLimit) {
-            _idempotentTriggerRateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"idempotent triggers"
-                                                                       minimumInterval:interval];
-        } else {
-            _idempotentTriggerRateLimit.minimumInterval = interval;
-        }
-        __weak __typeof(self) weakSelf = self;
-        [_idempotentTriggerRateLimit performRateLimitedBlock:^{
-            [weakSelf checkIdempotentTriggers];
-        }];
-    }
     _timerRunning = NO;
 }
 
@@ -5348,24 +5139,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [itad openPasswordManagerToAccountName:nil inSession:self];
 
     }
-}
-
-- (void)checkIdempotentTriggers {
-    DLog(@"%@", self);
-    if (!_shouldUpdateIdempotentTriggers) {
-        DLog(@"Don't need to update idempotent triggers");
-        return;
-    }
-    _shouldUpdateIdempotentTriggers = NO;
-    iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
-    DLog(@"Check idempotent triggers from line number %@", @(_screen.numberOfScrollbackLines));
-    [extractor enumerateWrappedLinesIntersectingRange:VT100GridRangeMake(_screen.numberOfScrollbackLines, _screen.height) block:
-     ^(iTermStringLine *stringLine, VT100GridWindowedRange range, BOOL *stop) {
-        [self reallyCheckTriggersOnPartialLine:NO
-                                    stringLine:stringLine
-                                    lineNumber:range.coordRange.start.y + _screen.totalScrollbackOverflow
-                            requireIdempotency:YES];
-    }];
 }
 
 // Update the tab, session view, and window title.
@@ -9280,7 +9053,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                  toConnectionKey:key];
         }];
     }
-    _shouldUpdateIdempotentTriggers = YES;
+    [_triggerEvaluator invalidateIdempotentTriggers];
 }
 
 - (void)textViewBeginDrag
@@ -10194,7 +9967,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (iTermExpect *)textViewExpect {
-    return self.expect;
+    return _triggerEvaluator.expect;
 }
 
 - (void)textViewDidDetectMouseReportingFrustration {
@@ -10833,7 +10606,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenTriggerableChangeDidOccur {
-    [self clearTriggerLine];
+    [_triggerEvaluator clearTriggerLine];
 }
 
 - (void)screenDidResetAllowingContentModification:(BOOL)modifyContent {
@@ -10870,7 +10643,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // If plainText is false then it's a control code.
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string
                                isPlainText:(BOOL)plainText {
-    [self appendStringToTriggerLine:string];
+    [_triggerEvaluator appendStringToTriggerLine:string];
     if (plainText) {
         [self logCooked:[string dataUsingEncoding:_terminal.encoding]];
     }
@@ -10900,12 +10673,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData {
-    if ([_triggers count] || _expect.expectations.count) {
-        NSString *string = [[[NSString alloc] initWithBytes:asciiData->buffer
-                                                     length:asciiData->length
-                                                   encoding:NSASCIIStringEncoding] autorelease];
-        [self screenDidAppendStringToCurrentLine:string isPlainText:YES];
-    } else {
+    [_triggerEvaluator appendAsciiDataToCurrentLine:asciiData];
+    if (_logging.enabled) {
         [self logCooked:[NSData dataWithBytes:asciiData->buffer
                                        length:asciiData->length]];
     }
@@ -11301,23 +11070,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_pasteHelper unblock];
 }
 
-- (void)triggerDidDetectStartOfPromptAt:(VT100GridAbsCoord)coord {
-    DLog(@"Trigger detected start of prompt");
-    if (_screen.fakePromptDetectedAbsLine == -2) {
-        // Infer the end of the preceding command. Set a return status of 0 since we don't know what it was.
-        [_screen setReturnCodeOfLastCommand:0];
-    }
-    // Use 0 here to avoid the screen inserting a newline.
-    coord.x = 0;
-    [_screen promptDidStartAt:coord];
-    _screen.fakePromptDetectedAbsLine = coord.y;
-}
-
-- (void)triggerDidDetectEndOfPromptAt:(VT100GridAbsCoord)coord {
-    DLog(@"Trigger detected end of prompt");
-    [_screen commandDidStartAt:coord];
-}
-
 - (void)screenPromptDidEndWithMark:(VT100ScreenMark *)mark {
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         if (obj.argumentsOneOfCase == ITMNotificationRequest_Arguments_OneOfCase_GPBUnsetOneOfCase ||
@@ -11392,8 +11144,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // Force triggers to be checked. We may be switching to a profile without triggers
     // and we don't want them to run on the lines of text above _triggerLine later on
     // when switching to a profile that does have triggers.
-    _lastPartialLineTriggerCheck = 0;
-    [self clearTriggerLine];
+    [_triggerEvaluator forceCheck];
 
     NSString *theName = [[self profile] objectForKey:KEY_NAME];
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
@@ -12779,7 +12530,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenSoftAlternateScreenModeDidChange {
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-    _triggersSlownessDetector.enabled = _screen.terminal.softAlternateScreenMode;
+    _triggerEvaluator.triggersSlownessDetector.enabled = _screen.terminal.softAlternateScreenMode;
     [self.tmuxForegroundJobMonitor updateOnce];
     [self.variablesScope setValue:@(_screen.showingAlternateScreen)
                  forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
@@ -14170,19 +13921,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermTriggersDataSource
 
 - (NSInteger)numberOfTriggers {
-    return _triggers.count;
+    return _triggerEvaluator.triggers.count;
 }
 
 - (NSArray<NSString *> *)triggerNames {
-    return [_triggers mapWithBlock:^id(Trigger *trigger) {
+    return [_triggerEvaluator.triggers mapWithBlock:^id(Trigger *trigger) {
         return [NSString stringWithFormat:@"%@ — %@", [[[trigger class] title] stringByRemovingSuffix:@"…"], trigger.regex];
     }];
 }
 
 - (NSIndexSet *)enabledTriggerIndexes {
-    return [_triggers it_indexSetWithObjectsPassingTest:^BOOL(Trigger *trigger) {
-        return !trigger.disabled;
-    }];
+    return [_triggerEvaluator enabledTriggerIndexes];
 }
 
 - (void)addTrigger {
@@ -15126,6 +14875,343 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 - (void)colorMap:(iTermColorMap *)colorMap mutingAmountDidChangeTo:(double)mutingAmount {
     [_textview colorMap:colorMap mutingAmountDidChangeTo:mutingAmount];
+}
+
+#pragma mark - iTermTriggerSession
+
+// This can be completely async
+- (void)triggerSessionReveal:(Trigger *)trigger {
+    NSWindowController<iTermWindowController> * term = [[self delegate] realParentWindow];
+    [[term window] makeKeyAndOrderFront:nil];
+    [self.delegate sessionSelectContainingTab];
+    [self.delegate setActiveSession:self];
+}
+
+// This can be completely async
+- (void)triggerSessionRingBell:(Trigger *)trigger {
+    [self.screen activateBell];
+}
+
+// This can be completely async
+- (BOOL)triggerSessionToolbeltIsVisible:(Trigger *)trigger {
+    if (!self.delegate.realParentWindow.shouldShowToolbelt) {
+        return NO;
+    }
+    return [iTermToolbeltView shouldShowTool:kCapturedOutputToolName];
+}
+
+// This can be completely async
+- (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger {
+    if (!self.delegate.realParentWindow.shouldShowToolbelt) {
+        [self.delegate.realParentWindow toggleToolbeltVisibility:nil];
+    }
+    if (![iTermToolbeltView shouldShowTool:kCapturedOutputToolName]) {
+        [iTermToolbeltView toggleShouldShowTool:kCapturedOutputToolName];
+    }
+}
+
+// This is already sync-safe
+- (BOOL)triggerSessionIsShellIntegrationInstalled:(Trigger *)trigger {
+    return self.screen.shellIntegrationInstalled;
+}
+
+// This can be completely async
+- (void)triggerSessionShowShellIntegrationRequiredAnnouncement:(Trigger *)trigger {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
+        return;
+    }
+    NSString *theTitle = @"A Capture Output trigger fired, but Shell Integration is not installed.";
+    void (^completion)(int selection) = ^(int selection) {
+        switch (selection) {
+            case -2:
+                break;
+
+            case 0:
+                [self tryToRunShellIntegrationInstallerWithPromptCheck:NO];
+                break;
+
+            case 1:
+                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                        forKey:kSuppressCaptureOutputRequiresShellIntegrationWarning];
+                break;
+        }
+    };
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:theTitle
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Install", @"Silence Warning" ]
+                                                    completion:completion];
+    [self queueAnnouncement:announcement
+                 identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier];
+}
+
+// This can be completely async
+- (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncement:(Trigger *)trigger {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputToolNotVisibleWarning]) {
+        return;
+    }
+
+    if ([self hasAnnouncementWithIdentifier:kSuppressCaptureOutputToolNotVisibleWarning]) {
+        return;
+    }
+    NSString *theTitle = @"A Capture Output trigger fired, but the Captured Output tool is not visible.";
+    void (^completion)(int selection) = ^(int selection) {
+        switch (selection) {
+            case -2:
+                break;
+
+            case 0:
+                [self triggerSessionShowCapturedOutputTool:trigger];
+                break;
+
+            case 1:
+                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                        forKey:kSuppressCaptureOutputToolNotVisibleWarning];
+                break;
+        }
+    };
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:theTitle
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Show It", @"Silence Warning" ]
+                                                    completion:completion];
+    announcement.dismissOnKeyDown = YES;
+    [self queueAnnouncement:announcement
+                 identifier:kSuppressCaptureOutputToolNotVisibleWarning];
+}
+
+- (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)output {
+#warning TODO: eventually triggers will need to run on the mutation thread which will simplify this.
+    // This has to be done synchronously
+    output.mark = [self markAddedAtCursorOfClass:[iTermCapturedOutputMark class]];
+    // This can be a side-effect
+    [self addCapturedOutput:output];
+}
+
+// This can be completely async
+- (void)triggerSession:(Trigger *)trigger
+launchCoprocessWithCommand:(NSString *)command
+            identifier:(NSString * _Nullable)identifier
+                silent:(BOOL)silent {
+    if (self.hasCoprocess) {
+        if (identifier && [[NSUserDefaults standardUserDefaults] boolForKey:identifier]) {
+            return;
+        }
+        NSString *triggerName = [NSString stringWithFormat:@"%@ trigger", [[trigger.class title] stringByRemovingSuffix:@"…"]];
+        NSString *message = [NSString stringWithFormat:@"%@: Can't run two coprocesses at once.", triggerName];
+        NSArray<NSString *> *actions = identifier ? @[ @"Silence Warning" ] : @[];
+        iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:message
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:actions
+                                                    completion:^(int selection) {
+            if (!identifier) {
+                return;
+            }
+            switch (selection) {
+                case 0:
+                    [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                            forKey:identifier];
+                    break;
+            }
+        }];
+        announcement.timeout = 2;
+        [self queueAnnouncement:announcement
+                     identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier];
+    } else if (command) {
+        if (silent) {
+            [self launchSilentCoprocessWithCommand:command];
+        } else {
+            [self launchCoprocessWithCommand:command];
+        }
+    }
+}
+
+// This can be completely async
+- (void)triggerSessionMakeFirstResponder:(Trigger *)trigger {
+    [self takeFocus];
+}
+
+// THIS IS A HUGE PROBLEM
+- (iTermVariableScope *)triggerSessionVariableScope:(Trigger *)trigger {
+    return self.variablesScope;
+}
+
+// This can be synchronous by moving the logic into VT100ScreenMutableState
+- (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger {
+    return _triggerEvaluator.triggerParametersUseInterpolatedStrings;
+}
+
+// This can be completely async
+- (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message {
+    iTermNotificationController *notificationController = [iTermNotificationController sharedInstance];
+    [notificationController notify:message
+                   withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
+                                    [[self name] removingHTMLFromTabTitleIfNeeded]
+                                    ,
+                                    self.delegate.tabNumber]
+                       windowIndex:[self screenWindowIndex]
+                          tabIndex:[self screenTabIndex]
+                         viewIndex:[self screenViewIndex]];
+}
+
+// This can be completely synchyronous
+- (void)triggerSession:(Trigger *)trigger
+  highlightTextInRange:(NSRange)rangeInScreenChars
+          absoluteLine:(long long)lineNumber
+                colors:(NSDictionary<NSString *, NSColor *> *)colors {
+    [self.screen highlightTextInRange:rangeInScreenChars
+            basedAtAbsoluteLineNumber:lineNumber
+                               colors:colors];
+}
+
+- (void)triggerSession:(Trigger *)trigger saveCursorLineAndStopScrolling:(BOOL)stopScrolling {
+    // sync
+    [self.screen mutSaveCursorLine];
+    if (stopScrolling) {
+        // async
+        [[self.view.scrollview ptyVerticalScroller] setUserScroll:YES];
+    }
+}
+
+// This can be completely async
+- (void)triggerSession:(Trigger *)trigger openPasswordManagerToAccountName:(NSString *)accountName {
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
+    [itad openPasswordManagerToAccountName:accountName
+                                     inSession:self];
+}
+
+// This can be completely async
+- (void)triggerSession:(Trigger *)trigger runCommandWithRunner:(iTermBackgroundCommandRunner *)runner {
+    runner.title = @"Run Command Trigger";
+    runner.notificationTitle = @"Run Command Trigger Failed";
+    runner.shell = self.userShell;
+    [runner run];
+}
+
+// This can be completely async
+- (void)triggerSession:(Trigger *)trigger writeText:(NSString *)text {
+    [self writeTaskNoBroadcast:text];
+}
+
+// This can be completely synchyronous
+- (void)triggerSession:(Trigger *)trigger setRemoteHostName:(NSString *)remoteHost {
+    [self.screen setRemoteHostName:remoteHost];
+}
+
+- (void)triggerSession:(Trigger *)trigger setCurrentDirectory:(NSString *)currentDirectory {
+    // This can be async
+    [self didUpdateCurrentDirectory];
+    // This can be sync
+    [self.screen currentDirectoryDidChangeTo:currentDirectory];
+}
+
+// STOP THE WORLD - sync
+- (void)triggerSession:(Trigger *)trigger didChangeNameTo:(NSString *)newName {
+    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionTriggerName: newName,
+                                                    iTermVariableKeySessionAutoNameFormat: newName }];
+    if (newName.length > 0) {
+        [self enableSessionNameTitleComponentIfPossible];
+    }
+}
+
+// This can be completely synchyronous
+- (void)triggerSession:(Trigger *)trigger didDetectPromptAt:(VT100GridAbsCoordRange)range {
+    DLog(@"Trigger detected prompt at %@", VT100GridAbsCoordRangeDescription(range));
+
+    if (_screen.fakePromptDetectedAbsLine == -2) {
+        // Infer the end of the preceding command. Set a return status of 0 since we don't know what it was.
+        [_screen setReturnCodeOfLastCommand:0];
+    }
+    // Use 0 here to avoid the screen inserting a newline.
+    range.start.x = 0;
+    [_screen promptDidStartAt:range.start];
+    _screen.fakePromptDetectedAbsLine = range.start.y;
+
+    [_screen commandDidStartAt:range.end];
+}
+
+// This can be completely synchyronous
+- (void)triggerSession:(Trigger *)trigger
+    makeHyperlinkToURL:(NSURL *)url
+               inRange:(NSRange)rangeInString
+                  line:(long long)lineNumber {
+#warning TODO: Make iTermURLStore threadsafe
+    // add URL to URL Store and retrieve URL code for later reference
+    unsigned int code = [[iTermURLStore sharedInstance] codeForURL:url withParams:@""];
+
+    // add url link to screen
+    [self.screen linkTextInRange:rangeInString
+       basedAtAbsoluteLineNumber:lineNumber
+                         URLCode:code];
+
+    // add invisible URL Mark so the URL can automatically freed
+    iTermURLMark *mark = [self.screen addMarkStartingAtAbsoluteLine:lineNumber
+                                                            oneLine:YES
+                                                            ofClass:[iTermURLMark class]];
+    mark.code = code;
+}
+
+// STOP THE WORLD - sync
+- (void)triggerSession:(Trigger *)trigger
+                invoke:(NSString *)invocation
+         withVariables:(NSDictionary *)temporaryVariables
+              captures:(NSArray<NSString *> *)captureStringArray {
+    iTermVariableScope *scope =
+        [self.variablesScope variableScopeByAddingBackreferences:captureStringArray
+                                                        owner:trigger];
+    [scope setValuesFromDictionary:temporaryVariables];
+    [self invokeFunctionCall:invocation scope:scope origin:@"Trigger"];
+}
+
+// This can be completely synchyronous
+- (void)triggerSession:(Trigger *)trigger
+         setAnnotation:(NSString *)annotation
+                 range:(NSRange)rangeInScreenChars
+                  line:(long long)lineNumber {
+    assert(rangeInScreenChars.length > 0);
+    const long long width = self.screen.width;
+    const VT100GridAbsCoordRange absRange =
+        VT100GridAbsCoordRangeMake(rangeInScreenChars.location,
+                                   lineNumber,
+                                   NSMaxRange(rangeInScreenChars) % width,
+                                   lineNumber + (NSMaxRange(rangeInScreenChars) - 1) / width);
+    [self addNoteWithText:annotation inAbsoluteRange:absRange];
+}
+
+// This can be completely synchyronous
+- (void)triggerSession:(Trigger *)trigger
+       highlightLineAt:(VT100GridAbsCoord)absCoord
+                colors:(NSDictionary *)colors {
+    iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:self.screen];
+    BOOL ok = NO;
+    const VT100GridCoord coord = VT100GridCoordFromAbsCoord(absCoord, self.screen.totalScrollbackOverflow, &ok);
+    if (!ok) {
+        return;
+    }
+    const VT100GridWindowedRange wrappedRange =
+    [extractor rangeForWrappedLineEncompassing:coord
+                          respectContinuations:NO
+                                      maxChars:self.screen.width * 10];
+
+    const long long lineLength = VT100GridCoordRangeLength(wrappedRange.coordRange,
+                                                           self.screen.width);
+    const int width = self.screen.width;
+    const long long lengthToHighlight = ceil((double)lineLength / (double)width);
+    const NSRange range = NSMakeRange(0, lengthToHighlight * width);
+    [[self screen] highlightTextInRange:range
+              basedAtAbsoluteLineNumber:absCoord.y
+                                 colors:colors];
+}
+
+// This can be completely synchyronous
+- (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data {
+    [self injectData:data];
+}
+
+// STOP THE WORLD - sync
+- (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value {
+    [self.genericScope setValue:value forVariableNamed:name];
 }
 
 @end

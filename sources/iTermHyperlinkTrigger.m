@@ -5,11 +5,6 @@
 //  Created by leppich on 09.05.18.
 //
 
-#import "PTYScrollView.h"
-#import "PTYSession.h"
-#import "VT100Screen.h"
-#import "iTermURLMark.h"
-#import "iTermURLStore.h"
 #import "NSURL+iTerm.h"
 #import "iTermHyperlinkTrigger.h"
 
@@ -44,49 +39,41 @@
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     const NSRange rangeInString = capturedRanges[0];
     
+    // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
     [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                               count:captureCount
-                                              scope:aSession.variablesScope
+                                              scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *urlString) {
-                                             [self performActionWithURLString:urlString
-                                                                        range:rangeInString
-                                                                      session:aSession
-                                                           absoluteLineNumber:lineNumber];
-                                         }];
+        [self performActionWithURLString:urlString
+                                   range:rangeInString
+                                 session:aSession
+                      absoluteLineNumber:lineNumber];
+    }];
     return YES;
 }
 
 - (void)performActionWithURLString:(NSString *)urlString
                              range:(NSRange)rangeInString
-                           session:(PTYSession *)aSession
+                           session:(id<iTermTriggerSession>)aSession
                 absoluteLineNumber:(long long)lineNumber {
     NSURL *url = urlString.length ? [NSURL URLWithUserSuppliedString:urlString] : nil;
     if (!url) {
         return;
     }
 
-    // add URL to URL Store and retrieve URL code for later reference
-    unsigned int code = [[iTermURLStore sharedInstance] codeForURL:url withParams:@""];
-    
-    // add url link to screen
-    [[aSession screen] linkTextInRange:rangeInString
-             basedAtAbsoluteLineNumber:lineNumber
-                               URLCode:code];
-    
-    // add invisible URL Mark so the URL can automatically freed
-    iTermURLMark *mark = [aSession.screen addMarkStartingAtAbsoluteLine:lineNumber
-                                                                oneLine:YES
-                                                                ofClass:[iTermURLMark class]];
-    mark.code = code;
+    [aSession triggerSession:self
+          makeHyperlinkToURL:url
+                     inRange:rangeInString
+                        line:lineNumber];
 }
 
 @end

@@ -15,6 +15,6 @@
 @interface CaptureTrigger : Trigger
 
 + (NSString *)title;
-- (void)activateOnOutput:(CapturedOutput *)capturedOutput inSession:(PTYSession *)session;
+- (void)activateOnOutput:(CapturedOutput *)capturedOutput inSession:(id<iTermTriggerSession>)session;
 
 @end

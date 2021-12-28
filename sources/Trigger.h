@@ -8,13 +8,17 @@
 #import <Cocoa/Cocoa.h>
 
 #import "iTermFocusReportingTextField.h"
+#import "iTermObject.h"
+#import "VT100GridTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class CapturedOutput;
+@class Trigger;
+@class iTermBackgroundCommandRunner;
 @protocol iTermObject;
 @class iTermStringLine;
 @class iTermVariableScope;
-@class PTYSession;
 
 extern NSString * const kTriggerRegexKey;
 extern NSString * const kTriggerActionKey;
@@ -22,7 +26,54 @@ extern NSString * const kTriggerParameterKey;
 extern NSString * const kTriggerPartialLineKey;
 extern NSString * const kTriggerDisabledKey;
 
-@interface Trigger : NSObject
+@protocol iTermTriggerSession<NSObject, iTermObject>
+- (void)triggerSessionReveal:(Trigger *)trigger;
+- (void)triggerSessionRingBell:(Trigger *)trigger;
+- (BOOL)triggerSessionToolbeltIsVisible:(Trigger *)trigger;
+- (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger;
+- (BOOL)triggerSessionIsShellIntegrationInstalled:(Trigger *)trigger;
+- (void)triggerSessionShowShellIntegrationRequiredAnnouncement:(Trigger *)trigger;
+- (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncement:(Trigger *)trigger;
+- (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)output;
+
+// Identifier is used for silenceing errors, or nil to make it not silenceable.
+- (void)triggerSession:(Trigger *)trigger launchCoprocessWithCommand:(NSString *)command identifier:(NSString * _Nullable)identifier silent:(BOOL)silent;
+- (iTermVariableScope *)triggerSessionVariableScope:(Trigger *)trigger;
+- (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger;
+- (void)triggerSessionMakeFirstResponder:(Trigger *)trigger;
+- (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message;
+- (void)triggerSession:(Trigger *)trigger
+  highlightTextInRange:(NSRange)rangeInScreenChars
+          absoluteLine:(long long)lineNumber
+                colors:(NSDictionary<NSString *, NSColor *> *)colors;
+- (void)triggerSession:(Trigger *)trigger saveCursorLineAndStopScrolling:(BOOL)stopScrolling;
+- (void)triggerSession:(Trigger *)trigger openPasswordManagerToAccountName:(NSString *)accountName;
+- (void)triggerSession:(Trigger *)trigger runCommandWithRunner:(iTermBackgroundCommandRunner *)runner;
+- (void)triggerSession:(Trigger *)trigger writeText:(NSString *)text;
+- (void)triggerSession:(Trigger *)trigger setRemoteHostName:(NSString *)remoteHost;
+- (void)triggerSession:(Trigger *)trigger setCurrentDirectory:(NSString *)text;
+- (void)triggerSession:(Trigger *)trigger didChangeNameTo:(NSString *)newName;
+- (void)triggerSession:(Trigger *)trigger didDetectPromptAt:(VT100GridAbsCoordRange)range;
+- (void)triggerSession:(Trigger *)trigger
+    makeHyperlinkToURL:(NSURL *)url
+               inRange:(NSRange)rangeInString
+                  line:(long long)lineNumber;
+- (void)triggerSession:(Trigger *)trigger
+                invoke:(NSString *)invocation
+         withVariables:(NSDictionary *)temporaryVariables
+              captures:(NSArray<NSString *> *)captureStringArray;
+- (void)triggerSession:(Trigger *)trigger
+         setAnnotation:(NSString *)annotation
+                 range:(NSRange)range
+                  line:(long long)lineNumber;
+- (void)triggerSession:(Trigger *)trigger
+       highlightLineAt:(VT100GridAbsCoord)absCoord
+                colors:(NSDictionary *)colors;
+- (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data;
+- (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value;
+@end
+
+@interface Trigger : NSObject<iTermObject>
 
 @property (nonatomic, copy) NSString *regex;
 @property (nonatomic, copy) NSString *action;
@@ -83,7 +134,7 @@ extern NSString * const kTriggerDisabledKey;
 
 // Returns YES if no more triggers should be processed.
 - (BOOL)tryString:(iTermStringLine *)stringLine
-        inSession:(PTYSession *)aSession
+        inSession:(id<iTermTriggerSession>)aSession
       partialLine:(BOOL)partialLine
        lineNumber:(long long)lineNumber
  useInterpolation:(BOOL)useInterpolation;
@@ -92,7 +143,7 @@ extern NSString * const kTriggerDisabledKey;
 - (BOOL)performActionWithCapturedStrings:(NSString * _Nonnull const * _Nonnull)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)s
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation

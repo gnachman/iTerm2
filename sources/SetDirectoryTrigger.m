@@ -9,7 +9,6 @@
 #import "SetDirectoryTrigger.h"
 
 #import "DebugLogging.h"
-#import "PTYSession.h"
 #import "VT100Screen+Mutation.h"
 
 @implementation SetDirectoryTrigger
@@ -33,21 +32,21 @@
 - (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
                           capturedRanges:(const NSRange *)capturedRanges
                             captureCount:(NSInteger)captureCount
-                               inSession:(PTYSession *)aSession
+                               inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
+    // Need to stop the world to get scope, provided it is needed. Directory changes slow & rare that this is ok.
     [self paramWithBackreferencesReplacedWithValues:capturedStrings
                                               count:captureCount
-                                              scope:aSession.variablesScope
+                                              scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
                                    useInterpolation:useInterpolation
                                          completion:^(NSString *currentDirectory) {
         DLog(@"SetDirectoryTrigger completed substitution with %@", currentDirectory);
         if (currentDirectory.length) {
-            [aSession didUpdateCurrentDirectory];
-            [aSession.screen terminalCurrentDirectoryDidChangeTo:currentDirectory];
+            [aSession triggerSession:self setCurrentDirectory:currentDirectory];
         }
     }];
     return YES;
