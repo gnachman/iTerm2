@@ -110,7 +110,7 @@
 
     // FinalTerm uses this to define the start of a collapsible region. That would be a nightmare
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
-    [self mutSetPromptStartLine:_mutableState.numberOfScrollbackLines + self.cursorY - 1];
+    [self mutSetPromptStartLine:_mutableState.numberOfScrollbackLines + _mutableState.cursorY - 1];
     if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
         [_mutableState.terminal resetGraphicRendition];
     }
@@ -128,7 +128,7 @@
                                                                   _state.currentGrid.cursor.x,
                                                                   _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + self.totalScrollbackOverflow);
     [self commandDidStartAtScreenCoord:_state.currentGrid.cursor];
-    const int line = _mutableState.numberOfScrollbackLines + self.cursorY - 1;
+    const int line = _mutableState.numberOfScrollbackLines + _mutableState.cursorY - 1;
     VT100ScreenMark *mark = [self updatePromptMarkRangesForPromptEndingOnLine:line];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidEndWithMark:mark];
@@ -582,7 +582,7 @@
     }
 
     VT100GridCoordRange lastCommandMarkRange = [self coordRangeForInterval:lastCommandMark.entry.interval];
-    int cursorLine = self.cursorY - 1 + _mutableState.numberOfScrollbackLines;
+    int cursorLine = _mutableState.cursorY - 1 + _mutableState.numberOfScrollbackLines;
     int cursorMarkOffset = cursorLine - lastCommandMarkRange.start.y;
     return 1 + cursorMarkOffset;
 }
@@ -2036,7 +2036,7 @@
             if (!shouldHonorProtected) {
                 [self scrollScreenIntoHistory];
             }
-        } else if (self.cursorX == 1 && self.cursorY == 1 && _state.terminal.lastToken.type == VT100CSI_CUP) {
+        } else if (self.cursorX == 1 && _mutableState.cursorY == 1 && _state.terminal.lastToken.type == VT100CSI_CUP) {
             // This is important for tmux integration with shell integration enabled. The screen
             // terminal uses ED 0 instead of ED 2 to clear the screen (e.g., when you do ^L at the shell).
             [self removePromptMarksBelowLine:yStart + _mutableState.numberOfScrollbackLines];
@@ -3801,7 +3801,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         [self setHost:host user:user];
     }
     [self terminalCurrentDirectoryDidChangeTo:path];
-    [self mutSetPromptStartLine:_mutableState.numberOfScrollbackLines + self.cursorY - 1];
+    [self mutSetPromptStartLine:_mutableState.numberOfScrollbackLines + _mutableState.cursorY - 1];
 }
 
 - (void)terminalClearScreen {
@@ -4240,7 +4240,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (int)terminalCursorY {
-    return [self cursorY];
+    return _mutableState.cursorY;
 }
 
 - (BOOL)terminalWillAutoWrap {

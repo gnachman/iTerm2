@@ -173,6 +173,12 @@ static const int kDefaultMaxScrollbackLines = 1000;
     [_temporaryDoubleBuffer reset];
 }
 
+#pragma mark - Grid
+
+- (int)cursorY {
+    return self.currentGrid.cursorY + 1;
+}
+
 #pragma mark - Scollback
 
 - (int)numberOfScrollbackLines {
