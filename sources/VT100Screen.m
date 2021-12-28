@@ -406,7 +406,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (int)cursorX {
-    return _state.currentGrid.cursorX + 1;
+    return _state.cursorX;
 }
 
 - (int)cursorY {
