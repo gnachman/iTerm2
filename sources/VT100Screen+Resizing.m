@@ -114,12 +114,12 @@
 
     [self fixUpPrimaryGridIntervalTreeForNewSize:newSize
                              wasShowingAltScreen:wasShowingAltScreen];
-    self.mutableCurrentGrid.size = newSize;
+    _mutableState.currentGrid.size = newSize;
 
     // Restore the screen contents that were pushed onto the linebuffer.
-    [self.mutableCurrentGrid restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : _mutableState.linebuffer
-                                         withDefaultChar:[_state.currentGrid defaultChar]
-                                       maxLinesToRestore:[wasShowingAltScreen ? altScreenLineBuffer : _mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width]];
+    [_mutableState.currentGrid restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : _mutableState.linebuffer
+                                           withDefaultChar:[_state.currentGrid defaultChar]
+                                         maxLinesToRestore:[wasShowingAltScreen ? altScreenLineBuffer : _mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width]];
     DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
 
     if (wasShowingAltScreen) {
@@ -346,8 +346,8 @@
                                 height:_state.currentGrid.size.height];
         if (!preserveScreen) {
             [self mutEraseInDisplayBeforeCursor:YES afterCursor:YES decProtect:NO];  // erase the screen
-            self.mutableCurrentGrid.cursorX = 0;
-            self.mutableCurrentGrid.cursorY = 0;
+            _mutableState.currentGrid.cursorX = 0;
+            _mutableState.currentGrid.cursorY = 0;
         }
     }
 }

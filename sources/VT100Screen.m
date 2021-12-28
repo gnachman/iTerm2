@@ -1793,6 +1793,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                      info:info];
 }
 
+- (void)restorePreferredCursorPositionIfPossible {
+    [self mutRestorePreferredCursorPositionIfPossible];
+}
+
 - (void)restoreSavedPositionToFindContext:(FindContext *)context {
     [self mutRestoreSavedPositionToFindContext:context];
 }

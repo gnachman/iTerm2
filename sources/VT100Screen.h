@@ -150,6 +150,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Restore the saved position into a passed-in find context (see saveFindContextAbsPos and
 // storeLastPositionInLineBufferAsFindContextSavedPosition).
 - (void)restoreSavedPositionToFindContext:(FindContext *)context;
+- (void)restorePreferredCursorPositionIfPossible;
 
 - (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
                                               query:(NSString *)query

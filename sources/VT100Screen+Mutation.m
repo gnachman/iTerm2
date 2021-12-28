@@ -42,10 +42,6 @@
 
 @implementation VT100Screen (Mutation)
 
-- (VT100Grid *)mutableCurrentGrid {
-    return (VT100Grid *)_state.currentGrid;
-}
-
 - (VT100Grid *)mutableAltGrid {
     return (VT100Grid *)_state.altGrid;
 }
@@ -444,7 +440,7 @@
            inRange:(VT100GridCoordRange)range
              focus:(BOOL)focus {
     [_mutableState.intervalTree addObject:annotation withInterval:[self intervalForGridCoordRange:range]];
-    [self.mutableCurrentGrid markAllCharsDirty:YES];
+    [_mutableState.currentGrid markAllCharsDirty:YES];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenDidAddNote:annotation focus:focus];
         [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeAnnotation
@@ -593,12 +589,12 @@
     [delegate_ screenTriggerableChangeDidOccur];
     // This clears the screen.
     int x = _state.currentGrid.cursorX;
-    [_mutableState incrementOverflowBy:[self.mutableCurrentGrid resetWithLineBuffer:_mutableState.linebuffer
+    [_mutableState incrementOverflowBy:[_mutableState.currentGrid resetWithLineBuffer:_mutableState.linebuffer
                                                                 unlimitedScrollback:_state.unlimitedScrollback
                                                                  preserveCursorLine:linesToSave > 0
                                                               additionalLinesToSave:MAX(0, linesToSave - 1)]];
-    self.mutableCurrentGrid.cursorX = x;
-    self.mutableCurrentGrid.cursorY = linesToSave - 1;
+    _mutableState.currentGrid.cursorX = x;
+    _mutableState.currentGrid.cursorY = linesToSave - 1;
     [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
                                                                    _mutableState.numberOfScrollbackLines,
                                                                    self.width,
@@ -609,13 +605,13 @@
     _mutableState.linebuffer = [[[LineBuffer alloc] init] autorelease];
     [self.mutableLineBuffer setMaxLines:_state.maxScrollbackLines];
     [delegate_ screenClearHighlights];
-    [self.mutableCurrentGrid markAllCharsDirty:YES];
+    [_mutableState.currentGrid markAllCharsDirty:YES];
 
     _mutableState.savedFindContextAbsPos = 0;
 
     [self resetScrollbackOverflow];
     [delegate_ screenRemoveSelection];
-    [self.mutableCurrentGrid markAllCharsDirty:YES];
+    [_mutableState.currentGrid markAllCharsDirty:YES];
     [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
                                                                    0,
                                                                    self.width, _mutableState.numberOfScrollbackLines + self.height)];
@@ -663,32 +659,32 @@
 - (void)mutRemoveLastLine {
     DLog(@"BEGIN removeLastLine with cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
     const int preHocNumberOfLines = [_mutableState.linebuffer numberOfWrappedLinesWithWidth:self.width];
-    const int numberOfLinesAppended = [self.mutableCurrentGrid appendLines:self.currentGrid.numberOfLinesUsed
-                                                              toLineBuffer:_mutableState.linebuffer];
+    const int numberOfLinesAppended = [_mutableState.currentGrid appendLines:self.currentGrid.numberOfLinesUsed
+                                                                toLineBuffer:_mutableState.linebuffer];
     if (numberOfLinesAppended <= 0) {
         return;
     }
-    [self.mutableCurrentGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                                       to:VT100GridCoordMake(self.width - 1,
-                                                             self.height - 1)
-                                   toChar:self.currentGrid.defaultChar
-                       externalAttributes:nil];
+    [_mutableState.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
+                                         to:VT100GridCoordMake(self.width - 1,
+                                                               self.height - 1)
+                                     toChar:self.currentGrid.defaultChar
+                         externalAttributes:nil];
     [self.mutableLineBuffer removeLastRawLine];
     const int postHocNumberOfLines = [_mutableState.linebuffer numberOfWrappedLinesWithWidth:self.width];
     const int numberOfLinesToPop = MAX(0, postHocNumberOfLines - preHocNumberOfLines);
 
-    [self.mutableCurrentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
-                                         withDefaultChar:[self.currentGrid defaultChar]
-                                       maxLinesToRestore:numberOfLinesToPop];
+    [_mutableState.currentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
+                                           withDefaultChar:[self.currentGrid defaultChar]
+                                         maxLinesToRestore:numberOfLinesToPop];
     // One of the lines "removed" will be the one the cursor is on. Don't need to move it up for
     // that one.
     const int adjustment = self.currentGrid.cursorX > 0 ? 1 : 0;
-    self.mutableCurrentGrid.cursorX = 0;
+    _mutableState.currentGrid.cursorX = 0;
     const int numberOfLinesRemoved = MAX(0, numberOfLinesAppended - numberOfLinesToPop);
     const int y = MAX(0, self.currentGrid.cursorY - numberOfLinesRemoved + adjustment);
     DLog(@"numLinesAppended=%@ numLinesToPop=%@ numLinesRemoved=%@ adjustment=%@ y<-%@",
           @(numberOfLinesAppended), @(numberOfLinesToPop), @(numberOfLinesRemoved), @(adjustment), @(y));
-    self.mutableCurrentGrid.cursorY = y;
+    _mutableState.currentGrid.cursorY = y;
     DLog(@"Cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
 }
 
@@ -726,7 +722,7 @@
         }
 
         // Cursor was among the cleared lines. Restore the line content.
-        self.mutableCurrentGrid.cursor = VT100GridCoordMake(0, absLine - totalScrollbackOverflow - _mutableState.numberOfScrollbackLines);
+        _mutableState.currentGrid.cursor = VT100GridCoordMake(0, absLine - totalScrollbackOverflow - _mutableState.numberOfScrollbackLines);
         [self mutAppendScreenChars:savedLine.line
                             length:savedLine.length
             externalAttributeIndex:savedLine.metadata.externalAttributes
@@ -771,14 +767,14 @@
 - (void)clearGridFromLineToEnd:(int)line {
     assert(line >= 0 && line < self.height);
     const VT100GridCoord savedCursor = self.currentGrid.cursor;
-    self.mutableCurrentGrid.cursor = VT100GridCoordMake(0, line);
+    _mutableState.currentGrid.cursor = VT100GridCoordMake(0, line);
     [self removeSoftEOLBeforeCursor];
     const VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(0, line),
                                                     VT100GridCoordMake(self.width, self.height),
                                                     self.width);
-    [self.mutableCurrentGrid setCharsInRun:run toChar:0 externalAttributes:nil];
+    [_mutableState.currentGrid setCharsInRun:run toChar:0 externalAttributes:nil];
     [delegate_ screenTriggerableChangeDidOccur];
-    self.mutableCurrentGrid.cursor = savedCursor;
+    _mutableState.currentGrid.cursor = savedCursor;
 }
 
 - (void)mutResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
@@ -788,10 +784,10 @@
         if (preservePrompt) {
             [self clearAndResetScreenSavingLines:linesToSave];
         } else {
-            [_mutableState incrementOverflowBy:[self.mutableCurrentGrid resetWithLineBuffer:_mutableState.linebuffer
-                                                                        unlimitedScrollback:_state.unlimitedScrollback
-                                                                         preserveCursorLine:NO
-                                                                      additionalLinesToSave:0]];
+            [_mutableState incrementOverflowBy:[_mutableState.currentGrid resetWithLineBuffer:_mutableState.linebuffer
+                                                                          unlimitedScrollback:_state.unlimitedScrollback
+                                                                           preserveCursorLine:NO
+                                                                        additionalLinesToSave:0]];
         }
     }
 
@@ -807,8 +803,8 @@
 
 - (void)mutSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight {
     if (_state.currentGrid.useScrollRegionCols) {
-        self.mutableCurrentGrid.scrollRegionCols = VT100GridRangeMake(scrollLeft,
-                                                                      scrollRight - scrollLeft + 1);
+        _mutableState.currentGrid.scrollRegionCols = VT100GridRangeMake(scrollLeft,
+                                                                        scrollRight - scrollLeft + 1);
         // set cursor to the home position
         [self mutCursorToX:1 Y:1];
     }
@@ -821,11 +817,11 @@
     // DECSET 1049, and neither xterm nor terminal have this behavior, and I'm not sure why it
     // would be desirable anyway. Like xterm (and unlike Terminal) we leave the cursor put.
     [delegate_ screenRemoveSelection];
-    [self.mutableCurrentGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                                       to:VT100GridCoordMake(_state.currentGrid.size.width - 1,
-                                                             _state.currentGrid.size.height - 1)
-                                   toChar:[_state.currentGrid defaultChar]
-                       externalAttributes:nil];
+    [_mutableState.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
+                                         to:VT100GridCoordMake(_state.currentGrid.size.width - 1,
+                                                               _state.currentGrid.size.height - 1)
+                                     toChar:[_state.currentGrid defaultChar]
+                         externalAttributes:nil];
 }
 
 
@@ -954,15 +950,15 @@
             // Not in alt screen or it's ok to scroll into line buffer while in alt screen.k
             lineBuffer = _mutableState.linebuffer;
         }
-        [_mutableState incrementOverflowBy:[self.mutableCurrentGrid appendCharsAtCursor:buffer
-                                                                                 length:len
-                                                                scrollingIntoLineBuffer:lineBuffer
-                                                                    unlimitedScrollback:_state.unlimitedScrollback
-                                                                useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                             wraparound:_state.wraparoundMode
-                                                                                   ansi:_state.ansi
-                                                                                 insert:_state.insert
-                                                                 externalAttributeIndex:externalAttributes]];
+        [_mutableState incrementOverflowBy:[_mutableState.currentGrid appendCharsAtCursor:buffer
+                                                                                   length:len
+                                                                  scrollingIntoLineBuffer:lineBuffer
+                                                                      unlimitedScrollback:_state.unlimitedScrollback
+                                                                  useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                                               wraparound:_state.wraparoundMode
+                                                                                     ansi:_state.ansi
+                                                                                   insert:_state.insert
+                                                                   externalAttributeIndex:externalAttributes]];
         iTermImmutableMetadata temp;
         iTermImmutableMetadataInit(&temp, 0, externalAttributes);
         [delegate_ screenAppendScreenCharArray:buffer
@@ -999,8 +995,8 @@
     dateFormatter.timeStyle = NSDateFormatterShortStyle;
     NSString *message = [NSString stringWithFormat:@"Session Contents Restored on %@", [dateFormatter stringFromDate:[NSDate date]]];
     [self mutAppendStringAtCursor:message];
-    self.mutableCurrentGrid.cursorX = 0;
-    self.mutableCurrentGrid.preferredCursorPosition = _state.currentGrid.cursor;
+    _mutableState.currentGrid.cursorX = 0;
+    _mutableState.currentGrid.preferredCursorPosition = _state.currentGrid.cursor;
 
     // Restore the graphic rendition, add a newline, and calculate how far down the cursor moved.
     _state.terminal.graphicRendition = saved;
@@ -1011,7 +1007,7 @@
     if (_state.currentGrid.preferredCursorPosition.y >= 0 && _state.currentGrid.preferredCursorPosition.y + 1 < _state.currentGrid.size.height) {
         VT100GridCoord coord = _state.currentGrid.preferredCursorPosition;
         coord.y = MAX(0, MIN(_state.currentGrid.size.height - 1, coord.y + delta));
-        self.mutableCurrentGrid.preferredCursorPosition = coord;
+        _mutableState.currentGrid.preferredCursorPosition = coord;
     }
 }
 
@@ -1085,9 +1081,9 @@
     [self mutClearBuffer];
     [self.mutableLineBuffer appendContentsOfLineBuffer:lineBuffer width:_state.currentGrid.size.width];
     const int numberOfLines = [self numberOfLines];
-    [self.mutableCurrentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
-                                         withDefaultChar:[self.currentGrid defaultChar]
-                                       maxLinesToRestore:MIN(numberOfLines, self.height)];
+    [_mutableState.currentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
+                                           withDefaultChar:[self.currentGrid defaultChar]
+                                         maxLinesToRestore:MIN(numberOfLines, self.height)];
 }
 
 - (void)mutSetHistory:(NSArray *)history {
@@ -1161,10 +1157,10 @@
     // We don't know the cursor position yet but give the linebuffer something
     // so it doesn't get confused in restoreScreenFromScrollback.
     [self.mutableLineBuffer setCursor:0];
-    [self.mutableCurrentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
-                                         withDefaultChar:[_state.currentGrid defaultChar]
-                                       maxLinesToRestore:MIN([_mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width],
-                                                             _state.currentGrid.size.height - numberOfConsecutiveEmptyLines)];
+    [_mutableState.currentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
+                                           withDefaultChar:[_state.currentGrid defaultChar]
+                                         maxLinesToRestore:MIN([_mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width],
+                                                               _state.currentGrid.size.height - numberOfConsecutiveEmptyLines)];
 }
 
 - (void)stripTrailingSpaceFromLine:(ScreenCharArray *)line {
@@ -1240,7 +1236,7 @@
         } else {
             numLines = [_state.currentGrid numberOfLinesUsed];
         }
-        [self.mutableCurrentGrid appendLines:numLines toLineBuffer:temp];
+        [_mutableState.currentGrid appendLines:numLines toLineBuffer:temp];
     }
 
     [temp encode:encoder maxLines:maxLines80];
@@ -1282,9 +1278,9 @@
         }
         const int linesRestored = MIN(MAX(0, maxLinesToRestore),
                                 [lineBuffer numLinesWithWidth:self.width]);
-        BOOL setCursorPosition = [self.mutableCurrentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
-                                                                      withDefaultChar:[_state.currentGrid defaultChar]
-                                                                    maxLinesToRestore:linesRestored];
+        BOOL setCursorPosition = [_mutableState.currentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
+                                                                        withDefaultChar:[_state.currentGrid defaultChar]
+                                                                      maxLinesToRestore:linesRestored];
         DLog(@"appendFromDictionary: Grid size is %dx%d", _state.currentGrid.size.width, _state.currentGrid.size.height);
         DLog(@"Restored %d wrapped lines from dictionary", _mutableState.numberOfScrollbackLines + linesRestored);
         DLog(@"setCursorPosition=%@", @(setCursorPosition));
@@ -1294,22 +1290,22 @@
                 // The initial size of this session might be smaller than its eventual size.
                 // Save the coord because after the window is set to its correct size it might be
                 // possible to place the cursor in this position.
-                self.mutableCurrentGrid.preferredCursorPosition = coord;
+                _mutableState.currentGrid.preferredCursorPosition = coord;
                 DLog(@"Save preferred cursor position %@", VT100GridCoordDescription(coord));
                 if (coord.x >= 0 &&
                     coord.y >= 0 &&
                     coord.x <= self.width &&
                     coord.y < self.height) {
                     DLog(@"Also set the cursor to this position");
-                    self.mutableCurrentGrid.cursor = coord;
+                    _mutableState.currentGrid.cursor = coord;
                     setCursorPosition = YES;
                 }
             }
         }
         if (!setCursorPosition) {
             DLog(@"Place the cursor on the first column of the last line");
-            self.mutableCurrentGrid.cursorY = linesRestored + 1;
-            self.mutableCurrentGrid.cursorX = 0;
+            _mutableState.currentGrid.cursorY = linesRestored + 1;
+            _mutableState.currentGrid.cursorX = 0;
         }
         // Reduce line buffer's max size to not include the grid height. This is its final state.
         [lineBuffer setMaxLines:_state.maxScrollbackLines];
@@ -1514,11 +1510,11 @@
         [_state.terminal setSavedCursorPosition:_state.primaryGrid.cursor];
     }
 
-    self.mutableCurrentGrid.cursorX = [[state objectForKey:kStateDictCursorX] intValue];
-    self.mutableCurrentGrid.cursorY = [[state objectForKey:kStateDictCursorY] intValue];
+    _mutableState.currentGrid.cursorX = [[state objectForKey:kStateDictCursorX] intValue];
+    _mutableState.currentGrid.cursorY = [[state objectForKey:kStateDictCursorY] intValue];
     int top = [[state objectForKey:kStateDictScrollRegionUpper] intValue];
     int bottom = [[state objectForKey:kStateDictScrollRegionLower] intValue];
-    self.mutableCurrentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
+    _mutableState.currentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
     [self showCursor:[[state objectForKey:kStateDictCursorMode] boolValue]];
 
     [_mutableState.tabStops removeAllObjects];
@@ -1648,7 +1644,7 @@
 
 - (void)mutCrlf {
     [self mutLinefeed];
-    self.mutableCurrentGrid.cursorX = 0;
+    _mutableState.currentGrid.cursorX = 0;
 }
 
 - (void)mutLinefeed {
@@ -1658,10 +1654,10 @@
         // In alt grid but saving to scrollback in alt-screen is off, so pass in a nil linebuffer.
         lineBufferToUse = nil;
     }
-    [_mutableState incrementOverflowBy:[self.mutableCurrentGrid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
-                                                                                         unlimitedScrollback:_state.unlimitedScrollback
-                                                                                     useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                                                  willScroll:^{
+    [_mutableState incrementOverflowBy:[_mutableState.currentGrid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
+                                                                                           unlimitedScrollback:_state.unlimitedScrollback
+                                                                                       useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                                                                    willScroll:^{
         if (noScrollback) {
             // This is a temporary hack. In this case, keeping the selection in the right place requires
             // more cooperation between VT100Screen and PTYTextView than is currently in place because
@@ -1697,7 +1693,7 @@
         xPos = MAX(leftMargin, MIN(rightMargin, xPos));
     }
 
-    self.mutableCurrentGrid.cursorX = xPos;
+    _mutableState.currentGrid.cursorX = xPos;
 
     DebugLog(@"cursorToX");
 }
@@ -1713,7 +1709,7 @@
         yPos += topMargin;
         yPos = MAX(topMargin, MIN(bottomMargin, yPos));
     }
-    self.mutableCurrentGrid.cursorY = yPos;
+    _mutableState.currentGrid.cursorY = yPos;
 
     DebugLog(@"cursorToY");
 
@@ -1727,17 +1723,17 @@
 
     if (cursorX >= self.width && _state.terminal.reverseWraparoundMode && _state.terminal.wraparoundMode) {
         // Reverse-wrap when past the screen edge is a special case.
-        self.mutableCurrentGrid.cursor = VT100GridCoordMake(rightMargin, cursorY);
+        _mutableState.currentGrid.cursor = VT100GridCoordMake(rightMargin, cursorY);
     } else if ([self shouldReverseWrap]) {
-        self.mutableCurrentGrid.cursor = VT100GridCoordMake(rightMargin, cursorY - 1);
+        _mutableState.currentGrid.cursor = VT100GridCoordMake(rightMargin, cursorY - 1);
     } else if (cursorX > leftMargin ||  // Cursor can move back without hitting the left margin: normal case
                (cursorX < leftMargin && cursorX > 0)) {  // Cursor left of left margin, right of left edge.
         if (cursorX >= _state.currentGrid.size.width) {
             // Cursor right of right edge, move back twice.
-            self.mutableCurrentGrid.cursorX = cursorX - 2;
+            _mutableState.currentGrid.cursorX = cursorX - 2;
         } else {
             // Normal case.
-            self.mutableCurrentGrid.cursorX = cursorX - 1;
+            _mutableState.currentGrid.cursorX = cursorX - 1;
         }
     }
 
@@ -1782,7 +1778,7 @@
 }
 
 - (void)convertHardNewlineToSoftOnGridLine:(int)line {
-    screen_char_t *aLine = [self.mutableCurrentGrid screenCharsAtLineNumber:line];
+    screen_char_t *aLine = [_mutableState.currentGrid screenCharsAtLineNumber:line];
     if (aLine[_state.currentGrid.size.width].code == EOL_HARD) {
         aLine[_state.currentGrid.size.width].code = EOL_SOFT;
     }
@@ -1799,7 +1795,7 @@
         return;
     }
     if (_state.currentGrid.cursor.y > 0) {
-        [self.mutableCurrentGrid setContinuationMarkOnLine:_state.currentGrid.cursor.y - 1 to:EOL_HARD];
+        [_mutableState.currentGrid setContinuationMarkOnLine:_state.currentGrid.cursor.y - 1 to:EOL_HARD];
     } else {
         [self.mutableLineBuffer setPartial:NO];
     }
@@ -1810,13 +1806,13 @@
         [self convertHardNewlineToSoftOnGridLine:_state.currentGrid.cursorY];
     }
     if (_state.currentGrid.cursorY == _state.currentGrid.bottomMargin) {
-        [_mutableState incrementOverflowBy:[self.mutableCurrentGrid scrollUpIntoLineBuffer:_mutableState.linebuffer
-                                                                       unlimitedScrollback:_state.unlimitedScrollback
-                                                                   useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                                 softBreak:YES]];
+        [_mutableState incrementOverflowBy:[_mutableState.currentGrid scrollUpIntoLineBuffer:_mutableState.linebuffer
+                                                                         unlimitedScrollback:_state.unlimitedScrollback
+                                                                     useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                                                   softBreak:YES]];
     }
-    self.mutableCurrentGrid.cursorX = _state.currentGrid.leftMargin;
-    self.mutableCurrentGrid.cursorY++;
+    _mutableState.currentGrid.cursorX = _state.currentGrid.leftMargin;
+    _mutableState.currentGrid.cursorY++;
 }
 
 - (int)tabStopAfterColumn:(int)lowerBound {
@@ -1856,7 +1852,7 @@
         }
     }
     const int y = _state.currentGrid.cursorY;
-    screen_char_t *aLine = [self.mutableCurrentGrid screenCharsAtLineNumber:y];
+    screen_char_t *aLine = [_mutableState.currentGrid screenCharsAtLineNumber:y];
     BOOL allNulls = YES;
     for (int i = _state.currentGrid.cursorX; i < nextTabStop; i++) {
         if (aLine[i].code) {
@@ -1871,11 +1867,11 @@
         const int startX = _state.currentGrid.cursorX;
         const int limit = nextTabStop - 1;
         iTermExternalAttribute *ea = [_state.terminal externalAttributes];
-        [self.mutableCurrentGrid mutateCharactersInRange:VT100GridCoordRangeMake(startX, y, limit + 1, y)
-                                                   block:^(screen_char_t *c,
-                                                           iTermExternalAttribute **eaOut,
-                                                           VT100GridCoord coord,
-                                                           BOOL *stop) {
+        [_mutableState.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(startX, y, limit + 1, y)
+                                                     block:^(screen_char_t *c,
+                                                             iTermExternalAttribute **eaOut,
+                                                             VT100GridCoord coord,
+                                                             BOOL *stop) {
             if (coord.x < limit) {
                 if (setBackgroundColors) {
                     *c = filler;
@@ -1903,11 +1899,11 @@
                                       metadata:iTermImmutableMetadataDefault()
                                         length:nextTabStop - startX];
     }
-    self.mutableCurrentGrid.cursorX = nextTabStop;
+    _mutableState.currentGrid.cursorX = nextTabStop;
 }
 
 - (void)mutCursorLeft:(int)n {
-    [self.mutableCurrentGrid moveCursorLeft:n];
+    [_mutableState.currentGrid moveCursorLeft:n];
     [delegate_ screenTriggerableChangeDidOccur];
     if (_state.commandStartCoord.x != -1) {
         [self mutDidUpdatePromptLocation];
@@ -1916,9 +1912,9 @@
 }
 
 - (void)mutCursorDown:(int)n andToStartOfLine:(BOOL)toStart {
-    [self.mutableCurrentGrid moveCursorDown:n];
+    [_mutableState.currentGrid moveCursorDown:n];
     if (toStart) {
-        [self.mutableCurrentGrid moveCursorToLeftMargin];
+        [_mutableState.currentGrid moveCursorToLeftMargin];
     }
     [delegate_ screenTriggerableChangeDidOccur];
     if (_state.commandStartCoord.x != -1) {
@@ -1928,7 +1924,7 @@
 }
 
 - (void)mutCursorRight:(int)n {
-    [self.mutableCurrentGrid moveCursorRight:n];
+    [_mutableState.currentGrid moveCursorRight:n];
     [delegate_ screenTriggerableChangeDidOccur];
     if (_state.commandStartCoord.x != -1) {
         [self mutDidUpdatePromptLocation];
@@ -1937,9 +1933,9 @@
 }
 
 - (void)mutCursorUp:(int)n andToStartOfLine:(BOOL)toStart {
-    [self.mutableCurrentGrid moveCursorUp:n];
+    [_mutableState.currentGrid moveCursorUp:n];
     if (toStart) {
-        [self.mutableCurrentGrid moveCursorToLeftMargin];
+        [_mutableState.currentGrid moveCursorToLeftMargin];
     }
     [delegate_ screenTriggerableChangeDidOccur];
     if (_state.commandStartCoord.x != -1) {
@@ -1951,13 +1947,13 @@
 - (void)mutShowTestPattern {
     screen_char_t ch = [_state.currentGrid defaultChar];
     ch.code = 'E';
-    [self.mutableCurrentGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                                       to:VT100GridCoordMake(_state.currentGrid.size.width - 1,
-                                                             _state.currentGrid.size.height - 1)
-                        toChar:ch
-            externalAttributes:nil];
-    [self.mutableCurrentGrid resetScrollRegions];
-    self.mutableCurrentGrid.cursor = VT100GridCoordMake(0, 0);
+    [_mutableState.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
+                                         to:VT100GridCoordMake(_state.currentGrid.size.width - 1,
+                                                               _state.currentGrid.size.height - 1)
+                                     toChar:ch
+                         externalAttributes:nil];
+    [_mutableState.currentGrid resetScrollRegions];
+    _mutableState.currentGrid.cursor = VT100GridCoordMake(0, 0);
 }
 
 - (void)mutSetScrollRegionTop:(int)top bottom:(int)bottom {
@@ -1966,13 +1962,13 @@
         bottom >= 0 &&
         bottom < _state.currentGrid.size.height &&
         bottom > top) {
-        self.mutableCurrentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
+        _mutableState.currentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
 
         if ([_state.terminal originMode]) {
-            self.mutableCurrentGrid.cursor = VT100GridCoordMake(_state.currentGrid.leftMargin,
-                                                                _state.currentGrid.topMargin);
+            _mutableState.currentGrid.cursor = VT100GridCoordMake(_state.currentGrid.leftMargin,
+                                                                  _state.currentGrid.topMargin);
         } else {
-            self.mutableCurrentGrid.cursor = VT100GridCoordMake(0, 0);
+            _mutableState.currentGrid.cursor = VT100GridCoordMake(0, 0);
         }
     }
 }
@@ -1989,8 +1985,8 @@
     const int n = [_state.currentGrid numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES];
     for (int i = 0; i < n; i++) {
         [_mutableState incrementOverflowBy:
-         [self.mutableCurrentGrid scrollWholeScreenUpIntoLineBuffer:lineBuffer
-                                                unlimitedScrollback:_state.unlimitedScrollback]];
+         [_mutableState.currentGrid scrollWholeScreenUpIntoLineBuffer:lineBuffer
+                                                  unlimitedScrollback:_state.unlimitedScrollback]];
     }
 }
 
@@ -2058,9 +2054,9 @@
             _mutableState.protectedMode = VT100TerminalProtectedModeNone;
         }
     } else {
-        [self.mutableCurrentGrid setCharsInRun:theRun
-                                        toChar:0
-                            externalAttributes:nil];
+        [_mutableState.currentGrid setCharsInRun:theRun
+                                          toChar:0
+                              externalAttributes:nil];
     }
     [delegate_ screenTriggerableChangeDidOccur];
 
@@ -2108,17 +2104,17 @@
         VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, _state.currentGrid.cursor.y),
                                                      VT100GridCoordMake(x2, _state.currentGrid.cursor.y),
                                                      _state.currentGrid.size.width);
-        [self.mutableCurrentGrid setCharsInRun:theRun
-                                        toChar:0
-                            externalAttributes:nil];
+        [_mutableState.currentGrid setCharsInRun:theRun
+                                          toChar:0
+                              externalAttributes:nil];
     }
 }
 
 - (void)mutCarriageReturn {
     if (_state.currentGrid.useScrollRegionCols && _state.currentGrid.cursorX < _state.currentGrid.leftMargin) {
-        self.mutableCurrentGrid.cursorX = 0;
+        _mutableState.currentGrid.cursorX = 0;
     } else {
-        [self.mutableCurrentGrid moveCursorToLeftMargin];
+        [_mutableState.currentGrid moveCursorToLeftMargin];
     }
     [delegate_ screenTriggerableChangeDidOccur];
     if (_state.commandStartCoord.x != -1) {
@@ -2132,10 +2128,10 @@
         if ([self cursorOutsideLeftRightMargin]) {
             return;
         } else {
-            [self.mutableCurrentGrid scrollDown];
+            [_mutableState.currentGrid scrollDown];
         }
     } else {
-        self.mutableCurrentGrid.cursorY = MAX(0, _state.currentGrid.cursorY - 1);
+        _mutableState.currentGrid.cursorY = MAX(0, _state.currentGrid.cursorY - 1);
     }
     [delegate_ screenTriggerableChangeDidOccur];
 }
@@ -2143,9 +2139,9 @@
 - (void)mutForwardIndex {
     if ((_state.currentGrid.cursorX == _state.currentGrid.rightMargin && ![self cursorOutsideLeftRightMargin] )||
          _state.currentGrid.cursorX == _state.currentGrid.size.width) {
-        [self.mutableCurrentGrid moveContentLeft:1];
+        [_mutableState.currentGrid moveContentLeft:1];
     } else {
-        self.mutableCurrentGrid.cursorX += 1;
+        _mutableState.currentGrid.cursorX += 1;
     }
     [delegate_ screenTriggerableChangeDidOccur];
 }
@@ -2153,9 +2149,9 @@
 - (void)mutBackIndex {
     if ((_state.currentGrid.cursorX == _state.currentGrid.leftMargin && ![self cursorOutsideLeftRightMargin] )||
          _state.currentGrid.cursorX == 0) {
-        [self.mutableCurrentGrid moveContentRight:1];
+        [_mutableState.currentGrid moveContentRight:1];
     } else if (_state.currentGrid.cursorX > 0) {
-        self.mutableCurrentGrid.cursorX -= 1;
+        _mutableState.currentGrid.cursorX -= 1;
     } else {
         return;
     }
@@ -2166,9 +2162,9 @@
     for (int i = 0; i < n; i++) {
         // TODO: respect left-right margins
         if (_state.currentGrid.cursorX > 0) {
-            self.mutableCurrentGrid.cursorX = _state.currentGrid.cursorX - 1;
+            _mutableState.currentGrid.cursorX = _state.currentGrid.cursorX - 1;
             while (![self haveTabStopAt:_state.currentGrid.cursorX] && _state.currentGrid.cursorX > 0) {
-                self.mutableCurrentGrid.cursorX = _state.currentGrid.cursorX - 1;
+                _mutableState.currentGrid.cursorX = _state.currentGrid.cursorX - 1;
             }
             [delegate_ screenTriggerableChangeDidOccur];
         }
@@ -2181,7 +2177,7 @@
 
 - (void)mutAdvanceCursorPastLastColumn {
     if (_state.currentGrid.cursorX == self.width - 1) {
-        self.mutableCurrentGrid.cursorX = self.width;
+        _mutableState.currentGrid.cursorX = self.width;
     }
 }
 
@@ -2196,10 +2192,10 @@
             case VT100TerminalProtectedModeDEC: {
                 // Do not honor protected mode.
                 int limit = MIN(_state.currentGrid.cursorX + j, _state.currentGrid.size.width);
-                [self.mutableCurrentGrid setCharsFrom:VT100GridCoordMake(_state.currentGrid.cursorX, _state.currentGrid.cursorY)
-                                                   to:VT100GridCoordMake(limit - 1, _state.currentGrid.cursorY)
-                                               toChar:[_state.currentGrid defaultChar]
-                        externalAttributes:nil];
+                [_mutableState.currentGrid setCharsFrom:VT100GridCoordMake(_state.currentGrid.cursorX, _state.currentGrid.cursorY)
+                                                     to:VT100GridCoordMake(limit - 1, _state.currentGrid.cursorY)
+                                                 toChar:[_state.currentGrid defaultChar]
+                                     externalAttributes:nil];
                 // TODO: This used to always set the continuation mark to hard, but I think it should only do that if the last char in the line is erased.
                 [delegate_ screenTriggerableChangeDidOccur];
                 break;
@@ -2217,10 +2213,10 @@
 }
 
 - (void)mutInsertEmptyCharsAtCursor:(int)n {
-    [self.mutableCurrentGrid insertChar:[_state.currentGrid defaultChar]
-                     externalAttributes:nil
-                                     at:_state.currentGrid.cursor
-                                  times:n];
+    [_mutableState.currentGrid insertChar:[_state.currentGrid defaultChar]
+                       externalAttributes:nil
+                                       at:_state.currentGrid.cursor
+                                    times:n];
 }
 
 - (void)mutShiftLeft:(int)n {
@@ -2230,7 +2226,7 @@
     if ([self cursorOutsideLeftRightMargin] || [self cursorOutsideTopBottomMargin]) {
         return;
     }
-    [self.mutableCurrentGrid moveContentLeft:n];
+    [_mutableState.currentGrid moveContentLeft:n];
 }
 
 - (void)mutShiftRight:(int)n {
@@ -2240,7 +2236,7 @@
     if ([self cursorOutsideLeftRightMargin] || [self cursorOutsideTopBottomMargin]) {
         return;
     }
-    [self.mutableCurrentGrid moveContentRight:n];
+    [_mutableState.currentGrid moveContentRight:n];
 }
 
 - (void)mutInsertBlankLinesAfterCursor:(int)n {
@@ -2258,15 +2254,15 @@
         int left = _state.currentGrid.leftMargin;
         int width = _state.currentGrid.rightMargin - _state.currentGrid.leftMargin + 1;
         int height = _state.currentGrid.bottomMargin - top + 1;
-        [self.mutableCurrentGrid scrollRect:VT100GridRectMake(left, top, width, height)
-                                     downBy:n
-                                  softBreak:NO];
+        [_mutableState.currentGrid scrollRect:VT100GridRectMake(left, top, width, height)
+                                       downBy:n
+                                    softBreak:NO];
         [delegate_ screenTriggerableChangeDidOccur];
     }
 }
 
 - (void)mutDeleteCharactersAtCursor:(int)n {
-    [self.mutableCurrentGrid deleteChars:n startingAt:_state.currentGrid.cursor];
+    [_mutableState.currentGrid deleteChars:n startingAt:_state.currentGrid.cursor];
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
@@ -2282,12 +2278,12 @@
     }
     BOOL cursorInScrollRegion = VT100GridCoordInRect(_state.currentGrid.cursor, scrollRegionRect);
     if (cursorInScrollRegion) {
-        [self.mutableCurrentGrid scrollRect:VT100GridRectMake(_state.currentGrid.leftMargin,
-                                                              _state.currentGrid.cursorY,
-                                                              _state.currentGrid.rightMargin - _state.currentGrid.leftMargin + 1,
-                                                              _state.currentGrid.bottomMargin - _state.currentGrid.cursorY + 1)
-                          downBy:-n
-                       softBreak:NO];
+        [_mutableState.currentGrid scrollRect:VT100GridRectMake(_state.currentGrid.leftMargin,
+                                                                _state.currentGrid.cursorY,
+                                                                _state.currentGrid.rightMargin - _state.currentGrid.leftMargin + 1,
+                                                                _state.currentGrid.bottomMargin - _state.currentGrid.cursorY + 1)
+                                       downBy:-n
+                                    softBreak:NO];
         [delegate_ screenTriggerableChangeDidOccur];
     }
 }
@@ -2297,19 +2293,19 @@
     for (int i = 0;
          i < MIN(_state.currentGrid.size.height, n);
          i++) {
-        [_mutableState incrementOverflowBy:[self.mutableCurrentGrid scrollUpIntoLineBuffer:_mutableState.linebuffer
-                                                                       unlimitedScrollback:_state.unlimitedScrollback
-                                                                   useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                                 softBreak:NO]];
+        [_mutableState incrementOverflowBy:[_mutableState.currentGrid scrollUpIntoLineBuffer:_mutableState.linebuffer
+                                                                         unlimitedScrollback:_state.unlimitedScrollback
+                                                                     useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                                                   softBreak:NO]];
     }
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
 - (void)mutScrollDown:(int)n {
     [delegate_ screenRemoveSelection];
-    [self.mutableCurrentGrid scrollRect:[_state.currentGrid scrollRegionRect]
-                                 downBy:MIN(_state.currentGrid.size.height, n)
-                              softBreak:NO];
+    [_mutableState.currentGrid scrollRect:[_state.currentGrid scrollRegionRect]
+                                   downBy:MIN(_state.currentGrid.size.height, n)
+                                softBreak:NO];
     [delegate_ screenTriggerableChangeDidOccur];
 }
 
@@ -2321,10 +2317,10 @@
         return;
     }
     for (int y = _state.currentGrid.topMargin; y <= _state.currentGrid.bottomMargin; y++) {
-        [self.mutableCurrentGrid insertChar:_state.currentGrid.defaultChar
-                         externalAttributes:nil
-                                         at:VT100GridCoordMake(_state.currentGrid.cursor.x, y)
-                                      times:n];
+        [_mutableState.currentGrid insertChar:_state.currentGrid.defaultChar
+                           externalAttributes:nil
+                                           at:VT100GridCoordMake(_state.currentGrid.cursor.x, y)
+                                        times:n];
     }
 }
 
@@ -2336,8 +2332,8 @@
         return;
     }
     for (int y = _state.currentGrid.topMargin; y <= _state.currentGrid.bottomMargin; y++) {
-        [self.mutableCurrentGrid deleteChars:n
-                                  startingAt:VT100GridCoordMake(_state.currentGrid.cursor.x, y)];
+        [_mutableState.currentGrid deleteChars:n
+                                    startingAt:VT100GridCoordMake(_state.currentGrid.cursor.x, y)];
     }
 }
 
@@ -2389,22 +2385,22 @@
         }
     };
     if (_state.terminal.decsaceRectangleMode) {
-        [self.mutableCurrentGrid mutateCellsInRect:rect
-                                             block:^(VT100GridCoord coord,
-                                                     screen_char_t *sct,
-                                                     iTermExternalAttribute **eaOut,
-                                                     BOOL *stop) {
+        [_mutableState.currentGrid mutateCellsInRect:rect
+                                               block:^(VT100GridCoord coord,
+                                                       screen_char_t *sct,
+                                                       iTermExternalAttribute **eaOut,
+                                                       BOOL *stop) {
             block(coord, sct, *eaOut, stop);
         }];
     } else {
-        [self.mutableCurrentGrid mutateCharactersInRange:VT100GridCoordRangeMake(rect.origin.x,
-                                                                                 rect.origin.y,
-                                                                                 rect.origin.x + rect.size.width,
-                                                                                 rect.origin.y + rect.size.height - 1)
-                                                   block:^(screen_char_t *sct,
-                                                           iTermExternalAttribute **eaOut,
-                                                           VT100GridCoord coord,
-                                                           BOOL *stop) {
+        [_mutableState.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(rect.origin.x,
+                                                                                   rect.origin.y,
+                                                                                   rect.origin.x + rect.size.width,
+                                                                                   rect.origin.y + rect.size.height - 1)
+                                                     block:^(screen_char_t *sct,
+                                                             iTermExternalAttribute **eaOut,
+                                                             VT100GridCoord coord,
+                                                             BOOL *stop) {
             block(coord, sct, *eaOut, stop);
         }];
     }
@@ -2432,32 +2428,32 @@
         }
     };
     if (_state.terminal.decsaceRectangleMode) {
-        [self.mutableCurrentGrid mutateCellsInRect:rect
-                                             block:^(VT100GridCoord coord,
-                                                     screen_char_t *sct,
-                                                     iTermExternalAttribute **eaOut,
-                                                     BOOL *stop) {
+        [_mutableState.currentGrid mutateCellsInRect:rect
+                                               block:^(VT100GridCoord coord,
+                                                       screen_char_t *sct,
+                                                       iTermExternalAttribute **eaOut,
+                                                       BOOL *stop) {
             block(coord, sct, *eaOut, stop);
         }];
     } else {
-        [self.mutableCurrentGrid mutateCharactersInRange:VT100GridCoordRangeMake(rect.origin.x,
-                                                                                 rect.origin.y,
-                                                                                 rect.origin.x + rect.size.width,
-                                                                                 rect.origin.y + rect.size.height - 1)
-                                                   block:^(screen_char_t *sct,
-                                                           iTermExternalAttribute **eaOut,
-                                                           VT100GridCoord coord,
-                                                           BOOL *stop) {
+        [_mutableState.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(rect.origin.x,
+                                                                                   rect.origin.y,
+                                                                                   rect.origin.x + rect.size.width,
+                                                                                   rect.origin.y + rect.size.height - 1)
+                                                     block:^(screen_char_t *sct,
+                                                             iTermExternalAttribute **eaOut,
+                                                             VT100GridCoord coord,
+                                                             BOOL *stop) {
             block(coord, sct, *eaOut, stop);
         }];
     }
 }
 
 - (void)mutFillRectangle:(VT100GridRect)rect with:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
-    [self.mutableCurrentGrid setCharsFrom:rect.origin
-                                       to:VT100GridRectMax(rect)
-                                   toChar:c
-                       externalAttributes:ea];
+    [_mutableState.currentGrid setCharsFrom:rect.origin
+                                         to:VT100GridRectMax(rect)
+                                     toChar:c
+                         externalAttributes:ea];
 }
 
 static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribute **eaOut, BOOL eraseAttributes, const screen_char_t *defaultChar) {
@@ -2480,11 +2476,11 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 // Note: this does not erase attributes! It just sets the character to space.
 - (void)mutSelectiveEraseRectangle:(VT100GridRect)rect {
     const screen_char_t dc = _state.currentGrid.defaultChar;
-    [self.mutableCurrentGrid mutateCellsInRect:rect
-                                         block:^(VT100GridCoord coord,
-                                                 screen_char_t *sct,
-                                                 iTermExternalAttribute **eaOut,
-                                                 BOOL *stop) {
+    [_mutableState.currentGrid mutateCellsInRect:rect
+                                           block:^(VT100GridCoord coord,
+                                                   screen_char_t *sct,
+                                                   iTermExternalAttribute **eaOut,
+                                                   BOOL *stop) {
         if (_state.protectedMode == VT100TerminalProtectedModeDEC && sct->guarded) {
             return;
         }
@@ -2496,11 +2492,11 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 - (BOOL)mutSelectiveEraseRange:(VT100GridCoordRange)range eraseAttributes:(BOOL)eraseAttributes {
     __block BOOL foundProtected = NO;
     const screen_char_t dc = _state.currentGrid.defaultChar;
-    [self.mutableCurrentGrid mutateCharactersInRange:range
-                                               block:^(screen_char_t *sct,
-                                                       iTermExternalAttribute **eaOut,
-                                                       VT100GridCoord coord,
-                                                       BOOL *stop) {
+    [_mutableState.currentGrid mutateCharactersInRange:range
+                                                 block:^(screen_char_t *sct,
+                                                         iTermExternalAttribute **eaOut,
+                                                         VT100GridCoord coord,
+                                                         BOOL *stop) {
         if (_state.protectedMode != VT100TerminalProtectedModeNone && sct->guarded) {
             foundProtected = YES;
             return;
@@ -2513,14 +2509,14 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)setCursorX:(int)x Y:(int)y {
     DLog(@"Move cursor to %d,%d", x, y);
-    self.mutableCurrentGrid.cursor = VT100GridCoordMake(x, y);
+    _mutableState.currentGrid.cursor = VT100GridCoordMake(x, y);
 }
 
 - (void)mutSetUseColumnScrollRegion:(BOOL)mode {
-    self.mutableCurrentGrid.useScrollRegionCols = mode;
+    _mutableState.currentGrid.useScrollRegionCols = mode;
     self.mutableAltGrid.useScrollRegionCols = mode;
     if (!mode) {
-        self.mutableCurrentGrid.scrollRegionCols = VT100GridRangeMake(0, _state.currentGrid.size.width);
+        _mutableState.currentGrid.scrollRegionCols = VT100GridRangeMake(0, _state.currentGrid.size.width);
     }
 }
 
@@ -2537,10 +2533,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         if (destCoord.x < 0 || destCoord.x >= size.width || destCoord.y < 0 || destCoord.y >= size.height) {
             return;
         }
-        [self.mutableCurrentGrid setCharsFrom:destCoord
-                                           to:destCoord
-                                       toChar:sct
-                           externalAttributes:ea];
+        [_mutableState.currentGrid setCharsFrom:destCoord
+                                             to:destCoord
+                                         toChar:sct
+                             externalAttributes:ea];
     }];
 }
 
@@ -2583,7 +2579,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         }
         iTermMetadataInitFromArray(&md[idx], obj);
     }];
-    [self.mutableCurrentGrid setContentsFromDVRFrame:s metadataArray:md info:info];
+    [_mutableState.currentGrid setContentsFromDVRFrame:s metadataArray:md info:info];
     for (int i = 0; i < info.height; i++) {
         iTermMetadataRelease(md[i]);
     }
@@ -2591,24 +2587,28 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     _mutableState.savedFindContextAbsPos = 0;
     [delegate_ screenRemoveSelection];
     [delegate_ screenNeedsRedraw];
-    [self.mutableCurrentGrid markAllCharsDirty:YES];
+    [_mutableState.currentGrid markAllCharsDirty:YES];
 }
 
 #pragma mark - Find on Page
 
 - (void)mutSaveFindContextAbsPos {
     int linesPushed;
-    linesPushed = [self.mutableCurrentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
-                                          toLineBuffer:_mutableState.linebuffer];
+    linesPushed = [_mutableState.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
+                                            toLineBuffer:_mutableState.linebuffer];
 
     [self mutSaveFindContextPosition];
     [self mutPopScrollbackLines:linesPushed];
 }
 
+- (void)mutRestorePreferredCursorPositionIfPossible {
+    [_mutableState.currentGrid restorePreferredCursorPositionIfPossible];
+}
+
 - (void)mutRestoreSavedPositionToFindContext:(FindContext *)context {
     int linesPushed;
-    linesPushed = [self.mutableCurrentGrid appendLines:[self.mutableCurrentGrid numberOfLinesUsed]
-                                          toLineBuffer:_mutableState.linebuffer];
+    linesPushed = [_mutableState.currentGrid appendLines:[_mutableState.currentGrid numberOfLinesUsed]
+                                            toLineBuffer:_mutableState.linebuffer];
 
     [_mutableState.linebuffer storeLocationOfAbsPos:_mutableState.savedFindContextAbsPos
                                           inContext:context];
@@ -2629,8 +2629,8 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     [tempLineBuffer seal];
 
     // Append the screen contents to the scrollback buffer so they are included in the search.
-    [self.mutableCurrentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
-                            toLineBuffer:tempLineBuffer];
+    [_mutableState.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
+                              toLineBuffer:tempLineBuffer];
 
     // Get the start position of (x,y)
     LineBufferPosition *startPos;
@@ -2704,8 +2704,8 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     [temporaryLineBuffer seal];
 
 #warning TODO: This is an unusual use of mutation since it is only temporary. But probably Find should happen off-thread anyway.
-    [self.mutableCurrentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
-                            toLineBuffer:temporaryLineBuffer];
+    [_mutableState.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
+                              toLineBuffer:temporaryLineBuffer];
 
     // Search one block.
     LineBufferPosition *stopAt;
@@ -2933,7 +2933,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 // Gets a line on the screen (0 = top of screen)
 - (screen_char_t *)mutGetLineAtScreenIndex:(int)theIndex {
-    return [self.mutableCurrentGrid screenCharsAtLineNumber:theIndex];
+    return [_mutableState.currentGrid screenCharsAtLineNumber:theIndex];
 }
 
 - (void)mutSetTerminal:(VT100Terminal *)terminal {
@@ -2946,14 +2946,14 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 #pragma mark - Dirty
 
 - (void)mutResetAllDirty {
-    self.mutableCurrentGrid.allDirty = NO;
+    _mutableState.currentGrid.allDirty = NO;
 }
 
 - (void)mutSetLineDirtyAtY:(int)y {
     if (y >= 0) {
-        [self.mutableCurrentGrid markCharsDirty:YES
-                                     inRectFrom:VT100GridCoordMake(0, y)
-                                             to:VT100GridCoordMake(self.width - 1, y)];
+        [_mutableState.currentGrid markCharsDirty:YES
+                                       inRectFrom:VT100GridCoordMake(0, y)
+                                               to:VT100GridCoordMake(self.width - 1, y)];
     }
 }
 
@@ -2969,28 +2969,28 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         yToMark++;
     }
     if (xToMark < _state.currentGrid.size.width && yToMark < _state.currentGrid.size.height) {
-        [self.mutableCurrentGrid markCharDirty:YES
-                                            at:VT100GridCoordMake(xToMark, yToMark)
-                               updateTimestamp:NO];
+        [_mutableState.currentGrid markCharDirty:YES
+                                              at:VT100GridCoordMake(xToMark, yToMark)
+                                 updateTimestamp:NO];
         if (xToMark < _state.currentGrid.size.width - 1) {
             // Just in case the cursor was over a double width character
-            [self.mutableCurrentGrid markCharDirty:YES
-                                                at:VT100GridCoordMake(xToMark + 1, yToMark)
-                                   updateTimestamp:NO];
+            [_mutableState.currentGrid markCharDirty:YES
+                                                  at:VT100GridCoordMake(xToMark + 1, yToMark)
+                                     updateTimestamp:NO];
         }
     }
 }
 
 - (void)mutResetDirty {
-    [self.mutableCurrentGrid markAllCharsDirty:NO];
+    [_mutableState.currentGrid markAllCharsDirty:NO];
 }
 
 - (void)mutMarkWholeScreenDirty {
-    [self.mutableCurrentGrid markAllCharsDirty:YES];
+    [_mutableState.currentGrid markAllCharsDirty:YES];
 }
 
 - (void)mutRedrawGrid {
-    [self.mutableCurrentGrid setAllDirty:YES];
+    [_mutableState.currentGrid setAllDirty:YES];
     // Force the screen to redraw right away. Some users reported lag and this seems to fix it.
     // I think the update timer was hitting a worst case scenario which made the lag visible.
     // See issue 3537.
@@ -3034,12 +3034,12 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     self.mutablePrimaryGrid.savedDefaultChar = [_state.primaryGrid defaultChar];
     [self hideOnScreenNotesAndTruncateSpanners];
     _mutableState.currentGrid = _state.altGrid;
-    self.mutableCurrentGrid.cursor = _state.primaryGrid.cursor;
+    _mutableState.currentGrid.cursor = _state.primaryGrid.cursor;
 
     [self mutSwapNotes];
     [self mutReloadMarkCache];
 
-    [self.mutableCurrentGrid markAllCharsDirty:YES];
+    [_mutableState.currentGrid markAllCharsDirty:YES];
     [delegate_ screenScheduleRedrawSoon];
     [self mutInvalidateCommandStartCoordWithoutSideEffects];
 }
@@ -3054,7 +3054,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         [self mutSwapNotes];
         [self mutReloadMarkCache];
 
-        [self.mutableCurrentGrid markAllCharsDirty:YES];
+        [_mutableState.currentGrid markAllCharsDirty:YES];
         [delegate_ screenScheduleRedrawSoon];
     }
 }
@@ -3087,9 +3087,9 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
     for (NSValue *value in [_state.currentGrid rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];
-        [self.mutableCurrentGrid setURLCode:code
-                                 inRectFrom:rect.origin
-                                         to:VT100GridRectMax(rect)];
+        [_mutableState.currentGrid setURLCode:code
+                                   inRectFrom:rect.origin
+                                           to:VT100GridRectMax(rect)];
     }
 }
 
@@ -3127,10 +3127,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
     for (NSValue *value in [_state.currentGrid rectsForRun:run]) {
         VT100GridRect rect = [value gridRectValue];
-        [self.mutableCurrentGrid setBackgroundColor:bg
-                                    foregroundColor:fg
-                                         inRectFrom:rect.origin
-                                                 to:VT100GridRectMax(rect)];
+        [_mutableState.currentGrid setBackgroundColor:bg
+                                      foregroundColor:fg
+                                           inRectFrom:rect.origin
+                                                   to:VT100GridRectMax(rect)];
     }
 }
 
@@ -3167,7 +3167,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (BOOL)mutGetAndResetHasScrolled {
     const BOOL result = _state.currentGrid.haveScrolled;
-    self.mutableCurrentGrid.haveScrolled = NO;
+    _mutableState.currentGrid.haveScrolled = NO;
     return result;
 }
 
