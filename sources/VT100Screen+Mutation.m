@@ -153,7 +153,7 @@
     DLog(@"FinalTerm: terminalCommandDidEnd");
     _mutableState.currentPromptRange = VT100GridAbsCoordRangeMake(0, 0, 0, 0);
 
-    [self commandDidEndAtAbsCoord:VT100GridAbsCoordMake(_state.currentGrid.cursor.x, _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + [self totalScrollbackOverflow])];
+    [self commandDidEndAtAbsCoord:VT100GridAbsCoordMake(_state.currentGrid.cursor.x, _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + _mutableState.cumulativeScrollbackOverflow)];
 }
 
 - (BOOL)mutCommandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
@@ -178,7 +178,7 @@
         NSString *trimmedCommand =
             [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         if (trimmedCommand.length) {
-            mark = [self markOnLine:self.lastPromptLine - [self totalScrollbackOverflow]];
+            mark = [self markOnLine:self.lastPromptLine - _mutableState.cumulativeScrollbackOverflow];
 #warning TODO: This modifies shared state
             DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
                  _mutableState.lastPromptLine - _mutableState.cumulativeScrollbackOverflow, mark, command);
@@ -398,7 +398,7 @@
         screenMark.delegate = self;
         screenMark.sessionGuid = _config.sessionGuid;
     }
-    long long totalOverflow = [self totalScrollbackOverflow];
+    long long totalOverflow = _mutableState.cumulativeScrollbackOverflow;
     if (line < totalOverflow || line > totalOverflow + self.numberOfLines) {
         return nil;
     }
@@ -418,7 +418,7 @@
                                         limit);
     }
     if ([mark isKindOfClass:[VT100ScreenMark class]]) {
-        _mutableState.markCache[@([self totalScrollbackOverflow] + range.end.y)] = mark;
+        _mutableState.markCache[@(_mutableState.cumulativeScrollbackOverflow + range.end.y)] = mark;
     }
     [_mutableState.intervalTree addObject:mark withInterval:[self intervalForGridCoordRange:range]];
     [self.intervalTreeObserver intervalTreeDidAddObjectOfType:[self intervalTreeObserverTypeForObject:mark]
@@ -428,7 +428,7 @@
 }
 
 - (void)mutReloadMarkCache {
-    long long totalScrollbackOverflow = [self totalScrollbackOverflow];
+    long long totalScrollbackOverflow = _mutableState.cumulativeScrollbackOverflow;
     [_mutableState.markCache removeAllObjects];
     for (id<IntervalTreeObject> obj in [_mutableState.intervalTree allObjects]) {
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
@@ -466,7 +466,7 @@
 }
 
 - (void)mutRemoveObjectFromIntervalTree:(id<IntervalTreeObject>)obj {
-    long long totalScrollbackOverflow = [self totalScrollbackOverflow];
+    long long totalScrollbackOverflow = _mutableState.cumulativeScrollbackOverflow;
     if ([obj isKindOfClass:[VT100ScreenMark class]]) {
         long long theKey = (totalScrollbackOverflow +
                             [self coordRangeForInterval:obj.entry.interval].end.y);
@@ -1231,7 +1231,7 @@
     int linesDroppedForBrevity = ([_mutableState.linebuffer numLinesWithWidth:effectiveWidth] -
                                   [temp numLinesWithWidth:effectiveWidth]);
     long long intervalOffset =
-        -(linesDroppedForBrevity + [self totalScrollbackOverflow]) * (self.width + 1);
+        -(linesDroppedForBrevity + _mutableState.cumulativeScrollbackOverflow) * (self.width + 1);
 
     if (includeGrid) {
         int numLines;
@@ -2737,8 +2737,8 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
                     result.startX = xyrange->xStart;
                     result.endX = xyrange->xEnd;
-                    result.absStartY = xyrange->yStart + [self totalScrollbackOverflow];
-                    result.absEndY = xyrange->yEnd + [self totalScrollbackOverflow];
+                    result.absStartY = xyrange->yStart + _mutableState.cumulativeScrollbackOverflow;
+                    result.absEndY = xyrange->yEnd + _mutableState.cumulativeScrollbackOverflow;
 
                     [results addObject:result];
 

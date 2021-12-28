@@ -184,8 +184,8 @@
             assert(objectRange.start.y >= 0);
             assert(objectRange.end.y >= 0);
             // Anticipate the lines that will be dropped when the alt grid is restored.
-            newRange.start.y += [self totalScrollbackOverflow] - numLinesDroppedFromTop;
-            newRange.end.y += [self totalScrollbackOverflow] - numLinesDroppedFromTop;
+            newRange.start.y += _mutableState.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
+            newRange.end.y += _mutableState.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
             if (newRange.start.y < 0) {
                 newRange.start.y = 0;
                 newRange.start.x = 0;
@@ -555,7 +555,7 @@
                 assert(noteRange.end.y >= 0);
                 Interval *newInterval = [self intervalForGridCoordRange:newRange
                                                                   width:newWidth
-                                                            linesOffset:[self totalScrollbackOverflow]];
+                                                            linesOffset:_mutableState.cumulativeScrollbackOverflow];
                 [[note retain] autorelease];
                 [_mutableState.intervalTree removeObject:note];
                 [replacementTree addObject:note withInterval:newInterval];
@@ -631,7 +631,7 @@
             DLog(@"  New range=%@", VT100GridCoordRangeDescription(newRange));
             Interval *interval = [self intervalForGridCoordRange:newRange
                                                            width:newSize.width
-                                                     linesOffset:[self totalScrollbackOverflow]];
+                                                     linesOffset:_mutableState.cumulativeScrollbackOverflow];
             [_mutableState.intervalTree addObject:note withInterval:interval];
         } else {
             DLog(@"  *FAILED TO CONVERT*");
