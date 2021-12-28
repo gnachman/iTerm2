@@ -1644,14 +1644,13 @@
                                                                                        useScrollbackWithRegion:_mutableState.appendToScrollbackWithStatusBar
                                                                                                     willScroll:^{
         if (noScrollback) {
-            // This is a temporary hack. In this case, keeping the selection in the right place requires
-            // more cooperation between VT100Screen and PTYTextView than is currently in place because
-            // the selection could become truncated, and regardless, will need to move up a line in terms
-            // of absolute Y position (normally when the screen scrolls the absolute Y position of the
-            // selection stays the same and the viewport moves down, or else there is some scrollback
-            // overflow and PTYTextView -refresh bumps the selection's Y position, but because in this
-            // case we don't append to the line buffer, scrollback overflow will not increment).
-            [delegate_ screenRemoveSelection];
+            [_mutableState addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+                // This isn't really necessary, although it has been this way for a very long time.
+                // In theory we could truncate the selection to not begin in scrollback history.
+                // Note that this happens in alternate screen mode when not adding to history.
+                // Regardless of what we do the behavior is going to be strange.
+                [delegate_ screenRemoveSelection];
+            }];
         }
     }]];
 }
