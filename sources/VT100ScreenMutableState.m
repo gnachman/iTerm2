@@ -196,6 +196,22 @@
     self.shouldExpectPromptMarks = YES;
 }
 
+- (void)setPromptStartLine:(int)line {
+    DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
+    // Reset this in case it's taking the "real" shell integration path.
+    self.fakePromptDetectedAbsLine = -1;
+    const long long lastPromptLine = (long long)line + self.cumulativeScrollbackOverflow;
+    self.lastPromptLine = lastPromptLine;
+    [self assignCurrentCommandEndDate];
+    VT100ScreenMark *mark = [self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
+    [mark setIsPrompt:YES];
+    mark.promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
+    [self didUpdatePromptLocation];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenPromptDidStartAtLine:line];
+    }];
+}
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation {
