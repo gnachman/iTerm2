@@ -84,5 +84,9 @@
     }]];
 }
 
+- (void)appendCarriageReturnLineFeed {
+    [self appendLineFeed];
+    self.currentGrid.cursorX = 0;
+}
 
 @end
