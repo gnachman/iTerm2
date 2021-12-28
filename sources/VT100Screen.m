@@ -1778,6 +1778,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)setConfig:(id<VT100ScreenConfiguration>)config {
     [_nextConfig autorelease];
     _nextConfig = [config copyWithZone:nil];
+#warning TODO: Fix this up when moving to a mutation thread.
     // In the future, VT100Screen+Mutation will run on a different thread and updating the config
     // will need to be synchronized properly.
     [self mutUpdateConfig];

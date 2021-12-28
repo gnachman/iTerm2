@@ -9,6 +9,7 @@
 #import "VT100ScreenState+Private.h"
 
 #import "PTYAnnotation.h"
+#import "VT100ScreenConfiguration.h"
 #import "VT100ScreenDelegate.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
