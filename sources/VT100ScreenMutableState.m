@@ -89,4 +89,14 @@
     self.currentGrid.cursorX = 0;
 }
 
+#pragma mark - Shell Integration
+
+- (void)assignCurrentCommandEndDate {
+    VT100ScreenMark *screenMark = self.lastCommandMark;
+    if (!screenMark.endDate) {
+#warning TODO: This mutates a shared object.
+        screenMark.endDate = [NSDate date];
+    }
+}
+
 @end
