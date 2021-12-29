@@ -333,55 +333,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 // NOTE: If you change this you probably want to change -haveCommandInRange:, too.
-#warning TODO: Don't call this in the mutable codepath. The use of the extractor makes it interesting - mutable state needs to be an extractor data source maybe?
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
-    if (range.start.x == -1) {
-        return nil;
-    }
-    // If semantic history goes nuts and the end-of-command code isn't received (which seems to be a
-    // common problem, probably because of buggy old versions of SH scripts) , the command can grow
-    // without bound. We'll limit the length of a command to avoid performance problems.
-    const int kMaxLines = 50;
-    if (range.end.y - range.start.y > kMaxLines) {
-        range.end.y = range.start.y + kMaxLines;
-    }
-    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
-    NSString *command = [extractor contentInRange:VT100GridWindowedRangeMake(range, 0, 0)
-                                attributeProvider:nil
-                                       nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
-                                              pad:NO
-                               includeLastNewline:NO
-                           trimTrailingWhitespace:NO
-                                     cappedAtSize:-1
-                                     truncateTail:YES
-                                continuationChars:nil
-                                           coords:nil];
-    NSRange newline = [command rangeOfString:@"\n"];
-    if (newline.location != NSNotFound) {
-        command = [command substringToIndex:newline.location];
-    }
-
-    return [command stringByTrimmingLeadingWhitespace];
+    return [_state commandInRange:range];
 }
 
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range {
-    if (range.start.x == -1) {
-        return NO;
-    }
-
-    // If semantic history goes nuts and the end-of-command code isn't received (which seems to be a
-    // common problem, probably because of buggy old versions of SH scripts) , the command can grow
-    // without bound. We'll limit the length of a command to avoid performance problems.
-    const int kMaxLines = 50;
-    if (range.end.y - range.start.y > kMaxLines) {
-        range.end.y = range.start.y + kMaxLines;
-    }
-    const int width = _state.width;
-    range.end.x = MIN(range.end.x, width - 1);
-    range.start.x = MIN(range.start.x, width - 1);
-
-    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
-    return [extractor haveNonWhitespaceInFirstLineOfRange:VT100GridWindowedRangeMake(range, 0, 0)];
+    return [_state haveCommandInRange:range];
 }
 
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord {
@@ -441,39 +398,19 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (ScreenCharArray *)screenCharArrayForLine:(int)line {
-    const NSInteger numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
-    if (line < numLinesInLineBuffer) {
-        const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1 &&
-                                     [_state.currentGrid screenCharsAtLineNumber:0][1].code == DWC_RIGHT);
-        return [[_state.linebuffer wrappedLineAtIndex:line width:_state.width continuation:NULL] paddedToLength:_state.width
-                                                                                                 eligibleForDWC:eligibleForDWC];
-    }
-    return [self screenCharArrayAtScreenIndex:line - numLinesInLineBuffer];
+    return [_state screenCharArrayForLine:line];
 }
 
 - (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
-    const screen_char_t *line = [_state.currentGrid screenCharsAtLineNumber:index];
-    const int width = _state.width;
-    ScreenCharArray *array = [[[ScreenCharArray alloc] initWithLine:line
-                                                             length:width
-                                                       continuation:line[width]] autorelease];
-    return array;
+    return [_state screenCharArrayAtScreenIndex:index];
 }
 
 - (id)fetchLine:(int)line block:(id (^ NS_NOESCAPE)(ScreenCharArray *))block {
-    ScreenCharArray *sca = [self screenCharArrayForLine:line];
-    return block(sca);
+    return [_state fetchLine:line block:block];
 }
 
 - (iTermImmutableMetadata)metadataOnLine:(int)lineNumber {
-    ITBetaAssert(lineNumber >= 0, @"Negative index to getLineAtIndex");
-    const int width = _state.currentGrid.size.width;
-    int numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:width];
-    if (lineNumber >= numLinesInLineBuffer) {
-        return [_state.currentGrid immutableMetadataAtLineNumber:lineNumber - numLinesInLineBuffer];
-    } else {
-        return [_state.linebuffer metadataForLineNumber:lineNumber width:width];
-    }
+    return [_state metadataOnLine:lineNumber];
 }
 
 - (iTermImmutableMetadata)metadataAtScreenIndex:(int)index {
@@ -481,8 +418,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (id<iTermExternalAttributeIndexReading>)externalAttributeIndexForLine:(int)y {
-    iTermImmutableMetadata metadata = [self metadataOnLine:y];
-    return iTermImmutableMetadataGetExternalAttributesIndex(metadata);
+    return [_state externalAttributeIndexForLine:y];
 }
 
 // Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
@@ -1021,8 +957,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100ScreenMark *)markOnLine:(int)line {
-#warning TODO: Figure out what to do with the mark cache. Also don't use totalScrollbackOverflow from mutable code path
-    return _state.markCache[@(_state.cumulativeScrollbackOverflow + line)];
+    return [_state markOnLine:line];
 }
 
 - (NSArray<VT100ScreenMark *> *)lastMarks {
@@ -1260,10 +1195,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Private
-
-- (VT100GridCoordRange)commandRange {
-    return _state.commandRange;
-}
 
 - (BOOL)isAnyCharDirty {
     return [_state.currentGrid isAnyCharDirty];
@@ -1767,6 +1698,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Accessors
 
+- (VT100GridCoordRange)commandRange {
+    return _state.commandRange;
+}
+
 - (void)setConfig:(id<VT100ScreenConfiguration>)config {
     [_nextConfig autorelease];
     _nextConfig = [config copyWithZone:nil];
@@ -1915,10 +1850,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - VT100ScreenSideEffectPerforming
 
 - (id<VT100ScreenDelegate>)sideEffectPerformingScreenDelegate {
+    assert([NSThread isMainThread]);
     return self.delegate;
 }
 
 - (id<iTermIntervalTreeObserver>)sideEffectPerformingIntervalTreeObserver {
+    assert([NSThread isMainThread]);
     return _state.intervalTreeObserver;
 }
 

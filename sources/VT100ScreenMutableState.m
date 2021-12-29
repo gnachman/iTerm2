@@ -12,21 +12,31 @@
 #import "PTYAnnotation.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenDelegate.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
 
 @interface VT100ScreenMutableState()<iTermMarkDelegate>
+@property (atomic) BOOL hadCommand;
 @end
 
-@implementation VT100ScreenMutableState
+@implementation VT100ScreenMutableState {
+    VT100GridCoordRange _previousCommandRange;
+    iTermIdempotentOperationJoiner *_commandRangeChangeJoiner;
+    dispatch_queue_t _queue;
+}
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
     self = [super initForMutation];
     if (self) {
+#warning TODO: When this moves to its own queue. change _queue.
+        _queue = dispatch_get_main_queue();
         _sideEffectPerformer = performer;
         _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
+        _previousCommandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
+        _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner asyncJoiner:_queue];
     }
     return self;
 }
@@ -237,6 +247,52 @@
     }
 }
 
+- (void)commandRangeDidChange {
+    [self assertOnMutationThread];
+
+    const VT100GridCoordRange current = self.commandRange;
+    DLog(@"FinalTerm: command changed %@ -> %@",
+         VT100GridCoordRangeDescription(_previousCommandRange),
+         VT100GridCoordRangeDescription(current));
+    _previousCommandRange = current;
+    const BOOL haveCommand = current.start.x >= 0 && [self haveCommandInRange:current];
+    const BOOL atPrompt = current.start.x >= 0;
+
+    if (haveCommand) {
+        VT100ScreenMark *mark = [self markOnLine:self.lastPromptLine - self.cumulativeScrollbackOverflow];
+        mark.commandRange = VT100GridAbsCoordRangeFromCoordRange(current, self.cumulativeScrollbackOverflow);
+        if (!self.hadCommand) {
+            mark.promptRange = VT100GridAbsCoordRangeMake(0,
+                                                          self.lastPromptLine,
+                                                          current.start.x,
+                                                          mark.commandRange.end.y);
+        }
+    }
+    NSString *command = haveCommand ? [self commandInRange:current] : @"";
+
+    __weak __typeof(self) weakSelf = self;
+    [_commandRangeChangeJoiner setNeedsUpdateWithBlock:^{
+        assert([NSThread isMainThread]);
+        [weakSelf notifyDelegateOfCommandChange:command
+                                       atPrompt:atPrompt
+                                    haveCommand:haveCommand
+                            sideEffectPerformer:weakSelf.sideEffectPerformer];
+    }];
+}
+
+- (void)notifyDelegateOfCommandChange:(NSString *)command
+                             atPrompt:(BOOL)atPrompt
+                          haveCommand:(BOOL)haveCommand
+                  sideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)sideEffectPerformer {
+    assert([NSThread isMainThread]);
+
+    __weak id<VT100ScreenDelegate> delegate = sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate screenCommandDidChangeTo:command
+                              atPrompt:atPrompt
+                            hadCommand:self.hadCommand
+                           haveCommand:haveCommand];
+    self.hadCommand = haveCommand;
+}
 
 #pragma mark - Annotations
 
@@ -260,7 +316,6 @@
 #pragma mark - iTermMarkDelegate
 
 - (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
-#warning TODO: Ensure this is called on the right thread once we move off main.
     [self assertOnMutationThread];
     if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
         self.lastCommandMark = mark;

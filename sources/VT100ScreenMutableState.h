@@ -67,6 +67,9 @@ NS_ASSUME_NONNULL_BEGIN
 // regular shell integration flow.
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord;
 
+// Update the commandRange in the current prompt's mark, if present. Asynchronously 
+- (void)commandRangeDidChange;
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation;

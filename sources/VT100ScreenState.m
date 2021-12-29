@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "IntervalTree.h"
 #import "iTermOrderEnforcer.h"
+#import "iTermTextExtractor.h"
 #import "LineBuffer.h"
 #import "NSDictionary+iTerm.h"
 
@@ -257,6 +258,17 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.currentGrid.size.height;
 }
 
+- (iTermImmutableMetadata)metadataOnLine:(int)lineNumber {
+    ITBetaAssert(lineNumber >= 0, @"Negative index to getLineAtIndex");
+    const int width = self.currentGrid.size.width;
+    int numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:width];
+    if (lineNumber >= numLinesInLineBuffer) {
+        return [self.currentGrid immutableMetadataAtLineNumber:lineNumber - numLinesInLineBuffer];
+    } else {
+        return [self.linebuffer metadataForLineNumber:lineNumber width:width];
+    }
+}
+
 #pragma mark - Shell Integration
 
 - (VT100ScreenMark *)lastCommandMark {
@@ -299,6 +311,98 @@ static const int kDefaultMaxScrollbackLines = 1000;
                                        self.currentGrid.cursorY + self.numberOfScrollbackLines);
     }
 }
+
+- (BOOL)haveCommandInRange:(VT100GridCoordRange)range {
+    if (range.start.x == -1) {
+        return NO;
+    }
+
+    // If semantic history goes nuts and the end-of-command code isn't received (which seems to be a
+    // common problem, probably because of buggy old versions of SH scripts) , the command can grow
+    // without bound. We'll limit the length of a command to avoid performance problems.
+    const int kMaxLines = 50;
+    if (range.end.y - range.start.y > kMaxLines) {
+        range.end.y = range.start.y + kMaxLines;
+    }
+    const int width = self.width;
+    range.end.x = MIN(range.end.x, width - 1);
+    range.start.x = MIN(range.start.x, width - 1);
+
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    return [extractor haveNonWhitespaceInFirstLineOfRange:VT100GridWindowedRangeMake(range, 0, 0)];
+}
+
+#warning TODO: Figure out what to do with the mark cache. Also don't use totalScrollbackOverflow from mutable code path
+- (VT100ScreenMark *)markOnLine:(int)line {
+    return self.markCache[@(self.cumulativeScrollbackOverflow + line)];
+}
+
+- (NSString *)commandInRange:(VT100GridCoordRange)range {
+    if (range.start.x == -1) {
+        return nil;
+    }
+    // If semantic history goes nuts and the end-of-command code isn't received (which seems to be a
+    // common problem, probably because of buggy old versions of SH scripts) , the command can grow
+    // without bound. We'll limit the length of a command to avoid performance problems.
+    const int kMaxLines = 50;
+    if (range.end.y - range.start.y > kMaxLines) {
+        range.end.y = range.start.y + kMaxLines;
+    }
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
+    NSString *command = [extractor contentInRange:VT100GridWindowedRangeMake(range, 0, 0)
+                                attributeProvider:nil
+                                       nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
+                                              pad:NO
+                               includeLastNewline:NO
+                           trimTrailingWhitespace:NO
+                                     cappedAtSize:-1
+                                     truncateTail:YES
+                                continuationChars:nil
+                                           coords:nil];
+    NSRange newline = [command rangeOfString:@"\n"];
+    if (newline.location != NSNotFound) {
+        command = [command substringToIndex:newline.location];
+    }
+
+    return [command stringByTrimmingLeadingWhitespace];
+}
+
+#pragma mark - iTermTextDataSource
+
+- (ScreenCharArray *)screenCharArrayForLine:(int)line {
+    const NSInteger numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    if (line < numLinesInLineBuffer) {
+        const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1 &&
+                                     [self.currentGrid screenCharsAtLineNumber:0][1].code == DWC_RIGHT);
+        return [[self.linebuffer wrappedLineAtIndex:line width:self.width continuation:NULL] paddedToLength:self.width
+                                                                                             eligibleForDWC:eligibleForDWC];
+    }
+    return [self screenCharArrayAtScreenIndex:line - numLinesInLineBuffer];
+}
+
+- (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
+    const screen_char_t *line = [self.currentGrid screenCharsAtLineNumber:index];
+    const int width = self.width;
+    ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:line
+                                                            length:width
+                                                      continuation:line[width]];
+    return array;
+}
+
+- (id<iTermExternalAttributeIndexReading>)externalAttributeIndexForLine:(int)y {
+    iTermImmutableMetadata metadata = [self metadataOnLine:y];
+    return iTermImmutableMetadataGetExternalAttributesIndex(metadata);
+}
+
+- (id)fetchLine:(int)line block:(id (^ NS_NOESCAPE)(ScreenCharArray *))block {
+    ScreenCharArray *sca = [self screenCharArrayForLine:line];
+    return block(sca);
+}
+
+- (long long)totalScrollbackOverflow {
+    return self.cumulativeScrollbackOverflow;
+}
+
 
 @end
 
