@@ -213,7 +213,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic) BOOL needsRedraw;
 @end
 
-@interface VT100ScreenState: NSObject<VT100ScreenState>
+@interface VT100ScreenState: NSObject<VT100ScreenState, iTermTextDataSource>
 
 - (instancetype)init NS_UNAVAILABLE;
 
@@ -232,6 +232,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) int numberOfLines;
 
+- (iTermImmutableMetadata)metadataOnLine:(int)lineNumber;
+
 #pragma mark - Interval Tree
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
@@ -243,7 +245,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Shell Integration
 
+// If at a shell prompt, this gives the range of the command being edited not past the cursor.
+// If not at a prompt (no shell integration or command is running) this is -1,-1,-1,-1.
 @property (nonatomic, readonly) VT100GridCoordRange commandRange;
+
+- (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
+
+- (VT100ScreenMark *)markOnLine:(int)line;
+
+- (NSString *)commandInRange:(VT100GridCoordRange)range;
 
 @end
 

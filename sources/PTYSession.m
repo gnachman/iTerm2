@@ -251,7 +251,7 @@ NSString *const SESSION_ARRANGEMENT_SERVER_DICT = @"Server Dict";  // NSDictiona
 // TODO: Make server report the TTY to us since orphans will end up with a nil tty.
 static NSString *const SESSION_ARRANGEMENT_TTY = @"TTY";  // TTY name. Used when using restoration to connect to a restored server.
 static NSString *const SESSION_ARRANGEMENT_VARIABLES = @"Variables";  // _variables
-static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE = @"Command Range";  // VT100GridCoordRange
+// static NSString *const SESSION_ARRANGEMENT_COMMAND_RANGE_DEPRECATED = @"Command Range";  // VT100GridCoordRange
 // Deprecated in favor of SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS and SESSION_ARRANGEMENT_SHOULD_EXPECT_CURRENT_DIR_UPDATES
 static NSString *const SESSION_ARRANGEMENT_SHELL_INTEGRATION_EVER_USED_DEPRECATED = @"Shell Integration Ever Used";  // BOOL
 
@@ -406,7 +406,6 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     NSFileHandle *_tmuxClientWritePipe;
     NSInteger _requestAttentionId;  // Last request-attention identifier
 
-    VT100GridCoordRange _commandRange;
     VT100GridAbsCoordRange _lastOrCurrentlyRunningCommandAbsRange;
 
     NSTimeInterval _timeOfLastScheduling;
@@ -711,7 +710,6 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
 
         _tmuxSecureLogging = NO;
         _tailFindContext = [[FindContext alloc] init];
-        _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
         _lastOrCurrentlyRunningCommandAbsRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
@@ -1278,9 +1276,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     aSession.cursorTypeOverride = arrangement[SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE];
     if (didRestoreContents && attachedToServer) {
-        if (arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE]) {
-            aSession->_commandRange = [arrangement[SESSION_ARRANGEMENT_COMMAND_RANGE] gridCoordRange];
-        }
         if (arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK]) {
             aSession->_alertOnNextMark = [arrangement[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] boolValue];
         }
@@ -4314,7 +4309,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)isAtShellPrompt {
-    return _commandRange.start.x >= 0;
+    return _screen.commandRange.start.x >= 0;
 }
 
 // You're processing if data was read off the socket in the last "idleTimeSeconds".
@@ -4913,11 +4908,6 @@ ITERM_WEAKLY_REFERENCEABLE
             return [_screen encodeContents:encoder linesDropped:&numberOfLinesDropped];
         }];
         result[SESSION_ARRANGEMENT_VARIABLES] = _variables.encodableDictionaryValue;
-        VT100GridCoordRange range = _commandRange;
-        range.start.y -= numberOfLinesDropped;
-        range.end.y -= numberOfLinesDropped;
-        result[SESSION_ARRANGEMENT_COMMAND_RANGE] =
-            [NSDictionary dictionaryWithGridCoordRange:range];
         result[SESSION_ARRANGEMENT_ALERT_ON_NEXT_MARK] = @(_alertOnNextMark);
         result[SESSION_ARRANGEMENT_CURSOR_GUIDE] = @(_textview.highlightCursorLine);
         result[SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE] = self.cursorTypeOverride;
@@ -9145,7 +9135,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // Click must be in the live area and not in a margin.
         return NO;
     }
-    if (_commandRange.start.x < 0) {
+    if (_screen.commandRange.start.x < 0) {
         if (_terminal.softAlternateScreenMode) {
             // In an interactive app. No restrictions.
             *verticalOk = YES;
@@ -9159,7 +9149,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         // At the command prompt. Ok to move to any char within current command, but no up or down
         // arrows please.
-        NSComparisonResult order = VT100GridCoordOrder(VT100GridCoordRangeMin(_commandRange),
+        NSComparisonResult order = VT100GridCoordOrder(VT100GridCoordRangeMin(_screen.commandRange),
                                                        coord);
         *verticalOk = NO;
         return (order != NSOrderedDescending);
@@ -9602,10 +9592,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         VT100GridAbsCoordRange range;
         iTermTextExtractorTrimTrailingWhitespace trailing;
         if (self.isAtShellPrompt) {
-            range = VT100GridAbsCoordRangeMake(_commandRange.start.x,
-                                               _commandRange.start.y + _screen.totalScrollbackOverflow,
-                                               _commandRange.end.x,
-                                               _commandRange.end.y + _screen.totalScrollbackOverflow);
+            range = VT100GridAbsCoordRangeMake(_screen.commandRange.start.x,
+                                               _screen.commandRange.start.y + _screen.totalScrollbackOverflow,
+                                               _screen.commandRange.end.x,
+                                               _screen.commandRange.end.y + _screen.totalScrollbackOverflow);
             trailing = iTermTextExtractorTrimTrailingWhitespaceAll;
         } else {
             range = _lastOrCurrentlyRunningCommandAbsRange;
@@ -11802,10 +11792,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSString *)currentCommand {
-    if (_commandRange.start.x < 0) {
+    if (_screen.commandRange.start.x < 0) {
         return nil;
     } else {
-        return [_screen commandInRange:_commandRange];
+        return [_screen commandInRange:_screen.commandRange];
     }
 }
 
@@ -11813,7 +11803,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (!_textview.cursorVisible) {
         return NO;
     }
-    VT100GridCoord coord = _commandRange.end;
+    VT100GridCoord coord = _screen.commandRange.end;
     coord.y -= _screen.numberOfScrollbackLines;
     if (!VT100GridCoordEquals(_screen.currentGrid.cursor, coord)) {
         return NO;
@@ -11825,10 +11815,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (NSArray *)autocompleteSuggestionsForCurrentCommand {
     NSString *command;
-    if (_commandRange.start.x < 0) {
+    if (_screen.commandRange.start.x < 0) {
         return nil;
     }
-    command = [_screen commandInRange:_commandRange];
+    command = [_screen commandInRange:_screen.commandRange];
     VT100RemoteHost *host = [_screen remoteHostOnLine:[_screen numberOfLines]];
     NSString *trimmedCommand =
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
@@ -11836,35 +11826,27 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                                   onHost:host];
 }
 
-- (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range {
-    DLog(@"FinalTerm: command changed. New range is %@", VT100GridCoordRangeDescription(range));
-    BOOL hadCommand = _commandRange.start.x >= 0 && [_screen haveCommandInRange:_commandRange];
-    _commandRange = range;
-    BOOL haveCommand = _commandRange.start.x >= 0 && [_screen haveCommandInRange:_commandRange];
-
-    if (haveCommand) {
-        VT100ScreenMark *mark = [_screen markOnLine:_screen.lastPromptLine - [_screen totalScrollbackOverflow]];
-        mark.commandRange = VT100GridAbsCoordRangeFromCoordRange(range, _screen.totalScrollbackOverflow);
-        if (!hadCommand) {
-            mark.promptRange = VT100GridAbsCoordRangeMake(0, _screen.lastPromptLine, range.start.x, mark.commandRange.end.y);
-        }
-    }
+- (void)screenCommandDidChangeTo:(NSString *)command
+                        atPrompt:(BOOL)atPrompt
+                      hadCommand:(BOOL)hadCommand
+                     haveCommand:(BOOL)haveCommand {
+    DLog(@"FinalTerm: command=%@ atPropt=%@ hadCommand=%@ haveCommand=%@",
+         command, @(atPrompt), @(hadCommand), @(haveCommand));
     if (!haveCommand && hadCommand) {
         DLog(@"ACH Hide because don't have a command, but just had one");
         [[_delegate realParentWindow] hideAutoCommandHistoryForSession:self];
-    } else {
-        if (!hadCommand && range.start.x >= 0) {
-            DLog(@"ACH Show because I have a range but didn't have a command");
-            [[_delegate realParentWindow] showAutoCommandHistoryForSession:self];
-        }
-        if ([[_delegate realParentWindow] wantsCommandHistoryUpdatesFromSession:self]) {
-            NSString *command = haveCommand ? [_screen commandInRange:_commandRange] : @"";
-            DLog(@"ACH Update command to %@, have=%d, range.start.x=%d", command, (int)haveCommand, range.start.x);
-            if (haveCommand && self.eligibleForAutoCommandHistory) {
-                [[_delegate realParentWindow] updateAutoCommandHistoryForPrefix:command
-                                                                      inSession:self
-                                                                    popIfNeeded:NO];
-            }
+        return;
+    }
+    if (!hadCommand && atPrompt) {
+        DLog(@"ACH Show because I have a range but didn't have a command");
+        [[_delegate realParentWindow] showAutoCommandHistoryForSession:self];
+    }
+    if ([[_delegate realParentWindow] wantsCommandHistoryUpdatesFromSession:self]) {
+        DLog(@"ACH Update command to %@", command);
+        if (haveCommand && self.eligibleForAutoCommandHistory) {
+            [[_delegate realParentWindow] updateAutoCommandHistoryForPrefix:command
+                                                                  inSession:self
+                                                                popIfNeeded:NO];
         }
     }
 }
@@ -11887,10 +11869,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     self.lastCommand = command;
     [self.variablesScope setValue:command forVariableNamed:iTermVariableKeySessionLastCommand];
 
-    // `_commandRange` is from the beginning of command, to the cursor, not necessarily the end of the command.
+    // `_screen.commandRange` is from the beginning of command, to the cursor, not necessarily the end of the command.
     // `range` here includes the entire command and a new line.
     _lastOrCurrentlyRunningCommandAbsRange = VT100GridAbsCoordRangeFromCoordRange(range, _screen.totalScrollbackOverflow);
-    _commandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
     DLog(@"Hide ACH because command ended");
     [[_delegate realParentWindow] hideAutoCommandHistoryForSession:self];
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
@@ -14620,11 +14601,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)composerManager:(iTermComposerManager *)composerManager sendCommand:(NSString *)command {
-    if (_commandRange.start.x < 0) {
+    if (_screen.commandRange.start.x < 0) {
         VT100RemoteHost *host = [self currentHost] ?: [VT100RemoteHost localhost];
         [[iTermShellHistoryController sharedInstance] addCommand:command
                                                           onHost:host
-                                                     inDirectory:[_screen workingDirectoryOnLine:_commandRange.start.y]
+                                                     inDirectory:[_screen workingDirectoryOnLine:_screen.commandRange.start.y]
                                                         withMark:nil];
     }
     [self writeTask:command];

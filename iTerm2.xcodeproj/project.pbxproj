@@ -1757,6 +1757,8 @@
 		A6661311225CFF7A00840E89 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
 		A6661312225CFF7A00840E89 /* BetterFontPicker.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6667E91277BC5A900152678 /* iTermIntervalTreeObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6667E90277BC5A900152678 /* iTermIntervalTreeObserver.m */; };
+		A6667E95277CDD1800152678 /* IdempotentOperationJoiner.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6667E94277CDD1800152678 /* IdempotentOperationJoiner.swift */; };
+		A6667E97277CDDD000152678 /* Mutex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6667E96277CDDD000152678 /* Mutex.swift */; };
 		A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA25E1CF0F20B00376F28 /* iTermEventTap.m */; };
 		A666D5E8221A191600D6184A /* iTermVariableScope+Session.h in Headers */ = {isa = PBXBuildFile; fileRef = A666D5E6221A191600D6184A /* iTermVariableScope+Session.h */; };
 		A666D5E9221A191600D6184A /* iTermVariableScope+Session.m in Sources */ = {isa = PBXBuildFile; fileRef = A666D5E7221A191600D6184A /* iTermVariableScope+Session.m */; };
@@ -5570,6 +5572,8 @@
 		A665C1F92440461500F623F0 /* WindowCorner.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WindowCorner.png; path = images/WindowCorner.png; sourceTree = "<group>"; };
 		A6661309225CFF5A00840E89 /* BetterFontPicker.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = BetterFontPicker.framework; path = BetterFontPicker/BetterFontPicker.framework; sourceTree = "<group>"; };
 		A6667E90277BC5A900152678 /* iTermIntervalTreeObserver.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermIntervalTreeObserver.m; sourceTree = "<group>"; };
+		A6667E94277CDD1800152678 /* IdempotentOperationJoiner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdempotentOperationJoiner.swift; sourceTree = "<group>"; };
+		A6667E96277CDDD000152678 /* Mutex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Mutex.swift; sourceTree = "<group>"; };
 		A666D5E6221A191600D6184A /* iTermVariableScope+Session.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermVariableScope+Session.h"; sourceTree = "<group>"; };
 		A666D5E7221A191600D6184A /* iTermVariableScope+Session.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "iTermVariableScope+Session.m"; sourceTree = "<group>"; };
 		A666D5EA221A1D9D00D6184A /* iTermVariableScope+Tab.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTermVariableScope+Tab.h"; sourceTree = "<group>"; };
@@ -9871,6 +9875,8 @@
 				A6E1524427602FFD00D0F41C /* iTermWeakBox.h */,
 				A6E1524527602FFE00D0F41C /* iTermWeakBox.m */,
 				A6667E90277BC5A900152678 /* iTermIntervalTreeObserver.m */,
+				A6667E94277CDD1800152678 /* IdempotentOperationJoiner.swift */,
+				A6667E96277CDDD000152678 /* Mutex.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -13925,6 +13931,7 @@
 				A6BF035121E176C30097DA86 /* iTermVariableScope.m in Sources */,
 				A6971F3820DA295A0075CFD4 /* ToolWebView.m in Sources */,
 				A6EC937D24E856F100EEADEF /* iTermAnnouncementView.m in Sources */,
+				A6667E97277CDDD000152678 /* Mutex.swift in Sources */,
 				A608F22220F08369008E8009 /* VT100DCSParser.m in Sources */,
 				A6C30060247117A9002BC672 /* iTermLocatedString.m in Sources */,
 				A699507821E33827009916BC /* iTermRawKeyMapper.m in Sources */,
@@ -14070,6 +14077,7 @@
 				A667C26227799447006B4DEF /* PTYNoteViewController.m in Sources */,
 				A63011AA20E7EDFC008114B7 /* iTermStatusBarKnobCheckboxViewController.m in Sources */,
 				53E9DFE9220D558E0070C9C0 /* iTermSetTitleTrigger.m in Sources */,
+				A6667E95277CDD1800152678 /* IdempotentOperationJoiner.swift in Sources */,
 				A6A4866320B6768A00493302 /* ContextMenuActionPrefsController.m in Sources */,
 				A6A4866920B6792900493302 /* iTermEditKeyActionWindowController.m in Sources */,
 				A6D4C27121E19959009CF11B /* iTermVariablesOutlineDelegate.m in Sources */,

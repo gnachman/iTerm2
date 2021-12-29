@@ -245,7 +245,11 @@
 - (BOOL)screenShouldSendReportForVariable:(NSString *)name;
 
 // FinalTerm stuff
-- (void)screenCommandDidChangeWithRange:(VT100GridCoordRange)range;
+- (void)screenCommandDidChangeTo:(NSString *)command
+                        atPrompt:(BOOL)atPrompt
+                      hadCommand:(BOOL)hadCommand
+                     haveCommand:(BOOL)haveCommand;
+
 - (void)screenDidExecuteCommand:(NSString *)command
                           range:(VT100GridCoordRange)range
                          onHost:(VT100RemoteHost *)host
