@@ -39,9 +39,8 @@
     return [aSession triggerSessionShowCapturedOutputTool:self];
 }
 
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
@@ -56,7 +55,7 @@
     output.absoluteLineNumber = lineNumber;
     output.line = stringLine.stringValue;
     output.trigger = self;
-    output.values = [NSArray arrayWithObjects:capturedStrings count:captureCount];
+    output.values = stringArray;
     [aSession triggerSession:self didCaptureOutput:output];
     return NO;
 }
