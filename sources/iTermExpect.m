@@ -7,21 +7,51 @@
 
 #import "iTermExpect.h"
 
+#import "NSArray+iTerm.h"
+
+// The concurrency model is based on multi-version concurrency. The API is designed so that merge conflicts cannot happen.
+// Clients on the main thread can add or cancel expectations.
+// Periodically, the main-thread instance of iTermExpect will be copied into the mutation thread.
+// This snapshot persists for a short time.
+// The mutation thread performs matching and may call didMatchWithCaptureGroups:.
+// Calls to didMatchWithCaptureGroups: on the mutation thread schedule matching main-thread calls.
+// These main thread calls update the main thread's copy of iTermExpect (e.g., adding and removing
+// expectations) and also run user callbacks.
+// During a call to didMatchWithCaptureGroups: the mutation thread updates its internal state in the
+// same way.
 @interface iTermExpectation()
 @property (nonatomic, readonly) void (^willExpect)(iTermExpectation *expectation);
 @property (nullable, nonatomic, strong, readwrite) iTermExpectation *successor;
 @property (nullable, nonatomic, weak, readwrite) iTermExpectation *predecessor;
+@property (nonatomic, nullable, weak) iTermExpectation *original;
+// Did a copy already match this and dispatch a call to didMatchWithCaptureGroups: on self?
+@property (atomic) BOOL matchPending;
 @end
 
 @implementation iTermExpectation {
     void (^_completion)(iTermExpectation *, NSArray<NSString *> * _Nonnull);
 }
 
+- (instancetype)initWithOriginal:(iTermExpectation *)original
+                      willExpect:(void (^)(iTermExpectation *))willExpect
+                      completion:(void (^)(iTermExpectation *, NSArray<NSString *> * _Nonnull))completion {
+    self = [self initWithRegularExpression:original.regex
+                                  deadline:original.deadline
+                                willExpect:willExpect
+                                completion:completion];
+    if (self) {
+        _original = original;
+    }
+    return self;
+}
+
 - (instancetype)initWithRegularExpression:(NSString *)regex
+                                 deadline:(NSDate *)deadline
                                willExpect:(void (^)(iTermExpectation *))willExpect
                                completion:(void (^)(iTermExpectation *, NSArray<NSString *> * _Nonnull))completion {
     self = [super init];
     if (self) {
+        _deadline = deadline;
         _completion = [completion copy];
         _willExpect = [willExpect copy];
         _regex = [regex copy];
@@ -30,7 +60,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p regex=%@ hasCompleted=%@ successors=%@>",
+    return [NSString stringWithFormat:@"<%@: %p regex=%@ hasCompleted=%@ successor=%@>",
             NSStringFromClass(self.class), self, _regex, @(self.hasCompleted), _successor];
 }
 
@@ -40,6 +70,17 @@
 }
 
 - (void)didMatchWithCaptureGroups:(NSArray<NSString *> *)captureGroups {
+    if (self.original) {
+        iTermExpectation *original = self.original;
+        original.matchPending = YES;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            original.matchPending = NO;
+            if (original.hasCompleted) {
+                return;
+            }
+            [original didMatchWithCaptureGroups:captureGroups];
+        });
+    }
     _hasCompleted = YES;
     if (_completion) {
         _completion(self, captureGroups);
@@ -51,6 +92,7 @@
 }
 
 - (void)addSuccessor:(iTermExpectation *)successor {
+    assert([NSThread isMainThread]);
     iTermExpectation *current = self;
     while (current.successor) {
         current = current.successor;
@@ -65,10 +107,12 @@
 }
 
 - (void)cancel {
+    [_successor cancel];
     _predecessor.successor = nil;
     _hasCompleted = YES;
     _completion = nil;
     _willExpect = nil;
+    assert(!self.original);  // Copies cannot cancel. This prevents the mutation thread from cancelling, which is not tested/supported.
 }
 
 @end
@@ -86,17 +130,11 @@
 }
 
 - (iTermExpectation *)expectRegularExpression:(NSString *)regex
-                                   completion:(void (^)(NSArray<NSString *> *captureGroups))completion {
-    return [self expectRegularExpression:regex
-                                   after:nil
-                              willExpect:nil
-                              completion:completion];
-}
-
-- (iTermExpectation *)expectRegularExpression:(NSString *)regex
                                         after:(nullable iTermExpectation *)predecessor
+                                     deadline:(nullable NSDate *)deadline
                                    willExpect:(void (^ _Nullable)(void))willExpect
                                    completion:(void (^ _Nullable)(NSArray<NSString *> * _Nonnull))completion {
+    assert([NSThread isMainThread]);
     __weak __typeof(self) weakSelf = self;
     void (^internalWillExpect)(iTermExpectation *) = ^(iTermExpectation *expectation){
         if (willExpect) {
@@ -112,6 +150,7 @@
         }
     };
     iTermExpectation *expectation = [[iTermExpectation alloc] initWithRegularExpression:regex
+                                                                               deadline:deadline
                                                                              willExpect:internalWillExpect
                                                                              completion:internalCompletion];
     if (predecessor && !predecessor.hasCompleted) {
@@ -123,6 +162,9 @@
 }
 
 - (void)addExpectation:(iTermExpectation *)expectation {
+    if (!expectation) {
+        return;
+    }
     [_expectations addObject:expectation];
 }
 
@@ -135,13 +177,48 @@
     [_expectations removeObject:expectation];
 }
 
-- (void)setTimeout:(NSTimeInterval)timeout forExpectation:(iTermExpectation *)expectation {
-    __weak __typeof(self) weakSelf = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeout * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (!expectation.hasCompleted) {
-            [weakSelf cancelExpectation:expectation];
-        }
-    });
+- (void)removeExpiredExpectations {
+    [_expectations removeObjectsPassingTest:^BOOL(iTermExpectation *expectation) {
+        return expectation.deadline != nil && expectation.deadline.timeIntervalSinceNow < 0;
+    }];
+}
+
+- (NSArray<iTermExpectation *> *)expectations {
+    [self removeExpiredExpectations];
+    return [_expectations copy];
+}
+
+#pragma mark - NSCopying
+
+- (iTermExpectation *)copyOfExpectation:(iTermExpectation *)original copiedExpect:(iTermExpect *)copiedExpect {
+    if (original.matchPending) {
+        return [self copyOfExpectation:original.successor copiedExpect:copiedExpect];
+    }
+
+    __weak __typeof(self) weakSelf = copiedExpect;
+    void (^willExpect)(iTermExpectation *) = ^(iTermExpectation *obj) {
+        [weakSelf addExpectation:obj];
+    };
+    void (^completion)(iTermExpectation *, NSArray<NSString *> *) = ^(iTermExpectation *obj,
+                                                                      NSArray<NSString *> * _Nonnull captures) {
+        [weakSelf removeExpectation:obj];
+    };
+    iTermExpectation *theCopy = [[iTermExpectation alloc] initWithOriginal:original
+                                                                willExpect:willExpect
+                                                                completion:completion];
+    if (original.successor) {
+        theCopy.successor = [self copyOfExpectation:original.successor copiedExpect:copiedExpect];
+    }
+    return theCopy;
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    iTermExpect *theCopy = [[iTermExpect alloc] init];
+    [self.expectations enumerateObjectsUsingBlock:^(iTermExpectation * _Nonnull original, NSUInteger idx, BOOL * _Nonnull stop) {
+        [theCopy addExpectation:[self copyOfExpectation:original
+                                           copiedExpect:theCopy]];
+    }];
+    return theCopy;
 }
 
 @end
