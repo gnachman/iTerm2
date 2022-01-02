@@ -41,24 +41,18 @@
 }
 
 
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Running a command is so slow & rare that this is ok.
-    [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                              count:captureCount
-                                              scope:[aSession triggerSessionVariableScope:self]
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
+                                              scope:[aSession triggerSessionVariableScopeProvider:self]
                                               owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *command) {
-        if (!command) {
-            return;
-        }
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull command) {
         [self runCommand:command session:aSession];
     }];
     return YES;
@@ -66,10 +60,8 @@
 
 - (void)runCommand:(NSString *)command session:(id<iTermTriggerSession>)session {
     DLog(@"Invoking command %@", command);
-    iTermBackgroundCommandRunner *runner = [[ScriptTrigger commandRunnerPool] requestBackgroundCommandRunnerWithTerminationBlock:nil];
-    runner.command = command;
 
-    [session triggerSession:self runCommandWithRunner:runner];
+    [session triggerSession:self runCommand:command withRunnerPool:[ScriptTrigger commandRunnerPool]];
 }
 
 @end

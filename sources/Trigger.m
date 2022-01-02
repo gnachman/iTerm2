@@ -31,6 +31,8 @@ NSString * const kTriggerDisabledKey = @"disabled";
     long long _lastLineNumber;
     NSString *regex_;
     id param_;
+
+    // main thread access only
     iTermSwiftyStringWithBackreferencesEvaluator *_evaluator;
 }
 
@@ -132,9 +134,8 @@ NSString * const kTriggerDisabledKey = @"disabled";
     return nil;
 }
 
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
@@ -180,61 +181,56 @@ NSString * const kTriggerDisabledKey = @"disabled";
                                         volatile BOOL *const stopEnumerating) {
                                self->_lastLineNumber = lineNumber;
                                DLog(@"Trigger %@ matched string %@", self, s);
-                               if (![self performActionWithCapturedStrings:capturedStrings
-                                                            capturedRanges:capturedRanges
-                                                              captureCount:captureCount
-                                                                 inSession:aSession
-                                                                  onString:stringLine
-                                                      atAbsoluteLineNumber:lineNumber
-                                                          useInterpolation:useInterpolation
-                                                                      stop:&stopFutureTriggersFromRunningOnThisLine]) {
-                                   *stopEnumerating = YES;
-                               }
-                           }];
+        NSArray<NSString *> *stringArray = [[NSArray alloc] initWithObjects:capturedStrings
+                                                                      count:captureCount];
+        if (![self performActionWithCapturedStrings:stringArray
+                                     capturedRanges:capturedRanges
+                                          inSession:aSession
+                                           onString:stringLine
+                               atAbsoluteLineNumber:lineNumber
+                                   useInterpolation:useInterpolation
+                                               stop:&stopFutureTriggersFromRunningOnThisLine]) {
+            *stopEnumerating = YES;
+        }
+    }];
     if (!partialLine) {
         _lastLineNumber = -1;
     }
     return stopFutureTriggersFromRunningOnThisLine;
 }
 
-- (void)paramWithBackreferencesReplacedWithValues:(NSArray *)strings
-                                            scope:(iTermVariableScope *)scope
-                                            owner:(id<iTermObject>)owner
-                                 useInterpolation:(BOOL)useInterpolation
-                                       completion:(void (^)(NSString *))completion {
-    NSString *temp[10];
-    int i;
-    for (i = 0; i < strings.count; i++) {
-        temp[i] = strings[i];
-    }
-    [self paramWithBackreferencesReplacedWithValues:temp
-                                              count:i
+- (iTermPromise<NSString *> *)paramWithBackreferencesReplacedWithValues:(NSArray *)stringArray
+                                                                  scope:(id<iTermTriggerScopeProvider>)scopeProvider
+                                                                  owner:(id<iTermObject>)owner
+                                                       useInterpolation:(BOOL)useInterpolation {
+    NSString *p = [NSString castFrom:self.param] ?: @"";
+    if (useInterpolation && [p interpolatedStringContainsNonliteral]) {
+        return [iTermPromise promise:^(id<iTermPromiseSeal> _Nonnull seal) {
+            [scopeProvider performBlockWithScope:^(iTermVariableScope * _Nonnull scope) {
+                assert([NSThread isMainThread]);
+                [self evaluateSwiftyStringParameter:p
+                                     backreferences:stringArray
                                               scope:scope
                                               owner:owner
-                                   useInterpolation:useInterpolation
-                                         completion:completion];
-}
-
-- (void)paramWithBackreferencesReplacedWithValues:(NSString * const*)strings
-                                            count:(NSInteger)count
-                                            scope:(iTermVariableScope *)scope
-                                            owner:(id<iTermObject>)owner
-                                 useInterpolation:(BOOL)useInterpolation
-                                       completion:(void (^)(NSString *))completion {
-    NSString *p = [NSString castFrom:self.param] ?: @"";
-    if (useInterpolation) {
-        [self evaluateSwiftyStringParameter:p
-                             backreferences:[[NSArray alloc] initWithObjects:strings count:count]
-                                      scope:scope
-                                      owner:owner
-                                 completion:completion];
-        return;
+                                         completion:^(NSString *value) {
+                    assert([NSThread isMainThread]);
+                    dispatch_async([scopeProvider triggerCompletionQueue], ^{
+                        if (value) {
+                            [seal fulfill:value];
+                        } else {
+                            [seal reject:[NSError errorWithDomain:@"com.iterm2.trigger" code:0 userInfo:nil]];
+                        }
+                    });
+                }];
+            }];
+        }];
     }
 
+    const NSUInteger count = stringArray.count;
     for (int i = 0; i < 9; i++) {
         NSString *rep = @"";
         if (count > i) {
-            rep = strings[i];
+            rep = stringArray[i];
         }
         p = [p stringByReplacingBackreference:i withString:rep];
     }
@@ -246,7 +242,10 @@ NSString * const kTriggerDisabledKey = @"disabled";
     p = [p stringByReplacingEscapedChar:'t' withString:@"\t"];
     p = [p stringByReplacingEscapedChar:'\\' withString:@"\\"];
     p = [p stringByReplacingEscapedHexValuesWithChars];
-    completion(p);
+
+    return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+        [seal fulfill:p];
+    }];
 }
 
 - (iTermVariableScope *)variableScope:(iTermVariableScope *)scope byAddingBackreferences:(NSArray<NSString *> *)backreferences {
@@ -258,6 +257,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
                                 scope:(iTermVariableScope *)scope
                                 owner:(id<iTermObject>)owner
                            completion:(void (^)(NSString *))completion {
+    assert([NSThread isMainThread]);
     if (!_evaluator) {
         _evaluator = [[iTermSwiftyStringWithBackreferencesEvaluator alloc] initWithExpression:expression];
     } else {
@@ -278,6 +278,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
 }
 
 - (void)evaluationDidFailWithError:(NSError *)error {
+    assert([NSThread isMainThread]);
     NSString *title =
         [NSString stringWithFormat:@"The following parameter for a “%@” trigger could not be evaluated:\n\n%@\n\nThe error was:\n\n%@",
                        [[self class] title],

@@ -224,33 +224,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)highlightTextInRange:(NSRange)range
    basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                       colors:(NSDictionary *)colors {
-    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - _state.numberOfScrollbackLines;
-
-    VT100GridRun gridRun = [_state.currentGrid gridRunFromRange:range relativeToRow:lineNumber];
-    DLog(@"Highlight range %@ with colors %@ at lineNumber %@ giving grid run %@",
-         NSStringFromRange(range),
-         colors,
-         @(lineNumber),
-         VT100GridRunDescription(gridRun));
-
-    if (gridRun.length > 0) {
-        NSColor *foreground = colors[kHighlightForegroundColor];
-        NSColor *background = colors[kHighlightBackgroundColor];
-        [self mutHighlightRun:gridRun withForegroundColor:foreground backgroundColor:background];
-    }
-}
-
-- (void)linkTextInRange:(NSRange)range
-basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                  URLCode:(unsigned int)code {
-    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - _state.numberOfScrollbackLines;
-    if (lineNumber < 0) {
-        return;
-    }
-    VT100GridRun gridRun = [_state.currentGrid gridRunFromRange:range relativeToRow:lineNumber];
-    if (gridRun.length > 0) {
-        [self mutLinkRun:gridRun withURLCode:code];
-    }
+    [_mutableState highlightTextInRange:range basedAtAbsoluteLineNumber:absoluteLineNumber colors:colors];
 }
 
 - (void)storeLastPositionInLineBufferAsFindContextSavedPosition {
@@ -689,25 +663,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
-    long long pos = [_state intervalForGridCoordRange:VT100GridCoordRangeMake(0,
-                                                                              line + 1,
-                                                                              0,
-                                                                              line + 1)].location;
-    if (pos < 0) {
-        return nil;
-    }
-    NSEnumerator *enumerator = [_state.intervalTree reverseEnumeratorAt:pos];
-    NSArray *objects;
-    do {
-        objects = [enumerator nextObject];
-        objects = [objects objectsOfClasses:@[ cls ]];
-    } while (objects && !objects.count);
-    if (objects.count) {
-        // We want the last object because they are sorted chronologically.
-        return [objects lastObject];
-    } else {
-        return nil;
-    }
+    return [_state objectOnOrBeforeLine:line ofClass:cls];
 }
 
 - (VT100RemoteHost *)remoteHostOnLine:(int)line {
@@ -921,25 +877,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100RemoteHost *)lastRemoteHost {
-    return [self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
+    return [_state lastRemoteHost];
 }
 
 - (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
-    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
-    NSArray *objects = [enumerator nextObject];
-    while (objects) {
-        for (id obj in objects) {
-            if ([obj isKindOfClass:theClass]) {
-                if (wantPrompt && [obj isPrompt]) {
-                    return obj;
-                } else if (!wantPrompt) {
-                    return obj;
-                }
-            }
-        }
-        objects = [enumerator nextObject];
-    }
-    return nil;
+    return [_state lastMarkMustBePrompt:wantPrompt class:theClass];
 }
 
 - (__kindof id<IntervalTreeObject>)lastMarkPassingTest:(BOOL (^)(__kindof id<IntervalTreeObject>))block {
@@ -1522,6 +1464,27 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Mutation Wrappers
 
+- (iTermExpect *)expect {
+    return [self mutExpectSource];
+}
+
+- (void)willUpdateDisplay {
+    [self mutWillUpdateDisplay];
+}
+
+- (void)loadTriggersFromProfileArray:(NSArray *)array
+              useInterpolatedStrings:(BOOL)useInterpolatedStrings {
+    [self mutLoadTriggersFromProfileArray:array useInterpolatedStrings:useInterpolatedStrings];
+}
+
+- (void)setExited:(BOOL)exited {
+    [self mutSetExited:exited];
+}
+
+- (void)setTriggerParametersUseInterpolatedStrings:(BOOL)triggerParametersUseInterpolatedStrings {
+    [self mutSetTriggerParametersUseInterpolatedStrings:triggerParametersUseInterpolatedStrings];
+}
+
 - (void)currentDirectoryDidChangeTo:(NSString *)dir {
     [self mutCurrentDirectoryDidChangeTo:dir];
 }
@@ -1594,11 +1557,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
-                knownTriggers:(NSArray *)triggers
                    reattached:(BOOL)reattached {
     [self mutRestoreFromDictionary:dictionary
      includeRestorationBanner:includeRestorationBanner
-                knownTriggers:triggers
                    reattached:reattached];
 }
 
@@ -1697,6 +1658,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Accessors
+
+- (iTermSlownessDetector *)slownessDetector {
+    return [self mutSlownessDetector];
+}
 
 - (VT100GridCoordRange)commandRange {
     return _state.commandRange;

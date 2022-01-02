@@ -84,35 +84,45 @@
 
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
-- (instancetype)initWithObserver:(void (^)(iTermOr<id, NSError *> *))observer NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithLock:(NSObject *)lock
+                    observer:(void (^)(iTermOr<id, NSError *> *))observer
+NS_DESIGNATED_INITIALIZER;
 
 - (void)fulfill:(id)value;
 - (void)reject:(NSError *)error;
 
 @end
 
-@implementation iTermPromiseSeal
+@implementation iTermPromiseSeal {
+    NSObject *_lock;
+}
 
-- (instancetype)initWithObserver:(void (^)(iTermOr<id, NSError *> *))observer {
+- (instancetype)initWithLock:(NSObject *)lock
+                    observer:(void (^)(iTermOr<id, NSError *> *))observer {
     self = [super init];
     if (self) {
         _observer = [observer copy];
+        _lock = lock;
     }
     return self;
 }
 
 - (void)fulfill:(id)value {
-    assert(_value == nil);
     assert(value);
-    _value = [iTermOr first:value];
-    self.observer(self.value);
+    @synchronized (_lock) {
+        assert(_value == nil);
+        _value = [iTermOr first:value];
+        self.observer(self.value);
+    }
 }
 
 - (void)reject:(NSError *)error {
-    assert(_value == nil);
     assert(error);
-    _value = [iTermOr second:error];
-    self.observer(self.value);
+    @synchronized (_lock) {
+        assert(_value == nil);
+        _value = [iTermOr second:error];
+        self.observer(self.value);
+    }
 }
 
 @end
@@ -123,7 +133,22 @@
 @property (nonatomic, strong) void (^callback)(iTermOr<id, NSError *> *);
 @end
 
-@implementation iTermPromise
+@implementation iTermPromise {
+    NSObject *_lock;
+    BOOL _haveNotified;
+}
+
++ (void)mutateStorage:(void (^)(NSMutableSet<iTermPromise *> *storage))block {
+    static dispatch_once_t onceToken;
+    static NSMutableSet<iTermPromise *> *storage;
+    dispatch_once(&onceToken, ^{
+        storage = [NSMutableSet set];
+    });
+
+    @synchronized([iTermPromise class]) {
+        block(storage);
+    }
+}
 
 + (instancetype)promise:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal>))block {
     return [[iTermPromise alloc] initPrivate:block];
@@ -131,89 +156,131 @@
 
 - (instancetype)initPrivate:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal>))block {
     self = [super init];
-    __weak __typeof(self) weakSelf = self;
-    iTermPromiseSeal *seal = [[iTermPromiseSeal alloc] initWithObserver:^(iTermOr<id,NSError *> *or) {
-        [or whenFirst:^(id object) {
-            [weakSelf didFulfill:object];
-        }
-               second:^(NSError *object) {
-            [weakSelf didReject:object];
-        }];
-    }];
-    if (!seal) {
-        return nil;
-    }
     if (self) {
-        block(seal);
+        _lock = [[NSObject alloc] init];
+        __weak __typeof(self) weakSelf = self;
+        iTermPromiseSeal *seal = [[iTermPromiseSeal alloc] initWithLock:_lock
+                                                               observer:^(iTermOr<id,NSError *> *or) {
+            [or whenFirst:^(id object) { [weakSelf didFulfill:object]; }
+                   second:^(NSError *object) { [weakSelf didReject:object]; }];
+        }];
+        [iTermPromise mutateStorage:^(NSMutableSet<iTermPromise *> *storage) {
+            [storage addObject:self];
+        }];
+        if (self) {
+            block(seal);
+        }
     }
     return self;
 }
 
+- (BOOL)isEqual:(id)object {
+    return self == object;
+}
+
+- (NSUInteger)hash {
+    NSUInteger result;
+    void *selfPtr = (__bridge void *)self;
+    assert(sizeof(result) == sizeof(selfPtr));
+    memmove(&result, &selfPtr, sizeof(result));
+    return result;
+}
+
 - (void)didFulfill:(id)object {
-    assert(!self.value);
-    self.value = [iTermOr first:object];
+    @synchronized (_lock) {
+        assert(!self.value);
+        self.value = [iTermOr first:object];
+        [iTermPromise mutateStorage:^(NSMutableSet<iTermPromise *> *storage) {
+            [storage removeObject:self];
+        }];
+    }
 }
 
 - (void)didReject:(NSError *)error {
-    assert(!self.value);
-    self.value = [iTermOr second:error];
+    @synchronized (_lock) {
+        assert(!self.value);
+        self.value = [iTermOr second:error];
+        [iTermPromise mutateStorage:^(NSMutableSet<iTermPromise *> *storage) {
+            [storage removeObject:self];
+        }];
+    }
 }
 
 - (void)setValue:(iTermOr<id, NSError *> *)value {
-    assert(!_value);
-    assert(value);
+    @synchronized (_lock) {
+        assert(!_value);
+        assert(value);
 
-    _value = value;
-    [self notify];
+        _value = value;
+        [self notify];
+    }
 }
 
 - (void)setCallback:(void (^)(iTermOr<id,NSError *> *))callback {
-    assert(!_callback);
-    assert(callback);
+    @synchronized (_lock) {
+        assert(!_callback);
+        assert(callback);
 
-    _callback = callback;
-    [self notify];
+        _callback = callback;
+        [self notify];
+    }
 }
 
 - (void)notify {
-    if (!self.callback || !self.value) {
-        return;
+    @synchronized (_lock) {
+        assert(!_haveNotified);
+        _haveNotified = YES;
+        if (!self.callback || !self.value) {
+            return;
+        }
+        self.callback(self.value);
     }
-    self.callback(self.value);
 }
 
 - (iTermPromise *)then:(void (^)(id))block {
-    assert(!self.callback);
+    @synchronized (_lock) {
+        assert(!self.callback);
 
-    iTermPromise *next = [iTermPromise promise:^(id<iTermPromiseSeal> seal) {
-        self.callback = ^(iTermOr<id,NSError *> *value) {
-            [value whenFirst:^(id object) {
-                block(object);
-                [seal fulfill:object];
-            }
-                      second:^(NSError *object) {
-                [seal reject:object];
-            }];
-        };
-    }];
-    return next;
+        iTermPromise *next = [iTermPromise promise:^(id<iTermPromiseSeal> seal) {
+            self.callback = ^(iTermOr<id,NSError *> *value) {
+                // _lock is held at this point since this is called from -notify.
+                [value whenFirst:^(id object) {
+                    block(object);
+                    [seal fulfill:object];
+                }
+                          second:^(NSError *object) {
+                    [seal reject:object];
+                }];
+            };
+        }];
+        return next;
+    }
 }
 
 - (iTermPromise *)catchError:(void (^)(NSError *error))block {
-    assert(!self.callback);
+    @synchronized (_lock) {
+        assert(!self.callback);
 
-    iTermPromise *next = [iTermPromise promise:^(id<iTermPromiseSeal> seal) {
-        self.callback = ^(iTermOr<id,NSError *> *value) {
-            [value whenFirst:^(id object) {
-                [seal fulfill:object];
-            }
-                      second:^(NSError *object) {
-                block(object);
-                [seal reject:object];
-            }];
-        };
-    }];
-    return next;
+        iTermPromise *next = [iTermPromise promise:^(id<iTermPromiseSeal> seal) {
+            self.callback = ^(iTermOr<id,NSError *> *value) {
+                // _lock is held at this point since this is called from -notify.
+                [value whenFirst:^(id object) {
+                    [seal fulfill:object];
+                }
+                          second:^(NSError *object) {
+                    block(object);
+                    [seal reject:object];
+                }];
+            };
+        }];
+        return next;
+    }
+}
+
+- (BOOL)hasValue {
+    @synchronized (_lock) {
+        return self.value != nil;
+    }
 }
 
 @end

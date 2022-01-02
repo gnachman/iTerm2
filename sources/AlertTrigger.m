@@ -31,9 +31,8 @@
     return YES;
 }
 
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
@@ -43,14 +42,14 @@
         return YES;
     }
     // Need to stop the world to get scope, provided it is needed. Alerts are so slow & rare that this is ok.
-    [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                              count:captureCount
-                                              scope:[aSession triggerSessionVariableScope:self]
-                                              owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *message) {
-                                             [self showAlertWithMessage:message inSession:aSession];
-                                         }];
+    id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
+    dispatch_queue_t queue = [scopeProvider triggerCompletionQueue];
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
+                                               scope:scopeProvider
+                                               owner:aSession
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull message) {
+        [self showAlertWithMessage:message inSession:aSession queue:queue];
+    }];
     return YES;
 }
 
@@ -63,37 +62,18 @@
     return _rateLimit;
 }
 
-- (void)showAlertWithMessage:(NSString *)message inSession:(id<iTermTriggerSession>)aSession {
-    if (!message) {
-        return;
-    }
+- (void)showAlertWithMessage:(NSString *)message inSession:(id<iTermTriggerSession>)aSession queue:(dispatch_queue_t)queue {
     [[self rateLimit] performRateLimitedBlock:^{
-        [self reallyShowAlertWithMessage:message inSession:aSession];
+        [self reallyShowAlertWithMessage:message inSession:aSession queue:queue];
     }];
 }
 
-- (void)reallyShowAlertWithMessage:(NSString *)message inSession:(id<iTermTriggerSession>)aSession {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = message ?: @"";
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Show Session"];
-    [alert addButtonWithTitle:@"Disable This Alert"];
-    switch ([alert runModal]) {
-        case NSAlertFirstButtonReturn:
-            break;
-
-        case NSAlertSecondButtonReturn: {
-            [aSession triggerSessionReveal:self];
-            break;
-        }
-
-        case NSAlertThirdButtonReturn:
-            disabled_ = YES;
-            break;
-
-        default:
-            break;
-    }
+- (void)reallyShowAlertWithMessage:(NSString *)message inSession:(id<iTermTriggerSession>)aSession queue:(dispatch_queue_t)queue {
+    [aSession triggerShowAlertWithMessage:message disable:^{
+        dispatch_async(queue, ^{
+            self->disabled_ = YES;
+        });
+    }];
 }
 
 @end

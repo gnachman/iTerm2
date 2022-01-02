@@ -17,6 +17,7 @@
 #import "VT100ScreenSideEffects.h"
 #import "VT100Terminal.h"
 #import "iTermColorMap.h"
+#import "iTermExpect.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMark.h"
 #import "iTermTemporaryDoubleBufferedGridController.h"
@@ -25,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class IntervalTree;
 @class VT100InlineImageHelper;
+@class VT100RemoteHost;
 @class iTermOrderEnforcer;
 
 @protocol VT100ScreenState<NSObject>
@@ -242,8 +244,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
                                   width:(int)width
                             linesOffset:(long long)linesOffset;
+- (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
 
 #pragma mark - Shell Integration
+
+@property (nonatomic, readonly) VT100RemoteHost *lastRemoteHost;
 
 // If at a shell prompt, this gives the range of the command being edited not past the cursor.
 // If not at a prompt (no shell integration or command is running) this is -1,-1,-1,-1.
@@ -254,6 +259,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (VT100ScreenMark *)markOnLine:(int)line;
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
+
+- (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass;
 
 @end
 

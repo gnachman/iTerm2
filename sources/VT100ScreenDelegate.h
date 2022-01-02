@@ -6,12 +6,41 @@
 
 @class VT100RemoteHost;
 @class VT100Screen;
+@class iTermBackgroundCommandRunnerPool;
 @class iTermColorMap;
 @protocol iTermMark;
 @class iTermSelection;
 @protocol iTermOrderedToken;
 
-@protocol VT100ScreenDelegate <NSObject, iTermColorMapDelegate>
+@protocol iTermTriggerSideEffectExecutor<NSObject>
+- (void)triggerSideEffectReveal;
+- (void)triggerSideEffectRingBell;
+- (void)triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded;
+- (void)triggerSideEffectShowCapturedOutputTool;
+- (void)triggerSideEffectShowShellIntegrationRequiredAnnouncement;
+- (void)triggerSideEffectDidCaptureOutput;
+- (void)triggerSideEffectLaunchCoprocessWithCommand:(NSString * _Nonnull)command
+                                         identifier:(NSString * _Nullable)identifier
+                                             silent:(BOOL)silent
+                                       triggerTitle:(NSString * _Nonnull)triggerTitle;
+- (void)triggerSideEffectMakeFirstResponder;
+- (void)triggerSideEffectPostUserNotificationWithMessage:(NSString * _Nonnull)message;
+- (void)triggerSideEffectStopScrollingAtLine:(long long)absLine;
+- (void)triggerSideEffectOpenPasswordManagerToAccountName:(NSString * _Nullable)accountName;
+- (void)triggerSideEffectRunBackgroundCommand:(NSString *)command pool:(iTermBackgroundCommandRunnerPool *)pool;
+- (void)triggerWriteTextWithoutBroadcasting:(NSString * _Nonnull)text;
+- (void)triggerSideEffectShowAlertWithMessage:(NSString * _Nonnull)message
+                                      disable:(void (^ _Nonnull)(void))disable;
+- (iTermVariableScope * _Nonnull)triggerSideEffectVariableScope;
+- (void)triggerSideEffectSetTitle:(NSString * _Nonnull)newName;
+- (void)triggerSideEffectInvokeFunctionCall:(NSString * _Nonnull)invocation
+                              withVariables:(NSDictionary * _Nonnull)temporaryVariables
+                                   captures:(NSArray<NSString *> * _Nonnull)captureStringArray
+                                    trigger:(Trigger * _Nonnull)trigger;
+- (void)triggerSideEffectSetValue:(id)value forVariableNamed:(NSString *)name;
+@end
+
+@protocol VT100ScreenDelegate <NSObject, iTermColorMapDelegate, iTermTriggerSideEffectExecutor>
 
 // Screen contents have become dirty and should be redrawn right away.
 - (void)screenNeedsRedraw;
@@ -38,16 +67,16 @@
 - (BOOL)screenAllowTitleSetting;
 
 // Called after text was added to the current line. Can be used to check triggers.
-- (void)screenDidAppendStringToCurrentLine:(NSString *)string
+- (void)screenDidAppendStringToCurrentLine:(NSString * _Nonnull)string
                                isPlainText:(BOOL)plainText;
-- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData;
+- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData * _Nonnull)asciiData;
 
 // Change the cursor's appearance.
 - (void)screenSetCursorBlinking:(BOOL)blink;
 - (BOOL)screenCursorIsBlinking;
 - (void)screenSetCursorType:(ITermCursorType)type;
 
-- (void)screenGetCursorType:(ITermCursorType *)cursorTypeOut
+- (void)screenGetCursorType:(ITermCursorType *_Nonnull)cursorTypeOut
                    blinking:(BOOL *)blinking;
 
 - (void)screenResetCursorTypeAndBlink;
@@ -64,7 +93,7 @@
 - (BOOL)screenShouldBeginPrinting;
 
 // Sets the window title.
-- (void)screenSetWindowTitle:(NSString *)title;
+- (void)screenSetWindowTitle:(NSString * _Nonnull)title;
 
 // Returns the current window title.
 - (NSString *)screenWindowTitle;
@@ -73,8 +102,8 @@
 - (NSString *)screenIconTitle;
 
 // Sets the session's name.
-- (void)screenSetIconName:(NSString *)name;
-- (void)screenSetSubtitle:(NSString *)subtitle;
+- (void)screenSetIconName:(NSString * _Nonnull)name;
+- (void)screenSetSubtitle:(NSString * _Nonnull)subtitle;
 
 // Returns the session's current name
 - (NSString *)screenName;
@@ -316,5 +345,8 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode;
 - (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
 - (int)screenMaximumTheoreticalImageDimension;
+- (void)screenDidUpdateReturnCodeForMark:(VT100ScreenMark *)mark
+                              remoteHost:(VT100RemoteHost *)remoteHost;
+- (void)screenDidUpdateCurrentDirectory;
 
 @end

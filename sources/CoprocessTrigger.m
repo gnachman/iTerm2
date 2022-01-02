@@ -26,21 +26,18 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
     return @"Enter coprocess command to run";
 }
 
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Coprocesses are so slow & rare that this is ok.
-    [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                              count:captureCount
-                                              scope:[aSession triggerSessionVariableScope:self]
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
+                                              scope:[aSession triggerSessionVariableScopeProvider:self]
                                               owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *command) {
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull command) {
         [aSession triggerSession:self
       launchCoprocessWithCommand:command
                       identifier:kSuppressCoprocessTriggerWarning

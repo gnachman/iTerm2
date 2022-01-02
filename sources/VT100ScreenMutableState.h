@@ -8,7 +8,10 @@
 #import <Foundation/Foundation.h>
 #import "VT100ScreenState.h"
 
+@class Trigger;
 @protocol VT100ScreenConfiguration;
+@protocol iTermOrderedToken;
+@class iTermSlownessDetector;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -23,6 +26,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
 @property (atomic, weak) id<VT100ScreenSideEffectPerforming> sideEffectPerformer;
 @property (nonatomic, copy) id<VT100ScreenConfiguration> config;
+
+// Mutations made here on the main thread are copied into the trigger evaluator's expect.
+@property (nonatomic, readonly) iTermExpect *expectSource;
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
 - (id<VT100ScreenState>)copy;
@@ -45,6 +51,24 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)appendLineFeed;
 - (void)appendCarriageReturnLineFeed;
+
+#pragma mark - URLs
+
+- (void)linkTextInRange:(NSRange)range
+basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                URLCode:(unsigned int)code;
+
+- (void)linkRun:(VT100GridRun)run
+    withURLCode:(unsigned int)code;
+
+#pragma mark - Highlighting
+
+- (void)highlightTextInRange:(NSRange)range
+   basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                      colors:(NSDictionary *)colors;
+- (void)highlightRun:(VT100GridRun)run
+ withForegroundColor:(NSColor *)fgColor
+     backgroundColor:(NSColor *)bgColor;
 
 #pragma mark - Interval Tree
 
@@ -70,9 +94,53 @@ NS_ASSUME_NONNULL_BEGIN
 // Update the commandRange in the current prompt's mark, if present. Asynchronously 
 - (void)commandRangeDidChange;
 
+- (void)saveCursorLine;
+
+- (void)setReturnCodeOfLastCommand:(int)returnCode;
+
+- (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord;
+
+- (void)currentDirectoryDidChangeTo:(NSString *)dir;
+
+- (void)setWorkingDirectory:(NSString *)workingDirectory
+                     onLine:(int)line
+                     pushed:(BOOL)pushed
+                      token:(id<iTermOrderedToken>)token;
+
+- (void)setRemoteHostFromString:(NSString *)remoteHost;
+
+- (void)setHost:(NSString *)host user:(NSString *)user;
+
+- (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line;
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation;
+
+- (void)addAnnotation:(PTYAnnotation *)annotation
+              inRange:(VT100GridCoordRange)range
+        andStealFocus:(BOOL)focus;
+
+#pragma mark - Triggers
+
+- (NSArray<Trigger *> *)triggers;
+
+- (void)setTriggerParametersUseInterpolatedStrings:(BOOL)value;
+
+// This is in the triggers section because it is currently only used to decide if triggers should
+// measure their performance penalty and synchronization with PTYSession is not important.
+- (void)setExited:(BOOL)exited;
+
+- (void)loadTriggersFromProfileArray:(NSArray *)array
+              useInterpolatedStrings:(BOOL)useInterpolatedStrings;
+
+#pragma mark - Interthread Synchronization
+
+- (void)willUpdateDisplay;
+
+#pragma mark - Temporary
+
+- (iTermSlownessDetector *)slownessDetector;
 
 @end
 

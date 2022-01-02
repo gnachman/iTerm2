@@ -53,64 +53,72 @@
 }
 
 - (void)retainCode:(unsigned int)code {
-    _generation++;
-    [NSApp invalidateRestorableState];
-    [_referenceCounts addObject:@(code)];
+    @synchronized (self) {
+        _generation++;
+        [NSApp invalidateRestorableState];
+        [_referenceCounts addObject:@(code)];
+    }
 }
 
 - (void)releaseCode:(unsigned int)code {
-    _generation++;
-    [NSApp invalidateRestorableState];
-    [_referenceCounts removeObject:@(code)];
-    if (![_referenceCounts containsObject:@(code)]) {
-        NSDictionary *dict = _reverseStore[@(code)];
-        [_reverseStore removeObjectForKey:@(code)];
-        NSString *url = [dict[@"url"] absoluteString];
-        NSString *params = dict[@"params"];
-        if (url) {
-            [_store removeObjectForKey:@{ @"url": url, @"params": params }];
+    @synchronized (self) {
+        _generation++;
+        [NSApp invalidateRestorableState];
+        [_referenceCounts removeObject:@(code)];
+        if (![_referenceCounts containsObject:@(code)]) {
+            NSDictionary *dict = _reverseStore[@(code)];
+            [_reverseStore removeObjectForKey:@(code)];
+            NSString *url = [dict[@"url"] absoluteString];
+            NSString *params = dict[@"params"];
+            if (url) {
+                [_store removeObjectForKey:@{ @"url": url, @"params": params }];
+            }
         }
     }
 }
 
 - (unsigned int)codeForURL:(NSURL *)url withParams:(NSString *)params {
-    if (!url.absoluteString || !params) {
-        DLog(@"codeForURL:%@ withParams:%@ returning 0 because of nil value", url.absoluteString, params);
-        return 0;
-    }
-    NSDictionary *key = @{ @"url": url.absoluteString, @"params": params };
-    NSNumber *number = _store[key];
-    if (number) {
+    @synchronized (self) {
+        if (!url.absoluteString || !params) {
+            DLog(@"codeForURL:%@ withParams:%@ returning 0 because of nil value", url.absoluteString, params);
+            return 0;
+        }
+        NSDictionary *key = @{ @"url": url.absoluteString, @"params": params };
+        NSNumber *number = _store[key];
+        if (number) {
+            return number.unsignedIntValue;
+        }
+        if (_reverseStore.count == USHRT_MAX - 1) {
+            DLog(@"Ran out of URL storage. Refusing to allocate a code.");
+            return 0;
+        }
+        // Advance _nextCode to the next unused code. This will not normally happen - only on wraparound.
+        while (_reverseStore[@(_nextCode)]) {
+            _nextCode = [iTermURLStore successor:_nextCode];
+        }
+
+        // Save it and advance.
+        number = @(_nextCode);
+        _nextCode = [iTermURLStore successor:_nextCode];
+
+        // Record the code/URL+params relation.
+        _store[key] = number;
+        _reverseStore[number] = @{ @"url": url, @"params": params };
+
+        [NSApp invalidateRestorableState];
+        _generation++;
         return number.unsignedIntValue;
     }
-    if (_reverseStore.count == USHRT_MAX - 1) {
-        DLog(@"Ran out of URL storage. Refusing to allocate a code.");
-        return 0;
-    }
-    // Advance _nextCode to the next unused code. This will not normally happen - only on wraparound.
-    while (_reverseStore[@(_nextCode)]) {
-        _nextCode = [iTermURLStore successor:_nextCode];
-    }
-
-    // Save it and advance.
-    number = @(_nextCode);
-    _nextCode = [iTermURLStore successor:_nextCode];
-
-    // Record the code/URL+params relation.
-    _store[key] = number;
-    _reverseStore[number] = @{ @"url": url, @"params": params };
-
-    [NSApp invalidateRestorableState];
-    _generation++;
-    return number.unsignedIntValue;
 }
 
 - (NSURL *)urlForCode:(unsigned int)code {
-    if (code == 0) {
-        // Safety valve in case something goes awry. There should never be an entry at 0.
-        return nil;
+    @synchronized (self) {
+        if (code == 0) {
+            // Safety valve in case something goes awry. There should never be an entry at 0.
+            return nil;
+        }
+        return _reverseStore[@(code)][@"url"];
     }
-    return _reverseStore[@(code)][@"url"];
 }
 
 - (NSString *)paramsForCode:(unsigned int)code {
@@ -118,7 +126,9 @@
         // Safety valve in case something goes awry. There should never be an entry at 0.
         return nil;
     }
-    return _reverseStore[@(code)][@"params"];
+    @synchronized (self) {
+        return _reverseStore[@(code)][@"params"];
+    }
 }
 
 - (NSString *)paramWithKey:(NSString *)key forCode:(unsigned int)code {
@@ -141,49 +151,53 @@
 }
 
 - (NSDictionary *)dictionaryValue {
-    NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initRequiringSecureCoding:YES];
-    coder.outputFormat = NSPropertyListBinaryFormat_v1_0;
-    [_referenceCounts encodeWithCoder:coder];
-    [coder finishEncoding];
+    @synchronized (self) {
+        NSKeyedArchiver *coder = [[NSKeyedArchiver alloc] initRequiringSecureCoding:YES];
+        coder.outputFormat = NSPropertyListBinaryFormat_v1_0;
+        [_referenceCounts encodeWithCoder:coder];
+        [coder finishEncoding];
 
-    return @{ @"store": _store,
-              @"refcounts": coder.encodedData };
+        return @{ @"store": _store,
+                  @"refcounts": coder.encodedData };
+    }
 }
 
 - (void)loadFromDictionary:(NSDictionary *)dictionary {
-    NSDictionary *store = dictionary[@"store"];
-    NSData *refcounts = dictionary[@"refcounts"];
+    @synchronized (self) {
+        NSDictionary *store = dictionary[@"store"];
+        NSData *refcounts = dictionary[@"refcounts"];
 
-    if (!store || !refcounts) {
-        DLog(@"URLStore restoration dictionary missing value");
-        DLog(@"store=%@", store);
-        DLog(@"refcounts=%@", refcounts);
-        return;
-    }
-    [store enumerateKeysAndObjectsUsingBlock:^(NSDictionary * _Nonnull key, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
-        if (![key isKindOfClass:[NSDictionary class]] ||
-            ![obj isKindOfClass:[NSNumber class]]) {
-            ELog(@"Unexpected types when loading dictionary: %@ -> %@", key.class, obj.class);
+        if (!store || !refcounts) {
+            DLog(@"URLStore restoration dictionary missing value");
+            DLog(@"store=%@", store);
+            DLog(@"refcounts=%@", refcounts);
             return;
         }
-        NSURL *url = [NSURL URLWithString:key[@"url"]];
-        if (url == nil) {
-            XLog(@"Bogus key not a URL: %@", url);
+        [store enumerateKeysAndObjectsUsingBlock:^(NSDictionary * _Nonnull key, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
+            if (![key isKindOfClass:[NSDictionary class]] ||
+                ![obj isKindOfClass:[NSNumber class]]) {
+                ELog(@"Unexpected types when loading dictionary: %@ -> %@", key.class, obj.class);
+                return;
+            }
+            NSURL *url = [NSURL URLWithString:key[@"url"]];
+            if (url == nil) {
+                XLog(@"Bogus key not a URL: %@", url);
+                return;
+            }
+            self->_store[key] = obj;
+
+            self->_reverseStore[obj] = @{ @"url": url, @"params": key[@"params"] ?: @"" };
+            self->_nextCode = [iTermURLStore successor:MAX(obj.unsignedIntValue, self->_nextCode)];
+        }];
+
+        NSError *error = nil;
+        NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:refcounts error:&error];
+        if (error) {
+            NSLog(@"Failed to decode refcounts from data %@", refcounts);
             return;
         }
-        self->_store[key] = obj;
-
-        self->_reverseStore[obj] = @{ @"url": url, @"params": key[@"params"] ?: @"" };
-        self->_nextCode = [iTermURLStore successor:MAX(obj.unsignedIntValue, self->_nextCode)];
-    }];
-    
-    NSError *error = nil;
-    NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:refcounts error:&error];
-    if (error) {
-        NSLog(@"Failed to decode refcounts from data %@", refcounts);
-        return;
+        _referenceCounts = [[NSCountedSet alloc] initWithCoder:decoder];
     }
-    _referenceCounts = [[NSCountedSet alloc] initWithCoder:decoder];
 }
 
 @end

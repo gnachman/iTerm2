@@ -23,15 +23,14 @@
     return YES;
 }
 
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-    if (captureCount > 0) {
+    if (stringArray.count > 0) {
         VT100GridAbsCoordRange range = VT100GridAbsCoordRangeMake(capturedRanges[0].location, lineNumber, NSMaxRange(capturedRanges[0]), lineNumber);
         [aSession triggerSession:self didDetectPromptAt:range];
     }

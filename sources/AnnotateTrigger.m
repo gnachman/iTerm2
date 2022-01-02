@@ -6,6 +6,7 @@
 //
 
 #import "AnnotateTrigger.h"
+#import "PTYAnnotation.h"
 #import "ScreenChar.h"
 
 @implementation AnnotateTrigger
@@ -25,9 +26,8 @@
 }
 
 
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
@@ -39,20 +39,23 @@
     if (length == 0) {
         return YES;
     }
+
     // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
-    [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                              count:captureCount
-                                              scope:[aSession triggerSessionVariableScope:self]
+    PTYAnnotation *annotation =
+        [aSession triggerSession:self
+           makeAnnotationInRange:rangeInScreenChars
+                            line:lineNumber];
+    if (!annotation) {
+        return YES;
+    }
+    id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
+                                              scope:scopeProvider
                                               owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *annotation) {
-        if (!annotation.length) {
-            return;
-        }
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull text) {
         [aSession triggerSession:self
                    setAnnotation:annotation
-                           range:rangeInScreenChars
-                            line:lineNumber];
+                        stringTo:text];
     }];
     return YES;
 }

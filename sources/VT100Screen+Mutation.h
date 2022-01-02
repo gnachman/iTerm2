@@ -44,7 +44,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetAltScreen:(NSArray *)lines;
 - (void)mutRestoreFromDictionary:(NSDictionary *)dictionary
         includeRestorationBanner:(BOOL)includeRestorationBanner
-                   knownTriggers:(NSArray *)triggers
                       reattached:(BOOL)reattached;
 - (void)mutSetTmuxState:(NSDictionary *)state;
 - (void)mutCrlf;
@@ -197,6 +196,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutCommandDidEndWithRange:(VT100GridCoordRange)range;
 - (void)mutSaveCursorLine;
 - (void)mutRestorePreferredCursorPositionIfPossible;
+- (void)mutSetTriggerParametersUseInterpolatedStrings:(BOOL)value;
+- (void)mutSetExited:(BOOL)exited;
+- (iTermSlownessDetector *)mutSlownessDetector;
+- (void)mutLoadTriggersFromProfileArray:(NSArray *)array;
+- (iTermExpect *)mutExpectSource;
 
 @end
 

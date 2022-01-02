@@ -27,21 +27,18 @@
     return YES;
 }
 
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Hostname changes are slow & rare that this is ok.
-    [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                              count:captureCount
-                                              scope:[aSession triggerSessionVariableScope:self]
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
+                                              scope:[aSession triggerSessionVariableScopeProvider:self]
                                               owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *remoteHost) {
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull remoteHost) {
         if (remoteHost.length) {
             [aSession triggerSession:self setRemoteHostName:remoteHost];
         }

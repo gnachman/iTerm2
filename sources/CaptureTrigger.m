@@ -31,17 +31,12 @@
     return @"Coprocess to run on activation";
 }
 
-- (BOOL)capturedOutputToolVisibleInSession:(id<iTermTriggerSession>)aSession {
-    return [aSession triggerSessionToolbeltIsVisible:self];
-}
-
 - (void)showCaptureOutputToolInSession:(id<iTermTriggerSession>)aSession {
     return [aSession triggerSessionShowCapturedOutputTool:self];
 }
 
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
@@ -49,33 +44,30 @@
                                     stop:(BOOL *)stop {
     if (![aSession triggerSessionIsShellIntegrationInstalled:self]) {
         [aSession triggerSessionShowShellIntegrationRequiredAnnouncement:self];
-    } else if (![self capturedOutputToolVisibleInSession:aSession]) {
-        [aSession triggerSessionShowCapturedOutputToolNotVisibleAnnouncement:self];
+    } else {
+        [aSession triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:self];
     }
     CapturedOutput *output = [[[CapturedOutput alloc] init] autorelease];
     output.absoluteLineNumber = lineNumber;
     output.line = stringLine.stringValue;
     output.trigger = self;
-    output.values = [NSArray arrayWithObjects:capturedStrings count:captureCount];
+    output.values = stringArray;
     [aSession triggerSession:self didCaptureOutput:output];
     return NO;
 }
 
-// Called by UI
 - (void)activateOnOutput:(CapturedOutput *)capturedOutput inSession:(id<iTermTriggerSession>)session {
-    assert([NSThread isMainThread]);
-    [self paramWithBackreferencesReplacedWithValues:capturedOutput.values
-                                              scope:[session triggerSessionVariableScope:self]
-                                              owner:session
-                                   useInterpolation:[session triggerSessionShouldUseInterpolatedStrings:self]
-                                         completion:^(NSString *command) {
-        if (command) {
-            [session triggerSession:self
-         launchCoprocessWithCommand:command
-                         identifier:nil
-                             silent:NO];
-            [session triggerSessionMakeFirstResponder:self];
-        }
+    id<iTermTriggerScopeProvider> scopeProvider = [session triggerSessionVariableScopeProvider:self];
+    const BOOL interpolate = [session triggerSessionShouldUseInterpolatedStrings:self];
+    [[self paramWithBackreferencesReplacedWithValues:capturedOutput.values
+                                               scope:scopeProvider
+                                               owner:session
+                                    useInterpolation:interpolate] then:^(NSString * _Nonnull command) {
+        [session triggerSession:self
+     launchCoprocessWithCommand:command
+                     identifier:nil
+                         silent:NO];
+        [session triggerSessionMakeFirstResponder:self];
     }];
 }
 

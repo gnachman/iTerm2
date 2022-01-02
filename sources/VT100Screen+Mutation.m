@@ -211,102 +211,18 @@
     }
 }
 
-// Adds a working directory mark at the given line.
-//
-// nil token means it was "strongly" pushed (e.g., CurrentDir=) and you oughtn't poll.
-// You can also get a "weak" push - window title OSC is pushed = YES, token != nil.
-//
-// non-pushed means we polled for the working directory sua sponte. This is considered poor quality
-// because it's quite spammy - every time you press enter, for example - and it shoul dhave
-// minimal side effects.
-//
-// pushed means it's a higher confidence update. The directory must be pushed to be remote, but
-// that alone is not sufficient evidence that it is remote. Pushed directories will update the
-// recently used directories and will change the current remote host to the remote host on `line`.
 - (void)mutSetWorkingDirectory:(NSString *)workingDirectory
-#warning TODO: I need to use an absolute line number here to avoid race conditions between main thread and mutation thread.
                         onLine:(int)line
                         pushed:(BOOL)pushed
                          token:(id<iTermOrderedToken>)token {
-    DLog(@"%p: setWorkingDirectory:%@ onLine:%d token:%@", self, workingDirectory, line, token);
-    VT100WorkingDirectory *workingDirectoryObj = [[[VT100WorkingDirectory alloc] init] autorelease];
-    if (token && !workingDirectory) {
-        __weak __typeof(self) weakSelf = self;
-        DLog(@"%p: Performing async working directory fetch for token %@", self, token);
-        [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-            [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
-                DLog(@"%p: Async update got %@ for token %@", self, path, token);
-                if (path) {
-                    [weakSelf mutSetWorkingDirectory:path onLine:line pushed:pushed token:token];
-                }
-            }];
-        }];
-        return;
-    }
-
-    DLog(@"%p: Set finished working directory token to %@", self, token);
-    if (workingDirectory.length) {
-        DLog(@"Changing working directory to %@", workingDirectory);
-        workingDirectoryObj.workingDirectory = workingDirectory;
-
-        VT100WorkingDirectory *previousWorkingDirectory = [[[self objectOnOrBeforeLine:line
-                                                                               ofClass:[VT100WorkingDirectory class]] retain] autorelease];
-        DLog(@"The previous directory was %@", previousWorkingDirectory);
-        if ([previousWorkingDirectory.workingDirectory isEqualTo:workingDirectory]) {
-            // Extend the previous working directory. We used to add a new VT100WorkingDirectory
-            // every time but if the window title gets changed a lot then they can pile up really
-            // quickly and you spend all your time searching through VT001WorkingDirectory marks
-            // just to find VT100RemoteHost or VT100ScreenMark objects.
-            //
-            // It's a little weird that a VT100WorkingDirectory can now represent the same path on
-            // two different hosts (e.g., you ssh from /Users/georgen to another host and you're in
-            // /Users/georgen over there, but you can share the same VT100WorkingDirectory between
-            // the two hosts because the path is the same). I can't see the harm in it besides being
-            // odd.
-            //
-            // Intervals aren't removed while part of them is on screen, so this works fine.
-            VT100GridCoordRange range = [_mutableState coordRangeForInterval:previousWorkingDirectory.entry.interval];
-            [_mutableState.intervalTree removeObject:previousWorkingDirectory];
-            range.end = VT100GridCoordMake(_mutableState.width, line);
-            DLog(@"Extending the previous directory to %@", VT100GridCoordRangeDescription(range));
-            Interval *interval = [_mutableState intervalForGridCoordRange:range];
-            [_mutableState.intervalTree addObject:previousWorkingDirectory withInterval:interval];
-        } else {
-            VT100GridCoordRange range;
-            range = VT100GridCoordRangeMake(_state.currentGrid.cursorX, line, _mutableState.width, line);
-            DLog(@"Set range of %@ to %@", workingDirectory, VT100GridCoordRangeDescription(range));
-            [_mutableState.intervalTree addObject:workingDirectoryObj
-                                     withInterval:[_mutableState intervalForGridCoordRange:range]];
-        }
-    }
-    VT100RemoteHost *remoteHost = [self remoteHostOnLine:line];
-    const long long absLine = _mutableState.cumulativeScrollbackOverflow + line;
-    VT100ScreenWorkingDirectoryPushType pushType;
-    if (!pushed) {
-        pushType = VT100ScreenWorkingDirectoryPushTypePull;
-    } else if (token == nil) {
-        pushType = VT100ScreenWorkingDirectoryPushTypeStrongPush;
-    } else {
-        pushType = VT100ScreenWorkingDirectoryPushTypeWeakPush;
-    }
-    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        const BOOL accepted = !token || [token commit];
-        [delegate screenLogWorkingDirectoryOnAbsoluteLine:absLine
-                                               remoteHost:remoteHost
-                                            withDirectory:workingDirectory
-                                                 pushType:pushType
-                                                 accepted:accepted];
-    }];
+    [_mutableState setWorkingDirectory:workingDirectory
+                                onLine:line
+                                pushed:pushed
+                                 token:token];
 }
 
 - (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
-    VT100RemoteHost *remoteHostObj = [[[VT100RemoteHost alloc] init] autorelease];
-    remoteHostObj.hostname = host;
-    remoteHostObj.username = user;
-    VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, _mutableState.width, line);
-    [_mutableState.intervalTree addObject:remoteHostObj
-                             withInterval:[_mutableState intervalForGridCoordRange:range]];
-    return remoteHostObj;
+    return [_mutableState setRemoteHost:host user:user onLine:line];
 }
 
 - (id<iTermMark>)mutAddMarkStartingAtAbsoluteLine:(long long)line
@@ -333,13 +249,7 @@
 - (void)mutAddNote:(PTYAnnotation *)annotation
            inRange:(VT100GridCoordRange)range
              focus:(BOOL)focus {
-    [_mutableState.intervalTree addObject:annotation withInterval:[_mutableState intervalForGridCoordRange:range]];
-    [_mutableState.currentGrid markAllCharsDirty:YES];
-    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenDidAddNote:annotation focus:focus];
-        [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeAnnotation
-                                                           onLine:range.start.y + _mutableState.cumulativeScrollbackOverflow];
-    }];
+    [_mutableState addAnnotation:annotation inRange:range andStealFocus:focus];
 }
 
 - (void)mutCommandWasAborted {
@@ -1132,7 +1042,6 @@
 
 - (void)mutRestoreFromDictionary:(NSDictionary *)dictionary
         includeRestorationBanner:(BOOL)includeRestorationBanner
-                   knownTriggers:(NSArray *)triggers
                       reattached:(BOOL)reattached {
     if (!_state.altGrid) {
         _mutableState.altGrid = [[_state.primaryGrid copy] autorelease];
@@ -1287,13 +1196,13 @@
         }
         _mutableState.intervalTree = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]] autorelease];
         [self fixUpDeserializedIntervalTree:_mutableState.intervalTree
-                              knownTriggers:triggers
+                              knownTriggers:_mutableState.triggers
                                     visible:YES
                       guidOfLastCommandMark:guidOfLastCommandMark];
 
         _mutableState.savedIntervalTree = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]] autorelease];
         [self fixUpDeserializedIntervalTree:_mutableState.savedIntervalTree
-                              knownTriggers:triggers
+                              knownTriggers:_mutableState.triggers
                                     visible:NO
                       guidOfLastCommandMark:guidOfLastCommandMark];
 
@@ -2713,7 +2622,35 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
     _mutableState.colorMap.dimmingAmount = value;
 }
 
+#pragma mark - Interthread Synchronization
+
+- (void)mutWillUpdateDisplay {
+    [_mutableState willUpdateDisplay];
+}
+
 #pragma mark - Accessors
+
+- (iTermExpect *)mutExpectSource {
+    return _mutableState.expectSource;
+}
+
+- (void)mutLoadTriggersFromProfileArray:(NSArray *)array
+                 useInterpolatedStrings:(BOOL)useInterpolatedStrings {
+    [_mutableState loadTriggersFromProfileArray:array
+                         useInterpolatedStrings:useInterpolatedStrings];
+}
+
+- (iTermSlownessDetector *)mutSlownessDetector {
+    return _mutableState.slownessDetector;
+}
+
+- (void)mutSetExited:(BOOL)exited {
+    [_mutableState setExited:exited];
+}
+
+- (void)mutSetTriggerParametersUseInterpolatedStrings:(BOOL)value {
+    [_mutableState setTriggerParametersUseInterpolatedStrings:value];
+}
 
 - (void)mutSetShouldExpectPromptMarks:(BOOL)value {
     _mutableState.shouldExpectPromptMarks = value;
@@ -2761,9 +2698,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord {
-    _mutableState.commandStartCoord = coord;
-    [_mutableState didUpdatePromptLocation];
-    [_mutableState commandRangeDidChange];
+    [_mutableState setCoordinateOfCommandStart:coord];
 }
 
 - (void)mutSetCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord {
@@ -2943,13 +2878,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)mutLinkRun:(VT100GridRun)run
        withURLCode:(unsigned int)code {
-
-    for (NSValue *value in [_state.currentGrid rectsForRun:run]) {
-        VT100GridRect rect = [value gridRectValue];
-        [_mutableState.currentGrid setURLCode:code
-                                   inRectFrom:rect.origin
-                                           to:VT100GridRectMax(rect)];
-    }
+    [_mutableState linkRun:run withURLCode:code];
 }
 
 #pragma mark - Highlighting
@@ -2958,39 +2887,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 - (void)mutHighlightRun:(VT100GridRun)run
     withForegroundColor:(NSColor *)fgColor
         backgroundColor:(NSColor *)bgColor {
-    DLog(@"Really highlight run %@ fg=%@ bg=%@", VT100GridRunDescription(run), fgColor, bgColor);
-
-    screen_char_t fg = { 0 };
-    screen_char_t bg = { 0 };
-
-    NSColor *genericFgColor = [fgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
-    NSColor *genericBgColor = [bgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
-
-    if (fgColor) {
-        fg.foregroundColor = genericFgColor.redComponent * 255;
-        fg.fgBlue = genericFgColor.blueComponent * 255;
-        fg.fgGreen = genericFgColor.greenComponent * 255;
-        fg.foregroundColorMode = ColorMode24bit;
-    } else {
-        fg.foregroundColorMode = ColorModeInvalid;
-    }
-
-    if (bgColor) {
-        bg.backgroundColor = genericBgColor.redComponent * 255;
-        bg.bgBlue = genericBgColor.blueComponent * 255;
-        bg.bgGreen = genericBgColor.greenComponent * 255;
-        bg.backgroundColorMode = ColorMode24bit;
-    } else {
-        bg.backgroundColorMode = ColorModeInvalid;
-    }
-
-    for (NSValue *value in [_state.currentGrid rectsForRun:run]) {
-        VT100GridRect rect = [value gridRectValue];
-        [_mutableState.currentGrid setBackgroundColor:bg
-                                      foregroundColor:fg
-                                           inRectFrom:rect.origin
-                                                   to:VT100GridRectMax(rect)];
-    }
+    [_mutableState highlightRun:run withForegroundColor:fgColor backgroundColor:bgColor];
 }
 
 #pragma mark - Scrollback
@@ -3599,46 +3496,11 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)mutSetRemoteHost:(NSString *)remoteHost {
-    DLog(@"Set remote host to %@ %@", remoteHost, self);
-    // Search backwards because Windows UPN format includes an @ in the user name. I don't think hostnames would ever have an @ sign.
-    NSRange atRange = [remoteHost rangeOfString:@"@" options:NSBackwardsSearch];
-    NSString *user = nil;
-    NSString *host = nil;
-    if (atRange.length == 1) {
-        user = [remoteHost substringToIndex:atRange.location];
-        host = [remoteHost substringFromIndex:atRange.location + 1];
-        if (host.length == 0) {
-            host = nil;
-        }
-    } else {
-        host = remoteHost;
-    }
-
-    [self setHost:host user:user];
+    [_mutableState setRemoteHostFromString:remoteHost];
 }
 
 - (void)setHost:(NSString *)host user:(NSString *)user {
-    DLog(@"setHost:%@ user:%@ %@", host, user, self);
-    VT100RemoteHost *currentHost = [self remoteHostOnLine:_mutableState.numberOfLines];
-    if (!host || !user) {
-        // A trigger can set the host and user alone. If remoteHost looks like example.com or
-        // user@, then preserve the previous host/user. Also ensure neither value is nil; the
-        // empty string will stand in for a real value if necessary.
-        VT100RemoteHost *lastRemoteHost = [self lastRemoteHost];
-        if (!host) {
-            host = [[lastRemoteHost.hostname copy] autorelease] ?: @"";
-        }
-        if (!user) {
-            user = [[lastRemoteHost.username copy] autorelease] ?: @"";
-        }
-    }
-
-    int cursorLine = _mutableState.numberOfLines - _mutableState.height + _state.currentGrid.cursorY;
-    VT100RemoteHost *remoteHostObj = [self setRemoteHost:host user:user onLine:cursorLine];
-
-    if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
-        [delegate_ screenCurrentHostDidChange:remoteHostObj];
-    }
+    [_mutableState setHost:host user:user];
 }
 
 - (void)terminalSetWorkingDirectoryURL:(NSString *)URLString {
@@ -3683,9 +3545,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)mutSaveCursorLine {
-    const int scrollbackLines = [_mutableState.linebuffer numLinesWithWidth:_mutableState.currentGrid.size.width];
-    [_mutableState addMarkOnLine:scrollbackLines + _mutableState.currentGrid.cursor.y
-                         ofClass:[VT100ScreenMark class]];
+    [_mutableState saveCursorLine];
 }
 
 - (void)terminalStealFocus {
@@ -3713,35 +3573,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)mutCurrentDirectoryDidChangeTo:(NSString *)dir {
-    DLog(@"%p: terminalCurrentDirectoryDidChangeTo:%@", self, dir);
-    [delegate_ screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
-
-    int cursorLine = _mutableState.numberOfLines - _mutableState.height + _state.currentGrid.cursorY;
-    if (dir.length) {
-        [self currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
-        return;
-    }
-
-    // Go fetch the working directory and then update it.
-    __weak __typeof(self) weakSelf = self;
-    id<iTermOrderedToken> token = [[_mutableState.currentDirectoryDidChangeOrderEnforcer newToken] autorelease];
-    DLog(@"Fetching directory asynchronously with token %@", token);
-    [delegate_ screenGetWorkingDirectoryWithCompletion:^(NSString *dir) {
-        DLog(@"For token %@, the working directory is %@", token, dir);
-        if ([token commit]) {
-            [weakSelf currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
-        }
-    }];
-}
-
-- (void)currentDirectoryReallyDidChangeTo:(NSString *)dir
-                                   onLine:(int)cursorLine {
-    DLog(@"currentDirectoryReallyDidChangeTo:%@ onLine:%@", dir, @(cursorLine));
-    BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
-    [self mutSetWorkingDirectory:dir onLine:cursorLine pushed:YES token:nil];
-    if (willChange) {
-        [delegate_ screenCurrentDirectoryDidChangeTo:dir];
-    }
+    [_mutableState currentDirectoryDidChangeTo:dir];
 }
 
 - (void)terminalProfileShouldChangeTo:(NSString *)value {
@@ -4167,25 +3999,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)mutSetReturnCodeOfLastCommand:(int)returnCode {
-    DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
-    VT100ScreenMark *mark = [[_mutableState.lastCommandMark retain] autorelease];
-    if (mark) {
-        DLog(@"FinalTerm: setting code on mark %@", mark);
-        const NSInteger line = [_mutableState coordRangeForInterval:mark.entry.interval].start.y + _mutableState.cumulativeScrollbackOverflow;
-        [_state.intervalTreeObserver intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
-                                                                onLine:line];
-        mark.code = returnCode;
-        [_state.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
-                                                             onLine:line];
-        VT100RemoteHost *remoteHost = [self remoteHostOnLine:_mutableState.numberOfLines];
-        [[iTermShellHistoryController sharedInstance] setStatusOfCommandAtMark:mark
-                                                                        onHost:remoteHost
-                                                                            to:returnCode];
-        [delegate_ screenNeedsRedraw];
-    } else {
-        DLog(@"No last command mark found.");
-    }
-    [delegate_ screenCommandDidExitWithCode:returnCode mark:mark];
+    [_mutableState setReturnCodeOfLastCommand:returnCode];
 }
 
 - (void)terminalFinalTermCommand:(NSArray *)argv {

@@ -13,7 +13,9 @@
 #import "iTermOrderEnforcer.h"
 #import "iTermTextExtractor.h"
 #import "LineBuffer.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "VT100RemoteHost.h"
 
 static const int kDefaultMaxScrollbackLines = 1000;
 
@@ -252,6 +254,28 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return [Interval intervalWithLocation:si length:ei - si];
 }
 
+- (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
+    long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
+                                                                            line + 1,
+                                                                            0,
+                                                                            line + 1)].location;
+    if (pos < 0) {
+        return nil;
+    }
+    NSEnumerator *enumerator = [self.intervalTree reverseEnumeratorAt:pos];
+    NSArray *objects;
+    do {
+        objects = [enumerator nextObject];
+        objects = [objects objectsOfClasses:@[ cls ]];
+    } while (objects && !objects.count);
+    if (objects.count) {
+        // We want the last object because they are sorted chronologically.
+        return [objects lastObject];
+    } else {
+        return nil;
+    }
+}
+
 #pragma mark - Combined Grid And Scrollback
 
 - (int)numberOfLines {
@@ -365,6 +389,28 @@ static const int kDefaultMaxScrollbackLines = 1000;
     }
 
     return [command stringByTrimmingLeadingWhitespace];
+}
+
+- (VT100RemoteHost *)lastRemoteHost {
+    return [self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
+}
+
+- (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
+    NSEnumerator *enumerator = [self.intervalTree reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        for (id obj in objects) {
+            if ([obj isKindOfClass:theClass]) {
+                if (wantPrompt && [obj isPrompt]) {
+                    return obj;
+                } else if (!wantPrompt) {
+                    return obj;
+                }
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+    return nil;
 }
 
 #pragma mark - iTermTextDataSource

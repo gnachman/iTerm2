@@ -9,13 +9,15 @@
 
 #import "iTermFocusReportingTextField.h"
 #import "iTermObject.h"
+#import "iTermPromise.h"
 #import "VT100GridTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @class CapturedOutput;
+@class PTYAnnotation;
 @class Trigger;
-@class iTermBackgroundCommandRunner;
+@class iTermBackgroundCommandRunnerPool;
 @protocol iTermObject;
 @class iTermStringLine;
 @class iTermVariableScope;
@@ -26,19 +28,23 @@ extern NSString * const kTriggerParameterKey;
 extern NSString * const kTriggerPartialLineKey;
 extern NSString * const kTriggerDisabledKey;
 
+@protocol iTermTriggerScopeProvider<NSObject>
+- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope))block;
+- (dispatch_queue_t)triggerCompletionQueue;
+@end
+
 @protocol iTermTriggerSession<NSObject, iTermObject>
 - (void)triggerSessionReveal:(Trigger *)trigger;
 - (void)triggerSessionRingBell:(Trigger *)trigger;
-- (BOOL)triggerSessionToolbeltIsVisible:(Trigger *)trigger;
 - (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger;
 - (BOOL)triggerSessionIsShellIntegrationInstalled:(Trigger *)trigger;
 - (void)triggerSessionShowShellIntegrationRequiredAnnouncement:(Trigger *)trigger;
-- (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncement:(Trigger *)trigger;
 - (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)output;
+- (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:(Trigger *)trigger;
 
 // Identifier is used for silenceing errors, or nil to make it not silenceable.
 - (void)triggerSession:(Trigger *)trigger launchCoprocessWithCommand:(NSString *)command identifier:(NSString * _Nullable)identifier silent:(BOOL)silent;
-- (iTermVariableScope *)triggerSessionVariableScope:(Trigger *)trigger;
+- (id<iTermTriggerScopeProvider>)triggerSessionVariableScopeProvider:(Trigger *)trigger;
 - (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger;
 - (void)triggerSessionMakeFirstResponder:(Trigger *)trigger;
 - (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message;
@@ -48,7 +54,7 @@ extern NSString * const kTriggerDisabledKey;
                 colors:(NSDictionary<NSString *, NSColor *> *)colors;
 - (void)triggerSession:(Trigger *)trigger saveCursorLineAndStopScrolling:(BOOL)stopScrolling;
 - (void)triggerSession:(Trigger *)trigger openPasswordManagerToAccountName:(NSString *)accountName;
-- (void)triggerSession:(Trigger *)trigger runCommandWithRunner:(iTermBackgroundCommandRunner *)runner;
+- (void)triggerSession:(Trigger *)trigger runCommand:(NSString *)command withRunnerPool:(iTermBackgroundCommandRunnerPool *)runner;
 - (void)triggerSession:(Trigger *)trigger writeText:(NSString *)text;
 - (void)triggerSession:(Trigger *)trigger setRemoteHostName:(NSString *)remoteHost;
 - (void)triggerSession:(Trigger *)trigger setCurrentDirectory:(NSString *)text;
@@ -63,14 +69,18 @@ extern NSString * const kTriggerDisabledKey;
          withVariables:(NSDictionary *)temporaryVariables
               captures:(NSArray<NSString *> *)captureStringArray;
 - (void)triggerSession:(Trigger *)trigger
-         setAnnotation:(NSString *)annotation
-                 range:(NSRange)range
-                  line:(long long)lineNumber;
+         setAnnotation:(PTYAnnotation *)annotation
+              stringTo:(NSString *)stringValue;
 - (void)triggerSession:(Trigger *)trigger
        highlightLineAt:(VT100GridAbsCoord)absCoord
                 colors:(NSDictionary *)colors;
 - (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data;
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value;
+- (void)triggerShowAlertWithMessage:(NSString *)message disable:(void (^)(void))disable;
+- (PTYAnnotation *)triggerSession:(Trigger *)trigger
+            makeAnnotationInRange:(NSRange)rangeInScreenChars
+                             line:(long long)lineNumber;
+
 @end
 
 @interface Trigger : NSObject<iTermObject>
@@ -119,18 +129,10 @@ extern NSString * const kTriggerDisabledKey;
 - (iTermVariableScope *)variableScope:(iTermVariableScope *)scope
                byAddingBackreferences:(NSArray<NSString *> *)backreferences;
 
-- (void)paramWithBackreferencesReplacedWithValues:(NSString * _Nonnull const * _Nonnull)strings
-                                            count:(NSInteger)count
-                                            scope:(iTermVariableScope *)scope
-                                            owner:(id<iTermObject>)owner
-                                 useInterpolation:(BOOL)useInterpolation
-                                       completion:(void (^)(NSString *result))completion;
-
-- (void)paramWithBackreferencesReplacedWithValues:(NSArray<NSString *> *)strings
-                                            scope:(iTermVariableScope *)scope
-                                            owner:(id<iTermObject>)owner
-                                 useInterpolation:(BOOL)useInterpolation
-                                       completion:(void (^)(NSString *result))completion;
+- (iTermPromise<NSString *> *)paramWithBackreferencesReplacedWithValues:(NSArray<NSString *> *)strings
+                                                                  scope:(id<iTermTriggerScopeProvider>)scope
+                                                                  owner:(id<iTermObject>)owner
+                                                       useInterpolation:(BOOL)useInterpolation;
 
 // Returns YES if no more triggers should be processed.
 - (BOOL)tryString:(iTermStringLine *)stringLine
@@ -140,9 +142,8 @@ extern NSString * const kTriggerDisabledKey;
  useInterpolation:(BOOL)useInterpolation;
 
 // Subclasses must override this. Return YES if it can fire again on this line.
-- (BOOL)performActionWithCapturedStrings:(NSString * _Nonnull const * _Nonnull)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)s
                     atAbsoluteLineNumber:(long long)lineNumber

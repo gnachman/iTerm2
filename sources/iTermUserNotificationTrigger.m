@@ -42,28 +42,31 @@
     return @"Enter Message";
 }
 
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Notifs are so slow & rare that this is ok.
-    [self paramWithBackreferencesReplacedWithValues:capturedStrings
-                                              count:captureCount
+    id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
+    dispatch_queue_t queue = scopeProvider.triggerCompletionQueue;
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
 #warning TODO: Variable scope will need an immutable copy :(
-                                              scope:[aSession triggerSessionVariableScope:self]
+                                              scope:scopeProvider
                                               owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *notificationText) {
-                                             [self postNotificationWithText:notificationText inSession:aSession];
-                                         }];
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull notificationText) {
+        [self postNotificationWithText:notificationText
+                             inSession:aSession
+                                 queue:queue];
+    }];
     return YES;
 }
 
 - (iTermRateLimitedUpdate *)rateLimit {
+    // iTermRateLimitedUpdated only works on the main thread because it uses NSTimer.
+    assert([NSThread isMainThread]);
     if (!_rateLimit) {
         _rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"UserNotificationTrigger"
                                                   minimumInterval:[iTermAdvancedSettingsModel userNotificationTriggerRateLimit]];
@@ -73,14 +76,19 @@
 }
 
 - (void)postNotificationWithText:(NSString *)notificationText
-                       inSession:(id<iTermTriggerSession>)aSession {
+                       inSession:(id<iTermTriggerSession>)aSession
+                           queue:(dispatch_queue_t)queue {
     if (!notificationText) {
         return;
     }
-    [[self rateLimit] performRateLimitedBlock:^{
-        [self reallyPostNotificationWithText:notificationText
-                                   inSession:aSession];
-    }];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[self rateLimit] performRateLimitedBlock:^{
+            dispatch_async(queue, ^{
+                [self reallyPostNotificationWithText:notificationText
+                                           inSession:aSession];
+            });
+        }];
+    });
 }
 
 - (void)reallyPostNotificationWithText:(NSString *)notificationText

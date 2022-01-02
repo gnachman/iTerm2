@@ -26,6 +26,8 @@
 }
 
 - (void)measureEvent:(NSString *)event block:(void (^ NS_NOESCAPE)(void))block {
+    // TODO: When moving to the mutation thread all uses of this method should be on that thread and the assertion must change.
+    assert([NSThread isMainThread]);
     [_stack addObject:@0];
     const NSTimeInterval durationWithDoubleCounting = [NSDate durationOfBlock:block];
     const NSTimeInterval duration = durationWithDoubleCounting - _stack.lastObject.doubleValue;

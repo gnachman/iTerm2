@@ -1305,6 +1305,21 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return temp;
 }
 
+- (BOOL)interpolatedStringContainsNonliteral {
+    iTermSwiftyStringParser *parser = [[iTermSwiftyStringParser alloc] initWithString:self];
+    __block BOOL result = NO;
+    [parser enumerateSwiftySubstringsWithBlock:^(NSUInteger index,
+                                                 NSString * _Nonnull substring,
+                                                 BOOL isLiteral,
+                                                 BOOL * _Nonnull stop) {
+        if (!isLiteral) {
+            result = YES;
+            *stop = YES;
+        }
+    }];
+    return result;
+}
+
 - (void)enumerateSwiftySubstrings:(void (^)(NSUInteger index, NSString *substring, BOOL isLiteral, BOOL *stop))block {
     iTermSwiftyStringParser *parser = [[iTermSwiftyStringParser alloc] initWithString:self];
     [parser enumerateSwiftySubstringsWithBlock:block];

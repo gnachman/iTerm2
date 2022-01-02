@@ -53,6 +53,7 @@ NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
         for (CaptureTrigger *trigger in knownTriggers) {
             if ([trigger isKindOfClass:[CaptureTrigger class]] &&
                 [trigger.digest isEqual:_triggerDigest]) {
+#warning TODO: This is some shared mutable state whose exact purpose isn't clear to me yet.
                 self.trigger = trigger;
                 self.triggerDigest = nil;
                 return;

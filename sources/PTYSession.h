@@ -837,8 +837,6 @@ backgroundColor:(NSColor *)backgroundColor;
 
 - (void)enterPassword:(NSString *)password;
 
-- (void)addCapturedOutput:(CapturedOutput *)capturedOutput;
-
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
                identifier:(NSString *)identifier;
 

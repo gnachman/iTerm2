@@ -58,6 +58,7 @@ static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
 }
 
 - (void)setStringValue:(NSString *)stringValue {
+    assert([NSThread isMainThread]);
     _stringValue = [stringValue copy];
     [_delegate annotationStringDidChange:self];
 }

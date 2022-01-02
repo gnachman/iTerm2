@@ -14,6 +14,7 @@
 #import "VT100Token.h"
 
 @class DVR;
+@class iTermExpect;
 @class iTermNotificationController;
 @class iTermMark;
 @class iTermStringLine;
@@ -29,6 +30,7 @@
 @class iTermAsyncFilter;
 @protocol iTermFilterDestination;
 @protocol iTermMark;
+@class iTermSlownessDetector;
 
 // Key into dictionaryValue to get screen state.
 extern NSString *const kScreenStateKey;
@@ -137,10 +139,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
    basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                       colors:(NSDictionary *)colors;
 
-- (void)linkTextInRange:(NSRange)range
-   basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                     URLCode:(unsigned int)code;
-
 // Load a frame from a dvr decoder.
 - (void)setFromFrame:(screen_char_t*)s len:(int)len metadata:(NSArray<NSArray *> *)metadataArrays info:(DVRFrameInfo)info;
 
@@ -224,7 +222,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // such as selections.
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
-                knownTriggers:(NSArray *)triggers
                    reattached:(BOOL)reattached;
 - (void)restoreInitialSize;
 
@@ -265,6 +262,14 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)setRemoteHostName:(NSString *)remoteHostName;
 - (void)currentDirectoryDidChangeTo:(NSString *)dir;
 - (VT100GridCoordRange)commandRange;
+- (void)setTriggerParametersUseInterpolatedStrings:(BOOL)triggerParametersUseInterpolatedStrings;
+- (void)setExited:(BOOL)setExited;
+#warning TODO: This api will not be needed after trigger evaluation and token execution moves to the mutation thread.
+- (iTermSlownessDetector *)slownessDetector;
+- (void)loadTriggersFromProfileArray:(NSArray *)array
+              useInterpolatedStrings:(BOOL)useInterpolatedStrings;
+- (void)willUpdateDisplay;
+- (iTermExpect *)expect;
 
 @end
 

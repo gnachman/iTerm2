@@ -15,10 +15,10 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermCommandRunnerPool : NSObject
 
 @property (nonatomic, readonly) int capacity;
-@property (nullable, nonatomic, readonly, copy) NSString *command;
-@property (nullable, nonatomic, readonly, copy) NSArray<NSString *> *arguments;
-@property (nullable, nonatomic, readonly, copy) NSString *workingDirectory;
-@property (nullable, nonatomic, copy) NSDictionary<NSString *, NSString *> *environment;
+@property (nullable, atomic, readonly, copy) NSString *command;
+@property (nullable, atomic, readonly, copy) NSArray<NSString *> *arguments;
+@property (nullable, atomic, readonly, copy) NSString *workingDirectory;
+@property (nullable, atomic, copy) NSDictionary<NSString *, NSString *> *environment;
 
 - (instancetype)initWithCapacity:(int)capacity
                          command:(nullable NSString *)command
