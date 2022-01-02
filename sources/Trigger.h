@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class Trigger;
 @class iTermBackgroundCommandRunner;
 @protocol iTermObject;
+@class iTermRateLimitedUpdate;
 @class iTermStringLine;
 @class iTermVariableScope;
 
@@ -75,7 +76,10 @@ extern NSString * const kTriggerDisabledKey;
                 colors:(NSDictionary *)colors;
 - (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data;
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value;
-- (void)triggerSession:(Trigger *)trigger showAlertWithMessage:(NSString *)message disable:(void (^)(void))disable;
+- (void)triggerSession:(Trigger *)trigger
+  showAlertWithMessage:(NSString *)message
+             rateLimit:(iTermRateLimitedUpdate *)rateLimit
+               disable:(void (^)(void))disable;
 - (PTYAnnotation * _Nullable)triggerSession:(Trigger *)trigger
                       makeAnnotationInRange:(NSRange)rangeInScreenChars
                                        line:(long long)lineNumber;

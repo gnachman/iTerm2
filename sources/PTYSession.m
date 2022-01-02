@@ -14876,7 +14876,14 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     [self.delegate setActiveSession:self];
 }
 
-- (void)triggerSession:(Trigger *)trigger showAlertWithMessage:(NSString *)message disable:(void (^)(void))disable {
+- (void)triggerSession:(Trigger *)trigger showAlertWithMessage:(NSString *)message rateLimit:(iTermRateLimitedUpdate *)rateLimit disable:(void (^)(void))disable {
+    __weak __typeof(self) weakSelf = self;
+    [rateLimit performRateLimitedBlock:^{
+        [weakSelf reallyShowAlertWithMessage:message trigger:trigger disable:disable];
+    }];
+}
+
+- (void)reallyShowAlertWithMessage:(NSString *)message trigger:(Trigger *)trigger disable:(void (^)(void))disable {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = message ?: @"";
     [alert addButtonWithTitle:@"OK"];
