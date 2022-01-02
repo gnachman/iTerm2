@@ -379,7 +379,6 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)amendDotFileWithExpectation:(inout iTermExpectation **)expectation
                                completion:(void (^)(void))completion {
-    __block NSString *joined = nil;
     const BOOL reallySend = (completion != nil);
     NSMutableArray<NSString *> *strings = [NSMutableArray array];
     NSArray<NSString *> *parts = [[[self launchBashString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] componentsSeparatedByString:@"\n"];
@@ -410,7 +409,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
             assert(NO);
     }
     [self sendText:[strings componentsJoinedByString:@""] reallySend:reallySend];
-    joined = [strings componentsJoinedByString:@""];
+    NSString *joined = [strings componentsJoinedByString:@""];
     [strings removeAllObjects];
 
     [strings addObject:[self sendText:[NSString stringWithFormat:@"if ! grep iterm2_shell_integration %@  > /dev/null 2>&1; then\n", script]

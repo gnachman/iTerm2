@@ -31,7 +31,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
     long long _lastLineNumber;
     NSString *regex_;
     id param_;
-
+    
     // main thread access only
     iTermSwiftyStringWithBackreferencesEvaluator *_evaluator;
 }
@@ -65,7 +65,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p regex=%@ param=%@>",
-               NSStringFromClass(self.class), self, self.regex, self.param];
+            NSStringFromClass(self.class), self, self.regex, self.param];
 }
 
 - (NSString *)action {
@@ -122,12 +122,12 @@ NSString * const kTriggerDisabledKey = @"disabled";
 
 - (NSArray *)groupedMenuItemsForPopupButton
 {
-  NSDictionary *menuItems = [self menuItemsForPoupupButton];
-  if (menuItems) {
-    return @[ menuItems ];
-  } else {
-    return nil;
-  }
+    NSDictionary *menuItems = [self menuItemsForPoupupButton];
+    if (menuItems) {
+        return @[ menuItems ];
+    } else {
+        return nil;
+    }
 }
 
 - (id<iTermFocusReportingTextFieldDelegate>)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough {
@@ -170,7 +170,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
         // This trigger doesn't support partial lines.
         return NO;
     }
-
+    
     __block BOOL stopFutureTriggersFromRunningOnThisLine = NO;
     NSString *s = stringLine.stringValue;
     DLog(@"Search for regex %@ in string %@", regex_, s);
@@ -179,8 +179,8 @@ NSString * const kTriggerDisabledKey = @"disabled";
                                         NSString *const __unsafe_unretained *capturedStrings,
                                         const NSRange *capturedRanges,
                                         volatile BOOL *const stopEnumerating) {
-                               self->_lastLineNumber = lineNumber;
-                               DLog(@"Trigger %@ matched string %@", self, s);
+        self->_lastLineNumber = lineNumber;
+        DLog(@"Trigger %@ matched string %@", self, s);
         NSArray<NSString *> *stringArray = [[NSArray alloc] initWithObjects:capturedStrings
                                                                       count:captureCount];
         if (![self performActionWithCapturedStrings:stringArray
@@ -225,7 +225,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
             }];
         }];
     }
-
+    
     const NSUInteger count = stringArray.count;
     for (int i = 0; i < 9; i++) {
         NSString *rep = @"";
@@ -280,10 +280,10 @@ NSString * const kTriggerDisabledKey = @"disabled";
 - (void)evaluationDidFailWithError:(NSError *)error {
     assert([NSThread isMainThread]);
     NSString *title =
-        [NSString stringWithFormat:@"The following parameter for a “%@” trigger could not be evaluated:\n\n%@\n\nThe error was:\n\n%@",
-                       [[self class] title],
-                       _evaluator.expression,
-                       error.localizedDescription];
+    [NSString stringWithFormat:@"The following parameter for a “%@” trigger could not be evaluated:\n\n%@\n\nThe error was:\n\n%@",
+     [[self class] title],
+     _evaluator.expression,
+     error.localizedDescription];
     [iTermWarning showWarningWithTitle:title
                                actions:@[ @"OK" ]
                              accessory:nil
@@ -329,13 +329,13 @@ NSString * const kTriggerDisabledKey = @"disabled";
                                          kTriggerParameterKey: self.param ?: @"",
                                          kTriggerPartialLineKey: @(self.partialLine),
                                          kTriggerDisabledKey: @(self.disabled) };
-
+    
     // Glom all the data together as key=value\nkey=value\n...
     NSMutableString *temp = [NSMutableString string];
     for (NSString *key in [[triggerDictionary allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         [temp appendFormat:@"%@=%@\n", key, triggerDictionary[key]];
     }
-
+    
     NSData *data = [temp dataUsingEncoding:NSUTF8StringEncoding];
     unsigned char hash[CC_SHA1_DIGEST_LENGTH];
     if (CC_SHA1([data bytes], [data length], hash) ) {

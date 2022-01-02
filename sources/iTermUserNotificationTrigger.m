@@ -54,8 +54,8 @@
     dispatch_queue_t queue = scopeProvider.triggerCompletionQueue;
     [[self paramWithBackreferencesReplacedWithValues:stringArray
 #warning TODO: Variable scope will need an immutable copy :(
-                                              scope:scopeProvider
-                                              owner:aSession
+                                               scope:scopeProvider
+                                               owner:aSession
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull notificationText) {
         [self postNotificationWithText:notificationText
                              inSession:aSession

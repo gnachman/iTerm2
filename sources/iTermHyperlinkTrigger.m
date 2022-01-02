@@ -47,8 +47,8 @@
     
     // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
     [[self paramWithBackreferencesReplacedWithValues:stringArray
-                                              scope:[aSession triggerSessionVariableScopeProvider:self]
-                                              owner:aSession
+                                               scope:[aSession triggerSessionVariableScopeProvider:self]
+                                               owner:aSession
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull urlString) {
         [self performActionWithURLString:urlString
                                    range:rangeInString
