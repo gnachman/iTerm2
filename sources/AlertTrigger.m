@@ -61,16 +61,7 @@
 }
 
 - (void)showAlertWithMessage:(NSString *)message inSession:(id<iTermTriggerSession>)aSession {
-    if (!message) {
-        return;
-    }
-    [[self rateLimit] performRateLimitedBlock:^{
-        [self reallyShowAlertWithMessage:message inSession:aSession];
-    }];
-}
-
-- (void)reallyShowAlertWithMessage:(NSString *)message inSession:(id<iTermTriggerSession>)aSession {
-    [aSession triggerSession:self showAlertWithMessage:message disable:^{
+    [aSession triggerSession:self showAlertWithMessage:message rateLimit:[self rateLimit] disable:^{
         self->disabled_ = YES;
     }];
 }
