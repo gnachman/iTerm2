@@ -14875,6 +14875,30 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     [self.delegate setActiveSession:self];
 }
 
+- (void)triggerSession:(Trigger *)trigger showAlertWithMessage:(NSString *)message disable:(void (^)(void))disable {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = message ?: @"";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Show Session"];
+    [alert addButtonWithTitle:@"Disable This Alert"];
+    switch ([alert runModal]) {
+        case NSAlertFirstButtonReturn:
+            break;
+
+        case NSAlertSecondButtonReturn: {
+            [self triggerSessionReveal:trigger];
+            break;
+        }
+
+        case NSAlertThirdButtonReturn:
+            disable();
+            break;
+
+        default:
+            break;
+    }
+}
+
 // This can be completely async
 - (void)triggerSessionRingBell:(Trigger *)trigger {
     [self.screen activateBell];

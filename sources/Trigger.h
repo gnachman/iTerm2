@@ -76,6 +76,7 @@ extern NSString * const kTriggerDisabledKey;
                 colors:(NSDictionary *)colors;
 - (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data;
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value;
+- (void)triggerSession:(Trigger *)trigger showAlertWithMessage:(NSString *)message disable:(void (^)(void))disable;
 @end
 
 @interface Trigger : NSObject<iTermObject>
