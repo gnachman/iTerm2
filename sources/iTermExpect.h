@@ -11,10 +11,11 @@
 //
 // /* Main thread */
 // iTermExpect *e = [[iTermExpect alloc] init];
-// iTermExpectation *x1 = [e expectRegularExpression:@"…" completion:…];
-// iTermExpectation *x2 = [e expectRegularExpression:@"…" after:x1 willExpect:… completion:…];
+// iTermExpectation *x1 = [e expectRegularExpression:@"…" after:nil deadline:nil willExpect:…  completion:…];
+// iTermExpectation *x2 = [e expectRegularExpression:@"…" after:x1 deadline:nil willExpect:… completion:…];
 //
-// /* Time to sync with mutation thread */
+// /* Time to sync with mutation thread. This happens in a mutex so neither `e` nor a pre-existing
+//    `_mutableState.expect` gets modified during -copy. */
 // _mutableState.expect = [e copy];
 //
 // /* Mutation thread */
@@ -22,7 +23,7 @@
 //
 // /* This is allowed concurrently on the main thread */
 // [e cancelExpectation:x1];
-// iTermExpectation *x3 = [e expectRegularExpression:@"…" after:x1 willExpect:… completion:…];
+// iTermExpectation *x3 = [e expectRegularExpression:@"…" after:nil deadline:nil willExpect:… completion:…];
 
 
 NS_ASSUME_NONNULL_BEGIN
@@ -34,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) iTermExpectation *lastExpectation;  // self or successor
 @property (nullable, nonatomic, readonly) NSDate *deadline;
 
+// This is to be called on the mutation thread.
 - (void)didMatchWithCaptureGroups:(NSArray<NSString *> *)captureGroups;
 
 @end
@@ -47,6 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
                                    willExpect:(void (^ _Nullable)(void))willExpect
                                    completion:(void (^ _Nullable)(NSArray<NSString *> *captureGroups))completion;
 
+// This may only be called on the main thread. The mutation thread cannot cancel expectations without creating races.
 - (void)cancelExpectation:(iTermExpectation *)expectation;
 
 @end

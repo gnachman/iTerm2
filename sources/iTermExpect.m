@@ -19,16 +19,13 @@
 // expectations) and also run user callbacks.
 // During a call to didMatchWithCaptureGroups: the mutation thread updates its internal state in the
 // same way.
-// Races are inevitable. For example, the main thread could cancel an expectation that already ran
-// on the mutation thread. In this case the completion() callback would not be run (since the
-// cancellation would mark it as completed before the async -didMatchWithCaptureGroups: runs).
-// The goal for dealing with races is to always have a consistent internal state and to be racey
-// only in the ways that there are inherent races in matching input from an external process.
 @interface iTermExpectation()
 @property (nonatomic, readonly) void (^willExpect)(iTermExpectation *expectation);
 @property (nullable, nonatomic, strong, readwrite) iTermExpectation *successor;
 @property (nullable, nonatomic, weak, readwrite) iTermExpectation *predecessor;
 @property (nonatomic, nullable, weak) iTermExpectation *original;
+// Did a copy already match this and dispatch a call to didMatchWithCaptureGroups: on self?
+@property (atomic) BOOL matchPending;
 @end
 
 @implementation iTermExpectation {
@@ -63,7 +60,7 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p regex=%@ hasCompleted=%@ successors=%@>",
+    return [NSString stringWithFormat:@"<%@: %p regex=%@ hasCompleted=%@ successor=%@>",
             NSStringFromClass(self.class), self, _regex, @(self.hasCompleted), _successor];
 }
 
@@ -74,12 +71,14 @@
 
 - (void)didMatchWithCaptureGroups:(NSArray<NSString *> *)captureGroups {
     if (self.original) {
-        __weak __typeof(self) weakSelf = self;
+        iTermExpectation *original = self.original;
+        original.matchPending = YES;
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (weakSelf.original.hasCompleted) {
+            original.matchPending = NO;
+            if (original.hasCompleted) {
                 return;
             }
-            [weakSelf.original didMatchWithCaptureGroups:captureGroups];
+            [original didMatchWithCaptureGroups:captureGroups];
         });
     }
     _hasCompleted = YES;
@@ -113,12 +112,7 @@
     _hasCompleted = YES;
     _completion = nil;
     _willExpect = nil;
-    if (self.original) {
-        __weak __typeof(self) weakSelf = self;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf.original cancel];
-        });
-    }
+    assert(!self.original);  // Copies cannot cancel. This prevents the mutation thread from cancelling, which is not tested/supported.
 }
 
 @end
@@ -168,6 +162,9 @@
 }
 
 - (void)addExpectation:(iTermExpectation *)expectation {
+    if (!expectation) {
+        return;
+    }
     [_expectations addObject:expectation];
 }
 
@@ -180,17 +177,25 @@
     [_expectations removeObject:expectation];
 }
 
-- (NSArray<iTermExpectation *> *)expectations {
+- (void)removeExpiredExpectations {
     [_expectations removeObjectsPassingTest:^BOOL(iTermExpectation *expectation) {
         return expectation.deadline != nil && expectation.deadline.timeIntervalSinceNow < 0;
     }];
+}
+
+- (NSArray<iTermExpectation *> *)expectations {
+    [self removeExpiredExpectations];
     return [_expectations copy];
 }
 
 #pragma mark - NSCopying
 
-- (iTermExpectation *)copyOfExpectation:(iTermExpectation *)original {
-    __weak __typeof(self) weakSelf = self;
+- (iTermExpectation *)copyOfExpectation:(iTermExpectation *)original copiedExpect:(iTermExpect *)copiedExpect {
+    if (original.matchPending) {
+        return [self copyOfExpectation:original.successor copiedExpect:copiedExpect];
+    }
+
+    __weak __typeof(self) weakSelf = copiedExpect;
     void (^willExpect)(iTermExpectation *) = ^(iTermExpectation *obj) {
         [weakSelf addExpectation:obj];
     };
@@ -198,15 +203,20 @@
                                                                       NSArray<NSString *> * _Nonnull captures) {
         [weakSelf removeExpectation:obj];
     };
-    return [[iTermExpectation alloc] initWithOriginal:original
-                                           willExpect:willExpect
-                                           completion:completion];
+    iTermExpectation *theCopy = [[iTermExpectation alloc] initWithOriginal:original
+                                                                willExpect:willExpect
+                                                                completion:completion];
+    if (original.successor) {
+        theCopy.successor = [self copyOfExpectation:original.successor copiedExpect:copiedExpect];
+    }
+    return theCopy;
 }
 
 - (id)copyWithZone:(NSZone *)zone {
     iTermExpect *theCopy = [[iTermExpect alloc] init];
     [self.expectations enumerateObjectsUsingBlock:^(iTermExpectation * _Nonnull original, NSUInteger idx, BOOL * _Nonnull stop) {
-        [theCopy addExpectation:[self copyOfExpectation:original]];
+        [theCopy addExpectation:[self copyOfExpectation:original
+                                           copiedExpect:theCopy]];
     }];
     return theCopy;
 }
