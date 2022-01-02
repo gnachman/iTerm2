@@ -7026,15 +7026,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {
+- (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {
     VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange,
                                                                      _screen.totalScrollbackOverflow);
     if (range.start.x < 0) {
-        return;
+        return nil;
     }
     PTYAnnotation *annotation = [[[PTYAnnotation alloc] init] autorelease];
     annotation.stringValue = text;
     [_screen addNote:annotation inRange:range focus:NO];
+    return annotation;
 }
 
 - (void)textViewToggleAnnotations {
@@ -15175,11 +15176,9 @@ launchCoprocessWithCommand:(NSString *)command
     [self invokeFunctionCall:invocation scope:scope origin:@"Trigger"];
 }
 
-// This can be completely synchyronous
-- (void)triggerSession:(Trigger *)trigger
-         setAnnotation:(NSString *)annotation
-                 range:(NSRange)rangeInScreenChars
-                  line:(long long)lineNumber {
+- (PTYAnnotation *)triggerSession:(Trigger *)trigger
+            makeAnnotationInRange:(NSRange)rangeInScreenChars
+                             line:(long long)lineNumber {
     assert(rangeInScreenChars.length > 0);
     const long long width = self.screen.width;
     const VT100GridAbsCoordRange absRange =
@@ -15187,7 +15186,13 @@ launchCoprocessWithCommand:(NSString *)command
                                    lineNumber,
                                    NSMaxRange(rangeInScreenChars) % width,
                                    lineNumber + (NSMaxRange(rangeInScreenChars) - 1) / width);
-    [self addNoteWithText:annotation inAbsoluteRange:absRange];
+    return [self addNoteWithText:@"" inAbsoluteRange:absRange];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+         setAnnotation:(PTYAnnotation *)annotation
+              stringTo:(NSString *)stringValue {
+    annotation.stringValue = stringValue;
 }
 
 // This can be completely synchyronous
