@@ -70,27 +70,9 @@
 }
 
 - (void)reallyShowAlertWithMessage:(NSString *)message inSession:(id<iTermTriggerSession>)aSession {
-    NSAlert *alert = [[NSAlert alloc] init];
-    alert.messageText = message ?: @"";
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Show Session"];
-    [alert addButtonWithTitle:@"Disable This Alert"];
-    switch ([alert runModal]) {
-        case NSAlertFirstButtonReturn:
-            break;
-
-        case NSAlertSecondButtonReturn: {
-            [aSession triggerSessionReveal:self];
-            break;
-        }
-
-        case NSAlertThirdButtonReturn:
-            disabled_ = YES;
-            break;
-
-        default:
-            break;
-    }
+    [aSession triggerSession:self showAlertWithMessage:message disable:^{
+        self->disabled_ = YES;
+    }];
 }
 
 @end
