@@ -39,16 +39,12 @@
         return YES;
     }
     // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
-    [self paramWithBackreferencesReplacedWithValues:stringArray
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
                                               scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *annotation) {
-        if (!annotation.length) {
-            return;
-        }
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull text) {
         [aSession triggerSession:self
-                   setAnnotation:annotation
+                   setAnnotation:text
                            range:rangeInScreenChars
                             line:lineNumber];
     }];

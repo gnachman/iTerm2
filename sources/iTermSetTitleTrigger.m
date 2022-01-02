@@ -38,14 +38,11 @@
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Title changes are slow & rare that this is ok.
-    [self paramWithBackreferencesReplacedWithValues:stringArray
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
                                               scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *newName) {
-        if (newName) {
-            [aSession triggerSession:self didChangeNameTo:newName];
-        }
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull newName) {
+        [aSession triggerSession:self didChangeNameTo:newName];
     }];
     return YES;
 }

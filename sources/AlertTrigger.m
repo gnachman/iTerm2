@@ -42,13 +42,12 @@
         return YES;
     }
     // Need to stop the world to get scope, provided it is needed. Alerts are so slow & rare that this is ok.
-    [self paramWithBackreferencesReplacedWithValues:stringArray
-                                              scope:[aSession triggerSessionVariableScope:self]
-                                              owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *message) {
-                                             [self showAlertWithMessage:message inSession:aSession];
-                                         }];
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
+                                               scope:[aSession triggerSessionVariableScope:self]
+                                               owner:aSession
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull message) {
+        [self showAlertWithMessage:message inSession:aSession];
+    }];
     return YES;
 }
 

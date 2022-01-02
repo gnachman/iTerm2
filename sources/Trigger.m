@@ -197,19 +197,25 @@ NSString * const kTriggerDisabledKey = @"disabled";
     return stopFutureTriggersFromRunningOnThisLine;
 }
 
-- (void)paramWithBackreferencesReplacedWithValues:(NSArray *)stringArray
-                                            scope:(iTermVariableScope *)scope
-                                            owner:(id<iTermObject>)owner
-                                 useInterpolation:(BOOL)useInterpolation
-                                       completion:(void (^)(NSString *))completion {
+- (iTermPromise<NSString *> *)paramWithBackreferencesReplacedWithValues:(NSArray *)stringArray
+                                                                  scope:(iTermVariableScope *)scope
+                                                                  owner:(id<iTermObject>)owner
+                                                       useInterpolation:(BOOL)useInterpolation {
     NSString *p = [NSString castFrom:self.param] ?: @"";
     if (useInterpolation) {
-        [self evaluateSwiftyStringParameter:p
-                             backreferences:stringArray
-                                      scope:scope
-                                      owner:owner
-                                 completion:completion];
-        return;
+        return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+            [self evaluateSwiftyStringParameter:p
+                                 backreferences:stringArray
+                                          scope:scope
+                                          owner:owner
+                                     completion:^(NSString *value) {
+                if (value) {
+                    [seal fulfill:value];
+                } else {
+                    [seal reject:[NSError errorWithDomain:@"com.iterm2.trigger" code:0 userInfo:nil]];
+                }
+            }];
+        }];
     }
     
     const NSUInteger count = stringArray.count;
@@ -228,7 +234,10 @@ NSString * const kTriggerDisabledKey = @"disabled";
     p = [p stringByReplacingEscapedChar:'t' withString:@"\t"];
     p = [p stringByReplacingEscapedChar:'\\' withString:@"\\"];
     p = [p stringByReplacingEscapedHexValuesWithChars];
-    completion(p);
+
+    return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+        [seal fulfill:p];
+    }];
 }
 
 - (iTermVariableScope *)variableScope:(iTermVariableScope *)scope byAddingBackreferences:(NSArray<NSString *> *)backreferences {

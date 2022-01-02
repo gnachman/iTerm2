@@ -50,14 +50,13 @@
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Notifs are so slow & rare that this is ok.
-    [self paramWithBackreferencesReplacedWithValues:stringArray
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
 #warning TODO: Variable scope will need an immutable copy :(
-                                              scope:[aSession triggerSessionVariableScope:self]
-                                              owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *notificationText) {
-                                             [self postNotificationWithText:notificationText inSession:aSession];
-                                         }];
+                                               scope:[aSession triggerSessionVariableScope:self]
+                                               owner:aSession
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull notificationText) {
+        [self postNotificationWithText:notificationText inSession:aSession];
+    }];
     return YES;
 }
 

@@ -37,11 +37,10 @@
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Directory changes slow & rare that this is ok.
-    [self paramWithBackreferencesReplacedWithValues:stringArray
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
                                               scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *currentDirectory) {
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull currentDirectory) {
         DLog(@"SetDirectoryTrigger completed substitution with %@", currentDirectory);
         if (currentDirectory.length) {
             [aSession triggerSession:self setCurrentDirectory:currentDirectory];

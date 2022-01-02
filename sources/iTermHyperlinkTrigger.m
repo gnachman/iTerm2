@@ -46,11 +46,10 @@
     const NSRange rangeInString = capturedRanges[0];
     
     // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
-    [self paramWithBackreferencesReplacedWithValues:stringArray
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
                                               scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *urlString) {
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull urlString) {
         [self performActionWithURLString:urlString
                                    range:rangeInString
                                  session:aSession

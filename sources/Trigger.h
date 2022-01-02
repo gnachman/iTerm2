@@ -9,6 +9,7 @@
 
 #import "iTermFocusReportingTextField.h"
 #import "iTermObject.h"
+#import "iTermPromise.h"
 #import "VT100GridTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -119,11 +120,10 @@ extern NSString * const kTriggerDisabledKey;
 - (iTermVariableScope *)variableScope:(iTermVariableScope *)scope
                byAddingBackreferences:(NSArray<NSString *> *)backreferences;
 
-- (void)paramWithBackreferencesReplacedWithValues:(NSArray<NSString *> *)strings
-                                            scope:(iTermVariableScope *)scope
-                                            owner:(id<iTermObject>)owner
-                                 useInterpolation:(BOOL)useInterpolation
-                                       completion:(void (^)(NSString *result))completion;
+- (iTermPromise<NSString *> *)paramWithBackreferencesReplacedWithValues:(NSArray<NSString *> *)strings
+                                                                  scope:(iTermVariableScope *)scope
+                                                                  owner:(id<iTermObject>)owner
+                                                       useInterpolation:(BOOL)useInterpolation;
 
 // Returns YES if no more triggers should be processed.
 - (BOOL)tryString:(iTermStringLine *)stringLine
