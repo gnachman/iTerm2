@@ -62,7 +62,7 @@ class SetUserVariableTrigger: Trigger {
                                 stop: UnsafeMutablePointer<ObjCBool>) -> Bool {
         // definitely stop the world
         paramWithBackreferencesReplaced(withValues: strings,
-                                        scope: session.triggerSessionVariableScope(self),
+                                        scope: session.triggerSessionVariableScopeProvider(self),
                                         owner: session,
                                         useInterpolation: useInterpolation).then { [weak self] message in
             if let self = self, let (name, value) = self.variableNameAndValue(message as String) {
