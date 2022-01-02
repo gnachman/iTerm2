@@ -63,7 +63,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p regex=%@ param=%@>",
-               NSStringFromClass(self.class), self, self.regex, self.param];
+            NSStringFromClass(self.class), self, self.regex, self.param];
 }
 
 - (NSString *)action {
@@ -120,21 +120,20 @@ NSString * const kTriggerDisabledKey = @"disabled";
 
 - (NSArray *)groupedMenuItemsForPopupButton
 {
-  NSDictionary *menuItems = [self menuItemsForPoupupButton];
-  if (menuItems) {
-    return @[ menuItems ];
-  } else {
-    return nil;
-  }
+    NSDictionary *menuItems = [self menuItemsForPoupupButton];
+    if (menuItems) {
+        return @[ menuItems ];
+    } else {
+        return nil;
+    }
 }
 
 - (id<iTermFocusReportingTextFieldDelegate>)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough {
     return nil;
 }
 
-- (BOOL)performActionWithCapturedStrings:(NSString *const *)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)stringLine
                     atAbsoluteLineNumber:(long long)lineNumber
@@ -169,7 +168,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
         // This trigger doesn't support partial lines.
         return NO;
     }
-
+    
     __block BOOL stopFutureTriggersFromRunningOnThisLine = NO;
     NSString *s = stringLine.stringValue;
     DLog(@"Search for regex %@ in string %@", regex_, s);
@@ -178,45 +177,27 @@ NSString * const kTriggerDisabledKey = @"disabled";
                                         NSString *const __unsafe_unretained *capturedStrings,
                                         const NSRange *capturedRanges,
                                         volatile BOOL *const stopEnumerating) {
-                               self->_lastLineNumber = lineNumber;
-                               DLog(@"Trigger %@ matched string %@", self, s);
-                               if (![self performActionWithCapturedStrings:capturedStrings
-                                                            capturedRanges:capturedRanges
-                                                              captureCount:captureCount
-                                                                 inSession:aSession
-                                                                  onString:stringLine
-                                                      atAbsoluteLineNumber:lineNumber
-                                                          useInterpolation:useInterpolation
-                                                                      stop:&stopFutureTriggersFromRunningOnThisLine]) {
-                                   *stopEnumerating = YES;
-                               }
-                           }];
+        self->_lastLineNumber = lineNumber;
+        DLog(@"Trigger %@ matched string %@", self, s);
+        NSArray<NSString *> *stringArray = [[NSArray alloc] initWithObjects:capturedStrings
+                                                                      count:captureCount];
+        if (![self performActionWithCapturedStrings:stringArray
+                                     capturedRanges:capturedRanges
+                                          inSession:aSession
+                                           onString:stringLine
+                               atAbsoluteLineNumber:lineNumber
+                                   useInterpolation:useInterpolation
+                                               stop:&stopFutureTriggersFromRunningOnThisLine]) {
+            *stopEnumerating = YES;
+        }
+    }];
     if (!partialLine) {
         _lastLineNumber = -1;
     }
     return stopFutureTriggersFromRunningOnThisLine;
 }
 
-- (void)paramWithBackreferencesReplacedWithValues:(NSArray *)strings
-                                            scope:(iTermVariableScope *)scope
-                                            owner:(id<iTermObject>)owner
-                                 useInterpolation:(BOOL)useInterpolation
-                                       completion:(void (^)(NSString *))completion {
-    NSString *temp[10];
-    int i;
-    for (i = 0; i < strings.count; i++) {
-        temp[i] = strings[i];
-    }
-    [self paramWithBackreferencesReplacedWithValues:temp
-                                              count:i
-                                              scope:scope
-                                              owner:owner
-                                   useInterpolation:useInterpolation
-                                         completion:completion];
-}
-
-- (void)paramWithBackreferencesReplacedWithValues:(NSString * const*)strings
-                                            count:(NSInteger)count
+- (void)paramWithBackreferencesReplacedWithValues:(NSArray *)stringArray
                                             scope:(iTermVariableScope *)scope
                                             owner:(id<iTermObject>)owner
                                  useInterpolation:(BOOL)useInterpolation
@@ -224,17 +205,18 @@ NSString * const kTriggerDisabledKey = @"disabled";
     NSString *p = [NSString castFrom:self.param] ?: @"";
     if (useInterpolation) {
         [self evaluateSwiftyStringParameter:p
-                             backreferences:[[NSArray alloc] initWithObjects:strings count:count]
+                             backreferences:stringArray
                                       scope:scope
                                       owner:owner
                                  completion:completion];
         return;
     }
-
+    
+    const NSUInteger count = stringArray.count;
     for (int i = 0; i < 9; i++) {
         NSString *rep = @"";
         if (count > i) {
-            rep = strings[i];
+            rep = stringArray[i];
         }
         p = [p stringByReplacingBackreference:i withString:rep];
     }
@@ -279,10 +261,10 @@ NSString * const kTriggerDisabledKey = @"disabled";
 
 - (void)evaluationDidFailWithError:(NSError *)error {
     NSString *title =
-        [NSString stringWithFormat:@"The following parameter for a “%@” trigger could not be evaluated:\n\n%@\n\nThe error was:\n\n%@",
-                       [[self class] title],
-                       _evaluator.expression,
-                       error.localizedDescription];
+    [NSString stringWithFormat:@"The following parameter for a “%@” trigger could not be evaluated:\n\n%@\n\nThe error was:\n\n%@",
+     [[self class] title],
+     _evaluator.expression,
+     error.localizedDescription];
     [iTermWarning showWarningWithTitle:title
                                actions:@[ @"OK" ]
                              accessory:nil
@@ -328,13 +310,13 @@ NSString * const kTriggerDisabledKey = @"disabled";
                                          kTriggerParameterKey: self.param ?: @"",
                                          kTriggerPartialLineKey: @(self.partialLine),
                                          kTriggerDisabledKey: @(self.disabled) };
-
+    
     // Glom all the data together as key=value\nkey=value\n...
     NSMutableString *temp = [NSMutableString string];
     for (NSString *key in [[triggerDictionary allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         [temp appendFormat:@"%@=%@\n", key, triggerDictionary[key]];
     }
-
+    
     NSData *data = [temp dataUsingEncoding:NSUTF8StringEncoding];
     unsigned char hash[CC_SHA1_DIGEST_LENGTH];
     if (CC_SHA1([data bytes], [data length], hash) ) {

@@ -119,13 +119,6 @@ extern NSString * const kTriggerDisabledKey;
 - (iTermVariableScope *)variableScope:(iTermVariableScope *)scope
                byAddingBackreferences:(NSArray<NSString *> *)backreferences;
 
-- (void)paramWithBackreferencesReplacedWithValues:(NSString * _Nonnull const * _Nonnull)strings
-                                            count:(NSInteger)count
-                                            scope:(iTermVariableScope *)scope
-                                            owner:(id<iTermObject>)owner
-                                 useInterpolation:(BOOL)useInterpolation
-                                       completion:(void (^)(NSString *result))completion;
-
 - (void)paramWithBackreferencesReplacedWithValues:(NSArray<NSString *> *)strings
                                             scope:(iTermVariableScope *)scope
                                             owner:(id<iTermObject>)owner
@@ -140,9 +133,8 @@ extern NSString * const kTriggerDisabledKey;
  useInterpolation:(BOOL)useInterpolation;
 
 // Subclasses must override this. Return YES if it can fire again on this line.
-- (BOOL)performActionWithCapturedStrings:(NSString * _Nonnull const * _Nonnull)capturedStrings
+- (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
-                            captureCount:(NSInteger)captureCount
                                inSession:(id<iTermTriggerSession>)aSession
                                 onString:(iTermStringLine *)s
                     atAbsoluteLineNumber:(long long)lineNumber

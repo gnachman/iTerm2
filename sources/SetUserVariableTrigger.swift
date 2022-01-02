@@ -53,17 +53,14 @@ class SetUserVariableTrigger: Trigger {
         return "Value for variable"
     }
 
-    override func performAction(withCapturedStrings capturedStrings: UnsafePointer<NSString>,
+    override func performAction(withCapturedStrings strings: [String],
                                 capturedRanges: UnsafePointer<NSRange>,
-                                captureCount: Int,
                                 in session: iTermTriggerSession,
                                 onString s: iTermStringLine,
                                 atAbsoluteLineNumber lineNumber: Int64,
                                 useInterpolation: Bool,
                                 stop: UnsafeMutablePointer<ObjCBool>) -> Bool {
         // definitely stop the world
-        let buffer = UnsafeBufferPointer(start: capturedStrings, count: captureCount)
-        let strings = Array(buffer).compactMap { $0 as String? }
         paramWithBackreferencesReplaced(withValues: strings,
                                         scope: session.triggerSessionVariableScope(self),
                                         owner: session,
