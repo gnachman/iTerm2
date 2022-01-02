@@ -14906,7 +14906,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 // This can be completely async
-- (BOOL)triggerSessionToolbeltIsVisible:(Trigger *)trigger {
+- (BOOL)toolbeltIsVisible {
     if (!self.delegate.realParentWindow.shouldShowToolbelt) {
         return NO;
     }
@@ -14959,7 +14959,10 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 // This can be completely async
-- (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncement:(Trigger *)trigger {
+- (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:(Trigger *)trigger {
+    if ([self toolbeltIsVisible]) {
+        return;
+    }
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputToolNotVisibleWarning]) {
         return;
     }
