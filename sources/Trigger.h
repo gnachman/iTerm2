@@ -77,9 +77,9 @@ extern NSString * const kTriggerDisabledKey;
 - (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data;
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value;
 - (void)triggerSession:(Trigger *)trigger showAlertWithMessage:(NSString *)message disable:(void (^)(void))disable;
-- (PTYAnnotation *)triggerSession:(Trigger *)trigger
-            makeAnnotationInRange:(NSRange)rangeInScreenChars
-                             line:(long long)lineNumber;
+- (PTYAnnotation * _Nullable)triggerSession:(Trigger *)trigger
+                      makeAnnotationInRange:(NSRange)rangeInScreenChars
+                                       line:(long long)lineNumber;
 
 @end
 
