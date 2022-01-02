@@ -35,12 +35,11 @@ extern NSString * const kTriggerDisabledKey;
 @protocol iTermTriggerSession<NSObject, iTermObject>
 - (void)triggerSessionReveal:(Trigger *)trigger;
 - (void)triggerSessionRingBell:(Trigger *)trigger;
-- (BOOL)triggerSessionToolbeltIsVisible:(Trigger *)trigger;
 - (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger;
 - (BOOL)triggerSessionIsShellIntegrationInstalled:(Trigger *)trigger;
 - (void)triggerSessionShowShellIntegrationRequiredAnnouncement:(Trigger *)trigger;
-- (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncement:(Trigger *)trigger;
 - (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)output;
+- (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:(Trigger *)trigger;
 
 // Identifier is used for silenceing errors, or nil to make it not silenceable.
 - (void)triggerSession:(Trigger *)trigger launchCoprocessWithCommand:(NSString *)command identifier:(NSString * _Nullable)identifier silent:(BOOL)silent;

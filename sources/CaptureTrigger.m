@@ -31,10 +31,6 @@
     return @"Coprocess to run on activation";
 }
 
-- (BOOL)capturedOutputToolVisibleInSession:(id<iTermTriggerSession>)aSession {
-    return [aSession triggerSessionToolbeltIsVisible:self];
-}
-
 - (void)showCaptureOutputToolInSession:(id<iTermTriggerSession>)aSession {
     return [aSession triggerSessionShowCapturedOutputTool:self];
 }
@@ -48,8 +44,8 @@
                                     stop:(BOOL *)stop {
     if (![aSession triggerSessionIsShellIntegrationInstalled:self]) {
         [aSession triggerSessionShowShellIntegrationRequiredAnnouncement:self];
-    } else if (![self capturedOutputToolVisibleInSession:aSession]) {
-        [aSession triggerSessionShowCapturedOutputToolNotVisibleAnnouncement:self];
+    } else {
+        [aSession triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:self];
     }
     CapturedOutput *output = [[[CapturedOutput alloc] init] autorelease];
     output.absoluteLineNumber = lineNumber;
@@ -63,10 +59,12 @@
 // Called by UI
 - (void)activateOnOutput:(CapturedOutput *)capturedOutput inSession:(id<iTermTriggerSession>)session {
     assert([NSThread isMainThread]);
+    id<iTermTriggerScopeProvider> scopeProvider = [session triggerSessionVariableScopeProvider:self];
+    const BOOL interpolate = [session triggerSessionShouldUseInterpolatedStrings:self];
     [[self paramWithBackreferencesReplacedWithValues:capturedOutput.values
-                                               scope:[session triggerSessionVariableScopeProvider:self]
+                                               scope:scopeProvider
                                                owner:session
-                                    useInterpolation:[session triggerSessionShouldUseInterpolatedStrings:self]] then:^(NSString * _Nonnull command) {
+                                    useInterpolation:interpolate] then:^(NSString * _Nonnull command) {
         [session triggerSession:self
      launchCoprocessWithCommand:command
                      identifier:nil
