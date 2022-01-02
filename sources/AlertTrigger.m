@@ -56,7 +56,6 @@
 }
 
 - (iTermRateLimitedUpdate *)rateLimit {
-    assert([NSThread isMainThread]);  // Can't use rateLimit off the main thread.
     if (!_rateLimit) {
         _rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"AlertTrigger"
                                                   minimumInterval:[iTermAdvancedSettingsModel alertTriggerRateLimit]];
@@ -65,22 +64,12 @@
     return _rateLimit;
 }
 
-// Main thread
-#warning TODO: Move rate-limiting to code that has to run on main thread anyway instead of bouncing between queue and main thread twice.
 - (void)showAlertWithMessage:(NSString *)message inSession:(id<iTermTriggerSession>)aSession queue:(dispatch_queue_t)queue {
-    [[self rateLimit] performRateLimitedBlock:^{
-        [self reallyShowAlertWithMessage:message inSession:aSession queue:queue];
+    [aSession triggerSession:self showAlertWithMessage:message rateLimit:[self rateLimit] disable:^{
+        dispatch_async(queue, ^{
+            self->disabled_ = YES;
+        });
     }];
-}
-
-- (void)reallyShowAlertWithMessage:(NSString *)message inSession:(id<iTermTriggerSession>)aSession queue:(dispatch_queue_t)queue {
-    dispatch_async(queue, ^{
-        [aSession triggerSession:self showAlertWithMessage:message disable:^{
-            dispatch_async(queue, ^{
-                self->disabled_ = YES;
-            });
-        }];
-    });
 }
 
 @end

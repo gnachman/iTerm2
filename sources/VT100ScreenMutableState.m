@@ -24,6 +24,7 @@
 #import "iTermCapturedOutputMark.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
+#import "iTermRateLimitedUpdate.h"
 #import "iTermTextExtractor.h"
 #import "iTermURLMark.h"
 #import "iTermURLStore.h"
@@ -1004,11 +1005,13 @@ basedAtAbsoluteLineNumber:lineNumber
 }
 
 
-- (void)triggerShowAlertWithMessage:(NSString *)message disable:(void (^)(void))disable {
+- (void)triggerShowAlertWithMessage:(NSString *)message rateLimit:(iTermRateLimitedUpdate *)rateLimit disable:(void (^)(void))disable {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate triggerSideEffectShowAlertWithMessage:message
-                                                disable:^{
-            disable();
+        [rateLimit performRateLimitedBlock:^{
+            [delegate triggerSideEffectShowAlertWithMessage:message
+                                                    disable:^{
+                disable();
+            }];
         }];
     }];
 }
