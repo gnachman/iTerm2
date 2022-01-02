@@ -15,6 +15,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class CapturedOutput;
+@class PTYAnnotation;
 @class Trigger;
 @class iTermBackgroundCommandRunner;
 @protocol iTermObject;
@@ -68,15 +69,18 @@ extern NSString * const kTriggerDisabledKey;
          withVariables:(NSDictionary *)temporaryVariables
               captures:(NSArray<NSString *> *)captureStringArray;
 - (void)triggerSession:(Trigger *)trigger
-         setAnnotation:(NSString *)annotation
-                 range:(NSRange)range
-                  line:(long long)lineNumber;
+         setAnnotation:(PTYAnnotation *)annotation
+              stringTo:(NSString *)stringValue;
 - (void)triggerSession:(Trigger *)trigger
        highlightLineAt:(VT100GridAbsCoord)absCoord
                 colors:(NSDictionary *)colors;
 - (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data;
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value;
 - (void)triggerSession:(Trigger *)trigger showAlertWithMessage:(NSString *)message disable:(void (^)(void))disable;
+- (PTYAnnotation * _Nullable)triggerSession:(Trigger *)trigger
+                      makeAnnotationInRange:(NSRange)rangeInScreenChars
+                                       line:(long long)lineNumber;
+
 @end
 
 @interface Trigger : NSObject<iTermObject>

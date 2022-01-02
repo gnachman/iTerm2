@@ -39,14 +39,20 @@
         return YES;
     }
     // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
+    PTYAnnotation *annotation =
+        [aSession triggerSession:self
+           makeAnnotationInRange:rangeInScreenChars
+                            line:lineNumber];
+    if (!annotation) {
+        return YES;
+    }
     [[self paramWithBackreferencesReplacedWithValues:stringArray
                                                scope:[aSession triggerSessionVariableScopeProvider:self]
                                                owner:aSession
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull text) {
         [aSession triggerSession:self
-                   setAnnotation:text
-                           range:rangeInScreenChars
-                            line:lineNumber];
+                   setAnnotation:annotation
+                        stringTo:text];
     }];
     return YES;
 }
