@@ -63,18 +63,15 @@
 // Called by UI
 - (void)activateOnOutput:(CapturedOutput *)capturedOutput inSession:(id<iTermTriggerSession>)session {
     assert([NSThread isMainThread]);
-    [self paramWithBackreferencesReplacedWithValues:capturedOutput.values
-                                              scope:[session triggerSessionVariableScope:self]
-                                              owner:session
-                                   useInterpolation:[session triggerSessionShouldUseInterpolatedStrings:self]
-                                         completion:^(NSString *command) {
-        if (command) {
-            [session triggerSession:self
-         launchCoprocessWithCommand:command
-                         identifier:nil
-                             silent:NO];
-            [session triggerSessionMakeFirstResponder:self];
-        }
+    [[self paramWithBackreferencesReplacedWithValues:capturedOutput.values
+                                               scope:[session triggerSessionVariableScope:self]
+                                               owner:session
+                                    useInterpolation:[session triggerSessionShouldUseInterpolatedStrings:self]] then:^(NSString * _Nonnull command) {
+        [session triggerSession:self
+     launchCoprocessWithCommand:command
+                     identifier:nil
+                         silent:NO];
+        [session triggerSessionMakeFirstResponder:self];
     }];
 }
 

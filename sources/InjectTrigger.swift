@@ -32,8 +32,8 @@ class InjectTrigger: Trigger {
         paramWithBackreferencesReplaced(withValues: strings,
                                         scope: session.triggerSessionVariableScope(self),
                                         owner: session,
-                                        useInterpolation: useInterpolation) { message in
-            if let data = message.data(using: .utf8) {
+                                        useInterpolation: useInterpolation).then { message in
+            if let data = (message as String).data(using: .utf8) {
                 session.triggerSession(self, inject: data);
             }
         }

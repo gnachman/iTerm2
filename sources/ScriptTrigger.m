@@ -48,14 +48,10 @@
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Running a command is so slow & rare that this is ok.
-    [self paramWithBackreferencesReplacedWithValues:stringArray
-                                              scope:[aSession triggerSessionVariableScope:self]
-                                              owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *command) {
-        if (!command) {
-            return;
-        }
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
+                                               scope:[aSession triggerSessionVariableScope:self]
+                                               owner:aSession
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull command) {
         [self runCommand:command session:aSession];
     }];
     return YES;

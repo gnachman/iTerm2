@@ -64,8 +64,8 @@ class SetUserVariableTrigger: Trigger {
         paramWithBackreferencesReplaced(withValues: strings,
                                         scope: session.triggerSessionVariableScope(self),
                                         owner: session,
-                                        useInterpolation: useInterpolation) { [weak self] message in
-            if let self = self, let (name, value) = self.variableNameAndValue(message) {
+                                        useInterpolation: useInterpolation).then { [weak self] message in
+            if let self = self, let (name, value) = self.variableNameAndValue(message as String) {
                 session.triggerSession(self,
                                        setVariableNamed: "user." + name,
                                        toValue: value)

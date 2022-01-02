@@ -35,11 +35,10 @@
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Hostname changes are slow & rare that this is ok.
-    [self paramWithBackreferencesReplacedWithValues:stringArray
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
                                               scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *remoteHost) {
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull remoteHost) {
         if (remoteHost.length) {
             [aSession triggerSession:self setRemoteHostName:remoteHost];
         }

@@ -86,14 +86,11 @@
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Password manager opens are so slow & rare that this is ok.
-    [self paramWithBackreferencesReplacedWithValues:stringArray
+    [[self paramWithBackreferencesReplacedWithValues:stringArray
                                               scope:[aSession triggerSessionVariableScope:self]
                                               owner:aSession
-                                   useInterpolation:useInterpolation
-                                         completion:^(NSString *accountName) {
-        if (accountName) {
-            [aSession triggerSession:self openPasswordManagerToAccountName:accountName];
-        }
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull accountName) {
+        [aSession triggerSession:self openPasswordManagerToAccountName:accountName];
     }];
     return YES;
 }
