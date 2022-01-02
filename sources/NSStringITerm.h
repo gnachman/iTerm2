@@ -343,6 +343,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // nil if this is not scannable as an integer.
 - (NSNumber *)integerNumber;
 - (BOOL)getHashColorRed:(unsigned int *)red green:(unsigned int *)green blue:(unsigned int *)blue;
+- (BOOL)interpolatedStringContainsNonliteral;
 
 @end
 

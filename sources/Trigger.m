@@ -198,22 +198,26 @@ NSString * const kTriggerDisabledKey = @"disabled";
 }
 
 - (iTermPromise<NSString *> *)paramWithBackreferencesReplacedWithValues:(NSArray *)stringArray
-                                                                  scope:(iTermVariableScope *)scope
+                                                                  scope:(id<iTermTriggerScopeProvider>)scopeProvider
                                                                   owner:(id<iTermObject>)owner
                                                        useInterpolation:(BOOL)useInterpolation {
     NSString *p = [NSString castFrom:self.param] ?: @"";
-    if (useInterpolation) {
+    if (useInterpolation && [p interpolatedStringContainsNonliteral]) {
         return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
-            [self evaluateSwiftyStringParameter:p
-                                 backreferences:stringArray
-                                          scope:scope
-                                          owner:owner
-                                     completion:^(NSString *value) {
-                if (value) {
-                    [seal fulfill:value];
-                } else {
-                    [seal reject:[NSError errorWithDomain:@"com.iterm2.trigger" code:0 userInfo:nil]];
-                }
+            [scopeProvider performBlockWithScope:^(iTermVariableScope * _Nonnull scope) {
+                assert([NSThread isMainThread]);
+                [self evaluateSwiftyStringParameter:p
+                                     backreferences:stringArray
+                                              scope:scope
+                                              owner:owner
+                                         completion:^(NSString *value) {
+                    assert([NSThread isMainThread]);
+                    if (value) {
+                        [seal fulfill:value];
+                    } else {
+                        [seal reject:[NSError errorWithDomain:@"com.iterm2.trigger" code:0 userInfo:nil]];
+                    }
+                }];
             }];
         }];
     }

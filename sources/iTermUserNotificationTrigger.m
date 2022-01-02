@@ -52,7 +52,7 @@
     // Need to stop the world to get scope, provided it is needed. Notifs are so slow & rare that this is ok.
     [[self paramWithBackreferencesReplacedWithValues:stringArray
 #warning TODO: Variable scope will need an immutable copy :(
-                                               scope:[aSession triggerSessionVariableScope:self]
+                                               scope:[aSession triggerSessionVariableScopeProvider:self]
                                                owner:aSession
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull notificationText) {
         [self postNotificationWithText:notificationText inSession:aSession];

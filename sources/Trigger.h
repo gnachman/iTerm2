@@ -27,6 +27,10 @@ extern NSString * const kTriggerParameterKey;
 extern NSString * const kTriggerPartialLineKey;
 extern NSString * const kTriggerDisabledKey;
 
+@protocol iTermTriggerScopeProvider<NSObject>
+- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope))block;
+@end
+
 @protocol iTermTriggerSession<NSObject, iTermObject>
 - (void)triggerSessionReveal:(Trigger *)trigger;
 - (void)triggerSessionRingBell:(Trigger *)trigger;
@@ -39,7 +43,7 @@ extern NSString * const kTriggerDisabledKey;
 
 // Identifier is used for silenceing errors, or nil to make it not silenceable.
 - (void)triggerSession:(Trigger *)trigger launchCoprocessWithCommand:(NSString *)command identifier:(NSString * _Nullable)identifier silent:(BOOL)silent;
-- (iTermVariableScope *)triggerSessionVariableScope:(Trigger *)trigger;
+- (id<iTermTriggerScopeProvider>)triggerSessionVariableScopeProvider:(Trigger *)trigger;
 - (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger;
 - (void)triggerSessionMakeFirstResponder:(Trigger *)trigger;
 - (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message;
@@ -121,7 +125,7 @@ extern NSString * const kTriggerDisabledKey;
                byAddingBackreferences:(NSArray<NSString *> *)backreferences;
 
 - (iTermPromise<NSString *> *)paramWithBackreferencesReplacedWithValues:(NSArray<NSString *> *)strings
-                                                                  scope:(iTermVariableScope *)scope
+                                                                  scope:(id<iTermTriggerScopeProvider>)scope
                                                                   owner:(id<iTermObject>)owner
                                                        useInterpolation:(BOOL)useInterpolation;
 

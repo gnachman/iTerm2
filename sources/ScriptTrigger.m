@@ -49,7 +49,7 @@
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Running a command is so slow & rare that this is ok.
     [[self paramWithBackreferencesReplacedWithValues:stringArray
-                                               scope:[aSession triggerSessionVariableScope:self]
+                                               scope:[aSession triggerSessionVariableScopeProvider:self]
                                                owner:aSession
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull command) {
         [self runCommand:command session:aSession];

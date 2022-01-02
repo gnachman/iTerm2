@@ -64,7 +64,7 @@
 - (void)activateOnOutput:(CapturedOutput *)capturedOutput inSession:(id<iTermTriggerSession>)session {
     assert([NSThread isMainThread]);
     [[self paramWithBackreferencesReplacedWithValues:capturedOutput.values
-                                               scope:[session triggerSessionVariableScope:self]
+                                               scope:[session triggerSessionVariableScopeProvider:self]
                                                owner:session
                                     useInterpolation:[session triggerSessionShouldUseInterpolatedStrings:self]] then:^(NSString * _Nonnull command) {
         [session triggerSession:self

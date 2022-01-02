@@ -15020,9 +15020,8 @@ launchCoprocessWithCommand:(NSString *)command
     [self takeFocus];
 }
 
-// THIS IS A HUGE PROBLEM
-- (iTermVariableScope *)triggerSessionVariableScope:(Trigger *)trigger {
-    return self.variablesScope;
+- (id<iTermTriggerScopeProvider>)triggerSessionVariableScopeProvider:(Trigger *)trigger {
+    return self;
 }
 
 // This can be synchronous by moving the logic into VT100ScreenMutableState
@@ -15204,6 +15203,13 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)performActionForCapturedOutput:(CapturedOutput *)capturedOutput {
     [capturedOutput.trigger activateOnOutput:capturedOutput inSession:self];
+}
+
+#pragma mark - iTermTriggerScopeProvider
+
+- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope))block {
+#warning TODO: Stop processing additional tokens until the next spin of the mainloop because they could modify variables causing state to appear to have time-traveled.
+    block(self.variablesScope);
 }
 
 @end
