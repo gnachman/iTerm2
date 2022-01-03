@@ -412,11 +412,11 @@
     DLog(@"Fetching directory asynchronously with token %@", token);
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *workingDirectory) {
-            DLog(@"For token %@, the working directory is %@", token, dir);
+            DLog(@"For token %@, the working directory is %@", token, workingDirectory);
             if (![token commit]) {
                 return;
             }
-            [weakSelf currentDirectoryReallyDidChangeTo:dir onAbsLine:cursorAbsLine];
+            [weakSelf currentDirectoryReallyDidChangeTo:workingDirectory onAbsLine:cursorAbsLine];
         }];
     }];
 }
