@@ -221,10 +221,6 @@
                                  token:token];
 }
 
-- (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
-    return [_mutableState setRemoteHost:host user:user onLine:line];
-}
-
 - (id<iTermMark>)mutAddMarkStartingAtAbsoluteLine:(long long)line
                                           oneLine:(BOOL)oneLine
                                           ofClass:(Class)markClass {

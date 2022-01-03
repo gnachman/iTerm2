@@ -1501,13 +1501,6 @@ ITERM_WEAKLY_REFERENCEABLE
         haveSavedProgramData = NO;
     }
 
-    // This must be done before setContentsFromLineBufferDictionary:includeRestorationBanner:reattached:
-    // because it will show an announcement if mouse reporting is on.
-    VT100RemoteHost *lastRemoteHost = aSession.screen.lastRemoteHost;
-    if (lastRemoteHost) {
-        [aSession screenCurrentHostDidChange:lastRemoteHost];
-    }
-
     if (arrangement[SESSION_ARRANGEMENT_REUSABLE_COOKIE]) {
         [[iTermWebSocketCookieJar sharedInstance] addCookie:arrangement[SESSION_ARRANGEMENT_REUSABLE_COOKIE]];
     }
@@ -1757,6 +1750,14 @@ ITERM_WEAKLY_REFERENCEABLE
     [_screen restoreFromDictionary:dict
           includeRestorationBanner:includeRestorationBanner
                         reattached:reattached];
+
+    VT100RemoteHost *lastRemoteHost = _screen.lastRemoteHost;
+    if (lastRemoteHost) {
+        NSString *pwd = [_screen workingDirectoryOnLine:_screen.numberOfLines];
+        [self screenCurrentHostDidChange:lastRemoteHost
+                                     pwd:pwd];
+    }
+
     [self screenSoftAlternateScreenModeDidChange];
     // Do this to force the hostname variable to be updated.
     [self currentHost];
@@ -11521,7 +11522,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[_delegate parentWindow] updateTabColors];
 }
 
-- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host {
+- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host pwd:(NSString *)workingDirectory {
     DLog(@"Current host did change to %@ %@", host, self);
     NSString *previousHostName = _currentHost.hostname;
 
@@ -11535,11 +11536,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     [[_delegate realParentWindow] sessionHostDidChange:self to:host];
 
-    int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
-    NSString *path = [_screen workingDirectoryOnLine:line];
     [self tryAutoProfileSwitchWithHostname:host.hostname
                                   username:host.username
-                                      path:path
+                                      path:workingDirectory
                                        job:self.variablesScope.jobName];
 
     // Ignore changes to username; only update on hostname changes. See issue 8030.

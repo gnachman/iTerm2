@@ -113,7 +113,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)setRemoteHostFromString:(NSString *)remoteHost;
 
-- (void)setHost:(NSString *)host user:(NSString *)user;
+- (void)setHost:(NSString * _Nullable)host user:(NSString * _Nullable)user;
 
 - (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line;
 

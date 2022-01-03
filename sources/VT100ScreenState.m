@@ -485,10 +485,6 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return [command stringByTrimmingLeadingWhitespace];
 }
 
-- (VT100RemoteHost *)lastRemoteHost {
-    return [self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
-}
-
 - (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
     NSEnumerator *enumerator = [self.intervalTree reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
@@ -515,6 +511,10 @@ static const int kDefaultMaxScrollbackLines = 1000;
     VT100WorkingDirectory *workingDirectory =
         [self objectOnOrBeforeLine:line ofClass:[VT100WorkingDirectory class]];
     return workingDirectory.workingDirectory;
+}
+
+- (VT100RemoteHost *)lastRemoteHost {
+    return [self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
 }
 
 #pragma mark - iTermTextDataSource
