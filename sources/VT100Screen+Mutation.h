@@ -196,11 +196,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutCommandDidEndWithRange:(VT100GridCoordRange)range;
 - (void)mutSaveCursorLine;
 - (void)mutRestorePreferredCursorPositionIfPossible;
-- (void)mutSetTriggerParametersUseInterpolatedStrings:(BOOL)value;
 - (void)mutSetExited:(BOOL)exited;
 - (iTermSlownessDetector *)mutSlownessDetector;
 - (void)mutLoadTriggersFromProfileArray:(NSArray *)array;
 - (iTermExpect *)mutExpectSource;
+- (void)mutForceCheckTriggers;
+- (NSInteger)mutNumberOfTriggers;
+- (NSArray<NSString *> *)mutTriggerNames;
+- (NSIndexSet *)mutEnabledTriggerIndexes;
 
 @end
 

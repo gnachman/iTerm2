@@ -2156,14 +2156,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setTermIDIfPossible];
 }
 
-- (BOOL)triggerParametersUseInterpolatedStrings {
-    return _triggerEvaluator.triggerParametersUseInterpolatedStrings;
-}
-
-- (void)setTriggerParametersUseInterpolatedStrings:(BOOL)triggerParametersUseInterpolatedStrings {
-    _triggerEvaluator.triggerParametersUseInterpolatedStrings = triggerParametersUseInterpolatedStrings;
-}
-
 - (void)didInitializeSessionWithName:(NSString *)name {
     [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionAutoNameFormat];
 }
@@ -2602,7 +2594,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setExited:(BOOL)exited {
     _exited = exited;
-    _triggerEvaluator.sessionExited = exited;
+    [_screen setExited:exited];
 }
 
 - (void)makeTerminationUndoable {
@@ -3045,13 +3037,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (BOOL)triggerEvaluatorShouldUseTriggers:(PTYTriggerEvaluator *)evaluator {
-    if (![self.terminal softAlternateScreenMode]) {
-        return YES;
-    }
-    return [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS inProfile:self.profile];
-}
-
 - (void)setAllTriggersEnabled:(BOOL)enabled {
     NSArray<NSDictionary *> *triggers = self.profile[KEY_TRIGGERS];
     triggers = [triggers mapWithBlock:^id(NSDictionary *dict) {
@@ -3083,14 +3068,6 @@ ITERM_WEAKLY_REFERENCEABLE
         return [iTermTuple tupleWithObject:dict[kTriggerRegexKey]
                                  andObject:@(![dict[kTriggerDisabledKey] boolValue])];
     }];
-}
-
-- (void)toggleTriggerEnabledAtIndex:(NSInteger)index {
-    NSMutableArray<NSDictionary *> *mutableTriggers = [[self.profile[KEY_TRIGGERS] mutableCopy] autorelease];
-    NSDictionary *triggerDict = mutableTriggers[index];
-    const BOOL disabled = [triggerDict[kTriggerDisabledKey] boolValue];
-    mutableTriggers[index] = [triggerDict dictionaryBySettingObject:@(!disabled) forKey:kTriggerDisabledKey];
-    [self setSessionSpecificProfileValues:@{ KEY_TRIGGERS: mutableTriggers }];
 }
 
 - (void)appendBrokenPipeMessage:(NSString *)unpaddedMessage {
@@ -4145,6 +4122,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                      image:[self tabGraphicForProfile:aDict]];
     [self.delegate sessionUpdateMetalAllowed];
     [self profileNameDidChangeTo:self.profile[KEY_NAME]];
+#warning TODO: Update configuration
 }
 
 - (void)setCursorTypeOverride:(NSNumber *)cursorTypeOverride {
@@ -10578,10 +10556,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
-- (void)screenTriggerableChangeDidOccur {
-    [_triggerEvaluator clearTriggerLine];
-}
-
 - (void)screenDidResetAllowingContentModification:(BOOL)modifyContent {
     if (!modifyContent) {
         [_screen loadInitialColorTable];
@@ -10616,7 +10590,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // If plainText is false then it's a control code.
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string
                                isPlainText:(BOOL)plainText {
-    [_triggerEvaluator appendStringToTriggerLine:string];
     if (plainText) {
         [self logCooked:[string dataUsingEncoding:_terminal.encoding]];
     }
@@ -10646,7 +10619,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData {
-    [_triggerEvaluator appendAsciiDataToCurrentLine:asciiData];
     if (_logging.enabled) {
         [self logCooked:[NSData dataWithBytes:asciiData->buffer
                                        length:asciiData->length]];
@@ -11117,7 +11089,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // Force triggers to be checked. We may be switching to a profile without triggers
     // and we don't want them to run on the lines of text above _triggerLine later on
     // when switching to a profile that does have triggers.
-    [_triggerEvaluator forceCheck];
+    [_screen forceCheckTriggers];
 
     NSString *theName = [[self profile] objectForKey:KEY_NAME];
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
@@ -11892,6 +11864,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                        inProfile:_profile];
     _config.sessionGuid = _guid;
+    _config.enableTriggersInInteractiveApps = [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS inProfile:self.profile];
 }
 
 - (void)updateConfiguration {
@@ -12495,7 +12468,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenSoftAlternateScreenModeDidChange {
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-    _triggerEvaluator.triggersSlownessDetector.enabled = _screen.terminal.softAlternateScreenMode;
     [self.tmuxForegroundJobMonitor updateOnce];
     [self.variablesScope setValue:@(_screen.showingAlternateScreen)
                  forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
@@ -12709,6 +12681,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenDidUpdateCurrentDirectory {
     [self didUpdateCurrentDirectory];
+}
+
+- (void)screenOfferToDisableTriggersInInteractiveApps {
+    [self.naggingController offerToDisableTriggersInInteractiveApps];
 }
 
 - (VT100Screen *)popupVT100Screen {
@@ -13898,17 +13874,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermTriggersDataSource
 
 - (NSInteger)numberOfTriggers {
-    return _triggerEvaluator.triggers.count;
+    return _screen.numberOfTriggers;
 }
 
 - (NSArray<NSString *> *)triggerNames {
-    return [_triggerEvaluator.triggers mapWithBlock:^id(Trigger *trigger) {
-        return [NSString stringWithFormat:@"%@ — %@", [[[trigger class] title] stringByRemovingSuffix:@"…"], trigger.regex];
-    }];
+    return _screen.triggerNames;
 }
 
 - (NSIndexSet *)enabledTriggerIndexes {
-    return [_triggerEvaluator enabledTriggerIndexes];
+    return _screen.enabledTriggerIndexes;
 }
 
 - (void)addTrigger {

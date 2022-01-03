@@ -395,46 +395,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state externalAttributeIndexForLine:y];
 }
 
-// Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
-// This function is dangerous! It writes to an internal buffer and returns a
-// pointer to it. Better to use getLineAtIndex:withBuffer:.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex {
-    return [self getLineAtIndex:theIndex withBuffer:[_state.currentGrid resultLine]];
+    return [_state getLineAtIndex:theIndex];
 }
 
 // theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
 // grid.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {
-    ITBetaAssert(theIndex >= 0, @"Negative index to getLineAtIndex");
-    int numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
-    if (theIndex >= numLinesInLineBuffer) {
-        // Get a line from the circular screen buffer
-        return [_state.currentGrid screenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
-    } else {
-        // Get a line from the scrollback buffer.
-        screen_char_t continuation;
-        int cont = [_state.linebuffer copyLineToBuffer:buffer
-                                                 width:_state.currentGrid.size.width
-                                               lineNum:theIndex
-                                          continuation:&continuation];
-        if (cont == EOL_SOFT &&
-            theIndex == numLinesInLineBuffer - 1 &&
-            [_state.currentGrid screenCharsAtLineNumber:0][1].code == DWC_RIGHT &&
-            buffer[_state.currentGrid.size.width - 1].code == 0) {
-            // The last line in the scrollback buffer is actually a split DWC
-            // if the first char on the screen is double-width and the buffer is soft-wrapped without
-            // a last char.
-            cont = EOL_DWC;
-        }
-        if (cont == EOL_DWC) {
-            buffer[_state.currentGrid.size.width - 1].code = DWC_SKIP;
-            buffer[_state.currentGrid.size.width - 1].complexChar = NO;
-        }
-        buffer[_state.currentGrid.size.width] = continuation;
-        buffer[_state.currentGrid.size.width].code = cont;
-
-        return buffer;
-    }
+    return [_state getLineAtIndex:theIndex withBuffer:buffer];
 }
 
 - (NSArray<ScreenCharArray *> *)gridLinesInRange:(const NSRange)range {
@@ -667,7 +635,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (VT100RemoteHost *)remoteHostOnLine:(int)line {
-    return (VT100RemoteHost *)[self objectOnOrBeforeLine:line ofClass:[VT100RemoteHost class]];
+    return [_state remoteHostOnLine:line];
 }
 
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line {
@@ -702,9 +670,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (NSString *)workingDirectoryOnLine:(int)line {
-    VT100WorkingDirectory *workingDirectory =
-        [self objectOnOrBeforeLine:line ofClass:[VT100WorkingDirectory class]];
-    return workingDirectory.workingDirectory;
+    return [_state workingDirectoryOnLine:line];
 }
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation {
@@ -1081,51 +1047,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                    startPtr:(long long *)startAbsLineNumber {
-    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow;
-    if (lineNumber < 0) {
-        return nil;
-    }
-    if (lineNumber >= _state.numberOfLines) {
-        return nil;
-    }
-    // Search backward for start of line
-    int i;
-    NSMutableData *data = [NSMutableData data];
-    *startAbsLineNumber = self.totalScrollbackOverflow;
-
-    // Max radius of lines to search above and below absoluteLineNumber
-    const int kMaxRadius = [iTermAdvancedSettingsModel triggerRadius];
-    BOOL foundStart = NO;
-    for (i = lineNumber - 1; i >= 0 && i >= lineNumber - kMaxRadius; i--) {
-        const screen_char_t *line = [self getLineAtIndex:i];
-        if (line[_state.width].code == EOL_HARD) {
-            *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
-            foundStart = YES;
-            break;
-        }
-        [data replaceBytesInRange:NSMakeRange(0, 0)
-                        withBytes:line
-                           length:_state.width * sizeof(screen_char_t)];
-    }
-    if (!foundStart) {
-        *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
-    }
-    BOOL done = NO;
-    for (i = lineNumber; !done && i < _state.numberOfLines && i < lineNumber + kMaxRadius; i++) {
-        const screen_char_t *line = [self getLineAtIndex:i];
-        int length = _state.width;
-        done = line[length].code == EOL_HARD;
-        if (done) {
-            // Remove trailing newlines
-            while (length > 0 && line[length - 1].code == 0 && !line[length - 1].complexChar) {
-                --length;
-            }
-        }
-        [data appendBytes:line length:length * sizeof(screen_char_t)];
-    }
-
-    return [[[iTermStringLine alloc] initWithScreenChars:data.mutableBytes
-                                                  length:data.length / sizeof(screen_char_t)] autorelease];
+    return [_state stringLineAsStringAtAbsoluteLineNumber:absoluteLineNumber startPtr:startAbsLineNumber];
 }
 
 - (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
@@ -1464,6 +1386,22 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 #pragma mark - Mutation Wrappers
 
+- (NSInteger)numberOfTriggers {
+    return [self mutNumberOfTriggers];
+}
+
+- (NSArray<NSString *> *)triggerNames {
+    return [self mutTriggerNames];
+}
+
+- (NSIndexSet *)enabledTriggerIndexes {
+    return [self mutEnabledTriggerIndexes];
+}
+
+- (void)forceCheckTriggers {
+    [self mutForceCheckTriggers];
+}
+
 - (iTermExpect *)expect {
     return [self mutExpectSource];
 }
@@ -1479,10 +1417,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)setExited:(BOOL)exited {
     [self mutSetExited:exited];
-}
-
-- (void)setTriggerParametersUseInterpolatedStrings:(BOOL)triggerParametersUseInterpolatedStrings {
-    [self mutSetTriggerParametersUseInterpolatedStrings:triggerParametersUseInterpolatedStrings];
 }
 
 - (void)currentDirectoryDidChangeTo:(NSString *)dir {

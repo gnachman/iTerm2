@@ -65,9 +65,7 @@ iTermTriggerSession,
 iTermTmuxControllerSession,
 iTermUpdateCadenceControllerDelegate,
 iTermWorkingDirectoryPollerDelegate,
-TriggerDelegate> {
-    PTYTriggerEvaluator *_triggerEvaluator;
-}
+TriggerDelegate>
 
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
 @property(nonatomic, retain) TerminalFileDownload *download;

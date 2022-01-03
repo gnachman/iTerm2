@@ -43,6 +43,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setNeedsRedraw;
 
+#pragma mark - Grid
+
+- (void)softAlternateScreenModeDidChange;
+
 #pragma mark - Scrollback
 
 - (void)incrementOverflowBy:(int)overflowCount;
@@ -125,14 +129,22 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (NSArray<Trigger *> *)triggers;
 
-- (void)setTriggerParametersUseInterpolatedStrings:(BOOL)value;
-
 // This is in the triggers section because it is currently only used to decide if triggers should
 // measure their performance penalty and synchronization with PTYSession is not important.
 - (void)setExited:(BOOL)exited;
 
 - (void)loadTriggersFromProfileArray:(NSArray *)array
               useInterpolatedStrings:(BOOL)useInterpolatedStrings;
+
+- (void)clearTriggerLine;
+
+- (void)didAppendString:(NSString *)string;
+- (void)didAppendAsciiDataToCurrentLine:(AsciiData *)asciiData;
+- (void)forceCheckTriggers;
+
+- (NSInteger)numberOfTriggers;
+- (NSArray<NSString *> *)triggerNames;
+- (NSIndexSet *)enabledTriggerIndexes;
 
 #pragma mark - Interthread Synchronization
 

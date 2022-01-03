@@ -13,6 +13,7 @@
 #import "CaptureTrigger.h"
 #import "DebugLogging.h"
 #import "iTermExpect.h"
+#import "NSArray+iTerm.h"
 #import "PTYAnnotation.h"
 #import "PTYTriggerEvaluator.h"
 #import "VT100RemoteHost.h"
@@ -125,6 +126,12 @@ iTermTriggerSession>
         self.cumulativeScrollbackOverflow += overflowCount;
     }
     [self.intervalTreeObserver intervalTreeVisibleRangeDidChange];
+}
+
+#pragma mark - Grid
+
+- (void)softAlternateScreenModeDidChange {
+    _triggerEvaluator.triggersSlownessDetector.enabled = self.terminal.softAlternateScreenMode;
 }
 
 #pragma mark - Terminal Fundamentals
@@ -686,9 +693,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _triggerEvaluator.triggers;
 }
 
-- (void)setTriggerParametersUseInterpolatedStrings:(BOOL)value {
-    _triggerEvaluator.triggerParametersUseInterpolatedStrings = value;
-}
 
 - (void)setExited:(BOOL)exited {
     _triggerEvaluator.sessionExited = exited;
@@ -698,6 +702,36 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
               useInterpolatedStrings:(BOOL)useInterpolatedStrings {
     [_triggerEvaluator loadFromProfileArray:array];
     _triggerEvaluator.triggerParametersUseInterpolatedStrings = useInterpolatedStrings;
+}
+
+- (void)clearTriggerLine {
+    [_triggerEvaluator clearTriggerLine];
+}
+
+- (void)didAppendString:(NSString *)string {
+    [_triggerEvaluator appendStringToTriggerLine:string];
+}
+
+- (void)didAppendAsciiDataToCurrentLine:(AsciiData *)asciiData {
+    [_triggerEvaluator appendAsciiDataToCurrentLine:asciiData];
+}
+
+- (void)forceCheckTriggers {
+    [_triggerEvaluator forceCheck];
+}
+
+- (NSInteger)numberOfTriggers {
+    return _triggerEvaluator.triggers.count;
+}
+
+- (NSArray<NSString *> *)triggerNames {
+    return [_triggerEvaluator.triggers mapWithBlock:^id(Trigger *trigger) {
+        return [NSString stringWithFormat:@"%@ — %@", [[[trigger class] title] stringByRemovingSuffix:@"…"], trigger.regex];
+    }];
+}
+
+- (NSIndexSet *)enabledTriggerIndexes {
+    return [_triggerEvaluator enabledTriggerIndexes];
 }
 
 #pragma mark - Temporary
@@ -801,11 +835,6 @@ launchCoprocessWithCommand:(NSString *)command
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectMakeFirstResponder];
     }];
-}
-
-// This can be synchronous by moving the logic into VT100ScreenMutableState
-- (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger {
-    return _triggerEvaluator.triggerParametersUseInterpolatedStrings;
 }
 
 // This can be completely async
@@ -1042,6 +1071,21 @@ basedAtAbsoluteLineNumber:lineNumber
 - (dispatch_queue_t)triggerCompletionQueue {
     // This can be called on any queue.
     return _queue;
+}
+
+#pragma mark - PTYTriggerEvaluatorDelegate
+
+- (BOOL)triggerEvaluatorShouldUseTriggers:(PTYTriggerEvaluator *)evaluator {
+    if (![self.terminal softAlternateScreenMode]) {
+        return YES;
+    }
+    return self.config.enableTriggersInInteractiveApps;
+}
+
+- (void)triggerEvaluatorOfferToDisableTriggersInInteractiveApps:(PTYTriggerEvaluator *)evaluator {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenOfferToDisableTriggersInInteractiveApps];
+    }];
 }
 
 @end

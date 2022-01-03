@@ -262,7 +262,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)setRemoteHostName:(NSString *)remoteHostName;
 - (void)currentDirectoryDidChangeTo:(NSString *)dir;
 - (VT100GridCoordRange)commandRange;
-- (void)setTriggerParametersUseInterpolatedStrings:(BOOL)triggerParametersUseInterpolatedStrings;
 - (void)setExited:(BOOL)setExited;
 #warning TODO: This api will not be needed after trigger evaluation and token execution moves to the mutation thread.
 - (iTermSlownessDetector *)slownessDetector;
@@ -270,6 +269,11 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
               useInterpolatedStrings:(BOOL)useInterpolatedStrings;
 - (void)willUpdateDisplay;
 - (iTermExpect *)expect;
+- (void)forceCheckTriggers;
+- (NSInteger)numberOfTriggers;
+- (NSArray<NSString *> *)triggerNames;
+- (NSIndexSet *)enabledTriggerIndexes;
+- (void)toggleTriggerAtIndex:(NSInteger)index;
 
 @end
 

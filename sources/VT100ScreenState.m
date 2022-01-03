@@ -10,12 +10,14 @@
 
 #import "DebugLogging.h"
 #import "IntervalTree.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermTextExtractor.h"
 #import "LineBuffer.h"
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "VT100RemoteHost.h"
+#import "VT100WorkingDirectory.h"
 
 static const int kDefaultMaxScrollbackLines = 1000;
 
@@ -293,6 +295,98 @@ static const int kDefaultMaxScrollbackLines = 1000;
     }
 }
 
+- (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                                                   startPtr:(long long *)startAbsLineNumber {
+    long long lineNumber = absoluteLineNumber - self.cumulativeScrollbackOverflow;
+    if (lineNumber < 0) {
+        return nil;
+    }
+    if (lineNumber >= self.numberOfLines) {
+        return nil;
+    }
+    // Search backward for start of line
+    int i;
+    NSMutableData *data = [NSMutableData data];
+    *startAbsLineNumber = self.cumulativeScrollbackOverflow;
+
+    // Max radius of lines to search above and below absoluteLineNumber
+    const int kMaxRadius = [iTermAdvancedSettingsModel triggerRadius];
+    BOOL foundStart = NO;
+    for (i = lineNumber - 1; i >= 0 && i >= lineNumber - kMaxRadius; i--) {
+        const screen_char_t *line = [self getLineAtIndex:i];
+        if (line[self.width].code == EOL_HARD) {
+            *startAbsLineNumber = i + self.cumulativeScrollbackOverflow + 1;
+            foundStart = YES;
+            break;
+        }
+        [data replaceBytesInRange:NSMakeRange(0, 0)
+                        withBytes:line
+                           length:self.width * sizeof(screen_char_t)];
+    }
+    if (!foundStart) {
+        *startAbsLineNumber = i + self.cumulativeScrollbackOverflow + 1;
+    }
+    BOOL done = NO;
+    for (i = lineNumber; !done && i < self.numberOfLines && i < lineNumber + kMaxRadius; i++) {
+        const screen_char_t *line = [self getLineAtIndex:i];
+        int length = self.width;
+        done = line[length].code == EOL_HARD;
+        if (done) {
+            // Remove trailing newlines
+            while (length > 0 && line[length - 1].code == 0 && !line[length - 1].complexChar) {
+                --length;
+            }
+        }
+        [data appendBytes:line length:length * sizeof(screen_char_t)];
+    }
+
+    return [[iTermStringLine alloc] initWithScreenChars:data.mutableBytes
+                                                 length:data.length / sizeof(screen_char_t)];
+}
+
+// Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
+// This function is dangerous! It writes to an internal buffer and returns a
+// pointer to it. Better to use getLineAtIndex:withBuffer:.
+- (const screen_char_t *)getLineAtIndex:(int)theIndex {
+    return [self getLineAtIndex:theIndex withBuffer:[self.currentGrid resultLine]];
+}
+
+// theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
+// grid.
+- (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer {
+    ITBetaAssert(theIndex >= 0, @"Negative index to getLineAtIndex");
+    int numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    if (theIndex >= numLinesInLineBuffer) {
+        // Get a line from the circular screen buffer
+        return [self.currentGrid screenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
+    } else {
+        // Get a line from the scrollback buffer.
+        screen_char_t continuation;
+        int cont = [self.linebuffer copyLineToBuffer:buffer
+                                                 width:self.currentGrid.size.width
+                                               lineNum:theIndex
+                                          continuation:&continuation];
+        if (cont == EOL_SOFT &&
+            theIndex == numLinesInLineBuffer - 1 &&
+            [self.currentGrid screenCharsAtLineNumber:0][1].code == DWC_RIGHT &&
+            buffer[self.currentGrid.size.width - 1].code == 0) {
+            // The last line in the scrollback buffer is actually a split DWC
+            // if the first char on the screen is double-width and the buffer is soft-wrapped without
+            // a last char.
+            cont = EOL_DWC;
+        }
+        if (cont == EOL_DWC) {
+            buffer[self.currentGrid.size.width - 1].code = DWC_SKIP;
+            buffer[self.currentGrid.size.width - 1].complexChar = NO;
+        }
+        buffer[self.currentGrid.size.width] = continuation;
+        buffer[self.currentGrid.size.width].code = cont;
+
+        return buffer;
+    }
+}
+
+
 #pragma mark - Shell Integration
 
 - (VT100ScreenMark *)lastCommandMark {
@@ -411,6 +505,16 @@ static const int kDefaultMaxScrollbackLines = 1000;
         objects = [enumerator nextObject];
     }
     return nil;
+}
+
+- (VT100RemoteHost *)remoteHostOnLine:(int)line {
+    return (VT100RemoteHost *)[self objectOnOrBeforeLine:line ofClass:[VT100RemoteHost class]];
+}
+
+- (NSString *)workingDirectoryOnLine:(int)line {
+    VT100WorkingDirectory *workingDirectory =
+        [self objectOnOrBeforeLine:line ofClass:[VT100WorkingDirectory class]];
+    return workingDirectory.workingDirectory;
 }
 
 #pragma mark - iTermTextDataSource

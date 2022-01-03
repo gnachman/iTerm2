@@ -236,6 +236,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (iTermImmutableMetadata)metadataOnLine:(int)lineNumber;
 
+- (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                                                   startPtr:(long long *)startAbsLineNumber;
+
+- (const screen_char_t *)getLineAtIndex:(int)theIndex;
+- (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer;
+
 #pragma mark - Interval Tree
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
@@ -261,6 +267,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
 
 - (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass;
+
+- (VT100RemoteHost *)remoteHostOnLine:(int)line;
+
+- (NSString *)workingDirectoryOnLine:(int)line;
 
 @end
 
