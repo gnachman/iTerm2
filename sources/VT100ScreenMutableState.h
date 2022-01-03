@@ -9,6 +9,7 @@
 #import "VT100ScreenState.h"
 
 @protocol VT100ScreenConfiguration;
+@protocol iTermOrderedToken;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -69,6 +70,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Update the commandRange in the current prompt's mark, if present. Asynchronously 
 - (void)commandRangeDidChange;
+
+- (void)setWorkingDirectory:(NSString * _Nullable)workingDirectory
+                  onAbsLine:(long long)absLine
+                     pushed:(BOOL)pushed
+                      token:(id<iTermOrderedToken> _Nullable)token;
+
+- (void)currentDirectoryDidChangeTo:(NSString *)dir;
 
 #pragma mark - Annotations
 

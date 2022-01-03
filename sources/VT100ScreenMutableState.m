@@ -12,6 +12,7 @@
 #import "PTYAnnotation.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenDelegate.h"
+#import "VT100WorkingDirectory.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermIntervalTreeObserver.h"
@@ -292,6 +293,132 @@
                             hadCommand:self.hadCommand
                            haveCommand:haveCommand];
     self.hadCommand = haveCommand;
+}
+
+- (void)setWorkingDirectory:(NSString *)workingDirectory
+                  onAbsLine:(long long)absLine
+                     pushed:(BOOL)pushed
+                      token:(id<iTermOrderedToken>)token {
+    DLog(@"%p: setWorkingDirectory:%@ onLine:%lld token:%@", self, workingDirectory, absLine, token);
+    const long long bigLine = MAX(0, absLine - self.cumulativeScrollbackOverflow);
+    if (bigLine >= INT_MAX) {
+        DLog(@"suspiciously large line %@ from absLine %@ cumulative %@", @(bigLine), @(absLine), @(self.cumulativeScrollbackOverflow));
+        return;
+    }
+    const int line = bigLine;
+    VT100WorkingDirectory *workingDirectoryObj = [[VT100WorkingDirectory alloc] init];
+    if (token && !workingDirectory) {
+        __weak __typeof(self) weakSelf = self;
+        DLog(@"%p: Performing async working directory fetch for token %@", self, token);
+        dispatch_queue_t queue = _queue;
+        [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
+                DLog(@"%p: Async update got %@ for token %@", weakSelf, path, token);
+                if (path) {
+                    dispatch_async(queue, ^{
+                        [weakSelf setWorkingDirectory:path onAbsLine:absLine pushed:pushed token:token];
+                    });
+                }
+            }];
+        }];
+        return;
+    }
+
+    DLog(@"%p: Set finished working directory token to %@", self, token);
+    if (workingDirectory.length) {
+        DLog(@"Changing working directory to %@", workingDirectory);
+        workingDirectoryObj.workingDirectory = workingDirectory;
+
+        VT100WorkingDirectory *previousWorkingDirectory = [self objectOnOrBeforeLine:line
+                                                                             ofClass:[VT100WorkingDirectory class]];
+        DLog(@"The previous directory was %@", previousWorkingDirectory);
+        if ([previousWorkingDirectory.workingDirectory isEqualTo:workingDirectory]) {
+            // Extend the previous working directory. We used to add a new VT100WorkingDirectory
+            // every time but if the window title gets changed a lot then they can pile up really
+            // quickly and you spend all your time searching through VT001WorkingDirectory marks
+            // just to find VT100RemoteHost or VT100ScreenMark objects.
+            //
+            // It's a little weird that a VT100WorkingDirectory can now represent the same path on
+            // two different hosts (e.g., you ssh from /Users/georgen to another host and you're in
+            // /Users/georgen over there, but you can share the same VT100WorkingDirectory between
+            // the two hosts because the path is the same). I can't see the harm in it besides being
+            // odd.
+            //
+            // Intervals aren't removed while part of them is on screen, so this works fine.
+            VT100GridCoordRange range = [self coordRangeForInterval:previousWorkingDirectory.entry.interval];
+            [self.intervalTree removeObject:previousWorkingDirectory];
+            range.end = VT100GridCoordMake(self.width, line);
+            DLog(@"Extending the previous directory to %@", VT100GridCoordRangeDescription(range));
+            Interval *interval = [self intervalForGridCoordRange:range];
+            [self.intervalTree addObject:previousWorkingDirectory withInterval:interval];
+        } else {
+            VT100GridCoordRange range;
+            range = VT100GridCoordRangeMake(self.currentGrid.cursorX, line, self.width, line);
+            DLog(@"Set range of %@ to %@", workingDirectory, VT100GridCoordRangeDescription(range));
+            [self.intervalTree addObject:workingDirectoryObj
+                            withInterval:[self intervalForGridCoordRange:range]];
+        }
+    }
+    VT100RemoteHost *remoteHost = [self remoteHostOnLine:line];
+    VT100ScreenWorkingDirectoryPushType pushType;
+    if (!pushed) {
+        pushType = VT100ScreenWorkingDirectoryPushTypePull;
+    } else if (token == nil) {
+        pushType = VT100ScreenWorkingDirectoryPushTypeStrongPush;
+    } else {
+        pushType = VT100ScreenWorkingDirectoryPushTypeWeakPush;
+    }
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        const BOOL accepted = !token || [token commit];
+        [delegate screenLogWorkingDirectoryOnAbsoluteLine:absLine
+                                               remoteHost:remoteHost
+                                            withDirectory:workingDirectory
+                                                 pushType:pushType
+                                                 accepted:accepted];
+    }];
+}
+
+- (void)currentDirectoryReallyDidChangeTo:(NSString *)dir
+                                   onAbsLine:(long long)cursorAbsLine {
+    DLog(@"currentDirectoryReallyDidChangeTo:%@ onAbsLine:%@", dir, @(cursorAbsLine));
+    BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorAbsLine - self.cumulativeScrollbackOverflow]];
+    [self setWorkingDirectory:dir
+                    onAbsLine:cursorAbsLine
+                       pushed:YES
+                        token:nil];
+    if (willChange) {
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenCurrentDirectoryDidChangeTo:dir];
+        }];
+    }
+}
+
+- (void)currentDirectoryDidChangeTo:(NSString *)dir {
+    DLog(@"%p: terminalCurrentDirectoryDidChangeTo:%@", self, dir);
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
+    }];
+
+    const int cursorLine = self.numberOfLines - self.height + self.currentGrid.cursorY;
+    const long long cursorAbsLine = self.cumulativeScrollbackOverflow + cursorLine;
+    if (dir.length) {
+        [self currentDirectoryReallyDidChangeTo:dir onAbsLine:cursorAbsLine];
+        return;
+    }
+
+    // Go fetch the working directory and then update it.
+    __weak __typeof(self) weakSelf = self;
+    id<iTermOrderedToken> token = [self.currentDirectoryDidChangeOrderEnforcer newToken];
+    DLog(@"Fetching directory asynchronously with token %@", token);
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *workingDirectory) {
+            DLog(@"For token %@, the working directory is %@", token, dir);
+            if (![token commit]) {
+                return;
+            }
+            [weakSelf currentDirectoryReallyDidChangeTo:dir onAbsLine:cursorAbsLine];
+        }];
+    }];
 }
 
 #pragma mark - Annotations

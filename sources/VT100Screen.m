@@ -683,35 +683,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line pushed:(BOOL)pushed {
     [self mutSetWorkingDirectory:workingDirectory
-                          onLine:line
+                       onAbsLine:line + self.totalScrollbackOverflow
                           pushed:pushed
                            token:[[_mutableState.setWorkingDirectoryOrderEnforcer newToken] autorelease]];
 }
 
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
-    long long pos = [_state intervalForGridCoordRange:VT100GridCoordRangeMake(0,
-                                                                              line + 1,
-                                                                              0,
-                                                                              line + 1)].location;
-    if (pos < 0) {
-        return nil;
-    }
-    NSEnumerator *enumerator = [_state.intervalTree reverseEnumeratorAt:pos];
-    NSArray *objects;
-    do {
-        objects = [enumerator nextObject];
-        objects = [objects objectsOfClasses:@[ cls ]];
-    } while (objects && !objects.count);
-    if (objects.count) {
-        // We want the last object because they are sorted chronologically.
-        return [objects lastObject];
-    } else {
-        return nil;
-    }
+    return [_state objectOnOrBeforeLine:line ofClass:cls];
 }
 
 - (VT100RemoteHost *)remoteHostOnLine:(int)line {
-    return (VT100RemoteHost *)[self objectOnOrBeforeLine:line ofClass:[VT100RemoteHost class]];
+    return [_state remoteHostOnLine:line];
 }
 
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line {
@@ -746,9 +728,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)workingDirectoryOnLine:(int)line {
-    VT100WorkingDirectory *workingDirectory =
-        [self objectOnOrBeforeLine:line ofClass:[VT100WorkingDirectory class]];
-    return workingDirectory.workingDirectory;
+    return [_state workingDirectoryOnLine:line];
 }
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation {

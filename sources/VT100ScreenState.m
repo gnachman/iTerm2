@@ -13,7 +13,10 @@
 #import "iTermOrderEnforcer.h"
 #import "iTermTextExtractor.h"
 #import "LineBuffer.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "VT100RemoteHost.h"
+#import "VT100WorkingDirectory.h"
 
 static const int kDefaultMaxScrollbackLines = 1000;
 
@@ -252,6 +255,33 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return [Interval intervalWithLocation:si length:ei - si];
 }
 
+- (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
+    long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
+                                                                              line + 1,
+                                                                              0,
+                                                                              line + 1)].location;
+    if (pos < 0) {
+        return nil;
+    }
+    NSEnumerator *enumerator = [self.intervalTree reverseEnumeratorAt:pos];
+    NSArray *objects;
+    do {
+        objects = [enumerator nextObject];
+        objects = [objects objectsOfClasses:@[ cls ]];
+    } while (objects && !objects.count);
+    if (objects.count) {
+        // We want the last object because they are sorted chronologically.
+        return [objects lastObject];
+    } else {
+        return nil;
+    }
+}
+
+- (VT100RemoteHost *)remoteHostOnLine:(int)line {
+    return (VT100RemoteHost *)[self objectOnOrBeforeLine:line ofClass:[VT100RemoteHost class]];
+}
+
+
 #pragma mark - Combined Grid And Scrollback
 
 - (int)numberOfLines {
@@ -365,6 +395,12 @@ static const int kDefaultMaxScrollbackLines = 1000;
     }
 
     return [command stringByTrimmingLeadingWhitespace];
+}
+
+- (NSString *)workingDirectoryOnLine:(int)line {
+    VT100WorkingDirectory *workingDirectory =
+        [self objectOnOrBeforeLine:line ofClass:[VT100WorkingDirectory class]];
+    return workingDirectory.workingDirectory;
 }
 
 #pragma mark - iTermTextDataSource

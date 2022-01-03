@@ -179,7 +179,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSynchronizedUpdate:(BOOL)begin;
 - (void)mutAppendNativeImageAtCursorWithName:(NSString *)name width:(int)width;
 - (void)mutSetWorkingDirectory:(NSString *)workingDirectory
-                        onLine:(int)line
+                     onAbsLine:(long long)line
                         pushed:(BOOL)pushed
                          token:(id<iTermOrderedToken> _Nullable)token;
 - (void)mutSetRemoteHost:(NSString *)remoteHost;
