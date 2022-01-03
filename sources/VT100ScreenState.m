@@ -257,9 +257,9 @@ static const int kDefaultMaxScrollbackLines = 1000;
 
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
     long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
-                                                                              line + 1,
-                                                                              0,
-                                                                              line + 1)].location;
+                                                                            line + 1,
+                                                                            0,
+                                                                            line + 1)].location;
     if (pos < 0) {
         return nil;
     }
