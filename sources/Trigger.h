@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class CapturedOutput;
 @class PTYAnnotation;
 @class Trigger;
-@class iTermBackgroundCommandRunner;
+@class iTermBackgroundCommandRunnerPool;
 @protocol iTermObject;
 @class iTermRateLimitedUpdate;
 @class iTermStringLine;
@@ -54,7 +54,9 @@ extern NSString * const kTriggerDisabledKey;
                 colors:(NSDictionary<NSString *, NSColor *> *)colors;
 - (void)triggerSession:(Trigger *)trigger saveCursorLineAndStopScrolling:(BOOL)stopScrolling;
 - (void)triggerSession:(Trigger *)trigger openPasswordManagerToAccountName:(NSString *)accountName;
-- (void)triggerSession:(Trigger *)trigger runCommandWithRunner:(iTermBackgroundCommandRunner *)runner;
+- (void)triggerSession:(Trigger *)trigger
+            runCommand:(NSString *)command
+        withRunnerPool:(iTermBackgroundCommandRunnerPool *)pool;
 - (void)triggerSession:(Trigger *)trigger writeText:(NSString *)text;
 - (void)triggerSession:(Trigger *)trigger setRemoteHostName:(NSString *)remoteHost;
 - (void)triggerSession:(Trigger *)trigger setCurrentDirectory:(NSString *)text;

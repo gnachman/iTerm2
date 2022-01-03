@@ -40,6 +40,7 @@
     return @"Enter command to run";
 }
 
+
 - (BOOL)performActionWithCapturedStrings:(NSArray<NSString *> *)stringArray
                           capturedRanges:(const NSRange *)capturedRanges
                                inSession:(id<iTermTriggerSession>)aSession
@@ -59,10 +60,8 @@
 
 - (void)runCommand:(NSString *)command session:(id<iTermTriggerSession>)session {
     DLog(@"Invoking command %@", command);
-    iTermBackgroundCommandRunner *runner = [[ScriptTrigger commandRunnerPool] requestBackgroundCommandRunnerWithTerminationBlock:nil];
-    runner.command = command;
 
-    [session triggerSession:self runCommandWithRunner:runner];
+    [session triggerSession:self runCommand:command withRunnerPool:[ScriptTrigger commandRunnerPool]];
 }
 
 @end
