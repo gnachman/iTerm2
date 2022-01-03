@@ -2163,14 +2163,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setTermIDIfPossible];
 }
 
-- (BOOL)triggerParametersUseInterpolatedStrings {
-    return _triggerEvaluator.triggerParametersUseInterpolatedStrings;
-}
-
-- (void)setTriggerParametersUseInterpolatedStrings:(BOOL)triggerParametersUseInterpolatedStrings {
-    _triggerEvaluator.triggerParametersUseInterpolatedStrings = triggerParametersUseInterpolatedStrings;
-}
-
 - (void)didInitializeSessionWithName:(NSString *)name {
     [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionAutoNameFormat];
 }
