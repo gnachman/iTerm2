@@ -2626,8 +2626,8 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 #pragma mark - Accessors
 
-- (iTermExpect *)mutExpectSource {
-    return _mutableState.expectSource;
+- (void)mutSetExpect:(iTermExpect *)expect {
+    [_mutableState setExpect:expect];
 }
 
 - (void)mutLoadTriggersFromProfileArray:(NSArray *)array

@@ -199,11 +199,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetExited:(BOOL)exited;
 - (iTermSlownessDetector *)mutSlownessDetector;
 - (void)mutLoadTriggersFromProfileArray:(NSArray *)array;
-- (iTermExpect *)mutExpectSource;
 - (void)mutForceCheckTriggers;
 - (NSInteger)mutNumberOfTriggers;
 - (NSArray<NSString *> *)mutTriggerNames;
 - (NSIndexSet *)mutEnabledTriggerIndexes;
+- (void)mutSetExpect:(iTermExpect *)expect;
 
 @end
 

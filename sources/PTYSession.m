@@ -579,6 +579,9 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     BOOL _profileInitialized;
     iTermUserDefaultsObserver *_disableTransparencyInKeyWindowObserver;
     VT100MutableScreenConfiguration *_config;
+
+    // Changes are made in the main thread to this and it periodically copied to the mutation thread.
+    iTermExpect *_expect;
 }
 
 @synthesize isDivorced = _divorced;
@@ -749,6 +752,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
                 [weakSelf useTransparencyDidChange];
             });
         }];
+        _expect = [[iTermExpect alloc] initDry:YES];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:kCoprocessStatusChangeNotification
@@ -973,6 +977,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_preferredProxyIcon release];
     [_savedStateForZoom release];
     [_config release];
+    [_expect release];
 
     [super dealloc];
 }
@@ -9919,7 +9924,24 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (iTermExpect *)textViewExpect {
-    return _screen.expect;
+#warning TODO: Rather than dispatch to the main thread, cause expect to be copied to VT100ScreenMutableState on the next sync.
+    return [self expect];
+}
+
+- (iTermExpect *)expect {
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf copyExpectToTriggerEvaluatorIfNeeded];
+    });
+    return _expect;
+}
+
+- (void)copyExpectToTriggerEvaluatorIfNeeded {
+    if (!_expect.dirty) {
+        return;
+    }
+    [_expect resetDirty];
+    _screen.expect = _expect;
 }
 
 - (void)textViewDidDetectMouseReportingFrustration {

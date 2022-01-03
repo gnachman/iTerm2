@@ -693,12 +693,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Expect
 
-- (iTermExpect *)expectSource {
-    assert([NSThread isMainThread]);
-#warning TODO: When moving to a separate queue for mutation and implementing syncing, there should be a separate instance for this that is periodically copied to the mutation thread.
-    return _triggerEvaluator.expect;
-}
-
 #pragma mark - Triggers
 
 - (NSArray *)triggers {
@@ -750,6 +744,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (iTermSlownessDetector *)slownessDetector {
     return _triggerEvaluator.triggersSlownessDetector;
+}
+
+#pragma mark - Expect
+
+- (void)setExpect:(iTermExpect *)expect {
+    _triggerEvaluator.expect = expect;
 }
 
 #pragma mark - Interthread Synchronization

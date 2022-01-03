@@ -34,7 +34,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         _delegate = delegate;
         _dataSource = dataSource;
         _triggerLineNumber = -1;
-        _expect = [[iTermExpect alloc] init];
+        _expect = [[iTermExpect alloc] initDry:NO];
         _triggersSlownessDetector = [[iTermSlownessDetector alloc] init];
     }
     return self;

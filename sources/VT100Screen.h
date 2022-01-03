@@ -268,7 +268,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)loadTriggersFromProfileArray:(NSArray *)array
               useInterpolatedStrings:(BOOL)useInterpolatedStrings;
 - (void)willUpdateDisplay;
-- (iTermExpect *)expect;
+- (void)setExpect:(iTermExpect *)expect;
 - (void)forceCheckTriggers;
 - (NSInteger)numberOfTriggers;
 - (NSArray<NSString *> *)triggerNames;

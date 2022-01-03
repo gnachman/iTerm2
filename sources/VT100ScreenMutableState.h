@@ -27,9 +27,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic, weak) id<VT100ScreenSideEffectPerforming> sideEffectPerformer;
 @property (nonatomic, copy) id<VT100ScreenConfiguration> config;
 
-// Mutations made here on the main thread are copied into the trigger evaluator's expect.
-@property (nonatomic, readonly) iTermExpect *expectSource;
-
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
 - (id<VT100ScreenState>)copy;
 
@@ -153,6 +150,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - Temporary
 
 - (iTermSlownessDetector *)slownessDetector;
+
+#pragma mark - Expect
+
+- (void)setExpect:(iTermExpect *)expect;
 
 @end
 

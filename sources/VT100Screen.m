@@ -1402,8 +1402,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [self mutForceCheckTriggers];
 }
 
-- (iTermExpect *)expect {
-    return [self mutExpectSource];
+- (void)setExpect:(iTermExpect *)expect {
+    [self mutSetExpect:[expect copy]];
 }
 
 - (void)willUpdateDisplay {

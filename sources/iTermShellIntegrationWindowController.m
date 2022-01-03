@@ -1,4 +1,3 @@
-#warning TODO: Don't send text until the expectation has been committed.
 //
 //  iTermShellIntegrationWindowController.m
 //  iTerm2
@@ -346,13 +345,13 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
 
 - (NSString *)discoverShell:(BOOL)reallySend completion:(void (^)(NSString *shell, NSString *dotdir))completion {
     iTermExpectation *expectation = nil;
-    NSString *result = [self sendText:@"echo My shell is $SHELL\n" reallySend:reallySend];
+    NSString *result = @"echo My shell is $SHELL\n";
     if (!reallySend) {
         result = [result stringByAppendingString:
                   @"# If the result is zsh, send:\n"
                   @"echo My dotfiles go in ${ZDOTDIR:-$HOME}"];
     }
-    [self sendText:nil
+    [self sendText:result
         reallySend:reallySend
         afterRegex:@"^My shell is (.+)"
        expectation:&expectation

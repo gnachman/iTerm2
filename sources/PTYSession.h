@@ -917,6 +917,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)addContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber;
 - (void)didFinishRestoration;
 - (void)performActionForCapturedOutput:(CapturedOutput *)capturedOutput;
+- (iTermExpect *)expect;
 
 #pragma mark - API
 
