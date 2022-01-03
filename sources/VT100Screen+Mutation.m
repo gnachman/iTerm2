@@ -225,78 +225,13 @@
 // recently used directories and will change the current remote host to the remote host on `line`.
 - (void)mutSetWorkingDirectory:(NSString *)workingDirectory
 #warning TODO: I need to use an absolute line number here to avoid race conditions between main thread and mutation thread.
-                        onLine:(int)line
+                     onAbsLine:(long long)line
                         pushed:(BOOL)pushed
                          token:(id<iTermOrderedToken>)token {
-    DLog(@"%p: setWorkingDirectory:%@ onLine:%d token:%@", self, workingDirectory, line, token);
-    VT100WorkingDirectory *workingDirectoryObj = [[[VT100WorkingDirectory alloc] init] autorelease];
-    if (token && !workingDirectory) {
-        __weak __typeof(self) weakSelf = self;
-        DLog(@"%p: Performing async working directory fetch for token %@", self, token);
-        [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-            [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
-                DLog(@"%p: Async update got %@ for token %@", self, path, token);
-                if (path) {
-                    [weakSelf mutSetWorkingDirectory:path onLine:line pushed:pushed token:token];
-                }
-            }];
-        }];
-        return;
-    }
-
-    DLog(@"%p: Set finished working directory token to %@", self, token);
-    if (workingDirectory.length) {
-        DLog(@"Changing working directory to %@", workingDirectory);
-        workingDirectoryObj.workingDirectory = workingDirectory;
-
-        VT100WorkingDirectory *previousWorkingDirectory = [[[self objectOnOrBeforeLine:line
-                                                                               ofClass:[VT100WorkingDirectory class]] retain] autorelease];
-        DLog(@"The previous directory was %@", previousWorkingDirectory);
-        if ([previousWorkingDirectory.workingDirectory isEqualTo:workingDirectory]) {
-            // Extend the previous working directory. We used to add a new VT100WorkingDirectory
-            // every time but if the window title gets changed a lot then they can pile up really
-            // quickly and you spend all your time searching through VT001WorkingDirectory marks
-            // just to find VT100RemoteHost or VT100ScreenMark objects.
-            //
-            // It's a little weird that a VT100WorkingDirectory can now represent the same path on
-            // two different hosts (e.g., you ssh from /Users/georgen to another host and you're in
-            // /Users/georgen over there, but you can share the same VT100WorkingDirectory between
-            // the two hosts because the path is the same). I can't see the harm in it besides being
-            // odd.
-            //
-            // Intervals aren't removed while part of them is on screen, so this works fine.
-            VT100GridCoordRange range = [_mutableState coordRangeForInterval:previousWorkingDirectory.entry.interval];
-            [_mutableState.intervalTree removeObject:previousWorkingDirectory];
-            range.end = VT100GridCoordMake(_mutableState.width, line);
-            DLog(@"Extending the previous directory to %@", VT100GridCoordRangeDescription(range));
-            Interval *interval = [_mutableState intervalForGridCoordRange:range];
-            [_mutableState.intervalTree addObject:previousWorkingDirectory withInterval:interval];
-        } else {
-            VT100GridCoordRange range;
-            range = VT100GridCoordRangeMake(_state.currentGrid.cursorX, line, _mutableState.width, line);
-            DLog(@"Set range of %@ to %@", workingDirectory, VT100GridCoordRangeDescription(range));
-            [_mutableState.intervalTree addObject:workingDirectoryObj
-                                     withInterval:[_mutableState intervalForGridCoordRange:range]];
-        }
-    }
-    VT100RemoteHost *remoteHost = [self remoteHostOnLine:line];
-    const long long absLine = _mutableState.cumulativeScrollbackOverflow + line;
-    VT100ScreenWorkingDirectoryPushType pushType;
-    if (!pushed) {
-        pushType = VT100ScreenWorkingDirectoryPushTypePull;
-    } else if (token == nil) {
-        pushType = VT100ScreenWorkingDirectoryPushTypeStrongPush;
-    } else {
-        pushType = VT100ScreenWorkingDirectoryPushTypeWeakPush;
-    }
-    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        const BOOL accepted = !token || [token commit];
-        [delegate screenLogWorkingDirectoryOnAbsoluteLine:absLine
-                                               remoteHost:remoteHost
-                                            withDirectory:workingDirectory
-                                                 pushType:pushType
-                                                 accepted:accepted];
-    }];
+    [_mutableState setWorkingDirectory:workingDirectory
+                             onAbsLine:line
+                                pushed:pushed
+                                 token:token];
 }
 
 - (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
@@ -3337,7 +3272,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         // enough rate (not too common, not too rare when part of a prompt)
         // that I'm comfortable calling it a push. I want it to do things like
         // update the list of recently used directories.
-        [self setWorkingDirectory:nil onLine:[self lineNumberOfCursor] pushed:YES];
+        [_mutableState setWorkingDirectory:nil
+                                 onAbsLine:[self lineNumberOfCursor] + _mutableState.cumulativeScrollbackOverflow
+                                    pushed:YES
+                                     token:[_mutableState.setWorkingDirectoryOrderEnforcer newToken]];
     } else {
         DLog(@"Already have a remote host so not updating working directory because of title change");
     }
@@ -3709,39 +3647,11 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 // Shell integration or equivalent.
 - (void)terminalCurrentDirectoryDidChangeTo:(NSString *)dir {
-    [self mutCurrentDirectoryDidChangeTo:dir];
+    [_mutableState currentDirectoryDidChangeTo:dir];
 }
 
 - (void)mutCurrentDirectoryDidChangeTo:(NSString *)dir {
-    DLog(@"%p: terminalCurrentDirectoryDidChangeTo:%@", self, dir);
-    [delegate_ screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
-
-    int cursorLine = _mutableState.numberOfLines - _mutableState.height + _state.currentGrid.cursorY;
-    if (dir.length) {
-        [self currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
-        return;
-    }
-
-    // Go fetch the working directory and then update it.
-    __weak __typeof(self) weakSelf = self;
-    id<iTermOrderedToken> token = [[_mutableState.currentDirectoryDidChangeOrderEnforcer newToken] autorelease];
-    DLog(@"Fetching directory asynchronously with token %@", token);
-    [delegate_ screenGetWorkingDirectoryWithCompletion:^(NSString *dir) {
-        DLog(@"For token %@, the working directory is %@", token, dir);
-        if ([token commit]) {
-            [weakSelf currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
-        }
-    }];
-}
-
-- (void)currentDirectoryReallyDidChangeTo:(NSString *)dir
-                                   onLine:(int)cursorLine {
-    DLog(@"currentDirectoryReallyDidChangeTo:%@ onLine:%@", dir, @(cursorLine));
-    BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
-    [self mutSetWorkingDirectory:dir onLine:cursorLine pushed:YES token:nil];
-    if (willChange) {
-        [delegate_ screenCurrentDirectoryDidChangeTo:dir];
-    }
+    [_mutableState currentDirectoryDidChangeTo:dir];
 }
 
 - (void)terminalProfileShouldChangeTo:(NSString *)value {

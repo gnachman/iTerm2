@@ -242,6 +242,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
                                   width:(int)width
                             linesOffset:(long long)linesOffset;
+- (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
 
 #pragma mark - Shell Integration
 
@@ -254,6 +255,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (VT100ScreenMark *)markOnLine:(int)line;
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
+
+- (VT100RemoteHost *)remoteHostOnLine:(int)line;
+
+- (NSString *)workingDirectoryOnLine:(int)line;
 
 @end
 
