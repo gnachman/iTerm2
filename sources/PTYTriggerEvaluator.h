@@ -43,7 +43,7 @@ extern NSString *const PTYSessionSlownessEventExecute;
 
 @property (nonatomic, readonly) BOOL shouldUpdateIdempotentTriggers;
 
-@property (nonatomic, strong, readonly) iTermExpect *expect;
+@property (nonatomic, strong) iTermExpect *expect;
 
 
 // Measures time spent in triggers and executing tokens while in interactive apps.
