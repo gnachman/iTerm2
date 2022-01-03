@@ -282,6 +282,24 @@ static const int kDefaultMaxScrollbackLines = 1000;
 }
 
 
+- (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
+    NSEnumerator *enumerator = [self.intervalTree reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        for (id obj in objects) {
+            if ([obj isKindOfClass:theClass]) {
+                if (wantPrompt && [obj isPrompt]) {
+                    return obj;
+                } else if (!wantPrompt) {
+                    return obj;
+                }
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+    return nil;
+}
+
 #pragma mark - Combined Grid And Scrollback
 
 - (int)numberOfLines {
@@ -401,6 +419,10 @@ static const int kDefaultMaxScrollbackLines = 1000;
     VT100WorkingDirectory *workingDirectory =
         [self objectOnOrBeforeLine:line ofClass:[VT100WorkingDirectory class]];
     return workingDirectory.workingDirectory;
+}
+
+- (VT100RemoteHost *)lastRemoteHost {
+    return [self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
 }
 
 #pragma mark - iTermTextDataSource

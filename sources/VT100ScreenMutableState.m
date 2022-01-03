@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "PTYAnnotation.h"
+#import "VT100RemoteHost.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenDelegate.h"
 #import "VT100WorkingDirectory.h"
@@ -59,6 +60,7 @@
 
 #pragma mark - Internal
 
+#warning TODO: I think side effects should happen atomically with copying state from mutable-to-immutable. Likewise, when the main thread needs to sync when resizing a screen, it should be able to force all these side-effects to happen synchronously.
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
     [self.sideEffects addSideEffect:sideEffect];
     __weak __typeof(self) weakSelf = self;
@@ -419,6 +421,63 @@
             [weakSelf currentDirectoryReallyDidChangeTo:workingDirectory onAbsLine:cursorAbsLine];
         }];
     }];
+}
+
+- (void)setRemoteHostFromString:(NSString *)remoteHost {
+    DLog(@"Set remote host to %@ %@", remoteHost, self);
+    // Search backwards because Windows UPN format includes an @ in the user name. I don't think hostnames would ever have an @ sign.
+    NSRange atRange = [remoteHost rangeOfString:@"@" options:NSBackwardsSearch];
+    NSString *user = nil;
+    NSString *host = nil;
+    if (atRange.length == 1) {
+        user = [remoteHost substringToIndex:atRange.location];
+        host = [remoteHost substringFromIndex:atRange.location + 1];
+        if (host.length == 0) {
+            host = nil;
+        }
+    } else {
+        host = remoteHost;
+    }
+
+    [self setHost:host user:user];
+}
+
+- (void)setHost:(NSString *)host user:(NSString *)user {
+    DLog(@"setHost:%@ user:%@ %@", host, user, self);
+    VT100RemoteHost *currentHost = [self remoteHostOnLine:self.numberOfLines];
+    if (!host || !user) {
+        // A trigger can set the host and user alone. If remoteHost looks like example.com or
+        // user@, then preserve the previous host/user. Also ensure neither value is nil; the
+        // empty string will stand in for a real value if necessary.
+        VT100RemoteHost *lastRemoteHost = [self lastRemoteHost];
+        if (!host) {
+            host = [lastRemoteHost.hostname copy] ?: @"";
+        }
+        if (!user) {
+            user = [lastRemoteHost.username copy] ?: @"";
+        }
+    }
+
+    const int cursorLine = self.numberOfLines - self.height + self.currentGrid.cursorY;
+    VT100RemoteHost *remoteHostObj = [self setRemoteHost:host user:user onLine:cursorLine];
+
+    if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
+        const int line = [self numberOfScrollbackLines] + self.cursorY;
+        NSString *pwd = [self workingDirectoryOnLine:line];
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenCurrentHostDidChange:remoteHostObj pwd:pwd];
+        }];
+    }
+}
+
+- (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
+    VT100RemoteHost *remoteHostObj = [[VT100RemoteHost alloc] init];
+    remoteHostObj.hostname = host;
+    remoteHostObj.username = user;
+    VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
+    [self.intervalTree addObject:remoteHostObj
+                    withInterval:[self intervalForGridCoordRange:range]];
+    return remoteHostObj;
 }
 
 #pragma mark - Annotations
