@@ -282,24 +282,6 @@ static const int kDefaultMaxScrollbackLines = 1000;
 }
 
 
-- (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
-    NSEnumerator *enumerator = [self.intervalTree reverseLimitEnumerator];
-    NSArray *objects = [enumerator nextObject];
-    while (objects) {
-        for (id obj in objects) {
-            if ([obj isKindOfClass:theClass]) {
-                if (wantPrompt && [obj isPrompt]) {
-                    return obj;
-                } else if (!wantPrompt) {
-                    return obj;
-                }
-            }
-        }
-        objects = [enumerator nextObject];
-    }
-    return nil;
-}
-
 #pragma mark - Combined Grid And Scrollback
 
 - (int)numberOfLines {
@@ -413,6 +395,24 @@ static const int kDefaultMaxScrollbackLines = 1000;
     }
 
     return [command stringByTrimmingLeadingWhitespace];
+}
+
+- (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
+    NSEnumerator *enumerator = [self.intervalTree reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        for (id obj in objects) {
+            if ([obj isKindOfClass:theClass]) {
+                if (wantPrompt && [obj isPrompt]) {
+                    return obj;
+                } else if (!wantPrompt) {
+                    return obj;
+                }
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+    return nil;
 }
 
 - (NSString *)workingDirectoryOnLine:(int)line {
