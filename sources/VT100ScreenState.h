@@ -243,9 +243,10 @@ NS_ASSUME_NONNULL_BEGIN
                                   width:(int)width
                             linesOffset:(long long)linesOffset;
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
-- (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass;
 
 #pragma mark - Shell Integration
+
+- (VT100RemoteHost *)lastRemoteHost;
 
 // If at a shell prompt, this gives the range of the command being edited not past the cursor.
 // If not at a prompt (no shell integration or command is running) this is -1,-1,-1,-1.
@@ -257,11 +258,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
 
+- (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass;
+
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
-
-- (VT100RemoteHost *)lastRemoteHost;
 
 @end
 
