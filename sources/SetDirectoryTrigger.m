@@ -39,7 +39,7 @@
     // Need to stop the world to get scope, provided it is needed. Directory changes slow & rare that this is ok.
     [[self paramWithBackreferencesReplacedWithValues:stringArray
                                                scope:[aSession triggerSessionVariableScopeProvider:self]
-                                              owner:aSession
+                                               owner:aSession
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull currentDirectory) {
         DLog(@"SetDirectoryTrigger completed substitution with %@", currentDirectory);
         if (currentDirectory.length) {
