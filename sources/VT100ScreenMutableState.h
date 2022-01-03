@@ -78,6 +78,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)currentDirectoryDidChangeTo:(NSString *)dir;
 
+- (void)setRemoteHostFromString:(NSString *)remoteHost;
+
+- (void)setHost:(NSString * _Nullable)host user:(NSString * _Nullable)user;
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation;

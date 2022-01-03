@@ -243,6 +243,7 @@ NS_ASSUME_NONNULL_BEGIN
                                   width:(int)width
                             linesOffset:(long long)linesOffset;
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
+- (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass;
 
 #pragma mark - Shell Integration
 
@@ -259,6 +260,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
+
+- (VT100RemoteHost *)lastRemoteHost;
 
 @end
 

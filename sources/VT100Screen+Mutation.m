@@ -234,16 +234,6 @@
                                  token:token];
 }
 
-- (VT100RemoteHost *)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
-    VT100RemoteHost *remoteHostObj = [[[VT100RemoteHost alloc] init] autorelease];
-    remoteHostObj.hostname = host;
-    remoteHostObj.username = user;
-    VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, _mutableState.width, line);
-    [_mutableState.intervalTree addObject:remoteHostObj
-                             withInterval:[_mutableState intervalForGridCoordRange:range]];
-    return remoteHostObj;
-}
-
 - (id<iTermMark>)mutAddMarkStartingAtAbsoluteLine:(long long)line
                                           oneLine:(BOOL)oneLine
                                           ofClass:(Class)markClass {
@@ -3537,46 +3527,11 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)mutSetRemoteHost:(NSString *)remoteHost {
-    DLog(@"Set remote host to %@ %@", remoteHost, self);
-    // Search backwards because Windows UPN format includes an @ in the user name. I don't think hostnames would ever have an @ sign.
-    NSRange atRange = [remoteHost rangeOfString:@"@" options:NSBackwardsSearch];
-    NSString *user = nil;
-    NSString *host = nil;
-    if (atRange.length == 1) {
-        user = [remoteHost substringToIndex:atRange.location];
-        host = [remoteHost substringFromIndex:atRange.location + 1];
-        if (host.length == 0) {
-            host = nil;
-        }
-    } else {
-        host = remoteHost;
-    }
-
-    [self setHost:host user:user];
+    [_mutableState setRemoteHostFromString:remoteHost];
 }
 
 - (void)setHost:(NSString *)host user:(NSString *)user {
-    DLog(@"setHost:%@ user:%@ %@", host, user, self);
-    VT100RemoteHost *currentHost = [self remoteHostOnLine:_mutableState.numberOfLines];
-    if (!host || !user) {
-        // A trigger can set the host and user alone. If remoteHost looks like example.com or
-        // user@, then preserve the previous host/user. Also ensure neither value is nil; the
-        // empty string will stand in for a real value if necessary.
-        VT100RemoteHost *lastRemoteHost = [self lastRemoteHost];
-        if (!host) {
-            host = [[lastRemoteHost.hostname copy] autorelease] ?: @"";
-        }
-        if (!user) {
-            user = [[lastRemoteHost.username copy] autorelease] ?: @"";
-        }
-    }
-
-    int cursorLine = _mutableState.numberOfLines - _mutableState.height + _state.currentGrid.cursorY;
-    VT100RemoteHost *remoteHostObj = [self setRemoteHost:host user:user onLine:cursorLine];
-
-    if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
-        [delegate_ screenCurrentHostDidChange:remoteHostObj];
-    }
+    [_mutableState setHost:host user:user];
 }
 
 - (void)terminalSetWorkingDirectoryURL:(NSString *)URLString {

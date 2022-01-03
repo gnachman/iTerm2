@@ -234,7 +234,7 @@
 - (void)screenResetColorsWithColorMapKey:(int)key;
 - (void)screenSelectColorPresetNamed:(NSString *)name;
 
-- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host;
+- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host pwd:(NSString *)workingDirectory;
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath;
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
                                                    payload:(NSString *)payload;

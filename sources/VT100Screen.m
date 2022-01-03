@@ -901,25 +901,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100RemoteHost *)lastRemoteHost {
-    return [self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
+    return [_state lastRemoteHost];
 }
 
 - (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
-    NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
-    NSArray *objects = [enumerator nextObject];
-    while (objects) {
-        for (id obj in objects) {
-            if ([obj isKindOfClass:theClass]) {
-                if (wantPrompt && [obj isPrompt]) {
-                    return obj;
-                } else if (!wantPrompt) {
-                    return obj;
-                }
-            }
-        }
-        objects = [enumerator nextObject];
-    }
-    return nil;
+    return [_state lastMarkMustBePrompt:wantPrompt class:theClass];
 }
 
 - (__kindof id<IntervalTreeObject>)lastMarkPassingTest:(BOOL (^)(__kindof id<IntervalTreeObject>))block {
