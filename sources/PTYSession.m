@@ -1507,13 +1507,6 @@ ITERM_WEAKLY_REFERENCEABLE
         haveSavedProgramData = NO;
     }
 
-    // This must be done before setContentsFromLineBufferDictionary:includeRestorationBanner:reattached:
-    // because it will show an announcement if mouse reporting is on.
-    VT100RemoteHost *lastRemoteHost = aSession.screen.lastRemoteHost;
-    if (lastRemoteHost) {
-        [aSession screenCurrentHostDidChange:lastRemoteHost];
-    }
-
     if (arrangement[SESSION_ARRANGEMENT_REUSABLE_COOKIE]) {
         [[iTermWebSocketCookieJar sharedInstance] addCookie:arrangement[SESSION_ARRANGEMENT_REUSABLE_COOKIE]];
     }
@@ -1764,6 +1757,14 @@ ITERM_WEAKLY_REFERENCEABLE
           includeRestorationBanner:includeRestorationBanner
                      knownTriggers:_triggerEvaluator.triggers
                         reattached:reattached];
+
+    VT100RemoteHost *lastRemoteHost = _screen.lastRemoteHost;
+    if (lastRemoteHost) {
+        NSString *pwd = [_screen workingDirectoryOnLine:_screen.numberOfLines];
+        [self screenCurrentHostDidChange:lastRemoteHost
+                                     pwd:pwd];
+    }
+
     [self screenSoftAlternateScreenModeDidChange];
     // Do this to force the hostname variable to be updated.
     [self currentHost];
