@@ -71,7 +71,7 @@ class SetUserVariableTrigger: Trigger {
                                        toValue: value)
             }
         }
-        return false
+        return true
     }
 
     override func paramIsTwoStrings() -> Bool {
