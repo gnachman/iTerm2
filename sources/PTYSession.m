@@ -32,6 +32,7 @@
 #import "iTermColorMap.h"
 #import "iTermColorPresets.h"
 #import "iTermColorSuggester.h"
+#import "iTermCommandRunnerPool.h"
 #import "iTermComposerManager.h"
 #import "iTermCommandHistoryCommandUseMO+Additions.h"
 #import "iTermController.h"
@@ -15104,7 +15105,11 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 // This can be completely async
-- (void)triggerSession:(Trigger *)trigger runCommandWithRunner:(iTermBackgroundCommandRunner *)runner {
+- (void)triggerSession:(Trigger *)trigger
+            runCommand:(NSString *)command
+        withRunnerPool:(iTermBackgroundCommandRunnerPool *)pool {
+    iTermBackgroundCommandRunner *runner = [pool requestBackgroundCommandRunnerWithTerminationBlock:nil];
+    runner.command = command;
     runner.title = @"Run Command Trigger";
     runner.notificationTitle = @"Run Command Trigger Failed";
     runner.shell = self.userShell;
