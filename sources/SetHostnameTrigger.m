@@ -37,7 +37,7 @@
     // Need to stop the world to get scope, provided it is needed. Hostname changes are slow & rare that this is ok.
     [[self paramWithBackreferencesReplacedWithValues:stringArray
                                                scope:[aSession triggerSessionVariableScopeProvider:self]
-                                              owner:aSession
+                                               owner:aSession
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull remoteHost) {
         if (remoteHost.length) {
             [aSession triggerSession:self setRemoteHostName:remoteHost];
