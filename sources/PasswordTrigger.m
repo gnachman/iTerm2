@@ -88,7 +88,7 @@
     // Need to stop the world to get scope, provided it is needed. Password manager opens are so slow & rare that this is ok.
     [[self paramWithBackreferencesReplacedWithValues:stringArray
                                                scope:[aSession triggerSessionVariableScopeProvider:self]
-                                              owner:aSession
+                                               owner:aSession
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull accountName) {
         [aSession triggerSession:self openPasswordManagerToAccountName:accountName];
     }];
