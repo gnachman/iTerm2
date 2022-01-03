@@ -6,7 +6,6 @@
 //
 
 #import "AnnotateTrigger.h"
-#import "PTYAnnotation.h"
 #import "ScreenChar.h"
 
 @implementation AnnotateTrigger
@@ -39,7 +38,6 @@
     if (length == 0) {
         return YES;
     }
-
     // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
     PTYAnnotation *annotation =
         [aSession triggerSession:self
@@ -48,10 +46,9 @@
     if (!annotation) {
         return YES;
     }
-    id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
     [[self paramWithBackreferencesReplacedWithValues:stringArray
-                                              scope:scopeProvider
-                                              owner:aSession
+                                               scope:[aSession triggerSessionVariableScopeProvider:self]
+                                               owner:aSession
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull text) {
         [aSession triggerSession:self
                    setAnnotation:annotation
