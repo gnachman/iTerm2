@@ -212,11 +212,11 @@
 }
 
 - (void)mutSetWorkingDirectory:(NSString *)workingDirectory
-                        onLine:(int)line
+                     onAbsLine:(long long)line
                         pushed:(BOOL)pushed
                          token:(id<iTermOrderedToken>)token {
     [_mutableState setWorkingDirectory:workingDirectory
-                                onLine:line
+                             onAbsLine:line
                                 pushed:pushed
                                  token:token];
 }
@@ -3233,7 +3233,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         // enough rate (not too common, not too rare when part of a prompt)
         // that I'm comfortable calling it a push. I want it to do things like
         // update the list of recently used directories.
-        [self setWorkingDirectory:nil onLine:[self lineNumberOfCursor] pushed:YES];
+        [_mutableState setWorkingDirectory:nil
+                                 onAbsLine:[self lineNumberOfCursor] + _mutableState.cumulativeScrollbackOverflow
+                                    pushed:YES
+                                     token:[_mutableState.setWorkingDirectoryOrderEnforcer newToken]];
     } else {
         DLog(@"Already have a remote host so not updating working directory because of title change");
     }
@@ -3568,7 +3571,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 // Shell integration or equivalent.
 - (void)terminalCurrentDirectoryDidChangeTo:(NSString *)dir {
-    [self mutCurrentDirectoryDidChangeTo:dir];
+    [_mutableState currentDirectoryDidChangeTo:dir];
 }
 
 - (void)mutCurrentDirectoryDidChangeTo:(NSString *)dir {

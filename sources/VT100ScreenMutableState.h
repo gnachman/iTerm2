@@ -100,16 +100,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)saveCursorLine;
 
-- (void)setReturnCodeOfLastCommand:(int)returnCode;
-
-- (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord;
+- (void)setWorkingDirectory:(NSString * _Nullable)workingDirectory
+                  onAbsLine:(long long)absLine
+                     pushed:(BOOL)pushed
+                      token:(id<iTermOrderedToken> _Nullable)token;
 
 - (void)currentDirectoryDidChangeTo:(NSString *)dir;
 
-- (void)setWorkingDirectory:(NSString *)workingDirectory
-                     onLine:(int)line
-                     pushed:(BOOL)pushed
-                      token:(id<iTermOrderedToken>)token;
+- (void)setReturnCodeOfLastCommand:(int)returnCode;
+
+- (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord;
 
 - (void)setRemoteHostFromString:(NSString *)remoteHost;
 

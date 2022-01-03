@@ -411,83 +411,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     self.hadCommand = haveCommand;
 }
 
-- (void)saveCursorLine {
-    const int scrollbackLines = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
-    [self addMarkOnLine:scrollbackLines + self.currentGrid.cursor.y
-                         ofClass:[VT100ScreenMark class]];
-}
-
-- (void)setReturnCodeOfLastCommand:(int)returnCode {
-    DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
-    VT100ScreenMark *mark = self.lastCommandMark;
-    if (mark) {
-        DLog(@"FinalTerm: setting code on mark %@", mark);
-        const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
-#warning Mutating shared state here. Perhaps don't pass mark to the delegate below?
-        mark.code = returnCode;
-        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
-            [observer intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
-                                                                    onLine:line];
-            [observer intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
-                                                                 onLine:line];
-        }];
-        VT100RemoteHost *remoteHost = [self remoteHostOnLine:self.numberOfLines];
-        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            [delegate screenDidUpdateReturnCodeForMark:mark
-                                            remoteHost:remoteHost];
-        }];
-    } else {
-        DLog(@"No last command mark found.");
-    }
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenCommandDidExitWithCode:returnCode mark:mark];
-    }];
-}
-
-- (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord {
-    self.commandStartCoord = coord;
-    [self didUpdatePromptLocation];
-    [self commandRangeDidChange];
-}
-
-- (void)currentDirectoryDidChangeTo:(NSString *)dir {
-    DLog(@"%p: terminalCurrentDirectoryDidChangeTo:%@", self, dir);
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
-    }];
-
-    const int cursorLine = self.numberOfLines - self.height + self.currentGrid.cursorY;
-    if (dir.length) {
-        [self currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
-        return;
-    }
-
-    // Go fetch the working directory and then update it.
-    __weak __typeof(self) weakSelf = self;
-    id<iTermOrderedToken> token = [self.currentDirectoryDidChangeOrderEnforcer newToken];
-    DLog(@"Fetching directory asynchronously with token %@", token);
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *dir) {
-            DLog(@"For token %@, the working directory is %@", token, dir);
-            if ([token commit]) {
-                [weakSelf currentDirectoryReallyDidChangeTo:dir onLine:cursorLine];
-            }
-        }];
-    }];
-}
-
-- (void)currentDirectoryReallyDidChangeTo:(NSString *)dir
-                                   onLine:(int)cursorLine {
-    DLog(@"currentDirectoryReallyDidChangeTo:%@ onLine:%@", dir, @(cursorLine));
-    BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorLine]];
-    [self setWorkingDirectory:dir onLine:cursorLine pushed:YES token:nil];
-    if (willChange) {
-        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            [delegate screenCurrentDirectoryDidChangeTo:dir];
-        }];
-    }
-}
-
 // Adds a working directory mark at the given line.
 //
 // nil token means it was "strongly" pushed (e.g., CurrentDir=) and you oughtn't poll.
@@ -502,22 +425,27 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // recently used directories and will change the current remote host to the remote host on `line`.
 - (void)setWorkingDirectory:(NSString *)workingDirectory
 #warning TODO: I need to use an absolute line number here to avoid race conditions between main thread and mutation thread.
-                        onLine:(int)line
+                     onAbsLine:(long long)absLine
                         pushed:(BOOL)pushed
                          token:(id<iTermOrderedToken>)token {
-    DLog(@"%p: setWorkingDirectory:%@ onLine:%d token:%@", self, workingDirectory, line, token);
+    DLog(@"%p: setWorkingDirectory:%@ onLine:%lld token:%@", self, workingDirectory, absLine, token);
+    const long long bigLine = MAX(0, absLine - self.cumulativeScrollbackOverflow);
+    if (bigLine >= INT_MAX) {
+        DLog(@"suspiciously large line %@ from absLine %@ cumulative %@", @(bigLine), @(absLine), @(self.cumulativeScrollbackOverflow));
+        return;
+    }
+    const int line = bigLine;
     VT100WorkingDirectory *workingDirectoryObj = [[VT100WorkingDirectory alloc] init];
     if (token && !workingDirectory) {
         __weak __typeof(self) weakSelf = self;
-        dispatch_queue_t queue = _queue;
         DLog(@"%p: Performing async working directory fetch for token %@", self, token);
+        dispatch_queue_t queue = _queue;
         [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *path) {
                 DLog(@"%p: Async update got %@ for token %@", weakSelf, path, token);
                 if (path) {
-#warning TODO: This used to be a simple recursion and now it's complicated. Is it right?
                     dispatch_async(queue, ^{
-                        [weakSelf setWorkingDirectory:path onLine:line pushed:pushed token:token];
+                        [weakSelf setWorkingDirectory:path onAbsLine:absLine pushed:pushed token:token];
                     });
                 }
             }];
@@ -557,11 +485,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             range = VT100GridCoordRangeMake(self.currentGrid.cursorX, line, self.width, line);
             DLog(@"Set range of %@ to %@", workingDirectory, VT100GridCoordRangeDescription(range));
             [self.intervalTree addObject:workingDirectoryObj
-                                     withInterval:[self intervalForGridCoordRange:range]];
+                            withInterval:[self intervalForGridCoordRange:range]];
         }
     }
     VT100RemoteHost *remoteHost = [self remoteHostOnLine:line];
-    const long long absLine = self.cumulativeScrollbackOverflow + line;
     VT100ScreenWorkingDirectoryPushType pushType;
     if (!pushed) {
         pushType = VT100ScreenWorkingDirectoryPushTypePull;
@@ -578,6 +505,88 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                  pushType:pushType
                                                  accepted:accepted];
     }];
+}
+
+- (void)currentDirectoryReallyDidChangeTo:(NSString *)dir
+                                onAbsLine:(long long)cursorAbsLine {
+    DLog(@"currentDirectoryReallyDidChangeTo:%@ onAbsLine:%@", dir, @(cursorAbsLine));
+    BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorAbsLine - self.cumulativeScrollbackOverflow]];
+    [self setWorkingDirectory:dir
+                    onAbsLine:cursorAbsLine
+                       pushed:YES
+                        token:nil];
+    if (willChange) {
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenCurrentDirectoryDidChangeTo:dir];
+        }];
+    }
+}
+
+- (void)currentDirectoryDidChangeTo:(NSString *)dir {
+    DLog(@"%p: terminalCurrentDirectoryDidChangeTo:%@", self, dir);
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
+    }];
+
+    const int cursorLine = self.numberOfLines - self.height + self.currentGrid.cursorY;
+    const long long cursorAbsLine = self.cumulativeScrollbackOverflow + cursorLine;
+    if (dir.length) {
+        [self currentDirectoryReallyDidChangeTo:dir onAbsLine:cursorAbsLine];
+        return;
+    }
+
+    // Go fetch the working directory and then update it.
+    __weak __typeof(self) weakSelf = self;
+    id<iTermOrderedToken> token = [self.currentDirectoryDidChangeOrderEnforcer newToken];
+    DLog(@"Fetching directory asynchronously with token %@", token);
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenGetWorkingDirectoryWithCompletion:^(NSString *dir) {
+            DLog(@"For token %@, the working directory is %@", token, dir);
+            if (![token commit]) {
+                return;
+            }
+            [weakSelf currentDirectoryReallyDidChangeTo:dir onAbsLine:cursorAbsLine];
+        }];
+    }];
+}
+
+- (void)saveCursorLine {
+    const int scrollbackLines = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    [self addMarkOnLine:scrollbackLines + self.currentGrid.cursor.y
+                         ofClass:[VT100ScreenMark class]];
+}
+
+- (void)setReturnCodeOfLastCommand:(int)returnCode {
+    DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
+    VT100ScreenMark *mark = self.lastCommandMark;
+    if (mark) {
+        DLog(@"FinalTerm: setting code on mark %@", mark);
+        const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
+#warning Mutating shared state here. Perhaps don't pass mark to the delegate below?
+        mark.code = returnCode;
+        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+            [observer intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
+                                                                    onLine:line];
+            [observer intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
+                                                                 onLine:line];
+        }];
+        VT100RemoteHost *remoteHost = [self remoteHostOnLine:self.numberOfLines];
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenDidUpdateReturnCodeForMark:mark
+                                            remoteHost:remoteHost];
+        }];
+    } else {
+        DLog(@"No last command mark found.");
+    }
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenCommandDidExitWithCode:returnCode mark:mark];
+    }];
+}
+
+- (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord {
+    self.commandStartCoord = coord;
+    [self didUpdatePromptLocation];
+    [self commandRangeDidChange];
 }
 
 - (void)setRemoteHostFromString:(NSString *)remoteHost {

@@ -625,7 +625,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line pushed:(BOOL)pushed {
     [self mutSetWorkingDirectory:workingDirectory
-                          onLine:line
+                       onAbsLine:line + self.totalScrollbackOverflow
                           pushed:pushed
                            token:[[_mutableState.setWorkingDirectoryOrderEnforcer newToken] autorelease]];
 }
