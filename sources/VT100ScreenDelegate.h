@@ -346,5 +346,6 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode;
 - (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
 - (int)screenMaximumTheoreticalImageDimension;
+- (void)screenOfferToDisableTriggersInInteractiveApps;
 
 @end
