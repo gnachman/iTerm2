@@ -97,6 +97,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)linkRun:(VT100GridRun)run
     withURLCode:(unsigned int)code;
 
+#pragma mark - Highlighting
+
+- (void)highlightRun:(VT100GridRun)run
+ withForegroundColor:(NSColor *)fgColor
+     backgroundColor:(NSColor *)bgColor;
+
 @end
 
 NS_ASSUME_NONNULL_END
