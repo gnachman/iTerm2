@@ -15044,11 +15044,10 @@ launchCoprocessWithCommand:(NSString *)command
 
 // STOP THE WORLD - sync
 - (void)triggerSession:(Trigger *)trigger didChangeNameTo:(NSString *)newName {
-    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionTriggerName: newName,
-                                                    iTermVariableKeySessionAutoNameFormat: newName }];
-    if (newName.length > 0) {
-        [self enableSessionNameTitleComponentIfPossible];
-    }
+#warning TODO: It would be nice to stop the world here so that the title change would be reflected immediately (e.g., in variables or title reporting.)
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectSetTitle:newName];
+    }];
 }
 
 // This can be completely synchyronous
@@ -15359,6 +15358,14 @@ launchCoprocessWithCommand:(NSString *)command
 - (iTermVariableScope *)triggerSideEffectVariableScope {
     assert([NSThread isMainThread]);
     return self.variablesScope;
+}
+
+- (void)triggerSideEffectSetTitle:(NSString * _Nonnull)newName {
+    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionTriggerName: newName,
+                                                    iTermVariableKeySessionAutoNameFormat: newName }];
+    if (newName.length > 0) {
+        [self enableSessionNameTitleComponentIfPossible];
+    }
 }
 
 @end
