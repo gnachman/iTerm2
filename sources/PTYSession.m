@@ -15016,14 +15016,11 @@ launchCoprocessWithCommand:(NSString *)command
 
 // This can be completely async
 - (void)triggerSession:(Trigger *)trigger
-            runCommand:(NSString *)command
-        withRunnerPool:(iTermBackgroundCommandRunnerPool *)pool {
-    iTermBackgroundCommandRunner *runner = [pool requestBackgroundCommandRunnerWithTerminationBlock:nil];
-    runner.command = command;
-    runner.title = @"Run Command Trigger";
-    runner.notificationTitle = @"Run Command Trigger Failed";
-    runner.shell = self.userShell;
-    [runner run];
+            runCommand:(nonnull NSString *)command
+        withRunnerPool:(nonnull iTermBackgroundCommandRunnerPool *)pool {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectRunBackgroundCommand:command pool:pool];
+    }];
 }
 
 // This can be completely async
@@ -15337,6 +15334,15 @@ launchCoprocessWithCommand:(NSString *)command
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad openPasswordManagerToAccountName:accountName
                                      inSession:self];
+}
+
+- (void)triggerSideEffectRunBackgroundCommand:(NSString *)command pool:(iTermBackgroundCommandRunnerPool *)pool {
+    iTermBackgroundCommandRunner *runner = [pool requestBackgroundCommandRunnerWithTerminationBlock:nil];
+    runner.command = command;
+    runner.title = @"Run Command Trigger";
+    runner.notificationTitle = @"Run Command Trigger Failed";
+    runner.shell = self.userShell;
+    [runner run];
 }
 
 @end
