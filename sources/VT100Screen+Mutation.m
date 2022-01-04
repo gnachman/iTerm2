@@ -2668,9 +2668,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord {
-    _mutableState.commandStartCoord = coord;
-    [_mutableState didUpdatePromptLocation];
-    [_mutableState commandRangeDidChange];
+    [_mutableState setCoordinateOfCommandStart:coord];
 }
 
 - (void)mutSetCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord {
