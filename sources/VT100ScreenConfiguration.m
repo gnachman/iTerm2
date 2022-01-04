@@ -13,6 +13,7 @@
 @property (nonatomic, copy, readwrite) NSString *sessionGuid;
 @property (nonatomic, readwrite) BOOL treatAmbiguousCharsAsDoubleWidth;
 @property (nonatomic, readwrite) NSInteger unicodeVersion;
+@property (nonatomic, readwrite) BOOL enableTriggersInInteractiveApps;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -21,6 +22,7 @@
 @synthesize sessionGuid = _sessionGuid;
 @synthesize treatAmbiguousCharsAsDoubleWidth = _treatAmbiguousCharsAsDoubleWidth;
 @synthesize unicodeVersion = _unicodeVersion;
+@synthesize enableTriggersInInteractiveApps = _enableTriggersInInteractiveApps;
 
 - (instancetype)initFrom:(VT100ScreenConfiguration *)other {
     self = [super init];
@@ -29,6 +31,7 @@
         _sessionGuid = other.sessionGuid;
         _treatAmbiguousCharsAsDoubleWidth = other.treatAmbiguousCharsAsDoubleWidth;
         _unicodeVersion = other.unicodeVersion;
+        _enableTriggersInInteractiveApps = other.enableTriggersInInteractiveApps;
     }
     return self;
 }
@@ -42,6 +45,7 @@
                             @"sessionGuid": _sessionGuid ?: @"(nil)",
                             @"treatAmbiguousCharsAsDoubleWidth": @(_treatAmbiguousCharsAsDoubleWidth),
                             @"unicodeVersion": @(_unicodeVersion),
+                            @"enableTriggersInInteractiveApps": @(_enableTriggersInInteractiveApps),
     };
     NSArray<NSString *> *keys = [dict.allKeys sortedArrayUsingSelector:@selector(compare:)];
     NSArray<NSString *> *kvps = [keys mapWithBlock:^id(NSString *key) {
@@ -58,6 +62,7 @@
 @dynamic sessionGuid;
 @dynamic treatAmbiguousCharsAsDoubleWidth;
 @dynamic unicodeVersion;
+@dynamic enableTriggersInInteractiveApps;
 
 - (id)copyWithZone:(NSZone *)zone {
     return [[VT100ScreenConfiguration alloc] initFrom:self];
