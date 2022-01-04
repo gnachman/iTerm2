@@ -16,7 +16,6 @@
 @protocol iTermTriggerSideEffectExecutor<NSObject>
 - (void)triggerSideEffectRingBell;
 - (void)triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded;
-- (void)triggerSideEffectShowCapturedOutputTool;
 - (void)triggerSideEffectShowShellIntegrationRequiredAnnouncement;
 - (void)triggerSideEffectDidCaptureOutput;
 - (void)triggerSideEffectLaunchCoprocessWithCommand:(NSString * _Nonnull)command
