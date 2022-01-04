@@ -6471,19 +6471,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-#pragma mark - Captured Output
-
-- (void)addCapturedOutput:(CapturedOutput *)capturedOutput {
-    VT100ScreenMark *lastCommandMark = [_screen lastCommandMark];
-    if (!lastCommandMark) {
-        // TODO: Show an announcement
-        return;
-    }
-    [lastCommandMark addCapturedOutput:capturedOutput];
-    [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionCapturedOutputDidChange
-                                                        object:nil];
-}
-
 #pragma mark - Password Management
 
 - (BOOL)canOpenPasswordManager {
@@ -14944,12 +14931,22 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     }];
 }
 
-- (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)output {
+- (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)capturedOutput {
 #warning TODO: eventually triggers will need to run on the mutation thread which will simplify this.
     // This has to be done synchronously
-    output.mark = [self markAddedAtCursorOfClass:[iTermCapturedOutputMark class]];
+    capturedOutput.mark = [self markAddedAtCursorOfClass:[iTermCapturedOutputMark class]];
     // This can be a side-effect
-    [self addCapturedOutput:output];
+
+    VT100ScreenMark *lastCommandMark = [_screen lastCommandMark];
+    if (!lastCommandMark) {
+        // TODO: Show an announcement
+        return;
+    }
+#warning TODO: Changing shared state here
+    [lastCommandMark addCapturedOutput:capturedOutput];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectDidCaptureOutput];
+    }];
 }
 
 // This can be completely async
@@ -15292,6 +15289,12 @@ launchCoprocessWithCommand:(NSString *)command
                                                     completion:completion];
     [self queueAnnouncement:announcement
                  identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier];
+}
+
+- (void)triggerSideEffectDidCaptureOutput {
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionCapturedOutputDidChange
+                                                        object:nil];
+
 }
 
 @end
