@@ -20,7 +20,7 @@
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
 
-@interface VT100ScreenMutableState()<PTYTriggerEvaluatorDelegate, iTermMarkDelegate>
+@interface VT100ScreenMutableState()<PTYTriggerEvaluatorDelegate, iTermMarkDelegate, iTermTriggerScopeProvider>
 @property (atomic) BOOL hadCommand;
 @end
 
@@ -869,8 +869,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (id<iTermTriggerScopeProvider>)triggerSessionVariableScopeProvider:(Trigger *)trigger {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    return [delegate triggerSessionVariableScopeProvider:trigger];
+    return self;
 }
 
 - (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger {
@@ -993,5 +992,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [delegate triggerSession:trigger makeAnnotationInRange:rangeInScreenChars line:lineNumber];
 }
 
+#pragma mark - iTermTriggerScopeProvider
+
+- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block {
+    id<iTermTriggerScopeProvider> delegate = (id<iTermTriggerScopeProvider>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+#warning TODO: Move impl here
+    [delegate performBlockWithScope:block];
+}
 
 @end
