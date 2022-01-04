@@ -666,9 +666,8 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
         _screen = [[VT100Screen alloc] initWithTerminal:_terminal
                                                darkMode:self.view.effectiveAppearance.it_isDark
                                           configuration:_config];
-        _triggerEvaluator = [[PTYTriggerEvaluator alloc] initWithNaggingController:self.naggingController
-                                                                          delegate:self
-                                                                        dataSource:_screen];
+        _triggerEvaluator = [[PTYTriggerEvaluator alloc] initWithDelegate:self
+                                                               dataSource:_screen];
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
 
         _overriddenFields = [[NSMutableSet alloc] init];
@@ -3055,6 +3054,12 @@ ITERM_WEAKLY_REFERENCEABLE
         return YES;
     }
     return [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS inProfile:self.profile];
+}
+
+- (void)triggerEvaluatorOfferToDisableTriggersInInteractiveApps:(PTYTriggerEvaluator *)evaluator {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenOfferToDisableTriggersInInteractiveApps];
+    }];
 }
 
 - (void)setAllTriggersEnabled:(BOOL)enabled {
@@ -12713,6 +12718,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (int)screenMaximumTheoreticalImageDimension {
     return PTYSessionMaximumMetalViewSize;
+}
+
+- (void)screenOfferToDisableTriggersInInteractiveApps {
+    [self.naggingController offerToDisableTriggersInInteractiveApps];
 }
 
 - (VT100Screen *)popupVT100Screen {

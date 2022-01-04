@@ -7,7 +7,6 @@
 
 #import <Foundation/Foundation.h>
 #import "iTermExpect.h"
-#import "iTermNaggingController.h"
 #import "iTermSlownessDetector.h"
 #import "PTYTextViewDataSource.h"
 #import "Trigger.h"
@@ -27,6 +26,8 @@ extern NSString *const PTYSessionSlownessEventExecute;
 
 @protocol PTYTriggerEvaluatorDelegate<NSObject, iTermTriggerSession>
 - (BOOL)triggerEvaluatorShouldUseTriggers:(PTYTriggerEvaluator *)evaluator;
+// Call naggingController.offerToDisableTriggersInInteractiveApps()
+- (void)triggerEvaluatorOfferToDisableTriggersInInteractiveApps:(PTYTriggerEvaluator *)evaluator;
 @end
 
 @interface PTYTriggerEvaluator : NSObject
@@ -50,17 +51,14 @@ extern NSString *const PTYSessionSlownessEventExecute;
 // nil when not in soft alternate screen mode.
 @property (nonatomic, strong, readonly) iTermSlownessDetector *triggersSlownessDetector;
 
-@property (nonatomic, strong, readonly) iTermNaggingController *naggingController;
-
 @property (nonatomic) BOOL triggerParametersUseInterpolatedStrings;
 
 @property (nonatomic, weak) id<PTYTriggerEvaluatorDataSource> dataSource;
 @property (nonatomic, weak) id<PTYTriggerEvaluatorDelegate> delegate;
 @property (nonatomic) BOOL sessionExited;
 
-- (instancetype)initWithNaggingController:(iTermNaggingController *)naggingController
-                                 delegate:(id<PTYTriggerEvaluatorDelegate>)delegate
-                               dataSource:(id<PTYTriggerEvaluatorDataSource>)dataSource NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithDelegate:(id<PTYTriggerEvaluatorDelegate>)delegate
+                      dataSource:(id<PTYTriggerEvaluatorDataSource>)dataSource NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (void)loadFromProfileArray:(NSArray *)array;

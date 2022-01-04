@@ -27,14 +27,12 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     BOOL _evaluating;
 }
 
-- (instancetype)initWithNaggingController:(iTermNaggingController *)naggingController
-                                 delegate:(id<PTYTriggerEvaluatorDelegate>)delegate
-                               dataSource:(id<PTYTriggerEvaluatorDataSource>)dataSource {
+- (instancetype)initWithDelegate:(id<PTYTriggerEvaluatorDelegate>)delegate
+                      dataSource:(id<PTYTriggerEvaluatorDataSource>)dataSource {
     self = [super init];
     if (self) {
         _delegate = delegate;
         _dataSource = dataSource;
-        _naggingController = naggingController;
         _triggerLineNumber = -1;
         _expect = [[iTermExpect alloc] initDry:NO];
         _triggersSlownessDetector = [[iTermSlownessDetector alloc] init];
@@ -154,7 +152,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         if (timeInTriggers > timeExecuting * 0.5 && (timeExecuting + timeInTriggers) > 0.1) {
             // We were CPU bound for at least 10% of the sample time and
             // triggers were at least half as expensive as token execution.
-            [self.naggingController offerToDisableTriggersInInteractiveApps];
+            [self.delegate triggerEvaluatorOfferToDisableTriggersInInteractiveApps:self];
         }
         [_triggersSlownessDetector reset];
     }
