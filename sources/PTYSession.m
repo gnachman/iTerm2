@@ -14965,7 +14965,9 @@ launchCoprocessWithCommand:(NSString *)command
 
 // This can be completely async
 - (void)triggerSessionMakeFirstResponder:(Trigger *)trigger {
-    [self takeFocus];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectMakeFirstResponder];
+    }];
 }
 
 - (id<iTermTriggerScopeProvider>)triggerSessionVariableScopeProvider:(Trigger *)trigger {
@@ -15306,6 +15308,10 @@ launchCoprocessWithCommand:(NSString *)command
             [self launchCoprocessWithCommand:command];
         }
     }
+}
+
+- (void)triggerSideEffectMakeFirstResponder {
+    [self takeFocus];
 }
 
 @end
