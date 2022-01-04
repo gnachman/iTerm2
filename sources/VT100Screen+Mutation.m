@@ -246,13 +246,7 @@
 - (void)mutAddNote:(PTYAnnotation *)annotation
            inRange:(VT100GridCoordRange)range
              focus:(BOOL)focus {
-    [_mutableState.intervalTree addObject:annotation withInterval:[_mutableState intervalForGridCoordRange:range]];
-    [_mutableState.currentGrid markAllCharsDirty:YES];
-    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenDidAddNote:annotation focus:focus];
-        [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeAnnotation
-                                                           onLine:range.start.y + _mutableState.cumulativeScrollbackOverflow];
-    }];
+    [_mutableState addAnnotation:annotation inRange:range focus:focus];
 }
 
 - (void)mutCommandWasAborted {

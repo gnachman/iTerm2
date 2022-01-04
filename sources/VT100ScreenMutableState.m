@@ -511,6 +511,21 @@
     [self setNeedsRedraw];
 }
 
+- (void)addAnnotation:(PTYAnnotation *)annotation
+              inRange:(VT100GridCoordRange)range
+                focus:(BOOL)focus {
+    [self.intervalTree addObject:annotation withInterval:[self intervalForGridCoordRange:range]];
+    [self.currentGrid markAllCharsDirty:YES];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenDidAddNote:annotation focus:focus];
+    }];
+    const long long line = range.start.y + self.cumulativeScrollbackOverflow;
+    [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+        [observer intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeAnnotation
+                                          onLine:line];
+    }];
+}
+
 #pragma mark - iTermMarkDelegate
 
 - (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
