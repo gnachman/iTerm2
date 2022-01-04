@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "IntervalTree.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermTextExtractor.h"
 #import "LineBuffer.h"
@@ -334,6 +335,55 @@ static const int kDefaultMaxScrollbackLines = 1000;
 
         return buffer;
     }
+}
+
+- (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                                                   startPtr:(long long *)startAbsLineNumber {
+    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow;
+    if (lineNumber < 0) {
+        return nil;
+    }
+    if (lineNumber >= self.numberOfLines) {
+        return nil;
+    }
+    // Search backward for start of line
+    int i;
+    NSMutableData *data = [NSMutableData data];
+    *startAbsLineNumber = self.totalScrollbackOverflow;
+
+    // Max radius of lines to search above and below absoluteLineNumber
+    const int kMaxRadius = [iTermAdvancedSettingsModel triggerRadius];
+    BOOL foundStart = NO;
+    for (i = lineNumber - 1; i >= 0 && i >= lineNumber - kMaxRadius; i--) {
+        const screen_char_t *line = [self getLineAtIndex:i];
+        if (line[self.width].code == EOL_HARD) {
+            *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
+            foundStart = YES;
+            break;
+        }
+        [data replaceBytesInRange:NSMakeRange(0, 0)
+                        withBytes:line
+                           length:self.width * sizeof(screen_char_t)];
+    }
+    if (!foundStart) {
+        *startAbsLineNumber = i + self.totalScrollbackOverflow + 1;
+    }
+    BOOL done = NO;
+    for (i = lineNumber; !done && i < self.numberOfLines && i < lineNumber + kMaxRadius; i++) {
+        const screen_char_t *line = [self getLineAtIndex:i];
+        int length = self.width;
+        done = line[length].code == EOL_HARD;
+        if (done) {
+            // Remove trailing newlines
+            while (length > 0 && line[length - 1].code == 0 && !line[length - 1].complexChar) {
+                --length;
+            }
+        }
+        [data appendBytes:line length:length * sizeof(screen_char_t)];
+    }
+
+    return [[iTermStringLine alloc] initWithScreenChars:data.mutableBytes
+                                                 length:data.length / sizeof(screen_char_t)];
 }
 
 #pragma mark - Shell Integration

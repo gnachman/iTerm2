@@ -241,6 +241,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer;
 
+- (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                                                   startPtr:(long long *)startAbsLineNumber;
+
 #pragma mark - Interval Tree
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
