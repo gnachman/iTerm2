@@ -26,7 +26,8 @@
 - (void)triggerSideEffectPostUserNotificationWithMessage:(NSString * _Nonnull)message;
 - (void)triggerSideEffectStopScrollingAtLine:(long long)absLine;
 - (void)triggerSideEffectOpenPasswordManagerToAccountName:(NSString * _Nullable)accountName;
-- (void)triggerSideEffectRunBackgroundCommand:(NSString *)command pool:(iTermBackgroundCommandRunnerPool *)pool;
+- (void)triggerSideEffectRunBackgroundCommand:(NSString * _Nonnull)command
+                                         pool:(iTermBackgroundCommandRunnerPool * _Nonnull)pool;
 - (void)triggerWriteTextWithoutBroadcasting:(NSString * _Nonnull)text;
 - (void)triggerSideEffectShowAlertWithMessage:(NSString * _Nonnull)message
                                       disable:(void (^ _Nonnull)(void))disable;
@@ -36,7 +37,8 @@
                               withVariables:(NSDictionary * _Nonnull)temporaryVariables
                                    captures:(NSArray<NSString *> * _Nonnull)captureStringArray
                                     trigger:(Trigger * _Nonnull)trigger;
-- (void)triggerSideEffectSetValue:(id)value forVariableNamed:(NSString *)name;
+- (void)triggerSideEffectSetValue:(id _Nullable)value
+                 forVariableNamed:(NSString * _Nonnull)name;
 @end
 
 @protocol VT100ScreenDelegate <NSObject, iTermColorMapDelegate, iTermTriggerSideEffectExecutor>
