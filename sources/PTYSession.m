@@ -14904,7 +14904,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 // This can be completely async
-- (BOOL)toolbeltIsVisible {
+- (BOOL)toolbeltIsVisibleWithCapturedOutput {
     if (!self.delegate.realParentWindow.shouldShowToolbelt) {
         return NO;
     }
@@ -14913,6 +14913,10 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 // This can be completely async
 - (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger {
+    [self showCapturedOutputTool];
+}
+
+- (void)showCapturedOutputTool {
     if (!self.delegate.realParentWindow.shouldShowToolbelt) {
         [self.delegate.realParentWindow toggleToolbeltVisibility:nil];
     }
@@ -14958,40 +14962,9 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 // This can be completely async
 - (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:(Trigger *)trigger {
-    if ([self toolbeltIsVisible]) {
-        return;
-    }
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputToolNotVisibleWarning]) {
-        return;
-    }
-
-    if ([self hasAnnouncementWithIdentifier:kSuppressCaptureOutputToolNotVisibleWarning]) {
-        return;
-    }
-    NSString *theTitle = @"A Capture Output trigger fired, but the Captured Output tool is not visible.";
-    void (^completion)(int selection) = ^(int selection) {
-        switch (selection) {
-            case -2:
-                break;
-
-            case 0:
-                [self triggerSessionShowCapturedOutputTool:trigger];
-                break;
-
-            case 1:
-                [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                        forKey:kSuppressCaptureOutputToolNotVisibleWarning];
-                break;
-        }
-    };
-    iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:theTitle
-                                                         style:kiTermAnnouncementViewStyleWarning
-                                                   withActions:@[ @"Show It", @"Silence Warning" ]
-                                                    completion:completion];
-    announcement.dismissOnKeyDown = YES;
-    [self queueAnnouncement:announcement
-                 identifier:kSuppressCaptureOutputToolNotVisibleWarning];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded];
+    }];
 }
 
 - (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)output {
@@ -15275,6 +15248,44 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)triggerSideEffectRingBell {
     [self.screen activateBell];
+}
+
+- (void)triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded {
+    if ([self toolbeltIsVisibleWithCapturedOutput]) {
+        return;
+    }
+
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputToolNotVisibleWarning]) {
+        return;
+    }
+
+    if ([self hasAnnouncementWithIdentifier:kSuppressCaptureOutputToolNotVisibleWarning]) {
+        return;
+    }
+    NSString *theTitle = @"A Capture Output trigger fired, but the Captured Output tool is not visible.";
+    void (^completion)(int selection) = ^(int selection) {
+        switch (selection) {
+            case -2:
+                break;
+
+            case 0:
+                [self showCapturedOutputTool];
+                break;
+
+            case 1:
+                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                        forKey:kSuppressCaptureOutputToolNotVisibleWarning];
+                break;
+        }
+    };
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:theTitle
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Show It", @"Silence Warning" ]
+                                                    completion:completion];
+    announcement.dismissOnKeyDown = YES;
+    [self queueAnnouncement:announcement
+                 identifier:kSuppressCaptureOutputToolNotVisibleWarning];
 }
 
 @end
