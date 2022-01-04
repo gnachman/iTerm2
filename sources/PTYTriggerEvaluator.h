@@ -19,9 +19,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 extern NSString *const PTYSessionSlownessEventExecute;
 
-@protocol PTYTriggerEvaluatorDataSource<PTYTextViewDataSource>
+@protocol PTYTriggerEvaluatorDataSource<iTermTextDataSource>
 - (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                    startPtr:(long long *)startAbsLineNumber;
+- (int)numberOfScrollbackLines;
+- (int)cursorY;
+- (long long)totalScrollbackOverflow;
+- (int)height;
 @end
 
 @protocol PTYTriggerEvaluatorDelegate<NSObject, iTermTriggerSession>
