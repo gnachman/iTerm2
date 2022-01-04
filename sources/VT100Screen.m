@@ -401,46 +401,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [_state externalAttributeIndexForLine:y];
 }
 
-// Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
-// This function is dangerous! It writes to an internal buffer and returns a
-// pointer to it. Better to use getLineAtIndex:withBuffer:.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex {
-    return [self getLineAtIndex:theIndex withBuffer:[_state.currentGrid resultLine]];
+    return [_state getLineAtIndex:theIndex];
 }
 
 // theIndex = 0 for first line in history; for sufficiently large values, it pulls from the current
 // grid.
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer {
-    ITBetaAssert(theIndex >= 0, @"Negative index to getLineAtIndex");
-    int numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
-    if (theIndex >= numLinesInLineBuffer) {
-        // Get a line from the circular screen buffer
-        return [_state.currentGrid screenCharsAtLineNumber:(theIndex - numLinesInLineBuffer)];
-    } else {
-        // Get a line from the scrollback buffer.
-        screen_char_t continuation;
-        int cont = [_state.linebuffer copyLineToBuffer:buffer
-                                                 width:_state.currentGrid.size.width
-                                               lineNum:theIndex
-                                          continuation:&continuation];
-        if (cont == EOL_SOFT &&
-            theIndex == numLinesInLineBuffer - 1 &&
-            [_state.currentGrid screenCharsAtLineNumber:0][1].code == DWC_RIGHT &&
-            buffer[_state.currentGrid.size.width - 1].code == 0) {
-            // The last line in the scrollback buffer is actually a split DWC
-            // if the first char on the screen is double-width and the buffer is soft-wrapped without
-            // a last char.
-            cont = EOL_DWC;
-        }
-        if (cont == EOL_DWC) {
-            buffer[_state.currentGrid.size.width - 1].code = DWC_SKIP;
-            buffer[_state.currentGrid.size.width - 1].complexChar = NO;
-        }
-        buffer[_state.currentGrid.size.width] = continuation;
-        buffer[_state.currentGrid.size.width].code = cont;
-
-        return buffer;
-    }
+    return [_state getLineAtIndex:theIndex withBuffer:buffer];
 }
 
 - (NSArray<ScreenCharArray *> *)gridLinesInRange:(const NSRange)range {

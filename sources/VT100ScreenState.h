@@ -234,6 +234,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (iTermImmutableMetadata)metadataOnLine:(int)lineNumber;
 
+// Like getLineAtIndex:withBuffer:, but uses dedicated storage for the result.
+// This function is dangerous! It writes to an internal buffer and returns a
+// pointer to it. Better to use getLineAtIndex:withBuffer:.
+- (const screen_char_t *)getLineAtIndex:(int)theIndex;
+
+- (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer;
+
 #pragma mark - Interval Tree
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
