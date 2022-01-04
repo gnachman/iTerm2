@@ -1392,6 +1392,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Mutation Wrappers
 
+- (id<PTYTriggerEvaluatorDelegate>)triggerEvaluatorDelegate {
+#warning TODO: Remove this temporary hack when trigger evaluator moves to mutable state.
+    return (id<PTYTriggerEvaluatorDelegate>)_mutableState;
+}
+
 - (void)currentDirectoryDidChangeTo:(NSString *)dir {
     [self mutCurrentDirectoryDidChangeTo:dir];
 }

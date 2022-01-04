@@ -265,6 +265,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)setRemoteHostName:(NSString *)remoteHostName;
 - (void)currentDirectoryDidChangeTo:(NSString *)dir;
 - (VT100GridCoordRange)commandRange;
+- (id<PTYTriggerEvaluatorDelegate>)triggerEvaluatorDelegate;
 
 @end
 

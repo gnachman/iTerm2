@@ -666,7 +666,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
         _screen = [[VT100Screen alloc] initWithTerminal:_terminal
                                                darkMode:self.view.effectiveAppearance.it_isDark
                                           configuration:_config];
-        _triggerEvaluator = [[PTYTriggerEvaluator alloc] initWithDelegate:self
+        _triggerEvaluator = [[PTYTriggerEvaluator alloc] initWithDelegate:_screen.triggerEvaluatorDelegate
                                                                dataSource:_screen];
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
 
@@ -3049,19 +3049,6 @@ ITERM_WEAKLY_REFERENCEABLE
     if (self.shell.pid > 0 || [[[self variablesScope] valueForVariableName:@"jobName"] length] > 0) {
         [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
     }
-}
-
-- (BOOL)triggerEvaluatorShouldUseTriggers:(PTYTriggerEvaluator *)evaluator {
-    if (![self.terminal softAlternateScreenMode]) {
-        return YES;
-    }
-    return [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS inProfile:self.profile];
-}
-
-- (void)triggerEvaluatorOfferToDisableTriggersInInteractiveApps:(PTYTriggerEvaluator *)evaluator {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenOfferToDisableTriggersInInteractiveApps];
-    }];
 }
 
 - (void)setAllTriggersEnabled:(BOOL)enabled {
