@@ -107,6 +107,10 @@ NS_ASSUME_NONNULL_BEGIN
  withForegroundColor:(NSColor *)fgColor
      backgroundColor:(NSColor *)bgColor;
 
+- (void)highlightTextInRange:(NSRange)range
+   basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                      colors:(NSDictionary *)colors;
+
 @end
 
 NS_ASSUME_NONNULL_END

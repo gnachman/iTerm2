@@ -579,6 +579,26 @@
 
 #pragma mark - Highlighting
 
+- (void)highlightTextInRange:(NSRange)range
+   basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                      colors:(NSDictionary *)colors {
+    long long lineNumber = absoluteLineNumber - self.cumulativeScrollbackOverflow - self.numberOfScrollbackLines;
+
+    VT100GridRun gridRun = [self.currentGrid gridRunFromRange:range relativeToRow:lineNumber];
+    DLog(@"Highlight range %@ with colors %@ at lineNumber %@ giving grid run %@",
+         NSStringFromRange(range),
+         colors,
+         @(lineNumber),
+         VT100GridRunDescription(gridRun));
+
+    if (gridRun.length > 0) {
+        NSColor *foreground = colors[kHighlightForegroundColor];
+        NSColor *background = colors[kHighlightBackgroundColor];
+        [self highlightRun:gridRun withForegroundColor:foreground backgroundColor:background];
+    }
+}
+
+// Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
 - (void)highlightRun:(VT100GridRun)run
  withForegroundColor:(NSColor *)fgColor
      backgroundColor:(NSColor *)bgColor {

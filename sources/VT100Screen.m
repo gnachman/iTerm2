@@ -224,20 +224,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)highlightTextInRange:(NSRange)range
    basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                       colors:(NSDictionary *)colors {
-    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - _state.numberOfScrollbackLines;
-
-    VT100GridRun gridRun = [_state.currentGrid gridRunFromRange:range relativeToRow:lineNumber];
-    DLog(@"Highlight range %@ with colors %@ at lineNumber %@ giving grid run %@",
-         NSStringFromRange(range),
-         colors,
-         @(lineNumber),
-         VT100GridRunDescription(gridRun));
-
-    if (gridRun.length > 0) {
-        NSColor *foreground = colors[kHighlightForegroundColor];
-        NSColor *background = colors[kHighlightBackgroundColor];
-        [self mutHighlightRun:gridRun withForegroundColor:foreground backgroundColor:background];
-    }
+    [self mutHighlightTextInRange:range basedAtAbsoluteLineNumber:absoluteLineNumber colors:colors];
 }
 
 - (void)linkTextInRange:(NSRange)range
