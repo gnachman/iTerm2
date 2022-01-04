@@ -86,6 +86,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation;
 
+- (void)addAnnotation:(PTYAnnotation *)annotation
+              inRange:(VT100GridCoordRange)range
+                focus:(BOOL)focus;
+
 @end
 
 NS_ASSUME_NONNULL_END
