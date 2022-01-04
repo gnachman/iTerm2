@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly) NSString *sessionGuid;
 @property (nonatomic, readonly) BOOL treatAmbiguousCharsAsDoubleWidth;
 @property (nonatomic, readonly) NSInteger unicodeVersion;
+@property (nonatomic, readonly) BOOL enableTriggersInInteractiveApps;
 
 @end
 
@@ -32,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readwrite) NSString *sessionGuid;
 @property (nonatomic, readwrite) BOOL treatAmbiguousCharsAsDoubleWidth;
 @property (nonatomic, readwrite) NSInteger unicodeVersion;
+@property (nonatomic, readwrite) BOOL enableTriggersInInteractiveApps;
 
 @end
 

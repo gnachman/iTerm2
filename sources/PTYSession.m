@@ -11917,6 +11917,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _config.sessionGuid = _guid;
     _config.treatAmbiguousCharsAsDoubleWidth = [self treatAmbiguousWidthAsDoubleWidth];
     _config.unicodeVersion = _unicodeVersion;
+    _config.enableTriggersInInteractiveApps = [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS
+                                                                        inProfile:self.profile];
 }
 
 - (void)updateConfiguration {
