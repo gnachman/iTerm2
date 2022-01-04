@@ -14932,32 +14932,9 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 // This can be completely async
 - (void)triggerSessionShowShellIntegrationRequiredAnnouncement:(Trigger *)trigger {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
-        return;
-    }
-    NSString *theTitle = @"A Capture Output trigger fired, but Shell Integration is not installed.";
-    void (^completion)(int selection) = ^(int selection) {
-        switch (selection) {
-            case -2:
-                break;
-
-            case 0:
-                [self tryToRunShellIntegrationInstallerWithPromptCheck:NO];
-                break;
-
-            case 1:
-                [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                        forKey:kSuppressCaptureOutputRequiresShellIntegrationWarning];
-                break;
-        }
-    };
-    iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:theTitle
-                                                         style:kiTermAnnouncementViewStyleWarning
-                                                   withActions:@[ @"Install", @"Silence Warning" ]
-                                                    completion:completion];
-    [self queueAnnouncement:announcement
-                 identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectShowShellIntegrationRequiredAnnouncement];
+    }];
 }
 
 // This can be completely async
@@ -15286,6 +15263,35 @@ launchCoprocessWithCommand:(NSString *)command
     announcement.dismissOnKeyDown = YES;
     [self queueAnnouncement:announcement
                  identifier:kSuppressCaptureOutputToolNotVisibleWarning];
+}
+
+- (void)triggerSideEffectShowShellIntegrationRequiredAnnouncement {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
+        return;
+    }
+    NSString *theTitle = @"A Capture Output trigger fired, but Shell Integration is not installed.";
+    void (^completion)(int selection) = ^(int selection) {
+        switch (selection) {
+            case -2:
+                break;
+
+            case 0:
+                [self tryToRunShellIntegrationInstallerWithPromptCheck:NO];
+                break;
+
+            case 1:
+                [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                        forKey:kSuppressCaptureOutputRequiresShellIntegrationWarning];
+                break;
+        }
+    };
+    iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:theTitle
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:@[ @"Install", @"Silence Warning" ]
+                                                    completion:completion];
+    [self queueAnnouncement:announcement
+                 identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier];
 }
 
 @end
