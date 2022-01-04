@@ -18,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Shell integration: if a command ends without a terminal newline, should we inject one prior to the prompt?
 @property (nonatomic, readonly) BOOL shouldPlacePromptAtFirstColumn;
 @property (nonatomic, copy, readonly) NSString *sessionGuid;
+@property (nonatomic, readonly) BOOL treatAmbiguousCharsAsDoubleWidth;
+@property (nonatomic, readonly) NSInteger unicodeVersion;
 
 @end
 
@@ -28,6 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readwrite) BOOL shouldPlacePromptAtFirstColumn;
 @property (nonatomic, copy, readwrite) NSString *sessionGuid;
+@property (nonatomic, readwrite) BOOL treatAmbiguousCharsAsDoubleWidth;
+@property (nonatomic, readwrite) NSInteger unicodeVersion;
 
 @end
 

@@ -47,6 +47,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)appendLineFeed;
 - (void)appendCarriageReturnLineFeed;
 - (void)softAlternateScreenModeDidChange;
+- (void)appendStringAtCursor:(NSString *)string;
+- (void)appendScreenCharArrayAtCursor:(const screen_char_t *)buffer
+                               length:(int)len
+               externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes;
 
 #pragma mark - Interval Tree
 
