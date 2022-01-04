@@ -2848,13 +2848,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)mutLinkRun:(VT100GridRun)run
        withURLCode:(unsigned int)code {
-
-    for (NSValue *value in [_state.currentGrid rectsForRun:run]) {
-        VT100GridRect rect = [value gridRectValue];
-        [_mutableState.currentGrid setURLCode:code
-                                   inRectFrom:rect.origin
-                                           to:VT100GridRectMax(rect)];
-    }
+    [_mutableState linkRun:run withURLCode:code];
 }
 
 #pragma mark - Highlighting

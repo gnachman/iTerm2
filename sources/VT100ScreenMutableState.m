@@ -533,6 +533,19 @@
     }];
 }
 
+#pragma mark - URLs
+
+- (void)linkRun:(VT100GridRun)run
+       withURLCode:(unsigned int)code {
+    for (NSValue *value in [self.currentGrid rectsForRun:run]) {
+        VT100GridRect rect = [value gridRectValue];
+        [self.currentGrid setURLCode:code
+                          inRectFrom:rect.origin
+                                  to:VT100GridRectMax(rect)];
+    }
+}
+
+
 #pragma mark - iTermMarkDelegate
 
 - (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
