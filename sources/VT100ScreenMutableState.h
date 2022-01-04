@@ -84,6 +84,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord;
 
+- (void)saveCursorLine;
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation;

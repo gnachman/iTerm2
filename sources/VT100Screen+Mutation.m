@@ -3518,9 +3518,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)mutSaveCursorLine {
-    const int scrollbackLines = [_mutableState.linebuffer numLinesWithWidth:_mutableState.currentGrid.size.width];
-    [_mutableState addMarkOnLine:scrollbackLines + _mutableState.currentGrid.cursor.y
-                         ofClass:[VT100ScreenMark class]];
+    [_mutableState saveCursorLine];
 }
 
 - (void)terminalStealFocus {

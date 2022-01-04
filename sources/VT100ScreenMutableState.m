@@ -499,6 +499,12 @@
 }
 
 
+- (void)saveCursorLine {
+    const int scrollbackLines = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    [self addMarkOnLine:scrollbackLines + self.currentGrid.cursor.y
+                ofClass:[VT100ScreenMark class]];
+}
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation {
