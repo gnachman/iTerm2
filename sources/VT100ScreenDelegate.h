@@ -14,7 +14,6 @@
 @protocol iTermOrderedToken;
 
 @protocol iTermTriggerSideEffectExecutor<NSObject>
-- (void)triggerSideEffectReveal;
 - (void)triggerSideEffectRingBell;
 - (void)triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded;
 - (void)triggerSideEffectShowCapturedOutputTool;
