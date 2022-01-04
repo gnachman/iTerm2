@@ -63,7 +63,6 @@ class SetUserVariableTrigger: Trigger {
         // definitely stop the world
         paramWithBackreferencesReplaced(withValues: strings,
                                         scope: session.triggerSessionVariableScopeProvider(self),
-                                        owner: session,
                                         useInterpolation: useInterpolation).then { [weak self] message in
             if let self = self, let (name, value) = self.variableNameAndValue(message as String) {
                 session.triggerSession(self,

@@ -31,7 +31,6 @@ class InjectTrigger: Trigger {
         // I can live with stopping the world here; this should be used very sparingly. I also don't expect much use of scope here.
         paramWithBackreferencesReplaced(withValues: strings,
                                         scope: session.triggerSessionVariableScopeProvider(self),
-                                        owner: session,
                                         useInterpolation: useInterpolation).then { message in
             if let data = (message as String).data(using: .utf8) {
                 session.triggerSession(self, inject: data);

@@ -830,4 +830,168 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
+#pragma mark - iTermTriggerSession
+
+#warning TODO: Move triggerSession impls here from PTYSession
+- (void)triggerSessionRingBell:(Trigger *)trigger {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSessionRingBell:trigger];
+}
+
+- (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSessionShowCapturedOutputTool:trigger];
+}
+
+- (BOOL)triggerSessionIsShellIntegrationInstalled:(Trigger *)trigger {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    return [delegate triggerSessionIsShellIntegrationInstalled:trigger];
+}
+
+- (void)triggerSessionShowShellIntegrationRequiredAnnouncement:(Trigger *)trigger {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSessionShowShellIntegrationRequiredAnnouncement:trigger];
+}
+
+- (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)output {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger didCaptureOutput:output];
+}
+
+- (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:(Trigger *)trigger {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:trigger];
+}
+
+- (void)triggerSession:(Trigger *)trigger launchCoprocessWithCommand:(NSString *)command identifier:(NSString * _Nullable)identifier silent:(BOOL)silent {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger launchCoprocessWithCommand:command identifier:identifier silent:silent];
+}
+
+- (id<iTermTriggerScopeProvider>)triggerSessionVariableScopeProvider:(Trigger *)trigger {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    return [delegate triggerSessionVariableScopeProvider:trigger];
+}
+
+- (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    return [delegate triggerSessionShouldUseInterpolatedStrings:trigger];
+}
+
+- (void)triggerSessionMakeFirstResponder:(Trigger *)trigger {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSessionMakeFirstResponder:trigger];
+}
+
+- (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger postUserNotificationWithMessage:message];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+  highlightTextInRange:(NSRange)rangeInScreenChars
+          absoluteLine:(long long)lineNumber
+                colors:(NSDictionary<NSString *, NSColor *> *)colors {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger highlightTextInRange:rangeInScreenChars absoluteLine:lineNumber colors:colors];
+}
+
+- (void)triggerSession:(Trigger *)trigger saveCursorLineAndStopScrolling:(BOOL)stopScrolling {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger saveCursorLineAndStopScrolling:stopScrolling];
+}
+
+- (void)triggerSession:(Trigger *)trigger openPasswordManagerToAccountName:(NSString *)accountName {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger openPasswordManagerToAccountName:accountName];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+            runCommand:(NSString *)command
+        withRunnerPool:(iTermBackgroundCommandRunnerPool *)pool {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger runCommand:command withRunnerPool:pool];
+}
+
+- (void)triggerSession:(Trigger *)trigger writeText:(NSString *)text {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger writeText:text];
+}
+
+- (void)triggerSession:(Trigger *)trigger setRemoteHostName:(NSString *)remoteHost {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger setRemoteHostName:remoteHost];
+}
+
+- (void)triggerSession:(Trigger *)trigger setCurrentDirectory:(NSString *)text {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger setCurrentDirectory:text];
+}
+
+- (void)triggerSession:(Trigger *)trigger didChangeNameTo:(NSString *)newName {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger didChangeNameTo:newName];
+}
+
+- (void)triggerSession:(Trigger *)trigger didDetectPromptAt:(VT100GridAbsCoordRange)range {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger didDetectPromptAt:range];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+    makeHyperlinkToURL:(NSURL *)url
+               inRange:(NSRange)rangeInString
+                  line:(long long)lineNumber {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger makeHyperlinkToURL:url inRange:rangeInString line:lineNumber];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+                invoke:(NSString *)invocation
+         withVariables:(NSDictionary *)temporaryVariables
+              captures:(NSArray<NSString *> *)captureStringArray {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger invoke:invocation withVariables:temporaryVariables captures:captureStringArray];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+         setAnnotation:(PTYAnnotation *)annotation
+              stringTo:(NSString *)stringValue {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger setAnnotation:annotation stringTo:stringValue];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+       highlightLineAt:(VT100GridAbsCoord)absCoord
+                colors:(NSDictionary *)colors {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger highlightLineAt:absCoord colors:colors];
+}
+
+- (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger injectData:data];
+}
+
+- (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger setVariableNamed:name toValue:value];
+}
+
+- (void)triggerSession:(Trigger *)trigger
+  showAlertWithMessage:(NSString *)message
+             rateLimit:(iTermRateLimitedUpdate *)rateLimit
+               disable:(void (^)(void))disable {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate triggerSession:trigger showAlertWithMessage:message rateLimit:rateLimit disable:disable];
+}
+
+- (PTYAnnotation * _Nullable)triggerSession:(Trigger *)trigger
+                      makeAnnotationInRange:(NSRange)rangeInScreenChars
+                                       line:(long long)lineNumber {
+    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    return [delegate triggerSession:trigger makeAnnotationInRange:rangeInScreenChars line:lineNumber];
+}
+
+
 @end

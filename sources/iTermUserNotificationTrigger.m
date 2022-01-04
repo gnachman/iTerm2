@@ -53,7 +53,6 @@
     [[self paramWithBackreferencesReplacedWithValues:stringArray
 #warning TODO: Variable scope will need an immutable copy :(
                                                scope:[aSession triggerSessionVariableScopeProvider:self]
-                                               owner:aSession
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull notificationText) {
         [self postNotificationWithText:notificationText inSession:aSession];
     }];
