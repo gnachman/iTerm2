@@ -211,18 +211,6 @@
     }
 }
 
-// Adds a working directory mark at the given line.
-//
-// nil token means it was "strongly" pushed (e.g., CurrentDir=) and you oughtn't poll.
-// You can also get a "weak" push - window title OSC is pushed = YES, token != nil.
-//
-// non-pushed means we polled for the working directory sua sponte. This is considered poor quality
-// because it's quite spammy - every time you press enter, for example - and it shoul dhave
-// minimal side effects.
-//
-// pushed means it's a higher confidence update. The directory must be pushed to be remote, but
-// that alone is not sufficient evidence that it is remote. Pushed directories will update the
-// recently used directories and will change the current remote host to the remote host on `line`.
 - (void)mutSetWorkingDirectory:(NSString *)workingDirectory
 #warning TODO: I need to use an absolute line number here to avoid race conditions between main thread and mutation thread.
                      onAbsLine:(long long)line
