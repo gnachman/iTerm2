@@ -92,6 +92,11 @@ NS_ASSUME_NONNULL_BEGIN
               inRange:(VT100GridCoordRange)range
                 focus:(BOOL)focus;
 
+#pragma mark - URLs
+
+- (void)linkRun:(VT100GridRun)run
+    withURLCode:(unsigned int)code;
+
 @end
 
 NS_ASSUME_NONNULL_END
