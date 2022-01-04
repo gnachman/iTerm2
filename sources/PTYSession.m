@@ -14954,38 +14954,13 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 launchCoprocessWithCommand:(NSString *)command
             identifier:(NSString * _Nullable)identifier
                 silent:(BOOL)silent {
-    if (self.hasCoprocess) {
-        if (identifier && [[NSUserDefaults standardUserDefaults] boolForKey:identifier]) {
-            return;
-        }
-        NSString *triggerName = [NSString stringWithFormat:@"%@ trigger", [[trigger.class title] stringByRemovingSuffix:@"…"]];
-        NSString *message = [NSString stringWithFormat:@"%@: Can't run two coprocesses at once.", triggerName];
-        NSArray<NSString *> *actions = identifier ? @[ @"Silence Warning" ] : @[];
-        iTermAnnouncementViewController *announcement =
-        [iTermAnnouncementViewController announcementWithTitle:message
-                                                         style:kiTermAnnouncementViewStyleWarning
-                                                   withActions:actions
-                                                    completion:^(int selection) {
-            if (!identifier) {
-                return;
-            }
-            switch (selection) {
-                case 0:
-                    [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                            forKey:identifier];
-                    break;
-            }
-        }];
-        announcement.timeout = 2;
-        [self queueAnnouncement:announcement
-                     identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier];
-    } else if (command) {
-        if (silent) {
-            [self launchSilentCoprocessWithCommand:command];
-        } else {
-            [self launchCoprocessWithCommand:command];
-        }
-    }
+    NSString *triggerName = [NSString stringWithFormat:@"%@ trigger", [[trigger.class title] stringByRemovingSuffix:@"…"]];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectLaunchCoprocessWithCommand:command
+                                                   identifier:identifier
+                                                       silent:silent
+                                                 triggerTitle:triggerName];
+    }];
 }
 
 // This can be completely async
@@ -15295,6 +15270,42 @@ launchCoprocessWithCommand:(NSString *)command
     [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionCapturedOutputDidChange
                                                         object:nil];
 
+}
+
+- (void)triggerSideEffectLaunchCoprocessWithCommand:(NSString * _Nonnull)command
+                                         identifier:(NSString * _Nullable)identifier
+                                             silent:(BOOL)silent
+                                       triggerTitle:(NSString * _Nonnull)triggerName {
+    if (self.hasCoprocess) {
+        if (identifier && [[NSUserDefaults standardUserDefaults] boolForKey:identifier]) {
+            return;
+        }
+        NSString *message = [NSString stringWithFormat:@"%@: Can't run two coprocesses at once.", triggerName];
+        NSArray<NSString *> *actions = identifier ? @[ @"Silence Warning" ] : @[];
+        iTermAnnouncementViewController *announcement =
+        [iTermAnnouncementViewController announcementWithTitle:message
+                                                         style:kiTermAnnouncementViewStyleWarning
+                                                   withActions:actions
+                                                    completion:^(int selection) {
+            if (!identifier) {
+                return;
+            }
+            switch (selection) {
+                case 0:
+                    [[NSUserDefaults standardUserDefaults] setBool:YES
+                                                            forKey:identifier];
+                    break;
+            }
+        }];
+        [self queueAnnouncement:announcement
+                     identifier:kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier];
+    } else if (command) {
+        if (silent) {
+            [self launchSilentCoprocessWithCommand:command];
+        } else {
+            [self launchCoprocessWithCommand:command];
+        }
+    }
 }
 
 @end
