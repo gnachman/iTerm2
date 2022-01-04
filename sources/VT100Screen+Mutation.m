@@ -2857,39 +2857,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 - (void)mutHighlightRun:(VT100GridRun)run
     withForegroundColor:(NSColor *)fgColor
         backgroundColor:(NSColor *)bgColor {
-    DLog(@"Really highlight run %@ fg=%@ bg=%@", VT100GridRunDescription(run), fgColor, bgColor);
-
-    screen_char_t fg = { 0 };
-    screen_char_t bg = { 0 };
-
-    NSColor *genericFgColor = [fgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
-    NSColor *genericBgColor = [bgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
-
-    if (fgColor) {
-        fg.foregroundColor = genericFgColor.redComponent * 255;
-        fg.fgBlue = genericFgColor.blueComponent * 255;
-        fg.fgGreen = genericFgColor.greenComponent * 255;
-        fg.foregroundColorMode = ColorMode24bit;
-    } else {
-        fg.foregroundColorMode = ColorModeInvalid;
-    }
-
-    if (bgColor) {
-        bg.backgroundColor = genericBgColor.redComponent * 255;
-        bg.bgBlue = genericBgColor.blueComponent * 255;
-        bg.bgGreen = genericBgColor.greenComponent * 255;
-        bg.backgroundColorMode = ColorMode24bit;
-    } else {
-        bg.backgroundColorMode = ColorModeInvalid;
-    }
-
-    for (NSValue *value in [_state.currentGrid rectsForRun:run]) {
-        VT100GridRect rect = [value gridRectValue];
-        [_mutableState.currentGrid setBackgroundColor:bg
-                                      foregroundColor:fg
-                                           inRectFrom:rect.origin
-                                                   to:VT100GridRectMax(rect)];
-    }
+    [_mutableState highlightRun:run withForegroundColor:fgColor backgroundColor:bgColor];
 }
 
 #pragma mark - Scrollback
