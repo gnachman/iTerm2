@@ -198,6 +198,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutLinkTextInRange:(NSRange)range
 basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                    URLCode:(unsigned int)code;
+- (void)mutHighlightTextInRange:(NSRange)range
+      basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                         colors:(NSDictionary *)colors;
 
 @end
 
