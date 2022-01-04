@@ -1769,7 +1769,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                      pwd:pwd];
     }
 
-    [self screenSoftAlternateScreenModeDidChange];
+    const BOOL enabled = _screen.terminal.softAlternateScreenMode;
+    const BOOL showing = _screen.showingAlternateScreen;
+    [self screenSoftAlternateScreenModeDidChangeTo:enabled showingAltScreen:showing];
     // Do this to force the hostname variable to be updated.
     [self currentHost];
 }
@@ -12514,11 +12516,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)screenSoftAlternateScreenModeDidChange {
+- (void)screenSoftAlternateScreenModeDidChangeTo:(BOOL)enabled
+                                showingAltScreen:(BOOL)showing {
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-    _triggerEvaluator.triggersSlownessDetector.enabled = _screen.terminal.softAlternateScreenMode;
+    _triggerEvaluator.triggersSlownessDetector.enabled = enabled;
     [self.tmuxForegroundJobMonitor updateOnce];
-    [self.variablesScope setValue:@(_screen.showingAlternateScreen)
+    [self.variablesScope setValue:@(showing)
                  forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
 }
 

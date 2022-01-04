@@ -325,7 +325,8 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenReportFocusWillChangeTo:(BOOL)reportFocus;
 - (void)screenReportPasteBracketingWillChangeTo:(BOOL)bracket;
 - (void)screenDidReceiveLineFeed;
-- (void)screenSoftAlternateScreenModeDidChange;
+- (void)screenSoftAlternateScreenModeDidChangeTo:(BOOL)enabled
+                                showingAltScreen:(BOOL)showing;
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp;
 - (BOOL)screenConfirmDownloadNamed:(NSString *)name canExceedSize:(NSInteger)limit;
 - (BOOL)screenConfirmDownloadAllowed:(NSString *)name

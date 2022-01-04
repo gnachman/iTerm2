@@ -46,6 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)appendLineFeed;
 - (void)appendCarriageReturnLineFeed;
+- (void)softAlternateScreenModeDidChange;
 
 #pragma mark - Interval Tree
 
