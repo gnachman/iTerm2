@@ -347,5 +347,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
 - (int)screenMaximumTheoreticalImageDimension;
 - (void)screenOfferToDisableTriggersInInteractiveApps;
+- (void)screenDidUpdateReturnCodeForMark:(VT100ScreenMark *)mark
+                              remoteHost:(VT100RemoteHost *)remoteHost;
 
 @end

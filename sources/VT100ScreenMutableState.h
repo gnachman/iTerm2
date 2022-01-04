@@ -86,6 +86,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)saveCursorLine;
 
+- (void)setReturnCodeOfLastCommand:(int)returnCode;
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation;

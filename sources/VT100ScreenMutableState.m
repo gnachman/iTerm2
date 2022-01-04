@@ -505,6 +505,32 @@
                 ofClass:[VT100ScreenMark class]];
 }
 
+- (void)setReturnCodeOfLastCommand:(int)returnCode {
+    DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
+    VT100ScreenMark *mark = self.lastCommandMark;
+    if (mark) {
+        DLog(@"FinalTerm: setting code on mark %@", mark);
+        const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
+        [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
+                                                                onLine:line];
+        mark.code = returnCode;
+        [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
+                                                             onLine:line];
+        VT100RemoteHost *remoteHost = [self remoteHostOnLine:self.numberOfLines];
+#warning TODO: mark is mutable shared state. Don't pass to main thread like this.
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenDidUpdateReturnCodeForMark:mark
+                                            remoteHost:remoteHost];
+        }];
+    } else {
+        DLog(@"No last command mark found.");
+    }
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+#warning TODO: mark is mutable shared state. Don't pass to main thread like this.
+        [delegate screenCommandDidExitWithCode:returnCode mark:mark];
+    }];
+}
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation {
