@@ -619,149 +619,13 @@
 #pragma mark - Appending
 
 - (void)mutAppendStringAtCursor:(NSString *)string {
-    int len = [string length];
-    if (len < 1 || !string) {
-        return;
-    }
-
-    unichar firstChar =  [string characterAtIndex:0];
-
-    DLog(@"appendStringAtCursor: %ld chars starting with %c at x=%d, y=%d, line=%d",
-         (unsigned long)len,
-         firstChar,
-         _state.currentGrid.cursorX,
-         _state.currentGrid.cursorY,
-         _state.currentGrid.cursorY + [_mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width]);
-
-    // Allocate a buffer of screen_char_t and place the new string in it.
-    const int kStaticBufferElements = 1024;
-    screen_char_t staticBuffer[kStaticBufferElements];
-    screen_char_t *dynamicBuffer = 0;
-    screen_char_t *buffer;
-    string = StringByNormalizingString(string, self.normalization);
-    len = [string length];
-    if (3 * len >= kStaticBufferElements) {
-        buffer = dynamicBuffer = (screen_char_t *) iTermCalloc(3 * len,
-                                                               sizeof(screen_char_t));
-        assert(buffer);
-        if (!buffer) {
-            NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
-            return;
-        }
-    } else {
-        buffer = staticBuffer;
-    }
-
-    // `predecessorIsDoubleWidth` will be true if the cursor is over a double-width character
-    // but NOT if it's over a DWC_RIGHT.
-    BOOL predecessorIsDoubleWidth = NO;
-    VT100GridCoord pred = [_state.currentGrid coordinateBefore:_state.currentGrid.cursor
-                                movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
-    NSString *augmentedString = string;
-    NSString *predecessorString = pred.x >= 0 ? [_state.currentGrid stringForCharacterAt:pred] : nil;
-    const BOOL augmented = predecessorString != nil;
-    if (augmented) {
-        augmentedString = [predecessorString stringByAppendingString:string];
-    } else {
-        // Prepend a space so we can detect if the first character is a combining mark.
-        augmentedString = [@" " stringByAppendingString:string];
-    }
-
-    assert(_state.terminal);
-    // Add DWC_RIGHT after each double-byte character, build complex characters out of surrogates
-    // and combining marks, replace private codes with replacement characters, swallow zero-
-    // width spaces, and set fg/bg colors and attributes.
-    BOOL dwc = NO;
-    StringToScreenChars(augmentedString,
-                        buffer,
-                        [_state.terminal foregroundColorCode],
-                        [_state.terminal backgroundColorCode],
-                        &len,
-                        [delegate_ screenShouldTreatAmbiguousCharsAsDoubleWidth],
-                        NULL,
-                        &dwc,
-                        self.normalization,
-                        [delegate_ screenUnicodeVersion]);
-    ssize_t bufferOffset = 0;
-    if (augmented && len > 0) {
-        screen_char_t *theLine = [self getLineAtScreenIndex:pred.y];
-        theLine[pred.x].code = buffer[0].code;
-        theLine[pred.x].complexChar = buffer[0].complexChar;
-        bufferOffset++;
-
-        // Does the augmented result begin with a double-width character? If so skip over the
-        // DWC_RIGHT when appending. I *think* this is redundant with the `predecessorIsDoubleWidth`
-        // test but I'm reluctant to remove it because it could break something.
-        const BOOL augmentedResultBeginsWithDoubleWidthCharacter = (augmented &&
-                                                                    len > 1 &&
-                                                                    buffer[1].code == DWC_RIGHT &&
-                                                                    !buffer[1].complexChar);
-        if ((augmentedResultBeginsWithDoubleWidthCharacter || predecessorIsDoubleWidth) && len > 1 && buffer[1].code == DWC_RIGHT) {
-            // Skip over a preexisting DWC_RIGHT in the predecessor.
-            bufferOffset++;
-        }
-    } else if (!buffer[0].complexChar) {
-        // We infer that the first character in |string| was not a combining mark. If it were, it
-        // would have combined with the space we added to the start of |augmentedString|. Skip past
-        // the space.
-        bufferOffset++;
-    }
-
-    if (dwc) {
-        self.mutableLineBuffer.mayHaveDoubleWidthCharacter = dwc;
-    }
-    [self mutAppendScreenCharArrayAtCursor:buffer + bufferOffset
-                                    length:len - bufferOffset
-                    externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:_state.terminal.externalAttributes]];
-    if (buffer == dynamicBuffer) {
-        free(buffer);
-    }
+    [_mutableState appendStringAtCursor:string];
 }
 
 - (void)mutAppendScreenCharArrayAtCursor:(const screen_char_t *)buffer
                                   length:(int)len
                   externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes {
-    if (len >= 1) {
-        screen_char_t lastCharacter = buffer[len - 1];
-        if (lastCharacter.code == DWC_RIGHT && !lastCharacter.complexChar) {
-            // Last character is the right half of a double-width character. Use the penultimate character instead.
-            if (len >= 2) {
-                _mutableState.lastCharacter = buffer[len - 2];
-                _mutableState.lastCharacterIsDoubleWidth = YES;
-                _mutableState.lastExternalAttribute = externalAttributes[len - 2];
-            }
-        } else {
-            // Record the last character.
-            _mutableState.lastCharacter = buffer[len - 1];
-            _mutableState.lastCharacterIsDoubleWidth = NO;
-            _mutableState.lastExternalAttribute = externalAttributes[len];
-        }
-        LineBuffer *lineBuffer = nil;
-        if (_state.currentGrid != _state.altGrid || _state.saveToScrollbackInAlternateScreen) {
-            // Not in alt screen or it's ok to scroll into line buffer while in alt screen.k
-            lineBuffer = _mutableState.linebuffer;
-        }
-        [_mutableState incrementOverflowBy:[_mutableState.currentGrid appendCharsAtCursor:buffer
-                                                                                   length:len
-                                                                  scrollingIntoLineBuffer:lineBuffer
-                                                                      unlimitedScrollback:_state.unlimitedScrollback
-                                                                  useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                               wraparound:_state.wraparoundMode
-                                                                                     ansi:_state.ansi
-                                                                                   insert:_state.insert
-                                                                   externalAttributeIndex:externalAttributes]];
-        iTermImmutableMetadata temp;
-        iTermImmutableMetadataInit(&temp, 0, externalAttributes);
-        [delegate_ screenAppendScreenCharArray:buffer
-                                      metadata:temp
-                                        length:len];
-        iTermImmutableMetadataRelease(temp);
-    }
-
-    if (_state.commandStartCoord.x != -1) {
-        [_mutableState didUpdatePromptLocation];
-        [_mutableState commandRangeDidChange];
-    }
+    [_mutableState appendScreenCharArrayAtCursor:buffer length:len externalAttributeIndex:externalAttributes];
 }
 
 - (void)appendSessionRestoredBanner {
@@ -785,7 +649,7 @@
     dateFormatter.dateStyle = NSDateFormatterMediumStyle;
     dateFormatter.timeStyle = NSDateFormatterShortStyle;
     NSString *message = [NSString stringWithFormat:@"Session Contents Restored on %@", [dateFormatter stringFromDate:[NSDate date]]];
-    [self mutAppendStringAtCursor:message];
+    [_mutableState appendStringAtCursor:message];
     _mutableState.currentGrid.cursorX = 0;
     _mutableState.currentGrid.preferredCursorPosition = _state.currentGrid.cursor;
 
@@ -2948,7 +2812,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [_mutableState.printBuffer appendString:string];
     } else {
         // else display string on screen
-        [self appendStringAtCursor:string];
+        [_mutableState appendStringAtCursor:string];
     }
     [delegate_ screenDidAppendStringToCurrentLine:string
                                       isPlainText:YES];

@@ -147,6 +147,152 @@
     }];
 }
 
+- (void)appendStringAtCursor:(NSString *)string {
+    int len = [string length];
+    if (len < 1 || !string) {
+        return;
+    }
+
+    DLog(@"appendStringAtCursor: %ld chars starting with %c at x=%d, y=%d, line=%d",
+         (unsigned long)len,
+         [string characterAtIndex:0],
+         self.currentGrid.cursorX,
+         self.currentGrid.cursorY,
+         self.currentGrid.cursorY + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width]);
+
+    // Allocate a buffer of screen_char_t and place the new string in it.
+    const int kStaticBufferElements = 1024;
+    screen_char_t staticBuffer[kStaticBufferElements];
+    screen_char_t *dynamicBuffer = 0;
+    screen_char_t *buffer;
+    string = StringByNormalizingString(string, self.normalization);
+    len = [string length];
+    if (3 * len >= kStaticBufferElements) {
+        buffer = dynamicBuffer = (screen_char_t *) iTermCalloc(3 * len,
+                                                               sizeof(screen_char_t));
+        assert(buffer);
+        if (!buffer) {
+            NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
+            return;
+        }
+    } else {
+        buffer = staticBuffer;
+    }
+
+    // `predecessorIsDoubleWidth` will be true if the cursor is over a double-width character
+    // but NOT if it's over a DWC_RIGHT.
+    BOOL predecessorIsDoubleWidth = NO;
+    const VT100GridCoord pred = [self.currentGrid coordinateBefore:self.currentGrid.cursor
+                                          movedBackOverDoubleWidth:&predecessorIsDoubleWidth];
+    NSString *augmentedString = string;
+    NSString *predecessorString = pred.x >= 0 ? [self.currentGrid stringForCharacterAt:pred] : nil;
+    const BOOL augmented = predecessorString != nil;
+    if (augmented) {
+        augmentedString = [predecessorString stringByAppendingString:string];
+    } else {
+        // Prepend a space so we can detect if the first character is a combining mark.
+        augmentedString = [@" " stringByAppendingString:string];
+    }
+
+    assert(self.terminal);
+    // Add DWC_RIGHT after each double-width character, build complex characters out of surrogates
+    // and combining marks, replace private codes with replacement characters, swallow zero-
+    // width spaces, and set fg/bg colors and attributes.
+    BOOL dwc = NO;
+    StringToScreenChars(augmentedString,
+                        buffer,
+                        [self.terminal foregroundColorCode],
+                        [self.terminal backgroundColorCode],
+                        &len,
+                        self.config.treatAmbiguousCharsAsDoubleWidth,
+                        NULL,
+                        &dwc,
+                        self.normalization,
+                        self.config.unicodeVersion);
+    ssize_t bufferOffset = 0;
+    if (augmented && len > 0) {
+        screen_char_t *theLine = [self.currentGrid screenCharsAtLineNumber:pred.y];
+        theLine[pred.x].code = buffer[0].code;
+        theLine[pred.x].complexChar = buffer[0].complexChar;
+        bufferOffset++;
+
+        // Does the augmented result begin with a double-width character? If so skip over the
+        // DWC_RIGHT when appending. I *think* this is redundant with the `predecessorIsDoubleWidth`
+        // test but I'm reluctant to remove it because it could break something.
+        const BOOL augmentedResultBeginsWithDoubleWidthCharacter = (augmented &&
+                                                                    len > 1 &&
+                                                                    buffer[1].code == DWC_RIGHT &&
+                                                                    !buffer[1].complexChar);
+        if ((augmentedResultBeginsWithDoubleWidthCharacter || predecessorIsDoubleWidth) && len > 1 && buffer[1].code == DWC_RIGHT) {
+            // Skip over a preexisting DWC_RIGHT in the predecessor.
+            bufferOffset++;
+        }
+    } else if (!buffer[0].complexChar) {
+        // We infer that the first character in |string| was not a combining mark. If it were, it
+        // would have combined with the space we added to the start of |augmentedString|. Skip past
+        // the space.
+        bufferOffset++;
+    }
+
+    if (dwc) {
+        self.linebuffer.mayHaveDoubleWidthCharacter = dwc;
+    }
+    [self appendScreenCharArrayAtCursor:buffer + bufferOffset
+                                 length:len - bufferOffset
+                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.terminal.externalAttributes]];
+    if (buffer == dynamicBuffer) {
+        free(buffer);
+    }
+}
+
+- (void)appendScreenCharArrayAtCursor:(const screen_char_t *)buffer
+                               length:(int)len
+               externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes {
+    if (len >= 1) {
+        screen_char_t lastCharacter = buffer[len - 1];
+        if (lastCharacter.code == DWC_RIGHT && !lastCharacter.complexChar) {
+            // Last character is the right half of a double-width character. Use the penultimate character instead.
+            if (len >= 2) {
+                self.lastCharacter = buffer[len - 2];
+                self.lastCharacterIsDoubleWidth = YES;
+                self.lastExternalAttribute = externalAttributes[len - 2];
+            }
+        } else {
+            // Record the last character.
+            self.lastCharacter = buffer[len - 1];
+            self.lastCharacterIsDoubleWidth = NO;
+            self.lastExternalAttribute = externalAttributes[len];
+        }
+        LineBuffer *lineBuffer = nil;
+        if (self.currentGrid != self.altGrid || self.saveToScrollbackInAlternateScreen) {
+            // Not in alt screen or it's ok to scroll into line buffer while in alt screen.k
+            lineBuffer = self.linebuffer;
+        }
+        [self incrementOverflowBy:[self.currentGrid appendCharsAtCursor:buffer
+                                                                 length:len
+                                                scrollingIntoLineBuffer:lineBuffer
+                                                    unlimitedScrollback:self.unlimitedScrollback
+                                                useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                             wraparound:self.wraparoundMode
+                                                                   ansi:self.ansi
+                                                                 insert:self.insert
+                                                 externalAttributeIndex:externalAttributes]];
+        iTermImmutableMetadata temp;
+        iTermImmutableMetadataInit(&temp, 0, externalAttributes);
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenAppendScreenCharArray:buffer
+                                         metadata:temp
+                                           length:len];
+        }];
+        iTermImmutableMetadataRelease(temp);
+    }
+
+    if (self.commandStartCoord.x != -1) {
+        [self didUpdatePromptLocation];
+        [self commandRangeDidChange];
+    }
+}
+
 #pragma mark - Interval Tree
 
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line

@@ -11915,6 +11915,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                        inProfile:_profile];
     _config.sessionGuid = _guid;
+    _config.treatAmbiguousCharsAsDoubleWidth = [self treatAmbiguousWidthAsDoubleWidth];
+    _config.unicodeVersion = _unicodeVersion;
 }
 
 - (void)updateConfiguration {
