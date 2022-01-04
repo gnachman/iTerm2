@@ -4293,7 +4293,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSoftAlternateScreenModeDidChange {
-    [self.delegate screenSoftAlternateScreenModeDidChange];
+    [_mutableState softAlternateScreenModeDidChange];
 }
 
 - (void)terminalReportKeyUpDidChange:(BOOL)reportKeyUp {

@@ -139,6 +139,14 @@
     self.currentGrid.cursorX = 0;
 }
 
+- (void)softAlternateScreenModeDidChange {
+    const BOOL enabled = self.terminal.softAlternateScreenMode;
+    const BOOL showing = self.currentGrid == self.altGrid;;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSoftAlternateScreenModeDidChangeTo:enabled showingAltScreen:showing];
+    }];
+}
+
 #pragma mark - Interval Tree
 
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
