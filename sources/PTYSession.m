@@ -14878,18 +14878,6 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 #pragma mark - iTermTriggerSession
 
-// This can be completely async
-- (void)triggerSessionReveal:(Trigger *)trigger {
-    [self revealForTrigger];
-}
-
-- (void)revealForTrigger {
-    NSWindowController<iTermWindowController> * term = [[self delegate] realParentWindow];
-    [[term window] makeKeyAndOrderFront:nil];
-    [self.delegate sessionSelectContainingTab];
-    [self.delegate setActiveSession:self];
-}
-
 #warning TODO: Remove this after triggerSession is implemented by VT100ScreenMutableState
 
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> _Nonnull delegate))block {
@@ -15270,7 +15258,7 @@ launchCoprocessWithCommand:(NSString *)command
             break;
 
         case NSAlertSecondButtonReturn: {
-            [self revealForTrigger];
+            [self reveal];
             break;
         }
 

@@ -34,7 +34,6 @@ extern NSString * const kTriggerDisabledKey;
 @end
 
 @protocol iTermTriggerSession<NSObject, iTermObject>
-- (void)triggerSessionReveal:(Trigger *)trigger;
 - (void)triggerSessionRingBell:(Trigger *)trigger;
 - (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger;
 - (BOOL)triggerSessionIsShellIntegrationInstalled:(Trigger *)trigger;
