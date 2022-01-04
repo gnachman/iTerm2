@@ -14981,15 +14981,9 @@ launchCoprocessWithCommand:(NSString *)command
 
 // This can be completely async
 - (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message {
-    iTermNotificationController *notificationController = [iTermNotificationController sharedInstance];
-    [notificationController notify:message
-                   withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
-                                    [[self name] removingHTMLFromTabTitleIfNeeded]
-                                    ,
-                                    self.delegate.tabNumber]
-                       windowIndex:[self screenWindowIndex]
-                          tabIndex:[self screenTabIndex]
-                         viewIndex:[self screenViewIndex]];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectPostUserNotificationWithMessage:message];
+    }];
 }
 
 // This can be completely synchyronous
@@ -15314,4 +15308,14 @@ launchCoprocessWithCommand:(NSString *)command
     [self takeFocus];
 }
 
+- (void)triggerSideEffectPostUserNotificationWithMessage:(NSString * _Nonnull)message {
+    iTermNotificationController *notificationController = [iTermNotificationController sharedInstance];
+    [notificationController notify:message
+                   withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
+                                    [[self name] removingHTMLFromTabTitleIfNeeded],
+                                    self.delegate.tabNumber]
+                       windowIndex:[self screenWindowIndex]
+                          tabIndex:[self screenTabIndex]
+                         viewIndex:[self screenViewIndex]];
+}
 @end
