@@ -567,6 +567,19 @@
 
 #pragma mark - URLs
 
+- (void)linkTextInRange:(NSRange)range
+basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                  URLCode:(unsigned int)code {
+    long long lineNumber = absoluteLineNumber - self.cumulativeScrollbackOverflow - self.numberOfScrollbackLines;
+    if (lineNumber < 0) {
+        return;
+    }
+    VT100GridRun gridRun = [self.currentGrid gridRunFromRange:range relativeToRow:lineNumber];
+    if (gridRun.length > 0) {
+        [self linkRun:gridRun withURLCode:code];
+    }
+}
+
 - (void)linkRun:(VT100GridRun)run
        withURLCode:(unsigned int)code {
     for (NSValue *value in [self.currentGrid rectsForRun:run]) {
