@@ -15009,9 +15009,9 @@ launchCoprocessWithCommand:(NSString *)command
 
 // This can be completely async
 - (void)triggerSession:(Trigger *)trigger openPasswordManagerToAccountName:(NSString *)accountName {
-    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-    [itad openPasswordManagerToAccountName:accountName
-                                     inSession:self];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectOpenPasswordManagerToAccountName:accountName];
+    }];
 }
 
 // This can be completely async
@@ -15331,6 +15331,12 @@ launchCoprocessWithCommand:(NSString *)command
     const int top = MAX(0, line - height);
     [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(top, height)];
     [[self.view.scrollview ptyVerticalScroller] setUserScroll:YES];
+}
+
+- (void)triggerSideEffectOpenPasswordManagerToAccountName:(NSString * _Nullable)accountName {
+    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
+    [itad openPasswordManagerToAccountName:accountName
+                                     inSession:self];
 }
 
 @end
