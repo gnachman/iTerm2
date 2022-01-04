@@ -3972,25 +3972,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 }
 
 - (void)mutSetReturnCodeOfLastCommand:(int)returnCode {
-    DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
-    VT100ScreenMark *mark = [[_mutableState.lastCommandMark retain] autorelease];
-    if (mark) {
-        DLog(@"FinalTerm: setting code on mark %@", mark);
-        const NSInteger line = [_mutableState coordRangeForInterval:mark.entry.interval].start.y + _mutableState.cumulativeScrollbackOverflow;
-        [_state.intervalTreeObserver intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
-                                                                onLine:line];
-        mark.code = returnCode;
-        [_state.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
-                                                             onLine:line];
-        VT100RemoteHost *remoteHost = [self remoteHostOnLine:_mutableState.numberOfLines];
-        [[iTermShellHistoryController sharedInstance] setStatusOfCommandAtMark:mark
-                                                                        onHost:remoteHost
-                                                                            to:returnCode];
-        [delegate_ screenNeedsRedraw];
-    } else {
-        DLog(@"No last command mark found.");
-    }
-    [delegate_ screenCommandDidExitWithCode:returnCode mark:mark];
+    [_mutableState setReturnCodeOfLastCommand:returnCode];
 }
 
 - (void)terminalFinalTermCommand:(NSArray *)argv {

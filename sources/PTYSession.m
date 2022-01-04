@@ -12724,6 +12724,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.naggingController offerToDisableTriggersInInteractiveApps];
 }
 
+- (void)screenDidUpdateReturnCodeForMark:(VT100ScreenMark *)mark
+                              remoteHost:(VT100RemoteHost *)remoteHost {
+    [[iTermShellHistoryController sharedInstance] setStatusOfCommandAtMark:mark
+                                                                    onHost:remoteHost
+                                                                        to:mark.code];
+    [self screenNeedsRedraw];
+}
+
 - (VT100Screen *)popupVT100Screen {
     return _screen;
 }
