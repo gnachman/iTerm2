@@ -36,7 +36,6 @@ static NSString *const kSuppressCoprocessTriggerWarning = @"NoSyncSuppressCoproc
     // Need to stop the world to get scope, provided it is needed. Coprocesses are so slow & rare that this is ok.
     [[self paramWithBackreferencesReplacedWithValues:stringArray
                                                scope:[aSession triggerSessionVariableScopeProvider:self]
-                                               owner:aSession
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull command) {
         [aSession triggerSession:self
       launchCoprocessWithCommand:command

@@ -63,7 +63,6 @@
     const BOOL interpolate = [session triggerSessionShouldUseInterpolatedStrings:self];
     [[self paramWithBackreferencesReplacedWithValues:capturedOutput.values
                                                scope:scopeProvider
-                                               owner:session
                                     useInterpolation:interpolate] then:^(NSString * _Nonnull command) {
         [session triggerSession:self
      launchCoprocessWithCommand:command

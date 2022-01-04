@@ -48,7 +48,6 @@
     }
     [[self paramWithBackreferencesReplacedWithValues:stringArray
                                                scope:[aSession triggerSessionVariableScopeProvider:self]
-                                               owner:aSession
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull text) {
         [aSession triggerSession:self
                    setAnnotation:annotation

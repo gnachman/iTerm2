@@ -199,17 +199,16 @@ NSString * const kTriggerDisabledKey = @"disabled";
 
 - (iTermPromise<NSString *> *)paramWithBackreferencesReplacedWithValues:(NSArray *)stringArray
                                                                   scope:(id<iTermTriggerScopeProvider>)scopeProvider
-                                                                  owner:(id<iTermObject>)owner
                                                        useInterpolation:(BOOL)useInterpolation {
     NSString *p = [NSString castFrom:self.param] ?: @"";
     if (useInterpolation && [p interpolatedStringContainsNonliteral]) {
         return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
-            [scopeProvider performBlockWithScope:^(iTermVariableScope * _Nonnull scope) {
+            [scopeProvider performBlockWithScope:^(iTermVariableScope * _Nonnull scope, id<iTermObject> _Nonnull object) {
                 assert([NSThread isMainThread]);
                 [self evaluateSwiftyStringParameter:p
                                      backreferences:stringArray
                                               scope:scope
-                                              owner:owner
+                                              owner:object
                                          completion:^(NSString *value) {
                     assert([NSThread isMainThread]);
                     if (value) {

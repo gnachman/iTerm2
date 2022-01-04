@@ -30,10 +30,10 @@ extern NSString * const kTriggerPartialLineKey;
 extern NSString * const kTriggerDisabledKey;
 
 @protocol iTermTriggerScopeProvider<NSObject>
-- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope))block;
+- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block;
 @end
 
-@protocol iTermTriggerSession<NSObject, iTermObject>
+@protocol iTermTriggerSession<NSObject>
 - (void)triggerSessionRingBell:(Trigger *)trigger;
 - (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger;
 - (BOOL)triggerSessionIsShellIntegrationInstalled:(Trigger *)trigger;
@@ -135,7 +135,6 @@ extern NSString * const kTriggerDisabledKey;
 
 - (iTermPromise<NSString *> *)paramWithBackreferencesReplacedWithValues:(NSArray<NSString *> *)strings
                                                                   scope:(id<iTermTriggerScopeProvider>)scope
-                                                                  owner:(id<iTermObject>)owner
                                                        useInterpolation:(BOOL)useInterpolation;
 
 // Returns YES if no more triggers should be processed.
