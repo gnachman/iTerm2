@@ -15025,7 +15025,9 @@ launchCoprocessWithCommand:(NSString *)command
 
 // This can be completely async
 - (void)triggerSession:(Trigger *)trigger writeText:(NSString *)text {
-    [self writeTaskNoBroadcast:text];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerWriteTextWithoutBroadcasting:text];
+    }];
 }
 
 // This can be completely synchyronous
@@ -15343,6 +15345,10 @@ launchCoprocessWithCommand:(NSString *)command
     runner.notificationTitle = @"Run Command Trigger Failed";
     runner.shell = self.userShell;
     [runner run];
+}
+
+- (void)triggerWriteTextWithoutBroadcasting:(NSString * _Nonnull)text {
+    [self writeTaskNoBroadcast:text];
 }
 
 @end
