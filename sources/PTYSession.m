@@ -15058,7 +15058,9 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)triggerSession:(Trigger *)trigger setCurrentDirectory:(NSString *)currentDirectory {
     // This can be async
-    [self didUpdateCurrentDirectory];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectCurrentDirectoryDidChange];
+    }];
     // This can be sync
     [self.screen currentDirectoryDidChangeTo:currentDirectory];
 }
@@ -15409,6 +15411,10 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)triggerSideEffectSetValue:(id _Nullable)value
                  forVariableNamed:(NSString * _Nonnull)name {
     [self.genericScope setValue:value forVariableNamed:name];
+}
+
+- (void)triggerSideEffectCurrentDirectoryDidChange {
+    [self didUpdateCurrentDirectory];
 }
 
 @end
