@@ -82,6 +82,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setHost:(NSString * _Nullable)host user:(NSString * _Nullable)user;
 
+- (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord;
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation;

@@ -492,6 +492,13 @@
     return remoteHostObj;
 }
 
+- (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord {
+    self.commandStartCoord = coord;
+    [self didUpdatePromptLocation];
+    [self commandRangeDidChange];
+}
+
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation {
