@@ -12093,10 +12093,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (profile) {
         return profile[KEY_NAME];
     }
-    return _profile
-
-
-    [KEY_NAME];
+    return _profile[KEY_NAME];
 }
 
 - (void)trimHostsIfNeeded {

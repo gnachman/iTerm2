@@ -68,17 +68,17 @@
 - (BOOL)screenAllowTitleSetting;
 
 // Called after text was added to the current line. Can be used to check triggers.
-- (void)screenDidAppendStringToCurrentLine:(NSString *)string
+- (void)screenDidAppendStringToCurrentLine:(NSString * _Nonnull)string
                                isPlainText:(BOOL)plainText;
-- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData;
+- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData * _Nonnull)asciiData;
 
 // Change the cursor's appearance.
 - (void)screenSetCursorBlinking:(BOOL)blink;
 - (BOOL)screenCursorIsBlinking;
 - (void)screenSetCursorType:(ITermCursorType)type;
 
-- (void)screenGetCursorType:(ITermCursorType *)cursorTypeOut
-                   blinking:(BOOL *)blinking;
+- (void)screenGetCursorType:(ITermCursorType * _Nonnull)cursorTypeOut
+                   blinking:(BOOL * _Nonnull)blinking;
 
 - (void)screenResetCursorTypeAndBlink;
 
@@ -94,20 +94,20 @@
 - (BOOL)screenShouldBeginPrinting;
 
 // Sets the window title.
-- (void)screenSetWindowTitle:(NSString *)title;
+- (void)screenSetWindowTitle:(NSString * _Nonnull)title;
 
 // Returns the current window title.
-- (NSString *)screenWindowTitle;
+- (NSString * _Nullable)screenWindowTitle;
 
 // Returns the session's "icon title", which is just its name.
-- (NSString *)screenIconTitle;
+- (NSString * _Nonnull)screenIconTitle;
 
 // Sets the session's name.
-- (void)screenSetIconName:(NSString *)name;
-- (void)screenSetSubtitle:(NSString *)subtitle;
+- (void)screenSetIconName:(NSString * _Nonnull)name;
+- (void)screenSetSubtitle:(NSString * _Nonnull)subtitle;
 
 // Returns the session's current name
-- (NSString *)screenName;
+- (NSString * _Nonnull)screenName;
 
 // Returns if the window is full-screen.
 - (BOOL)screenWindowIsFullscreen;
@@ -125,13 +125,13 @@
 - (void)screenRaise:(BOOL)flag;
 
 // Set the proxy icon of current session window.
-- (void)screenSetPreferredProxyIcon:(NSString *)value;
+- (void)screenSetPreferredProxyIcon:(NSString * _Nullable)value;
 
 // Returns if the window is miniaturized.
 - (BOOL)screenWindowIsMiniaturized;
 
 // Send input to the task.
-- (void)screenWriteDataToTask:(NSData *)data;
+- (void)screenWriteDataToTask:(NSData * _Nonnull)data;
 
 // Returns the visible frame of the display the screen's window is in.
 - (NSRect)screenWindowScreenFrame;
@@ -161,10 +161,10 @@
 - (int)screenViewIndex;
 
 // Requests that tmux integration mode begin.
-- (void)screenStartTmuxModeWithDCSIdentifier:(NSString *)dcsID;
+- (void)screenStartTmuxModeWithDCSIdentifier:(NSString * _Nonnull)dcsID;
 
 // Handle a line of input in tmux mode in the token's string.
-- (void)screenHandleTmuxInput:(VT100Token *)token;
+- (void)screenHandleTmuxInput:(VT100Token * _Nonnull)token;
 
 // Returns if ambiguous characters are treated as fullwidth.
 - (BOOL)screenShouldTreatAmbiguousCharsAsDoubleWidth;
@@ -176,7 +176,7 @@
 - (void)screenShowBellIndicator;
 
 // Request that a string be sent for printing.
-- (void)screenPrintString:(NSString *)string;
+- (void)screenPrintString:(NSString * _Nonnull)string;
 
 // Request that the currently visible area of the screen be sent for printing.
 - (void)screenPrintVisibleArea;
@@ -194,7 +194,7 @@
 - (void)screenRemoveSelection;
 
 // Selection range
-- (iTermSelection *)screenSelection;
+- (iTermSelection * _Nonnull)screenSelection;
 
 // Returns the size in pixels of a single cell.
 - (NSSize)screenCellSize;
@@ -203,13 +203,13 @@
 - (void)screenClearHighlights;
 
 // Scrollback buffer deleted
-- (void)screenDidClearScrollbackBuffer:(VT100Screen *)screen;
+- (void)screenDidClearScrollbackBuffer:(VT100Screen * _Nonnull)screen;
 
 // Called when the mouse reporting mode changes.
 - (void)screenMouseModeDidChange;
 
 // An image should be flashed over the view.
-- (void)screenFlashImage:(NSString *)identifier;
+- (void)screenFlashImage:(NSString * _Nonnull)identifier;
 
 - (void)screenIncrementBadge;
 
@@ -219,7 +219,7 @@
 
 - (void)screenDisinterSession;
 
-- (void)screenGetWorkingDirectoryWithCompletion:(void (^)(NSString *workingDirectory))completion;
+- (void)screenGetWorkingDirectoryWithCompletion:(void (^ _Nonnull)(NSString * _Nullable workingDirectory))completion;
 
 // Show/hide the cursor.
 - (void)screenSetCursorVisible:(BOOL)visible;
@@ -235,59 +235,62 @@
 
 // Save the current scroll position
 - (void)screenSaveScrollPosition;
-- (void)screenDidAddMark:(id<iTermMark>)mark;
+- (void)screenDidAddMark:(id<iTermMark> _Nonnull)mark;
 - (void)screenPromptDidStartAtLine:(int)line;
-- (void)screenPromptDidEndWithMark:(VT100ScreenMark *)mark;
+- (void)screenPromptDidEndWithMark:(VT100ScreenMark * _Nonnull)mark;
 
 - (void)screenStealFocus;
 
-- (void)screenSetProfileToProfileNamed:(NSString *)value;
-- (void)screenSetPasteboard:(NSString *)value;
-- (void)screenDidAddNote:(PTYAnnotation *)note focus:(BOOL)focus;
+- (void)screenSetProfileToProfileNamed:(NSString * _Nonnull)value;
+- (void)screenSetPasteboard:(NSString * _Nonnull)value;
+- (void)screenDidAddNote:(PTYAnnotation * _Nonnull)note focus:(BOOL)focus;
 - (void)screenCopyBufferToPasteboard;
 - (BOOL)screenIsAppendingToPasteboard;
-- (void)screenAppendDataToPasteboard:(NSData *)data;
+- (void)screenAppendDataToPasteboard:(NSData * _Nonnull)data;
 
-- (void)screenWillReceiveFileNamed:(NSString *)name ofSize:(NSInteger)size preconfirmed:(BOOL)preconfirmed;
+- (void)screenWillReceiveFileNamed:(NSString * _Nonnull)name
+                            ofSize:(NSInteger)size
+                      preconfirmed:(BOOL)preconfirmed;
 - (void)screenDidFinishReceivingFile;
 - (void)screenDidFinishReceivingInlineFile;
-- (void)screenDidReceiveBase64FileData:(NSString *)data;
+- (void)screenDidReceiveBase64FileData:(NSString * _Nonnull)data;
 - (void)screenFileReceiptEndedUnexpectedly;
 
-- (void)screenRequestUpload:(NSString *)args;
+- (void)screenRequestUpload:(NSString * _Nonnull)args;
 
-- (void)screenSetCurrentTabColor:(NSColor *)color;
+- (void)screenSetCurrentTabColor:(NSColor * _Nullable)color;
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color;
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color;
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
-- (void)screenSetColor:(NSColor *)color forKey:(int)key;
+- (void)screenSetColor:(NSColor * _Nullable)color forKey:(int)key;
 - (void)screenResetColorsWithColorMapKey:(int)key;
-- (void)screenSelectColorPresetNamed:(NSString *)name;
+- (void)screenSelectColorPresetNamed:(NSString * _Nonnull)name;
 
-- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host pwd:(NSString *)workingDirectory;
-- (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath;
-- (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
-                                                   payload:(NSString *)payload;
+- (void)screenCurrentHostDidChange:(VT100RemoteHost * _Nonnull)host
+                               pwd:(NSString * _Nullable)workingDirectory;
+- (void)screenCurrentDirectoryDidChangeTo:(NSString * _Nullable)newPath;
+- (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> * _Nonnull)parameters
+                                                   payload:(NSString * _Nonnull)payload;
 - (CGFloat)screenBackingScaleFactor;
 
 // Ok to write to shell?
 - (BOOL)screenShouldSendReport;
-- (BOOL)screenShouldSendReportForVariable:(NSString *)name;
+- (BOOL)screenShouldSendReportForVariable:(NSString * _Nullable)name;
 
 // FinalTerm stuff
-- (void)screenCommandDidChangeTo:(NSString *)command
+- (void)screenCommandDidChangeTo:(NSString * _Nonnull)command
                         atPrompt:(BOOL)atPrompt
                       hadCommand:(BOOL)hadCommand
                      haveCommand:(BOOL)haveCommand;
 
-- (void)screenDidExecuteCommand:(NSString *)command
+- (void)screenDidExecuteCommand:(NSString * _Nullable)command
                           range:(VT100GridCoordRange)range
-                         onHost:(VT100RemoteHost *)host
-                    inDirectory:(NSString *)directory
-                           mark:(VT100ScreenMark *)mark;
-- (void)screenCommandDidExitWithCode:(int)code mark:(VT100ScreenMark *)maybeMark;
+                         onHost:(VT100RemoteHost * _Nullable)host
+                    inDirectory:(NSString * _Nullable)directory
+                           mark:(VT100ScreenMark * _Nullable)mark;
+- (void)screenCommandDidExitWithCode:(int)code mark:(VT100ScreenMark * _Nullable)maybeMark;
 
-- (NSString *)screenProfileName;
+- (NSString * _Nullable)screenProfileName;
 
 typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
     // We polled for the working directory for a really sketchy reason, such as the user pressing enter.
@@ -299,56 +302,56 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 };
 
 - (void)screenLogWorkingDirectoryOnAbsoluteLine:(long long)absLine
-                                     remoteHost:(VT100RemoteHost *)remoteHost
-                                  withDirectory:(NSString *)directory
+                                     remoteHost:(VT100RemoteHost * _Nullable)remoteHost
+                                  withDirectory:(NSString * _Nullable)directory
                                        pushType:(VT100ScreenWorkingDirectoryPushType)pushType
                                        accepted:(BOOL)accepted;
 
 - (void)screenSuggestShellIntegrationUpgrade;
-- (void)screenDidDetectShell:(NSString *)shell;
+- (void)screenDidDetectShell:(NSString * _Nonnull)shell;
 
-- (void)screenSetBackgroundImageFile:(NSString *)filename;
-- (void)screenSetBadgeFormat:(NSString *)theFormat;
-- (void)screenSetUserVar:(NSString *)kvp;
+- (void)screenSetBackgroundImageFile:(NSString * _Nonnull)filename;
+- (void)screenSetBadgeFormat:(NSString * _Nonnull)theFormat;
+- (void)screenSetUserVar:(NSString * _Nonnull)kvp;
 
 - (BOOL)screenShouldReduceFlicker;
 - (NSInteger)screenUnicodeVersion;
 - (void)screenSetUnicodeVersion:(NSInteger)unicodeVersion;
-- (void)screenSetLabel:(NSString *)label forKey:(NSString *)keyName;
-- (void)screenPushKeyLabels:(NSString *)value;
-- (void)screenPopKeyLabels:(NSString *)value;
+- (void)screenSetLabel:(NSString * _Nonnull)label forKey:(NSString * _Nonnull)keyName;
+- (void)screenPushKeyLabels:(NSString * _Nonnull)value;
+- (void)screenPopKeyLabels:(NSString * _Nonnull)value;
 - (void)screenSendModifiersDidChange;
 - (void)screenKeyReportingFlagsDidChange;
 
 - (void)screenTerminalAttemptedPasteboardAccess;
-- (NSString *)screenValueOfVariableNamed:(NSString *)name;
+- (NSString * _Nullable)screenValueOfVariableNamed:(NSString * _Nonnull)name;
 - (void)screenReportFocusWillChangeTo:(BOOL)reportFocus;
 - (void)screenReportPasteBracketingWillChangeTo:(BOOL)bracket;
 - (void)screenDidReceiveLineFeed;
 - (void)screenSoftAlternateScreenModeDidChangeTo:(BOOL)enabled
                                 showingAltScreen:(BOOL)showing;
 - (void)screenReportKeyUpDidChange:(BOOL)reportKeyUp;
-- (BOOL)screenConfirmDownloadNamed:(NSString *)name canExceedSize:(NSInteger)limit;
-- (BOOL)screenConfirmDownloadAllowed:(NSString *)name
+- (BOOL)screenConfirmDownloadNamed:(NSString * _Nonnull)name canExceedSize:(NSInteger)limit;
+- (BOOL)screenConfirmDownloadAllowed:(NSString * _Nonnull)name
                                 size:(NSInteger)size
                        displayInline:(BOOL)displayInline
-                         promptIfBig:(BOOL *)promptIfBig;
+                         promptIfBig:(BOOL * _Nonnull)promptIfBig;
 - (BOOL)screenShouldClearScrollbackBuffer;
 - (VT100GridRange)screenRangeOfVisibleLines;
 - (void)screenDidResize;
-- (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode
-                                        flags:(NSEventModifierFlags)flags
-                                   characters:(NSString *)characters
-                  charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers;
-- (void)screenDidAppendImageData:(NSData *)data;
-- (void)screenAppendScreenCharArray:(const screen_char_t *)line
+- (NSString * _Nullable)screenStringForKeypressWithCode:(unsigned short)keycode
+                                                  flags:(NSEventModifierFlags)flags
+                                             characters:(NSString * _Nonnull)characters
+                            charactersIgnoringModifiers:(NSString * _Nonnull)charactersIgnoringModifiers;
+- (void)screenDidAppendImageData:(NSData * _Nonnull)data;
+- (void)screenAppendScreenCharArray:(const screen_char_t *_Nonnull)line
                            metadata:(iTermImmutableMetadata)metadata
                              length:(int)length;
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode;
-- (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
+- (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot * _Nonnull)slot;
 - (int)screenMaximumTheoreticalImageDimension;
 - (void)screenOfferToDisableTriggersInInteractiveApps;
-- (void)screenDidUpdateReturnCodeForMark:(VT100ScreenMark *)mark
-                              remoteHost:(VT100RemoteHost *)remoteHost;
+- (void)screenDidUpdateReturnCodeForMark:(VT100ScreenMark * _Nonnull)mark
+                              remoteHost:(VT100RemoteHost * _Nullable)remoteHost;
 
 @end
