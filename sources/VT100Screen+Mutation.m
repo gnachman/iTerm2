@@ -2846,9 +2846,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 #pragma mark - URLs
 
-- (void)mutLinkRun:(VT100GridRun)run
-       withURLCode:(unsigned int)code {
-    [_mutableState linkRun:run withURLCode:code];
+- (void)mutLinkTextInRange:(NSRange)range
+basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                  URLCode:(unsigned int)code {
+    [_mutableState linkTextInRange:range basedAtAbsoluteLineNumber:absoluteLineNumber URLCode:code];
 }
 
 #pragma mark - Highlighting

@@ -98,6 +98,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - URLs
 
+- (void)linkTextInRange:(NSRange)range
+basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                URLCode:(unsigned int)code;
+
 - (void)linkRun:(VT100GridRun)run
     withURLCode:(unsigned int)code;
 

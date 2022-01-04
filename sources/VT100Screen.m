@@ -230,14 +230,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)linkTextInRange:(NSRange)range
 basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                   URLCode:(unsigned int)code {
-    long long lineNumber = absoluteLineNumber - self.totalScrollbackOverflow - _state.numberOfScrollbackLines;
-    if (lineNumber < 0) {
-        return;
-    }
-    VT100GridRun gridRun = [_state.currentGrid gridRunFromRange:range relativeToRow:lineNumber];
-    if (gridRun.length > 0) {
-        [self mutLinkRun:gridRun withURLCode:code];
-    }
+    [self mutLinkTextInRange:range basedAtAbsoluteLineNumber:absoluteLineNumber URLCode:code];
 }
 
 - (void)storeLastPositionInLineBufferAsFindContextSavedPosition {

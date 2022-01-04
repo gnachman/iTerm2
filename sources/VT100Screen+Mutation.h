@@ -71,8 +71,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutHighlightRun:(VT100GridRun)run
     withForegroundColor:(NSColor *)fgColor
         backgroundColor:(NSColor *)bgColor;
-- (void)mutLinkRun:(VT100GridRun)run
-       withURLCode:(unsigned int)code;
 - (BOOL)mutContinueFindResultsInContext:(FindContext *)context
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
@@ -197,9 +195,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutCommandDidEndWithRange:(VT100GridCoordRange)range;
 - (void)mutSaveCursorLine;
 - (void)mutRestorePreferredCursorPositionIfPossible;
-- (void)mutHighlightRun:(VT100GridRun)run
-    withForegroundColor:(NSColor *)fgColor
-        backgroundColor:(NSColor *)bgColor;
+- (void)mutLinkTextInRange:(NSRange)range
+basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                   URLCode:(unsigned int)code;
 
 @end
 
