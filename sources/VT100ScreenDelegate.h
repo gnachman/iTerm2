@@ -4,14 +4,44 @@
 #import "VT100TerminalDelegate.h"
 #import "VT100Token.h"
 
+@class Trigger;
 @class VT100RemoteHost;
 @class VT100Screen;
+@class iTermBackgroundCommandRunnerPool;
 @class iTermColorMap;
 @protocol iTermMark;
 @class iTermSelection;
 @protocol iTermOrderedToken;
 
-@protocol VT100ScreenDelegate <NSObject, iTermColorMapDelegate>
+@protocol iTermTriggerSideEffectExecutor<NSObject>
+- (void)triggerSideEffectReveal;
+- (void)triggerSideEffectRingBell;
+- (void)triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded;
+- (void)triggerSideEffectShowCapturedOutputTool;
+- (void)triggerSideEffectShowShellIntegrationRequiredAnnouncement;
+- (void)triggerSideEffectDidCaptureOutput;
+- (void)triggerSideEffectLaunchCoprocessWithCommand:(NSString * _Nonnull)command
+                                         identifier:(NSString * _Nullable)identifier
+                                             silent:(BOOL)silent
+                                       triggerTitle:(NSString * _Nonnull)triggerTitle;
+- (void)triggerSideEffectMakeFirstResponder;
+- (void)triggerSideEffectPostUserNotificationWithMessage:(NSString * _Nonnull)message;
+- (void)triggerSideEffectStopScrollingAtLine:(long long)absLine;
+- (void)triggerSideEffectOpenPasswordManagerToAccountName:(NSString * _Nullable)accountName;
+- (void)triggerSideEffectRunBackgroundCommand:(NSString *)command pool:(iTermBackgroundCommandRunnerPool *)pool;
+- (void)triggerWriteTextWithoutBroadcasting:(NSString * _Nonnull)text;
+- (void)triggerSideEffectShowAlertWithMessage:(NSString * _Nonnull)message
+                                      disable:(void (^ _Nonnull)(void))disable;
+- (iTermVariableScope * _Nonnull)triggerSideEffectVariableScope;
+- (void)triggerSideEffectSetTitle:(NSString * _Nonnull)newName;
+- (void)triggerSideEffectInvokeFunctionCall:(NSString * _Nonnull)invocation
+                              withVariables:(NSDictionary * _Nonnull)temporaryVariables
+                                   captures:(NSArray<NSString *> * _Nonnull)captureStringArray
+                                    trigger:(Trigger * _Nonnull)trigger;
+- (void)triggerSideEffectSetValue:(id)value forVariableNamed:(NSString *)name;
+@end
+
+@protocol VT100ScreenDelegate <NSObject, iTermColorMapDelegate, iTermTriggerSideEffectExecutor>
 
 // Screen contents have become dirty and should be redrawn right away.
 - (void)screenNeedsRedraw;

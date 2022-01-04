@@ -14880,41 +14880,32 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 // This can be completely async
 - (void)triggerSessionReveal:(Trigger *)trigger {
+    [self revealForTrigger];
+}
+
+- (void)revealForTrigger {
     NSWindowController<iTermWindowController> * term = [[self delegate] realParentWindow];
     [[term window] makeKeyAndOrderFront:nil];
     [self.delegate sessionSelectContainingTab];
     [self.delegate setActiveSession:self];
 }
 
-- (void)triggerSession:(Trigger *)trigger showAlertWithMessage:(NSString *)message rateLimit:(iTermRateLimitedUpdate *)rateLimit disable:(void (^)(void))disable {
+#warning TODO: Remove this after triggerSession is implemented by VT100ScreenMutableState
+
+- (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> _Nonnull delegate))block {
     __weak __typeof(self) weakSelf = self;
-    [rateLimit performRateLimitedBlock:^{
-        [weakSelf reallyShowAlertWithMessage:message trigger:trigger disable:disable];
-    }];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        block(weakSelf);
+    });
 }
 
-- (void)reallyShowAlertWithMessage:(NSString *)message trigger:(Trigger *)trigger disable:(void (^)(void))disable {
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = message ?: @"";
-    [alert addButtonWithTitle:@"OK"];
-    [alert addButtonWithTitle:@"Show Session"];
-    [alert addButtonWithTitle:@"Disable This Alert"];
-    switch ([alert runModal]) {
-        case NSAlertFirstButtonReturn:
-            break;
+- (void)triggerSession:(Trigger *)trigger showAlertWithMessage:(NSString *)message rateLimit:(iTermRateLimitedUpdate *)rateLimit disable:(void (^)(void))disable {
 
-        case NSAlertSecondButtonReturn: {
-            [self triggerSessionReveal:trigger];
-            break;
-        }
-
-        case NSAlertThirdButtonReturn:
-            disable();
-            break;
-
-        default:
-            break;
-    }
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [rateLimit performRateLimitedBlock:^{
+            [delegate triggerSideEffectShowAlertWithMessage:message disable:disable];
+        }];
+    }];
 }
 
 // This can be completely async
@@ -15263,6 +15254,33 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)performBlockWithScope:(void (^)(iTermVariableScope *scope))block {
 #warning TODO: Stop processing additional tokens until the next spin of the mainloop because they could modify variables causing state to appear to have time-traveled.
     block(self.variablesScope);
+}
+
+#pragma mark - iTermTriggerSideEffectExecutor
+
+- (void)triggerSideEffectShowAlertWithMessage:(NSString *)message
+                                      disable:(void (^)(void))disable {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = message ?: @"";
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Show Session"];
+    [alert addButtonWithTitle:@"Disable This Alert"];
+    switch ([alert runModal]) {
+        case NSAlertFirstButtonReturn:
+            break;
+
+        case NSAlertSecondButtonReturn: {
+            [self revealForTrigger];
+            break;
+        }
+
+        case NSAlertThirdButtonReturn:
+            disable();
+            break;
+
+        default:
+            break;
+    }
 }
 
 @end
