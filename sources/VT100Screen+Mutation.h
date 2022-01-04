@@ -197,6 +197,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutCommandDidEndWithRange:(VT100GridCoordRange)range;
 - (void)mutSaveCursorLine;
 - (void)mutRestorePreferredCursorPositionIfPossible;
+- (void)mutHighlightRun:(VT100GridRun)run
+    withForegroundColor:(NSColor *)fgColor
+        backgroundColor:(NSColor *)bgColor;
 
 @end
 

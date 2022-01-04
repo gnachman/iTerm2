@@ -2853,12 +2853,20 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 #pragma mark - Highlighting
 
-// Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
 - (void)mutHighlightRun:(VT100GridRun)run
     withForegroundColor:(NSColor *)fgColor
         backgroundColor:(NSColor *)bgColor {
     [_mutableState highlightRun:run withForegroundColor:fgColor backgroundColor:bgColor];
 }
+
+- (void)mutHighlightTextInRange:(NSRange)range
+      basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
+                         colors:(NSDictionary *)colors {
+    [_mutableState highlightTextInRange:range
+              basedAtAbsoluteLineNumber:absoluteLineNumber
+                                 colors:colors];
+}
+
 
 #pragma mark - Scrollback
 
