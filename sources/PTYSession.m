@@ -14898,7 +14898,9 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 // This can be completely async
 - (void)triggerSessionRingBell:(Trigger *)trigger {
-    [self.screen activateBell];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectRingBell];
+    }];
 }
 
 // This can be completely async
@@ -15269,6 +15271,10 @@ launchCoprocessWithCommand:(NSString *)command
         default:
             break;
     }
+}
+
+- (void)triggerSideEffectRingBell {
+    [self.screen activateBell];
 }
 
 @end
