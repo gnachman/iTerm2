@@ -15000,8 +15000,10 @@ launchCoprocessWithCommand:(NSString *)command
     // sync
     [self.screen mutSaveCursorLine];
     if (stopScrolling) {
-        // async
-        [[self.view.scrollview ptyVerticalScroller] setUserScroll:YES];
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            const long long line = _screen.totalScrollbackOverflow + _screen.numberOfScrollbackLines + _screen.currentGrid.cursorY;
+            [delegate triggerSideEffectStopScrollingAtLine:line];
+        }];
     }
 }
 
@@ -15318,4 +15320,17 @@ launchCoprocessWithCommand:(NSString *)command
                           tabIndex:[self screenTabIndex]
                          viewIndex:[self screenViewIndex]];
 }
+
+// Scroll so that `absLine` is the last visible onscreen.
+- (void)triggerSideEffectStopScrollingAtLine:(long long)absLine {
+    const long long line = absLine - _screen.totalScrollbackOverflow;
+    if (line < 0) {
+        return;
+    }
+    const int height = _screen.height;
+    const int top = MAX(0, line - height);
+    [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(top, height)];
+    [[self.view.scrollview ptyVerticalScroller] setUserScroll:YES];
+}
+
 @end
