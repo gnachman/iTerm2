@@ -12,6 +12,7 @@
 #import "FindContext.h"
 #import "IntervalTree.h"
 #import "LineBuffer.h"
+#import "PTYTriggerEvaluator.h"
 #import "VT100Grid.h"
 #import "VT100ScreenMark.h"
 #import "VT100ScreenSideEffects.h"
@@ -213,7 +214,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic) BOOL needsRedraw;
 @end
 
-@interface VT100ScreenState: NSObject<VT100ScreenState, iTermTextDataSource>
+@interface VT100ScreenState: NSObject<PTYTriggerEvaluatorDataSource, VT100ScreenState, iTermTextDataSource>
 
 - (instancetype)init NS_UNAVAILABLE;
 

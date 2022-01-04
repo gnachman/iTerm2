@@ -37,7 +37,6 @@
 #import "iTermWorkingDirectoryPoller.h"
 
 @interface PTYSession () <
-PTYTriggerEvaluatorDelegate,
 iTermAutomaticProfileSwitcherDelegate,
 iTermBackgroundDrawingHelperDelegate,
 iTermBadgeLabelDelegate,

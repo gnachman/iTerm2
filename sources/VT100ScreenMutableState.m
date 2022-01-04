@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "PTYAnnotation.h"
+#import "PTYTriggerEvaluator.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenDelegate.h"
@@ -19,7 +20,7 @@
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
 
-@interface VT100ScreenMutableState()<iTermMarkDelegate>
+@interface VT100ScreenMutableState()<PTYTriggerEvaluatorDelegate, iTermMarkDelegate>
 @property (atomic) BOOL hadCommand;
 @end
 
@@ -812,6 +813,21 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
         self.lastCommandMark = mark;
     }
+}
+
+#pragma mark - PTYTriggerEvaluatorDelegate
+
+- (BOOL)triggerEvaluatorShouldUseTriggers:(PTYTriggerEvaluator *)evaluator {
+    if (![self.terminal softAlternateScreenMode]) {
+        return YES;
+    }
+    return self.config.enableTriggersInInteractiveApps;
+}
+
+- (void)triggerEvaluatorOfferToDisableTriggersInInteractiveApps:(PTYTriggerEvaluator *)evaluator {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenOfferToDisableTriggersInInteractiveApps];
+    }];
 }
 
 @end
