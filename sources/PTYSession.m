@@ -15151,7 +15151,12 @@ launchCoprocessWithCommand:(NSString *)command
 
 // STOP THE WORLD - sync
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value {
-    [self.genericScope setValue:value forVariableNamed:name];
+    // This doesn't need to stop the world because subsequent triggers that use variables can
+    // consume them only on the main thread. There is a risk if triggers can interact with each
+    // other in other ways that they get reordered, though.
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectSetValue:value forVariableNamed:name];
+    }];
 }
 
 - (void)performActionForCapturedOutput:(CapturedOutput *)capturedOutput {
@@ -15378,6 +15383,11 @@ launchCoprocessWithCommand:(NSString *)command
                                                        owner:trigger];
     [scope setValuesFromDictionary:temporaryVariables];
     [self invokeFunctionCall:invocation scope:scope origin:@"Trigger"];
+}
+
+- (void)triggerSideEffectSetValue:(id _Nullable)value
+                 forVariableNamed:(NSString * _Nonnull)name {
+    [self.genericScope setValue:value forVariableNamed:name];
 }
 
 @end
