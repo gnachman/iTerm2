@@ -15162,7 +15162,12 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)performBlockWithScope:(void (^)(iTermVariableScope *scope))block {
 #warning TODO: Stop processing additional tokens until the next spin of the mainloop because they could modify variables causing state to appear to have time-traveled.
-    block(self.variablesScope);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            assert([NSThread isMainThread]);
+            block([delegate triggerSideEffectVariableScope]);
+        }];
+    });
 }
 
 #pragma mark - iTermTriggerSideEffectExecutor
@@ -15349,6 +15354,11 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)triggerWriteTextWithoutBroadcasting:(NSString * _Nonnull)text {
     [self writeTaskNoBroadcast:text];
+}
+
+- (iTermVariableScope *)triggerSideEffectVariableScope {
+    assert([NSThread isMainThread]);
+    return self.variablesScope;
 }
 
 @end
