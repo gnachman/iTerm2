@@ -15092,11 +15092,12 @@ launchCoprocessWithCommand:(NSString *)command
                 invoke:(NSString *)invocation
          withVariables:(NSDictionary *)temporaryVariables
               captures:(NSArray<NSString *> *)captureStringArray {
-    iTermVariableScope *scope =
-        [self.variablesScope variableScopeByAddingBackreferences:captureStringArray
-                                                        owner:trigger];
-    [scope setValuesFromDictionary:temporaryVariables];
-    [self invokeFunctionCall:invocation scope:scope origin:@"Trigger"];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectInvokeFunctionCall:invocation
+                                        withVariables:temporaryVariables
+                                             captures:captureStringArray
+                                              trigger:trigger];
+    }];
 }
 
 - (PTYAnnotation *)triggerSession:(Trigger *)trigger
@@ -15366,6 +15367,17 @@ launchCoprocessWithCommand:(NSString *)command
     if (newName.length > 0) {
         [self enableSessionNameTitleComponentIfPossible];
     }
+}
+
+- (void)triggerSideEffectInvokeFunctionCall:(NSString * _Nonnull)invocation
+                              withVariables:(NSDictionary * _Nonnull)temporaryVariables
+                                   captures:(NSArray<NSString *> * _Nonnull)captureStringArray
+                                    trigger:(Trigger * _Nonnull)trigger {
+    iTermVariableScope *scope =
+    [self.variablesScope variableScopeByAddingBackreferences:captureStringArray
+                                                       owner:trigger];
+    [scope setValuesFromDictionary:temporaryVariables];
+    [self invokeFunctionCall:invocation scope:scope origin:@"Trigger"];
 }
 
 @end
