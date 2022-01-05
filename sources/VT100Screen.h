@@ -224,7 +224,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // such as selections.
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
-                knownTriggers:(NSArray *)triggers
                    reattached:(BOOL)reattached;
 - (void)restoreInitialSize;
 

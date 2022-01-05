@@ -10,11 +10,12 @@
 
 @class CaptureTrigger;
 @class iTermCapturedOutputMark;
+@class iTermPromise<T>;
 
 @interface CapturedOutput : NSObject
 @property(nonatomic, copy) NSString *line;
 @property(nonatomic, copy) NSArray *values;
-@property(nonatomic, retain) CaptureTrigger *trigger;
+@property(nonatomic, retain) iTermPromise<NSString *> *promisedCommand;
 @property(nonatomic, assign) BOOL state;  // user-defined state
 @property(nonatomic, retain) iTermCapturedOutputMark *mark;
 @property(nonatomic, assign) long long absoluteLineNumber;
@@ -24,7 +25,6 @@
 
 + (instancetype)capturedOutputWithDictionary:(NSDictionary *)dict;
 - (NSDictionary *)dictionaryValue;
-- (void)setKnownTriggers:(NSArray *)knownTriggers;
 - (BOOL)canMergeFrom:(CapturedOutput *)other;
 - (void)mergeFrom:(CapturedOutput *)other;
 

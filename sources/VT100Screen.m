@@ -1469,11 +1469,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
-                knownTriggers:(NSArray *)triggers
                    reattached:(BOOL)reattached {
     [self mutRestoreFromDictionary:dictionary
      includeRestorationBanner:includeRestorationBanner
-                knownTriggers:triggers
                    reattached:reattached];
 }
 

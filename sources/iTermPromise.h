@@ -32,6 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermPromise<T> : NSObject
 
 @property(nonatomic, readonly) BOOL hasValue;
+@property(nonatomic, nullable, readonly) T maybeValue;
 
 + (instancetype)promise:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal> seal))block;
 
