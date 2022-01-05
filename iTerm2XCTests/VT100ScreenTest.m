@@ -4315,7 +4315,7 @@ static NSString *VT100ScreenTestFindLines =
     NSDictionary *state = encoder.mutableDictionary;
 
     screen = [self screenWithWidth:3 height:4];
-    [screen restoreFromDictionary:state includeRestorationBanner:NO knownTriggers:@[] reattached:NO];
+    [screen restoreFromDictionary:state includeRestorationBanner:NO reattached:NO];
     XCTAssert([[screen compactLineDumpWithHistory] isEqualToString:
                @".....\n"
                @"abcde\n"
@@ -4424,7 +4424,7 @@ static NSString *VT100ScreenTestFindLines =
     NSDictionary *state = encoder.mutableDictionary;
 
     screen = [self screenWithWidth:80 height:25];
-    [screen restoreFromDictionary:state includeRestorationBanner:NO knownTriggers:@[] reattached:YES];
+    [screen restoreFromDictionary:state includeRestorationBanner:NO reattached:YES];
     [screen setSize:VT100GridSizeMake(77, 25)];
     {
         NSArray *notes = [screen annotationsInRange:VT100GridCoordRangeMake(0, 0, 80, 25)];

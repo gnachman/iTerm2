@@ -1759,7 +1759,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                  reattached:(BOOL)reattached {
     [_screen restoreFromDictionary:dict
           includeRestorationBanner:includeRestorationBanner
-                     knownTriggers:_triggerEvaluator.triggers
                         reattached:reattached];
 
     VT100RemoteHost *lastRemoteHost = _screen.lastRemoteHost;
@@ -15170,7 +15169,19 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 - (void)performActionForCapturedOutput:(CapturedOutput *)capturedOutput {
-    [capturedOutput.trigger activateOnOutput:capturedOutput inSession:self];
+    __weak __typeof(self) weakSelf = self;
+    [capturedOutput.promisedCommand then:^(NSString * _Nonnull command) {
+        [weakSelf reallyPerformActionForCapturedOutput:capturedOutput command:command];
+    }];
+}
+
+- (void)reallyPerformActionForCapturedOutput:(CapturedOutput *)capturedOutput
+                                     command:(NSString *)command {
+    [self launchCoprocessWithCommand:command
+                          identifier:nil
+                              silent:NO
+                        triggerTitle:@"Captured Output trigger"];
+    [self takeFocus];
 }
 
 #pragma mark - iTermTriggerScopeProvider
@@ -15293,6 +15304,13 @@ launchCoprocessWithCommand:(NSString *)command
                                          identifier:(NSString * _Nullable)identifier
                                              silent:(BOOL)silent
                                        triggerTitle:(NSString * _Nonnull)triggerName {
+    [self launchCoprocessWithCommand:command identifier:identifier silent:silent triggerTitle:triggerName];
+}
+
+- (void)launchCoprocessWithCommand:(NSString * _Nonnull)command
+                        identifier:(NSString * _Nullable)identifier
+                            silent:(BOOL)silent
+                      triggerTitle:(NSString * _Nonnull)triggerName {
     if (self.hasCoprocess) {
         if (identifier && [[NSUserDefaults standardUserDefaults] boolForKey:identifier]) {
             return;

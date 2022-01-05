@@ -903,7 +903,6 @@
 
 - (void)mutRestoreFromDictionary:(NSDictionary *)dictionary
         includeRestorationBanner:(BOOL)includeRestorationBanner
-                   knownTriggers:(NSArray *)triggers
                       reattached:(BOOL)reattached {
     if (!_state.altGrid) {
         _mutableState.altGrid = [[_state.primaryGrid copy] autorelease];
@@ -1058,13 +1057,11 @@
         }
         _mutableState.intervalTree = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]] autorelease];
         [self fixUpDeserializedIntervalTree:_mutableState.intervalTree
-                              knownTriggers:triggers
                                     visible:YES
                       guidOfLastCommandMark:guidOfLastCommandMark];
 
         _mutableState.savedIntervalTree = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]] autorelease];
         [self fixUpDeserializedIntervalTree:_mutableState.savedIntervalTree
-                              knownTriggers:triggers
                                     visible:NO
                       guidOfLastCommandMark:guidOfLastCommandMark];
 
@@ -1094,7 +1091,6 @@
 // Link marks for commands to CommandUse objects in command history.
 // Notify delegate of annotations so they get added as subviews, and set the delegate of not view controllers to self.
 - (void)fixUpDeserializedIntervalTree:(IntervalTree *)intervalTree
-                        knownTriggers:(NSArray *)triggers
                               visible:(BOOL)visible
                 guidOfLastCommandMark:(NSString *)guidOfLastCommandMark {
     VT100RemoteHost *lastRemoteHost = nil;
@@ -1110,7 +1106,6 @@
                 // was captured. The iTermCapturedOutputMarks will come later so save the GUIDs we need
                 // in markGuidToCapturedOutput and they'll get backfilled when found.
                 for (CapturedOutput *capturedOutput in screenMark.capturedOutput) {
-                    [capturedOutput setKnownTriggers:triggers];
                     if (capturedOutput.markGuid) {
                         markGuidToCapturedOutput[capturedOutput.markGuid] = capturedOutput;
                     }

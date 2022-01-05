@@ -50,26 +50,13 @@
     CapturedOutput *output = [[[CapturedOutput alloc] init] autorelease];
     output.absoluteLineNumber = lineNumber;
     output.line = stringLine.stringValue;
-    output.trigger = self;
+    const BOOL interpolate = [aSession triggerSessionShouldUseInterpolatedStrings:self];
+    output.promisedCommand = [self paramWithBackreferencesReplacedWithValues:stringArray
+                                                                       scope:[aSession triggerSessionVariableScopeProvider:self]
+                                                            useInterpolation:interpolate];
     output.values = stringArray;
     [aSession triggerSession:self didCaptureOutput:output];
     return NO;
-}
-
-// Called by UI
-- (void)activateOnOutput:(CapturedOutput *)capturedOutput inSession:(id<iTermTriggerSession>)session {
-    assert([NSThread isMainThread]);
-    id<iTermTriggerScopeProvider> scopeProvider = [session triggerSessionVariableScopeProvider:self];
-    const BOOL interpolate = [session triggerSessionShouldUseInterpolatedStrings:self];
-    [[self paramWithBackreferencesReplacedWithValues:capturedOutput.values
-                                               scope:scopeProvider
-                                    useInterpolation:interpolate] then:^(NSString * _Nonnull command) {
-        [session triggerSession:self
-     launchCoprocessWithCommand:command
-                     identifier:nil
-                         silent:NO];
-        [session triggerSessionMakeFirstResponder:self];
-    }];
 }
 
 @end

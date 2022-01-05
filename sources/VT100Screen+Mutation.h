@@ -44,7 +44,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetAltScreen:(NSArray *)lines;
 - (void)mutRestoreFromDictionary:(NSDictionary *)dictionary
         includeRestorationBanner:(BOOL)includeRestorationBanner
-                   knownTriggers:(NSArray *)triggers
                       reattached:(BOOL)reattached;
 - (void)mutSetTmuxState:(NSDictionary *)state;
 - (void)mutCrlf;
