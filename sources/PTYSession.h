@@ -939,9 +939,5 @@ backgroundColor:(NSColor *)backgroundColor;
                     origin:(NSString *)origin;
 - (void)setParentScope:(iTermVariableScope *)parentScope;
 
-#pragma mark - Testing utilities
-
-- (void)synchronousReadTask:(NSString *)string;
-
 @end
 

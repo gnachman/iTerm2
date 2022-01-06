@@ -83,7 +83,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, retain) id<VT100ScreenConfiguration> config;
 @property(nonatomic) long long fakePromptDetectedAbsLine;
 @property(nonatomic) long long lastPromptLine;
-@property(nonatomic, readonly) iTermTokenExecutor *tokenExecutor;
 
 // Designated initializer.
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal
@@ -269,6 +268,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)currentDirectoryDidChangeTo:(NSString *)dir;
 - (VT100GridCoordRange)commandRange;
 - (id<PTYTriggerEvaluatorDelegate>)triggerEvaluatorDelegate;
+- (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
+- (void)scheduleTokenExecution;
 
 @end
 

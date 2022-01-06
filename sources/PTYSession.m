@@ -661,8 +661,6 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
                                        slownessDetector:_triggerEvaluator.triggersSlownessDetector];
         _triggerEvaluator.delegate = _screen.triggerEvaluatorDelegate;
         _triggerEvaluator.dataSource = _screen;
-#warning TODO: Screen should be the delegate, eventually.
-        _screen.tokenExecutor.delegate = self;
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
 
         _overriddenFields = [[NSMutableSet alloc] init];
@@ -2916,7 +2914,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [_echoProbe updateEchoProbeStateWithTokenCVector:&vector];
     }
 
-    [_screen.tokenExecutor addTokens:vector length:length];
+    [_screen addTokens:vector length:length highPriority:NO];
 }
 
 - (BOOL)haveResizedRecently {
@@ -11331,7 +11329,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         CVectorDestroy(&vector);
         return;
     }
-    [self.screen.tokenExecutor addTokens:vector length:data.length highPriority:YES];
+    [self.screen addTokens:vector length:data.length highPriority:YES];
 }
 
 // indexes will be in [0,255].
@@ -11433,7 +11431,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[_delegate parentWindow] updateTabColors];
 }
 
-- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host pwd:(NSString *)workingDirectory {
+- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host
+                               pwd:(NSString *)workingDirectory {
     DLog(@"Current host did change to %@ %@", host, self);
     NSString *previousHostName = _currentHost.hostname;
 
@@ -14000,7 +13999,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if (_textview.selection.live) {
             [_textview.selection endLiveSelection];
         }
-        [_screen.tokenExecutor schedule];
+        [_screen scheduleTokenExecution];
     }
 }
 

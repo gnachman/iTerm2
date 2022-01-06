@@ -28,9 +28,12 @@
     VT100GridCoordRange _previousCommandRange;
     iTermIdempotentOperationJoiner *_commandRangeChangeJoiner;
     dispatch_queue_t _queue;
+#warning TODO: Remove this
+    iTermSlownessDetector *_slownessDetector;
 }
 
-- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
+- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer
+                           slownessDetector:(iTermSlownessDetector *)slownessDetector {
     self = [super initForMutation];
     if (self) {
 #warning TODO: When this moves to its own queue. change _queue.
@@ -40,6 +43,7 @@
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _previousCommandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
         _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner asyncJoiner:_queue];
+        _slownessDetector = slownessDetector;
     }
     return self;
 }
@@ -98,6 +102,19 @@
         weakSelf.needsRedraw = NO;
         [delegate screenNeedsRedraw];
     }];
+}
+
+#pragma mark - Accessors
+
+- (void)setTerminal:(VT100Terminal *)terminal {
+    [super setTerminal:terminal];
+    _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:terminal
+                                                 slownessDetector:_slownessDetector
+                                                            queue:_queue];
+}
+
+- (void)setTokenExecutorDelegate:(id)delegate {
+    _tokenExecutor.delegate = delegate;
 }
 
 #pragma mark - Scrollback
@@ -631,8 +648,10 @@
     if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
         const int line = [self numberOfScrollbackLines] + self.cursorY;
         NSString *pwd = [self workingDirectoryOnLine:line];
+        iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenCurrentHostDidChange:remoteHostObj pwd:pwd];
+            [unpauser unpause];
         }];
     }
 }
@@ -805,6 +824,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+
+#pragma mark - Token Execution
+
+// WARNING: This is called on PTYTask's thread.
+- (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority {
+    [_tokenExecutor addTokens:vector length:length highPriority:highPriority];
+}
+
+- (void)scheduleTokenExecution {
+    [_tokenExecutor schedule];
+}
 
 #pragma mark - iTermMarkDelegate
 

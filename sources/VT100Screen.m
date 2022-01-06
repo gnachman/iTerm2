@@ -94,15 +94,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                 slownessDetector:(iTermSlownessDetector *)slownessDetector {
     self = [super init];
     if (self) {
-        _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
+        _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self
+                                                                    slownessDetector:slownessDetector];
         _state = [_mutableState retain];
         _mutableState.colorMap.darkMode = darkMode;
 
         assert(terminal);
         [self setTerminal:terminal];
-        _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:terminal
-                                                     slownessDetector:slownessDetector
-                                                                queue:dispatch_get_main_queue()];
         _mutableState.primaryGrid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(kDefaultScreenColumns,
                                                                                        kDefaultScreenRows)
                                                             delegate:self] autorelease];
@@ -124,7 +122,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [dvr_ release];
     [_state release];
     [_mutableState release];
-    [_tokenExecutor release];
 
     [super dealloc];
 }
@@ -1396,6 +1393,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Mutation Wrappers
+
+// Warning: this is called on PTYTask's thread.
+- (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority {
+    [self mutAddTokens:vector length:length highPriority:highPriority];
+}
+
+- (void)scheduleTokenExecution {
+    [self mutScheduleTokenExecution];
+}
 
 - (id<PTYTriggerEvaluatorDelegate>)triggerEvaluatorDelegate {
 #warning TODO: Remove this temporary hack when trigger evaluator moves to mutable state.
