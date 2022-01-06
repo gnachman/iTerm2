@@ -14925,6 +14925,9 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     }
     const int height = MAX(1, _screen.height);
     const int top = MAX(0, line - height + 1);
+    if (_screen.numberOfLines < line) {
+        return;
+    }
     [_textview scrollLineNumberRangeIntoView:VT100GridRangeMake(top, height)];
     [[self.view.scrollview ptyVerticalScroller] setUserScroll:YES];
 }
