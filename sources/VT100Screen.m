@@ -1394,6 +1394,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Mutation Wrappers
 
+- (void)injectData:(NSData *)data {
+    [self mutInjectData:data];
+}
+
+- (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {
+    return [self mutAddNoteWithText:text inAbsoluteRange:absRange];
+}
+
+
 // Warning: this is called on PTYTask's thread.
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority {
     [self mutAddTokens:vector length:length highPriority:highPriority];

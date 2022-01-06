@@ -816,7 +816,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)toggleTmuxPausePane;
 
 - (void)addNoteAtCursor;
-- (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)range;
 - (void)previousMark;
 - (void)nextMark;
 - (void)previousAnnotation;

@@ -45,7 +45,6 @@ extern NSString * const kTriggerDisabledKey;
 - (void)triggerSession:(Trigger *)trigger launchCoprocessWithCommand:(NSString *)command identifier:(NSString * _Nullable)identifier silent:(BOOL)silent;
 - (id<iTermTriggerScopeProvider>)triggerSessionVariableScopeProvider:(Trigger *)trigger;
 - (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger;
-- (void)triggerSessionMakeFirstResponder:(Trigger *)trigger;
 - (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message;
 - (void)triggerSession:(Trigger *)trigger
   highlightTextInRange:(NSRange)rangeInScreenChars

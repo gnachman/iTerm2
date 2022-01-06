@@ -17,6 +17,7 @@
 @property(nonatomic, copy) NSArray *values;
 @property(nonatomic, retain) iTermPromise<NSString *> *promisedCommand;
 @property(nonatomic, assign) BOOL state;  // user-defined state
+#warning TODO: Which threads can access mark? Who can change it? This is risky.
 @property(nonatomic, retain) iTermCapturedOutputMark *mark;
 @property(nonatomic, assign) long long absoluteLineNumber;
 

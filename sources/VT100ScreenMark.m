@@ -153,6 +153,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
 }
 
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput {
+#warning TODO: This needs to be thread-safe. Or move it all to one thread. But be sure to check it!
     if (!_capturedOutput) {
         _capturedOutput = [[NSMutableArray alloc] init];
     } else if ([self mergeCapturedOutputIfPossible:capturedOutput]) {

@@ -270,6 +270,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (id<PTYTriggerEvaluatorDelegate>)triggerEvaluatorDelegate;
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
 - (void)scheduleTokenExecution;
+- (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange;
+- (void)injectData:(NSData *)data;
 
 @end
 

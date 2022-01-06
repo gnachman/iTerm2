@@ -11,6 +11,7 @@
 @class iTermColorMap;
 @protocol iTermMark;
 @class iTermSelection;
+@protocol iTermObject;
 @protocol iTermOrderedToken;
 
 @protocol iTermTriggerSideEffectExecutor<NSObject>
@@ -22,7 +23,6 @@
                                          identifier:(NSString * _Nullable)identifier
                                              silent:(BOOL)silent
                                        triggerTitle:(NSString * _Nonnull)triggerTitle;
-- (void)triggerSideEffectMakeFirstResponder;
 - (void)triggerSideEffectPostUserNotificationWithMessage:(NSString * _Nonnull)message;
 - (void)triggerSideEffectStopScrollingAtLine:(long long)absLine;
 - (void)triggerSideEffectOpenPasswordManagerToAccountName:(NSString * _Nullable)accountName;
@@ -30,6 +30,7 @@
                                          pool:(iTermBackgroundCommandRunnerPool * _Nonnull)pool;
 - (void)triggerWriteTextWithoutBroadcasting:(NSString * _Nonnull)text;
 - (void)triggerSideEffectShowAlertWithMessage:(NSString * _Nonnull)message
+                                    rateLimit:(iTermRateLimitedUpdate * _Nonnull)rateLimit
                                       disable:(void (^ _Nonnull)(void))disable;
 - (iTermVariableScope * _Nonnull)triggerSideEffectVariableScope;
 - (void)triggerSideEffectSetTitle:(NSString * _Nonnull)newName;
@@ -40,10 +41,11 @@
 - (void)triggerSideEffectSetValue:(id _Nullable)value
                  forVariableNamed:(NSString * _Nonnull)name;
 - (void)triggerSideEffectCurrentDirectoryDidChange;
+- (void)triggerSideEffectShowCapturedOutputTool;
 
 @end
 
-@protocol VT100ScreenDelegate <NSObject, iTermColorMapDelegate, iTermTriggerSideEffectExecutor>
+@protocol VT100ScreenDelegate <NSObject, iTermColorMapDelegate, iTermObject, iTermTriggerSideEffectExecutor>
 
 // Screen contents have become dirty and should be redrawn right away.
 - (void)screenNeedsRedraw;
