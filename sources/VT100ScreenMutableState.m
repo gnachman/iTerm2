@@ -901,10 +901,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - iTermTriggerScopeProvider
 
 - (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block {
-#warning TODO: Stop processing additional tokens until the next spin of the mainloop because they could modify variables causing state to appear to have time-traveled.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         assert([NSThread isMainThread]);
         block([delegate triggerSideEffectVariableScope], delegate);
+        [unpauser unpause];
     }];
 }
 
@@ -921,33 +922,28 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-// This can be completely async
 - (void)triggerSessionRingBell:(Trigger *)trigger {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectRingBell];
     }];
 }
 
-// This can be completely async
 - (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectShowCapturedOutputTool];
     }];
 }
 
-// This is already sync-safe
 - (BOOL)triggerSessionIsShellIntegrationInstalled:(Trigger *)trigger {
     return self.shellIntegrationInstalled;
 }
 
-// This can be completely async
 - (void)triggerSessionShowShellIntegrationRequiredAnnouncement:(Trigger *)trigger {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectShowShellIntegrationRequiredAnnouncement];
     }];
 }
 
-// This can be completely async
 - (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:(Trigger *)trigger {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded];
@@ -970,7 +966,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-// This can be completely async
 - (void)triggerSession:(Trigger *)trigger
 launchCoprocessWithCommand:(NSString *)command
             identifier:(NSString * _Nullable)identifier
@@ -988,19 +983,16 @@ launchCoprocessWithCommand:(NSString *)command
     return self;
 }
 
-// This can be synchronous by moving the logic into VT100ScreenMutableState
 - (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger {
     return self.config.triggerParametersUseInterpolatedStrings;
 }
 
-// This can be completely async
 - (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectPostUserNotificationWithMessage:message];
     }];
 }
 
-// This can be completely synchyronous
 - (void)triggerSession:(Trigger *)trigger
   highlightTextInRange:(NSRange)rangeInScreenChars
           absoluteLine:(long long)lineNumber
@@ -1011,7 +1003,6 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 - (void)triggerSession:(Trigger *)trigger saveCursorLineAndStopScrolling:(BOOL)stopScrolling {
-    // sync
     [self saveCursorLine];
     if (!stopScrolling) {
         return;
@@ -1022,14 +1013,12 @@ launchCoprocessWithCommand:(NSString *)command
     }];
 }
 
-// This can be completely async
 - (void)triggerSession:(Trigger *)trigger openPasswordManagerToAccountName:(NSString *)accountName {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectOpenPasswordManagerToAccountName:accountName];
     }];
 }
 
-// This can be completely async
 - (void)triggerSession:(Trigger *)trigger
             runCommand:(nonnull NSString *)command
         withRunnerPool:(nonnull iTermBackgroundCommandRunnerPool *)pool {
@@ -1038,14 +1027,12 @@ launchCoprocessWithCommand:(NSString *)command
     }];
 }
 
-// This can be completely async
 - (void)triggerSession:(Trigger *)trigger writeText:(NSString *)text {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerWriteTextWithoutBroadcasting:text];
     }];
 }
 
-// This can be completely synchyronous
 - (void)triggerSession:(Trigger *)trigger setRemoteHostName:(NSString *)remoteHost {
     [self setRemoteHostFromString:remoteHost];
 }
@@ -1061,7 +1048,6 @@ launchCoprocessWithCommand:(NSString *)command
 
 // STOP THE WORLD - sync
 - (void)triggerSession:(Trigger *)trigger didChangeNameTo:(NSString *)newName {
-#warning TODO: It would be nice to stop the world here so that the title change would be reflected immediately (e.g., in variables or title reporting.)
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectSetTitle:newName];
@@ -1069,7 +1055,6 @@ launchCoprocessWithCommand:(NSString *)command
     }];
 }
 
-// This can be completely synchyronousT
 - (void)triggerSession:(Trigger *)trigger didDetectPromptAt:(VT100GridAbsCoordRange)range {
     DLog(@"Trigger detected prompt at %@", VT100GridAbsCoordRangeDescription(range));
 
@@ -1085,35 +1070,34 @@ launchCoprocessWithCommand:(NSString *)command
     [self setCoordinateOfCommandStart:range.end];
 }
 
-// This can be completely synchyronous
 - (void)triggerSession:(Trigger *)trigger
     makeHyperlinkToURL:(NSURL *)url
                inRange:(NSRange)rangeInString
                   line:(long long)lineNumber {
-#warning TODO: Make iTermURLStore threadsafe
-    // add URL to URL Store and retrieve URL code for later reference
+    // Add URL to URL Store and retrieve URL code for later reference.
     unsigned int code = [[iTermURLStore sharedInstance] codeForURL:url withParams:@""];
 
-    // add url link to screen
+    // Modify grid to add URL attribute to affected cells.
     [self linkTextInRange:rangeInString basedAtAbsoluteLineNumber:lineNumber URLCode:code];
 
-    // add invisible URL Mark so the URL can automatically freed
+    // Add invisible URL Mark so the URL can automatically freed.
     iTermURLMark *mark = [self addMarkStartingAtAbsoluteLine:lineNumber
                                                      oneLine:YES
                                                      ofClass:[iTermURLMark class]];
     mark.code = code;
 }
 
-// STOP THE WORLD - sync
 - (void)triggerSession:(Trigger *)trigger
                 invoke:(NSString *)invocation
          withVariables:(NSDictionary *)temporaryVariables
               captures:(NSArray<NSString *> *)captureStringArray {
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectInvokeFunctionCall:invocation
                                         withVariables:temporaryVariables
                                              captures:captureStringArray
                                               trigger:trigger];
+        [unpauser unpause];
     }];
 }
 
@@ -1136,7 +1120,6 @@ launchCoprocessWithCommand:(NSString *)command
     annotation.stringValue = stringValue;
 }
 
-// This can be completely synchyronous
 - (void)triggerSession:(Trigger *)trigger
        highlightLineAt:(VT100GridAbsCoord)absCoord
                 colors:(NSDictionary *)colors {
@@ -1161,16 +1144,11 @@ launchCoprocessWithCommand:(NSString *)command
                         colors:colors];
 }
 
-// This can be completely synchyronous
 - (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data {
     [self injectData:data];
 }
 
-// STOP THE WORLD - sync
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value {
-    // This doesn't need to stop the world because subsequent triggers that use variables can
-    // consume them only on the main thread. There is a risk if triggers can interact with each
-    // other in other ways that they get reordered, though.
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectSetValue:value forVariableNamed:name];
     }];
