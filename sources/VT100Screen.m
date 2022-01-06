@@ -90,7 +90,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal
                         darkMode:(BOOL)darkMode
-                   configuration:(id<VT100ScreenConfiguration>)config {
+                   configuration:(id<VT100ScreenConfiguration>)config
+                slownessDetector:(iTermSlownessDetector *)slownessDetector {
     self = [super init];
     if (self) {
         _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
@@ -99,6 +100,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
         assert(terminal);
         [self setTerminal:terminal];
+        _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:terminal
+                                                     slownessDetector:slownessDetector
+                                                                queue:dispatch_get_main_queue()];
         _mutableState.primaryGrid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(kDefaultScreenColumns,
                                                                                        kDefaultScreenRows)
                                                             delegate:self] autorelease];
@@ -120,6 +124,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [dvr_ release];
     [_state release];
     [_mutableState release];
+    [_tokenExecutor release];
 
     [super dealloc];
 }

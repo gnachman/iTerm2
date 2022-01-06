@@ -896,7 +896,6 @@ backgroundColor:(NSColor *)backgroundColor;
 
 - (BOOL)willEnableMetal;
 - (BOOL)metalAllowed:(out iTermMetalUnavailableReason *)reason;
-- (void)executeTokens:(const CVector *)vector bytesHandled:(int)length;
 - (void)injectData:(NSData *)data;
 
 // Call this when a session moves to a different tab or window to update the session ID.

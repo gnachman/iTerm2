@@ -1190,6 +1190,8 @@
 		A620041E248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = A620041C248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h */; };
 		A620041F248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = A620041D248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m */; };
 		A62132D12786109000B80724 /* CapturedOutput.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57D31B11882900B4F135 /* CapturedOutput.m */; };
+		A62132D327862A4800B80724 /* TokenExecutor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A62132D227862A4800B80724 /* TokenExecutor.swift */; };
+		A62132D62786544A00B80724 /* CVector.m in Sources */ = {isa = PBXBuildFile; fileRef = A62132D42786542900B80724 /* CVector.m */; };
 		A621DDA8211D01D50095A399 /* NSAppearance+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A621DDA6211D01D50095A399 /* NSAppearance+iTerm.h */; };
 		A621DDA9211D01D50095A399 /* NSAppearance+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A621DDA7211D01D50095A399 /* NSAppearance+iTerm.m */; };
 		A621F0FD26F27D16001DD3A6 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
@@ -5098,6 +5100,8 @@
 		A61F8E2F1E62591800D315D0 /* iTermFakeUserDefaults.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFakeUserDefaults.m; sourceTree = "<group>"; };
 		A620041C248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTmuxBufferSizeMonitor.h; sourceTree = "<group>"; };
 		A620041D248B7CFC007D349C /* iTermTmuxBufferSizeMonitor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermTmuxBufferSizeMonitor.m; sourceTree = "<group>"; };
+		A62132D227862A4800B80724 /* TokenExecutor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenExecutor.swift; sourceTree = "<group>"; };
+		A62132D42786542900B80724 /* CVector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CVector.m; sourceTree = "<group>"; };
 		A621DDA6211D01D50095A399 /* NSAppearance+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAppearance+iTerm.h"; sourceTree = "<group>"; };
 		A621DDA7211D01D50095A399 /* NSAppearance+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAppearance+iTerm.m"; sourceTree = "<group>"; };
 		A621F0FF26F2AFAF001DD3A6 /* iTermMetadata.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetadata.h; sourceTree = "<group>"; };
@@ -7041,7 +7045,6 @@
 				1D9DDD9A142E5FBB00275650 /* Coprocess.h */,
 				1D9DDD90142E5AC600275650 /* CoprocessTrigger.h */,
 				A6F981CB1C13783C00EE0B80 /* iTermCPS.h */,
-				A699BAE418C8394700D425A7 /* CVector.h */,
 				1DD39B18180B82F5004E56D5 /* DebugLogging.h */,
 				1D03D41D191419080049EB8F /* DirectoriesPopup.h */,
 				1D93D33312695442007F741B /* DVR.h */,
@@ -8792,10 +8795,10 @@
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				A667C2542773C1D1006B4DEF /* VT100ScreenSideEffects.h */,
-				A667C2532773C1D0006B4DEF /* VT100ScreenSideEffects.m */,
 				A60E046426E037BD00DD162B /* ContentSubscriber.swift */,
 				1D9DDD9B142E5FBB00275650 /* Coprocess.m */,
+				A699BAE418C8394700D425A7 /* CVector.h */,
+				A62132D42786542900B80724 /* CVector.m */,
 				1DD39B19180B82F5004E56D5 /* DebugLogging.m */,
 				20E74F4904E9089700000106 /* ITAddressBookMgr.m */,
 				A6D463E82404482D005D073D /* iTermAlphaBlendingHelper.h */,
@@ -8891,6 +8894,7 @@
 				F52ED8DD037F0A7D01A8A066 /* PTYSession.m */,
 				A6F718D5226704920053488E /* PTYSession+ARC.h */,
 				A6F718D6226704920053488E /* PTYSession+ARC.m */,
+				A667C267277AEDB2006B4DEF /* PTYSession+Private.h */,
 				A6BEE47D26E7E4CC009C0C2C /* PTYSessionZoomState.swift */,
 				1DD6707614934ADE008E4361 /* PTYSplitView.m */,
 				1D2E802D129DA45A00F3D71E /* PTYTab.m */,
@@ -8903,12 +8907,15 @@
 				A6F718BA226596DB0053488E /* PTYTextView+ARC.m */,
 				A6F718BD226597300053488E /* PTYTextView+Private.h */,
 				A692666B210A341000A980C7 /* PTYTextViewDataSource.m */,
+				A667C263277A3B29006B4DEF /* PTYTriggerEvaluator.h */,
+				A667C264277A3B29006B4DEF /* PTYTriggerEvaluator.m */,
 				F56B230B03A1B36701A8A066 /* PTYWindow.m */,
 				1D36155412CBF33E00803EA9 /* ScreenChar.m */,
 				1D2E813012A18F7500F3D71E /* SessionView.m */,
 				A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */,
 				A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */,
 				1D44218B1290B34500891504 /* TextViewWrapper.m */,
+				A62132D227862A4800B80724 /* TokenExecutor.swift */,
 				1D8B8A121806038F00C2DC25 /* VT100Grid.h */,
 				1D8B8A131806038F00C2DC25 /* VT100Grid.m */,
 				1DD39ACE180B7884004E56D5 /* VT100GridTypes.m */,
@@ -8920,17 +8927,16 @@
 				A6E152582761F02600D0F41C /* VT100Screen+Mutation.h */,
 				A6E152592761F02600D0F41C /* VT100Screen+Mutation.m */,
 				A6E1525D2762AFBD00D0F41C /* VT100Screen+Private.h */,
-				A6F7F8042763F47B005E433E /* VT100ScreenState.h */,
-				A6F7F8052763F47B005E433E /* VT100ScreenState.m */,
 				A667C24527724EEA006B4DEF /* VT100Screen+Resizing.h */,
 				A667C24627724EEA006B4DEF /* VT100Screen+Resizing.m */,
 				A667C24A27725341006B4DEF /* VT100ScreenConfiguration.h */,
 				A667C24B27725341006B4DEF /* VT100ScreenConfiguration.m */,
-				A667C263277A3B29006B4DEF /* PTYTriggerEvaluator.h */,
-				A667C264277A3B29006B4DEF /* PTYTriggerEvaluator.m */,
-				A667C267277AEDB2006B4DEF /* PTYSession+Private.h */,
 				A667C268277B8DE2006B4DEF /* VT100ScreenMutableState.h */,
 				A667C269277B8DE2006B4DEF /* VT100ScreenMutableState.m */,
+				A667C2542773C1D1006B4DEF /* VT100ScreenSideEffects.h */,
+				A667C2532773C1D0006B4DEF /* VT100ScreenSideEffects.m */,
+				A6F7F8042763F47B005E433E /* VT100ScreenState.h */,
+				A6F7F8052763F47B005E433E /* VT100ScreenState.m */,
 				A667C26E277B8E19006B4DEF /* VT100ScreenState+Private.h */,
 			);
 			name = Core;
@@ -14208,6 +14214,7 @@
 				A65429BB20CE3C9F00CE71B1 /* iTermExpressionParser.m in Sources */,
 				5376CB0A2205337400FE7476 /* TmuxDashboardController.m in Sources */,
 				A6F718B22263E8A20053488E /* iTermInitialDirectory.m in Sources */,
+				A62132D327862A4800B80724 /* TokenExecutor.swift in Sources */,
 				A6566754219EA582005FE60E /* NSNull+iTerm.m in Sources */,
 				A629C706221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.m in Sources */,
 				A601F8902328B3E800EEE4DC /* iTermWeakReference.m in Sources */,
@@ -14637,6 +14644,7 @@
 				A6C7630A1B45C52B00E3C992 /* FindContext.m in Sources */,
 				A6C762C61B45C52B00E3C992 /* DebugLogging.m in Sources */,
 				A62C3A8A1BCAE03300B5629D /* iTermDirectoryTreeNode.m in Sources */,
+				A62132D62786544A00B80724 /* CVector.m in Sources */,
 				A6936B561D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m in Sources */,
 				A66DB8371C8E4CBB00233E88 /* iTermOpenQuicklyCommands.m in Sources */,
 				A6C7639C1B45C52B00E3C992 /* TmuxLayoutParser.m in Sources */,

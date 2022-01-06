@@ -29,6 +29,8 @@
 @class iTermAsyncFilter;
 @protocol iTermFilterDestination;
 @protocol iTermMark;
+@class iTermSlownessDetector;
+@class iTermTokenExecutor;
 
 // Key into dictionaryValue to get screen state.
 extern NSString *const kScreenStateKey;
@@ -81,11 +83,13 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, retain) id<VT100ScreenConfiguration> config;
 @property(nonatomic) long long fakePromptDetectedAbsLine;
 @property(nonatomic) long long lastPromptLine;
+@property(nonatomic, readonly) iTermTokenExecutor *tokenExecutor;
 
 // Designated initializer.
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal
                         darkMode:(BOOL)darkMode
-                   configuration:(id<VT100ScreenConfiguration>)config;
+                   configuration:(id<VT100ScreenConfiguration>)config
+                slownessDetector:(iTermSlownessDetector *)slownessDetector;
 
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.

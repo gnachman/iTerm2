@@ -445,10 +445,6 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     // Maps announcement identifiers to view controllers.
     NSMutableDictionary *_announcements;
 
-    // Tokens get queued when a shell enters the paused state. If it gets unpaused, then these are
-    // executed before any others.
-    NSMutableArray *_queuedTokens;
-
     // Moving average of time between bell rings
     MovingAverage *_bellRate;
     NSTimeInterval _lastBell;
@@ -643,11 +639,6 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
         _copyModeHandler = [[iTermCopyModeHandler alloc] init];
         _copyModeHandler.delegate = self;
 
-        // Experimentally, this is enough to keep the queue primed but not overwhelmed.
-        // TODO: How do slower machines fare?
-        static const int kMaxOutstandingExecuteCalls = 4;
-        _executionSemaphore = dispatch_semaphore_create(kMaxOutstandingExecuteCalls);
-
         _lastOutputIgnoringOutputAfterResizing = _lastInput;
         _lastUpdate = _lastInput;
         _pasteHelper = [[iTermPasteHelper alloc] init];
@@ -663,11 +654,15 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
         [[PTYSession sessionMap] setObject:self forKey:_guid];
 
         [self updateConfigurationFields];
+        _triggerEvaluator = [[PTYTriggerEvaluator alloc] init];
         _screen = [[VT100Screen alloc] initWithTerminal:_terminal
                                                darkMode:self.view.effectiveAppearance.it_isDark
-                                          configuration:_config];
-        _triggerEvaluator = [[PTYTriggerEvaluator alloc] initWithDelegate:_screen.triggerEvaluatorDelegate
-                                                               dataSource:_screen];
+                                          configuration:_config
+                                       slownessDetector:_triggerEvaluator.triggersSlownessDetector];
+        _triggerEvaluator.delegate = _screen.triggerEvaluatorDelegate;
+        _triggerEvaluator.dataSource = _screen;
+#warning TODO: Screen should be the delegate, eventually.
+        _screen.tokenExecutor.delegate = self;
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
 
         _overriddenFields = [[NSMutableSet alloc] init];
@@ -716,7 +711,6 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
         _lastOrCurrentlyRunningCommandAbsRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _activityCounter = [@0 retain];
         _announcements = [[NSMutableDictionary alloc] init];
-        _queuedTokens = [[NSMutableArray alloc] init];
         _commands = [[NSMutableArray alloc] init];
         _directories = [[NSMutableArray alloc] init];
         _hosts = [[NSMutableArray alloc] init];
@@ -856,7 +850,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_nameController release];
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
-    dispatch_release(_executionSemaphore);
     [_triggerEvaluator release];
     [_pasteboard release];
     [_pbtext release];
@@ -888,8 +881,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_tailFindContext release];
     [_patternedImage release];
     [_announcements release];
-    [self recycleQueuedTokens];
-    [_queuedTokens release];
     [_variables release];
     [_userVariables release];
     [_program release];
@@ -2575,7 +2566,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setExited:YES];
     [_view retain];  // hardstop and revive will release this.
     if (undoable) {
-        // TODO: executeTokens:bytesHandled: should queue up tokens to avoid a race condition.
         [self makeTerminationUndoable];
     } else {
         [self hardStop];
@@ -2926,128 +2916,12 @@ ITERM_WEAKLY_REFERENCEABLE
         [_echoProbe updateEchoProbeStateWithTokenCVector:&vector];
     }
 
-    // This limits the number of outstanding execution blocks to prevent the main thread from
-    // getting bogged down.
-    dispatch_semaphore_wait(_executionSemaphore, DISPATCH_TIME_FOREVER);
-
-    [self retain];
-    dispatch_retain(_executionSemaphore);
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (_useAdaptiveFrameRate) {
-            [_throughputEstimator addByteCount:length];
-        }
-        [self executeTokens:&vector bytesHandled:length];
-        [_cadenceController didHandleInput];
-
-        // Unblock the background thread; if it's ready, it can send the main thread more tokens
-        // now.
-        dispatch_semaphore_signal(_executionSemaphore);
-        dispatch_release(_executionSemaphore);
-        [self release];
-    });
-}
-
-- (void)synchronousReadTask:(NSString *)string {
-    NSData *data = [string dataUsingEncoding:self.encoding];
-    [_terminal.parser putStreamData:data.bytes length:data.length];
-    CVector vector;
-    CVectorCreate(&vector, 100);
-    [_terminal.parser addParsedTokensToVector:&vector];
-    if (CVectorCount(&vector) == 0) {
-        CVectorDestroy(&vector);
-        return;
-    }
-    [self executeTokens:&vector bytesHandled:data.length];
-}
-
-- (BOOL)shouldExecuteToken {
-    return (!_exited &&
-            _terminal &&
-            (self.tmuxMode == TMUX_GATEWAY || ![_shell hasMuteCoprocess]) &&
-            !_suppressAllOutput);
-}
-
-- (void)recycleQueuedTokens {
-    NSArray<VT100Token *> *tokens = [_queuedTokens retain];
-    [_queuedTokens autorelease];
-    _queuedTokens = [[NSMutableArray alloc] init];
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-        for (VT100Token *token in tokens) {
-            [token release];
-        }
-        [tokens release];
-    });
-}
-
-- (void)executeTokens:(const CVector *)vector bytesHandled:(int)length {
-    STOPWATCH_START(executing);
-    DLog(@"Session %@ begins executing tokens", self);
-    int n = CVectorCount(vector);
-
-    if (_shell.paused || _copyModeHandler.enabled) {
-        // Session was closed or is not accepting new tokens because it's in copy mode. These can
-        // be handled later (unclose or exit copy mode), so queue them up.
-        for (int i = 0; i < n; i++) {
-            [_queuedTokens addObject:CVectorGetObject(vector, i)];
-        }
-        CVectorDestroy(vector);
-        return;
-    } else if (_queuedTokens.count) {
-        // A closed session was just un-closed. Execute queued up tokens.
-        for (VT100Token *token in _queuedTokens) {
-            if (![self shouldExecuteToken]) {
-                break;
-            }
-            [_terminal executeToken:token];
-        }
-        [self recycleQueuedTokens];
-    }
-
-    [_triggerEvaluator.triggersSlownessDetector measureEvent:PTYSessionSlownessEventExecute block:^{
-        for (int i = 0; i < n; i++) {
-            if (![self shouldExecuteToken]) {
-                break;
-            }
-
-            VT100Token *token = CVectorGetObject(vector, i);
-            DLog(@"Execute token %@ cursor=(%d, %d)", token, _screen.cursorX - 1, _screen.cursorY - 1);
-            [_terminal executeToken:token];
-        }
-    }];
-
-    [self finishedHandlingNewOutputOfLength:length];
-
-    // When busy, we spend a lot of time performing recycleObject, so farm it
-    // off to a background thread.
-    CVector temp = *vector;
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-        for (int i = 0; i < n; i++) {
-            VT100Token *token = CVectorGetObject(&temp, i);
-            [token release];
-        }
-        CVectorDestroy(&temp);
-    })
-    STOPWATCH_LAP(executing);
+    [_screen.tokenExecutor addTokens:vector length:length];
 }
 
 - (BOOL)haveResizedRecently {
     const NSTimeInterval kGracePeriodAfterResize = 0.25;
     return [NSDate timeIntervalSinceReferenceDate] < _lastResize + kGracePeriodAfterResize;
-}
-
-- (void)finishedHandlingNewOutputOfLength:(int)length {
-    DLog(@"Session %@ (%@) is processing", self, _nameController.presentationSessionTitle);
-    if (![self haveResizedRecently]) {
-        _lastOutputIgnoringOutputAfterResizing = [NSDate timeIntervalSinceReferenceDate];
-    }
-    _newOutput = YES;
-
-    // Make sure the screen gets redrawn soonish
-    self.active = YES;
-
-    if (self.shell.pid > 0 || [[[self variablesScope] valueForVariableName:@"jobName"] length] > 0) {
-        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-    }
 }
 
 - (void)setAllTriggersEnabled:(BOOL)enabled {
@@ -3131,10 +3005,9 @@ ITERM_WEAKLY_REFERENCEABLE
     [self writeTask:string];
 }
 
-- (void)threadedTaskBrokenPipe
-{
+- (void)threadedTaskBrokenPipe {
     DLog(@"threaded task broken pipe");
-    // Put the call to brokenPipe in the same queue as executeTokens:bytesHandled: to avoid a race.
+    // Put the call to brokenPipe in the same queue as the token executor to avoid a race.
     dispatch_async(dispatch_get_main_queue(), ^{
         [self brokenPipe];
     });
@@ -11458,7 +11331,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         CVectorDestroy(&vector);
         return;
     }
-    [self executeTokens:&vector bytesHandled:data.length];
+    [self.screen.tokenExecutor addTokens:vector length:data.length highPriority:YES];
 }
 
 // indexes will be in [0,255].
@@ -14127,11 +14000,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if (_textview.selection.live) {
             [_textview.selection endLiveSelection];
         }
-        if (_queuedTokens.count > 0) {
-            CVector vector;
-            CVectorCreate(&vector, 1);
-            [self executeTokens:&vector bytesHandled:0];
-        }
+        [_screen.tokenExecutor schedule];
     }
 }
 
@@ -15420,6 +15289,57 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)triggerSideEffectCurrentDirectoryDidChange {
     [self didUpdateCurrentDirectory];
+}
+
+#pragma mark - iTermTokenExecutorDelegate
+
+- (BOOL)tokenExecutorShouldQueueTokens {
+    return _shell.paused || _copyModeHandler.enabled;
+}
+
+- (BOOL)tokenExecutorShouldDiscardTokens {
+    if (_exited) {
+        return YES;
+    }
+    if (!_terminal) {
+        return YES;
+    }
+    if (self.tmuxMode != TMUX_GATEWAY && [_shell hasMuteCoprocess]) {
+        return YES;
+    }
+    if (_suppressAllOutput) {
+        return YES;
+    }
+    return NO;
+}
+
+- (void)tokenExecutorWillEnqueueTokensWithLength:(NSInteger)length {
+    if (_useAdaptiveFrameRate) {
+        [_throughputEstimator addByteCount:length];
+    }
+}
+
+- (void)tokenExecutorDidExecuteWithLength:(NSInteger)length {
+    DLog(@"Session %@ (%@) is processing", self, _nameController.presentationSessionTitle);
+    if (![self haveResizedRecently]) {
+        _lastOutputIgnoringOutputAfterResizing = [NSDate timeIntervalSinceReferenceDate];
+    }
+    _newOutput = YES;
+
+    // Make sure the screen gets redrawn soonish
+    self.active = YES;
+
+    if (self.shell.pid > 0 || [[[self variablesScope] valueForVariableName:@"jobName"] length] > 0) {
+        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    }
+}
+
+- (void)tokenExecutorDidHandleInput {
+    [_cadenceController didHandleInput];
+}
+
+- (NSString *)tokenExecutorCursorCoordString {
+    return VT100GridCoordDescription(_screen.currentGrid.cursor);
 }
 
 @end

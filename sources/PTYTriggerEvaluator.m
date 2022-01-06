@@ -27,12 +27,9 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     BOOL _evaluating;
 }
 
-- (instancetype)initWithDelegate:(id<PTYTriggerEvaluatorDelegate>)delegate
-                      dataSource:(id<PTYTriggerEvaluatorDataSource>)dataSource {
+- (instancetype)init {
     self = [super init];
     if (self) {
-        _delegate = delegate;
-        _dataSource = dataSource;
         _triggerLineNumber = -1;
         _expect = [[iTermExpect alloc] initDry:NO];
         _triggersSlownessDetector = [[iTermSlownessDetector alloc] init];
