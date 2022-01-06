@@ -101,6 +101,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation;
 
+- (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange;
+
 - (void)addAnnotation:(PTYAnnotation *)annotation
               inRange:(VT100GridCoordRange)range
                 focus:(BOOL)focus;
@@ -128,6 +130,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
 - (void)scheduleTokenExecution;
+- (void)injectData:(NSData *)data;
 
 #pragma mark - Temporary
 

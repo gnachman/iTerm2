@@ -211,6 +211,11 @@
     }
 }
 
+- (PTYAnnotation *)mutAddNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {
+    return [_mutableState addNoteWithText:text inAbsoluteRange:absRange];
+}
+
+
 - (void)mutSetWorkingDirectory:(NSString *)workingDirectory
 #warning TODO: I need to use an absolute line number here to avoid race conditions between main thread and mutation thread.
                      onAbsLine:(long long)line
@@ -2810,6 +2815,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)mutFileReceiptEndedUnexpectedly {
     _mutableState.inlineImageHelper = nil;
     [delegate_ screenFileReceiptEndedUnexpectedly];
+}
+
+#pragma mark - Injection
+
+- (void)mutInjectData:(NSData *)data {
+    [_mutableState injectData:data];
 }
 
 #pragma mark - VT100TerminalDelegate

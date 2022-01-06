@@ -8,6 +8,7 @@
 #import "VT100ScreenMutableState.h"
 #import "VT100ScreenState+Private.h"
 
+#import "CapturedOutput.h"
 #import "DebugLogging.h"
 #import "PTYAnnotation.h"
 #import "PTYTriggerEvaluator.h"
@@ -17,11 +18,21 @@
 #import "VT100WorkingDirectory.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCapturedOutputMark.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
+#import "iTermTextExtractor.h"
+#import "iTermURLMark.h"
+#import "iTermURLStore.h"
 
-@interface VT100ScreenMutableState()<PTYTriggerEvaluatorDelegate, iTermMarkDelegate, iTermTriggerScopeProvider>
+@interface VT100ScreenMutableState()<
+PTYTriggerEvaluatorDelegate,
+iTermMarkDelegate,
+iTermTriggerSession,
+iTermTriggerScopeProvider>
+
 @property (atomic) BOOL hadCommand;
+
 @end
 
 @implementation VT100ScreenMutableState {
@@ -707,6 +718,19 @@
 
 #pragma mark - Annotations
 
+- (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {
+    VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange,
+                                                                     self.cumulativeScrollbackOverflow);
+    if (range.start.x < 0) {
+        return nil;
+    }
+    PTYAnnotation *annotation = [[PTYAnnotation alloc] init];
+    annotation.stringValue = text;
+    [self addAnnotation:annotation inRange:range focus:NO];
+    return annotation;
+}
+
+
 - (void)removeAnnotation:(PTYAnnotation *)annotation {
     if ([self.intervalTree containsObject:annotation]) {
         self.lastCommandMark = nil;
@@ -836,6 +860,20 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [_tokenExecutor schedule];
 }
 
+- (void)injectData:(NSData *)data {
+    VT100Parser *parser = [[VT100Parser alloc] init];
+    parser.encoding = self.terminal.encoding;
+    [parser putStreamData:data.bytes length:data.length];
+    CVector vector;
+    CVectorCreate(&vector, 100);
+    [parser addParsedTokensToVector:&vector];
+    if (CVectorCount(&vector) == 0) {
+        CVectorDestroy(&vector);
+        return;
+    }
+    [self addTokens:vector length:data.length highPriority:YES];
+}
+
 #pragma mark - iTermMarkDelegate
 
 - (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
@@ -860,174 +898,282 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
+#pragma mark - iTermTriggerScopeProvider
+
+- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block {
+#warning TODO: Stop processing additional tokens until the next spin of the mainloop because they could modify variables causing state to appear to have time-traveled.
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        assert([NSThread isMainThread]);
+        block([delegate triggerSideEffectVariableScope], delegate);
+    }];
+}
+
 #pragma mark - iTermTriggerSession
 
-#warning TODO: Move triggerSession impls here from PTYSession
+- (void)triggerSession:(Trigger *)trigger
+  showAlertWithMessage:(NSString *)message
+             rateLimit:(iTermRateLimitedUpdate *)rateLimit
+               disable:(void (^)(void))disable {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectShowAlertWithMessage:message
+                                              rateLimit:rateLimit
+                                                disable:disable];
+    }];
+}
+
+// This can be completely async
 - (void)triggerSessionRingBell:(Trigger *)trigger {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSessionRingBell:trigger];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectRingBell];
+    }];
 }
 
+// This can be completely async
 - (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSessionShowCapturedOutputTool:trigger];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectShowCapturedOutputTool];
+    }];
 }
 
+// This is already sync-safe
 - (BOOL)triggerSessionIsShellIntegrationInstalled:(Trigger *)trigger {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    return [delegate triggerSessionIsShellIntegrationInstalled:trigger];
+    return self.shellIntegrationInstalled;
 }
 
+// This can be completely async
 - (void)triggerSessionShowShellIntegrationRequiredAnnouncement:(Trigger *)trigger {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSessionShowShellIntegrationRequiredAnnouncement:trigger];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectShowShellIntegrationRequiredAnnouncement];
+    }];
 }
 
-- (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)output {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger didCaptureOutput:output];
-}
-
+// This can be completely async
 - (void)triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:(Trigger *)trigger {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSessionShowCapturedOutputToolNotVisibleAnnouncementIfNeeded:trigger];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded];
+    }];
 }
 
-- (void)triggerSession:(Trigger *)trigger launchCoprocessWithCommand:(NSString *)command identifier:(NSString * _Nullable)identifier silent:(BOOL)silent {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger launchCoprocessWithCommand:command identifier:identifier silent:silent];
+- (void)triggerSession:(Trigger *)trigger didCaptureOutput:(CapturedOutput *)capturedOutput {
+    capturedOutput.mark = (iTermCapturedOutputMark *)[self addMarkOnLine:self.numberOfScrollbackLines + self.cursorY - 1
+                                                                 ofClass:[iTermCapturedOutputMark class]];
+
+    VT100ScreenMark *lastCommandMark = self.lastCommandMark;
+    if (!lastCommandMark) {
+        // TODO: Show an announcement
+        return;
+    }
+#warning TODO: Changing shared state here
+    [lastCommandMark addCapturedOutput:capturedOutput];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectDidCaptureOutput];
+    }];
+}
+
+// This can be completely async
+- (void)triggerSession:(Trigger *)trigger
+launchCoprocessWithCommand:(NSString *)command
+            identifier:(NSString * _Nullable)identifier
+                silent:(BOOL)silent {
+    NSString *triggerName = [NSString stringWithFormat:@"%@ trigger", [[trigger.class title] stringByRemovingSuffix:@"…"]];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectLaunchCoprocessWithCommand:command
+                                                   identifier:identifier
+                                                       silent:silent
+                                                 triggerTitle:triggerName];
+    }];
 }
 
 - (id<iTermTriggerScopeProvider>)triggerSessionVariableScopeProvider:(Trigger *)trigger {
     return self;
 }
 
+// This can be synchronous by moving the logic into VT100ScreenMutableState
 - (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    return [delegate triggerSessionShouldUseInterpolatedStrings:trigger];
+    return self.config.triggerParametersUseInterpolatedStrings;
 }
 
-- (void)triggerSessionMakeFirstResponder:(Trigger *)trigger {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSessionMakeFirstResponder:trigger];
-}
-
+// This can be completely async
 - (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger postUserNotificationWithMessage:message];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectPostUserNotificationWithMessage:message];
+    }];
 }
 
+// This can be completely synchyronous
 - (void)triggerSession:(Trigger *)trigger
   highlightTextInRange:(NSRange)rangeInScreenChars
           absoluteLine:(long long)lineNumber
                 colors:(NSDictionary<NSString *, NSColor *> *)colors {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger highlightTextInRange:rangeInScreenChars absoluteLine:lineNumber colors:colors];
+    [self highlightTextInRange:rangeInScreenChars
+     basedAtAbsoluteLineNumber:lineNumber
+                        colors:colors];
 }
 
 - (void)triggerSession:(Trigger *)trigger saveCursorLineAndStopScrolling:(BOOL)stopScrolling {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger saveCursorLineAndStopScrolling:stopScrolling];
+    // sync
+    [self saveCursorLine];
+    if (!stopScrolling) {
+        return;
+    }
+    const long long line = self.cumulativeScrollbackOverflow + self.numberOfScrollbackLines + self.currentGrid.cursorY;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectStopScrollingAtLine:line];
+    }];
 }
 
+// This can be completely async
 - (void)triggerSession:(Trigger *)trigger openPasswordManagerToAccountName:(NSString *)accountName {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger openPasswordManagerToAccountName:accountName];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectOpenPasswordManagerToAccountName:accountName];
+    }];
 }
 
+// This can be completely async
 - (void)triggerSession:(Trigger *)trigger
-            runCommand:(NSString *)command
-        withRunnerPool:(iTermBackgroundCommandRunnerPool *)pool {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger runCommand:command withRunnerPool:pool];
+            runCommand:(nonnull NSString *)command
+        withRunnerPool:(nonnull iTermBackgroundCommandRunnerPool *)pool {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectRunBackgroundCommand:command pool:pool];
+    }];
 }
 
+// This can be completely async
 - (void)triggerSession:(Trigger *)trigger writeText:(NSString *)text {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger writeText:text];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerWriteTextWithoutBroadcasting:text];
+    }];
 }
 
+// This can be completely synchyronous
 - (void)triggerSession:(Trigger *)trigger setRemoteHostName:(NSString *)remoteHost {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger setRemoteHostName:remoteHost];
+    [self setRemoteHostFromString:remoteHost];
 }
 
-- (void)triggerSession:(Trigger *)trigger setCurrentDirectory:(NSString *)text {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger setCurrentDirectory:text];
+- (void)triggerSession:(Trigger *)trigger setCurrentDirectory:(NSString *)currentDirectory {
+    // Stop the world (this affects a variable)
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectCurrentDirectoryDidChange];
+    }];
+    // This can be sync
+    [self currentDirectoryDidChangeTo:currentDirectory];
 }
 
+// STOP THE WORLD - sync
 - (void)triggerSession:(Trigger *)trigger didChangeNameTo:(NSString *)newName {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger didChangeNameTo:newName];
+#warning TODO: It would be nice to stop the world here so that the title change would be reflected immediately (e.g., in variables or title reporting.)
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectSetTitle:newName];
+        [unpauser unpause];
+    }];
 }
 
+// This can be completely synchyronousT
 - (void)triggerSession:(Trigger *)trigger didDetectPromptAt:(VT100GridAbsCoordRange)range {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger didDetectPromptAt:range];
+    DLog(@"Trigger detected prompt at %@", VT100GridAbsCoordRangeDescription(range));
+
+    if (self.fakePromptDetectedAbsLine == -2) {
+        // Infer the end of the preceding command. Set a return status of 0 since we don't know what it was.
+        [self setReturnCodeOfLastCommand:0];
+    }
+    // Use 0 here to avoid the screen inserting a newline.
+    range.start.x = 0;
+    [self promptDidStartAt:range.start];
+    self.fakePromptDetectedAbsLine = range.start.y;
+
+    [self setCoordinateOfCommandStart:range.end];
 }
 
+// This can be completely synchyronous
 - (void)triggerSession:(Trigger *)trigger
     makeHyperlinkToURL:(NSURL *)url
                inRange:(NSRange)rangeInString
                   line:(long long)lineNumber {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger makeHyperlinkToURL:url inRange:rangeInString line:lineNumber];
+#warning TODO: Make iTermURLStore threadsafe
+    // add URL to URL Store and retrieve URL code for later reference
+    unsigned int code = [[iTermURLStore sharedInstance] codeForURL:url withParams:@""];
+
+    // add url link to screen
+    [self linkTextInRange:rangeInString basedAtAbsoluteLineNumber:lineNumber URLCode:code];
+
+    // add invisible URL Mark so the URL can automatically freed
+    iTermURLMark *mark = [self addMarkStartingAtAbsoluteLine:lineNumber
+                                                     oneLine:YES
+                                                     ofClass:[iTermURLMark class]];
+    mark.code = code;
 }
 
+// STOP THE WORLD - sync
 - (void)triggerSession:(Trigger *)trigger
                 invoke:(NSString *)invocation
          withVariables:(NSDictionary *)temporaryVariables
               captures:(NSArray<NSString *> *)captureStringArray {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger invoke:invocation withVariables:temporaryVariables captures:captureStringArray];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectInvokeFunctionCall:invocation
+                                        withVariables:temporaryVariables
+                                             captures:captureStringArray
+                                              trigger:trigger];
+    }];
+}
+
+- (PTYAnnotation *)triggerSession:(Trigger *)trigger
+            makeAnnotationInRange:(NSRange)rangeInScreenChars
+                             line:(long long)lineNumber {
+    assert(rangeInScreenChars.length > 0);
+    const long long width = self.width;
+    const VT100GridAbsCoordRange absRange =
+        VT100GridAbsCoordRangeMake(rangeInScreenChars.location,
+                                   lineNumber,
+                                   NSMaxRange(rangeInScreenChars) % width,
+                                   lineNumber + (NSMaxRange(rangeInScreenChars) - 1) / width);
+    return [self addNoteWithText:@"" inAbsoluteRange:absRange];
 }
 
 - (void)triggerSession:(Trigger *)trigger
          setAnnotation:(PTYAnnotation *)annotation
               stringTo:(NSString *)stringValue {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger setAnnotation:annotation stringTo:stringValue];
+    annotation.stringValue = stringValue;
 }
 
+// This can be completely synchyronous
 - (void)triggerSession:(Trigger *)trigger
        highlightLineAt:(VT100GridAbsCoord)absCoord
                 colors:(NSDictionary *)colors {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger highlightLineAt:absCoord colors:colors];
+    iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:self];
+    BOOL ok = NO;
+    const VT100GridCoord coord = VT100GridCoordFromAbsCoord(absCoord, self.cumulativeScrollbackOverflow, &ok);
+    if (!ok) {
+        return;
+    }
+    const VT100GridWindowedRange wrappedRange =
+    [extractor rangeForWrappedLineEncompassing:coord
+                          respectContinuations:NO
+                                      maxChars:self.width * 10];
+
+    const long long lineLength = VT100GridCoordRangeLength(wrappedRange.coordRange,
+                                                           self.width);
+    const int width = self.width;
+    const long long lengthToHighlight = ceil((double)lineLength / (double)width);
+    const NSRange range = NSMakeRange(0, lengthToHighlight * width);
+    [self highlightTextInRange:range
+     basedAtAbsoluteLineNumber:absCoord.y
+                        colors:colors];
 }
 
+// This can be completely synchyronous
 - (void)triggerSession:(Trigger *)trigger injectData:(NSData *)data {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger injectData:data];
+    [self injectData:data];
 }
 
+// STOP THE WORLD - sync
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger setVariableNamed:name toValue:value];
-}
-
-- (void)triggerSession:(Trigger *)trigger
-  showAlertWithMessage:(NSString *)message
-             rateLimit:(iTermRateLimitedUpdate *)rateLimit
-               disable:(void (^)(void))disable {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate triggerSession:trigger showAlertWithMessage:message rateLimit:rateLimit disable:disable];
-}
-
-- (PTYAnnotation * _Nullable)triggerSession:(Trigger *)trigger
-                      makeAnnotationInRange:(NSRange)rangeInScreenChars
-                                       line:(long long)lineNumber {
-    id<iTermTriggerSession> delegate = (id<iTermTriggerSession>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    return [delegate triggerSession:trigger makeAnnotationInRange:rangeInScreenChars line:lineNumber];
-}
-
-#pragma mark - iTermTriggerScopeProvider
-
-- (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block {
-    id<iTermTriggerScopeProvider> delegate = (id<iTermTriggerScopeProvider>)self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-#warning TODO: Move impl here
-    [delegate performBlockWithScope:block];
+    // This doesn't need to stop the world because subsequent triggers that use variables can
+    // consume them only on the main thread. There is a risk if triggers can interact with each
+    // other in other ways that they get reordered, though.
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate triggerSideEffectSetValue:value forVariableNamed:name];
+    }];
 }
 
 @end

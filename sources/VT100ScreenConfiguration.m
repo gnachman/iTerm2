@@ -14,6 +14,7 @@
 @property (nonatomic, readwrite) BOOL treatAmbiguousCharsAsDoubleWidth;
 @property (nonatomic, readwrite) NSInteger unicodeVersion;
 @property (nonatomic, readwrite) BOOL enableTriggersInInteractiveApps;
+@property (nonatomic, readwrite) BOOL triggerParametersUseInterpolatedStrings;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -23,6 +24,7 @@
 @synthesize treatAmbiguousCharsAsDoubleWidth = _treatAmbiguousCharsAsDoubleWidth;
 @synthesize unicodeVersion = _unicodeVersion;
 @synthesize enableTriggersInInteractiveApps = _enableTriggersInInteractiveApps;
+@synthesize triggerParametersUseInterpolatedStrings = _triggerParametersUseInterpolatedStrings;
 
 - (instancetype)initFrom:(VT100ScreenConfiguration *)other {
     self = [super init];
@@ -32,6 +34,7 @@
         _treatAmbiguousCharsAsDoubleWidth = other.treatAmbiguousCharsAsDoubleWidth;
         _unicodeVersion = other.unicodeVersion;
         _enableTriggersInInteractiveApps = other.enableTriggersInInteractiveApps;
+        _triggerParametersUseInterpolatedStrings = other.triggerParametersUseInterpolatedStrings;
     }
     return self;
 }
@@ -46,6 +49,7 @@
                             @"treatAmbiguousCharsAsDoubleWidth": @(_treatAmbiguousCharsAsDoubleWidth),
                             @"unicodeVersion": @(_unicodeVersion),
                             @"enableTriggersInInteractiveApps": @(_enableTriggersInInteractiveApps),
+                            @"triggerParametersUseInterpolatedStrings": @(_triggerParametersUseInterpolatedStrings),
     };
     NSArray<NSString *> *keys = [dict.allKeys sortedArrayUsingSelector:@selector(compare:)];
     NSArray<NSString *> *kvps = [keys mapWithBlock:^id(NSString *key) {
@@ -63,6 +67,7 @@
 @dynamic treatAmbiguousCharsAsDoubleWidth;
 @dynamic unicodeVersion;
 @dynamic enableTriggersInInteractiveApps;
+@dynamic triggerParametersUseInterpolatedStrings;
 
 - (id)copyWithZone:(NSZone *)zone {
     return [[VT100ScreenConfiguration alloc] initFrom:self];

@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL treatAmbiguousCharsAsDoubleWidth;
 @property (nonatomic, readonly) NSInteger unicodeVersion;
 @property (nonatomic, readonly) BOOL enableTriggersInInteractiveApps;
+@property (nonatomic, readonly) BOOL triggerParametersUseInterpolatedStrings;
 
 @end
 
@@ -34,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL treatAmbiguousCharsAsDoubleWidth;
 @property (nonatomic, readwrite) NSInteger unicodeVersion;
 @property (nonatomic, readwrite) BOOL enableTriggersInInteractiveApps;
+@property (nonatomic, readwrite) BOOL triggerParametersUseInterpolatedStrings;
 
 @end
 
