@@ -1745,6 +1745,7 @@
     } else {
         [_mutableState.currentGrid moveCursorToLeftMargin];
     }
+    // Consider moving this up to the top of the function so Inject triggers can run before the cursor moves. I should audit all calls to screenTriggerableChangeDidOccur since there could be other such opportunities.
     [delegate_ screenTriggerableChangeDidOccur];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];

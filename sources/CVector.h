@@ -59,6 +59,9 @@ NS_INLINE id CVectorLastObject(const CVector *vector) {
     return (__bridge id)(CVectorGet(vector, vector->count - 1));
 }
 
+// Call -release on all objects in `vector`.
+void CVectorReleaseObjects(const CVector *vector);
+
 // Hacky but fast templates in C.
 //
 // CTVector(double) myVector;
