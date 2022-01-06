@@ -10,6 +10,7 @@
 
 @protocol VT100ScreenConfiguration;
 @protocol iTermOrderedToken;
+@class iTermTokenExecutor;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -24,8 +25,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
 @property (atomic, weak) id<VT100ScreenSideEffectPerforming> sideEffectPerformer;
 @property (nonatomic, copy) id<VT100ScreenConfiguration> config;
+@property(nonatomic, readonly) iTermTokenExecutor *tokenExecutor;
 
-- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
+#warning TODO: Remove slownessDetector
+- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer
+                           slownessDetector:(iTermSlownessDetector *)slownessDetector NS_DESIGNATED_INITIALIZER;
 - (id<VT100ScreenState>)copy;
 
 #pragma mark - Internal
@@ -119,6 +123,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)highlightTextInRange:(NSRange)range
    basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                       colors:(NSDictionary *)colors;
+
+#pragma mark - Token Execution
+
+- (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
+- (void)scheduleTokenExecution;
+
+#pragma mark - Temporary
+
+- (void)setTokenExecutorDelegate:(id)delegate;
 
 @end
 

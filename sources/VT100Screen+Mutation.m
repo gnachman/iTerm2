@@ -2482,6 +2482,15 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 #pragma mark - Accessors
 
+// WARNING: This is called on PTYTask's thread.
+- (void)mutAddTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority {
+    [_mutableState addTokens:vector length:length highPriority:highPriority];
+}
+
+- (void)mutScheduleTokenExecution {
+    [_mutableState scheduleTokenExecution];
+}
+
 - (void)mutSetShouldExpectPromptMarks:(BOOL)value {
     _mutableState.shouldExpectPromptMarks = value;
 }
@@ -2492,6 +2501,8 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 - (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate {
     _mutableState.colorMap.delegate = delegate;
+#warning TODO: This is temporary. Mutable state should be the delegate.
+    [_mutableState setTokenExecutorDelegate:delegate];
     delegate_ = delegate;
 }
 
