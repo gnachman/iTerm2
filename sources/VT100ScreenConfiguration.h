@@ -22,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSInteger unicodeVersion;
 @property (nonatomic, readonly) BOOL enableTriggersInInteractiveApps;
 @property (nonatomic, readonly) BOOL triggerParametersUseInterpolatedStrings;
+@property (nonatomic, copy, readonly) NSArray<NSDictionary *> *triggerProfileDicts;
+@property (nonatomic, readonly) BOOL isDirty;
 
 @end
 
@@ -36,6 +38,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) NSInteger unicodeVersion;
 @property (nonatomic, readwrite) BOOL enableTriggersInInteractiveApps;
 @property (nonatomic, readwrite) BOOL triggerParametersUseInterpolatedStrings;
+@property (nonatomic, copy, readwrite) NSArray<NSDictionary *> *triggerProfileDicts;
+@property (nonatomic, readwrite) BOOL isDirty;
 
 @end
 

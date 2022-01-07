@@ -25,11 +25,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
 @property (atomic, weak) id<VT100ScreenSideEffectPerforming> sideEffectPerformer;
 @property (nonatomic, copy) id<VT100ScreenConfiguration> config;
-@property(nonatomic, readonly) iTermTokenExecutor *tokenExecutor;
+@property (nonatomic, readonly) iTermTokenExecutor *tokenExecutor;
+@property (nonatomic) BOOL exited;
 
 #warning TODO: Remove slownessDetector
-- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer
-                           slownessDetector:(iTermSlownessDetector *)slownessDetector NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
 - (id<VT100ScreenState>)copy;
 
 #pragma mark - Internal
@@ -131,6 +131,19 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
 - (void)scheduleTokenExecution;
 - (void)injectData:(NSData *)data;
+
+#pragma mark - Triggers
+
+- (void)performPeriodicTriggerCheck;
+- (void)clearTriggerLine;
+- (void)appendStringToTriggerLine:(NSString *)string;
+- (void)appendAsciiDataToTriggerLine:(AsciiData *)asciiData;
+- (void)forceCheckTriggers;
+
+#pragma mark - Cross-Thread Sync
+
+- (void)willSynchronize;
+- (void)updateExpectFrom:(iTermExpect *)source;
 
 #pragma mark - Temporary
 

@@ -90,12 +90,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal
                         darkMode:(BOOL)darkMode
-                   configuration:(id<VT100ScreenConfiguration>)config
-                slownessDetector:(iTermSlownessDetector *)slownessDetector {
+                   configuration:(id<VT100ScreenConfiguration>)config {
     self = [super init];
     if (self) {
-        _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self
-                                                                    slownessDetector:slownessDetector];
+        _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
         _state = [_mutableState retain];
         _mutableState.colorMap.darkMode = darkMode;
 
@@ -1394,6 +1392,33 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Mutation Wrappers
 
+- (void)forceCheckTriggers {
+    [self mutForceCheckTriggers];
+}
+
+- (void)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
+                       expect:(iTermExpect *)maybeExpect
+                checkTriggers:(BOOL)checkTriggers {
+    [_mutableState willSynchronize];
+    if (checkTriggers) {
+        [_mutableState forceCheckTriggers];
+    }
+    if (sourceConfig.isDirty) {
+        self.config = sourceConfig;
+    }
+    if (maybeExpect) {
+        [_mutableState updateExpectFrom:maybeExpect];
+    }
+}
+
+- (void)performPeriodicTriggerCheck {
+    [self mutPerformPeriodicTriggerCheck];
+}
+
+- (void)setExited:(BOOL)exited {
+    [self mutSetExited:exited];
+}
+
 - (void)injectData:(NSData *)data {
     [self mutInjectData:data];
 }
@@ -1410,11 +1435,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)scheduleTokenExecution {
     [self mutScheduleTokenExecution];
-}
-
-- (id<PTYTriggerEvaluatorDelegate>)triggerEvaluatorDelegate {
-#warning TODO: Remove this temporary hack when trigger evaluator moves to mutable state.
-    return (id<PTYTriggerEvaluatorDelegate>)_mutableState;
 }
 
 - (void)currentDirectoryDidChangeTo:(NSString *)dir {

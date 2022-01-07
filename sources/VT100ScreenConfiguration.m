@@ -15,6 +15,8 @@
 @property (nonatomic, readwrite) NSInteger unicodeVersion;
 @property (nonatomic, readwrite) BOOL enableTriggersInInteractiveApps;
 @property (nonatomic, readwrite) BOOL triggerParametersUseInterpolatedStrings;
+@property (nonatomic, copy, readwrite) NSArray<NSDictionary *> *triggerProfileDicts;
+@property (nonatomic, readwrite) BOOL isDirty;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -25,6 +27,8 @@
 @synthesize unicodeVersion = _unicodeVersion;
 @synthesize enableTriggersInInteractiveApps = _enableTriggersInInteractiveApps;
 @synthesize triggerParametersUseInterpolatedStrings = _triggerParametersUseInterpolatedStrings;
+@synthesize triggerProfileDicts = _triggerProfileDicts;
+@synthesize isDirty = _isDirty;
 
 - (instancetype)initFrom:(VT100ScreenConfiguration *)other {
     self = [super init];
@@ -35,6 +39,8 @@
         _unicodeVersion = other.unicodeVersion;
         _enableTriggersInInteractiveApps = other.enableTriggersInInteractiveApps;
         _triggerParametersUseInterpolatedStrings = other.triggerParametersUseInterpolatedStrings;
+        _triggerProfileDicts = [other.triggerProfileDicts copy];
+        _isDirty = other.isDirty;
     }
     return self;
 }
@@ -50,6 +56,8 @@
                             @"unicodeVersion": @(_unicodeVersion),
                             @"enableTriggersInInteractiveApps": @(_enableTriggersInInteractiveApps),
                             @"triggerParametersUseInterpolatedStrings": @(_triggerParametersUseInterpolatedStrings),
+                            @"triggerProfileDicts (count)": @(_triggerProfileDicts.count),
+                            @"isDirty": @(_isDirty),
     };
     NSArray<NSString *> *keys = [dict.allKeys sortedArrayUsingSelector:@selector(compare:)];
     NSArray<NSString *> *kvps = [keys mapWithBlock:^id(NSString *key) {
@@ -68,6 +76,8 @@
 @dynamic unicodeVersion;
 @dynamic enableTriggersInInteractiveApps;
 @dynamic triggerParametersUseInterpolatedStrings;
+@dynamic triggerProfileDicts;
+@dynamic isDirty;
 
 - (id)copyWithZone:(NSZone *)zone {
     return [[VT100ScreenConfiguration alloc] initFrom:self];

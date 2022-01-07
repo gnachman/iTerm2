@@ -169,11 +169,11 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     }
     __weak __typeof(self) weakSelf = self;
     self.pasteBracketingOopsieExpectation =
-    [_triggerEvaluator.expect expectRegularExpression:[NSString stringWithFormat:@"(%@)?%@", redflag, prefix.it_escapedForRegex]
-                                          after:nil
-                                       deadline:[NSDate dateWithTimeIntervalSinceNow:0.5]
-                                     willExpect:nil
-                                     completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
+    [_expect expectRegularExpression:[NSString stringWithFormat:@"(%@)?%@", redflag, prefix.it_escapedForRegex]
+                               after:nil
+                            deadline:[NSDate dateWithTimeIntervalSinceNow:0.5]
+                          willExpect:nil
+                          completion:^(NSArray<NSString *> * _Nonnull captureGroups) {
         if ([captureGroups[1] isEqualToString:redflag]) {
             [weakSelf didFindPasteBracketingOopsie];
         }
@@ -181,7 +181,7 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 }
 
 - (void)didFindPasteBracketingOopsie {
-    [_triggerEvaluator.expect cancelExpectation:self.pasteBracketingOopsieExpectation];
+    [_expect cancelExpectation:self.pasteBracketingOopsieExpectation];
     [self offerToTurnOffBracketedPasteOnHostChange];
  }
 

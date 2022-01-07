@@ -160,7 +160,6 @@
 #import "PTYTask.h"
 #import "PTYTextView.h"
 #import "PTYTextView+ARC.h"
-#import "PTYTriggerEvaluator.h"
 #import "PTYWindow.h"
 #import "RegexKitLite.h"
 #import "SCPFile.h"
@@ -578,8 +577,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     iTermUserDefaultsObserver *_disableTransparencyInKeyWindowObserver;
     VT100MutableScreenConfiguration *_config;
 
-    // Changes are made in the main thread to this and it periodically copied to the mutation thread.
-    iTermExpect *_expect;
+    BOOL _profileDidChange;
 }
 
 @synthesize isDivorced = _divorced;
@@ -653,14 +651,9 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
         _guid = [[NSString uuid] retain];
         [[PTYSession sessionMap] setObject:self forKey:_guid];
 
-        [self updateConfigurationFields];
-        _triggerEvaluator = [[PTYTriggerEvaluator alloc] init];
         _screen = [[VT100Screen alloc] initWithTerminal:_terminal
                                                darkMode:self.view.effectiveAppearance.it_isDark
-                                          configuration:_config
-                                       slownessDetector:_triggerEvaluator.triggersSlownessDetector];
-        _triggerEvaluator.delegate = _screen.triggerEvaluatorDelegate;
-        _triggerEvaluator.dataSource = _screen;
+                                          configuration:_config];
         NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
 
         _overriddenFields = [[NSMutableSet alloc] init];
@@ -827,8 +820,9 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
         if (!synthetic) {
             [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionCreatedNotification object:self];
         }
+        _profileDidChange = YES;
         _config = [[VT100MutableScreenConfiguration alloc] init];
-        [self updateConfiguration];
+        [self sync];
         DLog(@"Done initializing new PTYSession %@", self);
     }
     return self;
@@ -848,7 +842,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_nameController release];
     [self stopTailFind];  // This frees the substring in the tail find context, if needed.
     _shell.delegate = nil;
-    [_triggerEvaluator release];
     [_pasteboard release];
     [_pbtext release];
     [_creationDate release];
@@ -1005,7 +998,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [_guid autorelease];
     _guid = [guid copy];
-    [self updateConfiguration];
+    [self sync];
     [[PTYSession sessionMap] setObject:self forKey:_guid];
     [self.variablesScope setValue:_guid forVariableNamed:iTermVariableKeySessionID];
 }
@@ -2595,7 +2588,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setExited:(BOOL)exited {
     _exited = exited;
-    _triggerEvaluator.sessionExited = exited;
+    [_screen setExited:exited];
 }
 
 - (void)makeTerminationUndoable {
@@ -3888,9 +3881,6 @@ ITERM_WEAKLY_REFERENCEABLE
     if (currentTab == nil || [_delegate sessionBelongsToVisibleTab]) {
         [_delegate recheckBlur];
     }
-    [_triggerEvaluator loadFromProfileArray:aDict[KEY_TRIGGERS]];
-    _triggerEvaluator.triggerParametersUseInterpolatedStrings = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
-                                                                                          inProfile:aDict];
 
     [_textview setSmartSelectionRules:aDict[KEY_SMART_SELECTION_RULES]];
     [_textview setSemanticHistoryPrefs:aDict[KEY_SEMANTIC_HISTORY]];
@@ -4699,6 +4689,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [[_delegate realParentWindow] updateTabColors];
     [_delegate sessionDidUpdatePreferencesFromProfile:self];
     [_nameController setNeedsUpdate];
+    _profileDidChange = YES;
+    [self sync];
 }
 
 - (NSString *)programType {
@@ -4935,7 +4927,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)updateDisplayBecause:(NSString *)reason {
     DLog(@"updateDisplayBecause:%@ %@", reason, _cadenceController);
     // Periodically copy config to screen. In the future this will need to cross from the main thread to the mutation thread.
-    [self updateConfiguration];
+    [self sync];
     _updateCount++;
     if (_useMetal && _updateCount % 10 == 0) {
         iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: updateDisplay interval", _view.driver.identifier],
@@ -4968,7 +4960,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self stopTailFind];
     }
 
-    [_triggerEvaluator checkPartialLineTriggers];
+    [_screen performPeriodicTriggerCheck];
     const BOOL passwordInput = _shell.passwordInput;
     DLog(@"passwordInput=%@", @(passwordInput));
     if (passwordInput != _passwordInput) {
@@ -4978,7 +4970,6 @@ ITERM_WEAKLY_REFERENCEABLE
             [self didBeginPasswordInput];
         }
     }
-    [_triggerEvaluator checkIdempotentTriggersIfAllowed];
 
     _timerRunning = NO;
 }
@@ -7616,6 +7607,25 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return NO;
 }
 
+#warning TODO: Synchornize properly.
+- (void)textViewWillRefresh {
+    [self sync];
+}
+
+- (void)sync {
+    [self syncCheckingTriggers:NO];
+}
+
+- (void)syncCheckingTriggers:(BOOL)checkTriggers {
+    [self updateConfigurationFields];
+    const BOOL expectWasDirty = _expect.dirty;
+    [_expect resetDirty];
+    [_screen synchronizeWithConfig:_config
+                            expect:expectWasDirty ? _expect : nil
+                     checkTriggers:checkTriggers];
+    _config.isDirty = NO;
+}
+
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {
     const BOOL accept = [self shouldAcceptKeyDownEvent:event];
     if (accept) {
@@ -8884,7 +8894,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                  toConnectionKey:key];
         }];
     }
-    [_triggerEvaluator invalidateIdempotentTriggers];
 }
 
 - (void)textViewBeginDrag
@@ -9798,20 +9807,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (iTermExpect *)textViewExpect {
-#warning TODO: Rather than dispatch to the main thread, cause expect to be copied to VT100ScreenMutableState on the next sync.
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        [weakSelf copyExpectToTriggerEvaluatorIfNeeded];
+        [weakSelf sync];
     });
     return _expect;
-}
-
-- (void)copyExpectToTriggerEvaluatorIfNeeded {
-    if (!_expect.dirty) {
-        return;
-    }
-    [_expect resetDirty];
-    _triggerEvaluator.expect = [_expect copy];
 }
 
 - (void)textViewDidDetectMouseReportingFrustration {
@@ -10449,10 +10449,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
-- (void)screenTriggerableChangeDidOccur {
-    [_triggerEvaluator clearTriggerLine];
-}
-
 - (void)screenDidResetAllowingContentModification:(BOOL)modifyContent {
     if (!modifyContent) {
         [_screen loadInitialColorTable];
@@ -10487,7 +10483,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // If plainText is false then it's a control code.
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string
                                isPlainText:(BOOL)plainText {
-    [_triggerEvaluator appendStringToTriggerLine:string];
     if (plainText) {
         [self logCooked:[string dataUsingEncoding:_terminal.encoding]];
     }
@@ -10517,7 +10512,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData {
-    [_triggerEvaluator appendAsciiDataToCurrentLine:asciiData];
     if (_logging.enabled) {
         [self logCooked:[NSData dataWithBytes:asciiData->buffer
                                        length:asciiData->length]];
@@ -10987,8 +10981,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"Set profile to\n%@", newProfile);
     // Force triggers to be checked. We may be switching to a profile without triggers
     // and we don't want them to run on the lines of text above _triggerLine later on
-    // when switching to a profile that does have triggers.
-    [_triggerEvaluator forceCheck];
+    // when switching to a profile that does have triggers. See issue 7832.
+    [self syncCheckingTriggers:YES];
 
     NSString *theName = [[self profile] objectForKey:KEY_NAME];
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
@@ -11746,22 +11740,38 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }];
 }
 
-// NOTE: This is called during -initSynthetic and self is half-initialized.
 - (void)updateConfigurationFields {
-    _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
-                                                                       inProfile:_profile];
-    _config.sessionGuid = _guid;
-    _config.treatAmbiguousCharsAsDoubleWidth = [self treatAmbiguousWidthAsDoubleWidth];
-    _config.unicodeVersion = _unicodeVersion;
-    _config.enableTriggersInInteractiveApps = [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS
-                                                                        inProfile:self.profile];
-    _config.triggerParametersUseInterpolatedStrings = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
-                                                                                inProfile:self.profile];
-}
+    BOOL dirty = NO;
+    if (![NSObject object:_config.sessionGuid isEqualToObject:_guid]) {
+        _config.sessionGuid = _guid;
+        dirty = YES;
+    }
 
-- (void)updateConfiguration {
-    [self updateConfigurationFields];
-    _screen.config = _config;
+    const BOOL treatAmbiguousCharsAsDoubleWidth = [self treatAmbiguousWidthAsDoubleWidth];
+    if (_config.treatAmbiguousCharsAsDoubleWidth != treatAmbiguousCharsAsDoubleWidth) {
+        _config.treatAmbiguousCharsAsDoubleWidth = treatAmbiguousCharsAsDoubleWidth;
+        dirty = YES;
+    }
+
+    if (_config.unicodeVersion != _unicodeVersion) {
+        _config.unicodeVersion = _unicodeVersion;
+        dirty = YES;
+    }
+
+    if (_profileDidChange) {
+        _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
+                                                                           inProfile:_profile];
+        _config.enableTriggersInInteractiveApps = [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS
+                                                                            inProfile:self.profile];
+        _config.triggerParametersUseInterpolatedStrings = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
+                                                                                    inProfile:self.profile];
+        _config.triggerProfileDicts = [iTermProfilePreferences objectForKey:KEY_TRIGGERS inProfile:self.profile];
+        dirty = YES;
+        _profileDidChange = NO;
+    }
+    if (dirty) {
+        _config.isDirty = dirty;
+    }
 }
 
 - (BOOL)screenShouldPostTerminalGeneratedAlert {
@@ -12358,7 +12368,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenSoftAlternateScreenModeDidChangeTo:(BOOL)enabled
                                 showingAltScreen:(BOOL)showing {
     [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-    _triggerEvaluator.triggersSlownessDetector.enabled = enabled;
     [self.tmuxForegroundJobMonitor updateOnce];
     [self.variablesScope setValue:@(showing)
                  forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
@@ -13761,17 +13770,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermTriggersDataSource
 
 - (NSInteger)numberOfTriggers {
-    return _triggerEvaluator.triggers.count;
+    return _config.triggerProfileDicts.count;
 }
 
 - (NSArray<NSString *> *)triggerNames {
-    return [_triggerEvaluator.triggers mapWithBlock:^id(Trigger *trigger) {
+    return [_config.triggerProfileDicts mapWithBlock:^id(NSDictionary *dict) {
+        Trigger *trigger = [Trigger triggerFromDict:dict];
         return [NSString stringWithFormat:@"%@ — %@", [[[trigger class] title] stringByRemovingSuffix:@"…"], trigger.regex];
     }];
 }
 
 - (NSIndexSet *)enabledTriggerIndexes {
-    return [_triggerEvaluator enabledTriggerIndexes];
+    return [_config.triggerProfileDicts it_indexSetWithObjectsPassingTest:^BOOL(NSDictionary *triggerDict) {
+        return ![triggerDict[kTriggerDisabledKey] boolValue];
+    }];
 }
 
 - (void)addTrigger {
