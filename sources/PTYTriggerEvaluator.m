@@ -170,6 +170,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
 }
 
 - (void)loadFromProfileArray:(NSArray *)array {
+#warning TODO: This causes state loss, such as _disabled in the alert trigger. Avoid replacing unchanged trigges.
     _triggers = [array mapWithBlock:^Trigger *(NSDictionary *triggerDict) {
         return [Trigger triggerFromDict:triggerDict];
     }];

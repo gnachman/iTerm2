@@ -382,7 +382,7 @@
 // This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
 // coordinate. Scroll regions and the saved cursor position are reset.
 - (void)clearAndResetScreenSavingLines:(int)linesToSave {
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
     // This clears the screen.
     int x = _state.currentGrid.cursorX;
     [_mutableState incrementOverflowBy:[_mutableState.currentGrid resetWithLineBuffer:_mutableState.linebuffer
@@ -569,14 +569,14 @@
                                                     VT100GridCoordMake(_mutableState.width, _mutableState.height),
                                                     _mutableState.width);
     [_mutableState.currentGrid setCharsInRun:run toChar:0 externalAttributes:nil];
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
     _mutableState.currentGrid.cursor = savedCursor;
 }
 
 - (void)mutResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
     if (modifyContent) {
         const int linesToSave = [self numberOfLinesToPreserveWhenClearingScreen];
-        [delegate_ screenTriggerableChangeDidOccur];
+        [_mutableState clearTriggerLine];
         if (preservePrompt) {
             [self clearAndResetScreenSavingLines:linesToSave];
         } else {
@@ -1538,7 +1538,7 @@
 
 - (void)mutCursorLeft:(int)n {
     [_mutableState.currentGrid moveCursorLeft:n];
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
         [_mutableState commandRangeDidChange];
@@ -1550,7 +1550,7 @@
     if (toStart) {
         [_mutableState.currentGrid moveCursorToLeftMargin];
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
         [_mutableState commandRangeDidChange];
@@ -1559,7 +1559,7 @@
 
 - (void)mutCursorRight:(int)n {
     [_mutableState.currentGrid moveCursorRight:n];
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
         [_mutableState commandRangeDidChange];
@@ -1571,7 +1571,7 @@
     if (toStart) {
         [_mutableState.currentGrid moveCursorToLeftMargin];
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
         [_mutableState commandRangeDidChange];
@@ -1692,7 +1692,7 @@
                                           toChar:0
                               externalAttributes:nil];
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
 
 }
 
@@ -1751,7 +1751,7 @@
         [_mutableState.currentGrid moveCursorToLeftMargin];
     }
     // Consider moving this up to the top of the function so Inject triggers can run before the cursor moves. I should audit all calls to screenTriggerableChangeDidOccur since there could be other such opportunities.
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
         [_mutableState commandRangeDidChange];
@@ -1768,7 +1768,7 @@
     } else {
         _mutableState.currentGrid.cursorY = MAX(0, _state.currentGrid.cursorY - 1);
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
 }
 
 - (void)mutForwardIndex {
@@ -1778,7 +1778,7 @@
     } else {
         _mutableState.currentGrid.cursorX += 1;
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
 }
 
 - (void)mutBackIndex {
@@ -1790,7 +1790,7 @@
     } else {
         return;
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
 }
 
 - (void)mutBackTab:(int)n {
@@ -1801,7 +1801,7 @@
             while (![self haveTabStopAt:_state.currentGrid.cursorX] && _state.currentGrid.cursorX > 0) {
                 _mutableState.currentGrid.cursorX = _state.currentGrid.cursorX - 1;
             }
-            [delegate_ screenTriggerableChangeDidOccur];
+            [_mutableState clearTriggerLine];
         }
     }
 }
@@ -1832,7 +1832,7 @@
                                                  toChar:[_state.currentGrid defaultChar]
                                      externalAttributes:nil];
                 // TODO: This used to always set the continuation mark to hard, but I think it should only do that if the last char in the line is erased.
-                [delegate_ screenTriggerableChangeDidOccur];
+                [_mutableState clearTriggerLine];
                 break;
             }
             case VT100TerminalProtectedModeISO:
@@ -1892,13 +1892,13 @@
         [_mutableState.currentGrid scrollRect:VT100GridRectMake(left, top, width, height)
                                        downBy:n
                                     softBreak:NO];
-        [delegate_ screenTriggerableChangeDidOccur];
+        [_mutableState clearTriggerLine];
     }
 }
 
 - (void)mutDeleteCharactersAtCursor:(int)n {
     [_mutableState.currentGrid deleteChars:n startingAt:_state.currentGrid.cursor];
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
 }
 
 - (void)mutDeleteLinesAtCursor:(int)n {
@@ -1919,7 +1919,7 @@
                                                                 _state.currentGrid.bottomMargin - _state.currentGrid.cursorY + 1)
                                        downBy:-n
                                     softBreak:NO];
-        [delegate_ screenTriggerableChangeDidOccur];
+        [_mutableState clearTriggerLine];
     }
 }
 
@@ -1933,7 +1933,7 @@
                                                                      useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                                                    softBreak:NO]];
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
 }
 
 - (void)mutScrollDown:(int)n {
@@ -1941,7 +1941,7 @@
     [_mutableState.currentGrid scrollRect:[_state.currentGrid scrollRegionRect]
                                    downBy:MIN(_state.currentGrid.size.height, n)
                                 softBreak:NO];
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
 }
 
 - (void)mutInsertColumns:(int)n {
@@ -2121,7 +2121,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         }
         VT100ScreenEraseCell(sct, eaOut, NO, &dc);
     }];
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
 }
 
 - (BOOL)mutSelectiveEraseRange:(VT100GridCoordRange)range eraseAttributes:(BOOL)eraseAttributes {
@@ -2138,7 +2138,7 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         }
         VT100ScreenEraseCell(sct, eaOut, eraseAttributes, &dc);
     }];
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
     return foundProtected;
 }
 
@@ -2487,6 +2487,10 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
 
 #pragma mark - Accessors
 
+- (void)mutSetExited:(BOOL)exited {
+    [_mutableState setExited:exited];
+}
+
 // WARNING: This is called on PTYTask's thread.
 - (void)mutAddTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority {
     [_mutableState addTokens:vector length:length highPriority:highPriority];
@@ -2832,6 +2836,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         // else display string on screen
         [_mutableState appendStringAtCursor:string];
     }
+    [_mutableState appendStringToTriggerLine:string];
     [delegate_ screenDidAppendStringToCurrentLine:string
                                       isPlainText:YES];
 }
@@ -2847,11 +2852,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         // else display string on screen
         [self appendAsciiDataAtCursor:asciiData];
     }
-    [delegate_ screenDidAppendAsciiDataToCurrentLine:asciiData];
+    [_mutableState appendAsciiDataToTriggerLine:asciiData];
 }
 
 - (void)terminalRingBell {
     DLog(@"Terminal rang the bell");
+    [_mutableState appendStringToTriggerLine:@"\a"];
     [delegate_ screenDidAppendStringToCurrentLine:@"\a" isPlainText:NO];
     [self activateBell];
 }
@@ -2890,7 +2896,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     } else {
         [self linefeed];
     }
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
     [delegate_ screenDidReceiveLineFeed];
 }
 
@@ -2913,7 +2919,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalMoveCursorToX:(int)x y:(int)y {
     [self mutCursorToX:x Y:y];
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
         [_mutableState commandRangeDidChange];
@@ -3040,7 +3046,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalSetCursorX:(int)x {
     [self mutCursorToX:x];
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
 }
 
 - (void)terminalAdvanceCursorPastLastColumn {
@@ -3049,7 +3055,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalSetCursorY:(int)y {
     [self mutCursorToY:y];
-    [delegate_ screenTriggerableChangeDidOccur];
+    [_mutableState clearTriggerLine];
 }
 
 - (void)terminalEraseCharactersAfterCursor:(int)j {
@@ -3443,6 +3449,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalProfileShouldChangeTo:(NSString *)value {
+    [_mutableState forceCheckTriggers];
     [delegate_ screenSetProfileToProfileNamed:value];
 }
 
@@ -4161,6 +4168,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             [self mutAppendScreenCharArrayAtCursor:chars
                                             length:length
                             externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:_state.lastExternalAttribute]];
+            [_mutableState appendStringToTriggerLine:string];
             [delegate_ screenDidAppendStringToCurrentLine:string
                                               isPlainText:(_state.lastCharacter.complexChar ||
                                                            _state.lastCharacter.code >= ' ')];
@@ -4355,6 +4363,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (mark.entry.interval.location > _mutableState.lastCommandMark.entry.interval.location) {
         _mutableState.lastCommandMark = mark;
     }
+}
+
+#pragma mark - Triggers
+
+- (void)mutForceCheckTriggers {
+    [_mutableState forceCheckTriggers];
+}
+
+- (void)mutPerformPeriodicTriggerCheck {
+    [_mutableState performPeriodicTriggerCheck];
 }
 
 @end

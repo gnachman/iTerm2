@@ -62,9 +62,6 @@
 // Called when the screen's size changes.
 - (void)screenSizeDidChangeWithNewTopLineAt:(int)newTop;
 
-// A change was made to the screen's contents which could cause a trigger to fire.
-- (void)screenTriggerableChangeDidOccur;
-
 // Called when the screen and terminal's attributes are reset
 - (void)screenDidResetAllowingContentModification:(BOOL)modifyContent;
 

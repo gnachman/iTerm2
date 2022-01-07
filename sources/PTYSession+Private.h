@@ -7,8 +7,6 @@
 #import "PTYSession.h"
 
 #import "Coprocess.h"
-#import "PTYTriggerEvaluator.h"
-#import "PTYTriggerEvaluator.h"
 #import "SessionView.h"
 #import "TerminalFile.h"
 #import "TmuxController.h"
@@ -20,6 +18,7 @@
 #import "iTermColorMap.h"
 #import "iTermComposerManager.h"
 #import "iTermCopyModeHandler.h"
+#import "iTermExpect.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermLoggingHelper.h"
 #import "iTermMetaFrustrationDetector.h"
@@ -65,7 +64,8 @@ iTermTmuxControllerSession,
 iTermUpdateCadenceControllerDelegate,
 iTermWorkingDirectoryPollerDelegate,
 TriggerDelegate> {
-    PTYTriggerEvaluator *_triggerEvaluator;
+    // Changes are made in the main thread to this and it periodically copied to the mutation thread.
+    iTermExpect *_expect;
 }
 
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;

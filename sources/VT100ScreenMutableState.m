@@ -39,12 +39,10 @@ iTermTriggerScopeProvider>
     VT100GridCoordRange _previousCommandRange;
     iTermIdempotentOperationJoiner *_commandRangeChangeJoiner;
     dispatch_queue_t _queue;
-#warning TODO: Remove this
-    iTermSlownessDetector *_slownessDetector;
+    PTYTriggerEvaluator *_triggerEvaluator;
 }
 
-- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer
-                           slownessDetector:(iTermSlownessDetector *)slownessDetector {
+- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
     self = [super initForMutation];
     if (self) {
 #warning TODO: When this moves to its own queue. change _queue.
@@ -54,7 +52,10 @@ iTermTriggerScopeProvider>
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _previousCommandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
         _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner asyncJoiner:_queue];
-        _slownessDetector = slownessDetector;
+        _triggerEvaluator = [[PTYTriggerEvaluator alloc] init];
+        _triggerEvaluator.delegate = self;
+        _triggerEvaluator.dataSource = self;
+
     }
     return self;
 }
@@ -117,10 +118,22 @@ iTermTriggerScopeProvider>
 
 #pragma mark - Accessors
 
+- (void)setConfig:(id<VT100ScreenConfiguration>)config {
+    #warning TODO: It's kinda sketch to copy it here since we are on the wrong thread to use `config` at all.
+    _config = [config copyWithZone:nil];
+    [_triggerEvaluator loadFromProfileArray:config.triggerProfileDicts];
+    _triggerEvaluator.triggerParametersUseInterpolatedStrings = config.triggerParametersUseInterpolatedStrings;
+}
+
+- (void)setExited:(BOOL)exited {
+    _exited = exited;
+    _triggerEvaluator.sessionExited = exited;
+}
+
 - (void)setTerminal:(VT100Terminal *)terminal {
     [super setTerminal:terminal];
     _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:terminal
-                                                 slownessDetector:_slownessDetector
+                                                 slownessDetector:_triggerEvaluator.triggersSlownessDetector
                                                             queue:_queue];
 }
 
@@ -171,6 +184,8 @@ iTermTriggerScopeProvider>
 - (void)softAlternateScreenModeDidChange {
     const BOOL enabled = self.terminal.softAlternateScreenMode;
     const BOOL showing = self.currentGrid == self.altGrid;;
+    _triggerEvaluator.triggersSlownessDetector.enabled = enabled;
+
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSoftAlternateScreenModeDidChangeTo:enabled showingAltScreen:showing];
     }];
@@ -874,6 +889,41 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self addTokens:vector length:data.length highPriority:YES];
 }
 
+#pragma mark - Triggers
+
+- (void)performPeriodicTriggerCheck {
+    [_triggerEvaluator checkPartialLineTriggers];
+    [_triggerEvaluator checkIdempotentTriggersIfAllowed];
+}
+
+- (void)clearTriggerLine {
+    [_triggerEvaluator clearTriggerLine];
+}
+
+- (void)appendStringToTriggerLine:(NSString *)string {
+    [_triggerEvaluator appendStringToTriggerLine:string];
+}
+
+- (void)appendAsciiDataToTriggerLine:(AsciiData *)asciiData {
+    [_triggerEvaluator appendAsciiDataToCurrentLine:asciiData];
+}
+
+- (void)forceCheckTriggers {
+    [_triggerEvaluator forceCheck];
+}
+
+#pragma mark - Cross-Thread Sync
+
+- (void)willSynchronize {
+    if (self.currentGrid.isAnyCharDirty) {
+        [_triggerEvaluator invalidateIdempotentTriggers];
+    }
+}
+
+- (void)updateExpectFrom:(iTermExpect *)source {
+    _triggerEvaluator.expect = [source copy];
+}
+
 #pragma mark - iTermMarkDelegate
 
 - (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
@@ -984,7 +1034,7 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 - (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger {
-    return self.config.triggerParametersUseInterpolatedStrings;
+    return _triggerEvaluator.triggerParametersUseInterpolatedStrings;
 }
 
 - (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message {

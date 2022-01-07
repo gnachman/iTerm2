@@ -27,6 +27,7 @@
 @protocol VT100ScreenConfiguration;
 @class VT100Terminal;
 @class iTermAsyncFilter;
+@class iTermExpect;
 @protocol iTermFilterDestination;
 @protocol iTermMark;
 @class iTermSlownessDetector;
@@ -87,8 +88,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Designated initializer.
 - (instancetype)initWithTerminal:(VT100Terminal *)terminal
                         darkMode:(BOOL)darkMode
-                   configuration:(id<VT100ScreenConfiguration>)config
-                slownessDetector:(iTermSlownessDetector *)slownessDetector;
+                   configuration:(id<VT100ScreenConfiguration>)config;
 
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.
@@ -267,11 +267,16 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)setRemoteHostName:(NSString *)remoteHostName;
 - (void)currentDirectoryDidChangeTo:(NSString *)dir;
 - (VT100GridCoordRange)commandRange;
-- (id<PTYTriggerEvaluatorDelegate>)triggerEvaluatorDelegate;
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
 - (void)scheduleTokenExecution;
 - (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange;
 - (void)injectData:(NSData *)data;
+- (void)setExited:(BOOL)exited;
+- (void)forceCheckTriggers;
+- (void)performPeriodicTriggerCheck;
+- (void)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
+                       expect:(iTermExpect *)maybeExpect
+                checkTriggers:(BOOL)checkTriggers;
 
 @end
 

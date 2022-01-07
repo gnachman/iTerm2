@@ -204,6 +204,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)mutScheduleTokenExecution;
 - (PTYAnnotation *)mutAddNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange;
 - (void)mutInjectData:(NSData *)data;
+- (void)mutPerformPeriodicTriggerCheck;
+- (void)mutForceCheckTriggers;
+- (void)mutSetExited:(BOOL)exited;
 
 @end
 

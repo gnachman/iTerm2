@@ -2188,6 +2188,7 @@
     if (_dataSource == nil || _inRefresh) {
         return YES;
     }
+    [self.delegate textViewWillRefresh];
 
     // Get the number of lines that have disappeared if scrollback buffer is full.
     const int scrollbackOverflow = [_dataSource scrollbackOverflow];

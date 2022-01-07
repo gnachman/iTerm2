@@ -60,6 +60,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 
 @property (nonatomic, readonly) NSEdgeInsets textViewEdgeInsets;
 
+- (void)textViewWillRefresh;
 - (BOOL)xtermMouseReporting;
 - (BOOL)xtermMouseReportingAllowMouseWheel;
 - (BOOL)xtermMouseReportingAllowClicksAndDrags;
