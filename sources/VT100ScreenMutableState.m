@@ -416,6 +416,39 @@ iTermTriggerScopeProvider>
     }
 }
 
+- (BOOL)shouldQuellBell {
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    const NSTimeInterval interval = now - self.lastBell;
+    const BOOL result = interval < [iTermAdvancedSettingsModel bellRateLimit];
+    if (!result) {
+        self.lastBell = now;
+    }
+    return result;
+}
+
+- (void)terminalRingBell {
+    DLog(@"Terminal rang the bell");
+    [self appendStringToTriggerLine:@"\a"];
+
+    [self activateBell];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidAppendStringToCurrentLine:@"\a" isPlainText:NO];
+    }];
+}
+
+- (void)activateBell {
+    const BOOL audibleBell = self.audibleBell;
+    const BOOL flashBell = self.flashBell;
+    const BOOL showBellIndicator = self.showBellIndicator;
+    const BOOL shouldQuellBell = [self shouldQuellBell];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenActivateBellAudibly:audibleBell
+                                    visibly:flashBell
+                              showIndicator:showBellIndicator
+                                      quell:shouldQuellBell];
+    }];
+}
+
 #pragma mark - Interval Tree
 
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
@@ -1059,9 +1092,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)triggerSessionRingBell:(Trigger *)trigger {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate triggerSideEffectRingBell];
-    }];
+    [self activateBell];
 }
 
 - (void)triggerSessionShowCapturedOutputTool:(Trigger *)trigger {

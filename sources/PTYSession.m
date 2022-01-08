@@ -10736,10 +10736,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_textview updateNoteViewFrames];
 }
 
-- (void)screenShowBellIndicator {
-    [self setBell:YES];
-}
-
 - (void)screenPrintString:(NSString *)string {
     [[self textview] printContent:string];
 }
@@ -11788,7 +11784,34 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (BOOL)screenShouldIgnoreBellWhichIsAudible:(BOOL)audible visible:(BOOL)visible {
+// Called when a bell is to be run. Applies rate limiting and kicks off the bell indicators
+// (notifications, flashing lights, sounds) per user preference.
+- (void)screenActivateBellAudibly:(BOOL)audibleBell
+                          visibly:(BOOL)flashBell
+                    showIndicator:(BOOL)showBellIndicator
+                            quell:(BOOL)quell {
+    if ([self shouldIgnoreBellWhichIsAudible:audibleBell
+                                     visible:flashBell]) {
+        return;
+    }
+    if (quell) {
+        DLog(@"Quell bell");
+    } else {
+        if (audibleBell) {
+            DLog(@"Beep: ring audible bell");
+            NSBeep();
+        }
+        if (showBellIndicator) {
+            [self setBell:YES];
+        }
+        if (flashBell) {
+            [self screenFlashImage:kiTermIndicatorBell];
+        }
+    }
+    [[_delegate realParentWindow] incrementBadge];
+}
+
+- (BOOL)shouldIgnoreBellWhichIsAudible:(BOOL)audible visible:(BOOL)visible {
     self.variablesScope.bellCount = @(self.variablesScope.bellCount.integerValue + 1);
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     if (now < _ignoreBellUntil) {
@@ -14796,10 +14819,6 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)triggerSideEffectShowCapturedOutputTool {
     [self showCapturedOutputTool];
-}
-
-- (void)triggerSideEffectRingBell {
-    [self.screen activateBell];
 }
 
 - (void)triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded {
