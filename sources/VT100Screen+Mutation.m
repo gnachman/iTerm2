@@ -2794,10 +2794,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRingBell {
-    DLog(@"Terminal rang the bell");
-    [_mutableState appendStringToTriggerLine:@"\a"];
-    [delegate_ screenDidAppendStringToCurrentLine:@"\a" isPlainText:NO];
-    [self activateBell];
+    [_mutableState terminalRingBell];
 }
 
 - (void)terminalBackspace {

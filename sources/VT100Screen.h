@@ -166,10 +166,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // This is provided for testing only.
 - (id<VT100GridReading>)currentGrid;
 
-// Called when a bell is to be run. Applies rate limiting and kicks off the bell indicators
-// (notifications, flashing lights, sounds) per user preference.
-- (void)activateBell;
-
 // Show an inline image. image and data are mutually exclusive.
 - (void)appendNativeImageAtCursorWithName:(NSString *)name width:(int)width;
 

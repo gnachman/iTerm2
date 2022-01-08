@@ -190,37 +190,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [delegate_ screenSetCursorVisible:show];
 }
 
-- (BOOL)shouldQuellBell {
-    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    const NSTimeInterval interval = now - _state.lastBell;
-    const BOOL result = interval < [iTermAdvancedSettingsModel bellRateLimit];
-    if (!result) {
-        _mutableState.lastBell = now;
-    }
-    return result;
-}
-
-- (void)activateBell {
-    if ([delegate_ screenShouldIgnoreBellWhichIsAudible:_state.audibleBell visible:_state.flashBell]) {
-        return;
-    }
-    if ([self shouldQuellBell]) {
-        DLog(@"Quell bell");
-    } else {
-        if (_state.audibleBell) {
-            DLog(@"Beep: ring audible bell");
-            NSBeep();
-        }
-        if (_state.showBellIndicator) {
-            [delegate_ screenShowBellIndicator];
-        }
-        if (_state.flashBell) {
-            [delegate_ screenFlashImage:kiTermIndicatorBell];
-        }
-    }
-    [delegate_ screenIncrementBadge];
-}
-
 - (void)highlightTextInRange:(NSRange)range
    basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                       colors:(NSDictionary *)colors {

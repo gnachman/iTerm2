@@ -15,7 +15,6 @@
 @protocol iTermOrderedToken;
 
 @protocol iTermTriggerSideEffectExecutor<NSObject>
-- (void)triggerSideEffectRingBell;
 - (void)triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded;
 - (void)triggerSideEffectShowShellIntegrationRequiredAnnouncement;
 - (void)triggerSideEffectDidCaptureOutput;
@@ -173,8 +172,10 @@
 // Number of scrollback lines changed.
 - (void)screenDidChangeNumberOfScrollbackLines;
 
-// Requests that the bell indicator be shown, notification be posted, etc.
-- (void)screenShowBellIndicator;
+- (void)screenActivateBellAudibly:(BOOL)audibleBell
+                          visibly:(BOOL)flashBell
+                    showIndicator:(BOOL)showBellIndicator
+                            quell:(BOOL)quell;
 
 // Request that a string be sent for printing.
 - (void)screenPrintString:(NSString * _Nonnull)string;
@@ -187,9 +188,6 @@
 
 // Returns whether terminal-generated notifications are allowed.
 - (BOOL)screenShouldPostTerminalGeneratedAlert;
-
-// Should this bell be ignored?
-- (BOOL)screenShouldIgnoreBellWhichIsAudible:(BOOL)audible visible:(BOOL)visible;
 
 // PTYTextView deselect
 - (void)screenRemoveSelection;

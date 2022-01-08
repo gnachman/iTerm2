@@ -745,9 +745,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenHandleTmuxInput:(VT100Token *)token {
 }
 
-- (void)screenShowBellIndicator {
-}
-
 - (void)screenSuggestShellIntegrationUpgrade {
 }
 
@@ -829,10 +826,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 }
 
 - (BOOL)screenShouldPostTerminalGeneratedAlert {
-    return NO;
-}
-
-- (BOOL)screenShouldIgnoreBellWhichIsAudible:(BOOL)audible visible:(BOOL)visible {
     return NO;
 }
 
