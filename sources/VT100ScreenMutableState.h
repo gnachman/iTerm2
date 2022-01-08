@@ -19,7 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (id<iTermIntervalTreeObserver>)sideEffectPerformingIntervalTreeObserver;
 @end
 
-@interface VT100ScreenMutableState: VT100ScreenState<VT100ScreenMutableState, NSCopying>
+@interface VT100ScreenMutableState: VT100ScreenState<NSCopying, VT100ScreenMutableState, VT100TerminalDelegate>
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *currentDirectoryDidChangeOrderEnforcer;
 @property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
@@ -137,7 +137,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)performPeriodicTriggerCheck;
 - (void)clearTriggerLine;
 - (void)appendStringToTriggerLine:(NSString *)string;
-- (void)appendAsciiDataToTriggerLine:(AsciiData *)asciiData;
+- (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData;
 - (void)forceCheckTriggers;
 
 #pragma mark - Cross-Thread Sync

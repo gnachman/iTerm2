@@ -337,6 +337,22 @@ iTermTriggerScopeProvider>
     }
 }
 
+#pragma mark - VT100TerminalDelegate
+
+- (void)terminalAppendString:(NSString *)string {
+    if (self.collectInputForPrinting) {
+        [self.printBuffer appendString:string];
+    } else {
+        // else display string on screen
+        [self appendStringAtCursor:string];
+    }
+    [self appendStringToTriggerLine:string];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidAppendStringToCurrentLine:string
+                                          isPlainText:YES];
+    }];
+}
+
 #pragma mark - Interval Tree
 
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
@@ -904,8 +920,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [_triggerEvaluator appendStringToTriggerLine:string];
 }
 
-- (void)appendAsciiDataToTriggerLine:(AsciiData *)asciiData {
-    [_triggerEvaluator appendAsciiDataToCurrentLine:asciiData];
+- (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData {
+    NSString *string = [_triggerEvaluator appendAsciiDataToCurrentLine:asciiData];
+    if (!string) {
+        return NO;
+    }
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidAppendStringToCurrentLine:string isPlainText:YES];
+    }];
+    return YES;
 }
 
 - (void)forceCheckTriggers {

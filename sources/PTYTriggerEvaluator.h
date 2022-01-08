@@ -66,7 +66,7 @@ extern NSString *const PTYSessionSlownessEventExecute;
 - (void)checkIdempotentTriggersIfAllowed;
 - (void)invalidateIdempotentTriggers;
 - (void)appendStringToTriggerLine:(NSString *)s;
-- (void)appendAsciiDataToCurrentLine:(AsciiData *)asciiData;
+- (NSString *)appendAsciiDataToCurrentLine:(AsciiData *)asciiData;
 - (void)forceCheck;
 - (NSIndexSet *)enabledTriggerIndexes;
 - (void)clearTriggerLine;

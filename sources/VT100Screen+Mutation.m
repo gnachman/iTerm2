@@ -2830,15 +2830,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - VT100TerminalDelegate
 
 - (void)terminalAppendString:(NSString *)string {
-    if (_state.collectInputForPrinting) {
-        [_mutableState.printBuffer appendString:string];
-    } else {
-        // else display string on screen
-        [_mutableState appendStringAtCursor:string];
-    }
-    [_mutableState appendStringToTriggerLine:string];
-    [delegate_ screenDidAppendStringToCurrentLine:string
-                                      isPlainText:YES];
+    [_mutableState terminalAppendString:string];
 }
 
 - (void)terminalAppendAsciiData:(AsciiData *)asciiData {
@@ -2852,7 +2844,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         // else display string on screen
         [self appendAsciiDataAtCursor:asciiData];
     }
-    [_mutableState appendAsciiDataToTriggerLine:asciiData];
+    if (![_mutableState appendAsciiDataToTriggerLine:asciiData]) {
+        [_mutableState addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenDidAppendAsciiDataToCurrentLine:asciiData];
+        }];
+    }
 }
 
 - (void)terminalRingBell {
@@ -2897,7 +2893,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [self linefeed];
     }
     [_mutableState clearTriggerLine];
-    [delegate_ screenDidReceiveLineFeed];
+    [_mutableState addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidReceiveLineFeed];
+    }];
 }
 
 - (void)terminalCursorLeft:(int)n {

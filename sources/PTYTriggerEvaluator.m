@@ -214,15 +214,15 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     _shouldUpdateIdempotentTriggers = YES;
 }
 
-- (void)appendAsciiDataToCurrentLine:(AsciiData *)asciiData {
+- (NSString *)appendAsciiDataToCurrentLine:(AsciiData *)asciiData {
     if (![_triggers count] && !_expect.expectations.count) {
-        return;
+        return nil;
     }
     NSString *string = [[NSString alloc] initWithBytes:asciiData->buffer
                                                 length:asciiData->length
                                               encoding:NSASCIIStringEncoding];
     [self appendStringToTriggerLine:string];
-
+    return string;
 }
 
 - (void)forceCheck {
