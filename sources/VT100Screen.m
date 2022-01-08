@@ -1487,10 +1487,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                  continuation:continuation];
 }
 
-- (void)appendAsciiDataAtCursor:(AsciiData *)asciiData {
-    [self mutAppendAsciiDataAtCursor:asciiData];
-}
-
 - (void)appendStringAtCursor:(NSString *)string {
     [self mutAppendStringAtCursor:string];
 }

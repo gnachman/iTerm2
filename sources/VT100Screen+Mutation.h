@@ -38,7 +38,6 @@ NS_ASSUME_NONNULL_BEGIN
                    length:(int)length
    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
                 continuation:(screen_char_t)continuation;
-- (void)mutAppendAsciiDataAtCursor:(AsciiData *)asciiData;
 - (void)mutSetContentsFromLineBuffer:(LineBuffer *)lineBuffer;
 - (void)mutSetHistory:(NSArray *)history;
 - (void)mutSetAltScreen:(NSArray *)lines;
