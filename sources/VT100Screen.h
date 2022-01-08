@@ -113,7 +113,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
 // buffer may change.
 - (void)appendStringAtCursor:(NSString *)string;
-- (void)appendAsciiDataAtCursor:(AsciiData *)asciiData;
 
 - (void)removeLastLine;
 

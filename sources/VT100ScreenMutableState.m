@@ -337,6 +337,51 @@ iTermTriggerScopeProvider>
     }
 }
 
+- (void)appendAsciiDataAtCursor:(AsciiData *)asciiData {
+    int len = asciiData->length;
+    if (len < 1 || !asciiData) {
+        return;
+    }
+    STOPWATCH_START(appendAsciiDataAtCursor);
+    char firstChar = asciiData->buffer[0];
+
+    DLog(@"appendAsciiDataAtCursor: %ld chars starting with %c at x=%d, y=%d, line=%d",
+         (unsigned long)len,
+         firstChar,
+         self.currentGrid.cursorX,
+         self.currentGrid.cursorY,
+         self.currentGrid.cursorY + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width]);
+
+    screen_char_t *buffer;
+    buffer = asciiData->screenChars->buffer;
+
+    screen_char_t fg = [self.terminal foregroundColorCode];
+    screen_char_t bg = [self.terminal backgroundColorCode];
+    iTermExternalAttribute *ea = [self.terminal externalAttributes];
+
+    screen_char_t zero = { 0 };
+    if (memcmp(&fg, &zero, sizeof(fg)) || memcmp(&bg, &zero, sizeof(bg))) {
+        STOPWATCH_START(setUpScreenCharArray);
+        for (int i = 0; i < len; i++) {
+            CopyForegroundColor(&buffer[i], fg);
+            CopyBackgroundColor(&buffer[i], bg);
+        }
+        STOPWATCH_LAP(setUpScreenCharArray);
+    }
+
+    // If a graphics character set was selected then translate buffer
+    // characters into graphics characters.
+    if ([self.charsetUsesLineDrawingMode containsObject:@(self.terminal.charset)]) {
+        ConvertCharsToGraphicsCharset(buffer, len);
+    }
+
+    [self appendScreenCharArrayAtCursor:buffer
+                                 length:len
+                 externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:ea]];
+    STOPWATCH_LAP(appendAsciiDataAtCursor);
+}
+
+
 #pragma mark - VT100TerminalDelegate
 
 - (void)terminalAppendString:(NSString *)string {
@@ -351,6 +396,24 @@ iTermTriggerScopeProvider>
         [delegate screenDidAppendStringToCurrentLine:string
                                           isPlainText:YES];
     }];
+}
+
+- (void)terminalAppendAsciiData:(AsciiData *)asciiData {
+    if (self.collectInputForPrinting) {
+        NSString *string = [[NSString alloc] initWithBytes:asciiData->buffer
+                                                    length:asciiData->length
+                                                  encoding:NSASCIIStringEncoding];
+        [self terminalAppendString:string];
+        return;
+    }
+    // else display string on screen
+    [self appendAsciiDataAtCursor:asciiData];
+
+    if (![self appendAsciiDataToTriggerLine:asciiData]) {
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenDidAppendAsciiDataToCurrentLine:asciiData];
+        }];
+    }
 }
 
 #pragma mark - Interval Tree

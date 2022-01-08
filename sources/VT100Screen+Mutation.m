@@ -684,50 +684,6 @@
     }
 }
 
-- (void)mutAppendAsciiDataAtCursor:(AsciiData *)asciiData {
-    int len = asciiData->length;
-    if (len < 1 || !asciiData) {
-        return;
-    }
-    STOPWATCH_START(appendAsciiDataAtCursor);
-    char firstChar = asciiData->buffer[0];
-
-    DLog(@"appendAsciiDataAtCursor: %ld chars starting with %c at x=%d, y=%d, line=%d",
-         (unsigned long)len,
-         firstChar,
-         _state.currentGrid.cursorX,
-         _state.currentGrid.cursorY,
-         _state.currentGrid.cursorY + [_mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width]);
-
-    screen_char_t *buffer;
-    buffer = asciiData->screenChars->buffer;
-
-    screen_char_t fg = [_state.terminal foregroundColorCode];
-    screen_char_t bg = [_state.terminal backgroundColorCode];
-    iTermExternalAttribute *ea = [_state.terminal externalAttributes];
-
-    screen_char_t zero = { 0 };
-    if (memcmp(&fg, &zero, sizeof(fg)) || memcmp(&bg, &zero, sizeof(bg))) {
-        STOPWATCH_START(setUpScreenCharArray);
-        for (int i = 0; i < len; i++) {
-            CopyForegroundColor(&buffer[i], fg);
-            CopyBackgroundColor(&buffer[i], bg);
-        }
-        STOPWATCH_LAP(setUpScreenCharArray);
-    }
-
-    // If a graphics character set was selected then translate buffer
-    // characters into graphics characters.
-    if ([_state.charsetUsesLineDrawingMode containsObject:@(_state.terminal.charset)]) {
-        ConvertCharsToGraphicsCharset(buffer, len);
-    }
-
-    [self mutAppendScreenCharArrayAtCursor:buffer
-                                    length:len
-                    externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:ea]];
-    STOPWATCH_LAP(appendAsciiDataAtCursor);
-}
-
 #pragma mark - Arrangements
 
 - (void)mutRestoreInitialSize {
@@ -2834,21 +2790,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalAppendAsciiData:(AsciiData *)asciiData {
-    if (_state.collectInputForPrinting) {
-        NSString *string = [[[NSString alloc] initWithBytes:asciiData->buffer
-                                                     length:asciiData->length
-                                                   encoding:NSASCIIStringEncoding] autorelease];
-        [self terminalAppendString:string];
-        return;
-    } else {
-        // else display string on screen
-        [self appendAsciiDataAtCursor:asciiData];
-    }
-    if (![_mutableState appendAsciiDataToTriggerLine:asciiData]) {
-        [_mutableState addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            [delegate screenDidAppendAsciiDataToCurrentLine:asciiData];
-        }];
-    }
+    [_mutableState terminalAppendAsciiData:asciiData];
 }
 
 - (void)terminalRingBell {
