@@ -449,6 +449,83 @@ iTermTriggerScopeProvider>
     }];
 }
 
+- (void)terminalBackspace {
+    const int cursorX = self.currentGrid.cursorX;
+    const int cursorY = self.currentGrid.cursorY;
+
+    [self doBackspace];
+
+    if (self.commandStartCoord.x != -1 && (self.currentGrid.cursorX != cursorX ||
+                                           self.currentGrid.cursorY != cursorY)) {
+        [self didUpdatePromptLocation];
+        [self commandRangeDidChange];
+    }
+}
+
+#pragma mark - Backspace
+
+// Reverse wrap is allowed when the cursor is on the left margin or left edge, wraparoundMode is
+// set, the cursor is not at the top margin/edge, and:
+// 1. reverseWraparoundMode is set (xterm's rule), or
+// 2. there's no left-right margin and the preceding line has EOL_SOFT (Terminal.app's rule)
+- (BOOL)shouldReverseWrap {
+    if (!self.terminal.wraparoundMode) {
+        return NO;
+    }
+
+    // Cursor must be at left margin/edge.
+    const int leftMargin = self.currentGrid.leftMargin;
+    const int cursorX = self.currentGrid.cursorX;
+    if (cursorX != leftMargin && cursorX != 0) {
+        return NO;
+    }
+
+    // Cursor must not be at top margin/edge.
+    const int topMargin = self.currentGrid.topMargin;
+    const int cursorY = self.currentGrid.cursorY;
+    if (cursorY == topMargin || cursorY == 0) {
+        return NO;
+    }
+
+    // If reverseWraparoundMode is reset, then allow only if there's a soft newline on previous line
+    if (!self.terminal.reverseWraparoundMode) {
+        if (self.currentGrid.useScrollRegionCols) {
+            return NO;
+        }
+
+        const screen_char_t *line = [self.currentGrid screenCharsAtLineNumber:cursorY - 1];
+        const unichar c = line[self.width].code;
+        return (c == EOL_SOFT || c == EOL_DWC);
+    }
+
+    return YES;
+}
+
+- (void)doBackspace {
+    const int leftMargin = self.currentGrid.leftMargin;
+    const int rightMargin = self.currentGrid.rightMargin;
+    const int cursorX = self.currentGrid.cursorX;
+    const int cursorY = self.currentGrid.cursorY;
+
+    if (cursorX >= self.width && self.terminal.reverseWraparoundMode && self.terminal.wraparoundMode) {
+        // Reverse-wrap when past the screen edge is a special case.
+        self.currentGrid.cursor = VT100GridCoordMake(rightMargin, cursorY);
+    } else if ([self shouldReverseWrap]) {
+        self.currentGrid.cursor = VT100GridCoordMake(rightMargin, cursorY - 1);
+    } else if (cursorX > leftMargin ||  // Cursor can move back without hitting the left margin: normal case
+               (cursorX < leftMargin && cursorX > 0)) {  // Cursor left of left margin, right of left edge.
+        if (cursorX >= self.currentGrid.size.width) {
+            // Cursor right of right edge, move back twice.
+            self.currentGrid.cursorX = cursorX - 2;
+        } else {
+            // Normal case.
+            self.currentGrid.cursorX = cursorX - 1;
+        }
+    }
+
+    // It is OK to land on the right half of a double-width character (issue 3475).
+}
+
 #pragma mark - Interval Tree
 
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line

@@ -1305,68 +1305,6 @@
 
 }
 
-- (void)mutDoBackspace {
-    int leftMargin = _state.currentGrid.leftMargin;
-    int rightMargin = _state.currentGrid.rightMargin;
-    int cursorX = _state.currentGrid.cursorX;
-    int cursorY = _state.currentGrid.cursorY;
-
-    if (cursorX >= _mutableState.width && _state.terminal.reverseWraparoundMode && _state.terminal.wraparoundMode) {
-        // Reverse-wrap when past the screen edge is a special case.
-        _mutableState.currentGrid.cursor = VT100GridCoordMake(rightMargin, cursorY);
-    } else if ([self shouldReverseWrap]) {
-        _mutableState.currentGrid.cursor = VT100GridCoordMake(rightMargin, cursorY - 1);
-    } else if (cursorX > leftMargin ||  // Cursor can move back without hitting the left margin: normal case
-               (cursorX < leftMargin && cursorX > 0)) {  // Cursor left of left margin, right of left edge.
-        if (cursorX >= _state.currentGrid.size.width) {
-            // Cursor right of right edge, move back twice.
-            _mutableState.currentGrid.cursorX = cursorX - 2;
-        } else {
-            // Normal case.
-            _mutableState.currentGrid.cursorX = cursorX - 1;
-        }
-    }
-
-    // It is OK to land on the right half of a double-width character (issue 3475).
-}
-
-// Reverse wrap is allowed when the cursor is on the left margin or left edge, wraparoundMode is
-// set, the cursor is not at the top margin/edge, and:
-// 1. reverseWraparoundMode is set (xterm's rule), or
-// 2. there's no left-right margin and the preceding line has EOL_SOFT (Terminal.app's rule)
-- (BOOL)shouldReverseWrap {
-    if (!_state.terminal.wraparoundMode) {
-        return NO;
-    }
-
-    // Cursor must be at left margin/edge.
-    int leftMargin = _state.currentGrid.leftMargin;
-    int cursorX = _state.currentGrid.cursorX;
-    if (cursorX != leftMargin && cursorX != 0) {
-        return NO;
-    }
-
-    // Cursor must not be at top margin/edge.
-    int topMargin = _state.currentGrid.topMargin;
-    int cursorY = _state.currentGrid.cursorY;
-    if (cursorY == topMargin || cursorY == 0) {
-        return NO;
-    }
-
-    // If reverseWraparoundMode is reset, then allow only if there's a soft newline on previous line
-    if (!_state.terminal.reverseWraparoundMode) {
-        if (_state.currentGrid.useScrollRegionCols) {
-            return NO;
-        }
-
-        screen_char_t *line = [self getLineAtScreenIndex:cursorY - 1];
-        unichar c = line[_mutableState.width].code;
-        return (c == EOL_SOFT || c == EOL_DWC);
-    }
-
-    return YES;
-}
-
 - (void)convertHardNewlineToSoftOnGridLine:(int)line {
     screen_char_t *aLine = [_mutableState.currentGrid screenCharsAtLineNumber:line];
     if (aLine[_state.currentGrid.size.width].code == EOL_HARD) {
@@ -2798,16 +2736,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalBackspace {
-    int cursorX = _state.currentGrid.cursorX;
-    int cursorY = _state.currentGrid.cursorY;
-
-    [self mutDoBackspace];
-
-    if (_state.commandStartCoord.x != -1 && (_state.currentGrid.cursorX != cursorX ||
-                                             _state.currentGrid.cursorY != cursorY)) {
-        [_mutableState didUpdatePromptLocation];
-        [_mutableState commandRangeDidChange];
-    }
+    [_mutableState terminalBackspace];
 }
 
 - (void)terminalAppendTabAtCursor:(BOOL)setBackgroundColors {
