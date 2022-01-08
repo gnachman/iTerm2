@@ -73,7 +73,6 @@ NS_ASSUME_NONNULL_BEGIN
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
 - (void)mutRemoveObjectFromIntervalTree:(id<IntervalTreeObject>)obj;
-- (void)mutDoBackspace;
 - (void)mutAppendTabAtCursor:(BOOL)setBackgroundColors;
 - (void)mutCursorLeft:(int)n;
 - (void)mutCursorDown:(int)n andToStartOfLine:(BOOL)toStart;
