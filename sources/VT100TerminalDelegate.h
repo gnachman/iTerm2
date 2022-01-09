@@ -88,7 +88,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 // Returns if it's safe to send reports.
 - (BOOL)terminalShouldSendReport;
 
-- (BOOL)terminalShouldSendReportForVariable:(NSString *)variable;
+- (void)terminalReportVariableNamed:(NSString *)variable;
 
 // Sends a report.
 - (void)terminalSendReport:(NSData *)report;
@@ -444,8 +444,6 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalDidReceiveBase64PasteboardString:(NSString *)string;
 - (void)terminalDidFinishReceivingPasteboard;
 - (void)terminalPasteboardReceiptEndedUnexpectedly;
-
-- (NSString *)terminalValueOfVariableNamed:(NSString *)name;
 
 // Links
 - (void)terminalWillEndLinkWithCode:(unsigned int)code;

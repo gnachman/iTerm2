@@ -272,8 +272,7 @@
                                                    payload:(NSString * _Nonnull)payload;
 - (CGFloat)screenBackingScaleFactor;
 
-// Ok to write to shell?
-- (BOOL)screenShouldSendReportForVariable:(NSString * _Nullable)name;
+- (void)screenReportVariableNamed:(NSString * _Nonnull)name;
 
 // FinalTerm stuff
 - (void)screenCommandDidChangeTo:(NSString * _Nonnull)command
@@ -322,7 +321,6 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenKeyReportingFlagsDidChange;
 
 - (void)screenTerminalAttemptedPasteboardAccess;
-- (NSString * _Nullable)screenValueOfVariableNamed:(NSString * _Nonnull)name;
 - (void)screenReportFocusWillChangeTo:(BOOL)reportFocus;
 - (void)screenReportPasteBracketingWillChangeTo:(BOOL)bracket;
 - (void)screenDidReceiveLineFeed;

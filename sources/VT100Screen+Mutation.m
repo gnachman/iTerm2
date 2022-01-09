@@ -2568,8 +2568,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [_mutableState terminalShouldSendReport];
 }
 
-- (BOOL)terminalShouldSendReportForVariable:(NSString *)variable {
-    return [delegate_ screenShouldSendReportForVariable:variable];
+- (void)terminalReportVariableNamed:(NSString *)variable {
+    [_mutableState terminalReportVariableNamed:variable];
 }
 
 - (void)terminalSendReport:(NSData *)report {
@@ -2577,12 +2577,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         DLog(@"report %@", [report stringWithEncoding:NSUTF8StringEncoding]);
         [delegate_ screenWriteDataToTask:report];
     }
-}
-
-- (NSString *)terminalValueOfVariableNamed:(NSString *)name {
-    // This will need to be async. Keep in mind that a trigger could cause a user variable to change
-    // and this should be up-to-date.
-    return [delegate_ screenValueOfVariableNamed:name];
 }
 
 - (void)terminalShowTestPattern {

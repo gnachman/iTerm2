@@ -1360,4 +1360,14 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
              MAX(1, reqid), checksum] dataUsingEncoding:NSUTF8StringEncoding];
 }
 
+- (NSData *)reportVariableNamed:(NSString *)name value:(NSString *)variableValue {
+    NSString *encodedValue = @"";
+    if (variableValue) {
+        encodedValue = [[variableValue dataUsingEncoding:NSUTF8StringEncoding] base64EncodedStringWithOptions:0];
+    }
+    NSString *report = [NSString stringWithFormat:@"\e]1337;ReportVariable=%@\a",
+                        encodedValue ?: @""];
+    return [report dataUsingEncoding:NSUTF8StringEncoding];
+}
+
 @end
