@@ -272,8 +272,7 @@
                                                    payload:(NSString * _Nonnull)payload;
 - (CGFloat)screenBackingScaleFactor;
 
-// Ok to write to shell?
-- (BOOL)screenShouldSendReportForVariable:(NSString * _Nullable)name;
+- (void)screenRequestPermissionToReportVariable:(NSString * _Nonnull)name;
 
 // FinalTerm stuff
 - (void)screenCommandDidChangeTo:(NSString * _Nonnull)command

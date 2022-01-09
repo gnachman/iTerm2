@@ -48,7 +48,18 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
     return self;
 }
 
-- (BOOL)permissionToReportVariableNamed:(NSString *)name {
+- (NSSet<NSString *> *)reportableVariables {
+    static NSString *const allow = @"allow:";
+    NSArray<NSString *> *parts = [self variablesToReportEntries];
+    return [NSSet setWithArray:[parts mapWithBlock:^id(NSString *part) {
+        if (![part hasPrefix:allow]) {
+            return nil;
+        }
+        return [part substringFromIndex:allow.length];
+    }]];
+
+}
+- (void)requestPermissionToReportVariableNamed:(NSString *)name {
     static NSString *const allow = @"allow:";
     static NSString *const deny = @"deny:";
 
@@ -63,15 +74,17 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
         }
     }
 
-    return [self requestPermissionWithOriginalValue:originalValue
-                                                key:[NSString stringWithFormat:@"ShouldReportVariable%@", name]
-                                   prompt:[NSString stringWithFormat:@"A request to report variable “%@” was denied. Allow it in the future?", name]
-                                   setter:^(BOOL shouldAllow) {
+    [self requestPermissionWithOriginalValue:originalValue
+                                         key:[NSString stringWithFormat:@"ShouldReportVariable%@", name]
+                                      prompt:[NSString stringWithFormat:@"A request to report variable “%@” was denied. Allow it in the future?", name]
+                                      setter:^(BOOL shouldAllow) {
         NSArray<NSString *> *parts = [self variablesToReportEntries];
         NSString *prefix = shouldAllow ? allow : deny;
         NSString *newEntry = [prefix stringByAppendingString:name];
         parts = [parts arrayByAddingObject:newEntry];
+        self->_reportableVariablesHasChanged = YES;
         [iTermAdvancedSettingsModel setNoSyncVariablesToReport:[parts componentsJoinedByString:@","]];
+        [self.delegate naggingControllerReportableVariablesDidChange];
     }];
 }
 

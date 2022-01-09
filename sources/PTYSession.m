@@ -11604,11 +11604,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _naggingController;
 }
 
-- (BOOL)screenShouldSendReportForVariable:(NSString *)name {
+- (void)screenRequestPermissionToReportVariable:(NSString *)name {
     if (self.isTmuxClient) {
-        return NO;
+        return;
     }
-    return [self.naggingController permissionToReportVariableNamed:name];
+    [self.naggingController requestPermissionToReportVariableNamed:name];
 }
 
 - (VT100GridRange)screenRangeOfVisibleLines {
@@ -11760,6 +11760,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_config.isTmuxClient != self.isTmuxClient) {
         _config.isTmuxClient = self.isTmuxClient;
         dirty = YES;
+    }
+    if (self.isTmuxClient) {
+        if (_config.reportableVariables.count) {
+            _config.reportableVariables = [NSSet set];
+            dirty = YES;
+        }
+    } else {
+        if (!_config.reportableVariables || self.naggingController.reportableVariablesHasChanged) {
+            _config.reportableVariables = self.naggingController.reportableVariables;
+            self.naggingController.reportableVariablesHasChanged = NO;
+            dirty = YES;
+        }
     }
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
@@ -14475,6 +14487,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [iTermProfilePreferences setObjectsFromDictionary:update inProfile:self.profile model:[ProfileModel sharedInstance]];
     [[iTermNotificationController sharedInstance] notify:@"Profile Updated"
                                          withDescription:@"Triggers disabled in interactive apps. You can change this in Prefs > Profiles > Advanced."];
+}
+
+- (void)naggingControllerReportableVariablesDidChange {
+    [self sync];
 }
 
 #pragma mark - iTermComposerManagerDelegate
