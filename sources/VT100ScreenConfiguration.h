@@ -25,7 +25,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly) NSArray<NSDictionary *> *triggerProfileDicts;
 @property (nonatomic, readonly) BOOL notifyOfAppend;
 @property (nonatomic, readonly) BOOL isTmuxClient;
-@property (nonatomic, readonly) NSSet<NSString *> *reportableVariables;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -45,7 +44,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readwrite) NSArray<NSDictionary *> *triggerProfileDicts;
 @property (nonatomic, readwrite) BOOL notifyOfAppend;
 @property (nonatomic, readwrite) BOOL isTmuxClient;
-@property (nonatomic, readwrite, copy) NSSet<NSString *> *reportableVariables;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 
