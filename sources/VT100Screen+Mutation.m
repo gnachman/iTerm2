@@ -1322,15 +1322,6 @@
     }
 }
 
-- (void)mutCursorLeft:(int)n {
-    [_mutableState.currentGrid moveCursorLeft:n];
-    [_mutableState clearTriggerLine];
-    if (_state.commandStartCoord.x != -1) {
-        [_mutableState didUpdatePromptLocation];
-        [_mutableState commandRangeDidChange];
-    }
-}
-
 - (void)mutCursorDown:(int)n andToStartOfLine:(BOOL)toStart {
     [_mutableState.currentGrid moveCursorDown:n];
     if (toStart) {
@@ -2626,7 +2617,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalCursorLeft:(int)n {
-    [self mutCursorLeft:n];
+    [_mutableState terminalCursorLeft:n];
 }
 
 - (void)terminalCursorDown:(int)n andToStartOfLine:(BOOL)toStart {

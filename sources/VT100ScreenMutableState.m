@@ -403,6 +403,15 @@ iTermTriggerScopeProvider>
     STOPWATCH_LAP(appendAsciiDataAtCursor);
 }
 
+- (void)cursorLeft:(int)n {
+    [self.currentGrid moveCursorLeft:n];
+    [self clearTriggerLine];
+    if (self.commandStartCoord.x != -1) {
+        [self didUpdatePromptLocation];
+        [self commandRangeDidChange];
+    }
+}
+
 
 #pragma mark - VT100TerminalDelegate
 
@@ -508,6 +517,10 @@ iTermTriggerScopeProvider>
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenDidReceiveLineFeed];
     }];
+}
+
+- (void)terminalCursorLeft:(int)n {
+    [self cursorLeft:n];
 }
 
 #pragma mark - Tabs
