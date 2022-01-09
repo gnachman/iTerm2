@@ -645,6 +645,14 @@ iTermTriggerScopeProvider>
     self.currentGrid.cursor = VT100GridCoordMake(0, 0);
 }
 
+- (int)terminalRelativeCursorX {
+    return self.currentGrid.cursorX - self.currentGrid.leftMargin + 1;
+}
+
+- (int)terminalRelativeCursorY {
+    return self.currentGrid.cursorY - self.currentGrid.topMargin + 1;
+}
+
 #pragma mark - Tabs
 
 // See issue 6592 for why `setBackgroundColors` exists. tl;dr ncurses makes weird assumptions.
