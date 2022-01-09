@@ -433,6 +433,18 @@ iTermTriggerScopeProvider>
     }
 }
 
+- (void)cursorUp:(int)n andToStartOfLine:(BOOL)toStart {
+    [self.currentGrid moveCursorUp:n];
+    if (toStart) {
+        [self.currentGrid moveCursorToLeftMargin];
+    }
+    [self clearTriggerLine];
+    if (self.commandStartCoord.x != -1) {
+        [self didUpdatePromptLocation];
+        [self commandRangeDidChange];
+    }
+}
+
 #pragma mark - VT100TerminalDelegate
 
 - (void)terminalAppendString:(NSString *)string {
@@ -549,6 +561,10 @@ iTermTriggerScopeProvider>
 
 - (void)terminalCursorRight:(int)n {
     [self cursorRight:n];
+}
+
+- (void)terminalCursorUp:(int)n andToStartOfLine:(BOOL)toStart {
+    [self cursorUp:n andToStartOfLine:toStart];
 }
 
 #pragma mark - Tabs
