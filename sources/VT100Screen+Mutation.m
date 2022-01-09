@@ -2569,11 +2569,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (int)terminalRelativeCursorX {
-    return _state.currentGrid.cursorX - _state.currentGrid.leftMargin + 1;
+    return [_mutableState terminalRelativeCursorX];
 }
 
 - (int)terminalRelativeCursorY {
-    return _state.currentGrid.cursorY - _state.currentGrid.topMargin + 1;
+    return [_mutableState terminalRelativeCursorY];
 }
 
 - (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom {
