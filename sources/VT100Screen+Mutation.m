@@ -602,7 +602,7 @@
         _mutableState.currentGrid.scrollRegionCols = VT100GridRangeMake(scrollLeft,
                                                                         scrollRight - scrollLeft + 1);
         // set cursor to the home position
-        [self mutCursorToX:1 Y:1];
+        [_mutableState cursorToX:1 Y:1];
     }
 }
 
@@ -1264,45 +1264,6 @@
 - (BOOL)cursorOutsideTopBottomMargin {
     return (_state.currentGrid.cursorY < _state.currentGrid.topMargin ||
             _state.currentGrid.cursorY > _state.currentGrid.bottomMargin);
-}
-
-- (void)mutCursorToX:(int)x Y:(int)y {
-    [self mutCursorToX:x];
-    [self mutCursorToY:y];
-    DebugLog(@"cursorToX:Y");
-}
-
-- (void)mutCursorToX:(int)x {
-    const int leftMargin = [_state.currentGrid leftMargin];
-    const int rightMargin = [_state.currentGrid rightMargin];
-
-    int xPos = x - 1;
-
-    if ([_state.terminal originMode]) {
-        xPos += leftMargin;
-        xPos = MAX(leftMargin, MIN(rightMargin, xPos));
-    }
-
-    _mutableState.currentGrid.cursorX = xPos;
-
-    DebugLog(@"cursorToX");
-}
-
-- (void)mutCursorToY:(int)y {
-    int yPos;
-    int topMargin = _state.currentGrid.topMargin;
-    int bottomMargin = _state.currentGrid.bottomMargin;
-
-    yPos = y - 1;
-
-    if ([_state.terminal originMode]) {
-        yPos += topMargin;
-        yPos = MAX(topMargin, MIN(bottomMargin, yPos));
-    }
-    _mutableState.currentGrid.cursorY = yPos;
-
-    DebugLog(@"cursorToY");
-
 }
 
 // Remove soft eol on previous line, provided the cursor is on the first column. This is useful
@@ -2600,12 +2561,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalMoveCursorToX:(int)x y:(int)y {
-    [self mutCursorToX:x Y:y];
-    [_mutableState clearTriggerLine];
-    if (_state.commandStartCoord.x != -1) {
-        [_mutableState didUpdatePromptLocation];
-        [_mutableState commandRangeDidChange];
-    }
+    [_mutableState terminalMoveCursorToX:x y:y];
 }
 
 - (BOOL)terminalShouldSendReport {
@@ -2727,7 +2683,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetCursorX:(int)x {
-    [self mutCursorToX:x];
+    [_mutableState cursorToX:x];
     [_mutableState clearTriggerLine];
 }
 
@@ -2736,7 +2692,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetCursorY:(int)y {
-    [self mutCursorToY:y];
+    [_mutableState cursorToY:y];
     [_mutableState clearTriggerLine];
 }
 

@@ -445,6 +445,43 @@ iTermTriggerScopeProvider>
     }
 }
 
+- (void)cursorToX:(int)x Y:(int)y {
+    DLog(@"cursorToX:Y");
+    [self cursorToX:x];
+    [self cursorToY:y];
+}
+
+- (void)cursorToX:(int)x {
+    DLog(@"cursorToX");
+    const int leftMargin = [self.currentGrid leftMargin];
+    const int rightMargin = [self.currentGrid rightMargin];
+
+    int xPos = x - 1;
+
+    if ([self.terminal originMode]) {
+        xPos += leftMargin;
+        xPos = MAX(leftMargin, MIN(rightMargin, xPos));
+    }
+
+    self.currentGrid.cursorX = xPos;
+}
+
+- (void)cursorToY:(int)y {
+    DLog(@"cursorToY");
+    int yPos;
+    int topMargin = self.currentGrid.topMargin;
+    int bottomMargin = self.currentGrid.bottomMargin;
+
+    yPos = y - 1;
+
+    if ([self.terminal originMode]) {
+        yPos += topMargin;
+        yPos = MAX(topMargin, MIN(bottomMargin, yPos));
+    }
+    self.currentGrid.cursorY = yPos;
+}
+
+
 #pragma mark - VT100TerminalDelegate
 
 - (void)terminalAppendString:(NSString *)string {
@@ -565,6 +602,15 @@ iTermTriggerScopeProvider>
 
 - (void)terminalCursorUp:(int)n andToStartOfLine:(BOOL)toStart {
     [self cursorUp:n andToStartOfLine:toStart];
+}
+
+- (void)terminalMoveCursorToX:(int)x y:(int)y {
+    [self cursorToX:x Y:y];
+    [self clearTriggerLine];
+    if (self.commandStartCoord.x != -1) {
+        [self didUpdatePromptLocation];
+        [self commandRangeDidChange];
+    }
 }
 
 #pragma mark - Tabs

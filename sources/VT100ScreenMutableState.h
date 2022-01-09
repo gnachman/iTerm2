@@ -56,6 +56,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)appendScreenCharArrayAtCursor:(const screen_char_t *)buffer
                                length:(int)len
                externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes;
+- (void)cursorToX:(int)x;
+- (void)cursorToY:(int)y;
+- (void)cursorToX:(int)x Y:(int)y;
 
 #pragma mark - Interval Tree
 
