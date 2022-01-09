@@ -412,6 +412,15 @@ iTermTriggerScopeProvider>
     }
 }
 
+- (void)cursorRight:(int)n {
+    [self.currentGrid moveCursorRight:n];
+    [self clearTriggerLine];
+    if (self.commandStartCoord.x != -1) {
+        [self didUpdatePromptLocation];
+        [self commandRangeDidChange];
+    }
+}
+
 - (void)cursorDown:(int)n andToStartOfLine:(BOOL)toStart {
     [self.currentGrid moveCursorDown:n];
     if (toStart) {
@@ -536,6 +545,10 @@ iTermTriggerScopeProvider>
 
 - (void)terminalCursorDown:(int)n andToStartOfLine:(BOOL)toStart {
     [self cursorDown:n andToStartOfLine:toStart];
+}
+
+- (void)terminalCursorRight:(int)n {
+    [self cursorRight:n];
 }
 
 #pragma mark - Tabs
