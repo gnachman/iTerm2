@@ -37,7 +37,6 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 - (void)naggingControllerRepairInitialWorkingDirectoryOfSessionWithGUID:(NSString *)guid
                                                   inArrangementWithName:(NSString *)arrangementName;
 - (void)naggingControllerDisableTriggersInInteractiveApps;
-- (void)naggingControllerReportableVariablesDidChange;
 
 @end
 
@@ -47,10 +46,9 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
 // If we have complained that the saved arrangement is missing a profile, this is the GUID of the
 // missing profile.
 @property (nonatomic, copy, readonly) NSString *missingSavedArrangementProfileGUID;
-@property (nonatomic) BOOL reportableVariablesHasChanged;
-@property (nonatomic, readonly) NSSet<NSString *> *reportableVariables;
 
-- (void)requestPermissionToReportVariableNamed:(NSString *)name;
+
+- (BOOL)permissionToReportVariableNamed:(NSString *)name;
 
 - (void)arrangementWithName:(NSString *)savedArrangementName
         missingProfileNamed:(NSString *)profileName

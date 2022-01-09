@@ -943,7 +943,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 }
 
 
-- (void)screenRequestPermissionToReportVariable:(NSString *)name:(NSString *)name {
+- (BOOL)screenShouldSendReportForVariable:(NSString *)name {
+    return YES;
 }
 
 - (BOOL)screenConfirmDownloadAllowed:(NSString *)name size:(NSInteger)size displayInline:(BOOL)displayInline promptIfBig:(BOOL *)promptIfBig {
