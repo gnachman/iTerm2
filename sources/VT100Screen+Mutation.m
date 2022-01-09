@@ -1283,18 +1283,6 @@
     }
 }
 
-- (void)mutShowTestPattern {
-    screen_char_t ch = [_state.currentGrid defaultChar];
-    ch.code = 'E';
-    [_mutableState.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                                         to:VT100GridCoordMake(_state.currentGrid.size.width - 1,
-                                                               _state.currentGrid.size.height - 1)
-                                     toChar:ch
-                         externalAttributes:nil];
-    [_mutableState.currentGrid resetScrollRegions];
-    _mutableState.currentGrid.cursor = VT100GridCoordMake(0, 0);
-}
-
 - (void)mutSetScrollRegionTop:(int)top bottom:(int)bottom {
     if (top >= 0 &&
         top < _state.currentGrid.size.height &&
@@ -2577,7 +2565,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalShowTestPattern {
-    [self mutShowTestPattern];
+    [_mutableState terminalShowTestPattern];
 }
 
 - (int)terminalRelativeCursorX {
