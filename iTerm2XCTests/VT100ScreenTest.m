@@ -991,7 +991,8 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenSendModifiersDidChange {
 }
 
-- (void)screenAppendScreenCharArray:(const screen_char_t *)line metadata:(iTermImmutableMetadata)metadata length:(int)length {
+- (void)screenAppendScreenCharArray:(ScreenCharArray *)array
+                           metadata:(iTermImmutableMetadata)metadata {
 }
 
 - (void)screenDidAppendImageData:(NSData *)data {

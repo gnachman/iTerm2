@@ -679,7 +679,7 @@
                                     length:length
                     externalAttributeIndex:externalAttributeIndex];
     if (continuation.code == EOL_HARD) {
-        [self mutCarriageReturn];
+        [_mutableState carriageReturn];
         [_mutableState appendLineFeed];
     }
 }
@@ -1305,13 +1305,6 @@
 
 }
 
-- (void)convertHardNewlineToSoftOnGridLine:(int)line {
-    screen_char_t *aLine = [_mutableState.currentGrid screenCharsAtLineNumber:line];
-    if (aLine[_state.currentGrid.size.width].code == EOL_HARD) {
-        aLine[_state.currentGrid.size.width].code = EOL_SOFT;
-    }
-}
-
 // Remove soft eol on previous line, provided the cursor is on the first column. This is useful
 // because zsh likes to ED 0 after wrapping around before drawing the prompt. See issue 8938.
 // For consistency, EL uses it, too.
@@ -1327,107 +1320,6 @@
     } else {
         [self.mutableLineBuffer setPartial:NO];
     }
-}
-
-- (void)softWrapCursorToNextLineScrollingIfNeeded {
-    if (_state.currentGrid.rightMargin + 1 == _state.currentGrid.size.width) {
-        [self convertHardNewlineToSoftOnGridLine:_state.currentGrid.cursorY];
-    }
-    if (_state.currentGrid.cursorY == _state.currentGrid.bottomMargin) {
-        [_mutableState incrementOverflowBy:[_mutableState.currentGrid scrollUpIntoLineBuffer:_mutableState.linebuffer
-                                                                         unlimitedScrollback:_state.unlimitedScrollback
-                                                                     useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                                   softBreak:YES]];
-    }
-    _mutableState.currentGrid.cursorX = _state.currentGrid.leftMargin;
-    _mutableState.currentGrid.cursorY++;
-}
-
-- (int)tabStopAfterColumn:(int)lowerBound {
-    for (int i = lowerBound + 1; i < _mutableState.width - 1; i++) {
-        if ([_state.tabStops containsObject:@(i)]) {
-            return i;
-        }
-    }
-    return _mutableState.width - 1;
-}
-
-// See issue 6592 for why `setBackgroundColors` exists. tl;dr ncurses makes weird assumptions.
-- (void)mutAppendTabAtCursor:(BOOL)setBackgroundColors {
-    int rightMargin;
-    if (_state.currentGrid.useScrollRegionCols) {
-        rightMargin = _state.currentGrid.rightMargin;
-        if (_state.currentGrid.cursorX > rightMargin) {
-            rightMargin = _mutableState.width - 1;
-        }
-    } else {
-        rightMargin = _mutableState.width - 1;
-    }
-
-    if (_state.terminal.moreFix && _mutableState.cursorX > _mutableState.width && _state.terminal.wraparoundMode) {
-        [self terminalLineFeed];
-        [self mutCarriageReturn];
-    }
-
-    int nextTabStop = MIN(rightMargin, [self tabStopAfterColumn:_state.currentGrid.cursorX]);
-    if (nextTabStop <= _state.currentGrid.cursorX) {
-        // This happens when the cursor can't advance any farther.
-        if ([iTermAdvancedSettingsModel tabsWrapAround]) {
-            nextTabStop = [self tabStopAfterColumn:_state.currentGrid.leftMargin];
-            [self softWrapCursorToNextLineScrollingIfNeeded];
-        } else {
-            return;
-        }
-    }
-    const int y = _state.currentGrid.cursorY;
-    screen_char_t *aLine = [_mutableState.currentGrid screenCharsAtLineNumber:y];
-    BOOL allNulls = YES;
-    for (int i = _state.currentGrid.cursorX; i < nextTabStop; i++) {
-        if (aLine[i].code) {
-            allNulls = NO;
-            break;
-        }
-    }
-    if (allNulls) {
-        screen_char_t filler;
-        InitializeScreenChar(&filler, [_state.terminal foregroundColorCode], [_state.terminal backgroundColorCode]);
-        filler.code = TAB_FILLER;
-        const int startX = _state.currentGrid.cursorX;
-        const int limit = nextTabStop - 1;
-        iTermExternalAttribute *ea = [_state.terminal externalAttributes];
-        [_mutableState.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(startX, y, limit + 1, y)
-                                                     block:^(screen_char_t *c,
-                                                             iTermExternalAttribute **eaOut,
-                                                             VT100GridCoord coord,
-                                                             BOOL *stop) {
-            if (coord.x < limit) {
-                if (setBackgroundColors) {
-                    *c = filler;
-                    *eaOut = ea;
-                } else {
-                    c->image = NO;
-                    c->complexChar = NO;
-                    c->code = TAB_FILLER;
-                }
-            } else {
-                if (setBackgroundColors) {
-                    screen_char_t tab = filler;
-                    tab.code = '\t';
-                    *c = tab;
-                    *eaOut = ea;
-                } else {
-                    c->image = NO;
-                    c->complexChar = NO;
-                    c->code = '\t';
-                }
-            }
-        }];
-
-        [delegate_ screenAppendScreenCharArray:aLine + _state.currentGrid.cursorX
-                                      metadata:iTermImmutableMetadataDefault()
-                                        length:nextTabStop - startX];
-    }
-    _mutableState.currentGrid.cursorX = nextTabStop;
 }
 
 - (void)mutCursorLeft:(int)n {
@@ -1638,23 +1530,9 @@
     }
 }
 
-- (void)mutCarriageReturn {
-    if (_state.currentGrid.useScrollRegionCols && _state.currentGrid.cursorX < _state.currentGrid.leftMargin) {
-        _mutableState.currentGrid.cursorX = 0;
-    } else {
-        [_mutableState.currentGrid moveCursorToLeftMargin];
-    }
-    // Consider moving this up to the top of the function so Inject triggers can run before the cursor moves. I should audit all calls to screenTriggerableChangeDidOccur since there could be other such opportunities.
-    [_mutableState clearTriggerLine];
-    if (_state.commandStartCoord.x != -1) {
-        [_mutableState didUpdatePromptLocation];
-        [_mutableState commandRangeDidChange];
-    }
-}
-
 - (void)mutReverseIndex {
     if (_state.currentGrid.cursorY == _state.currentGrid.topMargin) {
-        if ([self cursorOutsideLeftRightMargin]) {
+        if (_state.cursorOutsideLeftRightMargin) {
             return;
         } else {
             [_mutableState.currentGrid scrollDown];
@@ -1666,7 +1544,7 @@
 }
 
 - (void)mutForwardIndex {
-    if ((_state.currentGrid.cursorX == _state.currentGrid.rightMargin && ![self cursorOutsideLeftRightMargin] )||
+    if ((_state.currentGrid.cursorX == _state.currentGrid.rightMargin && !_state.cursorOutsideLeftRightMargin )||
          _state.currentGrid.cursorX == _state.currentGrid.size.width) {
         [_mutableState.currentGrid moveContentLeft:1];
     } else {
@@ -1676,7 +1554,7 @@
 }
 
 - (void)mutBackIndex {
-    if ((_state.currentGrid.cursorX == _state.currentGrid.leftMargin && ![self cursorOutsideLeftRightMargin] )||
+    if ((_state.currentGrid.cursorX == _state.currentGrid.leftMargin && !_state.cursorOutsideLeftRightMargin )||
          _state.currentGrid.cursorX == 0) {
         [_mutableState.currentGrid moveContentRight:1];
     } else if (_state.currentGrid.cursorX > 0) {
@@ -1752,7 +1630,7 @@
     if (n < 1) {
         return;
     }
-    if ([self cursorOutsideLeftRightMargin] || [self cursorOutsideTopBottomMargin]) {
+    if (_state.cursorOutsideLeftRightMargin || [self cursorOutsideTopBottomMargin]) {
         return;
     }
     [_mutableState.currentGrid moveContentLeft:n];
@@ -1762,7 +1640,7 @@
     if (n < 1) {
         return;
     }
-    if ([self cursorOutsideLeftRightMargin] || [self cursorOutsideTopBottomMargin]) {
+    if (_state.cursorOutsideLeftRightMargin || [self cursorOutsideTopBottomMargin]) {
         return;
     }
     [_mutableState.currentGrid moveContentRight:n];
@@ -1839,7 +1717,7 @@
 }
 
 - (void)mutInsertColumns:(int)n {
-    if ([self cursorOutsideLeftRightMargin] || [self cursorOutsideTopBottomMargin]) {
+    if (_state.cursorOutsideLeftRightMargin || [self cursorOutsideTopBottomMargin]) {
         return;
     }
     if (n <= 0) {
@@ -1854,7 +1732,7 @@
 }
 
 - (void)mutDeleteColumns:(int)n {
-    if ([self cursorOutsideLeftRightMargin] || [self cursorOutsideTopBottomMargin]) {
+    if (_state.cursorOutsideLeftRightMargin || [self cursorOutsideTopBottomMargin]) {
         return;
     }
     if (n <= 0) {
@@ -2740,30 +2618,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalAppendTabAtCursor:(BOOL)setBackgroundColors {
-    [self mutAppendTabAtCursor:setBackgroundColors];
-}
-
-- (BOOL)cursorOutsideLeftRightMargin {
-    return (_state.currentGrid.useScrollRegionCols && (_state.currentGrid.cursorX < _state.currentGrid.leftMargin ||
-                                                 _state.currentGrid.cursorX > _state.currentGrid.rightMargin));
+    [_mutableState terminalAppendTabAtCursor:setBackgroundColors];
 }
 
 - (void)terminalLineFeed {
-    if (_state.currentGrid.cursor.y == VT100GridRangeMax(_state.currentGrid.scrollRegionRows) &&
-        [self cursorOutsideLeftRightMargin]) {
-        DLog(@"Ignore linefeed/formfeed/index because cursor outside left-right margin.");
-        return;
-    }
-
-    if (_state.collectInputForPrinting) {
-        [_mutableState.printBuffer appendString:@"\n"];
-    } else {
-        [self linefeed];
-    }
-    [_mutableState clearTriggerLine];
-    [_mutableState addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenDidReceiveLineFeed];
-    }];
+    [_mutableState terminalLineFeed];
 }
 
 - (void)terminalCursorLeft:(int)n {
@@ -2842,7 +2701,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalCarriageReturn {
-    [self mutCarriageReturn];
+    [_mutableState terminalCarriageReturn];
 }
 
 - (void)terminalReverseIndex {

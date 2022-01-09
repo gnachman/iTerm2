@@ -16,6 +16,7 @@
 @property (nonatomic, readwrite) BOOL enableTriggersInInteractiveApps;
 @property (nonatomic, readwrite) BOOL triggerParametersUseInterpolatedStrings;
 @property (nonatomic, copy, readwrite) NSArray<NSDictionary *> *triggerProfileDicts;
+@property (nonatomic, readwrite) BOOL notifyOfAppend;
 @property (nonatomic, readwrite) BOOL isDirty;
 @end
 
@@ -28,6 +29,8 @@
 @synthesize enableTriggersInInteractiveApps = _enableTriggersInInteractiveApps;
 @synthesize triggerParametersUseInterpolatedStrings = _triggerParametersUseInterpolatedStrings;
 @synthesize triggerProfileDicts = _triggerProfileDicts;
+@synthesize notifyOfAppend = _notifyOfAppend;
+
 @synthesize isDirty = _isDirty;
 
 - (instancetype)initFrom:(VT100ScreenConfiguration *)other {
@@ -40,6 +43,7 @@
         _enableTriggersInInteractiveApps = other.enableTriggersInInteractiveApps;
         _triggerParametersUseInterpolatedStrings = other.triggerParametersUseInterpolatedStrings;
         _triggerProfileDicts = [other.triggerProfileDicts copy];
+        _notifyOfAppend = other.notifyOfAppend;
         _isDirty = other.isDirty;
     }
     return self;
@@ -57,6 +61,8 @@
                             @"enableTriggersInInteractiveApps": @(_enableTriggersInInteractiveApps),
                             @"triggerParametersUseInterpolatedStrings": @(_triggerParametersUseInterpolatedStrings),
                             @"triggerProfileDicts (count)": @(_triggerProfileDicts.count),
+                            @"notifyOfAppend": @(_notifyOfAppend),
+
                             @"isDirty": @(_isDirty),
     };
     NSArray<NSString *> *keys = [dict.allKeys sortedArrayUsingSelector:@selector(compare:)];
@@ -77,6 +83,8 @@
 @dynamic enableTriggersInInteractiveApps;
 @dynamic triggerParametersUseInterpolatedStrings;
 @dynamic triggerProfileDicts;
+@dynamic notifyOfAppend;
+
 @dynamic isDirty;
 
 - (id)copyWithZone:(NSZone *)zone {

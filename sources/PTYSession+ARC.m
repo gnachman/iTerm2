@@ -224,17 +224,11 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     }
 }
 
-- (void)publishScreenCharArray:(const screen_char_t *)line
-                      metadata:(iTermImmutableMetadata)metadata
-                        length:(int)length {
+- (void)publishScreenCharArray:(ScreenCharArray *)array
+                      metadata:(iTermImmutableMetadata)metadata {
     if (self.contentSubscribers.count == 0) {
         return;
     }
-    screen_char_t continuation = { 0 };
-    continuation.code = EOL_SOFT;
-    ScreenCharArray *array = [[ScreenCharArray alloc] initWithLine:(screen_char_t *)line
-                                                            length:length
-                                                      continuation:continuation];
     for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
         [subscriber deliver:array metadata:metadata];
     }

@@ -49,6 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Terminal Fundamentals
 
 - (void)appendLineFeed;
+- (void)carriageReturn;
 - (void)appendCarriageReturnLineFeed;
 - (void)softAlternateScreenModeDidChange;
 - (void)appendStringAtCursor:(NSString *)string;
