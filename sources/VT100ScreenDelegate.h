@@ -343,7 +343,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                                              characters:(NSString * _Nonnull)characters
                             charactersIgnoringModifiers:(NSString * _Nonnull)charactersIgnoringModifiers;
 - (void)screenDidAppendImageData:(NSData * _Nonnull)data;
-- (void)screenAppendScreenCharArray:(ScreenCharArray *)array
+- (void)screenAppendScreenCharArray:(ScreenCharArray * _Nonnull)array
                            metadata:(iTermImmutableMetadata)metadata;
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode;
 - (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot * _Nonnull)slot;
