@@ -10671,6 +10671,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenWriteDataToTask:(NSData *)data {
+    if (_shell == nil) {
+        return;
+    }
     [self writeLatin1EncodedData:data broadcastAllowed:NO];
 }
 
@@ -11593,10 +11596,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _view.window.screen.backingScaleFactor;
 }
 
-- (BOOL)screenShouldSendReport {
-    return (_shell != nil) && (![self isTmuxClient]);
-}
-
 - (iTermNaggingController *)naggingController {
     if (!_naggingController) {
         _naggingController = [[iTermNaggingController alloc] init];
@@ -11606,7 +11605,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)screenShouldSendReportForVariable:(NSString *)name {
-    if (![self screenShouldSendReport]) {
+    if (self.isTmuxClient) {
         return NO;
     }
     return [self.naggingController permissionToReportVariableNamed:name];
@@ -11758,7 +11757,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.notifyOfAppend = notifyOfAppend;
         dirty = YES;
     }
-
+    if (_config.isTmuxClient != self.isTmuxClient) {
+        _config.isTmuxClient = self.isTmuxClient;
+        dirty = YES;
+    }
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                            inProfile:_profile];

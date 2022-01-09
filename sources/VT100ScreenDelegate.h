@@ -273,7 +273,6 @@
 - (CGFloat)screenBackingScaleFactor;
 
 // Ok to write to shell?
-- (BOOL)screenShouldSendReport;
 - (BOOL)screenShouldSendReportForVariable:(NSString * _Nullable)name;
 
 // FinalTerm stuff
