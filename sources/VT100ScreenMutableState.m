@@ -633,6 +633,18 @@ iTermTriggerScopeProvider>
     }
 }
 
+- (void)terminalShowTestPattern {
+    screen_char_t ch = [self.currentGrid defaultChar];
+    ch.code = 'E';
+    [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
+                                to:VT100GridCoordMake(self.currentGrid.size.width - 1,
+                                                      self.currentGrid.size.height - 1)
+                            toChar:ch
+                externalAttributes:nil];
+    [self.currentGrid resetScrollRegions];
+    self.currentGrid.cursor = VT100GridCoordMake(0, 0);
+}
+
 #pragma mark - Tabs
 
 // See issue 6592 for why `setBackgroundColors` exists. tl;dr ncurses makes weird assumptions.
