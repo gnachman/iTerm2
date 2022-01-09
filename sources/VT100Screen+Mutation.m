@@ -2569,7 +2569,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalShouldSendReportForVariable:(NSString *)variable {
-    return [delegate_ screenShouldSendReportForVariable:variable];
+    return [_mutableState terminalShouldSendReportForVariable:variable];
 }
 
 - (void)terminalSendReport:(NSData *)report {

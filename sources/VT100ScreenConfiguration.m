@@ -17,8 +17,10 @@
 @property (nonatomic, readwrite) BOOL triggerParametersUseInterpolatedStrings;
 @property (nonatomic, copy, readwrite) NSArray<NSDictionary *> *triggerProfileDicts;
 @property (nonatomic, readwrite) BOOL notifyOfAppend;
-@property (nonatomic, readwrite) BOOL isDirty;
 @property (nonatomic, readwrite) BOOL isTmuxClient;
+@property (nonatomic, readwrite, copy) NSSet<NSString *> *reportableVariables;
+
+@property (nonatomic, readwrite) BOOL isDirty;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -32,6 +34,7 @@
 @synthesize triggerProfileDicts = _triggerProfileDicts;
 @synthesize notifyOfAppend = _notifyOfAppend;
 @synthesize isTmuxClient = _isTmuxClient;
+@synthesize reportableVariables = _reportableVariables;
 
 @synthesize isDirty = _isDirty;
 
@@ -47,6 +50,7 @@
         _triggerProfileDicts = [other.triggerProfileDicts copy];
         _notifyOfAppend = other.notifyOfAppend;
         _isTmuxClient = other.isTmuxClient;
+        _reportableVariables = [other.reportableVariables copy];
 
         _isDirty = other.isDirty;
     }
@@ -67,6 +71,7 @@
                             @"triggerProfileDicts (count)": @(_triggerProfileDicts.count),
                             @"notifyOfAppend": @(_notifyOfAppend),
                             @"isTmuxClient": @(_isTmuxClient),
+                            @"reportableVariables (count)": @(_reportableVariables.count),
 
                             @"isDirty": @(_isDirty),
     };
@@ -90,6 +95,7 @@
 @dynamic triggerProfileDicts;
 @dynamic notifyOfAppend;
 @dynamic isTmuxClient;
+@dynamic reportableVariables;
 
 @dynamic isDirty;
 
