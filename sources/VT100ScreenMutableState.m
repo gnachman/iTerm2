@@ -10,6 +10,7 @@
 
 #import "CapturedOutput.h"
 #import "DebugLogging.h"
+#import "NSData+iTerm.h"
 #import "PTYAnnotation.h"
 #import "PTYTriggerEvaluator.h"
 #import "VT100RemoteHost.h"
@@ -621,6 +622,15 @@ iTermTriggerScopeProvider>
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenReportVariableNamed:variable];
     }];
+}
+
+- (void)terminalSendReport:(NSData *)report {
+    if (!self.config.isTmuxClient && report) {
+        DLog(@"report %@", [report stringWithEncoding:NSUTF8StringEncoding]);
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenWriteDataToTask:report];
+        }];
+    }
 }
 
 #pragma mark - Tabs
