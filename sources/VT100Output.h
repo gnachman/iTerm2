@@ -119,5 +119,6 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
 - (NSData *)reportDECDSR:(int)code :(int)subcode;
 - (NSData *)reportMacroSpace:(int)space;
 - (NSData *)reportMemoryChecksum:(int)checksum id:(int)reqid;
+- (NSData *)reportVariableNamed:(NSString *)name value:(NSString *)variableValue;
 
 @end

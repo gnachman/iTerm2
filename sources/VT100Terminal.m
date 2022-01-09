@@ -3689,14 +3689,8 @@ static const int kMaxScreenRows = 4096;
             }
             NSData *decodedData = [[NSData alloc] initWithBase64EncodedData:valueAsData options:0];
             NSString *name = [decodedData stringWithEncoding:self.encoding];
-            if (name && [_delegate terminalShouldSendReportForVariable:name]) {
-                NSString *encodedValue = @"";
-                if (name) {
-                    NSString *variableValue = [_delegate terminalValueOfVariableNamed:name];
-                    encodedValue = [[variableValue dataUsingEncoding:self.encoding] base64EncodedStringWithOptions:0];
-                }
-                NSString *report = [NSString stringWithFormat:@"%c]1337;ReportVariable=%@%c", VT100CC_ESC, encodedValue ?: @"", VT100CC_BEL];
-                [_delegate terminalSendReport:[report dataUsingEncoding:self.encoding]];
+            if (name) {
+                [_delegate terminalReportVariableNamed:name];
             }
         }
     } else if ([key isEqualToString:@"Custom"]) {

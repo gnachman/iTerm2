@@ -617,6 +617,12 @@ iTermTriggerScopeProvider>
     return !self.config.isTmuxClient;
 }
 
+- (void)terminalReportVariableNamed:(NSString *)variable {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenReportVariableNamed:variable];
+    }];
+}
+
 #pragma mark - Tabs
 
 // See issue 6592 for why `setBackgroundColors` exists. tl;dr ncurses makes weird assumptions.

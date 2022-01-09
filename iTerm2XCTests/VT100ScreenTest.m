@@ -867,10 +867,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenRequestUpload:(NSString *)args {
 }
 
-- (NSString *)screenValueOfVariableNamed:(NSString *)name {
-    return nil;
-}
-
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *,NSString *> *)parameters payload:(NSString *)payload {
 }
 
@@ -943,8 +939,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 }
 
 
-- (BOOL)screenShouldSendReportForVariable:(NSString *)name {
-    return YES;
+- (void)screenReportVariableNamed:(NSString *)name {
 }
 
 - (BOOL)screenConfirmDownloadAllowed:(NSString *)name size:(NSInteger)size displayInline:(BOOL)displayInline promptIfBig:(BOOL *)promptIfBig {

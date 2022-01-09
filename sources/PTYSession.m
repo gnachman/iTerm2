@@ -11604,11 +11604,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _naggingController;
 }
 
-- (BOOL)screenShouldSendReportForVariable:(NSString *)name {
+- (void)screenReportVariableNamed:(NSString *)name {
     if (self.isTmuxClient) {
-        return NO;
+        return;
     }
-    return [self.naggingController permissionToReportVariableNamed:name];
+    NSString *value = nil;
+    if ([self.naggingController permissionToReportVariableNamed:name]) {
+        value = [self stringValueOfVariable:name];
+    }
+    NSData *data = [_screen.terminal.output reportVariableNamed:name
+                                                          value:value];
+    [self screenWriteDataToTask:data];
 }
 
 - (VT100GridRange)screenRangeOfVisibleLines {
@@ -12356,7 +12362,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self queueAnnouncement:announcement identifier:identifier];
 }
 
-- (NSString *)screenValueOfVariableNamed:(NSString *)name {
+- (NSString *)stringValueOfVariable:(NSString *)name {
     if (!name) {
         return nil;
     }
