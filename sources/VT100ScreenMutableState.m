@@ -181,6 +181,20 @@ iTermTriggerScopeProvider>
     self.currentGrid.cursorX = 0;
 }
 
+- (void)carriageReturn {
+    if (self.currentGrid.useScrollRegionCols && self.currentGrid.cursorX < self.currentGrid.leftMargin) {
+        self.currentGrid.cursorX = 0;
+    } else {
+        [self.currentGrid moveCursorToLeftMargin];
+    }
+    // Consider moving this up to the top of the function so Inject triggers can run before the cursor moves. I should audit all calls to screenTriggerableChangeDidOccur since there could be other such opportunities.
+    [self clearTriggerLine];
+    if (self.commandStartCoord.x != -1) {
+        [self didUpdatePromptLocation];
+        [self commandRangeDidChange];
+    }
+}
+
 - (void)softAlternateScreenModeDidChange {
     const BOOL enabled = self.terminal.softAlternateScreenMode;
     const BOOL showing = self.currentGrid == self.altGrid;;
@@ -321,14 +335,22 @@ iTermTriggerScopeProvider>
                                                                    ansi:self.ansi
                                                                  insert:self.insert
                                                  externalAttributeIndex:externalAttributes]];
-        iTermImmutableMetadata temp;
-        iTermImmutableMetadataInit(&temp, 0, externalAttributes);
-        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            [delegate screenAppendScreenCharArray:buffer
-                                         metadata:temp
-                                           length:len];
-        }];
-        iTermImmutableMetadataRelease(temp);
+
+        if (self.config.notifyOfAppend) {
+            iTermImmutableMetadata temp;
+            iTermImmutableMetadataInit(&temp, 0, externalAttributes);
+
+            screen_char_t continuation = buffer[0];
+            continuation.code = EOL_SOFT;
+            ScreenCharArray *sca = [[ScreenCharArray alloc] initWithCopyOfLine:buffer
+                                                                        length:len
+                                                                  continuation:continuation];
+            [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+                [delegate screenAppendScreenCharArray:sca
+                                             metadata:temp];
+                iTermImmutableMetadataRelease(temp);
+            }];
+        }
     }
 
     if (self.commandStartCoord.x != -1) {
@@ -460,6 +482,147 @@ iTermTriggerScopeProvider>
         [self didUpdatePromptLocation];
         [self commandRangeDidChange];
     }
+}
+
+- (void)terminalAppendTabAtCursor:(BOOL)setBackgroundColors {
+    [self appendTabAtCursor:setBackgroundColors];
+}
+
+- (void)terminalCarriageReturn {
+    [self carriageReturn];
+}
+
+- (void)terminalLineFeed {
+    if (self.currentGrid.cursor.y == VT100GridRangeMax(self.currentGrid.scrollRegionRows) &&
+        self.cursorOutsideLeftRightMargin) {
+        DLog(@"Ignore linefeed/formfeed/index because cursor outside left-right margin.");
+        return;
+    }
+
+    if (self.collectInputForPrinting) {
+        [self.printBuffer appendString:@"\n"];
+    } else {
+        [self appendLineFeed];
+    }
+    [self clearTriggerLine];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidReceiveLineFeed];
+    }];
+}
+
+#pragma mark - Tabs
+
+// See issue 6592 for why `setBackgroundColors` exists. tl;dr ncurses makes weird assumptions.
+- (void)appendTabAtCursor:(BOOL)setBackgroundColors {
+    int rightMargin;
+    if (self.currentGrid.useScrollRegionCols) {
+        rightMargin = self.currentGrid.rightMargin;
+        if (self.currentGrid.cursorX > rightMargin) {
+            rightMargin = self.width - 1;
+        }
+    } else {
+        rightMargin = self.width - 1;
+    }
+
+    if (self.terminal.moreFix && self.cursorX > self.width && self.terminal.wraparoundMode) {
+        [self terminalLineFeed];
+        [self carriageReturn];
+    }
+
+    int nextTabStop = MIN(rightMargin, [self tabStopAfterColumn:self.currentGrid.cursorX]);
+    if (nextTabStop <= self.currentGrid.cursorX) {
+        // This happens when the cursor can't advance any farther.
+        if ([iTermAdvancedSettingsModel tabsWrapAround]) {
+            nextTabStop = [self tabStopAfterColumn:self.currentGrid.leftMargin];
+            [self softWrapCursorToNextLineScrollingIfNeeded];
+        } else {
+            return;
+        }
+    }
+    const int y = self.currentGrid.cursorY;
+    screen_char_t *aLine = [self.currentGrid screenCharsAtLineNumber:y];
+    BOOL allNulls = YES;
+    for (int i = self.currentGrid.cursorX; i < nextTabStop; i++) {
+        if (aLine[i].code) {
+            allNulls = NO;
+            break;
+        }
+    }
+    if (allNulls) {
+        screen_char_t filler;
+        InitializeScreenChar(&filler, [self.terminal foregroundColorCode], [self.terminal backgroundColorCode]);
+        filler.code = TAB_FILLER;
+        const int startX = self.currentGrid.cursorX;
+        const int limit = nextTabStop - 1;
+        iTermExternalAttribute *ea = [self.terminal externalAttributes];
+        [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(startX, y, limit + 1, y)
+                                                     block:^(screen_char_t *c,
+                                                             iTermExternalAttribute **eaOut,
+                                                             VT100GridCoord coord,
+                                                             BOOL *stop) {
+            if (coord.x < limit) {
+                if (setBackgroundColors) {
+                    *c = filler;
+                    *eaOut = ea;
+                } else {
+                    c->image = NO;
+                    c->complexChar = NO;
+                    c->code = TAB_FILLER;
+                }
+            } else {
+                if (setBackgroundColors) {
+                    screen_char_t tab = filler;
+                    tab.code = '\t';
+                    *c = tab;
+                    *eaOut = ea;
+                } else {
+                    c->image = NO;
+                    c->complexChar = NO;
+                    c->code = '\t';
+                }
+            }
+        }];
+        const int cursorX = self.currentGrid.cursorX;
+        screen_char_t continuation = aLine[cursorX];
+        continuation.code = EOL_SOFT;
+        ScreenCharArray *sca = [[ScreenCharArray alloc] initWithCopyOfLine:aLine + cursorX
+                                                                    length:nextTabStop - startX continuation:continuation];
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenAppendScreenCharArray:sca
+                                         metadata:iTermImmutableMetadataDefault()];
+        }];
+    }
+    self.currentGrid.cursorX = nextTabStop;
+}
+
+- (int)tabStopAfterColumn:(int)lowerBound {
+    for (int i = lowerBound + 1; i < self.width - 1; i++) {
+        if ([self.tabStops containsObject:@(i)]) {
+            return i;
+        }
+    }
+    return self.width - 1;
+}
+
+- (void)convertHardNewlineToSoftOnGridLine:(int)line {
+    screen_char_t *aLine = [self.currentGrid screenCharsAtLineNumber:line];
+    if (aLine[self.currentGrid.size.width].code == EOL_HARD) {
+        aLine[self.currentGrid.size.width].code = EOL_SOFT;
+    }
+}
+
+- (void)softWrapCursorToNextLineScrollingIfNeeded {
+    if (self.currentGrid.rightMargin + 1 == self.currentGrid.size.width) {
+        [self convertHardNewlineToSoftOnGridLine:self.currentGrid.cursorY];
+    }
+    if (self.currentGrid.cursorY == self.currentGrid.bottomMargin) {
+        [self incrementOverflowBy:[self.currentGrid scrollUpIntoLineBuffer:self.linebuffer
+                                                                         unlimitedScrollback:self.unlimitedScrollback
+                                                                     useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                                                   softBreak:YES]];
+    }
+    self.currentGrid.cursorX = self.currentGrid.leftMargin;
+    self.currentGrid.cursorY++;
 }
 
 #pragma mark - Backspace

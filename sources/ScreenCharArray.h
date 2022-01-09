@@ -24,6 +24,10 @@ NS_ASSUME_NONNULL_BEGIN
                       length:(int)length
                 continuation:(screen_char_t)continuation;
 
+- (instancetype)initWithCopyOfLine:(const screen_char_t *)line
+                            length:(int)length
+                      continuation:(screen_char_t)continuation;
+
 - (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
                     metadata:(iTermImmutableMetadata)metadata

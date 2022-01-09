@@ -23,7 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)tryToFinishAttachingToMultiserverWithPartialAttachment:(id<iTermPartialAttachment>)partialAttachment;
 
 - (void)publishNewline;
-- (void)publishScreenCharArray:(const screen_char_t *)line metadata:(iTermImmutableMetadata)metadata length:(int)length;
+- (void)publishScreenCharArray:(ScreenCharArray *)array
+                      metadata:(iTermImmutableMetadata)metadata;
 
 
 @end

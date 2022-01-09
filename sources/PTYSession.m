@@ -11753,6 +11753,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.unicodeVersion = _unicodeVersion;
         dirty = YES;
     }
+    const BOOL notifyOfAppend = self.contentSubscribers.count > 0;
+    if (_config.notifyOfAppend != notifyOfAppend) {
+        _config.notifyOfAppend = notifyOfAppend;
+        dirty = YES;
+    }
 
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
@@ -12546,10 +12551,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)screenAppendScreenCharArray:(const screen_char_t *)line
-                           metadata:(iTermImmutableMetadata)metadata
-                             length:(int)length {
-    [self publishScreenCharArray:line metadata:metadata length:length];
+- (void)screenAppendScreenCharArray:(ScreenCharArray *)sca
+                           metadata:(iTermImmutableMetadata)metadata {
+    [self publishScreenCharArray:sca metadata:metadata];
 }
 
 - (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode
@@ -13214,10 +13218,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _contentSubscribers = [[NSMutableArray alloc] init];
     }
     [_contentSubscribers addObject:contentSubscriber];
+    [self sync];
 }
 
 - (void)removeContentSubscriber:(id<iTermContentSubscriber>)contentSubscriber {
     [_contentSubscribers removeObject:contentSubscriber];
+    [self sync];
 }
 
 - (NSString *)stringForLine:(const screen_char_t *)screenChars

@@ -83,7 +83,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetScrollRegionTop:(int)top bottom:(int)bottom;
 - (void)mutEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec;
 - (void)mutEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec;
-- (void)mutCarriageReturn;
 - (void)mutReverseIndex;
 - (void)mutForwardIndex;
 - (void)mutBackIndex;
