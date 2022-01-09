@@ -2565,7 +2565,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalShouldSendReport {
-    return [delegate_ screenShouldSendReport];
+    return [_mutableState terminalShouldSendReport];
 }
 
 - (BOOL)terminalShouldSendReportForVariable:(NSString *)variable {
@@ -2573,7 +2573,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSendReport:(NSData *)report {
-    if ([delegate_ screenShouldSendReport] && report) {
+    if (!_mutableState.config.isTmuxClient && report) {
         DLog(@"report %@", [report stringWithEncoding:NSUTF8StringEncoding]);
         [delegate_ screenWriteDataToTask:report];
     }

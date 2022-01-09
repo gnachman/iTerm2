@@ -613,6 +613,10 @@ iTermTriggerScopeProvider>
     }
 }
 
+- (BOOL)terminalShouldSendReport {
+    return !self.config.isTmuxClient;
+}
+
 #pragma mark - Tabs
 
 // See issue 6592 for why `setBackgroundColors` exists. tl;dr ncurses makes weird assumptions.
