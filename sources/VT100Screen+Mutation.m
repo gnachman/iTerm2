@@ -1322,18 +1322,6 @@
     }
 }
 
-- (void)mutCursorUp:(int)n andToStartOfLine:(BOOL)toStart {
-    [_mutableState.currentGrid moveCursorUp:n];
-    if (toStart) {
-        [_mutableState.currentGrid moveCursorToLeftMargin];
-    }
-    [_mutableState clearTriggerLine];
-    if (_state.commandStartCoord.x != -1) {
-        [_mutableState didUpdatePromptLocation];
-        [_mutableState commandRangeDidChange];
-    }
-}
-
 - (void)mutShowTestPattern {
     screen_char_t ch = [_state.currentGrid defaultChar];
     ch.code = 'E';
@@ -2608,7 +2596,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalCursorUp:(int)n andToStartOfLine:(BOOL)toStart {
-    [self mutCursorUp:n andToStartOfLine:toStart];
+    [_mutableState terminalCursorUp:n andToStartOfLine:toStart];
 }
 
 - (void)terminalMoveCursorToX:(int)x y:(int)y {

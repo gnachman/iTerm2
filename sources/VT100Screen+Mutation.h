@@ -73,7 +73,6 @@ NS_ASSUME_NONNULL_BEGIN
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
 - (void)mutRemoveObjectFromIntervalTree:(id<IntervalTreeObject>)obj;
-- (void)mutCursorUp:(int)n andToStartOfLine:(BOOL)toStart;
 - (void)mutCursorToX:(int)x Y:(int)y;
 - (void)mutShowTestPattern;
 - (void)mutSetScrollRegionTop:(int)top bottom:(int)bottom;
