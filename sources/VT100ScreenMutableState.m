@@ -412,6 +412,17 @@ iTermTriggerScopeProvider>
     }
 }
 
+- (void)cursorDown:(int)n andToStartOfLine:(BOOL)toStart {
+    [self.currentGrid moveCursorDown:n];
+    if (toStart) {
+        [self.currentGrid moveCursorToLeftMargin];
+    }
+    [self clearTriggerLine];
+    if (self.commandStartCoord.x != -1) {
+        [self didUpdatePromptLocation];
+        [self commandRangeDidChange];
+    }
+}
 
 #pragma mark - VT100TerminalDelegate
 
@@ -521,6 +532,10 @@ iTermTriggerScopeProvider>
 
 - (void)terminalCursorLeft:(int)n {
     [self cursorLeft:n];
+}
+
+- (void)terminalCursorDown:(int)n andToStartOfLine:(BOOL)toStart {
+    [self cursorDown:n andToStartOfLine:toStart];
 }
 
 #pragma mark - Tabs
