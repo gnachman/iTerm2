@@ -74,7 +74,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)mutGetAndResetHasScrolled;
 - (void)mutRemoveObjectFromIntervalTree:(id<IntervalTreeObject>)obj;
 - (void)mutAppendTabAtCursor:(BOOL)setBackgroundColors;
-- (void)mutCursorRight:(int)n;
 - (void)mutCursorUp:(int)n andToStartOfLine:(BOOL)toStart;
 - (void)mutCursorToX:(int)x Y:(int)y;
 - (void)mutShowTestPattern;
