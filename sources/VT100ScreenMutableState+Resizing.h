@@ -53,6 +53,7 @@ NS_ASSUME_NONNULL_BEGIN
        tolerateEmpty:(BOOL)tolerateEmpty;
 - (NSArray *)subSelectionsWithConvertedRangesFromSelection:(iTermSelection *)selection
                                                   newWidth:(int)newWidth;
+- (IntervalTree *)replacementIntervalTreeForNewWidth:(int)newWidth;
 
 @end
 

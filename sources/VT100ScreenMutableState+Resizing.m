@@ -482,5 +482,33 @@ static void SwapInt(int *a, int *b) {
     return newSubSelections;
 }
 
+- (IntervalTree *)replacementIntervalTreeForNewWidth:(int)newWidth {
+    // Convert ranges of notes to their new coordinates and replace the interval tree.
+    IntervalTree *replacementTree = [[IntervalTree alloc] init];
+    for (id<IntervalTreeObject> note in [self.intervalTree allObjects]) {
+        VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
+        VT100GridCoordRange newRange;
+        if (noteRange.end.x < 0 && noteRange.start.y == 0 && noteRange.end.y < 0) {
+            // note has scrolled off top
+            [self.intervalTree removeObject:note];
+        } else {
+            if ([self convertRange:noteRange
+                                   toWidth:newWidth
+                                        to:&newRange
+                              inLineBuffer:self.linebuffer
+                             tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
+                assert(noteRange.start.y >= 0);
+                assert(noteRange.end.y >= 0);
+                Interval *newInterval = [self intervalForGridCoordRange:newRange
+                                                                          width:newWidth
+                                                                    linesOffset:self.cumulativeScrollbackOverflow];
+                [self.intervalTree removeObject:note];
+                [replacementTree addObject:note withInterval:newInterval];
+            }
+        }
+    }
+    return replacementTree;
+}
+
 
 @end
