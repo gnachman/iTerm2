@@ -31,6 +31,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (LineBufferPositionRange *)positionRangeForCoordRange:(VT100GridCoordRange)range
                                            inLineBuffer:(LineBuffer *)lineBuffer
                                           tolerateEmpty:(BOOL)tolerateEmpty;
+- (NSArray *)subSelectionTuplesWithUsedHeight:(int)usedHeight
+                                    newHeight:(int)newHeight
+                                    selection:(iTermSelection *)selection;
 
 @end
 

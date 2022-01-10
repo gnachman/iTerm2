@@ -270,5 +270,37 @@ static void SwapInt(int *a, int *b) {
     }
 }
 
+- (NSArray *)subSelectionTuplesWithUsedHeight:(int)usedHeight
+                                    newHeight:(int)newHeight
+                                    selection:(iTermSelection *)selection {
+    // In alternate screen mode, get the original positions of the
+    // selection. Later this will be used to set the selection positions
+    // relative to the end of the updated linebuffer (which could change as
+    // lines from the base screen are pushed onto it).
+    LineBuffer *lineBufferWithAltScreen = [self.linebuffer copy];
+    [self appendScreen:self.currentGrid
+          toScrollback:lineBufferWithAltScreen
+        withUsedHeight:usedHeight
+             newHeight:newHeight];
+    NSMutableArray *altScreenSubSelectionTuples = [NSMutableArray array];
+    for (iTermSubSelection *sub in selection.allSubSelections) {
+        VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
+                                              self.cumulativeScrollbackOverflow,
+                                              ^(VT100GridCoordRange range) {
+            LineBufferPositionRange *positionRange =
+            [self positionRangeForCoordRange:range
+                                inLineBuffer:lineBufferWithAltScreen
+                               tolerateEmpty:NO];
+            if (positionRange) {
+                [altScreenSubSelectionTuples addObject:@[ positionRange, sub ]];
+            } else {
+                DLog(@"Failed to get position range for selection on alt screen %@",
+                     VT100GridCoordRangeDescription(range));
+            }
+        });
+    }
+    return altScreenSubSelectionTuples;
+}
+
 
 @end
