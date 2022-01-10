@@ -1017,6 +1017,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self resetPreservingPrompt:preservePrompt modifyContent:modifyContent];
 }
 
+- (void)terminalSetCursorType:(ITermCursorType)cursorType {
+    [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetCursorType:cursorType];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
