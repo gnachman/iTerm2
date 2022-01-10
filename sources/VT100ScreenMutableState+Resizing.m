@@ -39,4 +39,16 @@
     return YES;
 }
 
+- (void)sanityCheckIntervalsFrom:(VT100GridSize)oldSize note:(NSString *)note {
+#if BETA
+    for (id<IntervalTreeObject> obj in [self.intervalTree allObjects]) {
+        IntervalTreeEntry *entry = obj.entry;
+        Interval *interval = entry.interval;
+        ITBetaAssert(interval.limit >= 0, @"Bogus interval %@ after resizing from %@ to %@. Note: %@",
+                     interval, VT100GridSizeDescription(oldSize), VT100GridSizeDescription(self.currentGrid.size),
+                     note);
+    }
+#endif
+}
+
 @end
