@@ -302,8 +302,7 @@
             mutableState.currentGrid = _state.primaryGrid;
         }
 
-        mutableState.intervalTree = [self replacementIntervalTreeForNewWidth:newSize.width
-                                                                mutableState:mutableState];
+        mutableState.intervalTree = [mutableState replacementIntervalTreeForNewWidth:newSize.width];
 
         if (wasShowingAltScreen) {
             // Return to alt grid.
@@ -366,36 +365,6 @@
 
     [self mutReloadMarkCache];
     [delegate_ screenSizeDidChangeWithNewTopLineAt:newTop];
-}
-
-- (IntervalTree *)replacementIntervalTreeForNewWidth:(int)newWidth
-                                        mutableState:(VT100ScreenMutableState *)mutableState {
-    // Convert ranges of notes to their new coordinates and replace the interval tree.
-    IntervalTree *replacementTree = [[[IntervalTree alloc] init] autorelease];
-    for (id<IntervalTreeObject> note in [mutableState.intervalTree allObjects]) {
-        VT100GridCoordRange noteRange = [mutableState coordRangeForInterval:note.entry.interval];
-        VT100GridCoordRange newRange;
-        if (noteRange.end.x < 0 && noteRange.start.y == 0 && noteRange.end.y < 0) {
-            // note has scrolled off top
-            [mutableState.intervalTree removeObject:note];
-        } else {
-            if ([mutableState convertRange:noteRange
-                                   toWidth:newWidth
-                                        to:&newRange
-                              inLineBuffer:mutableState.linebuffer
-                             tolerateEmpty:[mutableState intervalTreeObjectMayBeEmpty:note]]) {
-                assert(noteRange.start.y >= 0);
-                assert(noteRange.end.y >= 0);
-                Interval *newInterval = [mutableState intervalForGridCoordRange:newRange
-                                                                          width:newWidth
-                                                                    linesOffset:mutableState.cumulativeScrollbackOverflow];
-                [[note retain] autorelease];
-                [mutableState.intervalTree removeObject:note];
-                [replacementTree addObject:note withInterval:newInterval];
-            }
-        }
-    }
-    return replacementTree;
 }
 
 - (NSArray *)subSelectionsForNewSize:(VT100GridSize)newSize
