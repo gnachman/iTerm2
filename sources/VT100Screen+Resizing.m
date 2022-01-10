@@ -25,31 +25,32 @@
            hasView:(BOOL)hasView {
     assert([NSThread isMainThread]);
 
-    const VT100GridSize newSize = [_mutableState safeSizeForSize:proposedSize];
-    if (![_mutableState shouldSetSizeTo:newSize]) {
-        return;
-    }
-    [self.mutableLineBuffer beginResizing];
     [_mutableState performBlockWithJoinedThreads:^(VT100Terminal * _Nonnull terminal,
+                                                   VT100ScreenMutableState *mutableState,
                                                    id<VT100ScreenDelegate>  _Nonnull delegate) {
+        const VT100GridSize newSize = [mutableState safeSizeForSize:proposedSize];
+        if (![mutableState shouldSetSizeTo:newSize]) {
+            return;
+        }
+        [mutableState.linebuffer beginResizing];
         [self reallySetSize:newSize
                visibleLines:previouslyVisibleLineRange
                   selection:selection
                    delegate:delegate
                     hasView:hasView];
-    }];
-    [self.mutableLineBuffer endResizing];
+        [mutableState.linebuffer endResizing];
 
-    if (gDebugLogging) {
-        DLog(@"Notes after resizing to width=%@", @(_mutableState.width));
-        for (id<IntervalTreeObject> object in _mutableState.intervalTree.allObjects) {
-            if (![object isKindOfClass:[PTYAnnotation class]]) {
-                continue;
+        if (gDebugLogging) {
+            DLog(@"Notes after resizing to width=%@", @(_mutableState.width));
+            for (id<IntervalTreeObject> object in _mutableState.intervalTree.allObjects) {
+                if (![object isKindOfClass:[PTYAnnotation class]]) {
+                    continue;
+                }
+                DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([_mutableState coordRangeForInterval:object.entry.interval]));
             }
-            DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([_mutableState coordRangeForInterval:object.entry.interval]));
+            DLog(@"------------ end -----------");
         }
-        DLog(@"------------ end -----------");
-    }
+    }];
 }
 
 - (void)reallySetSize:(VT100GridSize)newSize

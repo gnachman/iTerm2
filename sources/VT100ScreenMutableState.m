@@ -1977,7 +1977,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
-                                                id<VT100ScreenDelegate> delegate))block {
+                                                            VT100ScreenMutableState *mutableState,
+                                                            id<VT100ScreenDelegate> delegate))block {
     DLog(@"%@", [NSThread callStackSymbols]);
     assert([NSThread isMainThread]);
 
@@ -1988,7 +1989,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         // Reentrant call. Avoid deadlock by running it immediately.
         assert(!running);  // Die if a different VT100Screen is also in performBlockWithJoinedThreads. This is not allowed because it causes a deadlock.
 
-        block(self.terminal, delegate);
+        block(self.terminal, self, delegate);
         return;
     }
 
@@ -1998,7 +1999,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     dispatch_group_t group = dispatch_group_create();
     dispatch_group_enter(group);
     [_tokenExecutor scheduleHighPriorityTask:^{
-        block(self.terminal, delegate);
+        block(self.terminal, self, delegate);
         dispatch_group_leave(group);
     }];
     dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
