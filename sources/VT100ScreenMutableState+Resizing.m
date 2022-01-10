@@ -815,4 +815,60 @@ static void SwapInt(int *a, int *b) {
     return newSubSelections;
 }
 
+- (void)updateAlternateScreenIntervalTreeForNewSize:(VT100GridSize)newSize {
+    // Append alt screen to empty line buffer
+    LineBuffer *altScreenLineBuffer = [[LineBuffer alloc] init];
+    [altScreenLineBuffer beginResizing];
+    [self appendScreen:self.altGrid
+          toScrollback:altScreenLineBuffer
+        withUsedHeight:[self.altGrid numberOfLinesUsed]
+             newHeight:newSize.height];
+    int numLinesThatWillBeRestored = MIN([altScreenLineBuffer numLinesWithWidth:newSize.width],
+                                         newSize.height);
+    int numLinesDroppedFromTop = [altScreenLineBuffer numLinesWithWidth:newSize.width] - numLinesThatWillBeRestored;
+
+    // Convert note ranges to new coords, dropping or truncating as needed
+    self.currentGrid = self.altGrid;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
+    IntervalTree *replacementTree = [[IntervalTree alloc] init];
+    for (id<IntervalTreeObject> object in [self.savedIntervalTree allObjects]) {
+        VT100GridCoordRange objectRange = [self coordRangeForInterval:object.entry.interval];
+        DLog(@"Found object at %@", VT100GridCoordRangeDescription(objectRange));
+        VT100GridCoordRange newRange;
+        if ([self convertRange:objectRange
+                       toWidth:newSize.width
+                            to:&newRange
+                  inLineBuffer:altScreenLineBuffer
+                 tolerateEmpty:[self intervalTreeObjectMayBeEmpty:object]]) {
+            assert(objectRange.start.y >= 0);
+            assert(objectRange.end.y >= 0);
+            // Anticipate the lines that will be dropped when the alt grid is restored.
+            newRange.start.y += self.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
+            newRange.end.y += self.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
+            if (newRange.start.y < 0) {
+                newRange.start.y = 0;
+                newRange.start.x = 0;
+            }
+            DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(objectRange), numLinesDroppedFromTop);
+            [self.savedIntervalTree removeObject:object];
+            if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
+                Interval *newInterval = [self intervalForGridCoordRange:newRange
+                                                                  width:newSize.width
+                                                            linesOffset:0];
+                [replacementTree addObject:object withInterval:newInterval];
+            } else {
+                DLog(@"Failed to convert");
+            }
+        }
+    }
+    self.savedIntervalTree = replacementTree;
+    self.currentGrid = self.primaryGrid;  // Swap back to primary grid
+
+    // Restore alt screen with new width
+    self.altGrid.size = VT100GridSizeMake(newSize.width, newSize.height);
+    [self.altGrid restoreScreenFromLineBuffer:altScreenLineBuffer
+                              withDefaultChar:[self.altGrid defaultChar]
+                            maxLinesToRestore:[altScreenLineBuffer numLinesWithWidth:self.currentGrid.size.width]];
+    [altScreenLineBuffer endResizing];
+}
+
 @end
