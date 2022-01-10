@@ -46,6 +46,11 @@ NS_ASSUME_NONNULL_BEGIN
                                           lineBuffer:(LineBuffer *)realLineBuffer
                                           usedHeight:(int)usedHeight
                                              newSize:(VT100GridSize)newSize;
+- (BOOL)convertRange:(VT100GridCoordRange)range
+             toWidth:(int)newWidth
+                  to:(VT100GridCoordRange *)resultPtr
+        inLineBuffer:(LineBuffer *)lineBuffer
+       tolerateEmpty:(BOOL)tolerateEmpty;
 
 @end
 

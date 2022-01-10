@@ -118,12 +118,11 @@
     DLog(@"History after appending screen to scrollback:\n%@", [mutableState.linebuffer debugString]);
 
     VT100GridCoordRange convertedRangeOfVisibleLines;
-    const BOOL rangeOfVisibleLinesConvertedCorrectly = [self convertRange:previouslyVisibleLines
-                                                                  toWidth:newSize.width
-                                                                       to:&convertedRangeOfVisibleLines
-                                                             inLineBuffer:mutableState.linebuffer
-                                                             mutableState:mutableState
-                                                            tolerateEmpty:YES];
+    const BOOL rangeOfVisibleLinesConvertedCorrectly = [mutableState convertRange:previouslyVisibleLines
+                                                                          toWidth:newSize.width
+                                                                               to:&convertedRangeOfVisibleLines
+                                                                     inLineBuffer:mutableState.linebuffer
+                                                                    tolerateEmpty:YES];
 
     // Contains iTermSubSelection*s updated for the new screen size. Used
     // regardless of whether we were in the alt screen, as it's simply the set
@@ -207,7 +206,11 @@
         VT100GridCoordRange objectRange = [mutableState coordRangeForInterval:object.entry.interval];
         DLog(@"Found object at %@", VT100GridCoordRangeDescription(objectRange));
         VT100GridCoordRange newRange;
-        if ([self convertRange:objectRange toWidth:newSize.width to:&newRange inLineBuffer:altScreenLineBuffer mutableState:mutableState tolerateEmpty:[mutableState intervalTreeObjectMayBeEmpty:object]]) {
+        if ([mutableState convertRange:objectRange
+                               toWidth:newSize.width
+                                    to:&newRange
+                          inLineBuffer:altScreenLineBuffer
+                         tolerateEmpty:[mutableState intervalTreeObjectMayBeEmpty:object]]) {
             assert(objectRange.start.y >= 0);
             assert(objectRange.end.y >= 0);
             // Anticipate the lines that will be dropped when the alt grid is restored.
@@ -377,12 +380,11 @@
                                               overflow,
                                               ^(VT100GridCoordRange range) {
             VT100GridCoordRange newSelection;
-            const BOOL ok = [self convertRange:range
-                                       toWidth:newWidth
-                                            to:&newSelection
-                                  inLineBuffer:mutableState.linebuffer
-                                  mutableState:mutableState
-                                 tolerateEmpty:NO];
+            const BOOL ok = [mutableState convertRange:range
+                                               toWidth:newWidth
+                                                    to:&newSelection
+                                          inLineBuffer:mutableState.linebuffer
+                                         tolerateEmpty:NO];
             if (ok) {
                 assert(range.start.y >= 0);
                 assert(range.end.y >= 0);
@@ -412,12 +414,11 @@
             // note has scrolled off top
             [mutableState.intervalTree removeObject:note];
         } else {
-            if ([self convertRange:noteRange
-                           toWidth:newWidth
-                                to:&newRange
-                      inLineBuffer:mutableState.linebuffer
-                      mutableState:mutableState
-                     tolerateEmpty:[mutableState intervalTreeObjectMayBeEmpty:note]]) {
+            if ([mutableState convertRange:noteRange
+                                   toWidth:newWidth
+                                        to:&newRange
+                              inLineBuffer:mutableState.linebuffer
+                             tolerateEmpty:[mutableState intervalTreeObjectMayBeEmpty:note]]) {
                 assert(noteRange.start.y >= 0);
                 assert(noteRange.end.y >= 0);
                 Interval *newInterval = [mutableState intervalForGridCoordRange:newRange
@@ -507,61 +508,6 @@
     }
 }
 
-
-- (BOOL)convertRange:(VT100GridCoordRange)range
-             toWidth:(int)newWidth
-                  to:(VT100GridCoordRange *)resultPtr
-        inLineBuffer:(LineBuffer *)lineBuffer
-        mutableState:(VT100ScreenMutableState *)mutableState
-       tolerateEmpty:(BOOL)tolerateEmpty {
-    if (range.start.y < 0 || range.end.y < 0) {
-        return NO;
-    }
-    LineBufferPositionRange *selectionRange;
-
-    // Temporarily swap in the passed-in linebuffer so the call below can access lines in the right line buffer.
-    LineBuffer *savedLineBuffer = mutableState.linebuffer;
-    mutableState.linebuffer = lineBuffer;
-    selectionRange = [mutableState positionRangeForCoordRange:range
-                                                 inLineBuffer:lineBuffer
-                                                tolerateEmpty:tolerateEmpty];
-    DLog(@"%@ -> %@", VT100GridCoordRangeDescription(range), selectionRange);
-    mutableState.linebuffer = savedLineBuffer;
-    if (!selectionRange) {
-        // One case where this happens is when the start and end of the range are past the last
-        // character in the line buffer (e.g., all nulls). It could occur when a note exists on a
-        // null line.
-        return NO;
-    }
-
-    resultPtr->start = [lineBuffer coordinateForPosition:selectionRange.start
-                                                   width:newWidth
-                                            extendsRight:NO
-                                                      ok:NULL];
-    BOOL ok = NO;
-    VT100GridCoord newEnd = [lineBuffer coordinateForPosition:selectionRange.end
-                                                        width:newWidth
-                                                 extendsRight:YES
-                                                           ok:&ok];
-    if (ok) {
-        newEnd.x++;
-        if (newEnd.x > newWidth) {
-            newEnd.y++;
-            newEnd.x -= newWidth;
-        }
-        resultPtr->end = newEnd;
-    } else {
-        // I'm not sure how to get here. It would happen if the endpoint of the selection could
-        // be converted into a LineBufferPosition with the original width but that LineBufferPosition
-        // could not be converted back into a VT100GridCoord with the new width.
-        resultPtr->end.x = _state.currentGrid.size.width;
-        resultPtr->end.y = [lineBuffer numLinesWithWidth:newWidth] + _state.currentGrid.size.height - 1;
-    }
-    if (selectionRange.end.extendsToEndOfLine) {
-        resultPtr->end.x = newWidth;
-    }
-    return YES;
-}
 
 // This is used for a very specific case. It's used when you have some history, optionally followed
 // by lines pulled from the primary grid, followed by the alternate grid, all stuffed into a line

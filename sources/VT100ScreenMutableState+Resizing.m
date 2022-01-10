@@ -396,5 +396,58 @@ static void SwapInt(int *a, int *b) {
     return altScreenLineBuffer;
 }
 
+- (BOOL)convertRange:(VT100GridCoordRange)range
+             toWidth:(int)newWidth
+                  to:(VT100GridCoordRange *)resultPtr
+        inLineBuffer:(LineBuffer *)lineBuffer
+       tolerateEmpty:(BOOL)tolerateEmpty {
+    if (range.start.y < 0 || range.end.y < 0) {
+        return NO;
+    }
+
+    // Temporarily swap in the passed-in linebuffer so the call below can access lines in the right line buffer.
+    LineBuffer *savedLineBuffer = self.linebuffer;
+    self.linebuffer = lineBuffer;
+    LineBufferPositionRange *selectionRange = [self positionRangeForCoordRange:range
+                                                                  inLineBuffer:lineBuffer
+                                                                 tolerateEmpty:tolerateEmpty];
+    DLog(@"%@ -> %@", VT100GridCoordRangeDescription(range), selectionRange);
+    self.linebuffer = savedLineBuffer;
+    if (!selectionRange) {
+        // One case where this happens is when the start and end of the range are past the last
+        // character in the line buffer (e.g., all nulls). It could occur when a note exists on a
+        // null line.
+        return NO;
+    }
+
+    resultPtr->start = [lineBuffer coordinateForPosition:selectionRange.start
+                                                   width:newWidth
+                                            extendsRight:NO
+                                                      ok:NULL];
+    BOOL ok = NO;
+    VT100GridCoord newEnd = [lineBuffer coordinateForPosition:selectionRange.end
+                                                        width:newWidth
+                                                 extendsRight:YES
+                                                           ok:&ok];
+    if (ok) {
+        newEnd.x++;
+        if (newEnd.x > newWidth) {
+            newEnd.y++;
+            newEnd.x -= newWidth;
+        }
+        resultPtr->end = newEnd;
+    } else {
+        // I'm not sure how to get here. It would happen if the endpoint of the selection could
+        // be converted into a LineBufferPosition with the original width but that LineBufferPosition
+        // could not be converted back into a VT100GridCoord with the new width.
+        resultPtr->end.x = self.currentGrid.size.width;
+        resultPtr->end.y = [lineBuffer numLinesWithWidth:newWidth] + self.currentGrid.size.height - 1;
+    }
+    if (selectionRange.end.extendsToEndOfLine) {
+        resultPtr->end.x = newWidth;
+    }
+    return YES;
+}
+
 
 @end
