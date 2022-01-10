@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Private APIs (remove this once migration is done)
 
 - (VT100GridSize)safeSizeForSize:(VT100GridSize)proposedSize;
+- (BOOL)shouldSetSizeTo:(VT100GridSize)size;
 
 @end
 

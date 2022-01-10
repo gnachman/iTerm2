@@ -6,6 +6,7 @@
 //
 
 #import "VT100ScreenMutableState+Resizing.h"
+#import "DebugLogging.h"
 
 @implementation VT100ScreenMutableState (Resizing)
 
@@ -14,6 +15,28 @@
     size.width = MAX(proposedSize.width, 1);
     size.height = MAX(proposedSize.height, 1);
     return size;
+}
+
+- (BOOL)shouldSetSizeTo:(VT100GridSize)size {
+    [self.temporaryDoubleBuffer reset];
+
+    DLog(@"Resize session to %@", VT100GridSizeDescription(size));
+    DLog(@"Before:\n%@", [self.currentGrid compactLineDumpWithContinuationMarks]);
+    DLog(@"Cursor at %d,%d", self.currentGrid.cursorX, self.currentGrid.cursorY);
+    if (self.commandStartCoord.x != -1) {
+        [self didUpdatePromptLocation];
+        [self commandDidEndWithRange:self.commandRange];
+        [self invalidateCommandStartCoordWithoutSideEffects];
+    }
+    self.lastCommandMark = nil;
+
+    if (self.currentGrid.size.width == 0 ||
+        self.currentGrid.size.height == 0 ||
+        (size.width == self.currentGrid.size.width &&
+         size.height == self.currentGrid.size.height)) {
+        return NO;
+    }
+    return YES;
 }
 
 @end
