@@ -96,6 +96,8 @@
 			<string>Owner</string>
 		</dict>
 	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>An application in iTerm2 wants to use Bluetooth.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>An application in iTerm2 wants to use Calendar data.</string>
 	<key>NSCameraUsageDescription</key>
