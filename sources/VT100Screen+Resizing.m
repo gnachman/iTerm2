@@ -106,14 +106,15 @@
                                                                selection:selection
                                                               lineBuffer:realLineBuffer
                                                               usedHeight:usedHeight
-                                                                 newSize:newSize];
+                                                                 newSize:newSize
+                                                            mutableState:mutableState];
     }
 
     // Append primary grid to line buffer.
-    [self appendScreen:mutableState.primaryGrid
-          toScrollback:mutableState.linebuffer
-        withUsedHeight:[mutableState.primaryGrid numberOfLinesUsed]
-             newHeight:newSize.height];
+    [mutableState appendScreen:mutableState.primaryGrid
+                  toScrollback:mutableState.linebuffer
+                withUsedHeight:[mutableState.primaryGrid numberOfLinesUsed]
+                     newHeight:newSize.height];
     DLog(@"History after appending screen to scrollback:\n%@", [mutableState.linebuffer debugString]);
 
     VT100GridCoordRange convertedRangeOfVisibleLines;
@@ -162,10 +163,12 @@
                                                                                  oldSize:oldSize
                                                                                  newSize:newSize
                                                                               usedHeight:usedHeight
-                                                                     intervalTreeObjects:altScreenNotes];
+                                                                     intervalTreeObjects:altScreenNotes
+                                                                            mutableState:mutableState];
     } else {
         // Was showing primary grid. Fix up notes in the alt screen.
-        [self updateAlternateScreenIntervalTreeForNewSize:newSize];
+        [self updateAlternateScreenIntervalTreeForNewSize:newSize
+                                             mutableState:mutableState];
     }
 
     const int newTop = rangeOfVisibleLinesConvertedCorrectly ? convertedRangeOfVisibleLines.start.y : -1;
@@ -181,14 +184,15 @@
     DLog(@"Cursor at %d,%d", mutableState.currentGrid.cursorX, mutableState.currentGrid.cursorY);
 }
 
-- (void)updateAlternateScreenIntervalTreeForNewSize:(VT100GridSize)newSize {
+- (void)updateAlternateScreenIntervalTreeForNewSize:(VT100GridSize)newSize
+                                       mutableState:(VT100ScreenMutableState *)mutableState {
     // Append alt screen to empty line buffer
     LineBuffer *altScreenLineBuffer = [[[LineBuffer alloc] init] autorelease];
     [altScreenLineBuffer beginResizing];
-    [self appendScreen:_state.altGrid
-          toScrollback:altScreenLineBuffer
-        withUsedHeight:[_state.altGrid numberOfLinesUsed]
-             newHeight:newSize.height];
+    [mutableState appendScreen:mutableState.altGrid
+                  toScrollback:altScreenLineBuffer
+                withUsedHeight:[mutableState.altGrid numberOfLinesUsed]
+                     newHeight:newSize.height];
     int numLinesThatWillBeRestored = MIN([altScreenLineBuffer numLinesWithWidth:newSize.width],
                                          newSize.height);
     int numLinesDroppedFromTop = [altScreenLineBuffer numLinesWithWidth:newSize.width] - numLinesThatWillBeRestored;
@@ -253,7 +257,8 @@
                                                              oldSize:(VT100GridSize)oldSize
                                                              newSize:(VT100GridSize)newSize
                                                           usedHeight:(int)usedHeight
-                                                 intervalTreeObjects:(NSArray *)altScreenNotes {
+                                                 intervalTreeObjects:(NSArray *)altScreenNotes
+                                                        mutableState:(VT100ScreenMutableState *)mutableState {
     [self restorePrimaryGridWithLineBuffer:realLineBuffer
                                    oldSize:oldSize
                                    newSize:newSize];
@@ -281,7 +286,8 @@
                                          originalLastPosition:originalLastPos
                                               newLastPosition:newLastPos
                                                  linesMovedUp:linesMovedUp
-                                         appendOnlyLineBuffer:appendOnlyLineBuffer];
+                                         appendOnlyLineBuffer:appendOnlyLineBuffer
+                                                 mutableState:mutableState];
     DLog(@"Original limit=%@", originalLastPos);
     DLog(@"New limit=%@", newLastPos);
     [self addObjectsToIntervalTreeFromTuples:altScreenNotes
@@ -299,25 +305,28 @@
                                            selection:(iTermSelection *)selection
                                           lineBuffer:(LineBuffer *)realLineBuffer
                                           usedHeight:(int)usedHeight
-                                             newSize:(VT100GridSize)newSize {
+                                             newSize:(VT100GridSize)newSize
+                                        mutableState:(VT100ScreenMutableState *)mutableState {
     if (couldHaveSelection) {
         *altScreenSubSelectionTuplesPtr = [self subSelectionTuplesWithUsedHeight:usedHeight
                                                                        newHeight:newSize.height
-                                                                    selection:selection];
+                                                                       selection:selection
+                                                                    mutableState:mutableState];
     }
 
     LineBuffer *altScreenLineBuffer = [[[LineBuffer alloc] init] autorelease];
     [altScreenLineBuffer beginResizing];
-    [self appendScreen:_state.altGrid
-          toScrollback:altScreenLineBuffer
-        withUsedHeight:usedHeight
-             newHeight:newSize.height];
+    [mutableState appendScreen:mutableState.altGrid
+                  toScrollback:altScreenLineBuffer
+                withUsedHeight:usedHeight
+                     newHeight:newSize.height];
 
     if ([_mutableState.intervalTree count]) {
         *altScreenNotesPtr = [self intervalTreeObjectsWithUsedHeight:usedHeight
                                                            newHeight:newSize.height
                                                                 grid:_state.altGrid
-                                                          lineBuffer:realLineBuffer];
+                                                          lineBuffer:realLineBuffer
+                                                        mutableState:mutableState];
     }
 
     _mutableState.currentGrid = _state.primaryGrid;
@@ -404,16 +413,17 @@
 
 - (NSArray *)subSelectionTuplesWithUsedHeight:(int)usedHeight
                                     newHeight:(int)newHeight
-                                    selection:(iTermSelection *)selection {
+                                    selection:(iTermSelection *)selection
+                                 mutableState:(VT100ScreenMutableState *)mutableState {
     // In alternate screen mode, get the original positions of the
     // selection. Later this will be used to set the selection positions
     // relative to the end of the updated linebuffer (which could change as
     // lines from the base screen are pushed onto it).
     LineBuffer *lineBufferWithAltScreen = [[_mutableState.linebuffer copy] autorelease];
-    [self appendScreen:_state.currentGrid
-          toScrollback:lineBufferWithAltScreen
-        withUsedHeight:usedHeight
-             newHeight:newHeight];
+    [mutableState appendScreen:mutableState.currentGrid
+                  toScrollback:lineBufferWithAltScreen
+                withUsedHeight:usedHeight
+                     newHeight:newHeight];
     NSMutableArray *altScreenSubSelectionTuples = [NSMutableArray array];
     for (iTermSubSelection *sub in selection.allSubSelections) {
         VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
@@ -437,7 +447,8 @@
 - (NSArray *)intervalTreeObjectsWithUsedHeight:(int)usedHeight
                                      newHeight:(int)newHeight
                                           grid:(VT100Grid *)grid
-                                    lineBuffer:(LineBuffer *)realLineBuffer {
+                                    lineBuffer:(LineBuffer *)realLineBuffer
+                                  mutableState:(VT100ScreenMutableState *)mutableState{
     // Add notes that were on the alt grid to altScreenNotes, leaving notes in history alone.
     VT100GridCoordRange screenCoordRange =
     VT100GridCoordRangeMake(0,
@@ -448,10 +459,10 @@
     [_mutableState.intervalTree objectsInInterval:[_mutableState intervalForGridCoordRange:screenCoordRange]];
 
     LineBuffer *appendOnlyLineBuffer = [[realLineBuffer copy] autorelease];
-    [self appendScreen:grid
-          toScrollback:appendOnlyLineBuffer
-        withUsedHeight:usedHeight
-             newHeight:newHeight];
+    [mutableState appendScreen:grid
+                  toScrollback:appendOnlyLineBuffer
+                withUsedHeight:usedHeight
+                     newHeight:newHeight];
 
     NSMutableArray *triples = [NSMutableArray array];
 
@@ -545,11 +556,12 @@
                 originalLastPosition:(LineBufferPosition *)originalLastPos
                      newLastPosition:(LineBufferPosition *)newLastPos
                         linesMovedUp:(int)linesMovedUp
-                appendOnlyLineBuffer:(LineBuffer *)appendOnlyLineBuffer {
-    [self appendScreen:copyOfAltGrid
-          toScrollback:appendOnlyLineBuffer
-        withUsedHeight:usedHeight
-             newHeight:newSize.height];
+                appendOnlyLineBuffer:(LineBuffer *)appendOnlyLineBuffer
+                        mutableState:(VT100ScreenMutableState *)mutableState{
+    [mutableState appendScreen:copyOfAltGrid
+                  toScrollback:appendOnlyLineBuffer
+                withUsedHeight:usedHeight
+                     newHeight:newSize.height];
 
     NSMutableArray *newSubSelections = [NSMutableArray array];
     for (int i = 0; i < altScreenSubSelectionTuples.count; i++) {
@@ -611,33 +623,6 @@
     }
 }
 
-// This assumes the window's height is going to change to newHeight but _state.currentGrid.size.height
-// is still the "old" height. Returns the number of lines appended.
-- (int)appendScreen:(VT100Grid *)grid
-        toScrollback:(LineBuffer *)lineBufferToUse
-      withUsedHeight:(int)usedHeight
-           newHeight:(int)newHeight {
-    int n;
-    if (grid.size.height - newHeight >= usedHeight) {
-        // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
-        // lines off the top, leaving the cursor floating without any text. Keep all used lines that
-        // fit onscreen.
-        n = MAX(usedHeight, newHeight);
-    } else {
-        if (newHeight < grid.size.height) {
-            // Screen is shrinking.
-            // If possible, keep the last used line a fixed distance from the top of
-            // the screen. If not, at least save all the used lines.
-            n = usedHeight;
-        } else {
-            // Screen is not shrinking in height. New content may be brought in on top.
-            n = grid.size.height;
-        }
-    }
-    [grid appendLines:n toLineBuffer:lineBufferToUse];
-
-    return n;
-}
 
 static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     if (py1 == py2) {
