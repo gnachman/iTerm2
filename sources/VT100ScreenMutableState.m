@@ -404,6 +404,19 @@ iTermTriggerScopeProvider>
     STOPWATCH_LAP(appendAsciiDataAtCursor);
 }
 
+- (void)reverseIndex {
+    if (self.currentGrid.cursorY == self.currentGrid.topMargin) {
+        if (self.cursorOutsideLeftRightMargin) {
+            return;
+        } else {
+            [self.currentGrid scrollDown];
+        }
+    } else {
+        self.currentGrid.cursorY = MAX(0, self.currentGrid.cursorY - 1);
+    }
+    [self clearTriggerLine];
+}
+
 - (void)cursorLeft:(int)n {
     [self.currentGrid moveCursorLeft:n];
     [self clearTriggerLine];
@@ -879,6 +892,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)terminalSetTabStopAtCursor {
     [self setTabStopAtCursor];
 }
+
+- (void)terminalReverseIndex {
+    [self reverseIndex];
+}
+
 #pragma mark - Tabs
 
 // See issue 6592 for why `setBackgroundColors` exists. tl;dr ncurses makes weird assumptions.

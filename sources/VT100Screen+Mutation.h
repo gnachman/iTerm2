@@ -72,7 +72,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)mutContinueFindResultsInContext:(FindContext *)context
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
-- (void)mutReverseIndex;
 - (void)mutForwardIndex;
 - (void)mutBackIndex;
 - (void)mutResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent;
