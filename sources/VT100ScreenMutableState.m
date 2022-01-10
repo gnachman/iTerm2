@@ -876,6 +876,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self eraseLineBeforeCursor:before afterCursor:after decProtect:NO];
 }
 
+- (void)terminalSetTabStopAtCursor {
+    [self setTabStopAtCursor];
+}
 #pragma mark - Tabs
 
 // See issue 6592 for why `setBackgroundColors` exists. tl;dr ncurses makes weird assumptions.
@@ -989,6 +992,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     self.currentGrid.cursorX = self.currentGrid.leftMargin;
     self.currentGrid.cursorY++;
+}
+
+- (void)setTabStopAtCursor {
+    if (self.currentGrid.cursorX < self.currentGrid.size.width) {
+        [self.tabStops addObject:[NSNumber numberWithInt:self.currentGrid.cursorX]];
+    }
 }
 
 #pragma mark - Backspace
