@@ -821,6 +821,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self setScrollRegionTop:top bottom:bottom];
 }
 
+- (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
+    [self eraseInDisplayBeforeCursor:before afterCursor:after decProtect:NO];
+}
+
 #pragma mark - Tabs
 
 // See issue 6592 for why `setBackgroundColors` exists. tl;dr ncurses makes weird assumptions.
