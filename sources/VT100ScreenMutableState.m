@@ -1018,15 +1018,21 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)terminalSetCursorType:(ITermCursorType)cursorType {
+    // Pause because cursor type and blink are reportable.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetCursorType:cursorType];
+        [unpauser unpause];
     }];
 }
 
 - (void)terminalSetCursorBlinking:(BOOL)blinking {
+    // Pause because cursor type and blink are reportable.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetCursorBlinking:blinking];
+        [unpauser unpause];
     }];
 }
 
