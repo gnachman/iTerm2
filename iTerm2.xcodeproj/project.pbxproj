@@ -1635,6 +1635,8 @@
 		A658882A201F06ED006F48DB /* iTermTexture.m in Sources */ = {isa = PBXBuildFile; fileRef = A6588828201F06ED006F48DB /* iTermTexture.m */; };
 		A65943CB1F83382B00598B1E /* iTermMetalClipView.h in Headers */ = {isa = PBXBuildFile; fileRef = A65943C91F83382B00598B1E /* iTermMetalClipView.h */; };
 		A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */ = {isa = PBXBuildFile; fileRef = A65943CA1F83382B00598B1E /* iTermMetalClipView.m */; };
+		A65B0400278CAA4600CD889E /* VT100ScreenMutableState+Resizing.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B03FE278CAA4600CD889E /* VT100ScreenMutableState+Resizing.h */; };
+		A65B0401278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B03FF278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m */; };
 		A65B49A8244199CF002B1C68 /* iTermSocketUnixDomainAddress.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B49A6244199CF002B1C68 /* iTermSocketUnixDomainAddress.h */; };
 		A65B49A9244199CF002B1C68 /* iTermSocketUnixDomainAddress.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B49A7244199CF002B1C68 /* iTermSocketUnixDomainAddress.m */; };
 		A65B72521B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
@@ -5509,6 +5511,9 @@
 		A6588828201F06ED006F48DB /* iTermTexture.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermTexture.m; path = Metal/Infrastructure/iTermTexture.m; sourceTree = "<group>"; };
 		A65943C91F83382B00598B1E /* iTermMetalClipView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = iTermMetalClipView.h; path = Metal/Support/iTermMetalClipView.h; sourceTree = "<group>"; };
 		A65943CA1F83382B00598B1E /* iTermMetalClipView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermMetalClipView.m; path = Metal/Support/iTermMetalClipView.m; sourceTree = "<group>"; };
+		A65B03FD278CA9D500CD889E /* VT100ScreenMutableState+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100ScreenMutableState+Private.h"; sourceTree = "<group>"; };
+		A65B03FE278CAA4600CD889E /* VT100ScreenMutableState+Resizing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100ScreenMutableState+Resizing.h"; sourceTree = "<group>"; };
+		A65B03FF278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100ScreenMutableState+Resizing.m"; sourceTree = "<group>"; };
 		A65B49A6244199CF002B1C68 /* iTermSocketUnixDomainAddress.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSocketUnixDomainAddress.h; sourceTree = "<group>"; };
 		A65B49A7244199CF002B1C68 /* iTermSocketUnixDomainAddress.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSocketUnixDomainAddress.m; sourceTree = "<group>"; };
 		A65B72501B1A5D7500F947A7 /* WarningSign.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WarningSign.png; path = images/WarningSign.png; sourceTree = "<group>"; };
@@ -8938,6 +8943,9 @@
 				A6F7F8042763F47B005E433E /* VT100ScreenState.h */,
 				A6F7F8052763F47B005E433E /* VT100ScreenState.m */,
 				A667C26E277B8E19006B4DEF /* VT100ScreenState+Private.h */,
+				A65B03FD278CA9D500CD889E /* VT100ScreenMutableState+Private.h */,
+				A65B03FE278CAA4600CD889E /* VT100ScreenMutableState+Resizing.h */,
+				A65B03FF278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -11590,6 +11598,7 @@
 				A66719401DCE36C3000CE608 /* iTermOpenQuicklyCommands.h in Headers */,
 				A6E180EA23D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h in Headers */,
 				A67C44E7211E24F6004EDB1C /* PSMMinimalTabStyle.h in Headers */,
+				A65B0400278CAA4600CD889E /* VT100ScreenMutableState+Resizing.h in Headers */,
 				A6F718BE226597700053488E /* PTYTextView+Private.h in Headers */,
 				530AB7B420A615D900D2AA08 /* iTermPythonArgumentParser.h in Headers */,
 				A6E1524627602FFE00D0F41C /* iTermWeakBox.h in Headers */,
@@ -14375,6 +14384,7 @@
 				A6AB55E1217256A600142244 /* iTermLineBlockArray.m in Sources */,
 				A67960CC1F81FCB6008A42BC /* iTermMetalCellRenderer.m in Sources */,
 				A653F6AD24D122440062377E /* iTermRestorableStateDriver.m in Sources */,
+				A65B0401278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m in Sources */,
 				5370678921C9D2780088D0F3 /* SIGSHA2VerificationAlgorithm.m in Sources */,
 				A63011C520E85132008114B7 /* iTermStatusBarBaseComponent.m in Sources */,
 				A6EF57D221994DDC00C76698 /* iTermUserDefaultsObserver.m in Sources */,

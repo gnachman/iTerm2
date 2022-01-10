@@ -8,6 +8,7 @@
 #import "VT100Screen+Resizing.h"
 #import "VT100Screen+Mutation.h"
 #import "VT100Screen+Private.h"
+#import "VT100ScreenMutableState+Resizing.h"
 
 #import "DebugLogging.h"
 #import "VT100RemoteHost.h"
@@ -19,7 +20,7 @@
 @implementation VT100Screen (Resizing)
 
 - (void)mutSetSize:(VT100GridSize)proposedSize {
-    VT100GridSize newSize = [self safeSizeForSize:proposedSize];
+    VT100GridSize newSize = [_mutableState safeSizeForSize:proposedSize];
     if (![self shouldSetSizeTo:newSize]) {
         return;
     }
@@ -414,13 +415,6 @@
         return NO;
     }
     return YES;
-}
-
-- (VT100GridSize)safeSizeForSize:(VT100GridSize)proposedSize {
-    VT100GridSize size;
-    size.width = MAX(proposedSize.width, 1);
-    size.height = MAX(proposedSize.height, 1);
-    return size;
 }
 
 - (void)willSetSizeWithSelection:(iTermSelection *)selection {

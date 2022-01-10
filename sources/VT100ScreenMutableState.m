@@ -6,6 +6,7 @@
 //
 
 #import "VT100ScreenMutableState.h"
+#import "VT100ScreenMutableState+Private.h"
 #import "VT100ScreenState+Private.h"
 
 #import "CapturedOutput.h"
@@ -26,22 +27,8 @@
 #import "iTermURLMark.h"
 #import "iTermURLStore.h"
 
-@interface VT100ScreenMutableState()<
-PTYTriggerEvaluatorDelegate,
-iTermMarkDelegate,
-iTermTriggerSession,
-iTermTriggerScopeProvider>
 
-@property (atomic) BOOL hadCommand;
-
-@end
-
-@implementation VT100ScreenMutableState {
-    VT100GridCoordRange _previousCommandRange;
-    iTermIdempotentOperationJoiner *_commandRangeChangeJoiner;
-    dispatch_queue_t _queue;
-    PTYTriggerEvaluator *_triggerEvaluator;
-}
+@implementation VT100ScreenMutableState 
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
     self = [super initForMutation];
