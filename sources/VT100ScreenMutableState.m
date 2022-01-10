@@ -1062,6 +1062,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalResetCursorTypeAndBlink {
+    // Pause because cursor type and blink are reportable.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenResetCursorTypeAndBlink];
+        [unpauser unpause];
+    }];
+}
+
 
 #pragma mark - Tabs
 
