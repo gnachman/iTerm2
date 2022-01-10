@@ -489,24 +489,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers {
-    NSMutableString *string =
-        [NSMutableString stringWithString:[_state.linebuffer compactLineDumpWithWidth:_state.width andContinuationMarks:YES]];
-    NSMutableArray *lines = [[[string componentsSeparatedByString:@"\n"] mutableCopy] autorelease];
-    long long absoluteLineNumber = self.totalScrollbackOverflow;
-    for (int i = 0; i < lines.count; i++) {
-        lines[i] = [NSString stringWithFormat:@"%8lld:        %@", absoluteLineNumber++, lines[i]];
-    }
-
-    if ([string length]) {
-        [lines addObject:@"- end of history -"];
-    }
-    NSString *gridDump = [_state.currentGrid compactLineDumpWithContinuationMarks];
-    NSArray *gridLines = [gridDump componentsSeparatedByString:@"\n"];
-    for (int i = 0; i < gridLines.count; i++) {
-        [lines addObject:[NSString stringWithFormat:@"%8lld (%04d): %@", absoluteLineNumber++, i, gridLines[i]]];
-    }
-    return [lines componentsJoinedByString:@"\n"];
+    return [_state compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers];
 }
+
 
 - (NSString *)compactLineDump {
     return [_state.currentGrid compactLineDump];
