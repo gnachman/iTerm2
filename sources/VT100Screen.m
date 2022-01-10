@@ -1032,50 +1032,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [_state.currentGrid isAnyCharDirty];
 }
 
-// It's kind of wrong to use VT100GridRun here, but I think it's harmless enough.
-- (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run {
-    VT100GridRun result = run;
-    int x = result.origin.x;
-    int y = result.origin.y;
-    ITBetaAssert(y >= 0, @"Negative y to runByTrimmingNullsFromRun");
-    const screen_char_t *line = [self getLineAtIndex:y];
-    int numberOfLines = _state.numberOfLines;
-    int width = _state.width;
-    if (x > 0) {
-        while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
-            x++;
-            result.length--;
-            if (x == width) {
-                x = 0;
-                y++;
-                if (y == numberOfLines) {
-                    // Run is all nulls
-                    result.length = 0;
-                    return result;
-                }
-                break;
-            }
-        }
-    }
-    result.origin = VT100GridCoordMake(x, y);
-
-    VT100GridCoord end = VT100GridRunMax(run, width);
-    x = end.x;
-    y = end.y;
-    ITBetaAssert(y >= 0, @"Negative y to from max of run %@", VT100GridRunDescription(run));
-    line = [self getLineAtIndex:y];
-    if (x < width - 1) {
-        while (result.length > 0 && line[x].code == 0 && y < numberOfLines) {
-            x--;
-            result.length--;
-            if (x == -1) {
-                break;
-            }
-        }
-    }
-    return result;
-}
-
 // NSLog the screen contents for debugging.
 - (void)dumpScreen {
     NSLog(@"%@", [self debugString]);
