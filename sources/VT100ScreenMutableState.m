@@ -1024,6 +1024,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalSetCursorBlinking:(BOOL)blinking {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetCursorBlinking:blinking];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
