@@ -101,14 +101,13 @@
     // the base screen's contents to it.
     LineBuffer *altScreenLineBuffer = nil;
     if (wasShowingAltScreen) {
-        altScreenLineBuffer = [self prepareToResizeInAlternateScreenMode:&altScreenSubSelectionTuples
+        altScreenLineBuffer = [mutableState prepareToResizeInAlternateScreenMode:&altScreenSubSelectionTuples
                                                      intervalTreeObjects:&altScreenNotes
                                                             hasSelection:couldHaveSelection
                                                                selection:selection
                                                               lineBuffer:realLineBuffer
                                                               usedHeight:usedHeight
-                                                                 newSize:newSize
-                                                            mutableState:mutableState];
+                                                                 newSize:newSize];
     }
 
     // Append primary grid to line buffer.
@@ -289,42 +288,6 @@
                                 linesMovedUp:linesMovedUp
                         appendOnlyLineBuffer:appendOnlyLineBuffer];
     return newSubSelections;
-}
-
-- (LineBuffer *)prepareToResizeInAlternateScreenMode:(NSArray **)altScreenSubSelectionTuplesPtr
-                                 intervalTreeObjects:(NSArray **)altScreenNotesPtr
-                                        hasSelection:(BOOL)couldHaveSelection
-                                           selection:(iTermSelection *)selection
-                                          lineBuffer:(LineBuffer *)realLineBuffer
-                                          usedHeight:(int)usedHeight
-                                             newSize:(VT100GridSize)newSize
-                                        mutableState:(VT100ScreenMutableState *)mutableState {
-    if (couldHaveSelection) {
-        *altScreenSubSelectionTuplesPtr = [mutableState subSelectionTuplesWithUsedHeight:usedHeight
-                                                                               newHeight:newSize.height
-                                                                               selection:selection];
-    }
-
-    LineBuffer *altScreenLineBuffer = [[[LineBuffer alloc] init] autorelease];
-    [altScreenLineBuffer beginResizing];
-    [mutableState appendScreen:mutableState.altGrid
-                  toScrollback:altScreenLineBuffer
-                withUsedHeight:usedHeight
-                     newHeight:newSize.height];
-
-    if ([mutableState.intervalTree count]) {
-        *altScreenNotesPtr = [mutableState intervalTreeObjectsWithUsedHeight:usedHeight
-                                                                   newHeight:newSize.height
-                                                                        grid:_state.altGrid
-                                                                  lineBuffer:realLineBuffer];
-    }
-
-    mutableState.currentGrid = _state.primaryGrid;
-    // Move savedIntervalTree_ into intervalTree_. This should leave savedIntervalTree_ empty.
-    [mutableState swapOnscreenIntervalTreeObjects];
-    mutableState.currentGrid = _state.altGrid;
-
-    return altScreenLineBuffer;
 }
 
 - (void)fixUpPrimaryGridIntervalTreeForNewSize:(VT100GridSize)newSize

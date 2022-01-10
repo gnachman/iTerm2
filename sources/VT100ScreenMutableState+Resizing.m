@@ -361,5 +361,40 @@ static void SwapInt(int *a, int *b) {
     return triples;
 }
 
+- (LineBuffer *)prepareToResizeInAlternateScreenMode:(NSArray **)altScreenSubSelectionTuplesPtr
+                                 intervalTreeObjects:(NSArray **)altScreenNotesPtr
+                                        hasSelection:(BOOL)couldHaveSelection
+                                           selection:(iTermSelection *)selection
+                                          lineBuffer:(LineBuffer *)realLineBuffer
+                                          usedHeight:(int)usedHeight
+                                             newSize:(VT100GridSize)newSize {
+    if (couldHaveSelection) {
+        *altScreenSubSelectionTuplesPtr = [self subSelectionTuplesWithUsedHeight:usedHeight
+                                                                       newHeight:newSize.height
+                                                                       selection:selection];
+    }
+
+    LineBuffer *altScreenLineBuffer = [[LineBuffer alloc] init];
+    [altScreenLineBuffer beginResizing];
+    [self appendScreen:self.altGrid
+          toScrollback:altScreenLineBuffer
+        withUsedHeight:usedHeight
+             newHeight:newSize.height];
+
+    if ([self.intervalTree count]) {
+        *altScreenNotesPtr = [self intervalTreeObjectsWithUsedHeight:usedHeight
+                                                           newHeight:newSize.height
+                                                                grid:self.altGrid
+                                                          lineBuffer:realLineBuffer];
+    }
+
+    self.currentGrid = self.primaryGrid;
+    // Move savedIntervalTree_ into intervalTree_. This should leave savedIntervalTree_ empty.
+    [self swapOnscreenIntervalTreeObjects];
+    self.currentGrid = self.altGrid;
+
+    return altScreenLineBuffer;
+}
+
 
 @end

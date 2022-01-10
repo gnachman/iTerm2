@@ -39,6 +39,13 @@ NS_ASSUME_NONNULL_BEGIN
                                      newHeight:(int)newHeight
                                           grid:(VT100Grid *)grid
                                     lineBuffer:(LineBuffer *)realLineBuffer;
+- (LineBuffer *)prepareToResizeInAlternateScreenMode:(NSArray **)altScreenSubSelectionTuplesPtr
+                                 intervalTreeObjects:(NSArray **)altScreenNotesPtr
+                                        hasSelection:(BOOL)couldHaveSelection
+                                           selection:(iTermSelection *)selection
+                                          lineBuffer:(LineBuffer *)realLineBuffer
+                                          usedHeight:(int)usedHeight
+                                             newSize:(VT100GridSize)newSize;
 
 @end
 
