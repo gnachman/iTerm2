@@ -100,6 +100,11 @@ NS_ASSUME_NONNULL_BEGIN
           subSelections:(NSArray *)newSubSelections
                  newTop:(int)newTop
                delegate:(id<VT100ScreenDelegate>)delegate;
+- (void)reallySetSize:(VT100GridSize)newSize
+         visibleLines:(VT100GridRange)previouslyVisibleLineRange
+            selection:(iTermSelection *)selection
+             delegate:(id<VT100ScreenDelegate>)delegate
+              hasView:(BOOL)hasView;
 
 @end
 

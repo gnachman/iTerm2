@@ -915,5 +915,132 @@ static void SwapInt(int *a, int *b) {
     [delegate screenSizeDidChangeWithNewTopLineAt:newTop];
 }
 
+- (void)reallySetSize:(VT100GridSize)newSize
+         visibleLines:(VT100GridRange)previouslyVisibleLineRange
+            selection:(iTermSelection *)selection
+             delegate:(id<VT100ScreenDelegate>)delegate
+              hasView:(BOOL)hasView {
+    assert([NSThread isMainThread]);
+
+    DLog(@"------------ reallySetSize");
+    DLog(@"Set size to %@", VT100GridSizeDescription(newSize));
+
+    const VT100GridCoordRange previouslyVisibleLines =
+    VT100GridCoordRangeMake(0,
+                            previouslyVisibleLineRange.location,
+                            0,
+                            previouslyVisibleLineRange.location + 1);
+
+    [self sanityCheckIntervalsFrom:self.currentGrid.size note:@"pre-hoc"];
+    [self.temporaryDoubleBuffer resetExplicitly];
+    const VT100GridSize oldSize = self.currentGrid.size;
+    [self willSetSizeWithSelection:selection];
+
+    const BOOL couldHaveSelection = hasView && selection.hasSelection;
+    const int usedHeight = [self.currentGrid numberOfLinesUsed];
+
+    VT100Grid *copyOfAltGrid = [self.altGrid copy];
+    LineBuffer *realLineBuffer = self.linebuffer;
+
+    // This is an array of tuples:
+    // [LineBufferPositionRange, iTermSubSelection]
+    NSArray *altScreenSubSelectionTuples = nil;
+    LineBufferPosition *originalLastPos = [self.linebuffer lastPosition];
+    BOOL wasShowingAltScreen = (self.currentGrid == self.altGrid);
+
+
+    // If non-nil, contains 3-tuples NSArray*s of
+    // [ PTYAnnotation*,
+    //   LineBufferPosition* for start of range,
+    //   LineBufferPosition* for end of range ]
+    // These will be re-added to intervalTree_ later on.
+    NSArray *altScreenNotes = nil;
+
+    // If we're in the alternate screen, create a temporary linebuffer and append
+    // the base screen's contents to it.
+    LineBuffer *altScreenLineBuffer = nil;
+    if (wasShowingAltScreen) {
+        altScreenLineBuffer = [self prepareToResizeInAlternateScreenMode:&altScreenSubSelectionTuples
+                                                     intervalTreeObjects:&altScreenNotes
+                                                            hasSelection:couldHaveSelection
+                                                               selection:selection
+                                                              lineBuffer:realLineBuffer
+                                                              usedHeight:usedHeight
+                                                                 newSize:newSize];
+    }
+
+    // Append primary grid to line buffer.
+    [self appendScreen:self.primaryGrid
+                  toScrollback:self.linebuffer
+                withUsedHeight:[self.primaryGrid numberOfLinesUsed]
+                     newHeight:newSize.height];
+    DLog(@"History after appending screen to scrollback:\n%@", [self.linebuffer debugString]);
+
+    VT100GridCoordRange convertedRangeOfVisibleLines;
+    const BOOL rangeOfVisibleLinesConvertedCorrectly = [self convertRange:previouslyVisibleLines
+                                                                          toWidth:newSize.width
+                                                                               to:&convertedRangeOfVisibleLines
+                                                                     inLineBuffer:self.linebuffer
+                                                                    tolerateEmpty:YES];
+
+    // Contains iTermSubSelection*s updated for the new screen size. Used
+    // regardless of whether we were in the alt screen, as it's simply the set
+    // of new sub-selections.
+    NSArray *newSubSelections = @[];
+    if (!wasShowingAltScreen && couldHaveSelection) {
+        newSubSelections = [self subSelectionsWithConvertedRangesFromSelection:selection
+                                                                              newWidth:newSize.width];
+    }
+
+    [self fixUpPrimaryGridIntervalTreeForNewSize:newSize
+                                     wasShowingAltScreen:wasShowingAltScreen];
+    self.currentGrid.size = newSize;
+
+    // Restore the screen contents that were pushed onto the linebuffer.
+    [self.currentGrid restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : self.linebuffer
+                                          withDefaultChar:[self.currentGrid defaultChar]
+                                        maxLinesToRestore:[wasShowingAltScreen ? altScreenLineBuffer : self.linebuffer numLinesWithWidth:self.currentGrid.size.width]];
+    DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
+
+    if (wasShowingAltScreen) {
+        // If we're in the alternate screen, restore its contents from the temporary
+        // linebuffer.
+        // In alternate screen mode, the screen contents move up when the screen gets smaller.
+        // For example, if your alt screen looks like this before:
+        //   abcd
+        //   ef..
+        // And then gets shrunk to 3 wide, it becomes
+        //   d..
+        //   ef.
+        // The "abc" line was lost, so "linesMovedUp" is 1. That's the number of lines at the top
+        // of the alt screen that were lost.
+        newSubSelections = [self subSelectionsAfterRestoringPrimaryGridWithCopyOfAltGrid:copyOfAltGrid
+                                                                                    linesMovedUp:[altScreenLineBuffer numLinesWithWidth:self.currentGrid.size.width]
+                                                                                    toLineBuffer:realLineBuffer
+                                                                              subSelectionTuples:altScreenSubSelectionTuples
+                                                                            originalLastPosition:originalLastPos
+                                                                                         oldSize:oldSize
+                                                                                         newSize:newSize
+                                                                                      usedHeight:usedHeight
+                                                                             intervalTreeObjects:altScreenNotes];
+    } else {
+        // Was showing primary grid. Fix up notes in the alt screen.
+        [self updateAlternateScreenIntervalTreeForNewSize:newSize];
+    }
+
+    const int newTop = rangeOfVisibleLinesConvertedCorrectly ? convertedRangeOfVisibleLines.start.y : -1;
+
+    [self didResizeToSize:newSize
+                        selection:selection
+               couldHaveSelection:couldHaveSelection
+                    subSelections:newSubSelections
+                           newTop:newTop
+                         delegate:delegate];
+    [altScreenLineBuffer endResizing];
+    [self sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];
+    DLog(@"After:\n%@", [self.currentGrid compactLineDumpWithContinuationMarks]);
+    DLog(@"Cursor at %d,%d", self.currentGrid.cursorX, self.currentGrid.cursorY);
+}
+
 
 @end
