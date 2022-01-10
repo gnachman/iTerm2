@@ -27,6 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermPromiseSeal<NSObject>
 - (void)fulfill:(id)value;
 - (void)reject:(NSError *)error;
+- (void)rejectWithDefaultError;
 @end
 
 @interface iTermPromise<T> : NSObject
@@ -35,6 +36,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, nullable, readonly) T maybeValue;
 
 + (instancetype)promise:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal> seal))block;
+// Nil gives default error
++ (instancetype)promiseValue:(T _Nullable)value;
++ (instancetype)promiseDefaultError;
 
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;

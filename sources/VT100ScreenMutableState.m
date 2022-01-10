@@ -1047,6 +1047,22 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalGetCursorInfoWithCompletion:(void (^)(ITermCursorType type, BOOL blinking))completion {
+    // Pause to avoid processing any more tokens since this is used for a report.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    dispatch_queue_t queue = _queue;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        ITermCursorType type = CURSOR_BOX;
+        BOOL blinking = YES;
+        [delegate screenGetCursorType:&type blinking:&blinking];
+        dispatch_async(queue, ^{
+            completion(type, blinking);
+            [unpauser unpause];
+        });
+    }];
+}
+
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

@@ -2237,9 +2237,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [_mutableState terminalCursorIsBlinkingPromise];
 }
 
-- (void)terminalGetCursorType:(ITermCursorType *)cursorTypeOut
-                     blinking:(BOOL *)blinking {
-    [delegate_ screenGetCursorType:cursorTypeOut blinking:blinking];
+- (void)terminalGetCursorInfoWithCompletion:(void (^)(ITermCursorType type, BOOL blinking))completion {
+    [_mutableState terminalGetCursorInfoWithCompletion:completion];
 }
 
 - (void)terminalResetCursorTypeAndBlink {
