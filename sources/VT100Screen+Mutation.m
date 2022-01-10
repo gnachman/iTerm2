@@ -2230,7 +2230,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetCursorBlinking:(BOOL)blinking {
-    [delegate_ screenSetCursorBlinking:blinking];
+    [_mutableState terminalSetCursorBlinking:blinking];
 }
 
 - (BOOL)terminalCursorIsBlinking {
