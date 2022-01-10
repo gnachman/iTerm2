@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "VT100InlineImageHelper.h"
 #import "VT100Token.h"
+#import "iTermPromise.h"
 
 @class VT100SavedColorsSlot;
 
@@ -140,7 +141,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 // Changes whether the cursor blinks.
 - (void)terminalSetCursorBlinking:(BOOL)blinking;
-- (BOOL)terminalCursorIsBlinking;
+- (iTermPromise<NSNumber *> *)terminalCursorIsBlinkingPromise;
 
 // Reset type and blink to default
 - (void)terminalResetCursorTypeAndBlink;
