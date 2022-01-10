@@ -129,9 +129,8 @@
     // of new sub-selections.
     NSArray *newSubSelections = @[];
     if (!wasShowingAltScreen && couldHaveSelection) {
-        newSubSelections = [self subSelectionsWithConvertedRangesFromSelection:selection
-                                                                  mutableState:mutableState
-                                                                      newWidth:newSize.width];
+        newSubSelections = [mutableState subSelectionsWithConvertedRangesFromSelection:selection
+                                                                              newWidth:newSize.width];
     }
 
     [self fixUpPrimaryGridIntervalTreeForNewSize:newSize
@@ -367,40 +366,6 @@
 
     [self mutReloadMarkCache];
     [delegate_ screenSizeDidChangeWithNewTopLineAt:newTop];
-}
-
-- (NSArray *)subSelectionsWithConvertedRangesFromSelection:(iTermSelection *)selection
-                                              mutableState:(VT100ScreenMutableState *)mutableState
-                                                  newWidth:(int)newWidth {
-    NSMutableArray *newSubSelections = [NSMutableArray array];
-    const long long overflow = mutableState.cumulativeScrollbackOverflow;
-    for (iTermSubSelection *sub in selection.allSubSelections) {
-        DLog(@"convert sub %@", sub);
-        VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
-                                              overflow,
-                                              ^(VT100GridCoordRange range) {
-            VT100GridCoordRange newSelection;
-            const BOOL ok = [mutableState convertRange:range
-                                               toWidth:newWidth
-                                                    to:&newSelection
-                                          inLineBuffer:mutableState.linebuffer
-                                         tolerateEmpty:NO];
-            if (ok) {
-                assert(range.start.y >= 0);
-                assert(range.end.y >= 0);
-                const VT100GridWindowedRange relativeRange = VT100GridWindowedRangeMake(newSelection, 0, 0);
-                const VT100GridAbsWindowedRange absRange =
-                VT100GridAbsWindowedRangeFromWindowedRange(relativeRange, overflow);
-                iTermSubSelection *theSub =
-                [iTermSubSelection subSelectionWithAbsRange:absRange
-                                                       mode:sub.selectionMode
-                                                      width:newWidth];
-                theSub.connected = sub.connected;
-                [newSubSelections addObject:theSub];
-            }
-        });
-    }
-    return newSubSelections;
 }
 
 - (IntervalTree *)replacementIntervalTreeForNewWidth:(int)newWidth

@@ -449,5 +449,38 @@ static void SwapInt(int *a, int *b) {
     return YES;
 }
 
+- (NSArray *)subSelectionsWithConvertedRangesFromSelection:(iTermSelection *)selection
+                                                  newWidth:(int)newWidth {
+    NSMutableArray *newSubSelections = [NSMutableArray array];
+    const long long overflow = self.cumulativeScrollbackOverflow;
+    for (iTermSubSelection *sub in selection.allSubSelections) {
+        DLog(@"convert sub %@", sub);
+        VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
+                                              overflow,
+                                              ^(VT100GridCoordRange range) {
+            VT100GridCoordRange newSelection;
+            const BOOL ok = [self convertRange:range
+                                               toWidth:newWidth
+                                                    to:&newSelection
+                                          inLineBuffer:self.linebuffer
+                                         tolerateEmpty:NO];
+            if (ok) {
+                assert(range.start.y >= 0);
+                assert(range.end.y >= 0);
+                const VT100GridWindowedRange relativeRange = VT100GridWindowedRangeMake(newSelection, 0, 0);
+                const VT100GridAbsWindowedRange absRange =
+                VT100GridAbsWindowedRangeFromWindowedRange(relativeRange, overflow);
+                iTermSubSelection *theSub =
+                [iTermSubSelection subSelectionWithAbsRange:absRange
+                                                       mode:sub.selectionMode
+                                                      width:newWidth];
+                theSub.connected = sub.connected;
+                [newSubSelections addObject:theSub];
+            }
+        });
+    }
+    return newSubSelections;
+}
+
 
 @end
