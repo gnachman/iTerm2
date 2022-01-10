@@ -1081,6 +1081,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return [self.charsetUsesLineDrawingMode containsObject:@(charset)];
 }
 
+- (void)terminalRemoveTabStops {
+    [self.tabStops removeAllObjects];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
