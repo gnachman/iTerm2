@@ -1077,6 +1077,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (BOOL)terminalLineDrawingFlagForCharset:(int)charset {
+    return [self.charsetUsesLineDrawingMode containsObject:@(charset)];
+}
 
 #pragma mark - Tabs
 

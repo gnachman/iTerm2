@@ -2254,7 +2254,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalLineDrawingFlagForCharset:(int)charset {
-    return [_state.charsetUsesLineDrawingMode containsObject:@(charset)];
+    return [_mutableState terminalLineDrawingFlagForCharset:charset];
 }
 
 - (void)terminalRemoveTabStops {
