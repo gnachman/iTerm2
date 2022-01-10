@@ -163,30 +163,6 @@
     }
 }
 
-// offset is added to intervals before inserting into interval tree.
-- (void)moveNotesOnScreenFrom:(IntervalTree *)source
-                           to:(IntervalTree *)dest
-                       offset:(long long)offset
-                 screenOrigin:(int)screenOrigin {
-    VT100GridCoordRange screenRange =
-        VT100GridCoordRangeMake(0,
-                                screenOrigin,
-                                _mutableState.width,
-                                screenOrigin + _mutableState.height);
-    DLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
-    Interval *sourceInterval = [_mutableState intervalForGridCoordRange:screenRange];
-    _mutableState.lastCommandMark = nil;
-    for (id<IntervalTreeObject> obj in [source objectsInInterval:sourceInterval]) {
-        Interval *interval = [[obj.entry.interval retain] autorelease];
-        [[obj retain] autorelease];
-        DLog(@"  found note with interval %@", interval);
-        [source removeObject:obj];
-        interval.location = interval.location + offset;
-        DLog(@"  new interval is %@", interval);
-        [dest addObject:obj withInterval:interval];
-    }
-}
-
 - (PTYAnnotation *)mutAddNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {
     return [_mutableState addNoteWithText:text inAbsoluteRange:absRange];
 }
@@ -1914,28 +1890,6 @@
 
 #pragma mark - Alternate Screen
 
-// Swap onscreen notes between intervalTree_ and savedIntervalTree_.
-// IMPORTANT: Call -mutReloadMarkCache after this.
-- (void)mutSwapNotes {
-    int historyLines = _mutableState.numberOfScrollbackLines;
-    Interval *origin = [_mutableState intervalForGridCoordRange:VT100GridCoordRangeMake(0,
-                                                                                        historyLines,
-                                                                                        1,
-                                                                                        historyLines)];
-    IntervalTree *temp = [[[IntervalTree alloc] init] autorelease];
-    DLog(@"mutSwapNotes: moving onscreen notes into savedNotes");
-    [self moveNotesOnScreenFrom:_mutableState.intervalTree
-                             to:temp
-                         offset:-origin.location
-                   screenOrigin:_mutableState.numberOfScrollbackLines];
-    DLog(@"mutSwapNotes: moving onscreen savedNotes into notes");
-    [self moveNotesOnScreenFrom:_mutableState.savedIntervalTree
-                             to:_mutableState.intervalTree
-                         offset:origin.location
-                   screenOrigin:0];
-    _mutableState.savedIntervalTree = temp;
-}
-
 - (void)mutShowAltBuffer {
     if (_state.currentGrid == _state.altGrid) {
         return;
@@ -1951,7 +1905,7 @@
     _mutableState.currentGrid = _state.altGrid;
     _mutableState.currentGrid.cursor = _state.primaryGrid.cursor;
 
-    [self mutSwapNotes];
+    [_mutableState swapOnscreenIntervalTreeObjects];
     [self mutReloadMarkCache];
 
     [_mutableState.currentGrid markAllCharsDirty:YES];
@@ -1966,7 +1920,7 @@
         [self hideOnScreenNotesAndTruncateSpanners];
         _mutableState.currentGrid = _state.primaryGrid;
         [_mutableState invalidateCommandStartCoordWithoutSideEffects];
-        [self mutSwapNotes];
+        [_mutableState swapOnscreenIntervalTreeObjects];
         [self mutReloadMarkCache];
 
         [_mutableState.currentGrid markAllCharsDirty:YES];

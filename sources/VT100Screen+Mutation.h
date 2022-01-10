@@ -157,7 +157,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutCurrentDirectoryDidChangeTo:(NSString *)dir;
 - (void)mutReloadMarkCache;
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
-- (void)mutSwapNotes;
 - (void)mutUpdateConfig;
 - (void)mutSetFakePromptDetectedAbsLine:(long long)value;
 - (void)mutUserDidPressReturn;
