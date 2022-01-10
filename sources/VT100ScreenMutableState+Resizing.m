@@ -8,7 +8,12 @@
 #import "VT100ScreenMutableState+Resizing.h"
 
 #import "DebugLogging.h"
+#import "PTYAnnotation.h"
+#import "VT100RemoteHost.h"
+#import "VT100WorkingDirectory.h"
+#import "iTermImageMark.h"
 #import "iTermSelection.h"
+#import "iTermURLMark.h"
 
 @implementation VT100ScreenMutableState (Resizing)
 
@@ -300,6 +305,18 @@ static void SwapInt(int *a, int *b) {
         });
     }
     return altScreenSubSelectionTuples;
+}
+
+- (BOOL)intervalTreeObjectMayBeEmpty:(id<IntervalTreeObject>)note {
+    // These kinds of ranges are allowed to be empty because
+    // although they nominally refer to an entire line, sometimes
+    // that line is blank such as just before the prompt is
+    // printed. See issue 4261.
+    return ([note isKindOfClass:[VT100RemoteHost class]] ||
+            [note isKindOfClass:[VT100WorkingDirectory class]] ||
+            [note isKindOfClass:[iTermImageMark class]] ||
+            [note isKindOfClass:[iTermURLMark class]] ||
+            [note isKindOfClass:[PTYAnnotation class]]);
 }
 
 

@@ -55,7 +55,6 @@ VT100ScreenSideEffectPerforming> {
 - (const screen_char_t *)getLineAtIndex:(int)theIndex;
 - (void)commandDidStartAt:(VT100GridAbsCoord)coord;
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord;
-- (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run;
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
 
 @end

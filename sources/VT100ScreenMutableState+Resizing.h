@@ -34,6 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray *)subSelectionTuplesWithUsedHeight:(int)usedHeight
                                     newHeight:(int)newHeight
                                     selection:(iTermSelection *)selection;
+- (BOOL)intervalTreeObjectMayBeEmpty:(id<IntervalTreeObject>)note;
 
 @end
 
