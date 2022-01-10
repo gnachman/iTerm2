@@ -155,16 +155,15 @@
         //   ef.
         // The "abc" line was lost, so "linesMovedUp" is 1. That's the number of lines at the top
         // of the alt screen that were lost.
-        newSubSelections = [self subSelectionsAfterRestoringPrimaryGridWithCopyOfAltGrid:copyOfAltGrid
-                                                                            linesMovedUp:[altScreenLineBuffer numLinesWithWidth:mutableState.currentGrid.size.width]
-                                                                            toLineBuffer:realLineBuffer
-                                                                      subSelectionTuples:altScreenSubSelectionTuples
-                                                                    originalLastPosition:originalLastPos
-                                                                                 oldSize:oldSize
-                                                                                 newSize:newSize
-                                                                              usedHeight:usedHeight
-                                                                     intervalTreeObjects:altScreenNotes
-                                                                            mutableState:mutableState];
+        newSubSelections = [mutableState subSelectionsAfterRestoringPrimaryGridWithCopyOfAltGrid:copyOfAltGrid
+                                                                                    linesMovedUp:[altScreenLineBuffer numLinesWithWidth:mutableState.currentGrid.size.width]
+                                                                                    toLineBuffer:realLineBuffer
+                                                                              subSelectionTuples:altScreenSubSelectionTuples
+                                                                            originalLastPosition:originalLastPos
+                                                                                         oldSize:oldSize
+                                                                                         newSize:newSize
+                                                                                      usedHeight:usedHeight
+                                                                             intervalTreeObjects:altScreenNotes];
     } else {
         // Was showing primary grid. Fix up notes in the alt screen.
         [self updateAlternateScreenIntervalTreeForNewSize:newSize
@@ -239,55 +238,6 @@
                                      withDefaultChar:[_state.altGrid defaultChar]
                                    maxLinesToRestore:[altScreenLineBuffer numLinesWithWidth:_state.currentGrid.size.width]];
     [altScreenLineBuffer endResizing];
-}
-
-- (NSArray *)subSelectionsAfterRestoringPrimaryGridWithCopyOfAltGrid:(VT100Grid *)copyOfAltGrid
-                                                        linesMovedUp:(int)linesMovedUp
-                                                        toLineBuffer:(LineBuffer *)realLineBuffer
-                                                  subSelectionTuples:(NSArray *)altScreenSubSelectionTuples
-                                                originalLastPosition:(LineBufferPosition *)originalLastPos
-                                                             oldSize:(VT100GridSize)oldSize
-                                                             newSize:(VT100GridSize)newSize
-                                                          usedHeight:(int)usedHeight
-                                                 intervalTreeObjects:(NSArray *)altScreenNotes
-                                                        mutableState:(VT100ScreenMutableState *)mutableState {
-    [mutableState restorePrimaryGridWithLineBuffer:realLineBuffer
-                                           oldSize:oldSize
-                                           newSize:newSize];
-
-    // Any onscreen notes in primary grid get moved to savedIntervalTree_.
-    mutableState.currentGrid = _state.primaryGrid;
-    [mutableState swapOnscreenIntervalTreeObjects];
-    mutableState.currentGrid = _state.altGrid;
-
-    ///////////////////////////////////////
-    // Create a cheap append-only copy of the line buffer and add the
-    // screen to it. This sets up the current state so that if there is a
-    // selection, linebuffer has the configuration that the user actually
-    // sees (history + the alt screen contents). That'll make
-    // convertRange:toWidth:... happy (the selection's Y values
-    // will be able to be looked up) and then after that's done we can swap
-    // back to the tempLineBuffer.
-    LineBuffer *appendOnlyLineBuffer = [[realLineBuffer copy] autorelease];
-    LineBufferPosition *newLastPos = [realLineBuffer lastPosition];
-    NSArray *newSubSelections = [mutableState subSelectionsForNewSize:newSize
-                                                           lineBuffer:realLineBuffer
-                                                                 grid:copyOfAltGrid
-                                                           usedHeight:usedHeight
-                                                   subSelectionTuples:altScreenSubSelectionTuples
-                                                 originalLastPosition:originalLastPos
-                                                      newLastPosition:newLastPos
-                                                         linesMovedUp:linesMovedUp
-                                                 appendOnlyLineBuffer:appendOnlyLineBuffer];
-    DLog(@"Original limit=%@", originalLastPos);
-    DLog(@"New limit=%@", newLastPos);
-    [mutableState addObjectsToIntervalTreeFromTuples:altScreenNotes
-                                             newSize:newSize
-                                originalLastPosition:originalLastPos
-                                     newLastPosition:newLastPos
-                                        linesMovedUp:linesMovedUp
-                                appendOnlyLineBuffer:appendOnlyLineBuffer];
-    return newSubSelections;
 }
 
 - (void)mutSetWidth:(int)width preserveScreen:(BOOL)preserveScreen {
