@@ -20,8 +20,8 @@
 @implementation VT100Screen (Resizing)
 
 - (void)mutSetSize:(VT100GridSize)proposedSize {
-    VT100GridSize newSize = [_mutableState safeSizeForSize:proposedSize];
-    if (![self shouldSetSizeTo:newSize]) {
+    const VT100GridSize newSize = [_mutableState safeSizeForSize:proposedSize];
+    if (![_mutableState shouldSetSizeTo:newSize]) {
         return;
     }
     [self.mutableLineBuffer beginResizing];
@@ -393,28 +393,6 @@
 
     [self mutReloadMarkCache];
     [delegate_ screenSizeDidChangeWithNewTopLineAt:newTop];
-}
-
-- (BOOL)shouldSetSizeTo:(VT100GridSize)size {
-    [self.mutableTemporaryDoubleBuffer reset];
-
-    DLog(@"Resize session to %@", VT100GridSizeDescription(size));
-    DLog(@"Before:\n%@", [_state.currentGrid compactLineDumpWithContinuationMarks]);
-    DLog(@"Cursor at %d,%d", _state.currentGrid.cursorX, _state.currentGrid.cursorY);
-    if (_state.commandStartCoord.x != -1) {
-        [_mutableState didUpdatePromptLocation];
-        [_mutableState commandDidEndWithRange:_mutableState.commandRange];
-        [_mutableState invalidateCommandStartCoordWithoutSideEffects];
-    }
-    _mutableState.lastCommandMark = nil;
-
-    if (_state.currentGrid.size.width == 0 ||
-        _state.currentGrid.size.height == 0 ||
-        (size.width == _state.currentGrid.size.width &&
-         size.height == _state.currentGrid.size.height)) {
-        return NO;
-    }
-    return YES;
 }
 
 - (void)willSetSizeWithSelection:(iTermSelection *)selection {
