@@ -1226,19 +1226,6 @@
 }
 
 
-- (void)mutReverseIndex {
-    if (_state.currentGrid.cursorY == _state.currentGrid.topMargin) {
-        if (_state.cursorOutsideLeftRightMargin) {
-            return;
-        } else {
-            [_mutableState.currentGrid scrollDown];
-        }
-    } else {
-        _mutableState.currentGrid.cursorY = MAX(0, _state.currentGrid.cursorY - 1);
-    }
-    [_mutableState clearTriggerLine];
-}
-
 - (void)mutForwardIndex {
     if ((_state.currentGrid.cursorX == _state.currentGrid.rightMargin && !_state.cursorOutsideLeftRightMargin )||
          _state.currentGrid.cursorX == _state.currentGrid.size.width) {
@@ -2345,7 +2332,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalReverseIndex {
-    [self mutReverseIndex];
+    [_mutableState terminalReverseIndex];
 }
 
 - (void)terminalForwardIndex {
