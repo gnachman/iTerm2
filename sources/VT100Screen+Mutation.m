@@ -608,7 +608,7 @@
     if (_state.currentGrid.cursor.x > 0) {
         [_mutableState appendCarriageReturnLineFeed];
     }
-    [self mutEraseLineBeforeCursor:YES afterCursor:YES decProtect:NO];
+    [_mutableState eraseLineBeforeCursor:YES afterCursor:YES decProtect:NO];
     NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
     dateFormatter.dateStyle = NSDateFormatterMediumStyle;
     dateFormatter.timeStyle = NSDateFormatterShortStyle;
@@ -1225,53 +1225,6 @@
             _state.currentGrid.cursorY > _state.currentGrid.bottomMargin);
 }
 
-- (void)mutEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec {
-    BOOL shouldHonorProtected = NO;
-    switch (_state.protectedMode) {
-        case VT100TerminalProtectedModeNone:
-            shouldHonorProtected = NO;
-            break;
-        case VT100TerminalProtectedModeISO:
-            shouldHonorProtected = YES;
-            break;
-        case VT100TerminalProtectedModeDEC:
-            shouldHonorProtected = dec;
-            break;
-    }
-    int x1 = 0;
-    int x2 = 0;
-
-    if (before && after) {
-        x1 = 0;
-        x2 = _state.currentGrid.size.width - 1;
-    } else if (before) {
-        x1 = 0;
-        x2 = MIN(_state.currentGrid.cursor.x, _state.currentGrid.size.width - 1);
-    } else if (after) {
-        x1 = _state.currentGrid.cursor.x;
-        x2 = _state.currentGrid.size.width - 1;
-    } else {
-        return;
-    }
-    if (after) {
-        [_mutableState removeSoftEOLBeforeCursor];
-    }
-
-    if (shouldHonorProtected) {
-        [_mutableState selectiveEraseRange:VT100GridCoordRangeMake(x1,
-                                                                   _state.currentGrid.cursor.y,
-                                                                   x2,
-                                                                   _state.currentGrid.cursor.y)
-                           eraseAttributes:YES];
-    } else {
-        VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, _state.currentGrid.cursor.y),
-                                                     VT100GridCoordMake(x2, _state.currentGrid.cursor.y),
-                                                     _state.currentGrid.size.width);
-        [_mutableState.currentGrid setCharsInRun:theRun
-                                          toChar:0
-                              externalAttributes:nil];
-    }
-}
 
 - (void)mutReverseIndex {
     if (_state.currentGrid.cursorY == _state.currentGrid.topMargin) {
@@ -2386,7 +2339,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
-    [self mutEraseLineBeforeCursor:before afterCursor:after decProtect:NO];
+    [_mutableState terminalEraseLineBeforeCursor:before afterCursor:after];
 }
 
 - (void)terminalSetTabStopAtCursor {

@@ -591,6 +591,53 @@ iTermTriggerScopeProvider>
     [self clearTriggerLine];
 }
 
+- (void)eraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec {
+    BOOL shouldHonorProtected = NO;
+    switch (self.protectedMode) {
+        case VT100TerminalProtectedModeNone:
+            shouldHonorProtected = NO;
+            break;
+        case VT100TerminalProtectedModeISO:
+            shouldHonorProtected = YES;
+            break;
+        case VT100TerminalProtectedModeDEC:
+            shouldHonorProtected = dec;
+            break;
+    }
+    int x1 = 0;
+    int x2 = 0;
+
+    if (before && after) {
+        x1 = 0;
+        x2 = self.currentGrid.size.width - 1;
+    } else if (before) {
+        x1 = 0;
+        x2 = MIN(self.currentGrid.cursor.x, self.currentGrid.size.width - 1);
+    } else if (after) {
+        x1 = self.currentGrid.cursor.x;
+        x2 = self.currentGrid.size.width - 1;
+    } else {
+        return;
+    }
+    if (after) {
+        [self removeSoftEOLBeforeCursor];
+    }
+
+    if (shouldHonorProtected) {
+        [self selectiveEraseRange:VT100GridCoordRangeMake(x1,
+                                                          self.currentGrid.cursor.y,
+                                                          x2,
+                                                          self.currentGrid.cursor.y)
+                  eraseAttributes:YES];
+    } else {
+        VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, self.currentGrid.cursor.y),
+                                                     VT100GridCoordMake(x2, self.currentGrid.cursor.y),
+                                                     self.currentGrid.size.width);
+        [self.currentGrid setCharsInRun:theRun
+                                 toChar:0
+                     externalAttributes:nil];
+    }
+}
 // Remove soft eol on previous line, provided the cursor is on the first column. This is useful
 // because zsh likes to ED 0 after wrapping around before drawing the prompt. See issue 8938.
 // For consistency, EL uses it, too.
@@ -823,6 +870,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
     [self eraseInDisplayBeforeCursor:before afterCursor:after decProtect:NO];
+}
+
+- (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
+    [self eraseLineBeforeCursor:before afterCursor:after decProtect:NO];
 }
 
 #pragma mark - Tabs

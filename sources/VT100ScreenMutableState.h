@@ -73,6 +73,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)selectiveEraseRange:(VT100GridCoordRange)range eraseAttributes:(BOOL)eraseAttributes;
 - (void)eraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec;
+- (void)eraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec;
 
 void VT100ScreenEraseCell(screen_char_t *sct,
                           iTermExternalAttribute **eaOut,
