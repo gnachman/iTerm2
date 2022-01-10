@@ -60,7 +60,7 @@
     [selection removeWindowsWithWidth:self.width];
 }
 
-// This assumes the window's height is going to change to newHeight but _state.currentGrid.size.height
+// This assumes the window's height is going to change to newHeight but self.currentGrid.size.height
 // is still the "old" height. Returns the number of lines appended.
 - (int)appendScreen:(VT100Grid *)grid
         toScrollback:(LineBuffer *)lineBufferToUse
@@ -199,5 +199,76 @@ static void SwapInt(int *a, int *b) {
     *endPtr = max;
     return YES;
 }
+
+- (LineBufferPositionRange *)positionRangeForCoordRange:(VT100GridCoordRange)range
+                                           inLineBuffer:(LineBuffer *)lineBuffer
+                                          tolerateEmpty:(BOOL)tolerateEmpty {
+    assert(range.end.y >= 0);
+    assert(range.start.y >= 0);
+
+    LineBufferPositionRange *positionRange = [[LineBufferPositionRange alloc] init];
+
+    BOOL endExtends = NO;
+    // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
+    if (range.end.x == self.width) {
+        const screen_char_t *line = [self getLineAtIndex:range.end.y];
+        if (line[range.end.x - 1].code == 0 && line[range.end.x].code == EOL_HARD) {
+            // The selection goes all the way to the end of the line and there is a null at the
+            // end of the line, so it extends to the end of the line. The linebuffer can't recover
+            // this from its position because the trailing null in the line wouldn't be in the
+            // linebuffer.
+            endExtends = YES;
+        }
+    }
+    range.end.x--;
+    if (range.end.x < 0) {
+        range.end.y--;
+        range.end.x = self.width - 1;
+        if (range.end.y < 0) {
+            return nil;
+        }
+    }
+
+    if (range.start.x < 0 || range.start.y < 0 ||
+        range.end.x < 0 || range.end.y < 0) {
+        return nil;
+    }
+
+    VT100GridCoord trimmedStart;
+    VT100GridCoord trimmedEnd;
+    BOOL ok = [self trimSelectionFromStart:VT100GridCoordMake(range.start.x, range.start.y)
+                                       end:VT100GridCoordMake(range.end.x, range.end.y)
+                                  toStartX:&trimmedStart
+                                    toEndX:&trimmedEnd];
+    if (!ok) {
+        if (tolerateEmpty) {
+            trimmedStart = trimmedEnd = range.start;
+        } else {
+            return nil;
+        }
+    }
+    if (VT100GridCoordOrder(trimmedStart, trimmedEnd) == NSOrderedDescending) {
+        if (tolerateEmpty) {
+            trimmedStart = trimmedEnd = range.start;
+        } else {
+            return nil;
+        }
+    }
+
+    positionRange.start = [lineBuffer positionForCoordinate:trimmedStart
+                                                      width:self.currentGrid.size.width
+                                                     offset:0];
+    positionRange.end = [lineBuffer positionForCoordinate:trimmedEnd
+                                                    width:self.currentGrid.size.width
+                                                   offset:0];
+    positionRange.end.extendsToEndOfLine = endExtends;
+
+    if (positionRange.start && positionRange.end) {
+        return positionRange;
+    } else {
+        return nil;
+    }
+}
+
 
 @end
