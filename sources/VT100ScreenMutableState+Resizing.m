@@ -694,6 +694,36 @@ static void SwapInt(int *a, int *b) {
     return result;
 }
 
-
+- (void)addObjectsToIntervalTreeFromTuples:(NSArray *)altScreenNotes
+                                   newSize:(VT100GridSize)newSize
+                      originalLastPosition:(LineBufferPosition *)originalLastPos
+                           newLastPosition:(LineBufferPosition *)newLastPos
+                              linesMovedUp:(int)linesMovedUp
+                      appendOnlyLineBuffer:(LineBuffer *)appendOnlyLineBuffer {
+    for (NSArray *tuple in altScreenNotes) {
+        id<IntervalTreeObject> note = tuple[0];
+        LineBufferPosition *start = tuple[1];
+        LineBufferPosition *end = tuple[2];
+        VT100GridCoordRange newRange;
+        DLog(@"  Note positions=%@ to %@", start, end);
+        BOOL ok = [self computeRangeFromOriginalLimit:originalLastPos
+                                                limitPosition:newLastPos
+                                                startPosition:start
+                                                  endPosition:end
+                                                     newWidth:newSize.width
+                                                   lineBuffer:appendOnlyLineBuffer
+                                                        range:&newRange
+                                                 linesMovedUp:linesMovedUp];
+        if (ok) {
+            DLog(@"  New range=%@", VT100GridCoordRangeDescription(newRange));
+            Interval *interval = [self intervalForGridCoordRange:newRange
+                                                                    width:newSize.width
+                                                              linesOffset:self.cumulativeScrollbackOverflow];
+            [self.intervalTree addObject:note withInterval:interval];
+        } else {
+            DLog(@"  *FAILED TO CONVERT*");
+        }
+    }
+}
 
 @end

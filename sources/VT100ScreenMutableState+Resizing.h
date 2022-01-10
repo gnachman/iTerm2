@@ -68,6 +68,12 @@ NS_ASSUME_NONNULL_BEGIN
                            lineBuffer:(LineBuffer *)lineBuffer  // NOTE: May be append-only
                                 range:(VT100GridCoordRange *)resultRangePtr
                          linesMovedUp:(int)linesMovedUp;
+- (void)addObjectsToIntervalTreeFromTuples:(NSArray *)altScreenNotes
+                                   newSize:(VT100GridSize)newSize
+                      originalLastPosition:(LineBufferPosition *)originalLastPos
+                           newLastPosition:(LineBufferPosition *)newLastPos
+                              linesMovedUp:(int)linesMovedUp
+                      appendOnlyLineBuffer:(LineBuffer *)appendOnlyLineBuffer;
 
 @end
 
