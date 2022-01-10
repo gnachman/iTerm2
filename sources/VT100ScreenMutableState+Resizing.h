@@ -19,6 +19,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)shouldSetSizeTo:(VT100GridSize)size;
 - (void)sanityCheckIntervalsFrom:(VT100GridSize)oldSize note:(NSString *)note;
 - (void)willSetSizeWithSelection:(iTermSelection *)selection;
+- (int)appendScreen:(VT100Grid *)grid
+       toScrollback:(LineBuffer *)lineBufferToUse
+     withUsedHeight:(int)usedHeight
+          newHeight:(int)newHeight;
 
 @end
 

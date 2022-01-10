@@ -60,4 +60,32 @@
     [selection removeWindowsWithWidth:self.width];
 }
 
+// This assumes the window's height is going to change to newHeight but _state.currentGrid.size.height
+// is still the "old" height. Returns the number of lines appended.
+- (int)appendScreen:(VT100Grid *)grid
+        toScrollback:(LineBuffer *)lineBufferToUse
+      withUsedHeight:(int)usedHeight
+           newHeight:(int)newHeight {
+    int n;
+    if (grid.size.height - newHeight >= usedHeight) {
+        // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
+        // lines off the top, leaving the cursor floating without any text. Keep all used lines that
+        // fit onscreen.
+        n = MAX(usedHeight, newHeight);
+    } else {
+        if (newHeight < grid.size.height) {
+            // Screen is shrinking.
+            // If possible, keep the last used line a fixed distance from the top of
+            // the screen. If not, at least save all the used lines.
+            n = usedHeight;
+        } else {
+            // Screen is not shrinking in height. New content may be brought in on top.
+            n = grid.size.height;
+        }
+    }
+    [grid appendLines:n toLineBuffer:lineBufferToUse];
+
+    return n;
+}
+
 @end
