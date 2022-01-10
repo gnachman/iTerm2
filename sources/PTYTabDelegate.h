@@ -71,5 +71,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)tabPasswordManagerWindowIsOpen;
 - (BOOL)tabCanDragByPaneTitleBar;
 - (void)tabEndSyntheticSession:(PTYSession *)syntheticSession;
+- (void)tab:(PTYTab *)tab sessionDidRestart:(PTYSession *)session;
 
 @end

@@ -3164,13 +3164,16 @@ ITERM_WEAKLY_REFERENCEABLE
            viewSize:_screen.viewSize
         scaleFactor:self.backingScaleFactor];
     [_terminal resetForRelaunch];
+    __weak __typeof(self) weakSelf = self;
     [self startProgram:_program
            environment:_environment
            customShell:_customShell
                 isUTF8:_isUTF8
          substitutions:_substitutions
            arrangement:nil
-            completion:nil];
+            completion:^(BOOL ok) {
+        [weakSelf.delegate sessionDidRestart:self];
+    }];
     [_naggingController willRecycleSession];
     DLog(@"  replaceTerminatedShellWithNewInstance: return with terminal=%@", _screen.terminal);
 }
