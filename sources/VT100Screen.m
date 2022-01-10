@@ -105,8 +105,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         _mutableState.currentGrid = _mutableState.primaryGrid;
         _mutableState.temporaryDoubleBuffer.delegate = self;
 
-        [self mutSetInitialTabStops];
-
         [iTermNotificationController sharedInstance];
 
         dvr_ = [DVR alloc];
@@ -185,11 +183,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return YES;
 }
 
-- (void)showCursor:(BOOL)show
-{
-    [delegate_ screenSetCursorVisible:show];
-}
-
 - (void)highlightTextInRange:(NSRange)range
    basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                       colors:(NSDictionary *)colors {
@@ -211,10 +204,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)loadInitialColorTable {
-    for (int i = 16; i < 256; i++) {
-        NSColor *theColor = [NSColor colorForAnsi256ColorIndex:i];
-        [self setColor:theColor forKey:kColorMap8bitBase + i];
-    }
+    [self mutLoadInitialColorTable];
 }
 
 - (void)setColor:(NSColor *)color forKey:(int)key {

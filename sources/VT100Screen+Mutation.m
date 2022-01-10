@@ -262,7 +262,7 @@
                                                               onLine:[_mutableState coordRangeForInterval:screenMark.entry.interval].start.y + _mutableState.cumulativeScrollbackOverflow];
         [_mutableState.intervalTree removeObject:screenMark];
     }
-    [self mutInvalidateCommandStartCoordWithoutSideEffects];
+    [_mutableState invalidateCommandStartCoordWithoutSideEffects];
     [_mutableState didUpdatePromptLocation];
     [self mutCommandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
 }
@@ -281,7 +281,7 @@
     // Cancel out the current command if shell integration is in use and we are
     // at the shell prompt.
 
-    const int linesToSave = savePrompt ? [self numberOfLinesToPreserveWhenClearingScreen] : 0;
+    const int linesToSave = savePrompt ? [_mutableState numberOfLinesToPreserveWhenClearingScreen] : 0;
     // NOTE: This is in screen coords (y=0 is the top)
     VT100GridCoord newCommandStart = VT100GridCoordMake(-1, -1);
     if (_state.commandStartCoord.x >= 0) {
@@ -300,7 +300,7 @@
     _mutableState.lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
 
     // Clear the grid by scrolling it up into history.
-    [self clearAndResetScreenSavingLines:linesToSave];
+    [_mutableState clearAndResetScreenSavingLines:linesToSave];
     // Erase history.
     [self mutClearScrollbackBuffer];
 
@@ -317,45 +317,6 @@
     [_mutableState.terminal resetSavedCursorPositions];
 }
 
-- (int)numberOfLinesToPreserveWhenClearingScreen {
-    if (VT100GridAbsCoordEquals(_state.currentPromptRange.start, _state.currentPromptRange.end)) {
-        // Prompt range not defined.
-        return 1;
-    }
-    if (_state.commandStartCoord.x < 0) {
-        // Prompt apparently hasn't ended.
-        return 1;
-    }
-    VT100ScreenMark *lastCommandMark = [self lastPromptMark];
-    if (!lastCommandMark) {
-        // Never had a mark.
-        return 1;
-    }
-
-    VT100GridCoordRange lastCommandMarkRange = [_mutableState coordRangeForInterval:lastCommandMark.entry.interval];
-    int cursorLine = _mutableState.cursorY - 1 + _mutableState.numberOfScrollbackLines;
-    int cursorMarkOffset = cursorLine - lastCommandMarkRange.start.y;
-    return 1 + cursorMarkOffset;
-}
-
-// This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
-// coordinate. Scroll regions and the saved cursor position are reset.
-- (void)clearAndResetScreenSavingLines:(int)linesToSave {
-    [_mutableState clearTriggerLine];
-    // This clears the screen.
-    int x = _state.currentGrid.cursorX;
-    [_mutableState incrementOverflowBy:[_mutableState.currentGrid resetWithLineBuffer:_mutableState.linebuffer
-                                                                unlimitedScrollback:_state.unlimitedScrollback
-                                                                 preserveCursorLine:linesToSave > 0
-                                                              additionalLinesToSave:MAX(0, linesToSave - 1)]];
-    _mutableState.currentGrid.cursorX = x;
-    _mutableState.currentGrid.cursorY = linesToSave - 1;
-    [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
-                                                                   _mutableState.numberOfScrollbackLines,
-                                                                   _mutableState.width,
-                                                                   _mutableState.numberOfScrollbackLines + _mutableState.height)];
-}
-
 - (void)mutClearScrollbackBuffer {
     _mutableState.linebuffer = [[[LineBuffer alloc] init] autorelease];
     [self.mutableLineBuffer setMaxLines:_state.maxScrollbackLines];
@@ -367,33 +328,14 @@
     [self resetScrollbackOverflow];
     [delegate_ screenRemoveSelection];
     [_mutableState.currentGrid markAllCharsDirty:YES];
-    [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
-                                                                   0,
-                                                                   _mutableState.width, _mutableState.numberOfScrollbackLines + _mutableState.height)];
+    [_mutableState removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
+                                                                            0,
+                                                                            _mutableState.width, _mutableState.numberOfScrollbackLines + _mutableState.height)];
     _mutableState.intervalTree = [[[IntervalTree alloc] init] autorelease];
     [self mutReloadMarkCache];
     _mutableState.lastCommandMark = nil;
     [delegate_ screenDidClearScrollbackBuffer:self];
     [delegate_ screenRefreshFindOnPageView];
-}
-
-- (void)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange {
-    [self removeIntervalTreeObjectsInRange:coordRange
-                          exceptCoordRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
-}
-
-- (NSMutableArray<id<IntervalTreeObject>> *)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange exceptCoordRange:(VT100GridCoordRange)coordRangeToSave {
-    Interval *intervalToClear = [_mutableState intervalForGridCoordRange:coordRange];
-    NSMutableArray<id<IntervalTreeObject>> *marksToMove = [NSMutableArray array];
-    for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:intervalToClear]) {
-        const VT100GridCoordRange markRange = [_mutableState coordRangeForInterval:obj.entry.interval];
-        if (VT100GridCoordRangeContainsCoord(coordRangeToSave, markRange.start)) {
-            [marksToMove addObject:obj];
-        } else {
-            [_mutableState removeObjectFromIntervalTree:obj];
-        }
-    }
-    return marksToMove;
 }
 
 - (void)clearScrollbackBufferFromLine:(int)line {
@@ -465,8 +407,8 @@
                                                                    _mutableState.width,
                                                                    _mutableState.numberOfScrollbackLines + _mutableState.height);
 
-    NSMutableArray<id<IntervalTreeObject>> *marksToMove = [self removeIntervalTreeObjectsInRange:coordRange
-                                                                                exceptCoordRange:cursorLineRange.coordRange];
+    NSMutableArray<id<IntervalTreeObject>> *marksToMove = [_mutableState removeIntervalTreeObjectsInRange:coordRange
+                                                                                         exceptCoordRange:cursorLineRange.coordRange];
     if (absCursorCoord.y >= absLine) {
         Interval *cursorLineInterval = [_mutableState intervalForGridCoordRange:cursorLineRange.coordRange];
         for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:cursorLineInterval]) {
@@ -530,30 +472,6 @@
     [_mutableState.currentGrid setCharsInRun:run toChar:0 externalAttributes:nil];
     [_mutableState clearTriggerLine];
     _mutableState.currentGrid.cursor = savedCursor;
-}
-
-- (void)mutResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
-    if (modifyContent) {
-        const int linesToSave = [self numberOfLinesToPreserveWhenClearingScreen];
-        [_mutableState clearTriggerLine];
-        if (preservePrompt) {
-            [self clearAndResetScreenSavingLines:linesToSave];
-        } else {
-            [_mutableState incrementOverflowBy:[_mutableState.currentGrid resetWithLineBuffer:_mutableState.linebuffer
-                                                                          unlimitedScrollback:_state.unlimitedScrollback
-                                                                           preserveCursorLine:NO
-                                                                        additionalLinesToSave:0]];
-        }
-    }
-
-    [self mutSetInitialTabStops];
-
-    for (int i = 0; i < NUM_CHARSETS; i++) {
-        [self mutSetCharacterSet:i usesLineDrawingMode:NO];
-    }
-    [delegate_ screenDidResetAllowingContentModification:modifyContent];
-    [self mutInvalidateCommandStartCoordWithoutSideEffects];
-    [self showCursor:YES];
 }
 
 - (void)mutSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight {
@@ -933,7 +851,7 @@
         [_state.terminal setStateFromDictionary:screenState[kScreenStateTerminalKey]];
         NSArray<NSNumber *> *array = screenState[kScreenStateLineDrawingModeKey];
         for (int i = 0; i < NUM_CHARSETS && i < array.count; i++) {
-            [self mutSetCharacterSet:i usesLineDrawingMode:array[i].boolValue];
+            [_mutableState setCharacterSet:i usesLineDrawingMode:array[i].boolValue];
         }
 
         if (!newFormat) {
@@ -953,7 +871,7 @@
 
         NSString *guidOfLastCommandMark = screenState[kScreenStateLastCommandMarkKey];
         if (reattached) {
-            [self mutSetCommandStartCoordWithoutSideEffects:VT100GridAbsCoordMake([screenState[kScreenStateCommandStartXKey] intValue],
+            [_mutableState setCommandStartCoordWithoutSideEffects:VT100GridAbsCoordMake([screenState[kScreenStateCommandStartXKey] intValue],
                                                                                   [screenState[kScreenStateCommandStartYKey] longLongValue])];
             _mutableState.startOfRunningCommandOutput = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
         }
@@ -1085,7 +1003,10 @@
     int top = [[state objectForKey:kStateDictScrollRegionUpper] intValue];
     int bottom = [[state objectForKey:kStateDictScrollRegionLower] intValue];
     _mutableState.currentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
-    [self showCursor:[[state objectForKey:kStateDictCursorMode] boolValue]];
+    [_mutableState addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetCursorVisible:[[state objectForKey:kStateDictCursorMode] boolValue]];
+#warning TODO: Maybe need to mark the grid dirty to force the cursor to be redrawn.
+    }];
 
     [_mutableState.tabStops removeAllObjects];
     int maxTab = 0;
@@ -1193,23 +1114,6 @@
         }
     }
     [delegate_ screenSetCursorVisible:visible];
-}
-
-- (void)mutSetCharacterSet:(int)charset usesLineDrawingMode:(BOOL)lineDrawingMode {
-    if (lineDrawingMode) {
-        [_mutableState.charsetUsesLineDrawingMode addObject:@(charset)];
-    } else {
-        [_mutableState.charsetUsesLineDrawingMode removeObject:@(charset)];
-    }
-}
-
-- (void)mutSetInitialTabStops {
-    [_mutableState.tabStops removeAllObjects];
-    const int kInitialTabWindow = 1000;
-    const int width = [iTermAdvancedSettingsModel defaultTabStopWidth];
-    for (int i = 0; i < kInitialTabWindow; i += width) {
-        [_mutableState.tabStops addObject:[NSNumber numberWithInt:i]];
-    }
 }
 
 - (void)mutCrlf {
@@ -1849,6 +1753,10 @@
 
 #pragma mark - Color Map
 
+- (void)mutLoadInitialColorTable {
+    [_mutableState loadInitialColorTable];
+}
+
 - (void)mutSetColor:(NSColor *)color forKey:(int)key {
     [_mutableState.colorMap setColor:color forKey:key];
 }
@@ -1935,16 +1843,8 @@
     [self mutSetCommandStartCoord:VT100GridAbsCoordMake(-1, -1)];
 }
 
-- (void)mutInvalidateCommandStartCoordWithoutSideEffects {
-    [self mutSetCommandStartCoordWithoutSideEffects:VT100GridAbsCoordMake(-1, -1)];
-}
-
 - (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord {
     [_mutableState setCoordinateOfCommandStart:coord];
-}
-
-- (void)mutSetCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord {
-    _mutableState.commandStartCoord = coord;
 }
 
 - (void)mutResetScrollbackOverflow {
@@ -2077,7 +1977,7 @@
 
     [_mutableState.currentGrid markAllCharsDirty:YES];
     [delegate_ screenScheduleRedrawSoon];
-    [self mutInvalidateCommandStartCoordWithoutSideEffects];
+    [_mutableState invalidateCommandStartCoordWithoutSideEffects];
 }
 
 - (void)mutShowPrimaryBuffer {
@@ -2086,7 +1986,7 @@
         [delegate_ screenRemoveSelection];
         [self hideOnScreenNotesAndTruncateSpanners];
         _mutableState.currentGrid = _state.primaryGrid;
-        [self mutInvalidateCommandStartCoordWithoutSideEffects];
+        [_mutableState invalidateCommandStartCoordWithoutSideEffects];
         [self mutSwapNotes];
         [self mutReloadMarkCache];
 
@@ -2322,7 +2222,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
-    [self mutResetPreservingPrompt:preservePrompt modifyContent:modifyContent];
+    [_mutableState terminalResetPreservingPrompt:preservePrompt modifyContent:modifyContent];
 }
 
 - (void)terminalSetCursorType:(ITermCursorType)cursorType {
@@ -2351,7 +2251,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetCharset:(int)charset toLineDrawingMode:(BOOL)lineDrawingMode {
-    [self mutSetCharacterSet:charset usesLineDrawingMode:lineDrawingMode];
+    [_mutableState setCharacterSet:charset usesLineDrawingMode:lineDrawingMode];
 }
 
 - (BOOL)terminalLineDrawingFlagForCharset:(int)charset {

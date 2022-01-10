@@ -403,7 +403,7 @@
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
         [self mutCommandDidEndWithRange:_mutableState.commandRange];
-        [self mutInvalidateCommandStartCoordWithoutSideEffects];
+        [_mutableState invalidateCommandStartCoordWithoutSideEffects];
     }
     _mutableState.lastCommandMark = nil;
 

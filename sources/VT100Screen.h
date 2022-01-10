@@ -94,8 +94,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // is not G0.
 - (BOOL)allCharacterSetPropertiesHaveDefaultValues;
 
-- (void)showCursor:(BOOL)show;
-
 // Preserves the prompt, but erases screen and scrollback buffer.
 - (void)clearBuffer;
 - (void)clearBufferSavingPrompt:(BOOL)savePrompt;

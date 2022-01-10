@@ -74,11 +74,17 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)selectiveEraseRange:(VT100GridCoordRange)range eraseAttributes:(BOOL)eraseAttributes;
 - (void)eraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec;
 - (void)eraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec;
+- (int)numberOfLinesToPreserveWhenClearingScreen;
+- (void)clearAndResetScreenSavingLines:(int)linesToSave;
 
 void VT100ScreenEraseCell(screen_char_t *sct,
                           iTermExternalAttribute **eaOut,
                           BOOL eraseAttributes,
                           const screen_char_t *defaultChar);
+
+#pragma mark - Character Sets
+
+- (void)setCharacterSet:(int)charset usesLineDrawingMode:(BOOL)lineDrawingMode;
 
 #pragma mark - Interval Tree
 
@@ -87,6 +93,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                        ofClass:(Class)markClass;
 
 - (void)removeObjectFromIntervalTree:(id<IntervalTreeObject>)obj;
+
+- (void)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange;
+
+- (NSMutableArray<id<IntervalTreeObject>> *)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange exceptCoordRange:(VT100GridCoordRange)coordRangeToSave;
 
 #pragma mark - Shell Integration
 
@@ -122,6 +132,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)saveCursorLine;
 
 - (void)setReturnCodeOfLastCommand:(int)returnCode;
+
+- (void)setCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord;
+
+- (void)invalidateCommandStartCoordWithoutSideEffects;
 
 #pragma mark - Annotations
 
@@ -165,6 +179,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)appendStringToTriggerLine:(NSString *)string;
 - (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData;
 - (void)forceCheckTriggers;
+
+#pragma mark - Color
+
+- (void)loadInitialColorTable;
 
 #pragma mark - Cross-Thread Sync
 

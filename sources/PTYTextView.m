@@ -1829,6 +1829,10 @@
     return [self.delegate textviewTimestampsMode];
 }
 
+- (void)setCursorVisibleWithoutSideEffects:(BOOL)cursorVisible {
+    _drawingHelper.cursorVisible = cursorVisible;
+}
+
 - (void)setCursorVisible:(BOOL)cursorVisible {
     [self markCursorDirty];
     _drawingHelper.cursorVisible = cursorVisible;
