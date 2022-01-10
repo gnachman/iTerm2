@@ -1766,6 +1766,48 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self setCommandStartCoordWithoutSideEffects:VT100GridAbsCoordMake(-1, -1)];
 }
 
+// offset is added to intervals before inserting into interval tree.
+- (void)moveNotesOnScreenFrom:(IntervalTree *)source
+                           to:(IntervalTree *)dest
+                       offset:(long long)offset
+                 screenOrigin:(int)screenOrigin {
+    VT100GridCoordRange screenRange =
+        VT100GridCoordRangeMake(0,
+                                screenOrigin,
+                                self.width,
+                                screenOrigin + self.height);
+    DLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
+    Interval *sourceInterval = [self intervalForGridCoordRange:screenRange];
+    self.lastCommandMark = nil;
+    for (id<IntervalTreeObject> obj in [source objectsInInterval:sourceInterval]) {
+        Interval *interval = obj.entry.interval;
+        DLog(@"  found note with interval %@", interval);
+        [source removeObject:obj];
+        interval.location = interval.location + offset;
+        DLog(@"  new interval is %@", interval);
+        [dest addObject:obj withInterval:interval];
+    }
+}
+
+- (void)swapOnscreenIntervalTreeObjects {
+    int historyLines = self.numberOfScrollbackLines;
+    Interval *origin = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
+                                                                                        historyLines,
+                                                                                        1,
+                                                                                        historyLines)];
+    IntervalTree *temp = [[IntervalTree alloc] init];
+    DLog(@"moving onscreen notes into savedNotes");
+    [self moveNotesOnScreenFrom:self.intervalTree
+                             to:temp
+                         offset:-origin.location
+                   screenOrigin:self.numberOfScrollbackLines];
+    DLog(@"moving onscreen savedNotes into notes");
+    [self moveNotesOnScreenFrom:self.savedIntervalTree
+                             to:self.intervalTree
+                         offset:origin.location
+                   screenOrigin:0];
+    self.savedIntervalTree = temp;
+}
 
 #pragma mark - Annotations
 

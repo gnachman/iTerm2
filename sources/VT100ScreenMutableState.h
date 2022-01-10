@@ -139,6 +139,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)invalidateCommandStartCoordWithoutSideEffects;
 
+// Swap onscreen notes between intervalTree_ and savedIntervalTree_.
+// IMPORTANT: Call -reloadMarkCache after this.
+- (void)swapOnscreenIntervalTreeObjects;
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation;

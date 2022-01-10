@@ -257,7 +257,7 @@
 
     // Any onscreen notes in primary grid get moved to savedIntervalTree_.
     mutableState.currentGrid = _state.primaryGrid;
-    [self mutSwapNotes];
+    [mutableState swapOnscreenIntervalTreeObjects];
     mutableState.currentGrid = _state.altGrid;
 
     ///////////////////////////////////////
@@ -321,7 +321,7 @@
 
     mutableState.currentGrid = _state.primaryGrid;
     // Move savedIntervalTree_ into intervalTree_. This should leave savedIntervalTree_ empty.
-    [self mutSwapNotes];
+    [mutableState swapOnscreenIntervalTreeObjects];
     mutableState.currentGrid = _state.altGrid;
 
     return altScreenLineBuffer;
