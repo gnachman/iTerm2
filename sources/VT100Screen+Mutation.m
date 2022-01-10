@@ -2382,7 +2382,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
-    [_mutableState eraseInDisplayBeforeCursor:before afterCursor:after decProtect:NO];
+    [_mutableState terminalEraseInDisplayBeforeCursor:before afterCursor:after];
 }
 
 - (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
