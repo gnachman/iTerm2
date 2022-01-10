@@ -345,7 +345,7 @@
         [delegate_ screenResizeToWidth:width
                                 height:_state.currentGrid.size.height];
         if (!preserveScreen) {
-            [self mutEraseInDisplayBeforeCursor:YES afterCursor:YES decProtect:NO];  // erase the screen
+            [_mutableState eraseInDisplayBeforeCursor:YES afterCursor:YES decProtect:NO];  // erase the screen
             _mutableState.currentGrid.cursorX = 0;
             _mutableState.currentGrid.cursorY = 0;
         }

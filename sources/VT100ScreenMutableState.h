@@ -48,23 +48,44 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Terminal Fundamentals
 
+#pragma mark Cursor Movement
+
 - (void)appendLineFeed;
 - (void)carriageReturn;
 - (void)appendCarriageReturnLineFeed;
+- (void)cursorToX:(int)x;
+- (void)cursorToY:(int)y;
+- (void)cursorToX:(int)x Y:(int)y;
+- (void)removeSoftEOLBeforeCursor;
+
+#pragma mark Alternate Screen
+
 - (void)softAlternateScreenModeDidChange;
+
+#pragma mark Write Text
+
 - (void)appendStringAtCursor:(NSString *)string;
 - (void)appendScreenCharArrayAtCursor:(const screen_char_t *)buffer
                                length:(int)len
                externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes;
-- (void)cursorToX:(int)x;
-- (void)cursorToY:(int)y;
-- (void)cursorToX:(int)x Y:(int)y;
+
+#pragma mark Erase
+
+- (BOOL)selectiveEraseRange:(VT100GridCoordRange)range eraseAttributes:(BOOL)eraseAttributes;
+- (void)eraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec;
+
+void VT100ScreenEraseCell(screen_char_t *sct,
+                          iTermExternalAttribute **eaOut,
+                          BOOL eraseAttributes,
+                          const screen_char_t *defaultChar);
 
 #pragma mark - Interval Tree
 
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass;
+
+- (void)removeObjectFromIntervalTree:(id<IntervalTreeObject>)obj;
 
 #pragma mark - Shell Integration
 

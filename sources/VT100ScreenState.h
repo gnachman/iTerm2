@@ -259,6 +259,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Shell Integration
 
 @property (nonatomic, readonly) VT100RemoteHost *lastRemoteHost;
+@property (nonatomic, readonly) VT100ScreenMark *lastPromptMark;
 
 // If at a shell prompt, this gives the range of the command being edited not past the cursor.
 // If not at a prompt (no shell integration or command is running) this is -1,-1,-1,-1.
