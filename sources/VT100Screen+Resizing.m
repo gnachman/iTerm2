@@ -133,9 +133,8 @@
                                                                               newWidth:newSize.width];
     }
 
-    [self fixUpPrimaryGridIntervalTreeForNewSize:newSize
-                             wasShowingAltScreen:wasShowingAltScreen
-                                    mutableState:mutableState];
+    [mutableState fixUpPrimaryGridIntervalTreeForNewSize:newSize
+                                     wasShowingAltScreen:wasShowingAltScreen];
     mutableState.currentGrid.size = newSize;
 
     // Restore the screen contents that were pushed onto the linebuffer.
@@ -290,25 +289,6 @@
                                 linesMovedUp:linesMovedUp
                         appendOnlyLineBuffer:appendOnlyLineBuffer];
     return newSubSelections;
-}
-
-- (void)fixUpPrimaryGridIntervalTreeForNewSize:(VT100GridSize)newSize
-                           wasShowingAltScreen:(BOOL)wasShowingAltScreen
-                                  mutableState:(VT100ScreenMutableState *)mutableState {
-    if ([mutableState.intervalTree count]) {
-        // Fix up the intervals for the primary grid.
-        if (wasShowingAltScreen) {
-            // Temporarily swap in primary grid so convertRange: will do the right thing.
-            mutableState.currentGrid = _state.primaryGrid;
-        }
-
-        mutableState.intervalTree = [mutableState replacementIntervalTreeForNewWidth:newSize.width];
-
-        if (wasShowingAltScreen) {
-            // Return to alt grid.
-            mutableState.currentGrid = mutableState.altGrid;
-        }
-    }
 }
 
 - (void)mutSetWidth:(int)width preserveScreen:(BOOL)preserveScreen {

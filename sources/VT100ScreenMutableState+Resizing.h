@@ -54,6 +54,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray *)subSelectionsWithConvertedRangesFromSelection:(iTermSelection *)selection
                                                   newWidth:(int)newWidth;
 - (IntervalTree *)replacementIntervalTreeForNewWidth:(int)newWidth;
+- (void)fixUpPrimaryGridIntervalTreeForNewSize:(VT100GridSize)newSize
+                           wasShowingAltScreen:(BOOL)wasShowingAltScreen;
 
 @end
 

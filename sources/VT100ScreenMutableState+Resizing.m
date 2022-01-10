@@ -510,5 +510,23 @@ static void SwapInt(int *a, int *b) {
     return replacementTree;
 }
 
+- (void)fixUpPrimaryGridIntervalTreeForNewSize:(VT100GridSize)newSize
+                           wasShowingAltScreen:(BOOL)wasShowingAltScreen {
+    if ([self.intervalTree count]) {
+        // Fix up the intervals for the primary grid.
+        if (wasShowingAltScreen) {
+            // Temporarily swap in primary grid so convertRange: will do the right thing.
+            self.currentGrid = self.primaryGrid;
+        }
+
+        self.intervalTree = [self replacementIntervalTreeForNewWidth:newSize.width];
+
+        if (wasShowingAltScreen) {
+            // Return to alt grid.
+            self.currentGrid = self.altGrid;
+        }
+    }
+}
+
 
 @end
