@@ -89,9 +89,6 @@
                     observer:(void (^)(iTermOr<id, NSError *> *))observer
 NS_DESIGNATED_INITIALIZER;
 
-- (void)fulfill:(id)value;
-- (void)reject:(NSError *)error;
-
 @end
 
 @implementation iTermPromiseSeal {
@@ -139,6 +136,10 @@ NS_DESIGNATED_INITIALIZER;
     }
 }
 
+- (void)rejectWithDefaultError {
+    [self reject:[NSError errorWithDomain:@"com.iterm2.promise" code:0 userInfo:nil]];
+}
+
 @end
 
 typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
@@ -155,6 +156,22 @@ typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
 
 + (instancetype)promise:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal>))block {
     return [[iTermPromise alloc] initPrivate:block];
+}
+
++ (instancetype)promiseValue:(id)value {
+    return [self promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+        if (value) {
+            [seal fulfill:value];
+        } else {
+            [seal rejectWithDefaultError];
+        }
+    }];
+}
+
++ (instancetype)promiseDefaultError {
+    return [self promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+        [seal rejectWithDefaultError];
+    }];
 }
 
 - (instancetype)initPrivate:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal>))block {

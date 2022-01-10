@@ -147,8 +147,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalResetCursorTypeAndBlink;
 
 // Returns the current cursor style as a DECSCUSR param.
-- (void)terminalGetCursorType:(ITermCursorType *)cursorTypeOut
-                     blinking:(BOOL *)blinking;
+- (void)terminalGetCursorInfoWithCompletion:(void (^)(ITermCursorType type, BOOL blinking))completion;
 
 // Sets the left/right scroll region.
 - (void)terminalSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight;

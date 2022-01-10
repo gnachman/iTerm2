@@ -2723,9 +2723,14 @@ static const int kMaxScreenRows = 4096;
             [_delegate terminalAppendSixelData:token.savedData];
             break;
 
-        case DCS_DECRQSS:
-            [_delegate terminalSendReport:[[self decrqss:token.string] dataUsingEncoding:_encoding]];
+        case DCS_DECRQSS: {
+            const NSStringEncoding encoding = _encoding;
+            __weak id<VT100TerminalDelegate> delegate = _delegate;
+            [[self decrqssPromise:token.string] then:^(NSString * _Nonnull value) {
+                [delegate terminalSendReport:[value dataUsingEncoding:encoding]];
+            }];
             break;
+        }
 
         case DCS_DECRSPS_DECCIR:
             [self executeDECRSPS_DECCIR:token.string];
@@ -2996,12 +3001,15 @@ static const int kMaxScreenRows = 4096;
     [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
-- (NSString *)decrqss:(NSString *)pt {
-    NSString *payload = [self decrqssPayload:pt];
-    if (payload) {
-        return [NSString stringWithFormat:@"%cP1$r%@%@%c\\", VT100CC_ESC, payload, pt, VT100CC_ESC];
-    }
-    return [NSString stringWithFormat:@"%cP0$r%@%c\\", VT100CC_ESC, pt, VT100CC_ESC];
+- (iTermPromise<NSString *> *)decrqssPromise:(NSString *)pt {
+    return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+        [[[self decrqssPayloadPromise:pt] then:^(NSString * _Nonnull payload) {
+            [seal fulfill:[NSString stringWithFormat:@"%cP1$r%@%@%c\\", VT100CC_ESC, payload, pt, VT100CC_ESC]];
+
+        }] catchError:^(NSError * _Nonnull error) {
+            [seal fulfill:[NSString stringWithFormat:@"%cP0$r%@%c\\", VT100CC_ESC, pt, VT100CC_ESC]];
+        }];
+    }];
 }
 
 - (NSString *)decrqssSGR {
@@ -3021,27 +3029,28 @@ static const int kMaxScreenRows = 4096;
     return @"61";
 }
 
-- (NSString *)decrqssDECSCUSR {
-    ITermCursorType type = CURSOR_BOX;
-    BOOL blinking = YES;
-    [self.delegate terminalGetCursorType:&type blinking:&blinking];
-    int code = 0;
-    switch (type) {
-        case CURSOR_DEFAULT:
-        case CURSOR_BOX:
-            code = 1;
-            break;
-        case CURSOR_UNDERLINE:
-            code = 3;
-            break;
-        case CURSOR_VERTICAL:
-            code = 5;
-            break;
-    }
-    if (!blinking) {
-        code++;
-    }
-    return [@(code) stringValue];
+- (iTermPromise<NSString *> *)decrqssDECSCUSRPromise {
+    return [iTermPromise promise:^(id<iTermPromiseSeal> _Nonnull seal) {
+        [self.delegate terminalGetCursorInfoWithCompletion:^(ITermCursorType type, BOOL blinking) {
+            int code = 0;
+            switch (type) {
+                case CURSOR_DEFAULT:
+                case CURSOR_BOX:
+                    code = 1;
+                    break;
+                case CURSOR_UNDERLINE:
+                    code = 3;
+                    break;
+                case CURSOR_VERTICAL:
+                    code = 5;
+                    break;
+            }
+            if (!blinking) {
+                code++;
+            }
+            [seal fulfill:[@(code) stringValue]];
+        }];
+    }];
 }
 
 - (NSString *)decrqssDECSCA {
@@ -3070,36 +3079,36 @@ static const int kMaxScreenRows = 4096;
     return [@([self.delegate terminalHeight]) stringValue];
 }
 
-- (NSString *)decrqssPayload:(NSString *)pt {
+- (iTermPromise<NSString *> *)decrqssPayloadPromise:(NSString *)pt {
     if ([pt isEqualToString:@"m"]) {
-        return [self decrqssSGR];
+        return [iTermPromise promiseValue:[self decrqssSGR]];
     }
     if ([pt isEqualToString:@"\"p"]) {
-        return [self decrqssDECSCL];
+        return [iTermPromise promiseValue:[self decrqssDECSCL]];
     }
     if ([pt isEqualToString:@" q"]) {
-        return [self decrqssDECSCUSR];
+        return [self decrqssDECSCUSRPromise];
     }
     if ([pt isEqualToString:@"\"q"]) {
-        return [self decrqssDECSCA];
+        return [iTermPromise promiseValue:[self decrqssDECSCA]];
     }
     if ([pt isEqualToString:@"r"]) {
-        return [self decrqssDECSTBM];
+        return [iTermPromise promiseValue:[self decrqssDECSTBM]];
     }
     if ([pt isEqualToString:@"s"]) {
-        return [self decrqssDECSLRM];
+        return [iTermPromise promiseValue:[self decrqssDECSLRM]];
     }
     if ([pt isEqualToString:@"t"]) {
-        return [self decrqssDECSLPP];
+        return [iTermPromise promiseValue:[self decrqssDECSLPP]];
     }
     if ([pt isEqualToString:@"$|"]) {
-        return [self decrqssDECSCPP];
+        return [iTermPromise promiseValue:[self decrqssDECSCPP]];
     }
     if ([pt isEqualToString:@"*|"]) {
-        return [self decrqssDECNLS];
+        return [iTermPromise promiseValue:[self decrqssDECNLS]];
     }
 
-    return nil;
+    return [iTermPromise promiseDefaultError];
 }
 
 - (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
