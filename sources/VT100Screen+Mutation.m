@@ -2242,7 +2242,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalResetCursorTypeAndBlink {
-    [delegate_ screenResetCursorTypeAndBlink];
+    [_mutableState terminalResetCursorTypeAndBlink];
 }
 
 - (void)terminalSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight {
