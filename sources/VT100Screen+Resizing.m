@@ -282,13 +282,12 @@
                                                  mutableState:mutableState];
     DLog(@"Original limit=%@", originalLastPos);
     DLog(@"New limit=%@", newLastPos);
-    [self addObjectsToIntervalTreeFromTuples:altScreenNotes
-                                     newSize:newSize
-                        originalLastPosition:originalLastPos
-                             newLastPosition:newLastPos
-                                linesMovedUp:linesMovedUp
-                        appendOnlyLineBuffer:appendOnlyLineBuffer
-                                mutableState:mutableState];
+    [mutableState addObjectsToIntervalTreeFromTuples:altScreenNotes
+                                             newSize:newSize
+                                originalLastPosition:originalLastPos
+                                     newLastPosition:newLastPos
+                                        linesMovedUp:linesMovedUp
+                                appendOnlyLineBuffer:appendOnlyLineBuffer];
     return newSubSelections;
 }
 
@@ -388,39 +387,6 @@
         }
     }
     return newSubSelections;
-}
-
-- (void)addObjectsToIntervalTreeFromTuples:(NSArray *)altScreenNotes
-                                   newSize:(VT100GridSize)newSize
-                      originalLastPosition:(LineBufferPosition *)originalLastPos
-                           newLastPosition:(LineBufferPosition *)newLastPos
-                              linesMovedUp:(int)linesMovedUp
-                      appendOnlyLineBuffer:(LineBuffer *)appendOnlyLineBuffer
-                              mutableState:(VT100ScreenMutableState *)mutableState {
-    for (NSArray *tuple in altScreenNotes) {
-        id<IntervalTreeObject> note = tuple[0];
-        LineBufferPosition *start = tuple[1];
-        LineBufferPosition *end = tuple[2];
-        VT100GridCoordRange newRange;
-        DLog(@"  Note positions=%@ to %@", start, end);
-        BOOL ok = [mutableState computeRangeFromOriginalLimit:originalLastPos
-                                                limitPosition:newLastPos
-                                                startPosition:start
-                                                  endPosition:end
-                                                     newWidth:newSize.width
-                                                   lineBuffer:appendOnlyLineBuffer
-                                                        range:&newRange
-                                                 linesMovedUp:linesMovedUp];
-        if (ok) {
-            DLog(@"  New range=%@", VT100GridCoordRangeDescription(newRange));
-            Interval *interval = [_mutableState intervalForGridCoordRange:newRange
-                                                                    width:newSize.width
-                                                              linesOffset:_mutableState.cumulativeScrollbackOverflow];
-            [_mutableState.intervalTree addObject:note withInterval:interval];
-        } else {
-            DLog(@"  *FAILED TO CONVERT*");
-        }
-    }
 }
 
 
