@@ -7,6 +7,8 @@
 
 #import "VT100ScreenMutableState.h"
 
+@class iTermSelection;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface VT100ScreenMutableState (Resizing)
@@ -16,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (VT100GridSize)safeSizeForSize:(VT100GridSize)proposedSize;
 - (BOOL)shouldSetSizeTo:(VT100GridSize)size;
 - (void)sanityCheckIntervalsFrom:(VT100GridSize)oldSize note:(NSString *)note;
+- (void)willSetSizeWithSelection:(iTermSelection *)selection;
 
 @end
 
