@@ -6,7 +6,9 @@
 //
 
 #import "VT100ScreenMutableState+Resizing.h"
+
 #import "DebugLogging.h"
+#import "iTermSelection.h"
 
 @implementation VT100ScreenMutableState (Resizing)
 
@@ -49,6 +51,13 @@
                      note);
     }
 #endif
+}
+
+- (void)willSetSizeWithSelection:(iTermSelection *)selection {
+    if (selection.live) {
+        [selection endLiveSelection];
+    }
+    [selection removeWindowsWithWidth:self.width];
 }
 
 @end

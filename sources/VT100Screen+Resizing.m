@@ -71,7 +71,7 @@
     [_mutableState sanityCheckIntervalsFrom:_state.currentGrid.size note:@"pre-hoc"];
     [self.mutableTemporaryDoubleBuffer resetExplicitly];
     const VT100GridSize oldSize = _state.currentGrid.size;
-    [self willSetSizeWithSelection:selection];
+    [_mutableState willSetSizeWithSelection:selection];
 
     const BOOL couldHaveSelection = hasView && selection.hasSelection;
     const int usedHeight = [_state.currentGrid numberOfLinesUsed];
@@ -397,13 +397,6 @@
 
     [self mutReloadMarkCache];
     [delegate_ screenSizeDidChangeWithNewTopLineAt:newTop];
-}
-
-- (void)willSetSizeWithSelection:(iTermSelection *)selection {
-    if (selection.live) {
-        [selection endLiveSelection];
-    }
-    [selection removeWindowsWithWidth:_mutableState.width];
 }
 
 - (NSArray *)subSelectionTuplesWithUsedHeight:(int)usedHeight
