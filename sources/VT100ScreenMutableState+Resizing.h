@@ -28,6 +28,9 @@ NS_ASSUME_NONNULL_BEGIN
                            end:(VT100GridCoord)end
                       toStartX:(VT100GridCoord *)startPtr
                         toEndX:(VT100GridCoord *)endPtr;
+- (LineBufferPositionRange *)positionRangeForCoordRange:(VT100GridCoordRange)range
+                                           inLineBuffer:(LineBuffer *)lineBuffer
+                                          tolerateEmpty:(BOOL)tolerateEmpty;
 
 @end
 
