@@ -482,6 +482,22 @@ iTermTriggerScopeProvider>
     self.currentGrid.cursorY = yPos;
 }
 
+- (void)setScrollRegionTop:(int)top bottom:(int)bottom {
+    if (top >= 0 &&
+        top < self.currentGrid.size.height &&
+        bottom >= 0 &&
+        bottom < self.currentGrid.size.height &&
+        bottom > top) {
+        self.currentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
+
+        if ([self.terminal originMode]) {
+            self.currentGrid.cursor = VT100GridCoordMake(self.currentGrid.leftMargin,
+                                                         self.currentGrid.topMargin);
+        } else {
+            self.currentGrid.cursor = VT100GridCoordMake(0, 0);
+        }
+    }
+}
 
 #pragma mark - VT100TerminalDelegate
 
@@ -651,6 +667,10 @@ iTermTriggerScopeProvider>
 
 - (int)terminalRelativeCursorY {
     return self.currentGrid.cursorY - self.currentGrid.topMargin + 1;
+}
+
+- (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom {
+    [self setScrollRegionTop:top bottom:bottom];
 }
 
 #pragma mark - Tabs

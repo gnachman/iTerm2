@@ -1283,23 +1283,6 @@
     }
 }
 
-- (void)mutSetScrollRegionTop:(int)top bottom:(int)bottom {
-    if (top >= 0 &&
-        top < _state.currentGrid.size.height &&
-        bottom >= 0 &&
-        bottom < _state.currentGrid.size.height &&
-        bottom > top) {
-        _mutableState.currentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
-
-        if ([_state.terminal originMode]) {
-            _mutableState.currentGrid.cursor = VT100GridCoordMake(_state.currentGrid.leftMargin,
-                                                                  _state.currentGrid.topMargin);
-        } else {
-            _mutableState.currentGrid.cursor = VT100GridCoordMake(0, 0);
-        }
-    }
-}
-
 - (void)scrollScreenIntoHistory {
     // Scroll the top lines of the screen into history, up to and including the last non-
     // empty line.
@@ -2577,7 +2560,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetScrollRegionTop:(int)top bottom:(int)bottom {
-    [self mutSetScrollRegionTop:top bottom:bottom];
+    [_mutableState terminalSetScrollRegionTop:top bottom:bottom];
 }
 
 - (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
