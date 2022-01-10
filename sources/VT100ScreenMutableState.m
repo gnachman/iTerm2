@@ -417,6 +417,28 @@ iTermTriggerScopeProvider>
     [self clearTriggerLine];
 }
 
+- (void)forwardIndex {
+    if ((self.currentGrid.cursorX == self.currentGrid.rightMargin && !self.cursorOutsideLeftRightMargin )||
+        self.currentGrid.cursorX == self.currentGrid.size.width) {
+        [self.currentGrid moveContentLeft:1];
+    } else {
+        self.currentGrid.cursorX += 1;
+    }
+    [self clearTriggerLine];
+}
+
+- (void)backIndex {
+    if ((self.currentGrid.cursorX == self.currentGrid.leftMargin && !self.cursorOutsideLeftRightMargin )||
+        self.currentGrid.cursorX == 0) {
+        [self.currentGrid moveContentRight:1];
+    } else if (self.currentGrid.cursorX > 0) {
+        self.currentGrid.cursorX -= 1;
+    } else {
+        return;
+    }
+    [self clearTriggerLine];
+}
+
 - (void)cursorLeft:(int)n {
     [self.currentGrid moveCursorLeft:n];
     [self clearTriggerLine];
@@ -895,6 +917,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)terminalReverseIndex {
     [self reverseIndex];
+}
+
+- (void)terminalForwardIndex {
+    [self forwardIndex];
+}
+
+- (void)terminalBackIndex {
+    [self backIndex];
 }
 
 #pragma mark - Tabs

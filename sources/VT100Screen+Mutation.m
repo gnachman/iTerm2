@@ -1226,28 +1226,6 @@
 }
 
 
-- (void)mutForwardIndex {
-    if ((_state.currentGrid.cursorX == _state.currentGrid.rightMargin && !_state.cursorOutsideLeftRightMargin )||
-         _state.currentGrid.cursorX == _state.currentGrid.size.width) {
-        [_mutableState.currentGrid moveContentLeft:1];
-    } else {
-        _mutableState.currentGrid.cursorX += 1;
-    }
-    [_mutableState clearTriggerLine];
-}
-
-- (void)mutBackIndex {
-    if ((_state.currentGrid.cursorX == _state.currentGrid.leftMargin && !_state.cursorOutsideLeftRightMargin )||
-         _state.currentGrid.cursorX == 0) {
-        [_mutableState.currentGrid moveContentRight:1];
-    } else if (_state.currentGrid.cursorX > 0) {
-        _mutableState.currentGrid.cursorX -= 1;
-    } else {
-        return;
-    }
-    [_mutableState clearTriggerLine];
-}
-
 - (void)mutBackTab:(int)n {
     for (int i = 0; i < n; i++) {
         // TODO: respect left-right margins
@@ -2336,11 +2314,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalForwardIndex {
-    [self mutForwardIndex];
+    [_mutableState terminalForwardIndex];
 }
 
 - (void)terminalBackIndex {
-    [self mutBackIndex];
+    [_mutableState terminalBackIndex];
 }
 
 - (void)terminalResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
