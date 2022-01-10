@@ -28,7 +28,7 @@
 #import "iTermURLStore.h"
 
 
-@implementation VT100ScreenMutableState 
+@implementation VT100ScreenMutableState
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
     self = [super initForMutation];
@@ -1349,6 +1349,42 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }
     }
     return marksToMove;
+}
+
+- (void)commandDidEndWithRange:(VT100GridCoordRange)range {
+    NSString *command = [self commandInRange:range];
+    DLog(@"FinalTerm: Command <<%@>> ended with range %@",
+         command, VT100GridCoordRangeDescription(range));
+    VT100ScreenMark *mark = nil;
+    if (command) {
+        NSString *trimmedCommand =
+            [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+        if (trimmedCommand.length) {
+            mark = [self markOnLine:self.lastPromptLine - self.cumulativeScrollbackOverflow];
+#warning TODO: This modifies shared state
+            DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
+                 self.lastPromptLine - self.cumulativeScrollbackOverflow, mark, command);
+            mark.command = command;
+            mark.commandRange = VT100GridAbsCoordRangeFromCoordRange(range, self.cumulativeScrollbackOverflow);
+            mark.outputStart = VT100GridAbsCoordMake(self.currentGrid.cursor.x,
+                                                     self.currentGrid.cursor.y + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.cumulativeScrollbackOverflow);
+        }
+    }
+    VT100RemoteHost *remoteHost = command ? [self remoteHostOnLine:range.end.y] : nil;
+    NSString *workingDirectory = command ? [self workingDirectoryOnLine:range.end.y] : nil;
+    if (!command) {
+        mark = nil;
+    }
+    // Pause because delegate will change variables.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenDidExecuteCommand:command
+                                    range:range
+                                   onHost:remoteHost
+                              inDirectory:workingDirectory
+                                     mark:mark];
+        [unpauser unpause];
+    }];
 }
 
 #pragma mark - Shell Integration

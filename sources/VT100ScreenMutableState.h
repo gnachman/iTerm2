@@ -98,6 +98,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (NSMutableArray<id<IntervalTreeObject>> *)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange exceptCoordRange:(VT100GridCoordRange)coordRangeToSave;
 
+- (void)commandDidEndWithRange:(VT100GridCoordRange)range;
+
 #pragma mark - Shell Integration
 
 - (void)assignCurrentCommandEndDate;
