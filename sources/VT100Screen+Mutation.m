@@ -19,6 +19,7 @@
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
 #import "VT100RemoteHost.h"
+#import "VT100ScreenMutableState+Resizing.h"
 #import "VT100Screen+Private.h"
 #import "VT100Token.h"
 #import "VT100WorkingDirectory.h"
@@ -107,7 +108,7 @@
 - (BOOL)mutCommandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
     if (_state.commandStartCoord.x != -1) {
         [_mutableState didUpdatePromptLocation];
-        [self mutCommandDidEndWithRange:_mutableState.commandRange];
+        [_mutableState commandDidEndWithRange:_mutableState.commandRange];
         [self mutInvalidateCommandStartCoord];
         _mutableState.startOfRunningCommandOutput = coord;
         return YES;
@@ -118,32 +119,7 @@
 #pragma mark - Interval Tree
 
 - (void)mutCommandDidEndWithRange:(VT100GridCoordRange)range {
-    NSString *command = [self commandInRange:range];
-    DLog(@"FinalTerm: Command <<%@>> ended with range %@",
-         command, VT100GridCoordRangeDescription(range));
-    VT100ScreenMark *mark = nil;
-    if (command) {
-        NSString *trimmedCommand =
-            [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-        if (trimmedCommand.length) {
-            mark = [self markOnLine:self.lastPromptLine - _mutableState.cumulativeScrollbackOverflow];
-#warning TODO: This modifies shared state
-            DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
-                 _mutableState.lastPromptLine - _mutableState.cumulativeScrollbackOverflow, mark, command);
-            mark.command = command;
-            mark.commandRange = VT100GridAbsCoordRangeFromCoordRange(range, _mutableState.cumulativeScrollbackOverflow);
-            mark.outputStart = VT100GridAbsCoordMake(_mutableState.currentGrid.cursor.x,
-                                                     _mutableState.currentGrid.cursor.y + [_mutableState.linebuffer numLinesWithWidth:_mutableState.currentGrid.size.width] + _mutableState.cumulativeScrollbackOverflow);
-            [[mark retain] autorelease];
-        }
-    }
-    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenDidExecuteCommand:command
-                                    range:range
-                                   onHost:command ? [self remoteHostOnLine:range.end.y] : nil
-                              inDirectory:command ? [self workingDirectoryOnLine:range.end.y] : nil
-                                     mark:command ? mark : nil];
-    }];
+    [_mutableState commandDidEndWithRange:range];
 }
 
 - (id<iTermMark>)mutAddMarkOnLine:(int)line ofClass:(Class)markClass {
@@ -264,7 +240,7 @@
     }
     [_mutableState invalidateCommandStartCoordWithoutSideEffects];
     [_mutableState didUpdatePromptLocation];
-    [self mutCommandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
+    [_mutableState commandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
 }
 
 - (void)mutRemoveAnnotation:(PTYAnnotation *)annotation {
