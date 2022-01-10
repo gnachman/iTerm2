@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
        toScrollback:(LineBuffer *)lineBufferToUse
      withUsedHeight:(int)usedHeight
           newHeight:(int)newHeight;
+- (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run;
 
 @end
 

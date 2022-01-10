@@ -66,10 +66,10 @@
     DLog(@"Set size to %@", VT100GridSizeDescription(newSize));
 
     const VT100GridCoordRange previouslyVisibleLines =
-        VT100GridCoordRangeMake(0,
-                                previouslyVisibleLineRange.location,
-                                0,
-                                previouslyVisibleLineRange.location + 1);
+    VT100GridCoordRangeMake(0,
+                            previouslyVisibleLineRange.location,
+                            0,
+                            previouslyVisibleLineRange.location + 1);
 
     [mutableState sanityCheckIntervalsFrom:mutableState.currentGrid.size note:@"pre-hoc"];
     [mutableState.temporaryDoubleBuffer resetExplicitly];
@@ -122,6 +122,7 @@
                                                                   toWidth:newSize.width
                                                                        to:&convertedRangeOfVisibleLines
                                                              inLineBuffer:mutableState.linebuffer
+                                                             mutableState:mutableState
                                                             tolerateEmpty:YES];
 
     // Contains iTermSubSelection*s updated for the new screen size. Used
@@ -130,11 +131,13 @@
     NSArray *newSubSelections = @[];
     if (!wasShowingAltScreen && couldHaveSelection) {
         newSubSelections = [self subSelectionsWithConvertedRangesFromSelection:selection
+                                                                  mutableState:mutableState
                                                                       newWidth:newSize.width];
     }
 
     [self fixUpPrimaryGridIntervalTreeForNewSize:newSize
-                             wasShowingAltScreen:wasShowingAltScreen];
+                             wasShowingAltScreen:wasShowingAltScreen
+                                    mutableState:mutableState];
     mutableState.currentGrid.size = newSize;
 
     // Restore the screen contents that were pushed onto the linebuffer.
@@ -198,36 +201,36 @@
     int numLinesDroppedFromTop = [altScreenLineBuffer numLinesWithWidth:newSize.width] - numLinesThatWillBeRestored;
 
     // Convert note ranges to new coords, dropping or truncating as needed
-    _mutableState.currentGrid = _mutableState.altGrid;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
+    mutableState.currentGrid = mutableState.altGrid;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
     IntervalTree *replacementTree = [[[IntervalTree alloc] init] autorelease];
     for (id<IntervalTreeObject> object in [_state.savedIntervalTree allObjects]) {
-        VT100GridCoordRange objectRange = [_mutableState coordRangeForInterval:object.entry.interval];
+        VT100GridCoordRange objectRange = [mutableState coordRangeForInterval:object.entry.interval];
         DLog(@"Found object at %@", VT100GridCoordRangeDescription(objectRange));
         VT100GridCoordRange newRange;
-        if ([self convertRange:objectRange toWidth:newSize.width to:&newRange inLineBuffer:altScreenLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:object]]) {
+        if ([self convertRange:objectRange toWidth:newSize.width to:&newRange inLineBuffer:altScreenLineBuffer mutableState:mutableState tolerateEmpty:[self intervalTreeObjectMayBeEmpty:object]]) {
             assert(objectRange.start.y >= 0);
             assert(objectRange.end.y >= 0);
             // Anticipate the lines that will be dropped when the alt grid is restored.
-            newRange.start.y += _mutableState.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
-            newRange.end.y += _mutableState.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
+            newRange.start.y += mutableState.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
+            newRange.end.y += mutableState.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
             if (newRange.start.y < 0) {
                 newRange.start.y = 0;
                 newRange.start.x = 0;
             }
             DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(objectRange), numLinesDroppedFromTop);
-            [_mutableState.savedIntervalTree removeObject:object];
+            [mutableState.savedIntervalTree removeObject:object];
             if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
-                Interval *newInterval = [_mutableState intervalForGridCoordRange:newRange
-                                                                           width:newSize.width
-                                                                     linesOffset:0];
+                Interval *newInterval = [mutableState intervalForGridCoordRange:newRange
+                                                                          width:newSize.width
+                                                                    linesOffset:0];
                 [replacementTree addObject:object withInterval:newInterval];
             } else {
                 DLog(@"Failed to convert");
             }
         }
     }
-    _mutableState.savedIntervalTree = replacementTree;
-    _mutableState.currentGrid = _state.primaryGrid;  // Swap back to primary grid
+    mutableState.savedIntervalTree = replacementTree;
+    mutableState.currentGrid = _state.primaryGrid;  // Swap back to primary grid
 
     // Restore alt screen with new width
     self.mutableAltGrid.size = VT100GridSizeMake(newSize.width, newSize.height);
@@ -264,9 +267,9 @@
                                    newSize:newSize];
 
     // Any onscreen notes in primary grid get moved to savedIntervalTree_.
-    _mutableState.currentGrid = _state.primaryGrid;
+    mutableState.currentGrid = _state.primaryGrid;
     [self mutSwapNotes];
-    _mutableState.currentGrid = _state.altGrid;
+    mutableState.currentGrid = _state.altGrid;
 
     ///////////////////////////////////////
     // Create a cheap append-only copy of the line buffer and add the
@@ -321,7 +324,7 @@
                 withUsedHeight:usedHeight
                      newHeight:newSize.height];
 
-    if ([_mutableState.intervalTree count]) {
+    if ([mutableState.intervalTree count]) {
         *altScreenNotesPtr = [self intervalTreeObjectsWithUsedHeight:usedHeight
                                                            newHeight:newSize.height
                                                                 grid:_state.altGrid
@@ -329,28 +332,30 @@
                                                         mutableState:mutableState];
     }
 
-    _mutableState.currentGrid = _state.primaryGrid;
+    mutableState.currentGrid = _state.primaryGrid;
     // Move savedIntervalTree_ into intervalTree_. This should leave savedIntervalTree_ empty.
     [self mutSwapNotes];
-    _mutableState.currentGrid = _state.altGrid;
+    mutableState.currentGrid = _state.altGrid;
 
     return altScreenLineBuffer;
 }
 
 - (void)fixUpPrimaryGridIntervalTreeForNewSize:(VT100GridSize)newSize
-                           wasShowingAltScreen:(BOOL)wasShowingAltScreen {
-    if ([_mutableState.intervalTree count]) {
+                           wasShowingAltScreen:(BOOL)wasShowingAltScreen
+                                  mutableState:(VT100ScreenMutableState *)mutableState {
+    if ([mutableState.intervalTree count]) {
         // Fix up the intervals for the primary grid.
         if (wasShowingAltScreen) {
             // Temporarily swap in primary grid so convertRange: will do the right thing.
-            _mutableState.currentGrid = _state.primaryGrid;
+            mutableState.currentGrid = _state.primaryGrid;
         }
 
-        _mutableState.intervalTree = [self replacementIntervalTreeForNewWidth:newSize.width];
+        mutableState.intervalTree = [self replacementIntervalTreeForNewWidth:newSize.width
+                                                                mutableState:mutableState];
 
         if (wasShowingAltScreen) {
             // Return to alt grid.
-            _mutableState.currentGrid = _state.altGrid;
+            mutableState.currentGrid = mutableState.altGrid;
         }
     }
 }
@@ -419,7 +424,7 @@
     // selection. Later this will be used to set the selection positions
     // relative to the end of the updated linebuffer (which could change as
     // lines from the base screen are pushed onto it).
-    LineBuffer *lineBufferWithAltScreen = [[_mutableState.linebuffer copy] autorelease];
+    LineBuffer *lineBufferWithAltScreen = [[mutableState.linebuffer copy] autorelease];
     [mutableState appendScreen:mutableState.currentGrid
                   toScrollback:lineBufferWithAltScreen
                 withUsedHeight:usedHeight
@@ -427,11 +432,12 @@
     NSMutableArray *altScreenSubSelectionTuples = [NSMutableArray array];
     for (iTermSubSelection *sub in selection.allSubSelections) {
         VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
-                                              _mutableState.cumulativeScrollbackOverflow,
+                                              mutableState.cumulativeScrollbackOverflow,
                                               ^(VT100GridCoordRange range) {
             LineBufferPositionRange *positionRange =
             [self positionRangeForCoordRange:range
                                 inLineBuffer:lineBufferWithAltScreen
+                                mutableState:mutableState
                                tolerateEmpty:NO];
             if (positionRange) {
                 [altScreenSubSelectionTuples addObject:@[ positionRange, sub ]];
@@ -448,15 +454,15 @@
                                      newHeight:(int)newHeight
                                           grid:(VT100Grid *)grid
                                     lineBuffer:(LineBuffer *)realLineBuffer
-                                  mutableState:(VT100ScreenMutableState *)mutableState{
+                                  mutableState:(VT100ScreenMutableState *)mutableState {
     // Add notes that were on the alt grid to altScreenNotes, leaving notes in history alone.
     VT100GridCoordRange screenCoordRange =
     VT100GridCoordRangeMake(0,
-                            _mutableState.numberOfScrollbackLines,
+                            mutableState.numberOfScrollbackLines,
                             0,
-                            _mutableState.numberOfScrollbackLines + self.height);
+                            mutableState.numberOfScrollbackLines + self.height);
     NSArray *notesAtLeastPartiallyOnScreen =
-    [_mutableState.intervalTree objectsInInterval:[_mutableState intervalForGridCoordRange:screenCoordRange]];
+    [mutableState.intervalTree objectsInInterval:[mutableState intervalForGridCoordRange:screenCoordRange]];
 
     LineBuffer *appendOnlyLineBuffer = [[realLineBuffer copy] autorelease];
     [mutableState appendScreen:grid
@@ -467,11 +473,11 @@
     NSMutableArray *triples = [NSMutableArray array];
 
     for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
-        VT100GridCoordRange range = [_mutableState coordRangeForInterval:note.entry.interval];
+        VT100GridCoordRange range = [mutableState coordRangeForInterval:note.entry.interval];
         [[note retain] autorelease];
-        [_mutableState.intervalTree removeObject:note];
+        [mutableState.intervalTree removeObject:note];
         LineBufferPositionRange *positionRange =
-        [self positionRangeForCoordRange:range inLineBuffer:appendOnlyLineBuffer tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]];
+        [self positionRangeForCoordRange:range inLineBuffer:appendOnlyLineBuffer mutableState:mutableState tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]];
         if (positionRange) {
             DLog(@"Add note on alt screen at %@ (position %@ to %@) to triples",
                  VT100GridCoordRangeDescription(range),
@@ -487,9 +493,10 @@
 }
 
 - (NSArray *)subSelectionsWithConvertedRangesFromSelection:(iTermSelection *)selection
+                                              mutableState:(VT100ScreenMutableState *)mutableState
                                                   newWidth:(int)newWidth {
     NSMutableArray *newSubSelections = [NSMutableArray array];
-    const long long overflow = _mutableState.cumulativeScrollbackOverflow;
+    const long long overflow = mutableState.cumulativeScrollbackOverflow;
     for (iTermSubSelection *sub in selection.allSubSelections) {
         DLog(@"convert sub %@", sub);
         VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
@@ -499,14 +506,15 @@
             const BOOL ok = [self convertRange:range
                                        toWidth:newWidth
                                             to:&newSelection
-                                  inLineBuffer:_mutableState.linebuffer
+                                  inLineBuffer:mutableState.linebuffer
+                                  mutableState:mutableState
                                  tolerateEmpty:NO];
             if (ok) {
                 assert(range.start.y >= 0);
                 assert(range.end.y >= 0);
                 const VT100GridWindowedRange relativeRange = VT100GridWindowedRangeMake(newSelection, 0, 0);
                 const VT100GridAbsWindowedRange absRange =
-                    VT100GridAbsWindowedRangeFromWindowedRange(relativeRange, overflow);
+                VT100GridAbsWindowedRangeFromWindowedRange(relativeRange, overflow);
                 iTermSubSelection *theSub =
                 [iTermSubSelection subSelectionWithAbsRange:absRange
                                                        mode:sub.selectionMode
@@ -519,28 +527,30 @@
     return newSubSelections;
 }
 
-- (IntervalTree *)replacementIntervalTreeForNewWidth:(int)newWidth {
+- (IntervalTree *)replacementIntervalTreeForNewWidth:(int)newWidth
+                                        mutableState:(VT100ScreenMutableState *)mutableState {
     // Convert ranges of notes to their new coordinates and replace the interval tree.
     IntervalTree *replacementTree = [[[IntervalTree alloc] init] autorelease];
-    for (id<IntervalTreeObject> note in [_mutableState.intervalTree allObjects]) {
-        VT100GridCoordRange noteRange = [_mutableState coordRangeForInterval:note.entry.interval];
+    for (id<IntervalTreeObject> note in [mutableState.intervalTree allObjects]) {
+        VT100GridCoordRange noteRange = [mutableState coordRangeForInterval:note.entry.interval];
         VT100GridCoordRange newRange;
         if (noteRange.end.x < 0 && noteRange.start.y == 0 && noteRange.end.y < 0) {
             // note has scrolled off top
-            [_mutableState.intervalTree removeObject:note];
+            [mutableState.intervalTree removeObject:note];
         } else {
             if ([self convertRange:noteRange
                            toWidth:newWidth
                                 to:&newRange
-                      inLineBuffer:_mutableState.linebuffer
+                      inLineBuffer:mutableState.linebuffer
+                      mutableState:mutableState
                      tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
                 assert(noteRange.start.y >= 0);
                 assert(noteRange.end.y >= 0);
-                Interval *newInterval = [_mutableState intervalForGridCoordRange:newRange
-                                                                           width:newWidth
-                                                                     linesOffset:_mutableState.cumulativeScrollbackOverflow];
+                Interval *newInterval = [mutableState intervalForGridCoordRange:newRange
+                                                                          width:newWidth
+                                                                    linesOffset:mutableState.cumulativeScrollbackOverflow];
                 [[note retain] autorelease];
-                [_mutableState.intervalTree removeObject:note];
+                [mutableState.intervalTree removeObject:note];
                 [replacementTree addObject:note withInterval:newInterval];
             }
         }
@@ -578,11 +588,11 @@
                                          linesMovedUp:linesMovedUp];
         if (ok) {
             const VT100GridAbsWindowedRange theRange =
-            VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeFromCoordRange(newSelection, _mutableState.cumulativeScrollbackOverflow),
+            VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeFromCoordRange(newSelection, mutableState.cumulativeScrollbackOverflow),
                                           0, 0);
             iTermSubSelection *theSub = [iTermSubSelection subSelectionWithAbsRange:theRange
                                                                                mode:originalSub.selectionMode
-                                                                              width:_mutableState.width];
+                                                                              width:mutableState.width];
             theSub.connected = originalSub.connected;
             [newSubSelections addObject:theSub];
         }
@@ -642,6 +652,7 @@ static void SwapInt(int *a, int *b) {
 
 - (BOOL)trimSelectionFromStart:(VT100GridCoord)start
                            end:(VT100GridCoord)end
+                  mutableState:(VT100ScreenMutableState *)mutableState
                       toStartX:(VT100GridCoord *)startPtr
                         toEndX:(VT100GridCoord *)endPtr {
     if (start.x < 0 || end.x < 0 ||
@@ -679,7 +690,7 @@ static void SwapInt(int *a, int *b) {
              VT100GridCoordDescription(end));
         return NO;
     }
-    run = [self runByTrimmingNullsFromRun:run];
+    run = [mutableState runByTrimmingNullsFromRun:run];
     if (run.length == 0) {
         DLog(@"After trimming, run has length 0 given start and end of %@ and %@", VT100GridCoordDescription(start),
              VT100GridCoordDescription(end));
@@ -694,6 +705,7 @@ static void SwapInt(int *a, int *b) {
 
 - (LineBufferPositionRange *)positionRangeForCoordRange:(VT100GridCoordRange)range
                                            inLineBuffer:(LineBuffer *)lineBuffer
+                                           mutableState:(VT100ScreenMutableState *)mutableState
                                           tolerateEmpty:(BOOL)tolerateEmpty {
     assert(range.end.y >= 0);
     assert(range.start.y >= 0);
@@ -702,7 +714,7 @@ static void SwapInt(int *a, int *b) {
 
     BOOL endExtends = NO;
     // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
-    if (range.end.x == _mutableState.width) {
+    if (range.end.x == mutableState.width) {
         const screen_char_t *line = [self getLineAtIndex:range.end.y];
         if (line[range.end.x - 1].code == 0 && line[range.end.x].code == EOL_HARD) {
             // The selection goes all the way to the end of the line and there is a null at the
@@ -715,7 +727,7 @@ static void SwapInt(int *a, int *b) {
     range.end.x--;
     if (range.end.x < 0) {
         range.end.y--;
-        range.end.x = _mutableState.width - 1;
+        range.end.x = mutableState.width - 1;
         if (range.end.y < 0) {
             return nil;
         }
@@ -730,6 +742,7 @@ static void SwapInt(int *a, int *b) {
     VT100GridCoord trimmedEnd;
     BOOL ok = [self trimSelectionFromStart:VT100GridCoordMake(range.start.x, range.start.y)
                                        end:VT100GridCoordMake(range.end.x, range.end.y)
+                              mutableState:mutableState
                                   toStartX:&trimmedStart
                                     toEndX:&trimmedEnd];
     if (!ok) {
@@ -766,6 +779,7 @@ static void SwapInt(int *a, int *b) {
              toWidth:(int)newWidth
                   to:(VT100GridCoordRange *)resultPtr
         inLineBuffer:(LineBuffer *)lineBuffer
+        mutableState:(VT100ScreenMutableState *)mutableState
        tolerateEmpty:(BOOL)tolerateEmpty {
     if (range.start.y < 0 || range.end.y < 0) {
         return NO;
@@ -773,11 +787,11 @@ static void SwapInt(int *a, int *b) {
     LineBufferPositionRange *selectionRange;
 
     // Temporarily swap in the passed-in linebuffer so the call below can access lines in the right line buffer.
-    LineBuffer *savedLineBuffer = _mutableState.linebuffer;
-    _mutableState.linebuffer = lineBuffer;
-    selectionRange = [self positionRangeForCoordRange:range inLineBuffer:lineBuffer tolerateEmpty:tolerateEmpty];
+    LineBuffer *savedLineBuffer = mutableState.linebuffer;
+    mutableState.linebuffer = lineBuffer;
+    selectionRange = [self positionRangeForCoordRange:range inLineBuffer:lineBuffer mutableState:mutableState tolerateEmpty:tolerateEmpty];
     DLog(@"%@ -> %@", VT100GridCoordRangeDescription(range), selectionRange);
-    _mutableState.linebuffer = savedLineBuffer;
+    mutableState.linebuffer = savedLineBuffer;
     if (!selectionRange) {
         // One case where this happens is when the start and end of the range are past the last
         // character in the line buffer (e.g., all nulls). It could occur when a note exists on a
@@ -848,19 +862,19 @@ static void SwapInt(int *a, int *b) {
     LineBufferPosition *predecessorOfLimit = [limit predecessor];
     if (growth > 0) {
         /*
-            +--------------------+
-            |                    |
-            |  Original History  |
-            |                    |
-            +....................+ <------- originalLimit
-            | Lines pushed from  | ^
-            | primary into       | |- growth = number of lines in this section
-            | history            | V
-            +--------------------+ <------- limit
-            |                    |
-            | Alt screen         |
-            |                    |
-            +--------------------+
+         +--------------------+
+         |                    |
+         |  Original History  |
+         |                    |
+         +....................+ <------- originalLimit
+         | Lines pushed from  | ^
+         | primary into       | |- growth = number of lines in this section
+         | history            | V
+         +--------------------+ <------- limit
+         |                    |
+         | Alt screen         |
+         |                    |
+         +--------------------+
          */
         if (startPos.absolutePosition >= originalLimit.absolutePosition) {
             // Start position was on alt screen originally. Move it down by the number of lines
@@ -874,18 +888,18 @@ static void SwapInt(int *a, int *b) {
         }
     } else if (growth < 0) {
         /*
-                                   +--------------------+
-                                   |                    |
-                                   | Original history   |
-                                   |                    |
-            +--------------------+ +....................+ <------- limit
-            | Current alt screen | | Lines pulled back  | ^
-            |                    | | into primary from  | |- growth = -(number of lines in this section)
-            +--------------------+ | history            | V
-                                   +--------------------+ <------- originalLimit
-                                   | Original           |
-                                   | Alt screen         |
-                                   +--------------------+
+         +--------------------+
+         |                    |
+         | Original history   |
+         |                    |
+         +--------------------+ +....................+ <------- limit
+         | Current alt screen | | Lines pulled back  | ^
+         |                    | | into primary from  | |- growth = -(number of lines in this section)
+         +--------------------+ | history            | V
+         +--------------------+ <------- originalLimit
+         | Original           |
+         | Alt screen         |
+         +--------------------+
          */
         if (startPos.absolutePosition >= limit.absolutePosition &&
             startPos.absolutePosition < originalLimit.absolutePosition) {
