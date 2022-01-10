@@ -7,12 +7,16 @@
 
 #import "VT100Screen.h"
 
+@class iTermSelection;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface VT100Screen (Resizing)
 
 - (void)mutSetSize:(VT100GridSize)proposedSize
-      visibleLines:(VT100GridRange)previouslyVisibleLineRange;
+      visibleLines:(VT100GridRange)previouslyVisibleLineRange
+         selection:(iTermSelection *)selection
+           hasView:(BOOL)hasView;
 - (void)mutSetWidth:(int)width preserveScreen:(BOOL)preserveScreen;
 
 @end

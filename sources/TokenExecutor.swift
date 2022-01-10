@@ -11,6 +11,8 @@ protocol UnpauserDelegate: AnyObject {
     func unpause()
 }
 
+typealias TokenExecutorTask = () -> ()
+
 // Delegate calls are run on the execution queue.
 @objc(iTermTokenExecutorDelegate)
 protocol TokenExecutorDelegate: AnyObject {
@@ -243,6 +245,36 @@ class TokenExecutor: NSObject {
     func schedule() {
         impl.schedule()
     }
+
+    // Note that the task may be run either synchronously or asynchronously.
+    // High priority tasks run as soon as possible. If a token is currently
+    // executing, it runs after that token's execution completes. Token
+    // execution is guaranteed to not block and should not take "very long".
+    @objc
+    func scheduleHighPriorityTask(_ task: @escaping TokenExecutorTask) {
+        self.impl.scheduleHighPriorityTask(task, syncAllowed: onExecutorQueue)
+    }
+}
+
+private class TaskQueue {
+    private var tasks = [TokenExecutorTask]()
+    private let mutex = Mutex()
+
+    func append(_ task: @escaping TokenExecutorTask) {
+        mutex.sync {
+            tasks.append(task)
+        }
+    }
+
+    func dequeue() -> TokenExecutorTask? {
+        mutex.sync {
+            guard let value = tasks.first else {
+                return nil
+            }
+            tasks.removeFirst()
+            return value
+        }
+    }
 }
 
 private class TokenExecutorImpl {
@@ -250,8 +282,10 @@ private class TokenExecutorImpl {
     private let queue: DispatchQueue
     private let slownessDetector: iTermSlownessDetector
     private let semaphore: DispatchSemaphore
+    private var taskQueue = TaskQueue()
     private let tokenQueue = TwoTierTokenQueue()
     private var pauseCount = 0
+    private var executingCount = 0
 
     weak var delegate: TokenExecutorDelegate?
 
@@ -295,18 +329,37 @@ private class TokenExecutorImpl {
         }
     }
 
+    // Any queue
+    func scheduleHighPriorityTask(_ task: @escaping TokenExecutorTask, syncAllowed: Bool) {
+        taskQueue.append(task)
+        if syncAllowed {
+            assertQueue()
+            if executingCount == 0 {
+                execute()
+                return
+            }
+        }
+        schedule()
+    }
+
     private func assertQueue() {
         dispatchPrecondition(condition: .onQueue(queue))
     }
 
     private func execute() {
         assertQueue()
+        executingCount += 1
+        defer {
+            executingCount -= 1
+            executeHighPriorityTasks()
+        }
         guard let delegate = delegate else {
             return
         }
         defer {
             delegate.tokenExecutorDidHandleInput()
         }
+        executeHighPriorityTasks()
         if delegate.tokenExecutorShouldQueueTokens() {
             #warning("TODO: Apply backpressure when queueing to avoid building up a huge queue (e.g., in copy mode while running yes)")
             return
@@ -329,7 +382,11 @@ private class TokenExecutorImpl {
                                priority: Int,
                                accumulatedLength: inout Int,
                                delegate: TokenExecutorDelegate) -> Bool {
+        defer {
+            executeHighPriorityTasks()
+        }
         while !isPaused, let token = vector.next() {
+            executeHighPriorityTasks()
             if execute(token: token,
                        from: vector,
                        priority: priority,
@@ -363,6 +420,12 @@ private class TokenExecutorImpl {
 
         // Return true if we need to switch to a high priority queue.
         return (priority > 0) && tokenQueue.hasHighPriorityToken
+    }
+
+    private func executeHighPriorityTasks() {
+        while let task = taskQueue.dequeue() {
+            task()
+        }
     }
 }
 

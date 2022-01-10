@@ -20,13 +20,24 @@
 @implementation VT100Screen (Resizing)
 
 - (void)mutSetSize:(VT100GridSize)proposedSize
-      visibleLines:(VT100GridRange)previouslyVisibleLineRange {
+      visibleLines:(VT100GridRange)previouslyVisibleLineRange
+         selection:(iTermSelection *)selection
+           hasView:(BOOL)hasView {
+    assert([NSThread isMainThread]);
+
     const VT100GridSize newSize = [_mutableState safeSizeForSize:proposedSize];
     if (![_mutableState shouldSetSizeTo:newSize]) {
         return;
     }
     [self.mutableLineBuffer beginResizing];
-    [self reallySetSize:newSize visibleLines:previouslyVisibleLineRange];
+    [_mutableState performBlockWithJoinedThreads:^(VT100Terminal * _Nonnull terminal,
+                                                   id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [self reallySetSize:newSize
+               visibleLines:previouslyVisibleLineRange
+                  selection:selection
+                   delegate:delegate
+                    hasView:hasView];
+    }];
     [self.mutableLineBuffer endResizing];
 
     if (gDebugLogging) {
@@ -42,7 +53,12 @@
 }
 
 - (void)reallySetSize:(VT100GridSize)newSize
-         visibleLines:(VT100GridRange)previouslyVisibleLineRange {
+         visibleLines:(VT100GridRange)previouslyVisibleLineRange
+            selection:(iTermSelection *)selection
+             delegate:(id<VT100ScreenDelegate>)delegate
+              hasView:(BOOL)hasView {
+    assert([NSThread isMainThread]);
+
     DLog(@"------------ reallySetSize");
     DLog(@"Set size to %@", VT100GridSizeDescription(newSize));
 
@@ -55,10 +71,9 @@
     [_mutableState sanityCheckIntervalsFrom:_state.currentGrid.size note:@"pre-hoc"];
     [self.mutableTemporaryDoubleBuffer resetExplicitly];
     const VT100GridSize oldSize = _state.currentGrid.size;
-    iTermSelection *selection = [delegate_ screenSelection];
     [self willSetSizeWithSelection:selection];
 
-    const BOOL couldHaveSelection = [delegate_ screenHasView] && selection.hasSelection;
+    const BOOL couldHaveSelection = hasView && selection.hasSelection;
     const int usedHeight = [_state.currentGrid numberOfLinesUsed];
 
     VT100Grid *copyOfAltGrid = [[self.mutableAltGrid copy] autorelease];

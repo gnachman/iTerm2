@@ -867,7 +867,10 @@
             // that annotation is dependent on the screen size and how text laid
             // out (maybe there are no nulls after reflow!).
             VT100GridSize savedSize = [VT100Grid sizeInStateDictionary:screenState[kScreenStatePrimaryGridStateKey]];
-            [self mutSetSize:savedSize visibleLines:[self.delegate screenRangeOfVisibleLines]];
+            [self mutSetSize:savedSize
+                visibleLines:[self.delegate screenRangeOfVisibleLines]
+                   selection:[self.delegate screenSelection]
+                     hasView:[self.delegate screenHasView]];
         }
         _mutableState.intervalTree = [[[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]] autorelease];
         [self fixUpDeserializedIntervalTree:_mutableState.intervalTree

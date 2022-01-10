@@ -28,7 +28,9 @@
 #import "iTermURLStore.h"
 
 
-@implementation VT100ScreenMutableState
+@implementation VT100ScreenMutableState {
+    BOOL _performingJoinedBlock;
+}
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
     self = [super initForMutation];
@@ -1972,6 +1974,36 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)updateExpectFrom:(iTermExpect *)source {
     _triggerEvaluator.expect = [source copy];
+}
+
+- (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
+                                                id<VT100ScreenDelegate> delegate))block {
+    DLog(@"%@", [NSThread callStackSymbols]);
+    assert([NSThread isMainThread]);
+
+    id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    static BOOL running = NO;
+
+    if (_performingJoinedBlock) {
+        // Reentrant call. Avoid deadlock by running it immediately.
+        assert(!running);  // Die if a different VT100Screen is also in performBlockWithJoinedThreads. This is not allowed because it causes a deadlock.
+
+        block(self.terminal, delegate);
+        return;
+    }
+
+    // Wait for the mutation thread to finish its current tasks+tokens, then run the block.
+    running = YES;
+    _performingJoinedBlock = YES;
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    [_tokenExecutor scheduleHighPriorityTask:^{
+        block(self.terminal, delegate);
+        dispatch_group_leave(group);
+    }];
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    _performingJoinedBlock = NO;
+    running = NO;
 }
 
 #pragma mark - iTermMarkDelegate
