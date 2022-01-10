@@ -57,6 +57,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)fixUpPrimaryGridIntervalTreeForNewSize:(VT100GridSize)newSize
                            wasShowingAltScreen:(BOOL)wasShowingAltScreen;
 
+- (void)restorePrimaryGridWithLineBuffer:(LineBuffer *)realLineBuffer
+                                 oldSize:(VT100GridSize)oldSize
+                                 newSize:(VT100GridSize)newSize;
+
 @end
 
 NS_ASSUME_NONNULL_END
