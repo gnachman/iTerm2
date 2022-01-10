@@ -1608,12 +1608,6 @@
     }];
 }
 
-- (void)mutSetTabStopAtCursor {
-    if (_state.currentGrid.cursorX < _state.currentGrid.size.width) {
-        [_mutableState.tabStops addObject:[NSNumber numberWithInt:_state.currentGrid.cursorX]];
-    }
-}
-
 - (void)mutRemoveAllTabStops {
     [_mutableState.tabStops removeAllObjects];
 }
@@ -2343,7 +2337,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetTabStopAtCursor {
-    [self mutSetTabStopAtCursor];
+    [_mutableState terminalSetTabStopAtCursor];
 }
 
 - (void)terminalCarriageReturn {
