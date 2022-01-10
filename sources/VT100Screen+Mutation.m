@@ -2226,7 +2226,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetCursorType:(ITermCursorType)cursorType {
-    [delegate_ screenSetCursorType:cursorType];
+    [_mutableState terminalSetCursorType:cursorType];
 }
 
 - (void)terminalSetCursorBlinking:(BOOL)blinking {
