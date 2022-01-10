@@ -313,11 +313,10 @@
                      newHeight:newSize.height];
 
     if ([mutableState.intervalTree count]) {
-        *altScreenNotesPtr = [self intervalTreeObjectsWithUsedHeight:usedHeight
-                                                           newHeight:newSize.height
-                                                                grid:_state.altGrid
-                                                          lineBuffer:realLineBuffer
-                                                        mutableState:mutableState];
+        *altScreenNotesPtr = [mutableState intervalTreeObjectsWithUsedHeight:usedHeight
+                                                                   newHeight:newSize.height
+                                                                        grid:_state.altGrid
+                                                                  lineBuffer:realLineBuffer];
     }
 
     mutableState.currentGrid = _state.primaryGrid;
@@ -402,50 +401,6 @@
 
     [self mutReloadMarkCache];
     [delegate_ screenSizeDidChangeWithNewTopLineAt:newTop];
-}
-
-- (NSArray *)intervalTreeObjectsWithUsedHeight:(int)usedHeight
-                                     newHeight:(int)newHeight
-                                          grid:(VT100Grid *)grid
-                                    lineBuffer:(LineBuffer *)realLineBuffer
-                                  mutableState:(VT100ScreenMutableState *)mutableState {
-    // Add notes that were on the alt grid to altScreenNotes, leaving notes in history alone.
-    VT100GridCoordRange screenCoordRange =
-    VT100GridCoordRangeMake(0,
-                            mutableState.numberOfScrollbackLines,
-                            0,
-                            mutableState.numberOfScrollbackLines + self.height);
-    NSArray *notesAtLeastPartiallyOnScreen =
-    [mutableState.intervalTree objectsInInterval:[mutableState intervalForGridCoordRange:screenCoordRange]];
-
-    LineBuffer *appendOnlyLineBuffer = [[realLineBuffer copy] autorelease];
-    [mutableState appendScreen:grid
-                  toScrollback:appendOnlyLineBuffer
-                withUsedHeight:usedHeight
-                     newHeight:newHeight];
-
-    NSMutableArray *triples = [NSMutableArray array];
-
-    for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
-        VT100GridCoordRange range = [mutableState coordRangeForInterval:note.entry.interval];
-        [[note retain] autorelease];
-        [mutableState.intervalTree removeObject:note];
-        LineBufferPositionRange *positionRange =
-        [mutableState positionRangeForCoordRange:range
-                                    inLineBuffer:appendOnlyLineBuffer
-                                   tolerateEmpty:[mutableState intervalTreeObjectMayBeEmpty:note]];
-        if (positionRange) {
-            DLog(@"Add note on alt screen at %@ (position %@ to %@) to triples",
-                 VT100GridCoordRangeDescription(range),
-                 positionRange.start,
-                 positionRange.end);
-            [triples addObject:@[ note, positionRange.start, positionRange.end ]];
-        } else {
-            DLog(@"Failed to get position range while in alt screen for note %@ with range %@",
-                 note, VT100GridCoordRangeDescription(range));
-        }
-    }
-    return triples;
 }
 
 - (NSArray *)subSelectionsWithConvertedRangesFromSelection:(iTermSelection *)selection

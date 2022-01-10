@@ -35,6 +35,10 @@ NS_ASSUME_NONNULL_BEGIN
                                     newHeight:(int)newHeight
                                     selection:(iTermSelection *)selection;
 - (BOOL)intervalTreeObjectMayBeEmpty:(id<IntervalTreeObject>)note;
+- (NSArray *)intervalTreeObjectsWithUsedHeight:(int)usedHeight
+                                     newHeight:(int)newHeight
+                                          grid:(VT100Grid *)grid
+                                    lineBuffer:(LineBuffer *)realLineBuffer;
 
 @end
 
