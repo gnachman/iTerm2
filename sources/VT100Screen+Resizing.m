@@ -19,13 +19,14 @@
 
 @implementation VT100Screen (Resizing)
 
-- (void)mutSetSize:(VT100GridSize)proposedSize {
+- (void)mutSetSize:(VT100GridSize)proposedSize
+      visibleLines:(VT100GridRange)previouslyVisibleLineRange {
     const VT100GridSize newSize = [_mutableState safeSizeForSize:proposedSize];
     if (![_mutableState shouldSetSizeTo:newSize]) {
         return;
     }
     [self.mutableLineBuffer beginResizing];
-    [self reallySetSize:newSize];
+    [self reallySetSize:newSize visibleLines:previouslyVisibleLineRange];
     [self.mutableLineBuffer endResizing];
 
     if (gDebugLogging) {
@@ -40,11 +41,11 @@
     }
 }
 
-- (void)reallySetSize:(VT100GridSize)newSize {
+- (void)reallySetSize:(VT100GridSize)newSize
+         visibleLines:(VT100GridRange)previouslyVisibleLineRange {
     DLog(@"------------ reallySetSize");
     DLog(@"Set size to %@", VT100GridSizeDescription(newSize));
 
-    const VT100GridRange previouslyVisibleLineRange = [self.delegate screenRangeOfVisibleLines];
     const VT100GridCoordRange previouslyVisibleLines =
         VT100GridCoordRangeMake(0,
                                 previouslyVisibleLineRange.location,
