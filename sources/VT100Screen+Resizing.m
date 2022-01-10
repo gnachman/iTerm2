@@ -311,10 +311,9 @@
                                              newSize:(VT100GridSize)newSize
                                         mutableState:(VT100ScreenMutableState *)mutableState {
     if (couldHaveSelection) {
-        *altScreenSubSelectionTuplesPtr = [self subSelectionTuplesWithUsedHeight:usedHeight
-                                                                       newHeight:newSize.height
-                                                                       selection:selection
-                                                                    mutableState:mutableState];
+        *altScreenSubSelectionTuplesPtr = [mutableState subSelectionTuplesWithUsedHeight:usedHeight
+                                                                               newHeight:newSize.height
+                                                                               selection:selection];
     }
 
     LineBuffer *altScreenLineBuffer = [[[LineBuffer alloc] init] autorelease];
@@ -414,39 +413,6 @@
 
     [self mutReloadMarkCache];
     [delegate_ screenSizeDidChangeWithNewTopLineAt:newTop];
-}
-
-- (NSArray *)subSelectionTuplesWithUsedHeight:(int)usedHeight
-                                    newHeight:(int)newHeight
-                                    selection:(iTermSelection *)selection
-                                 mutableState:(VT100ScreenMutableState *)mutableState {
-    // In alternate screen mode, get the original positions of the
-    // selection. Later this will be used to set the selection positions
-    // relative to the end of the updated linebuffer (which could change as
-    // lines from the base screen are pushed onto it).
-    LineBuffer *lineBufferWithAltScreen = [[mutableState.linebuffer copy] autorelease];
-    [mutableState appendScreen:mutableState.currentGrid
-                  toScrollback:lineBufferWithAltScreen
-                withUsedHeight:usedHeight
-                     newHeight:newHeight];
-    NSMutableArray *altScreenSubSelectionTuples = [NSMutableArray array];
-    for (iTermSubSelection *sub in selection.allSubSelections) {
-        VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
-                                              mutableState.cumulativeScrollbackOverflow,
-                                              ^(VT100GridCoordRange range) {
-            LineBufferPositionRange *positionRange =
-            [mutableState positionRangeForCoordRange:range
-                                        inLineBuffer:lineBufferWithAltScreen
-                                       tolerateEmpty:NO];
-            if (positionRange) {
-                [altScreenSubSelectionTuples addObject:@[ positionRange, sub ]];
-            } else {
-                DLog(@"Failed to get position range for selection on alt screen %@",
-                     VT100GridCoordRangeDescription(range));
-            }
-        });
-    }
-    return altScreenSubSelectionTuples;
 }
 
 - (NSArray *)intervalTreeObjectsWithUsedHeight:(int)usedHeight
