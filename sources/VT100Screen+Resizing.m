@@ -52,7 +52,7 @@
                                 0,
                                 previouslyVisibleLineRange.location + 1);
 
-    [self sanityCheckIntervalsFrom:_state.currentGrid.size note:@"pre-hoc"];
+    [_mutableState sanityCheckIntervalsFrom:_state.currentGrid.size note:@"pre-hoc"];
     [self.mutableTemporaryDoubleBuffer resetExplicitly];
     const VT100GridSize oldSize = _state.currentGrid.size;
     iTermSelection *selection = [delegate_ screenSelection];
@@ -158,7 +158,7 @@
             subSelections:newSubSelections
                    newTop:newTop];
     [altScreenLineBuffer endResizing];
-    [self sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];
+    [_mutableState sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];
     DLog(@"After:\n%@", [_state.currentGrid compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", _state.currentGrid.cursorX, _state.currentGrid.cursorY);
 }
@@ -326,18 +326,6 @@
             _mutableState.currentGrid = _state.altGrid;
         }
     }
-}
-
-- (void)sanityCheckIntervalsFrom:(VT100GridSize)oldSize note:(NSString *)note {
-#if BETA
-    for (id<IntervalTreeObject> obj in [_mutableState.intervalTree allObjects]) {
-        IntervalTreeEntry *entry = obj.entry;
-        Interval *interval = entry.interval;
-        ITBetaAssert(interval.limit >= 0, @"Bogus interval %@ after resizing from %@ to %@. Note: %@",
-                     interval, VT100GridSizeDescription(oldSize), VT100GridSizeDescription(_state.currentGrid.size),
-                     note);
-    }
-#endif
 }
 
 - (void)mutSetWidth:(int)width preserveScreen:(BOOL)preserveScreen {

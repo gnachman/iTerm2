@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (VT100GridSize)safeSizeForSize:(VT100GridSize)proposedSize;
 - (BOOL)shouldSetSizeTo:(VT100GridSize)size;
+- (void)sanityCheckIntervalsFrom:(VT100GridSize)oldSize note:(NSString *)note;
 
 @end
 
