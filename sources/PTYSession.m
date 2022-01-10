@@ -3574,13 +3574,17 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)loadInitialColorTableAndResetCursorGuide {
     [_screen loadInitialColorTable];
-    _textview.highlightCursorLine = [iTermProfilePreferences boolForColorKey:KEY_USE_CURSOR_GUIDE
-                                                                        dark:[NSApp effectiveAppearance].it_isDark
-                                                                     profile:_profile];
+    [self resetCursorGuide];
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf markProfileInitialized];
     });
+}
+
+- (void)resetCursorGuide {
+    _textview.highlightCursorLine = [iTermProfilePreferences boolForColorKey:KEY_USE_CURSOR_GUIDE
+                                                                        dark:[NSApp effectiveAppearance].it_isDark
+                                                                     profile:_profile];
 }
 
 - (void)markProfileInitialized {
@@ -10449,12 +10453,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_textview setBadgeLabel:[self badgeLabel]];
 }
 
-- (void)screenDidResetAllowingContentModification:(BOOL)modifyContent {
-    if (!modifyContent) {
-        [_screen loadInitialColorTable];
-        return;
-    }
-    [self loadInitialColorTableAndResetCursorGuide];
+- (void)screenDidReset {
     _cursorGuideSettingHasChanged = NO;
     _textview.highlightCursorLine = [iTermProfilePreferences boolForColorKey:KEY_USE_CURSOR_GUIDE
                                                                         dark:_screen.colorMap.darkMode
@@ -10793,7 +10792,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenSetCursorVisible:(BOOL)visible {
-    _textview.cursorVisible = visible;
+    [_textview setCursorVisibleWithoutSideEffects:visible];
 }
 
 - (void)screenCursorDidMoveToLine:(int)line {

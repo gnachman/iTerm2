@@ -65,14 +65,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetLineDirtyAtY:(int)y;
 - (void)mutSetCharDirtyAtCursorX:(int)x Y:(int)y;
 - (void)mutResetDirty;
-- (void)mutSetInitialTabStops;
 - (void)mutHighlightRun:(VT100GridRun)run
     withForegroundColor:(NSColor *)fgColor
         backgroundColor:(NSColor *)bgColor;
 - (BOOL)mutContinueFindResultsInContext:(FindContext *)context
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
-- (void)mutResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent;
 - (void)mutSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight;
 - (void)mutBackTab:(int)n;
 - (void)mutAdvanceCursorPastLastColumn;
@@ -117,9 +115,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetUnlimitedScrollback:(BOOL)newValue;
 - (void)mutResetScrollbackOverflow;
 - (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord;
-- (void)mutSetCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord;
 - (void)mutInvalidateCommandStartCoord;
-- (void)mutInvalidateCommandStartCoordWithoutSideEffects;
 - (id<iTermMark> _Nullable)mutAddMarkStartingAtAbsoluteLine:(long long)line
                                                     oneLine:(BOOL)oneLine
                                                     ofClass:(Class)markClass;
@@ -128,7 +124,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutRemoveAllTabStops;
 - (void)mutRemoveTabStopAtCursor;
 - (void)mutSetTabStops:(NSArray<NSNumber *> *)tabStops;
-- (void)mutSetCharacterSet:(int)charset usesLineDrawingMode:(BOOL)lineDrawingMode;
 - (void)mutSetSaveToScrollbackInAlternateScreen:(BOOL)value;
 - (void)mutSetCursorVisible:(BOOL)visible;
 - (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord;
@@ -186,6 +181,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)mutPerformPeriodicTriggerCheck;
 - (void)mutForceCheckTriggers;
 - (void)mutSetExited:(BOOL)exited;
+- (void)mutLoadInitialColorTable;
 
 @end
 

@@ -361,6 +361,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 
 // Is the cursor visible? Defaults to YES.
 @property(nonatomic, assign) BOOL cursorVisible;
+- (void)setCursorVisibleWithoutSideEffects:(BOOL)visible;
 
 // Indicates if a find is in progress.
 @property(nonatomic, readonly) BOOL findInProgress;

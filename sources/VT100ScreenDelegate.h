@@ -62,7 +62,7 @@
 - (void)screenSizeDidChangeWithNewTopLineAt:(int)newTop;
 
 // Called when the screen and terminal's attributes are reset
-- (void)screenDidResetAllowingContentModification:(BOOL)modifyContent;
+- (void)screenDidReset;
 
 // Terminal can change title
 - (BOOL)screenAllowTitleSetting;

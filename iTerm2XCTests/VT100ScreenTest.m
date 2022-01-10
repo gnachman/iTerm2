@@ -637,7 +637,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
                                  isPlainText:YES];
 }
 
-- (void)screenDidResetAllowingContentModification:(BOOL)modifyContent {
+- (void)screenDidReset {
 }
 
 - (void)screenPrintString:(NSString *)s {

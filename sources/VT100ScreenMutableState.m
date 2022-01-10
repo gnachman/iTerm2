@@ -56,7 +56,7 @@ iTermTriggerScopeProvider>
         _triggerEvaluator = [[PTYTriggerEvaluator alloc] init];
         _triggerEvaluator.delegate = self;
         _triggerEvaluator.dataSource = self;
-
+        [self setInitialTabStops];
     }
     return self;
 }
@@ -728,6 +728,92 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (int)numberOfLinesToPreserveWhenClearingScreen {
+    if (VT100GridAbsCoordEquals(self.currentPromptRange.start, self.currentPromptRange.end)) {
+        // Prompt range not defined.
+        return 1;
+    }
+    if (self.commandStartCoord.x < 0) {
+        // Prompt apparently hasn't ended.
+        return 1;
+    }
+    VT100ScreenMark *lastCommandMark = [self lastPromptMark];
+    if (!lastCommandMark) {
+        // Never had a mark.
+        return 1;
+    }
+
+    VT100GridCoordRange lastCommandMarkRange = [self coordRangeForInterval:lastCommandMark.entry.interval];
+    int cursorLine = self.cursorY - 1 + self.numberOfScrollbackLines;
+    int cursorMarkOffset = cursorLine - lastCommandMarkRange.start.y;
+    return 1 + cursorMarkOffset;
+}
+
+- (void)resetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
+    if (modifyContent) {
+        const int linesToSave = [self numberOfLinesToPreserveWhenClearingScreen];
+        [self clearTriggerLine];
+        if (preservePrompt) {
+            [self clearAndResetScreenSavingLines:linesToSave];
+        } else {
+            [self incrementOverflowBy:[self.currentGrid resetWithLineBuffer:self.linebuffer
+                                                        unlimitedScrollback:self.unlimitedScrollback
+                                                         preserveCursorLine:NO
+                                                      additionalLinesToSave:0]];
+        }
+    }
+
+    [self setInitialTabStops];
+
+    for (int i = 0; i < NUM_CHARSETS; i++) {
+        [self setCharacterSet:i usesLineDrawingMode:NO];
+    }
+
+    [self loadInitialColorTable];
+    if (modifyContent) {
+        // Pause because the delegate will change colors and they could be queried for.
+        iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenDidReset];
+            [unpauser unpause];
+        }];
+    }
+    [self invalidateCommandStartCoordWithoutSideEffects];
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetCursorVisible:YES];
+        [unpauser unpause];
+    }];
+    [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
+}
+
+// This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
+// coordinate. Scroll regions and the saved cursor position are reset.
+- (void)clearAndResetScreenSavingLines:(int)linesToSave {
+    [self clearTriggerLine];
+    // This clears the screen.
+    int x = self.currentGrid.cursorX;
+    [self incrementOverflowBy:[self.currentGrid resetWithLineBuffer:self.linebuffer
+                                                unlimitedScrollback:self.unlimitedScrollback
+                                                 preserveCursorLine:linesToSave > 0
+                                              additionalLinesToSave:MAX(0, linesToSave - 1)]];
+    self.currentGrid.cursorX = x;
+    self.currentGrid.cursorY = linesToSave - 1;
+    [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
+                                                                   self.numberOfScrollbackLines,
+                                                                   self.width,
+                                                                   self.numberOfScrollbackLines + self.height)];
+}
+
+#pragma mark - Character Sets
+
+- (void)setCharacterSet:(int)charset usesLineDrawingMode:(BOOL)lineDrawingMode {
+    if (lineDrawingMode) {
+        [self.charsetUsesLineDrawingMode addObject:@(charset)];
+    } else {
+        [self.charsetUsesLineDrawingMode removeObject:@(charset)];
+    }
+}
 
 #pragma mark - VT100TerminalDelegate
 
@@ -927,7 +1013,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self backIndex];
 }
 
+- (void)terminalResetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
+    [self resetPreservingPrompt:preservePrompt modifyContent:modifyContent];
+}
+
 #pragma mark - Tabs
+
+- (void)setInitialTabStops {
+    [self.tabStops removeAllObjects];
+    const int kInitialTabWindow = 1000;
+    const int width = [iTermAdvancedSettingsModel defaultTabStopWidth];
+    for (int i = 0; i < kInitialTabWindow; i += width) {
+        [self.tabStops addObject:@(i)];
+    }
+}
 
 // See issue 6592 for why `setBackgroundColors` exists. tl;dr ncurses makes weird assumptions.
 - (void)appendTabAtCursor:(BOOL)setBackgroundColors {
@@ -1176,6 +1275,25 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:type
                                                               onLine:range.start.y + self.cumulativeScrollbackOverflow];
     }
+}
+
+- (void)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange {
+    [self removeIntervalTreeObjectsInRange:coordRange
+                          exceptCoordRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
+}
+
+- (NSMutableArray<id<IntervalTreeObject>> *)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange exceptCoordRange:(VT100GridCoordRange)coordRangeToSave {
+    Interval *intervalToClear = [self intervalForGridCoordRange:coordRange];
+    NSMutableArray<id<IntervalTreeObject>> *marksToMove = [NSMutableArray array];
+    for (id<IntervalTreeObject> obj in [self.intervalTree objectsInInterval:intervalToClear]) {
+        const VT100GridCoordRange markRange = [self coordRangeForInterval:obj.entry.interval];
+        if (VT100GridCoordRangeContainsCoord(coordRangeToSave, markRange.start)) {
+            [marksToMove addObject:obj];
+        } else {
+            [self removeObjectFromIntervalTree:obj];
+        }
+    }
+    return marksToMove;
 }
 
 #pragma mark - Shell Integration
@@ -1547,6 +1665,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (void)setCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord {
+    self.commandStartCoord = coord;
+}
+
+- (void)invalidateCommandStartCoordWithoutSideEffects {
+    [self setCommandStartCoordWithoutSideEffects:VT100GridAbsCoordMake(-1, -1)];
+}
+
+
 #pragma mark - Annotations
 
 - (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {
@@ -1733,6 +1860,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)forceCheckTriggers {
     [_triggerEvaluator forceCheck];
+}
+
+#pragma mark - Color
+
+- (void)loadInitialColorTable {
+    for (int i = 16; i < 256; i++) {
+        NSColor *theColor = [NSColor colorForAnsi256ColorIndex:i];
+        [self.colorMap setColor:theColor forKey:kColorMap8bitBase + i];
+    }
 }
 
 #pragma mark - Cross-Thread Sync
