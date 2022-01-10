@@ -2258,7 +2258,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRemoveTabStops {
-    [self mutRemoveAllTabStops];
+    [_mutableState terminalRemoveTabStops];
 }
 
 - (void)terminalRemoveTabStopAtCursor {
