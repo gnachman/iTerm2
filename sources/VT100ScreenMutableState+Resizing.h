@@ -24,6 +24,10 @@ NS_ASSUME_NONNULL_BEGIN
      withUsedHeight:(int)usedHeight
           newHeight:(int)newHeight;
 - (VT100GridRun)runByTrimmingNullsFromRun:(VT100GridRun)run;
+- (BOOL)trimSelectionFromStart:(VT100GridCoord)start
+                           end:(VT100GridCoord)end
+                      toStartX:(VT100GridCoord *)startPtr
+                        toEndX:(VT100GridCoord *)endPtr;
 
 @end
 

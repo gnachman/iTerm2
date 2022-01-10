@@ -132,4 +132,72 @@
     return result;
 }
 
+static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
+    if (py1 == py2) {
+        return px1 < px2;
+    } else if (py1 < py2) {
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+static void SwapInt(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+- (BOOL)trimSelectionFromStart:(VT100GridCoord)start
+                           end:(VT100GridCoord)end
+                      toStartX:(VT100GridCoord *)startPtr
+                        toEndX:(VT100GridCoord *)endPtr {
+    if (start.x < 0 || end.x < 0 ||
+        start.y < 0 || end.y < 0) {
+        *startPtr = start;
+        *endPtr = end;
+        return YES;
+    }
+
+    if (!XYIsBeforeXY(start.x, start.y, end.x, end.y)) {
+        SwapInt(&start.x, &end.x);
+        SwapInt(&start.y, &end.y);
+    }
+
+    // Advance start position until it hits a non-null or equals the end position.
+    int startX = start.x;
+    int startY = start.y;
+    if (startX == self.currentGrid.size.width) {
+        startX = 0;
+        startY++;
+    }
+
+    int endX = end.x;
+    int endY = end.y;
+    if (endX == self.currentGrid.size.width) {
+        endX = 0;
+        endY++;
+    }
+
+    VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(startX, startY),
+                                              VT100GridCoordMake(endX, endY),
+                                              self.currentGrid.size.width);
+    if (run.length <= 0) {
+        DLog(@"Run has length %@ given start and end of %@ and %@", @(run.length), VT100GridCoordDescription(start),
+             VT100GridCoordDescription(end));
+        return NO;
+    }
+    run = [self runByTrimmingNullsFromRun:run];
+    if (run.length == 0) {
+        DLog(@"After trimming, run has length 0 given start and end of %@ and %@", VT100GridCoordDescription(start),
+             VT100GridCoordDescription(end));
+        return NO;
+    }
+    VT100GridCoord max = VT100GridRunMax(run, self.currentGrid.size.width);
+
+    *startPtr = run.origin;
+    *endPtr = max;
+    return YES;
+}
+
 @end
