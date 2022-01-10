@@ -171,11 +171,12 @@
 
     const int newTop = rangeOfVisibleLinesConvertedCorrectly ? convertedRangeOfVisibleLines.start.y : -1;
 
-    [self didResizeToSize:newSize
-                selection:selection
-       couldHaveSelection:couldHaveSelection
-            subSelections:newSubSelections
-                   newTop:newTop];
+    [mutableState didResizeToSize:newSize
+                        selection:selection
+               couldHaveSelection:couldHaveSelection
+                    subSelections:newSubSelections
+                           newTop:newTop
+                         delegate:delegate];
     [altScreenLineBuffer endResizing];
     [mutableState sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];
     DLog(@"After:\n%@", [mutableState.currentGrid compactLineDumpWithContinuationMarks]);
@@ -194,48 +195,6 @@
             _mutableState.currentGrid.cursorY = 0;
         }
     }
-}
-
-- (void)didResizeToSize:(VT100GridSize)newSize
-              selection:(iTermSelection *)selection
-     couldHaveSelection:(BOOL)couldHaveSelection
-          subSelections:(NSArray *)newSubSelections
-                 newTop:(int)newTop {
-    [_mutableState.terminal clampSavedCursorToScreenSize:VT100GridSizeMake(newSize.width, newSize.height)];
-
-    [self.mutablePrimaryGrid resetScrollRegions];
-    [self.mutableAltGrid resetScrollRegions];
-    [self.mutablePrimaryGrid clampCursorPositionToValid];
-    [self.mutableAltGrid clampCursorPositionToValid];
-
-    // The linebuffer may have grown. Ensure it doesn't have too many lines.
-    int linesDropped = 0;
-    if (!_state.unlimitedScrollback) {
-        linesDropped = [self.mutableLineBuffer dropExcessLinesWithWidth:_state.currentGrid.size.width];
-        [_mutableState incrementOverflowBy:linesDropped];
-    }
-    int lines __attribute__((unused)) = [_mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
-    ITAssertWithMessage(lines >= 0, @"Negative lines");
-
-    [selection clearSelection];
-    // An immediate refresh is needed so that the size of textview can be
-    // adjusted to fit the new size
-    DebugLog(@"setSize setDirty");
-    [delegate_ screenNeedsRedraw];
-    if (couldHaveSelection) {
-        NSMutableArray *subSelectionsToAdd = [NSMutableArray array];
-        for (iTermSubSelection *sub in newSubSelections) {
-            VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
-                                                  _mutableState.cumulativeScrollbackOverflow,
-                                                  ^(VT100GridCoordRange range) {
-                [subSelectionsToAdd addObject:sub];
-            });
-        }
-        [selection addSubSelections:subSelectionsToAdd];
-    }
-
-    [self mutReloadMarkCache];
-    [delegate_ screenSizeDidChangeWithNewTopLineAt:newTop];
 }
 
 

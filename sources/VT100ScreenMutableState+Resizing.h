@@ -94,6 +94,12 @@ NS_ASSUME_NONNULL_BEGIN
                                                           usedHeight:(int)usedHeight
                                                  intervalTreeObjects:(NSArray *)altScreenNotes;
 - (void)updateAlternateScreenIntervalTreeForNewSize:(VT100GridSize)newSize;
+- (void)didResizeToSize:(VT100GridSize)newSize
+              selection:(iTermSelection *)selection
+     couldHaveSelection:(BOOL)couldHaveSelection
+          subSelections:(NSArray *)newSubSelections
+                 newTop:(int)newTop
+               delegate:(id<VT100ScreenDelegate>)delegate;
 
 @end
 

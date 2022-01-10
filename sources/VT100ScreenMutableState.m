@@ -1809,6 +1809,19 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.savedIntervalTree = temp;
 }
 
+- (void)reloadMarkCache {
+    long long totalScrollbackOverflow = self.cumulativeScrollbackOverflow;
+    [self.markCache removeAllObjects];
+    for (id<IntervalTreeObject> obj in [self.intervalTree allObjects]) {
+        if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+            VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
+            VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+            self.markCache[@(totalScrollbackOverflow + range.end.y)] = mark;
+        }
+    }
+    [self.intervalTreeObserver intervalTreeDidReset];
+}
+
 #pragma mark - Annotations
 
 - (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {

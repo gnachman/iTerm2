@@ -188,16 +188,7 @@
 }
 
 - (void)mutReloadMarkCache {
-    long long totalScrollbackOverflow = _mutableState.cumulativeScrollbackOverflow;
-    [_mutableState.markCache removeAllObjects];
-    for (id<IntervalTreeObject> obj in [_mutableState.intervalTree allObjects]) {
-        if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-            VT100GridCoordRange range = [_mutableState coordRangeForInterval:obj.entry.interval];
-            VT100ScreenMark *mark = (VT100ScreenMark *)obj;
-            _mutableState.markCache[@(totalScrollbackOverflow + range.end.y)] = mark;
-        }
-    }
-    [self.intervalTreeObserver intervalTreeDidReset];
+    [_mutableState reloadMarkCache];
 }
 
 - (void)mutAddNote:(PTYAnnotation *)annotation
