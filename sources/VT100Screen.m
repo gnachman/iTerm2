@@ -658,7 +658,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
         for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:deadInterval]) {
             if ([obj.entry.interval limit] <= lastDeadLocation) {
-                [self mutRemoveObjectFromIntervalTree:obj];
+                [_mutableState removeObjectFromIntervalTree:obj];
             }
         }
     }
@@ -718,7 +718,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100ScreenMark *)lastPromptMark {
-    return [self lastMarkMustBePrompt:YES class:[VT100ScreenMark class]];
+    return [_state lastPromptMark];
 }
 
 - (VT100ScreenMark *)promptMarkWithGUID:(NSString *)guid {

@@ -499,6 +499,154 @@ iTermTriggerScopeProvider>
     }
 }
 
+- (void)scrollScreenIntoHistory {
+    // Scroll the top lines of the screen into history, up to and including the last non-
+    // empty line.
+    LineBuffer *lineBuffer;
+    if (self.currentGrid == self.altGrid && !self.saveToScrollbackInAlternateScreen) {
+        lineBuffer = nil;
+    } else {
+        lineBuffer = self.linebuffer;
+    }
+    const int n = [self.currentGrid numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES];
+    for (int i = 0; i < n; i++) {
+        [self incrementOverflowBy:
+         [self.currentGrid scrollWholeScreenUpIntoLineBuffer:lineBuffer
+                                         unlimitedScrollback:self.unlimitedScrollback]];
+    }
+}
+
+- (void)eraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec {
+    int x1, yStart, x2, y2;
+    BOOL shouldHonorProtected = NO;
+    switch (self.protectedMode) {
+        case VT100TerminalProtectedModeNone:
+            shouldHonorProtected = NO;
+            break;
+        case VT100TerminalProtectedModeISO:
+            shouldHonorProtected = YES;
+            break;
+        case VT100TerminalProtectedModeDEC:
+            shouldHonorProtected = dec;
+            break;
+    }
+    if (before && after) {
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenRemoveSelection];
+        }];
+        if (!shouldHonorProtected) {
+            [self scrollScreenIntoHistory];
+        }
+        x1 = 0;
+        yStart = 0;
+        x2 = self.currentGrid.size.width - 1;
+        y2 = self.currentGrid.size.height - 1;
+    } else if (before) {
+        x1 = 0;
+        yStart = 0;
+        x2 = MIN(self.currentGrid.cursor.x, self.currentGrid.size.width - 1);
+        y2 = self.currentGrid.cursor.y;
+    } else if (after) {
+        x1 = MIN(self.currentGrid.cursor.x, self.currentGrid.size.width - 1);
+        yStart = self.currentGrid.cursor.y;
+        x2 = self.currentGrid.size.width - 1;
+        y2 = self.currentGrid.size.height - 1;
+        if (x1 == 0 && yStart == 0 && [iTermAdvancedSettingsModel saveScrollBufferWhenClearing] && self.terminal.softAlternateScreenMode) {
+            // Save the whole screen. This helps the "screen" terminal, where CSI H CSI J is used to
+            // clear the screen.
+            // Only do it in alternate screen mode to avoid doing this for zsh (issue 8822)
+            // And don't do it if in a protection mode since that would defeat the purpose.
+            [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+                [delegate screenRemoveSelection];
+            }];
+            if (!shouldHonorProtected) {
+                [self scrollScreenIntoHistory];
+            }
+        } else if (self.cursorX == 1 && self.cursorY == 1 && self.terminal.lastToken.type == VT100CSI_CUP) {
+            // This is important for tmux integration with shell integration enabled. The screen
+            // terminal uses ED 0 instead of ED 2 to clear the screen (e.g., when you do ^L at the shell).
+            [self removePromptMarksBelowLine:yStart + self.numberOfScrollbackLines];
+        }
+    } else {
+        return;
+    }
+    if (after) {
+        [self removeSoftEOLBeforeCursor];
+    }
+    VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, yStart),
+                                                 VT100GridCoordMake(x2, y2),
+                                                 self.currentGrid.size.width);
+    if (shouldHonorProtected) {
+        const BOOL foundProtected = [self selectiveEraseRange:VT100GridCoordRangeMake(x1, yStart, x2, y2)
+                                                 eraseAttributes:YES];
+        const BOOL eraseAll = (x1 == 0 && yStart == 0 && x2 == self.currentGrid.size.width - 1 && y2 == self.currentGrid.size.height - 1);
+        if (!foundProtected && eraseAll) {  // xterm has this logic, so we do too. My guess is that it's an optimization.
+            self.protectedMode = VT100TerminalProtectedModeNone;
+        }
+    } else {
+        [self.currentGrid setCharsInRun:theRun
+                                 toChar:0
+                     externalAttributes:nil];
+    }
+    [self clearTriggerLine];
+}
+
+// Remove soft eol on previous line, provided the cursor is on the first column. This is useful
+// because zsh likes to ED 0 after wrapping around before drawing the prompt. See issue 8938.
+// For consistency, EL uses it, too.
+- (void)removeSoftEOLBeforeCursor {
+    if (self.currentGrid.cursor.x != 0) {
+        return;
+    }
+    if (self.currentGrid.haveScrollRegion) {
+        return;
+    }
+    if (self.currentGrid.cursor.y > 0) {
+        [self.currentGrid setContinuationMarkOnLine:self.currentGrid.cursor.y - 1 to:EOL_HARD];
+    } else {
+        [self.linebuffer setPartial:NO];
+    }
+}
+
+- (BOOL)selectiveEraseRange:(VT100GridCoordRange)range eraseAttributes:(BOOL)eraseAttributes {
+    __block BOOL foundProtected = NO;
+    const screen_char_t dc = self.currentGrid.defaultChar;
+    [self.currentGrid mutateCharactersInRange:range
+                                        block:^(screen_char_t *sct,
+                                                iTermExternalAttribute **eaOut,
+                                                VT100GridCoord coord,
+                                                BOOL *stop) {
+        if (self.protectedMode != VT100TerminalProtectedModeNone && sct->guarded) {
+            foundProtected = YES;
+            return;
+        }
+        VT100ScreenEraseCell(sct, eaOut, eraseAttributes, &dc);
+    }];
+    [self clearTriggerLine];
+    return foundProtected;
+}
+
+void VT100ScreenEraseCell(screen_char_t *sct,
+                          iTermExternalAttribute **eaOut,
+                          BOOL eraseAttributes,
+                          const screen_char_t *defaultChar) {
+    if (eraseAttributes) {
+        *sct = *defaultChar;
+        sct->code = ' ';
+        *eaOut = nil;
+        return;
+    }
+    sct->code = ' ';
+    sct->complexChar = NO;
+    sct->image = NO;
+    if ((*eaOut).urlCode) {
+        *eaOut = [iTermExternalAttribute attributeHavingUnderlineColor:(*eaOut).hasUnderlineColor
+                                                        underlineColor:(*eaOut).underlineColor
+                                                               urlCode:0];
+    }
+}
+
+
 #pragma mark - VT100TerminalDelegate
 
 - (void)terminalAppendString:(NSString *)string {
@@ -897,6 +1045,27 @@ iTermTriggerScopeProvider>
     return mark;
 }
 
+- (void)removeObjectFromIntervalTree:(id<IntervalTreeObject>)obj {
+    long long totalScrollbackOverflow = self.cumulativeScrollbackOverflow;
+    if ([obj isKindOfClass:[VT100ScreenMark class]]) {
+        long long theKey = (totalScrollbackOverflow +
+                            [self coordRangeForInterval:obj.entry.interval].end.y);
+        [self.markCache removeObjectForKey:@(theKey)];
+        self.lastCommandMark = nil;
+    }
+    PTYAnnotation *annotation = [PTYAnnotation castFrom:obj];
+    if (annotation) {
+        [annotation willRemove];
+    }
+    [self.intervalTree removeObject:obj];
+    iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(obj);
+    if (type != iTermIntervalTreeObjectTypeUnknown) {
+        VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
+        [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:type
+                                                              onLine:range.start.y + self.cumulativeScrollbackOverflow];
+    }
+}
+
 #pragma mark - Shell Integration
 
 - (void)assignCurrentCommandEndDate {
@@ -1244,6 +1413,26 @@ iTermTriggerScopeProvider>
 #warning TODO: mark is mutable shared state. Don't pass to main thread like this.
         [delegate screenCommandDidExitWithCode:returnCode mark:mark];
     }];
+}
+
+- (void)removePromptMarksBelowLine:(int)line {
+    VT100ScreenMark *mark = [self lastPromptMark];
+    if (!mark) {
+        return;
+    }
+
+    VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];
+    while (range.start.y >= line) {
+        if (mark == self.lastCommandMark) {
+            self.lastCommandMark = nil;
+        }
+        [self removeObjectFromIntervalTree:mark];
+        mark = [self lastPromptMark];
+        if (!mark) {
+            return;
+        }
+        range = [self coordRangeForInterval:mark.entry.interval];
+    }
 }
 
 #pragma mark - Annotations

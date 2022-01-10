@@ -267,47 +267,6 @@
     [self mutCommandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
 }
 
-- (void)mutRemoveObjectFromIntervalTree:(id<IntervalTreeObject>)obj {
-    long long totalScrollbackOverflow = _mutableState.cumulativeScrollbackOverflow;
-    if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-        long long theKey = (totalScrollbackOverflow +
-                            [_mutableState coordRangeForInterval:obj.entry.interval].end.y);
-        [_mutableState.markCache removeObjectForKey:@(theKey)];
-        _mutableState.lastCommandMark = nil;
-    }
-    PTYAnnotation *annotation = [PTYAnnotation castFrom:obj];
-    if (annotation) {
-        [annotation willRemove];
-    }
-    [_mutableState.intervalTree removeObject:obj];
-    iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(obj);
-    if (type != iTermIntervalTreeObjectTypeUnknown) {
-        VT100GridCoordRange range = [_mutableState coordRangeForInterval:obj.entry.interval];
-        [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:type
-                                                              onLine:range.start.y + _mutableState.cumulativeScrollbackOverflow];
-    }
-}
-
-- (void)removePromptMarksBelowLine:(int)line {
-    VT100ScreenMark *mark = [self lastPromptMark];
-    if (!mark) {
-        return;
-    }
-
-    VT100GridCoordRange range = [_mutableState coordRangeForInterval:mark.entry.interval];
-    while (range.start.y >= line) {
-        if (mark == _mutableState.lastCommandMark) {
-            _mutableState.lastCommandMark = nil;
-        }
-        [self mutRemoveObjectFromIntervalTree:mark];
-        mark = [self lastPromptMark];
-        if (!mark) {
-            return;
-        }
-        range = [_mutableState coordRangeForInterval:mark.entry.interval];
-    }
-}
-
 - (void)mutRemoveAnnotation:(PTYAnnotation *)annotation {
     [_mutableState removeAnnotation:annotation];
 }
@@ -431,7 +390,7 @@
         if (VT100GridCoordRangeContainsCoord(coordRangeToSave, markRange.start)) {
             [marksToMove addObject:obj];
         } else {
-            [self mutRemoveObjectFromIntervalTree:obj];
+            [_mutableState removeObjectFromIntervalTree:obj];
         }
     }
     return marksToMove;
@@ -535,7 +494,7 @@
                 Interval *interval = [_mutableState intervalForGridCoordRange:range];
 
                 // Remove and re-add the object with the new interval.
-                [self mutRemoveObjectFromIntervalTree:obj];
+                [_mutableState removeObjectFromIntervalTree:obj];
                 [_mutableState.intervalTree addObject:obj withInterval:interval];
 
                 // Re-adding an annotation requires telling the delegate so it can create a vc
@@ -552,7 +511,7 @@
         }
     } else {
         [marksToMove enumerateObjectsUsingBlock:^(id<IntervalTreeObject>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            [self mutRemoveObjectFromIntervalTree:obj];
+            [_mutableState removeObjectFromIntervalTree:obj];
         }];
     }
     [self mutReloadMarkCache];
@@ -564,7 +523,7 @@
     assert(line >= 0 && line < _mutableState.height);
     const VT100GridCoord savedCursor = self.currentGrid.cursor;
     _mutableState.currentGrid.cursor = VT100GridCoordMake(0, line);
-    [self removeSoftEOLBeforeCursor];
+    [_mutableState removeSoftEOLBeforeCursor];
     const VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(0, line),
                                                     VT100GridCoordMake(_mutableState.width, _mutableState.height),
                                                     _mutableState.width);
@@ -1266,112 +1225,6 @@
             _state.currentGrid.cursorY > _state.currentGrid.bottomMargin);
 }
 
-// Remove soft eol on previous line, provided the cursor is on the first column. This is useful
-// because zsh likes to ED 0 after wrapping around before drawing the prompt. See issue 8938.
-// For consistency, EL uses it, too.
-- (void)removeSoftEOLBeforeCursor {
-    if (_state.currentGrid.cursor.x != 0) {
-        return;
-    }
-    if (_state.currentGrid.haveScrollRegion) {
-        return;
-    }
-    if (_state.currentGrid.cursor.y > 0) {
-        [_mutableState.currentGrid setContinuationMarkOnLine:_state.currentGrid.cursor.y - 1 to:EOL_HARD];
-    } else {
-        [self.mutableLineBuffer setPartial:NO];
-    }
-}
-
-- (void)scrollScreenIntoHistory {
-    // Scroll the top lines of the screen into history, up to and including the last non-
-    // empty line.
-    LineBuffer *lineBuffer;
-    if (_state.currentGrid == _state.altGrid && !_state.saveToScrollbackInAlternateScreen) {
-        lineBuffer = nil;
-    } else {
-        lineBuffer = _mutableState.linebuffer;
-    }
-    const int n = [_state.currentGrid numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES];
-    for (int i = 0; i < n; i++) {
-        [_mutableState incrementOverflowBy:
-         [_mutableState.currentGrid scrollWholeScreenUpIntoLineBuffer:lineBuffer
-                                                  unlimitedScrollback:_state.unlimitedScrollback]];
-    }
-}
-
-- (void)mutEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec {
-    int x1, yStart, x2, y2;
-    BOOL shouldHonorProtected = NO;
-    switch (_state.protectedMode) {
-        case VT100TerminalProtectedModeNone:
-            shouldHonorProtected = NO;
-            break;
-        case VT100TerminalProtectedModeISO:
-            shouldHonorProtected = YES;
-            break;
-        case VT100TerminalProtectedModeDEC:
-            shouldHonorProtected = dec;
-            break;
-    }
-    if (before && after) {
-        [delegate_ screenRemoveSelection];
-        if (!shouldHonorProtected) {
-            [self scrollScreenIntoHistory];
-        }
-        x1 = 0;
-        yStart = 0;
-        x2 = _state.currentGrid.size.width - 1;
-        y2 = _state.currentGrid.size.height - 1;
-    } else if (before) {
-        x1 = 0;
-        yStart = 0;
-        x2 = MIN(_state.currentGrid.cursor.x, _state.currentGrid.size.width - 1);
-        y2 = _state.currentGrid.cursor.y;
-    } else if (after) {
-        x1 = MIN(_state.currentGrid.cursor.x, _state.currentGrid.size.width - 1);
-        yStart = _state.currentGrid.cursor.y;
-        x2 = _state.currentGrid.size.width - 1;
-        y2 = _state.currentGrid.size.height - 1;
-        if (x1 == 0 && yStart == 0 && [iTermAdvancedSettingsModel saveScrollBufferWhenClearing] && self.terminal.softAlternateScreenMode) {
-            // Save the whole screen. This helps the "screen" terminal, where CSI H CSI J is used to
-            // clear the screen.
-            // Only do it in alternate screen mode to avoid doing this for zsh (issue 8822)
-            // And don't do it if in a protection mode since that would defeat the purpose.
-            [delegate_ screenRemoveSelection];
-            if (!shouldHonorProtected) {
-                [self scrollScreenIntoHistory];
-            }
-        } else if (_mutableState.cursorX == 1 && _mutableState.cursorY == 1 && _state.terminal.lastToken.type == VT100CSI_CUP) {
-            // This is important for tmux integration with shell integration enabled. The screen
-            // terminal uses ED 0 instead of ED 2 to clear the screen (e.g., when you do ^L at the shell).
-            [self removePromptMarksBelowLine:yStart + _mutableState.numberOfScrollbackLines];
-        }
-    } else {
-        return;
-    }
-    if (after) {
-        [self removeSoftEOLBeforeCursor];
-    }
-    VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, yStart),
-                                                 VT100GridCoordMake(x2, y2),
-                                                 _state.currentGrid.size.width);
-    if (shouldHonorProtected) {
-        const BOOL foundProtected = [self mutSelectiveEraseRange:VT100GridCoordRangeMake(x1, yStart, x2, y2)
-                                                 eraseAttributes:YES];
-        const BOOL eraseAll = (x1 == 0 && yStart == 0 && x2 == _state.currentGrid.size.width - 1 && y2 == _state.currentGrid.size.height - 1);
-        if (!foundProtected && eraseAll) {  // xterm has this logic, so we do too. My guess is that it's an optimization.
-            _mutableState.protectedMode = VT100TerminalProtectedModeNone;
-        }
-    } else {
-        [_mutableState.currentGrid setCharsInRun:theRun
-                                          toChar:0
-                              externalAttributes:nil];
-    }
-    [_mutableState clearTriggerLine];
-
-}
-
 - (void)mutEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec {
     BOOL shouldHonorProtected = NO;
     switch (_state.protectedMode) {
@@ -1401,15 +1254,15 @@
         return;
     }
     if (after) {
-        [self removeSoftEOLBeforeCursor];
+        [_mutableState removeSoftEOLBeforeCursor];
     }
 
     if (shouldHonorProtected) {
-        [self mutSelectiveEraseRange:VT100GridCoordRangeMake(x1,
-                                                             _state.currentGrid.cursor.y,
-                                                             x2,
-                                                             _state.currentGrid.cursor.y)
-                     eraseAttributes:YES];
+        [_mutableState selectiveEraseRange:VT100GridCoordRangeMake(x1,
+                                                                   _state.currentGrid.cursor.y,
+                                                                   x2,
+                                                                   _state.currentGrid.cursor.y)
+                           eraseAttributes:YES];
     } else {
         VT100GridRun theRun = VT100GridRunFromCoords(VT100GridCoordMake(x1, _state.currentGrid.cursor.y),
                                                      VT100GridCoordMake(x2, _state.currentGrid.cursor.y),
@@ -1499,11 +1352,11 @@
             }
             case VT100TerminalProtectedModeISO:
                 // honor protected mode.
-                [self mutSelectiveEraseRange:VT100GridCoordRangeMake(_state.currentGrid.cursorX,
-                                                                     _state.currentGrid.cursorY,
-                                                                     MIN(_state.currentGrid.size.width, _state.currentGrid.cursorX + j),
-                                                                     _state.currentGrid.cursorY)
-                             eraseAttributes:YES];
+                [_mutableState selectiveEraseRange:VT100GridCoordRangeMake(_state.currentGrid.cursorX,
+                                                                           _state.currentGrid.cursorY,
+                                                                           MIN(_state.currentGrid.size.width, _state.currentGrid.cursorX + j),
+                                                                           _state.currentGrid.cursorY)
+                                   eraseAttributes:YES];
                 break;
         }
     }
@@ -1753,23 +1606,6 @@
                          externalAttributes:ea];
 }
 
-static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribute **eaOut, BOOL eraseAttributes, const screen_char_t *defaultChar) {
-    if (eraseAttributes) {
-        *sct = *defaultChar;
-        sct->code = ' ';
-        *eaOut = nil;
-        return;
-    }
-    sct->code = ' ';
-    sct->complexChar = NO;
-    sct->image = NO;
-    if ((*eaOut).urlCode) {
-        *eaOut = [iTermExternalAttribute attributeHavingUnderlineColor:(*eaOut).hasUnderlineColor
-                                                        underlineColor:(*eaOut).underlineColor
-                                                               urlCode:0];
-    }
-}
-
 // Note: this does not erase attributes! It just sets the character to space.
 - (void)mutSelectiveEraseRectangle:(VT100GridRect)rect {
     const screen_char_t dc = _state.currentGrid.defaultChar;
@@ -1784,24 +1620,6 @@ static inline void VT100ScreenEraseCell(screen_char_t *sct, iTermExternalAttribu
         VT100ScreenEraseCell(sct, eaOut, NO, &dc);
     }];
     [_mutableState clearTriggerLine];
-}
-
-- (BOOL)mutSelectiveEraseRange:(VT100GridCoordRange)range eraseAttributes:(BOOL)eraseAttributes {
-    __block BOOL foundProtected = NO;
-    const screen_char_t dc = _state.currentGrid.defaultChar;
-    [_mutableState.currentGrid mutateCharactersInRange:range
-                                                 block:^(screen_char_t *sct,
-                                                         iTermExternalAttribute **eaOut,
-                                                         VT100GridCoord coord,
-                                                         BOOL *stop) {
-        if (_state.protectedMode != VT100TerminalProtectedModeNone && sct->guarded) {
-            foundProtected = YES;
-            return;
-        }
-        VT100ScreenEraseCell(sct, eaOut, eraseAttributes, &dc);
-    }];
-    [_mutableState clearTriggerLine];
-    return foundProtected;
 }
 
 - (void)setCursorX:(int)x Y:(int)y {
@@ -2564,7 +2382,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalEraseInDisplayBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
-    [self mutEraseInDisplayBeforeCursor:before afterCursor:after decProtect:NO];
+    [_mutableState eraseInDisplayBeforeCursor:before afterCursor:after decProtect:NO];
 }
 
 - (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
@@ -3909,31 +3727,31 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             break;
     }
     // Unlike DECSERA, this does erase attributes.
-    [self mutEraseInDisplayBeforeCursor:before afterCursor:after decProtect:YES];
+    [_mutableState eraseInDisplayBeforeCursor:before afterCursor:after decProtect:YES];
 }
 
 - (void)terminalSelectiveEraseInLine:(int)mode {
     switch (mode) {
         case 0:
-            [self mutSelectiveEraseRange:VT100GridCoordRangeMake(_state.currentGrid.cursorX,
-                                                                 _state.currentGrid.cursorY,
-                                                                 _state.currentGrid.size.width,
-                                                                 _state.currentGrid.cursorY)
-                         eraseAttributes:YES];
+            [_mutableState selectiveEraseRange:VT100GridCoordRangeMake(_state.currentGrid.cursorX,
+                                                                       _state.currentGrid.cursorY,
+                                                                       _state.currentGrid.size.width,
+                                                                       _state.currentGrid.cursorY)
+                               eraseAttributes:YES];
             return;
         case 1:
-            [self mutSelectiveEraseRange:VT100GridCoordRangeMake(0,
-                                                                 _state.currentGrid.cursorY,
-                                                                 _state.currentGrid.cursorX + 1,
-                                                                 _state.currentGrid.cursorY)
-                         eraseAttributes:YES];
+            [_mutableState selectiveEraseRange:VT100GridCoordRangeMake(0,
+                                                                       _state.currentGrid.cursorY,
+                                                                       _state.currentGrid.cursorX + 1,
+                                                                       _state.currentGrid.cursorY)
+                               eraseAttributes:YES];
             return;
         case 2:
-            [self mutSelectiveEraseRange:VT100GridCoordRangeMake(0,
-                                                                 _state.currentGrid.cursorY,
-                                                                 _state.currentGrid.size.width,
-                                                                 _state.currentGrid.cursorY)
-                         eraseAttributes:YES];
+            [_mutableState selectiveEraseRange:VT100GridCoordRangeMake(0,
+                                                                       _state.currentGrid.cursorY,
+                                                                       _state.currentGrid.size.width,
+                                                                       _state.currentGrid.cursorY)
+                               eraseAttributes:YES];
     }
 }
 

@@ -517,6 +517,10 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return [self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
 }
 
+- (VT100ScreenMark *)lastPromptMark {
+    return [self lastMarkMustBePrompt:YES class:[VT100ScreenMark class]];
+}
+
 #pragma mark - iTermTextDataSource
 
 - (ScreenCharArray *)screenCharArrayForLine:(int)line {
