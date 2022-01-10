@@ -551,5 +551,149 @@ static void SwapInt(int *a, int *b) {
                                 maxLinesToRestore:MIN(oldSize.height, newSize.height)];
 }
 
+// This is used for a very specific case. It's used when you have some history, optionally followed
+// by lines pulled from the primary grid, followed by the alternate grid, all stuffed into a line
+// buffer. Given a pair of positions, it converts them to a range. If a position is between
+// originalLastPos and newLastPos, it's invalid. Likewise, if a position is in the first
+// |linesMovedUp| lines of the screen, it's invalid.
+// NOTE: This assumes that _mutableState.linebuffer contains the history plus lines from the primary grid.
+// Returns YES if the range is valid, NO if it could not be converted (e.g., because it was entirely
+// in the area of dropped lines).
+/*
+ * 0 History      }                                                                     }
+ * 1 History      } These lines were in history before resizing began                   }
+ * 2 History      }                    <- originalLimit                                 } equal to _mutableState.linebuffer
+ * 3 Line from primary grid            <- limit (pushed into history due to resize)     }
+ * 4 Line to be lost from alt grid     <- linesMovedUp = 1 because this one line will be lost
+ * 5 Line from alt grid                }
+ * 6 Line from alt grid                } These lines will be restored to the alt grid later
+ */
+- (BOOL)computeRangeFromOriginalLimit:(LineBufferPosition *)originalLimit
+                        limitPosition:(LineBufferPosition *)limit
+                        startPosition:(LineBufferPosition *)startPos
+                          endPosition:(LineBufferPosition *)endPos
+                             newWidth:(int)newWidth
+                           lineBuffer:(LineBuffer *)lineBuffer  // NOTE: May be append-only
+                                range:(VT100GridCoordRange *)resultRangePtr
+                         linesMovedUp:(int)linesMovedUp {
+    BOOL result = YES;
+    // Compute selection positions relative to the end of the line buffer, which may have
+    // grown or shrunk.
+    int growth = limit.absolutePosition - originalLimit.absolutePosition;
+    LineBufferPosition *savedEndPos = endPos;
+    LineBufferPosition *predecessorOfLimit = [limit predecessor];
+    if (growth > 0) {
+        /*
+         +--------------------+
+         |                    |
+         |  Original History  |
+         |                    |
+         +....................+ <------- originalLimit
+         | Lines pushed from  | ^
+         | primary into       | |- growth = number of lines in this section
+         | history            | V
+         +--------------------+ <------- limit
+         |                    |
+         | Alt screen         |
+         |                    |
+         +--------------------+
+         */
+        if (startPos.absolutePosition >= originalLimit.absolutePosition) {
+            // Start position was on alt screen originally. Move it down by the number of lines
+            // pulled in from the primary screen.
+            startPos.absolutePosition += growth;
+        }
+        if (endPos.absolutePosition >= originalLimit.absolutePosition) {
+            // End position was on alt screen originally. Move it down by the number of lines
+            // pulled in from the primary screen.
+            endPos.absolutePosition += growth;
+        }
+    } else if (growth < 0) {
+        /*
+         +--------------------+
+         |                    |
+         | Original history   |
+         |                    |
+         +--------------------+ +....................+ <------- limit
+         | Current alt screen | | Lines pulled back  | ^
+         |                    | | into primary from  | |- growth = -(number of lines in this section)
+         +--------------------+ | history            | V
+         +--------------------+ <------- originalLimit
+         | Original           |
+         | Alt screen         |
+         +--------------------+
+         */
+        if (startPos.absolutePosition >= limit.absolutePosition &&
+            startPos.absolutePosition < originalLimit.absolutePosition) {
+            // Started in history in the region pulled into primary screen. Advance start to
+            // new beginning of alt screen
+            startPos = limit;
+        } else if (startPos.absolutePosition >= originalLimit.absolutePosition) {
+            // Starts after deleted region. Move start position up by number of deleted lines so
+            // it refers to the same cell.
+            startPos.absolutePosition += growth;
+        }
+        if (endPos.absolutePosition >= predecessorOfLimit.absolutePosition &&
+            endPos.absolutePosition < originalLimit.absolutePosition) {
+            // Ended in deleted region. Move end point to just before current alt screen.
+            endPos = predecessorOfLimit;
+        } else if (endPos.absolutePosition >= originalLimit.absolutePosition) {
+            // Ends in alt screen. Move it up to refer to the same cell.
+            endPos.absolutePosition += growth;
+        }
+    }
+    if (startPos.absolutePosition >= endPos.absolutePosition + 1) {
+        result = NO;
+    }
+    resultRangePtr->start = [lineBuffer coordinateForPosition:startPos
+                                                        width:newWidth
+                                                 extendsRight:NO
+                                                           ok:NULL];
+    int numScrollbackLines = [self.linebuffer numLinesWithWidth:newWidth];
+
+    // |linesMovedUp| wrapped lines will not be restored into the alt grid later on starting at |limit|
+    if (resultRangePtr->start.y >= numScrollbackLines) {
+        if (resultRangePtr->start.y < numScrollbackLines + linesMovedUp) {
+            // The selection started in one of the lines that was lost. Move it to the
+            // first cell of the screen.
+            resultRangePtr->start.y = numScrollbackLines;
+            resultRangePtr->start.x = 0;
+        } else {
+            // The selection starts on screen, so move it up by the number of lines by which
+            // the alt screen shifted up.
+            resultRangePtr->start.y -= linesMovedUp;
+        }
+    }
+
+    resultRangePtr->end = [lineBuffer coordinateForPosition:endPos
+                                                      width:newWidth
+                                               extendsRight:YES
+                                                         ok:NULL];
+    if (resultRangePtr->end.y >= numScrollbackLines) {
+        if (resultRangePtr->end.y < numScrollbackLines + linesMovedUp) {
+            // The selection ends in one of the lines that was lost. The whole selection is
+            // gone.
+            result = NO;
+        } else {
+            // The selection ends on screen, so move it up by the number of lines by which
+            // the alt screen shifted up.
+            resultRangePtr->end.y -= linesMovedUp;
+        }
+    }
+    if (savedEndPos.extendsToEndOfLine) {
+        resultRangePtr->end.x = newWidth;
+    } else {
+        // Move to the successor of newSelection.end.x, newSelection.end.y.
+        resultRangePtr->end.x++;
+        if (resultRangePtr->end.x > newWidth) {
+            resultRangePtr->end.x -= newWidth;
+            resultRangePtr->end.y++;
+        }
+    }
+
+    return result;
+}
+
+
 
 @end

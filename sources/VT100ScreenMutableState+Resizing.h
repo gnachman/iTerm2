@@ -60,6 +60,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)restorePrimaryGridWithLineBuffer:(LineBuffer *)realLineBuffer
                                  oldSize:(VT100GridSize)oldSize
                                  newSize:(VT100GridSize)newSize;
+- (BOOL)computeRangeFromOriginalLimit:(LineBufferPosition *)originalLimit
+                        limitPosition:(LineBufferPosition *)limit
+                        startPosition:(LineBufferPosition *)startPos
+                          endPosition:(LineBufferPosition *)endPos
+                             newWidth:(int)newWidth
+                           lineBuffer:(LineBuffer *)lineBuffer  // NOTE: May be append-only
+                                range:(VT100GridCoordRange *)resultRangePtr
+                         linesMovedUp:(int)linesMovedUp;
 
 @end
 
