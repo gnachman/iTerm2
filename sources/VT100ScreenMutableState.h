@@ -191,6 +191,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)willSynchronize;
 - (void)updateExpectFrom:(iTermExpect *)source;
 
+// Call this on the main thread to sync with the mutation thread. In the block you can adjust
+// mutable state and main thread state safely. The block does not escape and is called synchronously.
+// It may block for some time until the current token or other high-priority tasks finish processing.
+- (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
+                                                            id<VT100ScreenDelegate> delegate))block;
+
 #pragma mark - Temporary
 
 - (void)setTokenExecutorDelegate:(id)delegate;
