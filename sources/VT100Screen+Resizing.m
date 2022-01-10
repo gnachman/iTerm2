@@ -270,16 +270,15 @@
     // back to the tempLineBuffer.
     LineBuffer *appendOnlyLineBuffer = [[realLineBuffer copy] autorelease];
     LineBufferPosition *newLastPos = [realLineBuffer lastPosition];
-    NSArray *newSubSelections = [self subSelectionsForNewSize:newSize
-                                                   lineBuffer:realLineBuffer
-                                                         grid:copyOfAltGrid
-                                                   usedHeight:usedHeight
-                                           subSelectionTuples:altScreenSubSelectionTuples
-                                         originalLastPosition:originalLastPos
-                                              newLastPosition:newLastPos
-                                                 linesMovedUp:linesMovedUp
-                                         appendOnlyLineBuffer:appendOnlyLineBuffer
-                                                 mutableState:mutableState];
+    NSArray *newSubSelections = [mutableState subSelectionsForNewSize:newSize
+                                                           lineBuffer:realLineBuffer
+                                                                 grid:copyOfAltGrid
+                                                           usedHeight:usedHeight
+                                                   subSelectionTuples:altScreenSubSelectionTuples
+                                                 originalLastPosition:originalLastPos
+                                                      newLastPosition:newLastPos
+                                                         linesMovedUp:linesMovedUp
+                                                 appendOnlyLineBuffer:appendOnlyLineBuffer];
     DLog(@"Original limit=%@", originalLastPos);
     DLog(@"New limit=%@", newLastPos);
     [mutableState addObjectsToIntervalTreeFromTuples:altScreenNotes
@@ -347,47 +346,6 @@
     [delegate_ screenSizeDidChangeWithNewTopLineAt:newTop];
 }
 
-- (NSArray *)subSelectionsForNewSize:(VT100GridSize)newSize
-                          lineBuffer:(LineBuffer *)realLineBuffer
-                                grid:(VT100Grid *)copyOfAltGrid
-                          usedHeight:(int)usedHeight
-                  subSelectionTuples:(NSArray *)altScreenSubSelectionTuples
-                originalLastPosition:(LineBufferPosition *)originalLastPos
-                     newLastPosition:(LineBufferPosition *)newLastPos
-                        linesMovedUp:(int)linesMovedUp
-                appendOnlyLineBuffer:(LineBuffer *)appendOnlyLineBuffer
-                        mutableState:(VT100ScreenMutableState *)mutableState {
-    [mutableState appendScreen:copyOfAltGrid
-                  toScrollback:appendOnlyLineBuffer
-                withUsedHeight:usedHeight
-                     newHeight:newSize.height];
-
-    NSMutableArray *newSubSelections = [NSMutableArray array];
-    for (int i = 0; i < altScreenSubSelectionTuples.count; i++) {
-        LineBufferPositionRange *positionRange = altScreenSubSelectionTuples[i][0];
-        iTermSubSelection *originalSub = altScreenSubSelectionTuples[i][1];
-        VT100GridCoordRange newSelection;
-        BOOL ok = [mutableState computeRangeFromOriginalLimit:originalLastPos
-                                                limitPosition:newLastPos
-                                                startPosition:positionRange.start
-                                                  endPosition:positionRange.end
-                                                     newWidth:newSize.width
-                                                   lineBuffer:appendOnlyLineBuffer
-                                                        range:&newSelection
-                                                 linesMovedUp:linesMovedUp];
-        if (ok) {
-            const VT100GridAbsWindowedRange theRange =
-            VT100GridAbsWindowedRangeMake(VT100GridAbsCoordRangeFromCoordRange(newSelection, mutableState.cumulativeScrollbackOverflow),
-                                          0, 0);
-            iTermSubSelection *theSub = [iTermSubSelection subSelectionWithAbsRange:theRange
-                                                                               mode:originalSub.selectionMode
-                                                                              width:mutableState.width];
-            theSub.connected = originalSub.connected;
-            [newSubSelections addObject:theSub];
-        }
-    }
-    return newSubSelections;
-}
 
 
 @end

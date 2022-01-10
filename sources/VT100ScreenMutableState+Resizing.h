@@ -75,6 +75,16 @@ NS_ASSUME_NONNULL_BEGIN
                               linesMovedUp:(int)linesMovedUp
                       appendOnlyLineBuffer:(LineBuffer *)appendOnlyLineBuffer;
 
+- (NSArray *)subSelectionsForNewSize:(VT100GridSize)newSize
+                          lineBuffer:(LineBuffer *)realLineBuffer
+                                grid:(VT100Grid *)copyOfAltGrid
+                          usedHeight:(int)usedHeight
+                  subSelectionTuples:(NSArray *)altScreenSubSelectionTuples
+                originalLastPosition:(LineBufferPosition *)originalLastPos
+                     newLastPosition:(LineBufferPosition *)newLastPos
+                        linesMovedUp:(int)linesMovedUp
+                appendOnlyLineBuffer:(LineBuffer *)appendOnlyLineBuffer;
+
 @end
 
 NS_ASSUME_NONNULL_END
