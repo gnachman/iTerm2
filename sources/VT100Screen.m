@@ -158,7 +158,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)setSize:(VT100GridSize)size {
-    [self mutSetSize:size];
+    [self mutSetSize:size visibleLines:[self.delegate screenRangeOfVisibleLines]];
 }
 
 - (VT100GridSize)size {

@@ -11,7 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface VT100Screen (Resizing)
 
-- (void)mutSetSize:(VT100GridSize)proposedSize;
+- (void)mutSetSize:(VT100GridSize)proposedSize
+      visibleLines:(VT100GridRange)previouslyVisibleLineRange;
 - (void)mutSetWidth:(int)width preserveScreen:(BOOL)preserveScreen;
 
 @end
