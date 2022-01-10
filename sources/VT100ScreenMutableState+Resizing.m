@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "PTYAnnotation.h"
 #import "VT100RemoteHost.h"
+#import "VT100ScreenDelegate.h"
 #import "VT100WorkingDirectory.h"
 #import "iTermImageMark.h"
 #import "iTermSelection.h"
@@ -870,5 +871,49 @@ static void SwapInt(int *a, int *b) {
                             maxLinesToRestore:[altScreenLineBuffer numLinesWithWidth:self.currentGrid.size.width]];
     [altScreenLineBuffer endResizing];
 }
+
+- (void)didResizeToSize:(VT100GridSize)newSize
+              selection:(iTermSelection *)selection
+     couldHaveSelection:(BOOL)couldHaveSelection
+          subSelections:(NSArray *)newSubSelections
+                 newTop:(int)newTop
+               delegate:(id<VT100ScreenDelegate>)delegate {
+    [self.terminal clampSavedCursorToScreenSize:VT100GridSizeMake(newSize.width, newSize.height)];
+
+    [self.primaryGrid resetScrollRegions];
+    [self.altGrid resetScrollRegions];
+    [self.primaryGrid clampCursorPositionToValid];
+    [self.altGrid clampCursorPositionToValid];
+
+    // The linebuffer may have grown. Ensure it doesn't have too many lines.
+    int linesDropped = 0;
+    if (!self.unlimitedScrollback) {
+        linesDropped = [self.linebuffer dropExcessLinesWithWidth:self.currentGrid.size.width];
+        [self incrementOverflowBy:linesDropped];
+    }
+    int lines __attribute__((unused)) = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    ITAssertWithMessage(lines >= 0, @"Negative lines");
+
+    [selection clearSelection];
+    // An immediate refresh is needed so that the size of textview can be
+    // adjusted to fit the new size
+    DebugLog(@"setSize setDirty");
+    [delegate screenNeedsRedraw];
+    if (couldHaveSelection) {
+        NSMutableArray *subSelectionsToAdd = [NSMutableArray array];
+        for (iTermSubSelection *sub in newSubSelections) {
+            VT100GridAbsCoordRangeTryMakeRelative(sub.absRange.coordRange,
+                                                  self.cumulativeScrollbackOverflow,
+                                                  ^(VT100GridCoordRange range) {
+                [subSelectionsToAdd addObject:sub];
+            });
+        }
+        [selection addSubSelections:subSelectionsToAdd];
+    }
+
+    [self reloadMarkCache];
+    [delegate screenSizeDidChangeWithNewTopLineAt:newTop];
+}
+
 
 @end

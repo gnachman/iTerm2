@@ -143,6 +143,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 // IMPORTANT: Call -reloadMarkCache after this.
 - (void)swapOnscreenIntervalTreeObjects;
 
+- (void)reloadMarkCache;
+
 #pragma mark - Annotations
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation;
