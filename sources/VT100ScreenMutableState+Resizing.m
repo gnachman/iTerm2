@@ -18,6 +18,37 @@
 
 @implementation VT100ScreenMutableState (Resizing)
 
+- (void)setSize:(VT100GridSize)proposedSize
+      visibleLines:(VT100GridRange)previouslyVisibleLineRange
+         selection:(iTermSelection *)selection
+           hasView:(BOOL)hasView
+       delegate:(id<VT100ScreenDelegate>)delegate {
+    const VT100GridSize newSize = [self safeSizeForSize:proposedSize];
+    if (![self shouldSetSizeTo:newSize]) {
+        return;
+    }
+    [self.linebuffer beginResizing];
+    [self reallySetSize:newSize
+           visibleLines:previouslyVisibleLineRange
+              selection:selection
+               delegate:delegate
+                hasView:hasView];
+    [self.linebuffer endResizing];
+
+    if (gDebugLogging) {
+        DLog(@"Notes after resizing to width=%@", @(self.width));
+        for (id<IntervalTreeObject> object in self.intervalTree.allObjects) {
+            if (![object isKindOfClass:[PTYAnnotation class]]) {
+                continue;
+            }
+            DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:object.entry.interval]));
+        }
+        DLog(@"------------ end -----------");
+    }
+}
+
+#pragma mark - Private
+
 - (VT100GridSize)safeSizeForSize:(VT100GridSize)proposedSize {
     VT100GridSize size;
     size.width = MAX(proposedSize.width, 1);

@@ -29,28 +29,11 @@
                                                    VT100ScreenMutableState *mutableState,
                                                    id<VT100ScreenDelegate>  _Nonnull delegate) {
         assert(mutableState);
-        const VT100GridSize newSize = [mutableState safeSizeForSize:proposedSize];
-        if (![mutableState shouldSetSizeTo:newSize]) {
-            return;
-        }
-        [mutableState.linebuffer beginResizing];
-        [mutableState reallySetSize:newSize
-                       visibleLines:previouslyVisibleLineRange
-                          selection:selection
-                           delegate:delegate
-                            hasView:hasView];
-        [mutableState.linebuffer endResizing];
-
-        if (gDebugLogging) {
-            DLog(@"Notes after resizing to width=%@", @(_mutableState.width));
-            for (id<IntervalTreeObject> object in _mutableState.intervalTree.allObjects) {
-                if (![object isKindOfClass:[PTYAnnotation class]]) {
-                    continue;
-                }
-                DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([_mutableState coordRangeForInterval:object.entry.interval]));
-            }
-            DLog(@"------------ end -----------");
-        }
+        [mutableState setSize:proposedSize
+                  visibleLines:previouslyVisibleLineRange
+                     selection:selection
+                       hasView:hasView
+                     delegate:delegate];
     }];
 }
 
