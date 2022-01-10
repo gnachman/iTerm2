@@ -28,6 +28,7 @@
     [_mutableState performBlockWithJoinedThreads:^(VT100Terminal * _Nonnull terminal,
                                                    VT100ScreenMutableState *mutableState,
                                                    id<VT100ScreenDelegate>  _Nonnull delegate) {
+        assert(mutableState);
         const VT100GridSize newSize = [mutableState safeSizeForSize:proposedSize];
         if (![mutableState shouldSetSizeTo:newSize]) {
             return;
@@ -207,7 +208,7 @@
         VT100GridCoordRange objectRange = [mutableState coordRangeForInterval:object.entry.interval];
         DLog(@"Found object at %@", VT100GridCoordRangeDescription(objectRange));
         VT100GridCoordRange newRange;
-        if ([self convertRange:objectRange toWidth:newSize.width to:&newRange inLineBuffer:altScreenLineBuffer mutableState:mutableState tolerateEmpty:[self intervalTreeObjectMayBeEmpty:object]]) {
+        if ([self convertRange:objectRange toWidth:newSize.width to:&newRange inLineBuffer:altScreenLineBuffer mutableState:mutableState tolerateEmpty:[mutableState intervalTreeObjectMayBeEmpty:object]]) {
             assert(objectRange.start.y >= 0);
             assert(objectRange.end.y >= 0);
             // Anticipate the lines that will be dropped when the alt grid is restored.
@@ -238,18 +239,6 @@
                                      withDefaultChar:[_state.altGrid defaultChar]
                                    maxLinesToRestore:[altScreenLineBuffer numLinesWithWidth:_state.currentGrid.size.width]];
     [altScreenLineBuffer endResizing];
-}
-
-- (BOOL)intervalTreeObjectMayBeEmpty:(id)note {
-    // These kinds of ranges are allowed to be empty because
-    // although they nominally refer to an entire line, sometimes
-    // that line is blank such as just before the prompt is
-    // printed. See issue 4261.
-    return ([note isKindOfClass:[VT100RemoteHost class]] ||
-            [note isKindOfClass:[VT100WorkingDirectory class]] ||
-            [note isKindOfClass:[iTermImageMark class]] ||
-            [note isKindOfClass:[iTermURLMark class]] ||
-            [note isKindOfClass:[PTYAnnotation class]]);
 }
 
 - (NSArray *)subSelectionsAfterRestoringPrimaryGridWithCopyOfAltGrid:(VT100Grid *)copyOfAltGrid
@@ -444,7 +433,7 @@
         LineBufferPositionRange *positionRange =
         [mutableState positionRangeForCoordRange:range
                                     inLineBuffer:appendOnlyLineBuffer
-                                   tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]];
+                                   tolerateEmpty:[mutableState intervalTreeObjectMayBeEmpty:note]];
         if (positionRange) {
             DLog(@"Add note on alt screen at %@ (position %@ to %@) to triples",
                  VT100GridCoordRangeDescription(range),
@@ -510,7 +499,7 @@
                                 to:&newRange
                       inLineBuffer:mutableState.linebuffer
                       mutableState:mutableState
-                     tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
+                     tolerateEmpty:[mutableState intervalTreeObjectMayBeEmpty:note]]) {
                 assert(noteRange.start.y >= 0);
                 assert(noteRange.end.y >= 0);
                 Interval *newInterval = [mutableState intervalForGridCoordRange:newRange
