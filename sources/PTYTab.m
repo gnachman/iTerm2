@@ -6421,6 +6421,10 @@ typedef struct {
     }
 }
 
+- (void)sessionDidRestart:(PTYSession *)session {
+    [self.delegate tab:self sessionDidRestart:session];
+}
+
 - (void)sessionProxyIconDidChange:(PTYSession *)session {
     if (session == self.activeSession) {
         [_delegate tabInvalidateProxyIcon:self];

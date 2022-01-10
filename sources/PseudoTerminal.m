@@ -7176,6 +7176,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self refreshTools];
 }
 
+- (void)tab:(PTYTab *)tab sessionDidRestart:(PTYSession *)session {
+    [self refreshTools];
+}
+
 - (void)genericCloseSheet:(NSWindow *)sheet
                returnCode:(int)returnCode
               contextInfo:(id)contextInfo {

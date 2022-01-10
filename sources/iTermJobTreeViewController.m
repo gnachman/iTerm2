@@ -352,7 +352,13 @@ static int gSignalsToList[] = {
 }
 
 - (void)update {
-    iTermJobProxy *newRoot = [[iTermJobProxy alloc] initWithProcessInfo:[[iTermProcessCache sharedInstance] processInfoForPid:_pid]];
+    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] processInfoForPid:_pid];
+    if (!info) {
+        _root = nil;
+        [_outlineView reloadData];
+        return;
+    }
+    iTermJobProxy *newRoot = [[iTermJobProxy alloc] initWithProcessInfo:info];
     if (!_root) {
         _root = newRoot;
         DLog(@"reloadData");
