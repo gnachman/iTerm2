@@ -6,6 +6,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermParser.h"
+#import "iTermPromise.h"
 #import "iTermURLStore.h"
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
@@ -3964,8 +3965,10 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 }
 
 - (void)executeDECRequestMode:(int)mode {
-    const iTermDECRPMSetting setting = [self settingForDECRequestMode:mode];
-    [self.delegate terminalSendReport:[self decrpmForMode:mode setting:setting ansi:NO]];
+    [[self promiseOfSettingForDECRequestMode:mode] then:^(NSNumber * _Nonnull value) {
+        const iTermDECRPMSetting setting = [value intValue];
+        [self.delegate terminalSendReport:[self decrpmForMode:mode setting:setting ansi:NO]];
+    }];
 }
 
 - (void)executeDECRQPSR:(int)ps {
@@ -4383,6 +4386,13 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 
 static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     return flag ? iTermDECRPMSettingSet : iTermDECRPMSettingReset;
+}
+
+// Number is a iTermDECRPMSetting
+static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(BOOL flag) {
+    return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+        [seal fulfill:@(VT100TerminalDECRPMSettingFromBoolean(flag))];
+    }];
 };
 
 - (iTermDECRPMSetting)settingForANSIRequestMode:(int)mode {
@@ -4395,105 +4405,114 @@ static iTermDECRPMSetting VT100TerminalDECRPMSettingFromBoolean(BOOL flag) {
     return iTermDECRPMSettingPermanentlyReset;
 }
 
-- (iTermDECRPMSetting)settingForDECRequestMode:(int)mode {
+// The number is a iTermDECRPMSetting
+- (iTermPromise<NSNumber *> *)promiseOfSettingForDECRequestMode:(int)mode {
     switch (mode) {
         case 1:
-            return VT100TerminalDECRPMSettingFromBoolean(self.cursorMode);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.cursorMode);
         case 2:
-            return VT100TerminalDECRPMSettingFromBoolean(YES);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(YES);
         case 3:
             if (self.allowColumnMode) {
-                return VT100TerminalDECRPMSettingFromBoolean(self.columnMode);
+                return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.columnMode);
             } else {
-                return iTermDECRPMSettingReset;
+                return VT100TerminalPromiseOfDECRPMSettingFromBoolean(NO);
             }
         case 4:
             // Smooth vs jump scrolling. Not supported.
             break;
         case 5:
-            return VT100TerminalDECRPMSettingFromBoolean(self.reverseVideo);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.reverseVideo);
         case 6:
-            return VT100TerminalDECRPMSettingFromBoolean(self.originMode);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.originMode);
         case 7:
-            return VT100TerminalDECRPMSettingFromBoolean(self.wraparoundMode);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.wraparoundMode);
         case 8:
-            return VT100TerminalDECRPMSettingFromBoolean(self.autorepeatMode);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.autorepeatMode);
         case 9:
             // TODO: This should send mouse x&y on button press.
             break;
-        case 12:
-            return VT100TerminalDECRPMSettingFromBoolean([self.delegate terminalCursorIsBlinking]);
-            break;
+        case 12: {
+            iTermPromise<NSNumber *> *blinkPromise = [self.delegate terminalCursorIsBlinkingPromise];
+            return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+                [blinkPromise then:^(NSNumber * _Nonnull value) {
+                    [seal fulfill:@(VT100TerminalDECRPMSettingFromBoolean(value.boolValue))];
+                }];
+            }];
+        }
         case 20:
             // This used to be the setter for "line mode", but it wasn't used and it's not
             // supported by xterm. Seemed to have something to do with CR vs LF.
             break;
-        case 25:
-            return VT100TerminalDECRPMSettingFromBoolean([self.delegate terminalCursorVisible]);
+        case 25: {
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean([self.delegate terminalCursorVisible]);
+        }
         case 40:
-            return VT100TerminalDECRPMSettingFromBoolean(self.allowColumnMode);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.allowColumnMode);
         case 41:
-            return VT100TerminalDECRPMSettingFromBoolean(self.moreFix);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.moreFix);
         case 45:
-            return VT100TerminalDECRPMSettingFromBoolean(self.reverseWraparoundMode);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.reverseWraparoundMode);
         case 1047:
         case 1049:
         case 47:
             // alternate screen buffer mode
             if (self.disableSmcupRmcup) {
-                return iTermDECRPMSettingReset;
+                return VT100TerminalPromiseOfDECRPMSettingFromBoolean(NO);
             } else {
-                return VT100TerminalDECRPMSettingFromBoolean(self.softAlternateScreenMode);
+                return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.softAlternateScreenMode);
             }
         case 66:
-            return VT100TerminalDECRPMSettingFromBoolean(self.keypadMode);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.keypadMode);
 
         case 69:
-            return VT100TerminalDECRPMSettingFromBoolean([_delegate terminalUseColumnScrollRegion]);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean([_delegate terminalUseColumnScrollRegion]);
         case 95:
-            return VT100TerminalDECRPMSettingFromBoolean(self.preserveScreenOnDECCOLM);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.preserveScreenOnDECCOLM);
         case 1000:
         case 1001:
         case 1002:
         case 1003:
-            return VT100TerminalDECRPMSettingFromBoolean(self.mouseMode + 1000 == mode);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.mouseMode + 1000 == mode);
 
         case 1004:
-            return VT100TerminalDECRPMSettingFromBoolean(self.reportFocus && [_delegate terminalFocusReportingAllowed]);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.reportFocus && [_delegate terminalFocusReportingAllowed]);
 
         case 1005:
-            return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_XTERM_EXT);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_XTERM_EXT);
 
         case 1006:
-            return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_SGR);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_SGR);
 
         case 1007:
-            return VT100TerminalDECRPMSettingFromBoolean(self.alternateScrollMode);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.alternateScrollMode);
 
         case 1015:
-            return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_URXVT);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_URXVT);
 
         case 10016:
-            return VT100TerminalDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_SGR_PIXEL);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.mouseFormat == MOUSE_FORMAT_SGR_PIXEL);
 
         case 1036:
-            return VT100TerminalDECRPMSettingFromBoolean(self.metaSendsEscape);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.metaSendsEscape);
 
         case 1048:
             // lol xterm always returns that this is set, but not with the "permanently set" code.
-            return VT100TerminalDECRPMSettingFromBoolean(YES);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(YES);
 
         case 1337:
-            return VT100TerminalDECRPMSettingFromBoolean(self.reportKeyUp);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.reportKeyUp);
 
         case 2004:
             // Set bracketed paste mode
-            return VT100TerminalDECRPMSettingFromBoolean(self.bracketedPasteMode);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.bracketedPasteMode);
 
         case 2026:
-            return VT100TerminalDECRPMSettingFromBoolean(self.synchronizedUpdates);
+            return VT100TerminalPromiseOfDECRPMSettingFromBoolean(self.synchronizedUpdates);
     }
-    return iTermDECRPMSettingPermanentlyReset;
+    return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+        [seal fulfill:@(iTermDECRPMSettingPermanentlyReset)];
+    }];
 }
 
 - (NSString *)substringAfterSpaceInString:(NSString *)string {

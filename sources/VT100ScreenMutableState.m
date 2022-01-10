@@ -1030,6 +1030,23 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (iTermPromise<NSNumber *> *)terminalCursorIsBlinkingPromise {
+    // Pause to avoid processing any more tokens since this is used for a report.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    dispatch_queue_t queue = _queue;
+    return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            const BOOL value = [delegate screenCursorIsBlinking];
+            // VT100Terminal is blithely unaware of dispatch queues so make sure to give it a result
+            // on the queue it expects to run on.
+            dispatch_async(queue, ^{
+                [seal fulfill:@(value)];
+                [unpauser unpause];
+            });
+        }];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

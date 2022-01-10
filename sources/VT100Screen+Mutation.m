@@ -2233,8 +2233,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [_mutableState terminalSetCursorBlinking:blinking];
 }
 
-- (BOOL)terminalCursorIsBlinking {
-    return [delegate_ screenCursorIsBlinking];
+- (iTermPromise<NSNumber *> *)terminalCursorIsBlinkingPromise {
+    return [_mutableState terminalCursorIsBlinkingPromise];
 }
 
 - (void)terminalGetCursorType:(ITermCursorType *)cursorTypeOut
