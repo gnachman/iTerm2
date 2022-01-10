@@ -36,6 +36,7 @@
         [self reallySetSize:newSize
                visibleLines:previouslyVisibleLineRange
                   selection:selection
+               mutableState:mutableState
                    delegate:delegate
                     hasView:hasView];
         [mutableState.linebuffer endResizing];
@@ -56,6 +57,7 @@
 - (void)reallySetSize:(VT100GridSize)newSize
          visibleLines:(VT100GridRange)previouslyVisibleLineRange
             selection:(iTermSelection *)selection
+         mutableState:(VT100ScreenMutableState *)mutableState
              delegate:(id<VT100ScreenDelegate>)delegate
               hasView:(BOOL)hasView {
     assert([NSThread isMainThread]);
@@ -69,22 +71,22 @@
                                 0,
                                 previouslyVisibleLineRange.location + 1);
 
-    [_mutableState sanityCheckIntervalsFrom:_state.currentGrid.size note:@"pre-hoc"];
-    [self.mutableTemporaryDoubleBuffer resetExplicitly];
-    const VT100GridSize oldSize = _state.currentGrid.size;
-    [_mutableState willSetSizeWithSelection:selection];
+    [mutableState sanityCheckIntervalsFrom:mutableState.currentGrid.size note:@"pre-hoc"];
+    [mutableState.temporaryDoubleBuffer resetExplicitly];
+    const VT100GridSize oldSize = mutableState.currentGrid.size;
+    [mutableState willSetSizeWithSelection:selection];
 
     const BOOL couldHaveSelection = hasView && selection.hasSelection;
-    const int usedHeight = [_state.currentGrid numberOfLinesUsed];
+    const int usedHeight = [mutableState.currentGrid numberOfLinesUsed];
 
-    VT100Grid *copyOfAltGrid = [[self.mutableAltGrid copy] autorelease];
-    LineBuffer *realLineBuffer = _mutableState.linebuffer;
+    VT100Grid *copyOfAltGrid = [[mutableState.altGrid copy] autorelease];
+    LineBuffer *realLineBuffer = mutableState.linebuffer;
 
     // This is an array of tuples:
     // [LineBufferPositionRange, iTermSubSelection]
     NSArray *altScreenSubSelectionTuples = nil;
-    LineBufferPosition *originalLastPos = [_mutableState.linebuffer lastPosition];
-    BOOL wasShowingAltScreen = (_state.currentGrid == _state.altGrid);
+    LineBufferPosition *originalLastPos = [mutableState.linebuffer lastPosition];
+    BOOL wasShowingAltScreen = (mutableState.currentGrid == mutableState.altGrid);
 
 
     // If non-nil, contains 3-tuples NSArray*s of
@@ -108,17 +110,17 @@
     }
 
     // Append primary grid to line buffer.
-    [self appendScreen:_state.primaryGrid
-          toScrollback:_mutableState.linebuffer
-        withUsedHeight:[_state.primaryGrid numberOfLinesUsed]
+    [self appendScreen:mutableState.primaryGrid
+          toScrollback:mutableState.linebuffer
+        withUsedHeight:[mutableState.primaryGrid numberOfLinesUsed]
              newHeight:newSize.height];
-    DLog(@"History after appending screen to scrollback:\n%@", [_mutableState.linebuffer debugString]);
+    DLog(@"History after appending screen to scrollback:\n%@", [mutableState.linebuffer debugString]);
 
     VT100GridCoordRange convertedRangeOfVisibleLines;
     const BOOL rangeOfVisibleLinesConvertedCorrectly = [self convertRange:previouslyVisibleLines
                                                                   toWidth:newSize.width
                                                                        to:&convertedRangeOfVisibleLines
-                                                             inLineBuffer:_mutableState.linebuffer
+                                                             inLineBuffer:mutableState.linebuffer
                                                             tolerateEmpty:YES];
 
     // Contains iTermSubSelection*s updated for the new screen size. Used
@@ -132,12 +134,12 @@
 
     [self fixUpPrimaryGridIntervalTreeForNewSize:newSize
                              wasShowingAltScreen:wasShowingAltScreen];
-    _mutableState.currentGrid.size = newSize;
+    mutableState.currentGrid.size = newSize;
 
     // Restore the screen contents that were pushed onto the linebuffer.
-    [_mutableState.currentGrid restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : _mutableState.linebuffer
-                                           withDefaultChar:[_state.currentGrid defaultChar]
-                                         maxLinesToRestore:[wasShowingAltScreen ? altScreenLineBuffer : _mutableState.linebuffer numLinesWithWidth:_state.currentGrid.size.width]];
+    [mutableState.currentGrid restoreScreenFromLineBuffer:wasShowingAltScreen ? altScreenLineBuffer : mutableState.linebuffer
+                                          withDefaultChar:[mutableState.currentGrid defaultChar]
+                                        maxLinesToRestore:[wasShowingAltScreen ? altScreenLineBuffer : mutableState.linebuffer numLinesWithWidth:mutableState.currentGrid.size.width]];
     DLog(@"After restoring screen from line buffer:\n%@", [self compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers]);
 
     if (wasShowingAltScreen) {
@@ -153,7 +155,7 @@
         // The "abc" line was lost, so "linesMovedUp" is 1. That's the number of lines at the top
         // of the alt screen that were lost.
         newSubSelections = [self subSelectionsAfterRestoringPrimaryGridWithCopyOfAltGrid:copyOfAltGrid
-                                                                            linesMovedUp:[altScreenLineBuffer numLinesWithWidth:_state.currentGrid.size.width]
+                                                                            linesMovedUp:[altScreenLineBuffer numLinesWithWidth:mutableState.currentGrid.size.width]
                                                                             toLineBuffer:realLineBuffer
                                                                       subSelectionTuples:altScreenSubSelectionTuples
                                                                     originalLastPosition:originalLastPos
@@ -174,9 +176,9 @@
             subSelections:newSubSelections
                    newTop:newTop];
     [altScreenLineBuffer endResizing];
-    [_mutableState sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];
-    DLog(@"After:\n%@", [_state.currentGrid compactLineDumpWithContinuationMarks]);
-    DLog(@"Cursor at %d,%d", _state.currentGrid.cursorX, _state.currentGrid.cursorY);
+    [mutableState sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];
+    DLog(@"After:\n%@", [mutableState.currentGrid compactLineDumpWithContinuationMarks]);
+    DLog(@"Cursor at %d,%d", mutableState.currentGrid.cursorX, mutableState.currentGrid.cursorY);
 }
 
 - (void)updateAlternateScreenIntervalTreeForNewSize:(VT100GridSize)newSize {
