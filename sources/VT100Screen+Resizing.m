@@ -251,9 +251,9 @@
                                                           usedHeight:(int)usedHeight
                                                  intervalTreeObjects:(NSArray *)altScreenNotes
                                                         mutableState:(VT100ScreenMutableState *)mutableState {
-    [self restorePrimaryGridWithLineBuffer:realLineBuffer
-                                   oldSize:oldSize
-                                   newSize:newSize];
+    [mutableState restorePrimaryGridWithLineBuffer:realLineBuffer
+                                           oldSize:oldSize
+                                           newSize:newSize];
 
     // Any onscreen notes in primary grid get moved to savedIntervalTree_.
     mutableState.currentGrid = _state.primaryGrid;
@@ -565,29 +565,6 @@
     }
 
     return result;
-}
-
-- (void)restorePrimaryGridWithLineBuffer:(LineBuffer *)realLineBuffer
-                                 oldSize:(VT100GridSize)oldSize
-                                 newSize:(VT100GridSize)newSize {
-    self.mutablePrimaryGrid.size = newSize;
-    [self.mutablePrimaryGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                                       to:VT100GridCoordMake(newSize.width - 1, newSize.height - 1)
-                                   toChar:_state.primaryGrid.savedDefaultChar
-                       externalAttributes:nil];
-    // If the height increased:
-    // Growing (avoid pulling in stuff from scrollback. Add blank lines
-    // at bottom instead). Note there's a little hack here: we use saved_primary_buffer as the default
-    // line because it was just initialized with default lines.
-    //
-    // If the height decreased or stayed the same:
-    // Shrinking (avoid pulling in stuff from scrollback, pull in no more
-    // than might have been pushed, even if more is available). Note there's a little hack
-    // here: we use saved_primary_buffer as the default line because it was just initialized with
-    // default lines.
-    [self.mutablePrimaryGrid restoreScreenFromLineBuffer:realLineBuffer
-                                         withDefaultChar:[_state.primaryGrid defaultChar]
-                                       maxLinesToRestore:MIN(oldSize.height, newSize.height)];
 }
 
 @end

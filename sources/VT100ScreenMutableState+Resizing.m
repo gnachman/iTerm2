@@ -528,5 +528,28 @@ static void SwapInt(int *a, int *b) {
     }
 }
 
+- (void)restorePrimaryGridWithLineBuffer:(LineBuffer *)realLineBuffer
+                                 oldSize:(VT100GridSize)oldSize
+                                 newSize:(VT100GridSize)newSize {
+    self.primaryGrid.size = newSize;
+    [self.primaryGrid setCharsFrom:VT100GridCoordMake(0, 0)
+                                to:VT100GridCoordMake(newSize.width - 1, newSize.height - 1)
+                            toChar:self.primaryGrid.savedDefaultChar
+                externalAttributes:nil];
+    // If the height increased:
+    // Growing (avoid pulling in stuff from scrollback. Add blank lines
+    // at bottom instead). Note there's a little hack here: we use saved_primary_buffer as the default
+    // line because it was just initialized with default lines.
+    //
+    // If the height decreased or stayed the same:
+    // Shrinking (avoid pulling in stuff from scrollback, pull in no more
+    // than might have been pushed, even if more is available). Note there's a little hack
+    // here: we use saved_primary_buffer as the default line because it was just initialized with
+    // default lines.
+    [self.primaryGrid restoreScreenFromLineBuffer:realLineBuffer
+                                  withDefaultChar:[self.primaryGrid defaultChar]
+                                maxLinesToRestore:MIN(oldSize.height, newSize.height)];
+}
+
 
 @end
