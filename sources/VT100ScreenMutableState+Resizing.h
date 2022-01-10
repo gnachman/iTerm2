@@ -93,6 +93,7 @@ NS_ASSUME_NONNULL_BEGIN
                                                              newSize:(VT100GridSize)newSize
                                                           usedHeight:(int)usedHeight
                                                  intervalTreeObjects:(NSArray *)altScreenNotes;
+- (void)updateAlternateScreenIntervalTreeForNewSize:(VT100GridSize)newSize;
 
 @end
 

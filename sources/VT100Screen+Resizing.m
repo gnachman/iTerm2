@@ -166,8 +166,7 @@
                                                                              intervalTreeObjects:altScreenNotes];
     } else {
         // Was showing primary grid. Fix up notes in the alt screen.
-        [self updateAlternateScreenIntervalTreeForNewSize:newSize
-                                             mutableState:mutableState];
+        [mutableState updateAlternateScreenIntervalTreeForNewSize:newSize];
     }
 
     const int newTop = rangeOfVisibleLinesConvertedCorrectly ? convertedRangeOfVisibleLines.start.y : -1;
@@ -181,63 +180,6 @@
     [mutableState sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];
     DLog(@"After:\n%@", [mutableState.currentGrid compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", mutableState.currentGrid.cursorX, mutableState.currentGrid.cursorY);
-}
-
-- (void)updateAlternateScreenIntervalTreeForNewSize:(VT100GridSize)newSize
-                                       mutableState:(VT100ScreenMutableState *)mutableState {
-    // Append alt screen to empty line buffer
-    LineBuffer *altScreenLineBuffer = [[[LineBuffer alloc] init] autorelease];
-    [altScreenLineBuffer beginResizing];
-    [mutableState appendScreen:mutableState.altGrid
-                  toScrollback:altScreenLineBuffer
-                withUsedHeight:[mutableState.altGrid numberOfLinesUsed]
-                     newHeight:newSize.height];
-    int numLinesThatWillBeRestored = MIN([altScreenLineBuffer numLinesWithWidth:newSize.width],
-                                         newSize.height);
-    int numLinesDroppedFromTop = [altScreenLineBuffer numLinesWithWidth:newSize.width] - numLinesThatWillBeRestored;
-
-    // Convert note ranges to new coords, dropping or truncating as needed
-    mutableState.currentGrid = mutableState.altGrid;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
-    IntervalTree *replacementTree = [[[IntervalTree alloc] init] autorelease];
-    for (id<IntervalTreeObject> object in [_state.savedIntervalTree allObjects]) {
-        VT100GridCoordRange objectRange = [mutableState coordRangeForInterval:object.entry.interval];
-        DLog(@"Found object at %@", VT100GridCoordRangeDescription(objectRange));
-        VT100GridCoordRange newRange;
-        if ([mutableState convertRange:objectRange
-                               toWidth:newSize.width
-                                    to:&newRange
-                          inLineBuffer:altScreenLineBuffer
-                         tolerateEmpty:[mutableState intervalTreeObjectMayBeEmpty:object]]) {
-            assert(objectRange.start.y >= 0);
-            assert(objectRange.end.y >= 0);
-            // Anticipate the lines that will be dropped when the alt grid is restored.
-            newRange.start.y += mutableState.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
-            newRange.end.y += mutableState.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
-            if (newRange.start.y < 0) {
-                newRange.start.y = 0;
-                newRange.start.x = 0;
-            }
-            DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(objectRange), numLinesDroppedFromTop);
-            [mutableState.savedIntervalTree removeObject:object];
-            if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
-                Interval *newInterval = [mutableState intervalForGridCoordRange:newRange
-                                                                          width:newSize.width
-                                                                    linesOffset:0];
-                [replacementTree addObject:object withInterval:newInterval];
-            } else {
-                DLog(@"Failed to convert");
-            }
-        }
-    }
-    mutableState.savedIntervalTree = replacementTree;
-    mutableState.currentGrid = _state.primaryGrid;  // Swap back to primary grid
-
-    // Restore alt screen with new width
-    self.mutableAltGrid.size = VT100GridSizeMake(newSize.width, newSize.height);
-    [self.mutableAltGrid restoreScreenFromLineBuffer:altScreenLineBuffer
-                                     withDefaultChar:[_state.altGrid defaultChar]
-                                   maxLinesToRestore:[altScreenLineBuffer numLinesWithWidth:_state.currentGrid.size.width]];
-    [altScreenLineBuffer endResizing];
 }
 
 - (void)mutSetWidth:(int)width preserveScreen:(BOOL)preserveScreen {
