@@ -51,6 +51,8 @@ NS_ASSUME_NONNULL_BEGIN
                   to:(VT100GridCoordRange *)resultPtr
         inLineBuffer:(LineBuffer *)lineBuffer
        tolerateEmpty:(BOOL)tolerateEmpty;
+- (NSArray *)subSelectionsWithConvertedRangesFromSelection:(iTermSelection *)selection
+                                                  newWidth:(int)newWidth;
 
 @end
 
