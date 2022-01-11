@@ -71,7 +71,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)mutContinueFindResultsInContext:(FindContext *)context
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
-- (void)mutScrollDown:(int)n;
 - (void)mutScrollUp:(int)n;
 - (void)mutMarkWholeScreenDirty;
 - (void)mutShowAltBuffer;

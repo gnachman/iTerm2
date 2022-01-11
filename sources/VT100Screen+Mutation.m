@@ -1074,14 +1074,6 @@
     [_mutableState clearTriggerLine];
 }
 
-- (void)mutScrollDown:(int)n {
-    [delegate_ screenRemoveSelection];
-    [_mutableState.currentGrid scrollRect:[_state.currentGrid scrollRegionRect]
-                                   downBy:MIN(_state.currentGrid.size.height, n)
-                                softBreak:NO];
-    [_mutableState clearTriggerLine];
-}
-
 - (void)mutInsertColumns:(int)n {
     if (_state.cursorOutsideLeftRightMargin || _state.cursorOutsideTopBottomMargin) {
         return;
@@ -2135,7 +2127,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalScrollDown:(int)n {
-    [self mutScrollDown:n];
+    [_mutableState terminalScrollDown:n];
 }
 
 - (void)terminalScrollUp:(int)n {
