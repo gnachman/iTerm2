@@ -2165,9 +2165,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetSubtitle:(NSString *)subtitle {
-    if ([delegate_ screenAllowTitleSetting]) {
-        [delegate_ screenSetSubtitle:subtitle];
-    }
+    [_mutableState terminalSetSubtitle:subtitle];
 }
 
 - (void)terminalPasteString:(NSString *)string {
