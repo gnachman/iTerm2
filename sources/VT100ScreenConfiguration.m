@@ -19,6 +19,7 @@
 @property (nonatomic, readwrite) BOOL notifyOfAppend;
 @property (nonatomic, readwrite) BOOL isDirty;
 @property (nonatomic, readwrite) BOOL isTmuxClient;
+@property (nonatomic, readwrite) BOOL printingAllowed;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -32,6 +33,7 @@
 @synthesize triggerProfileDicts = _triggerProfileDicts;
 @synthesize notifyOfAppend = _notifyOfAppend;
 @synthesize isTmuxClient = _isTmuxClient;
+@synthesize printingAllowed = _printingAllowed;
 
 @synthesize isDirty = _isDirty;
 
@@ -47,6 +49,7 @@
         _triggerProfileDicts = [other.triggerProfileDicts copy];
         _notifyOfAppend = other.notifyOfAppend;
         _isTmuxClient = other.isTmuxClient;
+        _printingAllowed = other.printingAllowed;
 
         _isDirty = other.isDirty;
     }
@@ -67,6 +70,7 @@
                             @"triggerProfileDicts (count)": @(_triggerProfileDicts.count),
                             @"notifyOfAppend": @(_notifyOfAppend),
                             @"isTmuxClient": @(_isTmuxClient),
+                            @"printingAllowed": @(_printingAllowed),
 
                             @"isDirty": @(_isDirty),
     };
@@ -90,6 +94,7 @@
 @dynamic triggerProfileDicts;
 @dynamic notifyOfAppend;
 @dynamic isTmuxClient;
+@dynamic printingAllowed;
 
 @dynamic isDirty;
 

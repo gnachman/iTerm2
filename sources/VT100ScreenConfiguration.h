@@ -26,6 +26,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL notifyOfAppend;
 @property (nonatomic, readonly) BOOL isTmuxClient;
 
+// Is terminal-initiated printing allowed?
+@property (nonatomic, readonly) BOOL printingAllowed;
+
 @property (nonatomic, readonly) BOOL isDirty;
 
 @end
@@ -44,6 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readwrite) NSArray<NSDictionary *> *triggerProfileDicts;
 @property (nonatomic, readwrite) BOOL notifyOfAppend;
 @property (nonatomic, readwrite) BOOL isTmuxClient;
+@property (nonatomic, readwrite) BOOL printingAllowed;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 

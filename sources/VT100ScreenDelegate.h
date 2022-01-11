@@ -90,9 +90,6 @@
 - (void)screenResizeToPixelWidth:(int)width height:(int)height;
 - (void)screenResizeToWidth:(int)width height:(int)height;
 
-// Returns if terminal-initiated printing is permitted.
-- (BOOL)screenShouldBeginPrinting;
-
 // Sets the window title.
 - (void)screenSetWindowTitle:(NSString * _Nonnull)title;
 

@@ -621,10 +621,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return shouldSendContentsChangedNotification_;
 }
 
-- (BOOL)screenShouldBeginPrinting {
-    return printingAllowed_;
-}
-
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string isPlainText:(BOOL)plainText {
     [triggerLine_ appendString:string];
 }

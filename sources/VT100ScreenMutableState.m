@@ -1295,6 +1295,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalBeginRedirectingToPrintBuffer {
+    if (!self.config.printingAllowed) {
+        return;
+    }
+    // allocate a string for the stuff to be printed
+    self.printBuffer = [[NSMutableString alloc] init];
+    self.collectInputForPrinting = YES;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

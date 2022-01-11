@@ -10615,11 +10615,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                      willPrint:willPrint];
 }
 
-#warning TODO: Remove this
-- (BOOL)screenShouldBeginPrinting {
-    return [self shouldBeginPrinting:NO];
-}
-
 - (void)screenSetWindowTitle:(NSString *)title {
     // The window name doesn't normally serve as an interpolated string, but just to be extra safe
     // break up \(.
@@ -11816,6 +11811,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     if (_config.isTmuxClient != self.isTmuxClient) {
         _config.isTmuxClient = self.isTmuxClient;
+        dirty = YES;
+    }
+    const BOOL printingAllowed = [self shouldBeginPrinting:NO];
+    if (printingAllowed != _config.printingAllowed) {
+        _config.printingAllowed = printingAllowed;
         dirty = YES;
     }
     if (_profileDidChange) {
