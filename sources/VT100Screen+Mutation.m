@@ -2123,11 +2123,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalMoveWindowTopLeftPointTo:(NSPoint)point {
-    if ([delegate_ screenShouldInitiateWindowResize] &&
-        ![delegate_ screenWindowIsFullscreen]) {
-        // TODO: Only allow this if there is a single session in the tab.
-        [delegate_ screenMoveWindowTopLeftPointTo:point];
-    }
+    [_mutableState terminalMoveWindowTopLeftPointTo:point];
 }
 
 - (void)terminalMiniaturize:(BOOL)mini {
