@@ -2127,11 +2127,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalMiniaturize:(BOOL)mini {
-    // TODO: Only allow this if there is a single session in the tab.
-    if ([delegate_ screenShouldInitiateWindowResize] &&
-        ![delegate_ screenWindowIsFullscreen]) {
-        [delegate_ screenMiniaturizeWindow:mini];
-    }
+    [_mutableState terminalMiniaturize:mini];
 }
 
 - (void)terminalRaise:(BOOL)raise {
