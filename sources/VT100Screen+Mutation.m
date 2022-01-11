@@ -1061,28 +1061,6 @@
     [_mutableState appendLineFeed];
 }
 
-- (void)mutDeleteLinesAtCursor:(int)n {
-    if (n <= 0) {
-        return;
-    }
-    VT100GridRect scrollRegionRect = [_state.currentGrid scrollRegionRect];
-    if (scrollRegionRect.origin.x + scrollRegionRect.size.width == _state.currentGrid.size.width) {
-        // Cursor can be in right margin and still be considered in the scroll region if the
-        // scroll region abuts the right margin.
-        scrollRegionRect.size.width++;
-    }
-    BOOL cursorInScrollRegion = VT100GridCoordInRect(_state.currentGrid.cursor, scrollRegionRect);
-    if (cursorInScrollRegion) {
-        [_mutableState.currentGrid scrollRect:VT100GridRectMake(_state.currentGrid.leftMargin,
-                                                                _state.currentGrid.cursorY,
-                                                                _state.currentGrid.rightMargin - _state.currentGrid.leftMargin + 1,
-                                                                _state.currentGrid.bottomMargin - _state.currentGrid.cursorY + 1)
-                                       downBy:-n
-                                    softBreak:NO];
-        [_mutableState clearTriggerLine];
-    }
-}
-
 - (void)mutScrollUp:(int)n {
     [delegate_ screenRemoveSelection];
     for (int i = 0;
@@ -2133,7 +2111,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalDeleteLinesAtCursor:(int)n {
-    [self mutDeleteLinesAtCursor:n];
+    [_mutableState terminalDeleteLinesAtCursor:n];
 }
 
 - (void)terminalSetRows:(int)rows andColumns:(int)columns {
