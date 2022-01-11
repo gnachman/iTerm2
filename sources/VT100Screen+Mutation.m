@@ -2149,11 +2149,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalBeginRedirectingToPrintBuffer {
-    if ([delegate_ screenShouldBeginPrinting]) {
-        // allocate a string for the stuff to be printed
-        _mutableState.printBuffer = [[[NSMutableString alloc] init] autorelease];
-        _mutableState.collectInputForPrinting = YES;
-    }
+    [_mutableState terminalBeginRedirectingToPrintBuffer];
 }
 
 - (void)terminalPrintScreen {
