@@ -1464,6 +1464,28 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self clearTriggerLine];
 }
 
+- (void)terminalDeleteLinesAtCursor:(int)n {
+    if (n <= 0) {
+        return;
+    }
+    VT100GridRect scrollRegionRect = [self.currentGrid scrollRegionRect];
+    if (scrollRegionRect.origin.x + scrollRegionRect.size.width == self.currentGrid.size.width) {
+        // Cursor can be in right margin and still be considered in the scroll region if the
+        // scroll region abuts the right margin.
+        scrollRegionRect.size.width++;
+    }
+    BOOL cursorInScrollRegion = VT100GridCoordInRect(self.currentGrid.cursor, scrollRegionRect);
+    if (cursorInScrollRegion) {
+        [self.currentGrid scrollRect:VT100GridRectMake(self.currentGrid.leftMargin,
+                                                       self.currentGrid.cursorY,
+                                                       self.currentGrid.rightMargin - self.currentGrid.leftMargin + 1,
+                                                       self.currentGrid.bottomMargin - self.currentGrid.cursorY + 1)
+                              downBy:-n
+                           softBreak:NO];
+        [self clearTriggerLine];
+    }
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
