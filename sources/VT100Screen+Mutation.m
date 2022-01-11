@@ -1061,19 +1061,6 @@
     [_mutableState appendLineFeed];
 }
 
-- (void)mutScrollUp:(int)n {
-    [delegate_ screenRemoveSelection];
-    for (int i = 0;
-         i < MIN(_state.currentGrid.size.height, n);
-         i++) {
-        [_mutableState incrementOverflowBy:[_mutableState.currentGrid scrollUpIntoLineBuffer:_mutableState.linebuffer
-                                                                         unlimitedScrollback:_state.unlimitedScrollback
-                                                                     useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                                   softBreak:NO]];
-    }
-    [_mutableState clearTriggerLine];
-}
-
 - (void)mutInsertColumns:(int)n {
     if (_state.cursorOutsideLeftRightMargin || _state.cursorOutsideTopBottomMargin) {
         return;
@@ -2131,7 +2118,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalScrollUp:(int)n {
-    [self mutScrollUp:n];
+    [_mutableState terminalScrollUp:n];
 }
 
 - (BOOL)terminalWindowIsMiniaturized {

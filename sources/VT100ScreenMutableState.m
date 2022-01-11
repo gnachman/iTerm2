@@ -1539,6 +1539,22 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self clearTriggerLine];
 }
 
+- (void)terminalScrollUp:(int)n {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenRemoveSelection];
+    }];
+    
+    for (int i = 0;
+         i < MIN(self.currentGrid.size.height, n);
+         i++) {
+        [self incrementOverflowBy:[self.currentGrid scrollUpIntoLineBuffer:self.linebuffer
+                                                       unlimitedScrollback:self.unlimitedScrollback
+                                                   useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
+                                                                 softBreak:NO]];
+    }
+    [self clearTriggerLine];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
