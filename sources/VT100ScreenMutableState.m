@@ -707,6 +707,39 @@
                      externalAttributes:nil];
     }
 }
+
+- (void)eraseCharactersAfterCursor:(int)j {
+    if (self.currentGrid.cursorX >= self.currentGrid.size.width) {
+        return;
+    }
+    if (j <= 0) {
+        return;
+    }
+
+    switch (self.protectedMode) {
+        case VT100TerminalProtectedModeNone:
+        case VT100TerminalProtectedModeDEC: {
+            // Do not honor protected mode.
+            int limit = MIN(self.currentGrid.cursorX + j, self.currentGrid.size.width);
+            [self.currentGrid setCharsFrom:self.currentGrid.cursor
+                                        to:VT100GridCoordMake(limit - 1, self.currentGrid.cursorY)
+                                    toChar:[self.currentGrid defaultChar]
+                        externalAttributes:nil];
+            // TODO: This used to always set the continuation mark to hard, but I think it should only do that if the last char in the line is erased.
+            [self clearTriggerLine];
+            break;
+        }
+        case VT100TerminalProtectedModeISO:
+            // honor protected mode.
+            [self selectiveEraseRange:VT100GridCoordRangeMake(self.currentGrid.cursorX,
+                                                              self.currentGrid.cursorY,
+                                                              MIN(self.currentGrid.size.width, self.currentGrid.cursorX + j),
+                                                              self.currentGrid.cursorY)
+                      eraseAttributes:YES];
+            break;
+    }
+}
+
 // Remove soft eol on previous line, provided the cursor is on the first column. This is useful
 // because zsh likes to ED 0 after wrapping around before drawing the prompt. See issue 8938.
 // For consistency, EL uses it, too.
@@ -1231,6 +1264,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)terminalAdvanceCursorPastLastColumn {
     [self advanceCursorPastLastColumn];
+}
+
+- (void)terminalEraseCharactersAfterCursor:(int)j {
+    [self eraseCharactersAfterCursor:j];
 }
 
 #pragma mark - Tabs
