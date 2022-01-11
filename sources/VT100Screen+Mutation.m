@@ -2161,9 +2161,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetIconTitle:(NSString *)title {
-    if ([delegate_ screenAllowTitleSetting]) {
-        [delegate_ screenSetIconName:title];
-    }
+    [_mutableState terminalSetIconTitle:title];
 }
 
 - (void)terminalSetSubtitle:(NSString *)subtitle {

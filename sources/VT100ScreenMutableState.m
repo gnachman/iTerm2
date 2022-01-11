@@ -1340,6 +1340,17 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                         token:[self.setWorkingDirectoryOrderEnforcer newToken]];
 }
 
+- (void)terminalSetIconTitle:(NSString *)title {
+    // Pause because a title change affects a variable, and that is observable by token execution.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        if ([delegate screenAllowTitleSetting]) {
+            [delegate screenSetIconName:title];
+        }
+        [unpauser unpause];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
