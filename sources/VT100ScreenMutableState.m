@@ -1304,6 +1304,38 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.collectInputForPrinting = YES;
 }
 
+- (void)terminalSetWindowTitle:(NSString *)title {
+    DLog(@"terminalSetWindowTitle:%@", title);
+
+    // Pause because a title change affects a variable, and that is observable by token execution.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        if ([delegate screenAllowTitleSetting]) {
+            [delegate screenSetWindowTitle:title];
+        }
+        [unpauser unpause];
+    }];
+
+    // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
+    // changes shouldn't override CurrentDirectory.
+    if ([self remoteHostOnLine:self.numberOfScrollbackLines + self.height]) {
+        DLog(@"Already have a remote host so not updating working directory because of title change");
+        return;
+    }
+    DLog(@"Don't have a remote host, so changing working directory");
+    // TODO: There's a bug here where remote host can scroll off the end of history, causing the
+    // working directory to come from PTYTask (which is what happens when nil is passed here).
+    //
+    // NOTE: Even though this is kind of a pull, it happens at a good
+    // enough rate (not too common, not too rare when part of a prompt)
+    // that I'm comfortable calling it a push. I want it to do things like
+    // update the list of recently used directories.
+    [self setWorkingDirectory:nil
+                    onAbsLine:self.lineNumberOfCursor + self.cumulativeScrollbackOverflow
+                       pushed:YES
+                        token:[self.setWorkingDirectoryOrderEnforcer newToken]];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
