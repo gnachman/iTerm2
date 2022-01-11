@@ -1061,16 +1061,6 @@
     [_mutableState appendLineFeed];
 }
 
-- (void)mutShiftRight:(int)n {
-    if (n < 1) {
-        return;
-    }
-    if (_state.cursorOutsideLeftRightMargin || _state.cursorOutsideTopBottomMargin) {
-        return;
-    }
-    [_mutableState.currentGrid moveContentRight:n];
-}
-
 - (void)mutInsertBlankLinesAfterCursor:(int)n {
     VT100GridRect scrollRegionRect = [_state.currentGrid scrollRegionRect];
     if (scrollRegionRect.origin.x + scrollRegionRect.size.width == _state.currentGrid.size.width) {
@@ -2158,7 +2148,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalShiftRight:(int)n {
-    [self mutShiftRight:n];
+    [_mutableState terminalShiftRight:n];
 }
 
 - (void)terminalInsertBlankLinesAfterCursor:(int)n {
