@@ -222,6 +222,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) int width;
 @property (nonatomic, readonly) int height;
 @property (nonatomic, readonly) BOOL cursorOutsideLeftRightMargin;
+@property (nonatomic, readonly) BOOL cursorOutsideTopBottomMargin;
+
 @property (nonatomic, readonly) int lineNumberOfCursor;
 
 #pragma mark - Scollback
