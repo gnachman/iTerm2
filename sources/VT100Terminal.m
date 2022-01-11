@@ -4368,7 +4368,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
     if (rows <= 0 || rows >= 256) {
         return;
     }
-    [_delegate terminalSetRows:rows andColumns:_delegate.terminalWidth];
+    [_delegate terminalSetRows:rows andColumns:-1];
 }
 
 - (void)sendGraphicsAttributeReportForToken:(VT100Token *)token

@@ -2190,22 +2190,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetRows:(int)rows andColumns:(int)columns {
-    if (rows == -1) {
-        rows = _mutableState.height;
-    } else if (rows == 0) {
-        rows = [self terminalScreenHeightInCells];
-    }
-    if (columns == -1) {
-        columns = _mutableState.width;
-    } else if (columns == 0) {
-        columns = [self terminalScreenWidthInCells];
-    }
-    if ([delegate_ screenShouldInitiateWindowResize] &&
-        ![delegate_ screenWindowIsFullscreen]) {
-        [delegate_ screenResizeToWidth:columns
-                                height:rows];
-
-    }
+    [_mutableState terminalSetRows:rows andColumns:columns];
 }
 
 - (void)terminalSetPixelWidth:(int)width height:(int)height {

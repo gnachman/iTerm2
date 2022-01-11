@@ -89,6 +89,7 @@
 // The delegate should resize the screen to the given size.
 - (void)screenResizeToPixelWidth:(int)width height:(int)height;
 - (void)screenResizeToWidth:(int)width height:(int)height;
+- (void)screenSetSize:(VT100GridSize)proposedSize;
 
 // Sets the window title.
 - (void)screenSetWindowTitle:(NSString * _Nonnull)title;

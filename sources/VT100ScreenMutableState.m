@@ -1198,6 +1198,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalSetRows:(int)rows andColumns:(int)columns {
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetSize:VT100GridSizeMake(rows, columns)];
+        [unpauser unpause];
+    }];
+}
+
+
 - (void)reallySetWidth:(int)width
                 height:(int)height
         preserveScreen:(BOOL)preserveScreen
