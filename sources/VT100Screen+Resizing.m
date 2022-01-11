@@ -37,20 +37,5 @@
     }];
 }
 
-- (void)mutSetWidth:(int)width preserveScreen:(BOOL)preserveScreen {
-    if ([delegate_ screenShouldInitiateWindowResize] &&
-        ![delegate_ screenWindowIsFullscreen]) {
-        // set the column
-        [delegate_ screenResizeToWidth:width
-                                height:_state.currentGrid.size.height];
-        if (!preserveScreen) {
-            [_mutableState eraseInDisplayBeforeCursor:YES afterCursor:YES decProtect:NO];  // erase the screen
-            _mutableState.currentGrid.cursorX = 0;
-            _mutableState.currentGrid.cursorY = 0;
-        }
-    }
-}
-
-
 
 @end

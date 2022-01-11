@@ -1615,7 +1615,7 @@ ITERM_WEAKLY_REFERENCEABLE
             // When restoring a window arrangement with contents and a nonempty saved directory, always
             // use the saved working directory, even if that contravenes the default setting for the
             // profile.
-            [aSession.terminal resetForRelaunch];
+            [aSession resetForRelaunch];
             NSString *oldCWD = arrangement[SESSION_ARRANGEMENT_WORKING_DIRECTORY];
             DLog(@"Running command...");
 
@@ -3078,9 +3078,13 @@ ITERM_WEAKLY_REFERENCEABLE
     [self cleanUpAfterBrokenPipe];
 
     if (_shouldRestart) {
-        [_terminal resetByUserRequest:NO];
-        [self appendBrokenPipeMessage:@"Session Restarted"];
-        [self replaceTerminatedShellWithNewInstance];
+        [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                 VT100ScreenMutableState *mutableState,
+                                                 id<VT100ScreenDelegate> delegate) {
+            [terminal resetByUserRequest:NO];
+            [self appendBrokenPipeMessage:@"Session Restarted"];
+            [self replaceTerminatedShellWithNewInstance];
+        }];
         return;
     }
 
@@ -3163,7 +3167,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_shell setSize:_screen.size
            viewSize:_screen.viewSize
         scaleFactor:self.backingScaleFactor];
-    [_terminal resetForRelaunch];
+    [self resetForRelaunch];
     __weak __typeof(self) weakSelf = self;
     [self startProgram:_program
            environment:_environment
@@ -4303,6 +4307,21 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)popIconTitle {
     NSString *theName = [_nameController popIconTitle];
     [self setIconName:theName ?: [iTermProfilePreferences stringForKey:KEY_NAME inProfile:self.profile]];
+}
+
+- (void)userInitiatedReset {
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [terminal resetByUserRequest:YES];
+    }];
+    [self updateDisplayBecause:@"reset terminal"];
+}
+
+- (void)resetForRelaunch {
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        [terminal resetForRelaunch];
+    }];
 }
 
 - (VT100Terminal *)terminal
@@ -7337,7 +7356,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)setTmuxHistory:(NSArray<NSData *> *)history
             altHistory:(NSArray<NSData *> *)altHistory
                  state:(NSDictionary *)state {
-    [self.terminal resetForTmuxUnpause];
+    __weak __typeof(self) weakSelf = self;
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [weakSelf reallySetTmuxHistory:history
+                            altHistory:altHistory
+                                 state:state
+                              terminal:terminal];
+    }];
+}
+
+- (void)reallySetTmuxHistory:(NSArray<NSData *> *)history
+                  altHistory:(NSArray<NSData *> *)altHistory
+                       state:(NSDictionary *)state
+                    terminal:(VT100Terminal *)terminal {
+    [terminal resetForTmuxUnpause];
     [self clearScrollbackBuffer];
     [_screen setHistory:history];
     [_screen setAltScreen:altHistory];

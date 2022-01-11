@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "VT100ScreenState.h"
+#import "VT100ScreenDelegate.h"
 
 @protocol VT100ScreenConfiguration;
 @protocol iTermOrderedToken;
@@ -81,6 +82,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                           iTermExternalAttribute **eaOut,
                           BOOL eraseAttributes,
                           const screen_char_t *defaultChar);
+
+#pragma mark - Scroll Regions
+
+- (void)setUseColumnScrollRegion:(BOOL)mode;
+- (void)setLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight;
 
 #pragma mark - Character Sets
 

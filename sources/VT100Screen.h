@@ -25,6 +25,7 @@
 @class VT100RemoteHost;
 @class VT100ScreenMark;
 @protocol VT100ScreenConfiguration;
+@class VT100ScreenMutableState;
 @class VT100Terminal;
 @class iTermAsyncFilter;
 @class iTermExpect;
@@ -55,7 +56,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, assign) BOOL allowTitleReporting;
 @property(nonatomic, assign) unsigned int maxScrollbackLines;
 @property(nonatomic, assign) BOOL unlimitedScrollback;
-@property(nonatomic, assign) BOOL useColumnScrollRegion;
+@property(nonatomic, readonly) BOOL useColumnScrollRegion;
 @property(nonatomic, assign) BOOL saveToScrollbackInAlternateScreen;
 // Main thread only! Unlike all other state in VT100Screen, this one is never seen by the screen mutator.
 @property(nonatomic, retain) DVR *dvr;
@@ -270,6 +271,9 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
                        expect:(iTermExpect *)maybeExpect
                 checkTriggers:(BOOL)checkTriggers;
+- (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
+                                                            VT100ScreenMutableState *mutableState,
+                                                            id<VT100ScreenDelegate> delegate))block;
 
 @end
 
