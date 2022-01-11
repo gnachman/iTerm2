@@ -1486,6 +1486,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (void)terminalSetPixelWidth:(int)width height:(int)height {
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetPointSize:NSMakeSize(width, height)];
+        [unpauser unpause];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
