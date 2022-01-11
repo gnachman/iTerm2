@@ -161,9 +161,13 @@
 
 - (void)setTerminal:(VT100Terminal *)terminal {
     [super setTerminal:terminal];
-    _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:terminal
-                                                 slownessDetector:_triggerEvaluator.triggersSlownessDetector
-                                                            queue:_queue];
+    if (terminal) {
+        _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:terminal
+                                                     slownessDetector:_triggerEvaluator.triggersSlownessDetector
+                                                                queue:_queue];
+    } else {
+        _tokenExecutor = nil;
+    }
 }
 
 - (void)setTokenExecutorDelegate:(id)delegate {
