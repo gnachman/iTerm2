@@ -640,15 +640,15 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenDidReset {
 }
 
-- (void)screenPrintString:(NSString *)s {
+- (void)screenPrintStringIfAllowed:(NSString *)s {
     if (!printed_) {
         printed_ = [NSMutableString string];
     }
     [printed_ appendString:s];
 }
 
-- (void)screenPrintVisibleArea {
-    [self screenPrintString:@"(screen dump)"];
+- (void)screenPrintVisibleAreaIfAllowed {
+    [self screenPrintStringIfAllowed:@"(screen dump)"];
 }
 
 - (BOOL)screenIsAppendingToPasteboard {

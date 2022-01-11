@@ -25,7 +25,8 @@
 }
 
 - (BOOL)shouldPrintWithProfile:(Profile *)profile
-                      inWindow:(NSWindow *)window {
+                      inWindow:(NSWindow *)window
+                     willPrint:(BOOL)willPrint {
     if (_printingDisabled) {
         return NO;
     }
@@ -33,7 +34,7 @@
     if (!okByProfile) {
         return NO;
     }
-    if ([self haveTriedToPrintRecently]) {
+    if (willPrint && [self haveTriedToPrintRecently]) {
         iTermWarningSelection selection =
         [iTermWarning showWarningWithTitle:@"There's a lot of printing going on. Want to keep allowing it?"
                                    actions:@[ @"Allow", @"Disable Temporarily", @"Disable Permanently" ]
