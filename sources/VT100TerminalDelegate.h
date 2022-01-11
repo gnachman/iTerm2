@@ -169,7 +169,11 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalSetTabStops:(NSArray<NSNumber *> *)tabStops;
 
 // Tries to resize the screen to |width|.
-- (void)terminalSetWidth:(int)width preserveScreen:(BOOL)preserveScreen;
+- (void)terminalSetWidth:(int)width
+          preserveScreen:(BOOL)preserveScreen
+           updateRegions:(BOOL)updateRegions
+            moveCursorTo:(VT100GridCoord)newCursorCoord
+              completion:(void (^)(void))completion;
 
 // Moves cursor to previous tab stop.
 - (void)terminalBackTab:(int)n;

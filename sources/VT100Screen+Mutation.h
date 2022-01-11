@@ -71,7 +71,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)mutContinueFindResultsInContext:(FindContext *)context
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
-- (void)mutSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight;
 - (void)mutBackTab:(int)n;
 - (void)mutAdvanceCursorPastLastColumn;
 - (void)mutEraseCharactersAfterCursor:(int)j;
@@ -98,7 +97,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutCopyFrom:(VT100GridRect)source to:(VT100GridCoord)dest;
 - (void)mutFillRectangle:(VT100GridRect)rect with:(screen_char_t)c externalAttributes:(iTermExternalAttribute * _Nullable)ea;
 - (void)mutSelectiveEraseRectangle:(VT100GridRect)rect;
-- (void)mutSetUseColumnScrollRegion:(BOOL)mode;
 - (void)mutPopScrollbackLines:(int)linesPushed;
 - (int)mutNumberOfLinesDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid
                                                         encoder:(id<iTermEncoderAdapter>)encoder

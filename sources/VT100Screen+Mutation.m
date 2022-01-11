@@ -417,15 +417,6 @@
     _mutableState.currentGrid.cursor = savedCursor;
 }
 
-- (void)mutSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight {
-    if (_state.currentGrid.useScrollRegionCols) {
-        _mutableState.currentGrid.scrollRegionCols = VT100GridRangeMake(scrollLeft,
-                                                                        scrollRight - scrollLeft + 1);
-        // set cursor to the home position
-        [_mutableState cursorToX:1 Y:1];
-    }
-}
-
 - (void)mutEraseScreenAndRemoveSelection {
     // Unconditionally clear the whole screen, regardless of cursor position.
     // This behavior changed in the Great VT100Grid Refactoring of 2013. Before, clearScreen
@@ -1395,14 +1386,6 @@
     _mutableState.currentGrid.cursor = VT100GridCoordMake(x, y);
 }
 
-- (void)mutSetUseColumnScrollRegion:(BOOL)mode {
-    _mutableState.currentGrid.useScrollRegionCols = mode;
-    self.mutableAltGrid.useScrollRegionCols = mode;
-    if (!mode) {
-        _mutableState.currentGrid.scrollRegionCols = VT100GridRangeMake(0, _state.currentGrid.size.width);
-    }
-}
-
 - (void)mutCopyFrom:(VT100GridRect)source to:(VT100GridCoord)dest {
     id<VT100GridReading> copy = [[_state.currentGrid copy] autorelease];
     const VT100GridSize size = _state.currentGrid.size;
@@ -2170,7 +2153,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetLeftMargin:(int)scrollLeft rightMargin:(int)scrollRight {
-    [self mutSetLeftMargin:scrollLeft rightMargin:scrollRight];
+    [_mutableState terminalSetLeftMargin:scrollLeft rightMargin:scrollRight];
 }
 
 - (void)terminalSetCharset:(int)charset toLineDrawingMode:(BOOL)lineDrawingMode {
@@ -2189,8 +2172,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutRemoveTabStopAtCursor];
 }
 
-- (void)terminalSetWidth:(int)width preserveScreen:(BOOL)preserveScreen {
-    [self mutSetWidth:width preserveScreen:preserveScreen];
+- (void)terminalSetWidth:(int)width
+          preserveScreen:(BOOL)preserveScreen
+           updateRegions:(BOOL)updateRegions
+            moveCursorTo:(VT100GridCoord)newCursorCoord
+              completion:(void (^)(void))completion {
+    [_mutableState terminalSetWidth:width
+                     preserveScreen:preserveScreen
+                      updateRegions:updateRegions
+                       moveCursorTo:newCursorCoord
+                         completion:completion];
 }
 
 - (void)terminalBackTab:(int)n {
@@ -2198,8 +2189,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetCursorX:(int)x {
-    [_mutableState cursorToX:x];
-    [_mutableState clearTriggerLine];
+    [_mutableState terminalSetCursorX:x];
 }
 
 - (void)terminalAdvanceCursorPastLastColumn {
@@ -2207,8 +2197,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetCursorY:(int)y {
-    [_mutableState cursorToY:y];
-    [_mutableState clearTriggerLine];
+    [_mutableState terminalSetCursorY:y];
 }
 
 - (void)terminalEraseCharactersAfterCursor:(int)j {
@@ -2497,7 +2486,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetUseColumnScrollRegion:(BOOL)use {
-    self.useColumnScrollRegion = use;
+    [_mutableState terminalSetUseColumnScrollRegion:use];
 }
 
 - (BOOL)terminalUseColumnScrollRegion {

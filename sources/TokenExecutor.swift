@@ -40,17 +40,21 @@ protocol TokenExecutorDelegate: AnyObject {
 @objc(iTermTokenExecutorUnpauser)
 class Unpauser: NSObject {
     private weak var delegate: UnpauserDelegate?
+    private let mutex = Mutex()
+
     init(_ delegate: UnpauserDelegate) {
         self.delegate = delegate
     }
 
     @objc
     func unpause() {
-        guard let temp = delegate else {
-            return
+        mutex.sync {
+            guard let temp = delegate else {
+                return
+            }
+            delegate = nil
+            temp.unpause()
         }
-        delegate = nil
-        temp.unpause()
     }
 }
 
@@ -227,6 +231,18 @@ class TokenExecutor: NSObject {
         }
     }
 
+    // Any queue
+    @objc
+    func addSideEffect(_ task: @escaping TokenExecutorTask) {
+        impl.addSideEffect(task)
+    }
+
+    @objc
+    func executeSideEffectsImmediately() {
+        dispatchPrecondition(condition: .onQueue(.main))
+        impl.executeSideEffects()
+    }
+
     // This takes ownership of vector.
     // You can only call this on `queue`.
     private func reallyAddTokens(_ vector: CVector, length: Int, highPriority: Bool) {
@@ -283,6 +299,7 @@ private class TokenExecutorImpl {
     private let slownessDetector: iTermSlownessDetector
     private let semaphore: DispatchSemaphore
     private var taskQueue = TaskQueue()
+    private var sideEffects = TaskQueue()
     private let tokenQueue = TwoTierTokenQueue()
     private var pauseCount = 0
     private var executingCount = 0
@@ -340,6 +357,23 @@ private class TokenExecutorImpl {
             }
         }
         schedule()
+    }
+
+    // Any queue
+    func addSideEffect(_ task: @escaping TokenExecutorTask) {
+        sideEffects.append(task)
+        DispatchQueue.main.async { [weak self] in
+            self?.executeSideEffects()
+        }
+    }
+
+    // Main queue
+    func executeSideEffects() {
+        dispatchPrecondition(condition: .onQueue(.main))
+
+        while let task = sideEffects.dequeue() {
+            task()
+        }
     }
 
     private func assertQueue() {

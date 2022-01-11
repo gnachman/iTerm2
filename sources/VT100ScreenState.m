@@ -76,7 +76,6 @@ static const int kDefaultMaxScrollbackLines = 1000;
 @synthesize temporaryDoubleBuffer = _temporaryDoubleBuffer;
 @synthesize fakePromptDetectedAbsLine = _fakePromptDetectedAbsLine;
 @synthesize lastPromptLine = _lastPromptLine;
-@synthesize sideEffects = _sideEffects;
 @synthesize shouldExpectPromptMarks = _shouldExpectPromptMarks;
 @synthesize needsRedraw = _needsRedraw;
 
@@ -100,7 +99,6 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _colorMap = [[iTermColorMap alloc] init];
         _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] init];
         _fakePromptDetectedAbsLine = -1;
-        _sideEffects = [[VT100ScreenSideEffectQueue alloc] init];
     }
     return self;
 }
@@ -170,7 +168,6 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _charsetUsesLineDrawingMode = [source.charsetUsesLineDrawingMode copy];
         _colorMap = [source.colorMap copy];
         _temporaryDoubleBuffer = [source.temporaryDoubleBuffer copy];
-        _sideEffects = [source.sideEffects copy];
     }
     return self;
 }

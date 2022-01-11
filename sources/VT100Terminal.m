@@ -428,7 +428,21 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)resetForRelaunch {
-    [self resetAllowingResize:NO preservePrompt:NO resetParser:YES modifyContent:NO];
+    [self finishResettingParser:YES
+                 preservePrompt:NO
+                  modifyContent:NO];
+}
+
+- (void)setWidth:(int)width
+  preserveScreen:(BOOL)preserveScreen
+   updateRegions:(BOOL)updateRegions
+    moveCursorTo:(VT100GridCoord)newCursorCoord
+      completion:(void (^)(void))completion {
+    [_delegate terminalSetWidth:width
+                 preserveScreen:preserveScreen
+                  updateRegions:updateRegions
+                   moveCursorTo:newCursorCoord
+                     completion:completion];
 }
 
 - (void)resetAllowingResize:(BOOL)canResize
@@ -436,8 +450,26 @@ static const int kMaxScreenRows = 4096;
                 resetParser:(BOOL)resetParser
               modifyContent:(BOOL)modifyContent {
     if (canResize && _columnMode) {
-        [_delegate terminalSetWidth:80 preserveScreen:NO];
+        __weak __typeof(self) weakSelf = self;
+        [self setWidth:80
+        preserveScreen:NO
+        updateRegions:NO
+          moveCursorTo:VT100GridCoordMake(-1, -1)
+            completion:^{
+            [weakSelf finishResettingParser:resetParser
+                             preservePrompt:preservePrompt
+                              modifyContent:modifyContent];
+        }];
+        return;
     }
+    [self finishResettingParser:resetParser
+                 preservePrompt:preservePrompt
+                  modifyContent:modifyContent];
+}
+
+- (void)finishResettingParser:(BOOL)resetParser
+               preservePrompt:(BOOL)preservePrompt
+                modifyContent:(BOOL)modifyContent {
     self.columnMode = NO;
     [self commonReset];
     if (resetParser) {
@@ -447,7 +479,9 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)resetForTmuxUnpause {
-    [self resetAllowingResize:NO preservePrompt:NO resetParser:YES modifyContent:YES];
+    [self finishResettingParser:YES
+                 preservePrompt:NO
+                  modifyContent:YES];
 }
 
 - (void)setWraparoundMode:(BOOL)mode {
@@ -651,16 +685,12 @@ static const int kMaxScreenRows = 4096;
                     self.columnMode = mode;
                     VT100GridCoord coord = VT100GridCoordMake(self.delegate.terminalCursorX,
                                                               self.delegate.terminalCursorY);
-                    [_delegate terminalSetWidth:(self.columnMode ? 132 : 80)
-                                 preserveScreen:!changed || self.preserveScreenOnDECCOLM];
-                    if (changed) {
-                        [_delegate terminalSetUseColumnScrollRegion:NO];
-                        [_delegate terminalSetLeftMargin:0 rightMargin:[_delegate terminalWidth] - 1];
-                        [_delegate terminalSetScrollRegionTop:0
-                                                       bottom:_delegate.terminalHeight - 1];
-                    }
-                    [_delegate terminalSetCursorX:MIN(coord.x, self.delegate.terminalWidth)];
-                    [_delegate terminalSetCursorY:coord.y];
+                    [self setWidth:(self.columnMode ? 132 : 80)
+                    preserveScreen:!changed || self.preserveScreenOnDECCOLM
+                     updateRegions:changed
+                      moveCursorTo:VT100GridCoordMake(MIN(coord.x, self.delegate.terminalWidth),
+                                                      coord.y)
+                        completion:nil];
                 }
                 break;
             case 4:
@@ -4326,8 +4356,11 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
         return;
     }
     self.columnMode = (cols == 132);
-    [_delegate terminalSetWidth:cols
-                 preserveScreen:YES];
+    [self setWidth:cols
+    preserveScreen:YES
+    updateRegions:NO
+      moveCursorTo:VT100GridCoordMake(-1, -1)
+        completion:nil];
 }
 
 - (void)executeDECSNLS:(int)rows {

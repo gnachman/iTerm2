@@ -17,7 +17,6 @@ NS_ASSUME_NONNULL_BEGIN
       visibleLines:(VT100GridRange)previouslyVisibleLineRange
          selection:(iTermSelection *)selection
            hasView:(BOOL)hasView;
-- (void)mutSetWidth:(int)width preserveScreen:(BOOL)preserveScreen;
 
 @end
 

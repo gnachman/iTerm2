@@ -1026,10 +1026,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.currentGrid.useScrollRegionCols;
 }
 
-- (void)setUseColumnScrollRegion:(BOOL)mode {
-    [self mutSetUseColumnScrollRegion:mode];
-}
-
 - (void)blink {
     if ([_state.currentGrid isAnyCharDirty]) {
         [delegate_ screenNeedsRedraw];
@@ -1294,6 +1290,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - Mutation Wrappers
+
+- (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
+                                                            VT100ScreenMutableState *mutableState,
+                                                            id<VT100ScreenDelegate> delegate))block {
+    [_mutableState performBlockWithJoinedThreads:block];
+}
 
 - (void)forceCheckTriggers {
     [self mutForceCheckTriggers];

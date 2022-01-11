@@ -9845,8 +9845,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 // Reset all state associated with the terminal.
 - (void)reset:(id)sender {
-    [[[self currentSession] terminal] resetByUserRequest:YES];
-    [[self currentSession] updateDisplayBecause:@"reset terminal"];
+    [[self currentSession] userInitiatedReset];
 }
 
 - (IBAction)resetCharset:(id)sender
