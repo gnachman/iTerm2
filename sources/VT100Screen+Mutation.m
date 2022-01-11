@@ -2119,23 +2119,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetPixelWidth:(int)width height:(int)height {
-    if ([delegate_ screenShouldInitiateWindowResize] &&
-        ![delegate_ screenWindowIsFullscreen]) {
-        // TODO: Only allow this if there is a single session in the tab.
-        NSRect frame = [delegate_ screenWindowFrame];
-        NSRect screenFrame = [delegate_ screenWindowScreenFrame];
-        if (width < 0) {
-            width = frame.size.width;
-        } else if (width == 0) {
-            width = screenFrame.size.width;
-        }
-        if (height < 0) {
-            height = frame.size.height;
-        } else if (height == 0) {
-            height = screenFrame.size.height;
-        }
-        [delegate_ screenResizeToPixelWidth:width height:height];
-    }
+    [_mutableState terminalSetPixelWidth:width height:height];
 }
 
 - (void)terminalMoveWindowTopLeftPointTo:(NSPoint)point {

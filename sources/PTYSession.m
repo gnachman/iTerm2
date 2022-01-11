@@ -10593,10 +10593,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate sessionInitiatedResize:self width:width height:height];
 }
 
-- (void)screenResizeToPixelWidth:(int)width height:(int)height {
-    [[_delegate realParentWindow] setFrameSize:NSMakeSize(width, height)];
-}
-
 - (void)screenSetSize:(VT100GridSize)proposedSize {
     if (![self screenShouldInitiateWindowResize]) {
         return;
@@ -10637,6 +10633,31 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return result;
 }
 
+- (void)screenSetPointSize:(NSSize)proposedSize {
+    if (![self screenShouldInitiateWindowResize]) {
+        return;
+    }
+    if ([self screenWindowIsFullscreen]) {
+        return;
+    }
+    // TODO: Only allow this if there is a single session in the tab.
+    const NSRect frame = [self screenWindowFrame];
+    const NSRect screenFrame = [self screenWindowScreenFrame];
+    CGFloat width = proposedSize.width;
+    if (width < 0) {
+        width = frame.size.width;
+    } else if (width == 0) {
+        width = screenFrame.size.width;
+    }
+
+    CGFloat height = proposedSize.height;
+    if (height < 0) {
+        height = frame.size.height;
+    } else if (height == 0) {
+        height = screenFrame.size.height;
+    }
+    [[_delegate realParentWindow] setFrameSize:NSMakeSize(width, height)];
+}
 
 - (void)screenPrintStringIfAllowed:(NSString *)string {
     if (![self shouldBeginPrinting:YES]) {
