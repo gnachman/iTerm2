@@ -2390,11 +2390,12 @@ static const int kMaxScreenRows = 4096;
 
             // XTERM extensions
         case XTERMCC_WIN_TITLE:
-            [_delegate terminalSetWindowTitle:[[self sanitizedTitle:token.string] stringByReplacingControlCharactersWithCaretLetter]];
+            [_delegate terminalSetWindowTitle:[[self sanitizedTitle:[self stringBeforeNewline:token.string]] stringByReplacingControlCharactersWithCaretLetter]];
             break;
         case XTERMCC_WINICON_TITLE: {
-            [_delegate terminalSetWindowTitle:[[self sanitizedTitle:token.string] stringByReplacingControlCharactersWithCaretLetter]];
-            [_delegate terminalSetIconTitle:[[self sanitizedTitle:token.string] stringByReplacingControlCharactersWithCaretLetter]];
+            NSString *title = [[self stringBeforeNewline:token.string] stringByReplacingControlCharactersWithCaretLetter];
+            [_delegate terminalSetWindowTitle:title];
+            [_delegate terminalSetIconTitle:title];
             NSString *subtitle = [[self subtitleFromIconTitle:token.string] stringByReplacingControlCharactersWithCaretLetter];
             if (subtitle) {
                 [_delegate terminalSetSubtitle:subtitle];
@@ -2463,7 +2464,7 @@ static const int kMaxScreenRows = 4096;
             [self executeFinalTermToken:token];
             break;
         case XTERMCC_ICON_TITLE: {
-            [_delegate terminalSetIconTitle:[token.string stringByReplacingControlCharactersWithCaretLetter]];
+            [_delegate terminalSetIconTitle:[[self stringBeforeNewline:token.string] stringByReplacingControlCharactersWithCaretLetter]];
             NSString *subtitle = [[self subtitleFromIconTitle:token.string] stringByReplacingControlCharactersWithCaretLetter];
             if (subtitle) {
                 [_delegate terminalSetSubtitle:subtitle];
@@ -4811,6 +4812,15 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     if (dict[kTerminalStateUnicodeVersionStack]) {
         [_unicodeVersionStack addObjectsFromArray:dict[kTerminalStateUnicodeVersionStack]];
     }
+}
+
+- (NSString *)stringBeforeNewline:(NSString *)title {
+    NSCharacterSet *newlinesCharacterSet = [NSCharacterSet characterSetWithCharactersInString:@"\r\n"];
+    NSRange newlineRange = [title rangeOfCharacterFromSet:newlinesCharacterSet];
+    if (newlineRange.location == NSNotFound) {
+        return title;
+    }
+    return [title substringToIndex:newlineRange.location];
 }
 
 - (NSString *)subtitleFromIconTitle:(NSString *)title {

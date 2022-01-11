@@ -1351,6 +1351,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalSetSubtitle:(NSString *)subtitle {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        if ([delegate screenAllowTitleSetting]) {
+            [delegate screenSetSubtitle:subtitle];
+        }
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
