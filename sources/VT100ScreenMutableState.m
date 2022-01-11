@@ -1507,6 +1507,18 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalMiniaturize:(BOOL)mini {
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        // TODO: Only allow this if there is a single session in the tab.
+        if ([delegate screenShouldInitiateWindowResize] &&
+            ![delegate screenWindowIsFullscreen]) {
+            [delegate screenMiniaturizeWindow:mini];
+        }
+        [unpauser unpause];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
