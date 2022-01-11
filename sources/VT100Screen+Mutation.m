@@ -1061,28 +1061,6 @@
     [_mutableState appendLineFeed];
 }
 
-- (void)mutInsertBlankLinesAfterCursor:(int)n {
-    VT100GridRect scrollRegionRect = [_state.currentGrid scrollRegionRect];
-    if (scrollRegionRect.origin.x + scrollRegionRect.size.width == _state.currentGrid.size.width) {
-        // Cursor can be in right margin and still be considered in the scroll region if the
-        // scroll region abuts the right margin.
-        scrollRegionRect.size.width++;
-    }
-    BOOL cursorInScrollRegion = VT100GridCoordInRect(_state.currentGrid.cursor, scrollRegionRect);
-    if (cursorInScrollRegion) {
-        // xterm appears to ignore INSLN if the cursor is outside the scroll region.
-        // See insln-* files in tests/.
-        int top = _state.currentGrid.cursorY;
-        int left = _state.currentGrid.leftMargin;
-        int width = _state.currentGrid.rightMargin - _state.currentGrid.leftMargin + 1;
-        int height = _state.currentGrid.bottomMargin - top + 1;
-        [_mutableState.currentGrid scrollRect:VT100GridRectMake(left, top, width, height)
-                                       downBy:n
-                                    softBreak:NO];
-        [_mutableState clearTriggerLine];
-    }
-}
-
 - (void)mutDeleteCharactersAtCursor:(int)n {
     [_mutableState.currentGrid deleteChars:n startingAt:_state.currentGrid.cursor];
     [_mutableState clearTriggerLine];
@@ -2152,7 +2130,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalInsertBlankLinesAfterCursor:(int)n {
-    [self mutInsertBlankLinesAfterCursor:n];
+    [_mutableState terminalInsertBlankLinesAfterCursor:n];
 }
 
 - (void)terminalDeleteCharactersAtCursor:(int)n {
