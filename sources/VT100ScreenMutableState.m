@@ -1459,6 +1459,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (void)terminalDeleteCharactersAtCursor:(int)n {
+    [self.currentGrid deleteChars:n startingAt:self.currentGrid.cursor];
+    [self clearTriggerLine];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

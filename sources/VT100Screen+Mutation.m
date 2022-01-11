@@ -1061,11 +1061,6 @@
     [_mutableState appendLineFeed];
 }
 
-- (void)mutDeleteCharactersAtCursor:(int)n {
-    [_mutableState.currentGrid deleteChars:n startingAt:_state.currentGrid.cursor];
-    [_mutableState clearTriggerLine];
-}
-
 - (void)mutDeleteLinesAtCursor:(int)n {
     if (n <= 0) {
         return;
@@ -2134,7 +2129,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalDeleteCharactersAtCursor:(int)n {
-    [self mutDeleteCharactersAtCursor:n];
+    [_mutableState terminalDeleteCharactersAtCursor:n];
 }
 
 - (void)terminalDeleteLinesAtCursor:(int)n {
