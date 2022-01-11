@@ -1219,6 +1219,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self removeTabStopAtCursor];
 }
 
+- (void)terminalBackTab:(int)n {
+    [self backTab:n];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
@@ -1352,6 +1356,23 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)removeTabStopAtCursor {
     if (self.currentGrid.cursorX < self.currentGrid.size.width) {
         [self.tabStops removeObject:@(self.currentGrid.cursorX)];
+    }
+}
+
+- (BOOL)haveTabStopAt:(int)x {
+    return [self.tabStops containsObject:@(x)];
+}
+
+- (void)backTab:(int)n {
+    for (int i = 0; i < n; i++) {
+        // TODO: respect left-right margins
+        if (self.currentGrid.cursorX > 0) {
+            self.currentGrid.cursorX = self.currentGrid.cursorX - 1;
+            while (![self haveTabStopAt:self.currentGrid.cursorX] && self.currentGrid.cursorX > 0) {
+                self.currentGrid.cursorX = self.currentGrid.cursorX - 1;
+            }
+            [self clearTriggerLine];
+        }
     }
 }
 
