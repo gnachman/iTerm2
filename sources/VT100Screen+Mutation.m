@@ -1067,23 +1067,6 @@
 }
 
 
-- (void)mutBackTab:(int)n {
-    for (int i = 0; i < n; i++) {
-        // TODO: respect left-right margins
-        if (_state.currentGrid.cursorX > 0) {
-            _mutableState.currentGrid.cursorX = _state.currentGrid.cursorX - 1;
-            while (![self haveTabStopAt:_state.currentGrid.cursorX] && _state.currentGrid.cursorX > 0) {
-                _mutableState.currentGrid.cursorX = _state.currentGrid.cursorX - 1;
-            }
-            [_mutableState clearTriggerLine];
-        }
-    }
-}
-
-- (BOOL)haveTabStopAt:(int)x {
-    return [_state.tabStops containsObject:[NSNumber numberWithInt:x]];
-}
-
 - (void)mutAdvanceCursorPastLastColumn {
     if (_state.currentGrid.cursorX == _mutableState.width - 1) {
         _mutableState.currentGrid.cursorX = _mutableState.width;
@@ -2179,7 +2162,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalBackTab:(int)n {
-    [self mutBackTab:n];
+    [_mutableState terminalBackTab:n];
 }
 
 - (void)terminalSetCursorX:(int)x {
