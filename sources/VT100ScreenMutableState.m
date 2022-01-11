@@ -1427,6 +1427,16 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.currentGrid moveContentLeft:n];
 }
 
+- (void)terminalShiftRight:(int)n {
+    if (n < 1) {
+        return;
+    }
+    if (self.cursorOutsideLeftRightMargin || self.cursorOutsideTopBottomMargin) {
+        return;
+    }
+    [self.currentGrid moveContentRight:n];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
