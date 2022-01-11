@@ -1061,27 +1061,11 @@
     [_mutableState appendLineFeed];
 }
 
-- (BOOL)cursorOutsideTopBottomMargin {
-    return (_state.currentGrid.cursorY < _state.currentGrid.topMargin ||
-            _state.currentGrid.cursorY > _state.currentGrid.bottomMargin);
-}
-
-
-- (void)mutShiftLeft:(int)n {
-    if (n < 1) {
-        return;
-    }
-    if (_state.cursorOutsideLeftRightMargin || [self cursorOutsideTopBottomMargin]) {
-        return;
-    }
-    [_mutableState.currentGrid moveContentLeft:n];
-}
-
 - (void)mutShiftRight:(int)n {
     if (n < 1) {
         return;
     }
-    if (_state.cursorOutsideLeftRightMargin || [self cursorOutsideTopBottomMargin]) {
+    if (_state.cursorOutsideLeftRightMargin || _state.cursorOutsideTopBottomMargin) {
         return;
     }
     [_mutableState.currentGrid moveContentRight:n];
@@ -1158,7 +1142,7 @@
 }
 
 - (void)mutInsertColumns:(int)n {
-    if (_state.cursorOutsideLeftRightMargin || [self cursorOutsideTopBottomMargin]) {
+    if (_state.cursorOutsideLeftRightMargin || _state.cursorOutsideTopBottomMargin) {
         return;
     }
     if (n <= 0) {
@@ -1173,7 +1157,7 @@
 }
 
 - (void)mutDeleteColumns:(int)n {
-    if (_state.cursorOutsideLeftRightMargin || [self cursorOutsideTopBottomMargin]) {
+    if (_state.cursorOutsideLeftRightMargin || _state.cursorOutsideTopBottomMargin) {
         return;
     }
     if (n <= 0) {
@@ -2170,7 +2154,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalShiftLeft:(int)n {
-    [self mutShiftLeft:n];
+    [_mutableState terminalShiftLeft:n];
 }
 
 - (void)terminalShiftRight:(int)n {

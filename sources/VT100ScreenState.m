@@ -199,6 +199,12 @@ static const int kDefaultMaxScrollbackLines = 1000;
                                                      self.currentGrid.cursorX > self.currentGrid.rightMargin));
 }
 
+- (BOOL)cursorOutsideTopBottomMargin {
+    return (self.currentGrid.cursorY < self.currentGrid.topMargin ||
+            self.currentGrid.cursorY > self.currentGrid.bottomMargin);
+}
+
+
 - (int)lineNumberOfCursor {
     return self.numberOfLines - self.height + self.currentGrid.cursorY;
 }
