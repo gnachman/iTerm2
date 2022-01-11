@@ -10597,6 +10597,47 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[_delegate realParentWindow] setFrameSize:NSMakeSize(width, height)];
 }
 
+- (void)screenSetSize:(VT100GridSize)proposedSize {
+    if (![self screenShouldInitiateWindowResize]) {
+        return;
+    }
+    if ([[_delegate parentWindow] anyFullScreen]) {
+        return;
+    }
+    int rows = proposedSize.width;
+    const VT100GridSize windowSize = [self windowSizeInCells];
+    if (rows == -1) {
+        rows = _screen.height;
+    } else if (rows == 0) {
+        rows = windowSize.height;
+    }
+
+    int columns = proposedSize.height;
+    if (columns == -1) {
+        columns = _screen.width;
+    } else if (columns == 0) {
+        columns = windowSize.width;
+    }
+    [_delegate sessionInitiatedResize:self width:columns height:rows];
+}
+
+- (VT100GridSize)windowSizeInCells {
+    VT100GridSize result;
+    const NSRect screenFrame = [self screenWindowScreenFrame];
+    const NSRect windowFrame = [self screenWindowFrame];
+    const NSSize cellSize = [self screenCellSize];
+    {
+        const CGFloat roomToGrow = screenFrame.size.height - windowFrame.size.height;
+        result.height = round(_screen.height + roomToGrow / cellSize.height);
+    }
+    {
+        const CGFloat roomToGrow = screenFrame.size.width - windowFrame.size.width;
+        result.width = round(_screen.width + roomToGrow / cellSize.width);
+    }
+    return result;
+}
+
+
 - (void)screenPrintStringIfAllowed:(NSString *)string {
     if (![self shouldBeginPrinting:YES]) {
         return;
