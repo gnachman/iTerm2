@@ -2145,9 +2145,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalPrintBuffer {
-    if ([delegate_ screenShouldBeginPrinting] && [_state.printBuffer length] > 0) {
-        [self doPrint];
-    }
+    [_mutableState terminalPrintBuffer];
 }
 
 - (void)terminalBeginRedirectingToPrintBuffer {
@@ -2159,12 +2157,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalPrintScreen {
-    if ([delegate_ screenShouldBeginPrinting]) {
-        // Print out the whole screen
-        _mutableState.printBuffer = nil;
-        _mutableState.collectInputForPrinting = NO;
-        [self doPrint];
-    }
+    [_mutableState terminalPrintScreen];
 }
 
 - (void)terminalSetWindowTitle:(NSString *)title {
@@ -3425,18 +3418,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (VT100TerminalProtectedMode)terminalProtectedMode {
     return _state.protectedMode;
-}
-
-#pragma mark - Printing
-
-- (void)doPrint {
-    if ([_state.printBuffer length] > 0) {
-        [delegate_ screenPrintString:_state.printBuffer];
-    } else {
-        [delegate_ screenPrintVisibleArea];
-    }
-    _mutableState.printBuffer = nil;
-    _mutableState.collectInputForPrinting = NO;
 }
 
 #pragma mark - iTermMarkDelegate

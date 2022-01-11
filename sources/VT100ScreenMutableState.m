@@ -1270,6 +1270,31 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self eraseCharactersAfterCursor:j];
 }
 
+- (void)terminalPrintBuffer {
+    if (self.printBuffer.length == 0) {
+        return;
+    }
+    NSString *string = [self.printBuffer copy];
+    self.printBuffer = nil;
+    self.collectInputForPrinting = NO;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenPrintStringIfAllowed:string];
+    }];
+}
+
+- (void)terminalPrintScreen {
+    // Print out the whole screen
+    self.printBuffer = nil;
+    self.collectInputForPrinting = NO;
+
+    // Pause so we print the current state and not future updates.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenPrintVisibleAreaIfAllowed];
+        [unpauser unpause];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

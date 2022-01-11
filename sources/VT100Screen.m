@@ -1314,6 +1314,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (maybeExpect) {
         [_mutableState updateExpectFrom:maybeExpect];
     }
+#warning TODO: _state = [_mutableState copy]
 }
 
 - (void)performPeriodicTriggerCheck {

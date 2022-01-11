@@ -10597,11 +10597,27 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[_delegate realParentWindow] setFrameSize:NSMakeSize(width, height)];
 }
 
-- (BOOL)screenShouldBeginPrinting {
+- (void)screenPrintStringIfAllowed:(NSString *)string {
+    if (![self shouldBeginPrinting:YES]) {
+        return;
+    }
+    if (string.length > 0) {
+        [[self textview] printContent:string];
+    }
+}
+
+- (BOOL)shouldBeginPrinting:(BOOL)willPrint {
     if (!_printGuard) {
         _printGuard = [[iTermPrintGuard alloc] init];
     }
-    return [_printGuard shouldPrintWithProfile:self.profile inWindow:self.view.window];
+    return [_printGuard shouldPrintWithProfile:self.profile
+                                      inWindow:self.view.window
+                                     willPrint:willPrint];
+}
+
+#warning TODO: Remove this
+- (BOOL)screenShouldBeginPrinting {
+    return [self shouldBeginPrinting:NO];
 }
 
 - (void)screenSetWindowTitle:(NSString *)title {
@@ -10773,12 +10789,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_textview updateNoteViewFrames];
 }
 
-- (void)screenPrintString:(NSString *)string {
-    [[self textview] printContent:string];
-}
-
-- (void)screenPrintVisibleArea {
-    [[self textview] print:nil];
+- (void)screenPrintVisibleAreaIfAllowed {
+    if (![self shouldBeginPrinting:YES]) {
+        return;
+    }
+    // Cause mutableState to be copied to state so we print what the app thinks it's printing.
+    [_textview refresh];
+    [_textview print:nil];
 }
 
 - (BOOL)screenShouldSendContentsChangedNotification {

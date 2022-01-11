@@ -178,10 +178,10 @@
                             quell:(BOOL)quell;
 
 // Request that a string be sent for printing.
-- (void)screenPrintString:(NSString * _Nonnull)string;
+- (void)screenPrintStringIfAllowed:(NSString *)printBuffer;
 
 // Request that the currently visible area of the screen be sent for printing.
-- (void)screenPrintVisibleArea;
+- (void)screenPrintVisibleAreaIfAllowed;
 
 // Returns if iTermTabContentsChanged notifications should be published when the view is updated.
 - (BOOL)screenShouldSendContentsChangedNotification;
