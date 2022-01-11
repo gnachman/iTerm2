@@ -1529,6 +1529,16 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalScrollDown:(int)n {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenRemoveSelection];
+    }];
+    [self.currentGrid scrollRect:[self.currentGrid scrollRegionRect]
+                          downBy:MIN(self.currentGrid.size.height, n)
+                       softBreak:NO];
+    [self clearTriggerLine];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
