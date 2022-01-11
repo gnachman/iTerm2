@@ -1067,13 +1067,6 @@
 }
 
 
-- (void)mutInsertEmptyCharsAtCursor:(int)n {
-    [_mutableState.currentGrid insertChar:[_state.currentGrid defaultChar]
-                       externalAttributes:nil
-                                       at:_state.currentGrid.cursor
-                                    times:n];
-}
-
 - (void)mutShiftLeft:(int)n {
     if (n < 1) {
         return;
@@ -2173,7 +2166,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalInsertEmptyCharsAtCursor:(int)n {
-    [self mutInsertEmptyCharsAtCursor:n];
+    [_mutableState terminalInsertEmptyCharsAtCursor:n];
 }
 
 - (void)terminalShiftLeft:(int)n {

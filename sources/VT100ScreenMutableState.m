@@ -1401,6 +1401,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.pasteboardString = nil;
 }
 
+- (void)terminalInsertEmptyCharsAtCursor:(int)n {
+    [self.currentGrid insertChar:[self.currentGrid defaultChar]
+              externalAttributes:nil
+                              at:self.currentGrid.cursor
+                           times:n];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
