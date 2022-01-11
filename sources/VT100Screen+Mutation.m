@@ -2157,30 +2157,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetWindowTitle:(NSString *)title {
-    DLog(@"terminalSetWindowTitle:%@", title);
-
-    if ([delegate_ screenAllowTitleSetting]) {
-        [delegate_ screenSetWindowTitle:title];
-    }
-
-    // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
-    // changes shouldn't override CurrentDirectory.
-    if (![self remoteHostOnLine:_mutableState.numberOfScrollbackLines + _mutableState.height]) {
-        DLog(@"Don't have a remote host, so changing working directory");
-        // TODO: There's a bug here where remote host can scroll off the end of history, causing the
-        // working directory to come from PTYTask (which is what happens when nil is passed here).
-        //
-        // NOTE: Even though this is kind of a pull, it happens at a good
-        // enough rate (not too common, not too rare when part of a prompt)
-        // that I'm comfortable calling it a push. I want it to do things like
-        // update the list of recently used directories.
-        [_mutableState setWorkingDirectory:nil
-                                 onAbsLine:[self lineNumberOfCursor] + _mutableState.cumulativeScrollbackOverflow
-                                    pushed:YES
-                                     token:[_mutableState.setWorkingDirectoryOrderEnforcer newToken]];
-    } else {
-        DLog(@"Already have a remote host so not updating working directory because of title change");
-    }
+    [_mutableState terminalSetWindowTitle:title];
 }
 
 - (void)terminalSetIconTitle:(NSString *)title {

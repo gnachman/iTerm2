@@ -435,9 +435,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.cumulativeScrollbackOverflow + _state.numberOfLines - _state.height + _state.currentGrid.cursorY;
 }
 
-- (int)lineNumberOfCursor
-{
-    return _state.numberOfLines - _state.height + _state.currentGrid.cursorY;
+- (int)lineNumberOfCursor {
+    return _state.lineNumberOfCursor;
 }
 
 - (BOOL)continueFindAllResults:(NSMutableArray<SearchResult *> *)results
