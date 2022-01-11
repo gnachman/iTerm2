@@ -1067,37 +1067,6 @@
 }
 
 
-- (void)mutEraseCharactersAfterCursor:(int)j {
-    if (_state.currentGrid.cursorX < _state.currentGrid.size.width) {
-        if (j <= 0) {
-            return;
-        }
-
-        switch (_state.protectedMode) {
-            case VT100TerminalProtectedModeNone:
-            case VT100TerminalProtectedModeDEC: {
-                // Do not honor protected mode.
-                int limit = MIN(_state.currentGrid.cursorX + j, _state.currentGrid.size.width);
-                [_mutableState.currentGrid setCharsFrom:VT100GridCoordMake(_state.currentGrid.cursorX, _state.currentGrid.cursorY)
-                                                     to:VT100GridCoordMake(limit - 1, _state.currentGrid.cursorY)
-                                                 toChar:[_state.currentGrid defaultChar]
-                                     externalAttributes:nil];
-                // TODO: This used to always set the continuation mark to hard, but I think it should only do that if the last char in the line is erased.
-                [_mutableState clearTriggerLine];
-                break;
-            }
-            case VT100TerminalProtectedModeISO:
-                // honor protected mode.
-                [_mutableState selectiveEraseRange:VT100GridCoordRangeMake(_state.currentGrid.cursorX,
-                                                                           _state.currentGrid.cursorY,
-                                                                           MIN(_state.currentGrid.size.width, _state.currentGrid.cursorX + j),
-                                                                           _state.currentGrid.cursorY)
-                                   eraseAttributes:YES];
-                break;
-        }
-    }
-}
-
 - (void)mutInsertEmptyCharsAtCursor:(int)n {
     [_mutableState.currentGrid insertChar:[_state.currentGrid defaultChar]
                        externalAttributes:nil
@@ -2172,7 +2141,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalEraseCharactersAfterCursor:(int)j {
-    [self mutEraseCharactersAfterCursor:j];
+    [_mutableState terminalEraseCharactersAfterCursor:j];
 }
 
 - (void)terminalPrintBuffer {
