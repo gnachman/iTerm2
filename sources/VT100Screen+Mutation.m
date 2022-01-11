@@ -2131,9 +2131,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRaise:(BOOL)raise {
-    if ([delegate_ screenShouldInitiateWindowResize]) {
-        [delegate_ screenRaise:raise];
-    }
+    [_mutableState terminalRaise:raise];
 }
 
 - (void)terminalScrollDown:(int)n {
