@@ -2651,16 +2651,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalBeginCopyToPasteboard {
-    [delegate_ screenTerminalAttemptedPasteboardAccess];
-    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
-        _mutableState.pasteboardString = [[[NSMutableString alloc] init] autorelease];
-    }
+    [_mutableState terminalBeginCopyToPasteboard];
 }
 
 - (void)terminalDidReceiveBase64PasteboardString:(NSString *)string {
-    if ([iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
-        [_mutableState.pasteboardString appendString:string];
-    }
+    [_mutableState terminalDidReceiveBase64PasteboardString:string];
 }
 
 - (void)terminalDidFinishReceivingPasteboard {

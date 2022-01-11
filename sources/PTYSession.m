@@ -11818,6 +11818,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.printingAllowed = printingAllowed;
         dirty = YES;
     }
+    const BOOL clipboardAccessAllowed = [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
+    if (clipboardAccessAllowed != _config.clipboardAccessAllowed) {
+        _config.clipboardAccessAllowed = clipboardAccessAllowed;
+        dirty = YES;
+    }
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                            inProfile:_profile];

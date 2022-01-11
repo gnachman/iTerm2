@@ -1365,6 +1365,21 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalBeginCopyToPasteboard {
+    if (self.config.clipboardAccessAllowed) {
+        self.pasteboardString = [[NSMutableString alloc] init];
+    }
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenTerminalAttemptedPasteboardAccess];
+    }];
+}
+
+- (void)terminalDidReceiveBase64PasteboardString:(NSString *)string {
+    if (self.config.clipboardAccessAllowed) {
+        [self.pasteboardString appendString:string];
+    }
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
