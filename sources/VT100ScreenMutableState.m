@@ -1494,6 +1494,19 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalMoveWindowTopLeftPointTo:(NSPoint)point {
+    // Pause because you can query for window location.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        if ([delegate screenShouldInitiateWindowResize] &&
+            ![delegate screenWindowIsFullscreen]) {
+            // TODO: Only allow this if there is a single session in the tab.
+            [delegate screenMoveWindowTopLeftPointTo:point];
+            [unpauser unpause];
+        }
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
