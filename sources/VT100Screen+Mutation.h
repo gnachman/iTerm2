@@ -71,7 +71,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)mutContinueFindResultsInContext:(FindContext *)context
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
-- (void)mutAdvanceCursorPastLastColumn;
 - (void)mutEraseCharactersAfterCursor:(int)j;
 - (void)mutInsertEmptyCharsAtCursor:(int)n;
 - (void)mutShiftLeft:(int)n;
