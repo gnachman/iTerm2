@@ -1410,12 +1410,6 @@
     [_mutableState.tabStops removeAllObjects];
 }
 
-- (void)mutRemoveTabStopAtCursor {
-    if (_state.currentGrid.cursorX < _state.currentGrid.size.width) {
-        [_mutableState.tabStops removeObject:[NSNumber numberWithInt:_state.currentGrid.cursorX]];
-    }
-}
-
 - (void)mutSetTabStops:(NSArray<NSNumber *> *)tabStops {
     [_mutableState.tabStops removeAllObjects];
     [tabStops enumerateObjectsUsingBlock:^(NSNumber * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -2169,7 +2163,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRemoveTabStopAtCursor {
-    [self mutRemoveTabStopAtCursor];
+    [_mutableState terminalRemoveTabStopAtCursor];
 }
 
 - (void)terminalSetWidth:(int)width

@@ -1215,6 +1215,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self clearTriggerLine];
 }
 
+- (void)terminalRemoveTabStopAtCursor {
+    [self removeTabStopAtCursor];
+}
 
 #pragma mark - Tabs
 
@@ -1343,6 +1346,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)setTabStopAtCursor {
     if (self.currentGrid.cursorX < self.currentGrid.size.width) {
         [self.tabStops addObject:[NSNumber numberWithInt:self.currentGrid.cursorX]];
+    }
+}
+
+- (void)removeTabStopAtCursor {
+    if (self.currentGrid.cursorX < self.currentGrid.size.width) {
+        [self.tabStops removeObject:@(self.currentGrid.cursorX)];
     }
 }
 
