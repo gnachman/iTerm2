@@ -2650,12 +2650,12 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         _textview.dataSource = _screen;
         _textview.delegate = self;
+        _screen.terminal = _terminal;
         _screen.delegate = self;
+        _terminal.delegate = _screen;
         if ([iTermAdvancedSettingsModel showLocationsInScrollbar]) {
             _screen.intervalTreeObserver = self;
         }
-        _screen.terminal = _terminal;
-        _terminal.delegate = _screen;
         _shell.paused = NO;
         [_view setFindDriverDelegate:self];
 
