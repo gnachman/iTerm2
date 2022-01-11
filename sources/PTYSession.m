@@ -12671,7 +12671,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     // set the result to paste board.
     NSPasteboard *thePasteboard = [NSPasteboard generalPasteboard];
-    [thePasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+    [thePasteboard clearContents];
+    [thePasteboard declareTypes:@[ NSPasteboardTypeString ] owner:nil];
     [thePasteboard setString:string forType:NSPasteboardTypeString];
 }
 

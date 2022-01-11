@@ -2659,23 +2659,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalDidFinishReceivingPasteboard {
-    if (_state.pasteboardString && [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
-        NSData *data = [NSData dataWithBase64EncodedString:_state.pasteboardString];
-        if (data) {
-            NSString *string = [[[NSString alloc] initWithData:data encoding:_state.terminal.encoding] autorelease];
-            if (!string) {
-                string = [[[NSString alloc] initWithData:data encoding:[NSString defaultCStringEncoding]] autorelease];
-            }
-
-            if (string) {
-                NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-                [pboard clearContents];
-                [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
-                [pboard setString:string forType:NSPasteboardTypeString];
-            }
-        }
-    }
-    _mutableState.pasteboardString = nil;
+    [_mutableState terminalDidFinishReceivingPasteboard];
 }
 
 - (void)terminalPasteboardReceiptEndedUnexpectedly {
