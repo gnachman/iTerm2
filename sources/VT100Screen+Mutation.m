@@ -2168,17 +2168,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [_mutableState terminalSetSubtitle:subtitle];
 }
 
-- (void)terminalPasteString:(NSString *)string {
-    [delegate_ screenTerminalAttemptedPasteboardAccess];
-    // check the configuration
-    if (![iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
-        return;
-    }
-
-    // set the result to paste board.
-    NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
-    [thePasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
-    [thePasteboard setString:string forType:NSPasteboardTypeString];
+- (void)terminalCopyStringToPasteboard:(NSString *)string {
+    [_mutableState terminalCopyStringToPasteboard:string];
 }
 
 - (void)terminalInsertEmptyCharsAtCursor:(int)n {

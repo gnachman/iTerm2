@@ -1359,6 +1359,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalCopyStringToPasteboard:(NSString *)string {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenCopyStringToPasteboard:string];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
