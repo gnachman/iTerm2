@@ -1067,12 +1067,6 @@
 }
 
 
-- (void)mutAdvanceCursorPastLastColumn {
-    if (_state.currentGrid.cursorX == _mutableState.width - 1) {
-        _mutableState.currentGrid.cursorX = _mutableState.width;
-    }
-}
-
 - (void)mutEraseCharactersAfterCursor:(int)j {
     if (_state.currentGrid.cursorX < _state.currentGrid.size.width) {
         if (j <= 0) {
@@ -2170,7 +2164,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalAdvanceCursorPastLastColumn {
-    [self mutAdvanceCursorPastLastColumn];
+    [_mutableState terminalAdvanceCursorPastLastColumn];
 }
 
 - (void)terminalSetCursorY:(int)y {

@@ -545,6 +545,12 @@
     self.currentGrid.cursorY = yPos;
 }
 
+- (void)advanceCursorPastLastColumn {
+    if (self.currentGrid.cursorX == self.width - 1) {
+        self.currentGrid.cursorX = self.width;
+    }
+}
+
 - (void)setScrollRegionTop:(int)top bottom:(int)bottom {
     if (top >= 0 &&
         top < self.currentGrid.size.height &&
@@ -1221,6 +1227,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)terminalBackTab:(int)n {
     [self backTab:n];
+}
+
+- (void)terminalAdvanceCursorPastLastColumn {
+    [self advanceCursorPastLastColumn];
 }
 
 #pragma mark - Tabs
