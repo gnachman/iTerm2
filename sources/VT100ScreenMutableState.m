@@ -1437,6 +1437,28 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.currentGrid moveContentRight:n];
 }
 
+- (void)terminalInsertBlankLinesAfterCursor:(int)n {
+    VT100GridRect scrollRegionRect = [self.currentGrid scrollRegionRect];
+    if (scrollRegionRect.origin.x + scrollRegionRect.size.width == self.currentGrid.size.width) {
+        // Cursor can be in right margin and still be considered in the scroll region if the
+        // scroll region abuts the right margin.
+        scrollRegionRect.size.width++;
+    }
+    BOOL cursorInScrollRegion = VT100GridCoordInRect(self.currentGrid.cursor, scrollRegionRect);
+    if (cursorInScrollRegion) {
+        // xterm appears to ignore INSLN if the cursor is outside the scroll region.
+        // See insln-* files in tests/.
+        int top = self.currentGrid.cursorY;
+        int left = self.currentGrid.leftMargin;
+        int width = self.currentGrid.rightMargin - self.currentGrid.leftMargin + 1;
+        int height = self.currentGrid.bottomMargin - top + 1;
+        [self.currentGrid scrollRect:VT100GridRectMake(left, top, width, height)
+                              downBy:n
+                           softBreak:NO];
+        [self clearTriggerLine];
+    }
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
