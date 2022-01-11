@@ -2406,7 +2406,7 @@ static const int kMaxScreenRows = 4096;
             if (token.string) {
                 NSString *decoded = [self decodedBase64PasteCommand:token.string];
                 if (decoded) {
-                    [_delegate terminalPasteString:decoded];
+                    [_delegate terminalCopyStringToPasteboard:decoded];
                 }
             }
             break;

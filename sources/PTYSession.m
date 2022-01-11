@@ -12404,12 +12404,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                      style:kiTermAnnouncementViewStyleWarning
                                                withActions:@[ @"_Open Prefs", @"Don't Show This Again" ]
                                                 completion:^(int selection) {
-                                                    if (selection == 0) {
-                                                        [[[iTermApplication sharedApplication] delegate] showPrefWindow:nil];
-                                                    } else if (selection == 1) {
-                                                        [iTermAdvancedSettingsModel setNoSyncSuppressClipboardAccessDeniedWarning:YES];
-                                                    }
-                                                }];
+        if (selection == 0) {
+            [[PreferencePanel sharedInstance] openToPreferenceWithKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
+        } else if (selection == 1) {
+            [iTermAdvancedSettingsModel setNoSyncSuppressClipboardAccessDeniedWarning:YES];
+        }
+    }];
     [self queueAnnouncement:announcement identifier:identifier];
 }
 
@@ -12655,6 +12655,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (int)screenMaximumTheoreticalImageDimension {
     return PTYSessionMaximumMetalViewSize;
+}
+
+- (void)screenCopyStringToPasteboard:(NSString *)string {
+    [self screenTerminalAttemptedPasteboardAccess];
+    // check the configuration
+    if (![iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal]) {
+        return;
+    }
+
+    // set the result to paste board.
+    NSPasteboard *thePasteboard = [NSPasteboard generalPasteboard];
+    [thePasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+    [thePasteboard setString:string forType:NSPasteboardTypeString];
 }
 
 - (void)screenOfferToDisableTriggersInInteractiveApps {
