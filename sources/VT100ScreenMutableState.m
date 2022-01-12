@@ -1913,6 +1913,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self clearBufferSavingPrompt:YES];
 }
 
+- (void)terminalProfileShouldChangeTo:(NSString *)value {
+    [self forceCheckTriggers];
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetProfileToProfileNamed:value];
+        [unpauser unpause];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
