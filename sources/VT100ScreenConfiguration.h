@@ -35,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL printingAllowed;
 @property (nonatomic, readonly) VT100GridSize theoreticalGridSize;
 @property (nonatomic, readonly) NSString *iconTitle;
+@property (nonatomic, readonly) NSString *windowTitle;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -60,6 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) NSRect windowFrame;
 @property (nonatomic, readwrite) VT100GridSize theoreticalGridSize;
 @property (nonatomic, copy, readwrite) NSString *iconTitle;
+@property (nonatomic, copy, readwrite) NSString *windowTitle;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 

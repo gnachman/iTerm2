@@ -1581,7 +1581,19 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (NSString *)terminalIconTitle {
-    return _config.iconTitle ?: @"";
+    if (self.allowTitleReporting && [self terminalIsTrusted]) {
+        return _config.iconTitle ?: @"";
+    } else {
+        return @"";
+    }
+}
+
+- (NSString *)terminalWindowTitle {
+    if (self.allowTitleReporting && [self terminalIsTrusted]) {
+        return _config.windowTitle ?: @"";
+    } else {
+        return @"";
+    }
 }
 
 #pragma mark - Tabs

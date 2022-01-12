@@ -2150,11 +2150,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)terminalWindowTitle {
-    if (_state.allowTitleReporting && [self terminalIsTrusted]) {
-        return [delegate_ screenWindowTitle] ? [delegate_ screenWindowTitle] : @"";
-    } else {
-        return @"";
-    }
+    return [_mutableState terminalWindowTitle];
 }
 
 - (void)terminalPushCurrentTitleForWindow:(BOOL)isWindow {
@@ -2519,9 +2515,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalIsTrusted {
-    const BOOL result = ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences];
-    DLog(@"terminalIsTrusted returning %@", @(result));
-    return result;
+    return _state.terminalIsTrusted;
 }
 
 - (BOOL)terminalCanUseDECRQCRA {

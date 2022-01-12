@@ -25,6 +25,7 @@
 @property (nonatomic, readwrite) NSRect windowFrame;
 @property (nonatomic, readwrite) VT100GridSize theoreticalGridSize;
 @property (nonatomic, copy, readwrite) NSString *iconTitle;
+@property (nonatomic, copy, readwrite) NSString *windowTitle;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -44,6 +45,7 @@
 @synthesize windowFrame = _windowFrame;
 @synthesize theoreticalGridSize = _theoreticalGridSize;
 @synthesize iconTitle = _iconTitle;
+@synthesize windowTitle = _windowTitle;
 
 @synthesize isDirty = _isDirty;
 
@@ -65,6 +67,7 @@
         _windowFrame = other.windowFrame;
         _theoreticalGridSize = other.theoreticalGridSize;
         _iconTitle = other.iconTitle;
+        _windowTitle = other.windowTitle;
 
         _isDirty = other.isDirty;
     }
@@ -91,6 +94,7 @@
                             @"windowFrame": @(_windowFrame),
                             @"theoreticalGridSize": VT100GridSizeDescription(_theoreticalGridSize),
                             @"iconTitle": _iconTitle ?: @"",
+                            @"windowTitle": _windowTitle ?: @"",
 
                             @"isDirty": @(_isDirty),
     };
@@ -120,6 +124,7 @@
 @dynamic windowFrame;
 @dynamic theoreticalGridSize;
 @dynamic iconTitle;
+@dynamic windowTitle;
 
 @dynamic isDirty;
 

@@ -11924,6 +11924,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.iconTitle = iconTitle;
         dirty = YES;
     }
+    NSString *windowTitle = [self screenWindowTitle];
+    if (![NSObject object:windowTitle isEqualToObject:_config.windowTitle]) {
+        _config.windowTitle = windowTitle;
+        dirty = YES;
+    }
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                            inProfile:_profile];
