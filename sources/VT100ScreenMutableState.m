@@ -1641,6 +1641,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalSynchronizedUpdate:(BOOL)begin {
+    if (begin) {
+        [self.temporaryDoubleBuffer startExplicitly];
+    } else {
+        [self.temporaryDoubleBuffer resetExplicitly];
+    }
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

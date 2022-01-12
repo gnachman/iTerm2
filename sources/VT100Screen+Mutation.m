@@ -1029,14 +1029,6 @@
     [helper writeToGrid:_state.currentGrid];
 }
 
-- (void)mutSynchronizedUpdate:(BOOL)begin {
-    if (begin) {
-        [_mutableState.temporaryDoubleBuffer startExplicitly];
-    } else {
-        [_mutableState.temporaryDoubleBuffer resetExplicitly];
-    }
-}
-
 - (void)mutSetProtectedMode:(VT100TerminalProtectedMode)mode {
     _mutableState.protectedMode = mode;
 }
@@ -2174,7 +2166,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSynchronizedUpdate:(BOOL)begin {
-    [self mutSynchronizedUpdate:begin];
+    [_mutableState terminalSynchronizedUpdate:begin];
 }
 
 - (int)terminalWidth {

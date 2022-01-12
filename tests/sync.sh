@@ -1,33 +1,29 @@
 #!/bin/bash
+
+echo ']4;-1;rgb:ff/ff/ff'
 echo Hello world should appear at once.
+
+sleep 1
+
+# Hide cursor - implicit sync if feature enabled
 echo '[?25l'
-sleep 0.1
-echo P=s\\
+echo hello
+sleep .05
+echo world
+echo '[?25h'
+
+sleep 1
+echo Hello world should appear and turn red at once.
+
+# begin sync
+echo P=1s\\
 echo ']4;-1;rgb:ff/00/00'
 echo hello
 sleep .5
 echo world
+echo P=2s\\
+#end sync
 
-
-echo P=s\\
 sleep .5
-echo world
 
-echo '[?25h'
-echo P=s\\
-sleep .5
-echo world
-
-echo P=s\\
-sleep .5
-echo world
-
-echo P=s\\
-sleep .5
-echo world
-
-echo P=s\\
-sleep .5
-echo world
-
-echo P=\\
+echo ']4;-1;rgb:ff/ff/ff'
