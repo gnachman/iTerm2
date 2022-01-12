@@ -914,6 +914,47 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)clearBufferSavingPrompt:(BOOL)savePrompt {
+    // Cancel out the current command if shell integration is in use and we are
+    // at the shell prompt.
+
+    const int linesToSave = savePrompt ? [self numberOfLinesToPreserveWhenClearingScreen] : 0;
+    // NOTE: This is in screen coords (y=0 is the top)
+    VT100GridCoord newCommandStart = VT100GridCoordMake(-1, -1);
+    if (self.commandStartCoord.x >= 0) {
+        // Compute the new location of the command's beginning, which is right
+        // after the end of the prompt in its new location.
+        int numberOfPromptLines = 1;
+        if (!VT100GridAbsCoordEquals(self.currentPromptRange.start, self.currentPromptRange.end)) {
+            numberOfPromptLines = MAX(1, self.currentPromptRange.end.y - self.currentPromptRange.start.y + 1);
+        }
+        newCommandStart = VT100GridCoordMake(self.commandStartCoord.x, numberOfPromptLines - 1);
+
+        // Abort the current command.
+        [self commandWasAborted];
+    }
+    // There is no last command after clearing the screen, so reset it.
+    self.lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+
+    // Clear the grid by scrolling it up into history.
+    [self clearAndResetScreenSavingLines:linesToSave];
+    // Erase history.
+    [self clearScrollbackBuffer];
+
+    // Redraw soon.
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenUpdateDisplay:NO];
+    }];
+
+    if (savePrompt && newCommandStart.x >= 0) {
+        // Create a new mark and inform the delegate that there's new command start coord.
+        [self setPromptStartLine:self.numberOfScrollbackLines];
+        [self commandDidStartAtScreenCoord:newCommandStart];
+    }
+    [self.terminal resetSavedCursorPositions];
+}
+
+
 // This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
 // coordinate. Scroll regions and the saved cursor position are reset.
 - (void)clearAndResetScreenSavingLines:(int)linesToSave {
@@ -1868,6 +1909,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self clearScrollbackBuffer];
 }
 
+- (void)terminalClearBuffer {
+    [self clearBufferSavingPrompt:YES];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
@@ -2659,6 +2704,31 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     [self currentDirectoryDidChangeTo:path];
     [self setPromptStartLine:self.numberOfScrollbackLines + self.cursorY - 1];
+}
+
+- (void)commandWasAborted {
+    VT100ScreenMark *screenMark = [self lastCommandMark];
+    if (screenMark) {
+        DLog(@"Removing last command mark %@", screenMark);
+        const NSInteger line = [self coordRangeForInterval:screenMark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
+        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+            [observer intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(screenMark)
+                                                 onLine:line];
+        }];
+        [self.intervalTree removeObject:screenMark];
+    }
+    [self invalidateCommandStartCoordWithoutSideEffects];
+    [self didUpdatePromptLocation];
+    [self commandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
+}
+
+- (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord {
+    [self commandDidStartAt:VT100GridAbsCoordMake(coord.x,
+                                                  coord.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)];
+}
+
+- (void)commandDidStartAt:(VT100GridAbsCoord)coord {
+    [self setCoordinateOfCommandStart:coord];
 }
 
 #pragma mark - Annotations

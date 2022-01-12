@@ -76,7 +76,7 @@
                                                                   _state.currentPromptRange.start.y,
                                                                   _state.currentGrid.cursor.x,
                                                                   _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + _mutableState.cumulativeScrollbackOverflow);
-    [self commandDidStartAtScreenCoord:_state.currentGrid.cursor];
+    [_mutableState commandDidStartAtScreenCoord:_state.currentGrid.cursor];
     const int line = _mutableState.numberOfScrollbackLines + _mutableState.cursorY - 1;
     VT100ScreenMark *mark = [self updatePromptMarkRangesForPromptEndingOnLine:line];
     [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
@@ -198,16 +198,7 @@
 }
 
 - (void)mutCommandWasAborted {
-    VT100ScreenMark *screenMark = [_mutableState lastCommandMark];
-    if (screenMark) {
-        DLog(@"Removing last command mark %@", screenMark);
-        [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(screenMark)
-                                                              onLine:[_mutableState coordRangeForInterval:screenMark.entry.interval].start.y + _mutableState.cumulativeScrollbackOverflow];
-        [_mutableState.intervalTree removeObject:screenMark];
-    }
-    [_mutableState invalidateCommandStartCoordWithoutSideEffects];
-    [_mutableState didUpdatePromptLocation];
-    [_mutableState commandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
+    [_mutableState commandWasAborted];
 }
 
 - (void)mutRemoveAnnotation:(PTYAnnotation *)annotation {
@@ -221,43 +212,7 @@
 }
 
 - (void)mutClearBufferSavingPrompt:(BOOL)savePrompt {
-    // Cancel out the current command if shell integration is in use and we are
-    // at the shell prompt.
-
-    const int linesToSave = savePrompt ? [_mutableState numberOfLinesToPreserveWhenClearingScreen] : 0;
-    // NOTE: This is in screen coords (y=0 is the top)
-    VT100GridCoord newCommandStart = VT100GridCoordMake(-1, -1);
-    if (_state.commandStartCoord.x >= 0) {
-        // Compute the new location of the command's beginning, which is right
-        // after the end of the prompt in its new location.
-        int numberOfPromptLines = 1;
-        if (!VT100GridAbsCoordEquals(_state.currentPromptRange.start, _state.currentPromptRange.end)) {
-            numberOfPromptLines = MAX(1, _state.currentPromptRange.end.y - _state.currentPromptRange.start.y + 1);
-        }
-        newCommandStart = VT100GridCoordMake(_state.commandStartCoord.x, numberOfPromptLines - 1);
-
-        // Abort the current command.
-        [self mutCommandWasAborted];
-    }
-    // There is no last command after clearing the screen, so reset it.
-    _mutableState.lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
-
-    // Clear the grid by scrolling it up into history.
-    [_mutableState clearAndResetScreenSavingLines:linesToSave];
-    // Erase history.
-    [self mutClearScrollbackBuffer];
-
-    // Redraw soon.
-    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenUpdateDisplay:NO];
-    }];
-
-    if (savePrompt && newCommandStart.x >= 0) {
-        // Create a new mark and inform the delegate that there's new command start coord.
-        [_mutableState setPromptStartLine:_mutableState.numberOfScrollbackLines];
-        [self commandDidStartAtScreenCoord:newCommandStart];
-    }
-    [_mutableState.terminal resetSavedCursorPositions];
+    [_mutableState clearBufferSavingPrompt:savePrompt];
 }
 
 - (void)mutClearScrollbackBuffer {
@@ -2120,7 +2075,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalClearBuffer {
-    [self clearBuffer];
+    [_mutableState terminalClearBuffer];
 }
 
 // Shell integration or equivalent.
