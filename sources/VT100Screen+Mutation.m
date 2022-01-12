@@ -2154,15 +2154,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalPushCurrentTitleForWindow:(BOOL)isWindow {
-    if ([delegate_ screenAllowTitleSetting]) {
-        [delegate_ screenPushCurrentTitleForWindow:isWindow];
-    }
+    [_mutableState terminalPushCurrentTitleForWindow:isWindow];
 }
 
 - (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow {
-    if ([delegate_ screenAllowTitleSetting]) {
-        [delegate_ screenPopCurrentTitleForWindow:isWindow];
-    }
+    [_mutableState terminalPopCurrentTitleForWindow:isWindow];
 }
 
 - (BOOL)terminalPostUserNotification:(NSString *)message {
