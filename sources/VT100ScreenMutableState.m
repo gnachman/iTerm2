@@ -1649,6 +1649,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (VT100GridSize)terminalSizeInCells {
+    return self.currentGrid.size;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
