@@ -24,6 +24,7 @@
 @property (nonatomic, readwrite) BOOL miniaturized;
 @property (nonatomic, readwrite) NSRect windowFrame;
 @property (nonatomic, readwrite) VT100GridSize theoreticalGridSize;
+@property (nonatomic, copy, readwrite) NSString *iconTitle;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -42,6 +43,7 @@
 @synthesize miniaturized = _miniaturized;
 @synthesize windowFrame = _windowFrame;
 @synthesize theoreticalGridSize = _theoreticalGridSize;
+@synthesize iconTitle = _iconTitle;
 
 @synthesize isDirty = _isDirty;
 
@@ -62,6 +64,7 @@
         _miniaturized = other.miniaturized;
         _windowFrame = other.windowFrame;
         _theoreticalGridSize = other.theoreticalGridSize;
+        _iconTitle = other.iconTitle;
 
         _isDirty = other.isDirty;
     }
@@ -87,6 +90,7 @@
                             @"miniaturized": @(_miniaturized),
                             @"windowFrame": @(_windowFrame),
                             @"theoreticalGridSize": VT100GridSizeDescription(_theoreticalGridSize),
+                            @"iconTitle": _iconTitle ?: @"",
 
                             @"isDirty": @(_isDirty),
     };
@@ -115,6 +119,7 @@
 @dynamic miniaturized;
 @dynamic windowFrame;
 @dynamic theoreticalGridSize;
+@dynamic iconTitle;
 
 @dynamic isDirty;
 

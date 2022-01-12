@@ -2146,11 +2146,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)terminalIconTitle {
-    if (_state.allowTitleReporting && [self terminalIsTrusted]) {
-        return [delegate_ screenIconTitle];
-    } else {
-        return @"";
-    }
+    return [_mutableState terminalIconTitle];
 }
 
 - (NSString *)terminalWindowTitle {
