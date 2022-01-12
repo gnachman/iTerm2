@@ -21,6 +21,7 @@
 @property (nonatomic, readwrite) BOOL isTmuxClient;
 @property (nonatomic, readwrite) BOOL printingAllowed;
 @property (nonatomic, readwrite) BOOL clipboardAccessAllowed;
+@property (nonatomic, readwrite) BOOL miniaturized;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -36,6 +37,7 @@
 @synthesize isTmuxClient = _isTmuxClient;
 @synthesize printingAllowed = _printingAllowed;
 @synthesize clipboardAccessAllowed = _clipboardAccessAllowed;
+@synthesize miniaturized = _miniaturized;
 
 @synthesize isDirty = _isDirty;
 
@@ -53,6 +55,7 @@
         _isTmuxClient = other.isTmuxClient;
         _printingAllowed = other.printingAllowed;
         _clipboardAccessAllowed = other.clipboardAccessAllowed;
+        _miniaturized = other.miniaturized;
 
         _isDirty = other.isDirty;
     }
@@ -75,6 +78,7 @@
                             @"isTmuxClient": @(_isTmuxClient),
                             @"printingAllowed": @(_printingAllowed),
                             @"clipboardAccessAllowed": @(_clipboardAccessAllowed),
+                            @"miniaturized": @(_miniaturized),
 
                             @"isDirty": @(_isDirty),
     };
@@ -100,6 +104,7 @@
 @dynamic isTmuxClient;
 @dynamic printingAllowed;
 @dynamic clipboardAccessAllowed;
+@dynamic miniaturized;
 
 @dynamic isDirty;
 

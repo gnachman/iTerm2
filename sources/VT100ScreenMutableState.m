@@ -1508,6 +1508,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)terminalMiniaturize:(BOOL)mini {
+    // Paseu becasue miniaturization status is reportable.
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         // TODO: Only allow this if there is a single session in the tab.
@@ -1543,7 +1544,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenRemoveSelection];
     }];
-    
+
     for (int i = 0;
          i < MIN(self.currentGrid.size.height, n);
          i++) {
@@ -1553,6 +1554,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                                  softBreak:NO]];
     }
     [self clearTriggerLine];
+}
+
+- (BOOL)terminalWindowIsMiniaturized {
+    return self.config.miniaturized;
 }
 
 #pragma mark - Tabs
