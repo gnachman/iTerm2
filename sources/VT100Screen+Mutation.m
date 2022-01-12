@@ -2129,7 +2129,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalIsShowingAltBuffer {
-    return [self showingAlternateScreen];
+    return [_mutableState terminalIsShowingAltBuffer];
 }
 
 - (void)terminalShowPrimaryBuffer {
