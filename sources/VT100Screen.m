@@ -1313,10 +1313,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutCurrentDirectoryDidChangeTo:dir];
 }
 
-- (void)setRemoteHostName:(NSString *)remoteHostName {
-    [self mutSetRemoteHost:remoteHostName];
-}
-
 - (void)saveCursorLine {
     [self mutSaveCursorLine];
 }

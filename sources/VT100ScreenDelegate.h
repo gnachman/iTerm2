@@ -87,7 +87,6 @@
 - (BOOL)screenShouldInitiateWindowResize;
 
 // The delegate should resize the screen to the given size.
-- (void)screenResizeToPixelWidth:(int)width height:(int)height;
 - (void)screenResizeToWidth:(int)width height:(int)height;
 - (void)screenSetSize:(VT100GridSize)proposedSize;
 - (void)screenSetPointSize:(NSSize)proposedSize;
