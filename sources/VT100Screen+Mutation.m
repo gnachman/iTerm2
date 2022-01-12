@@ -2125,7 +2125,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalStealFocus {
-    [delegate_ screenStealFocus];
+    [_mutableState terminalStealFocus];
 }
 
 - (void)terminalSetProxyIcon:(NSString *)value {

@@ -1816,6 +1816,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (void)terminalStealFocus {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenStealFocus];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
