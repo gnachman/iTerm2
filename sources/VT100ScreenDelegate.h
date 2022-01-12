@@ -182,9 +182,6 @@
 // Returns if iTermTabContentsChanged notifications should be published when the view is updated.
 - (BOOL)screenShouldSendContentsChangedNotification;
 
-// Returns whether terminal-generated notifications are allowed.
-- (BOOL)screenShouldPostTerminalGeneratedAlert;
-
 // PTYTextView deselect
 - (void)screenRemoveSelection;
 
@@ -205,8 +202,6 @@
 
 // An image should be flashed over the view.
 - (void)screenFlashImage:(NSString * _Nonnull)identifier;
-
-- (void)screenIncrementBadge;
 
 // Bounce the dock. Set request to false to cancel.
 - (void)screenRequestAttention:(VT100AttentionRequestType)request;
@@ -344,6 +339,6 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenOfferToDisableTriggersInInteractiveApps;
 - (void)screenDidUpdateReturnCodeForMark:(VT100ScreenMark * _Nonnull)mark
                               remoteHost:(VT100RemoteHost * _Nullable)remoteHost;
-- (void)screenCopyStringToPasteboard:(NSString *)string;
-
+- (void)screenCopyStringToPasteboard:(NSString * _Nonnull)string;
+- (void)screenPostUserNotification:(NSString * _Nonnull)string;
 @end
