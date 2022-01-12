@@ -1799,6 +1799,23 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self eraseScreenAndRemoveSelection];
 }
 
+- (void)terminalSaveScrollPositionWithArgument:(NSString *)argument {
+    // The difference between an argument of saveScrollPosition and saveCursorLine (the default) is
+    // subtle. When saving the scroll position, the entire region of visible lines is recorded and
+    // will be restored exactly. When saving only the line the cursor is on, when restored, that
+    // line will be made visible but no other aspect of the scroll position must be restored. This
+    // is often preferable because when setting a mark as part of the prompt, we wouldn't want the
+    // prompt to be the last line on the screen (such lines are scrolled to the center of
+    // the screen).
+    if ([argument isEqualToString:@"saveScrollPosition"]) {
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenSaveScrollPosition];
+        }];
+    } else {  // implicitly "saveCursorLine"
+        [self saveCursorLine];
+    }
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

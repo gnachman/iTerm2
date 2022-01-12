@@ -256,7 +256,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
-- (void)saveCursorLine;
 - (void)currentDirectoryDidChangeTo:(NSString *)dir;
 - (VT100GridCoordRange)commandRange;
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
