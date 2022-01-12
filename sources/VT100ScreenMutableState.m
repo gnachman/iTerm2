@@ -1635,6 +1635,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalHandleTmuxInput:(VT100Token *)token {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenHandleTmuxInput:token];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
