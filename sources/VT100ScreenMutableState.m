@@ -1572,6 +1572,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return round(self.config.windowFrame.size.height);
 }
 
+- (int)terminalScreenHeightInCells {
+    return self.config.theoreticalGridSize.height;
+}
+
+- (int)terminalScreenWidthInCells {
+    return self.config.theoreticalGridSize.width;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

@@ -23,6 +23,7 @@
 @property (nonatomic, readwrite) BOOL clipboardAccessAllowed;
 @property (nonatomic, readwrite) BOOL miniaturized;
 @property (nonatomic, readwrite) NSRect windowFrame;
+@property (nonatomic, readwrite) VT100GridSize theoreticalGridSize;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -40,6 +41,7 @@
 @synthesize clipboardAccessAllowed = _clipboardAccessAllowed;
 @synthesize miniaturized = _miniaturized;
 @synthesize windowFrame = _windowFrame;
+@synthesize theoreticalGridSize = _theoreticalGridSize;
 
 @synthesize isDirty = _isDirty;
 
@@ -59,6 +61,7 @@
         _clipboardAccessAllowed = other.clipboardAccessAllowed;
         _miniaturized = other.miniaturized;
         _windowFrame = other.windowFrame;
+        _theoreticalGridSize = other.theoreticalGridSize;
 
         _isDirty = other.isDirty;
     }
@@ -83,6 +86,7 @@
                             @"clipboardAccessAllowed": @(_clipboardAccessAllowed),
                             @"miniaturized": @(_miniaturized),
                             @"windowFrame": @(_windowFrame),
+                            @"theoreticalGridSize": VT100GridSizeDescription(_theoreticalGridSize),
 
                             @"isDirty": @(_isDirty),
     };
@@ -110,6 +114,7 @@
 @dynamic clipboardAccessAllowed;
 @dynamic miniaturized;
 @dynamic windowFrame;
+@dynamic theoreticalGridSize;
 
 @dynamic isDirty;
 
