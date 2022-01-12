@@ -740,29 +740,8 @@
         }
     } else if (screenState) {
         // New format
-        const BOOL onPrimary = (_state.currentGrid == _state.primaryGrid);
-        self.mutablePrimaryGrid.delegate = nil;
-        self.mutableAltGrid.delegate = nil;
-        _mutableState.altGrid = nil;
-
-        _mutableState.primaryGrid = [[[VT100Grid alloc] initWithDictionary:dictionary[@"PrimaryGrid"]
-                                                                  delegate:self] autorelease];
-        if (!_state.primaryGrid) {
-            // This is to prevent a crash if the dictionary is bad (i.e., non-backward compatible change in a future version).
-            _mutableState.primaryGrid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(2, 2) delegate:self] autorelease];
-        }
-        if ([dictionary[@"AltGrid"] count]) {
-            _mutableState.altGrid = [[[VT100Grid alloc] initWithDictionary:dictionary[@"AltGrid"]
-                                                                  delegate:self] autorelease];
-        }
-        if (!_state.altGrid) {
-            _mutableState.altGrid = [[[VT100Grid alloc] initWithSize:_state.primaryGrid.size delegate:self] autorelease];
-        }
-        if (onPrimary || includeRestorationBanner) {
-            _mutableState.currentGrid = _state.primaryGrid;
-        } else {
-            _mutableState.currentGrid = _state.altGrid;
-        }
+        [_mutableState restoreFromDictionary:dictionary
+                    includeRestorationBanner:includeRestorationBanner];
 
         LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary[@"LineBuffer"]];
         [lineBuffer setMaxLines:_state.maxScrollbackLines + _mutableState.height];
@@ -1693,34 +1672,11 @@
 
 #pragma mark - Alternate Screen
 
-- (void)mutShowAltBuffer {
-    if (_state.currentGrid == _state.altGrid) {
-        return;
-    }
-    [delegate_ screenRemoveSelection];
-    if (!_state.altGrid) {
-        _mutableState.altGrid = [[[VT100Grid alloc] initWithSize:_state.primaryGrid.size delegate:self] autorelease];
-    }
-
-    [self.mutableTemporaryDoubleBuffer reset];
-    self.mutablePrimaryGrid.savedDefaultChar = [_state.primaryGrid defaultChar];
-    [self hideOnScreenNotesAndTruncateSpanners];
-    _mutableState.currentGrid = _state.altGrid;
-    _mutableState.currentGrid.cursor = _state.primaryGrid.cursor;
-
-    [_mutableState swapOnscreenIntervalTreeObjects];
-    [self mutReloadMarkCache];
-
-    [_mutableState.currentGrid markAllCharsDirty:YES];
-    [delegate_ screenScheduleRedrawSoon];
-    [_mutableState invalidateCommandStartCoordWithoutSideEffects];
-}
-
 - (void)mutShowPrimaryBuffer {
     if (_state.currentGrid == _state.altGrid) {
         [self.mutableTemporaryDoubleBuffer reset];
         [delegate_ screenRemoveSelection];
-        [self hideOnScreenNotesAndTruncateSpanners];
+        [_mutableState hideOnScreenNotesAndTruncateSpanners];
         _mutableState.currentGrid = _state.primaryGrid;
         [_mutableState invalidateCommandStartCoordWithoutSideEffects];
         [_mutableState swapOnscreenIntervalTreeObjects];
@@ -1729,27 +1685,6 @@
         [_mutableState.currentGrid markAllCharsDirty:YES];
         [delegate_ screenScheduleRedrawSoon];
     }
-}
-
-- (void)hideOnScreenNotesAndTruncateSpanners {
-    int screenOrigin = _mutableState.numberOfScrollbackLines;
-    VT100GridCoordRange screenRange =
-        VT100GridCoordRangeMake(0,
-                                screenOrigin,
-                                _mutableState.width,
-                                screenOrigin + _mutableState.height);
-    Interval *screenInterval = [_mutableState intervalForGridCoordRange:screenRange];
-    for (id<IntervalTreeObject> note in [_state.intervalTree objectsInInterval:screenInterval]) {
-        if (note.entry.interval.location < screenInterval.location) {
-            // Truncate note so that it ends just before screen.
-            note.entry.interval.length = screenInterval.location - note.entry.interval.location;
-        }
-#warning TODO: This should be a side-effect. Moreover, I risk unchecked interations with mutable state through interval tree downcasts like this. I need a good solution to make the interval tree safe.
-        PTYAnnotation *annotation = [PTYAnnotation castFrom:note];
-        [annotation hide];
-    }
-    // Force annotations frames to be updated.
-    [delegate_ screenNeedsRedraw];
 }
 
 #pragma mark - URLs
@@ -2190,7 +2125,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalShowAltBuffer {
-    [self mutShowAltBuffer];
+    [_mutableState terminalShowAltBuffer];
 }
 
 - (BOOL)terminalIsShowingAltBuffer {

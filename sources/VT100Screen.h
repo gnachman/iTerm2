@@ -43,8 +43,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 @interface VT100Screen : NSObject <
     PTYTextViewDataSource,
-    PTYTriggerEvaluatorDataSource,
-    VT100GridDelegate>
+    PTYTriggerEvaluatorDataSource>
 
 @property(nonatomic, retain) VT100Terminal *terminal;
 @property(nonatomic, assign) BOOL audibleBell;

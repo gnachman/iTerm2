@@ -8,13 +8,16 @@
 #import "VT100ScreenMutableState.h"
 
 #import "PTYTriggerEvaluator.h"
-#import "iTermMark.h"
+
 #import "Trigger.h"
+#import "VT100Grid.h"
 #import "VT100GridTypes.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermMark.h"
 
 @interface VT100ScreenMutableState()<
 PTYTriggerEvaluatorDelegate,
+VT100GridDelegate,
 iTermMarkDelegate,
 iTermTriggerSession,
 iTermTriggerScopeProvider> {
