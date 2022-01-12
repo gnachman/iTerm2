@@ -806,6 +806,22 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (void)eraseScreenAndRemoveSelection {
+    // Unconditionally clear the whole screen, regardless of cursor position.
+    // This behavior changed in the Great VT100Grid Refactoring of 2013. Before, clearScreen
+    // used to move the cursor's wrapped line to the top of the screen. It's only used from
+    // DECSET 1049, and neither xterm nor terminal have this behavior, and I'm not sure why it
+    // would be desirable anyway. Like xterm (and unlike Terminal) we leave the cursor put.
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenRemoveSelection];
+    }];
+    [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
+                                to:VT100GridCoordMake(self.currentGrid.size.width - 1,
+                                                      self.currentGrid.size.height - 1)
+                            toChar:[self.currentGrid defaultChar]
+                externalAttributes:nil];
+}
+
 - (int)numberOfLinesToPreserveWhenClearingScreen {
     if (VT100GridAbsCoordEquals(self.currentPromptRange.start, self.currentPromptRange.end)) {
         // Prompt range not defined.
@@ -1779,6 +1795,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self currentDirectoryDidChangeTo:dir];
 }
 
+- (void)terminalClearScreen {
+    [self eraseScreenAndRemoveSelection];
+}
 
 #pragma mark - Tabs
 
