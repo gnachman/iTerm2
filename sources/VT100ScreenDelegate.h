@@ -111,9 +111,6 @@
 // Returns if the window is full-screen.
 - (BOOL)screenWindowIsFullscreen;
 
-// Returns the top left pixel coordinate of the window.
-- (NSPoint)screenWindowTopLeftPixelCoordinate;
-
 // Delegate should move the window's top left point to the given screen coordinate.
 - (void)screenMoveWindowTopLeftPointTo:(NSPoint)point;
 

@@ -1560,6 +1560,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return self.config.miniaturized;
 }
 
+- (NSPoint)terminalWindowTopLeftPixelCoordinate {
+    return self.config.windowOrigin;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

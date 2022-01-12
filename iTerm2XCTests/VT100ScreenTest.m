@@ -688,10 +688,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     return name_;
 }
 
-- (NSPoint)screenWindowTopLeftPixelCoordinate {
-    return NSZeroPoint;
-}
-
 - (void)screenMoveWindowTopLeftPointTo:(NSPoint)point {
 }
 
