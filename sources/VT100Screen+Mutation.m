@@ -2128,25 +2128,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetWorkingDirectoryURL:(NSString *)URLString {
-    DLog(@"terminalSetWorkingDirectoryURL:%@", URLString);
-
-    if (![iTermAdvancedSettingsModel acceptOSC7]) {
-        return;
-    }
-    NSURL *URL = [NSURL URLWithString:URLString];
-    if (!URL || URLString.length == 0) {
-        return;
-    }
-    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:NO] autorelease];
-    NSString *host = components.host;
-    NSString *user = components.user;
-    NSString *path = components.path;
-
-    if (host || user) {
-        [self setHost:host user:user];
-    }
-    [self terminalCurrentDirectoryDidChangeTo:path];
-    [_mutableState setPromptStartLine:_mutableState.numberOfScrollbackLines + _mutableState.cursorY - 1];
+    [_mutableState terminalSetWorkingDirectoryURL:URLString];
 }
 
 - (void)terminalClearScreen {
@@ -2193,7 +2175,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 // Shell integration or equivalent.
 - (void)terminalCurrentDirectoryDidChangeTo:(NSString *)dir {
-    [_mutableState currentDirectoryDidChangeTo:dir];
+    [_mutableState terminalCurrentDirectoryDidChangeTo:dir];
 }
 
 - (void)mutCurrentDirectoryDidChangeTo:(NSString *)dir {
