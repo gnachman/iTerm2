@@ -2120,11 +2120,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetRemoteHost:(NSString *)remoteHost {
-    [self mutSetRemoteHost:remoteHost];
-}
-
-- (void)mutSetRemoteHost:(NSString *)remoteHost {
-    [_mutableState setRemoteHostFromString:remoteHost];
+    [_mutableState terminalSetRemoteHost:remoteHost];
 }
 
 - (void)setHost:(NSString *)host user:(NSString *)user {

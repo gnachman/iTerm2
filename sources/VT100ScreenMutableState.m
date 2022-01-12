@@ -1767,6 +1767,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self showPrimaryBuffer];
 }
 
+- (void)terminalSetRemoteHost:(NSString *)remoteHost {
+    [self setRemoteHostFromString:remoteHost];
+}
 
 #pragma mark - Tabs
 

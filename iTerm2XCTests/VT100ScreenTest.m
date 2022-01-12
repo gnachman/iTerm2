@@ -564,10 +564,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     newSize_ = VT100GridSizeMake(newWidth, newHeight);
 }
 
-- (void)screenResizeToPixelWidth:(int)newWidth height:(int)newHeight {
-    newPixelSize_ = NSMakeSize(newWidth, newHeight);
-}
-
 - (BOOL)screenShouldInitiateWindowResize {
     return canResize_;
 }
