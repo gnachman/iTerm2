@@ -1771,6 +1771,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self setRemoteHostFromString:remoteHost];
 }
 
+- (void)terminalSetWorkingDirectoryURL:(NSString *)URLString {
+    [self setWorkingDirectoryFromURLString:URLString];
+}
+
+- (void)terminalCurrentDirectoryDidChangeTo:(NSString *)dir {
+    [self currentDirectoryDidChangeTo:dir];
+}
+
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
@@ -2333,7 +2342,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)currentDirectoryDidChangeTo:(NSString *)dir {
-    DLog(@"%p: terminalCurrentDirectoryDidChangeTo:%@", self, dir);
+    DLog(@"%p: currentDirectoryDidChangeTo:%@", self, dir);
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
     }];
@@ -2540,6 +2549,28 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }
     }
     [self.intervalTreeObserver intervalTreeDidReset];
+}
+
+- (void)setWorkingDirectoryFromURLString:(NSString *)URLString {
+    DLog(@"terminalSetWorkingDirectoryURL:%@", URLString);
+
+    if (![iTermAdvancedSettingsModel acceptOSC7]) {
+        return;
+    }
+    NSURL *URL = [NSURL URLWithString:URLString];
+    if (!URL || URLString.length == 0) {
+        return;
+    }
+    NSURLComponents *components = [[NSURLComponents alloc] initWithURL:URL resolvingAgainstBaseURL:NO];
+    NSString *host = components.host;
+    NSString *user = components.user;
+    NSString *path = components.path;
+
+    if (host || user) {
+        [self setHost:host user:user];
+    }
+    [self currentDirectoryDidChangeTo:path];
+    [self setPromptStartLine:self.numberOfScrollbackLines + self.cursorY - 1];
 }
 
 #pragma mark - Annotations
