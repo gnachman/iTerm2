@@ -72,7 +72,6 @@ NS_ASSUME_NONNULL_BEGIN
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
 - (void)mutMarkWholeScreenDirty;
-- (void)mutEraseScreenAndRemoveSelection;
 - (void)mutCommandWasAborted;
 - (void)mutAppendScreenCharArrayAtCursor:(const screen_char_t *)buffer
                                   length:(int)len

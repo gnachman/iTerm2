@@ -417,21 +417,6 @@
     _mutableState.currentGrid.cursor = savedCursor;
 }
 
-- (void)mutEraseScreenAndRemoveSelection {
-    // Unconditionally clear the whole screen, regardless of cursor position.
-    // This behavior changed in the Great VT100Grid Refactoring of 2013. Before, clearScreen
-    // used to move the cursor's wrapped line to the top of the screen. It's only used from
-    // DECSET 1049, and neither xterm nor terminal have this behavior, and I'm not sure why it
-    // would be desirable anyway. Like xterm (and unlike Terminal) we leave the cursor put.
-    [delegate_ screenRemoveSelection];
-    [_mutableState.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                                         to:VT100GridCoordMake(_state.currentGrid.size.width - 1,
-                                                               _state.currentGrid.size.height - 1)
-                                     toChar:[_state.currentGrid defaultChar]
-                         externalAttributes:nil];
-}
-
-
 #pragma mark - Appending
 
 - (void)mutAppendStringAtCursor:(NSString *)string {
@@ -2132,7 +2117,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalClearScreen {
-    [self mutEraseScreenAndRemoveSelection];
+    [_mutableState terminalClearScreen];
 }
 
 - (void)terminalSaveScrollPositionWithArgument:(NSString *)argument {
