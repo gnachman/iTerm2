@@ -194,7 +194,7 @@
 - (void)screenClearHighlights;
 
 // Scrollback buffer deleted
-- (void)screenDidClearScrollbackBuffer:(VT100Screen * _Nonnull)screen;
+- (void)screenDidClearScrollbackBuffer;
 
 // Called when the mouse reporting mode changes.
 - (void)screenMouseModeDidChange;
@@ -322,7 +322,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                                 size:(NSInteger)size
                        displayInline:(BOOL)displayInline
                          promptIfBig:(BOOL * _Nonnull)promptIfBig;
-- (BOOL)screenShouldClearScrollbackBuffer;
+- (void)screenAskAboutClearingScrollback;
 - (VT100GridRange)screenRangeOfVisibleLines;
 - (void)screenDidResize;
 - (NSString * _Nullable)screenStringForKeypressWithCode:(unsigned short)keycode

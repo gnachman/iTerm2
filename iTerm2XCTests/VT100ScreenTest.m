@@ -854,7 +854,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
 }
 
-- (void)screenDidClearScrollbackBuffer:(VT100Screen *)screen {
+- (void)screenDidClearScrollbackBuffer {
 }
 
 - (CGFloat)screenBackingScaleFactor {
@@ -936,10 +936,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 }
 
 - (void)screenResetCursorTypeAndBlink {
-}
-
-- (BOOL)screenShouldClearScrollbackBuffer {
-    return YES;
 }
 
 - (VT100GridRange)screenRangeOfVisibleLines {

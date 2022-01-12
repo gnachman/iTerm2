@@ -885,6 +885,35 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
 }
 
+- (void)resetScrollbackOverflow {
+    self.scrollbackOverflow = 0;
+}
+
+- (void)clearScrollbackBuffer {
+    self.linebuffer = [[LineBuffer alloc] init];
+    [self.linebuffer setMaxLines:self.maxScrollbackLines];
+    [self.currentGrid markAllCharsDirty:YES];
+
+    self.savedFindContextAbsPos = 0;
+
+    [self resetScrollbackOverflow];
+    [self.currentGrid markAllCharsDirty:YES];
+    [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
+                                                                            0,
+                                                                   self.width, self.numberOfScrollbackLines + self.height)];
+    self.intervalTree = [[IntervalTree alloc] init];
+    [self reloadMarkCache];
+    self.lastCommandMark = nil;
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenClearHighlights];
+        [delegate screenRemoveSelection];
+        [delegate screenDidClearScrollbackBuffer];
+        [delegate screenRefreshFindOnPageView];
+        [unpauser unpause];
+    }];
+}
+
 // This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
 // coordinate. Scroll regions and the saved cursor position are reset.
 - (void)clearAndResetScreenSavingLines:(int)linesToSave {
@@ -1827,6 +1856,16 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetPreferredProxyIcon:path];
     }];
+}
+
+- (void)terminalClearScrollbackBuffer {
+    if (!self.config.clearScrollbackAllowed) {
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenAskAboutClearingScrollback];
+        }];
+        return;
+    }
+    [self clearScrollbackBuffer];
 }
 
 #pragma mark - Tabs
