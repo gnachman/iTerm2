@@ -2088,8 +2088,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalProfileShouldChangeTo:(NSString *)value {
-    [_mutableState forceCheckTriggers];
-    [delegate_ screenSetProfileToProfileNamed:value];
+    [_mutableState terminalProfileShouldChangeTo:value];
 }
 
 - (void)terminalAddNote:(NSString *)value show:(BOOL)show {
