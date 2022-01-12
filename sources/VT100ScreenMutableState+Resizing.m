@@ -525,15 +525,15 @@ static void SwapInt(int *a, int *b) {
             [self.intervalTree removeObject:note];
         } else {
             if ([self convertRange:noteRange
-                                   toWidth:newWidth
-                                        to:&newRange
-                              inLineBuffer:self.linebuffer
-                             tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
+                           toWidth:newWidth
+                                to:&newRange
+                      inLineBuffer:self.linebuffer
+                     tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
                 assert(noteRange.start.y >= 0);
                 assert(noteRange.end.y >= 0);
                 Interval *newInterval = [self intervalForGridCoordRange:newRange
-                                                                          width:newWidth
-                                                                    linesOffset:self.cumulativeScrollbackOverflow];
+                                                                  width:newWidth
+                                                            linesOffset:self.cumulativeScrollbackOverflow];
                 [self.intervalTree removeObject:note];
                 [replacementTree addObject:note withInterval:newInterval];
             }

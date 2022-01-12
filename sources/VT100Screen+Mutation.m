@@ -2092,47 +2092,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalAddNote:(NSString *)value show:(BOOL)show {
-    NSArray *parts = [value componentsSeparatedByString:@"|"];
-    VT100GridCoord location = _state.currentGrid.cursor;
-    NSString *message = nil;
-    int length = _state.currentGrid.size.width - _state.currentGrid.cursorX - 1;
-    if (parts.count == 1) {
-        message = parts[0];
-    } else if (parts.count == 2) {
-        message = parts[1];
-        length = [parts[0] intValue];
-    } else if (parts.count >= 4) {
-        message = parts[0];
-        length = [parts[1] intValue];
-        VT100GridCoord limit = {
-            .x = _mutableState.width - 1,
-            .y = _mutableState.height - 1
-        };
-        location.x = MIN(MAX(0, [parts[2] intValue]), limit.x);
-        location.y = MIN(MAX(0, [parts[3] intValue]), limit.y);
-    }
-    VT100GridCoord end = location;
-    end.x += length;
-    end.y += end.x / _mutableState.width;
-    end.x %= _mutableState.width;
-
-    int endVal = end.x + end.y * _mutableState.width;
-    int maxVal = _mutableState.width - 1 + (_mutableState.height - 1) * _mutableState.width;
-    if (length > 0 &&
-        message.length > 0 &&
-        endVal <= maxVal) {
-        PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
-        note.stringValue = message;
-        [self addNote:note
-              inRange:VT100GridCoordRangeMake(location.x,
-                                              location.y + _mutableState.numberOfScrollbackLines,
-                                              end.x,
-                                              end.y + _mutableState.numberOfScrollbackLines)
-                focus:NO];
-        if (!show) {
-            [note hide];
-        }
-    }
+    [_mutableState terminalAddNote:value show:show];
 }
 
 - (void)terminalSetPasteboard:(NSString *)value {

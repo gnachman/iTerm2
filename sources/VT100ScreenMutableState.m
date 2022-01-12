@@ -1922,6 +1922,52 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalAddNote:(NSString *)value show:(BOOL)show {
+    NSArray *parts = [value componentsSeparatedByString:@"|"];
+    VT100GridCoord location = self.currentGrid.cursor;
+    NSString *message = nil;
+    int length = self.currentGrid.size.width - self.currentGrid.cursorX - 1;
+    if (parts.count == 1) {
+        message = parts[0];
+    } else if (parts.count == 2) {
+        message = parts[1];
+        length = [parts[0] intValue];
+    } else if (parts.count >= 4) {
+        message = parts[0];
+        length = [parts[1] intValue];
+        VT100GridCoord limit = {
+            .x = self.width - 1,
+            .y = self.height - 1
+        };
+        location.x = MIN(MAX(0, [parts[2] intValue]), limit.x);
+        location.y = MIN(MAX(0, [parts[3] intValue]), limit.y);
+    }
+    VT100GridCoord end = location;
+    end.x += length;
+    end.y += end.x / self.width;
+    end.x %= self.width;
+
+    int endVal = end.x + end.y * self.width;
+    int maxVal = self.width - 1 + (self.height - 1) * self.width;
+    if (length > 0 &&
+        message.length > 0 &&
+        endVal <= maxVal) {
+        PTYAnnotation *note = [[PTYAnnotation alloc] init];
+        note.stringValue = message;
+        [self addAnnotation:note
+                    inRange:VT100GridCoordRangeMake(location.x,
+                                                    location.y + self.numberOfScrollbackLines,
+                                                    end.x,
+                                                    end.y + self.numberOfScrollbackLines)
+                      focus:NO];
+        if (!show) {
+            [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+                [note hide];
+            }];
+        }
+    }
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
