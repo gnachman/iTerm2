@@ -2121,7 +2121,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalUseColumnScrollRegion {
-    return self.useColumnScrollRegion;
+    return [_mutableState terminalUseColumnScrollRegion];
 }
 
 - (void)terminalShowAltBuffer {
