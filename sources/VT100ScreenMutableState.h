@@ -46,6 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Scrollback
 
 - (void)incrementOverflowBy:(int)overflowCount;
+- (void)resetScrollbackOverflow;
 
 #pragma mark - Terminal Fundamentals
 
@@ -79,6 +80,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (int)numberOfLinesToPreserveWhenClearingScreen;
 - (void)clearAndResetScreenSavingLines:(int)linesToSave;
 - (void)clearScrollbackBuffer;
+- (void)clearBufferSavingPrompt:(BOOL)savePrompt;
 
 void VT100ScreenEraseCell(screen_char_t *sct,
                           iTermExternalAttribute **eaOut,
@@ -106,25 +108,45 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (NSMutableArray<id<IntervalTreeObject>> *)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange exceptCoordRange:(VT100GridCoordRange)coordRangeToSave;
 
-- (void)commandDidEndWithRange:(VT100GridCoordRange)range;
+// Swap onscreen notes between intervalTree_ and savedIntervalTree_.
+// IMPORTANT: Call -reloadMarkCache after this.
+- (void)swapOnscreenIntervalTreeObjects;
 
 #pragma mark - Shell Integration
 
-- (void)assignCurrentCommandEndDate;
+#pragma mark Marks
 
 // This is like addMarkStartingAtAbsoluteLine:oneLine:ofClass: but it notifies the delegate of a new mark.
 - (id<iTermMark>)addMarkOnLine:(int)line ofClass:(Class)markClass;
+- (void)saveCursorLine;
+- (void)reloadMarkCache;
 
-- (void)didUpdatePromptLocation;
-
-- (void)setPromptStartLine:(int)line;
+#pragma mark Prompt
 
 // This is like setPromptStartLine: but with lots of side effects that are desirable for the
 // regular shell integration flow.
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord;
 
-// Update the commandRange in the current prompt's mark, if present. Asynchronously 
+- (void)setPromptStartLine:(int)line;
+- (void)didUpdatePromptLocation;
+
+#pragma mark Command
+
+- (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord;
+- (void)setCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord;
+- (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord;
+- (void)commandDidStartAt:(VT100GridAbsCoord)coord;
+- (void)invalidateCommandStartCoordWithoutSideEffects;
+
+// Update the commandRange in the current prompt's mark, if present. Asynchronously
 - (void)commandRangeDidChange;
+
+- (void)setReturnCodeOfLastCommand:(int)returnCode;
+- (void)commandDidEndWithRange:(VT100GridCoordRange)range;
+- (void)commandWasAborted;
+- (void)assignCurrentCommandEndDate;
+
+#pragma mark Working Directory
 
 - (void)setWorkingDirectory:(NSString * _Nullable)workingDirectory
                   onAbsLine:(long long)absLine
@@ -133,25 +155,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)currentDirectoryDidChangeTo:(NSString *)dir;
 
+#pragma mark Remote Host
+
 - (void)setRemoteHostFromString:(NSString *)remoteHost;
-
 - (void)setHost:(NSString * _Nullable)host user:(NSString * _Nullable)user;
-
-- (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord;
-
-- (void)saveCursorLine;
-
-- (void)setReturnCodeOfLastCommand:(int)returnCode;
-
-- (void)setCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord;
-
-- (void)invalidateCommandStartCoordWithoutSideEffects;
-
-// Swap onscreen notes between intervalTree_ and savedIntervalTree_.
-// IMPORTANT: Call -reloadMarkCache after this.
-- (void)swapOnscreenIntervalTreeObjects;
-
-- (void)reloadMarkCache;
 
 #pragma mark - Annotations
 
