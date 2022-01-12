@@ -62,7 +62,7 @@ static NSString *const kGridSizeKey = @"Size";
     self = [super init];
     if (self) {
         delegate_ = delegate;
-        [self setSize:size];
+        [self setSize:size withSideEffects:NO];
         scrollRegionRows_ = VT100GridRangeMake(0, size_.height);
         scrollRegionCols_ = VT100GridRangeMake(0, size_.width);
         _preferredCursorPosition = VT100GridCoordMake(-1, -1);
@@ -2170,6 +2170,10 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
 // Warning: does not set dirty.
 - (void)setSize:(VT100GridSize)newSize {
+    [self setSize:newSize withSideEffects:YES];
+}
+
+- (void)setSize:(VT100GridSize)newSize withSideEffects:(BOOL)withSideEffects {
     if (newSize.width != size_.width || newSize.height != size_.height) {
         DLog(@"Grid for %@ resized to %@", self.delegate, VT100GridSizeDescription(newSize));
         size_ = newSize;
@@ -2186,7 +2190,9 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
         cursor_.x = MIN(cursor_.x, size_.width - 1);
         self.cursorY = MIN(cursor_.y, size_.height - 1);
-        [self.delegate gridDidResize];
+        if (withSideEffects) {
+            [self.delegate gridDidResize];
+        }
     }
 }
 
