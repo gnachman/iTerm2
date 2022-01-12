@@ -2138,21 +2138,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (int)terminalScreenHeightInCells {
-    //  TODO: WTF do we do with panes here?
-    NSRect screenFrame = [delegate_ screenWindowScreenFrame];
-    NSRect windowFrame = [delegate_ screenWindowFrame];
-    float roomToGrow = screenFrame.size.height - windowFrame.size.height;
-    NSSize cellSize = [delegate_ screenCellSize];
-    return _mutableState.height + roomToGrow / cellSize.height;
+    return [_mutableState terminalScreenHeightInCells];
 }
 
 - (int)terminalScreenWidthInCells {
-    //  TODO: WTF do we do with panes here?
-    NSRect screenFrame = [delegate_ screenWindowScreenFrame];
-    NSRect windowFrame = [delegate_ screenWindowFrame];
-    float roomToGrow = screenFrame.size.width - windowFrame.size.width;
-    NSSize cellSize = [delegate_ screenCellSize];
-    return _mutableState.width + roomToGrow / cellSize.width;
+    return [_mutableState terminalScreenWidthInCells];
 }
 
 - (NSString *)terminalIconTitle {

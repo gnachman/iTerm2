@@ -10747,6 +10747,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                       frame.size.height);
 }
 
+- (VT100GridSize)theoreticalGridSize {
+    //  TODO: WTF do we do with panes here?
+    VT100GridSize result;
+    NSRect screenFrame = [self screenWindowScreenFrame];
+    NSRect windowFrame = [self screenWindowFrame];
+    NSSize cellSize = [self screenCellSize];
+    {
+        const CGFloat roomToGrow = screenFrame.size.height - windowFrame.size.height;
+        result.height = _screen.height + roomToGrow / cellSize.height;
+    }
+    {
+        const CGFloat roomToGrow = screenFrame.size.width - windowFrame.size.width;
+        result.width = _screen.width + roomToGrow / cellSize.width;
+    }
+    return result;
+}
+
 // If flag is set, miniaturize; otherwise, deminiaturize.
 - (void)screenMiniaturizeWindow:(BOOL)flag {
     if (flag) {
@@ -11895,6 +11912,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     const NSRect windowFrame = [self windowFrame];
     if (!NSEqualRects(windowFrame, _config.windowFrame)) {
         _config.windowFrame = windowFrame;
+        dirty = YES;
+    }
+    const VT100GridSize theoreticalGridSize = [self theoreticalGridSize];
+    if (!VT100GridSizeEquals(theoreticalGridSize, _config.theoreticalGridSize)) {
+        _config.theoreticalGridSize = theoreticalGridSize;
         dirty = YES;
     }
     if (_profileDidChange) {
