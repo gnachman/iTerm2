@@ -1735,6 +1735,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self showAltBuffer];
 }
 
+- (BOOL)terminalUseColumnScrollRegion {
+    return self.currentGrid.useScrollRegionCols;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
