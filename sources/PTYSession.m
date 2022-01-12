@@ -11885,6 +11885,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.clipboardAccessAllowed = clipboardAccessAllowed;
         dirty = YES;
     }
+    const BOOL miniaturized = [[_delegate parentWindow] windowIsMiniaturized];
+    if (miniaturized != _config.miniaturized) {
+        _config.miniaturized = miniaturized;
+        dirty = YES;
+    }
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                            inProfile:_profile];

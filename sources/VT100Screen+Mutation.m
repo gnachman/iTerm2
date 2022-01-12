@@ -2122,7 +2122,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalWindowIsMiniaturized {
-    return [delegate_ screenWindowIsMiniaturized];
+    return [_mutableState terminalWindowIsMiniaturized];
 }
 
 - (NSPoint)terminalWindowTopLeftPixelCoordinate {
