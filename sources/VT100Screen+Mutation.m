@@ -2096,7 +2096,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetPasteboard:(NSString *)value {
-    [delegate_ screenSetPasteboard:value];
+    [_mutableState terminalSetPasteboard:value];
 }
 
 - (BOOL)preconfirmDownloadOfSize:(NSInteger)size
@@ -2230,15 +2230,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalCopyBufferToPasteboard {
-    [delegate_ screenCopyBufferToPasteboard];
-}
-
-- (BOOL)terminalIsAppendingToPasteboard {
-    return [delegate_ screenIsAppendingToPasteboard];
+    [_mutableState terminalCopyBufferToPasteboard];
 }
 
 - (void)terminalAppendDataToPasteboard:(NSData *)data {
-    return [delegate_ screenAppendDataToPasteboard:data];
+    [_mutableState terminalAppendDataToPasteboard:data];
 }
 
 - (BOOL)terminalIsTrusted {

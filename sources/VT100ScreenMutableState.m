@@ -1968,6 +1968,25 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (void)terminalSetPasteboard:(NSString *)value {
+    // Don't pause because there will never be a code to get the pasteboard value.
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetPasteboard:value];
+    }];
+}
+
+- (void)terminalAppendDataToPasteboard:(NSData *)data {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenAppendDataToPasteboard:data];
+    }];
+}
+
+- (void)terminalCopyBufferToPasteboard {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenCopyBufferToPasteboard];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

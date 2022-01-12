@@ -1815,8 +1815,7 @@ static const int kMaxScreenRows = 4096;
         }
     }
     if (token->savingData &&
-        token->type != VT100_SKIP &&
-        [_delegate terminalIsAppendingToPasteboard]) {  // This is the old code that echoes to the screen. Its use is discouraged.
+        token->type != VT100_SKIP) {  // This is the old code that echoes to the screen. Its use is discouraged.
         // We are probably copying text to the clipboard until esc]1337;EndCopy^G is received.
         if (token->type != XTERMCC_SET_KVP ||
             ![token.string hasPrefix:@"CopyToClipboard"]) {

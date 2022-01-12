@@ -334,7 +334,6 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 // empty string, are treated as the default pasteboard.
 - (void)terminalSetPasteboard:(NSString *)value;
 - (void)terminalCopyBufferToPasteboard;
-- (BOOL)terminalIsAppendingToPasteboard;
 - (void)terminalAppendDataToPasteboard:(NSData *)data;
 
 // Download of a base64-encoded file
