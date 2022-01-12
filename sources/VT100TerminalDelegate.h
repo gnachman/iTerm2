@@ -277,9 +277,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 // Handles input during tmux mode. A single line of input will be in the token's string.
 - (void)terminalHandleTmuxInput:(VT100Token *)token;
 
-// Returns the size of the terminal in cells.
-- (int)terminalWidth;
-- (int)terminalHeight;
+- (VT100GridSize)terminalSizeInCells;
 
 // Returns the size of a single cell. May contain non-integer values.
 - (NSSize)terminalCellSizeInPoints:(double *)scale;

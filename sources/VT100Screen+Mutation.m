@@ -2169,12 +2169,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [_mutableState terminalSynchronizedUpdate:begin];
 }
 
-- (int)terminalWidth {
-    return _mutableState.width;
-}
-
-- (int)terminalHeight {
-    return _mutableState.height;
+- (VT100GridSize)terminalSizeInCells {
+    return [_mutableState terminalSizeInCells];
 }
 
 - (void)terminalMouseModeDidChangeTo:(MouseMode)mouseMode {

@@ -688,7 +688,7 @@ static const int kMaxScreenRows = 4096;
                     [self setWidth:(self.columnMode ? 132 : 80)
                     preserveScreen:!changed || self.preserveScreenOnDECCOLM
                      updateRegions:changed
-                      moveCursorTo:VT100GridCoordMake(MIN(coord.x, self.delegate.terminalWidth),
+                      moveCursorTo:VT100GridCoordMake(MIN(coord.x, self.delegate.terminalSizeInCells.width),
                                                       coord.y)
                         completion:nil];
                 }
@@ -1124,7 +1124,8 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (VT100GridRect)defaultRectangle {
-    return VT100GridRectMake(0, 0, _delegate.terminalWidth, _delegate.terminalHeight);
+    const VT100GridSize size = [_delegate terminalSizeInCells];
+    return VT100GridRectMake(0, 0, size.width, size.height);
 }
 
 - (void)executeSGR:(VT100Token *)token {
@@ -1665,9 +1666,10 @@ static const int kMaxScreenRows = 4096;
     [_delegate terminalSetCursorType:CURSOR_DEFAULT];
 
     // Remove tb and lr margins
+    const VT100GridSize size = [_delegate terminalSizeInCells];
     [_delegate terminalSetScrollRegionTop:0
-                                   bottom:[_delegate terminalHeight] - 1];
-    [_delegate terminalSetLeftMargin:0 rightMargin:[_delegate terminalWidth] - 1];
+                                   bottom:size.height - 1];
+    [_delegate terminalSetLeftMargin:0 rightMargin:size.width - 1];
 
 
     // Turn off origin mode
@@ -1985,10 +1987,11 @@ static const int kMaxScreenRows = 4096;
             }
 
             int bottom;
+            const VT100GridSize size = [_delegate terminalSizeInCells];
             if (token.csi->count < 2 || token.csi->p[1] <= 0) {
-                bottom = _delegate.terminalHeight - 1;
+                bottom = size.height - 1;
             } else {
-                bottom = MIN(_delegate.terminalHeight, token.csi->p[1]) - 1;
+                bottom = MIN(size.height, token.csi->p[1]) - 1;
             }
 
             [_delegate terminalSetScrollRegionTop:top
@@ -2194,7 +2197,7 @@ static const int kMaxScreenRows = 4096;
         case VT100CSI_DECSLRM: {
             int scrollLeft = token.csi->p[0] - 1;
             int scrollRight = token.csi->p[1] - 1;
-            int width = [_delegate terminalWidth];
+            const int width = [_delegate terminalSizeInCells].width;
             if (scrollLeft < 0) {
                 scrollLeft = 0;
             }
@@ -2553,9 +2556,10 @@ static const int kMaxScreenRows = 4096;
             break;
         }
         case XTERMCC_REPORT_WIN_SIZE: {
+            const VT100GridSize size = [_delegate terminalSizeInCells];
             NSString *s = [NSString stringWithFormat:@"\033[8;%d;%dt",
-                           [_delegate terminalHeight],
-                           [_delegate terminalWidth]];
+                           size.height,
+                           size.width];
             [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
@@ -3098,7 +3102,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (NSString *)decrqssDECSLPP {
-    const int height = MAX(24, [self.delegate terminalHeight]);
+    const int height = MAX(24, [self.delegate terminalSizeInCells].height);
     return [@(height) stringValue];
  }
 
@@ -3107,7 +3111,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (NSString *)decrqssDECNLS {
-    return [@([self.delegate terminalHeight]) stringValue];
+    return [@([self.delegate terminalSizeInCells].height) stringValue];
 }
 
 - (iTermPromise<NSString *> *)decrqssPayloadPromise:(NSString *)pt {
@@ -3998,7 +4002,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 }
 
 - (void)executeCharacterPositionRelative:(int)dx {
-    const int width = [_delegate terminalWidth];
+    const int width = [_delegate terminalSizeInCells].width;
     const int proposed = [_delegate terminalCursorX] + dx;
     const int x = MIN(proposed, width);
     [_delegate terminalSetCursorX:x];
@@ -4200,8 +4204,9 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 - (void)executeReadSixelGeometry:(VT100Token *)token {
     double scale = 0;
     const NSSize cellSize = [_delegate terminalCellSizeInPoints:&scale];
-    const int width = MIN(255, [_delegate terminalWidth]);
-    const int height = MIN(255, [_delegate terminalHeight]);
+    const VT100GridSize size = [_delegate terminalSizeInCells];
+    const int width = MIN(255, size.width);
+    const int height = MIN(255, size.height);
 
     [self sendGraphicsAttributeReportForToken:token
                                        status:0
@@ -4404,7 +4409,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 
 - (void)sendDECCIR {
     if ([_delegate terminalShouldSendReport]) {
-        const int width = [_delegate terminalWidth];
+        const int width = [_delegate terminalSizeInCells].width;
         const int x = _delegate.terminalCursorX;
         const BOOL lineDrawingMode = [_delegate terminalLineDrawingFlagForCharset:self.charset];
         VT100OutputCursorInformation info =
