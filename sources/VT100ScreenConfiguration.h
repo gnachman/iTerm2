@@ -34,6 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Is terminal-initiated printing allowed?
 @property (nonatomic, readonly) BOOL printingAllowed;
 @property (nonatomic, readonly) VT100GridSize theoreticalGridSize;
+@property (nonatomic, readonly) NSString *iconTitle;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -58,6 +59,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL miniaturized;
 @property (nonatomic, readwrite) NSRect windowFrame;
 @property (nonatomic, readwrite) VT100GridSize theoreticalGridSize;
+@property (nonatomic, copy, readwrite) NSString *iconTitle;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 

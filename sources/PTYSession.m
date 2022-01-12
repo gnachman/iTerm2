@@ -11919,6 +11919,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.theoreticalGridSize = theoreticalGridSize;
         dirty = YES;
     }
+    NSString *iconTitle = [self screenIconTitle];
+    if (![NSObject object:iconTitle isEqualToObject:_config.iconTitle]) {
+        _config.iconTitle = iconTitle;
+        dirty = YES;
+    }
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                            inProfile:_profile];

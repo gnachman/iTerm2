@@ -1580,6 +1580,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return self.config.theoreticalGridSize.width;
 }
 
+- (NSString *)terminalIconTitle {
+    return _config.iconTitle ?: @"";
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
