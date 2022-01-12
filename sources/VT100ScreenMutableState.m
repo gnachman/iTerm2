@@ -1625,6 +1625,16 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
+    // Pause becuase a ton of stuff happens here and it's too hard to reason about what would happen
+    // otherwise.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenStartTmuxModeWithDCSIdentifier:dcsID];
+        [unpauser unpause];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

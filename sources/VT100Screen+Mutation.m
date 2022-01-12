@@ -2166,7 +2166,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
-    [delegate_ screenStartTmuxModeWithDCSIdentifier:dcsID];
+    [_mutableState terminalStartTmuxModeWithDCSIdentifier:dcsID];
 }
 
 - (void)terminalHandleTmuxInput:(VT100Token *)token {
