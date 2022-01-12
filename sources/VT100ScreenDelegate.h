@@ -174,7 +174,7 @@
                             quell:(BOOL)quell;
 
 // Request that a string be sent for printing.
-- (void)screenPrintStringIfAllowed:(NSString *)printBuffer;
+- (void)screenPrintStringIfAllowed:(NSString * _Nonnull)printBuffer;
 
 // Request that the currently visible area of the screen be sent for printing.
 - (void)screenPrintVisibleAreaIfAllowed;

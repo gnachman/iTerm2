@@ -72,8 +72,6 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 int kVT100ScreenMinColumns = 2;
 int kVT100ScreenMinRows = 2;
 
-static const int kDefaultScreenColumns = 80;
-static const int kDefaultScreenRows = 25;
 
 const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
@@ -99,10 +97,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
         assert(terminal);
         [self setTerminal:terminal];
-        _mutableState.primaryGrid = [[[VT100Grid alloc] initWithSize:VT100GridSizeMake(kDefaultScreenColumns,
-                                                                                       kDefaultScreenRows)
-                                                            delegate:self] autorelease];
-        _mutableState.currentGrid = _mutableState.primaryGrid;
         _mutableState.temporaryDoubleBuffer.delegate = self;
 
         [iTermNotificationController sharedInstance];
@@ -1056,33 +1050,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                            cadence:1.0 / 60.0
                                           refining:refining
                                           progress:progress];
-}
-
-#pragma mark - VT100GridDelegate
-
-- (screen_char_t)gridForegroundColorCode {
-    return [_state.terminal foregroundColorCodeReal];
-}
-
-- (screen_char_t)gridBackgroundColorCode {
-    return [_state.terminal backgroundColorCodeReal];
-}
-
-- (void)gridCursorDidChangeLine {
-    if (_state.trackCursorLineMovement) {
-        [delegate_ screenCursorDidMoveToLine:_state.currentGrid.cursorY + _state.numberOfScrollbackLines];
-    }
-}
-
-- (iTermUnicodeNormalization)gridUnicodeNormalizationForm {
-    return self.normalization;
-}
-
-- (void)gridCursorDidMove {
-}
-
-- (void)gridDidResize {
-    [self.delegate screenDidResize];
 }
 
 // Deprecated

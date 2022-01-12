@@ -62,6 +62,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark Alternate Screen
 
 - (void)softAlternateScreenModeDidChange;
+- (void)hideOnScreenNotesAndTruncateSpanners;
 
 #pragma mark Write Text
 
@@ -209,6 +210,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block;
+
+#pragma mark - State Restoration
+
+- (void)restoreFromDictionary:(NSDictionary *)dictionary
+     includeRestorationBanner:(BOOL)includeRestorationBanner;
 
 #pragma mark - Temporary
 

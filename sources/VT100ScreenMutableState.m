@@ -45,6 +45,13 @@
         _triggerEvaluator = [[PTYTriggerEvaluator alloc] init];
         _triggerEvaluator.delegate = self;
         _triggerEvaluator.dataSource = self;
+        const int defaultWidth = 80;
+        const int defaultHeight = 25;
+        self.primaryGrid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(defaultWidth,
+                                                                             defaultHeight)
+                                                  delegate:self];
+        self.currentGrid = self.primaryGrid;
+
         [self setInitialTabStops];
     }
     return self;
@@ -897,6 +904,68 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+#pragma mark - Alternate Screen
+
+- (void)showAltBuffer {
+    if (self.currentGrid == self.altGrid) {
+        return;
+    }
+    if (!self.altGrid) {
+        self.altGrid = [[VT100Grid alloc] initWithSize:self.primaryGrid.size delegate:self];
+    }
+
+    [self.temporaryDoubleBuffer reset];
+    self.primaryGrid.savedDefaultChar = [self.primaryGrid defaultChar];
+    [self hideOnScreenNotesAndTruncateSpanners];
+    self.currentGrid = self.altGrid;
+    self.currentGrid.cursor = self.primaryGrid.cursor;
+
+    [self swapOnscreenIntervalTreeObjects];
+    [self reloadMarkCache];
+
+    [self.currentGrid markAllCharsDirty:YES];
+    [self invalidateCommandStartCoordWithoutSideEffects];
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenRemoveSelection];
+        [delegate screenScheduleRedrawSoon];
+        [unpauser unpause];
+    }];
+}
+
+- (void)hideOnScreenNotesAndTruncateSpanners {
+    int screenOrigin = self.numberOfScrollbackLines;
+    VT100GridCoordRange screenRange =
+        VT100GridCoordRangeMake(0,
+                                screenOrigin,
+                                self.width,
+                                screenOrigin + self.height);
+    Interval *screenInterval = [self intervalForGridCoordRange:screenRange];
+    NSMutableArray<PTYAnnotation *> *annotationsToHide = [NSMutableArray array];
+    for (id<IntervalTreeObject> note in [self.intervalTree objectsInInterval:screenInterval]) {
+        if (note.entry.interval.location < screenInterval.location) {
+            // Truncate note so that it ends just before screen.
+#warning TODO: Modifying shared state
+            note.entry.interval.length = screenInterval.location - note.entry.interval.location;
+        }
+        PTYAnnotation *annotation = [PTYAnnotation castFrom:note];
+        if (annotation) {
+            [annotationsToHide addObject:annotation];
+        }
+    }
+    // Force annotations frames to be updated.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+#warning TODO: Coalesce calls to screenNeedsRedraw
+        [delegate screenNeedsRedraw];
+        [annotationsToHide enumerateObjectsUsingBlock:^(PTYAnnotation * _Nonnull annotation, NSUInteger idx, BOOL * _Nonnull stop) {
+#warning TODO: Modifying shared state
+#warning TODO: Coalesce showing/hiding of annotations since it is animated.
+            [annotation hide];
+        }];
+        [unpauser unpause];
+    }];
+}
 
 #pragma mark - Character Sets
 
@@ -1660,6 +1729,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [delegate screenMouseModeDidChange];
         [unpauser unpause];
     }];
+}
+
+- (void)terminalShowAltBuffer {
+    [self showAltBuffer];
 }
 
 #pragma mark - Tabs
@@ -2686,6 +2759,35 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+#pragma mark - State Restoration
+
+- (void)restoreFromDictionary:(NSDictionary *)dictionary
+     includeRestorationBanner:(BOOL)includeRestorationBanner {
+    const BOOL onPrimary = (self.currentGrid == self.primaryGrid);
+    self.primaryGrid.delegate = nil;
+    self.altGrid.delegate = nil;
+    self.altGrid = nil;
+
+    self.primaryGrid = [[VT100Grid alloc] initWithDictionary:dictionary[@"PrimaryGrid"]
+                                                    delegate:self];
+    if (!self.primaryGrid) {
+        // This is to prevent a crash if the dictionary is bad (i.e., non-backward compatible change in a future version).
+        self.primaryGrid = [[VT100Grid alloc] initWithSize:VT100GridSizeMake(2, 2) delegate:self];
+    }
+    if ([dictionary[@"AltGrid"] count]) {
+        self.altGrid = [[VT100Grid alloc] initWithDictionary:dictionary[@"AltGrid"]
+                                                    delegate:self];
+    }
+    if (!self.altGrid) {
+        self.altGrid = [[VT100Grid alloc] initWithSize:self.primaryGrid.size delegate:self];
+    }
+    if (onPrimary || includeRestorationBanner) {
+        self.currentGrid = self.primaryGrid;
+    } else {
+        self.currentGrid = self.altGrid;
+    }
+}
+
 #pragma mark - iTermMarkDelegate
 
 - (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
@@ -2961,6 +3063,39 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)triggerSession:(Trigger *)trigger setVariableNamed:(NSString *)name toValue:(id)value {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate triggerSideEffectSetValue:value forVariableNamed:name];
+    }];
+}
+
+#pragma mark - VT100GridDelegate
+
+- (screen_char_t)gridForegroundColorCode {
+    return [self.terminal foregroundColorCodeReal];
+}
+
+- (screen_char_t)gridBackgroundColorCode {
+    return [self.terminal backgroundColorCodeReal];
+}
+
+- (void)gridCursorDidChangeLine {
+    if (!self.trackCursorLineMovement) {
+        return;
+    }
+    const int line = self.currentGrid.cursorY + self.numberOfScrollbackLines;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenCursorDidMoveToLine:line];
+    }];
+}
+
+- (iTermUnicodeNormalization)gridUnicodeNormalizationForm {
+    return self.normalization;
+}
+
+- (void)gridCursorDidMove {
+}
+
+- (void)gridDidResize {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidResize];
     }];
 }
 
