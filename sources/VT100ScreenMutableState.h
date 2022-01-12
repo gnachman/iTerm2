@@ -78,6 +78,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)eraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after decProtect:(BOOL)dec;
 - (int)numberOfLinesToPreserveWhenClearingScreen;
 - (void)clearAndResetScreenSavingLines:(int)linesToSave;
+- (void)clearScrollbackBuffer;
 
 void VT100ScreenEraseCell(screen_char_t *sct,
                           iTermExternalAttribute **eaOut,

@@ -10890,7 +10890,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return NSMakeSize([_textview charWidth], [_textview lineHeight]);
 }
 
-- (void)screenDidClearScrollbackBuffer:(VT100Screen *)screen {
+- (void)screenDidClearScrollbackBuffer {
     [_delegate sessionDidClearScrollbackBuffer:self];
 }
 
@@ -11929,6 +11929,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.windowTitle = windowTitle;
         dirty = YES;
     }
+    const BOOL clearScrollbackAllowed = [self clearScrollbackAllowed];
+    if (clearScrollbackAllowed != _config.clearScrollbackAllowed) {
+        _config.clearScrollbackAllowed = clearScrollbackAllowed;
+        dirty = YES;
+    }
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                            inProfile:_profile];
@@ -12688,9 +12693,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return allow;
 }
 
-- (BOOL)screenShouldClearScrollbackBuffer {
+- (BOOL)clearScrollbackAllowed {
     if (self.naggingController.shouldAskAboutClearingScrollbackHistory) {
-        [self.naggingController askAboutClearingScrollbackHistory];
         return NO;
     }
     const BOOL *boolPtr = iTermAdvancedSettingsModel.preventEscapeSequenceFromClearingHistory;
@@ -12698,6 +12702,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     }
     return !*boolPtr;
+}
+
+- (void)screenAskAboutClearingScrollback {
+    if (self.naggingController.shouldAskAboutClearingScrollbackHistory) {
+        [self.naggingController askAboutClearingScrollbackHistory];
+    }
 }
 
 - (void)screenDidResize {

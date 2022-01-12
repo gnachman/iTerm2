@@ -261,24 +261,7 @@
 }
 
 - (void)mutClearScrollbackBuffer {
-    _mutableState.linebuffer = [[[LineBuffer alloc] init] autorelease];
-    [self.mutableLineBuffer setMaxLines:_state.maxScrollbackLines];
-    [delegate_ screenClearHighlights];
-    [_mutableState.currentGrid markAllCharsDirty:YES];
-
-    _mutableState.savedFindContextAbsPos = 0;
-
-    [self resetScrollbackOverflow];
-    [delegate_ screenRemoveSelection];
-    [_mutableState.currentGrid markAllCharsDirty:YES];
-    [_mutableState removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
-                                                                            0,
-                                                                            _mutableState.width, _mutableState.numberOfScrollbackLines + _mutableState.height)];
-    _mutableState.intervalTree = [[[IntervalTree alloc] init] autorelease];
-    [self mutReloadMarkCache];
-    _mutableState.lastCommandMark = nil;
-    [delegate_ screenDidClearScrollbackBuffer:self];
-    [delegate_ screenRefreshFindOnPageView];
+    [_mutableState clearScrollbackBuffer];
 }
 
 - (void)clearScrollbackBufferFromLine:(int)line {
@@ -1570,7 +1553,7 @@
 }
 
 - (void)mutResetScrollbackOverflow {
-    _mutableState.scrollbackOverflow = 0;
+    [_mutableState resetScrollbackOverflow];
 }
 
 - (void)mutSetWraparoundMode:(BOOL)newValue {
@@ -2133,9 +2116,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalClearScrollbackBuffer {
-    if ([self.delegate screenShouldClearScrollbackBuffer]) {
-        [self clearScrollbackBuffer];
-    }
+    [_mutableState terminalClearScrollbackBuffer];
 }
 
 - (void)terminalClearBuffer {

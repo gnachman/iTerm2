@@ -26,6 +26,7 @@
 @property (nonatomic, readwrite) VT100GridSize theoreticalGridSize;
 @property (nonatomic, copy, readwrite) NSString *iconTitle;
 @property (nonatomic, copy, readwrite) NSString *windowTitle;
+@property (nonatomic, readwrite) BOOL clearScrollbackAllowed;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -46,6 +47,7 @@
 @synthesize theoreticalGridSize = _theoreticalGridSize;
 @synthesize iconTitle = _iconTitle;
 @synthesize windowTitle = _windowTitle;
+@synthesize clearScrollbackAllowed = _clearScrollbackAllowed;
 
 @synthesize isDirty = _isDirty;
 
@@ -68,6 +70,7 @@
         _theoreticalGridSize = other.theoreticalGridSize;
         _iconTitle = other.iconTitle;
         _windowTitle = other.windowTitle;
+        _clearScrollbackAllowed = other.clearScrollbackAllowed;
 
         _isDirty = other.isDirty;
     }
@@ -95,6 +98,7 @@
                             @"theoreticalGridSize": VT100GridSizeDescription(_theoreticalGridSize),
                             @"iconTitle": _iconTitle ?: @"",
                             @"windowTitle": _windowTitle ?: @"",
+                            @"clearScrollbackAllowed": @(_clearScrollbackAllowed),
 
                             @"isDirty": @(_isDirty),
     };
@@ -125,6 +129,7 @@
 @dynamic theoreticalGridSize;
 @dynamic iconTitle;
 @dynamic windowTitle;
+@dynamic clearScrollbackAllowed;
 
 @dynamic isDirty;
 
