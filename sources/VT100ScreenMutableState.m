@@ -1561,7 +1561,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (NSPoint)terminalWindowTopLeftPixelCoordinate {
-    return self.config.windowOrigin;
+    return self.config.windowFrame.origin;
+}
+
+- (int)terminalWindowWidthInPixels {
+    return round(self.config.windowFrame.size.width);
+}
+
+- (int)terminalWindowHeightInPixels {
+    return round(self.config.windowFrame.size.height);
 }
 
 #pragma mark - Tabs

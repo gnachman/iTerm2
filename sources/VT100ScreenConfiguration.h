@@ -27,7 +27,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL isTmuxClient;
 @property (nonatomic, readonly) BOOL clipboardAccessAllowed;
 @property (nonatomic, readonly) BOOL miniaturized;
-@property (nonatomic, readonly) NSPoint windowOrigin;
+// Screen-relative window frame.
+@property (nonatomic, readonly) NSRect windowFrame;
 
 // Is terminal-initiated printing allowed?
 @property (nonatomic, readonly) BOOL printingAllowed;
@@ -53,7 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL printingAllowed;
 @property (nonatomic, readwrite) BOOL clipboardAccessAllowed;
 @property (nonatomic, readwrite) BOOL miniaturized;
-@property (nonatomic, readwrite) NSPoint windowOrigin;
+@property (nonatomic, readwrite) NSRect windowFrame;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 

@@ -2128,14 +2128,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (NSPoint)terminalWindowTopLeftPixelCoordinate {
     return [_mutableState terminalWindowTopLeftPixelCoordinate];
 }
+
 - (int)terminalWindowWidthInPixels {
-    NSRect frame = [delegate_ screenWindowFrame];
-    return frame.size.width;
+    return [_mutableState terminalWindowWidthInPixels];
 }
 
 - (int)terminalWindowHeightInPixels {
-    NSRect frame = [delegate_ screenWindowFrame];
-    return frame.size.height;
+    return [_mutableState terminalWindowHeightInPixels];
 }
 
 - (int)terminalScreenHeightInCells {

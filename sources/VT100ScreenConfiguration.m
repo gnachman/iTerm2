@@ -22,7 +22,7 @@
 @property (nonatomic, readwrite) BOOL printingAllowed;
 @property (nonatomic, readwrite) BOOL clipboardAccessAllowed;
 @property (nonatomic, readwrite) BOOL miniaturized;
-@property (nonatomic, readwrite) NSPoint windowOrigin;
+@property (nonatomic, readwrite) NSRect windowFrame;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -39,7 +39,7 @@
 @synthesize printingAllowed = _printingAllowed;
 @synthesize clipboardAccessAllowed = _clipboardAccessAllowed;
 @synthesize miniaturized = _miniaturized;
-@synthesize windowOrigin = _windowOrigin;
+@synthesize windowFrame = _windowFrame;
 
 @synthesize isDirty = _isDirty;
 
@@ -58,7 +58,7 @@
         _printingAllowed = other.printingAllowed;
         _clipboardAccessAllowed = other.clipboardAccessAllowed;
         _miniaturized = other.miniaturized;
-        _windowOrigin = other.windowOrigin;
+        _windowFrame = other.windowFrame;
 
         _isDirty = other.isDirty;
     }
@@ -82,7 +82,7 @@
                             @"printingAllowed": @(_printingAllowed),
                             @"clipboardAccessAllowed": @(_clipboardAccessAllowed),
                             @"miniaturized": @(_miniaturized),
-                            @"windowOrigin": @(_windowOrigin),
+                            @"windowFrame": @(_windowFrame),
 
                             @"isDirty": @(_isDirty),
     };
@@ -109,7 +109,7 @@
 @dynamic printingAllowed;
 @dynamic clipboardAccessAllowed;
 @dynamic miniaturized;
-@dynamic windowOrigin;
+@dynamic windowFrame;
 
 @dynamic isDirty;
 
