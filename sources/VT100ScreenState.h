@@ -277,6 +277,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSString *)workingDirectoryOnLine:(int)line;
 
+#pragma mark - Advanced Prefs
+
+@property (nonatomic, readonly) BOOL terminalIsTrusted;
+
 #pragma mark - Development
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers;

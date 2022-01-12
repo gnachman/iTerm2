@@ -528,6 +528,14 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return [self lastMarkMustBePrompt:YES class:[VT100ScreenMark class]];
 }
 
+#pragma mark - Advanced Prefs
+
+- (BOOL)terminalIsTrusted {
+    const BOOL result = ![iTermAdvancedSettingsModel disablePotentiallyInsecureEscapeSequences];
+    DLog(@"terminalIsTrusted returning %@", @(result));
+    return result;
+}
+
 #pragma mark - Development
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers {
