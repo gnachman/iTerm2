@@ -1313,10 +1313,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutCurrentDirectoryDidChangeTo:dir];
 }
 
-- (void)saveCursorLine {
-    [self mutSaveCursorLine];
-}
-
 - (long long)lastPromptLine {
     return _state.lastPromptLine;
 }
