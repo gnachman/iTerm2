@@ -2170,7 +2170,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalHandleTmuxInput:(VT100Token *)token {
-    [delegate_ screenHandleTmuxInput:token];
+    [_mutableState terminalHandleTmuxInput:token];
 }
 
 - (void)terminalSynchronizedUpdate:(BOOL)begin {
