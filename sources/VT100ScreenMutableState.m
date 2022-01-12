@@ -1596,6 +1596,25 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (void)terminalPushCurrentTitleForWindow:(BOOL)isWindow {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        if ([delegate screenAllowTitleSetting]) {
+            [delegate screenPushCurrentTitleForWindow:isWindow];
+        }
+    }];
+}
+
+- (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow {
+    // Pause because this sets the title, which is observable.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        if ([delegate screenAllowTitleSetting]) {
+            [delegate screenPopCurrentTitleForWindow:isWindow];
+        }
+        [unpauser unpause];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
