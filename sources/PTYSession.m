@@ -6379,8 +6379,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return dragImage;
 }
 
-- (void)setPasteboard:(NSString *)pbName
-{
+- (void)setPasteboard:(NSString *)pbName {
     if (pbName) {
         [_pasteboard autorelease];
         _pasteboard = [pbName copy];
@@ -6388,7 +6387,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _pbtext = [[NSMutableData alloc] init];
     } else {
         NSPasteboard *pboard = [NSPasteboard pasteboardWithName:_pasteboard];
-        [pboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:self];
+        [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
         [pboard setData:_pbtext forType:NSPasteboardTypeString];
 
         [_pasteboard release];
@@ -11164,11 +11163,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (BOOL)screenIsAppendingToPasteboard {
-    return _pasteboard != nil;
-}
-
 - (void)screenAppendDataToPasteboard:(NSData *)data {
+    if (_pasteboard == nil) {
+        return;
+    }
     // Don't allow more than 100MB to be added to the pasteboard queue in case someone
     // forgets to send the EndCopy command.
     const int kMaxPasteboardBytes = 100 * 1024 * 1024;
