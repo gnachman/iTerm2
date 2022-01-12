@@ -1822,6 +1822,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalSetProxyIcon:(NSString *)value {
+    NSString *path = [value length] ? value : nil;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetPreferredProxyIcon:path];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
