@@ -10738,11 +10738,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [[[_delegate parentWindow] windowScreen] visibleFrame];
 }
 
-- (NSPoint)windowOrigin {
+- (NSRect)windowFrame {
     NSRect frame = [self screenWindowFrame];
     NSRect screenFrame = [self screenWindowScreenFrame];
-    return NSMakePoint(frame.origin.x - screenFrame.origin.x,
-                       (screenFrame.origin.y + screenFrame.size.height) - (frame.origin.y + frame.size.height));
+    return NSMakeRect(frame.origin.x - screenFrame.origin.x,
+                      (screenFrame.origin.y + screenFrame.size.height) - (frame.origin.y + frame.size.height),
+                      frame.size.width,
+                      frame.size.height);
 }
 
 // If flag is set, miniaturize; otherwise, deminiaturize.
@@ -11890,9 +11892,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.miniaturized = miniaturized;
         dirty = YES;
     }
-    const NSPoint windowOrigin = [self windowOrigin];
-    if (!NSEqualPoints(windowOrigin, _config.windowOrigin)) {
-        _config.windowOrigin = windowOrigin;
+    const NSRect windowFrame = [self windowFrame];
+    if (!NSEqualRects(windowFrame, _config.windowFrame)) {
+        _config.windowFrame = windowFrame;
         dirty = YES;
     }
     if (_profileDidChange) {
