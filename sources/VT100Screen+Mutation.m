@@ -2174,7 +2174,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalMouseModeDidChangeTo:(MouseMode)mouseMode {
-    [delegate_ screenMouseModeDidChange];
+    [_mutableState terminalMouseModeDidChangeTo:mouseMode];
 }
 
 - (void)terminalNeedsRedraw {

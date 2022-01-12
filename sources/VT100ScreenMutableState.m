@@ -1653,6 +1653,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return self.currentGrid.size;
 }
 
+- (void)terminalMouseModeDidChangeTo:(MouseMode)mouseMode {
+    // Pause because this updates a variable.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenMouseModeDidChange];
+        [unpauser unpause];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
