@@ -269,7 +269,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow;
 
 // Posts a message to Notification center. Returns YES if the message was posted.
-- (BOOL)terminalPostUserNotification:(NSString *)message;
+- (void)terminalPostUserNotification:(NSString *)message;
 
 // Enters Tmux mode.
 - (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID;

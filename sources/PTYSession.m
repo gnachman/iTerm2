@@ -10909,7 +10909,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_textview beginFlash:identifier];
 }
 
-- (void)screenIncrementBadge {
+- (void)incrementBadge {
     [[_delegate realParentWindow] incrementBadge];
 }
 
@@ -11945,7 +11945,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (BOOL)screenShouldPostTerminalGeneratedAlert {
+- (BOOL)shouldPostTerminalGeneratedAlert {
     return [iTermProfilePreferences boolForKey:KEY_SEND_TERMINAL_GENERATED_ALERT
                                      inProfile:_profile];
 }
@@ -12792,6 +12792,25 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                     onHost:remoteHost
                                                                         to:mark.code];
     [self screenNeedsRedraw];
+}
+
+- (void)screenPostUserNotification:(NSString * _Nonnull)message {
+    if (![self shouldPostTerminalGeneratedAlert]) {
+        DLog(@"Declining to allow terminal to post user notification %@", message);
+        return;
+    }
+    DLog(@"Terminal posting user notification %@", message);
+    [self incrementBadge];
+    NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
+                             [[self name] removingHTMLFromTabTitleIfNeeded],
+                             [_delegate tabNumber],
+                             message];
+    [[iTermNotificationController sharedInstance]
+     notify:@"Alert"
+     withDescription:description
+     windowIndex:[self screenWindowIndex]
+     tabIndex:[self screenTabIndex]
+     viewIndex:[self screenViewIndex]];
 }
 
 - (VT100Screen *)popupVT100Screen {

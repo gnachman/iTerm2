@@ -746,9 +746,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenFlashImage:(NSString *)identifier {
 }
 
-- (void)screenIncrementBadge {
-}
-
 - (void)screenSetHighlightCursorLine:(BOOL)highlight {
 }
 
@@ -811,10 +808,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
 - (int)selectionViewportWidth {
     return 80;
-}
-
-- (BOOL)screenShouldPostTerminalGeneratedAlert {
-    return NO;
 }
 
 - (void)screenPromptDidStartAtLine:(int)line {

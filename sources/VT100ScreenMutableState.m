@@ -1615,6 +1615,16 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalPostUserNotification:(NSString *)message {
+    if (!self.postUserNotifications) {
+        DLog(@"Declining to allow terminal to post user notification %@", message);
+        return;
+    }
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenPostUserNotification:message];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

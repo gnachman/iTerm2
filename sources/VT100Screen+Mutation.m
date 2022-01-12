@@ -2161,25 +2161,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [_mutableState terminalPopCurrentTitleForWindow:isWindow];
 }
 
-- (BOOL)terminalPostUserNotification:(NSString *)message {
-    if (_state.postUserNotifications && [delegate_ screenShouldPostTerminalGeneratedAlert]) {
-        DLog(@"Terminal posting user notification %@", message);
-        [delegate_ screenIncrementBadge];
-        NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
-                                 [[delegate_ screenName] removingHTMLFromTabTitleIfNeeded],
-                                 [delegate_ screenNumber],
-                                 message];
-        BOOL sent = [[iTermNotificationController sharedInstance]
-                                 notify:@"Alert"
-                        withDescription:description
-                            windowIndex:[delegate_ screenWindowIndex]
-                               tabIndex:[delegate_ screenTabIndex]
-                              viewIndex:[delegate_ screenViewIndex]];
-        return sent;
-    } else {
-        DLog(@"Declining to allow terminal to post user notification %@", message);
-        return NO;
-    }
+- (void)terminalPostUserNotification:(NSString *)message {
+    [_mutableState terminalPostUserNotification:message];
 }
 
 - (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
