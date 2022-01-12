@@ -1670,23 +1670,6 @@
     [delegate_ screenUpdateDisplay:YES];
 }
 
-#pragma mark - Alternate Screen
-
-- (void)mutShowPrimaryBuffer {
-    if (_state.currentGrid == _state.altGrid) {
-        [self.mutableTemporaryDoubleBuffer reset];
-        [delegate_ screenRemoveSelection];
-        [_mutableState hideOnScreenNotesAndTruncateSpanners];
-        _mutableState.currentGrid = _state.primaryGrid;
-        [_mutableState invalidateCommandStartCoordWithoutSideEffects];
-        [_mutableState swapOnscreenIntervalTreeObjects];
-        [self mutReloadMarkCache];
-
-        [_mutableState.currentGrid markAllCharsDirty:YES];
-        [delegate_ screenScheduleRedrawSoon];
-    }
-}
-
 #pragma mark - URLs
 
 - (void)mutLinkTextInRange:(NSRange)range
@@ -2133,7 +2116,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalShowPrimaryBuffer {
-    [self mutShowPrimaryBuffer];
+    [_mutableState terminalShowPrimaryBuffer];
 }
 
 - (void)terminalSetRemoteHost:(NSString *)remoteHost {

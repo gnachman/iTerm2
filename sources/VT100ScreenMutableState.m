@@ -933,6 +933,26 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)showPrimaryBuffer {
+    if (self.currentGrid != self.altGrid) {
+        return;
+    }
+    [self.temporaryDoubleBuffer reset];
+    [self hideOnScreenNotesAndTruncateSpanners];
+    self.currentGrid = self.primaryGrid;
+    [self invalidateCommandStartCoordWithoutSideEffects];
+    [self swapOnscreenIntervalTreeObjects];
+    [self reloadMarkCache];
+
+    [self.currentGrid markAllCharsDirty:YES];
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenRemoveSelection];
+        [delegate screenScheduleRedrawSoon];
+        [unpauser unpause];
+    }];
+}
+
 - (void)hideOnScreenNotesAndTruncateSpanners {
     int screenOrigin = self.numberOfScrollbackLines;
     VT100GridCoordRange screenRange =
@@ -1742,6 +1762,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (BOOL)terminalIsShowingAltBuffer {
     return self.currentGrid == self.altGrid;
 }
+
+- (void)terminalShowPrimaryBuffer {
+    [self showPrimaryBuffer];
+}
+
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
