@@ -133,7 +133,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetMutingAmount:(double)value;
 - (void)mutSetDimmingAmount:(double)value;
 - (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate;
-- (void)mutSynchronizedUpdate:(BOOL)begin;
 - (void)mutAppendNativeImageAtCursorWithName:(NSString *)name width:(int)width;
 - (void)mutSetWorkingDirectory:(NSString *)workingDirectory
                      onAbsLine:(long long)line
