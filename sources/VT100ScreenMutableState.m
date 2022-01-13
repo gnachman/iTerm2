@@ -2007,6 +2007,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalDisinterSession {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDisinterSession];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

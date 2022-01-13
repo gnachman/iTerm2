@@ -2250,7 +2250,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalDisinterSession {
-    [delegate_ screenDisinterSession];
+    [_mutableState terminalDisinterSession];
 }
 
 - (void)terminalSetBackgroundImageFile:(NSString *)filename {
