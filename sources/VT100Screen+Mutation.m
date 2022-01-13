@@ -2338,7 +2338,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalWillAutoWrap {
-    return _mutableState.cursorX > _mutableState.width;
+    return [_mutableState terminalWillAutoWrap];
 }
 
 - (void)terminalSetCursorVisible:(BOOL)visible {
