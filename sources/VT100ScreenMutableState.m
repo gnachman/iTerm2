@@ -2229,6 +2229,22 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self commandWasAborted];
 }
 
+- (void)terminalSemanticTextDidStartOfType:(VT100TerminalSemanticTextType)type {
+    // TODO
+}
+
+- (void)terminalSemanticTextDidEndOfType:(VT100TerminalSemanticTextType)type {
+    // TODO
+}
+
+- (void)terminalProgressAt:(double)fraction label:(NSString *)label {
+     // TODO
+}
+
+- (void)terminalProgressDidFinish {
+    // TODO
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
