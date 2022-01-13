@@ -994,10 +994,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [_state stringLineAsStringAtAbsoluteLineNumber:absoluteLineNumber startPtr:startAbsLineNumber];
 }
 
-- (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
-    return [self mutCommandDidEndAtAbsCoord:coord];
-}
-
 - (void)appendNativeImageAtCursorWithName:(NSString *)name width:(int)width {
     [self mutAppendNativeImageAtCursorWithName:name width:width];
 }
