@@ -2334,11 +2334,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetHighlightCursorLine:(BOOL)highlight {
-    [delegate_ screenSetHighlightCursorLine:highlight];
+    [_mutableState terminalSetHighlightCursorLine:highlight];
 }
 
 - (void)terminalClearCapturedOutput {
-    [delegate_ screenClearCapturedOutput];
+    [_mutableState terminalClearCapturedOutput];
 }
 
 - (void)terminalPromptDidStart {
