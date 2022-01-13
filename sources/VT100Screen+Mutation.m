@@ -2322,7 +2322,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalCursorVisible {
-    return _state.cursorVisible;
+    return [_mutableState terminalCursorVisible];
 }
 
 - (NSColor *)terminalColorForIndex:(VT100TerminalColorIndex)index {
