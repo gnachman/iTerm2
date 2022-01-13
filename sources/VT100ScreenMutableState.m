@@ -2028,6 +2028,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalSetUserVar:(NSString *)kvp {
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetUserVar:kvp];
+        [unpauser unpause];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
