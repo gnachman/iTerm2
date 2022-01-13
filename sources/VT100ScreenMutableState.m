@@ -2139,6 +2139,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return [iTermAdvancedSettingsModel focusReportingEnabled];
 }
 
+- (BOOL)terminalCursorVisible {
+    return self.cursorVisible;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
