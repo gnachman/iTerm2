@@ -2330,11 +2330,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (int)terminalCursorX {
-    return MIN(_mutableState.cursorX, _mutableState.width);
+    return [_mutableState terminalCursorX];
 }
 
 - (int)terminalCursorY {
-    return _mutableState.cursorY;
+    return [_mutableState terminalCursorY];
 }
 
 - (BOOL)terminalWillAutoWrap {
