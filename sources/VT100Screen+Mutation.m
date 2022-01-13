@@ -2246,7 +2246,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRequestAttention:(VT100AttentionRequestType)request {
-    [delegate_ screenRequestAttention:request];
+    [_mutableState terminalRequestAttention:request];
 }
 
 - (void)terminalDisinterSession {
