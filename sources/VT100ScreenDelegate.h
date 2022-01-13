@@ -251,8 +251,11 @@
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color;
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color;
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
-- (void)screenSetColor:(NSColor * _Nullable)color forKey:(int)key;
-- (void)screenResetColorsWithColorMapKey:(int)key;
+- (void)screenSetColor:(NSColor * _Nullable)color
+                forKey:(int)key
+              colorMap:(iTermColorMap * _Nonnull)colorMap;
+- (void)screenResetColorsWithColorMapKey:(int)key
+                                colorMap:(iTermColorMap * _Nonnull)colorMap;
 - (void)screenSelectColorPresetNamed:(NSString * _Nonnull)name;
 
 - (void)screenCurrentHostDidChange:(VT100RemoteHost * _Nonnull)host
@@ -340,4 +343,6 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                               remoteHost:(VT100RemoteHost * _Nullable)remoteHost;
 - (void)screenCopyStringToPasteboard:(NSString * _Nonnull)string;
 - (void)screenPostUserNotification:(NSString * _Nonnull)string;
+- (void)screenSync;
+
 @end

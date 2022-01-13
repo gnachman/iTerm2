@@ -3788,7 +3788,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 // Restore a color to the value in `profile`.
 - (void)resetColorWithKey:(int)colorKey
-              fromProfile:(Profile *)profile {
+              fromProfile:(Profile *)profile
+                 colorMap:(iTermColorMap *)colorMap {
     DLog(@"resetColorWithKey:%d fromProfile:%@", colorKey, profile[KEY_GUID]);
     if (!_originalProfile) {
         DLog(@"No original profile");
@@ -3797,18 +3798,24 @@ ITERM_WEAKLY_REFERENCEABLE
 
     if (colorKey >= kColorMap8bitBase + 16 && colorKey < kColorMap8bitBase + 256) {
         // ANSI colors above 16 don't come from the profile. They have hard-coded defaults.
-        [_screen resetNonAnsiColorWithKey:colorKey];
+        [self resetNonAnsiColorWithKey:colorKey colorMap:colorMap];
         return;
     }
     // Note that we use _profile here since that tracks stuff like whether we have separate
     // light/dark colors and whether there is a custom underline color. Later we use
     // `originalProfile` to get the color to reset.
-    NSString *profileKey = [_screen.colorMap profileKeyForColorMapKey:colorKey];
+    NSString *profileKey = [colorMap profileKeyForColorMapKey:colorKey];
     DLog(@"profileKey=%@", profileKey);
     NSColor *color = [iTermProfilePreferences colorForKey:profileKey
-                                                     dark:_screen.colorMap.darkMode
+                                                     dark:colorMap.darkMode
                                                   profile:profile];
-    [self reallySetColor:color forKey:colorKey];
+    [self reallySetColor:color forKey:colorKey colorMap:colorMap];
+}
+
+- (void)resetNonAnsiColorWithKey:(int)colorKey
+                        colorMap:(iTermColorMap *)colorMap {
+    NSColor *theColor = [NSColor colorForAnsi256ColorIndex:colorKey - kColorMap8bitBase];
+    [colorMap setColor:theColor forKey:colorKey];
 }
 
 - (void)load16ANSIColorsFromProfile:(Profile *)aDict darkMode:(BOOL)dark {
@@ -7650,6 +7657,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self sync];
 }
 
+- (void)screenSync {
+    [self syncCheckingTriggers:NO];
+}
+
 - (void)sync {
     [self syncCheckingTriggers:NO];
 }
@@ -11433,12 +11444,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // 8-15 are ansi bright colors,
 // 16-255 are 256 color-mode colors.
 // If empty, reset all.
-- (void)screenResetColorsWithColorMapKey:(int)key {
+- (void)screenResetColorsWithColorMapKey:(int)key
+                                colorMap:(iTermColorMap *)colorMap {
     DLog(@"key=%d", key);
 
     if (key >= kColorMap8bitBase && key < kColorMap8bitBase + 256) {
         DLog(@"Reset ANSI color %@", @(key));
-        [self resetColorWithKey:key fromProfile:_originalProfile];
+        [self resetColorWithKey:key fromProfile:_originalProfile colorMap:colorMap];
         return;
     }
     DLog(@"Reset dynamic color with colormap key %d", key);
@@ -11454,23 +11466,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return;
     }
 
-    [self resetColorWithKey:key fromProfile:_originalProfile];
+    [self resetColorWithKey:key fromProfile:_originalProfile colorMap:colorMap];
 }
 
-- (void)screenSetColor:(NSColor *)color forKey:(int)key {
-    [self reallySetColor:color forKey:key];
+- (void)screenSetColor:(NSColor *)color forKey:(int)key colorMap:(iTermColorMap *)colorMap {
+    [self reallySetColor:color forKey:key colorMap:colorMap];
 }
 
-- (void)reallySetColor:(NSColor *)color forKey:(int)key {
+- (void)reallySetColor:(NSColor *)color forKey:(int)key colorMap:(iTermColorMap *)colorMap {
     if (!color) {
         return;
     }
 
-    NSString *profileKey = [_screen.colorMap profileKeyForColorMapKey:key];
+    NSString *profileKey = [colorMap profileKeyForColorMapKey:key];
     if (profileKey) {
         [self setSessionSpecificProfileValues:@{ profileKey: [color dictionaryValue] }];
     } else {
-        [_screen setColor:color forKey:key];
+        [colorMap setColor:color forKey:key];
     }
 }
 

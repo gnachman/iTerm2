@@ -206,6 +206,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - Color
 
 - (void)loadInitialColorTable;
+- (void)setColor:(NSColor *)color forKey:(int)key;
 
 #pragma mark - Cross-Thread Sync
 

@@ -28,5 +28,6 @@ iTermTriggerScopeProvider> {
 }
 
 @property (atomic) BOOL hadCommand;
+@property (atomic) BOOL performingJoinedBlock;
 
 @end

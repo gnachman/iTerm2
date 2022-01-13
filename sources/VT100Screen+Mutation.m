@@ -2266,88 +2266,55 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalResetColor:(VT100TerminalColorIndex)n {
-    const int key = [self colorMapKeyForTerminalColorIndex:n];
-    DLog(@"Key for %@ is %@", @(n), @(key));
-    if (key < 0) {
-        return;
-    }
-    [delegate_ screenResetColorsWithColorMapKey:key];
+    [_mutableState terminalResetColor:n];
 }
 
 - (void)terminalSetForegroundColor:(NSColor *)color {
-    [delegate_ screenSetColor:color forKey:kColorMapForeground];
+    [_mutableState terminalSetForegroundColor:color];
 }
 
 - (void)terminalSetBackgroundColor:(NSColor *)color {
-    [delegate_ screenSetColor:color forKey:kColorMapBackground];
+    [_mutableState terminalSetBackgroundColor:color];
 }
 
 - (void)terminalSetBoldColor:(NSColor *)color {
-    [delegate_ screenSetColor:color forKey:kColorMapBold];
+    [_mutableState terminalSetBoldColor:color];
 }
 
 - (void)terminalSetSelectionColor:(NSColor *)color {
-    [delegate_ screenSetColor:color forKey:kColorMapSelection];
+    [_mutableState terminalSetSelectionColor:color];
 }
 
 - (void)terminalSetSelectedTextColor:(NSColor *)color {
-    [delegate_ screenSetColor:color forKey:kColorMapSelectedText];
+    [_mutableState terminalSetSelectedTextColor:color];
 }
 
 - (void)terminalSetCursorColor:(NSColor *)color {
-    [delegate_ screenSetColor:color forKey:kColorMapCursor];
+    [_mutableState terminalSetCursorColor:color];
 }
 
 - (void)terminalSetCursorTextColor:(NSColor *)color {
-    [delegate_ screenSetColor:color forKey:kColorMapCursorText];
-}
-
-- (int)colorMapKeyForTerminalColorIndex:(VT100TerminalColorIndex)n {
-    switch (n) {
-        case VT100TerminalColorIndexText:
-            return kColorMapForeground;
-        case VT100TerminalColorIndexBackground:
-            return kColorMapBackground;
-        case VT100TerminalColorIndexCursor:
-            return kColorMapCursor;
-        case VT100TerminalColorIndexSelectionBackground:
-            return kColorMapSelection;
-        case VT100TerminalColorIndexSelectionForeground:
-            return kColorMapSelectedText;
-        case VT100TerminalColorIndexFirst8BitColorIndex:
-        case VT100TerminalColorIndexLast8BitColorIndex:
-            break;
-    }
-    if (n < 0 || n > 255) {
-        return -1;
-    } else {
-        return kColorMap8bitBase + n;
-    }
+    [_mutableState terminalSetCursorTextColor:color];
 }
 
 - (void)terminalSetColorTableEntryAtIndex:(VT100TerminalColorIndex)n color:(NSColor *)color {
-    const int key = [self colorMapKeyForTerminalColorIndex:n];
-    DLog(@"Key for %@ is %@", @(n), @(key));
-    if (key < 0) {
-        return;
-    }
-    [delegate_ screenSetColor:color forKey:key];
+    [_mutableState terminalSetColorTableEntryAtIndex:n color:color];
 }
 
 - (void)terminalSetCurrentTabColor:(NSColor *)color {
-    [delegate_ screenSetCurrentTabColor:color];
+    [_mutableState terminalSetCurrentTabColor:color];
 }
 
 - (void)terminalSetTabColorRedComponentTo:(CGFloat)color {
-    [delegate_ screenSetTabColorRedComponentTo:color];
+    [_mutableState terminalSetTabColorRedComponentTo:color];
 }
 
 - (void)terminalSetTabColorGreenComponentTo:(CGFloat)color {
-    [delegate_ screenSetTabColorGreenComponentTo:color];
+    [_mutableState terminalSetTabColorGreenComponentTo:color];
 }
 
 - (void)terminalSetTabColorBlueComponentTo:(CGFloat)color {
-    [delegate_ screenSetTabColorBlueComponentTo:color];
+    [_mutableState terminalSetTabColorBlueComponentTo:color];
 }
 
 - (BOOL)terminalFocusReportingAllowed {
@@ -2359,7 +2326,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSColor *)terminalColorForIndex:(VT100TerminalColorIndex)index {
-    const int key = [self colorMapKeyForTerminalColorIndex:index];
+    const int key = [_state colorMapKeyForTerminalColorIndex:index];
     if (key < 0) {
         return nil;
     }
