@@ -2001,6 +2001,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return NO;
 }
 
+- (void)terminalRequestAttention:(VT100AttentionRequestType)request {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenRequestAttention:request];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
