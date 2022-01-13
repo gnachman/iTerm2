@@ -2249,6 +2249,27 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self setReturnCodeOfLastCommand:returnCode];
 }
 
+- (void)terminalFinalTermCommand:(NSArray *)argv {
+    // TODO
+    // Currently, FinalTerm supports these commands:
+  /*
+   QUIT_PROGRAM,
+   SEND_TO_SHELL,
+   CLEAR_SHELL_COMMAND,
+   SET_SHELL_COMMAND,
+   RUN_SHELL_COMMAND,
+   TOGGLE_VISIBLE,
+   TOGGLE_FULLSCREEN,
+   TOGGLE_DROPDOWN,
+   ADD_TAB,
+   SPLIT,
+   CLOSE,
+   LOG,
+   PRINT_METRICS,
+   COPY_TO_CLIPBOARD,
+   OPEN_URL
+   */
+}
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
