@@ -2344,6 +2344,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return self.config.profileName;
 }
 
+- (VT100GridRect)terminalScrollRegion {
+    return self.currentGrid.scrollRegionRect;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
