@@ -27,6 +27,7 @@
 @property (nonatomic, copy, readwrite) NSString *iconTitle;
 @property (nonatomic, copy, readwrite) NSString *windowTitle;
 @property (nonatomic, readwrite) BOOL clearScrollbackAllowed;
+@property (nonatomic, copy, readwrite) NSString *profileName;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -48,6 +49,7 @@
 @synthesize iconTitle = _iconTitle;
 @synthesize windowTitle = _windowTitle;
 @synthesize clearScrollbackAllowed = _clearScrollbackAllowed;
+@synthesize profileName = _profileName;
 
 @synthesize isDirty = _isDirty;
 
@@ -71,6 +73,7 @@
         _iconTitle = other.iconTitle;
         _windowTitle = other.windowTitle;
         _clearScrollbackAllowed = other.clearScrollbackAllowed;
+        _profileName = other.profileName;
 
         _isDirty = other.isDirty;
     }
@@ -99,6 +102,7 @@
                             @"iconTitle": _iconTitle ?: @"",
                             @"windowTitle": _windowTitle ?: @"",
                             @"clearScrollbackAllowed": @(_clearScrollbackAllowed),
+                            @"profileName": _profileName ?: @"",
 
                             @"isDirty": @(_isDirty),
     };
@@ -130,6 +134,7 @@
 @dynamic iconTitle;
 @dynamic windowTitle;
 @dynamic clearScrollbackAllowed;
+@dynamic profileName;
 
 @dynamic isDirty;
 

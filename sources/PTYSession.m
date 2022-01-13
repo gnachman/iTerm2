@@ -11955,6 +11955,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.triggerParametersUseInterpolatedStrings = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
                                                                                     inProfile:self.profile];
         _config.triggerProfileDicts = [iTermProfilePreferences objectForKey:KEY_TRIGGERS inProfile:self.profile];
+
+        _config.profileName = [self profileName];
         dirty = YES;
         _profileDidChange = NO;
     }
@@ -12151,7 +12153,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return NO;
 }
 
-- (NSString *)screenProfileName {
+- (NSString *)profileName {
     NSString *guid = _profile[KEY_ORIGINAL_GUID] ?: _profile[KEY_GUID];
     Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (profile) {

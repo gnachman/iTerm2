@@ -2340,6 +2340,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return result;
 }
 
+- (NSString *)terminalProfileName {
+    return self.config.profileName;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
