@@ -146,10 +146,6 @@
     [_mutableState addAnnotation:annotation inRange:range focus:focus];
 }
 
-- (void)mutCommandWasAborted {
-    [_mutableState commandWasAborted];
-}
-
 - (void)mutRemoveAnnotation:(PTYAnnotation *)annotation {
     [_mutableState removeAnnotation:annotation];
 }
@@ -2304,8 +2300,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalAbortCommand {
-    DLog(@"FinalTerm: terminalAbortCommand");
-    [self mutCommandWasAborted];
+    [_mutableState terminalAbortCommand];
 }
 
 - (void)terminalSemanticTextDidStartOfType:(VT100TerminalSemanticTextType)type {

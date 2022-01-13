@@ -2224,6 +2224,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self commandDidEnd];
 }
 
+- (void)terminalAbortCommand {
+    DLog(@"FinalTerm: terminalAbortCommand");
+    [self commandWasAborted];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
