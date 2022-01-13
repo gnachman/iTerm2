@@ -528,6 +528,31 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return [self lastMarkMustBePrompt:YES class:[VT100ScreenMark class]];
 }
 
+#pragma mark - Colors
+
+- (int)colorMapKeyForTerminalColorIndex:(VT100TerminalColorIndex)n {
+    switch (n) {
+        case VT100TerminalColorIndexText:
+            return kColorMapForeground;
+        case VT100TerminalColorIndexBackground:
+            return kColorMapBackground;
+        case VT100TerminalColorIndexCursor:
+            return kColorMapCursor;
+        case VT100TerminalColorIndexSelectionBackground:
+            return kColorMapSelection;
+        case VT100TerminalColorIndexSelectionForeground:
+            return kColorMapSelectedText;
+        case VT100TerminalColorIndexFirst8BitColorIndex:
+        case VT100TerminalColorIndexLast8BitColorIndex:
+            break;
+    }
+    if (n < 0 || n > 255) {
+        return -1;
+    } else {
+        return kColorMap8bitBase + n;
+    }
+}
+
 #pragma mark - Advanced Prefs
 
 - (BOOL)terminalIsTrusted {

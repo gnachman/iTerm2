@@ -28,9 +28,7 @@
 #import "iTermURLStore.h"
 
 
-@implementation VT100ScreenMutableState {
-    BOOL _performingJoinedBlock;
-}
+@implementation VT100ScreenMutableState
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
     self = [super initForMutation];
@@ -76,7 +74,7 @@
 
 #warning TODO: I think side effects should happen atomically with copying state from mutable-to-immutable. Likewise, when the main thread needs to sync when resizing a screen, it should be able to force all these side-effects to happen synchronously.
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
-    if (_performingJoinedBlock) {
+    if (self.performingJoinedBlock) {
         [self performSideEffect:sideEffect];
         return;
     }
@@ -87,7 +85,7 @@
 }
 
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect {
-    if (_performingJoinedBlock) {
+    if (self.performingJoinedBlock) {
         [self performIntervalTreeSideEffect:sideEffect];
     }
     __weak __typeof(self) weakSelf = self;
@@ -96,12 +94,13 @@
     }];
 }
 
+// Called on the mutation thread.
 // Runs sideEffect either synchrnously or asynchronously.
 // No more tokens will be executed until it completes.
 // The main thread will be stopped while running your side effect and you can safely access both
 // mutation and main-thread data in it.
 - (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
-    if (_performingJoinedBlock) {
+    if (self.performingJoinedBlock) {
         [self performSideEffect:sideEffect];
         return;
     }
@@ -110,10 +109,13 @@
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
+            [unpauser unpause];
             return;
         }
-        [strongSelf->_tokenExecutor scheduleHighPriorityTask:^{
-            [weakSelf performSideEffect:sideEffect];
+        [strongSelf performBlockWithJoinedThreads:^(VT100Terminal * _Nonnull terminal,
+                                                    VT100ScreenMutableState * _Nonnull mutableState,
+                                                    id<VT100ScreenDelegate>  _Nonnull delegate) {
+            sideEffect(delegate);
             [unpauser unpause];
         }];
     }];
@@ -1359,16 +1361,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             moveCursorTo:(VT100GridCoord)newCursorCoord
               completion:(void (^)(void))completion {
     const int height = self.currentGrid.size.height;
-    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     __weak __typeof(self) weakSelf = self;
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [weakSelf reallySetWidth:width
                           height:height
                   preserveScreen:preserveScreen
                    updateRegions:updateRegions
                     moveCursorTo:newCursorCoord
                         delegate:delegate
-                        unpauser:unpauser
                       completion:completion];
     }];
 }
@@ -1388,9 +1388,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
          updateRegions:(BOOL)updateRegions
           moveCursorTo:(VT100GridCoord)newCursorCoord
               delegate:(id<VT100ScreenDelegate>)delegate
-              unpauser:(iTermTokenExecutorUnpauser *)unpauser
             completion:(void (^)(void))completion {
-    assert([NSThread isMainThread]);
+    assert(self.performingJoinedBlock);
     if ([delegate screenShouldInitiateWindowResize] &&
         ![delegate screenWindowIsFullscreen]) {
         // set the column
@@ -1415,12 +1414,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self clearTriggerLine];
     }
     if (completion) {
-        dispatch_async(_queue, ^{
-            completion();
-            [unpauser unpause];
-        });
-    } else {
-        [unpauser unpause];
+        completion();
     }
 }
 
@@ -2032,6 +2026,111 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetUserVar:kvp];
+        [unpauser unpause];
+    }];
+}
+
+- (void)terminalResetColor:(VT100TerminalColorIndex)n {
+    const int key = [self colorMapKeyForTerminalColorIndex:n];
+    DLog(@"Key for %@ is %@", @(n), @(key));
+    if (key < 0) {
+        return;
+    }
+    iTermColorMap *colorMap = self.colorMap;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenResetColorsWithColorMapKey:key colorMap:colorMap];
+    }];
+}
+
+- (void)terminalSetForegroundColor:(NSColor *)color {
+    iTermColorMap *colorMap = self.colorMap;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetColor:color forKey:kColorMapForeground colorMap:colorMap];
+    }];
+}
+
+- (void)terminalSetBackgroundColor:(NSColor *)color {
+    iTermColorMap *colorMap = self.colorMap;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetColor:color forKey:kColorMapBackground colorMap:colorMap];
+    }];
+}
+
+- (void)terminalSetBoldColor:(NSColor *)color {
+    iTermColorMap *colorMap = self.colorMap;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetColor:color forKey:kColorMapBold colorMap:colorMap];
+    }];
+}
+
+- (void)terminalSetSelectionColor:(NSColor *)color {
+    iTermColorMap *colorMap = self.colorMap;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetColor:color forKey:kColorMapSelection colorMap:colorMap];
+    }];
+}
+
+- (void)terminalSetSelectedTextColor:(NSColor *)color {
+    iTermColorMap *colorMap = self.colorMap;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetColor:color forKey:kColorMapSelectedText colorMap:colorMap];
+    }];
+}
+
+- (void)terminalSetCursorColor:(NSColor *)color {
+    iTermColorMap *colorMap = self.colorMap;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetColor:color forKey:kColorMapCursor colorMap:colorMap];
+    }];
+}
+
+- (void)terminalSetCursorTextColor:(NSColor *)color {
+    iTermColorMap *colorMap = self.colorMap;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetColor:color forKey:kColorMapCursorText colorMap:colorMap];
+    }];
+}
+
+- (void)terminalSetColorTableEntryAtIndex:(VT100TerminalColorIndex)n color:(NSColor *)color {
+    const int key = [self colorMapKeyForTerminalColorIndex:n];
+    DLog(@"Key for %@ is %@", @(n), @(key));
+    if (key < 0) {
+        return;
+    }
+    iTermColorMap *colorMap = self.colorMap;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetColor:color forKey:key colorMap:colorMap];
+    }];
+}
+
+- (void)terminalSetCurrentTabColor:(NSColor *)color {
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetCurrentTabColor:color];
+        [unpauser unpause];
+    }];
+}
+
+- (void)terminalSetTabColorRedComponentTo:(CGFloat)color {
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetTabColorRedComponentTo:color];
+        [unpauser unpause];
+    }];
+}
+
+- (void)terminalSetTabColorGreenComponentTo:(CGFloat)color {
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetTabColorGreenComponentTo:color];
+        [unpauser unpause];
+    }];
+}
+
+- (void)terminalSetTabColorBlueComponentTo:(CGFloat)color {
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetTabColorBlueComponentTo:color];
         [unpauser unpause];
     }];
 }
@@ -3051,6 +3150,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+- (void)setColor:(NSColor *)color forKey:(int)key {
+    [self.colorMap setColor:color forKey:key];
+}
+
 #pragma mark - Cross-Thread Sync
 
 - (void)willSynchronize {
@@ -3070,38 +3173,40 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     assert([NSThread isMainThread]);
 
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    static BOOL running = NO;
 
-    if (_performingJoinedBlock) {
+    if (self.performingJoinedBlock) {
         // Reentrant call. Avoid deadlock by running it immediately.
         [self reallyPerformBlockWithJoinedThreads:block delegate:delegate group:nil];
         return;
     }
 
     // Wait for the mutation thread to finish its current tasks+tokens, then run the block.
-    assert(!running);  // Die if a different VT100Screen is also in performBlockWithJoinedThreads. This is not allowed because it causes a deadlock.
-    running = YES;
-    _performingJoinedBlock = YES;
     dispatch_group_t group = dispatch_group_create();
     dispatch_group_enter(group);
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor scheduleHighPriorityTask:^{
-        [weakSelf reallyPerformBlockWithJoinedThreads:block delegate:delegate group:group];
+        [weakSelf reallyPerformBlockWithJoinedThreads:block
+                                             delegate:delegate
+                                                group:group];
     }];
     dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
-    _performingJoinedBlock = NO;
-    running = NO;
 }
 
+// This runs on the mutation queue while the main thread waits on `group`.
 - (void)reallyPerformBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *,
                                                                   VT100ScreenMutableState *,
                                                                   id<VT100ScreenDelegate>))block
                                    delegate:(id<VT100ScreenDelegate>)delegate
                                       group:(dispatch_group_t)group {
-    assert([NSThread isMainThread]);
     [_tokenExecutor executeSideEffectsImmediately];
 #warning TODO: Sync changes back from main thread to mutable state?
+    [delegate screenSync];
+    // This get-and-set is not a data race because assignment to perfomringJoinedBlock only happens
+    // on the mutation queue.
+    const BOOL previousValue = self.performingJoinedBlock;
+    self.performingJoinedBlock = YES;
     block(self.terminal, self, delegate);
+    self.performingJoinedBlock = previousValue;
     if (group) {
         dispatch_group_leave(group);
     }

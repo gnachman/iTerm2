@@ -93,6 +93,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (self) {
         _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
         _state = [_mutableState retain];
+#warning TODO: update colormap's darkMode through VT100ScreenConfiguration
         _mutableState.colorMap.darkMode = darkMode;
 
         assert(terminal);
@@ -205,12 +206,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)setColor:(NSColor *)color forKey:(int)key {
-    [self mutSetColor:color forKey:key];
-}
-
-- (void)resetNonAnsiColorWithKey:(int)colorKey {
-    NSColor *theColor = [NSColor colorForAnsi256ColorIndex:colorKey - kColorMap8bitBase];
-    [self setColor:theColor forKey:colorKey];
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState setColor:color forKey:key];
+    }];
 }
 
 - (void)setDimOnlyText:(BOOL)dimOnlyText {

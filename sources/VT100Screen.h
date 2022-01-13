@@ -240,7 +240,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Load 256 colors, but not ANSI (0-15).
 - (void)loadInitialColorTable;
 - (void)setColor:(NSColor *)color forKey:(int)key;
-- (void)resetNonAnsiColorWithKey:(int)key;
 - (void)setDimOnlyText:(BOOL)dimOnlyText;
 - (void)setDarkMode:(BOOL)darkMode;
 - (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value;
