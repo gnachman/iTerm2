@@ -2309,6 +2309,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue {
+    self.wraparoundMode = newValue;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
