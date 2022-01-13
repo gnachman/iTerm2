@@ -639,8 +639,7 @@ static const int kMaxScreenRows = 4096;
     return result;
 }
 
-- (void)setInsertMode:(BOOL)mode
-{
+- (void)setInsertMode:(BOOL)mode {
     if (_insertMode != mode) {
         _insertMode = mode;
         [_delegate terminalInsertModeDidChangeTo:mode];

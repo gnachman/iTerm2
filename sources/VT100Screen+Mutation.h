@@ -92,7 +92,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetTerminal:(VT100Terminal *)terminal;
 - (void)mutStopTerminalReceivingFile;
 - (void)mutFileReceiptEndedUnexpectedly;
-- (void)mutSetInsert:(BOOL)newValue;
 - (void)mutSetUnlimitedScrollback:(BOOL)newValue;
 - (void)mutResetScrollbackOverflow;
 - (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord;

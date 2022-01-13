@@ -1437,10 +1437,6 @@
     [_mutableState resetScrollbackOverflow];
 }
 
-- (void)mutSetInsert:(BOOL)newValue {
-    _mutableState.insert = newValue;
-}
-
 - (void)mutSetUnlimitedScrollback:(BOOL)newValue {
     _mutableState.unlimitedScrollback = newValue;
 }
@@ -2332,7 +2328,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalInsertModeDidChangeTo:(BOOL)newValue {
-    [self mutSetInsert:newValue];
+    [_mutableState terminalInsertModeDidChangeTo:newValue];
 }
 
 - (NSString *)terminalProfileName {
