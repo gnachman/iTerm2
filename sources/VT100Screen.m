@@ -1315,10 +1315,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutSetLastPromptLine:lastPromptLine];
 }
 
-- (void)setReturnCodeOfLastCommand:(int)code {
-    [self mutSetReturnCodeOfLastCommand:code];
-}
-
 - (void)setFakePromptDetectedAbsLine:(long long)value {
     [self mutSetFakePromptDetectedAbsLine:value];
 }
