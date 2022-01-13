@@ -2346,9 +2346,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSArray<NSNumber *> *)terminalTabStops {
-    return [[_state.tabStops.allObjects sortedArrayUsingSelector:@selector(compare:)] mapWithBlock:^NSNumber *(NSNumber *ts) {
-        return @(ts.intValue + 1);
-    }];
+    return [_mutableState terminalTabStops];
 }
 
 - (void)terminalSetTabStops:(NSArray<NSNumber *> *)tabStops {
