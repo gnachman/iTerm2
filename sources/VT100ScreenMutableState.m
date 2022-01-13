@@ -2321,6 +2321,25 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.insert = newValue;
 }
 
+- (int)terminalChecksumInRectangle:(VT100GridRect)rect {
+    int result = 0;
+    for (int y = rect.origin.y; y < rect.origin.y + rect.size.height; y++) {
+        const screen_char_t *theLine = [self.currentGrid screenCharsAtLineNumber:y];
+        for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
+            unichar code = theLine[x].code;
+            BOOL isPrivate = (code < ITERM2_PRIVATE_BEGIN &&
+                              code > ITERM2_PRIVATE_END);
+            if (code && !isPrivate) {
+                NSString *s = ScreenCharToStr(&theLine[x]);
+                for (int i = 0; i < s.length; i++) {
+                    result += (int)[s characterAtIndex:i];
+                }
+            }
+        }
+    }
+    return result;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
