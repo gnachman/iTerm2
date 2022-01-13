@@ -2242,11 +2242,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalCanUseDECRQCRA {
-    if (![iTermAdvancedSettingsModel disableDECRQCRA]) {
-        return YES;
-    }
-    [delegate_ screenDidTryToUseDECRQCRA];
-    return NO;
+    return [_mutableState terminalCanUseDECRQCRA];
 }
 
 - (void)terminalRequestAttention:(VT100AttentionRequestType)request {
