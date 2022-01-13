@@ -2013,6 +2013,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalSetBackgroundImageFile:(NSString *)filename {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetBackgroundImageFile:filename];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
