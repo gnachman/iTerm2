@@ -2317,6 +2317,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.ansi = [self.terminal isAnsi];
 }
 
+- (void)terminalInsertModeDidChangeTo:(BOOL)newValue {
+    self.insert = newValue;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
