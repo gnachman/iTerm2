@@ -69,29 +69,7 @@
     _mutableState.lastCommandOutputRange = lastCommandOutputRange;
 }
 
-- (void)mutCommandDidEnd {
-    DLog(@"FinalTerm: terminalCommandDidEnd");
-    _mutableState.currentPromptRange = VT100GridAbsCoordRangeMake(0, 0, 0, 0);
-
-    [self commandDidEndAtAbsCoord:VT100GridAbsCoordMake(_state.currentGrid.cursor.x, _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + _mutableState.cumulativeScrollbackOverflow)];
-}
-
-- (BOOL)mutCommandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
-    if (_state.commandStartCoord.x != -1) {
-        [_mutableState didUpdatePromptLocation];
-        [_mutableState commandDidEndWithRange:_mutableState.commandRange];
-        [self mutInvalidateCommandStartCoord];
-        _mutableState.startOfRunningCommandOutput = coord;
-        return YES;
-    }
-    return NO;
-}
-
 #pragma mark - Interval Tree
-
-- (void)mutCommandDidEndWithRange:(VT100GridCoordRange)range {
-    [_mutableState commandDidEndWithRange:range];
-}
 
 - (id<iTermMark>)mutAddMarkOnLine:(int)line ofClass:(Class)markClass {
     return [_mutableState addMarkOnLine:line ofClass:markClass];
@@ -126,7 +104,7 @@
         // End of command was detected before the newline came in. This is the normal case.
         coord.y += 1;
     }
-    if ([self mutCommandDidEndAtAbsCoord:coord]) {
+    if ([_mutableState commandDidEndAtAbsCoord:coord]) {
         _mutableState.fakePromptDetectedAbsLine = -2;
     } else {
         // Screen didn't think we were in a command.
@@ -2322,7 +2300,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalCommandDidEnd {
-    [self mutCommandDidEnd];
+    [_mutableState terminalCommandDidEnd];
 }
 
 - (void)terminalAbortCommand {

@@ -231,7 +231,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Fake shell integration via triggers APIs
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord;
 - (void)commandDidStartAt:(VT100GridAbsCoord)coord;
-- (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord;
 
 - (BOOL)confirmBigDownloadWithBeforeSize:(NSInteger)sizeBefore
                                afterSize:(NSInteger)afterSize

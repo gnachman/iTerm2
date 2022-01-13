@@ -40,6 +40,7 @@
         _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _previousCommandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
+#warning TODO: This should go through side-effects.
         _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner asyncJoiner:_queue];
         _triggerEvaluator = [[PTYTriggerEvaluator alloc] init];
         _triggerEvaluator.delegate = self;
@@ -2218,6 +2219,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self commandDidStart];
 }
 
+- (void)terminalCommandDidEnd {
+    [self commandDidEnd];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
@@ -2933,6 +2938,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self setCommandStartCoordWithoutSideEffects:VT100GridAbsCoordMake(-1, -1)];
 }
 
+- (void)invalidateCommandStartCoord {
+    [self setCoordinateOfCommandStart:VT100GridAbsCoordMake(-1, -1)];
+}
+
 // offset is added to intervals before inserting into interval tree.
 - (void)moveNotesOnScreenFrom:(IntervalTree *)source
                            to:(IntervalTree *)dest
@@ -3062,6 +3071,25 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                   y);
     mark.commandRange = VT100GridAbsCoordRangeMake(x, y, x, y);
     return mark;
+}
+
+- (void)commandDidEnd {
+    DLog(@"FinalTerm: terminalCommandDidEnd");
+    self.currentPromptRange = VT100GridAbsCoordRangeMake(0, 0, 0, 0);
+
+    [self commandDidEndAtAbsCoord:VT100GridAbsCoordMake(self.currentGrid.cursor.x,
+                                                        self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)];
+}
+
+- (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
+    if (self.commandStartCoord.x != -1) {
+        [self didUpdatePromptLocation];
+        [self commandDidEndWithRange:self.commandRange];
+        [self invalidateCommandStartCoord];
+        self.startOfRunningCommandOutput = coord;
+        return YES;
+    }
+    return NO;
 }
 
 #pragma mark - Annotations

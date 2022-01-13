@@ -142,6 +142,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)commandRangeDidChange;
 
 - (void)setReturnCodeOfLastCommand:(int)returnCode;
+- (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord;
 - (void)commandDidEndWithRange:(VT100GridCoordRange)range;
 - (void)commandWasAborted;
 - (void)assignCurrentCommandEndDate;
