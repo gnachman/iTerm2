@@ -11,6 +11,7 @@
 
 #import "CapturedOutput.h"
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "PTYAnnotation.h"
 #import "PTYTriggerEvaluator.h"
@@ -2199,6 +2200,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self promptDidStartAt:VT100GridAbsCoordMake(self.currentGrid.cursor.x,
                                                  self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)];
 }
+
+- (NSArray<NSNumber *> *)terminalTabStops {
+    return [[self.tabStops.allObjects sortedArrayUsingSelector:@selector(compare:)] mapWithBlock:^NSNumber *(NSNumber *ts) {
+        return @(ts.intValue + 1);
+    }];
+}
+
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
