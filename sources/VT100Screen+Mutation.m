@@ -2344,34 +2344,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)screenRect {
-    __block NSMutableSet<NSString *> *codes = nil;
-    VT100GridRect rect = screenRect;
-    rect.origin.y += [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
-    [self enumerateLinesInRange:NSMakeRange(rect.origin.y, rect.size.height)
-                          block:^(int y,
-                                  ScreenCharArray *sca,
-                                  iTermImmutableMetadata metadata,
-                                  BOOL *stop) {
-        const screen_char_t *theLine = sca.line;
-        id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
-        for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < _mutableState.width; x++) {
-            const screen_char_t c = theLine[x];
-            if (c.code == 0 && !c.complexChar && !c.image) {
-                continue;
-            }
-            NSSet<NSString *> *charCodes = [self sgrCodesForChar:c externalAttributes:eaIndex[x]];
-            if (!codes) {
-                codes = [[charCodes mutableCopy] autorelease];
-            } else {
-                [codes intersectSet:charCodes];
-                if (!codes.count) {
-                    *stop = YES;
-                    return;
-                }
-            }
-        }
-    }];
-    return codes.allObjects ?: @[];
+    return [_mutableState terminalSGRCodesInRectangle:screenRect];
 }
 
 - (NSSize)terminalCellSizeInPoints:(double *)scaleOut {

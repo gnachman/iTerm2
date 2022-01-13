@@ -2348,6 +2348,38 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return self.currentGrid.scrollRegionRect;
 }
 
+- (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)screenRect {
+    __block NSMutableSet<NSString *> *codes = nil;
+    VT100GridRect rect = screenRect;
+    rect.origin.y += [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    [self enumerateLinesInRange:NSMakeRange(rect.origin.y, rect.size.height)
+                          block:^(int y,
+                                  ScreenCharArray *sca,
+                                  iTermImmutableMetadata metadata,
+                                  BOOL *stop) {
+        const screen_char_t *theLine = sca.line;
+        id<iTermExternalAttributeIndexReading> eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(metadata);
+        for (int x = rect.origin.x; x < rect.origin.x + rect.size.width && x < self.width; x++) {
+            const screen_char_t c = theLine[x];
+            if (c.code == 0 && !c.complexChar && !c.image) {
+                continue;
+            }
+            NSSet<NSString *> *charCodes = [self.terminal sgrCodesForCharacter:c
+                                                            externalAttributes:eaIndex[x]];
+            if (!codes) {
+                codes = [charCodes mutableCopy];
+            } else {
+                [codes intersectSet:charCodes];
+                if (!codes.count) {
+                    *stop = YES;
+                    return;
+                }
+            }
+        }
+    }];
+    return codes.allObjects ?: @[];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
