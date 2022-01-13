@@ -2270,6 +2270,45 @@ void VT100ScreenEraseCell(screen_char_t *sct,
    OPEN_URL
    */
 }
+
+// version is formatted as
+// <version number>;<key>=<value>;<key>=<value>...
+// Older scripts may have only a version number and no key-value pairs.
+// The only defined key is "shell", and the value will be tcsh, bash, zsh, or fish.
+- (void)terminalSetShellIntegrationVersion:(NSString *)version {
+    NSArray *parts = [version componentsSeparatedByString:@";"];
+    NSString *shell = nil;
+    NSInteger versionNumber = [parts[0] integerValue];
+    if (parts.count >= 2) {
+        NSMutableDictionary *params = [NSMutableDictionary dictionary];
+        for (NSString *kvp in [parts subarrayWithRange:NSMakeRange(1, parts.count - 1)]) {
+            NSRange equalsRange = [kvp rangeOfString:@"="];
+            if (equalsRange.location == NSNotFound) {
+                continue;
+            }
+            NSString *key = [kvp substringToIndex:equalsRange.location];
+            NSString *value = [kvp substringFromIndex:NSMaxRange(equalsRange)];
+            params[key] = value;
+        }
+        shell = params[@"shell"];
+    }
+
+    NSDictionary<NSString *, NSNumber *> *lastVersionByShell =
+        @{ @"tcsh": @2,
+           @"bash": @5,
+           @"zsh": @5,
+           @"fish": @5 };
+    NSInteger latestKnownVersion = [lastVersionByShell[shell ?: @""] integerValue];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        if (shell) {
+            [delegate screenDidDetectShell:shell];
+        }
+        if (!shell || versionNumber < latestKnownVersion) {
+            [delegate screenSuggestShellIntegrationUpgrade];
+        }
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
