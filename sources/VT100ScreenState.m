@@ -398,6 +398,37 @@ static const int kDefaultMaxScrollbackLines = 1000;
                                                  length:data.length / sizeof(screen_char_t)];
 }
 
+- (void)enumerateLinesInRange:(NSRange)range
+                        block:(void (^)(int,
+                                        ScreenCharArray *,
+                                        iTermImmutableMetadata,
+                                        BOOL *))block {
+    NSInteger i = range.location;
+    const NSInteger lastLine = NSMaxRange(range);
+    const NSInteger numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    const int width = self.width;
+    while (i < lastLine) {
+        if (i < numLinesInLineBuffer) {
+            [self.linebuffer enumerateLinesInRange:NSMakeRange(i, lastLine - i)
+                                             width:width
+                                             block:block];
+            i = numLinesInLineBuffer;
+            continue;
+        }
+        BOOL stop = NO;
+        const int screenIndex = i - numLinesInLineBuffer;
+        block(i,
+              [self screenCharArrayAtScreenIndex:screenIndex],
+              [self.currentGrid immutableMetadataAtLineNumber:screenIndex],
+              &stop);
+        if (stop) {
+            return;
+        }
+        i += 1;
+    }
+}
+
+
 #pragma mark - Shell Integration
 
 - (VT100ScreenMark *)lastCommandMark {

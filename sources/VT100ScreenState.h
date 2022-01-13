@@ -246,6 +246,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                    startPtr:(long long *)startAbsLineNumber;
 
+- (void)enumerateLinesInRange:(NSRange)range
+                        block:(void (^)(int,
+                                        ScreenCharArray *,
+                                        iTermImmutableMetadata,
+                                        BOOL *))block;
+
 #pragma mark - Interval Tree
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;

@@ -306,29 +306,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int, ScreenCharArray *, iTermImmutableMetadata, BOOL *))block {
-    NSInteger i = range.location;
-    const NSInteger lastLine = NSMaxRange(range);
-    const NSInteger numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
-    const int width = _state.width;
-    while (i < lastLine) {
-        if (i < numLinesInLineBuffer) {
-            [_state.linebuffer enumerateLinesInRange:NSMakeRange(i, lastLine - i)
-                                               width:width
-                                               block:block];
-            i = numLinesInLineBuffer;
-            continue;
-        }
-        BOOL stop = NO;
-        const int screenIndex = i - numLinesInLineBuffer;
-        block(i,
-              [self screenCharArrayAtScreenIndex:screenIndex],
-              [self metadataAtScreenIndex:screenIndex],
-              &stop);
-        if (stop) {
-            return;
-        }
-        i += 1;
-    }
+    [_state enumerateLinesInRange:range block:block];
 }
 
 - (ScreenCharArray *)screenCharArrayForLine:(int)line {
