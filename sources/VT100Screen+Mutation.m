@@ -2336,7 +2336,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100GridRect)terminalScrollRegion {
-    return _state.currentGrid.scrollRegionRect;
+    return [_mutableState terminalScrollRegion];
 }
 
 - (int)terminalChecksumInRectangle:(VT100GridRect)rect {
