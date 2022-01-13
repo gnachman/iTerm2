@@ -2195,6 +2195,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalPromptDidStart {
+    [self promptDidStartAt:VT100GridAbsCoordMake(self.currentGrid.cursor.x,
+                                                 self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)];
+}
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {

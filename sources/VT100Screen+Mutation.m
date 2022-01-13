@@ -2342,8 +2342,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalPromptDidStart {
-    [_mutableState promptDidStartAt:VT100GridAbsCoordMake(_state.currentGrid.cursor.x,
-                                                          _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + _mutableState.cumulativeScrollbackOverflow)];
+    [_mutableState terminalPromptDidStart];
 }
 
 - (NSArray<NSNumber *> *)terminalTabStops {
