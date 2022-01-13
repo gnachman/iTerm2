@@ -2214,6 +2214,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalCommandDidStart {
+    [self commandDidStart];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
@@ -3030,6 +3034,34 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)commandDidStartAt:(VT100GridAbsCoord)coord {
     [self setCoordinateOfCommandStart:coord];
+}
+
+// End of command prompt, will start accepting command to run as the user types at the prompt.
+- (void)commandDidStart {
+    DLog(@"FinalTerm: terminalCommandDidStart");
+    self.currentPromptRange = VT100GridAbsCoordRangeMake(self.currentPromptRange.start.x,
+                                                         self.currentPromptRange.start.y,
+                                                         self.currentGrid.cursor.x,
+                                                         self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
+    [self commandDidStartAtScreenCoord:self.currentGrid.cursor];
+    const int line = self.numberOfScrollbackLines + self.cursorY - 1;
+    VT100ScreenMark *mark = [self updatePromptMarkRangesForPromptEndingOnLine:line];
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenPromptDidEndWithMark:mark];
+    }];
+}
+
+- (VT100ScreenMark *)updatePromptMarkRangesForPromptEndingOnLine:(int)line {
+    VT100ScreenMark *mark = [self lastPromptMark];
+    const int x = self.currentGrid.cursor.x;
+    const long long y = (long long)line + self.cumulativeScrollbackOverflow;
+#warning TODO: modifies shared state. I need a way to sync this back to the main thread later.
+    mark.promptRange = VT100GridAbsCoordRangeMake(mark.promptRange.start.x,
+                                                  mark.promptRange.end.y,
+                                                  x,
+                                                  y);
+    mark.commandRange = VT100GridAbsCoordRangeMake(x, y, x, y);
+    return mark;
 }
 
 #pragma mark - Annotations
