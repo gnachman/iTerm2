@@ -992,6 +992,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (void)setCursorVisible:(BOOL)visible {
+    if (visible != self.cursorVisible) {
+        [super setCursorVisible:visible];
+        if (visible) {
+            [self.temporaryDoubleBuffer reset];
+        } else {
+            [self.temporaryDoubleBuffer start];
+        }
+    }
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetCursorVisible:visible];
+    }];
+}
+
 #pragma mark - Alternate Screen
 
 - (void)showAltBuffer {
@@ -2162,6 +2176,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (BOOL)terminalWillAutoWrap {
     return self.cursorX > self.width;
+}
+
+- (void)terminalSetCursorVisible:(BOOL)visible {
+    [self setCursorVisible:visible];
 }
 
 #pragma mark - Tabs
