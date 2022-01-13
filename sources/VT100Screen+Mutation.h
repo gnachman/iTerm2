@@ -109,7 +109,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetSaveToScrollbackInAlternateScreen:(BOOL)value;
 - (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord;
 - (void)mutSetLastCommandOutputRange:(VT100GridAbsCoordRange)lastCommandOutputRange;
-- (void)mutCommandDidStart;
 - (void)mutCommandDidEnd;
 - (BOOL)mutCommandDidEndAtAbsCoord:(VT100GridAbsCoord)coord;
 - (void)mutRestoreInitialSize;

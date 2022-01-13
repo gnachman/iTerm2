@@ -69,35 +69,6 @@
     _mutableState.lastCommandOutputRange = lastCommandOutputRange;
 }
 
-// End of command prompt, will start accepting command to run as the user types at the prompt.
-- (void)mutCommandDidStart {
-    DLog(@"FinalTerm: terminalCommandDidStart");
-    _mutableState.currentPromptRange = VT100GridAbsCoordRangeMake(_state.currentPromptRange.start.x,
-                                                                  _state.currentPromptRange.start.y,
-                                                                  _state.currentGrid.cursor.x,
-                                                                  _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines + _mutableState.cumulativeScrollbackOverflow);
-    [_mutableState commandDidStartAtScreenCoord:_state.currentGrid.cursor];
-    const int line = _mutableState.numberOfScrollbackLines + _mutableState.cursorY - 1;
-    VT100ScreenMark *mark = [self updatePromptMarkRangesForPromptEndingOnLine:line];
-    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenPromptDidEndWithMark:mark];
-    }];
-}
-
-- (VT100ScreenMark *)updatePromptMarkRangesForPromptEndingOnLine:(int)line {
-#warning TODO: -lastPromptMark should be a method on VT100ScreenState since I need this to operate on the mutable copy of tstate.
-    VT100ScreenMark *mark = [self lastPromptMark];
-    const int x = _mutableState.currentGrid.cursor.x;
-    const long long y = (long long)line + _mutableState.cumulativeScrollbackOverflow;
-#warning TODO: modifies shared state. I need a way to sync this back to the main thread later.
-    mark.promptRange = VT100GridAbsCoordRangeMake(mark.promptRange.start.x,
-                                                  mark.promptRange.end.y,
-                                                  x,
-                                                  y);
-    mark.commandRange = VT100GridAbsCoordRangeMake(x, y, x, y);
-    return mark;
-}
-
 - (void)mutCommandDidEnd {
     DLog(@"FinalTerm: terminalCommandDidEnd");
     _mutableState.currentPromptRange = VT100GridAbsCoordRangeMake(0, 0, 0, 0);
@@ -2347,7 +2318,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalCommandDidStart {
-    [self mutCommandDidStart];
+    [_mutableState terminalCommandDidStart];
 }
 
 - (void)terminalCommandDidEnd {
