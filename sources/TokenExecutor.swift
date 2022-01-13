@@ -478,3 +478,9 @@ extension TokenExecutorImpl: UnpauserDelegate {
         }
     }
 }
+
+extension TokenExecutor: IdempotentOperationScheduler {
+    func scheduleIdempotentOperation(_ closure: @escaping () -> Void) {
+        addSideEffect(closure)
+    }
+}
