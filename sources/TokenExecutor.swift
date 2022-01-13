@@ -35,6 +35,9 @@ protocol TokenExecutorDelegate: AnyObject {
 
     // Remove this eventually
     func tokenExecutorCursorCoordString() -> NSString
+
+    // Synchronize state between threads.
+    func tokenExecutorSync()
 }
 
 @objc(iTermTokenExecutorUnpauser)
@@ -237,9 +240,9 @@ class TokenExecutor: NSObject {
         impl.addSideEffect(task)
     }
 
+    // This can run on the main queue, or else on the mutation queue when joined.
     @objc
     func executeSideEffectsImmediately() {
-        dispatchPrecondition(condition: .onQueue(.main))
         impl.executeSideEffects()
     }
 
@@ -367,11 +370,14 @@ private class TokenExecutorImpl {
         }
     }
 
-    // Main queue
+    // Main queue or mutation queue while joined.
     func executeSideEffects() {
-        dispatchPrecondition(condition: .onQueue(.main))
-
+        var haveSynced = false
         while let task = sideEffects.dequeue() {
+            if !haveSynced {
+                delegate?.tokenExecutorSync()
+                haveSynced = true
+            }
             task()
         }
     }

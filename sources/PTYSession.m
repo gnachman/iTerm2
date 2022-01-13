@@ -15298,4 +15298,8 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     return VT100GridCoordDescription(_screen.currentGrid.cursor);
 }
 
+- (void)tokenExecutorSync {
+    [self sync];
+}
+
 @end
