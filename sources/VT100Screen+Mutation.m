@@ -2304,19 +2304,19 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSemanticTextDidStartOfType:(VT100TerminalSemanticTextType)type {
-    // TODO
+    [_mutableState terminalSemanticTextDidStartOfType:type];
 }
 
 - (void)terminalSemanticTextDidEndOfType:(VT100TerminalSemanticTextType)type {
-    // TODO
+    [_mutableState terminalSemanticTextDidEndOfType:type];
 }
 
 - (void)terminalProgressAt:(double)fraction label:(NSString *)label {
-     // TODO
+    [_mutableState terminalProgressAt:fraction label:label];
 }
 
 - (void)terminalProgressDidFinish {
-    // TODO
+    [_mutableState terminalProgressDidFinish];
 }
 
 - (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
