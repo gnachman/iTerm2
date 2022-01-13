@@ -2258,7 +2258,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetBadgeFormat:(NSString *)badge {
-    [delegate_ screenSetBadgeFormat:badge];
+    [_mutableState terminalSetBadgeFormat:badge];
 }
 
 - (void)terminalSetUserVar:(NSString *)kvp {
