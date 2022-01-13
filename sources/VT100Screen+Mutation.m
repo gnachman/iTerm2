@@ -1135,13 +1135,6 @@
     [_mutableState.tabStops removeAllObjects];
 }
 
-- (void)mutSetTabStops:(NSArray<NSNumber *> *)tabStops {
-    [_mutableState.tabStops removeAllObjects];
-    [tabStops enumerateObjectsUsingBlock:^(NSNumber * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        [_mutableState.tabStops addObject:@(obj.intValue - 1)];
-    }];
-}
-
 #pragma mark - DVR
 
 - (void)mutSetFromFrame:(screen_char_t*)s
@@ -2350,7 +2343,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetTabStops:(NSArray<NSNumber *> *)tabStops {
-    [self mutSetTabStops:tabStops];
+    [_mutableState terminalSetTabStops:tabStops];
 }
 
 - (void)terminalCommandDidStart {
