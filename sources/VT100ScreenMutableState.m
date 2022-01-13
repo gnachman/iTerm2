@@ -72,7 +72,6 @@
 
 #pragma mark - Internal
 
-#warning TODO: I think side effects should happen atomically with copying state from mutable-to-immutable. Likewise, when the main thread needs to sync when resizing a screen, it should be able to force all these side-effects to happen synchronously.
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
     if (self.performingJoinedBlock) {
         [self performSideEffect:sideEffect];
