@@ -2254,7 +2254,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetBackgroundImageFile:(NSString *)filename {
-    [delegate_ screenSetBackgroundImageFile:filename];
+    [_mutableState terminalSetBackgroundImageFile:filename];
 }
 
 - (void)terminalSetBadgeFormat:(NSString *)badge {
