@@ -2332,7 +2332,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)terminalProfileName {
-    return [delegate_ screenProfileName];
+    return [_mutableState terminalProfileName];
 }
 
 - (VT100GridRect)terminalScrollRegion {

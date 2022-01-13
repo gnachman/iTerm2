@@ -589,10 +589,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     name_ = [[name copy] autorelease];
 }
 
-- (NSString *)screenProfileName {
-    return @"Default";
-}
-
 - (NSRect)screenWindowFrame {
     return NSMakeRect(10, 20, 100, 200);
 }

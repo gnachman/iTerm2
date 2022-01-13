@@ -280,8 +280,6 @@
                            mark:(VT100ScreenMark * _Nullable)mark;
 - (void)screenCommandDidExitWithCode:(int)code mark:(VT100ScreenMark * _Nullable)maybeMark;
 
-- (NSString * _Nullable)screenProfileName;
-
 typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
     // We polled for the working directory for a really sketchy reason, such as the user pressing enter.
     VT100ScreenWorkingDirectoryPushTypePull,
