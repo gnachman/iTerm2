@@ -1527,7 +1527,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)setTrackCursorLineMovement:(BOOL)trackCursorLineMovement {
-    [self mutSetTrackCursorLineMovement:trackCursorLineMovement];
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        _mutableState.trackCursorLineMovement = trackCursorLineMovement;
+    }];
 }
 
 - (VT100GridAbsCoordRange)lastCommandOutputRange {

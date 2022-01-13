@@ -2182,6 +2182,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self setCursorVisible:visible];
 }
 
+- (void)terminalSetHighlightCursorLine:(BOOL)highlight {
+    self.trackCursorLineMovement = highlight;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetHighlightCursorLine:highlight];
+    }];
+}
+
+- (void)terminalClearCapturedOutput {
+    // Join because delegate wants to change a mark.
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenClearCapturedOutput];
+    }];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
@@ -3245,14 +3259,21 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                                   id<VT100ScreenDelegate>))block
                                    delegate:(id<VT100ScreenDelegate>)delegate
                                       group:(dispatch_group_t)group {
+    // First execute pending side effects. Do this before setting performingJoinedBlock to YES
+    // because side effects could queue new joined blocks and we want them to run asynchronously.                                      
+    // Re-entrant joined blocks will act funny, though! Side effects will run while joined.
+    // I don't know yet if this is going to be a problem.
     [_tokenExecutor executeSideEffectsImmediately];
 #warning TODO: Sync changes back from main thread to mutable state?
+    // Sync so that the delegate's copy of state will be up-to-date.
     [delegate screenSync];
     // This get-and-set is not a data race because assignment to perfomringJoinedBlock only happens
     // on the mutation queue.
     const BOOL previousValue = self.performingJoinedBlock;
     self.performingJoinedBlock = YES;
     block(self.terminal, self, delegate);
+    // Sync so that our copy of state will be up-to-date.
+    [delegate screenSync];
     self.performingJoinedBlock = previousValue;
     if (group) {
         dispatch_group_leave(group);

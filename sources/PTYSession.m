@@ -10940,8 +10940,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenSetHighlightCursorLine:(BOOL)highlight {
-    _cursorGuideSettingHasChanged = YES;
-    self.highlightCursorLine = highlight;
+    [self internalSetHighlightCursorLine:highlight];
 }
 
 - (void)screenClearCapturedOutput {
@@ -10953,10 +10952,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)setHighlightCursorLine:(BOOL)highlight {
+    [self internalSetHighlightCursorLine:highlight];
+    _screen.trackCursorLineMovement = highlight;
+}
+
+- (void)internalSetHighlightCursorLine:(BOOL)highlight {
     _cursorGuideSettingHasChanged = YES;
     _textview.highlightCursorLine = highlight;
     [_textview setNeedsDisplay:YES];
-    _screen.trackCursorLineMovement = highlight;
 }
 
 - (BOOL)highlightCursorLine {
