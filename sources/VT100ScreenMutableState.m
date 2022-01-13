@@ -1991,6 +1991,16 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return [super terminalIsTrusted];
 }
 
+- (BOOL)terminalCanUseDECRQCRA {
+    if (![iTermAdvancedSettingsModel disableDECRQCRA]) {
+        return YES;
+    }
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidTryToUseDECRQCRA];
+    }];
+    return NO;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
