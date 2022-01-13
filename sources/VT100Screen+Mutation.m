@@ -2238,7 +2238,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalIsTrusted {
-    return _state.terminalIsTrusted;
+    return [_mutableState terminalIsTrusted];
 }
 
 - (BOOL)terminalCanUseDECRQCRA {

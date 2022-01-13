@@ -1987,6 +1987,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (BOOL)terminalIsTrusted {
+    return [super terminalIsTrusted];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
