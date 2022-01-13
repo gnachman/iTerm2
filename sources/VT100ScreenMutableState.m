@@ -2151,6 +2151,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return [self.colorMap colorForKey:key];
 }
 
+
+- (int)terminalCursorX {
+    return MIN(self.cursorX, self.width);
+}
+
+- (int)terminalCursorY {
+    return self.cursorY;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
