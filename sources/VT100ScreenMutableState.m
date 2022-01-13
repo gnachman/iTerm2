@@ -2135,6 +2135,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (BOOL)terminalFocusReportingAllowed {
+    return [iTermAdvancedSettingsModel focusReportingEnabled];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
