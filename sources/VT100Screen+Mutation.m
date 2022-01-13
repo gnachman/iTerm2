@@ -1437,10 +1437,6 @@
     [_mutableState resetScrollbackOverflow];
 }
 
-- (void)mutSetWraparoundMode:(BOOL)newValue {
-    _mutableState.wraparoundMode = newValue;
-}
-
 - (void)mutUpdateTerminalType {
     _mutableState.ansi = [_state.terminal isAnsi];
 }
@@ -2332,7 +2328,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalWraparoundModeDidChangeTo:(BOOL)newValue {
-    [self mutSetWraparoundMode:newValue];
+    [_mutableState terminalWraparoundModeDidChangeTo:newValue];
 }
 
 - (void)terminalTypeDidChange {
