@@ -246,7 +246,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)setMutingAmount:(double)value;
 - (void)setDimmingAmount:(double)value;
 - (void)userDidPressReturn;
-- (void)setReturnCodeOfLastCommand:(int)code;
 
 // This changes shared state and is called during initialization.
 - (void)setShouldExpectPromptMarks:(BOOL)value;

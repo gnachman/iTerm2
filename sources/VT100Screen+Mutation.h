@@ -135,7 +135,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutUpdateConfig;
 - (void)mutSetFakePromptDetectedAbsLine:(long long)value;
 - (void)mutUserDidPressReturn;
-- (void)mutSetReturnCodeOfLastCommand:(int)returnCode;
 - (void)mutSetLastPromptLine:(long long)value;
 - (id<iTermMark>)mutAddMarkOnLine:(int)line ofClass:(Class)markClass;
 - (void)mutSetShouldExpectPromptMarks:(BOOL)value;

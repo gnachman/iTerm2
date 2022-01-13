@@ -2320,11 +2320,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
-    [self mutSetReturnCodeOfLastCommand:returnCode];
-}
-
-- (void)mutSetReturnCodeOfLastCommand:(int)returnCode {
-    [_mutableState setReturnCodeOfLastCommand:returnCode];
+    [_mutableState terminalReturnCodeOfLastCommandWas:returnCode];
 }
 
 - (void)terminalFinalTermCommand:(NSArray *)argv {

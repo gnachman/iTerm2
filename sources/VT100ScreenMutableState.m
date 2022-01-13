@@ -2245,6 +2245,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // TODO
 }
 
+- (void)terminalReturnCodeOfLastCommandWas:(int)returnCode {
+    [self setReturnCodeOfLastCommand:returnCode];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
