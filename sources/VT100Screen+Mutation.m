@@ -2318,7 +2318,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalFocusReportingAllowed {
-    return [iTermAdvancedSettingsModel focusReportingEnabled];
+    return [_mutableState terminalFocusReportingAllowed];
 }
 
 - (BOOL)terminalCursorVisible {
