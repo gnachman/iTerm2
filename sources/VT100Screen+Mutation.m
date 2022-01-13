@@ -1437,10 +1437,6 @@
     [_mutableState resetScrollbackOverflow];
 }
 
-- (void)mutUpdateTerminalType {
-    _mutableState.ansi = [_state.terminal isAnsi];
-}
-
 - (void)mutSetInsert:(BOOL)newValue {
     _mutableState.insert = newValue;
 }
@@ -2332,7 +2328,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalTypeDidChange {
-    [self mutUpdateTerminalType];
+    [_mutableState terminalTypeDidChange];
 }
 
 - (void)terminalInsertModeDidChangeTo:(BOOL)newValue {

@@ -2313,6 +2313,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.wraparoundMode = newValue;
 }
 
+- (void)terminalTypeDidChange {
+    self.ansi = [self.terminal isAnsi];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
