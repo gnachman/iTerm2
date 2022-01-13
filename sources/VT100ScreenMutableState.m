@@ -40,8 +40,6 @@
         _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _previousCommandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
-#warning TODO: This should go through side-effects.
-        _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner asyncJoiner:_queue];
         _triggerEvaluator = [[PTYTriggerEvaluator alloc] init];
         _triggerEvaluator.delegate = self;
         _triggerEvaluator.dataSource = self;
@@ -175,8 +173,11 @@
         _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:terminal
                                                      slownessDetector:_triggerEvaluator.triggersSlownessDetector
                                                                 queue:_queue];
+        _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner joinerWithScheduler:_tokenExecutor];
     } else {
         _tokenExecutor = nil;
+        [_commandRangeChangeJoiner invalidate];
+        _commandRangeChangeJoiner = nil;
     }
 }
 
@@ -2652,21 +2653,23 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     __weak __typeof(self) weakSelf = self;
     [_commandRangeChangeJoiner setNeedsUpdateWithBlock:^{
+        // This runs as a side-effect
         assert([NSThread isMainThread]);
-        [weakSelf notifyDelegateOfCommandChange:command
-                                       atPrompt:atPrompt
-                                    haveCommand:haveCommand
-                            sideEffectPerformer:weakSelf.sideEffectPerformer];
+        [weakSelf performSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [weakSelf notifyDelegateOfCommandChange:command
+                                           atPrompt:atPrompt
+                                        haveCommand:haveCommand
+                                sideEffectPerformer:weakSelf.sideEffectPerformer
+                                           delegate:delegate];
+        }];
     }];
 }
 
 - (void)notifyDelegateOfCommandChange:(NSString *)command
                              atPrompt:(BOOL)atPrompt
                           haveCommand:(BOOL)haveCommand
-                  sideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)sideEffectPerformer {
-    assert([NSThread isMainThread]);
-
-    __weak id<VT100ScreenDelegate> delegate = sideEffectPerformer.sideEffectPerformingScreenDelegate;
+                  sideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)sideEffectPerformer
+                             delegate:(id<VT100ScreenDelegate>)delegate {
     [delegate screenCommandDidChangeTo:command
                               atPrompt:atPrompt
                             hadCommand:self.hadCommand
