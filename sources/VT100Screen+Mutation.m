@@ -2326,11 +2326,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSColor *)terminalColorForIndex:(VT100TerminalColorIndex)index {
-    const int key = [_state colorMapKeyForTerminalColorIndex:index];
-    if (key < 0) {
-        return nil;
-    }
-    return [_state.colorMap colorForKey:key];
+    return [_mutableState terminalColorForIndex:index];
 }
 
 - (int)terminalCursorX {

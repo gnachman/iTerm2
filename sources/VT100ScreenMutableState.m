@@ -2143,6 +2143,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return self.cursorVisible;
 }
 
+- (NSColor *)terminalColorForIndex:(VT100TerminalColorIndex)index {
+    const int key = [self colorMapKeyForTerminalColorIndex:index];
+    if (key < 0) {
+        return nil;
+    }
+    return [self.colorMap colorForKey:key];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
