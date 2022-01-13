@@ -2207,6 +2207,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)terminalSetTabStops:(NSArray<NSNumber *> *)tabStops {
+    [self.tabStops removeAllObjects];
+    [tabStops enumerateObjectsUsingBlock:^(NSNumber * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [self.tabStops addObject:@(obj.intValue - 1)];
+    }];
+}
 
 #pragma mark - Tabs
 
