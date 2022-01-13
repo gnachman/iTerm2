@@ -2262,7 +2262,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetUserVar:(NSString *)kvp {
-    [delegate_ screenSetUserVar:kvp];
+    [_mutableState terminalSetUserVar:kvp];
 }
 
 - (void)terminalResetColor:(VT100TerminalColorIndex)n {
