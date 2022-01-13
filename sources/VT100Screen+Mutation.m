@@ -935,18 +935,6 @@
     _mutableState.protectedMode = mode;
 }
 
-- (void)mutSetCursorVisible:(BOOL)visible {
-    if (visible != _state.cursorVisible) {
-        _mutableState.cursorVisible = visible;
-        if (visible) {
-            [self.mutableTemporaryDoubleBuffer reset];
-        } else {
-            [self.mutableTemporaryDoubleBuffer start];
-        }
-    }
-    [delegate_ screenSetCursorVisible:visible];
-}
-
 - (void)mutCrlf {
     [_mutableState appendCarriageReturnLineFeed];
 }
@@ -2342,7 +2330,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetCursorVisible:(BOOL)visible {
-    [self mutSetCursorVisible:visible];
+    [_mutableState terminalSetCursorVisible:visible];
 }
 
 - (void)terminalSetHighlightCursorLine:(BOOL)highlight {
