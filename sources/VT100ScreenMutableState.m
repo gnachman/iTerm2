@@ -2160,6 +2160,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return self.cursorY;
 }
 
+- (BOOL)terminalWillAutoWrap {
+    return self.cursorX > self.width;
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
