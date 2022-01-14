@@ -1676,4 +1676,8 @@
     [self deleteColumns:n];
 }
 
+- (void)terminalSetAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
+    [self setAttribute:sgrAttribute inRect:rect];
+}
+
 @end

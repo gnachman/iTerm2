@@ -1145,6 +1145,75 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (void)setAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
+    void (^block)(VT100GridCoord, screen_char_t *, iTermExternalAttribute *, BOOL *) =
+    ^(VT100GridCoord coord,
+      screen_char_t *sct,
+      iTermExternalAttribute *ea,
+      BOOL *stop) {
+        switch (sgrAttribute) {
+            case 0:
+                sct->bold = NO;
+                sct->blink = NO;
+                sct->underline = NO;
+                if (sct->inverse) {
+                    ScreenCharInvert(sct);
+                }
+                break;
+
+            case 1:
+                sct->bold = YES;
+                break;
+            case 4:
+                sct->underline = YES;
+                break;
+            case 5:
+                sct->blink = YES;
+                break;
+            case 7:
+                if (!sct->inverse) {
+                    ScreenCharInvert(sct);
+                }
+                break;
+
+            case 22:
+                sct->bold = NO;
+                break;
+            case 24:
+                sct->underline = NO;
+                break;
+            case 25:
+                sct->blink = NO;
+                break;
+            case 27:
+                if (sct->inverse) {
+                    ScreenCharInvert(sct);
+                }
+                break;
+        }
+    };
+    if (self.terminal.decsaceRectangleMode) {
+        [self.currentGrid mutateCellsInRect:rect
+                                      block:^(VT100GridCoord coord,
+                                              screen_char_t *sct,
+                                              iTermExternalAttribute **eaOut,
+                                              BOOL *stop) {
+            block(coord, sct, *eaOut, stop);
+        }];
+    } else {
+        [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(rect.origin.x,
+                                                                          rect.origin.y,
+                                                                          rect.origin.x + rect.size.width,
+                                                                          rect.origin.y + rect.size.height - 1)
+                                            block:^(screen_char_t *sct,
+                                                    iTermExternalAttribute **eaOut,
+                                                    VT100GridCoord coord,
+                                                    BOOL *stop) {
+            block(coord, sct, *eaOut, stop);
+        }];
+    }
+}
+
 
 #pragma mark - Character Sets
 
