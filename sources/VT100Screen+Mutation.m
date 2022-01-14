@@ -863,10 +863,6 @@
 
 #pragma mark - Terminal Fundamentals
 
-- (void)mutSetProtectedMode:(VT100TerminalProtectedMode)mode {
-    _mutableState.protectedMode = mode;
-}
-
 - (void)mutCrlf {
     [_mutableState appendCarriageReturnLineFeed];
 }
@@ -2260,7 +2256,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalProtectedModeDidChangeTo:(VT100TerminalProtectedMode)mode {
-    [self mutSetProtectedMode:mode];
+    [_mutableState terminalProtectedModeDidChangeTo:mode];
 }
 
 - (VT100TerminalProtectedMode)terminalProtectedMode {
