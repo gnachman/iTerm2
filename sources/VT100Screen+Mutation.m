@@ -875,49 +875,6 @@
     [_mutableState appendLineFeed];
 }
 
-- (void)mutToggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
-    void (^block)(VT100GridCoord, screen_char_t *, iTermExternalAttribute *, BOOL *) =
-    ^(VT100GridCoord coord,
-      screen_char_t *sct,
-      iTermExternalAttribute *ea,
-      BOOL *stop) {
-        switch (sgrAttribute) {
-            case 1:
-                sct->bold = !sct->bold;
-                break;
-            case 4:
-                sct->underline = !sct->underline;
-                break;
-            case 5:
-                sct->blink = !sct->blink;
-                break;
-            case 7:
-                ScreenCharInvert(sct);
-                break;
-        }
-    };
-    if (_state.terminal.decsaceRectangleMode) {
-        [_mutableState.currentGrid mutateCellsInRect:rect
-                                               block:^(VT100GridCoord coord,
-                                                       screen_char_t *sct,
-                                                       iTermExternalAttribute **eaOut,
-                                                       BOOL *stop) {
-            block(coord, sct, *eaOut, stop);
-        }];
-    } else {
-        [_mutableState.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(rect.origin.x,
-                                                                                   rect.origin.y,
-                                                                                   rect.origin.x + rect.size.width,
-                                                                                   rect.origin.y + rect.size.height - 1)
-                                                     block:^(screen_char_t *sct,
-                                                             iTermExternalAttribute **eaOut,
-                                                             VT100GridCoord coord,
-                                                             BOOL *stop) {
-            block(coord, sct, *eaOut, stop);
-        }];
-    }
-}
-
 - (void)mutFillRectangle:(VT100GridRect)rect with:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
     [_mutableState.currentGrid setCharsFrom:rect.origin
                                          to:VT100GridRectMax(rect)
@@ -2318,7 +2275,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalToggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
-    [self mutToggleAttribute:sgrAttribute inRect:rect];
+    [_mutableState terminalToggleAttribute:sgrAttribute inRect:rect];
 }
 
 - (void)terminalCopyFrom:(VT100GridRect)source to:(VT100GridCoord)dest {

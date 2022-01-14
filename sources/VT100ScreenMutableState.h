@@ -125,6 +125,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)insertColumns:(int)n;
 - (void)deleteColumns:(int)n;
 - (void)setAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect;
+- (void)toggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect;
 
 #pragma mark - Character Sets
 

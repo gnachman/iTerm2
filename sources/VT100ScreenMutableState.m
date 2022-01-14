@@ -1214,6 +1214,49 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (void)toggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
+    void (^block)(VT100GridCoord, screen_char_t *, iTermExternalAttribute *, BOOL *) =
+    ^(VT100GridCoord coord,
+      screen_char_t *sct,
+      iTermExternalAttribute *ea,
+      BOOL *stop) {
+        switch (sgrAttribute) {
+            case 1:
+                sct->bold = !sct->bold;
+                break;
+            case 4:
+                sct->underline = !sct->underline;
+                break;
+            case 5:
+                sct->blink = !sct->blink;
+                break;
+            case 7:
+                ScreenCharInvert(sct);
+                break;
+        }
+    };
+    if (self.terminal.decsaceRectangleMode) {
+        [self.currentGrid mutateCellsInRect:rect
+                                      block:^(VT100GridCoord coord,
+                                              screen_char_t *sct,
+                                              iTermExternalAttribute **eaOut,
+                                              BOOL *stop) {
+            block(coord, sct, *eaOut, stop);
+        }];
+    } else {
+        [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(rect.origin.x,
+                                                                          rect.origin.y,
+                                                                          rect.origin.x + rect.size.width,
+                                                                          rect.origin.y + rect.size.height - 1)
+                                            block:^(screen_char_t *sct,
+                                                    iTermExternalAttribute **eaOut,
+                                                    VT100GridCoord coord,
+                                                    BOOL *stop) {
+            block(coord, sct, *eaOut, stop);
+        }];
+    }
+}
+
 
 #pragma mark - Character Sets
 
