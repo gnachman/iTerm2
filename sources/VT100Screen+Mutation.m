@@ -2365,10 +2365,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)terminalLeftRightRegionString {
-    if (!_state.currentGrid.haveColumnScrollRegion) {
-        return @"";
-    }
-    return [NSString stringWithFormat:@"%d;%d", _state.currentGrid.leftMargin + 1, _state.currentGrid.rightMargin + 1];
+    return [_mutableState terminalLeftRightRegionString];
 }
 
 - (NSString *)terminalStringForKeypressWithCode:(unsigned short)keyCode
