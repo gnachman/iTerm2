@@ -2338,8 +2338,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)terminalCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
                                            payload:(NSString *)payload {
-    [delegate_ screenDidReceiveCustomEscapeSequenceWithParameters:parameters
-                                                          payload:payload];
+    [_mutableState terminalCustomEscapeSequenceWithParameters:parameters
+                                                      payload:payload];
 }
 
 - (void)terminalRepeatPreviousCharacter:(int)times {
