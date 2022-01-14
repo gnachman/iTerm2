@@ -72,7 +72,6 @@ NS_ASSUME_NONNULL_BEGIN
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
 - (void)mutMarkWholeScreenDirty;
-- (void)mutDeleteColumns:(int)n;
 - (void)mutSetAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect;
 - (void)mutToggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect;
 - (void)mutCopyFrom:(VT100GridRect)source to:(VT100GridCoord)dest;

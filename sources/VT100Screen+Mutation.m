@@ -875,19 +875,6 @@
     [_mutableState appendLineFeed];
 }
 
-- (void)mutDeleteColumns:(int)n {
-    if (_state.cursorOutsideLeftRightMargin || _state.cursorOutsideTopBottomMargin) {
-        return;
-    }
-    if (n <= 0) {
-        return;
-    }
-    for (int y = _state.currentGrid.topMargin; y <= _state.currentGrid.bottomMargin; y++) {
-        [_mutableState.currentGrid deleteChars:n
-                                    startingAt:VT100GridCoordMake(_state.currentGrid.cursor.x, y)];
-    }
-}
-
 - (void)mutSetAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
     void (^block)(VT100GridCoord, screen_char_t *, iTermExternalAttribute *, BOOL *) =
     ^(VT100GridCoord coord,
@@ -2392,7 +2379,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalDeleteColumns:(int)n {
-    [self mutDeleteColumns:n];
+    [_mutableState terminalDeleteColumns:n];
 }
 
 - (void)terminalSetAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
