@@ -2361,10 +2361,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSString *)terminalTopBottomRegionString {
-    if (!_state.currentGrid.haveRowScrollRegion) {
-        return @"";
-    }
-    return [NSString stringWithFormat:@"%d;%d", _state.currentGrid.topMargin + 1, _state.currentGrid.bottomMargin + 1];
+    return [_mutableState terminalTopBottomRegionString];
 }
 
 - (NSString *)terminalLeftRightRegionString {
