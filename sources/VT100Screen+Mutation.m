@@ -20,6 +20,7 @@
 #import "TmuxStateParser.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMutableState+Resizing.h"
+#import "VT100ScreenMutableState+TerminalDelegate.h"
 #import "VT100Screen+Private.h"
 #import "VT100Token.h"
 #import "VT100WorkingDirectory.h"
@@ -2308,8 +2309,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSSize)terminalCellSizeInPoints:(double *)scaleOut {
-    *scaleOut = _mutableState.config.backingScaleFactor;
-    return [delegate_ screenCellSize];
+    return [_mutableState terminalCellSizeInPoints:scaleOut];
 }
 
 - (void)terminalSetUnicodeVersion:(NSInteger)unicodeVersion {

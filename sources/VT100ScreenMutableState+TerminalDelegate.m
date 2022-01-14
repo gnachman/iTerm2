@@ -1385,5 +1385,9 @@
     [self appendCarriageReturnLineFeed];
 }
 
+- (NSSize)terminalCellSizeInPoints:(double *)scaleOut {
+    *scaleOut = self.config.backingScaleFactor;
+    return self.config.cellSize;
+}
 
 @end
