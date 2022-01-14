@@ -2357,7 +2357,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)terminalIsInAlternateScreenMode {
-    return [self showingAlternateScreen];
+    return [_mutableState terminalIsInAlternateScreenMode];
 }
 
 - (NSString *)terminalTopBottomRegionString {

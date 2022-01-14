@@ -1594,4 +1594,9 @@
     }];
 }
 
+- (BOOL)terminalIsInAlternateScreenMode {
+    return self.currentGrid == self.altGrid;
+}
+
+
 @end
