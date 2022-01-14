@@ -1598,5 +1598,12 @@
     return self.currentGrid == self.altGrid;
 }
 
+- (NSString *)terminalTopBottomRegionString {
+    if (!self.currentGrid.haveRowScrollRegion) {
+        return @"";
+    }
+    return [NSString stringWithFormat:@"%d;%d", self.currentGrid.topMargin + 1, self.currentGrid.bottomMargin + 1];
+}
+
 
 @end
