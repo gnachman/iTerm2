@@ -1605,5 +1605,11 @@
     return [NSString stringWithFormat:@"%d;%d", self.currentGrid.topMargin + 1, self.currentGrid.bottomMargin + 1];
 }
 
+- (NSString *)terminalLeftRightRegionString {
+    if (!self.currentGrid.haveColumnScrollRegion) {
+        return @"";
+    }
+    return [NSString stringWithFormat:@"%d;%d", self.currentGrid.leftMargin + 1, self.currentGrid.rightMargin + 1];
+}
 
 @end
