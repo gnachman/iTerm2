@@ -1538,4 +1538,13 @@
     }];
 }
 
+- (void)terminalCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> *)parameters
+                                           payload:(NSString *)payload {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidReceiveCustomEscapeSequenceWithParameters:parameters
+                                                             payload:payload];
+    }];
+}
+
+
 @end
