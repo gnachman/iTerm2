@@ -1706,4 +1706,10 @@
      externalAttributes:[self.terminal externalAttributes]];
 }
 
+- (void)terminalEraseRectangle:(VT100GridRect)rect {
+    screen_char_t c = [self.currentGrid defaultChar];
+    c.code = ' ';
+    [self fillRectangle:rect with:c externalAttributes:nil];
+}
+
 @end

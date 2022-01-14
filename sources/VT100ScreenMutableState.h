@@ -129,7 +129,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)copyFrom:(VT100GridRect)source to:(VT100GridCoord)dest;
 - (void)fillRectangle:(VT100GridRect)rect
                  with:(screen_char_t)c
-   externalAttributes:(iTermExternalAttribute *)ea;
+   externalAttributes:(iTermExternalAttribute * _Nullable)ea;
 
 #pragma mark - Character Sets
 
