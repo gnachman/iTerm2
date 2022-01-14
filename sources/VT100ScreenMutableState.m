@@ -1132,6 +1132,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (void)deleteColumns:(int)n {
+    if (self.cursorOutsideLeftRightMargin || self.cursorOutsideTopBottomMargin) {
+        return;
+    }
+    if (n <= 0) {
+        return;
+    }
+    for (int y = self.currentGrid.topMargin; y <= self.currentGrid.bottomMargin; y++) {
+        [self.currentGrid deleteChars:n
+                           startingAt:VT100GridCoordMake(self.currentGrid.cursor.x, y)];
+    }
+}
+
+
 #pragma mark - Character Sets
 
 - (void)setCharacterSet:(int)charset usesLineDrawingMode:(BOOL)lineDrawingMode {

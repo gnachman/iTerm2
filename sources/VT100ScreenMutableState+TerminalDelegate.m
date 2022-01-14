@@ -1672,4 +1672,8 @@
     [self insertColumns:n];
 }
 
+- (void)terminalDeleteColumns:(int)n {
+    [self deleteColumns:n];
+}
+
 @end

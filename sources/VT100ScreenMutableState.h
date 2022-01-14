@@ -123,6 +123,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 #pragma mark - Bulk Move
 
 - (void)insertColumns:(int)n;
+- (void)deleteColumns:(int)n;
 
 #pragma mark - Character Sets
 
