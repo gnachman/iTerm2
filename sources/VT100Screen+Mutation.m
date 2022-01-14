@@ -2341,7 +2341,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalReportFocusWillChangeTo:(BOOL)reportFocus {
-    [self.delegate screenReportFocusWillChangeTo:reportFocus];
+    [_mutableState terminalReportFocusWillChangeTo:reportFocus];
 }
 
 - (void)terminalPasteBracketingWillChangeTo:(BOOL)bracket {

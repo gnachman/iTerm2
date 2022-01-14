@@ -1576,4 +1576,10 @@
     }
 }
 
+- (void)terminalReportFocusWillChangeTo:(BOOL)reportFocus {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenReportFocusWillChangeTo:reportFocus];
+    }];
+}
+
 @end
