@@ -2313,7 +2313,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetUnicodeVersion:(NSInteger)unicodeVersion {
-    [delegate_ screenSetUnicodeVersion:unicodeVersion];
+    [_mutableState terminalSetUnicodeVersion:unicodeVersion];
 }
 
 - (NSInteger)terminalUnicodeVersion {

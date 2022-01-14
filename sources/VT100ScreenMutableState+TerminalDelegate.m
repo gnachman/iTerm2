@@ -1390,4 +1390,12 @@
     return self.config.cellSize;
 }
 
+- (void)terminalSetUnicodeVersion:(NSInteger)unicodeVersion {
+    // This is joined mostly out of caution. It changes the profile and so could unexpectedly do
+    // something observable.
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenSetUnicodeVersion:unicodeVersion];
+    }];
+}
+
 @end
