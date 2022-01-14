@@ -1770,4 +1770,9 @@
     self.pasteboardString = nil;
 }
 
+- (void)terminalSoftAlternateScreenModeDidChange {
+    [self softAlternateScreenModeDidChange];
+}
+
+
 @end

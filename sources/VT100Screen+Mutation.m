@@ -2118,7 +2118,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSoftAlternateScreenModeDidChange {
-    [_mutableState softAlternateScreenModeDidChange];
+    [_mutableState terminalSoftAlternateScreenModeDidChange];
 }
 
 - (void)terminalReportKeyUpDidChange:(BOOL)reportKeyUp {
