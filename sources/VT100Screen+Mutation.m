@@ -2345,7 +2345,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalPasteBracketingWillChangeTo:(BOOL)bracket {
-    [self.delegate screenReportPasteBracketingWillChangeTo:bracket];
+    [_mutableState terminalPasteBracketingWillChangeTo:bracket];
 }
 
 - (void)terminalSoftAlternateScreenModeDidChange {
