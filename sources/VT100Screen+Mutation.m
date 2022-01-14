@@ -2391,13 +2391,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100SavedColorsSlot *)terminalSavedColorsSlot {
-    return [[[VT100SavedColorsSlot alloc] initWithTextColor:[_state.colorMap colorForKey:kColorMapForeground]
-                                            backgroundColor:[_state.colorMap colorForKey:kColorMapBackground]
-                                         selectionTextColor:[_state.colorMap colorForKey:kColorMapSelectedText]
-                                   selectionBackgroundColor:[_state.colorMap colorForKey:kColorMapSelection]
-                                       indexedColorProvider:^NSColor *(NSInteger index) {
-        return [_state.colorMap colorForKey:kColorMap8bitBase + index] ?: [NSColor clearColor];
-    }] autorelease];
+    return [_mutableState terminalSavedColorsSlot];
 }
 
 - (void)terminalRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
