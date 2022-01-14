@@ -1744,4 +1744,20 @@
     }];
 }
 
+- (void)terminalDidFinishReceivingFile {
+    if (self.inlineImageHelper) {
+        [self.inlineImageHelper writeToGrid:self.currentGrid];
+        self.inlineImageHelper = nil;
+        // TODO: Handle objects other than images.
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenDidFinishReceivingInlineFile];
+        }];
+    } else {
+        DLog(@"Download finished");
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenDidFinishReceivingFile];
+        }];
+    }
+}
+
 @end

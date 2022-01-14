@@ -1836,15 +1836,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalDidFinishReceivingFile {
-    if (_mutableState.inlineImageHelper) {
-        [_mutableState.inlineImageHelper writeToGrid:_state.currentGrid];
-        _mutableState.inlineImageHelper = nil;
-        // TODO: Handle objects other than images.
-        [delegate_ screenDidFinishReceivingInlineFile];
-    } else {
-        DLog(@"Download finished");
-        [delegate_ screenDidFinishReceivingFile];
-    }
+    [_mutableState terminalDidFinishReceivingFile];
 }
 
 - (void)terminalDidReceiveBase64FileData:(NSString *)data {
