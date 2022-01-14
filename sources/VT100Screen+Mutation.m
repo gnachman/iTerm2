@@ -1828,11 +1828,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalDidChangeSendModifiers {
-    // CSI u is too different from xterm's modifyOtherKeys to allow the terminal to change it with
-    // xterm's control sequences. Lots of strange problems appear with vim. For example, mailing
-    // list thread with subject "Control Keys Failing After System Bell".
-    // TODO: terminal_.sendModifiers[i] holds the settings. See xterm's modifyOtherKeys and friends.
-    [self.delegate screenSendModifiersDidChange];
+    [_mutableState terminalDidChangeSendModifiers];
 }
 
 - (void)terminalKeyReportingFlagsDidChange {
