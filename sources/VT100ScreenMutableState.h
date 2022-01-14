@@ -120,6 +120,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)forwardIndex;
 - (void)backIndex;
 
+#pragma mark - Bulk Move
+
+- (void)insertColumns:(int)n;
+
 #pragma mark - Character Sets
 
 - (void)setCharacterSet:(int)charset usesLineDrawingMode:(BOOL)lineDrawingMode;

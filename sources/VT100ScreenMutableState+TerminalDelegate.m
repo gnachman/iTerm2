@@ -1668,4 +1668,8 @@
     return self.config.maximumTheoreticalImageDimension;
 }
 
+- (void)terminalInsertColumns:(int)n {
+    [self insertColumns:n];
+}
+
 @end
