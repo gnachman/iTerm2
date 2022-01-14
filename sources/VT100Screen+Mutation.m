@@ -1529,7 +1529,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetCharset:(int)charset toLineDrawingMode:(BOOL)lineDrawingMode {
-    [_mutableState setCharacterSet:charset usesLineDrawingMode:lineDrawingMode];
+    [_mutableState terminalSetCharset:charset toLineDrawingMode:lineDrawingMode];
 }
 
 - (BOOL)terminalLineDrawingFlagForCharset:(int)charset {

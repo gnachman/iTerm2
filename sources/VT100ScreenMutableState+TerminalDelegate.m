@@ -1720,4 +1720,8 @@
     [self fillRectangle:rect with:c externalAttributes:nil];
 }
 
+- (void)terminalSetCharset:(int)charset toLineDrawingMode:(BOOL)lineDrawingMode {
+    [self setCharacterSet:charset usesLineDrawingMode:lineDrawingMode];
+}
+
 @end
