@@ -667,7 +667,7 @@
       </property>
 
       <property name="profile name" code="Pfnm" description="The session's profile name" type="text" access="r">
-        <cocoa key="profileName"/>
+        <cocoa key="profileNameForScripting"/>
       </property>
 
       <property name="answerback string" code="Answ" description="ENQ Answerback string" type="text">

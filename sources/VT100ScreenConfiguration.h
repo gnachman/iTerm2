@@ -38,6 +38,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *windowTitle;
 @property (nonatomic, readonly) BOOL clearScrollbackAllowed;
 @property (nonatomic, readonly) NSString *profileName;
+@property (nonatomic, readonly) NSSize cellSize;
+@property (nonatomic, readonly) CGFloat backingScaleFactor;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -66,6 +68,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readwrite) NSString *windowTitle;
 @property (nonatomic, readwrite) BOOL clearScrollbackAllowed;
 @property (nonatomic, copy, readwrite) NSString *profileName;
+@property (nonatomic, readwrite) NSSize cellSize;
+@property (nonatomic, readwrite) CGFloat backingScaleFactor;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 

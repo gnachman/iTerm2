@@ -22,6 +22,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCapturedOutputMark.h"
+#import "iTermImageMark.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermTextExtractor.h"
@@ -2380,6 +2381,119 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return codes.allObjects ?: @[];
 }
 
+- (void)terminalWillReceiveFileNamed:(NSString *)name
+                              ofSize:(NSInteger)size
+                          completion:(void (^)(BOOL ok))completion {
+    // Use a joined side effect so we can safely call the completion block from the main thread.
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        BOOL promptIfBig = YES;
+        const BOOL ok = [delegate screenConfirmDownloadAllowed:name
+                                                          size:size
+                                                 displayInline:NO
+                                                   promptIfBig:&promptIfBig];
+        if (!ok) {
+            completion(NO);
+            return;
+        }
+
+        [delegate screenWillReceiveFileNamed:name ofSize:size preconfirmed:!promptIfBig];
+        completion(YES);
+    }];
+};
+
+- (void)terminalWillReceiveInlineFileNamed:(NSString *)name
+                                    ofSize:(NSInteger)size
+                                     width:(int)width
+                                     units:(VT100TerminalUnits)widthUnits
+                                    height:(int)height
+                                     units:(VT100TerminalUnits)heightUnits
+                       preserveAspectRatio:(BOOL)preserveAspectRatio
+                                     inset:(NSEdgeInsets)inset
+                                completion:(void (^)(BOOL ok))completion {
+    __weak __typeof(self) weakSelf = self;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            completion(NO);
+            return;
+        }
+        [weakSelf reallyWillReceiveInlineFileNamed:name
+                                            ofSize:size
+                                             width:width
+                                             units:widthUnits
+                                            height:height
+                                             units:heightUnits
+                               preserveAspectRatio:preserveAspectRatio
+                                             inset:inset
+                                          delegate:delegate
+                                        completion:completion];
+    }];
+}
+
+- (void)reallyWillReceiveInlineFileNamed:(NSString *)name
+                                    ofSize:(NSInteger)size
+                                     width:(int)width
+                                     units:(VT100TerminalUnits)widthUnits
+                                    height:(int)height
+                                     units:(VT100TerminalUnits)heightUnits
+                       preserveAspectRatio:(BOOL)preserveAspectRatio
+                                     inset:(NSEdgeInsets)inset
+                                delegate:(id<VT100ScreenDelegate>)delegate
+                                completion:(void (^)(BOOL ok))completion {
+    assert(_performingJoinedBlock);
+    BOOL promptIfBig = YES;
+    if (![delegate screenConfirmDownloadAllowed:name
+                                           size:size
+                                  displayInline:YES
+                                    promptIfBig:&promptIfBig]) {
+        completion(NO);
+        return;
+    }
+    const CGFloat scale = self.config.backingScaleFactor;
+    self.inlineImageHelper = [[VT100InlineImageHelper alloc] initWithName:name
+                                                                    width:width
+                                                               widthUnits:widthUnits
+                                                                   height:height
+                                                              heightUnits:heightUnits
+                                                              scaleFactor:scale
+                                                      preserveAspectRatio:preserveAspectRatio
+                                                                    inset:inset
+                                                             preconfirmed:!promptIfBig];
+    self.inlineImageHelper.delegate = self;
+    completion(YES);
+}
+
+- (void)terminalFileReceiptEndedUnexpectedly {
+    [self fileReceiptEndedUnexpectedly];
+}
+
+- (void)terminalDidReceiveBase64FileData:(NSString *)data {
+    if (self.inlineImageHelper) {
+        [self.inlineImageHelper appendBase64EncodedData:data];
+    } else {
+        __weak __typeof(self) weakSelf = self;
+        [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenDidReceiveBase64FileData:data
+                                             confirm:^void(NSString *name,
+                                                           NSInteger lengthBefore,
+                                                           NSInteger lengthAfter) {
+                [weakSelf confirmBigDownloadWithBeforeSize:lengthBefore
+                                                 afterSize:lengthAfter
+                                                      name:name
+                                                  delegate:delegate];
+            }];
+        }];
+    }
+}
+
+- (void)terminalAppendSixelData:(NSData *)data {
+    VT100InlineImageHelper *helper = [[VT100InlineImageHelper alloc] initWithSixelData:data
+                                                                           scaleFactor:self.config.backingScaleFactor];
+    helper.delegate = self;
+    [helper writeToGrid:self.currentGrid];
+    [self appendCarriageReturnLineFeed];
+}
+
 #pragma mark - Tabs
 
 - (void)setInitialTabStops {
@@ -3555,6 +3669,46 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+#pragma mark - Inline Images
+
+- (BOOL)confirmBigDownloadWithBeforeSize:(NSInteger)sizeBefore
+                               afterSize:(NSInteger)afterSize
+                                    name:(NSString *)name
+                                delegate:(id<VT100ScreenDelegate>)delegate {
+    assert(_performingJoinedBlock);
+
+    if (sizeBefore < VT100ScreenBigFileDownloadThreshold && afterSize > VT100ScreenBigFileDownloadThreshold) {
+        if (![delegate screenConfirmDownloadNamed:name
+                                    canExceedSize:VT100ScreenBigFileDownloadThreshold]) {
+            DLog(@"Aborting big download");
+            [self stopTerminalReceivingFile];
+            return NO;
+        }
+    }
+    return YES;
+}
+
+- (void)stopTerminalReceivingFile {
+    [self.terminal stopReceivingFile];
+    [self fileReceiptEndedUnexpectedly];
+}
+
+- (void)fileReceiptEndedUnexpectedly {
+    self.inlineImageHelper = nil;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenFileReceiptEndedUnexpectedly];
+    }];
+}
+
+- (void)appendNativeImageAtCursorWithName:(NSString *)name width:(int)width {
+    VT100InlineImageHelper *helper = [[VT100InlineImageHelper alloc] initWithNativeImageNamed:name
+                                                                                 spanningWidth:width
+                                                                                   scaleFactor:self.config.backingScaleFactor];
+    helper.delegate = self;
+    [helper writeToGrid:self.currentGrid];
+}
+
+
 #pragma mark - PTYTriggerEvaluatorDelegate
 
 - (BOOL)triggerEvaluatorShouldUseTriggers:(PTYTriggerEvaluator *)evaluator {
@@ -3856,5 +4010,48 @@ launchCoprocessWithCommand:(NSString *)command
         [delegate screenDidResize];
     }];
 }
+
+#pragma mark - VT100InlineImageHelperDelegate
+
+- (void)inlineImageConfirmBigDownloadWithBeforeSize:(NSInteger)lengthBefore
+                                          afterSize:(NSInteger)lengthAfter
+                                               name:(NSString *)name {
+    __weak __typeof(self) weakSelf = self;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [weakSelf confirmBigDownloadWithBeforeSize:lengthBefore
+                                         afterSize:lengthAfter
+                                              name:name
+                                          delegate:delegate];
+    }];
+}
+
+- (NSSize)inlineImageCellSize {
+    return self.config.cellSize;
+}
+
+- (void)inlineImageAppendLinefeed {
+    [self appendLineFeed];
+}
+
+- (void)inlineImageSetMarkOnScreenLine:(NSInteger)line
+                                  code:(unichar)code {
+    long long absLine = (self.cumulativeScrollbackOverflow +
+                         self.numberOfScrollbackLines +
+                         line);
+    iTermImageMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
+                                                       oneLine:YES
+                                                       ofClass:[iTermImageMark class]];
+    mark.imageCode = @(code);
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenNeedsRedraw];
+    }];
+}
+
+- (void)inlineImageDidFinishWithImageData:(NSData *)imageData {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidAppendImageData:imageData];
+    }];
+}
+
 
 @end

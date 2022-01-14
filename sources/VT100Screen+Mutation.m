@@ -868,14 +868,6 @@
 
 #pragma mark - Terminal Fundamentals
 
-- (void)mutAppendNativeImageAtCursorWithName:(NSString *)name width:(int)width {
-    VT100InlineImageHelper *helper = [[[VT100InlineImageHelper alloc] initWithNativeImageNamed:name
-                                                                                 spanningWidth:width
-                                                                                   scaleFactor:[delegate_ screenBackingScaleFactor]] autorelease];
-    helper.delegate = self;
-    [helper writeToGrid:_state.currentGrid];
-}
-
 - (void)mutSetProtectedMode:(VT100TerminalProtectedMode)mode {
     _mutableState.protectedMode = mode;
 }
@@ -1592,18 +1584,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return nil;
 }
 
-#pragma mark - File Transfer
-
-- (void)mutStopTerminalReceivingFile {
-    [_mutableState.terminal stopReceivingFile];
-    [self mutFileReceiptEndedUnexpectedly];
-}
-
-- (void)mutFileReceiptEndedUnexpectedly {
-    _mutableState.inlineImageHelper = nil;
-    [delegate_ screenFileReceiptEndedUnexpectedly];
-}
-
 #pragma mark - Injection
 
 - (void)mutInjectData:(NSData *)data {
@@ -2023,42 +2003,30 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                            promptIfBig:promptIfBig];
 }
 
-- (BOOL)terminalWillReceiveFileNamed:(NSString *)name
-                              ofSize:(NSInteger)size {
-    BOOL promptIfBig = YES;
-    if (![self preconfirmDownloadOfSize:size
-                                   name:name
-                          displayInline:NO
-                            promptIfBig:&promptIfBig]) {
-        return NO;
-    }
-    [delegate_ screenWillReceiveFileNamed:name ofSize:size preconfirmed:!promptIfBig];
-    return YES;
+- (void)terminalWillReceiveFileNamed:(NSString *)name
+                              ofSize:(NSInteger)size
+                          completion:(void (^)(BOOL ok))completion {
+    [_mutableState terminalWillReceiveFileNamed:name ofSize:size completion:completion];
 }
 
-- (BOOL)terminalWillReceiveInlineFileNamed:(NSString *)name
+- (void)terminalWillReceiveInlineFileNamed:(NSString *)name
                                     ofSize:(NSInteger)size
                                      width:(int)width
                                      units:(VT100TerminalUnits)widthUnits
                                     height:(int)height
                                      units:(VT100TerminalUnits)heightUnits
                        preserveAspectRatio:(BOOL)preserveAspectRatio
-                                     inset:(NSEdgeInsets)inset {
-    BOOL promptIfBig = YES;
-    if (![self preconfirmDownloadOfSize:size name:name displayInline:YES promptIfBig:&promptIfBig]) {
-        return NO;
-    }
-    _mutableState.inlineImageHelper = [[[VT100InlineImageHelper alloc] initWithName:name
-                                                                              width:width
-                                                                         widthUnits:widthUnits
-                                                                             height:height
-                                                                        heightUnits:heightUnits
-                                                                        scaleFactor:[delegate_ screenBackingScaleFactor]
-                                                                preserveAspectRatio:preserveAspectRatio
-                                                                              inset:inset
-                                                                       preconfirmed:!promptIfBig] autorelease];
-    _mutableState.inlineImageHelper.delegate = self;
-    return YES;
+                                     inset:(NSEdgeInsets)inset
+                                completion:(void (^)(BOOL ok))completion {
+    [_mutableState terminalWillReceiveInlineFileNamed:name
+                                               ofSize:size
+                                                width:width
+                                                units:widthUnits
+                                               height:height
+                                                units:heightUnits
+                                  preserveAspectRatio:preserveAspectRatio
+                                                inset:inset
+                                           completion:completion];
 }
 
 - (void)addURLMarkAtLineAfterCursorWithCode:(unsigned int)code {
@@ -2080,11 +2048,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalAppendSixelData:(NSData *)data {
-    VT100InlineImageHelper *helper = [[[VT100InlineImageHelper alloc] initWithSixelData:data
-                                                                            scaleFactor:[delegate_ screenBackingScaleFactor]] autorelease];
-    helper.delegate = self;
-    [helper writeToGrid:_state.currentGrid];
-    [_mutableState appendCarriageReturnLineFeed];
+    [_mutableState terminalAppendSixelData:data];
 }
 
 - (void)terminalDidChangeSendModifiers {
@@ -2112,15 +2076,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalDidReceiveBase64FileData:(NSString *)data {
-    if (_mutableState.inlineImageHelper) {
-        [_mutableState.inlineImageHelper appendBase64EncodedData:data];
-    } else {
-        [delegate_ screenDidReceiveBase64FileData:data];
-    }
+    [_mutableState terminalDidReceiveBase64FileData:data];
 }
 
 - (void)terminalFileReceiptEndedUnexpectedly {
-    [self mutFileReceiptEndedUnexpectedly];
+    [_mutableState terminalFileReceiptEndedUnexpectedly];
 }
 
 - (void)terminalRequestUpload:(NSString *)args {
@@ -2348,7 +2308,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSSize)terminalCellSizeInPoints:(double *)scaleOut {
-    *scaleOut = [delegate_ screenBackingScaleFactor];
+    *scaleOut = _mutableState.config.backingScaleFactor;
     return [delegate_ screenCellSize];
 }
 

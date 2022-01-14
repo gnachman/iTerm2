@@ -338,17 +338,19 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 // Download of a base64-encoded file
 // nil = name unknown, -1 = size unknown. Return YES to accept it.
-- (BOOL)terminalWillReceiveFileNamed:(NSString *)name
-                              ofSize:(NSInteger)size;
+- (void)terminalWillReceiveFileNamed:(NSString *)name
+                              ofSize:(NSInteger)size
+                          completion:(void (^)(BOOL ok))completion;
 
-- (BOOL)terminalWillReceiveInlineFileNamed:(NSString *)name
+- (void)terminalWillReceiveInlineFileNamed:(NSString *)name
                                     ofSize:(NSInteger)size
                                      width:(int)width
                                      units:(VT100TerminalUnits)widthUnits
                                     height:(int)height
                                      units:(VT100TerminalUnits)heightUnits
                        preserveAspectRatio:(BOOL)preserveAspectRatio
-                                     inset:(NSEdgeInsets)inset;
+                                     inset:(NSEdgeInsets)inset
+                                completion:(void (^)(BOOL ok))completion;
 
 // Download completed normally
 - (void)terminalDidFinishReceivingFile;

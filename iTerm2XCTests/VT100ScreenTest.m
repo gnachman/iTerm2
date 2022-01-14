@@ -765,7 +765,11 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 - (void)screenDidFinishReceivingFile {
 }
 
-- (void)screenDidReceiveBase64FileData:(NSString *)data {
+- (void)screenDidReceiveBase64FileData:(NSString * _Nonnull)data
+                               confirm:(void (^ NS_NOESCAPE)(NSString *name,
+                                                             NSInteger lengthBefore,
+                                                             NSInteger lengthAfter))confirm {
+    return nil;
 }
 
 - (void)screenFileReceiptEndedUnexpectedly {
@@ -852,11 +856,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 
 - (void)screenDidClearScrollbackBuffer {
 }
-
-- (CGFloat)screenBackingScaleFactor {
-    return 2;
-}
-
 
 - (void)screenDidReceiveLineFeed {
 }
