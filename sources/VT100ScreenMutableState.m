@@ -2199,6 +2199,16 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self.colorMap setColor:color forKey:key];
 }
 
+- (void)restoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
+    const int limit = MIN(kColorMapNumberOf8BitColors, slot.indexedColors.count);
+    for (int i = 16; i < limit; i++) {
+        [self setColor:slot.indexedColors[i] forKey:kColorMap8bitBase + i];
+    }
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenRestoreColorsFromSlot:slot];
+    }];
+}
+
 #pragma mark - Cross-Thread Sync
 
 - (void)willSynchronize {
