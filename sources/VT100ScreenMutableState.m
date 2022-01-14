@@ -1286,6 +1286,23 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                 externalAttributes:ea];
 }
 
+// Note: this does not erase attributes! It just sets the character to space.
+- (void)selectiveEraseRectangle:(VT100GridRect)rect {
+    const screen_char_t dc = self.currentGrid.defaultChar;
+    [self.currentGrid mutateCellsInRect:rect
+                                  block:^(VT100GridCoord coord,
+                                          screen_char_t *sct,
+                                          iTermExternalAttribute **eaOut,
+                                          BOOL *stop) {
+        if (self.protectedMode == VT100TerminalProtectedModeDEC && sct->guarded) {
+            return;
+        }
+        VT100ScreenEraseCell(sct, eaOut, NO, &dc);
+    }];
+    [self clearTriggerLine];
+}
+
+
 #pragma mark - Character Sets
 
 - (void)setCharacterSet:(int)charset usesLineDrawingMode:(BOOL)lineDrawingMode {
@@ -2863,6 +2880,10 @@ launchCoprocessWithCommand:(NSString *)command
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenDidAppendImageData:imageData];
     }];
+}
+
+- (void)terminalSelectiveEraseRectangle:(VT100GridRect)rect {
+    [self selectiveEraseRectangle:rect];
 }
 
 

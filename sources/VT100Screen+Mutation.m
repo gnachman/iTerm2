@@ -875,22 +875,6 @@
     [_mutableState appendLineFeed];
 }
 
-// Note: this does not erase attributes! It just sets the character to space.
-- (void)mutSelectiveEraseRectangle:(VT100GridRect)rect {
-    const screen_char_t dc = _state.currentGrid.defaultChar;
-    [_mutableState.currentGrid mutateCellsInRect:rect
-                                           block:^(VT100GridCoord coord,
-                                                   screen_char_t *sct,
-                                                   iTermExternalAttribute **eaOut,
-                                                   BOOL *stop) {
-        if (_state.protectedMode == VT100TerminalProtectedModeDEC && sct->guarded) {
-            return;
-        }
-        VT100ScreenEraseCell(sct, eaOut, NO, &dc);
-    }];
-    [_mutableState clearTriggerLine];
-}
-
 - (void)setCursorX:(int)x Y:(int)y {
     DLog(@"Move cursor to %d,%d", x, y);
     _mutableState.currentGrid.cursor = VT100GridCoordMake(x, y);
@@ -2264,7 +2248,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSelectiveEraseRectangle:(VT100GridRect)rect {
-    [self mutSelectiveEraseRectangle:rect];
+    [_mutableState terminalSelectiveEraseRectangle:rect];
 }
 
 - (void)terminalSelectiveEraseInDisplay:(int)mode {
