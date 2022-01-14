@@ -2387,7 +2387,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalApplicationKeypadModeDidChange:(BOOL)mode {
-    [self.delegate screenApplicationKeypadModeDidChange:mode];
+    [_mutableState terminalApplicationKeypadModeDidChange:mode];
 }
 
 - (VT100SavedColorsSlot *)terminalSavedColorsSlot {

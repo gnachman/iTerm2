@@ -1641,4 +1641,12 @@
     return [self.tokenExecutor pause];
 }
 
+- (void)terminalApplicationKeypadModeDidChange:(BOOL)mode {
+    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenApplicationKeypadModeDidChange:mode];
+        [unpauser unpause];
+    }];
+}
+
 @end
