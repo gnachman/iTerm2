@@ -1738,5 +1738,10 @@
     }];
 }
 
+- (void)terminalKeyReportingFlagsDidChange {
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenKeyReportingFlagsDidChange];
+    }];
+}
 
 @end

@@ -1832,7 +1832,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalKeyReportingFlagsDidChange {
-    [self.delegate screenKeyReportingFlagsDidChange];
+    [_mutableState terminalKeyReportingFlagsDidChange];
 }
 
 - (void)terminalDidFinishReceivingFile {
