@@ -32,4 +32,6 @@ iTermTriggerScopeProvider> {
 @property (atomic) BOOL hadCommand;
 @property (atomic) BOOL performingJoinedBlock;
 
+- (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
+
 @end

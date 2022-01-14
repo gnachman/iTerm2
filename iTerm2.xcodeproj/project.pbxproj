@@ -3063,6 +3063,8 @@
 		A6DBC04E2005F45700F1466D /* iTermHighlightRow.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC04B2005F45700F1466D /* iTermHighlightRow.metal */; };
 		A6DBC05120073CBA00F1466D /* NSResponder+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC04F20073CBA00F1466D /* NSResponder+iTerm.h */; };
 		A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC05020073CBA00F1466D /* NSResponder+iTerm.m */; };
+		A6DBC2FC2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC2FA2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.h */; };
+		A6DBC2FD2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC2FB2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m */; };
 		A6DBE76C22507D1600144200 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
 		A6DCDD202560B410004EA8A1 /* NSAttributedString+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */; };
 		A6DCDD212560B410004EA8A1 /* NSAttributedString+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */; };
@@ -6441,6 +6443,8 @@
 		A6DBC04B2005F45700F1466D /* iTermHighlightRow.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermHighlightRow.metal; path = Metal/Shaders/iTermHighlightRow.metal; sourceTree = "<group>"; };
 		A6DBC04F20073CBA00F1466D /* NSResponder+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSResponder+iTerm.h"; sourceTree = "<group>"; };
 		A6DBC05020073CBA00F1466D /* NSResponder+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSResponder+iTerm.m"; sourceTree = "<group>"; };
+		A6DBC2FA2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100ScreenMutableState+TerminalDelegate.h"; sourceTree = "<group>"; };
+		A6DBC2FB2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100ScreenMutableState+TerminalDelegate.m"; sourceTree = "<group>"; };
 		A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAttributedString+PSM.h"; sourceTree = "<group>"; };
 		A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAttributedString+PSM.m"; sourceTree = "<group>"; };
 		A6DDA88425B376D200AA55EE /* iTermActivityInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermActivityInfo.h; sourceTree = "<group>"; };
@@ -8940,6 +8944,8 @@
 				A65B03FD278CA9D500CD889E /* VT100ScreenMutableState+Private.h */,
 				A65B03FE278CAA4600CD889E /* VT100ScreenMutableState+Resizing.h */,
 				A65B03FF278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m */,
+				A6DBC2FA2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.h */,
+				A6DBC2FB2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -11540,6 +11546,7 @@
 				A667C26B277B8DE2006B4DEF /* VT100ScreenMutableState.h in Headers */,
 				535EA50420D1869800FC81E0 /* iTermSwiftyStringParser.h in Headers */,
 				A66719351DCE36C3000CE608 /* iTermClearView.h in Headers */,
+				A6DBC2FC2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.h in Headers */,
 				A69D559B232A0CF3002E0F99 /* iTermSessionLauncher.h in Headers */,
 				A66719361DCE36C3000CE608 /* iTermHostRecordMO.h in Headers */,
 				A65B49A8244199CF002B1C68 /* iTermSocketUnixDomainAddress.h in Headers */,
@@ -14257,6 +14264,7 @@
 				A60E046526E037BE00DD162B /* ContentSubscriber.swift in Sources */,
 				A639359A210401C700A16D1C /* iTermStatusBarMemoryUtilizationComponent.m in Sources */,
 				A69CCB1D211BF4FF008ADA71 /* iTermRecordingCodec.m in Sources */,
+				A6DBC2FD2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m in Sources */,
 				A65429B020C492F000CE71B1 /* iTermParameterPanelWindowController.m in Sources */,
 				53FF84E3217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.m in Sources */,
 				A631FC9920EF04E900EB824F /* iTermStatusBarSetupConfigureComponentWindowController.m in Sources */,
