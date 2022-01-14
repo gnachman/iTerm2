@@ -13,6 +13,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL hasFirst;
 @property (nonatomic, readonly) BOOL hasSecond;
 
+@property (nonatomic, readonly) T _Nullable maybeFirst;
+@property (nonatomic, readonly) U _Nullable maybeSecond;
+
 + (instancetype)first:(T)object;
 + (instancetype)second:(U)object;
 
@@ -39,6 +42,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Nil gives default error
 + (instancetype)promiseValue:(T _Nullable)value;
 + (instancetype)promiseDefaultError;
++ (void)gather:(NSArray<iTermPromise<T> *> *)promises
+         queue:(dispatch_queue_t)queue
+    completion:(void (^)(NSArray<iTermOr<T, NSError *> *> *values))completion;
 
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
