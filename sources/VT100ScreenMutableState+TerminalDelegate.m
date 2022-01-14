@@ -1724,4 +1724,9 @@
     [self setCharacterSet:charset usesLineDrawingMode:lineDrawingMode];
 }
 
+- (void)terminalNeedsRedraw {
+    [self.currentGrid markAllCharsDirty:YES];
+}
+
+
 @end

@@ -71,7 +71,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)mutContinueFindResultsInContext:(FindContext *)context
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
-- (void)mutMarkWholeScreenDirty;
 - (void)mutPopScrollbackLines:(int)linesPushed;
 - (int)mutNumberOfLinesDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid
                                                         encoder:(id<iTermEncoderAdapter>)encoder
