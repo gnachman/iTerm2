@@ -11956,6 +11956,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.backingScaleFactor = backingScaleFactor;
         dirty = YES;
     }
+    if (!_config.maximumTheoreticalImageDimension) {
+        _config.maximumTheoreticalImageDimension = PTYSessionMaximumMetalViewSize;
+        dirty = YES;
+    }
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                            inProfile:_profile];
@@ -12796,10 +12800,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
     }
     [self setSessionSpecificProfileValues:dict];
-}
-
-- (int)screenMaximumTheoreticalImageDimension {
-    return PTYSessionMaximumMetalViewSize;
 }
 
 - (void)screenCopyStringToPasteboard:(NSString *)string {

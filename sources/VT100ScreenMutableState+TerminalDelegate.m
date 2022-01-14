@@ -1664,4 +1664,8 @@
     [self restoreColorsFromSlot:slot];
 }
 
+- (int)terminalMaximumTheoreticalImageDimension {
+    return self.config.maximumTheoreticalImageDimension;
+}
+
 @end
