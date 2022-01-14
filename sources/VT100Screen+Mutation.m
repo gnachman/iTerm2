@@ -903,26 +903,6 @@
     _mutableState.currentGrid.cursor = VT100GridCoordMake(x, y);
 }
 
-- (void)mutCopyFrom:(VT100GridRect)source to:(VT100GridCoord)dest {
-    id<VT100GridReading> copy = [[_state.currentGrid copy] autorelease];
-    const VT100GridSize size = _state.currentGrid.size;
-    [copy enumerateCellsInRect:source
-                         block:^(VT100GridCoord sourceCoord,
-                                 screen_char_t sct,
-                                 iTermExternalAttribute *ea,
-                                 BOOL *stop) {
-        const VT100GridCoord destCoord = VT100GridCoordMake(sourceCoord.x - source.origin.x + dest.x,
-                                                            sourceCoord.y - source.origin.y + dest.y);
-        if (destCoord.x < 0 || destCoord.x >= size.width || destCoord.y < 0 || destCoord.y >= size.height) {
-            return;
-        }
-        [_mutableState.currentGrid setCharsFrom:destCoord
-                                             to:destCoord
-                                         toChar:sct
-                             externalAttributes:ea];
-    }];
-}
-
 - (void)mutRemoveAllTabStops {
     [_mutableState.tabStops removeAllObjects];
 }
@@ -2279,7 +2259,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalCopyFrom:(VT100GridRect)source to:(VT100GridCoord)dest {
-    [self mutCopyFrom:source to:dest];
+    [_mutableState terminalCopyFrom:source to:dest];
 }
 
 - (void)terminalFillRectangle:(VT100GridRect)rect withCharacter:(unichar)inputChar {

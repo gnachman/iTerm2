@@ -1684,4 +1684,8 @@
     [self toggleAttribute:sgrAttribute inRect:rect];
 }
 
+- (void)terminalCopyFrom:(VT100GridRect)source to:(VT100GridCoord)dest {
+    [self copyFrom:source to:dest];
+}
+
 @end

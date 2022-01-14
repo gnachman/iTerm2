@@ -119,13 +119,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)reverseIndex;
 - (void)forwardIndex;
 - (void)backIndex;
+- (void)insertColumns:(int)n;
+- (void)deleteColumns:(int)n;
 
 #pragma mark - Bulk Operations
 
-- (void)insertColumns:(int)n;
-- (void)deleteColumns:(int)n;
 - (void)setAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect;
 - (void)toggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect;
+- (void)copyFrom:(VT100GridRect)source to:(VT100GridCoord)dest;
 
 #pragma mark - Character Sets
 

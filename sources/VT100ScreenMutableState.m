@@ -1257,6 +1257,25 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (void)copyFrom:(VT100GridRect)source to:(VT100GridCoord)dest {
+    id<VT100GridReading> copy = [self.currentGrid copy];
+    const VT100GridSize size = self.currentGrid.size;
+    [copy enumerateCellsInRect:source
+                         block:^(VT100GridCoord sourceCoord,
+                                 screen_char_t sct,
+                                 iTermExternalAttribute *ea,
+                                 BOOL *stop) {
+        const VT100GridCoord destCoord = VT100GridCoordMake(sourceCoord.x - source.origin.x + dest.x,
+                                                            sourceCoord.y - source.origin.y + dest.y);
+        if (destCoord.x < 0 || destCoord.x >= size.width || destCoord.y < 0 || destCoord.y >= size.height) {
+            return;
+        }
+        [self.currentGrid setCharsFrom:destCoord
+                                    to:destCoord
+                                toChar:sct
+                    externalAttributes:ea];
+    }];
+}
 
 #pragma mark - Character Sets
 
