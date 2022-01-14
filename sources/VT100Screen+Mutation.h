@@ -111,7 +111,6 @@ NS_ASSUME_NONNULL_BEGIN
                      onAbsLine:(long long)line
                         pushed:(BOOL)pushed
                          token:(id<iTermOrderedToken> _Nullable)token;
-- (void)mutCurrentDirectoryDidChangeTo:(NSString *)dir;
 - (void)mutReloadMarkCache;
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutUpdateConfig;
