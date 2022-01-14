@@ -1295,10 +1295,6 @@
     [_mutableState.currentGrid markAllCharsDirty:NO];
 }
 
-- (void)mutMarkWholeScreenDirty {
-    [_mutableState.currentGrid markAllCharsDirty:YES];
-}
-
 - (void)mutRedrawGrid {
     [_mutableState.currentGrid setAllDirty:YES];
     // Force the screen to redraw right away. Some users reported lag and this seems to fix it.
@@ -1721,7 +1717,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalNeedsRedraw {
-    [self mutMarkWholeScreenDirty];
+    [_mutableState terminalNeedsRedraw];
 }
 
 - (void)terminalSetUseColumnScrollRegion:(BOOL)use {
