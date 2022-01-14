@@ -1864,7 +1864,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalPasteboardReceiptEndedUnexpectedly {
-    _mutableState.pasteboardString = nil;
+    [_mutableState terminalPasteboardReceiptEndedUnexpectedly];
 }
 
 - (void)terminalCopyBufferToPasteboard {

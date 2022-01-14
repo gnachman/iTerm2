@@ -1766,4 +1766,8 @@
     }];
 }
 
+- (void)terminalPasteboardReceiptEndedUnexpectedly {
+    self.pasteboardString = nil;
+}
+
 @end
