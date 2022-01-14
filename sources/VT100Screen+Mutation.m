@@ -875,21 +875,6 @@
     [_mutableState appendLineFeed];
 }
 
-- (void)mutInsertColumns:(int)n {
-    if (_state.cursorOutsideLeftRightMargin || _state.cursorOutsideTopBottomMargin) {
-        return;
-    }
-    if (n <= 0) {
-        return;
-    }
-    for (int y = _state.currentGrid.topMargin; y <= _state.currentGrid.bottomMargin; y++) {
-        [_mutableState.currentGrid insertChar:_state.currentGrid.defaultChar
-                           externalAttributes:nil
-                                           at:VT100GridCoordMake(_state.currentGrid.cursor.x, y)
-                                        times:n];
-    }
-}
-
 - (void)mutDeleteColumns:(int)n {
     if (_state.cursorOutsideLeftRightMargin || _state.cursorOutsideTopBottomMargin) {
         return;
@@ -2403,7 +2388,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalInsertColumns:(int)n {
-    [self mutInsertColumns:n];
+    [_mutableState terminalInsertColumns:n];
 }
 
 - (void)terminalDeleteColumns:(int)n {
