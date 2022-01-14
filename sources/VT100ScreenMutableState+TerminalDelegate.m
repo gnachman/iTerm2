@@ -1588,4 +1588,10 @@
     }];
 }
 
+- (void)terminalReportKeyUpDidChange:(BOOL)reportKeyUp {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenReportKeyUpDidChange:reportKeyUp];
+    }];
+}
+
 @end

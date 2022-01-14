@@ -2353,7 +2353,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalReportKeyUpDidChange:(BOOL)reportKeyUp {
-    [self.delegate screenReportKeyUpDidChange:reportKeyUp];
+    [_mutableState terminalReportKeyUpDidChange:reportKeyUp];
 }
 
 - (BOOL)terminalIsInAlternateScreenMode {
