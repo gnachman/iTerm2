@@ -2260,9 +2260,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalEraseRectangle:(VT100GridRect)rect {
-    screen_char_t c = [_state.currentGrid defaultChar];
-    c.code = ' ';
-    [self mutFillRectangle:rect with:c externalAttributes:nil];
+    [_mutableState terminalEraseRectangle:rect];
 }
 
 - (void)terminalSelectiveEraseRectangle:(VT100GridRect)rect {
