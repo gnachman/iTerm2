@@ -1649,4 +1649,15 @@
     }];
 }
 
+- (VT100SavedColorsSlot *)terminalSavedColorsSlot {
+    iTermColorMap *colorMap = self.colorMap;
+    return [[VT100SavedColorsSlot alloc] initWithTextColor:[colorMap colorForKey:kColorMapForeground]
+                                            backgroundColor:[colorMap colorForKey:kColorMapBackground]
+                                         selectionTextColor:[colorMap colorForKey:kColorMapSelectedText]
+                                   selectionBackgroundColor:[colorMap colorForKey:kColorMapSelection]
+                                       indexedColorProvider:^NSColor *(NSInteger index) {
+        return [colorMap colorForKey:kColorMap8bitBase + index] ?: [NSColor clearColor];
+    }];
+}
+
 @end
