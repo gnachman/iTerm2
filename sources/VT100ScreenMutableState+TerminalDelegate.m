@@ -1408,4 +1408,16 @@
     }];
 }
 
+- (void)terminalPushKeyLabels:(NSString *)value {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenPushKeyLabels:value];
+    }];
+}
+
+- (void)terminalPopKeyLabels:(NSString *)value {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenPopKeyLabels:value];
+    }];
+}
+
 @end
