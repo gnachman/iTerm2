@@ -1236,10 +1236,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutScheduleTokenExecution];
 }
 
-- (void)currentDirectoryDidChangeTo:(NSString *)dir {
-    [self mutCurrentDirectoryDidChangeTo:dir];
-}
-
 - (long long)lastPromptLine {
     return _state.lastPromptLine;
 }

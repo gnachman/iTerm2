@@ -1744,10 +1744,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [_mutableState terminalSetRemoteHost:remoteHost];
 }
 
-- (void)setHost:(NSString *)host user:(NSString *)user {
-    [_mutableState setHost:host user:user];
-}
-
 - (void)terminalSetWorkingDirectoryURL:(NSString *)URLString {
     [_mutableState terminalSetWorkingDirectoryURL:URLString];
 }
@@ -1779,10 +1775,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // Shell integration or equivalent.
 - (void)terminalCurrentDirectoryDidChangeTo:(NSString *)dir {
     [_mutableState terminalCurrentDirectoryDidChangeTo:dir];
-}
-
-- (void)mutCurrentDirectoryDidChangeTo:(NSString *)dir {
-    [_mutableState currentDirectoryDidChangeTo:dir];
 }
 
 - (void)terminalProfileShouldChangeTo:(NSString *)value {
