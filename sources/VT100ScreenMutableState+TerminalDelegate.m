@@ -1398,4 +1398,8 @@
     }];
 }
 
+- (NSInteger)terminalUnicodeVersion {
+    return self.config.unicodeVersion;
+}
+
 @end

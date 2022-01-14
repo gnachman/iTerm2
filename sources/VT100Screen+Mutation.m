@@ -2317,7 +2317,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSInteger)terminalUnicodeVersion {
-    return [delegate_ screenUnicodeVersion];
+    return [_mutableState terminalUnicodeVersion];
 }
 
 - (void)terminalSetLabel:(NSString *)label forKey:(NSString *)keyName {
