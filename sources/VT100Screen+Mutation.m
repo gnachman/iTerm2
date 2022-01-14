@@ -2399,7 +2399,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (int)terminalMaximumTheoreticalImageDimension {
-    return [delegate_ screenMaximumTheoreticalImageDimension];
+    return [_mutableState terminalMaximumTheoreticalImageDimension];
 }
 
 - (void)terminalInsertColumns:(int)n {

@@ -976,11 +976,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
 }
 
 
-- (int)screenMaximumTheoreticalImageDimension {
-    return 4096;
-}
-
-
 - (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
 }
 

@@ -30,6 +30,7 @@
 @property (nonatomic, copy, readwrite) NSString *profileName;
 @property (nonatomic, readwrite) NSSize cellSize;
 @property (nonatomic, readwrite) CGFloat backingScaleFactor;
+@property (nonatomic, readwrite) int maximumTheoreticalImageDimension;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -54,6 +55,7 @@
 @synthesize profileName = _profileName;
 @synthesize cellSize = _cellSize;
 @synthesize backingScaleFactor = _backingScaleFactor;
+@synthesize maximumTheoreticalImageDimension = _maximumTheoreticalImageDimension;
 
 @synthesize isDirty = _isDirty;
 
@@ -80,6 +82,7 @@
         _profileName = other.profileName;
         _cellSize = other.cellSize;
         _backingScaleFactor = other.backingScaleFactor;
+        _maximumTheoreticalImageDimension = other.maximumTheoreticalImageDimension;
 
         _isDirty = other.isDirty;
     }
@@ -111,6 +114,7 @@
                             @"profileName": _profileName ?: @"",
                             @"cellSize": NSStringFromSize(_cellSize),
                             @"backingScaleFactor": @(_backingScaleFactor),
+                            @"maximumTheoreticalImageDimension": @(_maximumTheoreticalImageDimension),
 
                             @"isDirty": @(_isDirty),
     };
@@ -145,6 +149,7 @@
 @dynamic profileName;
 @dynamic cellSize;
 @dynamic backingScaleFactor;
+@dynamic maximumTheoreticalImageDimension;
 
 @dynamic isDirty;
 

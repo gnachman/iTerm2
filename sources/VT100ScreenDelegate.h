@@ -337,7 +337,6 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                            metadata:(iTermImmutableMetadata)metadata;
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode;
 - (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot * _Nonnull)slot;
-- (int)screenMaximumTheoreticalImageDimension;
 - (void)screenOfferToDisableTriggersInInteractiveApps;
 - (void)screenDidUpdateReturnCodeForMark:(VT100ScreenMark * _Nonnull)mark
                               remoteHost:(VT100RemoteHost * _Nullable)remoteHost;
