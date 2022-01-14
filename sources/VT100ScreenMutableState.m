@@ -2933,4 +2933,8 @@ launchCoprocessWithCommand:(NSString *)command
     self.protectedMode = mode;
 }
 
+- (VT100TerminalProtectedMode)terminalProtectedMode {
+    return self.protectedMode;
+}
+
 @end

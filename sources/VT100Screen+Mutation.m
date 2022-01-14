@@ -2260,7 +2260,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (VT100TerminalProtectedMode)terminalProtectedMode {
-    return _state.protectedMode;
+    return [_mutableState terminalProtectedMode];
 }
 
 #pragma mark - iTermMarkDelegate
