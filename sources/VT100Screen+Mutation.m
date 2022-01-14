@@ -875,13 +875,6 @@
     [_mutableState appendLineFeed];
 }
 
-- (void)mutFillRectangle:(VT100GridRect)rect with:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
-    [_mutableState.currentGrid setCharsFrom:rect.origin
-                                         to:VT100GridRectMax(rect)
-                                     toChar:c
-                         externalAttributes:ea];
-}
-
 // Note: this does not erase attributes! It just sets the character to space.
 - (void)mutSelectiveEraseRectangle:(VT100GridRect)rect {
     const screen_char_t dc = _state.currentGrid.defaultChar;
@@ -2263,19 +2256,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalFillRectangle:(VT100GridRect)rect withCharacter:(unichar)inputChar {
-    screen_char_t c = {
-        .code = inputChar
-    };
-    if ([_state.charsetUsesLineDrawingMode containsObject:@(_state.terminal.charset)]) {
-        ConvertCharsToGraphicsCharset(&c, 1);
-    }
-    CopyForegroundColor(&c, [_state.terminal foregroundColorCode]);
-    CopyBackgroundColor(&c, [_state.terminal backgroundColorCode]);
-
-    // Only preserve SGR attributes. image is OSC, not SGR.
-    c.image = 0;
-
-    [self mutFillRectangle:rect with:c externalAttributes:[_state.terminal externalAttributes]];
+    [_mutableState terminalFillRectangle:rect withCharacter:inputChar];
 }
 
 - (void)terminalEraseRectangle:(VT100GridRect)rect {

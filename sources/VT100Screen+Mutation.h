@@ -72,7 +72,6 @@ NS_ASSUME_NONNULL_BEGIN
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
 - (void)mutMarkWholeScreenDirty;
-- (void)mutFillRectangle:(VT100GridRect)rect with:(screen_char_t)c externalAttributes:(iTermExternalAttribute * _Nullable)ea;
 - (void)mutSelectiveEraseRectangle:(VT100GridRect)rect;
 - (void)mutPopScrollbackLines:(int)linesPushed;
 - (int)mutNumberOfLinesDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid

@@ -28,6 +28,7 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#warning TODO: Audit this file for thread safety
 #import "ScreenChar.h"
 
 #import "DebugLogging.h"
