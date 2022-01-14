@@ -1680,4 +1680,8 @@
     [self setAttribute:sgrAttribute inRect:rect];
 }
 
+- (void)terminalToggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect {
+    [self toggleAttribute:sgrAttribute inRect:rect];
+}
+
 @end
