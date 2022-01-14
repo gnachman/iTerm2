@@ -2886,5 +2886,24 @@ launchCoprocessWithCommand:(NSString *)command
     [self selectiveEraseRectangle:rect];
 }
 
+- (void)terminalSelectiveEraseInDisplay:(int)mode {
+    BOOL before = NO;
+    BOOL after = NO;
+    switch (mode) {
+        case 0:
+            after = YES;
+            break;
+        case 1:
+            before = YES;
+            break;
+        case 2:
+            before = YES;
+            after = YES;
+            break;
+    }
+    // Unlike DECSERA, this does erase attributes.
+    [self eraseInDisplayBeforeCursor:before afterCursor:after decProtect:YES];
+}
+
 
 @end

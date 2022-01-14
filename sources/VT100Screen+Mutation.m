@@ -2252,22 +2252,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSelectiveEraseInDisplay:(int)mode {
-    BOOL before = NO;
-    BOOL after = NO;
-    switch (mode) {
-        case 0:
-            after = YES;
-            break;
-        case 1:
-            before = YES;
-            break;
-        case 2:
-            before = YES;
-            after = YES;
-            break;
-    }
-    // Unlike DECSERA, this does erase attributes.
-    [_mutableState eraseInDisplayBeforeCursor:before afterCursor:after decProtect:YES];
+    [_mutableState terminalSelectiveEraseInDisplay:mode];
 }
 
 - (void)terminalSelectiveEraseInLine:(int)mode {
