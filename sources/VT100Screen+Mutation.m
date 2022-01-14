@@ -2368,14 +2368,22 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [_mutableState terminalLeftRightRegionString];
 }
 
-- (NSString *)terminalStringForKeypressWithCode:(unsigned short)keyCode
-                                          flags:(NSEventModifierFlags)flags
-                                     characters:(NSString *)characters
-                    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
-    return [self.delegate screenStringForKeypressWithCode:keyCode
-                                                    flags:flags
-                                               characters:characters
-                              charactersIgnoringModifiers:charactersIgnoringModifiers];
+- (iTermPromise<NSString *> *)terminalStringForKeypressWithCode:(unsigned short)keyCode
+                                                          flags:(NSEventModifierFlags)flags
+                                                     characters:(NSString *)characters
+                                    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
+    return [_mutableState terminalStringForKeypressWithCode:keyCode
+                                                      flags:flags
+                                                 characters:characters
+                                charactersIgnoringModifiers:charactersIgnoringModifiers];
+}
+
+- (dispatch_queue_t)terminalQueue {
+    return [_mutableState terminalQueue];
+}
+
+- (iTermTokenExecutorUnpauser *)terminalPause {
+    return [_mutableState terminalPause];
 }
 
 - (void)terminalApplicationKeypadModeDidChange:(BOOL)mode {

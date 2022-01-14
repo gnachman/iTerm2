@@ -7,6 +7,7 @@
 
 #import "iTermPromise.h"
 
+#import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 
 @implementation iTermOr {
@@ -48,6 +49,14 @@
 
 - (BOOL)hasSecond {
     return _second != nil;
+}
+
+- (id)maybeFirst {
+    return _first;
+}
+
+- (id)maybeSecond {
+    return _second;
 }
 
 - (NSString *)description {
@@ -172,6 +181,26 @@ typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
     return [self promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
         [seal rejectWithDefaultError];
     }];
+}
+
++ (void)gather:(NSArray<iTermPromise<id> *> *)promises
+         queue:(dispatch_queue_t)queue
+    completion:(void (^)(NSArray<iTermOr<id, NSError *> *> *values))completion {
+    dispatch_group_t group = dispatch_group_create();
+    [promises enumerateObjectsUsingBlock:^(iTermPromise<id> * _Nonnull promise, NSUInteger idx, BOOL * _Nonnull stop) {
+        dispatch_group_enter(group);
+        [[promise then:^(id  _Nonnull value) {
+            dispatch_group_leave(group);
+        }] catchError:^(NSError * _Nonnull error) {
+            dispatch_group_leave(group);
+        }];
+    }];
+    dispatch_group_notify(group, queue, ^{
+        NSArray<iTermOr<id, NSError *> *> *ors = [promises mapWithBlock:^id(iTermPromise<id> *promise) {
+            return promise.value;
+        }];
+        completion(ors);
+    });
 }
 
 - (instancetype)initPrivate:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal>))block {

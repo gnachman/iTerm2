@@ -2813,53 +2813,72 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeRequestTermcapTerminfo:(VT100Token *)token {
-    NSString *(^key)(unsigned short, NSEventModifierFlags, NSString *, NSString *) = ^NSString *(unsigned short keyCode,
-                                                                                                 NSEventModifierFlags flags,
-                                                                                                 NSString *characters,
-                                                                                                 NSString *charactersIgnoringModifiers) {
-        return [[self.delegate terminalStringForKeypressWithCode:keyCode
-                                                           flags:flags
-                                                      characters:characters
-                                     charactersIgnoringModifiers:charactersIgnoringModifiers] hexEncodedString];
+    iTermPromise<NSString *> *(^key)(unsigned short, NSEventModifierFlags, NSString *, NSString *) =
+    ^iTermPromise<NSString *> *(unsigned short keyCode,
+                                NSEventModifierFlags flags,
+                                NSString *characters,
+                                NSString *charactersIgnoringModifiers) {
+        return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+            iTermPromise<NSString *> *unencodedValuePromise =
+            [self.delegate terminalStringForKeypressWithCode:keyCode
+                                                       flags:flags
+                                                  characters:characters
+                                 charactersIgnoringModifiers:charactersIgnoringModifiers];
+            [[unencodedValuePromise then:^(NSString * _Nonnull value) {
+                [seal fulfill:[value hexEncodedString]];
+            }] catchError:^(NSError * _Nonnull error) {
+                [seal rejectWithDefaultError];
+            }];
+        }];
     };
     NSString *(^c)(UTF32Char c) = ^NSString *(UTF32Char c) {
         return [NSString stringWithLongCharacter:c];
     };
     static NSString *const kFormat = @"%@=%@";
     __block BOOL ok = NO;
-    NSMutableArray *parts = [NSMutableArray array];
+    NSMutableArray<iTermPromise<NSString *> *> *parts = [NSMutableArray array];
     NSDictionary *inverseMap = [VT100DCSParser termcapTerminfoInverseNameDictionary];
     for (int i = 0; i < token.csi->count; i++) {
         NSString *stringKey = inverseMap[@(token.csi->p[i])];
         NSString *hexEncodedKey = [stringKey hexEncodedString];
-        void (^add)(unsigned short, NSEventModifierFlags, NSString *, NSString *) = ^void(unsigned short keyCode,
-                                                                                          NSEventModifierFlags flags,
-                                                                                          NSString *characters,
-                                                                                          NSString *charactersIgnoringModifiers) {
-            NSString *value = key(keyCode, flags, characters, charactersIgnoringModifiers);
-            if (!value) {
-                return;
-            }
-            [parts addObject:[NSString stringWithFormat:kFormat, hexEncodedKey, value]];
-            ok = YES;
-        };
+        void (^add)(unsigned short, NSEventModifierFlags, NSString *, NSString *) =
+            ^void(unsigned short keyCode,
+                  NSEventModifierFlags flags,
+                  NSString *characters,
+                  NSString *charactersIgnoringModifiers) {
+                // First get the value. This is legit async.
+                iTermPromise<NSString *> *keyStringPromise = key(keyCode, flags, characters, charactersIgnoringModifiers);
+
+                // Once the value is computed, format it into key=value.
+                iTermPromise<NSString *> *promise =
+                [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+                    [[keyStringPromise then:^(NSString * _Nonnull value) {
+                        NSString *kvp = [NSString stringWithFormat:kFormat, hexEncodedKey, value];
+                        [seal fulfill:kvp];
+                    }] catchError:^(NSError * _Nonnull error) {
+                        [seal rejectWithDefaultError];
+                    }];
+                }];
+                [parts addObject:promise];
+                ok = YES;
+            };
         switch (token.csi->p[i]) {
             case kDcsTermcapTerminfoRequestTerminfoName:
-                [parts addObject:[NSString stringWithFormat:kFormat,
-                                  hexEncodedKey,
-                                  [_termType hexEncodedString]]];
+                [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
+                                                             hexEncodedKey,
+                                                             [_termType hexEncodedString]]]];
                 ok = YES;
                 break;
             case kDcsTermcapTerminfoRequestTerminalName:
-                [parts addObject:[NSString stringWithFormat:kFormat,
-                                  hexEncodedKey,
-                                  [_termType hexEncodedString]]];
+                [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
+                                                             hexEncodedKey,
+                                                             [_termType hexEncodedString]]]];
                 ok = YES;
                 break;
             case kDcsTermcapTerminfoRequestiTerm2ProfileName:
-                [parts addObject:[NSString stringWithFormat:kFormat,
-                                  hexEncodedKey,
-                                  [[_delegate terminalProfileName] hexEncodedString]]];
+                [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
+                                                             hexEncodedKey,
+                                                             [[_delegate terminalProfileName] hexEncodedString]]]];
                 ok = YES;
                 break;
             case kDcsTermcapTerminfoRequestUnrecognizedName:
@@ -3008,6 +3027,20 @@ static const int kMaxScreenRows = 4096;
         }
     }
 
+    __weak __typeof(self) weakSelf = self;
+    iTermTokenExecutorUnpauser *unpauser = [self.delegate terminalPause];
+    [iTermPromise gather:parts queue:[self.delegate terminalQueue] completion:^(NSArray<iTermOr<id, NSError *> *> * _Nonnull values) {
+        NSArray<NSString *> *strings = [values mapWithBlock:^id(iTermOr<id,NSError *> *or) {
+            return or.maybeFirst;
+        }];
+        [weakSelf finishRequestTermcapTerminfoWithValues:strings
+                                                      ok:ok];
+        [unpauser unpause];
+    }];
+}
+
+- (void)finishRequestTermcapTerminfoWithValues:(NSArray<NSString *> *)parts
+                                            ok:(BOOL)ok {
     if (gDebugLogging) {
         [parts enumerateObjectsUsingBlock:^(NSString *kvp, NSUInteger idx, BOOL * _Nonnull stop) {
             iTermTuple<NSString *, NSString *> *tuple = [kvp keyValuePair];

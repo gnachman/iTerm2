@@ -1612,4 +1612,33 @@
     return [NSString stringWithFormat:@"%d;%d", self.currentGrid.leftMargin + 1, self.currentGrid.rightMargin + 1];
 }
 
+- (iTermPromise<NSString *> *)terminalStringForKeypressWithCode:(unsigned short)keyCode
+                                                          flags:(NSEventModifierFlags)flags
+                                                     characters:(NSString *)characters
+                                    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
+    return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+        iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            NSString *value = [delegate screenStringForKeypressWithCode:keyCode
+                                                                  flags:flags
+                                                             characters:characters
+                                            charactersIgnoringModifiers:charactersIgnoringModifiers];
+            if (value) {
+                [seal fulfill:value];
+            } else {
+                [seal rejectWithDefaultError];
+            }
+            [unpauser unpause];
+        }];
+    }];
+}
+
+- (dispatch_queue_t)terminalQueue {
+    return _queue;
+}
+
+- (id)terminalPause {
+    return [self.tokenExecutor pause];
+}
+
 @end

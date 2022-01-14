@@ -12,6 +12,7 @@
 #import "iTermPromise.h"
 
 @class VT100SavedColorsSlot;
+@class iTermTokenExecutorUnpauser;
 
 typedef NS_ENUM(NSInteger, MouseMode) {
     MOUSE_REPORTING_NONE = -1,
@@ -474,10 +475,10 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 - (BOOL)terminalIsInAlternateScreenMode;
 
-- (NSString *)terminalStringForKeypressWithCode:(unsigned short)keycode
-                                          flags:(NSEventModifierFlags)flags
-                                     characters:(NSString *)characters
-                    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers;
+- (iTermPromise<NSString *> *)terminalStringForKeypressWithCode:(unsigned short)keycode
+                                                          flags:(NSEventModifierFlags)flags
+                                                     characters:(NSString *)characters
+                                    charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers;
 - (void)terminalApplicationKeypadModeDidChange:(BOOL)mode;
 - (NSString *)terminalTopBottomRegionString;
 - (NSString *)terminalLeftRightRegionString;
@@ -497,5 +498,8 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalSelectiveEraseInLine:(int)mode;
 - (void)terminalProtectedModeDidChangeTo:(VT100TerminalProtectedMode)mode;
 - (VT100TerminalProtectedMode)terminalProtectedMode;
+
+- (dispatch_queue_t)terminalQueue;
+- (iTermTokenExecutorUnpauser *)terminalPause;
 
 @end
