@@ -1660,4 +1660,8 @@
     }];
 }
 
+- (void)terminalRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
+    [self restoreColorsFromSlot:slot];
+}
+
 @end

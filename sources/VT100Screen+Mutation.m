@@ -2395,12 +2395,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRestoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
-    for (int i = 0; i < MIN(kColorMapNumberOf8BitColors, slot.indexedColors.count); i++) {
-        if (i >= 16) {
-            [self setColor:slot.indexedColors[i] forKey:kColorMap8bitBase + i];
-        }
-    }
-    [delegate_ screenRestoreColorsFromSlot:slot];
+    [_mutableState terminalRestoreColorsFromSlot:slot];
 }
 
 - (int)terminalMaximumTheoreticalImageDimension {

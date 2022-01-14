@@ -244,6 +244,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)loadInitialColorTable;
 - (void)setColor:(NSColor *)color forKey:(int)key;
+- (void)restoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
 
 #pragma mark - Cross-Thread Sync
 
