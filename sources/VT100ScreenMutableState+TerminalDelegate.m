@@ -1546,5 +1546,34 @@
     }];
 }
 
+- (void)terminalRepeatPreviousCharacter:(int)times {
+    if (![iTermAdvancedSettingsModel supportREPCode]) {
+        return;
+    }
+    if (self.lastCharacter.code) {
+        int length = 1;
+        screen_char_t chars[2];
+        chars[0] = self.lastCharacter;
+        if (self.lastCharacterIsDoubleWidth) {
+            length++;
+            chars[1] = self.lastCharacter;
+            chars[1].code = DWC_RIGHT;
+            chars[1].complexChar = NO;
+        }
+
+        NSString *string = ScreenCharToStr(chars);
+        for (int i = 0; i < times; i++) {
+            [self appendScreenCharArrayAtCursor:chars
+                                         length:length
+                         externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.lastExternalAttribute]];
+            [self appendStringToTriggerLine:string];
+            [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+                [delegate screenDidAppendStringToCurrentLine:string
+                                                 isPlainText:(self.lastCharacter.complexChar ||
+                                                              self.lastCharacter.code >= ' ')];
+            }];
+        }
+    }
+}
 
 @end

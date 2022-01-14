@@ -307,12 +307,6 @@
     [_mutableState appendStringAtCursor:string];
 }
 
-- (void)mutAppendScreenCharArrayAtCursor:(const screen_char_t *)buffer
-                                  length:(int)len
-                  externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes {
-    [_mutableState appendScreenCharArrayAtCursor:buffer length:len externalAttributeIndex:externalAttributes];
-}
-
 - (void)appendSessionRestoredBanner {
     // Save graphic rendition. Set to system message color.
     const VT100GraphicRendition saved = _state.terminal.graphicRendition;
@@ -355,9 +349,9 @@
                    length:(int)length
    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
              continuation:(screen_char_t)continuation {
-    [self mutAppendScreenCharArrayAtCursor:line
-                                    length:length
-                    externalAttributeIndex:externalAttributeIndex];
+    [_mutableState appendScreenCharArrayAtCursor:line
+                                          length:length
+                          externalAttributeIndex:externalAttributeIndex];
     if (continuation.code == EOL_HARD) {
         [_mutableState carriageReturn];
         [_mutableState appendLineFeed];
@@ -2343,31 +2337,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRepeatPreviousCharacter:(int)times {
-    if (![iTermAdvancedSettingsModel supportREPCode]) {
-        return;
-    }
-    if (_state.lastCharacter.code) {
-        int length = 1;
-        screen_char_t chars[2];
-        chars[0] = _state.lastCharacter;
-        if (_state.lastCharacterIsDoubleWidth) {
-            length++;
-            chars[1] = _state.lastCharacter;
-            chars[1].code = DWC_RIGHT;
-            chars[1].complexChar = NO;
-        }
-
-        NSString *string = ScreenCharToStr(chars);
-        for (int i = 0; i < times; i++) {
-            [self mutAppendScreenCharArrayAtCursor:chars
-                                            length:length
-                            externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:_state.lastExternalAttribute]];
-            [_mutableState appendStringToTriggerLine:string];
-            [delegate_ screenDidAppendStringToCurrentLine:string
-                                              isPlainText:(_state.lastCharacter.complexChar ||
-                                                           _state.lastCharacter.code >= ' ')];
-        }
-    }
+    [_mutableState terminalRepeatPreviousCharacter:times];
 }
 
 - (void)terminalReportFocusWillChangeTo:(BOOL)reportFocus {
