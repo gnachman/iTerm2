@@ -1760,4 +1760,10 @@
     }
 }
 
+- (void)terminalRequestUpload:(NSString *)args {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenRequestUpload:args];
+    }];
+}
+
 @end

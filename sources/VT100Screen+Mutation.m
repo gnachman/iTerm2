@@ -1848,7 +1848,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalRequestUpload:(NSString *)args {
-    [delegate_ screenRequestUpload:args];
+    [_mutableState terminalRequestUpload:args];
 }
 
 - (void)terminalBeginCopyToPasteboard {
