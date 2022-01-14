@@ -28,6 +28,8 @@
 @property (nonatomic, copy, readwrite) NSString *windowTitle;
 @property (nonatomic, readwrite) BOOL clearScrollbackAllowed;
 @property (nonatomic, copy, readwrite) NSString *profileName;
+@property (nonatomic, readwrite) NSSize cellSize;
+@property (nonatomic, readwrite) CGFloat backingScaleFactor;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -50,6 +52,8 @@
 @synthesize windowTitle = _windowTitle;
 @synthesize clearScrollbackAllowed = _clearScrollbackAllowed;
 @synthesize profileName = _profileName;
+@synthesize cellSize = _cellSize;
+@synthesize backingScaleFactor = _backingScaleFactor;
 
 @synthesize isDirty = _isDirty;
 
@@ -74,6 +78,8 @@
         _windowTitle = other.windowTitle;
         _clearScrollbackAllowed = other.clearScrollbackAllowed;
         _profileName = other.profileName;
+        _cellSize = other.cellSize;
+        _backingScaleFactor = other.backingScaleFactor;
 
         _isDirty = other.isDirty;
     }
@@ -103,6 +109,8 @@
                             @"windowTitle": _windowTitle ?: @"",
                             @"clearScrollbackAllowed": @(_clearScrollbackAllowed),
                             @"profileName": _profileName ?: @"",
+                            @"cellSize": NSStringFromSize(_cellSize),
+                            @"backingScaleFactor": @(_backingScaleFactor),
 
                             @"isDirty": @(_isDirty),
     };
@@ -135,6 +143,8 @@
 @dynamic windowTitle;
 @dynamic clearScrollbackAllowed;
 @dynamic profileName;
+@dynamic cellSize;
+@dynamic backingScaleFactor;
 
 @dynamic isDirty;
 

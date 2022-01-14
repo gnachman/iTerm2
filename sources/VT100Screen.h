@@ -232,9 +232,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord;
 - (void)commandDidStartAt:(VT100GridAbsCoord)coord;
 
-- (BOOL)confirmBigDownloadWithBeforeSize:(NSInteger)sizeBefore
-                               afterSize:(NSInteger)afterSize
-                                    name:(NSString *)name;
 - (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block;
 // Load 256 colors, but not ANSI (0-15).
 - (void)loadInitialColorTable;

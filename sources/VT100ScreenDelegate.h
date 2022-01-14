@@ -242,7 +242,11 @@
                       preconfirmed:(BOOL)preconfirmed;
 - (void)screenDidFinishReceivingFile;
 - (void)screenDidFinishReceivingInlineFile;
-- (void)screenDidReceiveBase64FileData:(NSString * _Nonnull)data;
+// Call confirm if you want to give the user the chance to cancel the download.
+- (void)screenDidReceiveBase64FileData:(NSString * _Nonnull)data
+                               confirm:(void (^ _Nonnull NS_NOESCAPE)(NSString * _Nonnull name,
+                                                                      NSInteger lengthBefore,
+                                                                      NSInteger lengthAfter))confirm;
 - (void)screenFileReceiptEndedUnexpectedly;
 
 - (void)screenRequestUpload:(NSString * _Nonnull)args;
@@ -263,8 +267,6 @@
 - (void)screenCurrentDirectoryDidChangeTo:(NSString * _Nullable)newPath;
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> * _Nonnull)parameters
                                                    payload:(NSString * _Nonnull)payload;
-- (CGFloat)screenBackingScaleFactor;
-
 - (void)screenReportVariableNamed:(NSString * _Nonnull)name;
 
 // FinalTerm stuff

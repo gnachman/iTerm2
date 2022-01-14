@@ -90,8 +90,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetMaxScrollbackLines:(unsigned int)lines;
 - (PTYTextViewSynchronousUpdateState * _Nullable)mutSetUseSavedGridIfAvailable:(BOOL)useSavedGrid;
 - (void)mutSetTerminal:(VT100Terminal *)terminal;
-- (void)mutStopTerminalReceivingFile;
-- (void)mutFileReceiptEndedUnexpectedly;
 - (void)mutSetUnlimitedScrollback:(BOOL)newValue;
 - (void)mutResetScrollbackOverflow;
 - (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord;
@@ -121,7 +119,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetMutingAmount:(double)value;
 - (void)mutSetDimmingAmount:(double)value;
 - (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate;
-- (void)mutAppendNativeImageAtCursorWithName:(NSString *)name width:(int)width;
 - (void)mutSetWorkingDirectory:(NSString *)workingDirectory
                      onAbsLine:(long long)line
                         pushed:(BOOL)pushed

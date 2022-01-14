@@ -11209,7 +11209,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_naggingController didFinishDownload];
 }
 
-- (void)screenDidReceiveBase64FileData:(NSString *)data {
+- (void)screenDidReceiveBase64FileData:(NSString * _Nonnull)data
+                               confirm:(void (^ NS_NOESCAPE)(NSString *name,
+                                                             NSInteger lengthBefore,
+                                                             NSInteger lengthAfter))confirm {
     const NSInteger lengthBefore = self.download.length;
     if (self.download && ![self.download appendData:data]) {
         iTermAnnouncementViewController *announcement =
@@ -11224,9 +11227,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         self.download = nil;
         return;
     }
-    const NSInteger lengthAfter = self.download.length;
     if (!self.download.preconfirmed) {
-        [_screen confirmBigDownloadWithBeforeSize:lengthBefore afterSize:lengthAfter name:self.download.shortName];
+        const NSInteger lengthAfter = self.download.length;
+        confirm(self.download.shortName, lengthBefore, lengthAfter);
     }
 }
 
@@ -11732,10 +11735,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }];
 }
 
-- (CGFloat)screenBackingScaleFactor {
-    return _view.window.screen.backingScaleFactor;
-}
-
 - (iTermNaggingController *)naggingController {
     if (!_naggingController) {
         _naggingController = [[iTermNaggingController alloc] init];
@@ -11945,6 +11944,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     const BOOL clearScrollbackAllowed = [self clearScrollbackAllowed];
     if (clearScrollbackAllowed != _config.clearScrollbackAllowed) {
         _config.clearScrollbackAllowed = clearScrollbackAllowed;
+        dirty = YES;
+    }
+    const NSSize cellSize = NSMakeSize([_textview charWidth], [_textview lineHeight]);
+    if (!NSEqualSizes(cellSize, _config.cellSize)) {
+        _config.cellSize = cellSize;
+        dirty = YES;
+    }
+    const CGFloat backingScaleFactor = _view.window.screen.backingScaleFactor;
+    if (backingScaleFactor != _config.backingScaleFactor) {
+        _config.backingScaleFactor = backingScaleFactor;
         dirty = YES;
     }
     if (_profileDidChange) {

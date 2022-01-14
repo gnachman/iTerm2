@@ -226,6 +226,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner;
 
+#pragma mark - Inline Images
+
+- (void)stopTerminalReceivingFile;
+- (void)fileReceiptEndedUnexpectedly;
+- (void)appendNativeImageAtCursorWithName:(NSString *)name width:(int)width;
+
 #pragma mark - Temporary
 
 - (void)setTokenExecutorDelegate:(id)delegate;

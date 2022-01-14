@@ -253,19 +253,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutSetCommandStartCoord:coord];
 }
 
-- (BOOL)confirmBigDownloadWithBeforeSize:(NSInteger)sizeBefore
-                               afterSize:(NSInteger)afterSize
-                                    name:(NSString *)name {
-    if (sizeBefore < VT100ScreenBigFileDownloadThreshold && afterSize > VT100ScreenBigFileDownloadThreshold) {
-        if (![self.delegate screenConfirmDownloadNamed:name canExceedSize:VT100ScreenBigFileDownloadThreshold]) {
-            DLog(@"Aborting big download");
-            [self mutStopTerminalReceivingFile];
-            return NO;
-        }
-    }
-    return YES;
-}
-
 // NOTE: If you change this you probably want to change -haveCommandInRange:, too.
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
     return [_state commandInRange:range];
@@ -973,7 +960,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)appendNativeImageAtCursorWithName:(NSString *)name width:(int)width {
-    [self mutAppendNativeImageAtCursorWithName:name width:width];
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState appendNativeImageAtCursorWithName:name width:width];
+    }];
 }
 
 #pragma mark - Private
@@ -1191,40 +1180,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (lineBuffer == _state.linebuffer) {
         [delegate_ screenRefreshFindOnPageView];
     }
-}
-
-#pragma mark - VT100InlineImageHelperDelegate
-
-- (void)inlineImageConfirmBigDownloadWithBeforeSize:(NSInteger)lengthBefore
-                                          afterSize:(NSInteger)lengthAfter
-                                               name:(NSString *)name {
-    [self confirmBigDownloadWithBeforeSize:lengthBefore
-                                 afterSize:lengthAfter
-                                      name:name];
-}
-
-- (NSSize)inlineImageCellSize {
-    return [delegate_ screenCellSize];
-}
-
-- (void)inlineImageAppendLinefeed {
-    [self linefeed];
-}
-
-- (void)inlineImageSetMarkOnScreenLine:(NSInteger)line
-                                  code:(unichar)code {
-    long long absLine = (self.totalScrollbackOverflow +
-                         _state.numberOfScrollbackLines +
-                         line);
-    iTermImageMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
-                                                       oneLine:YES
-                                                       ofClass:[iTermImageMark class]];
-    mark.imageCode = @(code);
-    [delegate_ screenNeedsRedraw];
-}
-
-- (void)inlineImageDidFinishWithImageData:(NSData *)imageData {
-    [delegate_ screenDidAppendImageData:imageData];
 }
 
 #pragma mark - Mutation Wrappers

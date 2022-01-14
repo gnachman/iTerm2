@@ -534,7 +534,7 @@
                                                       height:rows];
 }
 
-- (NSString *)profileName {
+- (NSString *)profileNameForScripting {
   return self.profile[KEY_NAME];
 }
 

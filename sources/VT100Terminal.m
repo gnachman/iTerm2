@@ -3432,6 +3432,7 @@ static const int kMaxScreenRows = 4096;
     if (!name) {
         name = @"Unnamed file";
     }
+    __weak __typeof(self) weakSelf = self;
     if ([dict[@"inline"] boolValue]) {
         NSEdgeInsets inset = {
             .top = insetTop,
@@ -3439,7 +3440,6 @@ static const int kMaxScreenRows = 4096;
             .bottom = insetBottom,
             .right = insetRight
         };
-        const BOOL ok =
         [_delegate terminalWillReceiveInlineFileNamed:name
                                                ofSize:[dict[@"size"] integerValue]
                                                 width:width
@@ -3447,15 +3447,24 @@ static const int kMaxScreenRows = 4096;
                                                height:height
                                                 units:heightUnits
                                   preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]
-                                                inset:inset];
-        if (!ok) {
-            return;
-        }
+                                                inset:inset
+                                           completion:^(BOOL ok) {
+                  if (ok) {
+                      [weakSelf startReceivingFile];
+                  }
+        }];
     } else {
-        if (![_delegate terminalWillReceiveFileNamed:name ofSize:[dict[@"size"] integerValue]]) {
-            return;
-        }
+        [_delegate terminalWillReceiveFileNamed:name
+                                         ofSize:[dict[@"size"] integerValue]
+                                     completion:^(BOOL ok) {
+            if (ok) {
+                [weakSelf startReceivingFile];
+            }
+        }];
     }
+}
+
+- (void)startReceivingFile {
     DLog(@"Start file receipt");
     receivingFile_ = YES;
 }
