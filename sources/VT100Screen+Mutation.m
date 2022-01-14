@@ -2321,7 +2321,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSetLabel:(NSString *)label forKey:(NSString *)keyName {
-    [delegate_ screenSetLabel:label forKey:keyName];
+    [_mutableState terminalSetLabel:label forKey:keyName];
 }
 
 - (void)terminalPushKeyLabels:(NSString *)value {

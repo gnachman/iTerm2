@@ -1402,4 +1402,10 @@
     return self.config.unicodeVersion;
 }
 
+- (void)terminalSetLabel:(NSString *)label forKey:(NSString *)keyName {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetLabel:label forKey:keyName];
+    }];
+}
+
 @end
