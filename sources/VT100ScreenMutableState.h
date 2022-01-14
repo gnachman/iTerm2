@@ -228,6 +228,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)linkRun:(VT100GridRun)run
     withURLCode:(unsigned int)code;
 
+- (void)addURLMarkAtLineAfterCursorWithCode:(unsigned int)code;
+
 #pragma mark - Highlighting
 
 - (void)highlightRun:(VT100GridRun)run

@@ -763,6 +763,14 @@
     [self setWorkingDirectoryFromURLString:URLString];
 }
 
+- (void)terminalWillStartLinkWithCode:(unsigned int)code {
+    [self addURLMarkAtLineAfterCursorWithCode:code];
+}
+
+- (void)terminalWillEndLinkWithCode:(unsigned int)code {
+    [self addURLMarkAtLineAfterCursorWithCode:code];
+}
+
 - (void)terminalCurrentDirectoryDidChangeTo:(NSString *)dir {
     [self currentDirectoryDidChangeTo:dir];
 }

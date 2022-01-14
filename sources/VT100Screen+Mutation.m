@@ -1801,16 +1801,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [_mutableState terminalSetPasteboard:value];
 }
 
-- (BOOL)preconfirmDownloadOfSize:(NSInteger)size
-                            name:(NSString *)name
-                   displayInline:(BOOL)displayInline
-                     promptIfBig:(BOOL *)promptIfBig {
-    return [self.delegate screenConfirmDownloadAllowed:name
-                                                  size:size
-                                         displayInline:displayInline
-                                           promptIfBig:promptIfBig];
-}
-
 - (void)terminalWillReceiveFileNamed:(NSString *)name
                               ofSize:(NSInteger)size
                           completion:(void (^)(BOOL ok))completion {
@@ -1837,22 +1827,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                            completion:completion];
 }
 
-- (void)addURLMarkAtLineAfterCursorWithCode:(unsigned int)code {
-    long long absLine = (_mutableState.cumulativeScrollbackOverflow +
-                         _mutableState.numberOfScrollbackLines +
-                         _state.currentGrid.cursor.y + 1);
-    iTermURLMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
-                                                     oneLine:YES
-                                                     ofClass:[iTermURLMark class]];
-    mark.code = code;
-}
-
 - (void)terminalWillStartLinkWithCode:(unsigned int)code {
-    [self addURLMarkAtLineAfterCursorWithCode:code];
+    return [_mutableState terminalWillStartLinkWithCode:code];
 }
 
 - (void)terminalWillEndLinkWithCode:(unsigned int)code {
-    [self addURLMarkAtLineAfterCursorWithCode:code];
+    [_mutableState terminalWillEndLinkWithCode:code];
 }
 
 - (void)terminalAppendSixelData:(NSData *)data {
