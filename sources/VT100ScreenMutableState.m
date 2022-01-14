@@ -1277,6 +1277,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)fillRectangle:(VT100GridRect)rect
+                 with:(screen_char_t)c
+   externalAttributes:(iTermExternalAttribute *)ea {
+    [self.currentGrid setCharsFrom:rect.origin
+                                to:VT100GridRectMax(rect)
+                            toChar:c
+                externalAttributes:ea];
+}
+
 #pragma mark - Character Sets
 
 - (void)setCharacterSet:(int)charset usesLineDrawingMode:(BOOL)lineDrawingMode {

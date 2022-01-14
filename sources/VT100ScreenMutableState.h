@@ -127,6 +127,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)setAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect;
 - (void)toggleAttribute:(int)sgrAttribute inRect:(VT100GridRect)rect;
 - (void)copyFrom:(VT100GridRect)source to:(VT100GridCoord)dest;
+- (void)fillRectangle:(VT100GridRect)rect
+                 with:(screen_char_t)c
+   externalAttributes:(iTermExternalAttribute *)ea;
 
 #pragma mark - Character Sets
 

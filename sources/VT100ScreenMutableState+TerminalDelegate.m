@@ -1688,4 +1688,22 @@
     [self copyFrom:source to:dest];
 }
 
+- (void)terminalFillRectangle:(VT100GridRect)rect withCharacter:(unichar)inputChar {
+    screen_char_t c = {
+        .code = inputChar
+    };
+    if ([self.charsetUsesLineDrawingMode containsObject:@(self.terminal.charset)]) {
+        ConvertCharsToGraphicsCharset(&c, 1);
+    }
+    CopyForegroundColor(&c, [self.terminal foregroundColorCode]);
+    CopyBackgroundColor(&c, [self.terminal backgroundColorCode]);
+
+    // Only preserve SGR attributes. image is OSC, not SGR.
+    c.image = 0;
+
+    [self fillRectangle:rect
+                   with:c
+     externalAttributes:[self.terminal externalAttributes]];
+}
+
 @end
