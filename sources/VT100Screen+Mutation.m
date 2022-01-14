@@ -2256,28 +2256,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalSelectiveEraseInLine:(int)mode {
-    switch (mode) {
-        case 0:
-            [_mutableState selectiveEraseRange:VT100GridCoordRangeMake(_state.currentGrid.cursorX,
-                                                                       _state.currentGrid.cursorY,
-                                                                       _state.currentGrid.size.width,
-                                                                       _state.currentGrid.cursorY)
-                               eraseAttributes:YES];
-            return;
-        case 1:
-            [_mutableState selectiveEraseRange:VT100GridCoordRangeMake(0,
-                                                                       _state.currentGrid.cursorY,
-                                                                       _state.currentGrid.cursorX + 1,
-                                                                       _state.currentGrid.cursorY)
-                               eraseAttributes:YES];
-            return;
-        case 2:
-            [_mutableState selectiveEraseRange:VT100GridCoordRangeMake(0,
-                                                                       _state.currentGrid.cursorY,
-                                                                       _state.currentGrid.size.width,
-                                                                       _state.currentGrid.cursorY)
-                               eraseAttributes:YES];
-    }
+    [_mutableState terminalSelectiveEraseInLine:mode];
 }
 
 - (void)terminalProtectedModeDidChangeTo:(VT100TerminalProtectedMode)mode {
