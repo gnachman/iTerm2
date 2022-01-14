@@ -1582,4 +1582,10 @@
     }];
 }
 
+- (void)terminalPasteBracketingWillChangeTo:(BOOL)bracket {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenReportPasteBracketingWillChangeTo:bracket];
+    }];
+}
+
 @end
