@@ -2255,6 +2255,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+- (void)addURLMarkAtLineAfterCursorWithCode:(unsigned int)code {
+    long long absLine = (self.cumulativeScrollbackOverflow +
+                         self.numberOfScrollbackLines +
+                         self.currentGrid.cursor.y + 1);
+    iTermURLMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
+                                                     oneLine:YES
+                                                     ofClass:[iTermURLMark class]];
+    mark.code = code;
+}
+
+
 #pragma mark - Highlighting
 
 - (void)highlightTextInRange:(NSRange)range
