@@ -2325,11 +2325,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)terminalPushKeyLabels:(NSString *)value {
-    [delegate_ screenPushKeyLabels:value];
+    [_mutableState terminalPushKeyLabels:value];
 }
 
 - (void)terminalPopKeyLabels:(NSString *)value {
-    [delegate_ screenPopKeyLabels:value];
+    [_mutableState terminalPopKeyLabels:value];
 }
 
 // fg=ff0080,bg=srgb:808080
