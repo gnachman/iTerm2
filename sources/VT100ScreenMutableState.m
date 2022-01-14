@@ -1033,7 +1033,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return result;
 }
 
-
 #pragma mark - Alternate Screen
 
 - (void)showAltBuffer {
@@ -2928,6 +2927,10 @@ launchCoprocessWithCommand:(NSString *)command
                                                               self.currentGrid.cursorY)
                       eraseAttributes:YES];
     }
+}
+
+- (void)terminalProtectedModeDidChangeTo:(VT100TerminalProtectedMode)mode {
+    self.protectedMode = mode;
 }
 
 @end

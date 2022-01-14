@@ -94,7 +94,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord;
 - (void)mutSetLastCommandOutputRange:(VT100GridAbsCoordRange)lastCommandOutputRange;
 - (void)mutRestoreInitialSize;
-- (void)mutSetProtectedMode:(VT100TerminalProtectedMode)mode;
 - (void)mutSaveFindContextAbsPos;
 - (void)mutSetTrackCursorLineMovement:(BOOL)trackCursorLineMovement;
 - (void)mutSetAppendToScrollbackWithStatusBar:(BOOL)value;
