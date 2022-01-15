@@ -6454,7 +6454,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return;
     }
     _focused = focused;
-    if ([_screen.terminal reportFocus]) {
+    if (_screen.terminalReportFocus) {
         DLog(@"Will report focus");
         [self writeLatin1EncodedData:[_screen.terminalOutput reportFocusGained:focused] broadcastAllowed:NO];
     }
