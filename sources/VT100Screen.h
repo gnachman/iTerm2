@@ -94,6 +94,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic, readonly) BOOL terminalSendReceiveMode;
 @property (nonatomic, readonly) VT100Output *terminalOutput;
 @property (nonatomic, readonly) BOOL terminalAllowPasteBracketing;
+@property (nonatomic, readonly) BOOL terminalBracketedPasteMode;
 @property (nonatomic, readonly) NSMutableArray<NSNumber *> *terminalSendModifiers;
 @property (nonatomic, readonly) VT100TerminalKeyReportingFlags terminalKeyReportingFlags;
 @property (nonatomic, readonly) BOOL terminalReportFocus;

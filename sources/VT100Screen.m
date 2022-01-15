@@ -1460,6 +1460,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.terminalAllowPasteBracketing;
 }
 
+- (BOOL)terminalBracketedPasteMode {
+    return _state.terminalBracketedPasteMode;
+}
+
 - (NSMutableArray<NSNumber *> *)terminalSendModifiers {
     return _state.terminalSendModifiers;
 }
