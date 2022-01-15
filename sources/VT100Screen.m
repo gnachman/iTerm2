@@ -965,12 +965,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [_state stringLineAsStringAtAbsoluteLineNumber:absoluteLineNumber startPtr:startAbsLineNumber];
 }
 
-- (void)appendNativeImageAtCursorWithName:(NSString *)name width:(int)width {
-    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState appendNativeImageAtCursorWithName:name width:width];
-    }];
-}
-
 #pragma mark - Private
 
 - (BOOL)isAnyCharDirty {

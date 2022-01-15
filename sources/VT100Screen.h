@@ -179,9 +179,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // This is provided for testing only.
 - (id<VT100GridReading>)currentGrid;
 
-// Show an inline image. image and data are mutually exclusive.
-- (void)appendNativeImageAtCursorWithName:(NSString *)name width:(int)width;
-
 - (void)resetAnimatedLines;
 
 - (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
