@@ -366,7 +366,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // This is the one and only subview of the document view of -scrollview.
 @property(nonatomic, retain) PTYTextView *textview;
 
-@property(nonatomic, assign) NSStringEncoding encoding;
+@property(nonatomic, readonly) NSStringEncoding encoding;
 
 // Send a character periodically.
 @property(nonatomic, assign) BOOL antiIdle;

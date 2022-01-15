@@ -3900,7 +3900,8 @@ ITERM_WEAKLY_REFERENCEABLE
                    nonAscii:[iTermProfilePreferences boolForKey:KEY_NONASCII_ANTI_ALIASED
                                                       inProfile:aDict]];
     [_textview setUseNativePowerlineGlyphs:[iTermProfilePreferences boolForKey:KEY_POWERLINE inProfile:aDict]];
-    [self setEncoding:[iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
+    [self setEncoding:[iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:aDict]
+             terminal:terminal];
     [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]
                  terminal:terminal];
     [terminal setAnswerBackString:[iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:aDict]];
@@ -4355,10 +4356,9 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     return _screen.terminalEncoding;
 }
 
-- (void)setEncoding:(NSStringEncoding)encoding {
-    [_screen.terminal setEncoding:encoding];
+- (void)setEncoding:(NSStringEncoding)encoding terminal:(VT100Terminal *)terminal {
+    [terminal setEncoding:encoding];
 }
-
 
 - (NSString *)tty {
     return [_shell tty];
