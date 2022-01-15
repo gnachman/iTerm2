@@ -11685,13 +11685,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 break;
 
             case 0: // Yes
-                self.terminal.reportFocus = NO;
+                [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                         VT100ScreenMutableState *mutableState,
+                                                         id<VT100ScreenDelegate> delegate) {
+                    terminal.reportFocus = NO;
+                }];
                 break;
 
             case 1: // Always
                 [[NSUserDefaults standardUserDefaults] setBool:YES
                                                         forKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
-                self.terminal.reportFocus = NO;
+                [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                         VT100ScreenMutableState *mutableState,
+                                                         id<VT100ScreenDelegate> delegate) {
+                    terminal.reportFocus = NO;
+                }];
                 break;
 
             case 2: // Never
