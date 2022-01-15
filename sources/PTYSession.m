@@ -2877,20 +2877,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
 // in the main thread to execute the parsed tokens.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
-    // Pass the input stream to the parser.
-    [_screen.terminal.parser putStreamData:buffer length:length];
-
-    // Parse the input stream into an array of tokens.
-    CVector vector;
-    CVectorCreate(&vector, 100);
-    [_screen.terminal.parser addParsedTokensToVector:&vector];
-
-    if (CVectorCount(&vector) == 0) {
-        CVectorDestroy(&vector);
-        return;
-    }
-
-    [_screen addTokens:vector length:length highPriority:NO];
+    [_screen threadedReadTask:buffer length:length];
 }
 
 - (BOOL)haveResizedRecently {

@@ -272,6 +272,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)sendPasswordInEchoProbe;
 - (void)setEchoProbeDelegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate;
 - (void)resetEchoProbe;
+- (void)threadedReadTask:(char *)buffer length:(int)length;
 
 @end
 
