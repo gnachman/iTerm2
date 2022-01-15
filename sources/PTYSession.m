@@ -11644,13 +11644,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 break;
 
             case 0: // Yes
-                self.terminal.mouseMode = MOUSE_REPORTING_NONE;
+                [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                         VT100ScreenMutableState *mutableState,
+                                                         id<VT100ScreenDelegate> delegate) {
+                    terminal.mouseMode = MOUSE_REPORTING_NONE;
+                }];
                 break;
 
             case 1: // Always
                 [[NSUserDefaults standardUserDefaults] setBool:YES
                                                         forKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
-                self.terminal.mouseMode = MOUSE_REPORTING_NONE;
+                [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                         VT100ScreenMutableState *mutableState,
+                                                         id<VT100ScreenDelegate> delegate) {
+                    terminal.mouseMode = MOUSE_REPORTING_NONE;
+                }];
                 break;
 
             case 2: // Never
