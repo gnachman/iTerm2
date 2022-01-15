@@ -1488,6 +1488,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.terminalKeypadMode;
 }
 
+- (BOOL)terminalReceivingFile {
+    return _state.terminalReceivingFile;
+}
 
 - (VT100GridCoordRange)commandRange {
     return _state.commandRange;

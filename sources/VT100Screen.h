@@ -101,6 +101,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic, readonly) BOOL terminalReportKeyUp;
 @property (nonatomic, readonly) BOOL terminalCursorMode;
 @property (nonatomic, readonly) BOOL terminalKeypadMode;
+@property (nonatomic, readonly) BOOL terminalReceivingFile;
 
 // Designated initializer.
 - (instancetype)initWithDarkMode:(BOOL)darkMode
