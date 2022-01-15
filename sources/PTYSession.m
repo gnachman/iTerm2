@@ -14681,19 +14681,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)naggingControllerDisableMouseReportingPermanently:(BOOL)permanently {
-    if (permanently) {
-        if (self.isDivorced) {
-            [self setSessionSpecificProfileValues:@{ KEY_XTERM_MOUSE_REPORTING: @NO}];
-        } else {
-            [iTermProfilePreferences setBool:NO
-                                      forKey:KEY_XTERM_MOUSE_REPORTING
-                                   inProfile:self.profile
-                                       model:[ProfileModel sharedInstance]];
-            [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
-                                                                object:self.profile[KEY_GUID]];
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        if (permanently) {
+            if (self.isDivorced) {
+                [self setSessionSpecificProfileValues:@{ KEY_XTERM_MOUSE_REPORTING: @NO}];
+            } else {
+                [iTermProfilePreferences setBool:NO
+                                          forKey:KEY_XTERM_MOUSE_REPORTING
+                                       inProfile:self.profile
+                                           model:[ProfileModel sharedInstance]];
+                [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                                    object:self.profile[KEY_GUID]];
+            }
         }
-    }
-    [self.terminal setMouseMode:MOUSE_REPORTING_NONE];
+        [terminal setMouseMode:MOUSE_REPORTING_NONE];
+    }];
 }
 
 - (void)naggingControllerDisableBracketedPasteMode {
