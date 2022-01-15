@@ -12928,8 +12928,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)pasteHelperWriteString:(NSString *)string {
     [self writeTask:string];
     if (_pasteHelper.pasteContext.bytesWritten == 0 &&
-        _pasteHelper.pasteContext.pasteEvent.flags & kPasteFlagsBracket &&
-        [_screen.terminal bracketedPasteMode]) {
+        (_pasteHelper.pasteContext.pasteEvent.flags & kPasteFlagsBracket) &&
+        _screen.terminalBracketedPasteMode) {
         [self watchForPasteBracketingOopsieWithPrefix:[_pasteHelper.pasteContext.pasteEvent.originalString it_substringToIndex:4]];
     }
 }
@@ -12939,7 +12939,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)pasteHelperShouldBracket {
-    return [_screen.terminal bracketedPasteMode];
+    return _screen.terminalBracketedPasteMode;
 }
 
 - (NSStringEncoding)pasteHelperEncoding {
