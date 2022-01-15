@@ -25,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)publishNewline;
 - (void)publishScreenCharArray:(ScreenCharArray *)array
                       metadata:(iTermImmutableMetadata)metadata;
+- (void)maybeTurnOffPasteBracketing;
 
 
 @end
