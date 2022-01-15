@@ -98,7 +98,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetShellIntegrationInstalled:(BOOL)shellIntegrationInstalled;
 - (void)mutSetNormalization:(iTermUnicodeNormalization)value;
 - (void)mutSetIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver;
-- (void)mutSetColor:(NSColor *)color forKey:(int)key;
 - (void)mutSetDimOnlyText:(BOOL)dimOnlyText;
 - (void)mutSetDarkMode:(BOOL)darkMode;
 - (void)mutSetUseSeparateColorsForLightAndDarkMode:(BOOL)value;

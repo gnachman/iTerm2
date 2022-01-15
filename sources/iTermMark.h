@@ -17,7 +17,7 @@
 @end
 
 // This is a base class for marks but should never be used directly.
-@interface iTermMark : NSObject<iTermMark>
+@interface iTermMark : NSObject<iTermMark, NSCopying>
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 - (NSDictionary *)dictionaryValue;

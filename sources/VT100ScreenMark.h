@@ -11,9 +11,10 @@
 #import "VT100GridTypes.h"
 
 @class CapturedOutput;
+@class VT100ScreenMark;
 
 @protocol iTermMarkDelegate <NSObject>
-- (void)markDidBecomeCommandMark:(id<iTermMark>)mark;
+- (void)markDidBecomeCommandMark:(VT100ScreenMark *)mark;
 @end
 
 // Visible marks that can be navigated.

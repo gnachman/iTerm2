@@ -4493,7 +4493,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark - iTermColorMapDelegate
 
-- (void)colorMap:(iTermColorMap *)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
+- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
     if (theKey == kColorMapBackground) {
         [self updateScrollerForBackgroundColor];
         [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
@@ -4510,13 +4510,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self setNeedsDisplay:YES];
 }
 
-- (void)colorMap:(iTermColorMap *)colorMap
+- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap
     dimmingAmountDidChangeTo:(double)dimmingAmount {
     [_delegate textViewProcessedBackgroundColorDidChange];
     [[self superview] setNeedsDisplay:YES];
 }
 
-- (void)colorMap:(iTermColorMap *)colorMap
+- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap
     mutingAmountDidChangeTo:(double)mutingAmount {
     [_delegate textViewProcessedBackgroundColorDidChange];
     [[self superview] setNeedsDisplay:YES];

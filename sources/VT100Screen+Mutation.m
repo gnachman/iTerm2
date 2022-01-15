@@ -1143,32 +1143,28 @@
     [_mutableState loadInitialColorTable];
 }
 
-- (void)mutSetColor:(NSColor *)color forKey:(int)key {
-    [_mutableState.colorMap setColor:color forKey:key];
-}
-
 - (void)mutSetDimOnlyText:(BOOL)dimOnlyText {
-    _mutableState.colorMap.dimOnlyText = dimOnlyText;
+    _mutableState.dimOnlyText = dimOnlyText;
 }
 
 - (void)mutSetDarkMode:(BOOL)darkMode {
-    _mutableState.colorMap.darkMode = darkMode;
+    _mutableState.darkMode = darkMode;
 }
 
 - (void)mutSetUseSeparateColorsForLightAndDarkMode:(BOOL)value {
-    _mutableState.colorMap.useSeparateColorsForLightAndDarkMode = value;
+    _mutableState.useSeparateColorsForLightAndDarkMode = value;
 }
 
 - (void)mutSetMinimumContrast:(float)value {
-    _mutableState.colorMap.minimumContrast = value;
+    _mutableState.minimumContrast = value;
 }
 
 - (void)mutSetMutingAmount:(double)value {
-    _mutableState.colorMap.mutingAmount = value;
+    _mutableState.mutingAmount = value;
 }
 
 - (void)mutSetDimmingAmount:(double)value {
-    _mutableState.colorMap.dimmingAmount = value;
+    _mutableState.dimmingAmount = value;
 }
 
 #pragma mark - Accessors
@@ -1195,7 +1191,6 @@
 }
 
 - (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate {
-    _mutableState.colorMap.delegate = delegate;
 #warning TODO: This is temporary. Mutable state should be the delegate.
     [_mutableState setTokenExecutorDelegate:delegate];
     delegate_ = delegate;
@@ -2214,7 +2209,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - iTermMarkDelegate
 
-- (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
+- (void)markDidBecomeCommandMark:(VT100ScreenMark *)mark {
     if (mark.entry.interval.location > _mutableState.lastCommandMark.entry.interval.location) {
         _mutableState.lastCommandMark = mark;
     }

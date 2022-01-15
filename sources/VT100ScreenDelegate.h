@@ -44,7 +44,7 @@
 
 @end
 
-@protocol VT100ScreenDelegate <NSObject, iTermColorMapDelegate, iTermObject, iTermTriggerSideEffectExecutor>
+@protocol VT100ScreenDelegate <NSObject, iTermImmutableColorMapDelegate, iTermObject, iTermTriggerSideEffectExecutor>
 
 // Screen contents have become dirty and should be redrawn right away.
 - (void)screenNeedsRedraw;

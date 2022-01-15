@@ -21,6 +21,7 @@
 PTYTriggerEvaluatorDelegate,
 VT100GridDelegate,
 VT100InlineImageHelperDelegate,
+iTermColorMapDelegate,
 iTermEchoProbeDelegate,
 iTermMarkDelegate,
 iTermTriggerSession,
@@ -33,6 +34,8 @@ iTermTriggerScopeProvider> {
 
 @property (atomic) BOOL hadCommand;
 @property (atomic) BOOL performingJoinedBlock;
+
+- (iTermColorMap *)colorMap;
 
 - (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
 

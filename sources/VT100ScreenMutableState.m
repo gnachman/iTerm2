@@ -37,7 +37,8 @@
     BOOL _echoProbeShouldSendPassword;
 }
 
-- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
+- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer
+                                   darkMode:(BOOL)darkMode {
     self = [super initForMutation];
     if (self) {
 #warning TODO: When this moves to its own queue. change _queue.
@@ -65,8 +66,14 @@
                                                                 queue:_queue];
         _echoProbe = [[iTermEchoProbe alloc] init];
         _echoProbe.delegate = self;
+        self.colorMap.darkMode = darkMode;
+        self.colorMap.delegate = self;
     }
     return self;
+}
+
+- (iTermColorMap *)colorMap {
+    return (iTermColorMap *)[super colorMap];
 }
 
 - (VT100Terminal *)terminal {
@@ -1622,7 +1629,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                        ofClass:(Class)markClass {
     id<iTermMark> mark = [[markClass alloc] init];
     if ([mark isKindOfClass:[VT100ScreenMark class]]) {
-        VT100ScreenMark *screenMark = mark;
+        VT100ScreenMark *screenMark = (VT100ScreenMark *)mark;
         screenMark.delegate = self;
         screenMark.sessionGuid = self.config.sessionGuid;
     }
@@ -1769,7 +1776,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     const long long lastPromptLine = (long long)line + self.cumulativeScrollbackOverflow;
     self.lastPromptLine = lastPromptLine;
     [self assignCurrentCommandEndDate];
-    VT100ScreenMark *mark = [self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
+    VT100ScreenMark *mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
     [mark setIsPrompt:YES];
     mark.promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
     [self didUpdatePromptLocation];
@@ -2345,9 +2352,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     long long absLine = (self.cumulativeScrollbackOverflow +
                          self.numberOfScrollbackLines +
                          self.currentGrid.cursor.y + 1);
-    iTermURLMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
-                                                     oneLine:YES
-                                                     ofClass:[iTermURLMark class]];
+    iTermURLMark *mark = (iTermURLMark *)[self addMarkStartingAtAbsoluteLine:absLine
+                                                                     oneLine:YES
+                                                                     ofClass:[iTermURLMark class]];
     mark.code = code;
 }
 
@@ -2519,6 +2526,30 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
+- (void)setDimOnlyText:(BOOL)dimOnlyText {
+    self.colorMap.dimOnlyText = dimOnlyText;
+}
+
+- (void)setDarkMode:(BOOL)darkMode {
+    self.colorMap.darkMode = darkMode;
+}
+
+- (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value {
+    self.colorMap.useSeparateColorsForLightAndDarkMode = value;
+}
+
+- (void)setMinimumContrast:(float)value {
+    self.colorMap.minimumContrast = value;
+}
+
+- (void)setMutingAmount:(double)value {
+    self.colorMap.mutingAmount = value;
+}
+
+- (void)setDimmingAmount:(double)value {
+    self.colorMap.dimmingAmount = value;
+}
+
 #pragma mark - Cross-Thread Sync
 
 - (void)willSynchronize {
@@ -2563,6 +2594,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                                   id<VT100ScreenDelegate>))block
                                    delegate:(id<VT100ScreenDelegate>)delegate
                                       group:(dispatch_group_t)group {
+    // Set `performingJoinedBlock` to YES so that a side-effect that wants to join threads won't
+    // deadlock.
+    const BOOL previousValue = self.performingJoinedBlock;
+    self.performingJoinedBlock = YES;
     // First execute pending side effects. Do this before setting performingJoinedBlock to YES
     // because side effects could queue new joined blocks and we want them to run asynchronously.                                      
     // Re-entrant joined blocks will act funny, though! Side effects will run while joined.
@@ -2573,8 +2608,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [delegate screenSync];
     // This get-and-set is not a data race because assignment to perfomringJoinedBlock only happens
     // on the mutation queue.
-    const BOOL previousValue = self.performingJoinedBlock;
-    self.performingJoinedBlock = YES;
     if (block) {
         block(self.terminal, self, delegate);
         // Sync so that our copy of state will be up-to-date.
@@ -2621,7 +2654,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - iTermMarkDelegate
 
-- (void)markDidBecomeCommandMark:(id<iTermMark>)mark {
+- (void)markDidBecomeCommandMark:(VT100ScreenMark *)mark {
     [self assertOnMutationThread];
     if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
         self.lastCommandMark = mark;
@@ -2864,9 +2897,9 @@ launchCoprocessWithCommand:(NSString *)command
     [self linkTextInRange:rangeInString basedAtAbsoluteLineNumber:lineNumber URLCode:code];
 
     // Add invisible URL Mark so the URL can automatically freed.
-    iTermURLMark *mark = [self addMarkStartingAtAbsoluteLine:lineNumber
-                                                     oneLine:YES
-                                                     ofClass:[iTermURLMark class]];
+    iTermURLMark *mark = (iTermURLMark *)[self addMarkStartingAtAbsoluteLine:lineNumber
+                                                                     oneLine:YES
+                                                                     ofClass:[iTermURLMark class]];
     mark.code = code;
 }
 
@@ -2997,9 +3030,9 @@ launchCoprocessWithCommand:(NSString *)command
     long long absLine = (self.cumulativeScrollbackOverflow +
                          self.numberOfScrollbackLines +
                          line);
-    iTermImageMark *mark = [self addMarkStartingAtAbsoluteLine:absLine
-                                                       oneLine:YES
-                                                       ofClass:[iTermImageMark class]];
+    iTermImageMark *mark = (iTermImageMark *)[self addMarkStartingAtAbsoluteLine:absLine
+                                                                         oneLine:YES
+                                                                         ofClass:[iTermImageMark class]];
     mark.imageCode = @(code);
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenNeedsRedraw];
@@ -3060,6 +3093,30 @@ launchCoprocessWithCommand:(NSString *)command
     [self.echoProbeDelegate echoProbeDelegateWillChange:self.echoProbe];
     _echoProbeDelegate = echoProbeDelegate;
     _echoProbeShouldSendPassword = [echoProbeDelegate echoProbeShouldSendPassword:self.echoProbe];
+}
+
+#pragma mark - iTermColorMapDelegate
+
+// Note: we use joined side effects here to ensure the mainThreadCopy.colorMap is current.
+- (void)colorMap:(iTermColorMap *)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
+    __weak __typeof(self) weakSelf = self;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate immutableColorMap:weakSelf.mainThreadCopy.colorMap didChangeColorForKey:theKey];
+    }];
+}
+
+- (void)colorMap:(iTermColorMap *)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount {
+    __weak __typeof(self) weakSelf = self;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate immutableColorMap:weakSelf.mainThreadCopy.colorMap dimmingAmountDidChangeTo:dimmingAmount];
+    }];
+
+}
+- (void)colorMap:(iTermColorMap *)colorMap mutingAmountDidChangeTo:(double)mutingAmount {
+    __weak __typeof(self) weakSelf = self;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate immutableColorMap:weakSelf.mainThreadCopy.colorMap mutingAmountDidChangeTo:mutingAmount];
+    }];
 }
 
 @end

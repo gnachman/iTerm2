@@ -90,10 +90,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                    configuration:(id<VT100ScreenConfiguration>)config {
     self = [super init];
     if (self) {
-        _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
-        _state = [_mutableState retain];
 #warning TODO: update colormap's darkMode through VT100ScreenConfiguration
-        _mutableState.colorMap.darkMode = darkMode;
+        _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self
+                                                                            darkMode:darkMode];
+        _state = [_mutableState retain];
 
         _mutableState.temporaryDoubleBuffer.delegate = self;
 
@@ -1167,7 +1167,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     PTYTextViewSynchronousUpdateState *state = [[[PTYTextViewSynchronousUpdateState alloc] init] autorelease];
 
     state.grid = [_state.currentGrid.copy autorelease];
-    state.grid.delegate = nil;
+    // The grid can't be copied later unless it has a delegate. Use _state since it is an immutable snapshot of this point in time.
+    state.grid.delegate = _state;
 
     state.colorMap = [self.colorMap.copy autorelease];
     state.cursorVisible = self.temporaryDoubleBuffer.explicit ? _state.cursorVisible : YES;
@@ -1213,6 +1214,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (maybeExpect) {
         [_mutableState updateExpectFrom:maybeExpect];
     }
+    _mutableState.mainThreadCopy = [_mutableState copy];
 #warning TODO: _state = [_mutableState copy]
 }
 

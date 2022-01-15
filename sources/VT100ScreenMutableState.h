@@ -33,9 +33,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readonly) VT100Terminal *terminal;
 @property (nonatomic, strong) iTermEchoProbe *echoProbe;
 @property (nonatomic, weak) id<iTermEchoProbeDelegate> echoProbeDelegate;
+@property (nullable, nonatomic, strong) id<VT100ScreenState> mainThreadCopy;
 
-#warning TODO: Remove slownessDetector
-- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer
+                                   darkMode:(BOOL)darkMode NS_DESIGNATED_INITIALIZER;
 - (id<VT100ScreenState>)copy;
 
 #pragma mark - Internal
@@ -267,6 +268,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)loadInitialColorTable;
 - (void)setColor:(NSColor *)color forKey:(int)key;
 - (void)restoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
+
+#warning TODO: I think all of these could go through VT100ScreenConfiguration
+- (void)setDimOnlyText:(BOOL)dimOnlyText;
+- (void)setDarkMode:(BOOL)darkMode;
+- (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value;
+- (void)setMinimumContrast:(float)value;
+- (void)setMutingAmount:(double)value;
+- (void)setDimmingAmount:(double)value;
 
 #pragma mark - Cross-Thread Sync
 

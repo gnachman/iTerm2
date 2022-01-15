@@ -528,7 +528,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
 
 #warning TODO: Figure out what to do with the mark cache. Also don't use totalScrollbackOverflow from mutable code path
 - (VT100ScreenMark *)markOnLine:(int)line {
-    return self.markCache[@(self.cumulativeScrollbackOverflow + line)];
+    return [VT100ScreenMark castFrom:self.markCache[@(self.cumulativeScrollbackOverflow + line)]];
 }
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
@@ -684,6 +684,29 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return self.cumulativeScrollbackOverflow;
 }
 
+#pragma mark - VT100GridDelgate
+
+// This is here to enable copying of the temporary double buffer.
+- (screen_char_t)gridForegroundColorCode {
+    return self.terminalForegroundColorCode;
+}
+
+- (screen_char_t)gridBackgroundColorCode {
+    return self.terminalBackgroundColorCode;
+}
+
+- (iTermUnicodeNormalization)gridUnicodeNormalizationForm {
+    return self.normalization;
+}
+
+- (void)gridCursorDidMove {
+}
+
+- (void)gridCursorDidChangeLine {
+}
+
+- (void)gridDidResize {
+}
 
 @end
 

@@ -54,6 +54,7 @@ extern const int kColorMapAnsiBrightModifier;
 extern const int kColorMap24bitBase;
 
 @class iTermColorMap;
+@protocol iTermColorMapReading;
 
 @protocol iTermColorMapDelegate <NSObject>
 
@@ -61,6 +62,12 @@ extern const int kColorMap24bitBase;
 - (void)colorMap:(iTermColorMap *)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount;
 - (void)colorMap:(iTermColorMap *)colorMap mutingAmountDidChangeTo:(double)mutingAmount;
 
+@end
+
+@protocol iTermImmutableColorMapDelegate<NSObject>
+- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap didChangeColorForKey:(iTermColorMapKey)theKey;
+- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount;
+- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap mutingAmountDidChangeTo:(double)mutingAmount;
 @end
 
 @protocol iTermColorMapReading<NSCopying, NSObject>
