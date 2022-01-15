@@ -1492,6 +1492,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.terminalReceivingFile;
 }
 
+- (BOOL)terminalMetaSendsEscape {
+    return _state.terminalMetaSendsEscape;
+}
+
 - (VT100GridCoordRange)commandRange {
     return _state.commandRange;
 }
