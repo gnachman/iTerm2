@@ -16,6 +16,8 @@
 #import "NSData+iTerm.h"
 #import "PTYAnnotation.h"
 #import "PTYTriggerEvaluator.h"
+#import "TmuxStateParser.h"
+#import "TmuxWindowOpener.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenDelegate.h"
@@ -2704,6 +2706,137 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [helper writeToGrid:self.currentGrid];
 }
 
+
+#pragma mark - Tmux
+
+- (id)objectInDictionary:(NSDictionary *)dict withFirstKeyFrom:(NSArray *)keys {
+    for (NSString *key in keys) {
+        NSObject *object = [dict objectForKey:key];
+        if (object) {
+            return object;
+        }
+    }
+    return nil;
+}
+
+- (void)setTmuxState:(NSDictionary *)state {
+    BOOL inAltScreen = [[self objectInDictionary:state
+                                withFirstKeyFrom:@[ kStateDictSavedGrid, kStateDictSavedGrid]] intValue];
+    if (inAltScreen) {
+        // Alt and primary have been populated with each other's content.
+        id<VT100GridReading> temp = self.altGrid;
+        self.altGrid = self.primaryGrid;
+        self.primaryGrid = temp;
+    }
+
+    NSNumber *altSavedX = state[kStateDictAltSavedCX];
+    NSNumber *altSavedY = state[kStateDictAltSavedCY];
+    if (altSavedX && altSavedY && inAltScreen) {
+        self.primaryGrid.cursor = VT100GridCoordMake(altSavedX.intValue,
+                                                     altSavedY.intValue);
+        [self.terminal setSavedCursorPosition:self.primaryGrid.cursor];
+    }
+
+    self.currentGrid.cursorX = [state[kStateDictCursorX] intValue];
+    self.currentGrid.cursorY = [state[kStateDictCursorY] intValue];
+    int top = [state[kStateDictScrollRegionUpper] intValue];
+    int bottom = [state[kStateDictScrollRegionLower] intValue];
+    self.currentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetCursorVisible:[state[kStateDictCursorMode] boolValue]];
+#warning TODO: Maybe need to mark the grid dirty to force the cursor to be redrawn.
+    }];
+
+    [self.tabStops removeAllObjects];
+    int maxTab = 0;
+    for (NSNumber *n in state[kStateDictTabstops]) {
+        [self.tabStops addObject:n];
+        maxTab = MAX(maxTab, [n intValue]);
+    }
+    for (int i = 0; i < 1000; i += 8) {
+        if (i > maxTab) {
+            [self.tabStops addObject:@(i)];
+        }
+    }
+
+    NSNumber *cursorMode = state[kStateDictCursorMode];
+    if (cursorMode) {
+        [self terminalSetCursorVisible:!!cursorMode.intValue];
+    }
+
+    // Everything below this line needs testing
+    NSNumber *insertMode = state[kStateDictInsertMode];
+    if (insertMode) {
+        [self.terminal setInsertMode:!!insertMode.intValue];
+    }
+
+    NSNumber *applicationCursorKeys = state[kStateDictKCursorMode];
+    if (applicationCursorKeys) {
+        [self.terminal setCursorMode:!!applicationCursorKeys.intValue];
+    }
+
+    NSNumber *keypad = state[kStateDictKKeypadMode];
+    if (keypad) {
+        [self.terminal setKeypadMode:!!keypad.boolValue];
+    }
+
+    NSNumber *mouse = state[kStateDictMouseStandardMode];
+    if (mouse && mouse.intValue) {
+        [self.terminal setMouseMode:MOUSE_REPORTING_NORMAL];
+    }
+    mouse = state[kStateDictMouseButtonMode];
+    if (mouse && mouse.intValue) {
+        [self.terminal setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
+    }
+    mouse = state[kStateDictMouseButtonMode];
+    if (mouse && mouse.intValue) {
+        [self.terminal setMouseMode:MOUSE_REPORTING_ALL_MOTION];
+    }
+
+    // NOTE: You can get both SGR and UTF8 set. In that case SGR takes priority. See comment in
+    // tmux's input_key_get_mouse()
+    mouse = state[kStateDictMouseSGRMode];
+    if (mouse && mouse.intValue) {
+        [self.terminal setMouseFormat:MOUSE_FORMAT_SGR];
+    } else {
+        mouse = state[kStateDictMouseUTF8Mode];
+        if (mouse && mouse.intValue) {
+            [self.terminal setMouseFormat:MOUSE_FORMAT_XTERM_EXT];
+        }
+    }
+
+    NSNumber *wrap = state[kStateDictWrapMode];
+    if (wrap) {
+        [self.terminal setWraparoundMode:!!wrap.intValue];
+    }
+
+    NSData *pendingOutput = state[kTmuxWindowOpenerStatePendingOutput];
+    if (pendingOutput && pendingOutput.length) {
+        [self.terminal.parser putStreamData:pendingOutput.bytes
+                                     length:pendingOutput.length];
+    }
+    self.terminal.insertMode = [state[kStateDictInsertMode] boolValue];
+    self.terminal.cursorMode = [state[kStateDictKCursorMode] boolValue];
+    self.terminal.keypadMode = [state[kStateDictKKeypadMode] boolValue];
+    if ([state[kStateDictMouseStandardMode] boolValue]) {
+        [self.terminal setMouseMode:MOUSE_REPORTING_NORMAL];
+    } else if ([state[kStateDictMouseButtonMode] boolValue]) {
+        [self.terminal setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
+    } else if ([state[kStateDictMouseAnyMode] boolValue]) {
+        [self.terminal setMouseMode:MOUSE_REPORTING_ALL_MOTION];
+    } else {
+        [self.terminal setMouseMode:MOUSE_REPORTING_NONE];
+    }
+    // NOTE: You can get both SGR and UTF8 set. In that case SGR takes priority. See comment in
+    // tmux's input_key_get_mouse()
+    if ([state[kStateDictMouseSGRMode] boolValue]) {
+        [self.terminal setMouseFormat:MOUSE_FORMAT_SGR];
+    } else if ([state[kStateDictMouseUTF8Mode] boolValue]) {
+        [self.terminal setMouseFormat:MOUSE_FORMAT_XTERM_EXT];
+    } else {
+        [self.terminal setMouseFormat:MOUSE_FORMAT_XTERM];
+    }
+}
 
 #pragma mark - PTYTriggerEvaluatorDelegate
 
