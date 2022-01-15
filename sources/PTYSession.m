@@ -180,6 +180,7 @@
 #import "VT100Screen.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
+#import "VT100ScreenMutableState.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"
 #import "WindowArrangements.h"
@@ -2934,34 +2935,38 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)appendBrokenPipeMessage:(NSString *)unpaddedMessage {
-    NSString *const message = [NSString stringWithFormat:@" %@ ", unpaddedMessage];
-    if (_screen.cursorX != 1) {
-        [_screen crlf];
-    }
-    screen_char_t savedFgColor = [_screen.terminal foregroundColorCode];
-    screen_char_t savedBgColor = [_screen.terminal backgroundColorCode];
-    // This color matches the color used in BrokenPipeDivider.png.
-    [_screen.terminal setForeground24BitColor:[NSColor colorWithCalibratedRed:70.0/255.0
-                                                                        green:83.0/255.0
-                                                                         blue:246.0/255.0
-                                                                        alpha:1]];
-    [_screen.terminal setBackgroundColor:ALTSEM_DEFAULT
-                      alternateSemantics:YES];
-    int width = (_screen.width - message.length) / 2;
-    if (width > 0) {
-        [_screen appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
-                                             width:width];
-    }
-    [_screen appendStringAtCursor:message];
-    if (width > 0) {
-        [_screen appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
-                                             width:(_screen.width - _screen.cursorX + 1)];
-    }
-    [_screen crlf];
-    [_screen.terminal setForegroundColor:savedFgColor.foregroundColor
-                      alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
-    [_screen.terminal setBackgroundColor:savedBgColor.backgroundColor
-                      alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        NSString *const message = [NSString stringWithFormat:@" %@ ", unpaddedMessage];
+        if (mutableState.cursorX != 1) {
+            [mutableState appendCarriageReturnLineFeed];
+        }
+        screen_char_t savedFgColor = [terminal foregroundColorCode];
+        screen_char_t savedBgColor = [terminal backgroundColorCode];
+        // This color matches the color used in BrokenPipeDivider.png.
+        [terminal setForeground24BitColor:[NSColor colorWithCalibratedRed:70.0/255.0
+                                                                    green:83.0/255.0
+                                                                     blue:246.0/255.0
+                                                                    alpha:1]];
+        [terminal setBackgroundColor:ALTSEM_DEFAULT
+                  alternateSemantics:YES];
+        int width = (mutableState.width - message.length) / 2;
+        if (width > 0) {
+            [mutableState appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
+                                                      width:width];
+        }
+        [mutableState appendStringAtCursor:message];
+        if (width > 0) {
+            [mutableState appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
+                                                 width:(mutableState.width - mutableState.cursorX + 1)];
+        }
+        [mutableState appendCarriageReturnLineFeed];
+        [terminal setForegroundColor:savedFgColor.foregroundColor
+                  alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
+        [terminal setBackgroundColor:savedBgColor.backgroundColor
+                  alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
+    }];
 }
 
 // This is called in the main thread when coprocesses write to a tmux client.
