@@ -716,8 +716,6 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
         _metalGlue = [[iTermMetalGlue alloc] init];
         _metalGlue.delegate = self;
         _metalGlue.screen = _screen;
-        _echoProbe = [[iTermEchoProbe alloc] init];
-        _echoProbe.delegate = self;
         _metaFrustrationDetector = [[iTermMetaFrustrationDetector alloc] init];
         _metaFrustrationDetector.delegate = self;
         _pwdPoller = [[iTermWorkingDirectoryPoller alloc] init];
@@ -896,7 +894,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_subtitleSwiftyString release];
     [_autoNameSwiftyString release];
     [_statusBarViewController release];
-    [_echoProbe release];
     [_backgroundDrawingHelper release];
     [_metaFrustrationDetector release];
     [_tmuxStatusBarMonitor setActive:NO];
@@ -2891,10 +2888,6 @@ ITERM_WEAKLY_REFERENCEABLE
     if (CVectorCount(&vector) == 0) {
         CVectorDestroy(&vector);
         return;
-    }
-
-    @synchronized (self) {
-        [_echoProbe updateEchoProbeStateWithTokenCVector:&vector];
     }
 
     [_screen addTokens:vector length:length highPriority:NO];
@@ -6352,14 +6345,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - Password Management
 
 - (BOOL)canOpenPasswordManager {
-    return !self.echoProbe.isActive;
+    [self sync];
+    return !_screen.echoProbeIsActive;
 }
 
 - (void)enterPassword:(NSString *)password {
     [self incrementDisableFocusReporting:1];
-    _echoProbe.delegate = self;
-    [_echoProbe beginProbeWithBackspace:[self backspaceData]
-                               password:password];
+    [_screen beginEchoProbeWithBackspace:[self backspaceData] password:password delegate:self];
 }
 
 - (NSImage *)dragImage
@@ -13782,9 +13774,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                       silenceable:kiTermWarningTypePersistent
                                            window:self.view.window] == kiTermWarningSelection1);
     if (ok) {
-        [_echoProbe enterPassword];
+        [_screen sendPasswordInEchoProbe];
     } else {
         [self incrementDisableFocusReporting:-1];
+        [_screen resetEchoProbe];
     }
 }
 

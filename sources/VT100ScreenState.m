@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "IntervalTree.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermEchoProbe.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermTextExtractor.h"
 #import "LineBuffer.h"
@@ -77,6 +78,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
 @synthesize lastPromptLine = _lastPromptLine;
 @synthesize shouldExpectPromptMarks = _shouldExpectPromptMarks;
 @synthesize needsRedraw = _needsRedraw;
+@synthesize echoProbeIsActive = _echoProbeIsActive;
 
 - (instancetype)initForMutation {
     self = [super init];
@@ -157,6 +159,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
             temp[key] = [[theClass alloc] initWithDictionary:encoded];
         }];
         _markCache = temp;
+        _echoProbeIsActive = source.echoProbe.isActive;
 
         _animatedLines = [source.animatedLines copy];
         _pasteboardString = [source.pasteboardString copy];

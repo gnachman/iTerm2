@@ -1246,6 +1246,46 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.lastPromptLine;
 }
 
+- (void)beginEchoProbeWithBackspace:(NSData *)backspace
+                           password:(NSString *)password
+                           delegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate {
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        mutableState.echoProbeDelegate = echoProbeDelegate;
+        [mutableState.echoProbe beginProbeWithBackspace:backspace
+                                               password:password];
+    }];
+}
+
+- (void)sendPasswordInEchoProbe {
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                          VT100ScreenMutableState *mutableState,
+                                          id<VT100ScreenDelegate> delegate) {
+        [mutableState.echoProbe enterPassword];
+    }];
+}
+
+- (void)setEchoProbeDelegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate {
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        mutableState.echoProbeDelegate = echoProbeDelegate;
+    }];
+}
+
+- (void)resetEchoProbe {
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        [mutableState.echoProbe reset];
+    }];
+}
+
+- (BOOL)echoProbeIsActive {
+    return _state.echoProbeIsActive;
+}
+
 - (void)setLastPromptLine:(long long)lastPromptLine {
     [self mutSetLastPromptLine:lastPromptLine];
 }

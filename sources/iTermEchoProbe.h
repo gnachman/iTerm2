@@ -16,6 +16,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeData:(NSData *)data;
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeString:(NSString *)string;
+
+// Call -reset from this if you decide not to send the password anyway.
 - (void)echoProbeDidFail:(iTermEchoProbe *)echoProbe;
 - (void)echoProbeDidSucceed:(iTermEchoProbe *)echoProbe;
 - (BOOL)echoProbeShouldSendPassword:(iTermEchoProbe *)echoProbe;
@@ -32,6 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
                        password:(NSString *)password;
 - (void)updateEchoProbeStateWithTokenCVector:(CVector *)vector;
 - (void)enterPassword;
+- (void)reset;
 
 @end
 

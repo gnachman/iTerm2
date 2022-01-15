@@ -139,6 +139,12 @@ iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100T
     _password = nil;
 }
 
+- (void)reset {
+    _password = nil;
+    _state = iTermEchoProbeOff;
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(timeout) object:nil];
+}
+
 #pragma mark - Private
 
 - (void)timeout {
@@ -159,7 +165,6 @@ iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100T
                 break;
         }
         _state = iTermEchoProbeOff;
-        _password = nil;
     }
 }
 
