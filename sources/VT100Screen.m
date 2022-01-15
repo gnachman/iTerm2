@@ -1440,6 +1440,55 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Accessors
 
+- (BOOL)terminalSoftAlternateScreenMode {
+    return _state.terminalSoftAlternateScreenMode;
+}
+
+- (MouseMode)terminalMouseMode {
+    return _state.terminalMouseMode;
+}
+
+- (NSStringEncoding)terminalEncoding {
+    return _state.terminalEncoding;
+}
+
+- (BOOL)terminalSendReceiveMode {
+    return _state.terminalSendReceiveMode;
+}
+
+- (VT100Output *)terminalOutput {
+    return _state.terminalOutput;
+}
+
+- (BOOL)terminalAllowPasteBracketing {
+    return _state.terminalAllowPasteBracketing;
+}
+
+- (NSMutableArray<NSNumber *> *)terminalSendModifiers {
+    return _state.terminalSendModifiers;
+}
+
+- (VT100TerminalKeyReportingFlags)terminalKeyReportingFlags {
+    return _state.terminalKeyReportingFlags;
+}
+
+- (BOOL)terminalReportFocus {
+    return _state.terminalReportFocus;
+}
+
+- (BOOL)terminalReportKeyUp {
+    return _state.terminalReportKeyUp;
+}
+
+- (BOOL)terminalCursorMode {
+    return _state.terminalCursorMode;
+}
+
+- (BOOL)terminalKeypadMode {
+    return _state.terminalKeypadMode;
+}
+
+
 - (VT100GridCoordRange)commandRange {
     return _state.commandRange;
 }

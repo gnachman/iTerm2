@@ -145,6 +145,24 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic, readonly) BOOL needsRedraw;
 @property (nonatomic, readonly) BOOL echoProbeIsActive;
 
+// From VT100Terminal - no mutable equivalents provided.
+@property (nonatomic, readonly) BOOL terminalSoftAlternateScreenMode;
+@property (nonatomic, readonly) MouseMode terminalMouseMode;
+@property (nonatomic, readonly) NSStringEncoding terminalEncoding;
+@property (nonatomic, readonly) BOOL terminalSendReceiveMode;
+@property (nonatomic, readonly) VT100Output *terminalOutput;
+@property (nonatomic, readonly) BOOL terminalAllowPasteBracketing;
+@property (nonatomic, readonly) NSMutableArray<NSNumber *> *terminalSendModifiers;
+@property (nonatomic, readonly) VT100TerminalKeyReportingFlags terminalKeyReportingFlags;
+@property (nonatomic, readonly) BOOL terminalReportFocus;
+@property (nonatomic, readonly) BOOL terminalReportKeyUp;
+@property (nonatomic, readonly) BOOL terminalCursorMode;
+@property (nonatomic, readonly) BOOL terminalKeypadMode;
+@property (nonatomic, readonly) MouseMode terminalPreviousMouseMode;
+@property (nonatomic, readonly) screen_char_t terminalForegroundColorCode;
+@property (nonatomic, readonly) screen_char_t terminalBackgroundColorCode;
+
+
 @end
 
 @protocol VT100ScreenMutableState<VT100ScreenState>

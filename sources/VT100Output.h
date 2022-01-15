@@ -61,7 +61,7 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
 // This class produces data to send for special keys (arrow keys, function keys, etc.)
 // It has a small amount of state that is copied from VT100Terminal. This object is 1:1 with
 // VT100Terminal.
-@interface VT100Output : NSObject
+@interface VT100Output : NSObject<NSCopying>
 
 @property(nonatomic, copy) NSString *termType;
 @property(nonatomic, assign) BOOL keypadMode;

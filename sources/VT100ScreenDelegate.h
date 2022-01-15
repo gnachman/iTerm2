@@ -69,8 +69,13 @@
 
 // Called after text was added to the current line. Can be used to check triggers.
 - (void)screenDidAppendStringToCurrentLine:(NSString * _Nonnull)string
-                               isPlainText:(BOOL)plainText;
-- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData * _Nonnull)asciiData;
+                               isPlainText:(BOOL)plainText
+                                foreground:(screen_char_t)fg
+                                background:(screen_char_t)bg;
+
+- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData * _Nonnull)asciiData
+                                   foreground:(screen_char_t)fg
+                                   background:(screen_char_t)bg;
 
 // Change the cursor's appearance.
 - (void)screenSetCursorBlinking:(BOOL)blink;

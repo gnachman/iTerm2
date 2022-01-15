@@ -26,9 +26,13 @@
         [self appendStringAtCursor:string];
     }
     [self appendStringToTriggerLine:string];
+    const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
+    const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenDidAppendStringToCurrentLine:string
-                                          isPlainText:YES];
+                                          isPlainText:YES
+                                          foreground:foregroundColorCode
+                                          background:backgroundColorCode];
     }];
 }
 
@@ -44,8 +48,12 @@
     [self appendAsciiDataAtCursor:asciiData];
 
     if (![self appendAsciiDataToTriggerLine:asciiData]) {
+        const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
+        const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            [delegate screenDidAppendAsciiDataToCurrentLine:asciiData];
+            [delegate screenDidAppendAsciiDataToCurrentLine:asciiData
+                                                 foreground:foregroundColorCode
+                                                 background:backgroundColorCode];
         }];
     }
 }
@@ -55,8 +63,13 @@
     [self appendStringToTriggerLine:@"\a"];
 
     [self activateBell];
+    const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
+    const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenDidAppendStringToCurrentLine:@"\a" isPlainText:NO];
+        [delegate screenDidAppendStringToCurrentLine:@"\a"
+                                         isPlainText:NO
+                                          foreground:foregroundColorCode
+                                          background:backgroundColorCode];
     }];
 }
 
@@ -1569,6 +1582,8 @@
             chars[1].complexChar = NO;
         }
 
+        const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
+        const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
         NSString *string = ScreenCharToStr(chars);
         for (int i = 0; i < times; i++) {
             [self appendScreenCharArrayAtCursor:chars
@@ -1578,7 +1593,9 @@
             [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
                 [delegate screenDidAppendStringToCurrentLine:string
                                                  isPlainText:(self.lastCharacter.complexChar ||
-                                                              self.lastCharacter.code >= ' ')];
+                                                              self.lastCharacter.code >= ' ')
+                                                  foreground:foregroundColorCode
+                                                  background:backgroundColorCode];
             }];
         }
     }

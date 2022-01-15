@@ -211,6 +211,68 @@
     _tokenExecutor.delegate = delegate;
 }
 
+#pragma mark - Terminal State Accessors
+
+- (BOOL)terminalSoftAlternateScreenMode {
+    return self.terminal.softAlternateScreenMode;
+}
+
+- (MouseMode)terminalMouseMode {
+    return self.terminal.mouseMode;
+}
+
+- (NSStringEncoding)terminalEncoding {
+    return self.terminal.encoding;
+}
+
+- (BOOL)terminalSendReceiveMode {
+    return self.terminal.sendReceiveMode;
+}
+
+- (VT100Output *)terminalOutput {
+    return self.terminal.output;
+}
+
+- (BOOL)terminalAllowPasteBracketing {
+    return self.terminal.allowPasteBracketing;
+}
+
+- (NSMutableArray<NSNumber *> *)terminalSendModifiers {
+    return self.terminal.sendModifiers;
+}
+
+- (VT100TerminalKeyReportingFlags)terminalKeyReportingFlags {
+    return self.terminal.keyReportingFlags;
+}
+
+- (BOOL)terminalReportFocus {
+    return self.terminal.reportFocus;
+}
+
+- (BOOL)terminalReportKeyUp {
+    return self.terminal.reportKeyUp;
+}
+
+- (BOOL)terminalCursorMode {
+    return self.terminal.cursorMode;
+}
+
+- (BOOL)terminalKeypadMode {
+    return self.terminal.keypadMode;
+}
+
+- (MouseMode)terminalPreviousMouseMode {
+    return self.terminal.previousMouseMode;
+}
+
+- (screen_char_t)terminalForegroundColorCode {
+    return self.terminal.foregroundColorCode;
+}
+
+- (screen_char_t)terminalBackgroundColorCode {
+    return self.terminal.backgroundColorCode;
+}
+
 #pragma mark - Scrollback
 
 - (void)incrementOverflowBy:(int)overflowCount {
@@ -2415,8 +2477,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (!string) {
         return NO;
     }
+
+    const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
+    const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenDidAppendStringToCurrentLine:string isPlainText:YES];
+        [delegate screenDidAppendStringToCurrentLine:string
+                                         isPlainText:YES
+                                          foreground:foregroundColorCode
+                                          background:backgroundColorCode];
     }];
     return YES;
 }
@@ -2434,8 +2502,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+#warning TODO: Ensure all calls to changing the color map funnel through here to get the call to sync.
 - (void)setColor:(NSColor *)color forKey:(int)key {
     [self.colorMap setColor:color forKey:key];
+    // Sync so that HTML logging will have an up-to-date colormap.
+    [self sync];
 }
 
 - (void)restoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
@@ -2504,13 +2575,19 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // on the mutation queue.
     const BOOL previousValue = self.performingJoinedBlock;
     self.performingJoinedBlock = YES;
-    block(self.terminal, self, delegate);
-    // Sync so that our copy of state will be up-to-date.
-    [delegate screenSync];
+    if (block) {
+        block(self.terminal, self, delegate);
+        // Sync so that our copy of state will be up-to-date.
+        [delegate screenSync];
+    }
     self.performingJoinedBlock = previousValue;
     if (group) {
         dispatch_group_leave(group);
     }
+}
+
+- (void)sync {
+    [self performBlockWithJoinedThreads:nil];
 }
 
 #pragma mark - State Restoration
