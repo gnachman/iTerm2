@@ -41,4 +41,14 @@
     return YES;
 }
 
+#pragma mark - NSCopying
+
+- (id)copyWithZone:(NSZone *)zone {
+    return [[self.class alloc] initWithDictionary:self.dictionaryValue];
+}
+
+- (iTermMark *)copy {
+    return [self copyWithZone:nil];
+}
+
 @end

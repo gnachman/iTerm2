@@ -218,7 +218,6 @@ NS_ASSUME_NONNULL_BEGIN
 #warning TODO: Prevent access to intervalTreeObserver on the mutation queue. It should only be called on the main queue.
 @property (nonatomic, weak, readwrite) id<iTermIntervalTreeObserver> intervalTreeObserver;
 @property (nullable, nonatomic, strong, readwrite) VT100ScreenMark *lastCommandMark;
-@property (nonatomic, strong, readwrite) iTermColorMap *colorMap;
 @property (nonatomic, strong, readwrite) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 @property (nonatomic, readwrite) long long fakePromptDetectedAbsLine;
 @property (nonatomic, readwrite) long long lastPromptLine;
@@ -228,7 +227,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic) BOOL needsRedraw;
 @end
 
-@interface VT100ScreenState: NSObject<PTYTriggerEvaluatorDataSource, VT100ScreenState, iTermTextDataSource>
+@interface VT100ScreenState: NSObject<
+    PTYTriggerEvaluatorDataSource
+    VT100GridDelegate
+    VT100ScreenState
+    iTermTextDataSource>
 
 - (instancetype)init NS_UNAVAILABLE;
 
@@ -290,7 +293,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
 
-- (VT100ScreenMark *)markOnLine:(int)line;
+- (VT100ScreenMark * _Nullable)markOnLine:(int)line;
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
 

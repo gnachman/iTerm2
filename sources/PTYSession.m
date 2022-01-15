@@ -1771,7 +1771,10 @@ ITERM_WEAKLY_REFERENCEABLE
     NSSize aSize = [_view.scrollview contentSize];
     _wrapper = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
 
-    _textview = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins], aSize.width, aSize.height)
+    _textview = [[PTYTextView alloc] initWithFrame:NSMakeRect(0,
+                                                              [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins],
+                                                              aSize.width,
+                                                              aSize.height)
                                           colorMap:_screen.colorMap];
     _textview.keyboardHandler.keyMapper = _keyMapper;
     _view.mainResponder = _textview;
@@ -7642,6 +7645,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_screen synchronizeWithConfig:_config
                             expect:expectWasDirty ? _expect : nil
                      checkTriggers:checkTriggers];
+    _textview.colorMap = _screen.colorMap;
     _config.isDirty = NO;
 }
 
@@ -14961,19 +14965,18 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     [_screen removeLastLine];
 }
 
-#pragma mark - iTermColorMapDelegate
+#pragma mark - iTermImmutableColorMapDelegate
 
-#warning TODO: Proxy thru mutable state.
-- (void)colorMap:(iTermColorMap *)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
-    [_textview colorMap:colorMap didChangeColorForKey:theKey];
+- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
+    [_textview immutableColorMap:colorMap didChangeColorForKey:theKey];
 }
 
-- (void)colorMap:(iTermColorMap *)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount {
-    [_textview colorMap:colorMap dimmingAmountDidChangeTo:dimmingAmount];
+- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount {
+    [_textview immutableColorMap:colorMap dimmingAmountDidChangeTo:dimmingAmount];
 
 }
-- (void)colorMap:(iTermColorMap *)colorMap mutingAmountDidChangeTo:(double)mutingAmount {
-    [_textview colorMap:colorMap mutingAmountDidChangeTo:mutingAmount];
+- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap mutingAmountDidChangeTo:(double)mutingAmount {
+    [_textview immutableColorMap:colorMap mutingAmountDidChangeTo:mutingAmount];
 }
 
 // This can be completely async

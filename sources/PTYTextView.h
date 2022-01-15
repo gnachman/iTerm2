@@ -261,7 +261,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 @end
 
 @interface PTYTextView : NSView <
-  iTermColorMapDelegate,
+  iTermImmutableColorMapDelegate,
   iTermFocusFollowsMouseFocusReceiver,
   iTermIndicatorsHelperDelegate,
   iTermSemanticHistoryControllerDelegate,
@@ -375,8 +375,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 // Indicates if the "find cursor" mode is active.
 @property(nonatomic, readonly) BOOL isFindingCursor;
 
-// Stores colors.
-@property(nonatomic, strong, readonly) id<iTermColorMapReading> colorMap;
+// Stores colors. Gets updated on sync.
+@property(nonatomic, strong) id<iTermColorMapReading> colorMap;
 
 // Semantic history. TODO: Move this into PTYSession.
 @property(nonatomic, readonly) iTermSemanticHistoryController *semanticHistoryController;
