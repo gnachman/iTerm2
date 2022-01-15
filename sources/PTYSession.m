@@ -3816,6 +3816,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs {
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [self reallySetPreferencesFromAddressBookEntry:aePrefs terminal:terminal];
+    }];
+}
+
+- (void)reallySetPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
+                                        terminal:(VT100Terminal *)terminal {
     NSDictionary *aDict = aePrefs;
 
     if (aDict == nil) {
@@ -3895,7 +3902,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setUseNativePowerlineGlyphs:[iTermProfilePreferences boolForKey:KEY_POWERLINE inProfile:aDict]];
     [self setEncoding:[iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
     [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
-    [_screen.terminal setAnswerBackString:[iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:aDict]];
+    [terminal setAnswerBackString:[iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:aDict]];
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
     [self setAntiIdlePeriod:[iTermProfilePreferences doubleForKey:KEY_IDLE_PERIOD inProfile:aDict]];
     [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
@@ -3912,18 +3919,18 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                               inProfile:aDict]];
     [self setUnicodeVersion:[iTermProfilePreferences integerForKey:KEY_UNICODE_VERSION
                                                          inProfile:aDict]];
-    [_screen.terminal setDisableSmcupRmcup:[iTermProfilePreferences boolForKey:KEY_DISABLE_SMCUP_RMCUP
+    [terminal setDisableSmcupRmcup:[iTermProfilePreferences boolForKey:KEY_DISABLE_SMCUP_RMCUP
                                                                      inProfile:aDict]];
     [_screen setAllowTitleReporting:[iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_REPORTING
                                                               inProfile:aDict]];
     const BOOL didAllowPasteBracketing = _screen.terminalAllowPasteBracketing;
-    [_screen.terminal setAllowPasteBracketing:[iTermProfilePreferences boolForKey:KEY_ALLOW_PASTE_BRACKETING
+    [terminal setAllowPasteBracketing:[iTermProfilePreferences boolForKey:KEY_ALLOW_PASTE_BRACKETING
                                                                         inProfile:aDict]];
     if (didAllowPasteBracketing && !_screen.terminalAllowPasteBracketing) {
         // If the user flips the setting off, disable bracketed paste.
-        _screen.terminal.bracketedPasteMode = NO;
+        terminal.bracketedPasteMode = NO;
     }
-    [_screen.terminal setAllowKeypadMode:[iTermProfilePreferences boolForKey:KEY_APPLICATION_KEYPAD_ALLOWED
+    [terminal setAllowKeypadMode:[iTermProfilePreferences boolForKey:KEY_APPLICATION_KEYPAD_ALLOWED
                                                             inProfile:aDict]];
     [_screen setUnlimitedScrollback:[iTermProfilePreferences boolForKey:KEY_UNLIMITED_SCROLLBACK
                                                               inProfile:aDict]];
