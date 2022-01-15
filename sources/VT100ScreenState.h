@@ -228,9 +228,9 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface VT100ScreenState: NSObject<
-    PTYTriggerEvaluatorDataSource
-    VT100GridDelegate
-    VT100ScreenState
+    PTYTriggerEvaluatorDataSource,
+    VT100GridDelegate,
+    VT100ScreenState,
     iTermTextDataSource>
 
 - (instancetype)init NS_UNAVAILABLE;
