@@ -9777,61 +9777,66 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem {
-    switch (menuItem.tag) {
-        case 1:
-            [_screen.terminal toggleAlternateScreen];
-            break;
+    const NSInteger tag = menuItem.tag;
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        switch (tag) {
+            case 1:
+                [terminal toggleAlternateScreen];
+                break;
 
-        case 2:
-            _screen.terminal.reportFocus = !_screen.terminal.reportFocus;
-            break;
+            case 2:
+                terminal.reportFocus = !terminal.reportFocus;
+                break;
 
-        case 3:
-            if (_screen.terminal.mouseMode == MOUSE_REPORTING_NONE) {
-                _screen.terminal.mouseMode = _screen.terminal.previousMouseMode;
-            } else {
-                _screen.terminal.mouseMode = MOUSE_REPORTING_NONE;
-            }
-            [_screen.terminal.delegate terminalMouseModeDidChangeTo:_screen.terminal.mouseMode];
-            break;
+            case 3:
+                if (terminal.mouseMode == MOUSE_REPORTING_NONE) {
+                    terminal.mouseMode = terminal.previousMouseMode;
+                } else {
+                    terminal.mouseMode = MOUSE_REPORTING_NONE;
+                }
+                [terminal.delegate terminalMouseModeDidChangeTo:terminal.mouseMode];
+                break;
 
-        case 4:
-            _screen.terminal.bracketedPasteMode = !_screen.terminal.bracketedPasteMode;
-            break;
+            case 4:
+                terminal.bracketedPasteMode = !terminal.bracketedPasteMode;
+                break;
 
-        case 5:
-            _screen.terminal.cursorMode = !_screen.terminal.cursorMode;
-            break;
+            case 5:
+                terminal.cursorMode = !terminal.cursorMode;
+                break;
 
-        case 6:
-            [_screen.terminal forceSetKeypadMode:!_screen.terminal.keypadMode];
-            break;
+            case 6:
+                [terminal forceSetKeypadMode:!terminal.keypadMode];
+                break;
 
-        case 7:
-            _screen.terminal.sendModifiers[4] = @-1;
-            self.keyMappingMode = iTermKeyMappingModeStandard;
-            break;
+            case 7:
+                terminal.sendModifiers[4] = @-1;
+                self.keyMappingMode = iTermKeyMappingModeStandard;
+                break;
 
-        case 8:
-            _screen.terminal.sendModifiers[4] = @1;
-            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
-            break;
+            case 8:
+                terminal.sendModifiers[4] = @1;
+                self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
+                break;
 
-        case 9:
-            _screen.terminal.sendModifiers[4] = @2;
-            self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
-            break;
+            case 9:
+                terminal.sendModifiers[4] = @2;
+                self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
+                break;
 
-        case 10:
-            _screen.terminal.sendModifiers[4] = @-1;
-            self.keyMappingMode = iTermKeyMappingModeCSIu;
-            break;
+            case 10:
+                terminal.sendModifiers[4] = @-1;
+                self.keyMappingMode = iTermKeyMappingModeCSIu;
+                break;
 
-        case 11:
-            _screen.terminal.sendModifiers[4] = @-1;
-            self.keyMappingMode = iTermKeyMappingModeRaw;
-            break;
-    }
+            case 11:
+                terminal.sendModifiers[4] = @-1;
+                self.keyMappingMode = iTermKeyMappingModeRaw;
+                break;
+        }
+    }];
 }
 
 - (void)textViewResetTerminal {
