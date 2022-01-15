@@ -76,7 +76,6 @@ NS_ASSUME_NONNULL_BEGIN
 // This flag overrides maxScrollbackLines:
 @property (nonatomic, readonly) BOOL unlimitedScrollback;
 
-@property (nonatomic, strong, readonly) VT100Terminal *terminal;
 @property (nonatomic, strong, readonly) FindContext *findContext;
 @property (nonatomic, readonly) int scrollbackOverflow;
 
@@ -167,7 +166,6 @@ NS_ASSUME_NONNULL_BEGIN
 // When a saved grid is swapped in, this is the live current grid.
 @property (nullable, nonatomic, strong, readwrite) VT100Grid *realCurrentGrid;
 @property (nullable, nonatomic, strong, readwrite) IntervalTree *savedIntervalTree;
-@property (nonatomic, strong, readwrite) VT100Terminal *terminal;
 @property (nonatomic, readwrite) BOOL wraparoundMode;
 @property (nonatomic, readwrite) BOOL ansi;
 @property (nonatomic, readwrite) BOOL insert;

@@ -45,7 +45,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
     PTYTextViewDataSource,
     PTYTriggerEvaluatorDataSource>
 
-@property(nonatomic, retain) VT100Terminal *terminal;
+@property(nonatomic, readonly, strong) VT100Terminal *terminal;
+@property(nonatomic) BOOL terminalEnabled;
 @property(nonatomic, assign) BOOL audibleBell;
 @property(nonatomic, assign) BOOL showBellIndicator;
 @property(nonatomic, assign) BOOL flashBell;
@@ -86,8 +87,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic) long long lastPromptLine;
 
 // Designated initializer.
-- (instancetype)initWithTerminal:(VT100Terminal *)terminal
-                        darkMode:(BOOL)darkMode
+- (instancetype)initWithDarkMode:(BOOL)darkMode
                    configuration:(id<VT100ScreenConfiguration>)config;
 
 // Indicates if line drawing mode is enabled for any character set, or if the current character set

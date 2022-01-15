@@ -28,12 +28,15 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) id<VT100ScreenConfiguration> config;
 @property (nonatomic, readonly) iTermTokenExecutor *tokenExecutor;
 @property (nonatomic) BOOL exited;
+@property (nonatomic, strong, readonly) VT100Terminal *terminal;
 
 #warning TODO: Remove slownessDetector
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
 - (id<VT100ScreenState>)copy;
 
 #pragma mark - Internal
+
+@property (nonatomic) BOOL terminalEnabled;
 
 // This is how mutation code schedules work to be done on the main thread later. In particular, this
 // is the only way for it to call delegate methods. It will be performed asynchronously at some

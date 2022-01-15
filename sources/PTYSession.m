@@ -335,9 +335,6 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
 
 
 @implementation PTYSession {
-    // Terminal processes vt100 codes.
-    VT100Terminal *_terminal;
-
     NSString *_termVariable;
 
     // Has the underlying connection been closed?
@@ -644,17 +641,13 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
 
         // Allocate screen, shell, and terminal objects
         _shell = [[PTYTask alloc] init];
-        _terminal = [[VT100Terminal alloc] init];
-        _terminal.output.optionIsMetaForSpecialKeys =
-        [iTermAdvancedSettingsModel optionIsMetaForSpecialChars];
         // Allocate a guid. If we end up restoring from a session during startup this will be replaced.
         _guid = [[NSString uuid] retain];
         [[PTYSession sessionMap] setObject:self forKey:_guid];
 
-        _screen = [[VT100Screen alloc] initWithTerminal:_terminal
-                                               darkMode:self.view.effectiveAppearance.it_isDark
+        _screen = [[VT100Screen alloc] initWithDarkMode:self.view.effectiveAppearance.it_isDark
                                           configuration:_config];
-        NSParameterAssert(_shell != nil && _terminal != nil && _screen != nil);
+        NSParameterAssert(_shell != nil && _screen != nil);
 
         _overriddenFields = [[NSMutableSet alloc] init];
 
@@ -868,7 +861,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_upload release];
     [_shell release];
     [_screen release];
-    [_terminal release];
     [_tailFindContext release];
     [_patternedImage release];
     [_announcements release];
@@ -1801,10 +1793,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setFrame:NSMakeRect(0, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins], aSize.width, aSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins])];
 
     // assign terminal and task objects
-    _terminal.delegate = _screen;
+    [_screen setTerminalEnabled:YES];
     [_shell setDelegate:self];
     [self.variablesScope setValue:_shell.tty forVariableNamed:iTermVariableKeySessionTTY];
-    [self.variablesScope setValue:@(_terminal.mouseMode) forVariableNamed:iTermVariableKeySessionMouseReportingMode];
+    [self.variablesScope setValue:@(_screen.terminal.mouseMode) forVariableNamed:iTermVariableKeySessionMouseReportingMode];
 
     // initialize the screen
     // TODO: Shouldn't this take the scrollbar into account?
@@ -2534,7 +2526,7 @@ ITERM_WEAKLY_REFERENCEABLE
                      !_shouldRestart &&
                      !_synthetic &&
                      ![[iTermController sharedInstance] applicationIsQuitting]);
-    [_terminal.parser forceUnhookDCS:nil];
+    [_screen.terminal.parser forceUnhookDCS:nil];
     self.tmuxMode = TMUX_NONE;
     [_tmuxController release];
     _hideAfterTmuxWindowOpens = NO;
@@ -2573,8 +2565,7 @@ ITERM_WEAKLY_REFERENCEABLE
     _screen.delegate = nil;
     _screen.intervalTreeObserver = nil;
 
-    [_screen setTerminal:nil];
-    _terminal.delegate = nil;
+    _screen.terminalEnabled = NO;
     if (_view.findDriverDelegate == self) {
         _view.findDriverDelegate = nil;
     }
@@ -2650,9 +2641,8 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         _textview.dataSource = _screen;
         _textview.delegate = self;
-        _screen.terminal = _terminal;
+        _screen.terminalEnabled = YES;
         _screen.delegate = self;
-        _terminal.delegate = _screen;
         if ([iTermAdvancedSettingsModel showLocationsInScrollbar]) {
             _screen.intervalTreeObserver = self;
         }
@@ -2677,7 +2667,7 @@ ITERM_WEAKLY_REFERENCEABLE
              encoding:(NSStringEncoding)optionalEncoding
         forceEncoding:(BOOL)forceEncoding
          canBroadcast:(BOOL)canBroadcast {
-    const NSStringEncoding encoding = forceEncoding ? optionalEncoding : _terminal.encoding;
+    const NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminal.encoding;
     if (gDebugLogging) {
         NSArray *stack = [NSThread callStackSymbols];
         DLog(@"writeTaskImpl session=%@ encoding=%@ forceEncoding=%@ canBroadcast=%@: called from %@",
@@ -2689,7 +2679,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // Abort early so the surrogate hack works.
         return;
     }
-    if (canBroadcast && _terminal.sendReceiveMode && !self.isTmuxClient && !self.isTmuxGateway) {
+    if (canBroadcast && _screen.terminal.sendReceiveMode && !self.isTmuxClient && !self.isTmuxGateway) {
         // Local echo. Only for broadcastable text to avoid printing passwords from the password manager.
         [_screen appendStringAtCursor:[string stringByMakingControlCharactersToPrintable]];
     }
@@ -2757,7 +2747,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)writeTaskNoBroadcast:(NSString *)string {
-    [self writeTaskNoBroadcast:string encoding:_terminal.encoding forceEncoding:NO];
+    [self writeTaskNoBroadcast:string encoding:_screen.terminal.encoding forceEncoding:NO];
 }
 
 - (void)writeTaskNoBroadcast:(NSString *)string
@@ -2851,7 +2841,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)writeTask:(NSString *)string {
-    [self writeTask:string encoding:_terminal.encoding forceEncoding:NO];
+    [self writeTask:string encoding:_screen.terminal.encoding forceEncoding:NO];
 }
 
 // If forceEncoding is YES then optionalEncoding will be used regardless of the session's preferred
@@ -2861,7 +2851,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)writeTask:(NSString *)string
          encoding:(NSStringEncoding)optionalEncoding
     forceEncoding:(BOOL)forceEncoding {
-    NSStringEncoding encoding = forceEncoding ? optionalEncoding : _terminal.encoding;
+    NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminal.encoding;
     if (self.tmuxMode == TMUX_CLIENT) {
         [self setBell:NO];
         if ([[_delegate realParentWindow] broadcastInputToSession:self]) {
@@ -2891,12 +2881,12 @@ ITERM_WEAKLY_REFERENCEABLE
 // in the main thread to execute the parsed tokens.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
     // Pass the input stream to the parser.
-    [_terminal.parser putStreamData:buffer length:length];
+    [_screen.terminal.parser putStreamData:buffer length:length];
 
     // Parse the input stream into an array of tokens.
     CVector vector;
     CVectorCreate(&vector, 100);
-    [_terminal.parser addParsedTokensToVector:&vector];
+    [_screen.terminal.parser addParsedTokensToVector:&vector];
 
     if (CVectorCount(&vector) == 0) {
         CVectorDestroy(&vector);
@@ -2961,15 +2951,15 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_screen.cursorX != 1) {
         [_screen crlf];
     }
-    screen_char_t savedFgColor = [_terminal foregroundColorCode];
-    screen_char_t savedBgColor = [_terminal backgroundColorCode];
+    screen_char_t savedFgColor = [_screen.terminal foregroundColorCode];
+    screen_char_t savedBgColor = [_screen.terminal backgroundColorCode];
     // This color matches the color used in BrokenPipeDivider.png.
-    [_terminal setForeground24BitColor:[NSColor colorWithCalibratedRed:70.0/255.0
-                                                                 green:83.0/255.0
-                                                                  blue:246.0/255.0
-                                                                 alpha:1]];
-    [_terminal setBackgroundColor:ALTSEM_DEFAULT
-               alternateSemantics:YES];
+    [_screen.terminal setForeground24BitColor:[NSColor colorWithCalibratedRed:70.0/255.0
+                                                                        green:83.0/255.0
+                                                                         blue:246.0/255.0
+                                                                        alpha:1]];
+    [_screen.terminal setBackgroundColor:ALTSEM_DEFAULT
+                      alternateSemantics:YES];
     int width = (_screen.width - message.length) / 2;
     if (width > 0) {
         [_screen appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
@@ -2981,10 +2971,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                              width:(_screen.width - _screen.cursorX + 1)];
     }
     [_screen crlf];
-    [_terminal setForegroundColor:savedFgColor.foregroundColor
-               alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
-    [_terminal setBackgroundColor:savedBgColor.backgroundColor
-               alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
+    [_screen.terminal setForegroundColor:savedFgColor.foregroundColor
+                      alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
+    [_screen.terminal setBackgroundColor:savedBgColor.backgroundColor
+                      alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
 }
 
 // This is called in the main thread when coprocesses write to a tmux client.
@@ -3334,27 +3324,27 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)moveUp:(id)sender {
-    [self writeLatin1EncodedData:[_terminal.output keyArrowUp:0] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[_screen.terminal.output keyArrowUp:0] broadcastAllowed:YES];
 }
 
 - (void)moveDown:(id)sender {
-    [self writeLatin1EncodedData:[_terminal.output keyArrowDown:0] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[_screen.terminal.output keyArrowDown:0] broadcastAllowed:YES];
 }
 
 - (void)moveLeft:(id)sender {
-    [self writeLatin1EncodedData:[_terminal.output keyArrowLeft:0] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[_screen.terminal.output keyArrowLeft:0] broadcastAllowed:YES];
 }
 
 - (void)moveRight:(id)sender {
-    [self writeLatin1EncodedData:[_terminal.output keyArrowRight:0] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[_screen.terminal.output keyArrowRight:0] broadcastAllowed:YES];
 }
 
 - (void)pageUp:(id)sender {
-    [self writeLatin1EncodedData:[_terminal.output keyPageUp:0] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[_screen.terminal.output keyPageUp:0] broadcastAllowed:YES];
 }
 
 - (void)pageDown:(id)sender {
-    [self writeLatin1EncodedData:[_terminal.output keyPageDown:0] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[_screen.terminal.output keyPageDown:0] broadcastAllowed:YES];
 }
 
 + (NSString*)pasteboardString {
@@ -3911,7 +3901,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setUseNativePowerlineGlyphs:[iTermProfilePreferences boolForKey:KEY_POWERLINE inProfile:aDict]];
     [self setEncoding:[iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
     [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
-    [_terminal setAnswerBackString:[iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:aDict]];
+    [_screen.terminal setAnswerBackString:[iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:aDict]];
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
     [self setAntiIdlePeriod:[iTermProfilePreferences doubleForKey:KEY_IDLE_PERIOD inProfile:aDict]];
     [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
@@ -3928,18 +3918,18 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                               inProfile:aDict]];
     [self setUnicodeVersion:[iTermProfilePreferences integerForKey:KEY_UNICODE_VERSION
                                                          inProfile:aDict]];
-    [_terminal setDisableSmcupRmcup:[iTermProfilePreferences boolForKey:KEY_DISABLE_SMCUP_RMCUP
-                                                              inProfile:aDict]];
+    [_screen.terminal setDisableSmcupRmcup:[iTermProfilePreferences boolForKey:KEY_DISABLE_SMCUP_RMCUP
+                                                                     inProfile:aDict]];
     [_screen setAllowTitleReporting:[iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_REPORTING
                                                               inProfile:aDict]];
-    const BOOL didAllowPasteBracketing = _terminal.allowPasteBracketing;
-    [_terminal setAllowPasteBracketing:[iTermProfilePreferences boolForKey:KEY_ALLOW_PASTE_BRACKETING
-                                                                 inProfile:aDict]];
-    if (didAllowPasteBracketing && !_terminal.allowPasteBracketing) {
+    const BOOL didAllowPasteBracketing = _screen.terminal.allowPasteBracketing;
+    [_screen.terminal setAllowPasteBracketing:[iTermProfilePreferences boolForKey:KEY_ALLOW_PASTE_BRACKETING
+                                                                        inProfile:aDict]];
+    if (didAllowPasteBracketing && !_screen.terminal.allowPasteBracketing) {
         // If the user flips the setting off, disable bracketed paste.
-        _terminal.bracketedPasteMode = NO;
+        _screen.terminal.bracketedPasteMode = NO;
     }
-    [_terminal setAllowKeypadMode:[iTermProfilePreferences boolForKey:KEY_APPLICATION_KEYPAD_ALLOWED
+    [_screen.terminal setAllowKeypadMode:[iTermProfilePreferences boolForKey:KEY_APPLICATION_KEYPAD_ALLOWED
                                                             inProfile:aDict]];
     [_screen setUnlimitedScrollback:[iTermProfilePreferences boolForKey:KEY_UNLIMITED_SCROLLBACK
                                                               inProfile:aDict]];
@@ -4001,7 +3991,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
                                                     forSession:self];
     [[_delegate realParentWindow] invalidateRestorableState];
 
-    const int modifyOtherKeysTerminalSetting = _terminal.sendModifiers[4].intValue;
+    const int modifyOtherKeysTerminalSetting = _screen.terminal.sendModifiers[4].intValue;
     if (modifyOtherKeysTerminalSetting == -1) {
         const BOOL profileWantsTickit = [iTermProfilePreferences boolForKey:KEY_USE_LIBTICKIT_PROTOCOL
                                                                   inProfile:aDict];
@@ -4120,7 +4110,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
         _textview.keyboardHandler.keyMapper = _keyMapper;
     }
     iTermTermkeyKeyMapper *termkey = [iTermTermkeyKeyMapper castFrom:_keyMapper];
-    termkey.flags = _terminal.keyReportingFlags;
+    termkey.flags = _screen.terminal.keyReportingFlags;
 }
 
 - (NSString *)badgeFormat {
@@ -4333,7 +4323,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 
 - (VT100Terminal *)terminal
 {
-    return _terminal;
+    return _screen.terminal;
 }
 
 - (void)setTermVariable:(NSString *)termVariable {
@@ -4342,7 +4332,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     }
     [_termVariable autorelease];
     _termVariable = [termVariable copy];
-    [_terminal setTermType:_termVariable];
+    [_screen.terminal setTermType:_termVariable];
 }
 
 - (void)setView:(SessionView *)newView {
@@ -4361,11 +4351,11 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 
 - (NSStringEncoding)encoding
 {
-    return [_terminal encoding];
+    return [_screen.terminal encoding];
 }
 
 - (void)setEncoding:(NSStringEncoding)encoding {
-    [_terminal setEncoding:encoding];
+    [_screen.terminal setEncoding:encoding];
 }
 
 
@@ -6460,9 +6450,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return;
     }
     _focused = focused;
-    if ([_terminal reportFocus]) {
+    if ([_screen.terminal reportFocus]) {
         DLog(@"Will report focus");
-        [self writeLatin1EncodedData:[_terminal.output reportFocusGained:focused] broadcastAllowed:NO];
+        [self writeLatin1EncodedData:[_screen.terminal.output reportFocusGained:focused] broadcastAllowed:NO];
     }
     if (focused && [self isTmuxClient]) {
         DLog(@"Tell tmux about focus change");
@@ -6510,16 +6500,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         switch (tmuxMode) {
             case TMUX_NONE:
                 name = nil;
-                _terminal.tmuxMode = NO;
+                _screen.terminal.tmuxMode = NO;
                 break;
             case TMUX_GATEWAY:
                 name = @"gateway";
-                _terminal.tmuxMode = NO;
+                _screen.terminal.tmuxMode = NO;
                 break;
             case TMUX_CLIENT:
                 name = @"client";
-                _terminal.tmuxMode = YES;
-                _terminal.termType = _tmuxController.defaultTerminal ?: @"screen";
+                _screen.terminal.tmuxMode = YES;
+                _screen.terminal.termType = _tmuxController.defaultTerminal ?: @"screen";
                 [self loadTmuxProcessID];
                 [self installTmuxStatusBarMonitor];
                 [self installTmuxTitleMonitor];
@@ -7224,7 +7214,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_screen crlf];
     [dcsID retain];
     dispatch_async([[self class] tmuxQueue], ^{
-        [_terminal.parser forceUnhookDCS:dcsID];
+        [_screen.terminal.parser forceUnhookDCS:dcsID];
         [dcsID release];
     });
     self.tmuxMode = TMUX_NONE;
@@ -8442,7 +8432,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"PTYSession keyDown not short-circuted by special handler");
 
     const NSEventModifierFlags mask = (NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift | NSEventModifierFlagControl);
-    if (!_terminal.softAlternateScreenMode &&
+    if (!_screen.terminal.softAlternateScreenMode &&
         (event.modifierFlags & mask) == 0 &&
         [iTermProfilePreferences boolForKey:KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS inProfile:self.profile]) {
         switch (event.keyCode) {
@@ -8481,7 +8471,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if ([self shouldReportOrFilterKeystrokesForAPI]) {
         [self sendKeystrokeNotificationForEvent:event advanced:YES];
     }
-    if (_terminal.reportKeyUp) {
+    if (_screen.terminal.reportKeyUp) {
         NSData *const dataToSend = [_keyMapper keyMapperDataForKeyUp:event];
         if (dataToSend) {
             [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES];
@@ -8763,7 +8753,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     int spacesPerTab = -1;
     if (flags & kPTYSessionPasteWithShellEscapedTabs) {
         tabTransform = kTabTransformEscapeWithCtrlV;
-    } else if (!_terminal.bracketedPasteMode) {
+    } else if (!_screen.terminal.bracketedPasteMode) {
         spacesPerTab = [_pasteHelper numberOfSpacesToConvertTabsTo:theString];
         if (spacesPerTab >= 0) {
             tabTransform = kTabTransformConvertToSpaces;
@@ -8797,7 +8787,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // Show advanced paste window.
 - (IBAction)pasteOptions:(id)sender {
     [_pasteHelper showPasteOptionsInWindow:_delegate.realParentWindow.window
-                         bracketingEnabled:_terminal.bracketedPasteMode];
+                         bracketingEnabled:_screen.terminal.bracketedPasteMode];
 }
 
 - (void)textViewFontDidChange
@@ -9033,7 +9023,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     }
     if (_screen.commandRange.start.x < 0) {
-        if (_terminal.softAlternateScreenMode) {
+        if (_screen.terminal.softAlternateScreenMode) {
             // In an interactive app. No restrictions.
             *verticalOk = YES;
             return YES;
@@ -9246,7 +9236,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)textViewAnyMouseReportingModeIsEnabled {
-    return _terminal.mouseMode != MOUSE_REPORTING_NONE;
+    return _screen.terminal.mouseMode != MOUSE_REPORTING_NONE;
 }
 
 - (BOOL)textViewSmartSelectionActionsShouldUseInterpolatedStrings {
@@ -9270,7 +9260,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case NSEventTypeLeftMouseDown:
         case NSEventTypeRightMouseDown:
         case NSEventTypeOtherMouseDown:
-            switch ([_terminal mouseMode]) {
+            switch ([_screen.terminal mouseMode]) {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
@@ -9278,10 +9268,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                         [self setReportingMouseDownForEventType:eventType];
                         _lastReportedCoord = coord;
                         _lastReportedPoint = point;
-                        [self writeLatin1EncodedData:[_terminal.output mousePress:button
-                                                                    withModifiers:modifiers
-                                                                               at:coord
-                                                                            point:point]
+                        [self writeLatin1EncodedData:[_screen.terminal.output mousePress:button
+                                                                           withModifiers:modifiers
+                                                                                      at:coord
+                                                                                   point:point]
                                     broadcastAllowed:NO];
                     }
                     return YES;
@@ -9296,7 +9286,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case NSEventTypeRightMouseUp:
         case NSEventTypeOtherMouseUp:
             if (testOnly) {
-                switch ([_terminal mouseMode]) {
+                switch ([_screen.terminal mouseMode]) {
                     case MOUSE_REPORTING_NORMAL:
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
@@ -9313,16 +9303,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 _lastReportedCoord = VT100GridCoordMake(-1, -1);
                 _lastReportedPoint = NSMakePoint(-1, -1);
 
-                switch ([_terminal mouseMode]) {
+                switch ([_screen.terminal mouseMode]) {
                     case MOUSE_REPORTING_NORMAL:
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
                         _lastReportedCoord = coord;
                         _lastReportedPoint = point;
-                        [self writeLatin1EncodedData:[_terminal.output mouseRelease:button
-                                                                      withModifiers:modifiers
-                                                                                 at:coord
-                                                                              point:point]
+                        [self writeLatin1EncodedData:[_screen.terminal.output mouseRelease:button
+                                                                             withModifiers:modifiers
+                                                                                        at:coord
+                                                                                     point:point]
                                     broadcastAllowed:NO];
                         return YES;
 
@@ -9335,22 +9325,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 
         case NSEventTypeMouseMoved:
-            if ([_terminal mouseMode] != MOUSE_REPORTING_ALL_MOTION) {
+            if ([_screen.terminal mouseMode] != MOUSE_REPORTING_ALL_MOTION) {
                 return NO;
             }
             if (testOnly) {
                 return YES;
             }
-            if ([_terminal.output shouldReportMouseMotionAtCoord:coord
+            if ([_screen.terminal.output shouldReportMouseMotionAtCoord:coord
                                                        lastCoord:_lastReportedCoord
                                                            point:point
                                                        lastPoint:_lastReportedPoint]) {
                 _lastReportedCoord = coord;
                 _lastReportedPoint = point;
-                [self writeLatin1EncodedData:[_terminal.output mouseMotion:MOUSE_BUTTON_NONE
-                                                             withModifiers:modifiers
-                                                                        at:coord
-                                                                     point:point]
+                [self writeLatin1EncodedData:[_screen.terminal.output mouseMotion:MOUSE_BUTTON_NONE
+                                                                    withModifiers:modifiers
+                                                                               at:coord
+                                                                            point:point]
                             broadcastAllowed:NO];
                 return YES;
             }
@@ -9360,7 +9350,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case NSEventTypeRightMouseDragged:
         case NSEventTypeOtherMouseDragged:
             if (testOnly) {
-                switch ([_terminal mouseMode]) {
+                switch ([_screen.terminal mouseMode]) {
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
                     case MOUSE_REPORTING_NORMAL:
@@ -9373,20 +9363,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 return NO;
             }
             if (([self reportingMouseDownForEventType:eventType] || allowDragBeforeMouseDown) &&
-                [_terminal.output shouldReportMouseMotionAtCoord:coord
-                                                       lastCoord:_lastReportedCoord
-                                                           point:point
-                                                       lastPoint:_lastReportedPoint]) {
+                [_screen.terminal.output shouldReportMouseMotionAtCoord:coord
+                                                              lastCoord:_lastReportedCoord
+                                                                  point:point
+                                                              lastPoint:_lastReportedPoint]) {
                 _lastReportedCoord = coord;
                 _lastReportedPoint = point;
 
-                switch ([_terminal mouseMode]) {
+                switch ([_screen.terminal mouseMode]) {
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
-                        [self writeLatin1EncodedData:[_terminal.output mouseMotion:button
-                                                                     withModifiers:modifiers
-                                                                                at:coord
-                                                                             point:point]
+                        [self writeLatin1EncodedData:[_screen.terminal.output mouseMotion:button
+                                                                            withModifiers:modifiers
+                                                                                       at:coord
+                                                                                    point:point]
                                     broadcastAllowed:NO];
                         // Fall through
                     case MOUSE_REPORTING_NORMAL:
@@ -9402,7 +9392,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             break;
 
         case NSEventTypeScrollWheel:
-            switch ([_terminal mouseMode]) {
+            switch ([_screen.terminal mouseMode]) {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
@@ -9426,10 +9416,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                             steps = 2;
                         }
                         for (int i = 0; i < steps; i++) {
-                            [self writeLatin1EncodedData:[_terminal.output mousePress:button
-                                                                        withModifiers:modifiers
-                                                                                   at:coord
-                                                                                point:point]
+                            [self writeLatin1EncodedData:[_screen.terminal.output mousePress:button
+                                                                               withModifiers:modifiers
+                                                                                          at:coord
+                                                                                       point:point]
                                         broadcastAllowed:NO];
                         }
                         return YES;
@@ -9729,7 +9719,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)textViewInInteractiveApplication {
-    return _terminal.softAlternateScreenMode;
+    return _screen.terminal.softAlternateScreenMode;
 }
 
 // NOTE: Make sure to update both the context menu and the main menu when modifying these.
@@ -9739,20 +9729,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             return _screen.showingAlternateScreen;
 
         case 2:
-            return _terminal.reportFocus;
+            return _screen.terminal.reportFocus;
             break;
 
         case 3:
-            return _terminal.mouseMode != MOUSE_REPORTING_NONE;
+            return _screen.terminal.mouseMode != MOUSE_REPORTING_NONE;
 
         case 4:
-            return _terminal.bracketedPasteMode;
+            return _screen.terminal.bracketedPasteMode;
 
         case 5:
-            return _terminal.cursorMode;
+            return _screen.terminal.cursorMode;
 
         case 6:
-            return _terminal.keypadMode;
+            return _screen.terminal.keypadMode;
 
         case 7:
             return _keyMappingMode == iTermKeyMappingModeStandard;
@@ -9776,63 +9766,63 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem {
     switch (menuItem.tag) {
         case 1:
-            [_terminal toggleAlternateScreen];
+            [_screen.terminal toggleAlternateScreen];
             break;
 
         case 2:
-            _terminal.reportFocus = !_terminal.reportFocus;
+            _screen.terminal.reportFocus = !_screen.terminal.reportFocus;
             break;
 
         case 3:
-            if (_terminal.mouseMode == MOUSE_REPORTING_NONE) {
-                _terminal.mouseMode = _terminal.previousMouseMode;
+            if (_screen.terminal.mouseMode == MOUSE_REPORTING_NONE) {
+                _screen.terminal.mouseMode = _screen.terminal.previousMouseMode;
             } else {
-                _terminal.mouseMode = MOUSE_REPORTING_NONE;
+                _screen.terminal.mouseMode = MOUSE_REPORTING_NONE;
             }
-            [_terminal.delegate terminalMouseModeDidChangeTo:_terminal.mouseMode];
+            [_screen.terminal.delegate terminalMouseModeDidChangeTo:_screen.terminal.mouseMode];
             break;
 
         case 4:
-            _terminal.bracketedPasteMode = !_terminal.bracketedPasteMode;
+            _screen.terminal.bracketedPasteMode = !_screen.terminal.bracketedPasteMode;
             break;
 
         case 5:
-            _terminal.cursorMode = !_terminal.cursorMode;
+            _screen.terminal.cursorMode = !_screen.terminal.cursorMode;
             break;
 
         case 6:
-            [_terminal forceSetKeypadMode:!_terminal.keypadMode];
+            [_screen.terminal forceSetKeypadMode:!_screen.terminal.keypadMode];
             break;
 
         case 7:
-            _terminal.sendModifiers[4] = @-1;
+            _screen.terminal.sendModifiers[4] = @-1;
             self.keyMappingMode = iTermKeyMappingModeStandard;
             break;
 
         case 8:
-            _terminal.sendModifiers[4] = @1;
+            _screen.terminal.sendModifiers[4] = @1;
             self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
             break;
 
         case 9:
-            _terminal.sendModifiers[4] = @2;
+            _screen.terminal.sendModifiers[4] = @2;
             self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys2;
             break;
 
         case 10:
-            _terminal.sendModifiers[4] = @-1;
+            _screen.terminal.sendModifiers[4] = @-1;
             self.keyMappingMode = iTermKeyMappingModeCSIu;
             break;
 
         case 11:
-            _terminal.sendModifiers[4] = @-1;
+            _screen.terminal.sendModifiers[4] = @-1;
             self.keyMappingMode = iTermKeyMappingModeRaw;
             break;
     }
 }
 
 - (void)textViewResetTerminal {
-    [_terminal gentleReset];
+    [_screen.terminal gentleReset];
 }
 
 - (CGFloat)textViewBadgeTopMargin {
@@ -10420,18 +10410,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_exited) {
         return;
     }
-    screen_char_t savedFgColor = [_terminal foregroundColorCode];
-    screen_char_t savedBgColor = [_terminal backgroundColorCode];
-    [_terminal setForegroundColor:ALTSEM_DEFAULT
-               alternateSemantics:YES];
-    [_terminal setBackgroundColor:ALTSEM_DEFAULT
-               alternateSemantics:YES];
+    screen_char_t savedFgColor = [_screen.terminal foregroundColorCode];
+    screen_char_t savedBgColor = [_screen.terminal backgroundColorCode];
+    [_screen.terminal setForegroundColor:ALTSEM_DEFAULT
+                      alternateSemantics:YES];
+    [_screen.terminal setBackgroundColor:ALTSEM_DEFAULT
+                      alternateSemantics:YES];
     [_screen appendStringAtCursor:message];
     [_screen crlf];
-    [_terminal setForegroundColor:savedFgColor.foregroundColor
-               alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
-    [_terminal setBackgroundColor:savedBgColor.backgroundColor
-               alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
+    [_screen.terminal setForegroundColor:savedFgColor.foregroundColor
+                      alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
+    [_screen.terminal setBackgroundColor:savedBgColor.backgroundColor
+                      alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
 }
 
 - (void)printTmuxCommandOutputToScreen:(NSString *)response
@@ -10528,7 +10518,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenDidAppendStringToCurrentLine:(NSString *)string
                                isPlainText:(BOOL)plainText {
     if (plainText) {
-        [self logCooked:[string dataUsingEncoding:_terminal.encoding]];
+        [self logCooked:[string dataUsingEncoding:_screen.terminal.encoding]];
     }
 }
 
@@ -10546,8 +10536,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [_logging logData:data];
             break;
         case iTermLoggingStyleHTML:
-            [_logging logData:[data htmlDataWithForeground:_terminal.foregroundColorCode
-                                                background:_terminal.backgroundColorCode
+            [_logging logData:[data htmlDataWithForeground:_screen.terminal.foregroundColorCode
+                                                background:_screen.terminal.backgroundColorCode
                                                   colorMap:_screen.colorMap
                                         useCustomBoldColor:_textview.useCustomBoldColor
                                               brightenBold:_textview.brightenBold]];
@@ -10911,7 +10901,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenMouseModeDidChange {
     [_textview updateCursor:nil];
     [_textview updateTrackingAreas];
-    [self.variablesScope setValue:@(_terminal.mouseMode)
+    [self.variablesScope setValue:@(_screen.terminal.mouseMode)
                  forVariableNamed:iTermVariableKeySessionMouseReportingMode];
 }
 
@@ -12512,7 +12502,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (!allowed) {
         return;
     }
-    const int modifyOtherKeysMode = _terminal.sendModifiers[4].intValue;
+    const int modifyOtherKeysMode = _screen.terminal.sendModifiers[4].intValue;
     if (modifyOtherKeysMode == 1) {
         self.keyMappingMode = iTermKeyMappingModeModifyOtherKeys1;
     } else if (modifyOtherKeysMode == 2) {
@@ -12523,7 +12513,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenKeyReportingFlagsDidChange {
-    if (_terminal.keyReportingFlags & VT100TerminalKeyReportingFlagsDisambiguateEscape) {
+    if (_screen.terminal.keyReportingFlags & VT100TerminalKeyReportingFlagsDisambiguateEscape) {
         self.keyMappingMode = iTermKeyMappingModeCSIu;
     } else {
         self.keyMappingMode = iTermKeyMappingModeStandard;
@@ -12587,7 +12577,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             case iTermLoggingStyleRaw:
                 break;
             case iTermLoggingStyleHTML:
-                [_logging logNewline:[@"<br/>\n" dataUsingEncoding:_terminal.encoding]];
+                [_logging logNewline:[@"<br/>\n" dataUsingEncoding:_screen.terminal.encoding]];
                 break;
             case iTermLoggingStylePlainText:
                 [_logging logNewline:nil];
@@ -12779,7 +12769,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                      isARepeat:NO
                                        keyCode:keycode];
     return [_textview.keyboardHandler stringForEventWithoutSideEffects:event
-                                                              encoding:_terminal.encoding];
+                                                              encoding:_screen.terminal.encoding];
 }
 
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode {
@@ -12908,7 +12898,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self writeTask:string];
     if (_pasteHelper.pasteContext.bytesWritten == 0 &&
         _pasteHelper.pasteContext.pasteEvent.flags & kPasteFlagsBracket &&
-        [_terminal bracketedPasteMode]) {
+        [_screen.terminal bracketedPasteMode]) {
         [self watchForPasteBracketingOopsieWithPrefix:[_pasteHelper.pasteContext.pasteEvent.originalString it_substringToIndex:4]];
     }
 }
@@ -12918,11 +12908,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)pasteHelperShouldBracket {
-    return [_terminal bracketedPasteMode];
+    return [_screen.terminal bracketedPasteMode];
 }
 
 - (NSStringEncoding)pasteHelperEncoding {
-    return [_terminal encoding];
+    return [_screen.terminal encoding];
 }
 
 - (NSView *)pasteHelperViewForIndicator {
@@ -13420,14 +13410,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     if (self.useMetal) {
         if ([iTermPreferences maximizeMetalThroughput] &&
-            !_terminal.softAlternateScreenMode) {
+            !_screen.terminal.softAlternateScreenMode) {
             state.useAdaptiveFrameRate = YES;
         } else {
             state.useAdaptiveFrameRate = NO;
         }
     } else {
         if ([iTermAdvancedSettingsModel disableAdaptiveFrameRateInInteractiveApps] &&
-            _terminal.softAlternateScreenMode) {
+            _screen.terminal.softAlternateScreenMode) {
             state.useAdaptiveFrameRate = NO;
         } else {
             state.useAdaptiveFrameRate = _useAdaptiveFrameRate;
@@ -14149,7 +14139,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         DLog(@"Should not poll for working directory: shell integration used");
         return NO;
     }
-    if (_terminal.softAlternateScreenMode) {
+    if (_screen.terminal.softAlternateScreenMode) {
         DLog(@"Should not poll for working directory: soft alternate screen mode");
     }
     DLog(@"Should poll for working directory.");
@@ -14208,8 +14198,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)standardKeyMapperWillMapKey:(iTermStandardKeyMapper *)standardKeyMapper {
     iTermStandardKeyMapperConfiguration configuration = {
-        .outputFactory = [_terminal.output retain],
-        .encoding = _terminal.encoding,
+        .outputFactory = [_screen.terminal.output retain],
+        .encoding = _screen.terminal.encoding,
         .leftOptionKey = self.optionKey,
         .rightOptionKey = self.rightOptionKey,
         .screenlike = self.isTmuxClient
@@ -14221,11 +14211,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)termkeyKeyMapperWillMapKey:(iTermTermkeyKeyMapper *)termkeyKeyMaper {
     iTermTermkeyKeyMapperConfiguration configuration = {
-        .encoding = _terminal.encoding,
+        .encoding = _screen.terminal.encoding,
         .leftOptionKey = self.optionKey,
         .rightOptionKey = self.rightOptionKey,
-        .applicationCursorMode = _terminal.output.cursorMode,
-        .applicationKeypadMode = _terminal.output.keypadMode
+        .applicationCursorMode = _screen.terminal.output.cursorMode,
+        .applicationKeypadMode = _screen.terminal.output.keypadMode
     };
     termkeyKeyMaper.configuration = configuration;
 }
@@ -14907,8 +14897,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermModifyOtherKeysMapperDelegate
 
 - (NSStringEncoding)modifiyOtherKeysDelegateEncoding:(iTermModifyOtherKeysMapper *)sender {
-    DLog(@"encoding=%@", @(_terminal.encoding));
-    return _terminal.encoding;
+    DLog(@"encoding=%@", @(_screen.terminal.encoding));
+    return _screen.terminal.encoding;
 }
 
 - (void)modifyOtherKeys:(iTermModifyOtherKeysMapper *)sender
@@ -14920,7 +14910,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (VT100Output *)modifyOtherKeysOutputFactory:(iTermModifyOtherKeysMapper *)sender {
-    return _terminal.output;
+    return _screen.terminal.output;
 }
 
 - (BOOL)modifyOtherKeysTerminalIsScreenlike:(iTermModifyOtherKeysMapper *)sender {
@@ -15261,6 +15251,9 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 #pragma mark - iTermTokenExecutorDelegate
 
 - (BOOL)tokenExecutorShouldQueueTokens {
+    if (!_screen.terminalEnabled) {
+        return YES;
+    }
     return _shell.paused || _copyModeHandler.enabled;
 }
 
@@ -15268,7 +15261,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     if (_exited) {
         return YES;
     }
-    if (!_terminal) {
+    if (!_screen.terminal) {
         return YES;
     }
     if (self.tmuxMode != TMUX_GATEWAY && [_shell hasMuteCoprocess]) {

@@ -12,7 +12,7 @@ protocol UnpauserDelegate: AnyObject {
 }
 
 typealias TokenExecutorTask = () -> ()
-
+#warning("TODO: Ensure delegate methos are called on the right queue")
 // Delegate calls are run on the execution queue.
 @objc(iTermTokenExecutorDelegate)
 protocol TokenExecutorDelegate: AnyObject {
@@ -393,13 +393,13 @@ private class TokenExecutorImpl {
             executingCount -= 1
             executeHighPriorityTasks()
         }
+        executeHighPriorityTasks()
         guard let delegate = delegate else {
             return
         }
-        defer {
-            delegate.tokenExecutorDidHandleInput()
+        DispatchQueue.main.async { [weak self] in
+            self?.delegate?.tokenExecutorDidHandleInput()
         }
-        executeHighPriorityTasks()
         if delegate.tokenExecutorShouldQueueTokens() {
             #warning("TODO: Apply backpressure when queueing to avoid building up a huge queue (e.g., in copy mode while running yes)")
             return
