@@ -10432,18 +10432,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_exited) {
         return;
     }
-    screen_char_t savedFgColor = [_screen.terminal foregroundColorCode];
-    screen_char_t savedBgColor = [_screen.terminal backgroundColorCode];
-    [_screen.terminal setForegroundColor:ALTSEM_DEFAULT
-                      alternateSemantics:YES];
-    [_screen.terminal setBackgroundColor:ALTSEM_DEFAULT
-                      alternateSemantics:YES];
-    [_screen appendStringAtCursor:message];
-    [_screen crlf];
-    [_screen.terminal setForegroundColor:savedFgColor.foregroundColor
-                      alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
-    [_screen.terminal setBackgroundColor:savedBgColor.backgroundColor
-                      alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        screen_char_t savedFgColor = [terminal foregroundColorCode];
+        screen_char_t savedBgColor = [terminal backgroundColorCode];
+        [terminal setForegroundColor:ALTSEM_DEFAULT
+                          alternateSemantics:YES];
+        [terminal setBackgroundColor:ALTSEM_DEFAULT
+                          alternateSemantics:YES];
+        [mutableState appendStringAtCursor:message];
+        [mutableState appendCarriageReturnLineFeed];
+        [terminal setForegroundColor:savedFgColor.foregroundColor
+                          alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
+        [terminal setBackgroundColor:savedBgColor.backgroundColor
+                          alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
+    }];
 }
 
 - (void)printTmuxCommandOutputToScreen:(NSString *)response
