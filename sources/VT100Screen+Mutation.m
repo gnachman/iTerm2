@@ -309,14 +309,14 @@
 
 - (void)appendSessionRestoredBanner {
     // Save graphic rendition. Set to system message color.
-    const VT100GraphicRendition saved = _state.terminal.graphicRendition;
+    const VT100GraphicRendition saved = _mutableState.terminal.graphicRendition;
 
     VT100GraphicRendition temp = saved;
     temp.fgColorMode = ColorModeAlternate;
     temp.fgColorCode = ALTSEM_SYSTEM_MESSAGE;
     temp.bgColorMode = ColorModeAlternate;
     temp.bgColorCode = ALTSEM_SYSTEM_MESSAGE;
-    _state.terminal.graphicRendition = temp;
+    _mutableState.terminal.graphicRendition = temp;
 
     // Record the cursor position and append the message.
     const int yBefore = _state.currentGrid.cursor.y;
@@ -333,7 +333,7 @@
     _mutableState.currentGrid.preferredCursorPosition = _state.currentGrid.cursor;
 
     // Restore the graphic rendition, add a newline, and calculate how far down the cursor moved.
-    _state.terminal.graphicRendition = saved;
+    _mutableState.terminal.graphicRendition = saved;
     [_mutableState appendCarriageReturnLineFeed];
     const int delta = _state.currentGrid.cursor.y - yBefore;
 
@@ -624,7 +624,7 @@
         [_mutableState.tabStops removeAllObjects];
         [_mutableState.tabStops addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
 
-        [_state.terminal setStateFromDictionary:screenState[kScreenStateTerminalKey]];
+        [_mutableState.terminal setStateFromDictionary:screenState[kScreenStateTerminalKey]];
         NSArray<NSNumber *> *array = screenState[kScreenStateLineDrawingModeKey];
         for (int i = 0; i < NUM_CHARSETS && i < array.count; i++) {
             [_mutableState setCharacterSet:i usesLineDrawingMode:array[i].boolValue];
@@ -774,7 +774,7 @@
     NSNumber *altSavedY = [state objectForKey:kStateDictAltSavedCY];
     if (altSavedX && altSavedY && inAltScreen) {
         self.mutablePrimaryGrid.cursor = VT100GridCoordMake([altSavedX intValue], [altSavedY intValue]);
-        [_state.terminal setSavedCursorPosition:_state.primaryGrid.cursor];
+        [_mutableState.terminal setSavedCursorPosition:_state.primaryGrid.cursor];
     }
 
     _mutableState.currentGrid.cursorX = [[state objectForKey:kStateDictCursorX] intValue];
@@ -1244,13 +1244,6 @@
 // Gets a line on the screen (0 = top of screen)
 - (screen_char_t *)mutGetLineAtScreenIndex:(int)theIndex {
     return [_mutableState.currentGrid screenCharsAtLineNumber:theIndex];
-}
-
-- (void)mutSetTerminal:(VT100Terminal *)terminal {
-    _mutableState.terminal = terminal;
-    _mutableState.ansi = [terminal isAnsi];
-    _mutableState.wraparoundMode = [terminal wraparoundMode];
-    _mutableState.insert = [terminal insertMode];
 }
 
 #pragma mark - Dirty
@@ -2255,7 +2248,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     self.mutableAltGrid.cursor = VT100GridCoordMake(0, 0);
     [self.mutablePrimaryGrid resetScrollRegions];
     [self.mutableAltGrid resetScrollRegions];
-    [_state.terminal resetSavedCursorPositions];
+    [_mutableState.terminal resetSavedCursorPositions];
 
     _mutableState.findContext.substring = nil;
 

@@ -45,7 +45,6 @@ static const int kDefaultMaxScrollbackLines = 1000;
 @synthesize ansi = _ansi;
 @synthesize insert = _insert;
 @synthesize unlimitedScrollback = _unlimitedScrollback;
-@synthesize terminal = _terminal;
 @synthesize findContext = _findContext;
 @synthesize scrollbackOverflow = _scrollbackOverflow;
 @synthesize commandStartCoord = _commandStartCoord;

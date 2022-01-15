@@ -31,13 +31,19 @@
 #import "iTermURLStore.h"
 
 
-@implementation VT100ScreenMutableState
+@implementation VT100ScreenMutableState {
+    BOOL _terminalEnabled;
+    VT100Terminal *_terminal;
+}
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
     self = [super initForMutation];
     if (self) {
 #warning TODO: When this moves to its own queue. change _queue.
         _queue = dispatch_get_main_queue();
+        _terminal = [[VT100Terminal alloc] init];
+        _terminal.output.optionIsMetaForSpecialKeys =
+        [iTermAdvancedSettingsModel optionIsMetaForSpecialChars];
         _sideEffectPerformer = performer;
         _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
@@ -53,10 +59,39 @@
         self.currentGrid = self.primaryGrid;
 
         [self setInitialTabStops];
+        _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:_terminal
+                                                     slownessDetector:_triggerEvaluator.triggersSlownessDetector
+                                                                queue:_queue];
     }
     return self;
 }
 
+- (VT100Terminal *)terminal {
+    if (!self.terminalEnabled) {
+        return nil;
+    }
+    return _terminal;
+}
+
+- (void)setTerminalEnabled:(BOOL)enabled {
+    if (enabled == _terminalEnabled) {
+        return;
+    }
+    _terminalEnabled = enabled;
+    if (enabled) {
+        _terminal.delegate = self;
+        self.ansi = self.terminal.isAnsi;
+        self.wraparoundMode = self.terminal.wraparoundMode;
+        self.insert = self.terminal.insertMode;
+        _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner joinerWithScheduler:_tokenExecutor];
+#warning TODO: VT100Screen.setTerminalEnabled(_:) reassigns the executor's delegate. That's messy.
+    } else {
+        [_commandRangeChangeJoiner invalidate];
+        _commandRangeChangeJoiner = nil;
+        _tokenExecutor.delegate = nil;
+        _terminal.delegate = nil;
+    }
+}
 - (id)copyWithZone:(NSZone *)zone {
     return [[VT100ScreenState alloc] initWithState:self];
 }
@@ -167,20 +202,6 @@
 - (void)setExited:(BOOL)exited {
     _exited = exited;
     _triggerEvaluator.sessionExited = exited;
-}
-
-- (void)setTerminal:(VT100Terminal *)terminal {
-    [super setTerminal:terminal];
-    if (terminal) {
-        _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:terminal
-                                                     slownessDetector:_triggerEvaluator.triggersSlownessDetector
-                                                                queue:_queue];
-        _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner joinerWithScheduler:_tokenExecutor];
-    } else {
-        _tokenExecutor = nil;
-        [_commandRangeChangeJoiner invalidate];
-        _commandRangeChangeJoiner = nil;
-    }
 }
 
 - (void)setTokenExecutorDelegate:(id)delegate {

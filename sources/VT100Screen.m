@@ -86,8 +86,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 @synthesize dvr = dvr_;
 
-- (instancetype)initWithTerminal:(VT100Terminal *)terminal
-                        darkMode:(BOOL)darkMode
+- (instancetype)initWithDarkMode:(BOOL)darkMode
                    configuration:(id<VT100ScreenConfiguration>)config {
     self = [super init];
     if (self) {
@@ -96,8 +95,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 #warning TODO: update colormap's darkMode through VT100ScreenConfiguration
         _mutableState.colorMap.darkMode = darkMode;
 
-        assert(terminal);
-        [self setTerminal:terminal];
         _mutableState.temporaryDoubleBuffer.delegate = self;
 
         [iTermNotificationController sharedInstance];
@@ -143,13 +140,22 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return delegate_;
 }
 
-- (void)setTerminal:(VT100Terminal *)terminal {
-    DLog(@"set terminal=%@", terminal);
-    [self mutSetTerminal:terminal];
+- (VT100Terminal *)terminal {
+#warning TODO: Remove this
+    return _mutableState.terminal;
 }
 
-- (VT100Terminal *)terminal {
-    return _state.terminal;
+- (void)setTerminalEnabled:(BOOL)enabled {
+    if (_terminalEnabled == enabled) {
+        return;
+    }
+    _terminalEnabled = enabled;
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.terminalEnabled = enabled;
+        if (enabled) {
+            [self mutSetDelegate:self.delegate];
+        }
+    }];
 }
 
 - (void)setSize:(VT100GridSize)size {
@@ -175,7 +181,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             return NO;
         }
     }
-    if ([_state.terminal charset]) {
+    if ([self.terminal charset]) {
         return NO;
     }
     return YES;
@@ -242,7 +248,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
-    return [_state.terminal sgrCodesForCharacter:c externalAttributes:ea];
+    return [self.terminal sgrCodesForCharacter:c externalAttributes:ea];
 }
 
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord {
@@ -1092,7 +1098,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [encoder mergeDictionary:extra];
         NSDictionary *dict =
         @{ kScreenStateTabStopsKey: [_state.tabStops allObjects] ?: @[],
-           kScreenStateTerminalKey: [_state.terminal stateDictionary] ?: @{},
+           kScreenStateTerminalKey: [self.terminal stateDictionary] ?: @{},
            kScreenStateLineDrawingModeKey: @[ @([_state.charsetUsesLineDrawingMode containsObject:@0]),
                                               @([_state.charsetUsesLineDrawingMode containsObject:@1]),
                                               @([_state.charsetUsesLineDrawingMode containsObject:@2]),
