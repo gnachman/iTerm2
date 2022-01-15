@@ -7703,7 +7703,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
 
         if ((event.it_modifierFlags & NSEventModifierFlagControl) && [event.charactersIgnoringModifiers isEqualToString:@"c"]) {
-            if (self.terminal.receivingFile) {
+            if (_screen.terminalReceivingFile) {
                 // Offer to abort download if you press ^c while downloading an inline file
                 [self.naggingController askAboutAbortingDownload];
             } else if (self.upload) {

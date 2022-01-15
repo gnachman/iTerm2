@@ -274,6 +274,10 @@
     return self.terminal.keypadMode;
 }
 
+- (BOOL)terminalReceivingFile {
+    return self.terminal.receivingFile;
+}
+
 - (MouseMode)terminalPreviousMouseMode {
     return self.terminal.previousMouseMode;
 }

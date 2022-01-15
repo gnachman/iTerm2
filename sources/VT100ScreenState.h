@@ -159,6 +159,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL terminalReportKeyUp;
 @property (nonatomic, readonly) BOOL terminalCursorMode;
 @property (nonatomic, readonly) BOOL terminalKeypadMode;
+@property (nonatomic, readonly) BOOL terminalReceivingFile;
 @property (nonatomic, readonly) MouseMode terminalPreviousMouseMode;
 @property (nonatomic, readonly) screen_char_t terminalForegroundColorCode;
 @property (nonatomic, readonly) screen_char_t terminalBackgroundColorCode;
