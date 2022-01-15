@@ -305,6 +305,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                     name:(NSString *)name
                                 delegate:(id<VT100ScreenDelegate>)delegate;
 
+#pragma mark - Tmux
+
+- (void)setTmuxState:(NSDictionary *)state;
+
 #pragma mark - Temporary
 
 - (void)setTokenExecutorDelegate:(id)delegate;

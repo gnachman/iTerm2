@@ -7396,33 +7396,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)setTmuxState:(NSDictionary *)state {
-    [[self screen] setTmuxState:state];
-    NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
-    if (pendingOutput && [pendingOutput length]) {
-        [self.terminal.parser putStreamData:pendingOutput.bytes
-                                     length:pendingOutput.length];
-    }
-    [[self terminal] setInsertMode:[[state objectForKey:kStateDictInsertMode] boolValue]];
-    [[self terminal] setCursorMode:[[state objectForKey:kStateDictKCursorMode] boolValue]];
-    [[self terminal] setKeypadMode:[[state objectForKey:kStateDictKKeypadMode] boolValue]];
-    if ([[state objectForKey:kStateDictMouseStandardMode] boolValue]) {
-        [[self terminal] setMouseMode:MOUSE_REPORTING_NORMAL];
-    } else if ([[state objectForKey:kStateDictMouseButtonMode] boolValue]) {
-        [[self terminal] setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
-    } else if ([[state objectForKey:kStateDictMouseAnyMode] boolValue]) {
-        [[self terminal] setMouseMode:MOUSE_REPORTING_ALL_MOTION];
-    } else {
-        [[self terminal] setMouseMode:MOUSE_REPORTING_NONE];
-    }
-    // NOTE: You can get both SGR and UTF8 set. In that case SGR takes priority. See comment in
-    // tmux's input_key_get_mouse()
-    if ([state[kStateDictMouseSGRMode] boolValue]) {
-        [[self terminal] setMouseFormat:MOUSE_FORMAT_SGR];
-    } else if ([state[kStateDictMouseUTF8Mode] boolValue]) {
-        [[self terminal] setMouseFormat:MOUSE_FORMAT_XTERM_EXT];
-    } else {
-        [[self terminal] setMouseFormat:MOUSE_FORMAT_XTERM];
-    }
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        mutableState.tmuxState = state;
+    }];
 }
 
 - (void)unpauseTmux {

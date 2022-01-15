@@ -44,7 +44,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutRestoreFromDictionary:(NSDictionary *)dictionary
         includeRestorationBanner:(BOOL)includeRestorationBanner
                       reattached:(BOOL)reattached;
-- (void)mutSetTmuxState:(NSDictionary *)state;
 - (void)mutCrlf;
 - (void)mutLinefeed;
 - (void)mutSetFromFrame:(screen_char_t*)s
