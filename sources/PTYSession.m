@@ -6453,6 +6453,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         DLog(@"No change");
         return;
     }
+    if (self.isTmuxGateway) {
+        DLog(@"Is tmux gateway");
+        return;
+    }
     _focused = focused;
     if (_screen.terminalReportFocus) {
         DLog(@"Will report focus");
@@ -6500,20 +6504,28 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [self setUpTmuxPipe];
     }
     dispatch_async(dispatch_get_main_queue(), ^{
+        [self reallySetTmuxMode:tmuxMode];
+    });
+}
+
+- (void)reallySetTmuxMode:(PTYSessionTmuxMode)tmuxMode {
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
         NSString *name;
         switch (tmuxMode) {
             case TMUX_NONE:
                 name = nil;
-                _screen.terminal.tmuxMode = NO;
+                terminal.tmuxMode = NO;
                 break;
             case TMUX_GATEWAY:
                 name = @"gateway";
-                _screen.terminal.tmuxMode = NO;
+                terminal.tmuxMode = NO;
                 break;
             case TMUX_CLIENT:
                 name = @"client";
-                _screen.terminal.tmuxMode = YES;
-                _screen.terminal.termType = _tmuxController.defaultTerminal ?: @"screen";
+                terminal.tmuxMode = YES;
+                terminal.termType = _tmuxController.defaultTerminal ?: @"screen";
                 [self loadTmuxProcessID];
                 [self installTmuxStatusBarMonitor];
                 [self installTmuxTitleMonitor];
@@ -6523,7 +6535,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 break;
         }
         [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionTmuxRole];
-    });
+    }];
 }
 
 - (void)setUpTmuxPipe {
