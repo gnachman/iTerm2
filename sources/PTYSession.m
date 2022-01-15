@@ -7209,33 +7209,31 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)tmuxHostDisconnected:(NSString *)dcsID {
-    _hideAfterTmuxWindowOpens = NO;
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        _hideAfterTmuxWindowOpens = NO;
 
-    if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
-        [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
-        // Do this before detaching because it may be the only tab in a hotkey window. If all the
-        // tabs close the window is destroyed and it breaks the reference from iTermProfileHotkey.
-        // See issue 7384.
-        [[iTermBuriedSessions sharedInstance] restoreSession:self];
-    }
+        if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
+            [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
+            // Do this before detaching because it may be the only tab in a hotkey window. If all the
+            // tabs close the window is destroyed and it breaks the reference from iTermProfileHotkey.
+            // See issue 7384.
+            [[iTermBuriedSessions sharedInstance] restoreSession:self];
+        }
 
-    [_tmuxController detach];
-    // Autorelease the gateway because it called this function so we can't free
-    // it immediately.
-    [_tmuxGateway autorelease];
-    _tmuxGateway = nil;
-    [_tmuxController release];
-    _tmuxController = nil;
-    [_screen appendStringAtCursor:@"Detached"];
-    [_screen crlf];
-    [dcsID retain];
-    dispatch_async([[self class] tmuxQueue], ^{
-        [_screen.terminal.parser forceUnhookDCS:dcsID];
-        [dcsID release];
-    });
-    self.tmuxMode = TMUX_NONE;
-    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
-    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
+        [_tmuxController detach];
+        // Autorelease the gateway because it called this function so we can't free
+        // it immediately.
+        [_tmuxGateway autorelease];
+        _tmuxGateway = nil;
+        [_tmuxController release];
+        _tmuxController = nil;
+        [mutableState appendStringAtCursor:@"Detached"];
+        [mutableState appendCarriageReturnLineFeed];
+        [terminal.parser forceUnhookDCS:dcsID];
+        self.tmuxMode = TMUX_NONE;
+        [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
+        [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
+    }];
 }
 
 - (void)tmuxCannotSendCharactersInSupplementaryPlanes:(NSString *)string windowPane:(int)windowPane {
