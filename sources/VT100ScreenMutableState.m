@@ -34,6 +34,7 @@
 @implementation VT100ScreenMutableState {
     BOOL _terminalEnabled;
     VT100Terminal *_terminal;
+    BOOL _echoProbeShouldSendPassword;
 }
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
@@ -62,6 +63,8 @@
         _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:_terminal
                                                      slownessDetector:_triggerEvaluator.triggersSlownessDetector
                                                                 queue:_queue];
+        _echoProbe = [[iTermEchoProbe alloc] init];
+        _echoProbe.delegate = self;
     }
     return self;
 }
@@ -2352,6 +2355,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 // WARNING: This is called on PTYTask's thread.
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority {
+    [_echoProbe updateEchoProbeStateWithTokenCVector:&vector];
     [_tokenExecutor addTokens:vector length:length highPriority:highPriority];
 }
 
@@ -2913,5 +2917,54 @@ launchCoprocessWithCommand:(NSString *)command
     }];
 }
 
+#pragma mark - iTermEchoProbeDelegate
+
+- (void)echoProbe:(iTermEchoProbe *)echoProbe writeData:(NSData *)data {
+    __weak __typeof(self) weakSelf = self;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [weakSelf.echoProbeDelegate echoProbe:echoProbe writeData:data];
+    }];
+}
+
+- (void)echoProbe:(iTermEchoProbe *)echoProbe writeString:(NSString *)string {
+    __weak __typeof(self) weakSelf = self;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [weakSelf.echoProbeDelegate echoProbe:echoProbe writeString:string];
+    }];
+}
+
+- (void)echoProbeDidFail:(iTermEchoProbe *)echoProbe {
+    __weak __typeof(self) weakSelf = self;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        id<iTermEchoProbeDelegate> echoProbeDelegate = weakSelf.echoProbeDelegate;
+        if (!echoProbeDelegate) {
+            [echoProbe reset];
+        }
+        [echoProbeDelegate echoProbeDidFail:echoProbe];
+    }];
+}
+
+- (void)echoProbeDidSucceed:(iTermEchoProbe *)echoProbe {
+    __weak __typeof(self) weakSelf = self;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [weakSelf.echoProbeDelegate echoProbeDidSucceed:echoProbe];
+    }];
+}
+
+- (BOOL)echoProbeShouldSendPassword:(iTermEchoProbe *)echoProbe {
+    return _echoProbeShouldSendPassword;
+}
+
+- (void)echoProbeDelegateWillChange:(iTermEchoProbe *)echoProbe {
+}
+
+- (void)setEchoProbeDelegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate {
+    if (echoProbeDelegate == _echoProbeDelegate) {
+        return;
+    }
+    [self.echoProbeDelegate echoProbeDelegateWillChange:self.echoProbe];
+    _echoProbeDelegate = echoProbeDelegate;
+    _echoProbeShouldSendPassword = [echoProbeDelegate echoProbeShouldSendPassword:self.echoProbe];
+}
 
 @end

@@ -10,6 +10,8 @@
 #import "VT100ScreenDelegate.h"
 
 @protocol VT100ScreenConfiguration;
+@class iTermEchoProbe;
+@protocol iTermEchoProbeDelegate;
 @protocol iTermOrderedToken;
 @class iTermTokenExecutor;
 
@@ -29,6 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) iTermTokenExecutor *tokenExecutor;
 @property (nonatomic) BOOL exited;
 @property (nonatomic, strong, readonly) VT100Terminal *terminal;
+@property (nonatomic, strong) iTermEchoProbe *echoProbe;
+@property (nonatomic, weak) id<iTermEchoProbeDelegate> echoProbeDelegate;
 
 #warning TODO: Remove slownessDetector
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;

@@ -28,6 +28,7 @@
 @class VT100ScreenMutableState;
 @class VT100Terminal;
 @class iTermAsyncFilter;
+@protocol iTermEchoProbeDelegate;
 @class iTermExpect;
 @protocol iTermFilterDestination;
 @protocol iTermMark;
@@ -85,6 +86,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, retain) id<VT100ScreenConfiguration> config;
 @property(nonatomic) long long fakePromptDetectedAbsLine;
 @property(nonatomic) long long lastPromptLine;
+@property(nonatomic, readonly) BOOL echoProbeIsActive;
 
 // Designated initializer.
 - (instancetype)initWithDarkMode:(BOOL)darkMode
@@ -264,6 +266,12 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block;
+- (void)beginEchoProbeWithBackspace:(NSData *)backspace
+                           password:(NSString *)password
+                           delegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate;
+- (void)sendPasswordInEchoProbe;
+- (void)setEchoProbeDelegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate;
+- (void)resetEchoProbe;
 
 @end
 

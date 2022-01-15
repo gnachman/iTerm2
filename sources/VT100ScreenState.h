@@ -143,6 +143,7 @@ NS_ASSUME_NONNULL_BEGIN
 // can wait for prompts.
 @property (nonatomic, readonly) BOOL shouldExpectPromptMarks;
 @property (atomic, readonly) BOOL needsRedraw;
+@property (nonatomic, readonly) BOOL echoProbeIsActive;
 
 @end
 
