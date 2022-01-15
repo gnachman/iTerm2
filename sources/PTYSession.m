@@ -9840,7 +9840,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewResetTerminal {
-    [_screen.terminal gentleReset];
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        [terminal gentleReset];
+    }];
 }
 
 - (CGFloat)textViewBadgeTopMargin {
