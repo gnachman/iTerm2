@@ -3901,7 +3901,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       inProfile:aDict]];
     [_textview setUseNativePowerlineGlyphs:[iTermProfilePreferences boolForKey:KEY_POWERLINE inProfile:aDict]];
     [self setEncoding:[iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:aDict]];
-    [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]];
+    [self setTermVariable:[iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:aDict]
+                 terminal:terminal];
     [terminal setAnswerBackString:[iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:aDict]];
     [self setAntiIdleCode:[iTermProfilePreferences intForKey:KEY_IDLE_CODE inProfile:aDict]];
     [self setAntiIdlePeriod:[iTermProfilePreferences doubleForKey:KEY_IDLE_PERIOD inProfile:aDict]];
@@ -4327,13 +4328,13 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     return _screen.terminal;
 }
 
-- (void)setTermVariable:(NSString *)termVariable {
+- (void)setTermVariable:(NSString *)termVariable terminal:(VT100Terminal *)terminal {
     if (self.isTmuxClient) {
         return;
     }
     [_termVariable autorelease];
     _termVariable = [termVariable copy];
-    [_screen.terminal setTermType:_termVariable];
+    [terminal setTermType:_termVariable];
 }
 
 - (void)setView:(SessionView *)newView {
