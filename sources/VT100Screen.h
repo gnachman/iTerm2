@@ -88,6 +88,19 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic) long long lastPromptLine;
 @property(nonatomic, readonly) BOOL echoProbeIsActive;
 
+@property (nonatomic, readonly) BOOL terminalSoftAlternateScreenMode;
+@property (nonatomic, readonly) MouseMode terminalMouseMode;
+@property (nonatomic, readonly) NSStringEncoding terminalEncoding;
+@property (nonatomic, readonly) BOOL terminalSendReceiveMode;
+@property (nonatomic, readonly) VT100Output *terminalOutput;
+@property (nonatomic, readonly) BOOL terminalAllowPasteBracketing;
+@property (nonatomic, readonly) NSMutableArray<NSNumber *> *terminalSendModifiers;
+@property (nonatomic, readonly) VT100TerminalKeyReportingFlags terminalKeyReportingFlags;
+@property (nonatomic, readonly) BOOL terminalReportFocus;
+@property (nonatomic, readonly) BOOL terminalReportKeyUp;
+@property (nonatomic, readonly) BOOL terminalCursorMode;
+@property (nonatomic, readonly) BOOL terminalKeypadMode;
+
 // Designated initializer.
 - (instancetype)initWithDarkMode:(BOOL)darkMode
                    configuration:(id<VT100ScreenConfiguration>)config;

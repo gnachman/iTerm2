@@ -79,6 +79,21 @@ static const int kDefaultMaxScrollbackLines = 1000;
 @synthesize shouldExpectPromptMarks = _shouldExpectPromptMarks;
 @synthesize needsRedraw = _needsRedraw;
 @synthesize echoProbeIsActive = _echoProbeIsActive;
+@synthesize terminalSoftAlternateScreenMode = _terminalSoftAlternateScreenMode;
+@synthesize terminalMouseMode = _terminalMouseMode;
+@synthesize terminalEncoding = _terminalEncoding;
+@synthesize terminalSendReceiveMode = _terminalSendReceiveMode;
+@synthesize terminalOutput = _terminalOutput;
+@synthesize terminalAllowPasteBracketing = _terminalAllowPasteBracketing;
+@synthesize terminalSendModifiers = _terminalSendModifiers;
+@synthesize terminalKeyReportingFlags = _terminalKeyReportingFlags;
+@synthesize terminalReportFocus = _terminalReportFocus;
+@synthesize terminalReportKeyUp = _terminalReportKeyUp;
+@synthesize terminalCursorMode = _terminalCursorMode;
+@synthesize terminalKeypadMode = _terminalKeypadMode;
+@synthesize terminalPreviousMouseMode = _terminalPreviousMouseMode;
+@synthesize terminalForegroundColorCode = _terminalForegroundColorCode;
+@synthesize terminalBackgroundColorCode = _terminalBackgroundColorCode;
 
 - (instancetype)initForMutation {
     self = [super init];
@@ -104,6 +119,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
     return self;
 }
 
+#warning TODO: Test this
 - (instancetype)initWithState:(VT100ScreenMutableState *)source {
     self = [super init];
     if (self) {
@@ -160,6 +176,22 @@ static const int kDefaultMaxScrollbackLines = 1000;
         }];
         _markCache = temp;
         _echoProbeIsActive = source.echoProbe.isActive;
+
+        _terminalSoftAlternateScreenMode = source.terminalSoftAlternateScreenMode;
+        _terminalMouseMode = source.terminalMouseMode;
+        _terminalEncoding = source.terminalEncoding;
+        _terminalSendReceiveMode = source.terminalSendReceiveMode;
+        _terminalOutput = [source.terminalOutput copy];
+        _terminalAllowPasteBracketing = source.terminalAllowPasteBracketing;
+        _terminalSendModifiers = source.terminalSendModifiers;
+        _terminalKeyReportingFlags = source.terminalKeyReportingFlags;
+        _terminalReportFocus = source.terminalReportFocus;
+        _terminalReportKeyUp = source.terminalReportKeyUp;
+        _terminalCursorMode = source.terminalCursorMode;
+        _terminalKeypadMode = source.terminalKeypadMode;
+        _terminalPreviousMouseMode = source.terminalPreviousMouseMode;
+        _terminalForegroundColorCode = source.terminalForegroundColorCode;
+        _terminalBackgroundColorCode = source.terminalBackgroundColorCode;
 
         _animatedLines = [source.animatedLines copy];
         _pasteboardString = [source.pasteboardString copy];

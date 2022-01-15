@@ -276,9 +276,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // Call this on the main thread to sync with the mutation thread. In the block you can adjust
 // mutable state and main thread state safely. The block does not escape and is called synchronously.
 // It may block for some time until the current token or other high-priority tasks finish processing.
-- (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
-                                                            VT100ScreenMutableState *mutableState,
-                                                            id<VT100ScreenDelegate> delegate))block;
+// Pass a nil block to sync state without doing anything else.
+- (void)performBlockWithJoinedThreads:(void (^ _Nullable NS_NOESCAPE)(VT100Terminal *terminal,
+                                                                      VT100ScreenMutableState *mutableState,
+                                                                      id<VT100ScreenDelegate> delegate))block;
 
 #pragma mark - State Restoration
 

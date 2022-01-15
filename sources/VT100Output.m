@@ -99,6 +99,25 @@ typedef enum {
     return self;
 }
 
+- (instancetype)initWithOutput:(VT100Output *)source {
+    self = [super init];
+    if (self) {
+        for (int i = 0; i < TERMINFO_KEYS; i ++) {
+            if (source->_keyStrings[i]) {
+                _keyStrings[i] = strdup(source->_keyStrings[i]);
+            }
+        }
+        _standard = source->_standard;
+        _termType = [source->_termType copy];
+        _keypadMode = source->_keypadMode;
+        _mouseFormat = source->_mouseFormat;
+        _cursorMode = source->_cursorMode;
+        _optionIsMetaForSpecialKeys = source->_optionIsMetaForSpecialKeys;
+        _vtLevel = source->_vtLevel;
+    }
+    return self;
+}
+
 - (void)dealloc {
     for (int i = 0; i < TERMINFO_KEYS; i ++) {
         if (_keyStrings[i]) {
@@ -1368,6 +1387,17 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
     NSString *report = [NSString stringWithFormat:@"\e]1337;ReportVariable=%@\a",
                         encodedValue ?: @""];
     return [report dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+#pragma mark - NSCopying
+
+#warning TODO: Test this, ensure I got all state copied
+- (id)copyWithZone:(NSZone *)zone {
+    return [[VT100Output alloc] initWithOutput:self];
+}
+
+- (VT100Output *)copy {
+    return [self copyWithZone:nil];
 }
 
 @end
