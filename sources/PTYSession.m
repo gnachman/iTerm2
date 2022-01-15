@@ -11585,25 +11585,29 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)maybeResetTerminalStateOnHostChange:(VT100RemoteHost *)newRemoteHost {
-    if (_xtermMouseReporting && self.terminal.mouseMode != MOUSE_REPORTING_NONE) {
-        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
-        if ([number boolValue]) {
-            self.terminal.mouseMode = MOUSE_REPORTING_NONE;
-        } else if (!number) {
-            [self offerToTurnOffMouseReportingOnHostChange];
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        if (_xtermMouseReporting && terminal.mouseMode != MOUSE_REPORTING_NONE) {
+            NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffMouseReportingOnHostChangeUserDefaultsKey];
+            if ([number boolValue]) {
+                terminal.mouseMode = MOUSE_REPORTING_NONE;
+            } else if (!number) {
+                [self offerToTurnOffMouseReportingOnHostChange];
+            }
         }
-    }
-    if (self.screen.terminalReportFocus) {
-        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
-        if ([number boolValue]) {
-            self.terminal.reportFocus = NO;
-        } else if (!number) {
-            [self offerToTurnOffFocusReportingOnHostChange];
+        if (terminal.reportFocus) {
+            NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffFocusReportingOnHostChangeUserDefaultsKey];
+            if ([number boolValue]) {
+                terminal.reportFocus = NO;
+            } else if (!number) {
+                [self offerToTurnOffFocusReportingOnHostChange];
+            }
         }
-    }
-    if (self.terminal.bracketedPasteMode && ![self shellIsFishForHost:newRemoteHost]) {
-        [self maybeTurnOffPasteBracketing];
-    }
+        if (terminal.bracketedPasteMode && ![self shellIsFishForHost:newRemoteHost]) {
+            [self maybeTurnOffPasteBracketing];
+        }
+    }];
 }
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUses {
