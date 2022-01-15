@@ -8802,7 +8802,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // Show advanced paste window.
 - (IBAction)pasteOptions:(id)sender {
     [_pasteHelper showPasteOptionsInWindow:_delegate.realParentWindow.window
-                         bracketingEnabled:_screen.terminal.bracketedPasteMode];
+                         bracketingEnabled:_screen.terminalBracketedPasteMode];
 }
 
 - (void)textViewFontDidChange
