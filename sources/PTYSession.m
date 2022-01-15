@@ -14660,7 +14660,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)naggingControllerAbortDownload {
-    [self.terminal stopReceivingFile];
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        [terminal stopReceivingFile];
+    }];
 }
 
 - (void)naggingControllerAbortUpload {
