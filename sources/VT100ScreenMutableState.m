@@ -278,6 +278,10 @@
     return self.terminal.receivingFile;
 }
 
+- (BOOL)terminalMetaSendsEscape {
+    return self.terminal.metaSendsEscape;
+}
+
 - (MouseMode)terminalPreviousMouseMode {
     return self.terminal.previousMouseMode;
 }

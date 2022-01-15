@@ -8701,7 +8701,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (iTermOptionKeyBehavior)optionKey {
     if ([self shouldRespectTerminalMetaSendsEscape] &&
-        self.terminal.metaSendsEscape &&
+        _screen.terminalMetaSendsEscape &&
         [iTermProfilePreferences boolForKey:KEY_LEFT_OPTION_KEY_CHANGEABLE inProfile:self.profile]) {
         return OPT_ESC;
     }
@@ -8710,7 +8710,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (iTermOptionKeyBehavior)rightOptionKey {
     if ([self shouldRespectTerminalMetaSendsEscape] &&
-        self.terminal.metaSendsEscape &&
+        _screen.terminalMetaSendsEscape &&
         [iTermProfilePreferences boolForKey:KEY_RIGHT_OPTION_KEY_CHANGEABLE inProfile:self.profile]) {
         return OPT_ESC;
     }
