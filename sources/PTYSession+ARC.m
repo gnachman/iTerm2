@@ -182,7 +182,16 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 
 - (void)didFindPasteBracketingOopsie {
     [_expect cancelExpectation:self.pasteBracketingOopsieExpectation];
-    [self offerToTurnOffBracketedPasteOnHostChange];
+    [self maybeTurnOffPasteBracketing];
+}
+
+- (void)maybeTurnOffPasteBracketing {
+    NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
+    if (number.boolValue) {
+        self.terminal.bracketedPasteMode = NO;
+    } else if (!number) {
+        [self offerToTurnOffBracketedPasteOnHostChange];
+    }
  }
 
 #pragma mark - iTermPopupWindowPresenter

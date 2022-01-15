@@ -11611,12 +11611,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
     }
     if (self.terminal.bracketedPasteMode && ![self shellIsFishForHost:newRemoteHost]) {
-        NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
-        if ([number boolValue]) {
-            self.terminal.bracketedPasteMode = NO;
-        } else if (!number) {
-            [self offerToTurnOffBracketedPasteOnHostChange];
-        }
+        [self maybeTurnOffPasteBracketing];
     }
 }
 
