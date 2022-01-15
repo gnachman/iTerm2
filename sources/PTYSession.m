@@ -8768,7 +8768,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     int spacesPerTab = -1;
     if (flags & kPTYSessionPasteWithShellEscapedTabs) {
         tabTransform = kTabTransformEscapeWithCtrlV;
-    } else if (!_screen.terminal.bracketedPasteMode) {
+    } else if (!_screen.terminalBracketedPasteMode) {
         spacesPerTab = [_pasteHelper numberOfSpacesToConvertTabsTo:theString];
         if (spacesPerTab >= 0) {
             tabTransform = kTabTransformConvertToSpaces;

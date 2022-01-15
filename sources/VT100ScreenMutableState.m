@@ -244,6 +244,10 @@
     return self.terminal.allowPasteBracketing;
 }
 
+- (BOOL)terminalBracketedPasteMode {
+    return self.terminal.bracketedPasteMode;
+}
+
 - (NSMutableArray<NSNumber *> *)terminalSendModifiers {
     return self.terminal.sendModifiers;
 }
