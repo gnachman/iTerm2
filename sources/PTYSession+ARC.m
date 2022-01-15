@@ -188,7 +188,11 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 - (void)maybeTurnOffPasteBracketing {
     NSNumber *number = [[NSUserDefaults standardUserDefaults] objectForKey:kTurnOffBracketedPasteOnHostChangeUserDefaultsKey];
     if (number.boolValue) {
-        self.terminal.bracketedPasteMode = NO;
+        [self.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                     VT100ScreenMutableState *mutableState,
+                                                     id<VT100ScreenDelegate> delegate) {
+            terminal.bracketedPasteMode = NO;
+        }];
     } else if (!number) {
         [self offerToTurnOffBracketedPasteOnHostChange];
     }

@@ -2051,10 +2051,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
         const int line = [self numberOfScrollbackLines] + self.cursorY;
         NSString *pwd = [self workingDirectoryOnLine:line];
-        iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenCurrentHostDidChange:remoteHostObj pwd:pwd];
-            [unpauser unpause];
         }];
     }
 }
