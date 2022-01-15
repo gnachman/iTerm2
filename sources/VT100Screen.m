@@ -1232,6 +1232,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [self mutAddNoteWithText:text inAbsoluteRange:absRange];
 }
 
+// Warning: this is called on PTYTask's thread.
+- (void)threadedReadTask:(char *)buffer length:(int)length {
+    [_mutableState threadedReadTask:buffer length:length];
+}
 
 // Warning: this is called on PTYTask's thread.
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority {

@@ -249,6 +249,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Token Execution
 
+- (void)threadedReadTask:(char *)buffer length:(int)length;
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
 - (void)scheduleTokenExecution;
 - (void)injectData:(NSData *)data;

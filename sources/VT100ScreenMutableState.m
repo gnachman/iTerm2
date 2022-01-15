@@ -2354,6 +2354,24 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - Token Execution
 
 // WARNING: This is called on PTYTask's thread.
+- (void)threadedReadTask:(char *)buffer length:(int)length {
+    // Pass the input stream to the parser.
+    [self.terminal.parser putStreamData:buffer length:length];
+
+    // Parse the input stream into an array of tokens.
+    CVector vector;
+    CVectorCreate(&vector, 100);
+    [self.terminal.parser addParsedTokensToVector:&vector];
+
+    if (CVectorCount(&vector) == 0) {
+        CVectorDestroy(&vector);
+        return;
+    }
+
+    [self addTokens:vector length:length highPriority:NO];
+}
+
+// WARNING: This is called on PTYTask's thread.
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority {
     [_echoProbe updateEchoProbeStateWithTokenCVector:&vector];
     [_tokenExecutor addTokens:vector length:length highPriority:highPriority];
