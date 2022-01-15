@@ -5172,9 +5172,13 @@ verticalSpacing:(CGFloat)verticalSpacing {
 
 - (void)terminalFileShouldStop:(NSNotification *)notification {
     if ([notification object] == _download) {
-        [_screen.terminal stopReceivingFile];
-        [_download endOfData];
-        self.download = nil;
+        [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                 VT100ScreenMutableState *mutableState,
+                                                 id<VT100ScreenDelegate> delegate) {
+            [terminal stopReceivingFile];
+            [_download endOfData];
+            self.download = nil;
+        }];
     } else if ([notification object] == _upload) {
         [_pasteHelper abort];
         [_upload endOfData];
