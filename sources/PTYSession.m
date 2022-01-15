@@ -2485,96 +2485,100 @@ ITERM_WEAKLY_REFERENCEABLE
 // "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {
     DLog(@"terminate called from %@", [NSThread callStackSymbols]);
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
 
-    if ([[self textview] isFindingCursor]) {
-        [[self textview] endFindCursor];
-    }
-    if (_exited && !_shortLivedSingleUse) {
-        [self _maybeWarnAboutShortLivedSessions];
-    }
-    if (self.tmuxMode == TMUX_CLIENT) {
-        assert([_delegate tmuxWindow] >= 0);
-        [_tmuxController deregisterWindow:[_delegate tmuxWindow]
-                               windowPane:self.tmuxPane
-                                  session:self];
-        // This call to fitLayoutToWindows is necessary to handle the case where
-        // a small window closes and leaves behind a larger (e.g., fullscreen)
-        // window. We want to set the client size to that of the smallest
-        // remaining window.
-        int n = [[_delegate sessions] count];
-        if ([[_delegate sessions] indexOfObjectIdenticalTo:self] != NSNotFound) {
-            n--;
+        if ([[self textview] isFindingCursor]) {
+            [[self textview] endFindCursor];
         }
-        if (n == 0) {
-            // The last session in this tab closed so check if the client has
-            // changed size
-            DLog(@"Last session in tab closed. Check if the client has changed size");
-            [_tmuxController fitLayoutToWindows];
+        if (_exited && !_shortLivedSingleUse) {
+            [self _maybeWarnAboutShortLivedSessions];
         }
-        _tmuxStatusBarMonitor.active = NO;
-        [_tmuxStatusBarMonitor release];
-        _tmuxStatusBarMonitor = nil;
+        if (self.tmuxMode == TMUX_CLIENT) {
+            assert([_delegate tmuxWindow] >= 0);
+            [_tmuxController deregisterWindow:[_delegate tmuxWindow]
+                                   windowPane:self.tmuxPane
+                                      session:self];
+            // This call to fitLayoutToWindows is necessary to handle the case where
+            // a small window closes and leaves behind a larger (e.g., fullscreen)
+            // window. We want to set the client size to that of the smallest
+            // remaining window.
+            int n = [[_delegate sessions] count];
+            if ([[_delegate sessions] indexOfObjectIdenticalTo:self] != NSNotFound) {
+                n--;
+            }
+            if (n == 0) {
+                // The last session in this tab closed so check if the client has
+                // changed size
+                DLog(@"Last session in tab closed. Check if the client has changed size");
+                [_tmuxController fitLayoutToWindows];
+            }
+            _tmuxStatusBarMonitor.active = NO;
+            [_tmuxStatusBarMonitor release];
+            _tmuxStatusBarMonitor = nil;
 
-        [self uninstallTmuxTitleMonitor];
-        [self uninstallTmuxForegroundJobMonitor];
-    } else if (self.tmuxMode == TMUX_GATEWAY) {
-        [_tmuxController detach];
-        [_tmuxGateway release];
-        _tmuxGateway = nil;
-    }
-    BOOL undoable = (![self isTmuxClient] &&
-                     !_shouldRestart &&
-                     !_synthetic &&
-                     ![[iTermController sharedInstance] applicationIsQuitting]);
-    [_screen.terminal.parser forceUnhookDCS:nil];
-    self.tmuxMode = TMUX_NONE;
-    [_tmuxController release];
-    _hideAfterTmuxWindowOpens = NO;
-    _tmuxController = nil;
-    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
-    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
+            [self uninstallTmuxTitleMonitor];
+            [self uninstallTmuxForegroundJobMonitor];
+        } else if (self.tmuxMode == TMUX_GATEWAY) {
+            [_tmuxController detach];
+            [_tmuxGateway release];
+            _tmuxGateway = nil;
+        }
+        BOOL undoable = (![self isTmuxClient] &&
+                         !_shouldRestart &&
+                         !_synthetic &&
+                         ![[iTermController sharedInstance] applicationIsQuitting]);
+        [terminal.parser forceUnhookDCS:nil];
+        self.tmuxMode = TMUX_NONE;
+        [_tmuxController release];
+        _hideAfterTmuxWindowOpens = NO;
+        _tmuxController = nil;
+        [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
+        [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
 
-    // The source pane may have just exited. Dogs and cats living together!
-    // Mass hysteria!
-    [[MovePaneController sharedInstance] exitMovePaneMode];
+        // The source pane may have just exited. Dogs and cats living together!
+        // Mass hysteria!
+        [[MovePaneController sharedInstance] exitMovePaneMode];
 
-    // deregister from the notification center
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+        // deregister from the notification center
+        [[NSNotificationCenter defaultCenter] removeObserver:self];
 
-    if (_liveSession) {
-        [_liveSession terminate];
-    }
+        if (_liveSession) {
+            [_liveSession terminate];
+        }
 
-    DLog(@"  terminate: exited = YES");
-    [self setExited:YES];
-    [_view retain];  // hardstop and revive will release this.
-    if (undoable) {
-        [self makeTerminationUndoable];
-    } else {
-        [self hardStop];
-    }
-    [[iTermSessionHotkeyController sharedInstance] removeSession:self];
+        DLog(@"  terminate: exited = YES");
+        [self setExited:YES];
+        [_view retain];  // hardstop and revive will release this.
+        if (undoable) {
+            [self makeTerminationUndoable];
+        } else {
+            [self hardStop];
+        }
+        [[iTermSessionHotkeyController sharedInstance] removeSession:self];
 
-    // final update of display
-    [self updateDisplayBecause:@"terminate session"];
+        // final update of display
+        [self updateDisplayBecause:@"terminate session"];
 
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionWillTerminateNotification
-                                                        object:self];
-    [_delegate removeSession:self];
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionWillTerminateNotification
+                                                            object:self];
+        [_delegate removeSession:self];
 
-    _screen.delegate = nil;
-    _screen.intervalTreeObserver = nil;
+        _screen.delegate = nil;
+        _screen.intervalTreeObserver = nil;
 
-    _screen.terminalEnabled = NO;
-    if (_view.findDriverDelegate == self) {
-        _view.findDriverDelegate = nil;
-    }
+        _screen.terminalEnabled = NO;
+        if (_view.findDriverDelegate == self) {
+            _view.findDriverDelegate = nil;
+        }
 
-    [_pasteHelper abort];
+        [_pasteHelper abort];
 
-    [[_delegate realParentWindow] sessionDidTerminate:self];
+        [[_delegate realParentWindow] sessionDidTerminate:self];
 
-    _delegate = nil;
+        _delegate = nil;
+    }];
 }
 
 - (void)setExited:(BOOL)exited {
