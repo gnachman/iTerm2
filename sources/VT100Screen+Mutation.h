@@ -81,9 +81,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutResetScrollbackOverflow;
 - (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord;
 - (void)mutInvalidateCommandStartCoord;
-- (id<iTermMark> _Nullable)mutAddMarkStartingAtAbsoluteLine:(long long)line
-                                                    oneLine:(BOOL)oneLine
-                                                    ofClass:(Class)markClass;
 - (void)mutSaveFindContextPosition;
 - (void)mutStoreLastPositionInLineBufferAsFindContextSavedPosition;
 - (void)mutRemoveAllTabStops;
