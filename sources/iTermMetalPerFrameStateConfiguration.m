@@ -36,7 +36,7 @@ static vector_float4 VectorForColor(NSColor *color) {
     _useBoldFont = textView.useBoldFont;
     _useItalicFont = textView.useItalicFont;
     _useNonAsciiFont = textView.useNonAsciiFont;
-    _reverseVideo = textView.dataSource.terminal.reverseVideo;
+    _reverseVideo = textView.dataSource.terminalReverseVideo;
     _useCustomBoldColor = textView.useCustomBoldColor;
     _brightenBold = textView.brightenBold;
     _thinStrokes = textView.thinStrokes;

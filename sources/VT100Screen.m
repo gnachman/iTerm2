@@ -1492,6 +1492,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.terminalMetaSendsEscape;
 }
 
+- (BOOL)terminalReverseVideo {
+    return _state.terminalReverseVideo;
+}
+
+- (BOOL)terminalAlternateScrollMode {
+    return _state.terminalAlternateScrollMode;
+}
+
+- (BOOL)terminalAutorepeatMode {
+    return _state.terminalAutorepeatMode;
+}
+
 - (VT100GridCoordRange)commandRange {
     return _state.commandRange;
 }

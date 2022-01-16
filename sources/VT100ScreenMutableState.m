@@ -286,6 +286,18 @@
     return self.terminal.metaSendsEscape;
 }
 
+- (BOOL)terminalReverseVideo {
+    return self.terminal.reverseVideo;
+}
+
+- (BOOL)terminalAlternateScrollMode {
+    return self.terminal.alternateScrollMode;
+}
+
+- (BOOL)terminalAutorepeatMode {
+    return self.terminal.autorepeatMode;
+}
+
 - (MouseMode)terminalPreviousMouseMode {
     return self.terminal.previousMouseMode;
 }
