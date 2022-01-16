@@ -6902,28 +6902,30 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)addNoteAtCursor {
-    PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
-    VT100GridCoordRange rangeAtCursor =
-    [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX - 1,
-                                                   _screen.cursorY - 1)];
-    VT100GridCoordRange rangeBeforeCursor =
-    [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX - 2,
-                                                   _screen.cursorY - 1)];
-    VT100GridCoordRange rangeAfterCursor =
-    [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX,
-                                                   _screen.cursorY - 1)];
-    if (VT100GridCoordRangeLength(rangeAtCursor, _screen.width) > 0) {
-        [_screen addNote:note inRange:rangeAtCursor focus:YES];
-    } else if (VT100GridCoordRangeLength(rangeAfterCursor, _screen.width) > 0) {
-        [_screen addNote:note inRange:rangeAfterCursor focus:YES];
-    } else if (VT100GridCoordRangeLength(rangeBeforeCursor, _screen.width) > 0) {
-        [_screen addNote:note inRange:rangeBeforeCursor focus:YES];
-    } else {
-        int y = _screen.cursorY - 1 + [_screen numberOfScrollbackLines];
-        [_screen addNote:note
-                 inRange:VT100GridCoordRangeMake(0, y, _screen.width, y)
-                   focus:YES];
-    }
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        PTYAnnotation *note = [[[PTYAnnotation alloc] init] autorelease];
+        VT100GridCoordRange rangeAtCursor =
+        [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX - 1,
+                                                       _screen.cursorY - 1)];
+        VT100GridCoordRange rangeBeforeCursor =
+        [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX - 2,
+                                                       _screen.cursorY - 1)];
+        VT100GridCoordRange rangeAfterCursor =
+        [self smartSelectionRangeAt:VT100GridCoordMake(_screen.cursorX,
+                                                       _screen.cursorY - 1)];
+        if (VT100GridCoordRangeLength(rangeAtCursor, _screen.width) > 0) {
+            [_screen addNote:note inRange:rangeAtCursor focus:YES];
+        } else if (VT100GridCoordRangeLength(rangeAfterCursor, _screen.width) > 0) {
+            [_screen addNote:note inRange:rangeAfterCursor focus:YES];
+        } else if (VT100GridCoordRangeLength(rangeBeforeCursor, _screen.width) > 0) {
+            [_screen addNote:note inRange:rangeBeforeCursor focus:YES];
+        } else {
+            int y = _screen.cursorY - 1 + [_screen numberOfScrollbackLines];
+            [_screen addNote:note
+                     inRange:VT100GridCoordRangeMake(0, y, _screen.width, y)
+                       focus:YES];
+        }
+    }];
 }
 
 - (void)textViewToggleAnnotations {
