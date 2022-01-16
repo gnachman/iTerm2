@@ -1372,10 +1372,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)clearScrollbackBuffer {
-    [self mutClearScrollbackBuffer];
-}
-
 - (void)resetTimestamps {
     [self mutResetTimestamps];
 }

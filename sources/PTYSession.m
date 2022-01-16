@@ -4665,7 +4665,9 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 }
 
 - (void)clearScrollbackBuffer {
-    [_screen clearScrollbackBuffer];
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState clearScrollbackBuffer];
+    }];
     if (self.isTmuxClient) {
         [_tmuxController clearHistoryForWindowPane:self.tmuxPane];
     }
