@@ -1385,7 +1385,7 @@
                                                     _dataSource.cursorY - 1);
     _drawingHelper.totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
     _drawingHelper.numberOfScrollbackLines = [_dataSource numberOfScrollbackLines];
-    _drawingHelper.reverseVideo = [[_dataSource terminal] reverseVideo];
+    _drawingHelper.reverseVideo = _dataSource.terminalReverseVideo;
     _drawingHelper.textViewIsActiveSession = [self.delegate textViewIsActiveSession];
     _drawingHelper.isInKeyWindow = [self isInKeyWindow];
     // Draw the cursor filled in when we're inactive if there's a popup open or key focus was stolen.
@@ -3131,7 +3131,7 @@
 - (VT100GridCoord)moveCursorHorizontallyTo:(VT100GridCoord)target from:(VT100GridCoord)cursor {
     DLog(@"Moving cursor horizontally from %@ to %@",
          VT100GridCoordDescription(cursor), VT100GridCoordDescription(target));
-    VT100Terminal *terminal = [_dataSource terminal];
+    VT100Output *terminalOutput = [_dataSource terminalOutput];
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     NSComparisonResult initialOrder = VT100GridCoordOrder(cursor, target);
     // Note that we could overshoot the destination because of double-width characters if the target
@@ -3139,12 +3139,12 @@
     while (![extractor coord:cursor isEqualToCoord:target]) {
         switch (initialOrder) {
             case NSOrderedAscending:
-                [_delegate writeStringWithLatin1Encoding:[[terminal.output keyArrowRight:0] stringWithEncoding:NSISOLatin1StringEncoding]];
+                [_delegate writeStringWithLatin1Encoding:[[terminalOutput keyArrowRight:0] stringWithEncoding:NSISOLatin1StringEncoding]];
                 cursor = [extractor successorOfCoord:cursor];
                 break;
 
             case NSOrderedDescending:
-                [_delegate writeStringWithLatin1Encoding:[[terminal.output keyArrowLeft:0] stringWithEncoding:NSISOLatin1StringEncoding]];
+                [_delegate writeStringWithLatin1Encoding:[[terminalOutput keyArrowLeft:0] stringWithEncoding:NSISOLatin1StringEncoding]];
                 cursor = [extractor predecessorOfCoord:cursor];
                 break;
 
@@ -3161,7 +3161,7 @@
 
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     VT100GridCoord target = VT100GridCoordMake(clickPoint.x, clickPoint.y);
-    VT100Terminal *terminal = [_dataSource terminal];
+    VT100Output *terminalOutput = [_dataSource terminalOutput];
 
     VT100GridCoord cursor = VT100GridCoordMake([_dataSource cursorX] - 1,
                                                [_dataSource absoluteLineNumberOfCursor] - [_dataSource totalScrollbackOverflow]);
@@ -3184,10 +3184,10 @@
     DLog(@"Move cursor vertically from %@ to y=%d", VT100GridCoordDescription(cursor), target.y);
     while (cursor.y != target.y) {
         if (cursor.y > target.y) {
-            [_delegate writeStringWithLatin1Encoding:[[terminal.output keyArrowUp:0] stringWithEncoding:NSISOLatin1StringEncoding]];
+            [_delegate writeStringWithLatin1Encoding:[[terminalOutput keyArrowUp:0] stringWithEncoding:NSISOLatin1StringEncoding]];
             cursor.y--;
         } else {
-            [_delegate writeStringWithLatin1Encoding:[[terminal.output keyArrowDown:0] stringWithEncoding:NSISOLatin1StringEncoding]];
+            [_delegate writeStringWithLatin1Encoding:[[terminalOutput keyArrowDown:0] stringWithEncoding:NSISOLatin1StringEncoding]];
             cursor.y++;
         }
     }
@@ -5009,7 +5009,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     context->hasActionableKeyMapping = [_delegate hasActionableKeyMappingForEvent:event];
     context->leftOptionKey = [_delegate optionKey];
     context->rightOptionKey = [_delegate rightOptionKey];
-    context->autorepeatMode = [[_dataSource terminal] autorepeatMode];
+    context->autorepeatMode = [_dataSource terminalAutorepeatMode];
 }
 
 - (void)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler
@@ -5186,7 +5186,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (MouseMode)mouseHandlerMouseMode:(PTYMouseHandler *)handler {
-    return _dataSource.terminal.mouseMode;
+    return _dataSource.terminalMouseMode;
 }
 
 - (void)mouseHandlerDidSingleClick:(PTYMouseHandler *)handler {
@@ -5419,8 +5419,8 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 
     if ([self mouseHandlerAlternateScrollModeIsEnabled:mouseHandler]) {
         *forceLatin1 = YES;
-        NSData *data = down ? [_dataSource.terminal.output keyArrowDown:flags] :
-                              [_dataSource.terminal.output keyArrowUp:flags];
+        NSData *data = down ? [_dataSource.terminalOutput keyArrowDown:flags] :
+                              [_dataSource.terminalOutput keyArrowUp:flags];
         return [[[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding] autorelease];
     } else {
         *forceLatin1 = NO;
@@ -5434,11 +5434,11 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
     if ([iTermAdvancedSettingsModel alternateMouseScroll]) {
         return YES;
     }
-    return [self.dataSource.terminal alternateScrollMode];
+    return self.dataSource.terminalAlternateScrollMode;
 }
 
 - (BOOL)mouseHandlerShowingAlternateScreen:(PTYMouseHandler *)mouseHandler {
-    return [self.dataSource.terminal softAlternateScreenMode];
+    return self.dataSource.terminalSoftAlternateScreenMode;
 }
 
 - (void)mouseHandlerWillDrag:(PTYMouseHandler *)mouseHandler {

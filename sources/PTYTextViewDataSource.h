@@ -6,6 +6,7 @@
 #import "ScreenChar.h"
 #import "LineBuffer.h"
 #import "VT100Grid.h"
+#import "VT100Terminal.h"
 
 @class iTermColorMap;
 @class iTermExternalAttributeIndex;
@@ -47,7 +48,12 @@
 
 @protocol PTYTextViewDataSource <iTermLogicalMovementHelperDelegate, iTermTextDataSource>
 
-- (VT100Terminal *)terminal;
+- (BOOL)terminalReverseVideo;
+- (MouseMode)terminalMouseMode;
+- (VT100Output *)terminalOutput;
+- (BOOL)terminalAlternateScrollMode;
+- (BOOL)terminalSoftAlternateScreenMode;
+- (BOOL)terminalAutorepeatMode;
 - (int)height;
 
 // Cursor position is 1-based (the top left is at 1,1).

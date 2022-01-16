@@ -1306,8 +1306,8 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (!attachedToServer) {
         [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
-                                                 VT100ScreenMutableState *mutableState,
-                                                 id<VT100ScreenDelegate> delegate) {
+                                                         VT100ScreenMutableState *mutableState,
+                                                         id<VT100ScreenDelegate> delegate) {
             [terminal resetSendModifiersWithSideEffects:YES];
         }];
     }
@@ -2985,7 +2985,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [mutableState appendStringAtCursor:message];
         if (width > 0) {
             [mutableState appendNativeImageAtCursorWithName:@"BrokenPipeDivider"
-                                                 width:(mutableState.width - mutableState.cursorX + 1)];
+                                                      width:(mutableState.width - mutableState.cursorX + 1)];
         }
         [mutableState appendCarriageReturnLineFeed];
         [terminal setForegroundColor:savedFgColor.foregroundColor
@@ -3948,18 +3948,18 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setUnicodeVersion:[iTermProfilePreferences integerForKey:KEY_UNICODE_VERSION
                                                          inProfile:aDict]];
     [terminal setDisableSmcupRmcup:[iTermProfilePreferences boolForKey:KEY_DISABLE_SMCUP_RMCUP
-                                                                     inProfile:aDict]];
+                                                             inProfile:aDict]];
     [_screen setAllowTitleReporting:[iTermProfilePreferences boolForKey:KEY_ALLOW_TITLE_REPORTING
                                                               inProfile:aDict]];
     const BOOL didAllowPasteBracketing = _screen.terminalAllowPasteBracketing;
     [terminal setAllowPasteBracketing:[iTermProfilePreferences boolForKey:KEY_ALLOW_PASTE_BRACKETING
-                                                                        inProfile:aDict]];
+                                                                inProfile:aDict]];
     if (didAllowPasteBracketing && !_screen.terminalAllowPasteBracketing) {
         // If the user flips the setting off, disable bracketed paste.
         terminal.bracketedPasteMode = NO;
     }
     [terminal setAllowKeypadMode:[iTermProfilePreferences boolForKey:KEY_APPLICATION_KEYPAD_ALLOWED
-                                                            inProfile:aDict]];
+                                                           inProfile:aDict]];
     [_screen setUnlimitedScrollback:[iTermProfilePreferences boolForKey:KEY_UNLIMITED_SCROLLBACK
                                                               inProfile:aDict]];
     [_screen setMaxScrollbackLines:[iTermProfilePreferences intForKey:KEY_SCROLLBACK_LINES
@@ -10437,15 +10437,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         screen_char_t savedFgColor = [terminal foregroundColorCode];
         screen_char_t savedBgColor = [terminal backgroundColorCode];
         [terminal setForegroundColor:ALTSEM_DEFAULT
-                          alternateSemantics:YES];
+                  alternateSemantics:YES];
         [terminal setBackgroundColor:ALTSEM_DEFAULT
-                          alternateSemantics:YES];
+                  alternateSemantics:YES];
         [mutableState appendStringAtCursor:message];
         [mutableState appendCarriageReturnLineFeed];
         [terminal setForegroundColor:savedFgColor.foregroundColor
-                          alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
+                  alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
         [terminal setBackgroundColor:savedBgColor.backgroundColor
-                          alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
+                  alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
     }];
 }
 

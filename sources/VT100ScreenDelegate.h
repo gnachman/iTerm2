@@ -239,7 +239,6 @@
 - (void)screenSetPasteboard:(NSString * _Nonnull)value;
 - (void)screenDidAddNote:(PTYAnnotation * _Nonnull)note focus:(BOOL)focus;
 - (void)screenCopyBufferToPasteboard;
-- (BOOL)screenIsAppendingToPasteboard;
 - (void)screenAppendDataToPasteboard:(NSData * _Nonnull)data;
 
 - (void)screenWillReceiveFileNamed:(NSString * _Nonnull)name

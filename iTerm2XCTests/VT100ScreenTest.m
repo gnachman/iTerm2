@@ -639,10 +639,6 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     [self screenPrintStringIfAllowed:@"(screen dump)"];
 }
 
-- (BOOL)screenIsAppendingToPasteboard {
-    return pasteboard_ != nil && !pasted_;
-}
-
 - (void)screenSetPasteboard:(NSString *)pasteboard {
     pasteboard_ = [[pasteboard copy] autorelease];
 }
