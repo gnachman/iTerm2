@@ -60,19 +60,6 @@
     _mutableState.config = _nextConfig;
 }
 
-#pragma mark - Appending
-
-- (void)mutAppendScreenChars:(const screen_char_t *)line
-                      length:(int)length
-      externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
-                continuation:(screen_char_t)continuation {
-    [_mutableState appendScreenChars:line
-                              length:length
-              externalAttributeIndex:externalAttributeIndex
-                        continuation:continuation];
-}
-
-
 #pragma mark - Arrangements
 
 - (void)mutRestoreInitialSize {

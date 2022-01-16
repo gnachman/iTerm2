@@ -22,10 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) VT100Grid *mutableAltGrid;
 @property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
-- (void)mutAppendScreenChars:(const screen_char_t *)line
-                   length:(int)length
-   externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
-                continuation:(screen_char_t)continuation;
 - (void)mutSetHistory:(NSArray *)history;
 - (void)mutSetAltScreen:(NSArray *)lines;
 - (void)mutCrlf;
