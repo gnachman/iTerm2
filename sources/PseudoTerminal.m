@@ -9848,9 +9848,10 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     [[self currentSession] userInitiatedReset];
 }
 
-- (IBAction)resetCharset:(id)sender
-{
-    [[[self currentSession] terminal] resetCharset];
+- (IBAction)resetCharset:(id)sender {
+    [self.currentSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [terminal resetCharset];
+    }];
 }
 
 - (NSArray<PTYSession *> *)sessionsToSendClearTo {
