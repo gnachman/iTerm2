@@ -50,6 +50,7 @@
 #import "TmuxLayoutParser.h"
 #import "iTermTmuxOptionMonitor.h"
 #import "VT100GridTypes.h"
+#import "VT100ScreenMutableState.h"
 #import "WindowControllerInterface.h"
 
 #define PtyLog DLog
@@ -1500,7 +1501,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [syntheticSession divorceAddressBookEntryFromPreferences];
     [syntheticSession setSessionSpecificProfileValues:@{ KEY_UNLIMITED_SCROLLBACK: @YES }];
     syntheticSession.screen.unlimitedScrollback = YES;
-    [syntheticSession.screen terminalSetCursorVisible:NO];
+    [syntheticSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.cursorVisible = NO;
+    }];
     [self replaceActiveSessionWithSyntheticSession:syntheticSession];
     syntheticSession.filter = query;
     [syntheticSession showFilter];

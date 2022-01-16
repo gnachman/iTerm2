@@ -83,7 +83,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, retain, readonly) id<iTermColorMapReading> colorMap;
 @property(nonatomic, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
 @property(nonatomic, retain) id<VT100ScreenConfiguration> config;
-@property(nonatomic) long long fakePromptDetectedAbsLine;
+@property(nonatomic, readonly) long long fakePromptDetectedAbsLine;
 @property(nonatomic) long long lastPromptLine;
 @property(nonatomic, readonly) BOOL echoProbeIsActive;
 
@@ -262,7 +262,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (VT100GridCoordRange)commandRange;
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
 - (void)scheduleTokenExecution;
-- (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange;
 - (void)injectData:(NSData *)data;
 - (void)setExited:(BOOL)exited;
 - (void)forceCheckTriggers;
