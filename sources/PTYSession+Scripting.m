@@ -1,6 +1,7 @@
 #import "PTYSession+Scripting.h"
 
 #import "DebugLogging.h"
+#import "iTermProfilePreferences.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Session.h"
 #import "NSColor+iTerm.h"
@@ -379,7 +380,7 @@
 }
 
 - (NSString *)answerBackString {
-    return self.terminal.answerBackString;
+    return [iTermProfilePreferences stringForKey:KEY_ANSWERBACK_STRING inProfile:self.profile];
 }
 
 - (void)setAnswerBackString:(NSString *)string {
