@@ -734,7 +734,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             line += 1;
         }
     }
-    [self clearFromAbsoluteLineToEnd:line];
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState clearFromAbsoluteLineToEnd:line];
+    }];
 }
 
 - (VT100ScreenMark *)lastMark {
@@ -1399,10 +1401,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)removeLastLine {
     [self mutRemoveLastLine];
-}
-
-- (void)clearFromAbsoluteLineToEnd:(long long)absLine {
-    [self mutClearFromAbsoluteLineToEnd:absLine];
 }
 
 - (void)setMaxScrollbackLines:(unsigned int)lines {

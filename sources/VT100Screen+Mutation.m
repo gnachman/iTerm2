@@ -90,16 +90,6 @@
     [_mutableState clearScrollbackBuffer];
 }
 
-- (void)clearScrollbackBufferFromLine:(int)line {
-    const int width = _mutableState.width;
-    const int scrollbackLines = [_mutableState.linebuffer numberOfWrappedLinesWithWidth:width];
-    if (scrollbackLines < line) {
-        return;
-    }
-    [self.mutableLineBuffer removeLastWrappedLines:scrollbackLines - line
-                                             width:width];
-}
-
 - (void)mutResetTimestamps {
     [self.mutablePrimaryGrid resetTimestamps];
     [self.mutableAltGrid resetTimestamps];
@@ -135,95 +125,6 @@
           @(numberOfLinesAppended), @(numberOfLinesToPop), @(numberOfLinesRemoved), @(adjustment), @(y));
     _mutableState.currentGrid.cursorY = y;
     DLog(@"Cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
-}
-
-- (void)mutClearFromAbsoluteLineToEnd:(long long)absLine {
-    const VT100GridCoord cursorCoord = VT100GridCoordMake(_state.currentGrid.cursor.x,
-                                                          _state.currentGrid.cursor.y + _mutableState.numberOfScrollbackLines);
-    const long long totalScrollbackOverflow = _mutableState.cumulativeScrollbackOverflow;
-    const VT100GridAbsCoord absCursorCoord = VT100GridAbsCoordFromCoord(cursorCoord, totalScrollbackOverflow);
-    iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:self] autorelease];
-    const VT100GridWindowedRange cursorLineRange = [extractor rangeForWrappedLineEncompassing:cursorCoord
-                                                                         respectContinuations:YES
-                                                                                     maxChars:100000];
-    ScreenCharArray *savedLine = [extractor combinedLinesInRange:NSMakeRange(cursorLineRange.coordRange.start.y,
-                                                                             cursorLineRange.coordRange.end.y - cursorLineRange.coordRange.start.y + 1)];
-    savedLine = [savedLine screenCharArrayByRemovingTrailingNullsAndHardNewline];
-
-    const long long firstScreenAbsLine = _mutableState.numberOfScrollbackLines + totalScrollbackOverflow;
-    [self clearGridFromLineToEnd:MAX(0, absLine - firstScreenAbsLine)];
-
-    [self clearScrollbackBufferFromLine:absLine - _mutableState.cumulativeScrollbackOverflow];
-    const VT100GridCoordRange coordRange = VT100GridCoordRangeMake(0,
-                                                                   absLine - totalScrollbackOverflow,
-                                                                   _mutableState.width,
-                                                                   _mutableState.numberOfScrollbackLines + _mutableState.height);
-
-    NSMutableArray<id<IntervalTreeObject>> *marksToMove = [_mutableState removeIntervalTreeObjectsInRange:coordRange
-                                                                                         exceptCoordRange:cursorLineRange.coordRange];
-    if (absCursorCoord.y >= absLine) {
-        Interval *cursorLineInterval = [_mutableState intervalForGridCoordRange:cursorLineRange.coordRange];
-        for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:cursorLineInterval]) {
-            if ([marksToMove containsObject:obj]) {
-                continue;
-            }
-            [marksToMove addObject:obj];
-        }
-
-        // Cursor was among the cleared lines. Restore the line content.
-        _mutableState.currentGrid.cursor = VT100GridCoordMake(0, absLine - totalScrollbackOverflow - _mutableState.numberOfScrollbackLines);
-        [self mutAppendScreenChars:savedLine.line
-                            length:savedLine.length
-            externalAttributeIndex:savedLine.metadata.externalAttributes
-                      continuation:savedLine.continuation];
-
-        // Restore marks on that line.
-        const long long numberOfLinesRemoved = absCursorCoord.y - absLine;
-        if (numberOfLinesRemoved > 0) {
-            [marksToMove enumerateObjectsUsingBlock:^(id<IntervalTreeObject>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-                // Make an interval shifted up by `numberOfLinesRemoved`
-                VT100GridCoordRange range = [_mutableState coordRangeForInterval:obj.entry.interval];
-                range.start.y -= numberOfLinesRemoved;
-                range.end.y -= numberOfLinesRemoved;
-                Interval *interval = [_mutableState intervalForGridCoordRange:range];
-
-                // Remove and re-add the object with the new interval.
-                [_mutableState removeObjectFromIntervalTree:obj];
-                [_mutableState.intervalTree addObject:obj withInterval:interval];
-
-                // Re-adding an annotation requires telling the delegate so it can create a vc
-                PTYAnnotation *annotation = [PTYAnnotation castFrom:obj];
-                if (annotation) {
-                    [_mutableState addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-                        [delegate screenDidAddNote:annotation focus:NO];
-                    }];
-                }
-                // TODO: This needs to be a side effect.
-                [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeForObject(obj)
-                                                                   onLine:range.start.y + totalScrollbackOverflow];
-            }];
-        }
-    } else {
-        [marksToMove enumerateObjectsUsingBlock:^(id<IntervalTreeObject>  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            [_mutableState removeObjectFromIntervalTree:obj];
-        }];
-    }
-    [self mutReloadMarkCache];
-    [delegate_ screenRemoveSelection];
-    [delegate_ screenNeedsRedraw];
-}
-
-- (void)clearGridFromLineToEnd:(int)line {
-    assert(line >= 0 && line < _mutableState.height);
-    const VT100GridCoord savedCursor = self.currentGrid.cursor;
-    _mutableState.currentGrid.cursor = VT100GridCoordMake(0, line);
-    [_mutableState removeSoftEOLBeforeCursor];
-    const VT100GridRun run = VT100GridRunFromCoords(VT100GridCoordMake(0, line),
-                                                    VT100GridCoordMake(_mutableState.width, _mutableState.height),
-                                                    _mutableState.width);
-    [_mutableState.currentGrid setCharsInRun:run toChar:0 externalAttributes:nil];
-    [_mutableState clearTriggerLine];
-    _mutableState.currentGrid.cursor = savedCursor;
 }
 
 #pragma mark - Appending
@@ -271,17 +172,15 @@
 }
 
 - (void)mutAppendScreenChars:(const screen_char_t *)line
-                   length:(int)length
-   externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
-             continuation:(screen_char_t)continuation {
-    [_mutableState appendScreenCharArrayAtCursor:line
-                                          length:length
-                          externalAttributeIndex:externalAttributeIndex];
-    if (continuation.code == EOL_HARD) {
-        [_mutableState carriageReturn];
-        [_mutableState appendLineFeed];
-    }
+                      length:(int)length
+      externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
+                continuation:(screen_char_t)continuation {
+    [_mutableState appendScreenChars:line
+                              length:length
+              externalAttributeIndex:externalAttributeIndex
+                        continuation:continuation];
 }
+
 
 #pragma mark - Arrangements
 

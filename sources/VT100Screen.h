@@ -216,7 +216,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (BOOL)containsMark:(id<iTermMark>)mark;
 - (void)clearToLastMark;
-- (void)clearFromAbsoluteLineToEnd:(long long)absLine;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;

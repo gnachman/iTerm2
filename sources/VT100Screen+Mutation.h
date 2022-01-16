@@ -32,7 +32,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutClearScrollbackBuffer;
 - (void)mutResetTimestamps;
 - (void)mutRemoveLastLine;
-- (void)mutClearFromAbsoluteLineToEnd:(long long)absLine;
 - (void)mutAppendStringAtCursor:(NSString *)string;
 - (void)mutAppendScreenChars:(const screen_char_t *)line
                    length:(int)length

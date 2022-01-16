@@ -94,6 +94,10 @@ NS_ASSUME_NONNULL_BEGIN
                                length:(int)len
                externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes;
 - (void)appendTabAtCursor:(BOOL)setBackgroundColors;
+- (void)appendScreenChars:(const screen_char_t *)line
+                      length:(int)length
+      externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
+             continuation:(screen_char_t)continuation;
 
 #pragma mark Erase
 
@@ -107,6 +111,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)clearBufferSavingPrompt:(BOOL)savePrompt;
 - (void)eraseCharactersAfterCursor:(int)j;
 - (void)eraseScreenAndRemoveSelection;
+- (void)clearFromAbsoluteLineToEnd:(long long)absLine;
 
 void VT100ScreenEraseCell(screen_char_t *sct,
                           iTermExternalAttribute **eaOut,

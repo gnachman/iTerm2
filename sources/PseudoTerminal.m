@@ -9893,7 +9893,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (IBAction)clearToStartOfSelection:(id)sender {
-    [self.currentSession.screen clearFromAbsoluteLineToEnd:self.currentSession.textview.selection.firstAbsRange.coordRange.start.y];
+    const long long line = self.currentSession.textview.selection.firstAbsRange.coordRange.start.y;
+    [self.currentSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                                VT100ScreenMutableState *mutableState,
+                                                                id<VT100ScreenDelegate> delegate) {
+        [mutableState clearFromAbsoluteLineToEnd:line];
+    }];
 }
 
 - (IBAction)clearToLastMark:(id)sender {
