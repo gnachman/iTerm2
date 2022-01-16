@@ -62,15 +62,6 @@
 
 #pragma mark - Interval Tree
 
-- (void)mutSetFakePromptDetectedAbsLine:(long long)value {
-    _mutableState.fakePromptDetectedAbsLine = value;
-}
-
-- (PTYAnnotation *)mutAddNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {
-    return [_mutableState addNoteWithText:text inAbsoluteRange:absRange];
-}
-
-
 - (void)mutSetWorkingDirectory:(NSString *)workingDirectory
 #warning TODO: I need to use an absolute line number here to avoid race conditions between main thread and mutation thread.
                      onAbsLine:(long long)line

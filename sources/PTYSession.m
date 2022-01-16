@@ -14462,8 +14462,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         completion(nil, error);
         return;
     }
-
-    [_screen addNoteWithText:text inAbsoluteRange:range];
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        [mutableState addNoteWithText:text inAbsoluteRange:range];
+    }];
     completion(nil, nil);
 }
 

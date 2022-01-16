@@ -1224,10 +1224,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutInjectData:data];
 }
 
-- (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {
-    return [self mutAddNoteWithText:text inAbsoluteRange:absRange];
-}
-
 // Warning: this is called on PTYTask's thread.
 - (void)threadedReadTask:(char *)buffer length:(int)length {
     [_mutableState threadedReadTask:buffer length:length];
@@ -1288,10 +1284,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)setLastPromptLine:(long long)lastPromptLine {
     [self mutSetLastPromptLine:lastPromptLine];
-}
-
-- (void)setFakePromptDetectedAbsLine:(long long)value {
-    [self mutSetFakePromptDetectedAbsLine:value];
 }
 
 - (long long)fakePromptDetectedAbsLine {
