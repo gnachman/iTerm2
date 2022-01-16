@@ -62,10 +62,6 @@
 
 #pragma mark - Clearing
 
-- (void)mutClearBufferSavingPrompt:(BOOL)savePrompt {
-    [_mutableState clearBufferSavingPrompt:savePrompt];
-}
-
 - (void)mutClearScrollbackBuffer {
     [_mutableState clearScrollbackBuffer];
 }
