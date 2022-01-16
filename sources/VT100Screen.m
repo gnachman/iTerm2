@@ -263,10 +263,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [_state haveCommandInRange:range];
 }
 
-- (void)promptDidStartAt:(VT100GridAbsCoord)coord {
-    [self mutPromptDidStartAt:coord];
-}
-
 // This is a wee hack until PTYTextView breaks its direct dependence on PTYSession
 - (PTYSession *)session {
     return (PTYSession *)delegate_;
@@ -985,11 +981,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [_state lastCommandMark];
 }
 
-- (id<iTermMark>)markAddedAtCursorOfClass:(Class)theClass {
-    return [self mutAddMarkOnLine:_state.numberOfScrollbackLines + _state.cursorY - 1
-                          ofClass:theClass];
-}
-
 - (void)saveFindContextAbsPos {
     [self mutSaveFindContextAbsPos];
 }
@@ -1570,10 +1561,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (VT100GridAbsCoordRange)lastCommandOutputRange {
     return _state.lastCommandOutputRange;
-}
-
-- (void)setLastCommandOutputRange:(VT100GridAbsCoordRange)lastCommandOutputRange {
-    [self mutSetLastCommandOutputRange:lastCommandOutputRange];
 }
 
 - (BOOL)saveToScrollbackInAlternateScreen {

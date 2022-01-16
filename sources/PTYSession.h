@@ -820,7 +820,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)previousAnnotation;
 - (void)nextAnnotation;
 - (void)scrollToMark:(id<iTermMark>)mark;
-- (id<iTermMark>)markAddedAtCursorOfClass:(Class)theClass;
 
 // Select this session and tab and bring window to foreground.
 - (void)reveal;

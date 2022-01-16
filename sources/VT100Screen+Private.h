@@ -47,8 +47,6 @@ VT100ScreenSideEffectPerforming> {
     id<VT100ScreenConfiguration> _nextConfig;
 }
 
-@property(nonatomic, readwrite) VT100GridAbsCoordRange lastCommandOutputRange;
-
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers;
 - (VT100GridCoordRange)commandRange;
 - (const screen_char_t *)getLineAtIndex:(int)theIndex;
