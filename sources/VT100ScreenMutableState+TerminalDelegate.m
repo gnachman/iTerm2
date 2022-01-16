@@ -1277,7 +1277,7 @@
             if (c.code == 0 && !c.complexChar && !c.image) {
                 continue;
             }
-            NSSet<NSString *> *charCodes = [self.terminal sgrCodesForCharacter:c
+            NSSet<NSString *> *charCodes = [VT100Terminal sgrCodesForCharacter:c
                                                             externalAttributes:eaIndex[x]];
             if (!codes) {
                 codes = [charCodes mutableCopy];

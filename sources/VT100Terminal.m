@@ -3079,7 +3079,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (NSString *)decrqssSGR {
-    NSArray<NSString *> *codes = [[self sgrCodesForGraphicRendition:graphicRendition_].allObjects sortedArrayUsingSelector:@selector(compare:)];
+    NSArray<NSString *> *codes = [[VT100Terminal sgrCodesForGraphicRendition:graphicRendition_].allObjects sortedArrayUsingSelector:@selector(compare:)];
     return [codes componentsJoinedByString:@";"];
 }
 
@@ -3177,7 +3177,7 @@ static const int kMaxScreenRows = 4096;
     return [iTermPromise promiseDefaultError];
 }
 
-- (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
++ (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
                          externalAttributes:(iTermExternalAttribute *)ea {
     VT100GraphicRendition g = {
         .bold = c.bold,
@@ -3205,7 +3205,7 @@ static const int kMaxScreenRows = 4096;
     return [self sgrCodesForGraphicRendition:g];
 }
 
-- (NSSet<NSString *> *)sgrCodesForGraphicRendition:(VT100GraphicRendition)graphicRendition {
++ (NSSet<NSString *> *)sgrCodesForGraphicRendition:(VT100GraphicRendition)graphicRendition {
     NSMutableSet<NSString *> *result = [NSMutableSet set];
     [result addObject:@"0"];  // for xterm compatibility. Also makes esctest happy.
     switch (graphicRendition.fgColorMode) {

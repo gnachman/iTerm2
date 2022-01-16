@@ -129,6 +129,9 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic, readonly) VT100TerminalProtectedMode protectedMode;
 @property(nonatomic, strong, readonly) VT100Token *lastToken;
 
++ (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
+                         externalAttributes:(iTermExternalAttribute *)ea;
+
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem;
@@ -173,9 +176,6 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 - (void)resetGraphicRendition;
 
 - (void)gentleReset;
-
-- (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
-                         externalAttributes:(iTermExternalAttribute *)ea;
 
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects;
 - (void)toggleAlternateScreen;
