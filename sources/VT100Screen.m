@@ -248,7 +248,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
-    return [self.terminal sgrCodesForCharacter:c externalAttributes:ea];
+    return [VT100Terminal sgrCodesForCharacter:c externalAttributes:ea];
 }
 
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord {
