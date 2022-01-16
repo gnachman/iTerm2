@@ -1060,61 +1060,63 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
           linesDropped:(int *)linesDroppedOut {
-    NSDictionary *extra;
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        NSDictionary *extra;
 
-    // Interval tree
-    if ([iTermAdvancedSettingsModel useNewContentFormat]) {
-        long long intervalOffset = 0;
-        const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingModernFormatWithEncoder:encoder
-                                                                                          intervalOffset:&intervalOffset];
-        extra = @{
-            kScreenStateIntervalTreeKey: [_state.intervalTree dictionaryValueWithOffset:intervalOffset] ?: @{},
-        };
-        if (linesDroppedOut) {
-            *linesDroppedOut = linesDroppedForBrevity;
+        // Interval tree
+        if ([iTermAdvancedSettingsModel useNewContentFormat]) {
+            long long intervalOffset = 0;
+            const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingModernFormatWithEncoder:encoder
+                                                                                              intervalOffset:&intervalOffset];
+            extra = @{
+                kScreenStateIntervalTreeKey: [_state.intervalTree dictionaryValueWithOffset:intervalOffset] ?: @{},
+            };
+            if (linesDroppedOut) {
+                *linesDroppedOut = linesDroppedForBrevity;
+            }
+        } else {
+            long long intervalOffset = 0;
+            const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingLegacyFormatWithEncoder:encoder
+                                                                                              intervalOffset:&intervalOffset];
+            extra = @{
+                kScreenStateIntervalTreeKey: [_state.intervalTree dictionaryValueWithOffset:intervalOffset] ?: @{},
+                kScreenStateCursorCoord: VT100GridCoordToDictionary(_state.primaryGrid.cursor),
+            };
+            if (linesDroppedOut) {
+                *linesDroppedOut = linesDroppedForBrevity;
+            }
         }
-    } else {
-        long long intervalOffset = 0;
-        const int linesDroppedForBrevity = [self numberOfLinesDroppedWhenEncodingLegacyFormatWithEncoder:encoder
-                                                                                          intervalOffset:&intervalOffset];
-        extra = @{
-            kScreenStateIntervalTreeKey: [_state.intervalTree dictionaryValueWithOffset:intervalOffset] ?: @{},
-            kScreenStateCursorCoord: VT100GridCoordToDictionary(_state.primaryGrid.cursor),
-        };
-        if (linesDroppedOut) {
-            *linesDroppedOut = linesDroppedForBrevity;
-        }
-    }
 
-    [encoder encodeDictionaryWithKey:kScreenStateKey
-                          generation:iTermGenerationAlwaysEncode
-                               block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
-        [encoder mergeDictionary:extra];
-        NSDictionary *dict =
-        @{ kScreenStateTabStopsKey: [_state.tabStops allObjects] ?: @[],
-           kScreenStateTerminalKey: [self.terminal stateDictionary] ?: @{},
-           kScreenStateLineDrawingModeKey: @[ @([_state.charsetUsesLineDrawingMode containsObject:@0]),
-                                              @([_state.charsetUsesLineDrawingMode containsObject:@1]),
-                                              @([_state.charsetUsesLineDrawingMode containsObject:@2]),
-                                              @([_state.charsetUsesLineDrawingMode containsObject:@3]) ],
-           kScreenStateNonCurrentGridKey: [self contentsOfNonCurrentGrid] ?: @{},
-           kScreenStateCurrentGridIsPrimaryKey: @(_state.primaryGrid == _state.currentGrid),
-           kScreenStateSavedIntervalTreeKey: [_state.savedIntervalTree dictionaryValueWithOffset:0] ?: [NSNull null],
-           kScreenStateCommandStartXKey: @(_state.commandStartCoord.x),
-           kScreenStateCommandStartYKey: @(_state.commandStartCoord.y),
-           kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:_state.startOfRunningCommandOutput],
-           kScreenStateCursorVisibleKey: @(_state.cursorVisible),
-           kScreenStateTrackCursorLineMovementKey: @(_state.trackCursorLineMovement),
-           kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_state.lastCommandOutputRange],
-           kScreenStateShellIntegrationInstalledKey: @(_state.shellIntegrationInstalled),
-           kScreenStateLastCommandMarkKey: _state.lastCommandMark.guid ?: [NSNull null],
-           kScreenStatePrimaryGridStateKey: _state.primaryGrid.dictionaryValue ?: @{},
-           kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
-           kScreenStateProtectedMode: @(_state.protectedMode),
-        };
-        dict = [dict dictionaryByRemovingNullValues];
-        [encoder mergeDictionary:dict];
-        return YES;
+        [encoder encodeDictionaryWithKey:kScreenStateKey
+                              generation:iTermGenerationAlwaysEncode
+                                   block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
+            [encoder mergeDictionary:extra];
+            NSDictionary *dict =
+            @{ kScreenStateTabStopsKey: [_state.tabStops allObjects] ?: @[],
+               kScreenStateTerminalKey: [terminal stateDictionary] ?: @{},
+               kScreenStateLineDrawingModeKey: @[ @([_state.charsetUsesLineDrawingMode containsObject:@0]),
+                                                  @([_state.charsetUsesLineDrawingMode containsObject:@1]),
+                                                  @([_state.charsetUsesLineDrawingMode containsObject:@2]),
+                                                  @([_state.charsetUsesLineDrawingMode containsObject:@3]) ],
+               kScreenStateNonCurrentGridKey: [self contentsOfNonCurrentGrid] ?: @{},
+               kScreenStateCurrentGridIsPrimaryKey: @(_state.primaryGrid == _state.currentGrid),
+               kScreenStateSavedIntervalTreeKey: [_state.savedIntervalTree dictionaryValueWithOffset:0] ?: [NSNull null],
+               kScreenStateCommandStartXKey: @(_state.commandStartCoord.x),
+               kScreenStateCommandStartYKey: @(_state.commandStartCoord.y),
+               kScreenStateNextCommandOutputStartKey: [NSDictionary dictionaryWithGridAbsCoord:_state.startOfRunningCommandOutput],
+               kScreenStateCursorVisibleKey: @(_state.cursorVisible),
+               kScreenStateTrackCursorLineMovementKey: @(_state.trackCursorLineMovement),
+               kScreenStateLastCommandOutputRangeKey: [NSDictionary dictionaryWithGridAbsCoordRange:_state.lastCommandOutputRange],
+               kScreenStateShellIntegrationInstalledKey: @(_state.shellIntegrationInstalled),
+               kScreenStateLastCommandMarkKey: _state.lastCommandMark.guid ?: [NSNull null],
+               kScreenStatePrimaryGridStateKey: _state.primaryGrid.dictionaryValue ?: @{},
+               kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
+               kScreenStateProtectedMode: @(_state.protectedMode),
+            };
+            dict = [dict dictionaryByRemovingNullValues];
+            [encoder mergeDictionary:dict];
+            return YES;
+        }];
     }];
     return YES;
 }
