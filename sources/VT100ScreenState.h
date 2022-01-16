@@ -23,6 +23,28 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSString *const kScreenStateKey;
+
+extern NSString *const kScreenStateTabStopsKey;
+extern NSString *const kScreenStateTerminalKey;
+extern NSString *const kScreenStateLineDrawingModeKey;
+extern NSString *const kScreenStateNonCurrentGridKey;
+extern NSString *const kScreenStateCurrentGridIsPrimaryKey;
+extern NSString *const kScreenStateIntervalTreeKey;
+extern NSString *const kScreenStateSavedIntervalTreeKey;
+extern NSString *const kScreenStateCommandStartXKey;
+extern NSString *const kScreenStateCommandStartYKey;
+extern NSString *const kScreenStateNextCommandOutputStartKey;
+extern NSString *const kScreenStateCursorVisibleKey;
+extern NSString *const kScreenStateTrackCursorLineMovementKey;
+extern NSString *const kScreenStateLastCommandOutputRangeKey;
+extern NSString *const kScreenStateShellIntegrationInstalledKey;
+extern NSString *const kScreenStateLastCommandMarkKey;
+extern NSString *const kScreenStatePrimaryGridStateKey;
+extern NSString *const kScreenStateAlternateGridStateKey;
+extern NSString *const kScreenStateCursorCoord;
+extern NSString *const kScreenStateProtectedMode;
+
 @class IntervalTree;
 @class VT100InlineImageHelper;
 @class iTermOrderEnforcer;

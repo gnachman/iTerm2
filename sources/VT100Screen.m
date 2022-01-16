@@ -47,28 +47,6 @@
 
 #import <apr-1/apr_base64.h>
 
-NSString *const kScreenStateKey = @"Screen State";
-
-NSString *const kScreenStateTabStopsKey = @"Tab Stops";
-NSString *const kScreenStateTerminalKey = @"Terminal State";
-NSString *const kScreenStateLineDrawingModeKey = @"Line Drawing Modes";
-NSString *const kScreenStateNonCurrentGridKey = @"Non-current Grid";
-NSString *const kScreenStateCurrentGridIsPrimaryKey = @"Showing Primary Grid";
-NSString *const kScreenStateIntervalTreeKey = @"Interval Tree";
-NSString *const kScreenStateSavedIntervalTreeKey = @"Saved Interval Tree";
-NSString *const kScreenStateCommandStartXKey = @"Command Start X";
-NSString *const kScreenStateCommandStartYKey = @"Command Start Y";
-NSString *const kScreenStateNextCommandOutputStartKey = @"Output Start";
-NSString *const kScreenStateCursorVisibleKey = @"Cursor Visible";
-NSString *const kScreenStateTrackCursorLineMovementKey = @"Track Cursor Line";
-NSString *const kScreenStateLastCommandOutputRangeKey = @"Last Command Output Range";
-NSString *const kScreenStateShellIntegrationInstalledKey = @"Shell Integration Installed";
-NSString *const kScreenStateLastCommandMarkKey = @"Last Command Mark";
-NSString *const kScreenStatePrimaryGridStateKey = @"Primary Grid State";
-NSString *const kScreenStateAlternateGridStateKey = @"Alternate Grid State";
-NSString *const kScreenStateCursorCoord = @"Cursor Coord";
-NSString *const kScreenStateProtectedMode = @"Protected Mode";
-
 int kVT100ScreenMinColumns = 2;
 int kVT100ScreenMinRows = 2;
 
@@ -1316,9 +1294,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
                    reattached:(BOOL)reattached {
-    [self mutRestoreFromDictionary:dictionary
-     includeRestorationBanner:includeRestorationBanner
-                   reattached:reattached];
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                          VT100ScreenMutableState *mutableState,
+                                          id<VT100ScreenDelegate> delegate) {
+        [mutableState restoreFromDictionary:dictionary
+                   includeRestorationBanner:includeRestorationBanner
+                                 reattached:reattached
+                                   delegate:delegate];
+    }];
 }
 
 - (void)crlf {

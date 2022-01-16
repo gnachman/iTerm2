@@ -12888,6 +12888,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
      viewIndex:[self screenViewIndex]];
 }
 
+- (void)screenUpdateCommandUseWithGuid:(NSString *)screenmarkGuid
+                                onHost:(VT100RemoteHost *)lastRemoteHost
+                         toReferToMark:(VT100ScreenMark *)screenMark {
+#warning TODO: Mutating shared state
+    iTermCommandHistoryCommandUseMO *commandUse =
+        [[iTermShellHistoryController sharedInstance] commandUseWithMarkGuid:screenMark.guid
+                                                                      onHost:lastRemoteHost];
+    commandUse.mark = screenMark;
+}
+
 - (VT100Screen *)popupVT100Screen {
     return _screen;
 }

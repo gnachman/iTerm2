@@ -305,7 +305,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - State Restoration
 
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
-     includeRestorationBanner:(BOOL)includeRestorationBanner;
+     includeRestorationBanner:(BOOL)includeRestorationBanner
+                   reattached:(BOOL)reattache
+                     delegate:(id<VT100ScreenDelegate>)delegate;
 
 #pragma mark - Inline Images
 

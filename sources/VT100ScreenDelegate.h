@@ -347,5 +347,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenCopyStringToPasteboard:(NSString * _Nonnull)string;
 - (void)screenPostUserNotification:(NSString * _Nonnull)string;
 - (void)screenSync;
-
+- (void)screenUpdateCommandUseWithGuid:(NSString * _Nonnull)screenmarkGuid
+                                onHost:(VT100RemoteHost * _Nullable)lastRemoteHost
+                         toReferToMark:(VT100ScreenMark * _Nonnull)screenMark;
 @end
