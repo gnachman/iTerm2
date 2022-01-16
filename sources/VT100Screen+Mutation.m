@@ -62,11 +62,6 @@
 
 #pragma mark - Clearing
 
-- (void)mutResetTimestamps {
-    [self.mutablePrimaryGrid resetTimestamps];
-    [self.mutableAltGrid resetTimestamps];
-}
-
 - (void)mutRemoveLastLine {
     DLog(@"BEGIN removeLastLine with cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
     const int preHocNumberOfLines = [_mutableState.linebuffer numberOfWrappedLinesWithWidth:_mutableState.width];
