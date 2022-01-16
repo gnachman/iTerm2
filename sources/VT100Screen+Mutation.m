@@ -62,10 +62,6 @@
 
 #pragma mark - Interval Tree
 
-- (void)mutReloadMarkCache {
-    [_mutableState reloadMarkCache];
-}
-
 - (void)mutRemoveAnnotation:(PTYAnnotation *)annotation {
     [_mutableState removeAnnotation:annotation];
 }

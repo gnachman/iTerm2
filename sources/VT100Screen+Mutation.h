@@ -92,7 +92,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetMutingAmount:(double)value;
 - (void)mutSetDimmingAmount:(double)value;
 - (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate;
-- (void)mutReloadMarkCache;
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutUpdateConfig;
 - (void)mutSetLastPromptLine:(long long)value;
