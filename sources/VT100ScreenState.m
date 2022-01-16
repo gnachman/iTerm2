@@ -101,6 +101,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
 @synthesize terminalPreviousMouseMode = _terminalPreviousMouseMode;
 @synthesize terminalForegroundColorCode = _terminalForegroundColorCode;
 @synthesize terminalBackgroundColorCode = _terminalBackgroundColorCode;
+@synthesize terminalState = _terminalState;
 
 - (instancetype)initForMutation {
     self = [super init];
@@ -206,6 +207,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _terminalPreviousMouseMode = source.terminalPreviousMouseMode;
         _terminalForegroundColorCode = source.terminalForegroundColorCode;
         _terminalBackgroundColorCode = source.terminalBackgroundColorCode;
+        _terminalState = [source.terminalState copy];
 
         _animatedLines = [source.animatedLines copy];
         _pasteboardString = [source.pasteboardString copy];
