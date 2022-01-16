@@ -129,7 +129,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)userDidPressReturn {
-    [self mutUserDidPressReturn];
+    [self mutateAsynchronously:^(VT100Terminal * _Nonnull terminal,
+                                 VT100ScreenMutableState * _Nonnull mutableState,
+                                 id<VT100ScreenDelegate>  _Nonnull delegate) {
+        if (mutableState.fakePromptDetectedAbsLine >= 0) {
+            [mutableState didInferEndOfCommand];
+        }
+    }];
 }
 
 - (void)setDelegate:(id<VT100ScreenDelegate>)delegate {
@@ -1177,6 +1183,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block {
     [_mutableState performBlockWithJoinedThreads:block];
+}
+
+- (void)mutateAsynchronously:(void (^)(VT100Terminal *terminal,
+                                       VT100ScreenMutableState *mutableState,
+                                       id<VT100ScreenDelegate> delegate))block {
+    [_mutableState performBlockAsynchronously:block];
 }
 
 - (void)forceCheckTriggers {

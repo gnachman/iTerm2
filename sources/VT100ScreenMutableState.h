@@ -202,6 +202,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)commandDidEndWithRange:(VT100GridCoordRange)range;
 - (void)commandWasAborted;
 - (void)assignCurrentCommandEndDate;
+- (void)didInferEndOfCommand;
 
 #pragma mark Working Directory
 
@@ -290,6 +291,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)performBlockWithJoinedThreads:(void (^ _Nullable NS_NOESCAPE)(VT100Terminal *terminal,
                                                                       VT100ScreenMutableState *mutableState,
                                                                       id<VT100ScreenDelegate> delegate))block;
+
+// This is called eventually. It does not block the caller. It should be called from the main thread.
+- (void)performBlockAsynchronously:(void (^ _Nullable)(VT100Terminal *terminal,
+                                                       VT100ScreenMutableState *mutableState,
+                                                       id<VT100ScreenDelegate> delegate))block;
 
 #pragma mark - State Restoration
 
