@@ -60,40 +60,6 @@
     _mutableState.config = _nextConfig;
 }
 
-#pragma mark - Clearing
-
-- (void)mutRemoveLastLine {
-    DLog(@"BEGIN removeLastLine with cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
-    const int preHocNumberOfLines = [_mutableState.linebuffer numberOfWrappedLinesWithWidth:_mutableState.width];
-    const int numberOfLinesAppended = [_mutableState.currentGrid appendLines:self.currentGrid.numberOfLinesUsed
-                                                                toLineBuffer:_mutableState.linebuffer];
-    if (numberOfLinesAppended <= 0) {
-        return;
-    }
-    [_mutableState.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                                         to:VT100GridCoordMake(_mutableState.width - 1,
-                                                               _mutableState.height - 1)
-                                     toChar:self.currentGrid.defaultChar
-                         externalAttributes:nil];
-    [self.mutableLineBuffer removeLastRawLine];
-    const int postHocNumberOfLines = [_mutableState.linebuffer numberOfWrappedLinesWithWidth:_mutableState.width];
-    const int numberOfLinesToPop = MAX(0, postHocNumberOfLines - preHocNumberOfLines);
-
-    [_mutableState.currentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
-                                           withDefaultChar:[self.currentGrid defaultChar]
-                                         maxLinesToRestore:numberOfLinesToPop];
-    // One of the lines "removed" will be the one the cursor is on. Don't need to move it up for
-    // that one.
-    const int adjustment = self.currentGrid.cursorX > 0 ? 1 : 0;
-    _mutableState.currentGrid.cursorX = 0;
-    const int numberOfLinesRemoved = MAX(0, numberOfLinesAppended - numberOfLinesToPop);
-    const int y = MAX(0, self.currentGrid.cursorY - numberOfLinesRemoved + adjustment);
-    DLog(@"numLinesAppended=%@ numLinesToPop=%@ numLinesRemoved=%@ adjustment=%@ y<-%@",
-          @(numberOfLinesAppended), @(numberOfLinesToPop), @(numberOfLinesRemoved), @(adjustment), @(y));
-    _mutableState.currentGrid.cursorY = y;
-    DLog(@"Cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
-}
-
 #pragma mark - Appending
 
 - (void)mutAppendStringAtCursor:(NSString *)string {

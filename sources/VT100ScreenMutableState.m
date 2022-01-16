@@ -45,7 +45,7 @@
                                    darkMode:(BOOL)darkMode {
     self = [super initForMutation];
     if (self) {
-#warning TODO: When this moves to its own queue. change _queue.
+#warning TODO: When this moves to its own queue. change _queue. Consider keeping main thread as an option for lower-power mode and also for filter destinations to minimize overhead of constnatly syncing across threads.
         _queue = dispatch_get_main_queue();
         _terminal = [[VT100Terminal alloc] init];
         _terminal.output.optionIsMetaForSpecialKeys =
@@ -1229,6 +1229,38 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     [self.linebuffer removeLastWrappedLines:scrollbackLines - MAX(0, line)
                                              width:width];
+}
+
+- (void)removeLastLine {
+    DLog(@"BEGIN removeLastLine with cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
+    const int preHocNumberOfLines = [self.linebuffer numberOfWrappedLinesWithWidth:self.width];
+    const int numberOfLinesAppended = [self.currentGrid appendLines:self.currentGrid.numberOfLinesUsed
+                                                       toLineBuffer:self.linebuffer];
+    if (numberOfLinesAppended <= 0) {
+        return;
+    }
+    [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
+                                to:VT100GridCoordMake(self.width - 1,
+                                                      self.height - 1)
+                            toChar:self.currentGrid.defaultChar
+                externalAttributes:nil];
+    [self.linebuffer removeLastRawLine];
+    const int postHocNumberOfLines = [self.linebuffer numberOfWrappedLinesWithWidth:self.width];
+    const int numberOfLinesToPop = MAX(0, postHocNumberOfLines - preHocNumberOfLines);
+
+    [self.currentGrid restoreScreenFromLineBuffer:self.linebuffer
+                                  withDefaultChar:[self.currentGrid defaultChar]
+                                maxLinesToRestore:numberOfLinesToPop];
+    // One of the lines "removed" will be the one the cursor is on. Don't need to move it up for
+    // that one.
+    const int adjustment = self.currentGrid.cursorX > 0 ? 1 : 0;
+    self.currentGrid.cursorX = 0;
+    const int numberOfLinesRemoved = MAX(0, numberOfLinesAppended - numberOfLinesToPop);
+    const int y = MAX(0, self.currentGrid.cursorY - numberOfLinesRemoved + adjustment);
+    DLog(@"numLinesAppended=%@ numLinesToPop=%@ numLinesRemoved=%@ adjustment=%@ y<-%@",
+         @(numberOfLinesAppended), @(numberOfLinesToPop), @(numberOfLinesRemoved), @(adjustment), @(y));
+    self.currentGrid.cursorY = y;
+    DLog(@"Cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
 }
 
 - (void)setUseColumnScrollRegion:(BOOL)mode {

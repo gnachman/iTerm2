@@ -118,9 +118,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Preserves the prompt, but erases screen and scrollback buffer.
 - (void)clearBuffer;
 
-// Clears the scrollback buffer, leaving screen contents alone.
-- (void)clearScrollbackBuffer;
-
 - (void)appendScreenChars:(const screen_char_t *)line
                    length:(int)length
    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes
@@ -130,8 +127,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
 // buffer may change.
 - (void)appendStringAtCursor:(NSString *)string;
-
-- (void)removeLastLine;
 
 // This is a hacky thing that moves the cursor to the next line, not respecting scroll regions.
 // It's used for the tmux status screen.
