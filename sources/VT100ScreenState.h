@@ -168,7 +168,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) MouseMode terminalPreviousMouseMode;
 @property (nonatomic, readonly) screen_char_t terminalForegroundColorCode;
 @property (nonatomic, readonly) screen_char_t terminalBackgroundColorCode;
-
+@property (nonatomic, readonly) NSDictionary *terminalState;
 
 @end
 

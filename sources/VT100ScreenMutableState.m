@@ -314,6 +314,11 @@
     return self.terminal.backgroundColorCode;
 }
 
+- (NSDictionary *)terminalState {
+#warning TODO: Find an optimization to allow us to avoid computing this every time.
+    return self.terminal.stateDictionary;
+}
+
 #pragma mark - Scrollback
 
 - (void)incrementOverflowBy:(int)overflowCount {

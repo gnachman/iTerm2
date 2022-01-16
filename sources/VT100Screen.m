@@ -1093,7 +1093,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             [encoder mergeDictionary:extra];
             NSDictionary *dict =
             @{ kScreenStateTabStopsKey: [_state.tabStops allObjects] ?: @[],
-               kScreenStateTerminalKey: [terminal stateDictionary] ?: @{},
+               kScreenStateTerminalKey: _state.terminalState ?: @{},
                kScreenStateLineDrawingModeKey: @[ @([_state.charsetUsesLineDrawingMode containsObject:@0]),
                                                   @([_state.charsetUsesLineDrawingMode containsObject:@1]),
                                                   @([_state.charsetUsesLineDrawingMode containsObject:@2]),
