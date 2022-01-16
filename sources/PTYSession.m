@@ -14701,7 +14701,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)naggingControllerDisableBracketedPasteMode {
-    self.terminal.bracketedPasteMode = NO;
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        terminal.bracketedPasteMode = NO;
+    }];
 }
 
 - (void)naggingControllerCloseSession {
