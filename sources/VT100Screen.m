@@ -1373,7 +1373,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)resetTimestamps {
-    [self mutResetTimestamps];
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState.primaryGrid resetTimestamps];
+        [mutableState.altGrid resetTimestamps];
+    }];
 }
 
 - (void)removeLastLine {
