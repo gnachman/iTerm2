@@ -1305,7 +1305,11 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
     if (!attachedToServer) {
-        [aSession.terminal resetSendModifiersWithSideEffects:YES];
+        [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                                 VT100ScreenMutableState *mutableState,
+                                                 id<VT100ScreenDelegate> delegate) {
+            [terminal resetSendModifiersWithSideEffects:YES];
+        }];
     }
     NSString *path = [aSession.screen workingDirectoryOnLine:aSession.screen.numberOfScrollbackLines + aSession.screen.cursorY - 1];
     [aSession.variablesScope setValue:path forVariableNamed:iTermVariableKeySessionPath];
