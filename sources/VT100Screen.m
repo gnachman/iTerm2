@@ -1260,7 +1260,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)clearBuffer {
-    [self mutClearBuffer];
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState clearBufferSavingPrompt:YES];
+    }];
 }
 
 - (void)clearBufferSavingPrompt:(BOOL)savePrompt {
@@ -1279,10 +1281,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)appendStringAtCursor:(NSString *)string {
     [self mutAppendStringAtCursor:string];
-}
-
-- (void)setContentsFromLineBuffer:(LineBuffer *)lineBuffer {
-    [self mutSetContentsFromLineBuffer:lineBuffer];
 }
 
 - (void)setHistory:(NSArray *)history {

@@ -62,10 +62,6 @@
 
 #pragma mark - Clearing
 
-- (void)mutClearBuffer {
-    [self mutClearBufferSavingPrompt:YES];
-}
-
 - (void)mutClearBufferSavingPrompt:(BOOL)savePrompt {
     [_mutableState clearBufferSavingPrompt:savePrompt];
 }
@@ -137,15 +133,6 @@
     }
 }
 
-- (void)mutSetContentsFromLineBuffer:(LineBuffer *)lineBuffer {
-    [self mutClearBuffer];
-    [self.mutableLineBuffer appendContentsOfLineBuffer:lineBuffer width:_state.currentGrid.size.width];
-    const int numberOfLines = _mutableState.numberOfLines;
-    [_mutableState.currentGrid restoreScreenFromLineBuffer:_mutableState.linebuffer
-                                           withDefaultChar:[self.currentGrid defaultChar]
-                                         maxLinesToRestore:MIN(numberOfLines, _mutableState.height)];
-}
-
 - (void)mutSetHistory:(NSArray *)history {
     // This is way more complicated than it should be to work around something dumb in tmux.
     // It pads lines in its history with trailing spaces, which we'd like to trim. More importantly,
@@ -153,7 +140,7 @@
     // screen contents around on resize. So we take the history from tmux, append it to a temporary
     // line buffer, grab each wrapped line and trim spaces from it, and then append those modified
     // line (excluding empty ones at the end) to the real line buffer.
-    [self mutClearBuffer];
+    [_mutableState clearBufferSavingPrompt:YES];
     LineBuffer *temp = [[[LineBuffer alloc] init] autorelease];
     temp.mayHaveDoubleWidthCharacter = YES;
     self.mutableLineBuffer.mayHaveDoubleWidthCharacter = YES;
