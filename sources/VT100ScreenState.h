@@ -164,6 +164,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL terminalReverseVideo;
 @property (nonatomic, readonly) BOOL terminalAlternateScrollMode;
 @property (nonatomic, readonly) BOOL terminalAutorepeatMode;
+@property (nonatomic, readonly) int terminalCharset;
 @property (nonatomic, readonly) MouseMode terminalPreviousMouseMode;
 @property (nonatomic, readonly) screen_char_t terminalForegroundColorCode;
 @property (nonatomic, readonly) screen_char_t terminalBackgroundColorCode;

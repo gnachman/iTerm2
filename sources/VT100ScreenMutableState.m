@@ -298,6 +298,10 @@
     return self.terminal.autorepeatMode;
 }
 
+- (int)terminalCharset {
+    return self.terminal.charset;
+}
+
 - (MouseMode)terminalPreviousMouseMode {
     return self.terminal.previousMouseMode;
 }

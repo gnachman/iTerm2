@@ -181,7 +181,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             return NO;
         }
     }
-    if ([self.terminal charset]) {
+    if (_state.terminalCharset) {
         return NO;
     }
     return YES;
@@ -1502,6 +1502,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (BOOL)terminalAutorepeatMode {
     return _state.terminalAutorepeatMode;
+}
+
+- (int)terminalCharset {
+    return _state.terminalCharset;
 }
 
 - (VT100GridCoordRange)commandRange {
