@@ -7,6 +7,7 @@
 
 #import "VT100ScreenMutableState.h"
 #import "VT100ScreenMutableState+Private.h"
+#import "VT100ScreenMutableState+Resizing.h"
 #import "VT100ScreenMutableState+TerminalDelegate.h"
 #import "VT100ScreenState+Private.h"
 
@@ -14,6 +15,7 @@
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
+#import "NSDictionary+iTerm.h"
 #import "PTYAnnotation.h"
 #import "PTYTriggerEvaluator.h"
 #import "TmuxStateParser.h"
@@ -2813,6 +2815,272 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - State Restoration
+
+- (void)restoreFromDictionary:(NSDictionary *)dictionary
+        includeRestorationBanner:(BOOL)includeRestorationBanner
+                      reattached:(BOOL)reattached
+                     delegate:(id<VT100ScreenDelegate>)delegate {
+    if (!self.altGrid) {
+        self.altGrid = [self.primaryGrid copy];
+
+    }
+    NSDictionary *screenState = dictionary[kScreenStateKey];
+    if (screenState) {
+        if ([screenState[kScreenStateCurrentGridIsPrimaryKey] boolValue]) {
+            self.currentGrid = self.primaryGrid;
+        } else {
+            self.currentGrid = self.altGrid;
+        }
+    }
+
+    const BOOL newFormat = (dictionary[@"PrimaryGrid"] != nil);
+    if (!newFormat) {
+        LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
+        [lineBuffer setMaxLines:self.maxScrollbackLines + self.height];
+        if (!self.unlimitedScrollback) {
+            [lineBuffer dropExcessLinesWithWidth:self.width];
+        }
+        self.linebuffer = lineBuffer;
+        int maxLinesToRestore;
+        if ([iTermAdvancedSettingsModel runJobsInServers] && reattached) {
+            maxLinesToRestore = self.currentGrid.size.height;
+        } else {
+            maxLinesToRestore = self.currentGrid.size.height - 1;
+        }
+        const int linesRestored = MIN(MAX(0, maxLinesToRestore),
+                                [lineBuffer numLinesWithWidth:self.width]);
+        BOOL setCursorPosition = [self.currentGrid restoreScreenFromLineBuffer:self.linebuffer
+                                                                        withDefaultChar:[self.currentGrid defaultChar]
+                                                                      maxLinesToRestore:linesRestored];
+        DLog(@"appendFromDictionary: Grid size is %dx%d", self.currentGrid.size.width, self.currentGrid.size.height);
+        DLog(@"Restored %d wrapped lines from dictionary", self.numberOfScrollbackLines + linesRestored);
+        DLog(@"setCursorPosition=%@", @(setCursorPosition));
+        if (!setCursorPosition) {
+            VT100GridCoord coord;
+            if (VT100GridCoordFromDictionary(screenState[kScreenStateCursorCoord], &coord)) {
+                // The initial size of this session might be smaller than its eventual size.
+                // Save the coord because after the window is set to its correct size it might be
+                // possible to place the cursor in this position.
+                self.currentGrid.preferredCursorPosition = coord;
+                DLog(@"Save preferred cursor position %@", VT100GridCoordDescription(coord));
+                if (coord.x >= 0 &&
+                    coord.y >= 0 &&
+                    coord.x <= self.width &&
+                    coord.y < self.height) {
+                    DLog(@"Also set the cursor to this position");
+                    self.currentGrid.cursor = coord;
+                    setCursorPosition = YES;
+                }
+            }
+        }
+        if (!setCursorPosition) {
+            DLog(@"Place the cursor on the first column of the last line");
+            self.currentGrid.cursorY = linesRestored + 1;
+            self.currentGrid.cursorX = 0;
+        }
+        // Reduce line buffer's max size to not include the grid height. This is its final state.
+        [lineBuffer setMaxLines:self.maxScrollbackLines];
+        if (!self.unlimitedScrollback) {
+            [lineBuffer dropExcessLinesWithWidth:self.width];
+        }
+    } else if (screenState) {
+        // New format
+        [self restoreFromDictionary:dictionary
+           includeRestorationBanner:includeRestorationBanner];
+
+        LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary[@"LineBuffer"]];
+        [lineBuffer setMaxLines:self.maxScrollbackLines + self.height];
+        if (!self.unlimitedScrollback) {
+            [lineBuffer dropExcessLinesWithWidth:self.width];
+        }
+        self.linebuffer = lineBuffer;
+    }
+    BOOL addedBanner = NO;
+    if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
+        [self appendSessionRestoredBanner];
+        addedBanner = YES;
+    }
+
+    if (screenState) {
+        self.protectedMode = [screenState[kScreenStateProtectedMode] unsignedIntegerValue];
+        [self.tabStops removeAllObjects];
+        [self.tabStops addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
+
+        [self.terminal setStateFromDictionary:screenState[kScreenStateTerminalKey]];
+        NSArray<NSNumber *> *array = screenState[kScreenStateLineDrawingModeKey];
+        for (int i = 0; i < NUM_CHARSETS && i < array.count; i++) {
+            [self setCharacterSet:i usesLineDrawingMode:array[i].boolValue];
+        }
+
+        if (!newFormat) {
+            // Legacy content format restoration
+            VT100Grid *otherGrid = (self.currentGrid == self.primaryGrid) ? self.altGrid : self.primaryGrid;
+            LineBuffer *otherLineBuffer = [[LineBuffer alloc] initWithDictionary:screenState[kScreenStateNonCurrentGridKey]];
+            [otherGrid restoreScreenFromLineBuffer:otherLineBuffer
+                                   withDefaultChar:[self.altGrid defaultChar]
+                                 maxLinesToRestore:self.altGrid.size.height];
+            VT100GridCoord savedCursor = self.primaryGrid.cursor;
+            [self.primaryGrid setStateFromDictionary:screenState[kScreenStatePrimaryGridStateKey]];
+            if (addedBanner && self.currentGrid.preferredCursorPosition.x < 0 && self.currentGrid.preferredCursorPosition.y < 0) {
+                self.primaryGrid.cursor = savedCursor;
+            }
+            [self.altGrid setStateFromDictionary:screenState[kScreenStateAlternateGridStateKey]];
+        }
+
+        NSString *guidOfLastCommandMark = screenState[kScreenStateLastCommandMarkKey];
+        if (reattached) {
+            [self setCommandStartCoordWithoutSideEffects:VT100GridAbsCoordMake([screenState[kScreenStateCommandStartXKey] intValue],
+                                                                                  [screenState[kScreenStateCommandStartYKey] longLongValue])];
+            self.startOfRunningCommandOutput = [screenState[kScreenStateNextCommandOutputStartKey] gridAbsCoord];
+        }
+        self.cursorVisible = [screenState[kScreenStateCursorVisibleKey] boolValue];
+        self.trackCursorLineMovement = [screenState[kScreenStateTrackCursorLineMovementKey] boolValue];
+        self.lastCommandOutputRange = [screenState[kScreenStateLastCommandOutputRangeKey] gridAbsCoordRange];
+        self.shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
+
+
+        if (!newFormat) {
+            self.initialSize = self.currentGrid.size;
+            // Change the size to how big it was when state was saved so that
+            // interval trees can be fixed up properly when it is set back later by
+            // restoreInitialSize. Interval tree ranges cannot be interpreted
+            // outside the context of the data they annotate because when an
+            // annotation affects all the trailing nulls on a line, the length of
+            // that annotation is dependent on the screen size and how text laid
+            // out (maybe there are no nulls after reflow!).
+            VT100GridSize savedSize = [VT100Grid sizeInStateDictionary:screenState[kScreenStatePrimaryGridStateKey]];
+            [self setSize:savedSize
+             visibleLines:[delegate screenRangeOfVisibleLines]
+                selection:[delegate screenSelection]
+                  hasView:[delegate screenHasView]
+                 delegate:delegate];
+        }
+        self.intervalTree = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateIntervalTreeKey]];
+        [self fixUpDeserializedIntervalTree:self.intervalTree
+                                    visible:YES
+                      guidOfLastCommandMark:guidOfLastCommandMark
+                                   delegate:delegate];
+
+        self.savedIntervalTree = [[IntervalTree alloc] initWithDictionary:screenState[kScreenStateSavedIntervalTreeKey]];
+        [self fixUpDeserializedIntervalTree:self.savedIntervalTree
+                                    visible:NO
+                      guidOfLastCommandMark:guidOfLastCommandMark
+                                   delegate:delegate];
+
+        Interval *interval = [self lastPromptMark].entry.interval;
+        if (interval) {
+            const VT100GridRange gridRange = [self lineNumberRangeOfInterval:interval];
+            self.lastPromptLine = gridRange.location + self.cumulativeScrollbackOverflow;
+        }
+
+        [self reloadMarkCache];
+        [delegate screenSendModifiersDidChange];
+
+        if (gDebugLogging) {
+            DLog(@"Notes after restoring with width=%@", @(self.width));
+            for (id<IntervalTreeObject> object in self.intervalTree.allObjects) {
+                if (![object isKindOfClass:[PTYAnnotation class]]) {
+                    continue;
+                }
+                DLog(@"Note has coord range %@", VT100GridCoordRangeDescription([self coordRangeForInterval:object.entry.interval]));
+            }
+            DLog(@"------------ end -----------");
+        }
+    }
+}
+
+- (void)appendSessionRestoredBanner {
+    // Save graphic rendition. Set to system message color.
+    const VT100GraphicRendition saved = self.terminal.graphicRendition;
+
+    VT100GraphicRendition temp = saved;
+    temp.fgColorMode = ColorModeAlternate;
+    temp.fgColorCode = ALTSEM_SYSTEM_MESSAGE;
+    temp.bgColorMode = ColorModeAlternate;
+    temp.bgColorCode = ALTSEM_SYSTEM_MESSAGE;
+    self.terminal.graphicRendition = temp;
+
+    // Record the cursor position and append the message.
+    const int yBefore = self.currentGrid.cursor.y;
+    if (self.currentGrid.cursor.x > 0) {
+        [self appendCarriageReturnLineFeed];
+    }
+    [self eraseLineBeforeCursor:YES afterCursor:YES decProtect:NO];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateStyle = NSDateFormatterMediumStyle;
+    dateFormatter.timeStyle = NSDateFormatterShortStyle;
+    NSString *message = [NSString stringWithFormat:@"Session Contents Restored on %@", [dateFormatter stringFromDate:[NSDate date]]];
+    [self appendStringAtCursor:message];
+    self.currentGrid.cursorX = 0;
+    self.currentGrid.preferredCursorPosition = self.currentGrid.cursor;
+
+    // Restore the graphic rendition, add a newline, and calculate how far down the cursor moved.
+    self.terminal.graphicRendition = saved;
+    [self appendCarriageReturnLineFeed];
+    const int delta = self.currentGrid.cursor.y - yBefore;
+
+    // Update the preferred cursor position if needed.
+    if (self.currentGrid.preferredCursorPosition.y >= 0 && self.currentGrid.preferredCursorPosition.y + 1 < self.currentGrid.size.height) {
+        VT100GridCoord coord = self.currentGrid.preferredCursorPosition;
+        coord.y = MAX(0, MIN(self.currentGrid.size.height - 1, coord.y + delta));
+        self.currentGrid.preferredCursorPosition = coord;
+    }
+}
+
+// Link references to marks in CapturedOutput (for the lines where output was captured) to the deserialized mark.
+// Link marks for commands to CommandUse objects in command history.
+// Notify delegate of annotations so they get added as subviews, and set the delegate of not view controllers to self.
+- (void)fixUpDeserializedIntervalTree:(IntervalTree *)intervalTree
+                              visible:(BOOL)visible
+                guidOfLastCommandMark:(NSString *)guidOfLastCommandMark
+                             delegate:(id<VT100ScreenDelegate>)delegate {
+    assert(_performingJoinedBlock);
+    VT100RemoteHost *lastRemoteHost = nil;
+    NSMutableDictionary *markGuidToCapturedOutput = [NSMutableDictionary dictionary];
+    for (NSArray *objects in [intervalTree forwardLimitEnumerator]) {
+        for (id<IntervalTreeObject> object in objects) {
+            if ([object isKindOfClass:[VT100RemoteHost class]]) {
+                lastRemoteHost = object;
+            } else if ([object isKindOfClass:[VT100ScreenMark class]]) {
+                VT100ScreenMark *screenMark = (VT100ScreenMark *)object;
+#warning TODO: It isn't safe for screenmark to call its delegate on the mutation thread if it's also used on the main thread.
+                screenMark.delegate = self;
+                // If |capturedOutput| is not empty then this mark is a command, some of whose output
+                // was captured. The iTermCapturedOutputMarks will come later so save the GUIDs we need
+                // in markGuidToCapturedOutput and they'll get backfilled when found.
+                for (CapturedOutput *capturedOutput in screenMark.capturedOutput) {
+                    if (capturedOutput.markGuid) {
+#warning TODO: What thread does captured output belong to? Only use it on one.
+                        markGuidToCapturedOutput[capturedOutput.markGuid] = capturedOutput;
+                    }
+                }
+                if (screenMark.command) {
+                    // Find the matching object in command history and link it.
+                    [delegate screenUpdateCommandUseWithGuid:screenMark.guid
+                                                      onHost:lastRemoteHost
+                                               toReferToMark:screenMark];
+                }
+                if ([screenMark.guid isEqualToString:guidOfLastCommandMark]) {
+                    self.lastCommandMark = screenMark;
+                }
+            } else if ([object isKindOfClass:[iTermCapturedOutputMark class]]) {
+                // This mark represents a line whose output was captured. Find the preceding command
+                // mark that has a CapturedOutput corresponding to this mark and fill it in.
+                iTermCapturedOutputMark *capturedOutputMark = (iTermCapturedOutputMark *)object;
+                CapturedOutput *capturedOutput = markGuidToCapturedOutput[capturedOutputMark.guid];
+                capturedOutput.mark = capturedOutputMark;
+            } else if ([object isKindOfClass:[PTYAnnotation class]]) {
+                PTYAnnotation *note = (PTYAnnotation *)object;
+                if (visible) {
+                    [delegate screenDidAddNote:note focus:NO];
+                }
+            } else if ([object isKindOfClass:[iTermImageMark class]]) {
+                iTermImageMark *imageMark = (iTermImageMark *)object;
+                ScreenCharClearProvisionalFlagForImageWithCode(imageMark.imageCode.intValue);
+            }
+        }
+    }
+}
 
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner {

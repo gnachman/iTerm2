@@ -22,6 +22,28 @@
 
 static const int kDefaultMaxScrollbackLines = 1000;
 
+// State restoration dictionary keys
+NSString *const kScreenStateKey = @"Screen State";
+
+NSString *const kScreenStateTabStopsKey = @"Tab Stops";
+NSString *const kScreenStateTerminalKey = @"Terminal State";
+NSString *const kScreenStateLineDrawingModeKey = @"Line Drawing Modes";
+NSString *const kScreenStateNonCurrentGridKey = @"Non-current Grid";
+NSString *const kScreenStateCurrentGridIsPrimaryKey = @"Showing Primary Grid";
+NSString *const kScreenStateIntervalTreeKey = @"Interval Tree";
+NSString *const kScreenStateSavedIntervalTreeKey = @"Saved Interval Tree";
+NSString *const kScreenStateCommandStartXKey = @"Command Start X";
+NSString *const kScreenStateCommandStartYKey = @"Command Start Y";
+NSString *const kScreenStateNextCommandOutputStartKey = @"Output Start";
+NSString *const kScreenStateCursorVisibleKey = @"Cursor Visible";
+NSString *const kScreenStateTrackCursorLineMovementKey = @"Track Cursor Line";
+NSString *const kScreenStateLastCommandOutputRangeKey = @"Last Command Output Range";
+NSString *const kScreenStateShellIntegrationInstalledKey = @"Shell Integration Installed";
+NSString *const kScreenStateLastCommandMarkKey = @"Last Command Mark";
+NSString *const kScreenStatePrimaryGridStateKey = @"Primary Grid State";
+NSString *const kScreenStateAlternateGridStateKey = @"Alternate Grid State";
+NSString *const kScreenStateCursorCoord = @"Cursor Coord";
+NSString *const kScreenStateProtectedMode = @"Protected Mode";
 
 @implementation VT100ScreenState
 
@@ -168,7 +190,8 @@ static const int kDefaultMaxScrollbackLines = 1000;
         _needsRedraw = source.needsRedraw;
 
         _intervalTreeObserver = source.intervalTreeObserver;
-#warning TODO: I need a read-only protocol for VT100ScreenMark
+#warning TODO: I need a read-only protocol for VT100ScreenMark.
+#warning TODO: Copying marks messes up the registry since one key now can refer to two objects. The command history tool breaks scrolling to the selected command because it picks the wrong one.
         _lastCommandMark = [source.lastCommandMark copy];
         _shouldExpectPromptMarks = source.shouldExpectPromptMarks;
 
@@ -180,6 +203,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
             // TODO: This is going to be really slow. Marks being mutable is going to be a problem.
             // I think that very few kinds of marks are actually mutable, and in those cases a journal
             // might provide a cheap way to update an existing copy.
+#warning TODO: Copying marks messes up the registry since one key now can refer to two objects. The command history tool breaks scrolling to the selected command because it picks the wrong one.
             temp[key] = [[theClass alloc] initWithDictionary:encoded];
         }];
         _markCache = temp;
@@ -211,6 +235,7 @@ static const int kDefaultMaxScrollbackLines = 1000;
 
         _animatedLines = [source.animatedLines copy];
         _pasteboardString = [source.pasteboardString copy];
+#warning TODO: This is a shallow copy, leading to shared mutable state.
         _intervalTree = [source.intervalTree copy];
         _savedIntervalTree = [source.savedIntervalTree copy];
         _findContext = [source.findContext copy];

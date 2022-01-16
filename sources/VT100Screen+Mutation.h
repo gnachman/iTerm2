@@ -16,7 +16,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface VT100Screen (Mutation)<iTermMarkDelegate>
+@interface VT100Screen (Mutation)
 
 @property (nonatomic, readonly) VT100Grid *mutablePrimaryGrid;
 @property (nonatomic, readonly) VT100Grid *mutableAltGrid;
@@ -37,9 +37,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetContentsFromLineBuffer:(LineBuffer *)lineBuffer;
 - (void)mutSetHistory:(NSArray *)history;
 - (void)mutSetAltScreen:(NSArray *)lines;
-- (void)mutRestoreFromDictionary:(NSDictionary *)dictionary
-        includeRestorationBanner:(BOOL)includeRestorationBanner
-                      reattached:(BOOL)reattached;
 - (void)mutCrlf;
 - (void)mutLinefeed;
 - (void)mutSetFromFrame:(screen_char_t*)s
