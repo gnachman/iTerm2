@@ -535,13 +535,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return coord;
 }
 
-- (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line pushed:(BOOL)pushed {
-    [self mutSetWorkingDirectory:workingDirectory
-                       onAbsLine:line + self.totalScrollbackOverflow
-                          pushed:pushed
-                           token:[[_mutableState.setWorkingDirectoryOrderEnforcer newToken] autorelease]];
-}
-
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
     return [_state objectOnOrBeforeLine:line ofClass:cls];
 }

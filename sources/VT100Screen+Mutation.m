@@ -62,17 +62,6 @@
 
 #pragma mark - Interval Tree
 
-- (void)mutSetWorkingDirectory:(NSString *)workingDirectory
-#warning TODO: I need to use an absolute line number here to avoid race conditions between main thread and mutation thread.
-                     onAbsLine:(long long)line
-                        pushed:(BOOL)pushed
-                         token:(id<iTermOrderedToken>)token {
-    [_mutableState setWorkingDirectory:workingDirectory
-                             onAbsLine:line
-                                pushed:pushed
-                                 token:token];
-}
-
 - (id<iTermMark>)mutAddMarkStartingAtAbsoluteLine:(long long)line
                                           oneLine:(BOOL)oneLine
                                           ofClass:(Class)markClass {

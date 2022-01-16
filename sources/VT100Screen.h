@@ -221,7 +221,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)clearToLastMark;
 - (void)clearFromAbsoluteLineToEnd:(long long)absLine;
 
-- (void)setWorkingDirectory:(NSString *)workingDirectory onLine:(int)line pushed:(BOOL)pushed;
 - (NSString *)workingDirectoryOnLine:(int)line;
 - (VT100RemoteHost *)remoteHostOnLine:(int)line;
 - (VT100ScreenMark *)lastCommandMark;  // last mark representing a command

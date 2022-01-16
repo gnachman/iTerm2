@@ -14236,9 +14236,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     // Updates the mark
     DLog(@"Will create a mark");
-    [self.screen setWorkingDirectory:pwd
-                              onLine:[self.screen lineNumberOfCursor]
-                              pushed:NO];
+    const long absLine = _screen.lineNumberOfCursor + _screen.totalScrollbackOverflow;
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState setWorkingDirectory:pwd
+                                onAbsLine:absLine
+                                   pushed:NO
+                                    token:[[mutableState.setWorkingDirectoryOrderEnforcer newToken] autorelease]];
+    }];
+
 }
 
 #pragma mark - iTermStandardKeyMapperDelegate
