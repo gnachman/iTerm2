@@ -2712,7 +2712,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (canBroadcast && _screen.terminalSendReceiveMode && !self.isTmuxClient && !self.isTmuxGateway) {
         // Local echo. Only for broadcastable text to avoid printing passwords from the password manager.
-        [_screen appendStringAtCursor:[string stringByMakingControlCharactersToPrintable]];
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            [mutableState appendStringAtCursor:[string stringByMakingControlCharactersToPrintable]];
+        }];
     }
     // check if we want to send this input to all the sessions
     if (canBroadcast && [[_delegate realParentWindow] broadcastInputToSession:self]) {
@@ -6571,7 +6573,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (pipe(fds) < 0) {
         NSString *message = [NSString stringWithFormat:@"Failed to create pipe: %s", strerror(errno)];
         DLog(@"%@", message);
-        [_screen appendStringAtCursor:message];
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            [mutableState appendStringAtCursor:message];
+        }];
         _tmuxClientWritePipe = nil;
         return;
     }
@@ -7187,8 +7191,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)tmuxPrintLine:(NSString *)line {
     DLog(@"%@", line);
-    [_screen appendStringAtCursor:line];
-    [_screen crlf];
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState appendStringAtCursor:line];
+        [mutableState appendCarriageReturnLineFeed];
+    }];
 }
 
 - (void)tmuxGatewayDidTimeOut {

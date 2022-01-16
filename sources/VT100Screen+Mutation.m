@@ -62,10 +62,6 @@
 
 #pragma mark - Appending
 
-- (void)mutAppendStringAtCursor:(NSString *)string {
-    [_mutableState appendStringAtCursor:string];
-}
-
 - (void)mutAppendScreenChars:(const screen_char_t *)line
                       length:(int)length
       externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
