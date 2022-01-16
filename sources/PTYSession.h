@@ -348,8 +348,6 @@ backgroundColor:(NSColor *)backgroundColor;
 // Shell wraps the underlying file descriptor pair.
 @property(nonatomic, retain) PTYTask *shell;
 
-@property(nonatomic, readonly) VT100Terminal *terminal;
-
 // The value of the $TERM environment var.
 @property(nonatomic, copy) NSString *termVariable;
 

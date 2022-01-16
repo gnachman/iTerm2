@@ -1340,10 +1340,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                    reattached:reattached];
 }
 
-- (void)setTmuxState:(NSDictionary *)state {
-     [self mutSetTmuxState:state];
-}
-
 - (void)crlf {
     [self mutCrlf];
 }

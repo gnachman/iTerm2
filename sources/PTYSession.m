@@ -4350,11 +4350,6 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     }];
 }
 
-- (VT100Terminal *)terminal
-{
-    return _screen.terminal;
-}
-
 - (void)setTermVariable:(NSString *)termVariable terminal:(VT100Terminal *)terminal {
     if (self.isTmuxClient) {
         return;
