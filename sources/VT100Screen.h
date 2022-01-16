@@ -46,7 +46,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
     PTYTextViewDataSource,
     PTYTriggerEvaluatorDataSource>
 
-@property(nonatomic, readonly, strong) VT100Terminal *terminal;
 @property(nonatomic) BOOL terminalEnabled;
 @property(nonatomic, assign) BOOL audibleBell;
 @property(nonatomic, assign) BOOL showBellIndicator;

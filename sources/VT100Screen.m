@@ -140,11 +140,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return delegate_;
 }
 
-- (VT100Terminal *)terminal {
-#warning TODO: Remove this
-    return _mutableState.terminal;
-}
-
 - (void)setTerminalEnabled:(BOOL)enabled {
     if (_terminalEnabled == enabled) {
         return;
