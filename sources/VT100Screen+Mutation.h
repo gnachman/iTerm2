@@ -121,7 +121,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                          colors:(NSDictionary *)colors;
 - (void)mutAddTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
 - (void)mutScheduleTokenExecution;
-- (PTYAnnotation *)mutAddNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange;
 - (void)mutInjectData:(NSData *)data;
 - (void)mutPerformPeriodicTriggerCheck;
 - (void)mutForceCheckTriggers;
