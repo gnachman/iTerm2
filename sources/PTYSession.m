@@ -15057,7 +15057,9 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)filterDestinationRemoveLastLine {
-    [_screen removeLastLine];
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState removeLastLine];
+    }];
 }
 
 #pragma mark - iTermImmutableColorMapDelegate

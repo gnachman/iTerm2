@@ -112,6 +112,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)eraseCharactersAfterCursor:(int)j;
 - (void)eraseScreenAndRemoveSelection;
 - (void)clearFromAbsoluteLineToEnd:(long long)absLine;
+- (void)removeLastLine;
 
 void VT100ScreenEraseCell(screen_char_t *sct,
                           iTermExternalAttribute **eaOut,

@@ -1379,10 +1379,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)removeLastLine {
-    [self mutRemoveLastLine];
-}
-
 - (void)setMaxScrollbackLines:(unsigned int)lines {
     [self mutSetMaxScrollbackLines:lines];
 }
