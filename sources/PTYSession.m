@@ -1081,24 +1081,28 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source {
-    [source.screen enumerateLinesInRange:rangeOfLines
-                                   block:^(int i,
-                                           ScreenCharArray *sca,
-                                           iTermImmutableMetadata metadata,
-                                           BOOL *stopPtr) {
-        if (i + 1 == NSMaxRange(rangeOfLines)) {
-            screen_char_t continuation = { 0 };
-            continuation.code = EOL_SOFT;
-            [_screen appendScreenChars:sca.line
-                                length:sca.length
-                externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
-                          continuation:continuation];
-        } else {
-            [_screen appendScreenChars:sca.line
-                                length:sca.length
-                externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
-                          continuation:sca.continuation];
-        }
+    assert(source != self);
+
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [source.screen enumerateLinesInRange:rangeOfLines
+                                      block:^(int i,
+                                              ScreenCharArray *sca,
+                                              iTermImmutableMetadata metadata,
+                                              BOOL *stopPtr) {
+            if (i + 1 == NSMaxRange(rangeOfLines)) {
+                screen_char_t continuation = { 0 };
+                continuation.code = EOL_SOFT;
+                [mutableState appendScreenChars:sca.line
+                                         length:sca.length
+                         externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
+                                   continuation:continuation];
+            } else {
+                [mutableState appendScreenChars:sca.line
+                                         length:sca.length
+                         externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(metadata)
+                                   continuation:sca.continuation];
+            }
+        }];
     }];
 }
 
@@ -15056,10 +15060,12 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                                     count:(int)count
                    externalAttributeIndex:(iTermExternalAttributeIndex *)externalAttributeIndex
                              continuation:(screen_char_t)continuation {
-    [_screen appendScreenChars:(screen_char_t *)line
-                        length:count
-        externalAttributeIndex:externalAttributeIndex
-                  continuation:continuation];
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState appendScreenChars:line
+                                 length:count
+                 externalAttributeIndex:externalAttributeIndex
+                           continuation:continuation];
+    }];
 }
 
 - (void)filterDestinationRemoveLastLine {

@@ -1265,16 +1265,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)appendScreenChars:(const screen_char_t *)line
-                   length:(int)length
-   externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
-             continuation:(screen_char_t)continuation {
-    [self mutAppendScreenChars:line
-                       length:length
-       externalAttributeIndex:externalAttributeIndex
-                 continuation:continuation];
-}
-
 - (void)setHistory:(NSArray *)history {
     [self mutSetHistory:history];
 }
