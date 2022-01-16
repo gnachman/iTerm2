@@ -126,7 +126,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
                    length:(int)length
    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes
              continuation:(screen_char_t)continuation;
-- (void)setContentsFromLineBuffer:(LineBuffer *)lineBuffer;
 
 // Append a string to the screen at the current cursor position. The terminal's insert and wrap-
 // around modes are respected, the cursor is advanced, the screen may be scrolled, and the line

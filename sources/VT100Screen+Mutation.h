@@ -22,7 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) VT100Grid *mutableAltGrid;
 @property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
-- (void)mutClearBuffer;
 - (void)mutClearBufferSavingPrompt:(BOOL)savePrompt;
 - (void)mutClearScrollbackBuffer;
 - (void)mutResetTimestamps;
@@ -32,7 +31,6 @@ NS_ASSUME_NONNULL_BEGIN
                    length:(int)length
    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
                 continuation:(screen_char_t)continuation;
-- (void)mutSetContentsFromLineBuffer:(LineBuffer *)lineBuffer;
 - (void)mutSetHistory:(NSArray *)history;
 - (void)mutSetAltScreen:(NSArray *)lines;
 - (void)mutCrlf;

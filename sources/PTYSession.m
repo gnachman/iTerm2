@@ -4640,14 +4640,16 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 }
 
 - (void)clearBuffer {
-    [_screen clearBuffer];
-    if (self.isTmuxClient) {
-        [_tmuxController clearHistoryForWindowPane:self.tmuxPane];
-    }
-    if ([iTermAdvancedSettingsModel jiggleTTYSizeOnClearBuffer]) {
-        [self jiggle];
-    }
-    _view.scrollview.ptyVerticalScroller.userScroll = NO;
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState clearBufferSavingPrompt:YES];
+        if (self.isTmuxClient) {
+            [_tmuxController clearHistoryForWindowPane:self.tmuxPane];
+        }
+        if ([iTermAdvancedSettingsModel jiggleTTYSizeOnClearBuffer]) {
+            [self jiggle];
+        }
+        _view.scrollview.ptyVerticalScroller.userScroll = NO;
+    }];
 }
 
 - (void)jiggle {
@@ -5785,7 +5787,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.liveSession addContentSubscriber:_asyncFilter];
     if (replacingFilter) {
         DLog(@"Clear buffer because there is a pre-existing filter");
-        [self.screen clearBufferSavingPrompt:NO];
+        [self.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            [mutableState clearBufferSavingPrompt:NO];
+        }];
     }
     [_asyncFilter start];
 }

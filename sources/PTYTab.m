@@ -1480,34 +1480,38 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 }
 
 - (void)setFilter:(NSString *)query inSession:(PTYSession *)oldSession {
-    if (oldSession.filter != nil) {
-        if (query.length == 0) {
-            PTYSession *live = oldSession.liveSession;
-            [self.delegate tabEndSyntheticSession:oldSession];
-            [live.view.findDriver setFilterWithoutSideEffects:@""];
-        } else {
-            oldSession.filter = query;
+    // Join out of caution. I don't want oldSession changing unexpectedly during this method. setFilter:
+    // also joins out of necessity which could cause a state update.
+    [oldSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        if (oldSession.filter != nil) {
+            if (query.length == 0) {
+                PTYSession *live = oldSession.liveSession;
+                [self.delegate tabEndSyntheticSession:oldSession];
+                [live.view.findDriver setFilterWithoutSideEffects:@""];
+            } else {
+                oldSession.filter = query;
+            }
+            return;
         }
-        return;
-    }
-    if (!query.length) {
-        return;
-    }
-    PTYSession *syntheticSession = [self.realParentWindow syntheticSessionForSession:oldSession];
-    if (!syntheticSession) {
-        DLog(@"syntheticSessionForSession:%@ returned nl", oldSession);
-        return;
-    }
-    [syntheticSession divorceAddressBookEntryFromPreferences];
-    [syntheticSession setSessionSpecificProfileValues:@{ KEY_UNLIMITED_SCROLLBACK: @YES }];
-    syntheticSession.screen.unlimitedScrollback = YES;
-    [syntheticSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        mutableState.cursorVisible = NO;
+        if (!query.length) {
+            return;
+        }
+        PTYSession *syntheticSession = [self.realParentWindow syntheticSessionForSession:oldSession];
+        if (!syntheticSession) {
+            DLog(@"syntheticSessionForSession:%@ returned nl", oldSession);
+            return;
+        }
+        [syntheticSession divorceAddressBookEntryFromPreferences];
+        [syntheticSession setSessionSpecificProfileValues:@{ KEY_UNLIMITED_SCROLLBACK: @YES }];
+        syntheticSession.screen.unlimitedScrollback = YES;
+        [syntheticSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            mutableState.cursorVisible = NO;
+        }];
+        [self replaceActiveSessionWithSyntheticSession:syntheticSession];
+        syntheticSession.filter = query;
+        [syntheticSession showFilter];
+        [syntheticSession.view.findDriver setFilterWithoutSideEffects:query];
     }];
-    [self replaceActiveSessionWithSyntheticSession:syntheticSession];
-    syntheticSession.filter = query;
-    [syntheticSession showFilter];
-    [syntheticSession.view.findDriver setFilterWithoutSideEffects:query];
 }
 
 - (void)replaceActiveSessionWithSyntheticSession:(PTYSession *)newSession {
