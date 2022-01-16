@@ -62,41 +62,8 @@
 
 #pragma mark - Interval Tree
 
-- (void)mutSetPromptStartLine:(int)line {
-    [_mutableState setPromptStartLine:line];
-}
-
-- (void)mutDidUpdatePromptLocation {
-    [_mutableState didUpdatePromptLocation];
-}
-
-- (void)mutUserDidPressReturn {
-    if (_mutableState.fakePromptDetectedAbsLine >= 0) {
-        [self didInferEndOfCommand];
-    }
-}
-
 - (void)mutSetFakePromptDetectedAbsLine:(long long)value {
     _mutableState.fakePromptDetectedAbsLine = value;
-}
-
-- (void)didInferEndOfCommand {
-    DLog(@"Inferring end of command");
-    VT100GridAbsCoord coord;
-    coord.x = 0;
-    coord.y = (_mutableState.currentGrid.cursor.y +
-               [_mutableState.linebuffer numLinesWithWidth:_mutableState.currentGrid.size.width]
-               + _mutableState.cumulativeScrollbackOverflow);
-    if (_mutableState.currentGrid.cursorX > 0) {
-        // End of command was detected before the newline came in. This is the normal case.
-        coord.y += 1;
-    }
-    if ([_mutableState commandDidEndAtAbsCoord:coord]) {
-        _mutableState.fakePromptDetectedAbsLine = -2;
-    } else {
-        // Screen didn't think we were in a command.
-        _mutableState.fakePromptDetectedAbsLine = -1;
-    }
 }
 
 - (PTYAnnotation *)mutAddNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {

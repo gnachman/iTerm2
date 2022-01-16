@@ -2313,6 +2313,25 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return NO;
 }
 
+- (void)didInferEndOfCommand {
+    DLog(@"Inferring end of command");
+    VT100GridAbsCoord coord;
+    coord.x = 0;
+    coord.y = (self.currentGrid.cursor.y +
+               [self.linebuffer numLinesWithWidth:self.currentGrid.size.width]
+               + self.cumulativeScrollbackOverflow);
+    if (self.currentGrid.cursorX > 0) {
+        // End of command was detected before the newline came in. This is the normal case.
+        coord.y += 1;
+    }
+    if ([self commandDidEndAtAbsCoord:coord]) {
+        self.fakePromptDetectedAbsLine = -2;
+    } else {
+        // Screen didn't think we were in a command.
+        self.fakePromptDetectedAbsLine = -1;
+    }
+}
+
 #pragma mark - Annotations
 
 - (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange {
@@ -2654,6 +2673,21 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (group) {
         dispatch_group_leave(group);
     }
+}
+
+- (void)performBlockAsynchronously:(void (^ _Nullable)(VT100Terminal *terminal,
+                                                       VT100ScreenMutableState *mutableState,
+                                                       id<VT100ScreenDelegate> delegate))block {
+    assert([NSThread isMainThread]);
+    id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    __weak __typeof(self) weakSelf = self;
+    [_tokenExecutor scheduleHighPriorityTask:^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        block(strongSelf.terminal, strongSelf, delegate);
+    }];
 }
 
 - (void)sync {
