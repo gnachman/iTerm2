@@ -1265,10 +1265,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)clearBufferSavingPrompt:(BOOL)savePrompt {
-    [self mutClearBufferSavingPrompt:savePrompt];
-}
-
 - (void)appendScreenChars:(const screen_char_t *)line
                    length:(int)length
    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
