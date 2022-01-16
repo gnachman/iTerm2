@@ -598,12 +598,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [_state.intervalTree containsObject:mark];
 }
 
-- (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
-                                       oneLine:(BOOL)oneLine
-                                       ofClass:(Class)markClass {
-    return [self mutAddMarkStartingAtAbsoluteLine:line oneLine:oneLine ofClass:markClass];
-}
-
 - (VT100GridCoordRange)coordRangeOfAnnotation:(PTYAnnotation *)note {
     return [_state coordRangeForInterval:note.entry.interval];
 }

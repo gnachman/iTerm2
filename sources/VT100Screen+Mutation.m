@@ -62,14 +62,6 @@
 
 #pragma mark - Interval Tree
 
-- (id<iTermMark>)mutAddMarkStartingAtAbsoluteLine:(long long)line
-                                          oneLine:(BOOL)oneLine
-                                          ofClass:(Class)markClass {
-    return [_mutableState addMarkStartingAtAbsoluteLine:line
-                                                oneLine:oneLine
-                                                ofClass:markClass];
-}
-
 - (void)mutReloadMarkCache {
     [_mutableState reloadMarkCache];
 }

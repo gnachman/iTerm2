@@ -11093,11 +11093,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // Save the current scroll position
 - (void)screenSaveScrollPosition {
     DLog(@"Session %@ calling refresh", self);
-    [_textview refresh];  // In case text was appended
-    id<iTermMark> mark = [_screen addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
-                                                        oneLine:NO
-                                                        ofClass:[VT100ScreenMark class]];
-    self.currentMarkOrNotePosition = mark.entry.interval;
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+#warning When moving to multiple threads test this unusual reentrancy
+        [_textview refresh];  // In case text was appended
+        id<iTermMark> mark = [mutableState addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
+                                                                 oneLine:NO
+                                                                 ofClass:[VT100ScreenMark class]];
+        self.currentMarkOrNotePosition = mark.entry.interval;
+    }];
 }
 
 - (void)screenStealFocus {
