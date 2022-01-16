@@ -100,6 +100,7 @@ support8BitControlCharacters:(BOOL)support8BitControlCharacters
         if (![command hasPrefix:@"%begin"] && ![result.string hasPrefix:@"%exit"]) {
             result->type = VT100_WAIT;
             result.string = nil;
+            [_line setLength:0];
             return NO;
         }
     }

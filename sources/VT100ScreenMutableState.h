@@ -50,6 +50,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect;
 
 - (void)setNeedsRedraw;
+- (iTermTokenExecutorUnpauser *)pauseTokenExecution;
 
 #pragma mark - Scrollback
 

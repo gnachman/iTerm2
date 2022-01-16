@@ -252,6 +252,13 @@
     }
 }
 
+- (void)cancelTmuxRecoveryMode {
+    @synchronized(self) {
+        [_controlParser cancelTmuxRecoveryMode];
+        _dcsHooked = NO;
+    }
+}
+
 - (void)reset {
     @synchronized(self) {
         [_savedStateForPartialParse removeAllObjects];

@@ -1510,6 +1510,19 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         if ([iTermAdvancedSettingsModel runJobsInServers]) {
             DLog(@"Configured to run jobs in servers");
+            const BOOL isTmuxGateway = [arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue];
+            if (isTmuxGateway) {
+                DLog(@"Was a tmux gateway. Start recovery mode in parser.");
+                // Optimistally enter tmux recovery mode. If we do attach, the parser will be in the
+                // right state before any input arrives for it.
+                // In the event that attaching to the server fails we'll first tmux recovery mode
+                // and set runCommand=YES; later, a new program will run and input will be received
+                //  but the parser is safely out of recovery mode by then.
+                [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+                    [terminal.parser startTmuxRecoveryModeWithID:arrangement[SESSION_ARRANGEMENT_TMUX_DCS_ID]];
+                }];
+            }
+
             // iTerm2 is currently configured to run jobs in servers, but we
             // have to check if the arrangement was saved with that setting on.
             BOOL didAttach = NO;
@@ -1531,7 +1544,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 if (partialAttachments) {
                     id partial = partialAttachments[serverDict];
                     if (partial &&
-                        [aSession tryToFinishAttachingToMultiserverWithPartialAttachment:partial]) {
+                        [aSession tryToFinishAttachingToMultiserverWithPartialAttachment:partial] != 0) {
                         DLog(@"Finished attaching to multiserver!");
                         didAttach = YES;
                     }
@@ -1541,19 +1554,18 @@ ITERM_WEAKLY_REFERENCEABLE
                 }
             }
             if (didAttach) {
-                if ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue]) {
-                    DLog(@"Was a tmux gateway. Start recovery mode in parser.");
-                    // Before attaching to the server we can put the parser into "tmux recovery mode".
-                    [aSession.terminal.parser startTmuxRecoveryModeWithID:arrangement[SESSION_ARRANGEMENT_TMUX_DCS_ID]];
-                }
-
                 runCommand = NO;
                 attachedToServer = YES;
                 shouldEnterTmuxMode = ([arrangement[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] boolValue] &&
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
                 tmuxDCSIdentifier = arrangement[SESSION_ARRANGEMENT_TMUX_DCS_ID];
+            } else if (isTmuxGateway) {
+                [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+                    [terminal.parser cancelTmuxRecoveryMode];
+                }];
             }
+
         }
 
         // GUID will be set for new saved arrangements since late 2014.
@@ -1798,7 +1810,17 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview setFrame:NSMakeRect(0, [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins], aSize.width, aSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins])];
 
     // assign terminal and task objects
-    [_screen setTerminalEnabled:YES];
+    // Pause token execution in case the caller needs to modify terminal state before it starts running.
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
+                                             VT100ScreenMutableState *mutableState,
+                                             id<VT100ScreenDelegate> delegate) {
+        iTermTokenExecutorUnpauser *unpauser = [mutableState pauseTokenExecution];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"unpause %@", terminal);
+            [unpauser unpause];
+        });
+        [_screen setTerminalEnabled:YES];
+    }];
     [_shell setDelegate:self];
     [self.variablesScope setValue:_shell.tty forVariableNamed:iTermVariableKeySessionTTY];
     [self.variablesScope setValue:@(_screen.terminalMouseMode) forVariableNamed:iTermVariableKeySessionMouseReportingMode];

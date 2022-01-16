@@ -184,4 +184,8 @@
     [_dcsParser startTmuxRecoveryModeWithID:dcsID];
 }
 
+- (void)cancelTmuxRecoveryMode {
+    [_dcsParser cancelTmuxRecoveryMode];
+}
+
 @end

@@ -97,9 +97,9 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 
 #pragma mark - Attaching
 
-- (BOOL)tryToFinishAttachingToMultiserverWithPartialAttachment:(id<iTermPartialAttachment>)partialAttachment {
+- (iTermJobManagerAttachResults)tryToFinishAttachingToMultiserverWithPartialAttachment:(id<iTermPartialAttachment>)partialAttachment {
     if (!partialAttachment) {
-        return NO;
+        return 0;
     }
     return [self.shell finishAttachingToMultiserver:partialAttachment.partialResult
                                          jobManager:partialAttachment.jobManager
