@@ -1825,7 +1825,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)promptDidStartAt:(VT100GridAbsCoord)coord {
-    DLog(@"FinalTerm: mutPromptDidStartAt");
+    DLog(@"FinalTerm: promptDidStartAt");
     if (coord.x > 0 && self.config.shouldPlacePromptAtFirstColumn) {
         [self appendCarriageReturnLineFeed];
     }

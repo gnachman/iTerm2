@@ -60,21 +60,7 @@
     _mutableState.config = _nextConfig;
 }
 
-#pragma mark - FinalTerm
-
-- (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord {
-    [_mutableState promptDidStartAt:coord];
-}
-
-- (void)mutSetLastCommandOutputRange:(VT100GridAbsCoordRange)lastCommandOutputRange {
-    _mutableState.lastCommandOutputRange = lastCommandOutputRange;
-}
-
 #pragma mark - Interval Tree
-
-- (id<iTermMark>)mutAddMarkOnLine:(int)line ofClass:(Class)markClass {
-    return [_mutableState addMarkOnLine:line ofClass:markClass];
-}
 
 - (void)mutSetPromptStartLine:(int)line {
     [_mutableState setPromptStartLine:line];

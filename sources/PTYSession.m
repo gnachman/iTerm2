@@ -11100,10 +11100,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     self.currentMarkOrNotePosition = mark.entry.interval;
 }
 
-- (id<iTermMark>)markAddedAtCursorOfClass:(Class)theClass {
-    return [self.screen markAddedAtCursorOfClass:theClass];
-}
-
 - (void)screenStealFocus {
     NSString *const identifier = @"NoSyncAllowDenyStealFocus";
     const iTermWarningSelection selection =

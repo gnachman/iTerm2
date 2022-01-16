@@ -88,8 +88,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutStoreLastPositionInLineBufferAsFindContextSavedPosition;
 - (void)mutRemoveAllTabStops;
 - (void)mutSetSaveToScrollbackInAlternateScreen:(BOOL)value;
-- (void)mutPromptDidStartAt:(VT100GridAbsCoord)coord;
-- (void)mutSetLastCommandOutputRange:(VT100GridAbsCoordRange)lastCommandOutputRange;
 - (void)mutRestoreInitialSize;
 - (void)mutSaveFindContextAbsPos;
 - (void)mutSetTrackCursorLineMovement:(BOOL)trackCursorLineMovement;
@@ -114,7 +112,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetFakePromptDetectedAbsLine:(long long)value;
 - (void)mutUserDidPressReturn;
 - (void)mutSetLastPromptLine:(long long)value;
-- (id<iTermMark>)mutAddMarkOnLine:(int)line ofClass:(Class)markClass;
 - (void)mutSetShouldExpectPromptMarks:(BOOL)value;
 - (void)mutRestorePreferredCursorPositionIfPossible;
 - (void)mutLinkTextInRange:(NSRange)range
