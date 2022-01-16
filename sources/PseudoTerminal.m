@@ -128,7 +128,7 @@
 #import "ToolJobs.h"
 #import "VT100RemoteHost.h"
 #import "VT100Screen.h"
-#import "VT100Screen.h"
+#import "VT100ScreenMutableState.h"
 #import "VT100Terminal.h"
 #include "iTermFileDescriptorClient.h"
 #import <QuartzCore/QuartzCore.h>
@@ -7425,7 +7425,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)showRangeOfLines:(NSRange)rangeOfLines inSession:(PTYSession *)oldSession {
     PTYSessionZoomState *state = oldSession.stateToSaveForZoom;
     PTYSession *syntheticSession = [self syntheticSessionForSession:oldSession];
-    [syntheticSession.screen terminalSetCursorVisible:NO];
+    [syntheticSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.cursorVisible = NO;
+    }];
     [syntheticSession appendLinesInRange:rangeOfLines fromSession:oldSession];
     [[self tabForSession:oldSession] replaceActiveSessionWithSyntheticSession:syntheticSession];
     syntheticSession.savedStateForZoom = state;
