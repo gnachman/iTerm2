@@ -1275,10 +1275,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                  continuation:continuation];
 }
 
-- (void)appendStringAtCursor:(NSString *)string {
-    [self mutAppendStringAtCursor:string];
-}
-
 - (void)setHistory:(NSArray *)history {
     [self mutSetHistory:history];
 }

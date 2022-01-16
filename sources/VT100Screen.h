@@ -123,11 +123,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes
              continuation:(screen_char_t)continuation;
 
-// Append a string to the screen at the current cursor position. The terminal's insert and wrap-
-// around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
-// buffer may change.
-- (void)appendStringAtCursor:(NSString *)string;
-
 // This is a hacky thing that moves the cursor to the next line, not respecting scroll regions.
 // It's used for the tmux status screen.
 - (void)crlf;
@@ -264,6 +259,9 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block;
+- (void)mutateAsynchronously:(void (^)(VT100Terminal *terminal,
+                                       VT100ScreenMutableState *mutableState,
+                                       id<VT100ScreenDelegate> delegate))block;
 - (void)beginEchoProbeWithBackspace:(NSData *)backspace
                            password:(NSString *)password
                            delegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate;

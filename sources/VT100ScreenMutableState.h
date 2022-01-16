@@ -89,6 +89,10 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark Write Text
 
 - (void)appendAsciiDataAtCursor:(AsciiData *)asciiData;
+
+// Append a string to the screen at the current cursor position. The terminal's insert and wrap-
+// around modes are respected, the cursor is advanced, the screen may be scrolled, and the line
+// buffer may change.
 - (void)appendStringAtCursor:(NSString *)string;
 - (void)appendScreenCharArrayAtCursor:(const screen_char_t *)buffer
                                length:(int)len
