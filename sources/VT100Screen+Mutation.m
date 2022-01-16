@@ -66,12 +66,6 @@
     [_mutableState reloadMarkCache];
 }
 
-- (void)mutAddNote:(PTYAnnotation *)annotation
-           inRange:(VT100GridCoordRange)range
-             focus:(BOOL)focus {
-    [_mutableState addAnnotation:annotation inRange:range focus:focus];
-}
-
 - (void)mutRemoveAnnotation:(PTYAnnotation *)annotation {
     [_mutableState removeAnnotation:annotation];
 }
