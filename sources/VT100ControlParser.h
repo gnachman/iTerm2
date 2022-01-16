@@ -39,6 +39,7 @@ NS_INLINE BOOL isc1(int c) {
                    dcsHooked:(BOOL *)dcsHooked;
 
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
+- (void)cancelTmuxRecoveryMode;
 
 @end
 

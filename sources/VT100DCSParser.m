@@ -731,6 +731,14 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     // Replace the hook with one in recovery mode.
     _hook = [[VT100TmuxParser alloc] initInRecoveryMode];
     _uniqueID = [dcsID copy];
+    DLog(@"dcs parser code injected and parser hooked.");
+}
+
+- (void)cancelTmuxRecoveryMode {
+    if ([_hook isKindOfClass:[VT100TmuxParser class]]) {
+        DLog(@"unhook");
+        [self unhook];
+    }
 }
 
 @end

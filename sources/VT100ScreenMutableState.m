@@ -220,6 +220,10 @@
     _tokenExecutor.delegate = delegate;
 }
 
+- (iTermTokenExecutorUnpauser *)pauseTokenExecution {
+    return [_tokenExecutor pause];
+}
+
 #pragma mark - Terminal State Accessors
 
 - (BOOL)terminalSoftAlternateScreenMode {

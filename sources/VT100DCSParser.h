@@ -275,6 +275,7 @@ typedef NS_ENUM(NSInteger, VT100DCSState) {
 - (void)reset;
 
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
+- (void)cancelTmuxRecoveryMode;
 
 @end
 
