@@ -146,9 +146,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Sets the alt grid's contents. |lines| is NSData with screen_char_t's.
 - (void)setAltScreen:(NSArray *)lines;
 
-// Load state from tmux. The |state| dictionary has keys from the kStateDictXxx values.
-- (void)setTmuxState:(NSDictionary *)state;
-
 // Set the colors in the range relative to the start of the given line number.
 // See kHighlightXxxColor constants at the top of this file for dict keys, values are NSColor*s.
 - (void)highlightTextInRange:(NSRange)range
