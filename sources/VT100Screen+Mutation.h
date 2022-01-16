@@ -22,9 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) VT100Grid *mutableAltGrid;
 @property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
-- (void)mutAddNote:(PTYAnnotation *)note
-           inRange:(VT100GridCoordRange)range
-             focus:(BOOL)focus;
 - (void)mutRemoveAnnotation:(PTYAnnotation *)annotation;
 
 - (void)mutClearBuffer;

@@ -1388,7 +1388,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)addNote:(PTYAnnotation *)note
         inRange:(VT100GridCoordRange)range
           focus:(BOOL)focus {
-    [self mutAddNote:note inRange:range focus:focus];
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState addAnnotation:note inRange:range focus:focus];
+    }];
 }
 
 - (void)clearScrollbackBuffer {
