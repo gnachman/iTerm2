@@ -22,7 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) VT100Grid *mutableAltGrid;
 @property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
-- (void)mutClearScrollbackBuffer;
 - (void)mutResetTimestamps;
 - (void)mutRemoveLastLine;
 - (void)mutAppendStringAtCursor:(NSString *)string;

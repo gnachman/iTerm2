@@ -62,10 +62,6 @@
 
 #pragma mark - Clearing
 
-- (void)mutClearScrollbackBuffer {
-    [_mutableState clearScrollbackBuffer];
-}
-
 - (void)mutResetTimestamps {
     [self.mutablePrimaryGrid resetTimestamps];
     [self.mutableAltGrid resetTimestamps];
