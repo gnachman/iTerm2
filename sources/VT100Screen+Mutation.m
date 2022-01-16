@@ -60,12 +60,6 @@
     _mutableState.config = _nextConfig;
 }
 
-#pragma mark - Interval Tree
-
-- (void)mutRemoveAnnotation:(PTYAnnotation *)annotation {
-    [_mutableState removeAnnotation:annotation];
-}
-
 #pragma mark - Clearing
 
 - (void)mutClearBuffer {

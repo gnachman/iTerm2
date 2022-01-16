@@ -557,7 +557,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)removeAnnotation:(PTYAnnotation *)annotation {
-    [self mutRemoveAnnotation:annotation];
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState removeAnnotation:annotation];
+    }];
 }
 
 - (void)removeInaccessibleNotes {
