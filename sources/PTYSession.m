@@ -9748,7 +9748,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             return _screen.terminalMouseMode != MOUSE_REPORTING_NONE;
 
         case 4:
-            return _screen.terminal.bracketedPasteMode;
+            return _screen.terminalBracketedPasteMode;
 
         case 5:
             return _screen.terminalCursorMode;
