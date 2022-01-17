@@ -3601,7 +3601,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)loadInitialColorTableAndResetCursorGuide {
-    [_screen loadInitialColorTable];
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState loadInitialColorTable];
+    }];
     [self resetCursorGuide];
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{

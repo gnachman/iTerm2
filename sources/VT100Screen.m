@@ -189,10 +189,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.commandStartCoord;
 }
 
-- (void)loadInitialColorTable {
-    [self mutLoadInitialColorTable];
-}
-
 - (void)setColor:(NSColor *)color forKey:(int)key {
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState setColor:color forKey:key];

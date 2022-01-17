@@ -68,7 +68,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)mutPerformPeriodicTriggerCheck;
 - (void)mutForceCheckTriggers;
 - (void)mutSetExited:(BOOL)exited;
-- (void)mutLoadInitialColorTable;
 
 @end
 
