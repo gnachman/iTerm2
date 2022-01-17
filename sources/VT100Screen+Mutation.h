@@ -22,10 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) VT100Grid *mutableAltGrid;
 @property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
-- (void)mutSetFromFrame:(screen_char_t*)s
-                    len:(int)len
-               metadata:(NSArray<NSArray *> *)metadataArrays
-                   info:(DVRFrameInfo)info;
 - (void)mutRestoreSavedPositionToFindContext:(FindContext *)context;
 - (void)mutSetFindString:(NSString*)aString
      forwardDirection:(BOOL)direction

@@ -338,6 +338,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)setTmuxState:(NSDictionary *)state;
 
+#pragma mark - DVR
+
+// Load a frame from a dvr decoder.
+- (void)setFromFrame:(const screen_char_t *)s
+                 len:(int)len
+            metadata:(NSArray<NSArray *> *)metadataArrays
+                info:(DVRFrameInfo)info;
+
 #pragma mark - Temporary
 
 - (void)setTokenExecutorDelegate:(id)delegate;

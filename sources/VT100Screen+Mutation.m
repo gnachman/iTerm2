@@ -60,33 +60,6 @@
     _mutableState.config = _nextConfig;
 }
 
-#pragma mark - DVR
-
-- (void)mutSetFromFrame:(screen_char_t*)s
-                    len:(int)len
-               metadata:(NSArray<NSArray *> *)metadataArrays
-                   info:(DVRFrameInfo)info {
-    assert(len == (info.width + 1) * info.height * sizeof(screen_char_t));
-    NSMutableData *storage = [NSMutableData dataWithLength:sizeof(iTermMetadata) * info.height];
-    iTermMetadata *md = (iTermMetadata *)storage.mutableBytes;
-    [metadataArrays enumerateObjectsUsingBlock:^(NSArray * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        if (idx >= info.height) {
-            *stop = YES;
-            return;
-        }
-        iTermMetadataInitFromArray(&md[idx], obj);
-    }];
-    [_mutableState.currentGrid setContentsFromDVRFrame:s metadataArray:md info:info];
-    for (int i = 0; i < info.height; i++) {
-        iTermMetadataRelease(md[i]);
-    }
-    [self resetScrollbackOverflow];
-    _mutableState.savedFindContextAbsPos = 0;
-    [delegate_ screenRemoveSelection];
-    [delegate_ screenNeedsRedraw];
-    [_mutableState.currentGrid markAllCharsDirty:YES];
-}
-
 #pragma mark - Find on Page
 
 - (void)mutSaveFindContextAbsPos {

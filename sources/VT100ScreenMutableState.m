@@ -3444,6 +3444,35 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+#pragma mark - DVR
+
+- (void)setFromFrame:(const screen_char_t *)s
+                    len:(int)len
+               metadata:(NSArray<NSArray *> *)metadataArrays
+                   info:(DVRFrameInfo)info {
+    assert(len == (info.width + 1) * info.height * sizeof(screen_char_t));
+    NSMutableData *storage = [NSMutableData dataWithLength:sizeof(iTermMetadata) * info.height];
+    iTermMetadata *md = (iTermMetadata *)storage.mutableBytes;
+    [metadataArrays enumerateObjectsUsingBlock:^(NSArray * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (idx >= info.height) {
+            *stop = YES;
+            return;
+        }
+        iTermMetadataInitFromArray(&md[idx], obj);
+    }];
+    [self.currentGrid setContentsFromDVRFrame:s metadataArray:md info:info];
+    for (int i = 0; i < info.height; i++) {
+        iTermMetadataRelease(md[i]);
+    }
+    [self resetScrollbackOverflow];
+    self.savedFindContextAbsPos = 0;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenRemoveSelection];
+        [delegate screenNeedsRedraw];
+    }];
+    [self.currentGrid markAllCharsDirty:YES];
+}
+
 #pragma mark - PTYTriggerEvaluatorDelegate
 
 - (BOOL)triggerEvaluatorShouldUseTriggers:(PTYTriggerEvaluator *)evaluator {

@@ -1274,16 +1274,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)setFromFrame:(screen_char_t*)s
-                 len:(int)len
-            metadata:(NSArray<NSArray *> *)metadataArrays
-                info:(DVRFrameInfo)info {
-    [self mutSetFromFrame:s
-                      len:len
-                 metadata:metadataArrays
-                     info:info];
-}
-
 - (void)restorePreferredCursorPositionIfPossible {
     [self mutRestorePreferredCursorPositionIfPossible];
 }

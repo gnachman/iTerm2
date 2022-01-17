@@ -276,7 +276,7 @@
 - (void)scrollRect:(VT100GridRect)rect downBy:(int)direction softBreak:(BOOL)softBreak;
 
 // Load contents from a DVR frame.
-- (void)setContentsFromDVRFrame:(screen_char_t*)s
+- (void)setContentsFromDVRFrame:(const screen_char_t*)s
                   metadataArray:(iTermMetadata *)sourceMetadataArray
                            info:(DVRFrameInfo)info;
 
