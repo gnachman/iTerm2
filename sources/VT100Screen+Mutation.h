@@ -41,7 +41,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetSaveToScrollbackInAlternateScreen:(BOOL)value;
 - (void)mutSetTrackCursorLineMovement:(BOOL)trackCursorLineMovement;
 - (void)mutSetAppendToScrollbackWithStatusBar:(BOOL)value;
-- (void)mutSetShellIntegrationInstalled:(BOOL)shellIntegrationInstalled;
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutUpdateConfig;
 - (void)mutLinkTextInRange:(NSRange)range

@@ -62,10 +62,6 @@
 
 #pragma mark - Accessors
 
-- (void)mutSetShellIntegrationInstalled:(BOOL)shellIntegrationInstalled {
-    _mutableState.shellIntegrationInstalled = shellIntegrationInstalled;
-}
-
 - (void)mutSetAppendToScrollbackWithStatusBar:(BOOL)value {
     _mutableState.appendToScrollbackWithStatusBar = value;
 }
