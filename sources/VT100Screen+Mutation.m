@@ -62,10 +62,6 @@
 
 #pragma mark - Accessors
 
-- (void)mutSetIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver {
-    _mutableState.intervalTreeObserver = intervalTreeObserver;
-}
-
 - (void)mutSetNormalization:(iTermUnicodeNormalization)value {
     _mutableState.normalization = value;
 }
