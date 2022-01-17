@@ -62,11 +62,6 @@
 
 #pragma mark - Accessors
 
-// WARNING: This is called on PTYTask's thread.
-- (void)mutAddTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority {
-    [_mutableState addTokens:vector length:length highPriority:highPriority];
-}
-
 - (void)mutScheduleTokenExecution {
     [_mutableState scheduleTokenExecution];
 }

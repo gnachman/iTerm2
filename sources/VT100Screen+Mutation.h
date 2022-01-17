@@ -55,7 +55,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)mutHighlightTextInRange:(NSRange)range
       basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                          colors:(NSDictionary *)colors;
-- (void)mutAddTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
 - (void)mutScheduleTokenExecution;
 - (void)mutInjectData:(NSData *)data;
 - (void)mutPerformPeriodicTriggerCheck;

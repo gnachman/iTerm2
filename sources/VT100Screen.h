@@ -215,7 +215,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
 - (VT100GridCoordRange)commandRange;
-- (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
 - (void)scheduleTokenExecution;
 - (void)injectData:(NSData *)data;
 - (void)forceCheckTriggers;
