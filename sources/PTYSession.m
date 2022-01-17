@@ -6833,7 +6833,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // tmuxInitialCommandDidFailWithError: will be called on the first %end or
     // %error, respectively.
     [self printTmuxMessage:@"** tmux mode started **"];
-    [_screen crlf];
+    [self printTmuxMessage:@""];
     [self printTmuxMessage:@"Command Menu"];
     [self printTmuxMessage:@"----------------------------"];
     [self printTmuxMessage:@"esc    Detach cleanly."];

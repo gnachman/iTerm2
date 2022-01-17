@@ -118,10 +118,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Preserves the prompt, but erases screen and scrollback buffer.
 - (void)clearBuffer;
 
-// This is a hacky thing that moves the cursor to the next line, not respecting scroll regions.
-// It's used for the tmux status screen.
-- (void)crlf;
-
 // Move the cursor down one position, scrolling if needed. Scroll regions are respected.
 - (void)linefeed;
 

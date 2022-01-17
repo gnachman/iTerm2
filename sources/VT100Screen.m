@@ -1274,10 +1274,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)crlf {
-    [self mutCrlf];
-}
-
 - (void)linefeed {
     [self mutLinefeed];
 }
