@@ -1136,10 +1136,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutPerformPeriodicTriggerCheck];
 }
 
-- (void)setExited:(BOOL)exited {
-    [self mutSetExited:exited];
-}
-
 - (void)injectData:(NSData *)data {
     [self mutInjectData:data];
 }

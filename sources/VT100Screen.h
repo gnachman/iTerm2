@@ -218,7 +218,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
 - (void)scheduleTokenExecution;
 - (void)injectData:(NSData *)data;
-- (void)setExited:(BOOL)exited;
 - (void)forceCheckTriggers;
 - (void)performPeriodicTriggerCheck;
 - (void)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
