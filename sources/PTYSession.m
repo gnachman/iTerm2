@@ -4499,7 +4499,6 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 
 - (void)setMinimumContrast:(float)value {
     [[self textview] setMinimumContrast:value];
-    _screen.minimumContrast = value;
 }
 
 - (BOOL)viewShouldWantLayer {
@@ -12047,7 +12046,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.triggerProfileDicts = [iTermProfilePreferences objectForKey:KEY_TRIGGERS inProfile:self.profile];
         _config.useSeparateColorsForLightAndDarkMode = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE
                                                                                  inProfile:self.profile];
-
+        _config.minimumContrast = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, self.profile, darkMode)
+                                                             inProfile:self.profile];
         _config.profileName = [self profileName];
         dirty = YES;
         _profileDidChange = NO;

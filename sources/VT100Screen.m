@@ -191,10 +191,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)setMinimumContrast:(float)value {
-    [self mutSetMinimumContrast:value];
-}
-
 - (void)setMutingAmount:(double)value {
     [self mutSetMutingAmount:value];
 }
