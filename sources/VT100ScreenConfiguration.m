@@ -31,6 +31,7 @@
 @property (nonatomic, readwrite) NSSize cellSize;
 @property (nonatomic, readwrite) CGFloat backingScaleFactor;
 @property (nonatomic, readwrite) int maximumTheoreticalImageDimension;
+@property (nonatomic, readwrite) BOOL dimOnlyText;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -56,6 +57,7 @@
 @synthesize cellSize = _cellSize;
 @synthesize backingScaleFactor = _backingScaleFactor;
 @synthesize maximumTheoreticalImageDimension = _maximumTheoreticalImageDimension;
+@synthesize dimOnlyText = _dimOnlyText;
 
 @synthesize isDirty = _isDirty;
 
@@ -83,6 +85,7 @@
         _cellSize = other.cellSize;
         _backingScaleFactor = other.backingScaleFactor;
         _maximumTheoreticalImageDimension = other.maximumTheoreticalImageDimension;
+        _dimOnlyText = other.dimOnlyText;
 
         _isDirty = other.isDirty;
     }
@@ -115,6 +118,7 @@
                             @"cellSize": NSStringFromSize(_cellSize),
                             @"backingScaleFactor": @(_backingScaleFactor),
                             @"maximumTheoreticalImageDimension": @(_maximumTheoreticalImageDimension),
+                            @"dimOnlyText": @(_dimOnlyText),
 
                             @"isDirty": @(_isDirty),
     };
@@ -150,6 +154,7 @@
 @dynamic cellSize;
 @dynamic backingScaleFactor;
 @dynamic maximumTheoreticalImageDimension;
+@dynamic dimOnlyText;
 
 @dynamic isDirty;
 

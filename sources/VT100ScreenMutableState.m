@@ -211,6 +211,7 @@
     _config = [config copyWithZone:nil];
     [_triggerEvaluator loadFromProfileArray:config.triggerProfileDicts];
     _triggerEvaluator.triggerParametersUseInterpolatedStrings = config.triggerParametersUseInterpolatedStrings;
+    self.colorMap.dimOnlyText = _config.dimOnlyText;
 }
 
 - (void)setExited:(BOOL)exited {
@@ -2731,10 +2732,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenRestoreColorsFromSlot:slot];
     }];
-}
-
-- (void)setDimOnlyText:(BOOL)dimOnlyText {
-    self.colorMap.dimOnlyText = dimOnlyText;
 }
 
 - (void)setDarkMode:(BOOL)darkMode {

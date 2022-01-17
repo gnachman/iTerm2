@@ -1806,7 +1806,6 @@ ITERM_WEAKLY_REFERENCEABLE
     _view.mainResponder = _textview;
     _view.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
     _metalGlue.textView = _textview;
-    _screen.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [_textview setFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NORMAL_FONT]]
           nonAsciiFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NON_ASCII_FONT]]
@@ -5292,7 +5291,7 @@ verticalSpacing:(CGFloat)verticalSpacing {
 }
 
 - (void)refreshTerminal:(NSNotification *)notification {
-    _screen.dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
+    [self sync];
 }
 
 - (void)savedArrangementWasRepaired:(NSNotification *)notification {
@@ -12030,6 +12029,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     if (!_config.maximumTheoreticalImageDimension) {
         _config.maximumTheoreticalImageDimension = PTYSessionMaximumMetalViewSize;
+        dirty = YES;
+    }
+    const BOOL dimOnlyText = [iTermPreferences boolForKey:kPreferenceKeyDimOnlyText];
+    if (_config.dimOnlyText != dimOnlyText) {
+        _config.dimOnlyText = dimOnlyText;
         dirty = YES;
     }
     if (_profileDidChange) {

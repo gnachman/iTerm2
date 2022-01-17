@@ -195,10 +195,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)setDimOnlyText:(BOOL)dimOnlyText {
-    [self mutSetDimOnlyText:dimOnlyText];
-}
-
 - (void)setDarkMode:(BOOL)darkMode {
     [self mutSetDarkMode:darkMode];
 }
@@ -1257,9 +1253,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)restorePreferredCursorPositionIfPossible {
-    [self mutRestorePreferredCursorPositionIfPossible];
-}
 
 - (void)restoreSavedPositionToFindContext:(FindContext *)context {
     [self restoreSavedPositionToFindContextImpl:context];
