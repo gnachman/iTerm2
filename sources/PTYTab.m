@@ -2485,12 +2485,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // Resize a session's rows and columns for the existing pixel size of its
 // containing view.
 - (BOOL)fitSessionToCurrentViewSize:(PTYSession *)aSession {
-    DLog(@"fitSessionToCurrentViewSize:%@", aSession);
-    if ([aSession isTmuxClient]) {
-        return NO;
-    }
-    NSSize temp = [self sessionSizeForViewSize:aSession];
-    return [self resizeSession:aSession toSize:VT100GridSizeMake(temp.width, temp.height)];
+    __block BOOL result = NO;
+    [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        DLog(@"fitSessionToCurrentViewSize:%@", aSession);
+        if ([aSession isTmuxClient]) {
+            result = NO;
+            return;
+        }
+        NSSize temp = [self sessionSizeForViewSize:aSession];
+        result = [self resizeSession:aSession toSize:VT100GridSizeMake(temp.width, temp.height)];
+    }];
+    return result;
 }
 
 - (BOOL)resizeSession:(PTYSession *)aSession toSize:(VT100GridSize)newSize {

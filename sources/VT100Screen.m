@@ -40,6 +40,7 @@
 #import "VT100ScreenMark.h"
 #import "VT100WorkingDirectory.h"
 #import "VT100DCSParser.h"
+#import "VT100ScreenMutableState+Resizing.h"
 #import "VT100Screen+Mutation.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100Token.h"
@@ -138,10 +139,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)setSize:(VT100GridSize)size {
-    [self mutSetSize:size
-        visibleLines:[self.delegate screenRangeOfVisibleLines]
-           selection:[self.delegate screenSelection]
-             hasView:[self.delegate screenHasView]];
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState setSize:size delegate:delegate];
+    }];
 }
 
 - (VT100GridSize)size {
@@ -1098,10 +1098,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     iTermMutableDictionaryEncoderAdapter *encoder = [[[iTermMutableDictionaryEncoderAdapter alloc] init] autorelease];
     [temp encode:encoder maxLines:10000];
     return encoder.mutableDictionary;
-}
-
-- (void)restoreInitialSize {
-    [self mutRestoreInitialSize];
 }
 
 - (id<iTermTemporaryDoubleBufferedGridControllerReading>)temporaryDoubleBuffer {

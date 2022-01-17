@@ -19,6 +19,10 @@ NS_ASSUME_NONNULL_BEGIN
            hasView:(BOOL)hasView
        delegate:(id<VT100ScreenDelegate>)delegate;
 
+- (void)restoreInitialSizeWithDelegate:(id<VT100ScreenDelegate>)delegate;
+
+- (void)setSize:(VT100GridSize)size delegate:(id<VT100ScreenDelegate>)delegate;
+
 @end
 
 NS_ASSUME_NONNULL_END

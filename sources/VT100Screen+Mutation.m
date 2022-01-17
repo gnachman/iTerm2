@@ -62,13 +62,6 @@
 
 #pragma mark - Arrangements
 
-- (void)mutRestoreInitialSize {
-    if (_state.initialSize.width > 0 && _state.initialSize.height > 0) {
-        [self setSize:_state.initialSize];
-        _mutableState.initialSize = VT100GridSizeMake(-1, -1);
-    }
-}
-
 - (void)mutSetHistory:(NSArray *)history {
     // This is way more complicated than it should be to work around something dumb in tmux.
     // It pads lines in its history with trailing spaces, which we'd like to trim. More importantly,

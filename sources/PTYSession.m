@@ -181,6 +181,7 @@
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
 #import "VT100ScreenMutableState.h"
+#import "VT100ScreenMutableState+Resizing.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"
 #import "WindowArrangements.h"
@@ -1685,7 +1686,9 @@ ITERM_WEAKLY_REFERENCEABLE
                                                       width:aSession.screen.width
                                     totalScrollbackOverflow:aSession.screen.totalScrollbackOverflow];
     }
-    [aSession.screen restoreInitialSize];
+    [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState restoreInitialSizeWithDelegate:delegate];
+    }];
     [aSession updateMarksMinimapRangeOfVisibleLines];
 
     void (^finish)(PTYSession *, BOOL) = ^(PTYSession *newSession, BOOL ok) {

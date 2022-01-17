@@ -65,7 +65,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutStoreLastPositionInLineBufferAsFindContextSavedPosition;
 - (void)mutRemoveAllTabStops;
 - (void)mutSetSaveToScrollbackInAlternateScreen:(BOOL)value;
-- (void)mutRestoreInitialSize;
 - (void)mutSaveFindContextAbsPos;
 - (void)mutSetTrackCursorLineMovement:(BOOL)trackCursorLineMovement;
 - (void)mutSetAppendToScrollbackWithStatusBar:(BOOL)value;

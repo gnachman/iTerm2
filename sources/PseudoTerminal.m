@@ -5576,22 +5576,27 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
-    PtyLog(@"sessionInitiatedResize");
-    // ignore resize request when we are in full screen mode.
-    if ([self anyFullScreen]) {
-        PtyLog(@"sessionInitiatedResize - in full screen mode");
-        return NO;
-    }
+    __block BOOL result;
+    [session.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        PtyLog(@"sessionInitiatedResize");
+        // ignore resize request when we are in full screen mode.
+        if ([self anyFullScreen]) {
+            PtyLog(@"sessionInitiatedResize - in full screen mode");
+            result = NO;
+            return;
+        }
 
-    PTYTab *tab = [self tabForSession:session];
-    [tab setLockedSession:session];
-    [self safelySetSessionSize:session rows:height columns:width];
-    PtyLog(@"sessionInitiatedResize - calling fitWindowToTab");
-    [self fitWindowToTab:tab];
-    PtyLog(@"sessionInitiatedResize - calling fitTabsToWindow");
-    [self fitTabsToWindow];
-    [tab setLockedSession:nil];
-    return YES;
+        PTYTab *tab = [self tabForSession:session];
+        [tab setLockedSession:session];
+        [self safelySetSessionSize:session rows:height columns:width];
+        PtyLog(@"sessionInitiatedResize - calling fitWindowToTab");
+        [self fitWindowToTab:tab];
+        PtyLog(@"sessionInitiatedResize - calling fitTabsToWindow");
+        [self fitTabsToWindow];
+        [tab setLockedSession:nil];
+        result = YES;
+    }];
+    return result;
 }
 
 // Contextual menu

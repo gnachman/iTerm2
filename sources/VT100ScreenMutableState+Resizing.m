@@ -19,9 +19,9 @@
 @implementation VT100ScreenMutableState (Resizing)
 
 - (void)setSize:(VT100GridSize)proposedSize
-      visibleLines:(VT100GridRange)previouslyVisibleLineRange
-         selection:(iTermSelection *)selection
-           hasView:(BOOL)hasView
+   visibleLines:(VT100GridRange)previouslyVisibleLineRange
+      selection:(iTermSelection *)selection
+        hasView:(BOOL)hasView
        delegate:(id<VT100ScreenDelegate>)delegate {
     const VT100GridSize newSize = [self safeSizeForSize:proposedSize];
     if (![self shouldSetSizeTo:newSize]) {
@@ -45,6 +45,21 @@
         }
         DLog(@"------------ end -----------");
     }
+}
+
+- (void)restoreInitialSizeWithDelegate:(id<VT100ScreenDelegate>)delegate {
+    if (self.initialSize.width > 0 && self.initialSize.height > 0) {
+        [self setSize:self.initialSize delegate:delegate];
+        self.initialSize = VT100GridSizeMake(-1, -1);
+    }
+}
+
+- (void)setSize:(VT100GridSize)size delegate:(id<VT100ScreenDelegate>)delegate {
+    [self setSize:size
+     visibleLines:[delegate screenRangeOfVisibleLines]
+        selection:[delegate screenSelection]
+          hasView:[delegate screenHasView]
+         delegate:delegate];
 }
 
 #pragma mark - Private
