@@ -102,10 +102,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.shouldExpectPromptMarks;
 }
 
-- (void)setShouldExpectPromptMarks:(BOOL)value {
-    [self mutSetShouldExpectPromptMarks:value];
-}
-
 - (void)userDidPressReturn {
     [self mutateAsynchronously:^(VT100Terminal * _Nonnull terminal,
                                  VT100ScreenMutableState * _Nonnull mutableState,
