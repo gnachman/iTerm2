@@ -32,6 +32,7 @@
 @property (nonatomic, readwrite) CGFloat backingScaleFactor;
 @property (nonatomic, readwrite) int maximumTheoreticalImageDimension;
 @property (nonatomic, readwrite) BOOL dimOnlyText;
+@property (nonatomic, readwrite) BOOL darkMode;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -58,6 +59,7 @@
 @synthesize backingScaleFactor = _backingScaleFactor;
 @synthesize maximumTheoreticalImageDimension = _maximumTheoreticalImageDimension;
 @synthesize dimOnlyText = _dimOnlyText;
+@synthesize darkMode = _darkMode;
 
 @synthesize isDirty = _isDirty;
 
@@ -86,6 +88,7 @@
         _backingScaleFactor = other.backingScaleFactor;
         _maximumTheoreticalImageDimension = other.maximumTheoreticalImageDimension;
         _dimOnlyText = other.dimOnlyText;
+        _darkMode = other.darkMode;
 
         _isDirty = other.isDirty;
     }
@@ -119,6 +122,7 @@
                             @"backingScaleFactor": @(_backingScaleFactor),
                             @"maximumTheoreticalImageDimension": @(_maximumTheoreticalImageDimension),
                             @"dimOnlyText": @(_dimOnlyText),
+                            @"darkMode": @(_darkMode),
 
                             @"isDirty": @(_isDirty),
     };
@@ -155,6 +159,7 @@
 @dynamic backingScaleFactor;
 @dynamic maximumTheoreticalImageDimension;
 @dynamic dimOnlyText;
+@dynamic darkMode;
 
 @dynamic isDirty;
 

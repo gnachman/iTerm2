@@ -57,7 +57,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 
 @implementation VT100Screen {
-
     // Used for recording instant replay.
     // This is an inherently shared mutable data structure. I don't think it can be easily moved into
     // the VT100ScreenState model. Instad it will need lots of mutexes :(
@@ -66,13 +65,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 @synthesize dvr = dvr_;
 
-- (instancetype)initWithDarkMode:(BOOL)darkMode
-                   configuration:(id<VT100ScreenConfiguration>)config {
+- (instancetype)init {
     self = [super init];
     if (self) {
 #warning TODO: update colormap's darkMode through VT100ScreenConfiguration
-        _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self
-                                                                            darkMode:darkMode];
+        _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
         _state = [_mutableState retain];
 
         _mutableState.temporaryDoubleBuffer.delegate = self;
@@ -82,7 +79,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
         dvr_ = [DVR alloc];
         [dvr_ initWithBufferCapacity:[iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes] * 1024 * 1024];
-        [self setConfig:config];
     }
     return self;
 }
@@ -193,10 +189,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState setColor:color forKey:key];
     }];
-}
-
-- (void)setDarkMode:(BOOL)darkMode {
-    [self mutSetDarkMode:darkMode];
 }
 
 - (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value {

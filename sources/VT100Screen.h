@@ -111,10 +111,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic) long long savedFindContextAbsPos;
 @property (nonatomic, strong) FindContext *findContext;
 
-// Designated initializer.
-- (instancetype)initWithDarkMode:(BOOL)darkMode
-                   configuration:(id<VT100ScreenConfiguration>)config;
-
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.
 - (BOOL)allCharacterSetPropertiesHaveDefaultValues;
@@ -210,7 +206,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block;
 - (void)setColor:(NSColor *)color forKey:(int)key;
-- (void)setDarkMode:(BOOL)darkMode;
 - (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value;
 - (void)setMinimumContrast:(float)value;
 - (void)setMutingAmount:(double)value;
