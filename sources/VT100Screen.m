@@ -191,10 +191,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)setMutingAmount:(double)value {
-    [self mutSetMutingAmount:value];
-}
-
 - (void)setDimmingAmount:(double)value {
     [self mutSetDimmingAmount:value];
 }

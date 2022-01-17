@@ -45,6 +45,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL darkMode;
 @property (nonatomic, readonly) BOOL useSeparateColorsForLightAndDarkMode;
 @property (nonatomic, readonly) float minimumContrast;
+@property (nonatomic, readonly) double mutingAmount;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -80,6 +81,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL darkMode;
 @property (nonatomic, readwrite) BOOL useSeparateColorsForLightAndDarkMode;
 @property (nonatomic, readwrite) float minimumContrast;
+@property (nonatomic, readwrite) double mutingAmount;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 

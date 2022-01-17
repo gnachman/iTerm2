@@ -35,6 +35,7 @@
 @property (nonatomic, readwrite) BOOL darkMode;
 @property (nonatomic, readwrite) BOOL useSeparateColorsForLightAndDarkMode;
 @property (nonatomic, readwrite) float minimumContrast;
+@property (nonatomic, readwrite) double mutingAmount;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -64,6 +65,7 @@
 @synthesize darkMode = _darkMode;
 @synthesize useSeparateColorsForLightAndDarkMode = _useSeparateColorsForLightAndDarkMode;
 @synthesize minimumContrast = _minimumContrast;
+@synthesize mutingAmount = _mutingAmount;
 
 @synthesize isDirty = _isDirty;
 
@@ -95,6 +97,7 @@
         _darkMode = other.darkMode;
         _useSeparateColorsForLightAndDarkMode = other.useSeparateColorsForLightAndDarkMode;
         _minimumContrast = other.minimumContrast;
+        _mutingAmount = other.mutingAmount;
 
         _isDirty = other.isDirty;
     }
@@ -131,6 +134,7 @@
                             @"darkMode": @(_darkMode),
                             @"useSeparateColorsForLightAndDarkMode": @(_useSeparateColorsForLightAndDarkMode),
                             @"minimumContrast": @(_minimumContrast),
+                            @"mutingAmount": @(_mutingAmount),
 
                             @"isDirty": @(_isDirty),
     };
@@ -170,6 +174,7 @@
 @dynamic darkMode;
 @dynamic useSeparateColorsForLightAndDarkMode;
 @dynamic minimumContrast;
+@dynamic mutingAmount;
 
 @dynamic isDirty;
 
