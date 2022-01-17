@@ -3611,6 +3611,8 @@
 		A6EFF23F1D21949D00806EEF /* iTermShortcut.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF23D1D21949D00806EEF /* iTermShortcut.h */; };
 		A6EFF2471D21DD0700806EEF /* iTermSessionHotkeyController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */; };
 		A6EFF2481D21DD0700806EEF /* iTermSessionHotkeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EFF2461D21DD0700806EEF /* iTermSessionHotkeyController.m */; };
+		A6F0E2562795407A00022D20 /* VT100Screen+Search.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F0E2542795407A00022D20 /* VT100Screen+Search.h */; };
+		A6F0E2572795407A00022D20 /* VT100Screen+Search.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F0E2552795407A00022D20 /* VT100Screen+Search.m */; };
 		A6F14ED9217EDAD000047D2F /* iTermWindowOcclusionChangeMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B481D2D756200521B04 /* iTermWindowOcclusionChangeMonitor.m */; };
 		A6F1B3AB268FCAC000546767 /* iTermStatusBarTriggersComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6F1B3AA268FCAC000546767 /* iTermStatusBarTriggersComponent.swift */; };
 		A6F1B3AE268FD0F300546767 /* StatusBarIconTriggers@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F1B3AC268FD0F300546767 /* StatusBarIconTriggers@2x.png */; };
@@ -6620,6 +6622,8 @@
 		A6EFF23E1D21949D00806EEF /* iTermShortcut.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShortcut.m; sourceTree = "<group>"; };
 		A6EFF2451D21DD0700806EEF /* iTermSessionHotkeyController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSessionHotkeyController.h; sourceTree = "<group>"; };
 		A6EFF2461D21DD0700806EEF /* iTermSessionHotkeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSessionHotkeyController.m; sourceTree = "<group>"; };
+		A6F0E2542795407A00022D20 /* VT100Screen+Search.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100Screen+Search.h"; sourceTree = "<group>"; };
+		A6F0E2552795407A00022D20 /* VT100Screen+Search.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100Screen+Search.m"; sourceTree = "<group>"; };
 		A6F1B3AA268FCAC000546767 /* iTermStatusBarTriggersComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermStatusBarTriggersComponent.swift; sourceTree = "<group>"; };
 		A6F1B3AC268FD0F300546767 /* StatusBarIconTriggers@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusBarIconTriggers@2x.png"; path = "images/StatusBarIcons/StatusBarIconTriggers@2x.png"; sourceTree = "<group>"; };
 		A6F1B3AD268FD0F300546767 /* StatusBarIconTriggers.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconTriggers.png; path = images/StatusBarIcons/StatusBarIconTriggers.png; sourceTree = "<group>"; };
@@ -8946,6 +8950,8 @@
 				A65B03FF278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m */,
 				A6DBC2FA2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.h */,
 				A6DBC2FB2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m */,
+				A6F0E2542795407A00022D20 /* VT100Screen+Search.h */,
+				A6F0E2552795407A00022D20 /* VT100Screen+Search.m */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -11408,6 +11414,7 @@
 				A6D4C26621E18CB5009CF11B /* iTermScriptInspector.h in Headers */,
 				A6F22AC5239638B500C5D1A9 /* iTermSyntheticConfParser+Private.h in Headers */,
 				A64AE5172084128500D02F06 /* NSThread+iTerm.h in Headers */,
+				A6F0E2562795407A00022D20 /* VT100Screen+Search.h in Headers */,
 				A616839922F94AEE00661F71 /* GPBEnumArray+iTerm.h in Headers */,
 				A673DEBE22624A90004EBF4D /* iTermCopyModeHandler.h in Headers */,
 				A6153D5821F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.h in Headers */,
@@ -13939,6 +13946,7 @@
 				A6352257238CA38A00FED5BC /* iTermMultiServerJobManager.m in Sources */,
 				A6F1B3C52693BC2F00546767 /* iTermNotificationController.m in Sources */,
 				A653F66824CD6A8C0062377E /* iTermRestorableStateRestorer.m in Sources */,
+				A6F0E2572795407A00022D20 /* VT100Screen+Search.m in Sources */,
 				A653B6CF20AD3C4100B481F1 /* iTermSessionNameController.m in Sources */,
 				A64AE5182084128500D02F06 /* NSThread+iTerm.m in Sources */,
 				53B93DFE21F640B0001EC59C /* iTermBadgeConfigurationWindowController.m in Sources */,

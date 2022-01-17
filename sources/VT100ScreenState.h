@@ -9,7 +9,6 @@
 
 #import <Foundation/Foundation.h>
 
-#import "FindContext.h"
 #import "IntervalTree.h"
 #import "LineBuffer.h"
 #import "PTYTriggerEvaluator.h"
@@ -98,7 +97,6 @@ extern NSString *const kScreenStateProtectedMode;
 // This flag overrides maxScrollbackLines:
 @property (nonatomic, readonly) BOOL unlimitedScrollback;
 
-@property (nonatomic, strong, readonly) FindContext *findContext;
 @property (nonatomic, readonly) int scrollbackOverflow;
 
 // Location of the start of the current command, or (-1, -1) for none.
@@ -109,9 +107,6 @@ extern NSString *const kScreenStateProtectedMode;
 
 // Max size of scrollback buffer
 @property (nonatomic, readonly) unsigned int maxScrollbackLines;
-
-// Where the next tail-find needs to begin.
-@property (nonatomic, readonly) long long savedFindContextAbsPos;
 
 @property (nonatomic, strong, readonly) NSSet<NSNumber *> *tabStops;
 
@@ -218,14 +213,12 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, readwrite) BOOL ansi;
 @property (nonatomic, readwrite) BOOL insert;
 @property (nonatomic, readwrite) BOOL unlimitedScrollback;
-@property (nonatomic, strong, readwrite) FindContext *findContext;
 // How many scrollback lines have been lost due to overflow. Periodically reset with
 // -resetScrollbackOverflow.
 @property (nonatomic, readwrite) int scrollbackOverflow;
 @property (nonatomic, readwrite) VT100GridAbsCoord commandStartCoord;
 @property (nonatomic, strong, readwrite) NSMutableDictionary<NSNumber *, id<iTermMark>> *markCache;
 @property (nonatomic, readwrite) unsigned int maxScrollbackLines;
-@property (nonatomic, readwrite) long long savedFindContextAbsPos;
 @property (nonatomic, strong, readwrite) NSMutableSet<NSNumber *> *tabStops;
 @property (nonatomic, strong) NSMutableSet<NSNumber *> *charsetUsesLineDrawingMode;
 @property (nonatomic, readwrite) screen_char_t lastCharacter;

@@ -22,15 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) VT100Grid *mutableAltGrid;
 @property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
-- (void)mutRestoreSavedPositionToFindContext:(FindContext *)context;
-- (void)mutSetFindString:(NSString*)aString
-     forwardDirection:(BOOL)direction
-                 mode:(iTermFindMode)mode
-          startingAtX:(int)x
-          startingAtY:(int)y
-           withOffset:(int)offset
-            inContext:(FindContext*)context
-         multipleResults:(BOOL)multipleResults;
 - (screen_char_t *)mutGetLineAtScreenIndex:(int)theIndex;
 - (void)mutResetAllDirty;
 - (void)mutSetLineDirtyAtY:(int)y;
@@ -39,8 +30,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutHighlightRun:(VT100GridRun)run
     withForegroundColor:(NSColor *)fgColor
         backgroundColor:(NSColor *)bgColor;
-- (BOOL)mutContinueFindResultsInContext:(FindContext *)context
-                                toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
 - (void)mutPopScrollbackLines:(int)linesPushed;
 - (void)mutRedrawGrid;
@@ -50,10 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutResetScrollbackOverflow;
 - (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord;
 - (void)mutInvalidateCommandStartCoord;
-- (void)mutSaveFindContextPosition;
-- (void)mutStoreLastPositionInLineBufferAsFindContextSavedPosition;
 - (void)mutSetSaveToScrollbackInAlternateScreen:(BOOL)value;
-- (void)mutSaveFindContextAbsPos;
 - (void)mutSetTrackCursorLineMovement:(BOOL)trackCursorLineMovement;
 - (void)mutSetAppendToScrollbackWithStatusBar:(BOOL)value;
 - (void)mutSetShellIntegrationInstalled:(BOOL)shellIntegrationInstalled;

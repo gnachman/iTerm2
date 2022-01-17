@@ -107,6 +107,10 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic, readonly) BOOL terminalAutorepeatMode;
 @property (nonatomic, readonly) int terminalCharset;
 
+// Where the next tail-find needs to begin.
+@property (nonatomic) long long savedFindContextAbsPos;
+@property (nonatomic, strong) FindContext *findContext;
+
 // Designated initializer.
 - (instancetype)initWithDarkMode:(BOOL)darkMode
                    configuration:(id<VT100ScreenConfiguration>)config;

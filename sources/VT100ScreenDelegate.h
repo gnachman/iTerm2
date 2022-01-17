@@ -189,6 +189,8 @@
 // PTYTextView deselect
 - (void)screenRemoveSelection;
 
+- (void)screenResetTailFind;
+
 // Selection range
 - (iTermSelection * _Nonnull)screenSelection;
 
