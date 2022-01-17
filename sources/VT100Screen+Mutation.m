@@ -60,42 +60,6 @@
     _mutableState.config = _nextConfig;
 }
 
-#pragma mark - Arrangements
-
-- (int)mutNumberOfLinesDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid
-                                                        encoder:(id<iTermEncoderAdapter>)encoder
-                                                 intervalOffset:(long long *)intervalOffsetPtr {
-    // We want 10k lines of history at 80 cols, and fewer for small widths, to keep the size
-    // reasonable.
-    const int maxLines80 = [iTermAdvancedSettingsModel maxHistoryLinesToRestore];
-    const int effectiveWidth = _mutableState.width ?: 80;
-    const int maxArea = maxLines80 * (includeGrid ? 80 : effectiveWidth);
-    const int maxLines = MAX(1000, maxArea / effectiveWidth);
-
-    // Make a copy of the last blocks of the line buffer; enough to contain at least |maxLines|.
-    LineBuffer *temp = [[_mutableState.linebuffer copyWithMinimumLines:maxLines
-                                                               atWidth:effectiveWidth] autorelease];
-
-    // Offset for intervals so 0 is the first char in the provided contents.
-    int linesDroppedForBrevity = ([_mutableState.linebuffer numLinesWithWidth:effectiveWidth] -
-                                  [temp numLinesWithWidth:effectiveWidth]);
-    long long intervalOffset =
-        -(linesDroppedForBrevity + _mutableState.cumulativeScrollbackOverflow) * (_mutableState.width + 1);
-
-    if (includeGrid) {
-        int numLines;
-        if ([iTermAdvancedSettingsModel runJobsInServers]) {
-            numLines = _state.currentGrid.size.height;
-        } else {
-            numLines = [_state.currentGrid numberOfLinesUsed];
-        }
-        [_mutableState.currentGrid appendLines:numLines toLineBuffer:temp];
-    }
-
-    [temp encode:encoder maxLines:maxLines80];
-    *intervalOffsetPtr = intervalOffset;
-    return linesDroppedForBrevity;
-}
 
 #pragma mark - Terminal Fundamentals
 
