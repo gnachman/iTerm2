@@ -62,10 +62,6 @@
 
 #pragma mark - Accessors
 
-- (void)mutSetShouldExpectPromptMarks:(BOOL)value {
-    _mutableState.shouldExpectPromptMarks = value;
-}
-
 - (void)mutSetLastPromptLine:(long long)value {
     _mutableState.lastPromptLine = value;
 }

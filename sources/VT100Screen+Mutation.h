@@ -48,7 +48,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutUpdateConfig;
 - (void)mutSetLastPromptLine:(long long)value;
-- (void)mutSetShouldExpectPromptMarks:(BOOL)value;
 - (void)mutLinkTextInRange:(NSRange)range
 basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                    URLCode:(unsigned int)code;

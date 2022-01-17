@@ -208,8 +208,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)setColor:(NSColor *)color forKey:(int)key;
 - (void)userDidPressReturn;
 
-// This changes shared state and is called during initialization.
-- (void)setShouldExpectPromptMarks:(BOOL)value;
 - (BOOL)shouldExpectPromptMarks;
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
