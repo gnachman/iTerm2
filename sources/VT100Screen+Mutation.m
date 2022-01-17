@@ -62,10 +62,6 @@
 
 #pragma mark - Accessors
 
-- (void)mutSetTrackCursorLineMovement:(BOOL)trackCursorLineMovement {
-    _mutableState.trackCursorLineMovement = trackCursorLineMovement;
-}
-
 - (void)mutSetSaveToScrollbackInAlternateScreen:(BOOL)value {
     _mutableState.saveToScrollbackInAlternateScreen = value;
 }

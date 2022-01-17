@@ -39,7 +39,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord;
 - (void)mutInvalidateCommandStartCoord;
 - (void)mutSetSaveToScrollbackInAlternateScreen:(BOOL)value;
-- (void)mutSetTrackCursorLineMovement:(BOOL)trackCursorLineMovement;
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutUpdateConfig;
 - (void)mutLinkTextInRange:(NSRange)range
