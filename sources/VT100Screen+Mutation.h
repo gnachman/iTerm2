@@ -47,7 +47,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate;
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutUpdateConfig;
-- (void)mutSetLastPromptLine:(long long)value;
 - (void)mutLinkTextInRange:(NSRange)range
 basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                    URLCode:(unsigned int)code;

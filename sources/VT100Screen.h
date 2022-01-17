@@ -84,7 +84,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
 @property(nonatomic, retain) id<VT100ScreenConfiguration> config;
 @property(nonatomic, readonly) long long fakePromptDetectedAbsLine;
-@property(nonatomic) long long lastPromptLine;
+@property(nonatomic, readonly) long long lastPromptLine;
 @property(nonatomic, readonly) BOOL echoProbeIsActive;
 
 @property (nonatomic, readonly) BOOL terminalSoftAlternateScreenMode;

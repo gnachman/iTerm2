@@ -1185,10 +1185,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.echoProbeIsActive;
 }
 
-- (void)setLastPromptLine:(long long)lastPromptLine {
-    [self mutSetLastPromptLine:lastPromptLine];
-}
-
 - (long long)fakePromptDetectedAbsLine {
     return _state.fakePromptDetectedAbsLine;
 }
