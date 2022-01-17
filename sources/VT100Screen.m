@@ -202,14 +202,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return [VT100Terminal sgrCodesForCharacter:c externalAttributes:ea];
 }
 
-- (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord {
-    [self commandDidStartAt:VT100GridAbsCoordMake(coord.x, coord.y + _state.numberOfScrollbackLines + _state.cumulativeScrollbackOverflow)];
-}
-
-- (void)commandDidStartAt:(VT100GridAbsCoord)coord {
-    [self mutSetCommandStartCoord:coord];
-}
-
 // NOTE: If you change this you probably want to change -haveCommandInRange:, too.
 - (NSString *)commandInRange:(VT100GridCoordRange)range {
     return [_state commandInRange:range];

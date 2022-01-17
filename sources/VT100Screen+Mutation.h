@@ -36,8 +36,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (PTYTextViewSynchronousUpdateState * _Nullable)mutSetUseSavedGridIfAvailable:(BOOL)useSavedGrid;
 - (void)mutSetUnlimitedScrollback:(BOOL)newValue;
 - (void)mutResetScrollbackOverflow;
-- (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord;
-- (void)mutInvalidateCommandStartCoord;
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutUpdateConfig;
 - (void)mutLinkTextInRange:(NSRange)range
