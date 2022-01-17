@@ -138,7 +138,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Restore the saved position into a passed-in find context (see saveFindContextAbsPos and
 // storeLastPositionInLineBufferAsFindContextSavedPosition).
 - (void)restoreSavedPositionToFindContext:(FindContext *)context;
-- (void)restorePreferredCursorPositionIfPossible;
 
 - (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
                                               query:(NSString *)query
@@ -211,7 +210,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block;
 - (void)setColor:(NSColor *)color forKey:(int)key;
-- (void)setDimOnlyText:(BOOL)dimOnlyText;
 - (void)setDarkMode:(BOOL)darkMode;
 - (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value;
 - (void)setMinimumContrast:(float)value;

@@ -41,6 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSSize cellSize;
 @property (nonatomic, readonly) CGFloat backingScaleFactor;
 @property (nonatomic, readonly) int maximumTheoreticalImageDimension;
+@property (nonatomic, readonly) BOOL dimOnlyText;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -72,6 +73,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) NSSize cellSize;
 @property (nonatomic, readwrite) CGFloat backingScaleFactor;
 @property (nonatomic, readwrite) int maximumTheoreticalImageDimension;
+@property (nonatomic, readwrite) BOOL dimOnlyText;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 

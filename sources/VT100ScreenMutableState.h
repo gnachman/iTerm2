@@ -285,7 +285,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)restoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
 
 #warning TODO: I think all of these could go through VT100ScreenConfiguration
-- (void)setDimOnlyText:(BOOL)dimOnlyText;
 - (void)setDarkMode:(BOOL)darkMode;
 - (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value;
 - (void)setMinimumContrast:(float)value;

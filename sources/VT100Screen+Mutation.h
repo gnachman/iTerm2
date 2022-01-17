@@ -31,7 +31,6 @@ NS_ASSUME_NONNULL_BEGIN
     withForegroundColor:(NSColor *)fgColor
         backgroundColor:(NSColor *)bgColor;
 - (BOOL)mutGetAndResetHasScrolled;
-- (void)mutPopScrollbackLines:(int)linesPushed;
 - (void)mutRedrawGrid;
 - (void)mutSetMaxScrollbackLines:(unsigned int)lines;
 - (PTYTextViewSynchronousUpdateState * _Nullable)mutSetUseSavedGridIfAvailable:(BOOL)useSavedGrid;
@@ -45,7 +44,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetShellIntegrationInstalled:(BOOL)shellIntegrationInstalled;
 - (void)mutSetNormalization:(iTermUnicodeNormalization)value;
 - (void)mutSetIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver;
-- (void)mutSetDimOnlyText:(BOOL)dimOnlyText;
 - (void)mutSetDarkMode:(BOOL)darkMode;
 - (void)mutSetUseSeparateColorsForLightAndDarkMode:(BOOL)value;
 - (void)mutSetMinimumContrast:(float)value;

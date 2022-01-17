@@ -62,10 +62,6 @@
 
 #pragma mark - Color Map
 
-- (void)mutSetDimOnlyText:(BOOL)dimOnlyText {
-    _mutableState.dimOnlyText = dimOnlyText;
-}
-
 - (void)mutSetDarkMode:(BOOL)darkMode {
     _mutableState.darkMode = darkMode;
 }
