@@ -10508,6 +10508,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     self.active = YES;
 }
 
+- (void)screenResetTailFind {
+    _screen.savedFindContextAbsPos = 0;
+}
+
 - (void)screenNeedsRedraw {
     [self refresh];
     [_textview updateNoteViewFrames];

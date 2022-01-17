@@ -1047,8 +1047,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.linebuffer setMaxLines:self.maxScrollbackLines];
     [self.currentGrid markAllCharsDirty:YES];
 
-    self.savedFindContextAbsPos = 0;
-
     [self resetScrollbackOverflow];
     [self.currentGrid markAllCharsDirty:YES];
     [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
@@ -1059,6 +1057,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.lastCommandMark = nil;
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenResetTailFind];
         [delegate screenClearHighlights];
         [delegate screenRemoveSelection];
         [delegate screenDidClearScrollbackBuffer];
@@ -3465,10 +3464,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         iTermMetadataRelease(md[i]);
     }
     [self resetScrollbackOverflow];
-    self.savedFindContextAbsPos = 0;
+    // Unpause so tail find can continue after resetting it.
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenResetTailFind];
         [delegate screenRemoveSelection];
         [delegate screenNeedsRedraw];
+        [unpauser unpause];
     }];
     [self.currentGrid markAllCharsDirty:YES];
 }

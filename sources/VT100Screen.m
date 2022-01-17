@@ -3,6 +3,7 @@
 #import "VT100Screen+Mutation.h"
 #import "VT100Screen+Private.h"
 #import "VT100Screen+Resizing.h"
+#import "VT100Screen+Search.h"
 
 #import "CapturedOutput.h"
 #import "DebugLogging.h"
@@ -75,6 +76,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         _state = [_mutableState retain];
 
         _mutableState.temporaryDoubleBuffer.delegate = self;
+        _findContext = [[FindContext alloc] init];
 
         [iTermNotificationController sharedInstance];
 
@@ -89,6 +91,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [dvr_ release];
     [_state release];
     [_mutableState release];
+    [_findContext release];
 
     [super dealloc];
 }
@@ -179,7 +182,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)storeLastPositionInLineBufferAsFindContextSavedPosition {
-    [self mutStoreLastPositionInLineBufferAsFindContextSavedPosition];
+    [self storeLastPositionInLineBufferAsFindContextSavedPositionImpl];
 }
 
 - (VT100GridAbsCoord)commandStartCoord {
@@ -377,24 +380,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.lineNumberOfCursor;
 }
 
-- (BOOL)continueFindAllResults:(NSMutableArray<SearchResult *> *)results
-                     inContext:(FindContext*)context {
-    context.hasWrapped = YES;
-    NSDate* start = [NSDate date];
-    BOOL keepSearching;
-    do {
-        keepSearching = [self mutContinueFindResultsInContext:context
-                                                      toArray:results];
-    } while (keepSearching &&
-             [[NSDate date] timeIntervalSinceDate:start] < context.maxTime);
-    if (results.count > 0) {
-        [self.delegate screenRefreshFindOnPageView];
-    }
-    return keepSearching;
-}
-
-- (FindContext *)findContext {
-    return _state.findContext;
+- (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
+    return [self continueFindAllResultsImpl:results inContext:context];
 }
 
 - (NSString *)debugString {
@@ -957,7 +944,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)saveFindContextAbsPos {
-    [self mutSaveFindContextAbsPos];
+    [self saveFindContextAbsPosImpl];
 }
 
 - (iTermAsyncFilter *)newAsyncFilterWithDestination:(id<iTermFilterDestination>)destination
@@ -1279,7 +1266,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)restoreSavedPositionToFindContext:(FindContext *)context {
-    [self mutRestoreSavedPositionToFindContext:context];
+    [self restoreSavedPositionToFindContextImpl:context];
 }
 
 - (void)setFindString:(NSString*)aString
@@ -1290,14 +1277,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
            withOffset:(int)offset
             inContext:(FindContext*)context
       multipleResults:(BOOL)multipleResults {
-    [self mutSetFindString:aString
-         forwardDirection:direction
-                     mode:mode
-              startingAtX:x
-              startingAtY:y
-               withOffset:offset
-                inContext:context
-          multipleResults:multipleResults];
+    [self setFindStringImpl:aString
+           forwardDirection:direction
+                       mode:mode
+                startingAtX:x
+                startingAtY:y
+                 withOffset:offset
+                  inContext:context
+            multipleResults:multipleResults];
 }
 
 - (screen_char_t *)getLineAtScreenIndex:(int)theIndex {
