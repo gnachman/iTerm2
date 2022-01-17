@@ -4000,8 +4000,6 @@ ITERM_WEAKLY_REFERENCEABLE
         [self invalidateStatusBar];
     }
     _tmuxStatusBarMonitor.active = [iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:aDict];
-    _screen.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
-                                                                        inProfile:aDict];
     [_badgeFontName release];
     _badgeFontName = [[iTermProfilePreferences stringForKey:KEY_BADGE_FONT inProfile:aDict] copy];
 
@@ -12051,6 +12049,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                           inProfile:self.profile];
         _config.normalization = [iTermProfilePreferences integerForKey:KEY_UNICODE_NORMALIZATION
                                                              inProfile:self.profile];
+        _config.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
+                                                                            inProfile:self.profile];
         _config.profileName = [self profileName];
         dirty = YES;
         _profileDidChange = NO;

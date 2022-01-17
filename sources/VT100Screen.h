@@ -61,7 +61,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Main thread only! Unlike all other state in VT100Screen, this one is never seen by the screen mutator.
 @property(nonatomic, retain) DVR *dvr;
 @property(nonatomic, assign) BOOL trackCursorLineMovement;
-@property(nonatomic, assign) BOOL appendToScrollbackWithStatusBar;
+@property(nonatomic, readonly) BOOL appendToScrollbackWithStatusBar;
 @property(nonatomic, readonly) VT100GridAbsCoordRange lastCommandOutputRange;
 @property(nonatomic, readonly) BOOL shellIntegrationInstalled;  // Just a guess.
 @property(nonatomic, readonly) NSIndexSet *animatedLines;

@@ -62,10 +62,6 @@
 
 #pragma mark - Accessors
 
-- (void)mutSetAppendToScrollbackWithStatusBar:(BOOL)value {
-    _mutableState.appendToScrollbackWithStatusBar = value;
-}
-
 - (void)mutSetTrackCursorLineMovement:(BOOL)trackCursorLineMovement {
     _mutableState.trackCursorLineMovement = trackCursorLineMovement;
 }

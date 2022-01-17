@@ -1400,10 +1400,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.appendToScrollbackWithStatusBar;
 }
 
-- (void)setAppendToScrollbackWithStatusBar:(BOOL)appendToScrollbackWithStatusBar {
-    [self mutSetAppendToScrollbackWithStatusBar:appendToScrollbackWithStatusBar];
-}
-
 - (BOOL)trackCursorLineMovement {
     return _state.trackCursorLineMovement;
 }
