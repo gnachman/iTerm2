@@ -60,9 +60,6 @@
     _mutableState.config = _nextConfig;
 }
 
-- (void)mutRestorePreferredCursorPositionIfPossible {
-    [_mutableState.currentGrid restorePreferredCursorPositionIfPossible];
-}
 #pragma mark - Color Map
 
 - (void)mutLoadInitialColorTable {

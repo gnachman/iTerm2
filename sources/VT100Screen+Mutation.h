@@ -56,7 +56,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutUpdateConfig;
 - (void)mutSetLastPromptLine:(long long)value;
 - (void)mutSetShouldExpectPromptMarks:(BOOL)value;
-- (void)mutRestorePreferredCursorPositionIfPossible;
 - (void)mutLinkTextInRange:(NSRange)range
 basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                    URLCode:(unsigned int)code;
