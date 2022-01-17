@@ -62,10 +62,6 @@
 
 #pragma mark - Accessors
 
-- (void)mutScheduleTokenExecution {
-    [_mutableState scheduleTokenExecution];
-}
-
 - (void)mutSetShouldExpectPromptMarks:(BOOL)value {
     _mutableState.shouldExpectPromptMarks = value;
 }
