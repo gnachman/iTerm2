@@ -67,6 +67,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)appendLineFeed;
 - (void)carriageReturn;
+
+// This disregards scroll regions. It's useful for system messages, like the tmux mode menu.
 - (void)appendCarriageReturnLineFeed;
 - (void)cursorToX:(int)x;
 - (void)cursorToY:(int)y;

@@ -63,10 +63,6 @@
 
 #pragma mark - Terminal Fundamentals
 
-- (void)mutCrlf {
-    [_mutableState appendCarriageReturnLineFeed];
-}
-
 - (void)mutLinefeed {
     [_mutableState appendLineFeed];
 }
