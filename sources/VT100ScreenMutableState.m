@@ -212,6 +212,7 @@
     self.colorMap.dimOnlyText = _config.dimOnlyText;
     self.colorMap.darkMode = _config.darkMode;
     self.colorMap.useSeparateColorsForLightAndDarkMode = _config.useSeparateColorsForLightAndDarkMode;
+    self.colorMap.minimumContrast = _config.minimumContrast;
 }
 
 - (void)setExited:(BOOL)exited {
@@ -2732,10 +2733,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenRestoreColorsFromSlot:slot];
     }];
-}
-
-- (void)setMinimumContrast:(float)value {
-    self.colorMap.minimumContrast = value;
 }
 
 - (void)setMutingAmount:(double)value {

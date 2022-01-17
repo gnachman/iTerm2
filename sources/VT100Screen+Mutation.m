@@ -62,10 +62,6 @@
 
 #pragma mark - Color Map
 
-- (void)mutSetMinimumContrast:(float)value {
-    _mutableState.minimumContrast = value;
-}
-
 - (void)mutSetMutingAmount:(double)value {
     _mutableState.mutingAmount = value;
 }

@@ -34,6 +34,7 @@
 @property (nonatomic, readwrite) BOOL dimOnlyText;
 @property (nonatomic, readwrite) BOOL darkMode;
 @property (nonatomic, readwrite) BOOL useSeparateColorsForLightAndDarkMode;
+@property (nonatomic, readwrite) float minimumContrast;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -62,6 +63,7 @@
 @synthesize dimOnlyText = _dimOnlyText;
 @synthesize darkMode = _darkMode;
 @synthesize useSeparateColorsForLightAndDarkMode = _useSeparateColorsForLightAndDarkMode;
+@synthesize minimumContrast = _minimumContrast;
 
 @synthesize isDirty = _isDirty;
 
@@ -92,6 +94,7 @@
         _dimOnlyText = other.dimOnlyText;
         _darkMode = other.darkMode;
         _useSeparateColorsForLightAndDarkMode = other.useSeparateColorsForLightAndDarkMode;
+        _minimumContrast = other.minimumContrast;
 
         _isDirty = other.isDirty;
     }
@@ -127,6 +130,7 @@
                             @"dimOnlyText": @(_dimOnlyText),
                             @"darkMode": @(_darkMode),
                             @"useSeparateColorsForLightAndDarkMode": @(_useSeparateColorsForLightAndDarkMode),
+                            @"minimumContrast": @(_minimumContrast),
 
                             @"isDirty": @(_isDirty),
     };
@@ -165,6 +169,7 @@
 @dynamic dimOnlyText;
 @dynamic darkMode;
 @dynamic useSeparateColorsForLightAndDarkMode;
+@dynamic minimumContrast;
 
 @dynamic isDirty;
 

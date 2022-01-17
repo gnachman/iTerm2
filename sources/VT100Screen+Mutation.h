@@ -44,7 +44,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetShellIntegrationInstalled:(BOOL)shellIntegrationInstalled;
 - (void)mutSetNormalization:(iTermUnicodeNormalization)value;
 - (void)mutSetIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver;
-- (void)mutSetMinimumContrast:(float)value;
 - (void)mutSetMutingAmount:(double)value;
 - (void)mutSetDimmingAmount:(double)value;
 - (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate;

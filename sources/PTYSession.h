@@ -714,7 +714,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)deleteForward:(id)sender;
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move;
 - (void)setSmartCursorColor:(BOOL)value;
-- (void)setMinimumContrast:(float)value;
 
 // Returns the frame size for a scrollview that perfectly contains the contents
 // of this session based on rows/cols, and taking into account the presence of
