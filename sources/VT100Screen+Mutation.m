@@ -60,12 +60,6 @@
     _mutableState.config = _nextConfig;
 }
 
-#pragma mark - Color Map
-
-- (void)mutSetDimmingAmount:(double)value {
-    _mutableState.dimmingAmount = value;
-}
-
 #pragma mark - Accessors
 
 - (void)mutSetExited:(BOOL)exited {
