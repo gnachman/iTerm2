@@ -233,6 +233,10 @@
     return self.config.normalization;
 }
 
+- (BOOL)appendToScrollbackWithStatusBar {
+    return self.config.appendToScrollbackWithStatusBar;
+}
+
 #pragma mark - Terminal State Accessors
 
 - (BOOL)terminalSoftAlternateScreenMode {

@@ -37,6 +37,7 @@
 @property (nonatomic, readwrite) float minimumContrast;
 @property (nonatomic, readwrite) double mutingAmount;
 @property (nonatomic, readwrite) iTermUnicodeNormalization normalization;
+@property (nonatomic, readwrite) BOOL appendToScrollbackWithStatusBar;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -68,6 +69,7 @@
 @synthesize minimumContrast = _minimumContrast;
 @synthesize mutingAmount = _mutingAmount;
 @synthesize normalization = _normalization;
+@synthesize appendToScrollbackWithStatusBar = _appendToScrollbackWithStatusBar;
 
 @synthesize isDirty = _isDirty;
 
@@ -101,6 +103,7 @@
         _minimumContrast = other.minimumContrast;
         _mutingAmount = other.mutingAmount;
         _normalization = other.normalization;
+        _appendToScrollbackWithStatusBar = other.appendToScrollbackWithStatusBar;
 
         _isDirty = other.isDirty;
     }
@@ -139,6 +142,7 @@
                             @"minimumContrast": @(_minimumContrast),
                             @"mutingAmount": @(_mutingAmount),
                             @"normalization": @(_normalization),
+                            @"appendToScrollbackWithStatusBar": @(_appendToScrollbackWithStatusBar),
 
                             @"isDirty": @(_isDirty),
     };
@@ -180,6 +184,7 @@
 @dynamic minimumContrast;
 @dynamic mutingAmount;
 @dynamic normalization;
+@dynamic appendToScrollbackWithStatusBar;
 
 @dynamic isDirty;
 
