@@ -1236,10 +1236,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             multipleResults:multipleResults];
 }
 
-- (screen_char_t *)getLineAtScreenIndex:(int)theIndex {
-    return [self mutGetLineAtScreenIndex:theIndex];
-}
-
 - (void)resetAllDirty {
     [self mutResetAllDirty];
 }

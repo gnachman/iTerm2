@@ -22,7 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) VT100Grid *mutableAltGrid;
 @property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
-- (screen_char_t *)mutGetLineAtScreenIndex:(int)theIndex;
 - (void)mutResetAllDirty;
 - (void)mutSetLineDirtyAtY:(int)y;
 - (void)mutSetCharDirtyAtCursorX:(int)x Y:(int)y;
