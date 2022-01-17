@@ -62,10 +62,6 @@
 
 #pragma mark - Accessors
 
-- (void)mutSetNormalization:(iTermUnicodeNormalization)value {
-    _mutableState.normalization = value;
-}
-
 - (void)mutSetShellIntegrationInstalled:(BOOL)shellIntegrationInstalled {
     _mutableState.shellIntegrationInstalled = shellIntegrationInstalled;
 }

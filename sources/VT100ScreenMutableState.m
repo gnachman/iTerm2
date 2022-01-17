@@ -229,6 +229,10 @@
     return [_tokenExecutor pause];
 }
 
+- (iTermUnicodeNormalization)normalization {
+    return self.config.normalization;
+}
+
 #pragma mark - Terminal State Accessors
 
 - (BOOL)terminalSoftAlternateScreenMode {
@@ -461,7 +465,7 @@
                         self.config.treatAmbiguousCharsAsDoubleWidth,
                         NULL,
                         &dwc,
-                        self.normalization,
+                        self.config.normalization,
                         self.config.unicodeVersion);
     ssize_t bufferOffset = 0;
     if (augmented && len > 0) {

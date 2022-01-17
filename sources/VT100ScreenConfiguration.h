@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "ITAddressBookMgr.h"
 #import "VT100GridTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -46,6 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL useSeparateColorsForLightAndDarkMode;
 @property (nonatomic, readonly) float minimumContrast;
 @property (nonatomic, readonly) double mutingAmount;
+@property (nonatomic, readonly) iTermUnicodeNormalization normalization;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -82,6 +84,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL useSeparateColorsForLightAndDarkMode;
 @property (nonatomic, readwrite) float minimumContrast;
 @property (nonatomic, readwrite) double mutingAmount;
+@property (nonatomic, readwrite) iTermUnicodeNormalization normalization;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 

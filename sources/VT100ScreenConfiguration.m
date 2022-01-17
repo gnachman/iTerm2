@@ -36,6 +36,7 @@
 @property (nonatomic, readwrite) BOOL useSeparateColorsForLightAndDarkMode;
 @property (nonatomic, readwrite) float minimumContrast;
 @property (nonatomic, readwrite) double mutingAmount;
+@property (nonatomic, readwrite) iTermUnicodeNormalization normalization;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -66,6 +67,7 @@
 @synthesize useSeparateColorsForLightAndDarkMode = _useSeparateColorsForLightAndDarkMode;
 @synthesize minimumContrast = _minimumContrast;
 @synthesize mutingAmount = _mutingAmount;
+@synthesize normalization = _normalization;
 
 @synthesize isDirty = _isDirty;
 
@@ -98,6 +100,7 @@
         _useSeparateColorsForLightAndDarkMode = other.useSeparateColorsForLightAndDarkMode;
         _minimumContrast = other.minimumContrast;
         _mutingAmount = other.mutingAmount;
+        _normalization = other.normalization;
 
         _isDirty = other.isDirty;
     }
@@ -135,6 +138,7 @@
                             @"useSeparateColorsForLightAndDarkMode": @(_useSeparateColorsForLightAndDarkMode),
                             @"minimumContrast": @(_minimumContrast),
                             @"mutingAmount": @(_mutingAmount),
+                            @"normalization": @(_normalization),
 
                             @"isDirty": @(_isDirty),
     };
@@ -175,6 +179,7 @@
 @dynamic useSeparateColorsForLightAndDarkMode;
 @dynamic minimumContrast;
 @dynamic mutingAmount;
+@dynamic normalization;
 
 @dynamic isDirty;
 
