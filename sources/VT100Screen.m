@@ -986,9 +986,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             DLog(@"Save note with coord range %@", VT100GridCoordRangeDescription([_state coordRangeForInterval:object.entry.interval]));
         }
     }
-    return [self mutNumberOfLinesDroppedWhenEncodingContentsIncludingGrid:YES
-                                                                  encoder:encoder
-                                                           intervalOffset:intervalOffsetPtr];
+    return [_state numberOfLinesDroppedWhenEncodingContentsIncludingGrid:YES
+                                                                 encoder:encoder
+                                                          intervalOffset:intervalOffsetPtr];
 }
 
 - (int)numberOfLinesDroppedWhenEncodingModernFormatWithEncoder:(id<iTermEncoderAdapter>)encoder
@@ -997,9 +997,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [encoder encodeDictionaryWithKey:@"LineBuffer"
                           generation:iTermGenerationAlwaysEncode
                                block:^BOOL(id<iTermEncoderAdapter>  _Nonnull subencoder) {
-        linesDropped = [self mutNumberOfLinesDroppedWhenEncodingContentsIncludingGrid:NO
-                                                                              encoder:subencoder
-                                                                       intervalOffset:intervalOffsetPtr];
+        linesDropped = [_state numberOfLinesDroppedWhenEncodingContentsIncludingGrid:NO
+                                                                             encoder:subencoder
+                                                                      intervalOffset:intervalOffsetPtr];
         return YES;
     }];
     [encoder encodeDictionaryWithKey:@"PrimaryGrid"

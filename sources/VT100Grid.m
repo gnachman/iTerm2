@@ -348,7 +348,7 @@ static NSString *const kGridSizeKey = @"Size";
         lengthOfNextLine = [self lengthOfLineNumber:0];
     }
     for (i = 0; i < numLines; ++i) {
-        screen_char_t* line = [self screenCharsAtLineNumber:i];
+        const screen_char_t *line = [self screenCharsAtLineNumber:i];
         int currentLineLength = lengthOfNextLine;
         if (i + 1 < size_.height) {
             lengthOfNextLine = [self lengthOfLine:[self screenCharsAtLineNumber:i+1]];

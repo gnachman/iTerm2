@@ -301,6 +301,10 @@ extern NSString *const kScreenStateProtectedMode;
                                         iTermImmutableMetadata,
                                         BOOL *))block;
 
+- (int)numberOfLinesDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid
+                                                     encoder:(id<iTermEncoderAdapter>)encoder
+                                              intervalOffset:(long long *)intervalOffsetPtr;
+
 #pragma mark - Interval Tree
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;

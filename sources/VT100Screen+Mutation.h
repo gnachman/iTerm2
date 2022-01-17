@@ -50,9 +50,6 @@ NS_ASSUME_NONNULL_BEGIN
                                 toArray:(NSMutableArray *)results;
 - (BOOL)mutGetAndResetHasScrolled;
 - (void)mutPopScrollbackLines:(int)linesPushed;
-- (int)mutNumberOfLinesDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid
-                                                        encoder:(id<iTermEncoderAdapter>)encoder
-                                                 intervalOffset:(long long *)intervalOffsetPtr;
 - (void)mutRedrawGrid;
 - (void)mutSetMaxScrollbackLines:(unsigned int)lines;
 - (PTYTextViewSynchronousUpdateState * _Nullable)mutSetUseSavedGridIfAvailable:(BOOL)useSavedGrid;

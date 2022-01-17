@@ -118,6 +118,10 @@
 - (void)enumerateCellsInRect:(VT100GridRect)rect
                        block:(void (^)(VT100GridCoord, screen_char_t, iTermExternalAttribute *, BOOL *))block;
 
+// Append the first numLines to the given line buffer. Returns the number of lines appended.
+- (int)appendLines:(int)numLines
+      toLineBuffer:(LineBuffer *)lineBuffer;
+
 @end
 
 @interface VT100Grid : NSObject<VT100GridReading>
@@ -174,10 +178,6 @@
 // Mark chars dirty in a rectangle, inclusive of endpoints.
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to;
 - (void)markAllCharsDirty:(BOOL)dirty;
-
-// Append the first numLines to the given line buffer. Returns the number of lines appended.
-- (int)appendLines:(int)numLines
-      toLineBuffer:(LineBuffer *)lineBuffer;
 
 // Advances the cursor down one line and scrolls the screen, or part of the screen, if necessary.
 // Returns the number of lines dropped from lineBuffer. lineBuffer may be nil. If a scroll region is
