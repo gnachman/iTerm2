@@ -647,8 +647,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
         _guid = [[NSString uuid] retain];
         [[PTYSession sessionMap] setObject:self forKey:_guid];
 
-        _screen = [[VT100Screen alloc] initWithDarkMode:self.view.effectiveAppearance.it_isDark
-                                          configuration:_config];
+        _screen = [[VT100Screen alloc] init];
         NSParameterAssert(_shell != nil && _screen != nil);
 
         _overriddenFields = [[NSMutableSet alloc] init];
@@ -3756,7 +3755,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)loadColorsFromProfile:(Profile *)aDict {
     const BOOL dark = (self.view.effectiveAppearance ?: [NSApp effectiveAppearance]).it_isDark;
-    _screen.darkMode = dark;
     const BOOL modes = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:aDict];
     _screen.useSeparateColorsForLightAndDarkMode = modes;
     NSDictionary<NSNumber *, NSString *> *keyMap = [self colorTableForProfile:aDict darkMode:dark];
@@ -12036,6 +12034,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.dimOnlyText = dimOnlyText;
         dirty = YES;
     }
+    const BOOL darkMode = (self.view.effectiveAppearance ?: [NSApp effectiveAppearance]).it_isDark;
+    if (_config.darkMode != darkMode) {
+        _config.darkMode = darkMode;
+        dirty = YES;
+    }
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                            inProfile:_profile];
@@ -13459,7 +13462,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sessionViewDidChangeEffectiveAppearance {
-    _screen.darkMode = self.view.effectiveAppearance.it_isDark;
+    [self sync];
     if ([iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:self.profile]) {
         [self loadColorsFromProfile:self.profile];
     }

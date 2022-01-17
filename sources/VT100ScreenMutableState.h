@@ -35,8 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id<iTermEchoProbeDelegate> echoProbeDelegate;
 @property (nullable, nonatomic, strong) id<VT100ScreenState> mainThreadCopy;
 
-- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer
-                                   darkMode:(BOOL)darkMode NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
 - (id<VT100ScreenState>)copy;
 
 #pragma mark - Internal
@@ -285,7 +284,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)restoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
 
 #warning TODO: I think all of these could go through VT100ScreenConfiguration
-- (void)setDarkMode:(BOOL)darkMode;
 - (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value;
 - (void)setMinimumContrast:(float)value;
 - (void)setMutingAmount:(double)value;

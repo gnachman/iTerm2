@@ -62,10 +62,6 @@
 
 #pragma mark - Color Map
 
-- (void)mutSetDarkMode:(BOOL)darkMode {
-    _mutableState.darkMode = darkMode;
-}
-
 - (void)mutSetUseSeparateColorsForLightAndDarkMode:(BOOL)value {
     _mutableState.useSeparateColorsForLightAndDarkMode = value;
 }

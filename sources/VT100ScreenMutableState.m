@@ -41,8 +41,7 @@
     BOOL _echoProbeShouldSendPassword;
 }
 
-- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer
-                                   darkMode:(BOOL)darkMode {
+- (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
     self = [super initForMutation];
     if (self) {
 #warning TODO: When this moves to its own queue. change _queue. Consider keeping main thread as an option for lower-power mode and also for filter destinations to minimize overhead of constnatly syncing across threads.
@@ -70,7 +69,6 @@
                                                                 queue:_queue];
         _echoProbe = [[iTermEchoProbe alloc] init];
         _echoProbe.delegate = self;
-        self.colorMap.darkMode = darkMode;
         self.colorMap.delegate = self;
     }
     return self;
@@ -212,6 +210,7 @@
     [_triggerEvaluator loadFromProfileArray:config.triggerProfileDicts];
     _triggerEvaluator.triggerParametersUseInterpolatedStrings = config.triggerParametersUseInterpolatedStrings;
     self.colorMap.dimOnlyText = _config.dimOnlyText;
+    self.colorMap.darkMode = _config.darkMode;
 }
 
 - (void)setExited:(BOOL)exited {
@@ -2732,10 +2731,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenRestoreColorsFromSlot:slot];
     }];
-}
-
-- (void)setDarkMode:(BOOL)darkMode {
-    self.colorMap.darkMode = darkMode;
 }
 
 - (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value {
