@@ -13,6 +13,7 @@
 #import "LineBuffer.h"
 #import "PTYTriggerEvaluator.h"
 #import "VT100Grid.h"
+#import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
 #import "iTermColorMap.h"
@@ -186,6 +187,7 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, readonly) screen_char_t terminalForegroundColorCode;
 @property (nonatomic, readonly) screen_char_t terminalBackgroundColorCode;
 @property (nonatomic, readonly) NSDictionary *terminalState;
+@property (nonatomic, copy, readonly) id<VT100ScreenConfiguration> config;
 
 @end
 
@@ -242,6 +244,7 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, readwrite) long long fakePromptDetectedAbsLine;
 @property (nonatomic, readwrite) long long lastPromptLine;
 @property (nonatomic, readwrite) BOOL shouldExpectPromptMarks;
+@property (nonatomic, copy, readwrite) id<VT100ScreenConfiguration> config;
 
 #warning TODO: Once this synced properly (see comment in VT100Screen+Mutation) then it can be made nonatomic.
 @property (atomic) BOOL needsRedraw;

@@ -122,6 +122,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 @synthesize terminalForegroundColorCode = _terminalForegroundColorCode;
 @synthesize terminalBackgroundColorCode = _terminalBackgroundColorCode;
 @synthesize terminalState = _terminalState;
+@synthesize config = _config;
 
 - (instancetype)initForMutation {
     self = [super init];
@@ -238,6 +239,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
         _charsetUsesLineDrawingMode = [source.charsetUsesLineDrawingMode copy];
         _colorMap = [source.colorMap copy];
         _temporaryDoubleBuffer = [source.temporaryDoubleBuffer copy];
+        _config = [source.config copy];
     }
     return self;
 }

@@ -42,9 +42,6 @@ VT100ScreenSideEffectPerforming> {
     VT100ScreenMutableState *_mutableState;
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
-
-    // Most recent configuration. Will be copied to _config eventually.
-    id<VT100ScreenConfiguration> _nextConfig;
 }
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers;

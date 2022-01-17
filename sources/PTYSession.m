@@ -7672,27 +7672,48 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 #warning TODO: Synchornize properly.
-- (void)textViewWillRefresh {
-    [self sync];
+- (int)textViewWillRefresh {
+    return [self syncCheckingTriggers:NO resetOverflow:YES];
 }
 
-- (void)screenSync {
-    [self syncCheckingTriggers:NO];
+- (void)screenSync:(VT100ScreenMutableState *)mutableState {
+    [self syncCheckingTriggers:NO
+                 resetOverflow:NO
+                  mutableState:mutableState];
 }
 
 - (void)sync {
-    [self syncCheckingTriggers:NO];
+    [self syncCheckingTriggers:NO
+                 resetOverflow:NO];
 }
 
 - (void)syncCheckingTriggers:(BOOL)checkTriggers {
+    [self syncCheckingTriggers:checkTriggers resetOverflow:NO];
+}
+
+- (int)syncCheckingTriggers:(BOOL)checkTriggers
+              resetOverflow:(BOOL)resetOverflow {
+    __block int result = 0;
+    [_screen performLightweightBlockWithJoinedThreads:^(VT100ScreenMutableState *mutableState) {
+        result = [self syncCheckingTriggers:NO resetOverflow:resetOverflow mutableState:mutableState];
+    }];
+    return result;
+}
+
+- (int)syncCheckingTriggers:(BOOL)checkTriggers
+              resetOverflow:(BOOL)resetOverflow
+               mutableState:(VT100ScreenMutableState *)mutableState {
     [self updateConfigurationFields];
     const BOOL expectWasDirty = _expect.dirty;
     [_expect resetDirty];
-    [_screen synchronizeWithConfig:_config
-                            expect:expectWasDirty ? _expect : nil
-                     checkTriggers:checkTriggers];
+    const int overflow = [_screen synchronizeWithConfig:_config
+                                                 expect:expectWasDirty ? _expect : nil
+                                          checkTriggers:checkTriggers
+                                          resetOverflow:resetOverflow
+                                           mutableState:mutableState];
     _textview.colorMap = _screen.colorMap;
     _config.isDirty = NO;
+    return overflow;
 }
 
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {

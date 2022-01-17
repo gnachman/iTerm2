@@ -113,6 +113,10 @@
     return self;
 }
 
+- (id)copy {
+    return self;
+}
+
 - (id)copyWithZone:(NSZone *)zone {
     return self;
 }
@@ -192,6 +196,10 @@
 @dynamic saveToScrollbackInAlternateScreen;
 
 @dynamic isDirty;
+
+- (id)copy {
+    return [self copyWithZone:nil];
+}
 
 - (id)copyWithZone:(NSZone *)zone {
     return [[VT100ScreenConfiguration alloc] initFrom:self];

@@ -2193,11 +2193,8 @@
     if (_dataSource == nil || _inRefresh) {
         return YES;
     }
-    [self.delegate textViewWillRefresh];
-
     // Get the number of lines that have disappeared if scrollback buffer is full.
-    const int scrollbackOverflow = [_dataSource scrollbackOverflow];
-    [_dataSource resetScrollbackOverflow];
+    const int scrollbackOverflow = [self.delegate textViewWillRefresh];
     const BOOL frameDidChange = [_delegate textViewResizeFrameIfNeeded];
     // Perform adjustments if lines were lost from the head of the buffer.
     BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];

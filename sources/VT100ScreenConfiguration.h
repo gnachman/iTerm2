@@ -53,6 +53,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readonly) BOOL isDirty;
 
+- (id<VT100ScreenConfiguration>)copy;
+
 @end
 
 @interface VT100ScreenConfiguration : NSObject<VT100ScreenConfiguration>

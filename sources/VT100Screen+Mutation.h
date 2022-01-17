@@ -35,9 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetMaxScrollbackLines:(unsigned int)lines;
 - (PTYTextViewSynchronousUpdateState * _Nullable)mutSetUseSavedGridIfAvailable:(BOOL)useSavedGrid;
 - (void)mutSetUnlimitedScrollback:(BOOL)newValue;
-- (void)mutResetScrollbackOverflow;
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
-- (void)mutUpdateConfig;
 - (void)mutLinkTextInRange:(NSRange)range
 basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                    URLCode:(unsigned int)code;

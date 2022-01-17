@@ -67,7 +67,6 @@
 - (NSArray<ScreenCharArray *> *)linesInRange:(NSRange)range;
 - (int)numberOfScrollbackLines;
 - (int)scrollbackOverflow;
-- (void)resetScrollbackOverflow;
 - (long long)absoluteLineNumberOfCursor;
 - (BOOL)continueFindAllResults:(NSMutableArray*)results
                      inContext:(FindContext*)context;

@@ -81,7 +81,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 @property(nonatomic, retain, readonly) id<iTermColorMapReading> colorMap;
 @property(nonatomic, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
-@property(nonatomic, retain) id<VT100ScreenConfiguration> config;
+@property(nonatomic, readonly) id<VT100ScreenConfiguration> config;
 @property(nonatomic, readonly) long long fakePromptDetectedAbsLine;
 @property(nonatomic, readonly) long long lastPromptLine;
 @property(nonatomic, readonly) BOOL echoProbeIsActive;
@@ -200,9 +200,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int line, ScreenCharArray *, iTermImmutableMetadata, BOOL *))block;
 
-// Fake shell integration via triggers APIs
-- (void)commandDidStartAt:(VT100GridAbsCoord)coord;
-
 - (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block;
 - (void)setColor:(NSColor *)color forKey:(int)key;
 - (void)userDidPressReturn;
@@ -215,12 +212,15 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)injectData:(NSData *)data;
 - (void)forceCheckTriggers;
 - (void)performPeriodicTriggerCheck;
-- (void)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
-                       expect:(iTermExpect *)maybeExpect
-                checkTriggers:(BOOL)checkTriggers;
+- (int)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
+                      expect:(iTermExpect *)maybeExpect
+               checkTriggers:(BOOL)checkTriggers
+               resetOverflow:(BOOL)resetOverflow
+                mutableState:(VT100ScreenMutableState *)mutableState;
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block;
+- (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block;
 - (void)mutateAsynchronously:(void (^)(VT100Terminal *terminal,
                                        VT100ScreenMutableState *mutableState,
                                        id<VT100ScreenDelegate> delegate))block;
