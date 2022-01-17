@@ -3781,9 +3781,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [self setMinimumContrast:[iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, aDict, dark)
                                                         inProfile:aDict]];
-
-    _screen.mutingAmount = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_CURSOR_BOOST, aDict, dark)
-                                                      inProfile:aDict];
 }
 
 - (NSDictionary<NSNumber *, NSString *> *)colorTableForProfile:(Profile *)profile darkMode:(BOOL)dark {
@@ -12048,6 +12045,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                                  inProfile:self.profile];
         _config.minimumContrast = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, self.profile, darkMode)
                                                              inProfile:self.profile];
+        _config.mutingAmount = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_CURSOR_BOOST, self.profile, darkMode)
+                                                          inProfile:self.profile];
         _config.profileName = [self profileName];
         dirty = YES;
         _profileDidChange = NO;

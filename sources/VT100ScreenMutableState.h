@@ -284,7 +284,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)restoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
 
 #warning TODO: I think all of these could go through VT100ScreenConfiguration
-- (void)setMutingAmount:(double)value;
 - (void)setDimmingAmount:(double)value;
 
 #pragma mark - Cross-Thread Sync

@@ -62,10 +62,6 @@
 
 #pragma mark - Color Map
 
-- (void)mutSetMutingAmount:(double)value {
-    _mutableState.mutingAmount = value;
-}
-
 - (void)mutSetDimmingAmount:(double)value {
     _mutableState.dimmingAmount = value;
 }
