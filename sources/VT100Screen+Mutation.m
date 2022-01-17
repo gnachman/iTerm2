@@ -62,10 +62,6 @@
 
 #pragma mark - Color Map
 
-- (void)mutLoadInitialColorTable {
-    [_mutableState loadInitialColorTable];
-}
-
 - (void)mutSetDimOnlyText:(BOOL)dimOnlyText {
     _mutableState.dimOnlyText = dimOnlyText;
 }
