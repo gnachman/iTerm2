@@ -125,9 +125,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Move the cursor down one position, scrolling if needed. Scroll regions are respected.
 - (void)linefeed;
 
-// Sets the alt grid's contents. |lines| is NSData with screen_char_t's.
-- (void)setAltScreen:(NSArray *)lines;
-
 // Set the colors in the range relative to the start of the given line number.
 // See kHighlightXxxColor constants at the top of this file for dict keys, values are NSColor*s.
 - (void)highlightTextInRange:(NSRange)range
