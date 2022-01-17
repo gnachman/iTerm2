@@ -60,18 +60,6 @@
     _mutableState.config = _nextConfig;
 }
 
-
-#pragma mark - Terminal Fundamentals
-
-- (void)setCursorX:(int)x Y:(int)y {
-    DLog(@"Move cursor to %d,%d", x, y);
-    _mutableState.currentGrid.cursor = VT100GridCoordMake(x, y);
-}
-
-- (void)mutRemoveAllTabStops {
-    [_mutableState.tabStops removeAllObjects];
-}
-
 #pragma mark - DVR
 
 - (void)mutSetFromFrame:(screen_char_t*)s
