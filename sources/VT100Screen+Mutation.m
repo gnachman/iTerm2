@@ -63,10 +63,6 @@
 
 #pragma mark - Terminal Fundamentals
 
-- (void)mutLinefeed {
-    [_mutableState appendLineFeed];
-}
-
 - (void)setCursorX:(int)x Y:(int)y {
     DLog(@"Move cursor to %d,%d", x, y);
     _mutableState.currentGrid.cursor = VT100GridCoordMake(x, y);
