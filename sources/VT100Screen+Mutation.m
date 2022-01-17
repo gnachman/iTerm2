@@ -62,12 +62,6 @@
 
 #pragma mark - Accessors
 
-- (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate {
-#warning TODO: This is temporary. Mutable state should be the delegate.
-    [_mutableState setTokenExecutorDelegate:delegate];
-    delegate_ = delegate;
-}
-
 - (void)mutSetIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver {
     _mutableState.intervalTreeObserver = intervalTreeObserver;
 }
