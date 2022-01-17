@@ -1392,10 +1392,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.normalization;
 }
 
-- (void)setNormalization:(iTermUnicodeNormalization)normalization {
-    [self mutSetNormalization:normalization];
-}
-
 - (BOOL)shellIntegrationInstalled {
     return _state.shellIntegrationInstalled;
 }

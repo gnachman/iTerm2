@@ -63,7 +63,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, assign) BOOL trackCursorLineMovement;
 @property(nonatomic, assign) BOOL appendToScrollbackWithStatusBar;
 @property(nonatomic, readonly) VT100GridAbsCoordRange lastCommandOutputRange;
-@property(nonatomic, assign) iTermUnicodeNormalization normalization;
 @property(nonatomic, readonly) BOOL shellIntegrationInstalled;  // Just a guess.
 @property(nonatomic, readonly) NSIndexSet *animatedLines;
 @property(nonatomic, readonly) VT100GridAbsCoord startOfRunningCommandOutput;

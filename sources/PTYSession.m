@@ -3944,8 +3944,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setAntiIdlePeriod:[iTermProfilePreferences doubleForKey:KEY_IDLE_PERIOD inProfile:aDict]];
     [self setAntiIdle:[iTermProfilePreferences boolForKey:KEY_SEND_CODE_WHEN_IDLE inProfile:aDict]];
     self.endAction = [iTermProfilePreferences unsignedIntegerForKey:KEY_SESSION_END_ACTION inProfile:aDict];
-    _screen.normalization = [iTermProfilePreferences integerForKey:KEY_UNICODE_NORMALIZATION
-                                                         inProfile:aDict];
     [self setTreatAmbiguousWidthAsDoubleWidth:[iTermProfilePreferences boolForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH
                                                                         inProfile:aDict]];
     [self setXtermMouseReporting:[iTermProfilePreferences boolForKey:KEY_XTERM_MOUSE_REPORTING
@@ -9545,7 +9543,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (iTermUnicodeNormalization)textViewUnicodeNormalizationForm {
-    return _screen.normalization;
+    return _screen.config.normalization;
 }
 
 - (NSColor *)textViewCursorGuideColor {
@@ -12051,6 +12049,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                              inProfile:self.profile];
         _config.mutingAmount = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_CURSOR_BOOST, self.profile, darkMode)
                                                           inProfile:self.profile];
+        _config.normalization = [iTermProfilePreferences integerForKey:KEY_UNICODE_NORMALIZATION
+                                                             inProfile:self.profile];
         _config.profileName = [self profileName];
         dirty = YES;
         _profileDidChange = NO;

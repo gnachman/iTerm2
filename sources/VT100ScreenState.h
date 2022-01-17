@@ -236,7 +236,6 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, strong, readwrite) LineBuffer *linebuffer;
 @property (nonatomic, readwrite) BOOL trackCursorLineMovement;
 @property (nonatomic, readwrite) BOOL appendToScrollbackWithStatusBar;
-@property (nonatomic, readwrite) iTermUnicodeNormalization normalization;
 #warning TODO: Prevent access to intervalTreeObserver on the mutation queue. It should only be called on the main queue.
 @property (nonatomic, weak, readwrite) id<iTermIntervalTreeObserver> intervalTreeObserver;
 @property (nullable, nonatomic, strong, readwrite) VT100ScreenMark *lastCommandMark;
