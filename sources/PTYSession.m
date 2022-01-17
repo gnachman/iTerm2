@@ -14355,7 +14355,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if (_textview.selection.live) {
             [_textview.selection endLiveSelection];
         }
-        [_screen scheduleTokenExecution];
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            [mutableState scheduleTokenExecution];
+        }];
     }
 }
 

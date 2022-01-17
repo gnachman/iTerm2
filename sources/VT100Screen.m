@@ -1145,10 +1145,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [_mutableState threadedReadTask:buffer length:length];
 }
 
-- (void)scheduleTokenExecution {
-    [self mutScheduleTokenExecution];
-}
-
 - (long long)lastPromptLine {
     return _state.lastPromptLine;
 }
