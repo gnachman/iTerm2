@@ -62,10 +62,6 @@
 
 #pragma mark - Accessors
 
-- (void)mutSetLastPromptLine:(long long)value {
-    _mutableState.lastPromptLine = value;
-}
-
 - (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate {
 #warning TODO: This is temporary. Mutable state should be the delegate.
     [_mutableState setTokenExecutorDelegate:delegate];
