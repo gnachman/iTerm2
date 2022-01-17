@@ -213,7 +213,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
                    reattached:(BOOL)reattached;
-- (void)restoreInitialSize;
 
 // Uninitialize timestamps.
 - (void)resetTimestamps;
