@@ -211,6 +211,7 @@
     _triggerEvaluator.triggerParametersUseInterpolatedStrings = config.triggerParametersUseInterpolatedStrings;
     self.colorMap.dimOnlyText = _config.dimOnlyText;
     self.colorMap.darkMode = _config.darkMode;
+    self.colorMap.useSeparateColorsForLightAndDarkMode = _config.useSeparateColorsForLightAndDarkMode;
 }
 
 - (void)setExited:(BOOL)exited {
@@ -2731,10 +2732,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenRestoreColorsFromSlot:slot];
     }];
-}
-
-- (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value {
-    self.colorMap.useSeparateColorsForLightAndDarkMode = value;
 }
 
 - (void)setMinimumContrast:(float)value {
