@@ -191,10 +191,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value {
-    [self mutSetUseSeparateColorsForLightAndDarkMode:value];
-}
-
 - (void)setMinimumContrast:(float)value {
     [self mutSetMinimumContrast:value];
 }

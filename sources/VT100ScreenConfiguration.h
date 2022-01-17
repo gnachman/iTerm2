@@ -43,6 +43,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) int maximumTheoreticalImageDimension;
 @property (nonatomic, readonly) BOOL dimOnlyText;
 @property (nonatomic, readonly) BOOL darkMode;
+@property (nonatomic, readonly) BOOL useSeparateColorsForLightAndDarkMode;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -76,6 +77,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) int maximumTheoreticalImageDimension;
 @property (nonatomic, readwrite) BOOL dimOnlyText;
 @property (nonatomic, readwrite) BOOL darkMode;
+@property (nonatomic, readwrite) BOOL useSeparateColorsForLightAndDarkMode;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 
