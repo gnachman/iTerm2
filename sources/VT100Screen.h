@@ -55,7 +55,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, assign) BOOL cursorBlinks;
 @property(nonatomic, assign) BOOL allowTitleReporting;
 @property(nonatomic, assign) unsigned int maxScrollbackLines;
-@property(nonatomic, assign) BOOL unlimitedScrollback;
+@property(nonatomic, readonly) BOOL unlimitedScrollback;
 @property(nonatomic, readonly) BOOL useColumnScrollRegion;
 @property(nonatomic, readonly) BOOL saveToScrollbackInAlternateScreen;
 // Main thread only! Unlike all other state in VT100Screen, this one is never seen by the screen mutator.

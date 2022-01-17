@@ -1440,7 +1440,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    [[aSession screen] setUnlimitedScrollback:[[theBookmark objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession screen] setMaxScrollbackLines:[[theBookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     // set our preferences
@@ -3967,8 +3966,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [terminal setAllowKeypadMode:[iTermProfilePreferences boolForKey:KEY_APPLICATION_KEYPAD_ALLOWED
                                                            inProfile:aDict]];
-    [_screen setUnlimitedScrollback:[iTermProfilePreferences boolForKey:KEY_UNLIMITED_SCROLLBACK
-                                                              inProfile:aDict]];
     [_screen setMaxScrollbackLines:[iTermProfilePreferences intForKey:KEY_SCROLLBACK_LINES
                                                             inProfile:aDict]];
     if ([iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:aDict]) {
@@ -12072,6 +12069,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                             inProfile:self.profile];
         _config.saveToScrollbackInAlternateScreen = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN
                                                                               inProfile:self.profile];
+        _config.unlimitedScrollback = [iTermProfilePreferences boolForKey:KEY_UNLIMITED_SCROLLBACK
+                                                                inProfile:_profile];
         _config.profileName = [self profileName];
         dirty = YES;
         _profileDidChange = NO;

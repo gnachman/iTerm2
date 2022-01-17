@@ -266,6 +266,10 @@
     return self.config.saveToScrollbackInAlternateScreen;
 }
 
+- (BOOL)unlimitedScrollback {
+    return self.config.unlimitedScrollback;
+}
+
 #pragma mark - Terminal State Accessors
 
 - (BOOL)terminalSoftAlternateScreenMode {
