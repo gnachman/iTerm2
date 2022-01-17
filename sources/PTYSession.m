@@ -3755,8 +3755,6 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)loadColorsFromProfile:(Profile *)aDict {
     const BOOL dark = (self.view.effectiveAppearance ?: [NSApp effectiveAppearance]).it_isDark;
-    const BOOL modes = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE inProfile:aDict];
-    _screen.useSeparateColorsForLightAndDarkMode = modes;
     NSDictionary<NSNumber *, NSString *> *keyMap = [self colorTableForProfile:aDict darkMode:dark];
     for (NSNumber *colorKey in keyMap) {
         NSString *profileKey = keyMap[colorKey];
@@ -12047,6 +12045,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.triggerParametersUseInterpolatedStrings = [iTermProfilePreferences boolForKey:KEY_TRIGGERS_USE_INTERPOLATED_STRINGS
                                                                                     inProfile:self.profile];
         _config.triggerProfileDicts = [iTermProfilePreferences objectForKey:KEY_TRIGGERS inProfile:self.profile];
+        _config.useSeparateColorsForLightAndDarkMode = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE
+                                                                                 inProfile:self.profile];
 
         _config.profileName = [self profileName];
         dirty = YES;

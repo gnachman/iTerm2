@@ -206,7 +206,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 - (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block;
 - (void)setColor:(NSColor *)color forKey:(int)key;
-- (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)value;
 - (void)setMinimumContrast:(float)value;
 - (void)setMutingAmount:(double)value;
 - (void)setDimmingAmount:(double)value;

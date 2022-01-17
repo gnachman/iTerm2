@@ -62,10 +62,6 @@
 
 #pragma mark - Color Map
 
-- (void)mutSetUseSeparateColorsForLightAndDarkMode:(BOOL)value {
-    _mutableState.useSeparateColorsForLightAndDarkMode = value;
-}
-
 - (void)mutSetMinimumContrast:(float)value {
     _mutableState.minimumContrast = value;
 }

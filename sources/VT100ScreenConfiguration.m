@@ -33,6 +33,7 @@
 @property (nonatomic, readwrite) int maximumTheoreticalImageDimension;
 @property (nonatomic, readwrite) BOOL dimOnlyText;
 @property (nonatomic, readwrite) BOOL darkMode;
+@property (nonatomic, readwrite) BOOL useSeparateColorsForLightAndDarkMode;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -60,6 +61,7 @@
 @synthesize maximumTheoreticalImageDimension = _maximumTheoreticalImageDimension;
 @synthesize dimOnlyText = _dimOnlyText;
 @synthesize darkMode = _darkMode;
+@synthesize useSeparateColorsForLightAndDarkMode = _useSeparateColorsForLightAndDarkMode;
 
 @synthesize isDirty = _isDirty;
 
@@ -89,6 +91,7 @@
         _maximumTheoreticalImageDimension = other.maximumTheoreticalImageDimension;
         _dimOnlyText = other.dimOnlyText;
         _darkMode = other.darkMode;
+        _useSeparateColorsForLightAndDarkMode = other.useSeparateColorsForLightAndDarkMode;
 
         _isDirty = other.isDirty;
     }
@@ -123,6 +126,7 @@
                             @"maximumTheoreticalImageDimension": @(_maximumTheoreticalImageDimension),
                             @"dimOnlyText": @(_dimOnlyText),
                             @"darkMode": @(_darkMode),
+                            @"useSeparateColorsForLightAndDarkMode": @(_useSeparateColorsForLightAndDarkMode),
 
                             @"isDirty": @(_isDirty),
     };
@@ -160,6 +164,7 @@
 @dynamic maximumTheoreticalImageDimension;
 @dynamic dimOnlyText;
 @dynamic darkMode;
+@dynamic useSeparateColorsForLightAndDarkMode;
 
 @dynamic isDirty;
 
