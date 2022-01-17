@@ -27,7 +27,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, strong) VT100InlineImageHelper *inlineImageHelper;
 @property (nonatomic, strong, readwrite) iTermOrderEnforcer *setWorkingDirectoryOrderEnforcer;
 @property (atomic, weak) id<VT100ScreenSideEffectPerforming> sideEffectPerformer;
-@property (nonatomic, copy) id<VT100ScreenConfiguration> config;
 @property (nonatomic, readonly) iTermTokenExecutor *tokenExecutor;
 @property (nonatomic) BOOL exited;
 @property (nonatomic, strong, readonly) VT100Terminal *terminal;
@@ -303,6 +302,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)performBlockAsynchronously:(void (^ _Nullable)(VT100Terminal *terminal,
                                                        VT100ScreenMutableState *mutableState,
                                                        id<VT100ScreenDelegate> delegate))block;
+
+// Doesn't sync before or after running the block. Calls it even if there is no delegate.
+- (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block;
 
 #pragma mark - State Restoration
 

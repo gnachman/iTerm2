@@ -56,15 +56,7 @@
     return (LineBuffer *)_mutableState.linebuffer;
 }
 
-- (void)mutUpdateConfig {
-    _mutableState.config = _nextConfig;
-}
-
 #pragma mark - Accessors
-
-- (void)mutResetScrollbackOverflow {
-    [_mutableState resetScrollbackOverflow];
-}
 
 - (void)mutSetUnlimitedScrollback:(BOOL)newValue {
     _mutableState.unlimitedScrollback = newValue;

@@ -241,9 +241,9 @@ class TokenExecutor: NSObject {
     }
 
     // This can run on the main queue, or else on the mutation queue when joined.
-    @objc
-    func executeSideEffectsImmediately() {
-        impl.executeSideEffects()
+    @objc(executeSideEffectsImmediatelySyncingFirst:)
+    func executeSideEffectsImmediately(syncFirst: Bool) {
+        impl.executeSideEffects(syncFirst: syncFirst)
     }
 
     // This takes ownership of vector.
@@ -366,17 +366,17 @@ private class TokenExecutorImpl {
     func addSideEffect(_ task: @escaping TokenExecutorTask) {
         sideEffects.append(task)
         DispatchQueue.main.async { [weak self] in
-            self?.executeSideEffects()
+            self?.executeSideEffects(syncFirst: true)
         }
     }
 
     // Main queue or mutation queue while joined.
-    func executeSideEffects() {
-        var haveSynced = false
+    func executeSideEffects(syncFirst: Bool) {
+        var shouldSync = syncFirst
         while let task = sideEffects.dequeue() {
-            if !haveSynced {
+            if shouldSync {
                 delegate?.tokenExecutorSync()
-                haveSynced = true
+                shouldSync = false
             }
             task()
         }

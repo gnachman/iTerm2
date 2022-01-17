@@ -121,6 +121,21 @@
 
 #pragma mark - Internal
 
+// Don't create an unpauser yourself. If the delegate is nil, your block
+// doesn't get called to unpause. Use this instead unless you really know what
+// you're doing.
+- (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect {
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    if (self.performingJoinedBlock) {
+        [self performPausedSideEffect:unpauser block:sideEffect];
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    [_tokenExecutor addSideEffect:^{
+        [weakSelf performPausedSideEffect:unpauser block:sideEffect];
+    }];
+}
+
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
     if (self.performingJoinedBlock) {
         [self performSideEffect:sideEffect];
@@ -153,8 +168,7 @@
         return;
     }
     __weak __typeof(self) weakSelf = self;
-    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             [unpauser unpause];
@@ -178,6 +192,16 @@
         return;
     }
     block(delegate);
+}
+
+- (void)performPausedSideEffect:(iTermTokenExecutorUnpauser *)unpauser
+                          block:(void (^)(id<VT100ScreenDelegate>, iTermTokenExecutorUnpauser *))block {
+    id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    if (!delegate) {
+        [unpauser unpause];
+        return;
+    }
+    block(delegate, unpauser);
 }
 
 // See threading notes on performSideEffect:.
@@ -206,14 +230,15 @@
 
 - (void)setConfig:(id<VT100ScreenConfiguration>)config {
     #warning TODO: It's kinda sketch to copy it here since we are on the wrong thread to use `config` at all.
-    _config = [config copyWithZone:nil];
+    [super setConfig:config];
+
     [_triggerEvaluator loadFromProfileArray:config.triggerProfileDicts];
     _triggerEvaluator.triggerParametersUseInterpolatedStrings = config.triggerParametersUseInterpolatedStrings;
-    self.colorMap.dimOnlyText = _config.dimOnlyText;
-    self.colorMap.darkMode = _config.darkMode;
-    self.colorMap.useSeparateColorsForLightAndDarkMode = _config.useSeparateColorsForLightAndDarkMode;
-    self.colorMap.minimumContrast = _config.minimumContrast;
-    self.colorMap.mutingAmount = _config.mutingAmount;
+    self.colorMap.dimOnlyText = config.dimOnlyText;
+    self.colorMap.darkMode = config.darkMode;
+    self.colorMap.useSeparateColorsForLightAndDarkMode = config.useSeparateColorsForLightAndDarkMode;
+    self.colorMap.minimumContrast = config.minimumContrast;
+    self.colorMap.mutingAmount = config.mutingAmount;
 }
 
 - (void)setExited:(BOOL)exited {
@@ -1070,8 +1095,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.intervalTree = [[IntervalTree alloc] init];
     [self reloadMarkCache];
     self.lastCommandMark = nil;
-    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenResetTailFind];
         [delegate screenClearHighlights];
         [delegate screenRemoveSelection];
@@ -1352,8 +1376,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     [self.currentGrid markAllCharsDirty:YES];
     [self invalidateCommandStartCoordWithoutSideEffects];
-    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRemoveSelection];
         [delegate screenScheduleRedrawSoon];
         [unpauser unpause];
@@ -1372,8 +1395,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self reloadMarkCache];
 
     [self.currentGrid markAllCharsDirty:YES];
-    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRemoveSelection];
         [delegate screenScheduleRedrawSoon];
         [unpauser unpause];
@@ -1401,8 +1423,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }
     }
     // Force annotations frames to be updated.
-    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
 #warning TODO: Coalesce calls to screenNeedsRedraw
         [delegate screenNeedsRedraw];
         [annotationsToHide enumerateObjectsUsingBlock:^(PTYAnnotation * _Nonnull annotation, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -1937,8 +1958,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         mark = nil;
     }
     // Pause because delegate will change variables.
-    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenDidExecuteCommand:command
                                     range:range
                                    onHost:remoteHost
@@ -2764,6 +2784,27 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     _triggerEvaluator.expect = [source copy];
 }
 
+- (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block {
+    DLog(@"%@", [NSThread callStackSymbols]);
+    assert([NSThread isMainThread]);
+
+    if (self.performingJoinedBlock) {
+        // Reentrant call. Avoid deadlock by running it immediately.
+        [self reallyPerformLightweightBlockWithJoinedThreads:block group:nil];
+        return;
+    }
+
+    // Wait for the mutation thread to finish its current tasks+tokens, then run the block.
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    __weak __typeof(self) weakSelf = self;
+    [_tokenExecutor scheduleHighPriorityTask:^{
+        [weakSelf reallyPerformLightweightBlockWithJoinedThreads:block group:group];
+    }];
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+}
+
+
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block {
@@ -2798,22 +2839,38 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                       group:(dispatch_group_t)group {
     // Set `performingJoinedBlock` to YES so that a side-effect that wants to join threads won't
     // deadlock.
+    // This get-and-set is not a data race because assignment to performingJoinedBlock only happens
+    // on the mutation queue.
     const BOOL previousValue = self.performingJoinedBlock;
     self.performingJoinedBlock = YES;
-    // First execute pending side effects. Do this before setting performingJoinedBlock to YES
-    // because side effects could queue new joined blocks and we want them to run asynchronously.                                      
-    // Re-entrant joined blocks will act funny, though! Side effects will run while joined.
-    // I don't know yet if this is going to be a problem.
-    [_tokenExecutor executeSideEffectsImmediately];
-#warning TODO: Sync changes back from main thread to mutable state?
+
     // Sync so that the delegate's copy of state will be up-to-date.
-    [delegate screenSync];
-    // This get-and-set is not a data race because assignment to perfomringJoinedBlock only happens
-    // on the mutation queue.
+    [delegate screenSync:self];
+
+    // Now that the delegate has the most recent state, pending side effects which may operate on
+    // that state. Don't have the token executor initiate sync because that depends on having a non-
+    // empty list of side-effects.
+    [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
+
     if (block) {
         block(self.terminal, self, delegate);
         // Sync so that our copy of state will be up-to-date.
-        [delegate screenSync];
+        [delegate screenSync:self];
+    }
+    self.performingJoinedBlock = previousValue;
+    if (group) {
+        dispatch_group_leave(group);
+    }
+}
+
+- (void)reallyPerformLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *))block
+                                                 group:(dispatch_group_t)group {
+    // Set `performingJoinedBlock` to YES so that a side-effect that wants to join threads won't
+    // deadlock.
+    const BOOL previousValue = self.performingJoinedBlock;
+    self.performingJoinedBlock = YES;
+    if (block) {
+        block(self);
     }
     self.performingJoinedBlock = previousValue;
     if (group) {
@@ -3460,8 +3517,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
     [self resetScrollbackOverflow];
     // Unpause so tail find can continue after resetting it.
-    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenResetTailFind];
         [delegate screenRemoveSelection];
         [delegate screenNeedsRedraw];
@@ -3488,8 +3544,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - iTermTriggerScopeProvider
 
 - (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block {
-    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         assert([NSThread isMainThread]);
         block([delegate triggerSideEffectVariableScope], delegate);
         [unpauser unpause];
@@ -3633,8 +3688,7 @@ launchCoprocessWithCommand:(NSString *)command
 
 // STOP THE WORLD - sync
 - (void)triggerSession:(Trigger *)trigger didChangeNameTo:(NSString *)newName {
-    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate triggerSideEffectSetTitle:newName];
         [unpauser unpause];
     }];
@@ -3676,8 +3730,7 @@ launchCoprocessWithCommand:(NSString *)command
                 invoke:(NSString *)invocation
          withVariables:(NSDictionary *)temporaryVariables
               captures:(NSArray<NSString *> *)captureStringArray {
-    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate triggerSideEffectInvokeFunctionCall:invocation
                                         withVariables:temporaryVariables
                                              captures:captureStringArray

@@ -7,6 +7,7 @@
 @class Trigger;
 @class VT100RemoteHost;
 @class VT100Screen;
+@class VT100ScreenMutableState;
 @class iTermBackgroundCommandRunnerPool;
 @class iTermColorMap;
 @protocol iTermMark;
@@ -348,7 +349,8 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                               remoteHost:(VT100RemoteHost * _Nullable)remoteHost;
 - (void)screenCopyStringToPasteboard:(NSString * _Nonnull)string;
 - (void)screenPostUserNotification:(NSString * _Nonnull)string;
-- (void)screenSync;
+// Called while joined. Don't let `mutableState` escape.
+- (void)screenSync:(VT100ScreenMutableState * _Nonnull)mutableState;
 - (void)screenUpdateCommandUseWithGuid:(NSString * _Nonnull)screenmarkGuid
                                 onHost:(VT100RemoteHost * _Nullable)lastRemoteHost
                          toReferToMark:(VT100ScreenMark * _Nonnull)screenMark;

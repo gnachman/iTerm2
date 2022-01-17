@@ -324,10 +324,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.scrollbackOverflow;
 }
 
-- (void)resetScrollbackOverflow {
-    [self mutResetScrollbackOverflow];
-}
-
 - (long long)totalScrollbackOverflow {
     return _state.cumulativeScrollbackOverflow;
 }
@@ -1092,6 +1088,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Mutation Wrappers
 
+- (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block {
+    [_mutableState performLightweightBlockWithJoinedThreads:block];
+}
+
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block {
@@ -1108,21 +1108,29 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutForceCheckTriggers];
 }
 
-- (void)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
+- (int)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
                        expect:(iTermExpect *)maybeExpect
-                checkTriggers:(BOOL)checkTriggers {
-    [_mutableState willSynchronize];
+                checkTriggers:(BOOL)checkTriggers
+               resetOverflow:(BOOL)resetOverflow
+                mutableState:(VT100ScreenMutableState *)mutableState {
+    [mutableState willSynchronize];
     if (checkTriggers) {
-        [_mutableState forceCheckTriggers];
+        [mutableState forceCheckTriggers];
     }
     if (sourceConfig.isDirty) {
-        self.config = sourceConfig;
+        mutableState.config = sourceConfig;
     }
     if (maybeExpect) {
-        [_mutableState updateExpectFrom:maybeExpect];
+        [mutableState updateExpectFrom:maybeExpect];
     }
-    _mutableState.mainThreadCopy = [_mutableState copy];
-#warning TODO: _state = [_mutableState copy]
+    const int overflow = [mutableState scrollbackOverflow];
+#warning TODO: avoid making the copy if nothing has changed. This is important because joined threads perform two syncs and the copy is slow.
+    mutableState.mainThreadCopy = [mutableState copy];
+#warning TODO: _state = mutableState.mainThreadCopy;
+    if (resetOverflow) {
+        [mutableState resetScrollbackOverflow];
+    }
+    return overflow;
 }
 
 - (void)performPeriodicTriggerCheck {
@@ -1349,17 +1357,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.commandRange;
 }
 
-- (void)setConfig:(id<VT100ScreenConfiguration>)config {
-    [_nextConfig autorelease];
-    _nextConfig = [config copyWithZone:nil];
-#warning TODO: Fix this up when moving to a mutation thread.
-    // In the future, VT100Screen+Mutation will run on a different thread and updating the config
-    // will need to be synchronized properly.
-    [self mutUpdateConfig];
-}
-
 - (id<VT100ScreenConfiguration>)config {
-    return _nextConfig;
+    return _state.config;
 }
 
 - (VT100GridAbsCoord)startOfRunningCommandOutput {

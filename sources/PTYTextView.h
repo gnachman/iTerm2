@@ -60,7 +60,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 
 @property (nonatomic, readonly) NSEdgeInsets textViewEdgeInsets;
 
-- (void)textViewWillRefresh;
+// Returns scrollback overflow.
+- (int)textViewWillRefresh;
 - (BOOL)xtermMouseReporting;
 - (BOOL)xtermMouseReportingAllowMouseWheel;
 - (BOOL)xtermMouseReportingAllowClicksAndDrags;
