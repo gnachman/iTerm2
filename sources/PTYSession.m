@@ -13127,7 +13127,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sessionViewDimmingAmountDidChange:(CGFloat)newDimmingAmount {
-    _screen.dimmingAmount = newDimmingAmount;
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.dimmingAmount = newDimmingAmount;
+    }];
 }
 
 - (BOOL)sessionViewIsVisible {

@@ -191,10 +191,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)setDimmingAmount:(double)value {
-    [self mutSetDimmingAmount:value];
-}
-
 #pragma mark - PTYTextViewDataSource
 
 - (BOOL)showingAlternateScreen {
