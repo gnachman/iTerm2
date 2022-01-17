@@ -318,6 +318,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // containing screen_char_t's. It contains a bizarre workaround for tmux bugs.
 - (void)setHistory:(NSArray<NSData *> *)history;
 
+// Sets the alt grid's contents. `lines` is NSData with screen_char_t's.
+- (void)setAltScreen:(NSArray<NSData *> *)lines;
+
 #pragma mark - Inline Images
 
 - (void)stopTerminalReceivingFile;

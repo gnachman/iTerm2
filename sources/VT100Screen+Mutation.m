@@ -62,38 +62,6 @@
 
 #pragma mark - Arrangements
 
-- (void)mutSetAltScreen:(NSArray *)lines {
-    self.mutableLineBuffer.mayHaveDoubleWidthCharacter = YES;
-    if (!_state.altGrid) {
-        _mutableState.altGrid = [[self.mutablePrimaryGrid copy] autorelease];
-    }
-
-    // Initialize alternate screen to be empty
-    [self.mutableAltGrid setCharsFrom:VT100GridCoordMake(0, 0)
-                                   to:VT100GridCoordMake(_state.altGrid.size.width - 1, _state.altGrid.size.height - 1)
-                               toChar:[_state.altGrid defaultChar]
-        externalAttributes:nil];
-    // Copy the lines back over it
-    int o = 0;
-    for (int i = 0; o < _state.altGrid.size.height && i < MIN(lines.count, _state.altGrid.size.height); i++) {
-        NSData *chars = [lines objectAtIndex:i];
-        screen_char_t *line = (screen_char_t *) [chars bytes];
-        int length = [chars length] / sizeof(screen_char_t);
-
-        do {
-            // Add up to _state.altGrid.size.width characters at a time until they're all used.
-            screen_char_t *dest = [self.mutableAltGrid screenCharsAtLineNumber:o];
-            memcpy(dest, line, MIN(_state.altGrid.size.width, length) * sizeof(screen_char_t));
-            const BOOL isPartial = (length > _state.altGrid.size.width);
-            dest[_state.altGrid.size.width] = dest[_state.altGrid.size.width - 1];  // TODO: This is probably wrong?
-            dest[_state.altGrid.size.width].code = (isPartial ? EOL_SOFT : EOL_HARD);
-            length -= _state.altGrid.size.width;
-            line += _state.altGrid.size.width;
-            o++;
-        } while (o < _state.altGrid.size.height && length > 0);
-    }
-}
-
 - (int)mutNumberOfLinesDroppedWhenEncodingContentsIncludingGrid:(BOOL)includeGrid
                                                         encoder:(id<iTermEncoderAdapter>)encoder
                                                  intervalOffset:(long long *)intervalOffsetPtr {

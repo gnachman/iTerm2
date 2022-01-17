@@ -1197,7 +1197,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_ALT_HISTORY];
         if (history) {
-            [[aSession screen] setAltScreen:history];
+            [mutableState setAltScreen:history];
         }
     }];
     [aSession.nameController restoreNameFromStateDictionary:arrangement[SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE]];
@@ -7428,7 +7428,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [terminal resetForTmuxUnpause];
     [self clearScrollbackBuffer];
     [mutableState setHistory:history];
-    [_screen setAltScreen:altHistory];
+    [mutableState setAltScreen:altHistory];
     [self setTmuxState:state];
     _view.scrollview.ptyVerticalScroller.userScroll = NO;
 }

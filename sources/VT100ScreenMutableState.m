@@ -3280,6 +3280,38 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     line.length = len;
 }
 
+- (void)setAltScreen:(NSArray<NSData *> *)lines {
+    self.linebuffer.mayHaveDoubleWidthCharacter = YES;
+    if (!self.altGrid) {
+        self.altGrid = [self.primaryGrid copy];
+    }
+
+    // Initialize alternate screen to be empty
+    [self.altGrid setCharsFrom:VT100GridCoordMake(0, 0)
+                                   to:VT100GridCoordMake(self.altGrid.size.width - 1, self.altGrid.size.height - 1)
+                               toChar:[self.altGrid defaultChar]
+        externalAttributes:nil];
+    // Copy the lines back over it
+    int o = 0;
+    for (int i = 0; o < self.altGrid.size.height && i < MIN(lines.count, self.altGrid.size.height); i++) {
+        NSData *chars = [lines objectAtIndex:i];
+        screen_char_t *line = (screen_char_t *) [chars bytes];
+        int length = [chars length] / sizeof(screen_char_t);
+
+        do {
+            // Add up to self.altGrid.size.width characters at a time until they're all used.
+            screen_char_t *dest = [self.altGrid screenCharsAtLineNumber:o];
+            memcpy(dest, line, MIN(self.altGrid.size.width, length) * sizeof(screen_char_t));
+            const BOOL isPartial = (length > self.altGrid.size.width);
+            dest[self.altGrid.size.width] = dest[self.altGrid.size.width - 1];  // TODO: This is probably wrong?
+            dest[self.altGrid.size.width].code = (isPartial ? EOL_SOFT : EOL_HARD);
+            length -= self.altGrid.size.width;
+            line += self.altGrid.size.width;
+            o++;
+        } while (o < self.altGrid.size.height && length > 0);
+    }
+}
+
 
 #pragma mark - Tmux
 

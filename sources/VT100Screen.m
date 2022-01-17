@@ -1261,10 +1261,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)setAltScreen:(NSArray *)lines {
-    [self mutSetAltScreen:lines];
-}
-
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
                    reattached:(BOOL)reattached {
