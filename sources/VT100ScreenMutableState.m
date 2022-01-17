@@ -3189,6 +3189,97 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [helper writeToGrid:self.currentGrid];
 }
 
+- (void)setHistory:(NSArray<NSData *> *)history {
+    // This is way more complicated than it should be to work around something dumb in tmux.
+    // It pads lines in its history with trailing spaces, which we'd like to trim. More importantly,
+    // we need to trim empty lines at the end of the history because that breaks how we move the
+    // screen contents around on resize. So we take the history from tmux, append it to a temporary
+    // line buffer, grab each wrapped line and trim spaces from it, and then append those modified
+    // line (excluding empty ones at the end) to the real line buffer.
+    [self clearBufferSavingPrompt:YES];
+    LineBuffer *temp = [[LineBuffer alloc] init];
+    temp.mayHaveDoubleWidthCharacter = YES;
+    self.linebuffer.mayHaveDoubleWidthCharacter = YES;
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    // TODO(externalAttributes): Add support for external attributes here. This is only used by tmux at the moment.
+    iTermMetadata metadata;
+    iTermMetadataInit(&metadata, now, nil);
+    for (NSData *chars in history) {
+        screen_char_t *line = (screen_char_t *) [chars bytes];
+        const int len = [chars length] / sizeof(screen_char_t);
+        screen_char_t continuation;
+        if (len) {
+            continuation = line[len - 1];
+            continuation.code = EOL_HARD;
+        } else {
+            memset(&continuation, 0, sizeof(continuation));
+        }
+        [temp appendLine:line
+                  length:len
+                 partial:NO
+                   width:self.currentGrid.size.width
+                metadata:iTermMetadataMakeImmutable(metadata)
+            continuation:continuation];
+    }
+    NSMutableArray *wrappedLines = [NSMutableArray array];
+    int n = [temp numLinesWithWidth:self.currentGrid.size.width];
+    int numberOfConsecutiveEmptyLines = 0;
+    for (int i = 0; i < n; i++) {
+        ScreenCharArray *line = [temp wrappedLineAtIndex:i
+                                                   width:self.currentGrid.size.width
+                                            continuation:NULL];
+        if (line.eol == EOL_HARD) {
+            [self stripTrailingSpaceFromLine:line];
+            if (line.length == 0) {
+                ++numberOfConsecutiveEmptyLines;
+            } else {
+                numberOfConsecutiveEmptyLines = 0;
+            }
+        } else {
+            numberOfConsecutiveEmptyLines = 0;
+        }
+        [wrappedLines addObject:line];
+    }
+    for (int i = 0; i < n - numberOfConsecutiveEmptyLines; i++) {
+        ScreenCharArray *line = [wrappedLines objectAtIndex:i];
+        screen_char_t continuation = { 0 };
+        if (line.length) {
+            continuation = line.line[line.length - 1];
+        }
+        [self.linebuffer appendLine:line.line
+                             length:line.length
+                            partial:(line.eol != EOL_HARD)
+                              width:self.currentGrid.size.width
+                           metadata:iTermMetadataMakeImmutable(metadata)
+                       continuation:continuation];
+    }
+    if (!self.unlimitedScrollback) {
+        [self.linebuffer dropExcessLinesWithWidth:self.currentGrid.size.width];
+    }
+
+    // We don't know the cursor position yet but give the linebuffer something
+    // so it doesn't get confused in restoreScreenFromScrollback.
+    [self.linebuffer setCursor:0];
+    [self.currentGrid restoreScreenFromLineBuffer:self.linebuffer
+                                  withDefaultChar:[self.currentGrid defaultChar]
+                                maxLinesToRestore:MIN([self.linebuffer numLinesWithWidth:self.currentGrid.size.width],
+                                                      self.currentGrid.size.height - numberOfConsecutiveEmptyLines)];
+}
+
+- (void)stripTrailingSpaceFromLine:(ScreenCharArray *)line {
+    const screen_char_t *p = line.line;
+    int len = line.length;
+    for (int i = len - 1; i >= 0; i--) {
+        // TODO: When I add support for URLs to tmux, don't pass 0 here - pass the URL code instead.
+        if (p[i].code == ' ' && ScreenCharHasDefaultAttributesAndColors(p[i], 0)) {
+            len--;
+        } else {
+            break;
+        }
+    }
+    line.length = len;
+}
+
 
 #pragma mark - Tmux
 
