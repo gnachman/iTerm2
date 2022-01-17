@@ -1383,7 +1383,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)setIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver {
-    [self mutSetIntervalTreeObserver:intervalTreeObserver];
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.intervalTreeObserver = intervalTreeObserver;
+    }];
 }
 
 - (iTermUnicodeNormalization)normalization {
