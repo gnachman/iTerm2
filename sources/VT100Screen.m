@@ -1145,11 +1145,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [_mutableState threadedReadTask:buffer length:length];
 }
 
-// Warning: this is called on PTYTask's thread.
-- (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority {
-    [self mutAddTokens:vector length:length highPriority:highPriority];
-}
-
 - (void)scheduleTokenExecution {
     [self mutScheduleTokenExecution];
 }
