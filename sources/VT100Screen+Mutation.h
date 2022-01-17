@@ -60,7 +60,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)mutInjectData:(NSData *)data;
 - (void)mutPerformPeriodicTriggerCheck;
 - (void)mutForceCheckTriggers;
-- (void)mutSetExited:(BOOL)exited;
 
 @end
 
