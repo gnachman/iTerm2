@@ -44,7 +44,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)mutSetShellIntegrationInstalled:(BOOL)shellIntegrationInstalled;
 - (void)mutSetNormalization:(iTermUnicodeNormalization)value;
 - (void)mutSetIntervalTreeObserver:(id<iTermIntervalTreeObserver>)intervalTreeObserver;
-- (void)mutSetDelegate:(id<VT100ScreenDelegate>)delegate;
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutUpdateConfig;
 - (void)mutLinkTextInRange:(NSRange)range
