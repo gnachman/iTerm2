@@ -214,7 +214,7 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, readwrite) BOOL wraparoundMode;
 @property (nonatomic, readwrite) BOOL ansi;
 @property (nonatomic, readwrite) BOOL insert;
-@property (nonatomic, readwrite) BOOL unlimitedScrollback;
+
 // How many scrollback lines have been lost due to overflow. Periodically reset with
 // -resetScrollbackOverflow.
 @property (nonatomic, readwrite) int scrollbackOverflow;

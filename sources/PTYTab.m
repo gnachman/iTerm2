@@ -1503,7 +1503,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
         [syntheticSession divorceAddressBookEntryFromPreferences];
         [syntheticSession setSessionSpecificProfileValues:@{ KEY_UNLIMITED_SCROLLBACK: @YES }];
-        syntheticSession.screen.unlimitedScrollback = YES;
         [syntheticSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
             mutableState.cursorVisible = NO;
         }];

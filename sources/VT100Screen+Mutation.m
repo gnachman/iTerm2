@@ -58,10 +58,6 @@
 
 #pragma mark - Accessors
 
-- (void)mutSetUnlimitedScrollback:(BOOL)newValue {
-    _mutableState.unlimitedScrollback = newValue;
-}
-
 // Gets a line on the screen (0 = top of screen)
 - (screen_char_t *)mutGetLineAtScreenIndex:(int)theIndex {
     return [_mutableState.currentGrid screenCharsAtLineNumber:theIndex];

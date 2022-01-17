@@ -1417,10 +1417,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.unlimitedScrollback;
 }
 
-- (void)setUnlimitedScrollback:(BOOL)unlimitedScrollback {
-    [self mutSetUnlimitedScrollback:unlimitedScrollback];
-}
-
 - (BOOL)audibleBell {
     return _state.audibleBell;
 }

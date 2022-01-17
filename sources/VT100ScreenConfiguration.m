@@ -39,6 +39,7 @@
 @property (nonatomic, readwrite) iTermUnicodeNormalization normalization;
 @property (nonatomic, readwrite) BOOL appendToScrollbackWithStatusBar;
 @property (nonatomic, readwrite) BOOL saveToScrollbackInAlternateScreen;
+@property (nonatomic, readwrite) BOOL unlimitedScrollback;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -72,6 +73,7 @@
 @synthesize normalization = _normalization;
 @synthesize appendToScrollbackWithStatusBar = _appendToScrollbackWithStatusBar;
 @synthesize saveToScrollbackInAlternateScreen = _saveToScrollbackInAlternateScreen;
+@synthesize unlimitedScrollback = _unlimitedScrollback;
 
 @synthesize isDirty = _isDirty;
 
@@ -107,6 +109,7 @@
         _normalization = other.normalization;
         _appendToScrollbackWithStatusBar = other.appendToScrollbackWithStatusBar;
         _saveToScrollbackInAlternateScreen = other.saveToScrollbackInAlternateScreen;
+        _unlimitedScrollback = other.unlimitedScrollback;
 
         _isDirty = other.isDirty;
     }
@@ -151,6 +154,7 @@
                             @"normalization": @(_normalization),
                             @"appendToScrollbackWithStatusBar": @(_appendToScrollbackWithStatusBar),
                             @"saveToScrollbackInAlternateScreen": @(_saveToScrollbackInAlternateScreen),
+                            @"unlimitedScrollback": @(_unlimitedScrollback),
 
                             @"isDirty": @(_isDirty),
     };
@@ -194,6 +198,7 @@
 @dynamic normalization;
 @dynamic appendToScrollbackWithStatusBar;
 @dynamic saveToScrollbackInAlternateScreen;
+@dynamic unlimitedScrollback;
 
 @dynamic isDirty;
 

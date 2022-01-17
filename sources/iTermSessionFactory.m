@@ -321,7 +321,6 @@ NS_ASSUME_NONNULL_BEGIN
     // Initialize a new session
     aSession = [[PTYSession alloc] initSynthetic:NO];
 
-    [[aSession screen] setUnlimitedScrollback:[profile[KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession screen] setMaxScrollbackLines:[profile[KEY_SCROLLBACK_LINES] intValue]];
 
     // set our preferences
