@@ -62,10 +62,6 @@
 
 #pragma mark - Accessors
 
-- (void)mutSetSaveToScrollbackInAlternateScreen:(BOOL)value {
-    _mutableState.saveToScrollbackInAlternateScreen = value;
-}
-
 - (void)mutInvalidateCommandStartCoord {
     [self mutSetCommandStartCoord:VT100GridAbsCoordMake(-1, -1)];
 }

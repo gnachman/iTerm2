@@ -38,6 +38,7 @@
 @property (nonatomic, readwrite) double mutingAmount;
 @property (nonatomic, readwrite) iTermUnicodeNormalization normalization;
 @property (nonatomic, readwrite) BOOL appendToScrollbackWithStatusBar;
+@property (nonatomic, readwrite) BOOL saveToScrollbackInAlternateScreen;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -70,6 +71,7 @@
 @synthesize mutingAmount = _mutingAmount;
 @synthesize normalization = _normalization;
 @synthesize appendToScrollbackWithStatusBar = _appendToScrollbackWithStatusBar;
+@synthesize saveToScrollbackInAlternateScreen = _saveToScrollbackInAlternateScreen;
 
 @synthesize isDirty = _isDirty;
 
@@ -104,6 +106,7 @@
         _mutingAmount = other.mutingAmount;
         _normalization = other.normalization;
         _appendToScrollbackWithStatusBar = other.appendToScrollbackWithStatusBar;
+        _saveToScrollbackInAlternateScreen = other.saveToScrollbackInAlternateScreen;
 
         _isDirty = other.isDirty;
     }
@@ -143,6 +146,7 @@
                             @"mutingAmount": @(_mutingAmount),
                             @"normalization": @(_normalization),
                             @"appendToScrollbackWithStatusBar": @(_appendToScrollbackWithStatusBar),
+                            @"saveToScrollbackInAlternateScreen": @(_saveToScrollbackInAlternateScreen),
 
                             @"isDirty": @(_isDirty),
     };
@@ -185,6 +189,7 @@
 @dynamic mutingAmount;
 @dynamic normalization;
 @dynamic appendToScrollbackWithStatusBar;
+@dynamic saveToScrollbackInAlternateScreen;
 
 @dynamic isDirty;
 

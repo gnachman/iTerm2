@@ -1418,10 +1418,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return _state.saveToScrollbackInAlternateScreen;
 }
 
-- (void)setSaveToScrollbackInAlternateScreen:(BOOL)saveToScrollbackInAlternateScreen {
-    [self mutSetSaveToScrollbackInAlternateScreen:saveToScrollbackInAlternateScreen];
-}
-
 - (unsigned int)maxScrollbackLines {
     return _state.maxScrollbackLines;
 }
