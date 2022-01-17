@@ -1190,14 +1190,16 @@ ITERM_WEAKLY_REFERENCEABLE
         [aSession setSessionSpecificProfileValues:@{ KEY_SESSION_HOTKEY: shortcutDictionary }];
     }
 
-    NSArray *history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
-    if (history) {
-        [[aSession screen] setHistory:history];
-    }
-    history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_ALT_HISTORY];
-    if (history) {
-        [[aSession screen] setAltScreen:history];
-    }
+    [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        NSArray *history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
+        if (history) {
+            [mutableState setHistory:history];
+        }
+        history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_ALT_HISTORY];
+        if (history) {
+            [[aSession screen] setAltScreen:history];
+        }
+    }];
     [aSession.nameController restoreNameFromStateDictionary:arrangement[SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE]];
     if (arrangement[SESSION_ARRANGEMENT_VARIABLES]) {
         NSDictionary *variables = arrangement[SESSION_ARRANGEMENT_VARIABLES];
@@ -7413,17 +7415,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [weakSelf reallySetTmuxHistory:history
                             altHistory:altHistory
                                  state:state
-                              terminal:terminal];
+                              terminal:terminal
+                          mutableState:mutableState];
     }];
 }
 
 - (void)reallySetTmuxHistory:(NSArray<NSData *> *)history
                   altHistory:(NSArray<NSData *> *)altHistory
                        state:(NSDictionary *)state
-                    terminal:(VT100Terminal *)terminal {
+                    terminal:(VT100Terminal *)terminal
+                mutableState:(VT100ScreenMutableState *)mutableState {
     [terminal resetForTmuxUnpause];
     [self clearScrollbackBuffer];
-    [_screen setHistory:history];
+    [mutableState setHistory:history];
     [_screen setAltScreen:altHistory];
     [self setTmuxState:state];
     _view.scrollview.ptyVerticalScroller.userScroll = NO;

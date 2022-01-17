@@ -314,6 +314,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                    reattached:(BOOL)reattache
                      delegate:(id<VT100ScreenDelegate>)delegate;
 
+// Sets the primary grid's contents and scrollback history. `history` is an array of NSData
+// containing screen_char_t's. It contains a bizarre workaround for tmux bugs.
+- (void)setHistory:(NSArray<NSData *> *)history;
+
 #pragma mark - Inline Images
 
 - (void)stopTerminalReceivingFile;

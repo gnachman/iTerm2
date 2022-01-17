@@ -125,10 +125,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Move the cursor down one position, scrolling if needed. Scroll regions are respected.
 - (void)linefeed;
 
-// Sets the primary grid's contents and scrollback history. |history| is an array of NSData
-// containing screen_char_t's. It contains a bizarre workaround for tmux bugs.
-- (void)setHistory:(NSArray *)history;
-
 // Sets the alt grid's contents. |lines| is NSData with screen_char_t's.
 - (void)setAltScreen:(NSArray *)lines;
 

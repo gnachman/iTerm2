@@ -1261,10 +1261,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)setHistory:(NSArray *)history {
-    [self mutSetHistory:history];
-}
-
 - (void)setAltScreen:(NSArray *)lines {
     [self mutSetAltScreen:lines];
 }
