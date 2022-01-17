@@ -237,6 +237,10 @@
     return self.config.appendToScrollbackWithStatusBar;
 }
 
+- (BOOL)saveToScrollbackInAlternateScreen {
+    return self.config.saveToScrollbackInAlternateScreen;
+}
+
 #pragma mark - Terminal State Accessors
 
 - (BOOL)terminalSoftAlternateScreenMode {

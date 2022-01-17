@@ -4016,8 +4016,6 @@ ITERM_WEAKLY_REFERENCEABLE
      nonAsciiFont:[ITAddressBookMgr fontWithDesc:aDict[KEY_NON_ASCII_FONT]]
 horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING inProfile:aDict]
   verticalSpacing:[iTermProfilePreferences floatForKey:KEY_VERTICAL_SPACING inProfile:aDict]];
-    [_screen setSaveToScrollbackInAlternateScreen:[iTermProfilePreferences boolForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN
-                                                                            inProfile:aDict]];
 
     NSDictionary *shortcutDictionary = [iTermProfilePreferences objectForKey:KEY_SESSION_HOTKEY inProfile:aDict];
     iTermShortcut *shortcut = [iTermShortcut shortcutWithDictionary:shortcutDictionary];
@@ -12051,6 +12049,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                              inProfile:self.profile];
         _config.appendToScrollbackWithStatusBar = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_WITH_STATUS_BAR
                                                                             inProfile:self.profile];
+        _config.saveToScrollbackInAlternateScreen = [iTermProfilePreferences boolForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN
+                                                                              inProfile:self.profile];
         _config.profileName = [self profileName];
         dirty = YES;
         _profileDidChange = NO;
