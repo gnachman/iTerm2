@@ -62,14 +62,6 @@
 
 #pragma mark - Accessors
 
-- (void)mutInvalidateCommandStartCoord {
-    [self mutSetCommandStartCoord:VT100GridAbsCoordMake(-1, -1)];
-}
-
-- (void)mutSetCommandStartCoord:(VT100GridAbsCoord)coord {
-    [_mutableState setCoordinateOfCommandStart:coord];
-}
-
 - (void)mutResetScrollbackOverflow {
     [_mutableState resetScrollbackOverflow];
 }
