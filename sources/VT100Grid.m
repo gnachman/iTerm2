@@ -1432,7 +1432,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }
 }
 
-- (void)setContentsFromDVRFrame:(screen_char_t *)s
+- (void)setContentsFromDVRFrame:(const screen_char_t *)s
                   metadataArray:(iTermMetadata *)sourceMetadataArray
                            info:(DVRFrameInfo)info {
     [self setCharsFrom:VT100GridCoordMake(0, 0)
@@ -1456,7 +1456,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }
     for (int y = 0; y < MIN(info.height, size_.height); y++) {
         screen_char_t *dest = [self screenCharsAtLineNumber:y];
-        screen_char_t *src = s + ((y + sourceLineOffset) * (info.width + 1));
+        const screen_char_t *src = s + ((y + sourceLineOffset) * (info.width + 1));
         memmove(dest, src, sizeof(screen_char_t) * charsToCopyPerLine);
         if (size_.width != info.width) {
             // Not copying continuation marks, set them all to hard.

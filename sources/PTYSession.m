@@ -10320,48 +10320,50 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)setDvrFrame {
-    screen_char_t* s = (screen_char_t*)[_dvrDecoder decodedFrame];
-    const int len = [_dvrDecoder screenCharArrayLength];
-    DVRFrameInfo info = [_dvrDecoder info];
-    if (info.width != [_screen width] || info.height != [_screen height]) {
-        if (![_liveSession isTmuxClient]) {
-            [[_delegate realParentWindow] sessionInitiatedResize:self
-                                                           width:info.width
-                                                          height:info.height];
-        }
-    }
-    NSMutableData *data = [NSMutableData dataWithBytes:s length:len];
-    NSMutableArray<NSArray *> *metadataArrays = [NSMutableArray mapIntegersFrom:0 to:info.height block:^id(NSInteger i) {
-        NSData *data = [_dvrDecoder metadataForLine:i];
-        return iTermMetadataArrayFromData(data) ?: @[];
-    }];
-
-    if (_dvrDecoder.needsMigration) {
-        const int lineCount = (info.width + 1);
-        NSMutableData *replacement = [NSMutableData data];
-        for (int y = 0; y < info.height; y++) {
-            NSData *legacyData = [NSData dataWithBytes:s + lineCount * y
-                                                length:lineCount * sizeof(legacy_screen_char_t)];
-            iTermMetadata temp = { 0 };
-            iTermMetadataInitFromArray(&temp, metadataArrays[y]);
-            iTermMetadataAutorelease(temp);
-            iTermExternalAttributeIndex *originalIndex = iTermMetadataGetExternalAttributesIndex(temp);
-            iTermExternalAttributeIndex *eaIndex = originalIndex;
-            NSData *modernData = [legacyData modernizedScreenCharArray:&eaIndex];
-            if (!originalIndex && eaIndex) {
-                iTermMetadataSetExternalAttributes(&temp, eaIndex);
-                metadataArrays[y] = iTermMetadataEncodeToArray(temp);
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        const screen_char_t *s = (const screen_char_t *)[_dvrDecoder decodedFrame];
+        const int len = [_dvrDecoder screenCharArrayLength];
+        DVRFrameInfo info = [_dvrDecoder info];
+        if (info.width != mutableState.width || info.height != mutableState.height) {
+            if (![_liveSession isTmuxClient]) {
+                [[_delegate realParentWindow] sessionInitiatedResize:self
+                                                               width:info.width
+                                                              height:info.height];
             }
-            [replacement appendData:modernData];
         }
-        data = replacement;
-    }
-    [_screen setFromFrame:(screen_char_t *)data.bytes
-                      len:data.length
-                 metadata:metadataArrays
-                     info:info];
-    [[_delegate realParentWindow] clearTransientTitle];
-    [[_delegate realParentWindow] setWindowTitle];
+        NSMutableData *data = [NSMutableData dataWithBytes:s length:len];
+        NSMutableArray<NSArray *> *metadataArrays = [NSMutableArray mapIntegersFrom:0 to:info.height block:^id(NSInteger i) {
+            NSData *data = [_dvrDecoder metadataForLine:i];
+            return iTermMetadataArrayFromData(data) ?: @[];
+        }];
+
+        if (_dvrDecoder.needsMigration) {
+            const int lineCount = (info.width + 1);
+            NSMutableData *replacement = [NSMutableData data];
+            for (int y = 0; y < info.height; y++) {
+                NSData *legacyData = [NSData dataWithBytes:s + lineCount * y
+                                                    length:lineCount * sizeof(legacy_screen_char_t)];
+                iTermMetadata temp = { 0 };
+                iTermMetadataInitFromArray(&temp, metadataArrays[y]);
+                iTermMetadataAutorelease(temp);
+                iTermExternalAttributeIndex *originalIndex = iTermMetadataGetExternalAttributesIndex(temp);
+                iTermExternalAttributeIndex *eaIndex = originalIndex;
+                NSData *modernData = [legacyData modernizedScreenCharArray:&eaIndex];
+                if (!originalIndex && eaIndex) {
+                    iTermMetadataSetExternalAttributes(&temp, eaIndex);
+                    metadataArrays[y] = iTermMetadataEncodeToArray(temp);
+                }
+                [replacement appendData:modernData];
+            }
+            data = replacement;
+        }
+        [mutableState setFromFrame:(screen_char_t *)data.bytes
+                               len:data.length
+                          metadata:metadataArrays
+                              info:info];
+        [[_delegate realParentWindow] clearTransientTitle];
+        [[_delegate realParentWindow] setWindowTitle];
+    }];
 }
 
 - (void)continueTailFind {
