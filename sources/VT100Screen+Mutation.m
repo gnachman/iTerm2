@@ -56,13 +56,6 @@
     return (LineBuffer *)_mutableState.linebuffer;
 }
 
-#pragma mark - Accessors
-
-// Gets a line on the screen (0 = top of screen)
-- (screen_char_t *)mutGetLineAtScreenIndex:(int)theIndex {
-    return [_mutableState.currentGrid screenCharsAtLineNumber:theIndex];
-}
-
 #pragma mark - Dirty
 
 - (void)mutResetAllDirty {

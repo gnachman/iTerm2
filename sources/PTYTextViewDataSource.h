@@ -60,8 +60,6 @@
 - (int)cursorX;
 - (int)cursorY;
 
-- (screen_char_t *)getLineAtScreenIndex:(int)theIndex;
-
 // Provide a buffer as large as sizeof(screen_char_t*) * ([SCREEN width] + 1)
 - (const screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer;
 - (NSArray<ScreenCharArray *> *)linesInRange:(NSRange)range;
