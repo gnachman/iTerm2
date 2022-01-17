@@ -118,9 +118,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Preserves the prompt, but erases screen and scrollback buffer.
 - (void)clearBuffer;
 
-// Move the cursor down one position, scrolling if needed. Scroll regions are respected.
-- (void)linefeed;
-
 // Set the colors in the range relative to the start of the given line number.
 // See kHighlightXxxColor constants at the top of this file for dict keys, values are NSColor*s.
 - (void)highlightTextInRange:(NSRange)range

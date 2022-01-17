@@ -1274,10 +1274,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (void)linefeed {
-    [self mutLinefeed];
-}
-
 - (void)setFromFrame:(screen_char_t*)s
                  len:(int)len
             metadata:(NSArray<NSArray *> *)metadataArrays

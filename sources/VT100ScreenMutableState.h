@@ -65,6 +65,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark Cursor Movement
 
+// Move the cursor down one position, scrolling if needed. Scroll regions are respected.
 - (void)appendLineFeed;
 - (void)carriageReturn;
 
