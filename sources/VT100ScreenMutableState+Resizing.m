@@ -62,25 +62,6 @@
          delegate:delegate];
 }
 
-// For tests
-- (void)destructivelySetScreenWidth:(int)width height:(int)height {
-    self.primaryGrid.size = VT100GridSizeMake(width, height);
-    self.altGrid.size = VT100GridSizeMake(width, height);
-    self.primaryGrid.cursor = VT100GridCoordMake(0, 0);
-    self.altGrid.cursor = VT100GridCoordMake(0, 0);
-    [self.primaryGrid resetScrollRegions];
-    [self.altGrid resetScrollRegions];
-    [self.terminal resetSavedCursorPositions];
-
-    self.scrollbackOverflow = 0;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenRemoveSelection];
-    }];
-
-    [self.primaryGrid markAllCharsDirty:YES];
-    [self.altGrid markAllCharsDirty:YES];
-}
-
 #pragma mark - Private
 
 - (VT100GridSize)safeSizeForSize:(VT100GridSize)proposedSize {
