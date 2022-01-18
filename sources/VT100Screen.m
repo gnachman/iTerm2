@@ -1129,6 +1129,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #warning TODO: _state = mutableState.mainThreadCopy;
     if (resetOverflow) {
         [mutableState resetScrollbackOverflow];
+#warning TODO: Uncomment this after I make a copy
+        // [mutableState.currentGrid markAllCharsDirty:NO];
     }
     return overflow;
 }
@@ -1248,6 +1250,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutSetCharDirtyAtCursorX:x Y:y];
 }
 
+// I can remove this after making a copy of the state in sync.
 - (void)resetDirty {
     [self mutResetDirty];
 }

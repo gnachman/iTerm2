@@ -94,6 +94,7 @@
     }
 }
 
+// This can be deleted after I make a copy of the state in -sync
 - (void)mutResetDirty {
     [_mutableState.currentGrid markAllCharsDirty:NO];
 }
