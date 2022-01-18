@@ -23,8 +23,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
 - (void)mutResetAllDirty;
-- (void)mutSetLineDirtyAtY:(int)y;
-- (void)mutSetCharDirtyAtCursorX:(int)x Y:(int)y;
 - (void)mutResetDirty;
 - (void)mutHighlightRun:(VT100GridRun)run
     withForegroundColor:(NSColor *)fgColor

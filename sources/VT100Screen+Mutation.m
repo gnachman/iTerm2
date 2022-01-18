@@ -62,38 +62,6 @@
     _mutableState.currentGrid.allDirty = NO;
 }
 
-- (void)mutSetLineDirtyAtY:(int)y {
-    if (y >= 0) {
-        [_mutableState.currentGrid markCharsDirty:YES
-                                       inRectFrom:VT100GridCoordMake(0, y)
-                                               to:VT100GridCoordMake(_mutableState.width - 1, y)];
-    }
-}
-
-- (void)mutSetCharDirtyAtCursorX:(int)x Y:(int)y {
-    if (y < 0) {
-        DLog(@"Warning: cannot set character dirty at y=%d", y);
-        return;
-    }
-    int xToMark = x;
-    int yToMark = y;
-    if (xToMark == _state.currentGrid.size.width && yToMark < _state.currentGrid.size.height - 1) {
-        xToMark = 0;
-        yToMark++;
-    }
-    if (xToMark < _state.currentGrid.size.width && yToMark < _state.currentGrid.size.height) {
-        [_mutableState.currentGrid markCharDirty:YES
-                                              at:VT100GridCoordMake(xToMark, yToMark)
-                                 updateTimestamp:NO];
-        if (xToMark < _state.currentGrid.size.width - 1) {
-            // Just in case the cursor was over a double width character
-            [_mutableState.currentGrid markCharDirty:YES
-                                                  at:VT100GridCoordMake(xToMark + 1, yToMark)
-                                     updateTimestamp:NO];
-        }
-    }
-}
-
 // This can be deleted after I make a copy of the state in -sync
 - (void)mutResetDirty {
     [_mutableState.currentGrid markAllCharsDirty:NO];

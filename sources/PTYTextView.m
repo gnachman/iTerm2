@@ -2245,10 +2245,8 @@
 }
 
 - (void)markCursorDirty {
-    int currentCursorX = [_dataSource cursorX] - 1;
-    int currentCursorY = [_dataSource cursorY] - 1;
-    DLog(@"Mark cursor position %d, %d dirty.", currentCursorX, currentCursorY);
-    [_dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
+    DLog(@"Cursor marked dirty. Schedule redraw.");
+    [self setNeedsDisplay:YES];
 }
 
 - (BOOL)shouldRedrawBlinkingObjects {
