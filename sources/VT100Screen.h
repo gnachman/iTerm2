@@ -232,7 +232,6 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 
 @interface VT100Screen (Testing)
 
-- (void)setMayHaveDoubleWidthCharacters:(BOOL)value;
 // Destructively sets the screen size.
 - (void)destructivelySetScreenWidth:(int)width height:(int)height;
 

@@ -67,10 +67,6 @@
 
 @implementation VT100Screen (Testing)
 
-- (void)setMayHaveDoubleWidthCharacters:(BOOL)value {
-    self.mutableLineBuffer.mayHaveDoubleWidthCharacter = value;
-}
-
 - (void)destructivelySetScreenWidth:(int)width height:(int)height {
     width = MAX(width, kVT100ScreenMinColumns);
     height = MAX(height, kVT100ScreenMinRows);
