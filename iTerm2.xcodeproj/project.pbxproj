@@ -6624,6 +6624,7 @@
 		A6EFF2461D21DD0700806EEF /* iTermSessionHotkeyController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSessionHotkeyController.m; sourceTree = "<group>"; };
 		A6F0E2542795407A00022D20 /* VT100Screen+Search.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100Screen+Search.h"; sourceTree = "<group>"; };
 		A6F0E2552795407A00022D20 /* VT100Screen+Search.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100Screen+Search.m"; sourceTree = "<group>"; };
+		A6F0E2582796AA7900022D20 /* VT100SyncResult.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VT100SyncResult.h; sourceTree = "<group>"; };
 		A6F1B3AA268FCAC000546767 /* iTermStatusBarTriggersComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermStatusBarTriggersComponent.swift; sourceTree = "<group>"; };
 		A6F1B3AC268FD0F300546767 /* StatusBarIconTriggers@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusBarIconTriggers@2x.png"; path = "images/StatusBarIcons/StatusBarIconTriggers@2x.png"; sourceTree = "<group>"; };
 		A6F1B3AD268FD0F300546767 /* StatusBarIconTriggers.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarIconTriggers.png; path = images/StatusBarIcons/StatusBarIconTriggers.png; sourceTree = "<group>"; };
@@ -8951,6 +8952,7 @@
 				A6DBC2FB2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m */,
 				A6F0E2542795407A00022D20 /* VT100Screen+Search.h */,
 				A6F0E2552795407A00022D20 /* VT100Screen+Search.m */,
+				A6F0E2582796AA7900022D20 /* VT100SyncResult.h */,
 			);
 			name = Core;
 			sourceTree = "<group>";

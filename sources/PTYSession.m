@@ -7665,7 +7665,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 #warning TODO: Synchornize properly.
-- (int)textViewWillRefresh {
+- (VT100SyncResult)textViewWillRefresh {
     return [self syncCheckingTriggers:NO resetOverflow:YES];
 }
 
@@ -7684,29 +7684,29 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self syncCheckingTriggers:checkTriggers resetOverflow:NO];
 }
 
-- (int)syncCheckingTriggers:(BOOL)checkTriggers
-              resetOverflow:(BOOL)resetOverflow {
-    __block int result = 0;
+- (VT100SyncResult)syncCheckingTriggers:(BOOL)checkTriggers
+                          resetOverflow:(BOOL)resetOverflow {
+    __block VT100SyncResult result = { 0 };
     [_screen performLightweightBlockWithJoinedThreads:^(VT100ScreenMutableState *mutableState) {
         result = [self syncCheckingTriggers:NO resetOverflow:resetOverflow mutableState:mutableState];
     }];
     return result;
 }
 
-- (int)syncCheckingTriggers:(BOOL)checkTriggers
-              resetOverflow:(BOOL)resetOverflow
-               mutableState:(VT100ScreenMutableState *)mutableState {
+- (VT100SyncResult)syncCheckingTriggers:(BOOL)checkTriggers
+                          resetOverflow:(BOOL)resetOverflow
+                           mutableState:(VT100ScreenMutableState *)mutableState {
     [self updateConfigurationFields];
     const BOOL expectWasDirty = _expect.dirty;
     [_expect resetDirty];
-    const int overflow = [_screen synchronizeWithConfig:_config
-                                                 expect:expectWasDirty ? _expect : nil
-                                          checkTriggers:checkTriggers
-                                          resetOverflow:resetOverflow
-                                           mutableState:mutableState];
+    const VT100SyncResult syncResult = [_screen synchronizeWithConfig:_config
+                                                               expect:expectWasDirty ? _expect : nil
+                                                        checkTriggers:checkTriggers
+                                                        resetOverflow:resetOverflow
+                                                         mutableState:mutableState];
     _textview.colorMap = _screen.colorMap;
     _config.isDirty = NO;
-    return overflow;
+    return syncResult;
 }
 
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {

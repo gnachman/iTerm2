@@ -10,6 +10,7 @@
 #import "SCPPath.h"
 #import "ScreenCharArray.h"
 #import "VT100ScreenDelegate.h"
+#import "VT100SyncResult.h"
 #import "VT100Terminal.h"
 #import "VT100Token.h"
 
@@ -202,11 +203,12 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)injectData:(NSData *)data;
 - (void)forceCheckTriggers;
 - (void)performPeriodicTriggerCheck;
-- (int)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
-                      expect:(iTermExpect *)maybeExpect
-               checkTriggers:(BOOL)checkTriggers
-               resetOverflow:(BOOL)resetOverflow
-                mutableState:(VT100ScreenMutableState *)mutableState;
+
+- (VT100SyncResult)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
+                                  expect:(iTermExpect *)maybeExpect
+                           checkTriggers:(BOOL)checkTriggers
+                           resetOverflow:(BOOL)resetOverflow
+                            mutableState:(VT100ScreenMutableState *)mutableState;
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block;

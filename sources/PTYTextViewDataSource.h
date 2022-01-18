@@ -107,8 +107,6 @@
 // NOTE: y is a grid index and cannot refer to scrollback history.
 - (VT100GridRange)dirtyRangeForLine:(int)y;
 
-- (BOOL)textViewGetAndResetHasScrolled;
-
 // Returns the last modified date for a given line.
 - (NSDate *)timestampForLine:(int)y;
 

@@ -21,6 +21,7 @@
 #import "PTYFontInfo.h"
 #import "ScreenChar.h"
 #import "VT100Output.h"
+#import "VT100SyncResult.h"
 #include <sys/time.h>
 
 @class CRunStorage;
@@ -61,7 +62,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 @property (nonatomic, readonly) NSEdgeInsets textViewEdgeInsets;
 
 // Returns scrollback overflow.
-- (int)textViewWillRefresh;
+- (VT100SyncResult)textViewWillRefresh;
 - (BOOL)xtermMouseReporting;
 - (BOOL)xtermMouseReportingAllowMouseWheel;
 - (BOOL)xtermMouseReportingAllowClicksAndDrags;

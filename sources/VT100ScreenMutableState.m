@@ -2816,6 +2816,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     DLog(@"Did synchronize. Set drewSavedGrid=YES");
     [self resetScrollbackOverflow];
     self.temporaryDoubleBuffer.drewSavedGrid = YES;
+    self.currentGrid.haveScrolled = NO;
 }
 
 - (void)updateExpectFrom:(iTermExpect *)source {

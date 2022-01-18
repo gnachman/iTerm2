@@ -1983,7 +1983,7 @@
 // is dealt with so that this function can dereference
 // [_dataSource dirty] correctly.
 #pragma mark TODO - Dirty bits no longer work in a concurrent environment. I think I need a dirty "generation" and to give up on drawing less than a whole screen at a time.
-- (BOOL)updateDirtyRects:(BOOL *)foundDirtyPtr {
+- (BOOL)updateDirtyRects:(BOOL *)foundDirtyPtr haveScrolled:(BOOL)haveScrolled {
     BOOL anythingIsBlinking = NO;
     BOOL foundDirty = NO;
     assert([_dataSource scrollbackOverflow] == 0);
@@ -2049,7 +2049,6 @@
         [_findOnPageHelper removeSearchResultsInRange:range];
         [self setNeedsDisplayInRect:[self gridRect]];
     } else {
-        const BOOL hasScrolled = [self.dataSource textViewGetAndResetHasScrolled];
         for (int y = lineStart; y < lineEnd; y++) {
             VT100GridRange range = [_dataSource dirtyRangeForLine:y - lineStart];
             if (y == cursorLines[0] || y == cursorLines[1]) {
@@ -2060,7 +2059,7 @@
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [_findOnPageHelper removeSearchResultsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
                 [self setNeedsDisplayOnLine:y inRange:range];
-            } else if (!hasScrolled) {
+            } else if (!haveScrolled) {
                 [cleanLines addIndex:y - lineStart];
             }
         }
@@ -2197,7 +2196,8 @@
         return YES;
     }
     // Get the number of lines that have disappeared if scrollback buffer is full.
-    const int scrollbackOverflow = [self.delegate textViewWillRefresh];
+    const VT100SyncResult syncResult = [self.delegate textViewWillRefresh];
+    const int scrollbackOverflow = syncResult.overflow;
     const BOOL frameDidChange = [_delegate textViewResizeFrameIfNeeded];
     // Perform adjustments if lines were lost from the head of the buffer.
     BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
@@ -2234,7 +2234,7 @@
     __block BOOL foundBlink = NO;
     [self.dataSource performBlockWithSavedGrid:^(id<PTYTextViewSynchronousUpdateStateReading>  _Nullable state) {
         BOOL foundDirty = NO;
-        foundBlink = [self updateDirtyRects:&foundDirty] || [self isCursorBlinking];
+        foundBlink = [self updateDirtyRects:&foundDirty haveScrolled:syncResult.haveScrolled] || [self isCursorBlinking];
         // Update accessibility.
         if (foundDirty) {
             [self refreshAccessibility];
