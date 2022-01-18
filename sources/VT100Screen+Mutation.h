@@ -23,8 +23,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
 - (void)mutResetDirty;
-- (void)mutPerformPeriodicTriggerCheck;
-- (void)mutForceCheckTriggers;
 
 @end
 
