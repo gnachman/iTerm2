@@ -63,14 +63,6 @@
     [_mutableState.currentGrid markAllCharsDirty:NO];
 }
 
-#pragma mark - Miscellaneous State
-
-- (BOOL)mutGetAndResetHasScrolled {
-    const BOOL result = _state.currentGrid.haveScrolled;
-    _mutableState.currentGrid.haveScrolled = NO;
-    return result;
-}
-
 #pragma mark - Synchronized Drawing
 
 - (iTermTemporaryDoubleBufferedGridController *)mutableTemporaryDoubleBuffer {

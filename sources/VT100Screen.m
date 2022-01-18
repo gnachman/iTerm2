@@ -419,10 +419,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state.currentGrid dirtyRangeForLine:y];
 }
 
-- (BOOL)textViewGetAndResetHasScrolled {
-    return [self mutGetAndResetHasScrolled];
-}
-
 - (NSDate *)timestampForLine:(int)y {
     int numLinesInLineBuffer = [_state.linebuffer numLinesWithWidth:_state.currentGrid.size.width];
     NSTimeInterval interval;
@@ -1056,11 +1052,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [self mutForceCheckTriggers];
 }
 
-- (int)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
-                       expect:(iTermExpect *)maybeExpect
-                checkTriggers:(BOOL)checkTriggers
-               resetOverflow:(BOOL)resetOverflow
-                mutableState:(VT100ScreenMutableState *)mutableState {
+- (VT100SyncResult)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
+                                  expect:(iTermExpect *)maybeExpect
+                           checkTriggers:(BOOL)checkTriggers
+                           resetOverflow:(BOOL)resetOverflow
+                            mutableState:(VT100ScreenMutableState *)mutableState {
     DLog(@"Begin");
     [mutableState willSynchronize];
     if (checkTriggers) {
@@ -1082,7 +1078,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         // [mutableState.currentGrid markAllCharsDirty:NO];
     }
     DLog(@"End");
-    return overflow;
+    return (VT100SyncResult) {
+        .overflow = overflow,
+        .haveScrolled = _state.currentGrid.haveScrolled
+    };
 }
 
 - (void)performPeriodicTriggerCheck {

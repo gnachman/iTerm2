@@ -23,7 +23,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
 - (void)mutResetDirty;
-- (BOOL)mutGetAndResetHasScrolled;
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutInjectData:(NSData *)data;
 - (void)mutPerformPeriodicTriggerCheck;
