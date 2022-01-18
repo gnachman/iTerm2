@@ -6,21 +6,10 @@
 //
 
 #import "VT100Screen.h"
-#import "VT100Terminal.h"
-
-#import "VT100ScreenMark.h"
-
-@class iTermTemporaryDoubleBufferedGridController;
-
-@protocol iTermOrderedToken;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface VT100Screen (Mutation)
-
-@property (nonatomic, readonly) VT100Grid *mutablePrimaryGrid;
-@property (nonatomic, readonly) VT100Grid *mutableAltGrid;
-@property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
 - (void)mutResetDirty;
 
