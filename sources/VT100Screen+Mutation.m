@@ -63,22 +63,6 @@
     [_mutableState.currentGrid markAllCharsDirty:NO];
 }
 
-#pragma mark - Synchronized Drawing
-
-- (iTermTemporaryDoubleBufferedGridController *)mutableTemporaryDoubleBuffer {
-    if ([delegate_ screenShouldReduceFlicker] || _mutableState.temporaryDoubleBuffer.explicit) {
-        return _mutableState.temporaryDoubleBuffer;
-    } else {
-        return nil;
-    }
-}
-
-#pragma mark - Injection
-
-- (void)mutInjectData:(NSData *)data {
-    [_mutableState injectData:data];
-}
-
 #pragma mark - Triggers
 
 - (void)mutForceCheckTriggers {

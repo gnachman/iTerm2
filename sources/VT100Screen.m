@@ -1089,7 +1089,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)injectData:(NSData *)data {
-    [self mutInjectData:data];
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState injectData:data];
+    }];
 }
 
 // Warning: this is called on PTYTask's thread.
