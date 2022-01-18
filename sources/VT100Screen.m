@@ -178,6 +178,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }];
 }
 
+- (void)destructivelySetScreenWidth:(int)width
+                             height:(int)height
+                       mutableState:(VT100ScreenMutableState *)mutableState {
+    self.findContext.substring = nil;
+    [mutableState destructivelySetScreenWidth:MAX(width, kVT100ScreenMinColumns)
+                                       height:MAX(height, kVT100ScreenMinRows)];
+}
+
 #pragma mark - PTYTextViewDataSource
 
 - (void)performBlockWithSavedGrid:(void (^)(id<PTYTextViewSynchronousUpdateStateReading> _Nullable))block {

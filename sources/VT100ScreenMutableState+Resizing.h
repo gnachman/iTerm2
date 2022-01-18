@@ -23,6 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setSize:(VT100GridSize)size delegate:(id<VT100ScreenDelegate>)delegate;
 
+- (void)destructivelySetScreenWidth:(int)width height:(int)height;
+
 @end
 
 NS_ASSUME_NONNULL_END

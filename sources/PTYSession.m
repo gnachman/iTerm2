@@ -1826,25 +1826,27 @@ ITERM_WEAKLY_REFERENCEABLE
             [unpauser unpause];
         });
         [_screen setTerminalEnabled:YES];
+        [_shell setDelegate:self];
+        [self.variablesScope setValue:_shell.tty forVariableNamed:iTermVariableKeySessionTTY];
+        [self.variablesScope setValue:@(_screen.terminalMouseMode) forVariableNamed:iTermVariableKeySessionMouseReportingMode];
+
+        // initialize the screen
+        // TODO: Shouldn't this take the scrollbar into account?
+        NSSize contentSize = [PTYScrollView contentSizeForFrameSize:aSize
+                                            horizontalScrollerClass:nil
+                                              verticalScrollerClass:parent.scrollbarShouldBeVisible ? [[_view.scrollview verticalScroller] class] : nil
+                                                         borderType:_view.scrollview.borderType
+                                                        controlSize:NSControlSizeRegular
+                                                      scrollerStyle:_view.scrollview.scrollerStyle];
+
+        int width = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins]*2) / [_textview charWidth];
+        int height = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]*2) / [_textview lineHeight];
+        [_screen destructivelySetScreenWidth:width
+                                      height:height
+                                mutableState:mutableState];
+        [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(width),
+                                                        iTermVariableKeySessionRows: @(height) }];
     }];
-    [_shell setDelegate:self];
-    [self.variablesScope setValue:_shell.tty forVariableNamed:iTermVariableKeySessionTTY];
-    [self.variablesScope setValue:@(_screen.terminalMouseMode) forVariableNamed:iTermVariableKeySessionMouseReportingMode];
-
-    // initialize the screen
-    // TODO: Shouldn't this take the scrollbar into account?
-    NSSize contentSize = [PTYScrollView contentSizeForFrameSize:aSize
-                                        horizontalScrollerClass:nil
-                                          verticalScrollerClass:parent.scrollbarShouldBeVisible ? [[_view.scrollview verticalScroller] class] : nil
-                                                     borderType:_view.scrollview.borderType
-                                                    controlSize:NSControlSizeRegular
-                                                  scrollerStyle:_view.scrollview.scrollerStyle];
-
-    int width = (contentSize.width - [iTermPreferences intForKey:kPreferenceKeySideMargins]*2) / [_textview charWidth];
-    int height = (contentSize.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]*2) / [_textview lineHeight];
-    [_screen destructivelySetScreenWidth:width height:height];
-    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(width),
-                                                    iTermVariableKeySessionRows: @(height) }];
 
     [_textview setDataSource:_screen];
     [_textview setDelegate:self];
