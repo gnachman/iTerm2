@@ -65,3 +65,31 @@
 
 @end
 
+@implementation VT100Screen (Testing)
+
+- (void)setMayHaveDoubleWidthCharacters:(BOOL)value {
+    self.mutableLineBuffer.mayHaveDoubleWidthCharacter = value;
+}
+
+- (void)destructivelySetScreenWidth:(int)width height:(int)height {
+    width = MAX(width, kVT100ScreenMinColumns);
+    height = MAX(height, kVT100ScreenMinRows);
+
+    self.mutablePrimaryGrid.size = VT100GridSizeMake(width, height);
+    self.mutableAltGrid.size = VT100GridSizeMake(width, height);
+    self.mutablePrimaryGrid.cursor = VT100GridCoordMake(0, 0);
+    self.mutableAltGrid.cursor = VT100GridCoordMake(0, 0);
+    [self.mutablePrimaryGrid resetScrollRegions];
+    [self.mutableAltGrid resetScrollRegions];
+    [_mutableState.terminal resetSavedCursorPositions];
+
+    self.findContext.substring = nil;
+
+    _mutableState.scrollbackOverflow = 0;
+    [delegate_ screenRemoveSelection];
+
+    [self.mutablePrimaryGrid markAllCharsDirty:YES];
+    [self.mutableAltGrid markAllCharsDirty:YES];
+}
+
+@end
