@@ -1993,18 +1993,19 @@
             [self setCursorNeedsDisplay];
         }
     }
-    int WIDTH = [_dataSource width];
+    const int width = [_dataSource width];
 
     // Any characters that changed selection status since the last update or
     // are blinking should be set dirty.
-    anythingIsBlinking = [self _markChangedSelectionAndBlinkDirty:redrawBlink width:WIDTH];
+    anythingIsBlinking = [self _markChangedSelectionAndBlinkDirty:redrawBlink width:width];
 
     // Copy selection position to detect change in selected chars next call.
     [_oldSelection release];
     _oldSelection = [_selection copy];
 
     // Redraw lines with dirty characters
-    int lineStart = [_dataSource numberOfLines] - [_dataSource height];
+    const int numberOfLines = _dataSource.numberOfLines;
+    int lineStart = numberOfLines - [_dataSource height];
     int lineEnd = [_dataSource numberOfLines];
     // lineStart to lineEnd is the region that is the screen when the scrollbar
     // is at the bottom of the frame.
@@ -2012,27 +2013,23 @@
     [_dataSource setUseSavedGridIfAvailable:YES];
     long long totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
     int allDirty = [_dataSource isAllDirty] ? 1 : 0;
-    [_dataSource resetAllDirty];
 
     VT100GridCoord cursorPosition = VT100GridCoordMake([_dataSource cursorX] - 1,
                                                        [_dataSource cursorY] - 1);
+    int cursorLines[2] = { -1, -1 };
     if (_previousCursorCoord.x != cursorPosition.x ||
         _previousCursorCoord.y - totalScrollbackOverflow != cursorPosition.y) {
-        // Mark previous and current cursor position dirty
-        DLog(@"Mark previous cursor position %d,%lld dirty",
-             _previousCursorCoord.x, _previousCursorCoord.y - totalScrollbackOverflow);
-        int maxX = [_dataSource width] - 1;
-        if (_drawingHelper.highlightCursorLine) {
-            [_dataSource setLineDirtyAtY:_previousCursorCoord.y - totalScrollbackOverflow];
-            DLog(@"Mark current cursor line %d dirty", cursorPosition.y);
-            [_dataSource setLineDirtyAtY:cursorPosition.y];
+        DLog(@"Redraw previous cursor line (%d) and current cursor line (%d)",
+             (int)(_previousCursorCoord.y - totalScrollbackOverflow),
+             cursorPosition.y);
+        const int previous = totalScrollbackOverflow - totalScrollbackOverflow;
+        if (previous >= 0 && previous < numberOfLines) {
+            cursorLines[0] = _previousCursorCoord.y - totalScrollbackOverflow;
         } else {
-            [_dataSource setCharDirtyAtCursorX:MIN(maxX, _previousCursorCoord.x)
-                                             Y:_previousCursorCoord.y - totalScrollbackOverflow];
-            DLog(@"Mark current cursor position %d,%lld dirty", _previousCursorCoord.x,
-                 _previousCursorCoord.y - totalScrollbackOverflow);
-            [_dataSource setCharDirtyAtCursorX:MIN(maxX, cursorPosition.x) Y:cursorPosition.y];
+            cursorLines[0] = cursorPosition.y;
         }
+        cursorLines[1] = cursorPosition.y;
+
         // Set _previousCursorCoord to new cursor position
         _previousCursorCoord = VT100GridAbsCoordMake(cursorPosition.x,
                                                      cursorPosition.y + totalScrollbackOverflow);
@@ -2051,6 +2048,9 @@
         const BOOL hasScrolled = [self.dataSource textViewGetAndResetHasScrolled];
         for (int y = lineStart; y < lineEnd; y++) {
             VT100GridRange range = [_dataSource dirtyRangeForLine:y - lineStart];
+            if (y == cursorLines[0] || y == cursorLines[1]) {
+                range = VT100GridRangeMake(0, width);
+            }
             if (range.length > 0) {
                 foundDirty = YES;
                 [_findOnPageHelper removeHighlightsInRange:NSMakeRange(y + totalScrollbackOverflow, 1)];
@@ -2077,6 +2077,7 @@
 
     // Unset the dirty bit for all chars.
     DebugLog(@"updateDirtyRects resetDirty");
+#warning TODO: Remove this after making a copy of the state in sync
     [_dataSource resetDirty];
 
     if (foundDirty) {
