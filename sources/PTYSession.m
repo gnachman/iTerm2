@@ -1440,8 +1440,6 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }
 
-    [[aSession screen] setMaxScrollbackLines:[[theBookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
-
     // set our preferences
     [aSession setProfile:theBookmark];
 
@@ -3966,8 +3964,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     [terminal setAllowKeypadMode:[iTermProfilePreferences boolForKey:KEY_APPLICATION_KEYPAD_ALLOWED
                                                            inProfile:aDict]];
-    [_screen setMaxScrollbackLines:[iTermProfilePreferences intForKey:KEY_SCROLLBACK_LINES
-                                                            inProfile:aDict]];
     if ([iTermProfilePreferences boolForKey:KEY_SHOW_STATUS_BAR inProfile:aDict]) {
         NSDictionary *layout = [iTermProfilePreferences objectForKey:KEY_STATUS_BAR_LAYOUT inProfile:aDict];
         NSDictionary *existing = _statusBarViewController.layout.dictionaryValue;
@@ -10936,10 +10932,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self treatAmbiguousWidthAsDoubleWidth];
 }
 
-- (void)screenDidChangeNumberOfScrollbackLines {
-    [_textview updateNoteViewFrames];
-}
-
 - (void)screenPrintVisibleAreaIfAllowed {
     if (![self shouldBeginPrinting:YES]) {
         return;
@@ -12072,7 +12064,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.unlimitedScrollback = [iTermProfilePreferences boolForKey:KEY_UNLIMITED_SCROLLBACK
                                                                 inProfile:_profile];
         _config.reduceFlicker = [iTermProfilePreferences boolForKey:KEY_REDUCE_FLICKER inProfile:self.profile];
-
+        _config.maxScrollbackLines = [iTermProfilePreferences intForKey:KEY_SCROLLBACK_LINES
+                                                              inProfile:self.profile];
         _config.profileName = [self profileName];
         dirty = YES;
         _profileDidChange = NO;

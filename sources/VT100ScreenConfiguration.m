@@ -41,6 +41,7 @@
 @property (nonatomic, readwrite) BOOL saveToScrollbackInAlternateScreen;
 @property (nonatomic, readwrite) BOOL unlimitedScrollback;
 @property (nonatomic, readwrite) BOOL reduceFlicker;
+@property (nonatomic, readwrite) int maxScrollbackLines;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -76,6 +77,7 @@
 @synthesize saveToScrollbackInAlternateScreen = _saveToScrollbackInAlternateScreen;
 @synthesize unlimitedScrollback = _unlimitedScrollback;
 @synthesize reduceFlicker = _reduceFlicker;
+@synthesize maxScrollbackLines = _maxScrollbackLines;
 
 @synthesize isDirty = _isDirty;
 
@@ -113,6 +115,7 @@
         _saveToScrollbackInAlternateScreen = other.saveToScrollbackInAlternateScreen;
         _unlimitedScrollback = other.unlimitedScrollback;
         _reduceFlicker = other.reduceFlicker;
+        _maxScrollbackLines = other.maxScrollbackLines;
 
         _isDirty = other.isDirty;
     }
@@ -159,6 +162,7 @@
                             @"saveToScrollbackInAlternateScreen": @(_saveToScrollbackInAlternateScreen),
                             @"unlimitedScrollback": @(_unlimitedScrollback),
                             @"reduceFlicker": @(_reduceFlicker),
+                            @"maxScrollbackLines": @(_maxScrollbackLines),
 
                             @"isDirty": @(_isDirty),
     };
@@ -204,6 +208,7 @@
 @dynamic saveToScrollbackInAlternateScreen;
 @dynamic unlimitedScrollback;
 @dynamic reduceFlicker;
+@dynamic maxScrollbackLines;
 
 @dynamic isDirty;
 

@@ -151,7 +151,6 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 - (instancetype)initWithState:(VT100ScreenMutableState *)source {
     self = [super init];
     if (self) {
-        _queue = dispatch_get_main_queue();
         _audibleBell = source.audibleBell;
         _showBellIndicator = source.showBellIndicator;
         _flashBell = source.flashBell;

@@ -3103,8 +3103,6 @@
                                         (1 + coordRange.end.y) * _lineHeight)];
         }
     }
-
-    [_dataSource removeInaccessibleNotes];
 }
 
 - (BOOL)anyAnnotationsAreVisible {

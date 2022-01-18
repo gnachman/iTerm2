@@ -170,9 +170,6 @@
 // Returns if ambiguous characters are treated as fullwidth.
 - (BOOL)screenShouldTreatAmbiguousCharsAsDoubleWidth;
 
-// Number of scrollback lines changed.
-- (void)screenDidChangeNumberOfScrollbackLines;
-
 - (void)screenActivateBellAudibly:(BOOL)audibleBell
                           visibly:(BOOL)flashBell
                     showIndicator:(BOOL)showBellIndicator

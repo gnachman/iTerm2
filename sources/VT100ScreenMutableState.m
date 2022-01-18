@@ -241,6 +241,14 @@
     self.colorMap.useSeparateColorsForLightAndDarkMode = config.useSeparateColorsForLightAndDarkMode;
     self.colorMap.minimumContrast = config.minimumContrast;
     self.colorMap.mutingAmount = config.mutingAmount;
+    if (config.maxScrollbackLines != self.maxScrollbackLines) {
+        self.maxScrollbackLines = config.maxScrollbackLines;
+        [self.linebuffer setMaxLines:config.maxScrollbackLines];
+        if (!self.unlimitedScrollback) {
+            [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:self.currentGrid.size.width]];
+        }
+        [self removeInaccessibleIntervalTreeObjects];
+    }
 }
 
 - (void)setExited:(BOOL)exited {
@@ -1901,6 +1909,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)removeObjectFromIntervalTree:(id<IntervalTreeObject>)obj {
+    DLog(@"Remove %@", obj);
     long long totalScrollbackOverflow = self.cumulativeScrollbackOverflow;
     if ([obj isKindOfClass:[VT100ScreenMark class]]) {
         long long theKey = (totalScrollbackOverflow +
@@ -1973,6 +1982,21 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                      mark:mark];
         [unpauser unpause];
     }];
+}
+
+- (void)removeInaccessibleIntervalTreeObjects {
+    long long lastDeadLocation = self.cumulativeScrollbackOverflow * (self.width + 1);
+    if (lastDeadLocation <= 0) {
+        return;
+    }
+    DLog(@"Begin");
+    Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
+    for (id<IntervalTreeObject> obj in [self.intervalTree objectsInInterval:deadInterval]) {
+        if ([obj.entry.interval limit] <= lastDeadLocation) {
+            [self removeObjectFromIntervalTree:obj];
+        }
+    }
+    DLog(@"End");
 }
 
 #pragma mark - Shell Integration
@@ -2785,6 +2809,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (self.currentGrid.isAnyCharDirty) {
         [_triggerEvaluator invalidateIdempotentTriggers];
     }
+    [self removeInaccessibleIntervalTreeObjects];
 }
 
 - (void)didSynchronize {
