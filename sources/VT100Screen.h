@@ -210,7 +210,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 
 - (VT100SyncResult)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
                                   expect:(iTermExpect *)maybeExpect
-                           checkTriggers:(BOOL)checkTriggers
+                           checkTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                            resetOverflow:(BOOL)resetOverflow
                             mutableState:(VT100ScreenMutableState *)mutableState;
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
@@ -227,6 +227,10 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 - (void)setEchoProbeDelegate:(id<iTermEchoProbeDelegate>)echoProbeDelegate;
 - (void)resetEchoProbe;
 - (void)threadedReadTask:(char *)buffer length:(int)length;
+
+- (void)destructivelySetScreenWidth:(int)width
+                             height:(int)height
+                       mutableState:(VT100ScreenMutableState *)mutableState;
 
 @end
 
