@@ -22,7 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) VT100Grid *mutableAltGrid;
 @property (nonatomic, readonly) LineBuffer *mutableLineBuffer;
 
-- (void)mutResetAllDirty;
 - (void)mutResetDirty;
 - (void)mutHighlightRun:(VT100GridRun)run
     withForegroundColor:(NSColor *)fgColor

@@ -1210,10 +1210,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             multipleResults:multipleResults];
 }
 
-- (void)resetAllDirty {
-    [self mutResetAllDirty];
-}
-
 // I can remove this after making a copy of the state in sync.
 - (void)resetDirty {
     [self mutResetDirty];

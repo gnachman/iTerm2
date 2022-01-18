@@ -58,10 +58,6 @@
 
 #pragma mark - Dirty
 
-- (void)mutResetAllDirty {
-    _mutableState.currentGrid.allDirty = NO;
-}
-
 // This can be deleted after I make a copy of the state in -sync
 - (void)mutResetDirty {
     [_mutableState.currentGrid markAllCharsDirty:NO];
