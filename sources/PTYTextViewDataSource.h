@@ -86,7 +86,6 @@
 // Return a human-readable dump of the screen contents.
 - (NSString*)debugString;
 - (BOOL)isAllDirty;
-- (void)resetAllDirty;
 - (void)setRangeOfCharsAnimated:(NSRange)range onLine:(int)line;
 - (NSIndexSet *)animatedLines;
 - (void)resetAnimatedLines;
