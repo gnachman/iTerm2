@@ -7360,12 +7360,12 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     // set our preferences
     newSession.profile = profile;
 
-    [[newSession screen] setMaxScrollbackLines:0];
     [self setupSession:newSession withSize:nil];
     [[newSession view] setViewId:[[oldSession view] viewId]];
     [[newSession view] setShowTitle:[[oldSession view] showTitle] adjustScrollView:YES];
     [[newSession view] setShowBottomStatusBar:oldSession.view.showBottomStatusBar adjustScrollView:YES];
     [[newSession view] updateFindDriver];
+    [newSession setSessionSpecificProfileValues:@{ KEY_SCROLLBACK_LINES: @0 }];
 
     // Add this session to our term and make it current
     PTYTab *theTab = [tabViewItem identifier];

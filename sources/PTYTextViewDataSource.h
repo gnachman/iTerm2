@@ -113,7 +113,6 @@
 - (NSDate *)timestampForLine:(int)y;
 
 - (void)addNote:(PTYAnnotation *)note inRange:(VT100GridCoordRange)range focus:(BOOL)focus;
-- (void)removeInaccessibleNotes;
 
 // Returns all notes in a range of cells.
 - (NSArray<PTYAnnotation *> *)annotationsInRange:(VT100GridCoordRange)range;

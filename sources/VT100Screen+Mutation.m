@@ -63,43 +63,6 @@
     [_mutableState.currentGrid markAllCharsDirty:NO];
 }
 
-#pragma mark - URLs
-
-- (void)mutLinkTextInRange:(NSRange)range
-basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                  URLCode:(unsigned int)code {
-    [_mutableState linkTextInRange:range basedAtAbsoluteLineNumber:absoluteLineNumber URLCode:code];
-}
-
-#pragma mark - Highlighting
-
-- (void)mutHighlightRun:(VT100GridRun)run
-    withForegroundColor:(NSColor *)fgColor
-        backgroundColor:(NSColor *)bgColor {
-    [_mutableState highlightRun:run withForegroundColor:fgColor backgroundColor:bgColor];
-}
-
-- (void)mutHighlightTextInRange:(NSRange)range
-      basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                         colors:(NSDictionary *)colors {
-    [_mutableState highlightTextInRange:range
-              basedAtAbsoluteLineNumber:absoluteLineNumber
-                                 colors:colors];
-}
-
-
-#pragma mark - Scrollback
-
-// sets scrollback lines.
-- (void)mutSetMaxScrollbackLines:(unsigned int)lines {
-    _mutableState.maxScrollbackLines = lines;
-    [self.mutableLineBuffer setMaxLines: lines];
-    if (!_state.unlimitedScrollback) {
-        [_mutableState incrementOverflowBy:[self.mutableLineBuffer dropExcessLinesWithWidth:_state.currentGrid.size.width]];
-    }
-    [delegate_ screenDidChangeNumberOfScrollbackLines];
-}
-
 #pragma mark - Miscellaneous State
 
 - (BOOL)mutGetAndResetHasScrolled {

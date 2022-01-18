@@ -54,7 +54,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, assign) BOOL postUserNotifications;
 @property(nonatomic, assign) BOOL cursorBlinks;
 @property(nonatomic, assign) BOOL allowTitleReporting;
-@property(nonatomic, assign) unsigned int maxScrollbackLines;
+@property(nonatomic, readonly) unsigned int maxScrollbackLines;
 @property(nonatomic, readonly) BOOL unlimitedScrollback;
 @property(nonatomic, readonly) BOOL useColumnScrollRegion;
 @property(nonatomic, readonly) BOOL saveToScrollbackInAlternateScreen;
@@ -116,16 +116,6 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 // Preserves the prompt, but erases screen and scrollback buffer.
 - (void)clearBuffer;
-
-// Set the colors in the range relative to the start of the given line number.
-// See kHighlightXxxColor constants at the top of this file for dict keys, values are NSColor*s.
-- (void)highlightTextInRange:(NSRange)range
-   basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                      colors:(NSDictionary *)colors;
-
-- (void)linkTextInRange:(NSRange)range
-   basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                     URLCode:(unsigned int)code;
 
 // Save the position of the end of the scrollback buffer without the screen appended.
 - (void)storeLastPositionInLineBufferAsFindContextSavedPosition;

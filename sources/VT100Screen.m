@@ -164,18 +164,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return YES;
 }
 
-- (void)highlightTextInRange:(NSRange)range
-   basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                      colors:(NSDictionary *)colors {
-    [self mutHighlightTextInRange:range basedAtAbsoluteLineNumber:absoluteLineNumber colors:colors];
-}
-
-- (void)linkTextInRange:(NSRange)range
-basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
-                  URLCode:(unsigned int)code {
-    [self mutLinkTextInRange:range basedAtAbsoluteLineNumber:absoluteLineNumber URLCode:code];
-}
-
 - (void)storeLastPositionInLineBufferAsFindContextSavedPosition {
     [self storeLastPositionInLineBufferAsFindContextSavedPositionImpl];
 }
@@ -506,18 +494,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState removeAnnotation:annotation];
     }];
-}
-
-- (void)removeInaccessibleNotes {
-    long long lastDeadLocation = _state.cumulativeScrollbackOverflow * (_state.width + 1);
-    if (lastDeadLocation > 0) {
-        Interval *deadInterval = [Interval intervalWithLocation:0 length:lastDeadLocation + 1];
-        for (id<IntervalTreeObject> obj in [_mutableState.intervalTree objectsInInterval:deadInterval]) {
-            if ([obj.entry.interval limit] <= lastDeadLocation) {
-                [_mutableState removeObjectFromIntervalTree:obj];
-            }
-        }
-    }
 }
 
 - (BOOL)markIsValid:(iTermMark *)mark {
@@ -1085,6 +1061,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 checkTriggers:(BOOL)checkTriggers
                resetOverflow:(BOOL)resetOverflow
                 mutableState:(VT100ScreenMutableState *)mutableState {
+    DLog(@"Begin");
     [mutableState willSynchronize];
     if (checkTriggers) {
         [mutableState forceCheckTriggers];
@@ -1104,6 +1081,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #warning TODO: Uncomment this after I make a copy
         // [mutableState.currentGrid markAllCharsDirty:NO];
     }
+    DLog(@"End");
     return overflow;
 }
 
@@ -1228,10 +1206,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [mutableState.primaryGrid resetTimestamps];
         [mutableState.altGrid resetTimestamps];
     }];
-}
-
-- (void)setMaxScrollbackLines:(unsigned int)lines {
-    [self mutSetMaxScrollbackLines:lines];
 }
 
 #pragma mark - Accessors
