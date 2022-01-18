@@ -6,7 +6,6 @@
 //
 
 #import "IntervalTree.h"
-#import "iTermTemporaryDoubleBufferedGridController.h"
 #import "LineBuffer.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
@@ -35,7 +34,6 @@ extern NSString *const kScreenStateCursorCoord;
 extern NSString *const kScreenStateProtectedMode;
 
 @interface VT100Screen () <
-iTermTemporaryDoubleBufferedGridControllerDelegate,
 iTermLineBufferDelegate,
 VT100ScreenSideEffectPerforming> {
     VT100ScreenState *_state;

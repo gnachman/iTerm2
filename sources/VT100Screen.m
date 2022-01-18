@@ -71,8 +71,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 #warning TODO: update colormap's darkMode through VT100ScreenConfiguration
         _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
         _state = [_mutableState retain];
-
-        _mutableState.temporaryDoubleBuffer.delegate = self;
         _findContext = [[FindContext alloc] init];
 
         [iTermNotificationController sharedInstance];
@@ -193,6 +191,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 #pragma mark - PTYTextViewDataSource
+
+- (void)performBlockWithSavedGrid:(void (^)(id<PTYTextViewSynchronousUpdateStateReading> _Nullable))block {
+    [_state performBlockWithSavedGrid:block];
+}
 
 - (BOOL)showingAlternateScreen {
     return _state.currentGrid == _state.altGrid;
@@ -866,10 +868,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     return range;
 }
 
-- (PTYTextViewSynchronousUpdateState *)setUseSavedGridIfAvailable:(BOOL)useSavedGrid {
-    return [self mutSetUseSavedGridIfAvailable:useSavedGrid];
-}
-
 - (iTermStringLine *)stringLineAsStringAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                    startPtr:(long long *)startAbsLineNumber {
     return [_state stringLineAsStringAtAbsoluteLineNumber:absoluteLineNumber startPtr:startAbsLineNumber];
@@ -1052,32 +1050,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
-#pragma mark - iTermFullScreenUpdateDetectorDelegate
-
-- (VT100Grid *)temporaryDoubleBufferedGridCopy {
-    VT100Grid *copy = [[_state.currentGrid copy] autorelease];
-    copy.delegate = nil;
-    return copy;
-}
-
-- (PTYTextViewSynchronousUpdateState *)temporaryDoubleBufferedGridSavedState {
-    PTYTextViewSynchronousUpdateState *state = [[[PTYTextViewSynchronousUpdateState alloc] init] autorelease];
-
-    state.grid = [_state.currentGrid.copy autorelease];
-    // The grid can't be copied later unless it has a delegate. Use _state since it is an immutable snapshot of this point in time.
-    state.grid.delegate = _state;
-
-    state.colorMap = [self.colorMap.copy autorelease];
-    state.cursorVisible = self.temporaryDoubleBuffer.explicit ? _state.cursorVisible : YES;
-
-    return state;
-
-}
-
-- (void)temporaryDoubleBufferedGridDidExpire {
-    [self mutRedrawGrid];
-}
-
 #pragma mark - iTermLineBufferDelegate
 
 - (void)lineBufferDidDropLines:(LineBuffer *)lineBuffer {
@@ -1128,7 +1100,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     mutableState.mainThreadCopy = [mutableState copy];
 #warning TODO: _state = mutableState.mainThreadCopy;
     if (resetOverflow) {
-        [mutableState resetScrollbackOverflow];
+        [mutableState didSynchronize];
 #warning TODO: Uncomment this after I make a copy
         // [mutableState.currentGrid markAllCharsDirty:NO];
     }

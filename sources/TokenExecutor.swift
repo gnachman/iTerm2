@@ -149,6 +149,10 @@ private class TwoTierTokenQueue {
         return nil
     }
 
+    var isEmpty: Bool {
+        return queues.allSatisfy { $0.isEmpty }
+    }
+
     // Closure returns false to stop, true to keep going
     func enumerateTokenArrays(_ closure: (TokenArray, Int) -> Bool) {
         while let tuple = nextQueueAndTokenArray {
@@ -397,8 +401,10 @@ private class TokenExecutorImpl {
         guard let delegate = delegate else {
             return
         }
-        DispatchQueue.main.async { [weak self] in
-            self?.delegate?.tokenExecutorDidHandleInput()
+        if !tokenQueue.isEmpty {
+            DispatchQueue.main.async { [weak self] in
+                self?.delegate?.tokenExecutorDidHandleInput()
+            }
         }
         if delegate.tokenExecutorShouldQueueTokens() {
             #warning("TODO: Apply backpressure when queueing to avoid building up a huge queue (e.g., in copy mode while running yes)")

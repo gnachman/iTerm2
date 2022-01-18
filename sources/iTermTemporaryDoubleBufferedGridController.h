@@ -50,6 +50,10 @@
 // Set this to use if you're drawing the view from the saved grid in order to get a notification
 // when it expires.
 @property(nonatomic) BOOL drewSavedGrid;
+@property(nonatomic, readonly) dispatch_queue_t queue;
+
+- (instancetype)initWithQueue:(dispatch_queue_t)queue NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
 
 // Save the grid if there isn't already a saved grid.
 - (void)start;

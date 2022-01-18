@@ -8,6 +8,6 @@
 #import "VT100ScreenMutableState.h"
 
 @interface VT100ScreenState() <VT100ScreenMutableState>
-- (instancetype)initForMutation;
+- (instancetype)initForMutationOnQueue:(dispatch_queue_t)queue;
 - (instancetype)initWithState:(VT100ScreenMutableState *)source;
 @end

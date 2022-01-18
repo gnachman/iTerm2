@@ -42,10 +42,11 @@
 }
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
-    self = [super initForMutation];
+    dispatch_queue_t queue = dispatch_get_main_queue();;
+    self = [super initForMutationOnQueue:queue];
     if (self) {
 #warning TODO: When this moves to its own queue. change _queue. Consider keeping main thread as an option for lower-power mode and also for filter destinations to minimize overhead of constnatly syncing across threads.
-        _queue = dispatch_get_main_queue();
+        _queue = queue;
         _terminal = [[VT100Terminal alloc] init];
         _terminal.output.optionIsMetaForSpecialKeys =
         [iTermAdvancedSettingsModel optionIsMetaForSpecialChars];
@@ -70,6 +71,7 @@
         _echoProbe = [[iTermEchoProbe alloc] init];
         _echoProbe.delegate = self;
         self.colorMap.delegate = self;
+        self.unconditionalTemporaryDoubleBuffer.delegate = self;
     }
     return self;
 }
@@ -1323,6 +1325,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)setCursorVisible:(BOOL)visible {
+    DLog(@"VT100ScreenMutableState.setCursorVisible(%@)", visible ? @"true" : @"false");
     if (visible != self.cursorVisible) {
         [super setCursorVisible:visible];
         if (visible) {
@@ -2784,6 +2787,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+- (void)didSynchronize {
+    DLog(@"Did synchronize. Set drewSavedGrid=YES");
+    [self resetScrollbackOverflow];
+    self.temporaryDoubleBuffer.drewSavedGrid = YES;
+}
+
 - (void)updateExpectFrom:(iTermExpect *)source {
     _triggerEvaluator.expect = [source copy];
 }
@@ -3944,5 +3953,31 @@ launchCoprocessWithCommand:(NSString *)command
         [delegate immutableColorMap:weakSelf.mainThreadCopy.colorMap mutingAmountDidChangeTo:mutingAmount];
     }];
 }
+
+#pragma mark - iTermTemporaryDoubleBufferedGridControllerDelegate
+
+- (PTYTextViewSynchronousUpdateState *)temporaryDoubleBufferedGridSavedState {
+    PTYTextViewSynchronousUpdateState *state = [[PTYTextViewSynchronousUpdateState alloc] init];
+
+    state.grid = self.currentGrid.copy;
+    // The grid can't be copied later unless it has a delegate. Use _state since it is an immutable snapshot of this point in time.
+    state.grid.delegate = self;
+
+    state.colorMap = self.colorMap.copy;
+    state.cursorVisible = self.temporaryDoubleBuffer.explicit ? self.cursorVisible : YES;
+
+    return state;
+}
+
+- (void)temporaryDoubleBufferedGridDidExpire {
+    [self.currentGrid setAllDirty:YES];
+    // Force the screen to redraw right away. Some users reported lag and this seems to fix it.
+    // I think the update timer was hitting a worst case scenario which made the lag visible.
+    // See issue 3537.
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenUpdateDisplay:NO];
+    }];
+}
+
 
 @end

@@ -28,9 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
     withForegroundColor:(NSColor *)fgColor
         backgroundColor:(NSColor *)bgColor;
 - (BOOL)mutGetAndResetHasScrolled;
-- (void)mutRedrawGrid;
 - (void)mutSetMaxScrollbackLines:(unsigned int)lines;
-- (PTYTextViewSynchronousUpdateState * _Nullable)mutSetUseSavedGridIfAvailable:(BOOL)useSavedGrid;
 - (iTermTemporaryDoubleBufferedGridController * _Nullable)mutableTemporaryDoubleBuffer;
 - (void)mutLinkTextInRange:(NSRange)range
 basedAtAbsoluteLineNumber:(long long)absoluteLineNumber

@@ -338,6 +338,12 @@ extern NSString *const kScreenStateProtectedMode;
 
 @property (nonatomic, readonly) BOOL terminalIsTrusted;
 
+#pragma mark - Double Buffer
+
+@property (nonatomic, readonly) iTermTemporaryDoubleBufferedGridController *unconditionalTemporaryDoubleBuffer;
+
+- (void)performBlockWithSavedGrid:(void (^)(id<PTYTextViewSynchronousUpdateStateReading> _Nullable state))block;
+
 #pragma mark - Development
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers;

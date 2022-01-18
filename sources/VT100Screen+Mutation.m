@@ -67,14 +67,6 @@
     [_mutableState.currentGrid markAllCharsDirty:NO];
 }
 
-- (void)mutRedrawGrid {
-    [_mutableState.currentGrid setAllDirty:YES];
-    // Force the screen to redraw right away. Some users reported lag and this seems to fix it.
-    // I think the update timer was hitting a worst case scenario which made the lag visible.
-    // See issue 3537.
-    [delegate_ screenUpdateDisplay:YES];
-}
-
 #pragma mark - URLs
 
 - (void)mutLinkTextInRange:(NSRange)range
@@ -128,19 +120,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     } else {
         return nil;
     }
-}
-
-- (PTYTextViewSynchronousUpdateState *)mutSetUseSavedGridIfAvailable:(BOOL)useSavedGrid {
-    if (useSavedGrid && !_state.realCurrentGrid && self.mutableTemporaryDoubleBuffer.savedState) {
-        _mutableState.realCurrentGrid = _state.currentGrid;
-        _mutableState.currentGrid = self.mutableTemporaryDoubleBuffer.savedState.grid;
-        self.mutableTemporaryDoubleBuffer.drewSavedGrid = YES;
-        return self.mutableTemporaryDoubleBuffer.savedState;
-    } else if (!useSavedGrid && _state.realCurrentGrid) {
-        _mutableState.currentGrid = _state.realCurrentGrid;
-        _mutableState.realCurrentGrid = nil;
-    }
-    return nil;
 }
 
 #pragma mark - Injection
