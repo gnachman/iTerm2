@@ -4970,14 +4970,16 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 
 - (void)updateDisplayBecause:(NSString *)reason {
     DLog(@"updateDisplayBecause:%@ %@", reason, _cadenceController);
-    // Periodically copy config to screen. In the future this will need to cross from the main thread to the mutation thread.
-    [self sync];
     _updateCount++;
     if (_useMetal && _updateCount % 10 == 0) {
         iTermPreciseTimerSaveLog([NSString stringWithFormat:@"%@: updateDisplay interval", _view.driver.identifier],
                                  _cadenceController.histogram.stringValue);
     }
     _timerRunning = YES;
+
+    // This syncs with the mutation thread.
+    DLog(@"Session %@ calling refresh", self);
+    const BOOL somethingIsBlinking = [_textview refresh];
 
     // Set attributes of tab to indicate idle, processing, etc.
     if (![self isTmuxGateway]) {
@@ -4991,8 +4993,6 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
         [self.view setTitle:_nameController.presentationSessionTitle];
     }
 
-    DLog(@"Session %@ calling refresh", self);
-    const BOOL somethingIsBlinking = [_textview refresh];
     const BOOL transientTitle = _delegate.realParentWindow.isShowingTransientTitle;
     const BOOL animationPlaying = _textview.getAndResetDrawingAnimatedImageFlag;
 
@@ -5004,7 +5004,6 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
         [self stopTailFind];
     }
 
-    [_screen performPeriodicTriggerCheck];
     const BOOL passwordInput = _shell.passwordInput;
     DLog(@"passwordInput=%@", @(passwordInput));
     if (passwordInput != _passwordInput) {
@@ -7666,34 +7665,37 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #warning TODO: Synchornize properly.
 - (VT100SyncResult)textViewWillRefresh {
-    return [self syncCheckingTriggers:NO resetOverflow:YES];
+    return [self syncCheckingTriggers:VT100ScreenTriggerCheckTypePartialLines
+                        resetOverflow:YES];
 }
 
 - (void)screenSync:(VT100ScreenMutableState *)mutableState {
-    [self syncCheckingTriggers:NO
+    [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
                  resetOverflow:NO
                   mutableState:mutableState];
 }
 
 - (void)sync {
-    [self syncCheckingTriggers:NO
+    [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
                  resetOverflow:NO];
 }
 
-- (void)syncCheckingTriggers:(BOOL)checkTriggers {
+- (void)syncCheckingTriggers:(VT100ScreenTriggerCheckType)checkTriggers {
     [self syncCheckingTriggers:checkTriggers resetOverflow:NO];
 }
 
-- (VT100SyncResult)syncCheckingTriggers:(BOOL)checkTriggers
+- (VT100SyncResult)syncCheckingTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                           resetOverflow:(BOOL)resetOverflow {
     __block VT100SyncResult result = { 0 };
     [_screen performLightweightBlockWithJoinedThreads:^(VT100ScreenMutableState *mutableState) {
-        result = [self syncCheckingTriggers:NO resetOverflow:resetOverflow mutableState:mutableState];
+        result = [self syncCheckingTriggers:checkTriggers
+                              resetOverflow:resetOverflow
+                               mutableState:mutableState];
     }];
     return result;
 }
 
-- (VT100SyncResult)syncCheckingTriggers:(BOOL)checkTriggers
+- (VT100SyncResult)syncCheckingTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                           resetOverflow:(BOOL)resetOverflow
                            mutableState:(VT100ScreenMutableState *)mutableState {
     [self updateConfigurationFields];
@@ -11177,7 +11179,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // Force triggers to be checked. We may be switching to a profile without triggers
     // and we don't want them to run on the lines of text above _triggerLine later on
     // when switching to a profile that does have triggers. See issue 7832.
-    [self syncCheckingTriggers:YES];
+    [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeFullLines];
 
     NSString *theName = [[self profile] objectForKey:KEY_NAME];
     NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];

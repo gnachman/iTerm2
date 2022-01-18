@@ -201,8 +201,12 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
 - (VT100GridCoordRange)commandRange;
 - (void)injectData:(NSData *)data;
-- (void)forceCheckTriggers;
-- (void)performPeriodicTriggerCheck;
+
+typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
+    VT100ScreenTriggerCheckTypeNone,
+    VT100ScreenTriggerCheckTypePartialLines,
+    VT100ScreenTriggerCheckTypeFullLines
+};
 
 - (VT100SyncResult)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
                                   expect:(iTermExpect *)maybeExpect

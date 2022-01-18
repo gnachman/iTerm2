@@ -1048,19 +1048,22 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_mutableState performBlockAsynchronously:block];
 }
 
-- (void)forceCheckTriggers {
-    [self mutForceCheckTriggers];
-}
-
 - (VT100SyncResult)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
                                   expect:(iTermExpect *)maybeExpect
-                           checkTriggers:(BOOL)checkTriggers
+                           checkTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                            resetOverflow:(BOOL)resetOverflow
                             mutableState:(VT100ScreenMutableState *)mutableState {
     DLog(@"Begin");
     [mutableState willSynchronize];
-    if (checkTriggers) {
-        [mutableState forceCheckTriggers];
+    switch (checkTriggers) {
+        case VT100ScreenTriggerCheckTypeNone:
+            break;
+        case VT100ScreenTriggerCheckTypePartialLines:
+            [mutableState performPeriodicTriggerCheck];
+            break;
+        case VT100ScreenTriggerCheckTypeFullLines:
+            [mutableState forceCheckTriggers];
+            break;
     }
     if (sourceConfig.isDirty) {
         mutableState.config = sourceConfig;
@@ -1082,10 +1085,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         .overflow = overflow,
         .haveScrolled = _state.currentGrid.haveScrolled
     };
-}
-
-- (void)performPeriodicTriggerCheck {
-    [self mutPerformPeriodicTriggerCheck];
 }
 
 - (void)injectData:(NSData *)data {

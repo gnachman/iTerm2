@@ -63,16 +63,6 @@
     [_mutableState.currentGrid markAllCharsDirty:NO];
 }
 
-#pragma mark - Triggers
-
-- (void)mutForceCheckTriggers {
-    [_mutableState forceCheckTriggers];
-}
-
-- (void)mutPerformPeriodicTriggerCheck {
-    [_mutableState performPeriodicTriggerCheck];
-}
-
 @end
 
 @implementation VT100Screen (Testing)
