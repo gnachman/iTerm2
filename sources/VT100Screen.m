@@ -1242,14 +1242,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self mutResetAllDirty];
 }
 
-- (void)setLineDirtyAtY:(int)y {
-    [self mutSetLineDirtyAtY:y];
-}
-
-- (void)setCharDirtyAtCursorX:(int)x Y:(int)y {
-    [self mutSetCharDirtyAtCursorX:x Y:y];
-}
-
 // I can remove this after making a copy of the state in sync.
 - (void)resetDirty {
     [self mutResetDirty];
