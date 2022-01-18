@@ -183,7 +183,6 @@
 		1D6ED88619AEA20D005A7799 /* CGSAccessibility.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F630E748404000EC682 /* CGSAccessibility.h */; };
 		1D6ED88719AEA20D005A7799 /* CGSCIFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F640E748404000EC682 /* CGSCIFilter.h */; };
 		1D6ED88819AEA20D005A7799 /* CGSConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F650E748404000EC682 /* CGSConnection.h */; };
-		1D6ED88919AEA20D005A7799 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
 		1D6ED88A19AEA20D005A7799 /* iTermNSKeyBindingEmulator.h in Headers */ = {isa = PBXBuildFile; fileRef = A60014F918552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h */; };
 		1D6ED88B19AEA20D005A7799 /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
 		1D6ED88C19AEA20D005A7799 /* CGSCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F660E748404000EC682 /* CGSCursor.h */; };
@@ -2733,7 +2732,6 @@
 		A6C4352221D1C64800346910 /* iterm2Invoke.js in Resources */ = {isa = PBXBuildFile; fileRef = A6C4352021D1C64800346910 /* iterm2Invoke.js */; };
 		A6C4352321D1C64800346910 /* iterm2Invoke.js in Resources */ = {isa = PBXBuildFile; fileRef = A6C4352021D1C64800346910 /* iterm2Invoke.js */; };
 		A6C4352421D1C98900346910 /* iTermWebViewWrapperViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D72A4D41BE9707A0042174A /* iTermWebViewWrapperViewController.m */; };
-		A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */; };
 		A6C537BE1938374600A08C18 /* iTermTabBarControlView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */; };
 		A6C537C31939507100A08C18 /* iTermRestorableSession.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C537C11939507100A08C18 /* iTermRestorableSession.h */; };
 		A6C760431B45C4CF00E3C992 /* NSTableColumn+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA1C1F11A2E49A3007381D3 /* NSTableColumn+iTerm.m */; };
@@ -7076,7 +7074,6 @@
 				1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */,
 				1DB9D8F0183FE9EF0029F0B5 /* iTermHotKeyController.h */,
 				1D7B9A671491D82F003A2A22 /* IntervalMap.h */,
-				A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */,
 				20E74F4804E9089700000106 /* ITAddressBookMgr.h */,
 				1D407A2614BABE8700BD5035 /* iTerm.h */,
 				A663010E19CFE41A004AF81C /* iTermAboutWindow.h */,
@@ -9909,6 +9906,7 @@
 				A6358641184BEA47009ED690 /* AATree */,
 				1DAE714C14AAF24200DA144B /* EquivalenceClassSet.m */,
 				1D7B9A681491D82F003A2A22 /* IntervalMap.m */,
+				A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */,
 				A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */,
 			);
 			name = "Data Structures";
@@ -10657,7 +10655,6 @@
 				1D6ED88819AEA20D005A7799 /* CGSConnection.h in Headers */,
 				A663196E22FE651D00C502BD /* iTermFileDescriptorMultiClient+MRR.h in Headers */,
 				A62A1AE41AAE290700B49F79 /* iTermTextDrawingHelper.h in Headers */,
-				1D6ED88919AEA20D005A7799 /* IntervalTree.h in Headers */,
 				1D6ED88A19AEA20D005A7799 /* iTermNSKeyBindingEmulator.h in Headers */,
 				1D6ED88B19AEA20D005A7799 /* NSColor+iTerm.h in Headers */,
 				A6E77FA21A2A8A5A009B1CB6 /* NSData+iTerm.h in Headers */,
@@ -11001,7 +10998,6 @@
 				A65B72711B248F1800F947A7 /* iTermOrphanServerAdopter.h in Headers */,
 				A635F1E92507621A008C3038 /* iTermSnippetsEditingViewController.h in Headers */,
 				1D5FDD6B1208E8F000C46BA3 /* CGSConnection.h in Headers */,
-				A6C4E8E21846E13800CFAA77 /* IntervalTree.h in Headers */,
 				A67960951F81FC96008A42BC /* iTermMetalCellRenderer.h in Headers */,
 				A67960E21F82019B008A42BC /* iTermMetalDriver.h in Headers */,
 				A60014FB18552BDF00CE38D8 /* iTermNSKeyBindingEmulator.h in Headers */,
