@@ -80,9 +80,11 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 }
 
 - (void)didHandleInput {
+    DLog(@"didHandleInput");
     const NSInteger kThroughputLimit = 1024;
     const NSInteger estimatedThroughput = [_throughputEstimator estimatedThroughput];
     if (estimatedThroughput < kThroughputLimit && [self lastKeystrokeWasRecent]) {
+        DLog(@"  low bandwidth so call updateDisplay");
         [self updateDisplay];
     }
 }

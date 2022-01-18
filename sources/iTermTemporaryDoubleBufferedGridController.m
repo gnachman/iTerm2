@@ -7,6 +7,7 @@
 //
 
 #import "iTermTemporaryDoubleBufferedGridController.h"
+#import "iTermGCDTimer.h"
 #import "DebugLogging.h"
 #import "VT100Grid.h"
 
@@ -15,7 +16,15 @@
 @end
 
 @implementation iTermTemporaryDoubleBufferedGridController {
-    NSTimer *_timer;
+    iTermGCDTimer *_timer;
+}
+
+- (instancetype)initWithQueue:(dispatch_queue_t)queue {
+    self = [super init];
+    if (self) {
+        _queue = queue;
+    }
+    return self;
 }
 
 - (void)start {
@@ -72,14 +81,13 @@
     static const NSTimeInterval kExplicitSaveTime = 1.0;
     DLog(@"%@ schedule timer", self.delegate);
     [_timer invalidate];
-    _timer = [NSTimer scheduledTimerWithTimeInterval:_explicit ? kExplicitSaveTime : kTimeToKeepSavedGrid
+    _timer = [[iTermGCDTimer alloc] initWithInterval:_explicit ? kExplicitSaveTime : kTimeToKeepSavedGrid
+                                               queue:_queue
                                               target:self
-                                            selector:@selector(savedGridExpirationTimer:)
-                                            userInfo:nil
-                                             repeats:NO];
+                                            selector:@selector(savedGridExpirationTimer:)];
 }
 
-- (void)savedGridExpirationTimer:(NSTimer *)timer {
+- (void)savedGridExpirationTimer:(iTermGCDTimer *)timer {
     DLog(@"Saved grid expired. (delegate=%@)", _delegate);
     _timer = nil;
     [self resetExplicitly];
@@ -88,7 +96,7 @@
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {
-    iTermTemporaryDoubleBufferedGridController *copy = [[iTermTemporaryDoubleBufferedGridController alloc] init];
+    iTermTemporaryDoubleBufferedGridController *copy = [[iTermTemporaryDoubleBufferedGridController alloc] initWithQueue:_queue];
     copy->_explicit = _explicit;
     copy.drewSavedGrid = _drewSavedGrid;
     copy.savedState = [self.savedState copy];

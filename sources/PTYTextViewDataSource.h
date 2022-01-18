@@ -136,9 +136,9 @@
 
 // When the cursor is about to be hidden, a copy of the grid is saved. This
 // method is used to temporarily swap in the saved grid if one is available. It
-// returns a nonnil state if the saved grid was swapped in (only possible if useSavedGrid
-// is YES, of course).
-- (PTYTextViewSynchronousUpdateState *)setUseSavedGridIfAvailable:(BOOL)useSavedGrid;
+// calls `block` with a nonnil state if the saved grid was swapped in.
+- (void)performBlockWithSavedGrid:(void (^)(id<PTYTextViewSynchronousUpdateStateReading> state))block;
+
 - (NSString *)compactLineDumpWithContinuationMarks;
 - (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c
                     externalAttributes:(iTermExternalAttribute *)ea;

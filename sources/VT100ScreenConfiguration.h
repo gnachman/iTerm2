@@ -51,6 +51,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL appendToScrollbackWithStatusBar;
 @property (nonatomic, readonly) BOOL saveToScrollbackInAlternateScreen;
 @property (nonatomic, readonly) BOOL unlimitedScrollback;
+@property (nonatomic, readonly) BOOL reduceFlicker;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -93,6 +94,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL appendToScrollbackWithStatusBar;
 @property (nonatomic, readwrite) BOOL saveToScrollbackInAlternateScreen;
 @property (nonatomic, readwrite) BOOL unlimitedScrollback;
+@property (nonatomic, readwrite) BOOL reduceFlicker;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 

@@ -124,7 +124,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 @synthesize terminalState = _terminalState;
 @synthesize config = _config;
 
-- (instancetype)initForMutation {
+- (instancetype)initForMutationOnQueue:(dispatch_queue_t)queue {
     self = [super init];
     if (self) {
         _animatedLines = [NSMutableIndexSet indexSet];
@@ -141,7 +141,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
         _initialSize = VT100GridSizeMake(-1, -1);
         _linebuffer = [[LineBuffer alloc] init];
         _colorMap = [[iTermColorMap alloc] init];
-        _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] init];
+        _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] initWithQueue:queue];
         _fakePromptDetectedAbsLine = -1;
     }
     return self;
@@ -151,6 +151,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 - (instancetype)initWithState:(VT100ScreenMutableState *)source {
     self = [super init];
     if (self) {
+        _queue = dispatch_get_main_queue();
         _audibleBell = source.audibleBell;
         _showBellIndicator = source.showBellIndicator;
         _flashBell = source.flashBell;
@@ -238,8 +239,9 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
         _tabStops = [source.tabStops copy];
         _charsetUsesLineDrawingMode = [source.charsetUsesLineDrawingMode copy];
         _colorMap = [source.colorMap copy];
-        _temporaryDoubleBuffer = [source.temporaryDoubleBuffer copy];
+        _temporaryDoubleBuffer = [source.unconditionalTemporaryDoubleBuffer copy];
         _config = [source.config copy];
+        DLog(@"Copy mutable to immutable");
     }
     return self;
 }
@@ -688,6 +690,37 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     } else {
         return kColorMap8bitBase + n;
     }
+}
+
+#pragma mark - Double Buffer
+
+- (iTermTemporaryDoubleBufferedGridController *)temporaryDoubleBuffer {
+    if (!self.config.reduceFlicker && !_temporaryDoubleBuffer.explicit) {
+        return nil;
+    }
+    return _temporaryDoubleBuffer;
+}
+
+- (iTermTemporaryDoubleBufferedGridController *)unconditionalTemporaryDoubleBuffer {
+    return _temporaryDoubleBuffer;
+}
+
+- (void)performBlockWithSavedGrid:(void (^)(id<PTYTextViewSynchronousUpdateStateReading> _Nullable state))block {
+    if (!self.realCurrentGrid && self.temporaryDoubleBuffer.savedState) {
+        // Swap in saved state.
+        self.realCurrentGrid = self.currentGrid;
+        self.currentGrid = self.temporaryDoubleBuffer.savedState.grid;
+
+        block(self.temporaryDoubleBuffer.savedState);
+
+        // Restore original state.
+        self.currentGrid = self.realCurrentGrid;
+        self.realCurrentGrid = nil;
+        return;
+    }
+
+    // Regular behavior.
+    block(nil);
 }
 
 #pragma mark - Advanced Prefs

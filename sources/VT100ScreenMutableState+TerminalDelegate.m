@@ -733,9 +733,9 @@
 
 - (void)terminalSynchronizedUpdate:(BOOL)begin {
     if (begin) {
-        [self.temporaryDoubleBuffer startExplicitly];
+        [self.unconditionalTemporaryDoubleBuffer startExplicitly];
     } else {
-        [self.temporaryDoubleBuffer resetExplicitly];
+        [self.unconditionalTemporaryDoubleBuffer resetExplicitly];
     }
 }
 

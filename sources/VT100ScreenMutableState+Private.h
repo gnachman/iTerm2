@@ -16,6 +16,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermEchoProbe.h"
 #import "iTermMark.h"
+#import "iTermTemporaryDoubleBufferedGridController.h"
 
 @interface VT100ScreenMutableState()<
 PTYTriggerEvaluatorDelegate,
@@ -24,6 +25,7 @@ VT100InlineImageHelperDelegate,
 iTermColorMapDelegate,
 iTermEchoProbeDelegate,
 iTermMarkDelegate,
+iTermTemporaryDoubleBufferedGridControllerDelegate,
 iTermTriggerSession,
 iTermTriggerScopeProvider> {
     VT100GridCoordRange _previousCommandRange;

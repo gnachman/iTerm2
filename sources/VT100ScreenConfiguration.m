@@ -40,6 +40,7 @@
 @property (nonatomic, readwrite) BOOL appendToScrollbackWithStatusBar;
 @property (nonatomic, readwrite) BOOL saveToScrollbackInAlternateScreen;
 @property (nonatomic, readwrite) BOOL unlimitedScrollback;
+@property (nonatomic, readwrite) BOOL reduceFlicker;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -74,6 +75,7 @@
 @synthesize appendToScrollbackWithStatusBar = _appendToScrollbackWithStatusBar;
 @synthesize saveToScrollbackInAlternateScreen = _saveToScrollbackInAlternateScreen;
 @synthesize unlimitedScrollback = _unlimitedScrollback;
+@synthesize reduceFlicker = _reduceFlicker;
 
 @synthesize isDirty = _isDirty;
 
@@ -110,6 +112,7 @@
         _appendToScrollbackWithStatusBar = other.appendToScrollbackWithStatusBar;
         _saveToScrollbackInAlternateScreen = other.saveToScrollbackInAlternateScreen;
         _unlimitedScrollback = other.unlimitedScrollback;
+        _reduceFlicker = other.reduceFlicker;
 
         _isDirty = other.isDirty;
     }
@@ -155,6 +158,7 @@
                             @"appendToScrollbackWithStatusBar": @(_appendToScrollbackWithStatusBar),
                             @"saveToScrollbackInAlternateScreen": @(_saveToScrollbackInAlternateScreen),
                             @"unlimitedScrollback": @(_unlimitedScrollback),
+                            @"reduceFlicker": @(_reduceFlicker),
 
                             @"isDirty": @(_isDirty),
     };
@@ -199,6 +203,7 @@
 @dynamic appendToScrollbackWithStatusBar;
 @dynamic saveToScrollbackInAlternateScreen;
 @dynamic unlimitedScrollback;
+@dynamic reduceFlicker;
 
 @dynamic isDirty;
 

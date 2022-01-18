@@ -10995,7 +10995,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenSetCursorVisible:(BOOL)visible {
-    [_textview setCursorVisibleWithoutSideEffects:visible];
+    [_textview setCursorVisible:visible];
 }
 
 - (void)screenCursorDidMoveToLine:(int)line {
@@ -12071,6 +12071,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                               inProfile:self.profile];
         _config.unlimitedScrollback = [iTermProfilePreferences boolForKey:KEY_UNLIMITED_SCROLLBACK
                                                                 inProfile:_profile];
+        _config.reduceFlicker = [iTermProfilePreferences boolForKey:KEY_REDUCE_FLICKER inProfile:self.profile];
+
         _config.profileName = [self profileName];
         dirty = YES;
         _profileDidChange = NO;

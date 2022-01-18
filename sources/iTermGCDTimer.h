@@ -15,8 +15,14 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSTimeInterval actualInterval;
 
 - (instancetype)initWithInterval:(NSTimeInterval)interval
+                           queue:(dispatch_queue_t)queue
                           target:(id)target // WEAK!
                         selector:(SEL)selector NS_DESIGNATED_INITIALIZER;
+
+- (instancetype)initWithInterval:(NSTimeInterval)interval
+                          target:(id)target // WEAK!
+                        selector:(SEL)selector;
+
 - (instancetype)init NS_UNAVAILABLE;
 - (void)invalidate;
 @end

@@ -163,8 +163,6 @@ typedef struct {
     [self loadIndicatorsFromTextView:textView];
     [self loadHighlightedRowsFromTextView:textView];
     [self loadAnnotationRangesFromTextView:textView];
-
-    [textView.dataSource setUseSavedGridIfAvailable:NO];
 }
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper

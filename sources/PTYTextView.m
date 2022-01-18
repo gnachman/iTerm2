@@ -1322,29 +1322,37 @@
 }
 
 - (void)performBlockWithFlickerFixerGrid:(void (NS_NOESCAPE ^)(void))block {
-    PTYTextViewSynchronousUpdateState *originalState = nil;
-    PTYTextViewSynchronousUpdateState *savedState = [_dataSource setUseSavedGridIfAvailable:YES];
-    if (savedState) {
-        originalState = [[[PTYTextViewSynchronousUpdateState alloc] init] autorelease];
-        originalState.colorMap = _colorMap;
-        originalState.cursorVisible = _drawingHelper.cursorVisible;
+    __block PTYTextViewSynchronousUpdateState *originalState = nil;
+    [_dataSource performBlockWithSavedGrid:^(id<PTYTextViewSynchronousUpdateStateReading>  _Nullable savedState) {
+        if (savedState) {
+            originalState = [self syncUpdateState];
+            DLog(@"PTYTextView.performBlockWithFlickerFixerGrid: set cusrorVisible=%@", _drawingHelper.cursorVisible ? @"true": @"false");
+            [self loadSyncUpdateState:savedState];
+        } else {
+            DLog(@"PTYTextView.performBlockWithFlickerFixerGrid: (no saved grid) cusrorVisible=%@", _drawingHelper.cursorVisible ? @"true": @"false");
+        }
 
-        _drawingHelper.cursorVisible = savedState.cursorVisible;
-        _drawingHelper.colorMap = savedState.colorMap;
-        [_colorMap autorelease];
-        _colorMap = [savedState.colorMap retain];
-    }
-
-    block();
-
-    [_dataSource setUseSavedGridIfAvailable:NO];
+        block();
+    }];
     if (originalState) {
-        _drawingHelper.colorMap = originalState.colorMap;
-        [_colorMap autorelease];
-        _colorMap = [originalState.colorMap retain];
-        _drawingHelper.cursorVisible = originalState.cursorVisible;
+        [self loadSyncUpdateState:originalState];
     }
 }
+
+- (void)loadSyncUpdateState:(id<PTYTextViewSynchronousUpdateStateReading>)savedState {
+    _drawingHelper.cursorVisible = savedState.cursorVisible;
+    _drawingHelper.colorMap = savedState.colorMap;
+    [_colorMap autorelease];
+    _colorMap = [savedState.colorMap retain];
+}
+
+- (PTYTextViewSynchronousUpdateState *)syncUpdateState {
+    PTYTextViewSynchronousUpdateState *originalState = [[[PTYTextViewSynchronousUpdateState alloc] init] autorelease];
+    originalState.colorMap = _colorMap;
+    originalState.cursorVisible = _drawingHelper.cursorVisible;
+    return originalState;
+}
+
 
 - (void)setSuppressDrawing:(BOOL)suppressDrawing {
     if (suppressDrawing == _suppressDrawing) {
@@ -1829,11 +1837,8 @@
     return [self.delegate textviewTimestampsMode];
 }
 
-- (void)setCursorVisibleWithoutSideEffects:(BOOL)cursorVisible {
-    _drawingHelper.cursorVisible = cursorVisible;
-}
-
 - (void)setCursorVisible:(BOOL)cursorVisible {
+    DLog(@"setCursorVisible:%@", cursorVisible ? @"true" : @"false");
     [self markCursorDirty];
     _drawingHelper.cursorVisible = cursorVisible;
 }
@@ -2010,7 +2015,6 @@
     // lineStart to lineEnd is the region that is the screen when the scrollbar
     // is at the bottom of the frame.
 
-    [_dataSource setUseSavedGridIfAvailable:YES];
     long long totalScrollbackOverflow = [_dataSource totalScrollbackOverflow];
     int allDirty = [_dataSource isAllDirty] ? 1 : 0;
 
@@ -2024,11 +2028,11 @@
              cursorPosition.y);
         const int previous = totalScrollbackOverflow - totalScrollbackOverflow;
         if (previous >= 0 && previous < numberOfLines) {
-            cursorLines[0] = _previousCursorCoord.y - totalScrollbackOverflow;
+            cursorLines[0] = lineStart + _previousCursorCoord.y - totalScrollbackOverflow;
         } else {
-            cursorLines[0] = cursorPosition.y;
+            cursorLines[0] = lineStart + cursorPosition.y;
         }
-        cursorLines[1] = cursorPosition.y;
+        cursorLines[1] = lineStart + cursorPosition.y;
 
         // Set _previousCursorCoord to new cursor position
         _previousCursorCoord = VT100GridAbsCoordMake(cursorPosition.x,
@@ -2089,8 +2093,6 @@
     if (foundDirty && [_dataSource shouldSendContentsChangedNotification]) {
         [_delegate textViewPostTabContentsChangedNotification];
     }
-
-    [_dataSource setUseSavedGridIfAvailable:NO];
 
     // If you're viewing the scrollback area and it contains an animated gif it will need
     // to be redrawn periodically. The set of animated lines is added to while drawing and then
@@ -2229,13 +2231,15 @@
 
     // See if any characters are dirty and mark them as needing to be redrawn.
     // Return if anything was found to be blinking.
-    BOOL foundDirty = NO;
-    const BOOL foundBlink = [self updateDirtyRects:&foundDirty] || [self isCursorBlinking];
-
-    // Update accessibility.
-    if (foundDirty) {
-        [self refreshAccessibility];
-    }
+    __block BOOL foundBlink = NO;
+    [self.dataSource performBlockWithSavedGrid:^(id<PTYTextViewSynchronousUpdateStateReading>  _Nullable state) {
+        BOOL foundDirty = NO;
+        foundBlink = [self updateDirtyRects:&foundDirty] || [self isCursorBlinking];
+        // Update accessibility.
+        if (foundDirty) {
+            [self refreshAccessibility];
+        }
+    }];
     if (scrollbackOverflow > 0 || frameDidChange) {
         // Need to redraw locations of search results.
         [self.delegate textViewFindOnPageLocationsDidChange];
