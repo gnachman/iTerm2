@@ -30,6 +30,20 @@ static NSString *const kMarkOutputStart = @"Output Start";
     NSMutableArray *_capturedOutput;
 }
 
+@synthesize isPrompt = _isPrompt;
+@synthesize guid = _guid;
+@synthesize clearCount = _clearCount;
+@synthesize capturedOutput = _capturedOutput;
+@synthesize code = _code;
+@synthesize hasCode = _hasCode;
+@synthesize command = _command;
+@synthesize startDate = _startDate;
+@synthesize endDate = _endDate;
+@synthesize sessionGuid = _sessionGuid;
+@synthesize promptRange = _promptRange;
+@synthesize commandRange = _commandRange;
+@synthesize outputStart = _outputStart;
+
 + (NSMapTable *)registry {
     static NSMapTable *registry;
     static dispatch_once_t onceToken;
@@ -41,14 +55,18 @@ static NSString *const kMarkOutputStart = @"Output Start";
     return registry;
 }
 
-+ (VT100ScreenMark *)markWithGuid:(NSString *)guid {
-    return [self.registry objectForKey:guid];
++ (id<VT100ScreenMarkReading>)markWithGuid:(NSString *)guid {
+    @synchronized([VT100ScreenMark class]) {
+        return [self.registry objectForKey:guid];
+    }
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
-        [[self.class registry] setObject:self forKey:self.guid];
+        @synchronized([VT100ScreenMark class]) {
+            [[self.class registry] setObject:self forKey:self.guid];
+        }
         _promptRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _commandRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _outputStart = VT100GridAbsCoordMake(-1, -1);
@@ -69,19 +87,19 @@ static NSString *const kMarkOutputStart = @"Output Start";
         if ([dict[kMarkGuidKey] isKindOfClass:[NSString class]]) {
             _guid = [dict[kMarkGuidKey] copy];
         } else {
-            _guid = [[NSString uuid] retain];
+            _guid = [NSString uuid];
         }
         _sessionGuid = [dict[kMarkSessionGuidKey] copy];
         NSTimeInterval start = [dict[kMarkStartDateKey] doubleValue];
         if (start > 0) {
-            _startDate = [[NSDate dateWithTimeIntervalSinceReferenceDate:start] retain];
+            _startDate = [NSDate dateWithTimeIntervalSinceReferenceDate:start];
         }
         NSTimeInterval end = [dict[kMarkEndDateKey] doubleValue];
         if (end > 0) {
-            _endDate = [[NSDate dateWithTimeIntervalSinceReferenceDate:end] retain];
+            _endDate = [NSDate dateWithTimeIntervalSinceReferenceDate:end];
         }
         NSMutableArray *array = [NSMutableArray array];
-        _capturedOutput = [array retain];
+        _capturedOutput = array;
         for (NSDictionary *capturedOutputDict in dict[kMarkCapturedOutputKey]) {
             [array addObject:[CapturedOutput capturedOutputWithDictionary:capturedOutputDict]];
         }
@@ -103,20 +121,17 @@ static NSString *const kMarkOutputStart = @"Output Start";
         } else {
             _outputStart = VT100GridAbsCoordMake(-1, -1);
         }
-        [[self.class registry] setObject:self forKey:self.guid];
+        @synchronized([VT100ScreenMark class]) {
+            [[self.class registry] setObject:self forKey:self.guid];
+        }
     }
     return self;
 }
 
 - (void)dealloc {
-    [[self.class registry] removeObjectForKey:_guid];
-    [_guid release];
-    [_capturedOutput release];
-    [_command release];
-    [_startDate release];
-    [_endDate release];
-    [_sessionGuid release];
-    [super dealloc];
+    @synchronized([VT100ScreenMark class]) {
+        [[self.class registry] removeObjectForKey:_guid];
+    }
 }
 
 - (NSString *)guid {
@@ -135,7 +150,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
 }
 
 - (NSDictionary *)dictionaryValue {
-    NSMutableDictionary *dict = [[[super dictionaryValue] mutableCopy] autorelease];
+    NSMutableDictionary *dict = [[super dictionaryValue] mutableCopy];
     dict[kScreenMarkIsPrompt] = @(_isPrompt);
     dict[kMarkGuidKey] = self.guid;
     dict[kMarkCapturedOutputKey] = [self capturedOutputDictionaries];
@@ -176,7 +191,6 @@ static NSString *const kMarkOutputStart = @"Output Start";
 #warning TODO: This will need to be called on the mutation thread
         [self.delegate markDidBecomeCommandMark:self];
     }
-    [_command autorelease];
     _command = [command copy];
     self.startDate = [NSDate date];
 }
@@ -188,6 +202,10 @@ static NSString *const kMarkOutputStart = @"Output Start";
 
 - (void)incrementClearCount {
     _clearCount += 1;
+}
+
+- (id<VT100ScreenMarkReading>)doppelganger {
+    return (id<VT100ScreenMarkReading>)[super doppelganger];
 }
 
 @end

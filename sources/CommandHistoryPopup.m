@@ -48,7 +48,7 @@
     [super dealloc];
 }
 
-- (NSArray *)commandsForHost:(VT100RemoteHost *)host
+- (NSArray *)commandsForHost:(id<VT100RemoteHostReading>)host
               partialCommand:(NSString *)partialCommand
                       expand:(BOOL)expand {
     iTermShellHistoryController *history = [iTermShellHistoryController sharedInstance];

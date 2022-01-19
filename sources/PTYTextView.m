@@ -3062,7 +3062,7 @@
 
 #pragma mark - Annotations
 
-- (void)addViewForNote:(PTYAnnotation *)annotation focus:(BOOL)focus {
+- (void)addViewForNote:(id<PTYAnnotationReading>)annotation focus:(BOOL)focus {
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] initWithAnnotation:annotation] autorelease];
     note.delegate = self;
     [_notes addObject:note];
@@ -4605,7 +4605,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate textViewDrawBackgroundImageInView:self viewRect:rect blendDefaultBackground:blend virtualOffset:virtualOffset];
 }
 
-- (VT100ScreenMark *)drawingHelperMarkOnLine:(int)line {
+- (id<VT100ScreenMarkReading>)drawingHelperMarkOnLine:(int)line {
     return [_dataSource markOnLine:line];
 }
 
@@ -5119,6 +5119,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)noteWillBeRemoved:(PTYNoteViewController *)note {
     [self removeNote:note];
+}
+
+- (void)note:(PTYNoteViewController *)note setAnnotation:(id<PTYAnnotationReading>)annotation stringValue:(NSString *)stringValue {
+    [_dataSource setStringValueOfAnnotation:annotation to:stringValue];
 }
 
 - (void)updateAlphaValue {

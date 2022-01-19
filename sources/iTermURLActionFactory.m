@@ -42,7 +42,7 @@ typedef enum {
 @property (nonatomic) VT100GridCoord coord;
 @property (nonatomic) BOOL respectHardNewlines;
 @property (nonatomic, copy) NSString *workingDirectory;
-@property (nonatomic, strong) VT100RemoteHost *remoteHost;
+@property (nonatomic, strong) id<VT100RemoteHostReading> remoteHost;
 @property (nonatomic, strong) iTermVariableScope *scope;
 @property (nonatomic, strong) id<iTermObject> owner;
 @property (nonatomic, copy) NSDictionary<NSNumber *, NSString *> *selectors;
@@ -70,7 +70,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         workingDirectory:(NSString *)workingDirectory
                    scope:(iTermVariableScope *)scope
                    owner:(id<iTermObject>)owner
-              remoteHost:(VT100RemoteHost *)remoteHost
+              remoteHost:(id<VT100RemoteHostReading>)remoteHost
                selectors:(NSDictionary<NSNumber *, NSString *> *)selectors
                    rules:(NSArray *)rules
                extractor:(iTermTextExtractor *)extractor
@@ -413,7 +413,7 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
         action.representedObject = @{ iTermSmartSelectionActionContextKeyAction: actions[0],
                                       iTermSmartSelectionActionContextKeyComponents: smartMatch.components,
                                       iTermSmartSelectionActionContextKeyWorkingDirectory: self.workingDirectory ?: [NSNull null],
-                                      iTermSmartSelectionActionContextKeyRemoteHost: self.remoteHost ?: [NSNull null]};
+                                      iTermSmartSelectionActionContextKeyRemoteHost: (id)self.remoteHost ?: [NSNull null]};
         completion(action);
     } else {
         completion(nil);

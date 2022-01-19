@@ -32,10 +32,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, readonly) VT100Terminal *terminal;
 @property (nonatomic, strong) iTermEchoProbe *echoProbe;
 @property (nonatomic, weak) id<iTermEchoProbeDelegate> echoProbeDelegate;
-@property (nullable, nonatomic, strong) id<VT100ScreenState> mainThreadCopy;
+@property (nullable, nonatomic, strong) VT100ScreenState *mainThreadCopy;
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
-- (id<VT100ScreenState>)copy;
+- (VT100ScreenState *)copy;
+
+- (iTermJournalingIntervalTree *)mutableIntervalTree;
+- (iTermJournalingIntervalTree *)mutableSavedIntervalTree;
 
 #pragma mark - Internal
 
@@ -158,6 +161,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 #pragma mark - Interval Tree
 
+@property (nonatomic, readonly) IntervalTree *derivativeIntervalTree;
+@property (nonatomic, readonly) IntervalTree *derivativeSavedIntervalTree;
+
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass;
@@ -194,6 +200,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)setPromptStartLine:(int)line;
 - (void)didUpdatePromptLocation;
+- (void)incrementClearCountForCommandMark:(id<VT100ScreenMarkReading>)screenMarkDoppelganger;
 
 #pragma mark Command
 
@@ -232,13 +239,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 #pragma mark - Annotations
 
-- (void)removeAnnotation:(PTYAnnotation *)annotation;
+- (void)removeAnnotation:(id<PTYAnnotationReading>)annotation;
 
-- (PTYAnnotation *)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange;
+- (id<PTYAnnotationReading>)addNoteWithText:(NSString *)text inAbsoluteRange:(VT100GridAbsCoordRange)absRange;
 
-- (void)addAnnotation:(PTYAnnotation *)annotation
+- (void)addAnnotation:(id<PTYAnnotationReading>)annotation
               inRange:(VT100GridCoordRange)range
                 focus:(BOOL)focus;
+
+- (void)setStringValueOfAnnotation:(id<PTYAnnotationReading>)annotation to:(NSString *)stringValue;
 
 #pragma mark - URLs
 

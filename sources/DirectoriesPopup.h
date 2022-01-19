@@ -10,7 +10,7 @@
 #import "PopupEntry.h"
 
 @class iTermRecentDirectoryMO;
-@class VT100RemoteHost;
+@protocol VT100RemoteHostReading;
 
 @interface DirectoriesPopupEntry : PopupEntry
 @property(nonatomic, retain) iTermRecentDirectoryMO *entry;
@@ -18,6 +18,6 @@
 
 @interface DirectoriesPopupWindowController : iTermPopupWindowController
 
-- (void)loadDirectoriesForHost:(VT100RemoteHost *)host;
+- (void)loadDirectoriesForHost:(id<VT100RemoteHostReading>)host;
 
 @end

@@ -856,18 +856,18 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
 #pragma mark - Feature Extraction
 
 // Returns an array of hostnames from an array of VT100RemoteHost*s
-- (NSArray *)hostnamesInHosts:(NSArray *)hosts {
+- (NSArray *)hostnamesInHosts:(NSArray<id<VT100RemoteHostReading>> *)hosts {
     NSMutableArray *names = [NSMutableArray array];
-    for (VT100RemoteHost *host in hosts) {
+    for (id<VT100RemoteHostReading> host in hosts) {
         [names addObject:host.hostname];
     }
     return names;
 }
 
 // Returns an array of usernames from an array of VT100RemoteHost*s
-- (NSArray *)usernamesInHosts:(NSArray *)hosts {
+- (NSArray *)usernamesInHosts:(NSArray<id<VT100RemoteHostReading>> *)hosts {
     NSMutableArray *names = [NSMutableArray array];
-    for (VT100RemoteHost *host in hosts) {
+    for (id<VT100RemoteHostReading> host in hosts) {
         [names addObject:host.username];
     }
     return names;

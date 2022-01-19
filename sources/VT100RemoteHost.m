@@ -15,7 +15,11 @@
 static NSString *const kRemoteHostHostNameKey = @"Host name";
 static NSString *const kRemoteHostUserNameKey = @"User name";
 
-@implementation VT100RemoteHost
+@implementation VT100RemoteHost {
+    VT100RemoteHost *_doppelganger;
+    BOOL _isDoppelganger;
+}
+
 @synthesize entry;
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
@@ -39,7 +43,7 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
             self.class, self, self.hostname, self.username];
 }
 
-- (BOOL)isEqualToRemoteHost:(VT100RemoteHost *)other {
+- (BOOL)isEqualToRemoteHost:(id<VT100RemoteHostReading>)other {
     return ([_hostname isEqualToString:other.hostname] &&
             [_username isEqualToString:other.username]);
 }
@@ -67,7 +71,19 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
 }
 
 - (instancetype)copyOfIntervalTreeObject {
-    return [[self.class alloc] initWithDictionary:self.dictionaryValue];
+    VT100RemoteHost *copy = [[VT100RemoteHost alloc] init];
+    copy.hostname = self.hostname;
+    copy.username = self.username;
+    return copy;
+}
+
+- (id<IntervalTreeObject>)doppelganger {
+    assert(!_isDoppelganger);
+    if (!_doppelganger) {
+        _doppelganger = [self copyOfIntervalTreeObject];
+        _doppelganger->_isDoppelganger = YES;
+    }
+    return _doppelganger;
 }
 
 @end

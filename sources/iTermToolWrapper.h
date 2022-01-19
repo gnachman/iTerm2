@@ -12,12 +12,12 @@
 
 @class CapturedOutput;
 @class iTermAction;
-@class iTermMark;
-@class VT100RemoteHost;
+@protocol iTermMark;
 @class ToolCommandHistoryView;
+@protocol VT100ScreenMarkReading;
+@protocol VT100RemoteHostReading;
 @class iTermCommandHistoryCommandUseMO;
 @class iTermToolWrapper;
-@class VT100ScreenMark;
 
 @protocol iTermToolbeltViewDelegate<NSObject>
 
@@ -26,10 +26,10 @@
 - (void)toolbeltDidFinishGrowing;
 - (void)toolbeltUpdateMouseCursor;
 - (void)toolbeltInsertText:(NSString *)text;
-- (VT100RemoteHost *)toolbeltCurrentHost;
+- (id<VT100RemoteHostReading>)toolbeltCurrentHost;
 - (pid_t)toolbeltCurrentShellProcessId;
-- (VT100ScreenMark *)toolbeltLastCommandMark;
-- (void)toolbeltDidSelectMark:(iTermMark *)mark;
+- (id<VT100ScreenMarkReading>)toolbeltLastCommandMark;
+- (void)toolbeltDidSelectMark:(id<iTermMark>)mark;
 - (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput;
 - (BOOL)toolbeltCurrentSessionHasGuid:(NSString *)guid;
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession;

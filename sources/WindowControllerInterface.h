@@ -15,7 +15,7 @@
 @class PTYTab;
 @class PTYTabView;
 @class TmuxController;
-@class VT100RemoteHost;
+@protocol VT100RemoteHostReading;
 
 @class iTermRestorableSession;
 
@@ -385,7 +385,7 @@
 // Is this a "floating" hotkey window? These sit in nonactivating panels with a high window level.
 - (BOOL)isFloatingHotKeyWindow;
 
-- (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host;
+- (void)sessionHostDidChange:(PTYSession *)session to:(id<VT100RemoteHostReading>)host;
 
 #pragma mark - Command history
 

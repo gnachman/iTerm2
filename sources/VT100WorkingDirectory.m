@@ -11,7 +11,11 @@
 
 static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Directory";
 
-@implementation VT100WorkingDirectory
+@implementation VT100WorkingDirectory {
+    VT100WorkingDirectory *_doppelganger;
+    __weak VT100WorkingDirectory *_progenitor;
+}
+
 @synthesize entry;
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
@@ -42,8 +46,20 @@ static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Dir
     }
 }
 
+- (nonnull id<IntervalTreeObject>)doppelganger {
+    @synchronized ([VT100WorkingDirectory class]) {
+        if (!_doppelganger) {
+            _doppelganger = [self copyOfIntervalTreeObject];
+            _doppelganger->_progenitor = self;
+        }
+        return _doppelganger;
+    }
+}
+
 - (instancetype)copyOfIntervalTreeObject {
-    return [[self.class alloc] initWithDictionary:self.dictionaryValue];
+    VT100WorkingDirectory *copy = [[VT100WorkingDirectory alloc] init];
+    copy.workingDirectory = self.workingDirectory;
+    return copy;
 }
 
 @end

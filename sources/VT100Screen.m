@@ -70,7 +70,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (self) {
 #warning TODO: update colormap's darkMode through VT100ScreenConfiguration
         _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
-        _state = [_mutableState retain];
+        _mutableState.mainThreadCopy = [_mutableState copy];
+        _state = _mutableState.mainThreadCopy;
         _findContext = [[FindContext alloc] init];
 
         [iTermNotificationController sharedInstance];
@@ -455,13 +456,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state objectOnOrBeforeLine:line ofClass:cls];
 }
 
-- (VT100RemoteHost *)remoteHostOnLine:(int)line {
+- (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line {
     return [_state remoteHostOnLine:line];
 }
 
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line {
     DLog(@"Figuring out path for %@ on line %d", filename, line);
-    VT100RemoteHost *remoteHost = [self remoteHostOnLine:line];
+    id<VT100RemoteHostReading> remoteHost = [self remoteHostOnLine:line];
     if (!remoteHost.username || !remoteHost.hostname) {
         DLog(@"nil username or hostname; return nil");
         return nil;
@@ -494,9 +495,22 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state workingDirectoryOnLine:line];
 }
 
-- (void)removeAnnotation:(PTYAnnotation *)annotation {
+- (void)removeAnnotation:(id<PTYAnnotationReading>)annotation {
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState removeAnnotation:annotation];
+    }];
+}
+
+- (void)setStringValueOfAnnotation:(id<PTYAnnotationReading>)annotation to:(NSString *)stringValue {
+    id<PTYAnnotationReading> progenitor = annotation.progenitor;
+    if (!progenitor) {
+        return;
+    }
+    DLog(@"Optimistically set main-thread copy of %@ to %@", annotation, stringValue);
+    // Optimistically set it in the doppelganger. This will be overwritten at the next sync.
+    ((PTYAnnotation *)annotation).stringValue = stringValue;
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState setStringValueOfAnnotation:progenitor to:stringValue];
     }];
 }
 
@@ -504,7 +518,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state.intervalTree containsObject:mark];
 }
 
-- (VT100GridCoordRange)coordRangeOfAnnotation:(PTYAnnotation *)note {
+- (VT100GridCoordRange)coordRangeOfAnnotation:(id<IntervalTreeImmutableObject>)note {
     return [_state coordRangeForInterval:note.entry.interval];
 }
 
@@ -535,28 +549,28 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return result;
 }
 
-- (NSArray<PTYAnnotation *> *)annotationsInRange:(VT100GridCoordRange)range {
+- (NSArray<id<PTYAnnotationReading>> *)annotationsInRange:(VT100GridCoordRange)range {
     Interval *interval = [_state intervalForGridCoordRange:range];
     NSArray *objects = [_state.intervalTree objectsInInterval:interval];
-    NSMutableArray *notes = [NSMutableArray array];
+    NSMutableArray<id<PTYAnnotationReading>> *notes = [NSMutableArray array];
     for (id<IntervalTreeObject> o in objects) {
         if ([o isKindOfClass:[PTYAnnotation class]]) {
-            [notes addObject:o];
+            [notes addObject:(id<PTYAnnotationReading>)o];
         }
     }
     return notes;
 }
 
-- (VT100ScreenMark *)lastPromptMark {
+- (id<VT100ScreenMarkReading>)lastPromptMark {
     return [_state lastPromptMark];
 }
 
-- (VT100ScreenMark *)promptMarkWithGUID:(NSString *)guid {
+- (id<VT100ScreenMarkReading>)promptMarkWithGUID:(NSString *)guid {
     NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
         for (id obj in objects) {
-            VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
+            id<VT100ScreenMarkReading> screenMark = [VT100ScreenMark castFrom:obj];
             if (!screenMark) {
                 continue;
             }
@@ -588,13 +602,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)enumeratePromptsFrom:(NSString *)maybeFirst
                           to:(NSString *)maybeLast
-                       block:(void (^ NS_NOESCAPE)(VT100ScreenMark *mark))block {
+                       block:(void (^ NS_NOESCAPE)(id<VT100ScreenMarkReading> mark))block {
     NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     BOOL foundFirst = (maybeFirst == nil);
     while (objects) {
         for (id obj in objects) {
-            VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
+            id<VT100ScreenMarkReading> screenMark = [VT100ScreenMark castFrom:obj];
             if (!screenMark) {
                 continue;
             }
@@ -619,11 +633,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)clearToLastMark {
     const long long overflow = self.totalScrollbackOverflow;
     const int cursorLine = self.currentGrid.cursor.y + _state.numberOfScrollbackLines;
-    VT100ScreenMark *lastMark = [self lastMarkPassingTest:^BOOL(__kindof id<IntervalTreeObject> obj) {
+    id<VT100ScreenMarkReading> lastMark = [self lastMarkPassingTest:^BOOL(__kindof id<IntervalTreeObject> obj) {
         if (![obj isKindOfClass:[VT100ScreenMark class]]) {
             return NO;
         }
-        VT100ScreenMark *mark = obj;
+        id<VT100ScreenMarkReading> mark = obj;
         const VT100GridCoord intervalStart = [_state coordRangeForInterval:mark.entry.interval].start;
         if (intervalStart.y >= _state.numberOfScrollbackLines + self.currentGrid.cursor.y) {
             return NO;
@@ -645,11 +659,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }];
 }
 
-- (VT100ScreenMark *)lastMark {
+- (id<VT100ScreenMarkReading>)lastMark {
     return [self lastMarkMustBePrompt:NO class:[VT100ScreenMark class]];
 }
 
-- (VT100RemoteHost *)lastRemoteHost {
+- (id<VT100RemoteHostReading>)lastRemoteHost {
     return [_state lastRemoteHost];
 }
 
@@ -671,29 +685,29 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return nil;
 }
 
-- (VT100ScreenMark *)markOnLine:(int)line {
+- (id<VT100ScreenMarkReading>)markOnLine:(int)line {
     return [_state markOnLine:line];
 }
 
-- (NSArray<VT100ScreenMark *> *)lastMarks {
+- (NSArray<id<VT100ScreenMarkReading>> *)lastMarks {
     NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     return [self firstMarkBelongingToAnyClassIn:@[ [VT100ScreenMark class] ]
                                 usingEnumerator:enumerator];
 }
 
-- (NSArray<VT100ScreenMark *> *)firstMarks {
+- (NSArray<id<VT100ScreenMarkReading>> *)firstMarks {
     NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumerator];
     return [self firstMarkBelongingToAnyClassIn:@[ [VT100ScreenMark class] ]
                                 usingEnumerator:enumerator];
 }
 
-- (NSArray<PTYAnnotation *> *)lastAnnotations {
+- (NSArray<id<PTYAnnotationReading>> *)lastAnnotations {
     NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumerator];
     return [self firstMarkBelongingToAnyClassIn:@[ [PTYAnnotation class] ]
                                 usingEnumerator:enumerator];
 }
 
-- (NSArray<PTYAnnotation *> *)firstAnnotations {
+- (NSArray<id<PTYAnnotationReading>> *)firstAnnotations {
     NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumerator];
     return [self firstMarkBelongingToAnyClassIn:@[ [PTYAnnotation class] ]
                                 usingEnumerator:enumerator];
@@ -721,7 +735,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     while (objects) {
         for (id object in objects) {
             if ([object isKindOfClass:[VT100ScreenMark class]]) {
-                VT100ScreenMark *mark = object;
+                id<VT100ScreenMarkReading> mark = object;
                 return overflow + [_state coordRangeForInterval:mark.entry.interval].start.y;
             }
         }
@@ -742,7 +756,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     while (objects) {
         for (id object in objects) {
             if ([object isKindOfClass:[VT100ScreenMark class]]) {
-                VT100ScreenMark *mark = object;
+                id<VT100ScreenMarkReading> mark = object;
                 return overflow + [_state coordRangeForInterval:mark.entry.interval].end.y;
             }
         }
@@ -820,13 +834,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state lineNumberRangeOfInterval:interval];
 }
 
-- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
+- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
     NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumeratorAt:mark.entry.interval.limit];
     NSArray *objects;
     do {
         objects = [enumerator nextObject];
         objects = [objects objectsOfClasses:@[ [VT100ScreenMark class] ]];
-        for (VT100ScreenMark *nextMark in objects) {
+        for (id<VT100ScreenMarkReading> nextMark in objects) {
             if (nextMark.isPrompt) {
                 VT100GridCoordRange range;
                 range.start = [_state coordRangeForInterval:mark.entry.interval].end;
@@ -874,7 +888,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
 }
 
-- (VT100ScreenMark *)lastCommandMark {
+- (id<VT100ScreenMarkReading>)lastCommandMark {
     return [_state lastCommandMark];
 }
 
@@ -1080,13 +1094,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         [mutableState updateExpectFrom:maybeExpect];
     }
     const int overflow = [mutableState scrollbackOverflow];
+    if (resetOverflow) {
+        [mutableState resetScrollbackOverflow];
+    }
 #warning TODO: avoid making the copy if nothing has changed. This is important because joined threads perform two syncs and the copy is slow.
     mutableState.mainThreadCopy = [mutableState copy];
-#warning TODO: _state = mutableState.mainThreadCopy;
+    _state = mutableState.mainThreadCopy;
     if (resetOverflow) {
         [mutableState didSynchronize];
-#warning TODO: Uncomment this after I make a copy
-        // [mutableState.currentGrid markAllCharsDirty:NO];
     }
     DLog(@"End");
     return (VT100SyncResult) {

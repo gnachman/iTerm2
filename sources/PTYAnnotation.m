@@ -11,9 +11,14 @@ static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
 
 @implementation PTYAnnotation {
     BOOL _deferHide;
+    PTYAnnotation *_doppelganger;
+    BOOL _isDoppelganger;
 }
 
+@synthesize progenitor = _progenitor;
 @synthesize entry = _entry;
+@synthesize delegate = _delegate;
+
 - (instancetype)init {
     self = [super init];
     if (self) {
@@ -35,7 +40,9 @@ static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
 }
 
 - (instancetype)copyOfIntervalTreeObject {
-    return [[PTYAnnotation alloc] initWithDictionary:self.dictionaryValue];
+    PTYAnnotation *copy = [[PTYAnnotation alloc] init];
+    copy.stringValue = _stringValue;
+    return copy;
 }
 
 - (void)hide {
@@ -70,4 +77,17 @@ static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
     [_delegate annotationWillBeRemoved:self];
 }
 
+- (id<IntervalTreeObject>)doppelganger {
+    @synchronized ([PTYAnnotation class]) {
+        assert(!_isDoppelganger);
+        if (!_doppelganger) {
+            _doppelganger = [self copyOfIntervalTreeObject];
+            _doppelganger->_progenitor = self;
+            _doppelganger->_isDoppelganger = YES;
+        }
+        return _doppelganger;
+    }
+}
+
 @end
+

@@ -407,7 +407,7 @@ static void SwapInt(int *a, int *b) {
 
     for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
         VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
-        [self.intervalTree removeObject:note];
+        [self.mutableIntervalTree removeObject:note];
         LineBufferPositionRange *positionRange =
         [self positionRangeForCoordRange:range
                                     inLineBuffer:appendOnlyLineBuffer
@@ -446,7 +446,7 @@ static void SwapInt(int *a, int *b) {
         withUsedHeight:usedHeight
              newHeight:newSize.height];
 
-    if ([self.intervalTree count]) {
+    if ([self.mutableIntervalTree count]) {
         *altScreenNotesPtr = [self intervalTreeObjectsWithUsedHeight:usedHeight
                                                            newHeight:newSize.height
                                                                 grid:self.altGrid
@@ -547,44 +547,45 @@ static void SwapInt(int *a, int *b) {
     return newSubSelections;
 }
 
-- (IntervalTree *)replacementIntervalTreeForNewWidth:(int)newWidth {
+- (void)updateIntervalTreeWithWidth:(int)newWidth {
+    NSArray<id<IntervalTreeImmutableObject>> *objects = [self.intervalTree allObjects];
+    [self.mutableIntervalTree removeAllObjects];
+
     // Convert ranges of notes to their new coordinates and replace the interval tree.
-    IntervalTree *replacementTree = [[IntervalTree alloc] init];
-    for (id<IntervalTreeObject> note in [self.intervalTree allObjects]) {
+    for (id<IntervalTreeObject> note in objects) {
         VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
         VT100GridCoordRange newRange;
         if (noteRange.end.x < 0 && noteRange.start.y == 0 && noteRange.end.y < 0) {
-            // note has scrolled off top
-            [self.intervalTree removeObject:note];
-        } else {
-            if ([self convertRange:noteRange
-                           toWidth:newWidth
-                                to:&newRange
-                      inLineBuffer:self.linebuffer
-                     tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
-                assert(noteRange.start.y >= 0);
-                assert(noteRange.end.y >= 0);
-                Interval *newInterval = [self intervalForGridCoordRange:newRange
-                                                                  width:newWidth
-                                                            linesOffset:self.cumulativeScrollbackOverflow];
-                [self.intervalTree removeObject:note];
-                [replacementTree addObject:note withInterval:newInterval];
-            }
+            continue;
         }
+        if (![self convertRange:noteRange
+                       toWidth:newWidth
+                            to:&newRange
+                  inLineBuffer:self.linebuffer
+                 tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
+            continue;
+        }
+        assert(noteRange.start.y >= 0);
+        assert(noteRange.end.y >= 0);
+        Interval *newInterval = [self intervalForGridCoordRange:newRange
+                                                          width:newWidth
+                                                    linesOffset:self.cumulativeScrollbackOverflow];
+        note.entry = nil;
+        note.doppelganger.entry = nil;
+        [self.mutableIntervalTree addObject:note withInterval:newInterval];
     }
-    return replacementTree;
 }
 
 - (void)fixUpPrimaryGridIntervalTreeForNewSize:(VT100GridSize)newSize
                            wasShowingAltScreen:(BOOL)wasShowingAltScreen {
-    if ([self.intervalTree count]) {
+    if ([self.mutableIntervalTree count]) {
         // Fix up the intervals for the primary grid.
         if (wasShowingAltScreen) {
             // Temporarily swap in primary grid so convertRange: will do the right thing.
             self.currentGrid = self.primaryGrid;
         }
 
-        self.intervalTree = [self replacementIntervalTreeForNewWidth:newSize.width];
+        [self updateIntervalTreeWithWidth:newSize.width];
 
         if (wasShowingAltScreen) {
             // Return to alt grid.
@@ -784,7 +785,7 @@ static void SwapInt(int *a, int *b) {
             Interval *interval = [self intervalForGridCoordRange:newRange
                                                                     width:newSize.width
                                                               linesOffset:self.cumulativeScrollbackOverflow];
-            [self.intervalTree addObject:note withInterval:interval];
+            [self.mutableIntervalTree addObject:note withInterval:interval];
         } else {
             DLog(@"  *FAILED TO CONVERT*");
         }
@@ -880,6 +881,44 @@ static void SwapInt(int *a, int *b) {
     return newSubSelections;
 }
 
+- (void)updateSavedIntervalTreeWithWidth:(int)newWidth
+                              lineBuffer:(LineBuffer *)altScreenLineBuffer
+                                 dropped:(int)numLinesDroppedFromTop {
+    NSArray<id<IntervalTreeImmutableObject>> *objects = self.savedIntervalTree.allObjects;
+    [self.mutableSavedIntervalTree removeAllObjects];
+    for (id<IntervalTreeObject> object in objects) {
+        VT100GridCoordRange objectRange = [self coordRangeForInterval:object.entry.interval];
+        DLog(@"Found object at %@", VT100GridCoordRangeDescription(objectRange));
+        VT100GridCoordRange newRange;
+        if (![self convertRange:objectRange
+                       toWidth:newWidth
+                            to:&newRange
+                  inLineBuffer:altScreenLineBuffer
+                 tolerateEmpty:[self intervalTreeObjectMayBeEmpty:object]]) {
+            continue;
+        }
+        assert(objectRange.start.y >= 0);
+        assert(objectRange.end.y >= 0);
+        // Anticipate the lines that will be dropped when the alt grid is restored.
+        newRange.start.y += self.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
+        newRange.end.y += self.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
+        if (newRange.start.y < 0) {
+            newRange.start.y = 0;
+            newRange.start.x = 0;
+        }
+        DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(objectRange), numLinesDroppedFromTop);
+        [self.mutableSavedIntervalTree removeObject:object];
+        if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
+            Interval *newInterval = [self intervalForGridCoordRange:newRange
+                                                              width:newWidth
+                                                        linesOffset:0];
+            [self.mutableSavedIntervalTree addObject:object withInterval:newInterval];
+        } else {
+            DLog(@"Failed to convert");
+        }
+    }
+}
+
 - (void)updateAlternateScreenIntervalTreeForNewSize:(VT100GridSize)newSize {
     // Append alt screen to empty line buffer
     LineBuffer *altScreenLineBuffer = [[LineBuffer alloc] init];
@@ -894,38 +933,9 @@ static void SwapInt(int *a, int *b) {
 
     // Convert note ranges to new coords, dropping or truncating as needed
     self.currentGrid = self.altGrid;  // Swap to alt grid temporarily for convertRange:toWidth:to:inLineBuffer:
-    IntervalTree *replacementTree = [[IntervalTree alloc] init];
-    for (id<IntervalTreeObject> object in [self.savedIntervalTree allObjects]) {
-        VT100GridCoordRange objectRange = [self coordRangeForInterval:object.entry.interval];
-        DLog(@"Found object at %@", VT100GridCoordRangeDescription(objectRange));
-        VT100GridCoordRange newRange;
-        if ([self convertRange:objectRange
-                       toWidth:newSize.width
-                            to:&newRange
-                  inLineBuffer:altScreenLineBuffer
-                 tolerateEmpty:[self intervalTreeObjectMayBeEmpty:object]]) {
-            assert(objectRange.start.y >= 0);
-            assert(objectRange.end.y >= 0);
-            // Anticipate the lines that will be dropped when the alt grid is restored.
-            newRange.start.y += self.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
-            newRange.end.y += self.cumulativeScrollbackOverflow - numLinesDroppedFromTop;
-            if (newRange.start.y < 0) {
-                newRange.start.y = 0;
-                newRange.start.x = 0;
-            }
-            DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(objectRange), numLinesDroppedFromTop);
-            [self.savedIntervalTree removeObject:object];
-            if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
-                Interval *newInterval = [self intervalForGridCoordRange:newRange
-                                                                  width:newSize.width
-                                                            linesOffset:0];
-                [replacementTree addObject:object withInterval:newInterval];
-            } else {
-                DLog(@"Failed to convert");
-            }
-        }
-    }
-    self.savedIntervalTree = replacementTree;
+    [self updateSavedIntervalTreeWithWidth:newSize.width
+                                lineBuffer:altScreenLineBuffer
+                                   dropped:numLinesDroppedFromTop];
     self.currentGrid = self.primaryGrid;  // Swap back to primary grid
 
     // Restore alt screen with new width

@@ -87,7 +87,7 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
     _comboBox.stringValue = stringValue;
 }
 
-- (void)setHost:(VT100RemoteHost *)host {
+- (void)setHost:(id<VT100RemoteHostReading>)host {
 }
 
 #pragma mark - Private

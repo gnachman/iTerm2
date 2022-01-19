@@ -48,14 +48,14 @@
     return managedObject;
 }
 
-- (VT100ScreenMark *)mark {
+- (id<VT100ScreenMarkReading>)mark {
     if (!self.markGuid) {
         return nil;
     }
-    return [VT100ScreenMark markWithGuid:self.markGuid];
+    return [[VT100ScreenMark markWithGuid:self.markGuid] doppelganger];
 }
 
-- (void)setMark:(VT100ScreenMark *)mark {
+- (void)setMark:(id<VT100ScreenMarkReading>)mark {
     self.markGuid = mark.guid;
 }
 

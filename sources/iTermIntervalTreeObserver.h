@@ -28,6 +28,6 @@ typedef NS_ENUM(NSUInteger, iTermIntervalTreeObjectType) {
 - (void)intervalTreeVisibleRangeDidChange;
 @end
 
-iTermIntervalTreeObjectType iTermIntervalTreeObjectTypeForObject(id<IntervalTreeObject> object);
+iTermIntervalTreeObjectType iTermIntervalTreeObjectTypeForObject(id<IntervalTreeImmutableObject> object);
 
 NS_ASSUME_NONNULL_END

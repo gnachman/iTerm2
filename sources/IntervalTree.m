@@ -329,23 +329,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
     self = [self init];
     if (self) {
-        for (NSDictionary *entry in dict[kIntervalTreeEntriesKey]) {
-            NSDictionary *intervalDict = entry[kIntervalTreeIntervalKey];
-            NSDictionary *objectDict = entry[kIntervalTreeObjectKey];
-            NSString *className = entry[kIntervalTreeClassNameKey];
-            if (intervalDict && objectDict && className) {
-                Class theClass = NSClassFromString(className);
-                if ([theClass instancesRespondToSelector:@selector(initWithDictionary:)]) {
-                    id<IntervalTreeObject> object = [[[theClass alloc] initWithDictionary:objectDict] autorelease];
-                    if (object) {
-                        Interval *interval = [Interval intervalWithDictionary:intervalDict];
-                        if (interval.limit >= 0) {
-                            [self addObject:object withInterval:interval];
-                        }
-                    }
-                }
-            }
-        }
+        [self restoreFromDictionary:dict];
     }
     return self;
 }
@@ -369,6 +353,53 @@ static NSString *const kIntervalLengthKey = @"Length";
     _tree.delegate = nil;
     [_tree release];
     [super dealloc];
+}
+
+- (void)restoreFromDictionary:(NSDictionary *)dict {
+    for (NSDictionary *entry in dict[kIntervalTreeEntriesKey]) {
+        NSDictionary *intervalDict = entry[kIntervalTreeIntervalKey];
+        NSDictionary *objectDict = entry[kIntervalTreeObjectKey];
+        NSString *className = entry[kIntervalTreeClassNameKey];
+        if (intervalDict && objectDict && className) {
+            Class theClass = NSClassFromString(className);
+            if ([theClass instancesRespondToSelector:@selector(initWithDictionary:)]) {
+                id<IntervalTreeObject> object = [[[theClass alloc] initWithDictionary:objectDict] autorelease];
+                if (object) {
+                    Interval *interval = [Interval intervalWithDictionary:intervalDict];
+                    if (interval.limit >= 0) {
+                        [self addObject:object withInterval:interval];
+                    }
+                }
+            }
+        }
+    }
+}
+
+- (iTermTuple<Interval *, id<IntervalTreeObject>> *)dropFirst {
+    NSEnumerator *enumerator = [self forwardLimitEnumeratorAt:0];
+    if (!enumerator) {
+        return nil;
+    }
+    id<IntervalTreeObject> obj = [enumerator nextObject];
+    if (!obj) {
+        return nil;
+    }
+    Interval *interval = [[obj.entry.interval copy] autorelease];
+    [self removeObject:obj];
+    if (!obj) {
+        return nil;
+    }
+    return [iTermTuple tupleWithObject:interval andObject:obj];
+}
+
+- (void)removeAllObjects {
+    _tree.delegate = nil;
+    _count = 0;
+    _tree = [[AATree alloc] initWithKeyComparator:^(NSNumber *key1, NSNumber *key2) {
+        return [key1 compare:key2];
+    }];
+    assert(_tree);
+    _tree.delegate = self;
 }
 
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval {
@@ -940,17 +971,6 @@ static NSString *const kIntervalLengthKey = @"Length";
         interval.location = interval.location - offset;
     }
     return @{ kIntervalTreeEntriesKey: objectDicts };
-}
-
-- (id)copyWithZone:(NSZone *)zone {
-    IntervalTree *theCopy = [[IntervalTree alloc] init];
-    for (id<IntervalTreeObject> object in self.allObjects) {
-        id<IntervalTreeObject> copiedObject = [[object copyOfIntervalTreeObject] autorelease];
-        copiedObject.entry = nil;
-        [theCopy addObject:copiedObject
-              withInterval:object.entry.interval];
-    }
-    return theCopy;
 }
 
 @end

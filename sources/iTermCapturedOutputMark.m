@@ -13,10 +13,10 @@ static NSString *const kMarkGuidKey = @"Guid";
 
 @implementation iTermCapturedOutputMark
 
-- (void)dealloc {
-    [_guid release];
-    [super dealloc];
-}
+@synthesize guid = _guid;
+#warning TODO: I hae no idea why the compiler insists on these @dynamics. Make sure it works.
+@dynamic interval;
+@dynamic object;
 
 - (NSString *)guid {
     if (!_guid) {
@@ -38,7 +38,7 @@ static NSString *const kMarkGuidKey = @"Guid";
 }
 
 - (NSDictionary *)dictionaryValue {
-    NSMutableDictionary *dict = [[[super dictionaryValue] mutableCopy] autorelease];
+    NSMutableDictionary *dict = [[super dictionaryValue] mutableCopy];
     dict[kMarkGuidKey] = self.guid;
     return dict;
 }

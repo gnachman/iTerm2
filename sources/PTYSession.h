@@ -59,7 +59,7 @@ extern NSString *const iTermSessionWillTerminateNotification;
 @class PasteContext;
 @class PreferencePanel;
 @class PTYSession;
-@class VT100RemoteHost;
+@protocol VT100RemoteHostReading;
 @class VT100Screen;
 @class VT100Terminal;
 @class iTermColorMap;
@@ -455,7 +455,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // Call this on tmux clients to get the session with the tmux gateway.
 @property(nonatomic, readonly) PTYSession *tmuxGatewaySession;
 
-@property(nonatomic, readonly) VT100RemoteHost *currentHost;
+@property(nonatomic, readonly) id<VT100RemoteHostReading> currentHost;
 
 @property(nonatomic, readonly) int tmuxPane;
 
@@ -481,7 +481,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // Requires shell integration.
 @property(nonatomic, readonly) NSMutableArray<NSString *> *commands;  // of NSString
 @property(nonatomic, readonly) NSMutableArray<NSString *> *directories;  // of NSString
-@property(nonatomic, readonly) NSMutableArray<VT100RemoteHost *> *hosts;  // of VT100RemoteHost
+@property(nonatomic, readonly) NSMutableArray<id<VT100RemoteHostReading>> *hosts;  // of VT100RemoteHost
 
 @property (nonatomic, readonly) iTermVariables *variables;
 @property (nonatomic, readonly) iTermVariableScope<iTermSessionScope> *variablesScope;

@@ -82,7 +82,7 @@ TriggerDelegate> {
 @property(nonatomic, copy) NSString *lastDirectory;
 @property(nonatomic, copy) NSString *lastLocalDirectory;
 @property(nonatomic) BOOL lastLocalDirectoryWasPushed;  // was lastLocalDirectory from shell integration?
-@property(nonatomic, retain) VT100RemoteHost *lastRemoteHost;  // last remote host at time of setting current directory
+@property(nonatomic, retain) id<VT100RemoteHostReading> lastRemoteHost;  // last remote host at time of setting current directory
 @property(nonatomic, retain) NSColor *cursorGuideColor;
 @property(nonatomic, copy) NSString *badgeFormat;
 
@@ -97,7 +97,7 @@ TriggerDelegate> {
 @property(nonatomic, retain) iTermPasteHelper *pasteHelper;
 @property(nonatomic, copy) NSString *lastCommand;
 @property(nonatomic, retain) iTermAutomaticProfileSwitcher *automaticProfileSwitcher;
-@property(nonatomic, retain) VT100RemoteHost *currentHost;
+@property(nonatomic, retain) id<VT100RemoteHostReading> currentHost;
 @property(nonatomic, retain) iTermExpectation *pasteBracketingOopsieExpectation;
 @property(nonatomic, copy) NSString *cookie;
 @end

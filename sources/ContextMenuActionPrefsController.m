@@ -49,8 +49,7 @@ NSString *iTermSmartSelectionActionContextKeyRemoteHost = @"remoteHost";
 + (NSString *)titleForActionDict:(NSDictionary *)dict
            withCaptureComponents:(NSArray *)components
                 workingDirectory:(NSString *)workingDirectory
-                      remoteHost:(VT100RemoteHost *)remoteHost
-{
+                      remoteHost:(id<VT100RemoteHostReading>)remoteHost {
     NSString *title = [dict objectForKey:kTitleKey];
     for (int i = 0; i < 9; i++) {
         NSString *repl = @"";

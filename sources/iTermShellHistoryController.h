@@ -14,8 +14,8 @@
 extern NSString *const kCommandHistoryDidChangeNotificationName;
 extern NSString *const kDirectoriesDidChangeNotificationName;
 
-@class VT100RemoteHost;
-@class VT100ScreenMark;
+@protocol VT100RemoteHostReading;
+@protocol VT100ScreenMarkReading;
 
 // This is an informal protocol that the first responder may adopt.
 @protocol ShellIntegrationInstaller <NSObject>
@@ -43,13 +43,13 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 
 // Record the use of a command.
 - (void)addCommand:(NSString *)command
-            onHost:(VT100RemoteHost *)host
+            onHost:(id<VT100RemoteHostReading>)host
        inDirectory:(NSString *)directory
-          withMark:(VT100ScreenMark *)mark;
+          withMark:(id<VT100ScreenMarkReading>)mark;
 
 // Change the status code of a command after it finishes running.
-- (void)setStatusOfCommandAtMark:(VT100ScreenMark *)mark
-                          onHost:(VT100RemoteHost *)remoteHost
+- (void)setStatusOfCommandAtMark:(id<VT100ScreenMarkReading>)mark
+                          onHost:(id<VT100RemoteHostReading>)remoteHost
                               to:(int)status;
 
 #pragma mark Lookup
@@ -59,22 +59,22 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 
 // Returns unique commands that have a given prefix. Sorted by frecency.
 - (NSArray<iTermCommandHistoryEntryMO *> *)commandHistoryEntriesWithPrefix:(NSString *)partialCommand
-                                                                    onHost:(VT100RemoteHost *)host;
+                                                                    onHost:(id<VT100RemoteHostReading>)host;
 
 // Just like commandHistoryEntriesWithPrefix:onHost, but returns command uses rather than entries.
 // Only the most recent use is returned.
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)autocompleteSuggestionsWithPartialCommand:(NSString *)partialCommand
-                                                                                   onHost:(VT100RemoteHost *)host;
+                                                                                   onHost:(id<VT100RemoteHostReading>)host;
 
 // Is there any command history for this host?
-- (BOOL)haveCommandsForHost:(VT100RemoteHost *)host;
+- (BOOL)haveCommandsForHost:(id<VT100RemoteHostReading>)host;
 
 // Returns a command use for a given mark.
 - (iTermCommandHistoryCommandUseMO *)commandUseWithMarkGuid:(NSString *)markGuid
-                                                     onHost:(VT100RemoteHost *)host;
+                                                     onHost:(id<VT100RemoteHostReading>)host;
 
 // Returns all command uses on a given host.
-- (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUsesForHost:(VT100RemoteHost *)host;
+- (NSArray<iTermCommandHistoryCommandUseMO *> *)commandUsesForHost:(id<VT100RemoteHostReading>)host;
 
 #pragma mark - Recent Directories
 
@@ -83,7 +83,7 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 // Record that a directory was entered. Set isChange to YES if the directory has just changed, or
 // NO if it's a repeat of the last path on this host.
 - (iTermRecentDirectoryMO *)recordUseOfPath:(NSString *)path
-                                     onHost:(VT100RemoteHost *)host
+                                     onHost:(id<VT100RemoteHostReading>)host
                                    isChange:(BOOL)isChange;
 
 // Change the "starred" setting of a directory.
@@ -96,15 +96,15 @@ extern NSString *const kDirectoriesDidChangeNotificationName;
 - (NSIndexSet *)abbreviationSafeIndexesInRecentDirectory:(iTermRecentDirectoryMO *)entry;
 
 // Find directories on a given host sorted by frecency.
-- (NSArray *)directoriesSortedByScoreOnHost:(VT100RemoteHost *)host;
+- (NSArray *)directoriesSortedByScoreOnHost:(id<VT100RemoteHostReading>)host;
 
 // Are there any directories known for this host?
-- (BOOL)haveDirectoriesForHost:(VT100RemoteHost *)host;
+- (BOOL)haveDirectoriesForHost:(id<VT100RemoteHostReading>)host;
 
 #pragma mark - Testing
 
-- (void)eraseCommandHistoryForHost:(VT100RemoteHost *)host;
-- (void)eraseDirectoriesForHost:(VT100RemoteHost *)host;
+- (void)eraseCommandHistoryForHost:(id<VT100RemoteHostReading>)host;
+- (void)eraseDirectoriesForHost:(id<VT100RemoteHostReading>)host;
 - (NSString *)pathForFileNamed:(NSString *)name;
 - (NSTimeInterval)now;
 - (NSString *)databaseFilenamePrefix;

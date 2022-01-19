@@ -9,8 +9,12 @@
 #import <Foundation/Foundation.h>
 #import "IntervalTree.h"
 
-@interface VT100WorkingDirectory : NSObject <IntervalTreeObject>
+@protocol VT100WorkingDirectoryReading<IntervalTreeImmutableObject>
+@property(nonatomic, copy, readonly) NSString *workingDirectory;
+@end
 
-@property(nonatomic, copy) NSString *workingDirectory;
+@interface VT100WorkingDirectory : NSObject <IntervalTreeObject, VT100WorkingDirectoryReading>
+
+@property(nonatomic, copy, readwrite) NSString *workingDirectory;
 
 @end

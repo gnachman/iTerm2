@@ -37,6 +37,7 @@
 @class iTermURLActionHelper;
 @class iTermVariableScope;
 @class MovingAverage;
+@protocol PTYAnnotationReading;
 @class PTYScroller;
 @class PTYScrollView;
 @class PTYTask;
@@ -588,7 +589,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)addSearchResult:(SearchResult *)searchResult;
 
 // When a new note is created, call this to add a view for it.
-- (void)addViewForNote:(PTYAnnotation *)annotation focus:(BOOL)focus;
+- (void)addViewForNote:(id<PTYAnnotationReading>)annotation focus:(BOOL)focus;
 
 // Makes sure not view frames are in the right places (e.g., after a resize).
 - (void)updateNoteViewFrames;

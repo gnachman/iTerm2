@@ -21,7 +21,7 @@
 @class iTermSelection;
 @class iTermTextExtractor;
 @class PTYFontInfo;
-@class VT100ScreenMark;
+@protocol VT100ScreenMarkReading;
 
 BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
@@ -31,7 +31,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
                         blendDefaultBackground:(BOOL)blendDefaultBackground
                                  virtualOffset:(CGFloat)virtualOffset;
 
-- (VT100ScreenMark *)drawingHelperMarkOnLine:(int)line;
+- (id<VT100ScreenMarkReading>)drawingHelperMarkOnLine:(int)line;
 
 - (const screen_char_t *)drawingHelperLineAtIndex:(int)line;
 - (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line;

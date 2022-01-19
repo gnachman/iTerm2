@@ -10,14 +10,16 @@
 
 @class iTermColorMap;
 @class iTermExternalAttributeIndex;
+@protocol IntervalTreeImmutableObject;
 @class PTYAnnotation;
+@protocol PTYAnnotationReading;
 @class PTYNoteViewController;
 @class PTYSession;
 @class PTYTask;
 @class SCPPath;
 @class VT100Grid;
-@class VT100RemoteHost;
-@class VT100ScreenMark;
+@protocol VT100RemoteHostReading;
+@protocol VT100ScreenMarkReading;
 @class VT100Terminal;
 
 @protocol PTYTextViewSynchronousUpdateStateReading<NSObject>
@@ -113,17 +115,17 @@
 - (void)addNote:(PTYAnnotation *)note inRange:(VT100GridCoordRange)range focus:(BOOL)focus;
 
 // Returns all notes in a range of cells.
-- (NSArray<PTYAnnotation *> *)annotationsInRange:(VT100GridCoordRange)range;
+- (NSArray<id<PTYAnnotationReading>> *)annotationsInRange:(VT100GridCoordRange)range;
 
-- (VT100GridCoordRange)coordRangeOfAnnotation:(PTYAnnotation *)note;
+- (VT100GridCoordRange)coordRangeOfAnnotation:(id<IntervalTreeImmutableObject>)note;
 - (NSArray *)charactersWithNotesOnLine:(int)line;
-- (VT100ScreenMark *)markOnLine:(int)line;
+- (id<VT100ScreenMarkReading>)markOnLine:(int)line;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
 
 - (SCPPath *)scpPathForFile:(NSString *)filename onLine:(int)line;
-- (VT100RemoteHost *)remoteHostOnLine:(int)line;
-- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark;
+- (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
+- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
 
 // Indicates if we're in alternate screen mode.
 - (BOOL)showingAlternateScreen;
@@ -141,6 +143,7 @@
 
 - (void)setColor:(NSColor *)color forKey:(int)key;
 - (id<iTermColorMapReading>)colorMap;
-- (void)removeAnnotation:(PTYAnnotation *)annotation;
+- (void)removeAnnotation:(id<PTYAnnotationReading>)annotation;
+- (void)setStringValueOfAnnotation:(id<PTYAnnotationReading>)annotation to:(NSString *)stringValue;
 
 @end
