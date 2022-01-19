@@ -7,6 +7,7 @@
 
 #import "TmuxGateway.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "TmuxController.h"
@@ -858,15 +859,32 @@ error:
         }
     }
 
-    // Send multiple small send-keys commands because commands longer than 1024 bytes crash tmux 1.8.
+    // Configure max lengths. Commands larger than 1024 bytes crash tmux 1.8.
+    const NSUInteger maxLiteralCharacters = 1000;
+    const NSUInteger maxHexCharacters = maxLiteralCharacters / 8;  // len(' C-Space') = 8
+    NSDictionary<NSNumber *, NSNumber *> *maxLengths = @{
+        @YES: @(maxLiteralCharacters),
+        @NO: @(maxHexCharacters)
+    };
+
     NSMutableArray *commands = [NSMutableArray array];
-    const NSUInteger stride = 80;
-    for (NSUInteger start = 0; start < codePoints.count; start += stride) {
-        NSUInteger length = MIN(stride, codePoints.count - start);
-        NSRange range = NSMakeRange(start, length);
-        NSArray *subarray = [codePoints subarrayWithRange:range];
-        [commands addObject:[self dictionaryForSendKeysCommandWithCodePoints:subarray windowPane:windowPane]];
-    }
+    void (^emitter)(NSArray<NSNumber *> * _Nonnull,
+              NSNumber * _Nonnull) =
+    ^(NSArray<NSNumber *> * _Nonnull codePoints,
+      NSNumber * _Nonnull literal) {
+        [commands addObject:[self dictionaryForSendKeysCommandWithCodePoints:codePoints
+                                                                  windowPane:windowPane
+                                                         asLiteralCharacters:literal.boolValue]];
+    };
+    NSNumber * _Nonnull(^classifier)(NSNumber * _Nonnull number) =
+    ^NSNumber * _Nonnull(NSNumber * _Nonnull number) {
+        return @([self canSendAsLiteralCharacter:number]);
+    };
+
+    [iTermRunLengthEncoder encodeArray:codePoints
+                            maxLengths:maxLengths
+                               emitter:emitter
+                            classifier:classifier];
 
     [delegate_ tmuxSetSecureLogging:YES];
     [self sendCommandList:commands];
@@ -887,16 +905,30 @@ error:
     return !([self.minimumServerVersion isEqual:version2_2] && [self.maximumServerVersion isEqual:version2_2]);
 }
 
+- (BOOL)canSendAsLiteralCharacter:(NSNumber *)codePoint {
+    const unichar c = codePoint.unsignedShortValue;
+    return isascii(c) && isalnum(c);
+}
+
+- (NSString *)numbersAsLiteralCharacters:(NSArray<NSNumber *> *)codePoints {
+    NSMutableString *result = [NSMutableString stringWithCapacity:codePoints.count];
+    for (NSNumber *number in codePoints) {
+        [result appendFormat:@"%c", number.intValue];
+    }
+    return result;
+}
+
 - (NSDictionary *)dictionaryForSendKeysCommandWithCodePoints:(NSArray<NSNumber *> *)codePoints
-                                                  windowPane:(int)windowPane {
+                                                  windowPane:(int)windowPane
+                                         asLiteralCharacters:(BOOL)asLiteralCharacters {
     NSString *value;
-    if ([codePoints isEqual:@[ @0 ]]) {
-        value = @"C-Space";
+    if (asLiteralCharacters) {
+        value = [self numbersAsLiteralCharacters:codePoints];
     } else {
         value = [codePoints numbersAsHexStrings];
     }
-    NSString *command = [NSString stringWithFormat:@"send-keys -t \"%%%d\" %@",
-                         windowPane, value];
+    NSString *command = [NSString stringWithFormat:@"send %@ %%%d %@",
+                         asLiteralCharacters ? @"-lt" : @"-t", windowPane, value];
     NSDictionary *dict = [self dictionaryForCommand:command
                                      responseTarget:self
                                    responseSelector:@selector(noopResponseSelector:)
