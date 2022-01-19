@@ -21,7 +21,17 @@ NSString *const kCaputredOutputCommandKey = @"Command";
 NSString *const kCapturedOutputStateKey = @"State";
 NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
 
-@implementation CapturedOutput
+@implementation CapturedOutput {
+    CapturedOutput *_doppelganger;
+}
+
+@synthesize line = _line;
+@synthesize values = _values;
+@synthesize promisedCommand = _promisedCommand;
+@synthesize state = _state;
+@synthesize mark = _mark;
+@synthesize absoluteLineNumber = _absoluteLineNumber;
+@synthesize markGuid = _markGuid;
 
 + (instancetype)capturedOutputWithDictionary:(NSDictionary *)dict {
     CapturedOutput *capturedOutput = [[CapturedOutput alloc] init];
@@ -67,6 +77,17 @@ NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
     self.promisedCommand = other.promisedCommand;
     self.state = other.state;
     self.markGuid = other.markGuid;
+}
+
+- (CapturedOutput *)copy {
+    return [CapturedOutput capturedOutputWithDictionary:self.dictionaryValue];
+}
+
+- (id<CapturedOutputReading>)doppelganger {
+    if (!_doppelganger) {
+        _doppelganger = [self copy];
+    }
+    return _doppelganger;
 }
 
 @end

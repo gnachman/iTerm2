@@ -9,18 +9,22 @@
 #import <Foundation/Foundation.h>
 #import "IntervalTree.h"
 
-@interface VT100RemoteHost : NSObject <IntervalTreeObject>
-@property(nonatomic, copy) NSString *hostname;
-@property(nonatomic, copy) NSString *username;
+@protocol VT100RemoteHostReading<NSObject, IntervalTreeImmutableObject>
+@property(nonatomic, copy, readonly) NSString *hostname;
+@property(nonatomic, copy, readonly) NSString *username;
 
 // Tries to guess if this is the local host.
 @property(nonatomic, readonly) BOOL isLocalhost;
 
-+ (instancetype)localhost;
-
-- (BOOL)isEqualToRemoteHost:(VT100RemoteHost *)other;
+- (BOOL)isEqualToRemoteHost:(id<VT100RemoteHostReading>)other;
 
 // Returns username@hostname.
 - (NSString *)usernameAndHostname;
+@end
 
+@interface VT100RemoteHost : NSObject <IntervalTreeObject, VT100RemoteHostReading>
+@property(nonatomic, copy, readwrite) NSString *hostname;
+@property(nonatomic, copy, readwrite) NSString *username;
+
++ (instancetype)localhost;
 @end

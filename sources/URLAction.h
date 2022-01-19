@@ -13,7 +13,7 @@
 @class iTermSemanticHistoryController;
 @class iTermTextExtractor;
 @class SCPPath;
-@class VT100RemoteHost;
+@protocol VT100RemoteHostReading;
 
 typedef NS_ENUM(NSInteger, URLActionType) {
     kURLActionOpenURL,

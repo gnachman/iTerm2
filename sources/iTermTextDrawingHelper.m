@@ -894,7 +894,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return [img retain];
 }
 
-- (iTermMarkIndicatorType)markIndicatorTypeForMark:(VT100ScreenMark *)mark {
+- (iTermMarkIndicatorType)markIndicatorTypeForMark:(id<VT100ScreenMarkReading>)mark {
     if (mark.code == 0) {
         return iTermMarkIndicatorTypeSuccess;
     }
@@ -906,7 +906,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return iTermMarkIndicatorTypeError;
 }
 
-- (NSColor *)colorForMark:(VT100ScreenMark *)mark {
+- (NSColor *)colorForMark:(id<VT100ScreenMarkReading>)mark {
     switch ([self markIndicatorTypeForMark:mark]) {
         case iTermMarkIndicatorTypeSuccess:
             return [iTermTextDrawingHelper successMarkColor];
@@ -920,7 +920,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (void)drawMarkIfNeededOnLine:(int)line
                 leftMarginRect:(NSRect)leftMargin
                  virtualOffset:(CGFloat)virtualOffset {
-    VT100ScreenMark *mark = [self.delegate drawingHelperMarkOnLine:line];
+    id<VT100ScreenMarkReading> mark = [self.delegate drawingHelperMarkOnLine:line];
     if (mark.isVisible && self.drawMarkIndicators) {
         NSRect insetLeftMargin = leftMargin;
         insetLeftMargin.origin.x += 1;
@@ -2177,6 +2177,7 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
         result = rawColor;
     }
     context->previousForegroundColor = result;
+    assert(result);
     return result;
 }
 

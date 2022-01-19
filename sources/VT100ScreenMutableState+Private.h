@@ -9,6 +9,7 @@
 
 #import "PTYTriggerEvaluator.h"
 
+#import "PTYAnnotation.h"
 #import "Trigger.h"
 #import "VT100Grid.h"
 #import "VT100GridTypes.h"
@@ -19,11 +20,13 @@
 #import "iTermTemporaryDoubleBufferedGridController.h"
 
 @interface VT100ScreenMutableState()<
+PTYAnnotationDelegate,
 PTYTriggerEvaluatorDelegate,
 VT100GridDelegate,
 VT100InlineImageHelperDelegate,
 iTermColorMapDelegate,
 iTermEchoProbeDelegate,
+iTermJournalingIntervalTreeSideEffectPerformer,
 iTermMarkDelegate,
 iTermTemporaryDoubleBufferedGridControllerDelegate,
 iTermTriggerSession,

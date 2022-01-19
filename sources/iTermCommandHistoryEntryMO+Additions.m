@@ -78,7 +78,7 @@ static NSString *const kCommandUses = @"use times";  // The name is a historical
     [self didChange:NSKeyValueChangeInsertion valuesAtIndexes:indexSet forKey:key];
 }
 
-- (VT100ScreenMark *)lastMark {
+- (id<VT100ScreenMarkReading>)lastMark {
     iTermCommandHistoryCommandUseMO *use = [self.uses lastObject];
     return use.mark;
 }

@@ -93,7 +93,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     const int x = clickPoint.x;
     const int y = clickPoint.y;
     NSMenu *markMenu = nil;
-    VT100ScreenMark *mark = [self.delegate contextMenu:self markOnLine:y];
+    id<VT100ScreenMarkReading> mark = [self.delegate contextMenu:self markOnLine:y];
     DLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark command]);
     if (mark && mark.command.length) {
         NSString *workingDirectory= [self.delegate contextMenu:self
@@ -187,7 +187,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         return [self.delegate contextMenuCanBurySession:self];
     }
     if ([item action] == @selector(selectCommandOutput:)) {
-        VT100ScreenMark *commandMark = [item representedObject];
+        id<VT100ScreenMarkReading> commandMark = [item representedObject];
         return [self.delegate contextMenu:self hasOutputForCommandMark:commandMark];
     }
     if ([item action] == @selector(sendSelection:) ||
@@ -658,7 +658,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                 for (NSDictionary *action in actions) {
                     SEL mySelector = [self selectorForSmartSelectionAction:action];
                     NSString *workingDirectory = [self.delegate contextMenu:self workingDirectoryOnLine:line];
-                    VT100RemoteHost *remoteHost = [self.delegate contextMenu:self remoteHostOnLine:line];
+                    id<VT100RemoteHostReading> remoteHost = [self.delegate contextMenu:self remoteHostOnLine:line];
                     NSString *theTitle =
                         [ContextMenuActionPrefsController titleForActionDict:action
                                                        withCaptureComponents:components
@@ -700,7 +700,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     return YES;
 }
 
-- (NSMenu *)menuForMark:(VT100ScreenMark *)mark directory:(NSString *)directory {
+- (NSMenu *)menuForMark:(id<VT100ScreenMarkReading>)mark directory:(NSString *)directory {
     NSMenu *theMenu;
 
     // Allocate a menu
@@ -837,7 +837,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     NSDictionary *action = dict[iTermSmartSelectionActionContextKeyAction];
     NSArray *components = dict[iTermSmartSelectionActionContextKeyComponents];
     NSString *workingDirectory = [dict[iTermSmartSelectionActionContextKeyWorkingDirectory] nilIfNull];
-    VT100RemoteHost *remoteHost = [dict[iTermSmartSelectionActionContextKeyRemoteHost] nilIfNull];
+    id<VT100RemoteHostReading> remoteHost = [dict[iTermSmartSelectionActionContextKeyRemoteHost] nilIfNull];
 
     iTermVariableScope *myScope = [[self.delegate contextMenuSessionScope:self] copy];
     [myScope setValue:workingDirectory forVariableNamed:iTermVariableKeySessionPath];
@@ -981,7 +981,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 }
 
 - (void)selectCommandOutput:(id)sender {
-    VT100ScreenMark *mark = [sender representedObject];
+    id<VT100ScreenMarkReading> mark = [sender representedObject];
     VT100GridCoordRange range = [self.delegate contextMenu:self rangeOfOutputForCommandMark:mark];
     if (range.start.x == -1) {
         DLog(@"Beep: can't select output");

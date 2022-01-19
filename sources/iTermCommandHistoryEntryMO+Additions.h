@@ -10,12 +10,13 @@
 
 #import "iTermCommandHistoryEntryMO.h"
 
-@class VT100RemoteHost;
+@protocol VT100RemoteHostReading;
 @class VT100ScreenMark;
+@protocol VT100ScreenMarkReading;
 
 @interface iTermCommandHistoryEntryMO (Additions)
 
-@property(nonatomic, readonly) VT100ScreenMark *lastMark;
+@property(nonatomic, readonly) id<VT100ScreenMarkReading> lastMark;
 
 // PWD at the time of the command
 @property(nonatomic, readonly) NSString *lastDirectory;

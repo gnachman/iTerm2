@@ -16,12 +16,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class CapturedOutput;
 @class PTYAnnotation;
+@protocol PTYAnnotationReading;
 @class Trigger;
 @class iTermBackgroundCommandRunnerPool;
 @protocol iTermObject;
 @class iTermRateLimitedUpdate;
 @class iTermStringLine;
 @class iTermVariableScope;
+@protocol PTYAnnotationReading;
 
 extern NSString * const kTriggerRegexKey;
 extern NSString * const kTriggerActionKey;
@@ -69,7 +71,7 @@ extern NSString * const kTriggerDisabledKey;
          withVariables:(NSDictionary *)temporaryVariables
               captures:(NSArray<NSString *> *)captureStringArray;
 - (void)triggerSession:(Trigger *)trigger
-         setAnnotation:(PTYAnnotation *)annotation
+         setAnnotation:(id<PTYAnnotationReading>)annotation
               stringTo:(NSString *)stringValue;
 - (void)triggerSession:(Trigger *)trigger
        highlightLineAt:(VT100GridAbsCoord)absCoord
@@ -80,7 +82,7 @@ extern NSString * const kTriggerDisabledKey;
   showAlertWithMessage:(NSString *)message
              rateLimit:(iTermRateLimitedUpdate *)rateLimit
                disable:(void (^)(void))disable;
-- (PTYAnnotation * _Nullable)triggerSession:(Trigger *)trigger
+- (id<PTYAnnotationReading> _Nullable)triggerSession:(Trigger *)trigger
                       makeAnnotationInRange:(NSRange)rangeInScreenChars
                                        line:(long long)lineNumber;
 

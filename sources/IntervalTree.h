@@ -1,7 +1,11 @@
 #import <Foundation/Foundation.h>
 #import "AATree.h"
+#import "iTermTuple.h"
+
+NS_ASSUME_NONNULL_BEGIN
 
 @class IntervalTreeEntry;
+@protocol IntervalTreeObject;
 
 @interface Interval : NSObject<NSCopying>
 // Negative locations have special meaning. Don't use them.
@@ -25,19 +29,21 @@
 
 // Serialized value.
 - (NSDictionary *)dictionaryValue;
+
+// A parallel object whose state will be eventually consistent with this one.
+- (id<IntervalTreeObject>)doppelganger;
 @end
 
 @protocol IntervalTreeObject <IntervalTreeImmutableObject, NSObject>
 // Deserialize from dictionaryValue.
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 
-@property(nonatomic, weak) IntervalTreeEntry *entry;
+@property(nullable, nonatomic, weak) IntervalTreeEntry *entry;
 
 // Serialized value.
 - (NSDictionary *)dictionaryValue;
 
 - (instancetype)copyOfIntervalTreeObject;
-
 @end
 
 @protocol IntervalTreeImmutableEntry<NSObject>
@@ -56,23 +62,23 @@
 @protocol IntervalTreeReading<NSObject>
 
 @property(nonatomic, readonly) NSString *debugString;
-- (NSArray<IntervalTreeImmutableObject> *)objectsInInterval:(Interval *)interval;
-- (NSArray<IntervalTreeImmutableObject> *)allObjects;
-- (BOOL)containsObject:(id<IntervalTreeImmutableObject>)object;
+- (NSArray<id<IntervalTreeImmutableObject>> *)objectsInInterval:(Interval *)interval;
+- (NSArray<id<IntervalTreeImmutableObject>> *)allObjects;
+- (BOOL)containsObject:(id<IntervalTreeImmutableObject> _Nullable)object;
 
 // Returns the object with the highest limit
-- (NSArray<IntervalTreeImmutableObject> *)objectsWithLargestLimit;
+- (NSArray<id<IntervalTreeImmutableObject>> * _Nullable)objectsWithLargestLimit;
 // Returns the object with the smallest limit
-- (NSArray<IntervalTreeImmutableObject> *)objectsWithSmallestLimit;
+- (NSArray<id<IntervalTreeImmutableObject>> * _Nullable)objectsWithSmallestLimit;
 
 // Returns the object with the largest location
-- (NSArray<IntervalTreeImmutableObject> *)objectsWithLargestLocation;
+- (NSArray<id<IntervalTreeImmutableObject>> *_Nullable)objectsWithLargestLocation;
 
 // Returns the object with the largest location before (but NOT AT) |location|.
-- (NSArray<IntervalTreeImmutableObject> *)objectsWithLargestLocationBefore:(long long)location;
+- (NSArray<id<IntervalTreeImmutableObject>> *_Nullable)objectsWithLargestLocationBefore:(long long)location;
 
-- (NSArray<IntervalTreeImmutableObject> *)objectsWithLargestLimitBefore:(long long)limit;
-- (NSArray<IntervalTreeImmutableObject> *)objectsWithSmallestLimitAfter:(long long)limit;
+- (NSArray<id<IntervalTreeImmutableObject>> *_Nullable)objectsWithLargestLimitBefore:(long long)limit;
+- (NSArray<id<IntervalTreeImmutableObject>> *_Nullable)objectsWithSmallestLimitAfter:(long long)limit;
 
 // Enumerates backwards by location (NOT LIMIT)
 - (NSEnumerator<IntervalTreeImmutableObject> *)reverseEnumeratorAt:(long long)start;
@@ -88,10 +94,9 @@
 @end
 
 
-@interface IntervalTree : NSObject <AATreeDelegate, IntervalTreeReading, NSCopying>
+@interface IntervalTree : NSObject <AATreeDelegate, IntervalTreeReading>
 
 @property(nonatomic, readonly) NSInteger count;
-@property(nonatomic, readonly) NSString *debugString;
 
 // Deserialize
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
@@ -99,37 +104,17 @@
 // |object| should implement -hash.
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval;
 - (void)removeObject:(id<IntervalTreeObject>)object;
-- (NSArray<IntervalTreeObject> *)objectsInInterval:(Interval *)interval;
-- (NSArray<IntervalTreeObject> *)allObjects;
-- (BOOL)containsObject:(id<IntervalTreeObject>)object;
 
-// Returns the object with the highest limit
-- (NSArray<IntervalTreeObject> *)objectsWithLargestLimit;
-// Returns the object with the smallest limit
-- (NSArray<IntervalTreeObject> *)objectsWithSmallestLimit;
-
-// Returns the object with the largest location
-- (NSArray<IntervalTreeObject> *)objectsWithLargestLocation;
-
-// Returns the object with the largest location before (but NOT AT) |location|.
-- (NSArray<IntervalTreeObject> *)objectsWithLargestLocationBefore:(long long)location;
-
-- (NSArray<IntervalTreeObject> *)objectsWithLargestLimitBefore:(long long)limit;
-- (NSArray<IntervalTreeObject> *)objectsWithSmallestLimitAfter:(long long)limit;
-
-// Enumerates backwards by location (NOT LIMIT)
-- (NSEnumerator<IntervalTreeObject> *)reverseEnumeratorAt:(long long)start;
-
-- (NSEnumerator<IntervalTreeObject> *)reverseLimitEnumeratorAt:(long long)start;
-- (NSEnumerator<IntervalTreeObject> *)forwardLimitEnumeratorAt:(long long)start;
-- (NSEnumerator<IntervalTreeObject> *)reverseLimitEnumerator;
-- (NSEnumerator<IntervalTreeObject> *)forwardLimitEnumerator;
+// NOTE: This leaves the entry set on objects so you can recover the interval. You must nil it out
+// before adding an object to another tree.
+- (void)removeAllObjects;
+- (iTermTuple<Interval *, id<IntervalTreeObject>> *)dropFirst;
 
 - (void)sanityCheck;
 
-// Serialize, adding offset to interval locations (useful for taking the tail
-// of an interval tree).
-- (NSDictionary *)dictionaryValueWithOffset:(long long)offset;
+// For subclasses;
+- (void)restoreFromDictionary:(NSDictionary *)dict;
 
 @end
 
+NS_ASSUME_NONNULL_END

@@ -13,8 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class SCPPath;
 @protocol iTermObject;
-@class VT100RemoteHost;
-@class VT100ScreenMark;
+@protocol VT100RemoteHostReading;
+@protocol VT100ScreenMarkReading;
 @class iTermImageInfo;
 @class iTermSelection;
 @class iTermTextExtractor;
@@ -41,8 +41,8 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
 - (NSString *)contextMenuSelectedText:(iTermTextViewContextMenuHelper *)contextMenu
                                capped:(int)maxBytes;
 
-- (VT100ScreenMark *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-                      markOnLine:(int)line;
+- (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+                               markOnLine:(int)line;
 
 - (NSString *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
    workingDirectoryOnLine:(int)line;
@@ -101,11 +101,11 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange;
 toggleTerminalStateForMenuItem:(NSMenuItem *)item;
 - (void)contextMenuResetTerminal:(iTermTextViewContextMenuHelper *)contextMenu;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu addContextMenuItems:(NSMenu *)theMenu;
-- (VT100RemoteHost *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu remoteHostOnLine:(int)line;
+- (id<VT100RemoteHostReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu remoteHostOnLine:(int)line;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu insertText:(NSString *)text;
-- (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu hasOutputForCommandMark:(VT100ScreenMark *)commandMark;
+- (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu hasOutputForCommandMark:(id<VT100ScreenMarkReading>)commandMark;
 - (VT100GridCoordRange)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-       rangeOfOutputForCommandMark:(VT100ScreenMark *)mark;
+       rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
 - (void)contextMenuCopySelectionAccordingToUserPreferences:(iTermTextViewContextMenuHelper *)contextMenu;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                copy:(NSString *)string;

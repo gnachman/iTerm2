@@ -5,7 +5,8 @@
 #import "VT100Token.h"
 
 @class Trigger;
-@class VT100RemoteHost;
+@protocol VT100RemoteHostReading;
+@protocol VT100ScreenMarkReading;
 @class VT100Screen;
 @class VT100ScreenMutableState;
 @class iTermBackgroundCommandRunnerPool;
@@ -231,13 +232,13 @@
 - (void)screenSaveScrollPosition;
 - (void)screenDidAddMark:(id<iTermMark> _Nonnull)mark;
 - (void)screenPromptDidStartAtLine:(int)line;
-- (void)screenPromptDidEndWithMark:(VT100ScreenMark * _Nonnull)mark;
+- (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading> _Nonnull)mark;
 
 - (void)screenStealFocus;
 
 - (void)screenSetProfileToProfileNamed:(NSString * _Nonnull)value;
 - (void)screenSetPasteboard:(NSString * _Nonnull)value;
-- (void)screenDidAddNote:(PTYAnnotation * _Nonnull)note focus:(BOOL)focus;
+- (void)screenDidAddNote:(id<PTYAnnotationReading> _Nonnull)note focus:(BOOL)focus;
 - (void)screenCopyBufferToPasteboard;
 - (void)screenAppendDataToPasteboard:(NSData * _Nonnull)data;
 
@@ -266,7 +267,7 @@
                                 colorMap:(iTermColorMap * _Nonnull)colorMap;
 - (void)screenSelectColorPresetNamed:(NSString * _Nonnull)name;
 
-- (void)screenCurrentHostDidChange:(VT100RemoteHost * _Nonnull)host
+- (void)screenCurrentHostDidChange:(id<VT100RemoteHostReading> _Nonnull)host
                                pwd:(NSString * _Nullable)workingDirectory;
 - (void)screenCurrentDirectoryDidChangeTo:(NSString * _Nullable)newPath;
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> * _Nonnull)parameters
@@ -281,10 +282,10 @@
 
 - (void)screenDidExecuteCommand:(NSString * _Nullable)command
                           range:(VT100GridCoordRange)range
-                         onHost:(VT100RemoteHost * _Nullable)host
+                         onHost:(id<VT100RemoteHostReading> _Nullable)host
                     inDirectory:(NSString * _Nullable)directory
-                           mark:(VT100ScreenMark * _Nullable)mark;
-- (void)screenCommandDidExitWithCode:(int)code mark:(VT100ScreenMark * _Nullable)maybeMark;
+                           mark:(id<VT100ScreenMarkReading> _Nullable)mark;
+- (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading> _Nullable)maybeMark;
 
 typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
     // We polled for the working directory for a really sketchy reason, such as the user pressing enter.
@@ -296,7 +297,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 };
 
 - (void)screenLogWorkingDirectoryOnAbsoluteLine:(long long)absLine
-                                     remoteHost:(VT100RemoteHost * _Nullable)remoteHost
+                                     remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost
                                   withDirectory:(NSString * _Nullable)directory
                                        pushType:(VT100ScreenWorkingDirectoryPushType)pushType
                                        accepted:(BOOL)accepted;
@@ -342,13 +343,13 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode;
 - (void)screenRestoreColorsFromSlot:(VT100SavedColorsSlot * _Nonnull)slot;
 - (void)screenOfferToDisableTriggersInInteractiveApps;
-- (void)screenDidUpdateReturnCodeForMark:(VT100ScreenMark * _Nonnull)mark
-                              remoteHost:(VT100RemoteHost * _Nullable)remoteHost;
+- (void)screenDidUpdateReturnCodeForMark:(id<VT100ScreenMarkReading> _Nonnull)mark
+                              remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost;
 - (void)screenCopyStringToPasteboard:(NSString * _Nonnull)string;
 - (void)screenPostUserNotification:(NSString * _Nonnull)string;
 // Called while joined. Don't let `mutableState` escape.
 - (void)screenSync:(VT100ScreenMutableState * _Nonnull)mutableState;
 - (void)screenUpdateCommandUseWithGuid:(NSString * _Nonnull)screenmarkGuid
-                                onHost:(VT100RemoteHost * _Nullable)lastRemoteHost
-                         toReferToMark:(VT100ScreenMark * _Nonnull)screenMark;
+                                onHost:(id<VT100RemoteHostReading> _Nullable)lastRemoteHost
+                         toReferToMark:(id<VT100ScreenMarkReading> _Nonnull)screenMark;
 @end

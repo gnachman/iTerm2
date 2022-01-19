@@ -497,7 +497,7 @@
     [_insertedText appendString:text];
 }
 
-- (VT100RemoteHost *)toolbeltCurrentHost {
+- (id<VT100RemoteHostReading>)toolbeltCurrentHost {
     return nil;
 }
 
@@ -505,7 +505,7 @@
     return 0;
 }
 
-- (VT100ScreenMark *)toolbeltLastCommandMark {
+- (id<VT100ScreenMarkReading>)toolbeltLastCommandMark {
     return nil;
 }
 

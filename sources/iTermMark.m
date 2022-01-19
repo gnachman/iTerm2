@@ -10,7 +10,10 @@
 #import "CapturedOutput.h"
 #import "NSDictionary+iTerm.h"
 
-@implementation iTermMark
+@implementation iTermMark {
+    iTermMark *_doppelganger;
+    __weak iTermMark *_progenitor;
+}
 
 @synthesize entry;
 
@@ -26,6 +29,22 @@
 
 - (instancetype)copyOfIntervalTreeObject {
     return [[self.class alloc] init];
+}
+
+- (id<IntervalTreeObject>)doppelganger {
+    @synchronized ([iTermMark class]) {
+        if (!_doppelganger) {
+            _doppelganger = [self copy];
+            _doppelganger->_progenitor = self;
+        }
+        return _doppelganger;
+    }
+}
+
+- (id<iTermMark>)progenitor {
+    @synchronized ([iTermMark class]) {
+        return _progenitor;
+    }
 }
 
 #pragma mark - NSObject

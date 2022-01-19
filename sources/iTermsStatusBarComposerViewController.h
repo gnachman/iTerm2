@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class VT100RemoteHost;
+@protocol VT100RemoteHostReading;
 @class iTermsStatusBarComposerViewController;
 
 @protocol iTermsStatusBarComposerViewControllerDelegate<NSObject>
@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)reloadData;
 - (void)makeFirstResponder;
-- (void)setHost:(VT100RemoteHost *)host;
+- (void)setHost:(id<VT100RemoteHostReading>)host;
 - (void)deselect;
 
 @end

@@ -20,8 +20,6 @@
 #import "VT100RemoteHost.h"
 #import "VT100WorkingDirectory.h"
 
-static const int kDefaultMaxScrollbackLines = 1000;
-
 // State restoration dictionary keys
 NSString *const kScreenStateKey = @"Screen State";
 
@@ -128,11 +126,9 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     self = [super init];
     if (self) {
         _animatedLines = [NSMutableIndexSet indexSet];
-        _intervalTree = [[IntervalTree alloc] init];
-        _savedIntervalTree = [[IntervalTree alloc] init];
         _commandStartCoord = VT100GridAbsCoordMake(-1, -1);
         _markCache = [[NSMutableDictionary alloc] init];
-        _maxScrollbackLines = kDefaultMaxScrollbackLines;
+        _maxScrollbackLines = -1;
         _tabStops = [[NSMutableSet alloc] init];
         _charsetUsesLineDrawingMode = [NSMutableSet set];
         _cursorVisible = YES;
@@ -148,7 +144,8 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 }
 
 #warning TODO: Test this
-- (instancetype)initWithState:(VT100ScreenMutableState *)source {
+- (instancetype)initWithState:(VT100ScreenMutableState *)source
+                  predecessor:(VT100ScreenState *)predecessor {
     self = [super init];
     if (self) {
         _audibleBell = source.audibleBell;
@@ -189,21 +186,14 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
         _intervalTreeObserver = source.intervalTreeObserver;
 #warning TODO: I need a read-only protocol for VT100ScreenMark.
 #warning TODO: Copying marks messes up the registry since one key now can refer to two objects. The command history tool breaks scrolling to the selected command because it picks the wrong one.
-        _lastCommandMark = [source.lastCommandMark copy];
+        _lastCommandMark = [source.lastCommandMark doppelganger];
         _shouldExpectPromptMarks = source.shouldExpectPromptMarks;
 
         _linebuffer = [source.linebuffer copy];
-        NSMutableDictionary<NSNumber *, id<iTermMark>> *temp = [NSMutableDictionary dictionary];
+        _markCache = [NSMutableDictionary dictionary];
         [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
-            NSDictionary *encoded = [obj dictionaryValue];
-            Class theClass = [obj class];
-            // TODO: This is going to be really slow. Marks being mutable is going to be a problem.
-            // I think that very few kinds of marks are actually mutable, and in those cases a journal
-            // might provide a cheap way to update an existing copy.
-#warning TODO: Copying marks messes up the registry since one key now can refer to two objects. The command history tool breaks scrolling to the selected command because it picks the wrong one.
-            temp[key] = [[theClass alloc] initWithDictionary:encoded];
+            _markCache[key] = (id<iTermMark>)[obj doppelganger];
         }];
-        _markCache = temp;
         _echoProbeIsActive = source.echoProbe.isActive;
 
         _terminalSoftAlternateScreenMode = source.terminalSoftAlternateScreenMode;
@@ -232,14 +222,22 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 
         _animatedLines = [source.animatedLines copy];
         _pasteboardString = [source.pasteboardString copy];
-#warning TODO: This is a shallow copy, leading to shared mutable state.
-        _intervalTree = [source.intervalTree copy];
-        _savedIntervalTree = [source.savedIntervalTree copy];
+        _intervalTree = source.mutableIntervalTree.derivative;
+        _savedIntervalTree = source.mutableSavedIntervalTree.derivative;
         _tabStops = [source.tabStops copy];
         _charsetUsesLineDrawingMode = [source.charsetUsesLineDrawingMode copy];
         _colorMap = [source.colorMap copy];
         _temporaryDoubleBuffer = [source.unconditionalTemporaryDoubleBuffer copy];
         _config = [source.config copy];
+        _primaryGrid = [source.primaryGrid copy];
+        _primaryGrid.delegate = self;
+        _altGrid = [source.altGrid copy];
+        _altGrid.delegate = self;
+        if (source.currentGrid == source.primaryGrid) {
+            _currentGrid = _primaryGrid;
+        } else {
+            _currentGrid = _altGrid;
+        }
         DLog(@"Copy mutable to immutable");
     }
     return self;
@@ -289,6 +287,14 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 }
 
 #pragma mark - Interval Tree
+
+- (id<IntervalTreeReading>)intervalTree {
+    return _intervalTree;
+}
+
+- (id<IntervalTreeReading>)savedIntervalTree {
+    return _savedIntervalTree;
+}
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval {
     VT100GridCoordRange result;
@@ -341,7 +347,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     return [Interval intervalWithLocation:si length:ei - si];
 }
 
-- (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
+- (__kindof id<IntervalTreeImmutableObject>)objectOnOrBeforeLine:(int)line ofClass:(Class)cls {
     long long pos = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
                                                                             line + 1,
                                                                             0,
@@ -363,8 +369,8 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     }
 }
 
-- (VT100RemoteHost *)remoteHostOnLine:(int)line {
-    return (VT100RemoteHost *)[self objectOnOrBeforeLine:line ofClass:[VT100RemoteHost class]];
+- (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line {
+    return (id<VT100RemoteHostReading>)[self objectOnOrBeforeLine:line ofClass:[VT100RemoteHost class]];
 }
 
 
@@ -538,7 +544,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 
 #pragma mark - Shell Integration
 
-- (VT100ScreenMark *)lastCommandMark {
+- (id<VT100ScreenMarkReading>)lastCommandMark {
     DLog(@"Searching for last command mark...");
     if (_lastCommandMark) {
         DLog(@"Return cached mark %@", _lastCommandMark);
@@ -550,7 +556,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     while (objects && numChecked < 500) {
         for (id<IntervalTreeObject> obj in objects) {
             if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-                VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+                id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)obj;
                 if (mark.command) {
                     DLog(@"Found mark %@ in line number range %@", mark,
                          VT100GridRangeDescription([self lineNumberRangeOfInterval:obj.entry.interval]));
@@ -600,7 +606,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 }
 
 #warning TODO: Figure out what to do with the mark cache. Also don't use totalScrollbackOverflow from mutable code path
-- (VT100ScreenMark *)markOnLine:(int)line {
+- (id<VT100ScreenMarkReading>)markOnLine:(int)line {
     return [VT100ScreenMark castFrom:self.markCache[@(self.cumulativeScrollbackOverflow + line)]];
 }
 
@@ -634,7 +640,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     return [command stringByTrimmingLeadingWhitespace];
 }
 
-- (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
+- (id<IntervalTreeImmutableObject>)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass {
     NSEnumerator *enumerator = [self.intervalTree reverseLimitEnumerator];
     NSArray *objects = [enumerator nextObject];
     while (objects) {
@@ -653,17 +659,17 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 }
 
 - (NSString *)workingDirectoryOnLine:(int)line {
-    VT100WorkingDirectory *workingDirectory =
+    id<VT100WorkingDirectoryReading> workingDirectory =
         [self objectOnOrBeforeLine:line ofClass:[VT100WorkingDirectory class]];
     return workingDirectory.workingDirectory;
 }
 
-- (VT100RemoteHost *)lastRemoteHost {
-    return [self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
+- (id<VT100RemoteHostReading>)lastRemoteHost {
+    return (id<VT100RemoteHostReading>)[self lastMarkMustBePrompt:NO class:[VT100RemoteHost class]];
 }
 
-- (VT100ScreenMark *)lastPromptMark {
-    return [self lastMarkMustBePrompt:YES class:[VT100ScreenMark class]];
+- (id<VT100ScreenMarkReading>)lastPromptMark {
+    return (id<VT100ScreenMarkReading>)[self lastMarkMustBePrompt:YES class:[VT100ScreenMark class]];
 }
 
 #pragma mark - Colors

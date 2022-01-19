@@ -23,7 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class SCPPath;
 @class SmartMatch;
 @class URLAction;
-@class VT100RemoteHost;
+@protocol VT100RemoteHostReading;
 
 @protocol iTermURLActionHelperDelegate<NSObject>
 - (BOOL)urlActionHelperShouldIgnoreHardNewlines:(iTermURLActionHelper *)helper;
@@ -44,7 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (long long)urlActionTotalScrollbackOverflow:(iTermURLActionHelper *)helper;
 
-- (VT100RemoteHost *)urlActionHelper:(iTermURLActionHelper *)helper remoteHostOnLine:(int)line;
+- (id<VT100RemoteHostReading>)urlActionHelper:(iTermURLActionHelper *)helper remoteHostOnLine:(int)line;
 
 - (NSDictionary<NSNumber *, NSString *> *)urlActionHelperSmartSelectionActionSelectorDictionary:(iTermURLActionHelper *)helper;
 - (NSArray<NSDictionary<NSString *, id> *> *)urlActionHelperSmartSelectionRules:(iTermURLActionHelper *)helper;

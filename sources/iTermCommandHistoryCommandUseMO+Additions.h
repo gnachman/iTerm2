@@ -11,12 +11,12 @@
 #import "iTermCommandHistoryCommandUseMO.h"
 
 @class iTermCommandHistoryCommandUseMO;
-@class VT100ScreenMark;
+@protocol VT100ScreenMarkReading;
 
 @interface iTermCommandHistoryCommandUseMO (Additions)
 
 // Setting this actually sets the markGuid.
-@property(nonatomic, retain) VT100ScreenMark *mark;
+@property(nonatomic, retain) id<VT100ScreenMarkReading> mark;
 
 + (instancetype)commandHistoryCommandUseInContext:(NSManagedObjectContext *)context;
 + (NSString *)entityName;

@@ -227,7 +227,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return NO;
 }
 
-- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
+- (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
     return VT100GridCoordRangeMake(0, 0, 0, 0);
 }
 
@@ -351,7 +351,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewFontDidChange {
 }
 
-- (VT100RemoteHost *)remoteHostOnLine:(int)line {
+- (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line {
     return nil;
 }
 
@@ -383,7 +383,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return line - 1;
 }
 
-- (VT100ScreenMark *)markOnLine:(int)line {
+- (id<VT100ScreenMarkReading>)markOnLine:(int)line {
     return nil;
 }
 

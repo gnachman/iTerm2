@@ -8,7 +8,11 @@
 
 #import "iTermMark.h"
 
+@protocol iTermURLMarkReading<IntervalTreeImmutableObject>
+@property (nonatomic, readonly) unsigned int code;
+@end
+
 // Invisible marks used to record where URL links are located so they can be freed.
-@interface iTermURLMark : iTermMark
-@property (nonatomic) unsigned int code;
+@interface iTermURLMark : iTermMark<iTermURLMarkReading>
+@property (nonatomic, readwrite) unsigned int code;
 @end

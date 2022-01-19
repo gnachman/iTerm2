@@ -55,7 +55,7 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
     return gVisibleNotes > 0;
 }
 
-- (instancetype)initWithAnnotation:(PTYAnnotation *)annotation {
+- (instancetype)initWithAnnotation:(id<PTYAnnotationReading>)annotation {
     self = [super init];
     if (self) {
         _annotation = annotation;
@@ -300,7 +300,7 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
 #pragma mark - NSControlTextEditingDelegate
 
 - (void)textDidChange:(NSNotification *)notification {
-    [_annotation setStringValueWithoutSideEffects:textView_.string];
+    [self.delegate note:self setAnnotation:_annotation stringValue:textView_.string];
     if (!noteView_.heightChangedManually) {
         const NSSize fittingSize = [self fittingSize];
         if (fittingSize.height > scrollView_.superview.frame.size.height) {
@@ -311,7 +311,7 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
 
 - (BOOL)textView:(NSTextView *)aTextView doCommandBySelector:(SEL)aSelector {
     if (aSelector == @selector(cancelOperation:)) {
-        [_annotation setStringValueWithoutSideEffects:textView_.string];
+        [self.delegate note:self setAnnotation:_annotation stringValue:textView_.string];
         [self.delegate noteDidEndEditing:self];
         return YES;
     }
@@ -353,15 +353,15 @@ static void PTYNoteViewControllerIncrementVisibleCount(NSInteger delta) {
 
 #pragma mark - PTYAnnotationDelegate
 
-- (void)annotationDidRequestHide:(PTYAnnotation *)annotation {
+- (void)annotationDidRequestHide:(id<PTYAnnotationReading>)annotation {
     [self setNoteHidden:YES];
 }
 
-- (void)annotationStringDidChange:(PTYAnnotation *)annotation {
+- (void)annotationStringDidChange:(id<PTYAnnotationReading>)annotation {
     [self updateTextViewString];
 }
 
-- (void)annotationWillBeRemoved:(PTYAnnotation *)annotation {
+- (void)annotationWillBeRemoved:(id<PTYAnnotationReading>)annotation {
     [self.delegate noteWillBeRemoved:self];
 }
 

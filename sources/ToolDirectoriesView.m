@@ -261,7 +261,7 @@ static const CGFloat kHelpMargin = 5;
 - (void)updateDirectories {
     entries_ = nil;
     iTermToolWrapper *wrapper = self.toolWrapper;
-    VT100RemoteHost *host = [wrapper.delegate.delegate toolbeltCurrentHost];
+    id<VT100RemoteHostReading> host = [wrapper.delegate.delegate toolbeltCurrentHost];
     NSArray<iTermRecentDirectoryMO *> *entries =
         [[iTermShellHistoryController sharedInstance] directoriesSortedByScoreOnHost:host];
     NSArray<iTermRecentDirectoryMO *> *reversed = [[entries reverseObjectEnumerator] allObjects];

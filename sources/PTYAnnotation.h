@@ -11,21 +11,30 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class PTYAnnotation;
+@protocol PTYAnnotationReading;
 
 @protocol PTYAnnotationDelegate<NSObject>
-- (void)annotationDidRequestHide:(PTYAnnotation *)annotation;
-- (void)annotationStringDidChange:(PTYAnnotation *)annotation;
-- (void)annotationWillBeRemoved:(PTYAnnotation *)annotation;
+- (void)annotationDidRequestHide:(id<PTYAnnotationReading>)annotation;
+- (void)annotationStringDidChange:(id<PTYAnnotationReading>)annotation;
+- (void)annotationWillBeRemoved:(id<PTYAnnotationReading>)annotation;
 @end
 
-@interface PTYAnnotation : NSObject<IntervalTreeObject>
-@property(nonatomic, weak) id<PTYAnnotationDelegate> delegate;
-@property(nonatomic, copy) NSString *stringValue;
+@protocol PTYAnnotationReading<NSObject, IntervalTreeImmutableObject>
+@property(nonatomic, copy, readonly) NSString *stringValue;
+@property(nonatomic, nullable, weak) id<PTYAnnotationDelegate> delegate;
+@property(nonatomic, nullable, weak, readonly) id<PTYAnnotationReading> progenitor;  // The doppelganger's creator
+
+- (id<PTYAnnotationReading>)doppelganger;
+@end
+
+@interface PTYAnnotation : NSObject<IntervalTreeObject, PTYAnnotationReading>
+@property(nonatomic, copy, readwrite) NSString *stringValue;
 
 - (void)hide;
 - (void)setStringValueWithoutSideEffects:(NSString *)value;
 - (void)willRemove;
 
+- (id<PTYAnnotationReading>)doppelganger;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -9,9 +9,9 @@
 #import "PTYAnnotation.h"
 #import "VT100ScreenMark.h"
 
-iTermIntervalTreeObjectType iTermIntervalTreeObjectTypeForObject(id<IntervalTreeObject> object) {
+iTermIntervalTreeObjectType iTermIntervalTreeObjectTypeForObject(id<IntervalTreeImmutableObject> object) {
     if ([object isKindOfClass:[VT100ScreenMark class]]) {
-        VT100ScreenMark *mark = (VT100ScreenMark *)object;
+        id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)object;
         if (!mark.hasCode) {
             return iTermIntervalTreeObjectTypeManualMark;
         }

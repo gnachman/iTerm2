@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "FutureMethods.h"
 
-@class VT100RemoteHost;
+@protocol VT100RemoteHostReading;
 @protocol iTermObject;
 @class iTermVariableScope;
 
@@ -42,7 +42,7 @@ typedef NS_ENUM(NSInteger, ContextMenuActions) {
 + (NSString *)titleForActionDict:(NSDictionary *)dict
            withCaptureComponents:(NSArray *)components
                 workingDirectory:(NSString *)workingDirectory
-                      remoteHost:(VT100RemoteHost *)remoteHost;
+                      remoteHost:(id<VT100RemoteHostReading>)remoteHost;
 
 // Use this as the keys into the dictionary that get passed to the `dict` parameter of
 // computeParameterForActionDict:….

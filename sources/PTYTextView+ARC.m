@@ -641,7 +641,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     return self.dataSource.totalScrollbackOverflow;
 }
 
-- (VT100RemoteHost *)urlActionHelper:(iTermURLActionHelper *)helper remoteHostOnLine:(int)y {
+- (id<VT100RemoteHostReading>)urlActionHelper:(iTermURLActionHelper *)helper remoteHostOnLine:(int)y {
     return [self.dataSource remoteHostOnLine:y];
 }
 
@@ -797,8 +797,8 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
     return [self selectedTextCappedAtSize:maxBytes];
 }
 
-- (VT100ScreenMark *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-                      markOnLine:(int)line {
+- (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+                               markOnLine:(int)line {
     return [self.dataSource markOnLine:line];
 }
 
@@ -889,7 +889,7 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
 
 - (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
 hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
-    for (PTYAnnotation *annotation in [self.dataSource annotationsInRange:coordRange]) {
+    for (id<PTYAnnotationReading> annotation in [self.dataSource annotationsInRange:coordRange]) {
         PTYNoteViewController *note = (PTYNoteViewController *)annotation.delegate;
         if (note.isNoteHidden) {
             return YES;
@@ -905,7 +905,7 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
                                 coord.y,
                                 coord.x + 1,
                                 coord.y);
-    for (PTYAnnotation *annotation in [self.dataSource annotationsInRange:coordRange]) {
+    for (id<PTYAnnotationReading> annotation in [self.dataSource annotationsInRange:coordRange]) {
         PTYNoteViewController *note = (PTYNoteViewController *)annotation.delegate;
         [note setNoteHidden:NO];
     }
@@ -970,7 +970,7 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
     return self.smartSelectionRules;
 }
 
-- (VT100RemoteHost *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu remoteHostOnLine:(int)line {
+- (id<VT100RemoteHostReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu remoteHostOnLine:(int)line {
     return [self.dataSource remoteHostOnLine:line];
 }
 
@@ -978,12 +978,12 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
     [self.delegate insertText:text];
 }
 
-- (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu hasOutputForCommandMark:(VT100ScreenMark *)commandMark {
+- (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu hasOutputForCommandMark:(id<VT100ScreenMarkReading>)commandMark {
     return [self.dataSource textViewRangeOfOutputForCommandMark:commandMark].start.x != -1;
 }
 
 - (VT100GridCoordRange)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-       rangeOfOutputForCommandMark:(VT100ScreenMark *)mark {
+       rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
     return [self.dataSource textViewRangeOfOutputForCommandMark:mark];
 }
 

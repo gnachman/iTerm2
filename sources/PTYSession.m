@@ -476,7 +476,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     // during live resize (unlike the default runloops).
     BOOL _inLiveResize;
 
-    VT100RemoteHost *_currentHost;
+    id<VT100RemoteHostReading> _currentHost;
 
     NSMutableDictionary<id, ITMNotificationRequest *> *_keystrokeSubscriptions;
     NSMutableDictionary<id, ITMNotificationRequest *> *_keyboardFilterSubscriptions;
@@ -1246,7 +1246,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (arrangement[SESSION_ARRANGEMENT_HOSTS]) {
         for (NSDictionary *host in arrangement[SESSION_ARRANGEMENT_HOSTS]) {
-            VT100RemoteHost *remoteHost = [[[VT100RemoteHost alloc] initWithDictionary:host] autorelease];
+            id<VT100RemoteHostReading> remoteHost = [[[VT100RemoteHost alloc] initWithDictionary:host] autorelease];
             if (remoteHost) {
                 [aSession.hosts addObject:remoteHost];
                 [aSession trimHostsIfNeeded];
@@ -1756,7 +1756,7 @@ ITERM_WEAKLY_REFERENCEABLE
           includeRestorationBanner:includeRestorationBanner
                         reattached:reattached];
 
-    VT100RemoteHost *lastRemoteHost = _screen.lastRemoteHost;
+    id<VT100RemoteHostReading> lastRemoteHost = _screen.lastRemoteHost;
     if (lastRemoteHost) {
         NSString *pwd = [_screen workingDirectoryOnLine:_screen.numberOfLines];
         [self screenCurrentHostDidChange:lastRemoteHost
@@ -4881,7 +4881,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     // If this is slow, it could be encoded more efficiently by using encodeArrayWithKey:...
     // but that would require coming up with a good unique identifier.
     result[SESSION_ARRANGEMENT_HOSTS] = [_hosts mapWithBlock:^id(id anObject) {
-        return [(VT100RemoteHost *)anObject dictionaryValue];
+        return [(id<VT100RemoteHostReading>)anObject dictionaryValue];
     }];
 
     NSString *pwd = [self currentLocalWorkingDirectory];
@@ -5587,7 +5587,7 @@ DLog(args); \
 
 // Jump to the saved scroll position
 - (void)jumpToSavedScrollPosition {
-    iTermMark *mark = [_screen lastMark];
+    id<VT100ScreenMarkReading> mark = [_screen lastMark];
     Interval *interval = mark.entry.interval;
     if (!interval) {
         DLog(@"Beep: Can't jump to bad interval");
@@ -6507,7 +6507,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSString *)preferredTmuxClientName {
-    VT100RemoteHost *remoteHost = [self currentHost];
+    id<VT100RemoteHostReading> remoteHost = [self currentHost];
     if (remoteHost) {
         return [NSString stringWithFormat:@"%@@%@", remoteHost.username, remoteHost.hostname];
     } else {
@@ -6938,34 +6938,35 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                             0,
                             _screen.width,
                             _screen.height + [_screen numberOfScrollbackLines]);
-    NSArray<PTYAnnotation *> *annotations = [_screen annotationsInRange:range];
+    NSArray<id<PTYAnnotationReading>> *annotations = [_screen annotationsInRange:range];
     BOOL anyNoteIsVisible = NO;
-    for (PTYAnnotation *annotation in annotations) {
+    for (id<PTYAnnotationReading> annotation in annotations) {
         PTYNoteViewController *note = (PTYNoteViewController *)annotation.delegate;
         if (!note.view.isHidden) {
             anyNoteIsVisible = YES;
             break;
         }
     }
-    for (PTYAnnotation *annotation in annotations) {
+    for (id<PTYAnnotationReading> annotation in annotations) {
         PTYNoteViewController *note = (PTYNoteViewController *)annotation.delegate;
         [note setNoteHidden:anyNoteIsVisible];
     }
     [self.delegate sessionUpdateMetalAllowed];
 }
 
-- (void)highlightMarkOrNote:(id<IntervalTreeObject>)obj {
+- (void)highlightMarkOrNote:(id<IntervalTreeImmutableObject>)obj {
     if ([obj isKindOfClass:[iTermMark class]]) {
         BOOL hasErrorCode = NO;
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
-            VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+            id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)obj;
             hasErrorCode = mark.code != 0;
         }
         [_textview highlightMarkOnLine:VT100GridRangeMax([_screen lineNumberRangeOfInterval:obj.entry.interval])
                           hasErrorCode:hasErrorCode];
     } else {
-        PTYAnnotation *annotation = [PTYAnnotation castFrom:obj];
+        id<PTYAnnotationReading> annotation = [PTYAnnotation castFrom:obj];
         if (annotation) {
+#warning TODO: This is dumb. Just add delegate methods and avoid the cast.
             PTYNoteViewController *note = (PTYNoteViewController *)annotation.delegate;
             [note setNoteHidden:NO];
             [note highlight];
@@ -7031,7 +7032,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)nextMarkOrNote:(BOOL)annotationsOnly {
-    NSArray<id<IntervalTreeObject>> *objects = nil;
+    NSArray<id<IntervalTreeImmutableObject>> *objects = nil;
     if (self.currentMarkOrNotePosition == nil) {
         if (annotationsOnly) {
             objects = [_screen firstAnnotations];
@@ -7056,7 +7057,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
     }
     if (objects.count) {
-        id<IntervalTreeObject> obj = objects[0];
+        id<IntervalTreeImmutableObject> obj = objects[0];
         self.currentMarkOrNotePosition = obj.entry.interval;
         VT100GridRange range = [_screen lineNumberRangeOfInterval:self.currentMarkOrNotePosition];
         [_textview scrollLineNumberRangeIntoView:range];
@@ -7074,7 +7075,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)setCurrentHost:(VT100RemoteHost *)remoteHost {
+- (void)setCurrentHost:(id<VT100RemoteHostReading>)remoteHost {
     [_currentHost autorelease];
     _currentHost = [remoteHost retain];
     [self.variablesScope setValue:remoteHost.hostname forVariableNamed:iTermVariableKeySessionHostname];
@@ -7082,7 +7083,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate sessionCurrentHostDidChange:self];
 }
 
-- (VT100RemoteHost *)currentHost {
+- (id<VT100RemoteHostReading>)currentHost {
     if (!_currentHost) {
         // This is used when a session gets restored since _currentHost doesn't get persisted (and
         // perhaps other edge cases I haven't found--it used to be done every time before the
@@ -9009,7 +9010,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // the main thread. Don't use this unless you have to be synchronous.
 // Use asyncGetCurrentLocatioNWithCompletion instead.
 - (NSURL *)textViewCurrentLocation {
-    VT100RemoteHost *host = [self currentHost];
+    id<VT100RemoteHostReading>host = [self currentHost];
     NSString *path = _lastDirectory;
     NSURLComponents *components = [[[NSURLComponents alloc] init] autorelease];
     components.host = host.hostname;
@@ -9052,7 +9053,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     completion(pwd);
 }
 
-- (NSURL *)urlForHost:(VT100RemoteHost *)host path:(NSString *)path {
+- (NSURL *)urlForHost:(id<VT100RemoteHostReading>)host path:(NSString *)path {
     NSURLComponents *components = [[[NSURLComponents alloc] init] autorelease];
     components.host = host.hostname;
     components.user = host.username;
@@ -11006,7 +11007,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenClearCapturedOutput {
     if (self.screen.lastCommandMark.capturedOutput.count) {
-        [self.screen.lastCommandMark incrementClearCount];
+        id<VT100ScreenMarkReading> commandMark = self.screen.lastCommandMark;
+        [self.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            [mutableState incrementClearCountForCommandMark:commandMark];
+        }];
     }
     [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionCapturedOutputDidChange
                                                         object:nil];
@@ -11108,7 +11112,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_pasteHelper unblock];
 }
 
-- (void)screenPromptDidEndWithMark:(VT100ScreenMark *)mark {
+- (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading>)mark {
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         if (obj.argumentsOneOfCase == ITMNotificationRequest_Arguments_OneOfCase_GPBUnsetOneOfCase ||
             [obj.promptMonitorRequest.modesArray it_contains:ITMPromptMonitorMode_Prompt]) {
@@ -11219,7 +11223,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)screenDidAddNote:(PTYAnnotation *)note
+- (void)screenDidAddNote:(id<PTYAnnotationReading>)note
                    focus:(BOOL)focus {
     [_textview addViewForNote:note focus:focus];
     [self.delegate sessionUpdateMetalAllowed];
@@ -11605,7 +11609,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[_delegate parentWindow] updateTabColors];
 }
 
-- (void)screenCurrentHostDidChange:(VT100RemoteHost *)host
+- (void)screenCurrentHostDidChange:(id<VT100RemoteHostReading>)host
                                pwd:(NSString *)workingDirectory {
     DLog(@"Current host did change to %@ %@", host, self);
     NSString *previousHostName = _currentHost.hostname;
@@ -11632,7 +11636,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     self.currentHost = host;
 }
 
-- (BOOL)shellIsFishForHost:(VT100RemoteHost *)host {
+- (BOOL)shellIsFishForHost:(id<VT100RemoteHostReading>)host {
     NSString *name = host.usernameAndHostname;
     if (!name) {
         return NO;
@@ -11640,7 +11644,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self.hostnameToShell[name] isEqualToString:@"fish"];
 }
 
-- (void)maybeResetTerminalStateOnHostChange:(VT100RemoteHost *)newRemoteHost {
+- (void)maybeResetTerminalStateOnHostChange:(id<VT100RemoteHostReading>)newRemoteHost {
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                              VT100ScreenMutableState *mutableState,
                                              id<VT100ScreenDelegate> delegate) {
@@ -11787,7 +11791,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.variablesScope setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
 
     int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
-    VT100RemoteHost *remoteHost = [_screen remoteHostOnLine:line];
+    id<VT100RemoteHostReading> remoteHost = [_screen remoteHostOnLine:line];
     [self tryAutoProfileSwitchWithHostname:remoteHost.hostname
                                   username:remoteHost.username
                                       path:newPath
@@ -11869,7 +11873,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return nil;
     }
     command = [_screen commandInRange:_screen.commandRange];
-    VT100RemoteHost *host = [_screen remoteHostOnLine:[_screen numberOfLines]];
+    id<VT100RemoteHostReading> host = [_screen remoteHostOnLine:[_screen numberOfLines]];
     NSString *trimmedCommand =
     [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     return [[iTermShellHistoryController sharedInstance] commandHistoryEntriesWithPrefix:trimmedCommand
@@ -11903,9 +11907,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenDidExecuteCommand:(NSString *)command
                           range:(VT100GridCoordRange)range
-                         onHost:(VT100RemoteHost *)host
+                         onHost:(id<VT100RemoteHostReading>)host
                     inDirectory:(NSString *)directory
-                           mark:(VT100ScreenMark *)mark {
+                           mark:(id<VT100ScreenMarkReading>)mark {
     NSString *trimmedCommand =
     [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     if (trimmedCommand.length) {
@@ -11939,7 +11943,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }];
 }
 
-- (void)screenCommandDidExitWithCode:(int)code mark:(VT100ScreenMark *)maybeMark {
+- (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading>)maybeMark {
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         if ([obj.promptMonitorRequest.modesArray it_contains:ITMPromptMonitorMode_CommandEnd]) {
             ITMNotification *notification = [[[ITMNotification alloc] init] autorelease];
@@ -12377,7 +12381,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return self.lastLocalDirectory;
 }
 
-- (void)setLastRemoteHost:(VT100RemoteHost *)lastRemoteHost {
+- (void)setLastRemoteHost:(id<VT100RemoteHostReading>)lastRemoteHost {
     if (lastRemoteHost) {
         [_hosts addObject:lastRemoteHost];
         [self trimHostsIfNeeded];
@@ -12387,7 +12391,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenLogWorkingDirectoryOnAbsoluteLine:(long long)absLine
-                                     remoteHost:(VT100RemoteHost *)remoteHost
+                                     remoteHost:(id<VT100RemoteHostReading>)remoteHost
                                   withDirectory:(NSString *)directory
                                        pushType:(VT100ScreenWorkingDirectoryPushType)pushType
                                        accepted:(BOOL)accepted {
@@ -12445,7 +12449,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _shouldExpectCurrentDirUpdates = YES;
 }
 
-- (NSString *)shellIntegrationUpgradeUserDefaultsKeyForHost:(VT100RemoteHost *)host {
+- (NSString *)shellIntegrationUpgradeUserDefaultsKeyForHost:(id<VT100RemoteHostReading>)host {
     return [NSString stringWithFormat:@"SuppressShellIntegrationUpgradeAnnouncementForHost_%@@%@",
             host.username, host.hostname];
 }
@@ -12483,7 +12487,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenSuggestShellIntegrationUpgrade {
-    VT100RemoteHost *currentRemoteHost = [self currentHost];
+    id<VT100RemoteHostReading> currentRemoteHost = [self currentHost];
 
     NSString *theKey = [self shellIntegrationUpgradeUserDefaultsKeyForHost:currentRemoteHost];
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
@@ -12921,8 +12925,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.naggingController offerToDisableTriggersInInteractiveApps];
 }
 
-- (void)screenDidUpdateReturnCodeForMark:(VT100ScreenMark *)mark
-                              remoteHost:(VT100RemoteHost *)remoteHost {
+- (void)screenDidUpdateReturnCodeForMark:(id<VT100ScreenMarkReading>)mark
+                              remoteHost:(id<VT100RemoteHostReading>)remoteHost {
     [[iTermShellHistoryController sharedInstance] setStatusOfCommandAtMark:mark
                                                                     onHost:remoteHost
                                                                         to:mark.code];
@@ -12949,9 +12953,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenUpdateCommandUseWithGuid:(NSString *)screenmarkGuid
-                                onHost:(VT100RemoteHost *)lastRemoteHost
-                         toReferToMark:(VT100ScreenMark *)screenMark {
-#warning TODO: Mutating shared state
+                                onHost:(id<VT100RemoteHostReading>)lastRemoteHost
+                         toReferToMark:(id<VT100ScreenMarkReading>)screenMark {
     iTermCommandHistoryCommandUseMO *commandUse =
         [[iTermShellHistoryController sharedInstance] commandUseWithMarkGuid:screenMark.guid
                                                                       onHost:lastRemoteHost];
@@ -13718,14 +13721,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     ITMListPromptsResponse *response = [[[ITMListPromptsResponse alloc] init] autorelease];
     [_screen enumeratePromptsFrom:request.hasFirstUniqueId ? request.firstUniqueId : nil
                                to:request.hasLastUniqueId ? request.lastUniqueId : nil
-                            block:^(VT100ScreenMark *mark) {
+                            block:^(id<VT100ScreenMarkReading> mark) {
         [response.uniquePromptIdArray addObject:mark.guid];
     }];
     completion(response);
 }
 
 - (void)handleGetPromptRequest:(ITMGetPromptRequest *)request completion:(void (^)(ITMGetPromptResponse *response))completion {
-    VT100ScreenMark *mark;
+    id<VT100ScreenMarkReading> mark;
     if (request.hasUniquePromptId) {
         mark = [_screen promptMarkWithGUID:request.uniquePromptId];
     } else {
@@ -13735,7 +13738,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     completion(response);
 }
 
-- (ITMGetPromptResponse *)getPromptResponseForMark:(VT100ScreenMark *)mark {
+- (ITMGetPromptResponse *)getPromptResponseForMark:(id<VT100ScreenMarkReading>)mark {
     ITMGetPromptResponse *response = [[[ITMGetPromptResponse alloc] init] autorelease];
     if (!mark) {
         response.status = ITMGetPromptResponse_Status_PromptUnavailable;
@@ -14869,7 +14872,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)composerManager:(iTermComposerManager *)composerManager sendCommand:(NSString *)command {
     if (_screen.commandRange.start.x < 0) {
-        VT100RemoteHost *host = [self currentHost] ?: [VT100RemoteHost localhost];
+        id<VT100RemoteHostReading> host = [self currentHost] ?: [VT100RemoteHost localhost];
         [[iTermShellHistoryController sharedInstance] addCommand:command
                                                           onHost:host
                                                      inDirectory:[_screen workingDirectoryOnLine:_screen.commandRange.start.y]
@@ -14895,7 +14898,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [NSAppearance appearanceNamed:NSAppearanceNameAqua];
 }
 
-- (VT100RemoteHost *)composerManagerRemoteHost:(iTermComposerManager *)composerManager {
+- (id<VT100RemoteHostReading>)composerManagerRemoteHost:(iTermComposerManager *)composerManager {
     return [self currentHost];
 }
 

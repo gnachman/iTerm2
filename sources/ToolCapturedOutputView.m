@@ -42,7 +42,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     BOOL shutdown_;
     NSArray *allCapturedOutput_;
     NSTableCellView *_measuringCellView;
-    VT100ScreenMark *mark_;  // Mark from which captured output came
+    id<VT100ScreenMarkReading> mark_;  // Mark from which captured output came
     NSInteger _clearCount;
     iTermSearchField *searchField_;
     NSButton *help_;
@@ -141,7 +141,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     iTermToolWrapper *wrapper = self.toolWrapper;
     ToolCommandHistoryView *commandHistoryView = [wrapper.delegate commandHistoryView];
     iTermCommandHistoryCommandUseMO *commandUse = [commandHistoryView selectedCommandUse];
-    VT100ScreenMark *mark;
+    id<VT100ScreenMarkReading> mark;
     NSArray *theArray;
     if (commandUse) {
         mark = commandUse.mark;

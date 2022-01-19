@@ -7,6 +7,7 @@
 
 #import "AnnotateTrigger.h"
 #import "ScreenChar.h"
+#import "PTYAnnotation.h"
 
 @implementation AnnotateTrigger
 
@@ -39,7 +40,7 @@
         return YES;
     }
     // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
-    PTYAnnotation *annotation =
+    id<PTYAnnotationReading> annotation =
         [aSession triggerSession:self
            makeAnnotationInRange:rangeInScreenChars
                             line:lineNumber];

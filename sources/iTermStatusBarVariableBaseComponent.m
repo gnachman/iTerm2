@@ -313,7 +313,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
     NSMenu *menu = [[NSMenu alloc] init];
     NSView *containingView = view.superview;
 
-    VT100RemoteHost *remoteHost = [self remoteHost];
+    id<VT100RemoteHostReading> remoteHost = [self remoteHost];
     for (iTermRecentDirectoryMO *directory in [[[iTermShellHistoryController sharedInstance] directoriesSortedByScoreOnHost:remoteHost] it_arrayByKeepingFirstN:10]) {
         NSString *title;
         if (directory.starred.boolValue) {
@@ -337,7 +337,7 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
                           writeString:[NSString stringWithFormat:@"cd %@", [path stringWithEscapedShellCharactersIncludingNewlines:YES]]];
 }
 
-- (VT100RemoteHost *)remoteHost {
+- (id<VT100RemoteHostReading>)remoteHost {
     VT100RemoteHost *result = [[VT100RemoteHost alloc] init];
     result.hostname = [self.scope valueForVariableName:iTermVariableKeySessionHostname];
     result.username = [self.scope valueForVariableName:iTermVariableKeySessionUsername];

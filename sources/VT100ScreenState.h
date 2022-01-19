@@ -16,6 +16,7 @@
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenMark.h"
 #import "VT100Terminal.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermColorMap.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMark.h"
@@ -88,7 +89,7 @@ extern NSString *const kScreenStateProtectedMode;
 
 // Holds notes on alt/primary grid (the one we're not in). The origin is the top-left of the
 // grid.
-@property (nullable, nonatomic, strong, readonly) IntervalTree *savedIntervalTree;
+@property (nullable, nonatomic, strong, readonly) id<IntervalTreeReading> savedIntervalTree;
 
 // Cached copies of terminal attributes
 @property (nonatomic, readonly) BOOL wraparoundMode;
@@ -145,7 +146,7 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, readonly) iTermUnicodeNormalization normalization;
 @property (nonatomic, weak, readonly) id<iTermIntervalTreeObserver> intervalTreeObserver;
 // Note that the ivar for lastCommandMark *is* mutable because it is used as a cache.
-@property (nullable, nonatomic, strong, readonly) VT100ScreenMark *lastCommandMark;
+@property (nullable, nonatomic, strong, readonly) id<VT100ScreenMarkReading> lastCommandMark;
 @property (nonatomic, strong, readonly) id<iTermColorMapReading> colorMap;
 @property (nonatomic, strong, readonly) id<iTermTemporaryDoubleBufferedGridControllerReading> temporaryDoubleBuffer;
 
@@ -203,14 +204,14 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, readwrite) NSTimeInterval lastBell;
 @property (nonatomic, strong, readwrite) NSMutableIndexSet *animatedLines;
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *pasteboardString;
-@property (nonatomic, strong, readwrite) IntervalTree *intervalTree;
+@property (nonatomic, strong, readwrite) id<IntervalTreeReading> intervalTree;
 
 @property (nonatomic, strong, readwrite) VT100Grid *primaryGrid;
 @property (nullable, nonatomic, strong, readwrite) VT100Grid *altGrid;
 @property (nonatomic, strong, readwrite) VT100Grid *currentGrid;
 // When a saved grid is swapped in, this is the live current grid.
 @property (nullable, nonatomic, strong, readwrite) VT100Grid *realCurrentGrid;
-@property (nullable, nonatomic, strong, readwrite) IntervalTree *savedIntervalTree;
+@property (nullable, nonatomic, strong, readwrite) id<IntervalTreeReading> savedIntervalTree;
 @property (nonatomic, readwrite) BOOL wraparoundMode;
 @property (nonatomic, readwrite) BOOL ansi;
 @property (nonatomic, readwrite) BOOL insert;
@@ -237,9 +238,9 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, readwrite) long long cumulativeScrollbackOverflow;
 @property (nonatomic, strong, readwrite) LineBuffer *linebuffer;
 @property (nonatomic, readwrite) BOOL trackCursorLineMovement;
-#warning TODO: Prevent access to intervalTreeObserver on the mutation queue. It should only be called on the main queue.
+#warning TODO: Prevent access to intervalTreeObserver on the mutation queue. It should only be called on the main queue. AUDIT FOR ALL USES OF THIS - I KNOW I MISSED SOME
 @property (nonatomic, weak, readwrite) id<iTermIntervalTreeObserver> intervalTreeObserver;
-@property (nullable, nonatomic, strong, readwrite) VT100ScreenMark *lastCommandMark;
+@property (nullable, nonatomic, strong, readwrite) id<VT100ScreenMarkReading> lastCommandMark;
 @property (nonatomic, strong, readwrite) iTermTemporaryDoubleBufferedGridController *temporaryDoubleBuffer;
 @property (nonatomic, readwrite) long long fakePromptDetectedAbsLine;
 @property (nonatomic, readwrite) long long lastPromptLine;
@@ -307,12 +308,12 @@ extern NSString *const kScreenStateProtectedMode;
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
                                   width:(int)width
                             linesOffset:(long long)linesOffset;
-- (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
+- (__kindof id<IntervalTreeImmutableObject>)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
 
 #pragma mark - Shell Integration
 
-@property (nonatomic, readonly) VT100RemoteHost *lastRemoteHost;
-@property (nonatomic, readonly) VT100ScreenMark *lastPromptMark;
+@property (nonatomic, readonly) id<VT100RemoteHostReading> lastRemoteHost;
+@property (nonatomic, readonly) id<VT100ScreenMarkReading> lastPromptMark;
 
 // If at a shell prompt, this gives the range of the command being edited not past the cursor.
 // If not at a prompt (no shell integration or command is running) this is -1,-1,-1,-1.
@@ -320,13 +321,13 @@ extern NSString *const kScreenStateProtectedMode;
 
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
 
-- (VT100ScreenMark * _Nullable)markOnLine:(int)line;
+- (id<VT100ScreenMarkReading> _Nullable)markOnLine:(int)line;
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
 
-- (id)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass;
+- (id<IntervalTreeImmutableObject>)lastMarkMustBePrompt:(BOOL)wantPrompt class:(Class)theClass;
 
-- (VT100RemoteHost *)remoteHostOnLine:(int)line;
+- (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
 

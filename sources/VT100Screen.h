@@ -23,8 +23,9 @@
 @class IntervalTree;
 @class PTYTask;
 @class VT100Grid;
-@class VT100RemoteHost;
+@protocol VT100RemoteHostReading;
 @class VT100ScreenMark;
+@protocol VT100ScreenMarkReading;
 @protocol VT100ScreenConfiguration;
 @class VT100ScreenMutableState;
 @class VT100Terminal;
@@ -144,21 +145,21 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 
 #pragma mark - Marks and notes
 
-- (VT100ScreenMark *)lastMark;
-- (VT100ScreenMark *)lastPromptMark;
-- (VT100RemoteHost *)lastRemoteHost;
-- (VT100ScreenMark *)promptMarkWithGUID:(NSString *)guid;
+- (id<VT100ScreenMarkReading>)lastMark;
+- (id<VT100ScreenMarkReading>)lastPromptMark;
+- (id<VT100RemoteHostReading>)lastRemoteHost;
+- (id<VT100ScreenMarkReading>)promptMarkWithGUID:(NSString *)guid;
 - (BOOL)markIsValid:(iTermMark *)mark;
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
 - (void)enumeratePromptsFrom:(NSString *)maybeFirst
                           to:(NSString *)maybeLast
-                       block:(void (^ NS_NOESCAPE)(VT100ScreenMark *mark))block;
+                       block:(void (^ NS_NOESCAPE)(id<VT100ScreenMarkReading> mark))block;
 // These methods normally only return one object, but if there is a tie, all of the equally-positioned marks/notes are returned.
 
-- (NSArray<VT100ScreenMark *> *)lastMarks;
-- (NSArray<VT100ScreenMark *> *)firstMarks;
-- (NSArray<PTYAnnotation *> *)lastAnnotations;
-- (NSArray<PTYAnnotation *> *)firstAnnotations;
+- (NSArray<id<VT100ScreenMarkReading>> *)lastMarks;
+- (NSArray<id<VT100ScreenMarkReading>> *)firstMarks;
+- (NSArray<id<PTYAnnotationReading>> *)lastAnnotations;
+- (NSArray<id<PTYAnnotationReading>> *)firstAnnotations;
 
 - (NSArray *)marksOrNotesBefore:(Interval *)location;
 - (NSArray *)marksOrNotesAfter:(Interval *)location;
@@ -173,8 +174,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)clearToLastMark;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
-- (VT100RemoteHost *)remoteHostOnLine:(int)line;
-- (VT100ScreenMark *)lastCommandMark;  // last mark representing a command
+- (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
+- (id<VT100ScreenMarkReading>)lastCommandMark;  // last mark representing a command
 
 - (BOOL)encodeContents:(id<iTermEncoderAdapter>)encoder
           linesDropped:(int *)linesDroppedOut;

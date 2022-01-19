@@ -11,7 +11,9 @@
 #import "DebugLogging.h"
 #import "ScreenChar.h"
 
-@implementation iTermImageMark
+@implementation iTermImageMark {
+    iTermImageMark *_doppelganger;
+}
 
 - (instancetype)init {
     self = [super init];
@@ -52,6 +54,13 @@
     if (_imageCode) {
         ReleaseImage(_imageCode.integerValue);
     }
+}
+
+- (id<IntervalTreeObject>)doppelganger {
+    if (!_doppelganger) {
+        _doppelganger = [self copy];
+    }
+    return _doppelganger;
 }
 
 @end

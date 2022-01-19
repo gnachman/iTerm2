@@ -45,7 +45,7 @@
     [super dealloc];
 }
 
-- (void)loadDirectoriesForHost:(VT100RemoteHost *)host {
+- (void)loadDirectoriesForHost:(id<VT100RemoteHostReading>)host {
     [[self unfilteredModel] removeAllObjects];
     for (iTermRecentDirectoryMO *entry in [[iTermShellHistoryController sharedInstance] directoriesSortedByScoreOnHost:host]) {
         DirectoriesPopupEntry *popupEntry = [[[DirectoriesPopupEntry alloc] init] autorelease];

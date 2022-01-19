@@ -70,7 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
         return iTermMarkStyleNone;
     }
 
-    VT100ScreenMark *mark = [textView.dataSource markOnLine:i];
+    id<VT100ScreenMarkReading> mark = [textView.dataSource markOnLine:i];
     if (!mark.isVisible) {
         return iTermMarkStyleNone;
     }

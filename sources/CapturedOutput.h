@@ -9,20 +9,37 @@
 #import <Foundation/Foundation.h>
 
 @class CaptureTrigger;
+@class CapturedOutput;
 @class iTermCapturedOutputMark;
+@protocol iTermCapturedOutputMarkReading;
 @class iTermPromise<T>;
 
-@interface CapturedOutput : NSObject
-@property(nonatomic, copy) NSString *line;
-@property(nonatomic, copy) NSArray *values;
-@property(nonatomic, retain) iTermPromise<NSString *> *promisedCommand;
-@property(nonatomic, assign) BOOL state;  // user-defined state
-#warning TODO: Which threads can access mark? Who can change it? This is risky.
-@property(nonatomic, retain) iTermCapturedOutputMark *mark;
-@property(nonatomic, assign) long long absoluteLineNumber;
+@protocol CapturedOutputReading<NSObject>
+@property(nonatomic, copy, readonly) NSString *line;
+@property(nonatomic, copy, readonly) NSArray *values;
+@property(nonatomic, strong, readonly) iTermPromise<NSString *> *promisedCommand;
+@property(nonatomic, readonly) BOOL state;  // user-defined state
+@property(nonatomic, strong, readonly) id<iTermCapturedOutputMarkReading> mark;
+@property(nonatomic, readonly) long long absoluteLineNumber;
 
 // Used for finding the |mark| later on while deserializing.
-@property(nonatomic, copy) NSString *markGuid;
+@property(nonatomic, copy, readonly) NSString *markGuid;
+
+- (NSDictionary *)dictionaryValue;
+- (id<CapturedOutputReading>)doppelganger;
+@end
+
+@interface CapturedOutput : NSObject<CapturedOutputReading>
+@property(nonatomic, copy, readwrite) NSString *line;
+@property(nonatomic, copy, readwrite) NSArray *values;
+@property(nonatomic, retain, readwrite) iTermPromise<NSString *> *promisedCommand;
+@property(nonatomic, assign, readwrite) BOOL state;  // user-defined state
+#warning TODO: Which threads can access mark? Who can change it? This is risky.
+@property(nonatomic, retain, readwrite) id<iTermCapturedOutputMarkReading> mark;
+@property(nonatomic, assign, readwrite) long long absoluteLineNumber;
+
+// Used for finding the |mark| later on while deserializing.
+@property(nonatomic, copy, readwrite) NSString *markGuid;
 
 + (instancetype)capturedOutputWithDictionary:(NSDictionary *)dict;
 - (NSDictionary *)dictionaryValue;

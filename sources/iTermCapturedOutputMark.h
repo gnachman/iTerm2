@@ -8,7 +8,11 @@
 
 #import "iTermMark.h"
 
+@protocol iTermCapturedOutputMarkReading<NSObject, IntervalTreeImmutableEntry, iTermMark>
+@property (nonatomic, copy, readonly) NSString *guid;
+@end
+
 // Invisible marks used to keep track of the location of captured output.
-@interface iTermCapturedOutputMark : iTermMark
-@property(nonatomic, copy) NSString *guid;
+@interface iTermCapturedOutputMark : iTermMark<iTermCapturedOutputMarkReading>
+@property(nonatomic, copy, readwrite) NSString *guid;
 @end

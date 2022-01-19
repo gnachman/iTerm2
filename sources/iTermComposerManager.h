@@ -10,7 +10,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class TmuxController;
-@class VT100RemoteHost;
+@protocol VT100RemoteHostReading;
 @class iTermComposerManager;
 @class iTermVariableScope;
 @class iTermStatusBarViewController;
@@ -26,7 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
     sendToAdvancedPaste:(NSString *)command;
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager;
 - (NSAppearance *_Nullable)composerManagerAppearance:(iTermComposerManager *)composerManager;
-- (VT100RemoteHost *)composerManagerRemoteHost:(iTermComposerManager *)composerManager;
+- (id<VT100RemoteHostReading>)composerManagerRemoteHost:(iTermComposerManager *)composerManager;
 - (NSString *_Nullable)composerManagerWorkingDirectory:(iTermComposerManager *)composerManager;
 - (NSString *)composerManagerShell:(iTermComposerManager *)composerManager;
 - (TmuxController * _Nullable)composerManagerTmuxController:(iTermComposerManager *)composerManager;

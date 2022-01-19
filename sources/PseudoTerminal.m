@@ -10075,7 +10075,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
             return YES;
         }
-        VT100RemoteHost *host = [[self currentSession] currentHost] ?: [VT100RemoteHost localhost];
+        id<VT100RemoteHostReading> host = [[self currentSession] currentHost] ?: [VT100RemoteHost localhost];
         return [[iTermShellHistoryController sharedInstance] haveCommandsForHost:host];
     } else if ([item action] == @selector(openDirectories:)) {
         if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
@@ -10537,7 +10537,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     [self.window.dockTile setShowsApplicationBadge:YES];
 }
 
-- (void)sessionHostDidChange:(PTYSession *)session to:(VT100RemoteHost *)host {
+- (void)sessionHostDidChange:(PTYSession *)session to:(id<VT100RemoteHostReading>)host {
     if ([self currentSession] == session) {
         [self refreshTools];
     }
@@ -11285,7 +11285,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     [[self currentSession] takeFocus];
 }
 
-- (VT100RemoteHost *)toolbeltCurrentHost {
+- (id<VT100RemoteHostReading>)toolbeltCurrentHost {
     return [[self currentSession] currentHost];
 }
 
@@ -11293,11 +11293,11 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     return [[[self currentSession] shell] pid];
 }
 
-- (VT100ScreenMark *)toolbeltLastCommandMark {
+- (id<VT100ScreenMarkReading>)toolbeltLastCommandMark {
     return self.currentSession.screen.lastCommandMark;
 }
 
-- (void)toolbeltDidSelectMark:(iTermMark *)mark {
+- (void)toolbeltDidSelectMark:(id<iTermMark>)mark {
     [self.currentSession scrollToMark:mark];
     [self.currentSession takeFocus];
 }
