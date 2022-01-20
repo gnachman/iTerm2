@@ -1,5 +1,5 @@
 //
-//  JournalingIntervalTree.swift
+//  EventuallyConsistentIntervalTree.swift
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 1/18/22.
@@ -7,30 +7,52 @@
 
 import Foundation
 
-@objc(iTermJournalingIntervalTreeSideEffectPerformer)
-protocol JournalingIntervalTreeSideEffectPerformer: AnyObject {
-    @objc(addJournalingIntervalTreeSideEffect:)
+@objc(iTermEventuallyConsistentIntervalTreeSideEffectPerformer)
+protocol EventuallyConsistentIntervalTreeSideEffectPerformer: AnyObject {
+    @objc(addEventuallyConsistentIntervalTreeSideEffect:)
     func addSideEffect(_ closure: @escaping () -> ())
 }
 
-@objc(iTermJournalingIntervalTree)
-class JournalingIntervalTree: IntervalTree {
-    private weak var sideEffectPerformer: JournalingIntervalTreeSideEffectPerformer?
-    @objc let derivative: IntervalTree
+// The design of the interval tree is not obvious.
+//
+// The mutation thread has an instance of this class on which it performs additions, removals,
+// and mutations.
+//
+// The main thread has an immutable instance of the "derivative" tree. It does not admit mutations.
+// Internally, a mutable instance of the derivative tree is held. It is modified as a side-effect.
+// Consequently, the derivative tree is an eventually-consistent copy of this tree. It is
+// updated by some external code that performs side-effects and deals with synchronization so that
+// the side-effects occur in a critical section where both the main and mutation threads are
+// synchronized.
+//
+// Objects in the interval tree conform to IntervalTreeObject. They are capable of producing a
+// "doppelganger" which is the main-thread copy of that object. An object's doppelganger is stable:
+// once created, there is a 1:1 correspondance between the "progenitor" object (the original one)
+// and its doppelganger.
+//
+// To modify an object already in the tree and have the change reflected in the doppelganger, use
+// the `mutate(_:, closure)` method.
+@objc(iTermEventuallyConsistentIntervalTree)
+class EventuallyConsistentIntervalTree: IntervalTree {
+    private weak var sideEffectPerformer: EventuallyConsistentIntervalTreeSideEffectPerformer?
+    @objc var derivative: IntervalTreeReading {
+        return _derivative
+    }
+    private let _derivative: IntervalTree
 
     @objc(initWithSideEffectPerformer:derivativeIntervalTree:)
-    init(_ sideEffectPerformer: JournalingIntervalTreeSideEffectPerformer,
+    init(_ sideEffectPerformer: EventuallyConsistentIntervalTreeSideEffectPerformer,
          derivative: IntervalTree) {
-        self.derivative = derivative
+        self._derivative = derivative
         self.sideEffectPerformer = sideEffectPerformer
         super.init()
     }
 
     @objc(initWithDictionary:sideEffectPerformer:derivativeIntervalTree:)
     init(dictionary: [AnyHashable : Any],
-         sideEffectPerformer: JournalingIntervalTreeSideEffectPerformer,
+         sideEffectPerformer: EventuallyConsistentIntervalTreeSideEffectPerformer,
          derivative: IntervalTree) {
-        self.derivative = derivative
+        self._derivative = derivative
         self.sideEffectPerformer = sideEffectPerformer
         super.init(dictionary: dictionary)
     }
@@ -48,22 +70,29 @@ class JournalingIntervalTree: IntervalTree {
         }
     }
 
+    // Returns whether the object was actually removed.
     @objc
-    override func remove(_ object: IntervalTreeObject) {
-        super.remove(object)
+    @discardableResult
+    override func remove(_ object: IntervalTreeObject) -> Bool {
+        let result = super.remove(object)
         addSideEffect(object) { doppelganger, derivative in
             derivative.remove(doppelganger)
         }
+        return result
     }
 
+    // This is faster than calling `remove(_:)` on each object int he tree.
     @objc
     override func removeAllObjects() {
         super.removeAllObjects()
         sideEffectPerformer?.addSideEffect { [weak self] in
-            self?.derivative.removeAllObjects()
+            self?._derivative.removeAllObjects()
         }
     }
 
+    // The `closure` gets called twice: once (synchronously) with `object` and a second time (maybe
+    // asynchronously) as its doppelganger. As long as all mutations to objects in the interval tree
+    // happen through this method, eventual consistency is guaranteed.
     @objc(mutateObject:block:)
     func mutate(_ object: IntervalTreeImmutableObject,
                 closure: @escaping (IntervalTreeObject) -> ()) {
@@ -73,6 +102,8 @@ class JournalingIntervalTree: IntervalTree {
         }
     }
 
+    // If you know you're making lots of changes at one time, this is a faster version of
+    // `mutate(_:, closure)` that only creates one side-effect instead of N.
     @objc(bulkMutateObjects:block:)
     func bulkMutate(_ objects: [IntervalTreeImmutableObject],
                     closure: @escaping (IntervalTreeObject) -> ()) {
@@ -89,7 +120,7 @@ class JournalingIntervalTree: IntervalTree {
         let doppelganger = object.doppelganger()
         sideEffectPerformer?.addSideEffect { [weak self] in
             if let self = self {
-                closure(doppelganger, self.derivative)
+                closure(doppelganger, self._derivative)
             }
         }
     }
@@ -100,7 +131,7 @@ class JournalingIntervalTree: IntervalTree {
         sideEffectPerformer?.addSideEffect { [weak self] in
             if let self = self {
                 for doppelganger in doppelgangers {
-                    closure(doppelganger, self.derivative)
+                    closure(doppelganger, self._derivative)
                 }
             }
         }

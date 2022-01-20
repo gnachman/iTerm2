@@ -9,11 +9,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface Interval : NSObject<NSCopying>
 // Negative locations have special meaning. Don't use them.
-@property(nonatomic, assign) long long location;
+@property(nonatomic, readonly) long long location;
 @property(nonatomic, assign) long long length;
 @property(nonatomic, readonly) long long limit;
 
 + (instancetype)intervalWithLocation:(long long)location length:(long long)length;
+- (instancetype)initWithLocation:(long long)location length:(long long)length;
 + (Interval *)maxInterval;
 // One more than the largest value in the interval.
 - (BOOL)intersects:(Interval *)other;
@@ -53,8 +54,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 // A node in the interval tree will contain one or more entries, each of which has an interval and an object. All intervals should have the same location.
 @interface IntervalTreeEntry : NSObject<IntervalTreeImmutableEntry>
-@property(nonatomic, retain) Interval *interval;
-@property(nonatomic, retain) id<IntervalTreeObject> object;
+@property(nonatomic, readonly, retain) Interval *interval;
+@property(nonatomic, readonly, retain) id<IntervalTreeObject> object;
 
 + (IntervalTreeEntry *)entryWithInterval:(Interval *)interval object:(id<IntervalTreeObject>)object;
 @end
@@ -103,7 +104,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // |object| should implement -hash.
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval;
-- (void)removeObject:(id<IntervalTreeObject>)object;
+- (BOOL)removeObject:(id<IntervalTreeObject>)object;
 
 // NOTE: This leaves the entry set on objects so you can recover the interval. You must nil it out
 // before adding an object to another tree.

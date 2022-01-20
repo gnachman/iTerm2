@@ -1798,8 +1798,8 @@ ITERM_WEAKLY_REFERENCEABLE
     _textview = [[PTYTextView alloc] initWithFrame:NSMakeRect(0,
                                                               [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins],
                                                               aSize.width,
-                                                              aSize.height)
-                                          colorMap:_screen.colorMap];
+                                                              aSize.height)];
+    _textview.colorMap = _screen.colorMap;
     _textview.keyboardHandler.keyMapper = _keyMapper;
     _view.mainResponder = _textview;
     _view.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
@@ -7694,6 +7694,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         result = [self syncCheckingTriggers:checkTriggers
                               resetOverflow:resetOverflow
                                mutableState:mutableState];
+        _textview.colorMap = _screen.colorMap;
     }];
     return result;
 }

@@ -75,7 +75,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     });
     _script = [NSMutableString string];
     _colorMap = [[iTermColorMap alloc] init];
-    _textView = [[PTYTextView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100) colorMap:_colorMap];
+    _textView = [[PTYTextView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];
     [_textView.dataSource setColor:[NSColor redColor] forKey:kColorMapBackground];
     [_textView.dataSource setColor:[NSColor redColor] forKey:kColorMapForeground];
     _textView.delegate = self;

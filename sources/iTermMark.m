@@ -33,8 +33,10 @@
 
 - (id<IntervalTreeObject>)doppelganger {
     @synchronized ([iTermMark class]) {
+        assert(!_isDoppelganger);
         if (!_doppelganger) {
             _doppelganger = [self copy];
+            _doppelganger->_isDoppelganger = YES;
             _doppelganger->_progenitor = self;
         }
         return _doppelganger;
@@ -50,8 +52,11 @@
 #pragma mark - NSObject
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p interval=%@>",
-            self.class, self, self.entry.interval];
+    return [NSString stringWithFormat:@"<%@: %p interval=%@ %@>",
+            NSStringFromClass(self.class),
+            self,
+            self.entry.interval,
+            _isDoppelganger ? @"IsDop" : @"NotDop"];
 }
 
 #pragma mark - APIs

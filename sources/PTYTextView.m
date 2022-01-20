@@ -173,11 +173,6 @@
 }
 
 
-- (instancetype)initWithFrame:(NSRect)frameRect {
-    // Must call initWithFrame:colorMap:.
-    assert(false);
-}
-
 // This is an attempt to fix performance problems that appeared in macOS 10.14
 // (rdar://45295749, also mentioned in PTYScrollView.m).
 //
@@ -215,7 +210,7 @@
     return size;
 }
 
-- (instancetype)initWithFrame:(NSRect)aRect colorMap:(id<iTermColorMapReading>)colorMap {
+- (instancetype)initWithFrame:(NSRect)aRect {
     self = [super initWithFrame:aRect];
     if (self) {
         // This class has a complicated role.
@@ -251,9 +246,6 @@
         [self resetMouseLocationToRefuseFirstResponderAt];
         _drawingHelper = [[iTermTextDrawingHelper alloc] init];
         _drawingHelper.delegate = self;
-
-        _colorMap = [colorMap retain];
-        _drawingHelper.colorMap = colorMap;
 
         [self updateMarkedTextAttributes];
         _drawingHelper.cursorVisible = YES;
@@ -393,7 +385,6 @@
     if (dataSource) {
         [_colorMap autorelease];
         _colorMap = [_dataSource.colorMap retain];
-        _drawingHelper.colorMap = _colorMap;
     }
 }
 
@@ -1422,6 +1413,7 @@
     _drawingHelper.forceAntialiasingOnRetina = [iTermAdvancedSettingsModel forceAntialiasingOnRetina];
     _drawingHelper.blend = MIN(MAX(0.05, [_delegate textViewBlend]), 1);
     _drawingHelper.shouldShowTimestamps = self.showTimestamps;
+    _drawingHelper.colorMap = _colorMap;
 
     CGFloat rightMargin = 0;
     if (self.showTimestamps) {

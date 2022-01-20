@@ -14,6 +14,7 @@ static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Dir
 @implementation VT100WorkingDirectory {
     VT100WorkingDirectory *_doppelganger;
     __weak VT100WorkingDirectory *_progenitor;
+    BOOL _isDoppelganger;
 }
 
 @synthesize entry;
@@ -32,8 +33,9 @@ static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Dir
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p workingDirectory=%@ interval=%@>",
-            self.class, self, self.workingDirectory, self.entry.interval];
+    return [NSString stringWithFormat:@"<%@: %p workingDirectory=%@ interval=%@ %@>",
+            self.class, self, self.workingDirectory, self.entry.interval,
+            _isDoppelganger ? @"IsDop" : @"NotDop"];
 }
 
 #pragma mark - IntervalTreeObject
@@ -48,9 +50,11 @@ static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Dir
 
 - (nonnull id<IntervalTreeObject>)doppelganger {
     @synchronized ([VT100WorkingDirectory class]) {
+        assert(!_isDoppelganger);
         if (!_doppelganger) {
             _doppelganger = [self copyOfIntervalTreeObject];
             _doppelganger->_progenitor = self;
+            _doppelganger->_isDoppelganger = YES;
         }
         return _doppelganger;
     }

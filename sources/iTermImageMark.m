@@ -13,6 +13,8 @@
 
 @implementation iTermImageMark {
     iTermImageMark *_doppelganger;
+    __weak iTermImageMark *_progenitor;
+    BOOL _isDoppelganger;
 }
 
 - (instancetype)init {
@@ -27,7 +29,11 @@
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p %@>", self.class, self, self.imageCode];
+    return [NSString stringWithFormat:@"<%@: %p imageCode=%@ %@>",
+            NSStringFromClass(self.class),
+            self,
+            self.imageCode,
+            _isDoppelganger ? @"IsDop" : @"NotDop"];
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
@@ -57,10 +63,17 @@
 }
 
 - (id<IntervalTreeObject>)doppelganger {
-    if (!_doppelganger) {
-        _doppelganger = [self copy];
+    @synchronized ([iTermImageMark class]) {
+        assert(!_isDoppelganger);
+        if (!_doppelganger) {
+            _doppelganger = [[iTermImageMark alloc] init];
+            _doppelganger->_imageCode = _imageCode;
+            _doppelganger->_isDoppelganger = YES;
+            _doppelganger->_progenitor = self;
+        }
+        assert(_doppelganger);
+        return _doppelganger;
     }
-    return _doppelganger;
 }
 
 @end

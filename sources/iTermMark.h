@@ -19,6 +19,7 @@
 
 // This is a base class for marks but should never be used directly.
 @interface iTermMark : NSObject<iTermMark, IntervalTreeObject, NSCopying>
+@property (nonatomic, readonly) BOOL isDoppelganger;
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 - (NSDictionary *)dictionaryValue;

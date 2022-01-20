@@ -199,18 +199,23 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 + (Interval *)intervalWithLocation:(long long)location length:(long long)length {
-    Interval *interval = [[[Interval alloc] init] autorelease];
-    interval.location = location;
-    interval.length = length;
+    Interval *interval = [[[Interval alloc] initWithLocation:location length:length] autorelease];
     [interval boundsCheck];
     return interval;
 }
 
 + (Interval *)maxInterval {
-    Interval *interval = [[[Interval alloc] init] autorelease];
-    interval.location = kMinLocation;
-    interval.length = kMaxLimit - kMinLocation ;
+    Interval *interval = [[[Interval alloc] initWithLocation:kMinLocation length:kMaxLimit - kMinLocation] autorelease];
     return interval;
+}
+
+- (instancetype)initWithLocation:(long long)location length:(long long)length {
+    self = [super init];
+    if (self) {
+        _location = location;
+        _length = length;
+    }
+    return self;
 }
 
 - (long long)limit {
@@ -257,10 +262,17 @@ static NSString *const kIntervalLengthKey = @"Length";
 
 + (IntervalTreeEntry *)entryWithInterval:(Interval *)interval
                                   object:(id<IntervalTreeObject>)object {
-    IntervalTreeEntry *entry = [[[IntervalTreeEntry alloc] init] autorelease];
-    entry.interval = interval;
-    entry.object = object;
-    return entry;
+    return [[[self alloc] initWithInterval:interval object:object] autorelease];
+}
+
+- (instancetype)initWithInterval:(Interval *)interval object:(id<IntervalTreeObject>)object {
+    self = [super init];
+    if (self) {
+        assert(object);
+        _interval = [interval retain];
+        _object = [object retain];
+    }
+    return self;
 }
 
 - (void)dealloc {
@@ -380,12 +392,14 @@ static NSString *const kIntervalLengthKey = @"Length";
     if (!enumerator) {
         return nil;
     }
-    id<IntervalTreeObject> obj = [enumerator nextObject];
-    if (!obj) {
+    NSArray<id<IntervalTreeObject>> *array = [enumerator nextObject];
+    if (!array) {
         return nil;
     }
+    id<IntervalTreeObject> obj = array.firstObject;
     Interval *interval = [[obj.entry.interval copy] autorelease];
-    [self removeObject:obj];
+    const BOOL removed = [self removeObject:obj];
+    assert(removed);
     if (!obj) {
         return nil;
     }
@@ -421,7 +435,8 @@ static NSString *const kIntervalLengthKey = @"Length";
     ++_count;
 }
 
-- (void)removeObject:(id<IntervalTreeObject>)object {
+- (BOOL)removeObject:(id<IntervalTreeObject>)object {
+    [_tree sanityCheck];
     DLog(@"Remove %@\n%@", object, [NSThread callStackSymbols]);
     Interval *interval = object.entry.interval;
     long long theLocation = interval.location;
@@ -445,6 +460,10 @@ static NSString *const kIntervalLengthKey = @"Length";
             [_tree notifyValueChangedForKey:@(theLocation)];
         }
         --_count;
+        return YES;
+    } else {
+        DLog(@"Failed to remove object not in tree");
+        return NO;
     }
 }
 
@@ -546,7 +565,7 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p tree=%@>", self.class, self, _tree];
+    return [NSString stringWithFormat:@"<%@: %p tree=%@>", self.class, self, _tree.description];
 }
 
 - (BOOL)containsObject:(id<IntervalTreeObject>)object {
@@ -963,12 +982,11 @@ static NSString *const kIntervalLengthKey = @"Length";
 - (NSDictionary *)dictionaryValueWithOffset:(long long)offset {
     NSMutableArray *objectDicts = [NSMutableArray array];
     for (id<IntervalTreeObject> object in self.allObjects) {
-        Interval *interval = object.entry.interval;
-        interval.location = interval.location + offset;
-        [objectDicts addObject:@{ kIntervalTreeIntervalKey: object.entry.interval.dictionaryValue,
+        Interval *interval = [Interval intervalWithLocation:object.entry.interval.location + offset
+                                                     length:object.entry.interval.length];
+        [objectDicts addObject:@{ kIntervalTreeIntervalKey: interval.dictionaryValue,
                                   kIntervalTreeObjectKey: object.dictionaryValue,
                                   kIntervalTreeClassNameKey: NSStringFromClass(object.class) }];
-        interval.location = interval.location - offset;
     }
     return @{ kIntervalTreeEntriesKey: objectDicts };
 }

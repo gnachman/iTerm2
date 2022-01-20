@@ -407,7 +407,8 @@ static void SwapInt(int *a, int *b) {
 
     for (id<IntervalTreeObject> note in notesAtLeastPartiallyOnScreen) {
         VT100GridCoordRange range = [self coordRangeForInterval:note.entry.interval];
-        [self.mutableIntervalTree removeObject:note];
+        const BOOL removed = [self.mutableIntervalTree removeObject:note];
+        assert(removed);
         LineBufferPositionRange *positionRange =
         [self positionRangeForCoordRange:range
                                     inLineBuffer:appendOnlyLineBuffer
@@ -906,8 +907,9 @@ static void SwapInt(int *a, int *b) {
             newRange.start.y = 0;
             newRange.start.x = 0;
         }
-        DLog(@"  Its new range is %@ including %d lines dropped from top", VT100GridCoordRangeDescription(objectRange), numLinesDroppedFromTop);
-        [self.mutableSavedIntervalTree removeObject:object];
+        DLog(@"  Its new range is %@ including %d lines dropped from top. Remove %@", VT100GridCoordRangeDescription(objectRange), numLinesDroppedFromTop, object);
+        const BOOL removed = [self.mutableSavedIntervalTree removeObject:object];
+        assert(removed);
         if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
             Interval *newInterval = [self intervalForGridCoordRange:newRange
                                                               width:newWidth

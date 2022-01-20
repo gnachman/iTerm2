@@ -35,6 +35,14 @@ static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p string=%@ %@>",
+            NSStringFromClass([self class]),
+            self,
+            _stringValue,
+            _isDoppelganger ? @"IsDop" : @"NotDop"];
+}
+
 - (NSDictionary *)dictionaryValue {
     return @{ PTYAnnotationDictionaryKeyText: _stringValue.copy };
 }
