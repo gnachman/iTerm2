@@ -37,8 +37,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer NS_DESIGNATED_INITIALIZER;
 - (VT100ScreenState *)copy;
 
-- (iTermJournalingIntervalTree *)mutableIntervalTree;
-- (iTermJournalingIntervalTree *)mutableSavedIntervalTree;
+- (iTermEventuallyConsistentIntervalTree *)mutableIntervalTree;
+- (iTermEventuallyConsistentIntervalTree *)mutableSavedIntervalTree;
 
 #pragma mark - Internal
 
@@ -168,7 +168,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass;
 
-- (void)removeObjectFromIntervalTree:(id<IntervalTreeObject>)obj;
+- (BOOL)removeObjectFromIntervalTree:(id<IntervalTreeObject>)obj;
 
 - (void)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange;
 

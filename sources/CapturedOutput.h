@@ -37,6 +37,7 @@
 #warning TODO: Which threads can access mark? Who can change it? This is risky.
 @property(nonatomic, retain, readwrite) id<iTermCapturedOutputMarkReading> mark;
 @property(nonatomic, assign, readwrite) long long absoluteLineNumber;
+@property(nonatomic, readonly) BOOL isDoppelganger;
 
 // Used for finding the |mark| later on while deserializing.
 @property(nonatomic, copy, readwrite) NSString *markGuid;

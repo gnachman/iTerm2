@@ -52,7 +52,7 @@
     if (!self.markGuid) {
         return nil;
     }
-    return [[VT100ScreenMark markWithGuid:self.markGuid] doppelganger];
+    return [VT100ScreenMark markWithGuid:self.markGuid forMutationThread:NO];
 }
 
 - (void)setMark:(id<VT100ScreenMarkReading>)mark {

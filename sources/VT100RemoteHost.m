@@ -17,6 +17,7 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
 
 @implementation VT100RemoteHost {
     VT100RemoteHost *_doppelganger;
+    __weak VT100RemoteHost *_progenitor;
     BOOL _isDoppelganger;
 }
 
@@ -39,8 +40,8 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p hostname=%@ username=%@>",
-            self.class, self, self.hostname, self.username];
+    return [NSString stringWithFormat:@"<%@: %p hostname=%@ username=%@ doppelganger=%@ (%@) progenitor=%@>",
+            self.class, self, self.hostname, self.username, _doppelganger, _isDoppelganger ? @"IsDop" : @"NotDop", _progenitor];
 }
 
 - (BOOL)isEqualToRemoteHost:(id<VT100RemoteHostReading>)other {

@@ -8,6 +8,7 @@
 
 #import "VT100ScreenMark.h"
 #import "CapturedOutput.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
@@ -27,7 +28,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
 
 #warning TODO: I need an immutable protocol for this. In particular, setCommand: calls delegate.markDidBecomeCommandMark(_:) which mutates VT100Screen. So that must only happen on the mutation thread!
 @implementation VT100ScreenMark {
-    NSMutableArray *_capturedOutput;
+    NSMutableArray<CapturedOutput *> *_capturedOutput;
 }
 
 @synthesize isPrompt = _isPrompt;
@@ -55,9 +56,14 @@ static NSString *const kMarkOutputStart = @"Output Start";
     return registry;
 }
 
-+ (id<VT100ScreenMarkReading>)markWithGuid:(NSString *)guid {
++ (id<VT100ScreenMarkReading>)markWithGuid:(NSString *)guid
+                         forMutationThread:(BOOL)forMutationThread {
     @synchronized([VT100ScreenMark class]) {
-        return [self.registry objectForKey:guid];
+        VT100ScreenMark *mark = [self.registry objectForKey:guid];
+        if (forMutationThread) {
+            return mark;
+        }
+        return [mark doppelganger];
     }
 }
 
@@ -75,6 +81,10 @@ static NSString *const kMarkOutputStart = @"Output Start";
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
+    return [self initWithDictionary:dict shouldRegister:YES];
+}
+
+- (instancetype)initWithDictionary:(NSDictionary *)dict shouldRegister:(BOOL)shouldRegister {
     self = [super initWithDictionary:dict];
     if (self) {
         _code = [dict[kMarkCodeKey] intValue];
@@ -121,17 +131,52 @@ static NSString *const kMarkOutputStart = @"Output Start";
         } else {
             _outputStart = VT100GridAbsCoordMake(-1, -1);
         }
-        @synchronized([VT100ScreenMark class]) {
-            [[self.class registry] setObject:self forKey:self.guid];
+        if (shouldRegister) {
+            @synchronized([VT100ScreenMark class]) {
+                [[self.class registry] setObject:self forKey:self.guid];
+            }
         }
     }
     return self;
+}
+
+// Note that this assumes the copy will be a doppelganger (since it uses CapturedOutput doppelgangers).
+- (instancetype)copyWithZone:(NSZone *)zone {
+    VT100ScreenMark *mark = [[VT100ScreenMark alloc] init];
+
+    assert(!self.isDoppelganger);
+
+    mark->_code = _code;
+    mark->_hasCode = _hasCode;
+    mark->_isPrompt = _isPrompt;
+    mark->_guid = [_guid copy];
+    mark->_sessionGuid = [_sessionGuid copy];
+    mark->_startDate = _startDate;
+    mark->_endDate = _endDate;
+    mark->_capturedOutput = [[_capturedOutput mapWithBlock:^id(CapturedOutput *capturedOutput) {
+        return [capturedOutput doppelganger];
+    }] mutableCopy];
+    mark->_command = [_command copy];
+    mark->_promptRange = _promptRange;
+    mark->_commandRange = _commandRange;
+    mark->_outputStart = _outputStart;
+
+    return mark;
 }
 
 - (void)dealloc {
     @synchronized([VT100ScreenMark class]) {
         [[self.class registry] removeObjectForKey:_guid];
     }
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p guid=%@ command=%@ %@>",
+            NSStringFromClass([self class]),
+            self,
+            _guid,
+            _command,
+            self.isDoppelganger ? @"IsDop" : @"NotDop"];
 }
 
 - (NSString *)guid {

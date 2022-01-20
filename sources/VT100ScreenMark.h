@@ -81,7 +81,8 @@
 @property(nonatomic, readwrite) VT100GridAbsCoord outputStart;
 
 // Returns a reference to an existing mark with the given GUID.
-+ (id<VT100ScreenMarkReading>)markWithGuid:(NSString *)guid;
++ (id<VT100ScreenMarkReading>)markWithGuid:(NSString *)guid
+                         forMutationThread:(BOOL)forMutationThread;
 
 // Add an object to self.capturedOutput.
 - (void)addCapturedOutput:(CapturedOutput *)capturedOutput;

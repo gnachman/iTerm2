@@ -52,6 +52,16 @@ NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
     return capturedOutput;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p line=%@ mark=%@ values=%@ %@>",
+            NSStringFromClass([self class]),
+            self,
+            _line,
+            _mark,
+            _values,
+            _isDoppelganger ? @"IsDop" : @"NotDop"];
+}
+
 - (NSDictionary *)dictionaryValue {
     NSDictionary *dict =
     @{ kCapturedOutputLineKey: _line ?: [NSNull null],
@@ -84,10 +94,14 @@ NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
 }
 
 - (id<CapturedOutputReading>)doppelganger {
-    if (!_doppelganger) {
-        _doppelganger = [self copy];
+    @synchronized([CapturedOutput class]) {
+        assert(!_isDoppelganger);
+        if (!_doppelganger) {
+            _doppelganger = [self copy];
+            _doppelganger->_isDoppelganger = YES;
+        }
+        return _doppelganger;
     }
-    return _doppelganger;
 }
 
 @end
