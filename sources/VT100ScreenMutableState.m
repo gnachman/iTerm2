@@ -114,6 +114,7 @@
         _terminal.delegate = nil;
     }
 }
+
 - (id)copyWithZone:(NSZone *)zone {
     return [[VT100ScreenState alloc] initWithState:self
                                        predecessor:self.mainThreadCopy];
@@ -240,7 +241,7 @@
 #pragma mark - Accessors
 
 - (void)setConfig:(id<VT100ScreenConfiguration>)config {
-#warning TODO: It's kinda sketch to copy it here since we are on the wrong thread to use `config` at all.
+    assert(self.performingJoinedBlock);
     [super setConfig:config];
 
     [_triggerEvaluator loadFromProfileArray:config.triggerProfileDicts];
@@ -1881,6 +1882,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass {
     iTermMark *mark = [[markClass alloc] init];
+    return [self addMark:mark onLine:line singleLine:oneLine];
+}
+
+- (id<iTermMark>)addMark:(iTermMark *)mark onLine:(long long)line singleLine:(BOOL)oneLine {
     if ([mark isKindOfClass:[VT100ScreenMark class]]) {
         VT100ScreenMark *screenMark = (VT100ScreenMark *)mark;
         screenMark.delegate = self;
@@ -2037,7 +2042,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self.mutableIntervalTree mutateObject:screenMark block:^(id<IntervalTreeObject> _Nonnull obj) {
             ((VT100ScreenMark *)obj).endDate = now;
         }];
-#warning TODO: This mutates a shared object.
     }
 }
 
@@ -2179,7 +2183,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         return;
     }
     const int line = bigLine;
-    VT100WorkingDirectory *workingDirectoryObj = [[VT100WorkingDirectory alloc] init];
     if (token && !workingDirectory) {
         __weak __typeof(self) weakSelf = self;
         DLog(@"%p: Performing async working directory fetch for token %@", self, token);
@@ -2200,7 +2203,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"%p: Set finished working directory token to %@", self, token);
     if (workingDirectory.length) {
         DLog(@"Changing working directory to %@", workingDirectory);
-        workingDirectoryObj.workingDirectory = workingDirectory;
+        VT100WorkingDirectory *workingDirectoryObj = [[VT100WorkingDirectory alloc] initWithDirectory:workingDirectory];
 
         id<VT100WorkingDirectoryReading> previousWorkingDirectory =
         (id<VT100WorkingDirectoryReading>)[self objectOnOrBeforeLine:line
@@ -2347,9 +2350,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (id<VT100RemoteHostReading>)setRemoteHost:(NSString *)host user:(NSString *)user onLine:(int)line {
-    VT100RemoteHost *remoteHostObj = [[VT100RemoteHost alloc] init];
-    remoteHostObj.hostname = host;
-    remoteHostObj.username = user;
+    VT100RemoteHost *remoteHostObj = [[VT100RemoteHost alloc] initWithUsername:user hostname:host];
     VT100GridCoordRange range = VT100GridCoordRangeMake(0, line, self.width, line);
     DLog(@"setRemoteHost:%@", remoteHostObj);
     [self.mutableIntervalTree addObject:remoteHostObj
@@ -2482,10 +2483,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"moving onscreen savedNotes into notes");
     // alt -> primary
     DLog(@"saved: %@", self.mutableSavedIntervalTree);
+    // Notes in the saved tree have 0 as the top of the mutable screen area. -movesNotes… adds
+    // the current cumulative overflow to the screenOrigin, so give it a negative origin to offset
+    // that.
     [self moveNotesOnScreenFrom:self.mutableSavedIntervalTree
                              to:self.mutableIntervalTree
                          offset:origin.location
-                   screenOrigin:0];
+                   screenOrigin:-self.cumulativeScrollbackOverflow];
     DLog(@"after moving saved to primary, primary:\n%@", self.mutableIntervalTree);
     DLog(@"after moving saved to primary, saved:\n%@", self.mutableSavedIntervalTree);
 
@@ -2704,7 +2708,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.mutableIntervalTree mutateObject:annotation block:^(id<IntervalTreeObject> _Nonnull obj) {
         PTYAnnotation *mutableAnnotation = (PTYAnnotation *)obj;
         DLog(@"%@.stringValue=%@", mutableAnnotation, stringValue);
-        mutableAnnotation.stringValue = stringValue;
+        [mutableAnnotation setStringValueWithoutSideEffects:stringValue];
     }];
 }
 
@@ -2737,13 +2741,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     long long absLine = (self.cumulativeScrollbackOverflow +
                          self.numberOfScrollbackLines +
                          self.currentGrid.cursor.y + 1);
-    id<iTermMark> mark = (iTermURLMark *)[self addMarkStartingAtAbsoluteLine:absLine
-                                                                     oneLine:YES
-                                                                     ofClass:[iTermURLMark class]];
-    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
-        iTermURLMark *mark = (iTermURLMark *)obj;
-        mark.code = code;
-    }];
+    iTermURLMark *mark = [[iTermURLMark alloc] initWithCode:code];
+    [self addMark:mark onLine:absLine singleLine:YES];
 }
 
 
@@ -3891,13 +3890,8 @@ launchCoprocessWithCommand:(NSString *)command
     [self linkTextInRange:rangeInString basedAtAbsoluteLineNumber:lineNumber URLCode:code];
 
     // Add invisible URL Mark so the URL can automatically freed.
-    id<iTermMark> mark = (iTermURLMark *)[self addMarkStartingAtAbsoluteLine:lineNumber
-                                                                     oneLine:YES
-                                                                     ofClass:[iTermURLMark class]];
-    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
-        iTermURLMark *mark = (iTermURLMark *)obj;
-        mark.code = code;
-    }];
+    iTermURLMark *mark = [[iTermURLMark alloc] initWithCode:code];
+    [self addMark:mark onLine:lineNumber singleLine:YES];
 }
 
 - (void)triggerSession:(Trigger *)trigger
@@ -4029,13 +4023,8 @@ launchCoprocessWithCommand:(NSString *)command
     long long absLine = (self.cumulativeScrollbackOverflow +
                          self.numberOfScrollbackLines +
                          line);
-    id<iTermMark> mark = (iTermImageMark *)[self addMarkStartingAtAbsoluteLine:absLine
-                                                                       oneLine:YES
-                                                                       ofClass:[iTermImageMark class]];
-    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
-        iTermImageMark *mark = (iTermImageMark *)obj;
-        mark.imageCode = @(code);
-    }];
+    iTermImageMark *mark = [[iTermImageMark alloc] initWithImageCode:@(code)];
+    mark = (iTermImageMark *)[self addMark:mark onLine:absLine singleLine:YES];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenNeedsRedraw];
     }];

@@ -6,6 +6,7 @@
 //
 
 #import "iTermWeakBox.h"
+#import "NSObject+iTerm.h"
 
 @implementation iTermWeakBox
 

@@ -44,4 +44,11 @@ iTermTriggerScopeProvider> {
 
 - (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
 
+// Main thread/synchronized access only.
+@property (nonatomic, readonly) IntervalTree *derivativeIntervalTree;
+
+// Main thread/synchronized access only.
+@property (nonatomic, readonly) IntervalTree *derivativeSavedIntervalTree;
+
+
 @end

@@ -33,6 +33,7 @@
 
 #import "DebugLogging.h"
 #import "charmaps.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermImageInfo.h"
 #import "iTermMalloc.h"
@@ -48,16 +49,11 @@ static NSString *const kScreenCharImageMapKey = @"Image Map";
 static NSString *const kScreenCharCCMNextKeyKey = @"Next Key";
 static NSString *const kScreenCharHasWrappedKey = @"Has Wrapped";
 
-static NSInteger gScreenCharGeneration;
-
 // Maps codes to strings
 static NSMutableDictionary* complexCharMap;
 static NSMutableSet<NSNumber *> *spacingCombiningMarkCodeNumbers;
 // Maps strings to codes.
 static NSMutableDictionary* inverseComplexCharMap;
-// Image info. Maps a NSNumber with the image's code to an ImageInfo object.
-static NSMutableDictionary<NSNumber *, iTermImageInfo *> *gImages;
-static NSMutableDictionary* gEncodableImageMap;
 // Next available code.
 static int ccmNextKey = 1;
 // If ccmNextKey has wrapped then this is set to true and we have to delete old
@@ -145,7 +141,7 @@ static void CreateComplexCharMapIfNeeded() {
         complexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
         spacingCombiningMarkCodeNumbers = [[NSMutableSet alloc] initWithCapacity:1000];
         inverseComplexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
-        gScreenCharGeneration++;
+        [[iTermScreenCharGeneration counter] advance];
     }
 }
 
@@ -212,20 +208,12 @@ static BOOL ComplexCharKeyIsReserved(int k) {
     return k >= iTermBoxDrawingCodeMin && k <= iTermBoxDrawingCodeMax;
 }
 
-static void AllocateImageMapsIfNeeded(void) {
-    if (!gImages) {
-        gImages = [[NSMutableDictionary alloc] init];
-        gEncodableImageMap = [[NSMutableDictionary alloc] init];
-        gScreenCharGeneration++;
-    }
-}
-
 screen_char_t ImageCharForNewImage(NSString *name,
                                    int width,
                                    int height,
                                    BOOL preserveAspectRatio,
                                    NSEdgeInsets inset) {
-    AllocateImageMapsIfNeeded();
+    [[iTermScreenCharGeneration counter] advance];
     int newKey;
     do {
         newKey = ccmNextKey++;
@@ -241,8 +229,7 @@ screen_char_t ImageCharForNewImage(NSString *name,
     imageInfo.preserveAspectRatio = preserveAspectRatio;
     imageInfo.size = NSMakeSize(width, height);
     imageInfo.inset = inset;
-    gImages[@(c.code)] = imageInfo;
-    gScreenCharGeneration++;
+    [[iTermImageRegistry sharedInstance] assignCode:c.code toImageInfo:imageInfo];
     DLog(@"Assign %@ to image code %@", imageInfo, @(c.code));
 
     return c;
@@ -255,25 +242,18 @@ void SetPositionInImageChar(screen_char_t *charPtr, int x, int y)
 }
 
 void SetDecodedImage(unichar code, iTermImage *image, NSData *data) {
-    iTermImageInfo *imageInfo = gImages[@(code)];
-    [imageInfo setImageFromImage:image data:data];
-    gEncodableImageMap[@(code)] = [imageInfo dictionary];
-    gScreenCharGeneration++;
+    [[iTermImageRegistry sharedInstance] setData:data forImage:image code:code];
     if ([iTermAdvancedSettingsModel restoreWindowContents]) {
         [NSApp invalidateRestorableState];
     }
-    DLog(@"set decoded image in %@", imageInfo);
 }
 
 void ReleaseImage(unichar code) {
-    DLog(@"ReleaseImage(%@)", @(code));
-    [gImages removeObjectForKey:@(code)];
-    [gEncodableImageMap removeObjectForKey:@(code)];
-    gScreenCharGeneration++;
+    [[iTermImageRegistry sharedInstance] removeCode:code];
 }
 
 iTermImageInfo *GetImageInfo(unichar code) {
-    return gImages[@(code)];
+    return [[iTermImageRegistry sharedInstance] infoForCode:code];
 }
 
 VT100GridCoord GetPositionOfImageInChar(screen_char_t c) {
@@ -289,7 +269,7 @@ int GetOrSetComplexChar(NSString *str,
         return [number intValue];
     }
 
-    gScreenCharGeneration++;
+    [[iTermScreenCharGeneration counter] advance];
     int newKey;
     do {
         newKey = ccmNextKey++;
@@ -739,29 +719,24 @@ void ConvertCharsToGraphicsCharset(screen_char_t *s, int len)
 }
 
 NSInteger ScreenCharGeneration(void) {
-    return gScreenCharGeneration;
+    return [[iTermScreenCharGeneration counter] value];
 }
 
 NSDictionary *ScreenCharEncodedRestorableState(void) {
     return @{ kScreenCharComplexCharMapKey: complexCharMap ?: @{},
               kScreenCharSpacingCombiningMarksKey: spacingCombiningMarkCodeNumbers.allObjects ?: @[],
               kScreenCharInverseComplexCharMapKey: inverseComplexCharMap ?: @{},
-              kScreenCharImageMapKey: gEncodableImageMap ?: @{},
+              kScreenCharImageMapKey: [[iTermImageRegistry sharedInstance] imageMap],
               kScreenCharCCMNextKeyKey: @(ccmNextKey),
               kScreenCharHasWrappedKey: @(hasWrapped) };
 }
 
 void ScreenCharGarbageCollectImages(void) {
-    NSArray<NSNumber *> *provisionalKeys = [gImages.allKeys filteredArrayUsingBlock:^BOOL(NSNumber *key) {
-        return gImages[key].provisional;
-    }];
-    DLog(@"Garbage collect: %@", provisionalKeys);
-    [gImages removeObjectsForKeys:provisionalKeys];
+    [[iTermImageRegistry sharedInstance] collectGarbage];
 }
 
 void ScreenCharClearProvisionalFlagForImageWithCode(int code) {
-    DLog(@"Clear provisional for %@", @(code));
-    gImages[@(code)].provisional = NO;
+    [[iTermImageRegistry sharedInstance] clearProvisionalFlagForCode:code];
 }
 
 void ScreenCharDecodeRestorableState(NSDictionary *state) {
@@ -784,16 +759,8 @@ void ScreenCharDecodeRestorableState(NSDictionary *state) {
         }
     }
     NSDictionary *imageMap = state[kScreenCharImageMapKey];
-    AllocateImageMapsIfNeeded();
-    for (id key in imageMap) {
-        gEncodableImageMap[key] = imageMap[key];
-        iTermImageInfo *info = [[iTermImageInfo alloc] initWithDictionary:imageMap[key]];
-        if (info) {
-            info.provisional = YES;
-            gImages[key] = info;
-            DLog(@"Decoded restorable state for image %@: %@", key, info);
-        }
-    }
+    [[iTermImageRegistry sharedInstance] restoreFrom:imageMap];
+
     ccmNextKey = [state[kScreenCharCCMNextKeyKey] intValue];
     hasWrapped = [state[kScreenCharHasWrappedKey] boolValue];
 }

@@ -14,13 +14,14 @@ static NSString *const kMarkGuidKey = @"Guid";
 @implementation iTermCapturedOutputMark
 
 @synthesize guid = _guid;
-#warning TODO: I hae no idea why the compiler insists on these @dynamics. Make sure it works.
+
+// I feel like I hit a dark corner of the compiler that requires me to do this.
 @dynamic interval;
 @dynamic object;
 
 - (NSString *)guid {
     if (!_guid) {
-        self.guid = [NSString uuid];
+        _guid = [NSString uuid];
     }
     return _guid;
 }

@@ -70,8 +70,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (self) {
 #warning TODO: update colormap's darkMode through VT100ScreenConfiguration
         _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
-        _mutableState.mainThreadCopy = [_mutableState copy];
-        _state = _mutableState.mainThreadCopy;
+        _state = [_mutableState copy];
+        _mutableState.mainThreadCopy = _state;
         _findContext = [[FindContext alloc] init];
 
         [iTermNotificationController sharedInstance];
@@ -1098,8 +1098,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         [mutableState resetScrollbackOverflow];
     }
 #warning TODO: avoid making the copy if nothing has changed. This is important because joined threads perform two syncs and the copy is slow.
-    mutableState.mainThreadCopy = [mutableState copy];
-    _state = mutableState.mainThreadCopy;
+    [_state autorelease];
+    _state = [mutableState copy];
+    mutableState.mainThreadCopy = _state;
     if (resetOverflow) {
         [mutableState didSynchronize];
     }

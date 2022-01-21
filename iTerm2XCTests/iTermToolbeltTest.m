@@ -41,9 +41,8 @@
     _currentDir = [@"/dir" retain];
 
     // Erase command history for the remotehost we test with.
-    VT100RemoteHost *host = [[[VT100RemoteHost alloc] init] autorelease];
-    host.hostname = @"hostname";
-    host.username = @"user";
+    VT100RemoteHost *host = [[[VT100RemoteHost alloc] initWithUsername:@"user"
+                                                              hostname:@"hostname"] autorelease];
     [[iTermShellHistoryController sharedInstance] eraseCommandHistoryForHost:host];
 
     // Erase directory history for the remotehost we test with.

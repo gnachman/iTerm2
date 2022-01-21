@@ -3180,7 +3180,8 @@ ITERM_WEAKLY_REFERENCEABLE
     _shouldRestart = NO;
     DLog(@"  replaceTerminatedShellWithNewInstance: exited <- NO");
     [self setExited:NO];
-    [_shell release];
+    [_shell autorelease];
+    _shell = nil;
     [_logging stop];
 
     self.guid = [NSString uuid];
@@ -15408,7 +15409,13 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     if (!_screen.terminalEnabled) {
         return YES;
     }
-    return _shell.paused || _copyModeHandler.enabled;
+    if (_shell.paused) {
+        return YES;
+    }
+    if (_copyModeHandler.enabled) {
+        return YES;
+    }
+    return NO;
 }
 
 - (BOOL)tokenExecutorShouldDiscardTokens {

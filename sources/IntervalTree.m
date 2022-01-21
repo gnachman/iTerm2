@@ -436,7 +436,6 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 - (BOOL)removeObject:(id<IntervalTreeObject>)object {
-    [_tree sanityCheck];
     DLog(@"Remove %@\n%@", object, [NSThread callStackSymbols]);
     Interval *interval = object.entry.interval;
     long long theLocation = interval.location;

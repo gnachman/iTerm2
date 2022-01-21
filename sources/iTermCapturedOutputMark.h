@@ -14,5 +14,5 @@
 
 // Invisible marks used to keep track of the location of captured output.
 @interface iTermCapturedOutputMark : iTermMark<iTermCapturedOutputMarkReading>
-@property(nonatomic, copy, readwrite) NSString *guid;
+@property(nonatomic, copy, readonly) NSString *guid;
 @end

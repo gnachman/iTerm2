@@ -211,7 +211,9 @@
 - (void)terminalSetCursorType:(ITermCursorType)cursorType {
     // Pause because cursor type and blink are reportable.
     iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
+    if (self.currentGrid.cursor.x < self.currentGrid.size.width) {
+        [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
+    }
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetCursorType:cursorType];
         [unpauser unpause];
