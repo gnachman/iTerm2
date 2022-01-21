@@ -76,6 +76,7 @@
         _tokenExecutor = [[iTermTokenExecutor alloc] initWithTerminal:_terminal
                                                      slownessDetector:_triggerEvaluator.triggersSlownessDetector
                                                                 queue:_queue];
+        _tokenExecutor.delegate = self;
         _echoProbe = [[iTermEchoProbe alloc] init];
         _echoProbe.delegate = self;
         self.colorMap.delegate = self;
@@ -106,7 +107,8 @@
         self.wraparoundMode = self.terminal.wraparoundMode;
         self.insert = self.terminal.insertMode;
         _commandRangeChangeJoiner = [iTermIdempotentOperationJoiner joinerWithScheduler:_tokenExecutor];
-#warning TODO: VT100Screen.setTerminalEnabled(_:) reassigns the executor's delegate. That's messy.
+        _terminal.delegate = self;
+        _tokenExecutor.delegate = self;
     } else {
         [_commandRangeChangeJoiner invalidate];
         _commandRangeChangeJoiner = nil;
@@ -264,10 +266,6 @@
 - (void)setExited:(BOOL)exited {
     _exited = exited;
     _triggerEvaluator.sessionExited = exited;
-}
-
-- (void)setTokenExecutorDelegate:(id)delegate {
-    _tokenExecutor.delegate = delegate;
 }
 
 - (iTermTokenExecutorUnpauser *)pauseTokenExecution {
@@ -2553,8 +2551,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                  onLine:line];
         }];
         DLog(@"Command was aborted. Remove %@", screenMark);
-        const BOOL removed = [self.mutableIntervalTree removeObject:(VT100ScreenMark *)screenMark];
-        assert(removed);
+        [self.mutableIntervalTree removeObject:(VT100ScreenMark *)screenMark];
+        [self.mutableSavedIntervalTree removeObject:(VT100ScreenMark *)screenMark];
     }
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self didUpdatePromptLocation];
@@ -4151,6 +4149,68 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)addEventuallyConsistentIntervalTreeSideEffect:(void (^)(void))block {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         block();
+    }];
+}
+
+#pragma mark - iTermTokenExecutorDelegate
+
+- (BOOL)tokenExecutorShouldQueueTokens {
+    if (!self.terminalEnabled) {
+        return YES;
+    }
+    if (self.taskPaused) {
+        return YES;
+    }
+    if (self.copyMode) {
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)tokenExecutorShouldDiscardTokens {
+    if (self.exited) {
+        return YES;
+    }
+    if (!self.terminalEnabled) {
+        return YES;
+    }
+    if (!self.isTmuxGateway && self.hasMuteCoprocess) {
+        return YES;
+    }
+    if (_suppressAllOutput) {
+        return YES;
+    }
+    return NO;
+}
+
+- (void)tokenExecutorWillEnqueueTokensWithLength:(NSInteger)length {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenWillExecuteTokensOfSize:length];
+    }];
+}
+
+- (void)tokenExecutorDidExecuteWithLength:(NSInteger)length {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidExecuteTokensOfSize:length];
+    }];
+}
+
+- (void)tokenExecutorDidHandleInput {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidHandleInput];
+    }];
+}
+
+- (NSString *)tokenExecutorCursorCoordString {
+    return VT100GridCoordDescription(self.currentGrid.cursor);
+}
+
+// Main queue or mutation queue while joined.
+- (void)tokenExecutorSync {
+    [self performLightweightBlockWithJoinedThreads:^(VT100ScreenMutableState * _Nonnull mutableState) {
+        [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenSync:mutableState];
+        }];
     }];
 }
 

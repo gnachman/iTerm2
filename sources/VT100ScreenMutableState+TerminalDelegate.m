@@ -718,12 +718,10 @@
 }
 
 - (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
-    // Pause becuase a ton of stuff happens here and it's too hard to reason about what would happen
-    // otherwise.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    // Use a joined side-effect because we need to change the token executor's discarding behavior
+    // synchronously.
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenStartTmuxModeWithDCSIdentifier:dcsID];
-        [unpauser unpause];
     }];
 }
 

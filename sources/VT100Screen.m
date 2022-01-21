@@ -64,6 +64,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 @synthesize dvr = dvr_;
+@synthesize delegate = delegate_;
 
 - (instancetype)init {
     self = [super init];
@@ -111,18 +112,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }];
 }
 
-- (void)setDelegate:(id<VT100ScreenDelegate>)delegate {
-    delegate_ = delegate;
-    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-#warning TODO: This is temporary. Mutable state should be the delegate.
-        [mutableState setTokenExecutorDelegate:delegate];
-    }];
-}
-
-- (id<VT100ScreenDelegate>)delegate {
-    return delegate_;
-}
-
 - (void)setTerminalEnabled:(BOOL)enabled {
     if (_terminalEnabled == enabled) {
         return;
@@ -130,10 +119,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     _terminalEnabled = enabled;
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.terminalEnabled = enabled;
-        if (enabled) {
-            // Disabling nils the delegate but enabling needs us to set it explicitly.
-            [mutableState setTokenExecutorDelegate:delegate_];
-        }
     }];
 }
 

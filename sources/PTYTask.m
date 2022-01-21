@@ -147,6 +147,7 @@ static void HandleSigChld(int n) {
     }
     // Start/stop selecting on our FD
     [[TaskNotifier sharedInstance] unblock];
+    [_delegate taskDidChangePaused:self paused:paused];
 }
 
 - (pid_t)pidToWaitOn {
@@ -209,11 +210,16 @@ static void HandleSigChld(int n) {
     return nil;
 }
 
+// This runs on the task notifier thread
 - (void)setCoprocess:(Coprocess *)coprocess {
     @synchronized (self) {
         coprocess_ = coprocess;
         self.hasMuteCoprocess = coprocess_.mute;
     }
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf.delegate taskMuteCoprocessDidChange:self hasMuteCoprocess:self.hasMuteCoprocess];
+    });
     [[TaskNotifier sharedInstance] unblock];
 }
 
@@ -526,6 +532,8 @@ static void HandleSigChld(int n) {
         coprocess_ = nil;
         self.hasMuteCoprocess = NO;
     }
+    [self.delegate taskMuteCoprocessDidChange:self hasMuteCoprocess:self.hasMuteCoprocess];
+
     if (thePid) {
         [[TaskNotifier sharedInstance] waitForPid:thePid];
     }

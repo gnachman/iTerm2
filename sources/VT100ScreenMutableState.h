@@ -274,6 +274,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Token Execution
 
+// Factors that could cause tokens to queue instead of execute.
+@property (nonatomic) BOOL taskPaused;
+@property (nonatomic) BOOL copyMode;
+
+// Factors that cause tokens to be discarded.
+@property (nonatomic) BOOL isTmuxGateway;
+@property (nonatomic) BOOL hasMuteCoprocess;
+@property (nonatomic) BOOL suppressAllOutput;
+
 - (void)threadedReadTask:(char *)buffer length:(int)length;
 - (void)addTokens:(CVector)vector length:(int)length highPriority:(BOOL)highPriority;
 - (void)scheduleTokenExecution;
@@ -353,10 +362,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                  len:(int)len
             metadata:(NSArray<NSArray *> *)metadataArrays
                 info:(DVRFrameInfo)info;
-
-#pragma mark - Temporary
-
-- (void)setTokenExecutorDelegate:(id)delegate;
 
 @end
 

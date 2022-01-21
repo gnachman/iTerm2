@@ -3024,6 +3024,18 @@ ITERM_WEAKLY_REFERENCEABLE
     });
 }
 
+- (void)taskDidChangePaused:(PTYTask *)task paused:(BOOL)paused {
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.taskPaused = paused;
+    }];
+}
+
+- (void)taskMuteCoprocessDidChange:(PTYTask *)task hasMuteCoprocess:(BOOL)hasMuteCoprocess {
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.hasMuteCoprocess = hasMuteCoprocess;
+    }];
+}
+
 - (void)taskDiedImmediately {
     // Let initial creation finish, then report the broken pipe. This happens if the file descriptor
     // server dies immediately.
@@ -6524,6 +6536,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     @synchronized ([TmuxGateway class]) {
         _tmuxMode = tmuxMode;
     }
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.isTmuxGateway = (tmuxMode == TMUX_GATEWAY);
+    }];
     if (tmuxMode == TMUX_CLIENT) {
         [self setUpTmuxPipe];
     }
@@ -12090,11 +12105,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                      inProfile:_profile];
 }
 
+- (void)setSuppressAllOutput:(BOOL)suppressAllOutput {
+    _suppressAllOutput = suppressAllOutput;
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.suppressAllOutput = suppressAllOutput;
+    }];
+}
+
 - (void)resumeOutputIfNeeded {
     if (_suppressAllOutput) {
         // If all output was being suppressed and you hit a key, stop it but ignore bells for a few
         // seconds until we can process any that are in the pipeline.
-        _suppressAllOutput = NO;
+        self.suppressAllOutput = NO;
         _ignoreBellUntil = [NSDate timeIntervalSinceReferenceDate] + 5;
     }
 }
@@ -12212,7 +12234,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
                     case 1: // Suppress all output
                         DLog(@"Suppress all output");
-                        _suppressAllOutput = YES;
+                        self.suppressAllOutput = YES;
                         break;
 
                     case 2: // Never offer again
@@ -12252,7 +12274,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
                     case 0: // Suppress all output
                         DLog(@"Suppress all output");
-                        _suppressAllOutput = YES;
+                        self.suppressAllOutput = YES;
                         break;
 
                     case 1: // Never offer again
@@ -12961,6 +12983,32 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [[iTermShellHistoryController sharedInstance] commandUseWithMarkGuid:screenMark.guid
                                                                       onHost:lastRemoteHost];
     commandUse.mark = screenMark;
+}
+
+- (void)screenWillExecuteTokensOfSize:(NSInteger)length {
+    if (_useAdaptiveFrameRate) {
+#warning TODO: Is throughput estimation responsive enough?
+        [_throughputEstimator addByteCount:length];
+    }
+}
+
+- (void)screenDidExecuteTokensOfSize:(NSInteger)length {
+    DLog(@"Session %@ (%@) is processing", self, _nameController.presentationSessionTitle);
+    if (![self haveResizedRecently]) {
+        _lastOutputIgnoringOutputAfterResizing = [NSDate timeIntervalSinceReferenceDate];
+    }
+    _newOutput = YES;
+
+    // Make sure the screen gets redrawn soonish
+    self.active = YES;
+
+    if (self.shell.pid > 0 || [[[self variablesScope] valueForVariableName:@"jobName"] length] > 0) {
+        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    }
+}
+
+- (void)screenDidHandleInput {
+    [_cadenceController didHandleInput];
 }
 
 - (VT100Screen *)popupVT100Screen {
@@ -14377,7 +14425,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)copyModeHandlerDidChangeEnabledState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
     [_textview setNeedsDisplay:YES];
-    if (!handler.enabled) {
+    const BOOL enabled = handler.enabled;
+    if (!enabled) {
         if (_textview.selection.live) {
             [_textview.selection endLiveSelection];
         }
@@ -14385,6 +14434,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [mutableState scheduleTokenExecution];
         }];
     }
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.copyMode = enabled;
+    }];
 }
 
 - (iTermCopyModeState *)copyModeHandlerCreateState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
@@ -15401,70 +15453,6 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)triggerSideEffectCurrentDirectoryDidChange {
     [self didUpdateCurrentDirectory];
-}
-
-#pragma mark - iTermTokenExecutorDelegate
-
-- (BOOL)tokenExecutorShouldQueueTokens {
-    if (!_screen.terminalEnabled) {
-        return YES;
-    }
-    if (_shell.paused) {
-        return YES;
-    }
-    if (_copyModeHandler.enabled) {
-        return YES;
-    }
-    return NO;
-}
-
-- (BOOL)tokenExecutorShouldDiscardTokens {
-    if (_exited) {
-        return YES;
-    }
-    if (!_screen.terminalEnabled) {
-        return YES;
-    }
-    if (self.tmuxMode != TMUX_GATEWAY && [_shell hasMuteCoprocess]) {
-        return YES;
-    }
-    if (_suppressAllOutput) {
-        return YES;
-    }
-    return NO;
-}
-
-- (void)tokenExecutorWillEnqueueTokensWithLength:(NSInteger)length {
-    if (_useAdaptiveFrameRate) {
-        [_throughputEstimator addByteCount:length];
-    }
-}
-
-- (void)tokenExecutorDidExecuteWithLength:(NSInteger)length {
-    DLog(@"Session %@ (%@) is processing", self, _nameController.presentationSessionTitle);
-    if (![self haveResizedRecently]) {
-        _lastOutputIgnoringOutputAfterResizing = [NSDate timeIntervalSinceReferenceDate];
-    }
-    _newOutput = YES;
-
-    // Make sure the screen gets redrawn soonish
-    self.active = YES;
-
-    if (self.shell.pid > 0 || [[[self variablesScope] valueForVariableName:@"jobName"] length] > 0) {
-        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-    }
-}
-
-- (void)tokenExecutorDidHandleInput {
-    [_cadenceController didHandleInput];
-}
-
-- (NSString *)tokenExecutorCursorCoordString {
-    return VT100GridCoordDescription(_screen.currentGrid.cursor);
-}
-
-- (void)tokenExecutorSync {
-    [self sync];
 }
 
 @end

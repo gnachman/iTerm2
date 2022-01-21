@@ -352,4 +352,8 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenUpdateCommandUseWithGuid:(NSString * _Nonnull)screenmarkGuid
                                 onHost:(id<VT100RemoteHostReading> _Nullable)lastRemoteHost
                          toReferToMark:(id<VT100ScreenMarkReading> _Nonnull)screenMark;
+- (void)screenWillExecuteTokensOfSize:(NSInteger)length;
+- (void)screenDidExecuteTokensOfSize:(NSInteger)length;
+- (void)screenDidHandleInput;
+
 @end
