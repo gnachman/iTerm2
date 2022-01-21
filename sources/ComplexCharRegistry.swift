@@ -112,6 +112,25 @@ class ComplexCharRegistry: NSObject {
         return 1
     }
 
+
+    @objc
+    func setComplexChar(in screenChar: UnsafeMutablePointer<screen_char_t>,
+                        string: NSString,
+                        normalization: iTermUnicodeNormalization,
+                        isSpacingCombiningMark: Bool) {
+        let normalizedString = string.normalized(normalization)
+        if normalizedString.length == 1 && !isSpacingCombiningMark {
+            screenChar[0].code = normalizedString.character(at: 0)
+            return
+        }
+        let code = lazilyCreatedCode(for: normalizedString,
+                                        isSpacingCombiningMark: iTermTriStateFromBool(isSpacingCombiningMark))
+        screenChar[0].code = unichar(code)
+        screenChar[0].complexChar = 1
+    }
+
+    // MARK:- Private
+
     private func expand(string: NSString?, to destination: UnsafeMutablePointer<unichar>) -> Int32 {
         guard let string = string else {
             return 0
@@ -258,3 +277,20 @@ private class ComplexCharRegistryImpl: NSObject {
     }
 }
 
+extension NSString {
+    @objc
+    func normalized(_ normalization: iTermUnicodeNormalization) -> NSString {
+        switch normalization {
+        case .none:
+            return self
+        case .NFC:
+            return self.precomposedStringWithCanonicalMapping as NSString
+        case .NFD:
+            return self.decomposedStringWithCanonicalMapping as NSString
+        case .hfsPlus:
+            return self.precomposedStringWithHFSPlusMapping() as NSString
+        @unknown default:
+            return self
+        }
+    }
+}

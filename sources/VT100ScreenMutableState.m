@@ -478,7 +478,7 @@
     screen_char_t staticBuffer[kStaticBufferElements];
     screen_char_t *dynamicBuffer = 0;
     screen_char_t *buffer;
-    string = StringByNormalizingString(string, self.normalization);
+    string = [string normalized:self.normalization];
     len = [string length];
     if (3 * len >= kStaticBufferElements) {
         buffer = dynamicBuffer = (screen_char_t *) iTermCalloc(3 * len,
