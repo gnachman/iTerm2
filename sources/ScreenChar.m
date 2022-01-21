@@ -137,37 +137,15 @@ BOOL ComplexCharCodeIsSpacingCombiningMark(unichar code) {
 }
 
 NSString *ScreenCharToStr(const screen_char_t *const sct) {
-    return CharToStr(sct->code, sct->complexChar);
+    return [GetComplexCharRegistry() charToString:*sct];
 }
 
 NSString *CharToStr(unichar code, BOOL isComplex) {
-    if (code == UNICODE_REPLACEMENT_CHAR) {
-        return ReplacementString();
-    }
-
-    if (isComplex) {
-        return ComplexCharToStr(code);
-    } else {
-        return [NSString stringWithCharacters:&code length:1];
-    }
+    return [GetComplexCharRegistry() stringForCode:code isComplex:isComplex];
 }
 
 int ExpandScreenChar(const screen_char_t *sct, unichar* dest) {
-    NSString* value = nil;
-    if (sct->code == UNICODE_REPLACEMENT_CHAR) {
-        value = ReplacementString();
-    } else if (sct->complexChar) {
-        value = ComplexCharToStr(sct->code);
-    } else {
-        *dest = sct->code;
-        return 1;
-    }
-    if (!value) {
-        // This can happen if state restoration goes awry.
-        return 0;
-    }
-    [value getCharacters:dest];
-    return (int)[value length];
+    return [GetComplexCharRegistry() expandScreenChar:sct[0] to:dest];;
 }
 
 UTF32Char CharToLongChar(unichar code, BOOL isComplex)

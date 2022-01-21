@@ -7,6 +7,8 @@
 
 import Foundation
 
+private let UnicodeReplacementString = "\u{fffd}"
+
 @objc(iTermComplexCharRegistry)
 class ComplexCharRegistry: NSObject {
     @objc(sharedInstance) static let instance = ComplexCharRegistry()
@@ -81,6 +83,42 @@ class ComplexCharRegistry: NSObject {
         return mutex.sync { impl.lazilyCreatedCode(for: string,
                                                       isSpacingCombiningMark: isSpacingCombiningMark) }
     }
+
+    @objc
+    func charToString(_ char: screen_char_t) -> NSString? {
+        return string(for: char.code, isComplex: char.complexChar != 0)
+    }
+
+    @objc(stringForCode:isComplex:)
+    func string(for code: unichar, isComplex: Bool) -> NSString? {
+        if code == UNICODE_REPLACEMENT_CHAR {
+            return UnicodeReplacementString as NSString
+        }
+        if isComplex {
+            return mutex.sync { impl.string(for: Int(code)) }
+        }
+        let temp = code;
+        return withUnsafePointer(to: temp) { codePointer in
+            return NSString(characters: codePointer, length: 1)
+        }
+    }
+
+    @objc(expandScreenChar:to:)
+    func expand(screenChar: screen_char_t, to destination: UnsafeMutablePointer<unichar>) -> Int32 {
+        if screenChar.code != UNICODE_REPLACEMENT_CHAR && screenChar.complexChar != 0 {
+            return expand(string: string(for: Int(screenChar.code)), to: destination)
+        }
+        destination[0] = screenChar.code
+        return 1
+    }
+
+    private func expand(string: NSString?, to destination: UnsafeMutablePointer<unichar>) -> Int32 {
+        guard let string = string else {
+            return 0
+        }
+        string.getCharacters(destination)
+        return Int32(string.length)
+    }
 }
 
 
@@ -142,7 +180,7 @@ private class ComplexCharRegistryImpl: NSObject {
 
     func string(for code: Int) -> NSString? {
         if code == UNICODE_REPLACEMENT_CHAR {
-            return "\u{fffd}"
+            return UnicodeReplacementString as NSString
         }
         return complexCharMap[NSNumber(value: code)]
     }
