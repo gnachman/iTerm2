@@ -12,7 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class iTermImageInfo;
+@protocol iTermImageInfoReading;
 @protocol iTermObject;
 @class iTermSelection;
 @class iTermSemanticHistoryController;
@@ -27,7 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermURLActionHelperDelegate<NSObject>
 - (BOOL)urlActionHelperShouldIgnoreHardNewlines:(iTermURLActionHelper *)helper;
-- (iTermImageInfo *)urlActionHelper:(iTermURLActionHelper *)helper imageInfoAt:(VT100GridCoord)coord;
+- (id<iTermImageInfoReading>)urlActionHelper:(iTermURLActionHelper *)helper imageInfoAt:(VT100GridCoord)coord;
 - (iTermTextExtractor *)urlActionHelperNewTextExtractor:(iTermURLActionHelper *)helper;
 - (void)urlActionHelper:(iTermURLActionHelper *)helper workingDirectoryOnLine:(int)line completion:(void (^)(NSString *workingDirectory))completion;
 

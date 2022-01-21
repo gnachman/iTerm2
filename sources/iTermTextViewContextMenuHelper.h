@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermObject;
 @protocol VT100RemoteHostReading;
 @protocol VT100ScreenMarkReading;
-@class iTermImageInfo;
+@protocol iTermImageInfoReading;
 @class iTermSelection;
 @class iTermTextExtractor;
 @class iTermTextViewContextMenuHelper;
@@ -47,8 +47,8 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
 - (NSString *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
    workingDirectoryOnLine:(int)line;
 
-- (nullable iTermImageInfo *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-                        imageInfoAtCoord:(VT100GridCoord)coord;
+- (nullable id<iTermImageInfoReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+                                 imageInfoAtCoord:(VT100GridCoord)coord;
 
 - (long long)contextMenuTotalScrollbackOverflow:(iTermTextViewContextMenuHelper *)contextMenu;
 
@@ -125,11 +125,11 @@ runCommandInBackground:(NSString *)command;
     failedWithError:(NSError *)error
         forMenuItem:(NSString *)title;
 
-- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu saveImage:(iTermImageInfo *)image;
-- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu copyImage:(iTermImageInfo *)image;
-- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu openImage:(iTermImageInfo *)image;
-- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu inspectImage:(iTermImageInfo *)image;
-- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu toggleAnimationOfImage:(iTermImageInfo *)image;
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu saveImage:(id<iTermImageInfoReading>)image;
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu copyImage:(id<iTermImageInfoReading>)image;
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu openImage:(id<iTermImageInfoReading>)image;
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu inspectImage:(id<iTermImageInfoReading>)image;
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu toggleAnimationOfImage:(id<iTermImageInfoReading>)image;
 - (void)contextMenuSaveSelectionAsSnippet:(iTermTextViewContextMenuHelper *)contextMenu;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu addTrigger:(NSString *)text;
 - (id<iTermObject>)contextMenuOwner:(iTermTextViewContextMenuHelper *)contextMenu;

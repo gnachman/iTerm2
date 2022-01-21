@@ -35,7 +35,6 @@
 #import "RegexKitLite.h"
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
-#import "VT100InlineImageHelper.h"
 #import "VT100LineInfo.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"

@@ -3494,7 +3494,7 @@
     }
 }
 
-- (void)_dragImage:(iTermImageInfo *)imageInfo forEvent:(NSEvent *)theEvent {
+- (void)_dragImage:(id<iTermImageInfoReading>)imageInfo forEvent:(NSEvent *)theEvent {
     NSImage *icon = [imageInfo imageWithCellSize:NSMakeSize(_charWidth, _lineHeight)
                                            scale:1];
 
@@ -5196,7 +5196,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _selection;
 }
 
-- (iTermImageInfo *)mouseHandler:(PTYMouseHandler *)handler imageAt:(VT100GridCoord)coord {
+- (id<iTermImageInfoReading>)mouseHandler:(PTYMouseHandler *)handler imageAt:(VT100GridCoord)coord {
     return [self imageInfoAtCoord:coord];
 }
 
@@ -5440,7 +5440,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 }
 
 - (void)mouseHandler:(PTYMouseHandler *)mouseHandler
-           dragImage:(iTermImageInfo *)image
+           dragImage:(id<iTermImageInfoReading>)image
             forEvent:(NSEvent *)event {
     [self _dragImage:image forEvent:event];
 }

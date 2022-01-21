@@ -5,7 +5,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class iTermImageInfo;
+@protocol iTermImageInfoReading;
 
 // Describes a horizontal run of image cells for the same image.
 NS_CLASS_AVAILABLE(10_11, NA)
@@ -14,7 +14,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) VT100GridCoord startingCoordOnScreen;
 @property (nonatomic) int length;
 @property (nonatomic) unichar code;
-@property (nonatomic, strong) iTermImageInfo *imageInfo;
+@property (nonatomic, strong) id<iTermImageInfoReading> imageInfo;
 @end
 
 

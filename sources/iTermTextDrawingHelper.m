@@ -2922,7 +2922,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
             originInImage:(VT100GridCoord)originInImage
             virtualOffset:(CGFloat)virtualOffset {
     //DLog(@"Drawing image at %@ with code %@", VT100GridCoordDescription(origin), @(code));
-    iTermImageInfo *imageInfo = GetImageInfo(code);
+    id<iTermImageInfoReading> imageInfo = GetImageInfo(code);
     NSImage *image = [imageInfo imageWithCellSize:_cellSize scale:self.isRetina ? 2 : 1];
     if (!image) {
         if (!imageInfo) {

@@ -35,6 +35,7 @@
 
 @class iTermImage;
 @class iTermImageInfo;
+@protocol iTermImageInfoReading;
 
 // This is used in the rightmost column when a double-width character would
 // have been split in half and was wrapped to the next line. It is nonprintable
@@ -511,7 +512,8 @@ void SetDecodedImage(unichar code, iTermImage *image, NSData *data);
 void ReleaseImage(unichar code);
 
 // Returns image info for a code found in a screen_char_t with field image==1.
-iTermImageInfo *GetImageInfo(unichar code);
+id<iTermImageInfoReading> GetImageInfo(unichar code);
+iTermImageInfo* GetMutableImageInfo(unichar code);
 
 // Returns the position of a character within an image in cells with the origin
 // at the top left.

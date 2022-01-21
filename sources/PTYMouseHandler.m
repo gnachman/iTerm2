@@ -60,7 +60,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL _mouseDragged;
     BOOL _mouseDownOnSelection;
     BOOL _mouseDownOnImage;
-    iTermImageInfo *_imageBeingClickedOn;
+    id<iTermImageInfoReading>_imageBeingClickedOn;
     NSEvent *_mouseDownEvent;
 
     // Work around an embarassing macOS bug. Issue 8350.
@@ -286,7 +286,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return NO;
     }
 
-    iTermImageInfo *const imageBeingClickedOn = [self.mouseDelegate mouseHandler:self imageAt:VT100GridCoordMake(x, y)];
+    id<iTermImageInfoReading> const imageBeingClickedOn = [self.mouseDelegate mouseHandler:self imageAt:VT100GridCoordMake(x, y)];
     const long long overflow = [_mouseDelegate mouseHandlerTotalScrollbackOverflow:self];
     const BOOL mouseDownOnSelection =
         [self.selection containsAbsCoord:VT100GridAbsCoordMake(x, y + overflow)];

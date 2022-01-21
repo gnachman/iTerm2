@@ -47,7 +47,6 @@ extern NSString *const kScreenStateCursorCoord;
 extern NSString *const kScreenStateProtectedMode;
 
 @class IntervalTree;
-@class VT100InlineImageHelper;
 @class iTermOrderEnforcer;
 
 @protocol VT100ScreenState<NSObject>

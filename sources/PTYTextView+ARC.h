@@ -44,8 +44,8 @@ iTermURLActionHelperDelegate>
 
 #pragma mark - Inline Images
 
-- (nullable iTermImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord;
-- (BOOL)imageIsVisible:(iTermImageInfo *)image;
+- (nullable id<iTermImageInfoReading>)imageInfoAtCoord:(VT100GridCoord)coord;
+- (BOOL)imageIsVisible:(id<iTermImageInfoReading>)image;
 
 #pragma mark - Semantic History
 

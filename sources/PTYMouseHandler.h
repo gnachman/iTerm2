@@ -37,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)mouseHandlerReportingAllowed:(PTYMouseHandler *)handler;
 - (void)mouseHandlerDidSingleClick:(PTYMouseHandler *)handler;
 - (iTermSelection *)mouseHandlerCurrentSelection:(PTYMouseHandler *)handler;
-- (iTermImageInfo *)mouseHandler:(PTYMouseHandler *)handler imageAt:(VT100GridCoord)coord;
+- (id<iTermImageInfoReading>)mouseHandler:(PTYMouseHandler *)handler imageAt:(VT100GridCoord)coord;
 - (void)mouseHandlerLockScrolling:(PTYMouseHandler *)handler;
 - (void)mouseHandlerUnlockScrolling:(PTYMouseHandler *)handler;
 - (void)mouseHandlerDidMutateState:(PTYMouseHandler *)handler;
@@ -95,7 +95,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 - (void)mouseHandlerWillDrag:(PTYMouseHandler *)mouseHandler;
 
 - (void)mouseHandler:(PTYMouseHandler *)mouseHandler
-           dragImage:(iTermImageInfo *)image
+           dragImage:(id<iTermImageInfoReading>)image
             forEvent:(NSEvent *)event;
 
 - (NSString *)mouseHandlerSelectedText:(PTYMouseHandler *)mouseHandler;

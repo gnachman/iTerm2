@@ -66,7 +66,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Notifications
 
 - (void)imageDidLoad:(NSNotification *)notification {
-    iTermImageInfo *image = notification.object;
+    id<iTermImageInfoReading> image = notification.object;
     [_loadedImages addObject:image.uniqueIdentifier];
     if ([self missingImageIsVisible:image]) {
         [_textView setNeedsDisplay:YES];
@@ -75,7 +75,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Private
 
-- (BOOL)missingImageIsVisible:(iTermImageInfo *)image {
+- (BOOL)missingImageIsVisible:(id<iTermImageInfoReading>)image {
     if (![_missingImages containsObject:image.uniqueIdentifier]) {
         return NO;
     }

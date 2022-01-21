@@ -106,7 +106,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     }
 
     const VT100GridCoord coord = VT100GridCoordMake(x, y);
-    iTermImageInfo *imageInfo = [self.delegate contextMenu:self imageInfoAtCoord:coord];
+    id<iTermImageInfoReading> imageInfo = [self.delegate contextMenu:self imageInfoAtCoord:coord];
 
     const long long overflow = [self.delegate contextMenuTotalScrollbackOverflow:self];
     iTermSelection *selection = [self.delegate contextMenuSelection:self];
@@ -267,7 +267,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
     // Allocate a menu
     theMenu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
-    iTermImageInfo *imageInfo = [self.delegate contextMenu:self imageInfoAtCoord:coord];
+    id<iTermImageInfoReading> imageInfo = [self.delegate contextMenu:self imageInfoAtCoord:coord];
     if (imageInfo) {
         // Show context menu for an image.
         NSArray *entryDicts;
