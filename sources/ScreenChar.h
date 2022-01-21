@@ -107,6 +107,7 @@ typedef NS_ENUM(int, iTermTriState) {
     iTermTriStateTrue,
     iTermTriStateOther
 };
+iTermTriState iTermTriStateFromBool(BOOL b);
 
 // Max unichars in a glyph.
 static const int kMaxParts = 20;
@@ -407,9 +408,6 @@ BOOL ComplexCharCodeIsSpacingCombiningMark(unichar code);
 // be complex.
 NSString* ScreenCharToStr(const screen_char_t *const sct);
 NSString* CharToStr(unichar code, BOOL isComplex);
-
-// Performs the appropriate normalization.
-NSString *StringByNormalizingString(NSString *theString, iTermUnicodeNormalization normalization);
 
 // This is a faster version of ScreenCharToStr if what you want is an array of
 // unichars. Returns the number of code points appended to dest.

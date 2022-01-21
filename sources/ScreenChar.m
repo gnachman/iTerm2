@@ -218,38 +218,14 @@ int AppendToComplexChar(int key, unichar codePoint) {
     return [GetComplexCharRegistry() appendCodePoint:codePoint to:key];
 }
 
-NSString *StringByNormalizingString(NSString *theString, iTermUnicodeNormalization normalization) {
-    NSString *normalizedString;
-    switch (normalization) {
-        case iTermUnicodeNormalizationNFC:
-            normalizedString = [theString precomposedStringWithCanonicalMapping];
-            break;
-        case iTermUnicodeNormalizationNFD:
-            normalizedString = [theString decomposedStringWithCanonicalMapping];
-            break;
-        case iTermUnicodeNormalizationNone:
-            normalizedString = theString;
-            break;
-        case iTermUnicodeNormalizationHFSPlus:
-            normalizedString = [theString precomposedStringWithHFSPlusMapping];
-            break;
-    }
-    return normalizedString;
-}
-
 void SetComplexCharInScreenChar(screen_char_t *screenChar,
                                 NSString *theString,
                                 iTermUnicodeNormalization normalization,
                                 BOOL isSpacingCombiningMark) {
-    NSString *normalizedString = StringByNormalizingString(theString, normalization);
-    [theString precomposedStringWithCanonicalMapping];
-    if (normalizedString.length == 1 && !isSpacingCombiningMark) {
-        screenChar->code = [normalizedString characterAtIndex:0];
-    } else {
-        screenChar->code = [GetComplexCharRegistry() lazilyCreatedCodeFor:theString
-                                                   isSpacingCombiningMark:isSpacingCombiningMark];
-        screenChar->complexChar = YES;
-    }
+    return [GetComplexCharRegistry() setComplexCharIn:screenChar
+                                               string:theString
+                                        normalization:normalization
+                               isSpacingCombiningMark:isSpacingCombiningMark];
 }
 
 void AppendToChar(screen_char_t *dest, unichar c) {
