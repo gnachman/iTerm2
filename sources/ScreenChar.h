@@ -102,7 +102,11 @@ typedef NS_ENUM(NSUInteger, kiTermScreenCharAnsiColor) {
     kiTermScreenCharAnsiColorBrightWhite
 };
 
-
+typedef NS_ENUM(int, iTermTriState) {
+    iTermTriStateFalse,
+    iTermTriStateTrue,
+    iTermTriStateOther
+};
 
 // Max unichars in a glyph.
 static const int kMaxParts = 20;
@@ -283,8 +287,7 @@ typedef struct screen_char_t {
 
 
 // Standard unicode replacement string. Is a double-width character.
-static inline NSString* ReplacementString()
-{
+static inline NSString* ReplacementString() {
     const unichar kReplacementCharacter = UNICODE_REPLACEMENT_CHAR;
     return [NSString stringWithCharacters:&kReplacementCharacter length:1];
 }

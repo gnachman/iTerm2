@@ -35,8 +35,8 @@ class ScreenCharGeneration: NSObject {
 
 @objc(iTermImageRegistry)
 class ImageRegistry: NSObject {
-    private var gImages = [Int: iTermImageInfo]()
-    private var gEncodableImageMap = [NSNumber: [String: NSObjectProtocol & NSCopying]]()
+    private var codeToImage = [Int: iTermImageInfo]()
+    private var codeToPropertyList = [NSNumber: [String: NSObjectProtocol & NSCopying]]()
     private let mutex = Mutex()
     @objc(sharedInstance) static let instance = ImageRegistry()
 
@@ -44,12 +44,12 @@ class ImageRegistry: NSObject {
     func restore(from dict: [NSNumber: [String: NSObjectProtocol & NSCopying]]) {
         mutex.sync {
             for (key, value) in dict {
-                gEncodableImageMap[key] = value
+                codeToPropertyList[key] = value
                 guard let info = iTermImageInfo(dictionary: value) else {
                     continue
                 }
                 info.provisional = true
-                gImages[key.intValue] = info
+                codeToImage[key.intValue] = info
                 DLog("Decoded restorable state for image \(key): \(info)")
                 ScreenCharGeneration.counter.advance()
             }
@@ -59,7 +59,7 @@ class ImageRegistry: NSObject {
     @objc(assignCode:toImageInfo:)
     func assign(code: Int, imageInfo: iTermImageInfo) {
         mutex.sync {
-            gImages[code] = imageInfo
+            codeToImage[code] = imageInfo
             ScreenCharGeneration.counter.advance()
         }
     }
@@ -67,7 +67,7 @@ class ImageRegistry: NSObject {
     @objc(infoForCode:)
     func info(for code: Int) -> iTermImageInfo? {
         return mutex.sync {
-            return gImages[code]
+            return codeToImage[code]
         }
     }
 
@@ -75,8 +75,8 @@ class ImageRegistry: NSObject {
     func remove(code: Int) {
         mutex.sync {
             DLog("ReleaseImage(\(code))")
-            gImages.removeValue(forKey: code)
-            gEncodableImageMap.removeValue(forKey: NSNumber(value: code))
+            codeToImage.removeValue(forKey: code)
+            codeToPropertyList.removeValue(forKey: NSNumber(value: code))
             ScreenCharGeneration.counter.advance()
         }
     }
@@ -85,12 +85,12 @@ class ImageRegistry: NSObject {
     func collectGarbage() {
         mutex.sync {
             DLog("Garbage collect")
-            for (key, value) in gImages {
+            for (key, value) in codeToImage {
                 guard value.provisional else {
                     continue
                 }
                 DLog("Remove \(key)")
-                gImages.removeValue(forKey: key)
+                codeToImage.removeValue(forKey: key)
             }
         }
     }
@@ -99,18 +99,18 @@ class ImageRegistry: NSObject {
     func clearProvisionalFlag(code: Int) {
         mutex.sync {
             DLog("Clear provisional for \(code)")
-            gImages[code]?.provisional = false
+            codeToImage[code]?.provisional = false
         }
     }
 
     @objc(setData:forImage:code:)
     func set(data: Data, image: iTermImage, code: Int) {
         mutex.sync {
-            guard let imageInfo = gImages[code] else {
+            guard let imageInfo = codeToImage[code] else {
                 return
             }
             imageInfo.setImageFrom(image, data: data)
-            gEncodableImageMap[NSNumber(value: code)] = imageInfo.dictionary()
+            codeToPropertyList[NSNumber(value: code)] = imageInfo.dictionary()
             ScreenCharGeneration.counter.advance()
             DLog("set decoded image in \(imageInfo)")
         }
@@ -119,7 +119,7 @@ class ImageRegistry: NSObject {
     @objc
     var imageMap: NSDictionary {
         mutex.sync {
-            return (gEncodableImageMap as NSDictionary).copy() as! NSDictionary
+            return (codeToPropertyList as NSDictionary).copy() as! NSDictionary
         }
     }
 }
