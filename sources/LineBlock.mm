@@ -251,7 +251,7 @@ struct iTermNumFullLinesCacheKeyHasher {
     // Keys are (offset from raw_buffer, length to examine, width).
     std::unordered_map<iTermNumFullLinesCacheKey, int, iTermNumFullLinesCacheKeyHasher> _numberOfFullLinesCache;
 
-    std::vector<void *> _observers;
+    NSMutableArray<iTermWeakBox<id<iTermLineBlockObserver>> *> *_observers;
     NSString *_guid;
 
     NSObject *_cachedMutationCert;  // DON'T USE DIRECTLY THIS UNLESS YOU LOVE PAIN. Only -willModify should touch it.
@@ -259,9 +259,8 @@ struct iTermNumFullLinesCacheKeyHasher {
 
 NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock) {
     lineBlock->_generation += 1;
-    for (auto &observer : lineBlock->_observers) {
-        __unsafe_unretained id<iTermLineBlockObserver> obj = (__bridge id<iTermLineBlockObserver>)observer;
-        [obj lineBlockDidChange:lineBlock];
+    for (iTermWeakBox<id<iTermLineBlockObserver>> *box in lineBlock->_observers) {
+        [box.object lineBlockDidChange:lineBlock];
     }
 }
 
@@ -299,7 +298,7 @@ static void iTermAssignToConstPointer(void **dest, void *address) {
             gUseCachingNumberOfLines = YES;
         }
     });
-
+    _observers = [NSMutableArray array];
     if (!_guid) {
         _guid = [[NSUUID UUID] UUIDString];
     }
@@ -419,22 +418,25 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
 }
 
 - (void)dealloc {
+    BOOL shouldFreeBuffers = YES;
     @synchronized([LineBlock class]) {
         if (self.owner != nil) {
+            shouldFreeBuffers = NO;
             // I don't own my memory so I should not free it. Remove myself from the owner's client
             // list to ensure its list of clients doesn't get too big.f
             [self.owner.clients removeObjectsPassingTest:^BOOL(iTermWeakBox<LineBlock *> *box) {
                 return box.object == self;
             }];
-            return;
         }
     }
 
-    if (raw_buffer) {
-        free((void *)raw_buffer);
-    }
-    if (cumulative_line_lengths) {
-        free((void *)cumulative_line_lengths);
+    if (shouldFreeBuffers) {
+        if (raw_buffer) {
+            free((void *)raw_buffer);
+        }
+        if (cumulative_line_lengths) {
+            free((void *)cumulative_line_lengths);
+        }
     }
     if (metadata_) {
         iTermLineBlockFreeMetadata(metadata_, cll_capacity);
@@ -452,9 +454,11 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     for (int i = 0; i < cll_capacity; i++) {
         LineBlockMetadata *theirs = (LineBlockMetadata *)&theCopy->metadata_[i];
 
+        iTermExternalAttributeIndex *index = iTermMetadataGetExternalAttributesIndex(metadata_[i].lineMetadata);
+        iTermExternalAttributeIndex *indexCopy = [index copy];
         iTermMetadataInit(&theirs->lineMetadata,
                           metadata_[i].lineMetadata.timestamp,
-                          [iTermMetadataGetExternalAttributesIndex(metadata_[i].lineMetadata) copy]);
+                          indexCopy);
 
         theirs->continuation = metadata_[i].continuation;
         theirs->number_of_wrapped_lines = 0;
@@ -526,6 +530,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
         cll_capacity *= 2;
         cll_capacity = MAX(1, cll_capacity);
         [cert setCumulativeLineLengthsCapacity:cll_capacity];
+        NSString *ptr = [NSString stringWithFormat:@"%p", metadata_];
         metadata_ = (LineBlockMetadata *)iTermRealloc((void *)metadata_, cll_capacity, sizeof(LineBlockMetadata));
         if (gEnableDoubleWidthCharacterLineCache) {
             memset((LineBlockMetadata *)metadata_ + cll_entries,
@@ -2000,21 +2005,21 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 }
 
 - (void)addObserver:(id<iTermLineBlockObserver>)observer {
-    _observers.push_back((__bridge void *)observer);
+    [_observers addObject:[iTermWeakBox boxFor:observer]];
 }
 
 - (void)removeObserver:(id<iTermLineBlockObserver>)observer {
-    void *voidptr = (__bridge void *)observer;
-    auto it = std::find(_observers.begin(), _observers.end(), voidptr);
-    if (it != _observers.end()) {
-        _observers.erase(it);
-    }
+    [_observers removeObjectsPassingTest:^BOOL(iTermWeakBox<id<iTermLineBlockObserver>> *anObject) {
+        return anObject.object == nil || anObject.object == observer;
+    }];
 }
 
 - (BOOL)hasObserver:(id<iTermLineBlockObserver>)observer {
-    void *voidptr = (__bridge void *)observer;
-    auto it = std::find(_observers.begin(), _observers.end(), voidptr);
-    return it != _observers.end();
+    // Can't use -[NSArray containsObject:] because it does [observer isEqual:_observers[j]] where
+    // _observesr[j] is an iTermWeakBox.
+    return [_observers anyWithBlock:^BOOL(iTermWeakBox<id<iTermLineBlockObserver>> *box) {
+        return [box.object isEqual:observer];
+    }];
 }
 
 static void *iTermMemdup(const void *data, size_t count, size_t size) {

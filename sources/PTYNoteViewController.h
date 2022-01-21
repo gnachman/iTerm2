@@ -23,9 +23,9 @@ extern NSString *const iTermAnnotationVisibilityDidChange;
 - (void)noteWillBeRemoved:(PTYNoteViewController *)note;
 - (void)noteDidEndEditing:(PTYNoteViewController *)note;
 - (void)noteVisibilityDidChange:(PTYNoteViewController *)note;
-
-// Synchronously do     [_annotation.progenitor setStringValueWithoutSideEffects:textView_.string];
-- (void)note:(PTYNoteViewController *)note setAnnotation:(id<PTYAnnotationReading>)annotation stringValue:(NSString *)stringValue;
+- (void)note:(PTYNoteViewController *)note
+setAnnotation:(id<PTYAnnotationReading>)annotation
+ stringValue:(NSString *)stringValue;
 @end
 
 @interface PTYNoteViewController : NSViewController<PTYAnnotationDelegate>

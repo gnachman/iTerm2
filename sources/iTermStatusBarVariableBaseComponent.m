@@ -338,9 +338,8 @@ static NSString *const iTermStatusBarHostnameComponentAbbreviateLocalhost = @"ab
 }
 
 - (id<VT100RemoteHostReading>)remoteHost {
-    VT100RemoteHost *result = [[VT100RemoteHost alloc] init];
-    result.hostname = [self.scope valueForVariableName:iTermVariableKeySessionHostname];
-    result.username = [self.scope valueForVariableName:iTermVariableKeySessionUsername];
+    VT100RemoteHost *result = [[VT100RemoteHost alloc] initWithUsername:[self.scope valueForVariableName:iTermVariableKeySessionUsername]
+                                                               hostname:[self.scope valueForVariableName:iTermVariableKeySessionHostname]];
     return result;
 }
 

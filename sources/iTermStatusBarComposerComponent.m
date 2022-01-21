@@ -120,9 +120,8 @@
 - (NSView *)statusBarComponentView {
     [self updateForTerminalBackgroundColor];
 
-    VT100RemoteHost *remoteHost = [[VT100RemoteHost alloc] init];
-    remoteHost.hostname = [self.scope valueForVariableName:iTermVariableKeySessionHostname];
-    remoteHost.username = [self.scope valueForVariableName:iTermVariableKeySessionUsername];
+    VT100RemoteHost *remoteHost = [[VT100RemoteHost alloc] initWithUsername:[self.scope valueForVariableName:iTermVariableKeySessionUsername]
+                                                                   hostname:[self.scope valueForVariableName:iTermVariableKeySessionHostname]];
 
     [self.viewController setHost:remoteHost];
     return self.viewController.view;

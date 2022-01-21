@@ -23,8 +23,9 @@
 @end
 
 @interface VT100RemoteHost : NSObject <IntervalTreeObject, VT100RemoteHostReading>
-@property(nonatomic, copy, readwrite) NSString *hostname;
-@property(nonatomic, copy, readwrite) NSString *username;
+
+- (instancetype)init NS_UNAVAILABLE;
+- (instancetype)initWithUsername:(NSString *)username hostname:(NSString *)hostname NS_DESIGNATED_INITIALIZER;
 
 + (instancetype)localhost;
 @end

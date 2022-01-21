@@ -50,7 +50,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         registry = [[NSMapTable alloc] initWithKeyOptions:(NSPointerFunctionsStrongMemory | NSPointerFunctionsObjectPersonality)
-                                             valueOptions:(NSPointerFunctionsOpaqueMemory | NSPointerFunctionsOpaquePersonality)
+                                             valueOptions:(NSPointerFunctionsWeakMemory | NSPointerFunctionsOpaquePersonality)
                                                  capacity:1024];
     });
     return registry;
@@ -68,10 +68,16 @@ static NSString *const kMarkOutputStart = @"Output Start";
 }
 
 - (instancetype)init {
+    return [self initRegistered:YES];
+}
+
+- (instancetype)initRegistered:(BOOL)shouldRegister {
     self = [super init];
     if (self) {
-        @synchronized([VT100ScreenMark class]) {
-            [[self.class registry] setObject:self forKey:self.guid];
+        if (shouldRegister) {
+            @synchronized([VT100ScreenMark class]) {
+                [[self.class registry] setObject:self forKey:self.guid];
+            }
         }
         _promptRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         _commandRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
@@ -142,9 +148,10 @@ static NSString *const kMarkOutputStart = @"Output Start";
 
 // Note that this assumes the copy will be a doppelganger (since it uses CapturedOutput doppelgangers).
 - (instancetype)copyWithZone:(NSZone *)zone {
-    VT100ScreenMark *mark = [[VT100ScreenMark alloc] init];
-
     assert(!self.isDoppelganger);
+
+    // Doppelgangers should not be registered. They take the GUID of the progenitor.
+    VT100ScreenMark *mark = [[VT100ScreenMark alloc] initRegistered:NO];
 
     mark->_code = _code;
     mark->_hasCode = _hasCode;
@@ -166,6 +173,8 @@ static NSString *const kMarkOutputStart = @"Output Start";
 
 - (void)dealloc {
     @synchronized([VT100ScreenMark class]) {
+        // I think this is not needed because we use weak pointers but I also don't trust
+        // NSMapTable to ever remove dead objects. Do this to avoid a possible waste of memory.
         [[self.class registry] removeObjectForKey:_guid];
     }
 }

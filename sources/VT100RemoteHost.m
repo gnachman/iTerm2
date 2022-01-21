@@ -22,20 +22,26 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
 }
 
 @synthesize entry;
+@synthesize username = _username;
+@synthesize hostname = _hostname;
 
-- (instancetype)initWithDictionary:(NSDictionary *)dict {
+- (instancetype)initWithUsername:(NSString *)username hostname:(NSString *)hostname {
     self = [super init];
     if (self) {
-        self.hostname = dict[kRemoteHostHostNameKey];
-        self.username = dict[kRemoteHostUserNameKey];
+        _username = [username copy];
+        _hostname = [hostname copy];
     }
     return self;
 }
 
+- (instancetype)initWithDictionary:(NSDictionary *)dict {
+    return [self initWithUsername:dict[kRemoteHostUserNameKey]
+                         hostname:dict[kRemoteHostHostNameKey]];
+}
+
 + (instancetype)localhost {
-    VT100RemoteHost *localhost = [[self alloc] init];
-    localhost.hostname = [NSHost fullyQualifiedDomainName];
-    localhost.username = NSUserName();
+    VT100RemoteHost *localhost = [[self alloc] initWithUsername:NSUserName()
+                                                       hostname:[NSHost fullyQualifiedDomainName]];
     return localhost;
 }
 
@@ -72,9 +78,7 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
 }
 
 - (instancetype)copyOfIntervalTreeObject {
-    VT100RemoteHost *copy = [[VT100RemoteHost alloc] init];
-    copy.hostname = self.hostname;
-    copy.username = self.username;
+    VT100RemoteHost *copy = [[VT100RemoteHost alloc] initWithUsername:self.username hostname:self.hostname];
     return copy;
 }
 

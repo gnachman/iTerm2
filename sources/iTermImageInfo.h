@@ -9,6 +9,8 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermImage.h"
 
+#warning TODO: Expose a readonly protocol for this to the main thread.
+
 // Posted when a lazily loaded image is loaded.
 extern NSString *const iTermImageDidLoad;
 
@@ -30,19 +32,19 @@ extern NSString *const iTermImageDidLoad;
 @property(atomic, readonly) NSString *uniqueIdentifier;
 
 // Size in cells.
-@property(atomic, assign) NSSize size;
+@property(atomic) NSSize size;
 
 // Full-size image.
-@property(atomic, retain) iTermImage *image;
+@property(atomic, strong) iTermImage *image;
 
 // If set, the image won't be squished.
-@property(atomic, assign) BOOL preserveAspectRatio;
+@property(atomic) BOOL preserveAspectRatio;
 
 // Original filename
 @property(atomic, copy) NSString *filename;
 
 // Inset for the image within its area.
-@property(atomic, assign) NSEdgeInsets inset;
+@property(atomic) NSEdgeInsets inset;
 
 // Image code
 @property(atomic, readonly) unichar code;
@@ -96,7 +98,7 @@ extern NSString *const iTermImageDidLoad;
 - (void)setImageFromImage:(iTermImage *)image data:(NSData *)data;
 
 // Coded representation
-- (NSDictionary *)dictionary;
+- (NSDictionary<NSString *, NSObject<NSCopying> *> *)dictionary;
 
 // Format inferred from extension
 - (void)saveToFile:(NSString *)filename;

@@ -75,7 +75,7 @@ extern NSString *const kScreenStateProtectedMode;
 // base64 value to copy to pasteboard, being built up bit by bit.
 @property (nullable, nonatomic, strong, readonly) NSString *pasteboardString;
 
-// All currently visible marks and notes. Maps an interval of
+// All currently available marks and notes. Maps an interval of
 //   (startx + absstarty * (width+1)) to (endx + absendy * (width+1))
 // to an id<IntervalTreeObject>, which is either PTYNoteViewController or VT100ScreenMark.
 @property (nonatomic, strong, readonly) id<IntervalTreeReading> intervalTree;

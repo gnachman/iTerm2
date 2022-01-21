@@ -16,5 +16,7 @@
 
 // Invisible marks used to record where images are located so they can be freed.
 @interface iTermImageMark : iTermMark
-@property(nonatomic, strong, readwrite) NSNumber *imageCode;
+- (instancetype)initWithImageCode:(NSNumber *)imageCode NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+@property(nonatomic, strong, readonly) NSNumber *imageCode;
 @end

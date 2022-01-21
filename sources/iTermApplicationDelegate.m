@@ -955,9 +955,6 @@ static BOOL hasBecomeActive = NO;
     if (screenCharState) {
         ScreenCharDecodeRestorableState(screenCharState);
     }
-    [PseudoTerminalRestorer setPostRestorationCompletionBlock:^{
-        ScreenCharGarbageCollectImages();
-    }];
 
     NSDictionary *urlStoreState = [coder decodeObjectForKey:kURLStoreRestorableStateKey];
     if (urlStoreState) {
@@ -1100,6 +1097,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     [_restorableStateController restoreWindowsWithCompletion:^{
         DLog(@"Window restoration is totally complete");
         [_untitledWindowStateMachine didFinishRestoringWindows];
+        ScreenCharGarbageCollectImages();
     }];
 }
 
@@ -2711,9 +2709,6 @@ void TurnOnDebugLoggingAutomatically(void) {
     if (screenCharState) {
         ScreenCharDecodeRestorableState(screenCharState);
     }
-    [PseudoTerminalRestorer setPostRestorationCompletionBlock:^{
-        ScreenCharGarbageCollectImages();
-    }];
 
     NSDictionary *urlStoreState = [NSDictionary castFrom:[[app childRecordWithKey:kURLStoreRestorableStateKey identifier:@""] propertyListValue]];
     if (urlStoreState) {

@@ -17,8 +17,11 @@
     BOOL _isDoppelganger;
 }
 
-- (instancetype)init {
+- (instancetype)initWithImageCode:(NSNumber *)imageCode {
     self = [super init];
+    if (self) {
+        _imageCode = imageCode;
+    }
     DLog(@"New mage mark %@ created", self);
     return self;
 }
@@ -37,14 +40,11 @@
 }
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
-    self = [super init];
-    if (self) {
-        _imageCode = dict[@"imageCode"];
-        if (!_imageCode) {
-            return nil;
-        }
+    NSNumber *imageCode = dict[@"imageCode"];
+    if (!imageCode) {
+        return nil;
     }
-    return self;
+    return [self initWithImageCode:imageCode];
 }
 
 - (NSDictionary *)dictionaryValue {

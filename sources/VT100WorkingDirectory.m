@@ -20,16 +20,15 @@ static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Dir
 @synthesize entry;
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict {
-    self = [super init];
-    if (self) {
-        self.workingDirectory = dict[kWorkingDirectoryStateWorkingDirectoryKey];
-    }
-    return self;
+    return [self initWithDirectory:dict[kWorkingDirectoryStateWorkingDirectoryKey]];
 }
 
-- (void)dealloc {
-    [_workingDirectory release];
-    [super dealloc];
+- (instancetype)initWithDirectory:(NSString *)directory {
+    self = [super init];
+    if (self) {
+        _workingDirectory = [directory copy];
+    }
+    return self;
 }
 
 - (NSString *)description {
@@ -61,9 +60,7 @@ static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Dir
 }
 
 - (instancetype)copyOfIntervalTreeObject {
-    VT100WorkingDirectory *copy = [[VT100WorkingDirectory alloc] init];
-    copy.workingDirectory = self.workingDirectory;
-    return copy;
+    return [[VT100WorkingDirectory alloc] initWithDirectory:self.workingDirectory];
 }
 
 @end

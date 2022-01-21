@@ -161,12 +161,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 #pragma mark - Interval Tree
 
-@property (nonatomic, readonly) IntervalTree *derivativeIntervalTree;
-@property (nonatomic, readonly) IntervalTree *derivativeSavedIntervalTree;
-
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass;
+
+// Returns nil if it was not accepted, otherwise it returns `mark`.
+- (id<iTermMark>)addMark:(iTermMark *)mark
+                  onLine:(long long)line
+              singleLine:(BOOL)oneLine;
 
 - (BOOL)removeObjectFromIntervalTree:(id<IntervalTreeObject>)obj;
 
