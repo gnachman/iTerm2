@@ -65,7 +65,7 @@
     return action;
 }
 
-+ (instancetype)urlActionToOpenImage:(iTermImageInfo *)imageInfo {
++ (instancetype)urlActionToOpenImage:(id<iTermImageInfoReading>)imageInfo {
     URLAction *action = [self urlAction];
     action.string = imageInfo.filename;
     action.actionType = kURLActionOpenImage;

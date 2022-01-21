@@ -44,6 +44,15 @@ NSString *const iTermImageDidLoad = @"iTermImageDidLoad";
     iTermAnimatedImageInfo *_animatedImage;
 }
 
+@synthesize image = _image;
+@synthesize data = _data;
+@synthesize code = _code;
+@synthesize broken = _broken;
+@synthesize paused = _paused;
+@synthesize uniqueIdentifier = _uniqueIdentifier;
+@synthesize size = _size;
+@synthesize filename = _filename;
+
 - (instancetype)initWithCode:(unichar)code {
     self = [super init];
     if (self) {

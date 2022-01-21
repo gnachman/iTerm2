@@ -61,7 +61,7 @@
         completion(nil);
         return;
     }
-    iTermImageInfo *imageInfo = [self.delegate urlActionHelper:self imageInfoAt:coord];
+    id<iTermImageInfoReading> imageInfo = [self.delegate urlActionHelper:self imageInfoAt:coord];
     if (imageInfo) {
         completion([URLAction urlActionToOpenImage:imageInfo]);
         return;
@@ -342,7 +342,7 @@
 
             case kURLActionOpenImage:
                 DLog(@"Open image");
-                [[NSWorkspace sharedWorkspace] openFile:[(iTermImageInfo *)action.identifier nameForNewSavedTempFile]];
+                [[NSWorkspace sharedWorkspace] openFile:[(id<iTermImageInfoReading>)action.identifier nameForNewSavedTempFile]];
                 break;
 
             case kURLActionSecureCopyFile:

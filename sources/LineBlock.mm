@@ -530,7 +530,6 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
         cll_capacity *= 2;
         cll_capacity = MAX(1, cll_capacity);
         [cert setCumulativeLineLengthsCapacity:cll_capacity];
-        NSString *ptr = [NSString stringWithFormat:@"%p", metadata_];
         metadata_ = (LineBlockMetadata *)iTermRealloc((void *)metadata_, cll_capacity, sizeof(LineBlockMetadata));
         if (gEnableDoubleWidthCharacterLineCache) {
             memset((LineBlockMetadata *)metadata_ + cll_entries,

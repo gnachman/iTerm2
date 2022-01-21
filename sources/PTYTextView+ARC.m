@@ -175,7 +175,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 #pragma mark - Query Coordinates
 
-- (iTermImageInfo *)imageInfoAtCoord:(VT100GridCoord)coord {
+- (id<iTermImageInfoReading>)imageInfoAtCoord:(VT100GridCoord)coord {
     if (coord.x < 0 ||
         coord.y < 0 ||
         coord.x >= [self.dataSource width] ||
@@ -596,7 +596,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     return [self.delegate textViewInInteractiveApplication];
 }
 
-- (iTermImageInfo *)urlActionHelper:(iTermURLActionHelper *)helper imageInfoAt:(VT100GridCoord)coord {
+- (id<iTermImageInfoReading>)urlActionHelper:(iTermURLActionHelper *)helper imageInfoAt:(VT100GridCoord)coord {
     return [self imageInfoAtCoord:coord];
 }
 
@@ -763,14 +763,14 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     }
 }
 
-- (BOOL)missingImageIsVisible:(iTermImageInfo *)image {
+- (BOOL)missingImageIsVisible:(id<iTermImageInfoReading>)image {
     if (![self.drawingHelper.missingImages containsObject:image.uniqueIdentifier]) {
         return NO;
     }
     return [self imageIsVisible:image];
 }
 
-- (BOOL)imageIsVisible:(iTermImageInfo *)image {
+- (BOOL)imageIsVisible:(id<iTermImageInfoReading>)image {
     int firstVisibleLine = [[self enclosingScrollView] documentVisibleRect].origin.y / self.lineHeight;
     int width = [self.dataSource width];
     for (int y = 0; y < [self.dataSource height]; y++) {
@@ -807,8 +807,8 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
     return [self.dataSource workingDirectoryOnLine:line];
 }
 
-- (nullable iTermImageInfo *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
-                        imageInfoAtCoord:(VT100GridCoord)coord {
+- (nullable id<iTermImageInfoReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+                                 imageInfoAtCoord:(VT100GridCoord)coord {
     return [self imageInfoAtCoord:coord];
 }
 
@@ -1043,7 +1043,8 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
 
 }
 
-- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu saveImage:(iTermImageInfo *)imageInfo {
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+          saveImage:(id<iTermImageInfoReading>)imageInfo {
     NSSavePanel* panel = [NSSavePanel savePanel];
 
     NSString *directory = [[NSFileManager defaultManager] downloadsDirectory] ?: NSHomeDirectory();
@@ -1060,7 +1061,8 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
     }
 }
 
-- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu copyImage:(iTermImageInfo *)imageInfo {
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu copyImage:(
+                                                                             id<iTermImageInfoReading>)imageInfo {
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
     NSPasteboardItem *item = imageInfo.pasteboardItem;
     if (item) {
@@ -1070,14 +1072,16 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
 }
 
 
-- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu openImage:(iTermImageInfo *)imageInfo {
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+          openImage:(id<iTermImageInfoReading>)imageInfo {
     NSString *name = imageInfo.nameForNewSavedTempFile;
     if (name) {
         [[iTermLaunchServices sharedInstance] openFile:name];
     }
 }
 
-- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu inspectImage:(iTermImageInfo *)imageInfo {
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+       inspectImage:(id<iTermImageInfoReading>)imageInfo {
     if (imageInfo) {
         NSString *text = [NSString stringWithFormat:
                           @"Filename: %@\n"
@@ -1094,7 +1098,8 @@ toggleTerminalStateForMenuItem:(nonnull NSMenuItem *)item {
     }
 }
 
-- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu toggleAnimationOfImage:(iTermImageInfo *)imageInfo {
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     if (imageInfo) {
         imageInfo.paused = !imageInfo.paused;
         if (!imageInfo.paused) {

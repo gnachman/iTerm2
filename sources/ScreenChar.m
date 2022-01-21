@@ -252,7 +252,11 @@ void ReleaseImage(unichar code) {
     [[iTermImageRegistry sharedInstance] removeCode:code];
 }
 
-iTermImageInfo *GetImageInfo(unichar code) {
+id<iTermImageInfoReading> GetImageInfo(unichar code) {
+    return [[iTermImageRegistry sharedInstance] infoForCode:code];
+}
+
+iTermImageInfo *GetMutableImageInfo(unichar code) {
     return [[iTermImageRegistry sharedInstance] infoForCode:code];
 }
 

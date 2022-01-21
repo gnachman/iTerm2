@@ -429,7 +429,7 @@
                      width:(int)width
                     height:(int)height
               decodedImage:(VT100DecodedImage *)decodedImage {
-    iTermImageInfo *imageInfo = GetImageInfo(screenChar.code);
+    iTermImageInfo *imageInfo = GetMutableImageInfo(screenChar.code);
     imageInfo.broken = decodedImage.isBroken;
     DLog(@"Append %d rows of image characters with %d columns. The value of c.image is %@", height, width, @(screenChar.image));
     const int xOffset = grid.cursorX;
