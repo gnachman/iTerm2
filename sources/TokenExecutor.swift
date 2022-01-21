@@ -401,9 +401,10 @@ private class TokenExecutorImpl {
         guard let delegate = delegate else {
             return
         }
-        if !tokenQueue.isEmpty {
-            DispatchQueue.main.async { [weak self] in
-                self?.delegate?.tokenExecutorDidHandleInput()
+        let hadTokens = !tokenQueue.isEmpty
+        defer {
+            if hadTokens {
+                delegate.tokenExecutorDidHandleInput()
             }
         }
         if delegate.tokenExecutorShouldQueueTokens() {

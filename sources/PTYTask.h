@@ -33,6 +33,8 @@
 // Main thread
 - (void)taskDidRegister:(PTYTask *)task;
 
+- (void)taskDidChangePaused:(PTYTask *)task paused:(BOOL)paused;
+- (void)taskMuteCoprocessDidChange:(PTYTask *)task hasMuteCoprocess:(BOOL)hasMuteCoprocess;
 @end
 
 typedef NS_ENUM(NSUInteger, iTermJobManagerForkAndExecStatus) {

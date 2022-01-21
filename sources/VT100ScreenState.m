@@ -184,8 +184,6 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
         _needsRedraw = source.needsRedraw;
 
         _intervalTreeObserver = source.intervalTreeObserver;
-#warning TODO: I need a read-only protocol for VT100ScreenMark.
-#warning TODO: Copying marks messes up the registry since one key now can refer to two objects. The command history tool breaks scrolling to the selected command because it picks the wrong one.
         _lastCommandMark = [source.lastCommandMark doppelganger];
         _shouldExpectPromptMarks = source.shouldExpectPromptMarks;
 
@@ -605,7 +603,6 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     return [extractor haveNonWhitespaceInFirstLineOfRange:VT100GridWindowedRangeMake(range, 0, 0)];
 }
 
-#warning TODO: Figure out what to do with the mark cache. Also don't use totalScrollbackOverflow from mutable code path
 - (id<VT100ScreenMarkReading>)markOnLine:(int)line {
     return [VT100ScreenMark castFrom:self.markCache[@(self.cumulativeScrollbackOverflow + line)]];
 }

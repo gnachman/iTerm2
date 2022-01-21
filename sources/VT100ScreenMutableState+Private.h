@@ -29,6 +29,7 @@ iTermEchoProbeDelegate,
 iTermEventuallyConsistentIntervalTreeSideEffectPerformer,
 iTermMarkDelegate,
 iTermTemporaryDoubleBufferedGridControllerDelegate,
+iTermTokenExecutorDelegate,
 iTermTriggerSession,
 iTermTriggerScopeProvider> {
     VT100GridCoordRange _previousCommandRange;
