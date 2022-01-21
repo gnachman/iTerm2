@@ -3,6 +3,7 @@
 //
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermImageInfo.h"
 #import "iTermSearchFieldCell.h"
@@ -24,6 +25,7 @@
 #import "IntervalTree.h"
 #import "LineBlock.h"
 #import "LineBufferHelpers.h"
+#import "NSCharacterSet+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDate+iTerm.h"
 #import "NSFont+iTerm.h"
@@ -38,3 +40,4 @@
 #import "ScreenCharArray.h"
 #import "Trigger.h"
 #import "VT100Screen+Mutation.h"
+#import "charmaps.h"

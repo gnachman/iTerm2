@@ -344,6 +344,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSNumber *)integerNumber;
 - (BOOL)getHashColorRed:(unsigned int *)red green:(unsigned int *)green blue:(unsigned int *)blue;
 - (BOOL)interpolatedStringContainsNonliteral;
+- (NSString *)it_stringByAppendingCharacter:(unichar)theChar;
 
 @end
 

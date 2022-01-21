@@ -49,22 +49,14 @@ static NSString *const kScreenCharImageMapKey = @"Image Map";
 static NSString *const kScreenCharCCMNextKeyKey = @"Next Key";
 static NSString *const kScreenCharHasWrappedKey = @"Has Wrapped";
 
-// Maps codes to strings
-static NSMutableDictionary* complexCharMap;
-static NSMutableSet<NSNumber *> *spacingCombiningMarkCodeNumbers;
-// Maps strings to codes.
-static NSMutableDictionary* inverseComplexCharMap;
-// Next available code.
-static int ccmNextKey = 1;
-// If ccmNextKey has wrapped then this is set to true and we have to delete old
-// strings before creating a new one with a recycled code.
-static BOOL hasWrapped = NO;
-
-typedef NS_ENUM(int, iTermTriState) {
-    iTermTriStateFalse,
-    iTermTriStateTrue,
-    iTermTriStateOther
-};
+static iTermComplexCharRegistry *GetComplexCharRegistry(void) {
+    static iTermComplexCharRegistry *instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [iTermComplexCharRegistry sharedInstance];
+    });
+    return instance;
+}
 
 iTermTriState iTermTriStateFromBool(BOOL b) {
     return b ? iTermTriStateTrue : iTermTriStateFalse;
@@ -136,26 +128,12 @@ iTermTriState iTermTriStateFromBool(BOOL b) {
 
 @end
 
-static void CreateComplexCharMapIfNeeded() {
-    if (!complexCharMap) {
-        complexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
-        spacingCombiningMarkCodeNumbers = [[NSMutableSet alloc] initWithCapacity:1000];
-        inverseComplexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];
-        [[iTermScreenCharGeneration counter] advance];
-    }
-}
-
 NSString *ComplexCharToStr(int key) {
-    if (key == UNICODE_REPLACEMENT_CHAR) {
-        return ReplacementString();
-    }
-
-    CreateComplexCharMapIfNeeded();
-    return [complexCharMap objectForKey:[NSNumber numberWithInt:key]];
+    return [GetComplexCharRegistry() stringFor:key];
 }
 
 BOOL ComplexCharCodeIsSpacingCombiningMark(unichar code) {
-    return [spacingCombiningMarkCodeNumbers containsObject:@(code)];
+    return [GetComplexCharRegistry() codeIsSpacingCombiningMark:code];
 }
 
 NSString *ScreenCharToStr(const screen_char_t *const sct) {
@@ -204,20 +182,13 @@ UTF32Char CharToLongChar(unichar code, BOOL isComplex)
     }
 }
 
-static BOOL ComplexCharKeyIsReserved(int k) {
-    return k >= iTermBoxDrawingCodeMin && k <= iTermBoxDrawingCodeMax;
-}
-
 screen_char_t ImageCharForNewImage(NSString *name,
                                    int width,
                                    int height,
                                    BOOL preserveAspectRatio,
                                    NSEdgeInsets inset) {
     [[iTermScreenCharGeneration counter] advance];
-    int newKey;
-    do {
-        newKey = ccmNextKey++;
-    } while (ComplexCharKeyIsReserved(newKey));
+    const int newKey = [GetComplexCharRegistry() nextCode];
 
     screen_char_t c;
     memset(&c, 0, sizeof(c));
@@ -265,69 +236,8 @@ VT100GridCoord GetPositionOfImageInChar(screen_char_t c) {
                               c.backgroundColor);
 }
 
-int GetOrSetComplexChar(NSString *str,
-                        iTermTriState isSpacingCombiningMark) {
-    CreateComplexCharMapIfNeeded();
-    NSNumber *number = inverseComplexCharMap[str];
-    if (number) {
-        return [number intValue];
-    }
-
-    [[iTermScreenCharGeneration counter] advance];
-    int newKey;
-    do {
-        newKey = ccmNextKey++;
-    } while (ComplexCharKeyIsReserved(newKey));
-
-    number = @(newKey);
-    if (hasWrapped) {
-        NSString* oldStr = complexCharMap[number];
-        if (oldStr) {
-            [inverseComplexCharMap removeObjectForKey:oldStr];
-            [spacingCombiningMarkCodeNumbers removeObject:number];
-        }
-    }
-    switch (isSpacingCombiningMark) {
-        case iTermTriStateTrue:
-            [spacingCombiningMarkCodeNumbers addObject:number];
-            break;
-        case iTermTriStateFalse:
-            break;
-        case iTermTriStateOther: {
-            NSCharacterSet *scmSet = [NSCharacterSet spacingCombiningMarksForUnicodeVersion:12];
-            if ([str rangeOfCharacterFromSet:scmSet].location != NSNotFound) {
-                [spacingCombiningMarkCodeNumbers addObject:number];
-            }
-        }
-    }
-    complexCharMap[number] = str;
-    inverseComplexCharMap[str] = number;
-    if ([iTermAdvancedSettingsModel restoreWindowContents]) {
-        [NSApp invalidateRestorableState];
-    }
-    if (ccmNextKey == 0xf000) {
-        ccmNextKey = 1;
-        hasWrapped = YES;
-    }
-    return newKey;
-}
-
 int AppendToComplexChar(int key, unichar codePoint) {
-    if (key == UNICODE_REPLACEMENT_CHAR) {
-        return UNICODE_REPLACEMENT_CHAR;
-    }
-
-    NSString* str = [complexCharMap objectForKey:[NSNumber numberWithInt:key]];
-    if ([str length] == kMaxParts) {
-        NSLog(@"Warning: char <<%@>> with key %d reached max length %d", str,
-              key, kMaxParts);
-        return key;
-    }
-    assert(str);
-    NSMutableString* temp = [NSMutableString stringWithString:str];
-    [temp appendString:[NSString stringWithCharacters:&codePoint length:1]];
-
-    return GetOrSetComplexChar(temp, iTermTriStateOther);
+    return [GetComplexCharRegistry() appendCodePoint:codePoint to:key];
 }
 
 NSString *StringByNormalizingString(NSString *theString, iTermUnicodeNormalization normalization) {
@@ -358,7 +268,8 @@ void SetComplexCharInScreenChar(screen_char_t *screenChar,
     if (normalizedString.length == 1 && !isSpacingCombiningMark) {
         screenChar->code = [normalizedString characterAtIndex:0];
     } else {
-        screenChar->code = GetOrSetComplexChar(theString, iTermTriStateFromBool(isSpacingCombiningMark));
+        screenChar->code = [GetComplexCharRegistry() lazilyCreatedCodeFor:theString
+                                                   isSpacingCombiningMark:isSpacingCombiningMark];
         screenChar->complexChar = YES;
     }
 }
@@ -711,15 +622,8 @@ void InitializeScreenChar(screen_char_t *s, screen_char_t fg, screen_char_t bg) 
     s->unused = 0;
 }
 
-void ConvertCharsToGraphicsCharset(screen_char_t *s, int len)
-{
-    int i;
-
-    for (i = 0; i < len; i++) {
-        assert(!s[i].complexChar);
-        s[i].complexChar = NO;
-        s[i].code = charmap[(int)(s[i].code)];
-    }
+void ConvertCharsToGraphicsCharset(screen_char_t *s, int len) {
+    [GetComplexCharRegistry() convertToGraphicsWithChars:s count:len];
 }
 
 NSInteger ScreenCharGeneration(void) {
@@ -727,12 +631,12 @@ NSInteger ScreenCharGeneration(void) {
 }
 
 NSDictionary *ScreenCharEncodedRestorableState(void) {
-    return @{ kScreenCharComplexCharMapKey: complexCharMap ?: @{},
-              kScreenCharSpacingCombiningMarksKey: spacingCombiningMarkCodeNumbers.allObjects ?: @[],
-              kScreenCharInverseComplexCharMapKey: inverseComplexCharMap ?: @{},
+    return @{ kScreenCharComplexCharMapKey: [GetComplexCharRegistry() complexCharMap] ?: @{},
+              kScreenCharSpacingCombiningMarksKey: [GetComplexCharRegistry() spacingCombiningMarkCodeNumbers].allObjects ?: @[],
+              kScreenCharInverseComplexCharMapKey: [GetComplexCharRegistry() inverseComplexCharMap] ?: @{},
               kScreenCharImageMapKey: [[iTermImageRegistry sharedInstance] imageMap],
-              kScreenCharCCMNextKeyKey: @(ccmNextKey),
-              kScreenCharHasWrappedKey: @(hasWrapped) };
+              kScreenCharCCMNextKeyKey: @([GetComplexCharRegistry() peekNextCode]),
+              kScreenCharHasWrappedKey: @([GetComplexCharRegistry() hasWrapped]) };
 }
 
 void ScreenCharGarbageCollectImages(void) {
@@ -744,29 +648,12 @@ void ScreenCharClearProvisionalFlagForImageWithCode(int code) {
 }
 
 void ScreenCharDecodeRestorableState(NSDictionary *state) {
-    NSDictionary *stateComplexCharMap = state[kScreenCharComplexCharMapKey];
-    CreateComplexCharMapIfNeeded();
-    for (id key in stateComplexCharMap) {
-        if (!complexCharMap[key]) {
-            complexCharMap[key] = stateComplexCharMap[key];
-        }
-    }
-    NSArray<NSString *> *spacingCombiningMarksArray = state[kScreenCharSpacingCombiningMarksKey];
-    for (NSNumber *number in spacingCombiningMarksArray) {
-        [spacingCombiningMarkCodeNumbers addObject:number];
-    }
-
-    NSDictionary *stateInverseMap = state[kScreenCharInverseComplexCharMapKey];
-    for (id key in stateInverseMap) {
-        if (!inverseComplexCharMap[key]) {
-            inverseComplexCharMap[key] = stateInverseMap[key];
-        }
-    }
-    NSDictionary *imageMap = state[kScreenCharImageMapKey];
-    [[iTermImageRegistry sharedInstance] restoreFrom:imageMap];
-
-    ccmNextKey = [state[kScreenCharCCMNextKeyKey] intValue];
-    hasWrapped = [state[kScreenCharHasWrappedKey] boolValue];
+    [GetComplexCharRegistry() loadCharMap:state[kScreenCharComplexCharMapKey]
+                                     spacingCombiningMarks:state[kScreenCharSpacingCombiningMarksKey]
+                                                inverseMap:state[kScreenCharInverseComplexCharMapKey]
+                                                   nextKey:[state[kScreenCharCCMNextKeyKey] intValue]
+                                                hasWrapped:[state[kScreenCharHasWrappedKey] boolValue]];
+    [[iTermImageRegistry sharedInstance] restoreFrom:state[kScreenCharImageMapKey]];
 }
 
 static NSString *ScreenCharColorDescription(unsigned int red,

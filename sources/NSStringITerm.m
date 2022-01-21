@@ -2296,6 +2296,10 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return YES;
 }
 
+- (NSString *)it_stringByAppendingCharacter:(unichar)theChar {
+    return [self stringByAppendingString:[NSString stringWithCharacters:&theChar length:1]];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

@@ -19,7 +19,7 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
     static dispatch_once_t onceToken;
     static NSCharacterSet *idnCharacters;
     dispatch_once(&onceToken, ^{
-        NSMutableCharacterSet *set = [[[NSMutableCharacterSet alloc] init] autorelease];
+        NSMutableCharacterSet *set = [[NSMutableCharacterSet alloc] init];
         [set addCharactersInRange:NSMakeRange(0x61, 1)];
         [set addCharactersInRange:NSMakeRange(0x27, 1)];
         [set addCharactersInRange:NSMakeRange(0x2d, 2)];
@@ -2162,7 +2162,7 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
         if (![iTermAdvancedSettingsModel zeroWidthSpaceAdvancesCursor]) {
             string = [string stringByAppendingString:@"\u200b"];  // zero width space
         }
-        characterSet = [[NSCharacterSet characterSetWithCharactersInString:string] retain];
+        characterSet = [NSCharacterSet characterSetWithCharactersInString:string];
     });
     return characterSet;
 }
@@ -2210,10 +2210,9 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         NSString *chars = [iTermAdvancedSettingsModel URLCharacterSet];
-        urlChars = [[NSMutableCharacterSet characterSetWithCharactersInString:chars] retain];
+        urlChars = [NSMutableCharacterSet characterSetWithCharactersInString:chars];
         [urlChars formUnionWithCharacterSet:[NSCharacterSet idnCharacters]];
         [urlChars removeCharactersInString:[iTermAdvancedSettingsModel URLCharacterSetExclusions]];
-        [urlChars retain];
     });
 
     return urlChars;
