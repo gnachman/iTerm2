@@ -28,6 +28,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCapturedOutputMark.h"
+#import "iTermGCD.h"
 #import "iTermImageMark.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermOrderEnforcer.h"
@@ -43,10 +44,9 @@
 }
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
-    dispatch_queue_t queue = dispatch_get_main_queue();;
+    dispatch_queue_t queue = [iTermGCD mutationQueue];
     self = [super initForMutationOnQueue:queue];
     if (self) {
-#warning TODO: When this moves to its own queue. change _queue. Consider keeping main thread as an option for lower-power mode and also for filter destinations to minimize overhead of constnatly syncing across threads.
         _queue = queue;
         _derivativeIntervalTree = [[IntervalTree alloc] init];
         _derivativeSavedIntervalTree = [[IntervalTree alloc] init];
@@ -390,7 +390,9 @@
         self.scrollbackOverflow += overflowCount;
         self.cumulativeScrollbackOverflow += overflowCount;
     }
-    [self.intervalTreeObserver intervalTreeVisibleRangeDidChange];
+    [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+        [observer intervalTreeVisibleRangeDidChange];
+    }];
 }
 
 #pragma mark - Terminal Fundamentals
@@ -2375,13 +2377,16 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
         const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
-        [self.intervalTreeObserver intervalTreeDidRemoveObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
-                                                              onLine:line];
         [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
             ((VT100ScreenMark *)obj).code = returnCode;
         }];
-        [self.intervalTreeObserver intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeForObject(mark)
-                                                           onLine:line];
+        const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(mark);
+        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+            [observer intervalTreeDidRemoveObjectOfType:type
+                                                 onLine:line];
+            [observer intervalTreeDidAddObjectOfType:type
+                                              onLine:line];
+        }];
         id<VT100RemoteHostReading> remoteHost = [self remoteHostOnLine:self.numberOfLines];
 #warning TODO: mark is mutable shared state. Don't pass to main thread like this.
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
@@ -2516,7 +2521,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             self.markCache[@(totalScrollbackOverflow + range.end.y)] = mark;
         }
     }
-    [self.intervalTreeObserver intervalTreeDidReset];
+    [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+        [observer intervalTreeDidReset];
+    }];
 }
 
 - (void)setWorkingDirectoryFromURLString:(NSString *)URLString {
@@ -2940,22 +2947,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block {
     DLog(@"%@", [NSThread callStackSymbols]);
-    assert([NSThread isMainThread]);
+    [iTermGCD assertMainQueueSafe];
 
     if (self.performingJoinedBlock) {
         // Reentrant call. Avoid deadlock by running it immediately.
-        [self reallyPerformLightweightBlockWithJoinedThreads:block group:nil];
+        [self reallyPerformLightweightBlockWithJoinedThreads:block];
         return;
     }
 
-    // Wait for the mutation thread to finish its current tasks+tokens, then run the block.
-    dispatch_group_t group = dispatch_group_create();
-    dispatch_group_enter(group);
     __weak __typeof(self) weakSelf = self;
-    [_tokenExecutor scheduleHighPriorityTask:^{
-        [weakSelf reallyPerformLightweightBlockWithJoinedThreads:block group:group];
+    [self performSynchroDanceWithBlock:^{
+        [weakSelf reallyPerformLightweightBlockWithJoinedThreads:block];
     }];
-    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 }
 
 
@@ -2963,34 +2966,58 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block {
     DLog(@"%@", [NSThread callStackSymbols]);
-    assert([NSThread isMainThread]);
+    [iTermGCD assertMainQueueSafe];
 
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
 
     if (self.performingJoinedBlock) {
         // Reentrant call. Avoid deadlock by running it immediately.
-        [self reallyPerformBlockWithJoinedThreads:block delegate:delegate group:nil];
+        [self reallyPerformBlockWithJoinedThreads:block delegate:delegate];
         return;
     }
 
     // Wait for the mutation thread to finish its current tasks+tokens, then run the block.
+    __weak __typeof(self) weakSelf = self;
+    [self performSynchroDanceWithBlock:^{
+        [weakSelf reallyPerformBlockWithJoinedThreads:block
+                                             delegate:delegate];
+    }];
+}
+
+- (void)performSynchroDanceWithBlock:(void (^)(void))block {
+    assert(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue()));
+
+    [iTermGCD setMainQueueSafe:YES];
     dispatch_group_t group = dispatch_group_create();
     dispatch_group_enter(group);
-    __weak __typeof(self) weakSelf = self;
+
+    dispatch_group_t group2 = dispatch_group_create();
+    dispatch_group_enter(group2);
+
+    // Ask the token executor to run a high-pri task. This will be the next thing it does.
     [_tokenExecutor scheduleHighPriorityTask:^{
-        [weakSelf reallyPerformBlockWithJoinedThreads:block
-                                             delegate:delegate
-                                                group:group];
+        // Unblock the main queue.
+        dispatch_group_leave(group);
+
+        // Wait for the main queue to finish.
+        dispatch_group_wait(group2, DISPATCH_TIME_FOREVER);
     }];
+
+    // Wait for the high-pri task to begin.
     dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+
+    // The mutation queue is now blocked on group2.
+    block();
+    [iTermGCD setMainQueueSafe:NO];
+    // Unblock the token executor
+    dispatch_group_leave(group2);
 }
 
 // This runs on the mutation queue while the main thread waits on `group`.
 - (void)reallyPerformBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *,
                                                                   VT100ScreenMutableState *,
                                                                   id<VT100ScreenDelegate>))block
-                                   delegate:(id<VT100ScreenDelegate>)delegate
-                                      group:(dispatch_group_t)group {
+                                   delegate:(id<VT100ScreenDelegate>)delegate {
     // Set `performingJoinedBlock` to YES so that a side-effect that wants to join threads won't
     // deadlock.
     // This get-and-set is not a data race because assignment to performingJoinedBlock only happens
@@ -3012,13 +3039,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [delegate screenSync:self];
     }
     self.performingJoinedBlock = previousValue;
-    if (group) {
-        dispatch_group_leave(group);
-    }
 }
 
-- (void)reallyPerformLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *))block
-                                                 group:(dispatch_group_t)group {
+- (void)reallyPerformLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *))block {
     // Set `performingJoinedBlock` to YES so that a side-effect that wants to join threads won't
     // deadlock.
     const BOOL previousValue = self.performingJoinedBlock;
@@ -3027,15 +3050,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         block(self);
     }
     self.performingJoinedBlock = previousValue;
-    if (group) {
-        dispatch_group_leave(group);
-    }
 }
 
 - (void)performBlockAsynchronously:(void (^ _Nullable)(VT100Terminal *terminal,
                                                        VT100ScreenMutableState *mutableState,
                                                        id<VT100ScreenDelegate> delegate))block {
-    assert([NSThread isMainThread]);
+    [iTermGCD assertMainQueueSafe];
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor scheduleHighPriorityTask:^{
@@ -3705,7 +3725,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block {
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
-        assert([NSThread isMainThread]);
+        [iTermGCD assertMainQueueSafe];
         block([delegate triggerSideEffectVariableScope], delegate);
         [unpauser unpause];
     }];

@@ -12,7 +12,7 @@ protocol UnpauserDelegate: AnyObject {
 }
 
 typealias TokenExecutorTask = () -> ()
-#warning("TODO: Ensure delegate methos are called on the right queue")
+
 // Delegate calls are run on the execution queue.
 @objc(iTermTokenExecutorDelegate)
 protocol TokenExecutorDelegate: AnyObject {
@@ -308,7 +308,7 @@ private class TokenExecutorImpl {
     private var taskQueue = TaskQueue()
     private var sideEffects = TaskQueue()
     private let tokenQueue = TwoTierTokenQueue()
-    private var pauseCount = 0
+    private var pauseCount = MutableAtomicObject(0)
     private var executingCount = 0
 
     weak var delegate: TokenExecutorDelegate?
@@ -325,13 +325,15 @@ private class TokenExecutorImpl {
 
     func pause() -> Unpauser {
         assertQueue()
-        pauseCount += 1
+        pauseCount.mutate { value in
+            return value + 1
+        }
         return Unpauser(self)
     }
 
     private var isPaused: Bool {
         assertQueue()
-        return pauseCount > 0
+        return pauseCount.value > 0
     }
 
     func invalidate() {
@@ -387,7 +389,7 @@ private class TokenExecutorImpl {
     }
 
     private func assertQueue() {
-        dispatchPrecondition(condition: .onQueue(queue))
+        iTermGCD.assertMutationQueueSafe()
     }
 
     private func execute() {
@@ -477,10 +479,13 @@ private class TokenExecutorImpl {
 }
 
 extension TokenExecutorImpl: UnpauserDelegate {
+    // You can call this on any queue.
     func unpause() {
-        precondition(pauseCount > 0)
-        pauseCount -= 1
-        if pauseCount == 0 {
+        let newCount = pauseCount.mutate { value in
+            precondition(value > 0)
+            return value - 1
+        }
+        if newCount == 0 {
             schedule()
         }
     }

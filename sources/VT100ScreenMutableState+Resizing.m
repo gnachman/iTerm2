@@ -12,6 +12,7 @@
 #import "VT100RemoteHost.h"
 #import "VT100ScreenDelegate.h"
 #import "VT100WorkingDirectory.h"
+#import "iTermGCD.h"
 #import "iTermImageMark.h"
 #import "iTermSelection.h"
 #import "iTermURLMark.h"
@@ -996,7 +997,7 @@ static void SwapInt(int *a, int *b) {
             selection:(iTermSelection *)selection
              delegate:(id<VT100ScreenDelegate>)delegate
               hasView:(BOOL)hasView {
-    assert([NSThread isMainThread]);
+    [iTermGCD assertMainQueueSafe];
 
     DLog(@"------------ reallySetSize");
     DLog(@"Set size to %@", VT100GridSizeDescription(newSize));

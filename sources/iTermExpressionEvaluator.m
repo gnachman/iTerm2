@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermAPIHelper.h"
 #import "iTermExpressionParser.h"
+#import "iTermGCD.h"
 #import "iTermScriptFunctionCall+Private.h"
 #import "iTermScriptHistory.h"
 #import "iTermVariableScope.h"
@@ -92,8 +93,7 @@
 }
 
 static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
-    ITBetaAssert(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue()),
-                 @"Expression evaluation should only occur on the main queue.");
+    [iTermGCD assertMainQueueSafe:@"Expression evaluation must be main-queue safe"];
     static NSMutableArray *array;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{

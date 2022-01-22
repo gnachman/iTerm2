@@ -96,7 +96,6 @@
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {
-#warning TODO: The queue is a lie. Make queue mutable (and set it to main queue after copy) maybe? Or use initWithSource:queue: instead of -copy.
     iTermTemporaryDoubleBufferedGridController *copy = [[iTermTemporaryDoubleBufferedGridController alloc] initWithQueue:_queue];
     copy->_explicit = _explicit;
     copy.drewSavedGrid = _drewSavedGrid;

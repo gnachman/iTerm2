@@ -226,6 +226,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
         _charsetUsesLineDrawingMode = [source.charsetUsesLineDrawingMode copy];
         _colorMap = [source.colorMap copy];
         _temporaryDoubleBuffer = [source.unconditionalTemporaryDoubleBuffer copy];
+        _temporaryDoubleBuffer.queue = dispatch_get_main_queue();
         _config = [source.config copy];
         _primaryGrid = [source.primaryGrid copy];
         _primaryGrid.delegate = self;

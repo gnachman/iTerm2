@@ -19,7 +19,7 @@
 
 // Maps process id to deepest foreground job. _lockQueue
 @property (nonatomic) NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJobLQ;
-
+@property (atomic) BOOL forcingLQ;
 @end
 
 @implementation iTermProcessCache {
@@ -31,7 +31,6 @@
     BOOL _needsUpdateFlagLQ;  // _lockQueue
     iTermRateLimitedUpdate *_rateLimit;  // Main queue. keeps updateIfNeeded from eating all the CPU
     NSMutableIndexSet *_dirtyPIDsLQ;  // _lockQueue
-    BOOL _forcingLQ;
 }
 
 + (instancetype)sharedInstance {
@@ -216,14 +215,14 @@
 - (void)processMonitor:(iTermProcessMonitor *)monitor didChangeFlags:(dispatch_source_proc_flags_t)flags {
     DLog(@"Flags changed for %@.", @(monitor.processInfo.processID));
     _needsUpdateFlagLQ = YES;
-    const BOOL wasForced = _forcingLQ;
-    _forcingLQ = YES;
+    const BOOL wasForced = self.forcingLQ;
+    self.forcingLQ = YES;
     if (!wasForced) {
         dispatch_async(dispatch_get_main_queue(), ^{
             DLog(@"Forcing update");
             [self->_rateLimit performRateLimitedSelector:@selector(updateIfNeeded) onTarget:self withObject:nil];
             [self->_rateLimit performWithinDuration:0.0167];
-            self->_forcingLQ = NO;
+            self.forcingLQ = NO;
         });
     }
 }

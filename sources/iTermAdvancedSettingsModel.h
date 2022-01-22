@@ -79,6 +79,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)compactEdgeDragSize;
 + (double)compactMinimalTabBarHeight;
 + (NSString *)composerClearSequence;
++ (BOOL)concurrentMutation;
 + (BOOL)conservativeURLGuessing;
 + (BOOL)convertItalicsToReverseVideoForTmux;
 + (BOOL)convertTabDragToWindowDragForSolitaryTabInCompactOrMinimalTheme;
