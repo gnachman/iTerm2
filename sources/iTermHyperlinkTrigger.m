@@ -47,14 +47,16 @@
     
     // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
     id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
-    dispatch_queue_t queue = [scopeProvider triggerScopeProviderQueue];
+    id<iTermTriggerCallbackScheduler> scheduler = [scopeProvider triggerCallbackScheduler];
     [[self paramWithBackreferencesReplacedWithValues:stringArray
                                                scope:scopeProvider
-                                    useInterpolation:useInterpolation] onQueue:queue then:^(NSString * _Nonnull urlString) {
-        [self performActionWithURLString:urlString
-                                   range:rangeInString
-                                 session:aSession
-                      absoluteLineNumber:lineNumber];
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull urlString) {
+        [scheduler scheduleTriggerCallback:^{
+            [self performActionWithURLString:urlString
+                                       range:rangeInString
+                                     session:aSession
+                          absoluteLineNumber:lineNumber];
+        }];
     }];
     return YES;
 }

@@ -65,8 +65,9 @@ class EventuallyConsistentIntervalTree: IntervalTree {
     @objc
     override func add(_ object: IntervalTreeObject, with interval: Interval) {
         super.add(object, with: interval)
+        let copyOfInterval = interval.copy(with: nil) as! Interval
         addSideEffect(object) { doppelganger, derivative in
-            derivative.add(doppelganger, with: interval)
+            derivative.add(doppelganger, with: copyOfInterval)
         }
     }
 

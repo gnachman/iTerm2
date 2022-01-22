@@ -60,6 +60,7 @@ extern NSString *const PTYSessionSlownessEventExecute;
 @property (nonatomic, weak) id<PTYTriggerEvaluatorDataSource> dataSource;
 @property (nonatomic, weak) id<PTYTriggerEvaluatorDelegate> delegate;
 @property (nonatomic) BOOL sessionExited;
+@property (atomic, readonly) BOOL evaluating;
 
 - (void)loadFromProfileArray:(NSArray *)array;
 - (void)checkPartialLineTriggers;

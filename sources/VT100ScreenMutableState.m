@@ -3028,9 +3028,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // Sync so that the delegate's copy of state will be up-to-date.
     [delegate screenSync:self];
 
-    // Now that the delegate has the most recent state, pending side effects which may operate on
+    // Now that the delegate has the most recent state, perform pending side effects which may operate on
     // that state. Don't have the token executor initiate sync because that depends on having a non-
-    // empty list of side-effects.
+    // empty list of side-effects. Note that if we're already executing a side-effect this
+    // will have no effect because re-entrant side effects are almost impossible to reason about.
+    // Reentrancy could happen like this:
+    // performSideEffect
+    //    [NSAlert run]
+    //      (runloop)
+    //        applicationDidResignActive
+    //          encodeRestorableState
+    //            performJoinedBlock
+    //              executeSideEffectsImmediatelySyncingFirst (here)
     [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
 
     if (block) {
@@ -3731,8 +3740,20 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-- (dispatch_queue_t)triggerScopeProviderQueue {
-    return _queue;
+// Main queue or mutation queue.
+- (id<iTermTriggerCallbackScheduler>)triggerCallbackScheduler {
+    return self;
+}
+
+#pragma mark - iTermTriggerCallbackScheduler
+
+// Main queue or mutation queue.
+- (void)scheduleTriggerCallback:(void (^)(void))block {
+    if ([iTermGCD onMutationQueue] && _triggerEvaluator.evaluating) {
+        block();
+        return;
+    }
+    [_tokenExecutor scheduleHighPriorityTask:block];
 }
 
 #pragma mark - iTermTriggerSession

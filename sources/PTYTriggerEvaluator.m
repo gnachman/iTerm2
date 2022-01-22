@@ -22,9 +22,12 @@ NSString *const PTYSessionSlownessEventExecutel;
 static NSString *const PTYSessionSlownessEventTriggers = @"triggers";
 NSString *const PTYSessionSlownessEventExecute = @"execute";
 
+@interface PTYTriggerEvaluator()
+@property (atomic, readwrite) BOOL evaluating;
+@end
+
 @implementation PTYTriggerEvaluator {
     iTermRateLimitedUpdate *_idempotentTriggerRateLimit;
-    BOOL _evaluating;
 }
 
 - (instancetype)init {
@@ -96,10 +99,10 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
                               stringLine:(iTermStringLine *)stringLine
                               lineNumber:(long long)startAbsLineNumber
                       requireIdempotency:(BOOL)requireIdempotency {
-    if (_evaluating) {
+    if (self.evaluating) {
         return;
     }
-    _evaluating = YES;
+    self.evaluating = YES;
     @try {
         for (iTermExpectation *expectation in [_expect.expectations copy]) {
             NSArray<NSString *> *capture = [stringLine.stringValue captureComponentsMatchedByRegex:expectation.regex];
@@ -132,7 +135,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     @finally {
         // I don't expect an exception but I do want to make sure an early return added in the
         // future doesn't prevent me from resetting this.
-        _evaluating = NO;
+        self.evaluating = NO;
     }
 }
 
