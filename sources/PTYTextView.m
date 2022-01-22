@@ -2072,8 +2072,6 @@
 
     // Unset the dirty bit for all chars.
     DebugLog(@"updateDirtyRects resetDirty");
-#warning TODO: Remove this after making a copy of the state in sync
-    [_dataSource resetDirty];
 
     if (foundDirty) {
         [_dataSource saveToDvr:cleanLines];

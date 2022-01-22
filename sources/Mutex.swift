@@ -51,4 +51,14 @@ class MutableAtomicObject<T> {
             return original
         }
     }
+
+    @discardableResult
+    func mutate(_ block:(T) -> T) -> T {
+        return mutex.sync {
+            let result = block(_value)
+            _value = result
+            return result
+        }
+    }
 }
+

@@ -46,6 +46,7 @@
 #import "iTermFindDriver.h"
 #import "iTermFindOnPageHelper.h"
 #import "iTermFindPasteboard.h"
+#import "iTermGCD.h"
 #import "iTermGraphicSource.h"
 #import "iTermIntervalTreeObserver.h"
 #import "iTermKeyMappings.h"
@@ -14978,6 +14979,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermIntervalTreeObserver
 
 - (void)intervalTreeDidReset {
+    [iTermGCD assertMainQueueSafe];
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
@@ -15004,6 +15006,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)intervalTreeDidAddObjectOfType:(iTermIntervalTreeObjectType)type
                                 onLine:(NSInteger)line {
+    [iTermGCD assertMainQueueSafe];
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
@@ -15019,6 +15022,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)intervalTreeVisibleRangeDidChange {
+    [iTermGCD assertMainQueueSafe];
     [self updateMarksMinimapRangeOfVisibleLines];
 }
 
@@ -15231,6 +15235,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)triggerSideEffectShowAlertWithMessage:(NSString *)message
                                     rateLimit:(iTermRateLimitedUpdate *)rateLimit
                                       disable:(void (^)(void))disable {
+    [iTermGCD assertMainQueueSafe];
     __weak __typeof(self) weakSelf = self;
     [rateLimit performRateLimitedBlock:^{
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
@@ -15258,10 +15263,12 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)triggerSideEffectShowCapturedOutputTool {
+    [iTermGCD assertMainQueueSafe];
     [self showCapturedOutputTool];
 }
 
 - (void)triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded {
+    [iTermGCD assertMainQueueSafe];
     if ([self toolbeltIsVisibleWithCapturedOutput]) {
         return;
     }
@@ -15300,6 +15307,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)triggerSideEffectShowShellIntegrationRequiredAnnouncement {
+    [iTermGCD assertMainQueueSafe];
     if ([[NSUserDefaults standardUserDefaults] boolForKey:kSuppressCaptureOutputRequiresShellIntegrationWarning]) {
         return;
     }
@@ -15329,6 +15337,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)triggerSideEffectDidCaptureOutput {
+    [iTermGCD assertMainQueueSafe];
     [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionCapturedOutputDidChange
                                                         object:nil];
 
@@ -15338,6 +15347,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                                          identifier:(NSString * _Nullable)identifier
                                              silent:(BOOL)silent
                                        triggerTitle:(NSString * _Nonnull)triggerName {
+    [iTermGCD assertMainQueueSafe];
     [self launchCoprocessWithCommand:command identifier:identifier silent:silent triggerTitle:triggerName];
 }
 
@@ -15378,6 +15388,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)triggerSideEffectPostUserNotificationWithMessage:(NSString * _Nonnull)message {
+    [iTermGCD assertMainQueueSafe];
     iTermNotificationController *notificationController = [iTermNotificationController sharedInstance];
     [notificationController notify:message
                    withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
@@ -15390,6 +15401,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 // Scroll so that `absLine` is the last visible onscreen.
 - (void)triggerSideEffectStopScrollingAtLine:(long long)absLine {
+    [iTermGCD assertMainQueueSafe];
     const long long line = absLine - _screen.totalScrollbackOverflow;
     if (line < 0) {
         return;
@@ -15404,12 +15416,14 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)triggerSideEffectOpenPasswordManagerToAccountName:(NSString * _Nullable)accountName {
+    [iTermGCD assertMainQueueSafe];
     iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
     [itad openPasswordManagerToAccountName:accountName
                                      inSession:self];
 }
 
 - (void)triggerSideEffectRunBackgroundCommand:(NSString *)command pool:(iTermBackgroundCommandRunnerPool *)pool {
+    [iTermGCD assertMainQueueSafe];
     iTermBackgroundCommandRunner *runner = [pool requestBackgroundCommandRunnerWithTerminationBlock:nil];
     runner.command = command;
     runner.title = @"Run Command Trigger";
@@ -15423,11 +15437,12 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (iTermVariableScope *)triggerSideEffectVariableScope {
-    assert([NSThread isMainThread]);
+    [iTermGCD assertMainQueueSafe];
     return self.variablesScope;
 }
 
 - (void)triggerSideEffectSetTitle:(NSString * _Nonnull)newName {
+    [iTermGCD assertMainQueueSafe];
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionTriggerName: newName,
                                                     iTermVariableKeySessionAutoNameFormat: newName }];
     if (newName.length > 0) {
@@ -15439,6 +15454,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                               withVariables:(NSDictionary * _Nonnull)temporaryVariables
                                    captures:(NSArray<NSString *> * _Nonnull)captureStringArray
                                     trigger:(Trigger * _Nonnull)trigger {
+    [iTermGCD assertMainQueueSafe];
     iTermVariableScope *scope =
     [self.variablesScope variableScopeByAddingBackreferences:captureStringArray
                                                        owner:trigger];
@@ -15448,10 +15464,12 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)triggerSideEffectSetValue:(id _Nullable)value
                  forVariableNamed:(NSString * _Nonnull)name {
+    [iTermGCD assertMainQueueSafe];
     [self.genericScope setValue:value forVariableNamed:name];
 }
 
 - (void)triggerSideEffectCurrentDirectoryDidChange {
+    [iTermGCD assertMainQueueSafe];
     [self didUpdateCurrentDirectory];
 }
 

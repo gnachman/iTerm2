@@ -10,6 +10,7 @@
 
 #import "DebugLogging.h"
 #import "NSTimer+iTerm.h"
+#import "iTermGCD.h"
 
 @implementation iTermRateLimitedUpdate {
     // While nonnil, block will not be performed.
@@ -94,7 +95,7 @@
 }
 
 - (void)performRateLimitedBlock:(void (^)(void))block {
-    assert([NSThread isMainThread]);
+    [iTermGCD assertMainQueueSafe];
     DLog(@"%@", [NSThread callStackSymbols]);
     if (_minimumInterval == 0) {
         block();

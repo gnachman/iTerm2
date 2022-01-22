@@ -13,6 +13,7 @@
 #import "iTermCapturedOutputMark.h"
 #import "iTermColorMap.h"
 #import "iTermExternalAttributeIndex.h"
+#import "iTermGCD.h"
 #import "iTermNotificationController.h"
 #import "iTermImage.h"
 #import "iTermImageInfo.h"
@@ -1196,11 +1197,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             multipleResults:multipleResults];
 }
 
-// I can remove this after making a copy of the state in sync.
-- (void)resetDirty {
-    [self mutResetDirty];
-}
-
 - (void)addNote:(PTYAnnotation *)note
         inRange:(VT100GridCoordRange)range
           focus:(BOOL)focus {
@@ -1420,13 +1416,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 #pragma mark - VT100ScreenSideEffectPerforming
 
+// THis is accessed by both main and mutation queues and it must be atomic.
 - (id<VT100ScreenDelegate>)sideEffectPerformingScreenDelegate {
-    assert([NSThread isMainThread]);
     return self.delegate;
 }
 
 - (id<iTermIntervalTreeObserver>)sideEffectPerformingIntervalTreeObserver {
-    assert([NSThread isMainThread]);
+    [iTermGCD assertMainQueueSafe];
     return _state.intervalTreeObserver;
 }
 

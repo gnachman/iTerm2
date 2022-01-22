@@ -95,8 +95,6 @@
 // Check if any the character at x,y has been marked dirty.
 - (BOOL)isDirtyAtX:(int)x Y:(int)y;
 - (NSIndexSet *)dirtyIndexesOnLine:(int)line;
-#warning TODO: Delete this after making a copy of the state in sync
-- (void)resetDirty;
 
 // Save the current state to a new frame in the dvr.
 - (void)saveToDvr:(NSIndexSet *)cleanLines;
