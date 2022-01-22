@@ -13,6 +13,7 @@
 
 #import "CapturedOutput.h"
 #import "DebugLogging.h"
+#import "iTermRateLimitedUpdate.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSDictionary+iTerm.h"
@@ -129,8 +130,7 @@
 #pragma mark - Private
 
 - (void)assertOnMutationThread {
-#warning TODO: Change this when creating the mutation thread.
-    assert([NSThread isMainThread]);
+    assert(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(_queue));
 }
 
 #pragma mark - Internal
@@ -3711,6 +3711,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
+- (dispatch_queue_t)triggerScopeProviderQueue {
+    return _queue;
+}
+
 #pragma mark - iTermTriggerSession
 
 - (void)triggerSession:(Trigger *)trigger
@@ -3795,9 +3799,11 @@ launchCoprocessWithCommand:(NSString *)command
     return _triggerEvaluator.triggerParametersUseInterpolatedStrings;
 }
 
-- (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message {
+- (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message rateLimit:(nonnull iTermRateLimitedUpdate *)rateLimit {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate triggerSideEffectPostUserNotificationWithMessage:message];
+        [rateLimit performRateLimitedBlock:^{
+            [delegate triggerSideEffectPostUserNotificationWithMessage:message];
+        }];
     }];
 }
 

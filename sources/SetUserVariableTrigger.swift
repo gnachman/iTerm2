@@ -60,16 +60,17 @@ class SetUserVariableTrigger: Trigger {
                                 atAbsoluteLineNumber lineNumber: Int64,
                                 useInterpolation: Bool,
                                 stop: UnsafeMutablePointer<ObjCBool>) -> Bool {
-        // definitely stop the world
+        let scopeProvider = session.triggerSessionVariableScopeProvider(self)
+        let queue = scopeProvider.triggerScopeProviderQueue()
         paramWithBackreferencesReplaced(withValues: strings,
-                                        scope: session.triggerSessionVariableScopeProvider(self),
-                                        useInterpolation: useInterpolation).then { [weak self] message in
+                                        scope: scopeProvider,
+                                        useInterpolation: useInterpolation).onQueue(queue, then: { [weak self] message in
             if let self = self, let (name, value) = self.variableNameAndValue(message as String) {
                 session.triggerSession(self,
                                        setVariableNamed: "user." + name,
                                        toValue: value)
             }
-        }
+        })
         return true
     }
 

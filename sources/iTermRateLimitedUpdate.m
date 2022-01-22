@@ -94,6 +94,7 @@
 }
 
 - (void)performRateLimitedBlock:(void (^)(void))block {
+    assert([NSThread isMainThread]);
     DLog(@"%@", [NSThread callStackSymbols]);
     if (_minimumInterval == 0) {
         block();

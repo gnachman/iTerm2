@@ -15212,7 +15212,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)performActionForCapturedOutput:(CapturedOutput *)capturedOutput {
     __weak __typeof(self) weakSelf = self;
-    [capturedOutput.promisedCommand then:^(NSString * _Nonnull command) {
+    [capturedOutput.promisedCommand onQueue:dispatch_get_main_queue() then:^(NSString * _Nonnull command) {
         [weakSelf reallyPerformActionForCapturedOutput:capturedOutput command:command];
     }];
 }

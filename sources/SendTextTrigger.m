@@ -33,9 +33,11 @@
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. This will be a modest performance issue at most.
+    id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
+    dispatch_queue_t queue = [scopeProvider triggerScopeProviderQueue];
     [[self paramWithBackreferencesReplacedWithValues:stringArray
-                                               scope:[aSession triggerSessionVariableScopeProvider:self]
-                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull message) {
+                                               scope:scopeProvider
+                                    useInterpolation:useInterpolation] onQueue:queue then:^(NSString * _Nonnull message) {
         [aSession triggerSession:self writeText:message];
     }];
     return YES;

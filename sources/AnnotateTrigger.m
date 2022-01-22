@@ -47,9 +47,11 @@
     if (!annotation) {
         return YES;
     }
+    id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
+    dispatch_queue_t queue = [scopeProvider triggerScopeProviderQueue];
     [[self paramWithBackreferencesReplacedWithValues:stringArray
-                                               scope:[aSession triggerSessionVariableScopeProvider:self]
-                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull text) {
+                                               scope:scopeProvider
+                                    useInterpolation:useInterpolation] onQueue:queue then:^(NSString * _Nonnull text) {
         [aSession triggerSession:self
                    setAnnotation:annotation
                         stringTo:text];

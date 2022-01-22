@@ -28,14 +28,15 @@ class InjectTrigger: Trigger {
                                 atAbsoluteLineNumber lineNumber: Int64,
                                 useInterpolation: Bool,
                                 stop: UnsafeMutablePointer<ObjCBool>) -> Bool {
-        // I can live with stopping the world here; this should be used very sparingly. I also don't expect much use of scope here.
+        let scopeProvider = session.triggerSessionVariableScopeProvider(self)
+        let queue = scopeProvider.triggerScopeProviderQueue()
         paramWithBackreferencesReplaced(withValues: strings,
-                                        scope: session.triggerSessionVariableScopeProvider(self),
-                                        useInterpolation: useInterpolation).then { message in
+                                        scope: scopeProvider,
+                                        useInterpolation: useInterpolation).onQueue(queue, then: { message in
             if let data = (message as String).data(using: .utf8) {
                 session.triggerSession(self, inject: data);
             }
-        }
+        })
         return false
     }
 }

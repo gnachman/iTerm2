@@ -33,6 +33,7 @@ extern NSString * const kTriggerDisabledKey;
 
 @protocol iTermTriggerScopeProvider<NSObject>
 - (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block;
+- (dispatch_queue_t)triggerScopeProviderQueue;
 @end
 
 @protocol iTermTriggerSession<NSObject>
@@ -47,7 +48,7 @@ extern NSString * const kTriggerDisabledKey;
 - (void)triggerSession:(Trigger *)trigger launchCoprocessWithCommand:(NSString *)command identifier:(NSString * _Nullable)identifier silent:(BOOL)silent;
 - (id<iTermTriggerScopeProvider>)triggerSessionVariableScopeProvider:(Trigger *)trigger;
 - (BOOL)triggerSessionShouldUseInterpolatedStrings:(Trigger *)trigger;
-- (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message;
+- (void)triggerSession:(Trigger *)trigger postUserNotificationWithMessage:(NSString *)message rateLimit:(iTermRateLimitedUpdate *)rateLimit;
 - (void)triggerSession:(Trigger *)trigger
   highlightTextInRange:(NSRange)rangeInScreenChars
           absoluteLine:(long long)lineNumber

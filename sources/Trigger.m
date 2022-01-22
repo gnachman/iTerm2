@@ -210,7 +210,6 @@ NSString * const kTriggerDisabledKey = @"disabled";
                                               scope:scope
                                               owner:object
                                          completion:^(NSString *value) {
-                    assert([NSThread isMainThread]);
                     if (value) {
                         [seal fulfill:value];
                     } else {
