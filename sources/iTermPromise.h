@@ -52,6 +52,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermPromise<T> *)then:(void (^)(T value))block;
 - (iTermPromise<T> *)catchError:(void (^)(NSError *error))block;
 
+
+- (iTermPromise<T> *)onQueue:(dispatch_queue_t)queue then:(void (^)(T value))block;
+- (iTermPromise<T> *)onQueue:(dispatch_queue_t)queue catchError:(void (^)(NSError *error))block;
+
 @end
 
 NS_ASSUME_NONNULL_END

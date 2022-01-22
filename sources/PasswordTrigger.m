@@ -86,9 +86,11 @@
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Password manager opens are so slow & rare that this is ok.
+    id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
+    dispatch_queue_t queue = [scopeProvider triggerScopeProviderQueue];
     [[self paramWithBackreferencesReplacedWithValues:stringArray
-                                               scope:[aSession triggerSessionVariableScopeProvider:self]
-                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull accountName) {
+                                               scope:scopeProvider
+                                    useInterpolation:useInterpolation] onQueue:queue then:^(NSString * _Nonnull accountName) {
         [aSession triggerSession:self openPasswordManagerToAccountName:accountName];
     }];
     return YES;

@@ -42,9 +42,11 @@
         return YES;
     }
     // Need to stop the world to get scope, provided it is needed. Alerts are so slow & rare that this is ok.
+    id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
+    dispatch_queue_t queue = [scopeProvider triggerScopeProviderQueue];
     [[self paramWithBackreferencesReplacedWithValues:stringArray
-                                               scope:[aSession triggerSessionVariableScopeProvider:self]
-                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull message) {
+                                               scope:scopeProvider
+                                    useInterpolation:useInterpolation] onQueue:queue then:^(NSString * _Nonnull message) {
         [self showAlertWithMessage:message inSession:aSession];
     }];
     return YES;

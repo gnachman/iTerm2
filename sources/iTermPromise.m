@@ -319,6 +319,28 @@ typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
     }
 }
 
+static void iTermPromiseRunBlockOnQueue(dispatch_queue_t queue, id parameter, void (^block)(id)) {
+    if (dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(queue)) {
+        block(parameter);
+        return;
+    }
+    dispatch_async(queue, ^{
+        block(parameter);
+    });
+}
+
+- (iTermPromise *)onQueue:(dispatch_queue_t)queue then:(void (^)(id value))block {
+    return [self then:^(id  _Nonnull value) {
+        iTermPromiseRunBlockOnQueue(queue, value, block);
+    }];
+}
+
+- (iTermPromise *)onQueue:(dispatch_queue_t)queue catchError:(void (^)(NSError *error))block {
+    return [self catchError:^(NSError * _Nonnull error) {
+        iTermPromiseRunBlockOnQueue(queue, error, block);
+    }];
+}
+
 - (BOOL)hasValue {
     @synchronized (_lock) {
         return self.value != nil;

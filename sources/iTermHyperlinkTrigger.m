@@ -46,9 +46,11 @@
     const NSRange rangeInString = capturedRanges[0];
     
     // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
+    id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
+    dispatch_queue_t queue = [scopeProvider triggerScopeProviderQueue];
     [[self paramWithBackreferencesReplacedWithValues:stringArray
-                                               scope:[aSession triggerSessionVariableScopeProvider:self]
-                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull urlString) {
+                                               scope:scopeProvider
+                                    useInterpolation:useInterpolation] onQueue:queue then:^(NSString * _Nonnull urlString) {
         [self performActionWithURLString:urlString
                                    range:rangeInString
                                  session:aSession
