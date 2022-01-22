@@ -21,6 +21,8 @@ static char iTermGCDMutationQueueSafeKey;
 static char iTermGCDSpecificMutationQueueSafe_Yes;
 static char iTermGCDSpecificMutationQueueSafe_No;
 
+static const char *iTermGCDMutationQueueLabel = "com.iterm2.mutation";
+
 + (void)initialize {
     if (self != [iTermGCD self]) {
         return;
@@ -35,7 +37,7 @@ static char iTermGCDSpecificMutationQueueSafe_No;
     static dispatch_queue_t mutationQueue;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        mutationQueue = dispatch_queue_create("com.iterm2.mutation", DISPATCH_QUEUE_SERIAL);
+        mutationQueue = dispatch_queue_create(iTermGCDMutationQueueLabel, DISPATCH_QUEUE_SERIAL);
         dispatch_queue_set_specific(mutationQueue,
                                     &iTermGCDMutationQueueSafeKey,
                                     &iTermGCDSpecificMutationQueueSafe_Yes,
@@ -97,6 +99,10 @@ static char iTermGCDSpecificMutationQueueSafe_No;
                                 &iTermGCDMutationQueueSafeKey,
                                 safe ? &iTermGCDSpecificMutationQueueSafe_Yes : &iTermGCDSpecificMutationQueueSafe_No,
                                 nil);
+}
+
++ (BOOL)onMutationQueue {
+    return dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == iTermGCDMutationQueueLabel;
 }
 
 @end

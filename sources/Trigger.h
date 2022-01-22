@@ -31,9 +31,13 @@ extern NSString * const kTriggerParameterKey;
 extern NSString * const kTriggerPartialLineKey;
 extern NSString * const kTriggerDisabledKey;
 
+@protocol iTermTriggerCallbackScheduler<NSObject>
+- (void)scheduleTriggerCallback:(void (^)(void))block;
+@end
+
 @protocol iTermTriggerScopeProvider<NSObject>
 - (void)performBlockWithScope:(void (^)(iTermVariableScope *scope, id<iTermObject> object))block;
-- (dispatch_queue_t)triggerScopeProviderQueue;
+- (id<iTermTriggerCallbackScheduler>)triggerCallbackScheduler;
 @end
 
 @protocol iTermTriggerSession<NSObject>

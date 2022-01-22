@@ -29,14 +29,16 @@ class InjectTrigger: Trigger {
                                 useInterpolation: Bool,
                                 stop: UnsafeMutablePointer<ObjCBool>) -> Bool {
         let scopeProvider = session.triggerSessionVariableScopeProvider(self)
-        let queue = scopeProvider.triggerScopeProviderQueue()
+        let scheduler = scopeProvider.triggerCallbackScheduler()
         paramWithBackreferencesReplaced(withValues: strings,
                                         scope: scopeProvider,
-                                        useInterpolation: useInterpolation).onQueue(queue, then: { message in
+                                        useInterpolation: useInterpolation).then { message in
             if let data = (message as String).data(using: .utf8) {
-                session.triggerSession(self, inject: data);
+                scheduler.scheduleTriggerCallback {
+                    session.triggerSession(self, inject: data);
+                }
             }
-        })
+        }
         return false
     }
 }

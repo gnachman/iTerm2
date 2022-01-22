@@ -50,11 +50,13 @@
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Running a command is so slow & rare that this is ok.
     id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
-    dispatch_queue_t queue = [scopeProvider triggerScopeProviderQueue];
+    id<iTermTriggerCallbackScheduler> scheduler = [scopeProvider triggerCallbackScheduler];
     [[self paramWithBackreferencesReplacedWithValues:stringArray
                                                scope:scopeProvider
-                                    useInterpolation:useInterpolation] onQueue:queue then:^(NSString * _Nonnull command) {
-        [self runCommand:command session:aSession];
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull command) {
+        [scheduler scheduleTriggerCallback:^{
+            [self runCommand:command session:aSession];
+        }];
     }];
     return YES;
 }

@@ -273,6 +273,7 @@ class TokenExecutor: NSObject {
     // High priority tasks run as soon as possible. If a token is currently
     // executing, it runs after that token's execution completes. Token
     // execution is guaranteed to not block and should not take "very long".
+    // You can call this on any queue.
     @objc
     func scheduleHighPriorityTask(_ task: @escaping TokenExecutorTask) {
         self.impl.scheduleHighPriorityTask(task, syncAllowed: onExecutorQueue)
@@ -310,6 +311,7 @@ private class TokenExecutorImpl {
     private let tokenQueue = TwoTierTokenQueue()
     private var pauseCount = MutableAtomicObject(0)
     private var executingCount = 0
+    private let executingSideEffects = MutableAtomicObject(false)
 
     weak var delegate: TokenExecutorDelegate?
 
@@ -376,8 +378,15 @@ private class TokenExecutorImpl {
         }
     }
 
-    // Main queue or mutation queue while joined.
     func executeSideEffects(syncFirst: Bool) {
+        iTermGCD.assertMainQueueSafe()
+        if executingSideEffects.getAndSet(true) {
+            // Do not allow re-entrant side-effects.
+            return
+        }
+        defer {
+            executingSideEffects.set(false)
+        }
         var shouldSync = syncFirst
         while let task = sideEffects.dequeue() {
             if shouldSync {

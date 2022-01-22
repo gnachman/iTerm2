@@ -60,5 +60,11 @@ class MutableAtomicObject<T> {
             return result
         }
     }
+
+    func set(_ newValue: T) {
+        mutex.sync {
+            _value = newValue
+        }
+    }
 }
 

@@ -48,13 +48,15 @@
         return YES;
     }
     id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
-    dispatch_queue_t queue = [scopeProvider triggerScopeProviderQueue];
+    id<iTermTriggerCallbackScheduler> scheduler = [scopeProvider triggerCallbackScheduler];
     [[self paramWithBackreferencesReplacedWithValues:stringArray
                                                scope:scopeProvider
-                                    useInterpolation:useInterpolation] onQueue:queue then:^(NSString * _Nonnull text) {
-        [aSession triggerSession:self
-                   setAnnotation:annotation
-                        stringTo:text];
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull text) {
+        [scheduler scheduleTriggerCallback:^{
+            [aSession triggerSession:self
+                       setAnnotation:annotation
+                            stringTo:text];
+        }];
     }];
     return YES;
 }

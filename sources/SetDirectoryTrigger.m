@@ -38,13 +38,15 @@
                                     stop:(BOOL *)stop {
     // Need to stop the world to get scope, provided it is needed. Directory changes slow & rare that this is ok.
     id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
-    dispatch_queue_t queue = [scopeProvider triggerScopeProviderQueue];
+    id<iTermTriggerCallbackScheduler> scheduler = [scopeProvider triggerCallbackScheduler];
     [[self paramWithBackreferencesReplacedWithValues:stringArray
                                                scope:scopeProvider
-                                    useInterpolation:useInterpolation] onQueue:queue then:^(NSString * _Nonnull currentDirectory) {
+                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull currentDirectory) {
         DLog(@"SetDirectoryTrigger completed substitution with %@", currentDirectory);
         if (currentDirectory.length) {
-            [aSession triggerSession:self setCurrentDirectory:currentDirectory];
+            [scheduler scheduleTriggerCallback:^{
+                [aSession triggerSession:self setCurrentDirectory:currentDirectory];
+            }];
         }
     }];
     return YES;
