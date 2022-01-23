@@ -909,12 +909,12 @@ static void SwapInt(int *a, int *b) {
             newRange.start.x = 0;
         }
         DLog(@"  Its new range is %@ including %d lines dropped from top. Remove %@", VT100GridCoordRangeDescription(objectRange), numLinesDroppedFromTop, object);
-        const BOOL removed = [self.mutableSavedIntervalTree removeObject:object];
-        assert(removed);
         if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
             Interval *newInterval = [self intervalForGridCoordRange:newRange
                                                               width:newWidth
                                                         linesOffset:0];
+            object.entry = nil;
+            object.doppelganger.entry = nil;
             [self.mutableSavedIntervalTree addObject:object withInterval:newInterval];
         } else {
             DLog(@"Failed to convert");
