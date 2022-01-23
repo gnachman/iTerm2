@@ -8,6 +8,10 @@
 import Foundation
 
 extension ProcessInfo {
+    static let hasARMProcessor: Bool = {
+        (ProcessInfo.it_machine ?? "").contains("arm")
+    }()
+
     static var it_machine: String? {
         var sysinfo = utsname()
         guard uname(&sysinfo) == EXIT_SUCCESS else {
@@ -21,6 +25,6 @@ extension ProcessInfo {
     }
 
     @objc static var it_hasARMProcessor: Bool {
-        return (it_machine ?? "").contains("arm")
+        return hasARMProcessor
     }
 }
