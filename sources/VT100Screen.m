@@ -1,6 +1,5 @@
 
 #import "VT100Screen.h"
-#import "VT100Screen+Mutation.h"
 #import "VT100Screen+Private.h"
 #import "VT100Screen+Resizing.h"
 #import "VT100Screen+Search.h"
@@ -42,7 +41,6 @@
 #import "VT100WorkingDirectory.h"
 #import "VT100DCSParser.h"
 #import "VT100ScreenMutableState+Resizing.h"
-#import "VT100Screen+Mutation.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100Token.h"
 #import "VT100ScreenState.h"
@@ -173,6 +171,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 #pragma mark - PTYTextViewDataSource
+
+- (void)resetDirty {
+    [_state.currentGrid markAllCharsDirty:NO];
+}
 
 - (void)performBlockWithSavedGrid:(void (^)(id<PTYTextViewSynchronousUpdateStateReading> _Nullable))block {
     [_state performBlockWithSavedGrid:block];
@@ -1082,9 +1084,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (resetOverflow) {
         [mutableState resetScrollbackOverflow];
     }
-#warning TODO: avoid making the copy if nothing has changed. This is important because joined threads perform two syncs and the copy is slow.
-    [_state autorelease];
-    _state = [mutableState copy];
+    if (_state) {
+        [_state mergeFrom:mutableState];
+    } else {
+        [_state autorelease];
+        _state = [mutableState copy];
+    }
     mutableState.mainThreadCopy = _state;
     if (resetOverflow) {
         [mutableState didSynchronize];

@@ -49,8 +49,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) BOOL mayHaveDoubleWidthCharacter;
 // Absolute block number of last block.
 @property(nonatomic, readonly) int largestAbsoluteBlockNumber;
-@property(nonatomic, weak, nullable) id<iTermLineBufferDelegate> delegate;
-
 // Returns the metadata associated with a line when wrapped to the specified width.
 - (iTermImmutableMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
 
@@ -185,6 +183,10 @@ NS_ASSUME_NONNULL_BEGIN
 @interface LineBuffer : NSObject <LineBufferReading>
 
 @property(nonatomic, readwrite) BOOL mayHaveDoubleWidthCharacter;
+@property(nonatomic, weak, nullable) id<iTermLineBufferDelegate> delegate;
+
+// Has anything changed? Feel free to reset this to NO as you please.
+@property(nonatomic) BOOL dirty;
 
 - (LineBuffer * _Nonnull)initWithBlockSize:(int)bs;
 - (LineBuffer * _Nullable)initWithDictionary:(NSDictionary * _Nonnull)dictionary;

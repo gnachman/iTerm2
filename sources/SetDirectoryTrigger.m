@@ -9,7 +9,6 @@
 #import "SetDirectoryTrigger.h"
 
 #import "DebugLogging.h"
-#import "VT100Screen+Mutation.h"
 
 @implementation SetDirectoryTrigger
 

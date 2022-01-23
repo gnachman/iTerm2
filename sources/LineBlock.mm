@@ -448,6 +448,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
 }
 
 - (void)copyMetadataTo:(LineBlock *)theCopy {
+#warning: TODO COW-copy metadata
     iTermLineBlockFreeMetadata(theCopy->metadata_, theCopy->cll_capacity);
     theCopy->metadata_ = (LineBlockMetadata *)iTermCalloc(cll_capacity, sizeof(LineBlockMetadata));
     // Copy metadata field by field to please arc (memmove doesn't work right!)

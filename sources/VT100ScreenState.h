@@ -256,6 +256,7 @@ extern NSString *const kScreenStateProtectedMode;
     iTermTextDataSource>
 
 - (instancetype)init NS_UNAVAILABLE;
+- (void)mergeFrom:(VT100ScreenMutableState *)source;
 
 #pragma mark - Grid
 

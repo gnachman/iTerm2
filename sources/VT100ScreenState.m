@@ -143,100 +143,130 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     return self;
 }
 
-#warning TODO: Test this
+- (void)copyFastStuffFrom:(VT100ScreenMutableState *)source {
+    _audibleBell = source.audibleBell;
+    _showBellIndicator = source.showBellIndicator;
+    _flashBell = source.flashBell;
+    _postUserNotifications = source.postUserNotifications;
+    _cursorBlinks = source.cursorBlinks;
+    _collectInputForPrinting = source.collectInputForPrinting;
+    _printBuffer = [source.printBuffer copy];
+    _allowTitleReporting = source.allowTitleReporting;
+    _lastBell = source.lastBell;
+    _wraparoundMode = source.wraparoundMode;
+    _ansi = source.ansi;
+    _insert = source.insert;
+    _unlimitedScrollback = source.unlimitedScrollback;
+    _scrollbackOverflow = source.scrollbackOverflow;
+    _commandStartCoord = source.commandStartCoord;
+    _maxScrollbackLines = source.maxScrollbackLines;
+    _lastCharacter = source.lastCharacter;
+    _lastCharacterIsDoubleWidth = source.lastCharacterIsDoubleWidth;
+    _lastExternalAttribute = source.lastExternalAttribute;
+    _saveToScrollbackInAlternateScreen = source.saveToScrollbackInAlternateScreen;
+    _cursorVisible = source.cursorVisible;
+    _shellIntegrationInstalled = source.shellIntegrationInstalled;
+    _lastCommandOutputRange = source.lastCommandOutputRange;
+    _currentPromptRange = source.currentPromptRange;
+    _startOfRunningCommandOutput = source.startOfRunningCommandOutput;
+    _protectedMode = source.protectedMode;
+    _initialSize = source.initialSize;
+    _cumulativeScrollbackOverflow = source.cumulativeScrollbackOverflow;
+    _trackCursorLineMovement = source.trackCursorLineMovement;
+    _appendToScrollbackWithStatusBar = source.appendToScrollbackWithStatusBar;
+    _normalization = source.normalization;
+    _fakePromptDetectedAbsLine = source.fakePromptDetectedAbsLine;
+    _lastPromptLine = source.lastPromptLine;
+    _needsRedraw = source.needsRedraw;
+    _intervalTreeObserver = source.intervalTreeObserver;
+    _lastCommandMark = [source.lastCommandMark doppelganger];
+    _shouldExpectPromptMarks = source.shouldExpectPromptMarks;
+    _echoProbeIsActive = source.echoProbe.isActive;
+    _terminalSoftAlternateScreenMode = source.terminalSoftAlternateScreenMode;
+    _terminalMouseMode = source.terminalMouseMode;
+    _terminalEncoding = source.terminalEncoding;
+    _terminalSendReceiveMode = source.terminalSendReceiveMode;
+    _terminalOutput = [source.terminalOutput copy];
+    _terminalAllowPasteBracketing = source.terminalAllowPasteBracketing;
+    _terminalBracketedPasteMode = source.terminalBracketedPasteMode;
+    _terminalSendModifiers = source.terminalSendModifiers;
+    _terminalKeyReportingFlags = source.terminalKeyReportingFlags;
+    _terminalReportFocus = source.terminalReportFocus;
+    _terminalReportKeyUp = source.terminalReportKeyUp;
+    _terminalCursorMode = source.terminalCursorMode;
+    _terminalKeypadMode = source.terminalKeypadMode;
+    _terminalReceivingFile = source.terminalReceivingFile;
+    _terminalMetaSendsEscape = source.terminalMetaSendsEscape;
+    _terminalReverseVideo = source.terminalReverseVideo;
+    _terminalAlternateScrollMode = source.terminalAlternateScrollMode;
+    _terminalAutorepeatMode = source.terminalAutorepeatMode;
+    _terminalCharset = source.terminalCharset;
+    _terminalPreviousMouseMode = source.terminalPreviousMouseMode;
+    _terminalForegroundColorCode = source.terminalForegroundColorCode;
+    _terminalBackgroundColorCode = source.terminalBackgroundColorCode;
+    _pasteboardString = [source.pasteboardString copy];
+    _intervalTree = source.mutableIntervalTree.derivative;
+    _savedIntervalTree = source.mutableSavedIntervalTree.derivative;
+    _tabStops = [source.tabStops copy];
+    _charsetUsesLineDrawingMode = [source.charsetUsesLineDrawingMode copy];
+    _config = source.config;
+}
+
+- (void)copySlowStuffFrom:(VT100ScreenMutableState *)source {
+    _markCache = [NSMutableDictionary dictionary];
+    [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
+        _markCache[key] = (id<iTermMark>)[obj doppelganger];
+    }];
+    _animatedLines = [source.animatedLines copy];
+    _colorMap = [source.colorMap copy];
+    _temporaryDoubleBuffer = [source.unconditionalTemporaryDoubleBuffer copy];
+    _temporaryDoubleBuffer.queue = dispatch_get_main_queue();
+    _primaryGrid.delegate = self;
+    _altGrid.delegate = self;
+    if (source.currentGrid == source.primaryGrid) {
+        _currentGrid = _primaryGrid;
+    } else {
+        _currentGrid = _altGrid;
+    }
+}
+
+#warning TODO: avoid making the copy if nothing has changed. This is important because joined threads perform two syncs and the copy is slow.
+- (void)mergeFrom:(VT100ScreenMutableState *)source {
+    [self copyFastStuffFrom:source];
+
+    if (!_linebuffer || source.linebuffer.dirty) {
+#warning TODO: More optimization to be done here.
+        _linebuffer = [source.linebuffer copy];
+        source.linebuffer.dirty = NO;
+    }
+    [_primaryGrid copyDirtyFromGrid:source.primaryGrid];
+    [source.primaryGrid markAllCharsDirty:NO];
+
+    if (_altGrid && source.altGrid) {
+        [_altGrid copyDirtyFromGrid:source.altGrid];
+    } else {
+        _altGrid = [source.altGrid copy];
+    }
+    [source.altGrid markAllCharsDirty:NO];
+    if (!_terminalState || source.terminal.dirty) {
+        source.terminal.dirty = NO;
+        _terminalState = [source.terminalState copy];
+    }
+
+    [self copySlowStuffFrom:source];
+}
+
 - (instancetype)initWithState:(VT100ScreenMutableState *)source
                   predecessor:(VT100ScreenState *)predecessor {
     self = [super init];
     if (self) {
-        _audibleBell = source.audibleBell;
-        _showBellIndicator = source.showBellIndicator;
-        _flashBell = source.flashBell;
-        _postUserNotifications = source.postUserNotifications;
-        _cursorBlinks = source.cursorBlinks;
-        _collectInputForPrinting = source.collectInputForPrinting;
-        _printBuffer = [source.printBuffer copy];
-        _allowTitleReporting = source.allowTitleReporting;
-        _lastBell = source.lastBell;
-        _wraparoundMode = source.wraparoundMode;
-        _ansi = source.ansi;
-        _insert = source.insert;
-        _unlimitedScrollback = source.unlimitedScrollback;
-        _scrollbackOverflow = source.scrollbackOverflow;
-        _commandStartCoord = source.commandStartCoord;
-        _maxScrollbackLines = source.maxScrollbackLines;
-        _lastCharacter = source.lastCharacter;
-        _lastCharacterIsDoubleWidth = source.lastCharacterIsDoubleWidth;
-        _lastExternalAttribute = source.lastExternalAttribute;
-        _saveToScrollbackInAlternateScreen = source.saveToScrollbackInAlternateScreen;
-        _cursorVisible = source.cursorVisible;
-        _shellIntegrationInstalled = source.shellIntegrationInstalled;
-        _lastCommandOutputRange = source.lastCommandOutputRange;
-        _currentPromptRange = source.currentPromptRange;
-        _startOfRunningCommandOutput = source.startOfRunningCommandOutput;
-        _protectedMode = source.protectedMode;
-        _initialSize = source.initialSize;
-        _cumulativeScrollbackOverflow = source.cumulativeScrollbackOverflow;
-        _trackCursorLineMovement = source.trackCursorLineMovement;
-        _appendToScrollbackWithStatusBar = source.appendToScrollbackWithStatusBar;
-        _normalization = source.normalization;
-        _fakePromptDetectedAbsLine = source.fakePromptDetectedAbsLine;
-        _lastPromptLine = source.lastPromptLine;
-        _needsRedraw = source.needsRedraw;
-
-        _intervalTreeObserver = source.intervalTreeObserver;
-        _lastCommandMark = [source.lastCommandMark doppelganger];
-        _shouldExpectPromptMarks = source.shouldExpectPromptMarks;
-
         _linebuffer = [source.linebuffer copy];
-        _markCache = [NSMutableDictionary dictionary];
-        [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
-            _markCache[key] = (id<iTermMark>)[obj doppelganger];
-        }];
-        _echoProbeIsActive = source.echoProbe.isActive;
-
-        _terminalSoftAlternateScreenMode = source.terminalSoftAlternateScreenMode;
-        _terminalMouseMode = source.terminalMouseMode;
-        _terminalEncoding = source.terminalEncoding;
-        _terminalSendReceiveMode = source.terminalSendReceiveMode;
-        _terminalOutput = [source.terminalOutput copy];
-        _terminalAllowPasteBracketing = source.terminalAllowPasteBracketing;
-        _terminalBracketedPasteMode = source.terminalBracketedPasteMode;
-        _terminalSendModifiers = source.terminalSendModifiers;
-        _terminalKeyReportingFlags = source.terminalKeyReportingFlags;
-        _terminalReportFocus = source.terminalReportFocus;
-        _terminalReportKeyUp = source.terminalReportKeyUp;
-        _terminalCursorMode = source.terminalCursorMode;
-        _terminalKeypadMode = source.terminalKeypadMode;
-        _terminalReceivingFile = source.terminalReceivingFile;
-        _terminalMetaSendsEscape = source.terminalMetaSendsEscape;
-        _terminalReverseVideo = source.terminalReverseVideo;
-        _terminalAlternateScrollMode = source.terminalAlternateScrollMode;
-        _terminalAutorepeatMode = source.terminalAutorepeatMode;
-        _terminalCharset = source.terminalCharset;
-        _terminalPreviousMouseMode = source.terminalPreviousMouseMode;
-        _terminalForegroundColorCode = source.terminalForegroundColorCode;
-        _terminalBackgroundColorCode = source.terminalBackgroundColorCode;
+        _primaryGrid = [source.primaryGrid copy];
+        _altGrid = [source.altGrid copy];
         _terminalState = [source.terminalState copy];
 
-        _animatedLines = [source.animatedLines copy];
-        _pasteboardString = [source.pasteboardString copy];
-        _intervalTree = source.mutableIntervalTree.derivative;
-        _savedIntervalTree = source.mutableSavedIntervalTree.derivative;
-        _tabStops = [source.tabStops copy];
-        _charsetUsesLineDrawingMode = [source.charsetUsesLineDrawingMode copy];
-        _colorMap = [source.colorMap copy];
-        _temporaryDoubleBuffer = [source.unconditionalTemporaryDoubleBuffer copy];
-        _temporaryDoubleBuffer.queue = dispatch_get_main_queue();
-        _config = [source.config copy];
-        _primaryGrid = [source.primaryGrid copy];
-        _primaryGrid.delegate = self;
-        _altGrid = [source.altGrid copy];
-        _altGrid.delegate = self;
-        if (source.currentGrid == source.primaryGrid) {
-            _currentGrid = _primaryGrid;
-        } else {
-            _currentGrid = _altGrid;
-        }
+        [self copyFastStuffFrom:source];
+        [self copySlowStuffFrom:source];
         DLog(@"Copy mutable to immutable");
     }
     return self;

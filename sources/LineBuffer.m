@@ -88,6 +88,7 @@ static const NSInteger kUnicodeVersion = 9;
 
 // Append a block
 - (LineBlock *)_addBlockOfSize:(int)size {
+    _dirty = YES;
     LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];
     block.mayHaveDoubleWidthCharacter = self.mayHaveDoubleWidthCharacter;
     [_lineBlocks addBlock:block];
@@ -177,12 +178,14 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 
 - (void)setMaxLines:(int)maxLines {
+    _dirty = YES;
     max_lines = maxLines;
     num_wrapped_lines_width = -1;
 }
 
 
 - (int)dropExcessLinesWithWidth:(int)width {
+    _dirty = YES;
     int nl = RawNumLines(self, width);
     int totalDropped = 0;
     if (max_lines != -1 && nl > max_lines) {
@@ -320,6 +323,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
              width:(int)width
           metadata:(iTermImmutableMetadata)metadataObj
       continuation:(screen_char_t)continuation {
+    _dirty = YES;
 #ifdef LOG_MUTATIONS
     NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
 #endif
@@ -494,6 +498,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (void)appendContentsOfLineBuffer:(LineBuffer *)other width:(int)width {
+    _dirty = YES;
     while (_lineBlocks.lastBlock.isEmpty) {
         [_lineBlocks removeLastBlock];
     }
@@ -598,6 +603,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (void)removeLastRawLine {
+    _dirty = YES;
     [_lineBlocks.lastBlock removeLastRawLine];
     if (_lineBlocks.lastBlock.numRawLines == 0 && _lineBlocks.count > 1) {
         [_lineBlocks removeLastBlock];
@@ -608,6 +614,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
                          width:(int)width {
+    _dirty = YES;
     // Invalidate the cache
     num_wrapped_lines_width = -1;
 
@@ -651,11 +658,11 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
                       metadata:(out iTermImmutableMetadata *)metadataPtr
-                  continuation:(screen_char_t *)continuationPtr
-{
-    if ([self numLinesWithWidth: width] == 0) {
+                  continuation:(screen_char_t *)continuationPtr {
+    if ([self numLinesWithWidth:width] == 0) {
         return NO;
     }
+    _dirty = YES;
     num_wrapped_lines_width = -1;
 
     LineBlock* block = _lineBlocks.lastBlock;
@@ -702,6 +709,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (void)setCursor:(int)x {
+    _dirty = YES;
     LineBlock *block = _lineBlocks.lastBlock;
     if ([block hasPartial]) {
         int last_line_length = [block getRawLineLength: [block numEntries]-1];
@@ -1338,19 +1346,17 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 - (void)beginResizing {
     assert(!_lineBlocks.resizing);
     _lineBlocks.resizing = YES;
-
-    // Just a sanity check, not a real limitation.
-    dispatch_async(dispatch_get_main_queue(), ^{
-        assert(!self->_lineBlocks.resizing);
-    });
+    _dirty = YES;
 }
 
 - (void)endResizing {
     assert(_lineBlocks.resizing);
     _lineBlocks.resizing = NO;
+    _dirty = YES;
 }
 
 - (void)setPartial:(BOOL)partial {
+    _dirty = YES;
     [_lineBlocks.lastBlock setPartial:partial];
 }
 
@@ -1393,6 +1399,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (void)seal {
+    _dirty = YES;
     if (_lineBlocks.lastBlock.isEmpty) {
         return;
     }

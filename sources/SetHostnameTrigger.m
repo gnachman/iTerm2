@@ -7,7 +7,6 @@
 //
 
 #import "SetHostnameTrigger.h"
-#import "VT100Screen+Mutation.h"
 
 @implementation SetHostnameTrigger
 

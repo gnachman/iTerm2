@@ -275,7 +275,7 @@ static const int kMaxScreenRows = 4096;
         _mouseFormat = MOUSE_FORMAT_XTERM;
 
         _allowKeypadMode = YES;
-        _allowPasteBracketing = YES;
+        self.allowPasteBracketing = YES;
         _sendModifiers = [@[ @-1, @-1, @-1, @-1, @-1 ] mutableCopy];
         _mainKeyReportingModeStack = [[NSMutableArray alloc] init];
         _alternateKeyReportingModeStack = [[NSMutableArray alloc] init];
@@ -297,6 +297,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setEncoding:(NSStringEncoding)encoding canonical:(BOOL)canonical {
+    self.dirty = YES;
     if (canonical) {
         _canonicalEncoding = encoding;
     }
@@ -305,6 +306,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setTermType:(NSString *)termtype {
+    self.dirty = YES;
     DLog(@"setTermType:%@", termtype);
     _termType = [termtype copy];
 
@@ -323,25 +325,27 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setAnswerBackString:(NSString *)s {
+    self.dirty = YES;
     s = [s stringByExpandingVimSpecialCharacters];
     _answerBackString = [s copy];
 }
 
 - (void)setForeground24BitColor:(NSColor *)color {
+    self.dirty = YES;
     graphicRendition_.fgColorCode = color.redComponent * 255.0;
     graphicRendition_.fgGreen = color.greenComponent * 255.0;
     graphicRendition_.fgBlue = color.blueComponent * 255.0;
     graphicRendition_.fgColorMode = ColorMode24bit;
 }
 
-- (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem
-{
+- (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem {
+    self.dirty = YES;
     graphicRendition_.fgColorCode = fgColorCode;
     graphicRendition_.fgColorMode = (altsem ? ColorModeAlternate : ColorModeNormal);
 }
 
-- (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem
-{
+- (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem {
+    self.dirty = YES;
     graphicRendition_.bgColorCode = bgColorCode;
     graphicRendition_.bgColorMode = (altsem ? ColorModeAlternate : ColorModeNormal);
 }
@@ -350,12 +354,28 @@ static const int kMaxScreenRows = 4096;
     if (softAlternateScreenMode == _softAlternateScreenMode) {
         return;
     }
+    self.dirty = YES;
     _softAlternateScreenMode = softAlternateScreenMode;
     [self.delegate terminalSoftAlternateScreenModeDidChange];
 }
 
+- (void)setReverseVideo:(BOOL)reverseVideo {
+    self.dirty = YES;
+    _reverseVideo = reverseVideo;
+}
+
+- (void)setOriginMode:(BOOL)originMode {
+    self.dirty = YES;
+    _originMode = originMode;
+}
+
+- (void)setMoreFix:(BOOL)moreFix {
+    self.dirty = YES;
+    _moreFix = moreFix;
+}
+
 - (void)resetCharset {
-    _charset = 0;
+    self.charset = 0;
     for (int i = 0; i < NUM_CHARSETS; i++) {
         [_delegate terminalSetCharset:i toLineDrawingMode:NO];
     }
@@ -363,6 +383,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)commonReset {
     DLog(@"TERMINAL RESET");
+    self.dirty = YES;
     self.cursorMode = NO;
     _reverseVideo = NO;
     _originMode = NO;
@@ -373,13 +394,13 @@ static const int kMaxScreenRows = 4096;
     self.keypadMode = NO;
     self.reportKeyUp = NO;
     self.metaSendsEscape = NO;
-    _alternateScrollMode = NO;
+    self.alternateScrollMode = NO;
     self.synchronizedUpdates = NO;
-    _preserveScreenOnDECCOLM = NO;
+    self.preserveScreenOnDECCOLM = NO;
     self.insertMode = NO;
     self.sendReceiveMode = NO;
     self.bracketedPasteMode = NO;
-    _charset = 0;
+    self.charset = 0;
     [self resetGraphicRendition];
     self.mouseMode = MOUSE_REPORTING_NONE;
     self.mouseFormat = MOUSE_FORMAT_XTERM;
@@ -408,9 +429,11 @@ static const int kMaxScreenRows = 4096;
 
 - (void)resetSendModifiersWithSideEffects:(BOOL)sideEffects {
     DLog(@"reset send modifiers with side effects=%@", @(sideEffects));
+    self.dirty = YES;
     for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
         _sendModifiers[i] = @-1;
     }
+    self.dirty = YES;
     [_mainKeyReportingModeStack removeAllObjects];
     [_alternateKeyReportingModeStack removeAllObjects];
     if (sideEffects) {
@@ -486,17 +509,85 @@ static const int kMaxScreenRows = 4096;
 
 - (void)setWraparoundMode:(BOOL)mode {
     if (mode != _wraparoundMode) {
+        self.dirty = YES;
         _wraparoundMode = mode;
         [_delegate terminalWraparoundModeDidChangeTo:mode];
     }
 }
 
+- (void)setReverseWraparoundMode:(BOOL)reverseWraparoundMode {
+    self.dirty = YES;
+    _reverseWraparoundMode = reverseWraparoundMode;
+}
+
+- (void)setIsAnsi:(BOOL)isAnsi {
+    self.dirty = YES;
+    _isAnsi = isAnsi;
+}
+
+- (void)setAutorepeatMode:(BOOL)autorepeatMode {
+    self.dirty = YES;
+    _autorepeatMode = autorepeatMode;
+}
+
+- (void)setSendReceiveMode:(BOOL)sendReceiveMode {
+    self.dirty = YES;
+    _sendReceiveMode = sendReceiveMode;
+}
+
+- (void)setCharset:(int)charset {
+    self.dirty = YES;
+    _charset = charset;
+}
+
 - (void)setCursorMode:(BOOL)cursorMode {
+    self.dirty = YES;
     _cursorMode = cursorMode;
     _output.cursorMode = cursorMode;
 }
 
+- (void)setMetaSendsEscape:(BOOL)metaSendsEscape {
+    self.dirty = YES;
+    _metaSendsEscape = metaSendsEscape;
+}
+
+- (void)setAlternateScrollMode:(BOOL)alternateScrollMode {
+    self.dirty = YES;
+    _alternateScrollMode = alternateScrollMode;
+}
+
+- (void)setDecsaceRectangleMode:(BOOL)decsaceRectangleMode {
+    self.dirty = YES;
+    _decsaceRectangleMode = decsaceRectangleMode;
+}
+
+- (void)setAllowPasteBracketing:(BOOL)allowPasteBracketing {
+    self.dirty = YES;
+    _allowPasteBracketing = allowPasteBracketing;
+}
+
+- (void)setAllowColumnMode:(BOOL)allowColumnMode {
+    self.dirty = YES;
+    _allowColumnMode = allowColumnMode;
+}
+
+- (void)setColumnMode:(BOOL)columnMode {
+    self.dirty = YES;
+    _columnMode = columnMode;
+}
+
+- (void)setDisableSmcupRmcup:(BOOL)value {
+    self.dirty = YES;
+    _disableSmcupRmcup = value;
+}
+
+- (void)setPreserveScreenOnDECCOLM:(BOOL)preserveScreenOnDECCOLM {
+    self.dirty = YES;
+    _preserveScreenOnDECCOLM = preserveScreenOnDECCOLM;
+}
+
 - (void)setMouseFormat:(MouseFormat)mouseFormat {
+    self.dirty = YES;
     _mouseFormat = mouseFormat;
     _output.mouseFormat = mouseFormat;
 }
@@ -506,12 +597,14 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)forceSetKeypadMode:(BOOL)mode {
+    self.dirty = YES;
     _keypadMode = mode;
     _output.keypadMode = _keypadMode;
     [self.delegate terminalApplicationKeypadModeDidChange:mode];
 }
 
 - (void)setAllowKeypadMode:(BOOL)allow {
+    self.dirty = YES;
     _allowKeypadMode = allow;
     if (!allow) {
         self.keypadMode = NO;
@@ -522,6 +615,7 @@ static const int kMaxScreenRows = 4096;
     if (reportKeyUp == _reportKeyUp) {
         return;
     }
+    self.dirty = YES;
     _reportKeyUp = reportKeyUp;
     [self.delegate terminalReportKeyUpDidChange:reportKeyUp];
 }
@@ -641,6 +735,7 @@ static const int kMaxScreenRows = 4096;
 
 - (void)setInsertMode:(BOOL)mode {
     if (_insertMode != mode) {
+        self.dirty = YES;
         _insertMode = mode;
         [_delegate terminalInsertModeDidChangeTo:mode];
     }
@@ -740,7 +835,7 @@ static const int kMaxScreenRows = 4096;
 
                 // TODO: 80 - DECSDM
             case 95:
-                _preserveScreenOnDECCOLM = mode;
+                self.preserveScreenOnDECCOLM = mode;
                 break;
             case 1000:
             // case 1001:
@@ -776,7 +871,7 @@ static const int kMaxScreenRows = 4096;
                 break;
 
             case 1007:
-                _alternateScrollMode = mode;
+                self.alternateScrollMode = mode;
                 break;
 
             case 1015:
@@ -896,6 +991,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setSynchronizedUpdates:(BOOL)synchronizedUpdates {
+    self.dirty = YES;
     _synchronizedUpdates = synchronizedUpdates;
     [self.delegate terminalSynchronizedUpdate:synchronizedUpdates];
 }
@@ -909,6 +1005,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)resetGraphicRendition {
+    self.dirty = YES;
     memset(&graphicRendition_, 0, sizeof(graphicRendition_));
     [self updateExternalAttributes];
 }
@@ -1064,10 +1161,10 @@ static const int kMaxScreenRows = 4096;
     switch (token.csi->p[0]) {
         case 0:
         case 1:
-            _decsaceRectangleMode = NO;
+            self.decsaceRectangleMode = NO;
             break;
         case 2:
-            _decsaceRectangleMode = YES;
+            self.decsaceRectangleMode = YES;
             break;
     }
 }
@@ -1128,6 +1225,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)executeSGR:(VT100Token *)token {
+    self.dirty = YES;
     assert(token->type == VT100CSI_SGR);
     if (token.csi->count == 0) {
         [self resetGraphicRendition];
@@ -1334,6 +1432,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setMouseMode:(MouseMode)mode {
+    self.dirty = YES;
     if (_mouseMode != MOUSE_REPORTING_NONE) {
         _previousMouseMode = self.mouseMode;
     }
@@ -1585,6 +1684,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)saveCursor {
+    self.dirty = YES;
     VT100SavedCursor *savedCursor = [self savedCursor];
 
     savedCursor->position = VT100GridCoordMake([_delegate terminalCursorX] - 1,
@@ -1602,6 +1702,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setReportFocus:(BOOL)reportFocus {
+    self.dirty = YES;
     [self.delegate terminalReportFocusWillChangeTo:reportFocus];
     _reportFocus = reportFocus;
 }
@@ -1611,6 +1712,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setBracketedPasteMode:(BOOL)bracketedPasteMode withSideEffects:(BOOL)sideEffects {
+    self.dirty = YES;
     if (sideEffects) {
         [_delegate terminalPasteBracketingWillChangeTo:bracketedPasteMode];
     }
@@ -1618,11 +1720,13 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)resetSavedCursorPositions {
+    self.dirty = YES;
     mainSavedCursor_.position = VT100GridCoordMake(0, 0);
     altSavedCursor_.position = VT100GridCoordMake(0, 0);
 }
 
 - (void)clampSavedCursorToScreenSize:(VT100GridSize)newSize {
+    self.dirty = YES;
     mainSavedCursor_.position = VT100GridCoordMake(MIN(newSize.width - 1, mainSavedCursor_.position.x),
                                                    MIN(newSize.height - 1, mainSavedCursor_.position.y));
     altSavedCursor_.position = VT100GridCoordMake(MIN(newSize.width - 1, altSavedCursor_.position.x),
@@ -1630,15 +1734,17 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setSavedCursorPosition:(VT100GridCoord)position {
+    self.dirty = YES;
     VT100SavedCursor *savedCursor = [self savedCursor];
     savedCursor->position = position;
 }
 
 - (void)restoreCursor {
+    self.dirty = YES;
     VT100SavedCursor *savedCursor = [self savedCursor];
     [_delegate terminalSetCursorX:savedCursor->position.x + 1];
     [_delegate terminalSetCursorY:savedCursor->position.y + 1];
-    _charset = savedCursor->charset;
+    self.charset = savedCursor->charset;
     for (int i = 0; i < NUM_CHARSETS; i++) {
         [_delegate terminalSetCharset:i toLineDrawingMode:savedCursor->lineDrawing[i]];
     }
@@ -1653,6 +1759,7 @@ static const int kMaxScreenRows = 4096;
 
 // These steps are derived from xterm's source.
 - (void)softReset {
+    self.dirty = YES;
     // The steps here are derived from xterm's implementation. The order is different but not in
     // a significant way.
     int x = [_delegate terminalCursorX];
@@ -1686,7 +1793,7 @@ static const int kMaxScreenRows = 4096;
     graphicRendition_.bgColorMode = 0;
 
     // Reset character-sets to initial state
-    _charset = 0;
+    self.charset = 0;
     for (int i = 0; i < NUM_CHARSETS; i++) {
         [_delegate terminalSetCharset:i toLineDrawingMode:NO];
     }
@@ -1703,9 +1810,9 @@ static const int kMaxScreenRows = 4096;
 
     self.reportKeyUp = NO;
     self.metaSendsEscape = NO;
-    _alternateScrollMode = NO;
+    self.alternateScrollMode = NO;
     self.synchronizedUpdates = NO;
-    _preserveScreenOnDECCOLM = NO;
+    self.preserveScreenOnDECCOLM = NO;
 
     // Set WRAPROUND to initial value
     self.wraparoundMode = YES;
@@ -1879,10 +1986,10 @@ static const int kMaxScreenRows = 4096;
             [_delegate terminalCarriageReturn];
             break;
         case VT100CC_SI:
-            _charset = 0;
+            self.charset = 0;
             break;
         case VT100CC_SO:
-            _charset = 1;
+            self.charset = 1;
             break;
         case VT100CC_DC1:
         case VT100CC_DC3:
@@ -2060,6 +2167,7 @@ static const int kMaxScreenRows = 4096;
             // Note that xterm doesn't update the screen state for EPA even though it does for SPA.
             // I believe that's because the screen state is about whether there could possibly be
             // protected characters on-screen.
+            self.dirty = YES;
             _protectedMode = VT100TerminalProtectedModeNone;
             break;
 
@@ -2083,9 +2191,11 @@ static const int kMaxScreenRows = 4096;
             switch (token.csi->p[0]) {
                 case 0:
                 case 2:
+                    self.dirty = YES;
                     _protectedMode = VT100TerminalProtectedModeNone;
                     break;
                 case 1:
+                    self.dirty = YES;
                     _protectedMode = VT100TerminalProtectedModeDEC;
                     break;
             }
@@ -2666,9 +2776,11 @@ static const int kMaxScreenRows = 4096;
             int resource = token.csi->p[0];
             if (resource >= 0 && resource <= NUM_MODIFIABLE_RESOURCES) {
                 _sendModifiers[resource] = @-1;
+                self.dirty = YES;
                 [self.currentKeyReportingModeStack removeAllObjects];
                 [self.delegate terminalDidChangeSendModifiers];
             }
+            self.dirty = YES;
             break;
 
         case VT100CSI_SET_MODIFIERS: {
@@ -2689,12 +2801,14 @@ static const int kMaxScreenRows = 4096;
                     break;
                 }
             }
+            self.dirty = YES;
             _sendModifiers[resource] = @(value);
             // The protocol described here:
             // https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement
             // is flawed because if CSI > 4 ; 0 m pops the stack it would leave
             // it in the wrong state if CSI > 4 ; 1 m were sent twice.
             // CSI m will nuke the stack and CSI u will respect it.
+            self.dirty = YES;
             [self.currentKeyReportingModeStack removeAllObjects];
             [self.delegate terminalDidChangeSendModifiers];
             break;
@@ -2784,6 +2898,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)pruneKeyReportingModeStack:(NSMutableArray *)array {
+    self.dirty = YES;
     const NSInteger maxCount = 1024;
     if (array.count < maxCount) {
         return;
@@ -2792,6 +2907,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)pushKeyReportingFlags:(VT100TerminalKeyReportingFlags)flags {
+    self.dirty = YES;
     DLog(@"Push key reporting flags %@", @(flags));
     [self.currentKeyReportingModeStack addObject:@(flags)];
     [self pruneKeyReportingModeStack:self.currentKeyReportingModeStack];
@@ -2800,6 +2916,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)popKeyReportingModes:(int)count {
+    self.dirty = YES;
     DLog(@"pop key reporting modes count=%@", @(count));
     if (count <= 0) {
         [self popKeyReportingModes:1];
@@ -3927,8 +4044,9 @@ static const int kMaxScreenRows = 4096;
         case 'A':
             // Sequence marking the start of the command prompt (FTCS_PROMPT_START)
             self.softAlternateScreenMode = NO;  // We can reasonably assume alternate screen mode has ended if there's a prompt. Could be ssh dying, etc.
+            self.dirty = YES;
             inCommand_ = NO;  // Issue 7954
-            _alternateScrollMode = NO;  // Avoid leaving it on when ssh dies.
+            self.alternateScrollMode = NO;  // Avoid leaving it on when ssh dies.
             [_delegate terminalPromptDidStart];
             break;
 
@@ -3936,6 +4054,7 @@ static const int kMaxScreenRows = 4096;
             // Sequence marking the start of the command read from the command prompt
             // (FTCS_COMMAND_START)
             [_delegate terminalCommandDidStart];
+            self.dirty = YES;
             inCommand_ = YES;
             break;
 
@@ -3943,6 +4062,7 @@ static const int kMaxScreenRows = 4096;
             // Sequence marking the end of the command read from the command prompt (FTCS_COMMAND_END)
             if (inCommand_) {
                 [_delegate terminalCommandDidEnd];
+                self.dirty = YES;
                 inCommand_ = NO;
             }
             break;
@@ -3951,6 +4071,7 @@ static const int kMaxScreenRows = 4096;
             // Return code of last command
             if (inCommand_) {
                 [_delegate terminalAbortCommand];
+                self.dirty = YES;
                 inCommand_ = NO;
             } else if (args.count >= 2) {
                 int returnCode = [args[1] intValue];
@@ -4067,6 +4188,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 }
 
 - (void)executeDECRSPS_DECCIR:(NSString *)string {
+    self.dirty = YES;
     BOOL ok = NO;
     const VT100OutputCursorInformation info = VT100OutputCursorInformationFromString(string, &ok);
     if (!ok) {
@@ -4134,6 +4256,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
 }
 
 - (void)executePopColors:(VT100Token *)token {
+    self.dirty = YES;
     VT100SavedColorsSlot *newColors = nil;
     if (token.csi->count > 0) {
         // Only the last parameter matters. Previous pops are completely over replaced by subsequent pops.
@@ -4272,6 +4395,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
     if (_sgrStackSize == VT100TerminalMaxSGRStackEntries) {
         return;
     }
+    self.dirty = YES;
     _sgrStack[_sgrStackSize].graphicRendition = self.graphicRendition;
     int j = 0;
     if (token.csi->count == 0) {
@@ -4305,6 +4429,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
     if (_sgrStackSize == 0) {
         return;
     }
+    self.dirty = YES;
     _sgrStackSize -= 1;
     VT100TerminalSGRStackEntry entry = _sgrStack[_sgrStackSize];
 
@@ -4436,6 +4561,7 @@ typedef NS_ENUM(int, iTermDECRPMSetting)  {
     if (value == 0) {
         return;
     }
+    self.dirty = YES;
     if (value < 0) {
         [_savedColors push:slot];
     } else {
@@ -4613,11 +4739,13 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
 }
 
 - (void)pushUnicodeVersion:(NSString *)label {
+    self.dirty = YES;
     label = [self substringAfterSpaceInString:label];
     [_unicodeVersionStack addObject:@[ label ?: @"", @([_delegate terminalUnicodeVersion]) ]];
 }
 
 - (void)popUnicodeVersion:(NSString *)label {
+    self.dirty = YES;
     label = [self substringAfterSpaceInString:label];
     while (_unicodeVersionStack.count > 0) {
         id entry = [_unicodeVersionStack lastObject];
@@ -4785,6 +4913,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     if (!dict) {
         return;
     }
+    self.dirty = YES;
     self.termType = [dict[kTerminalStateTermTypeKey] nilIfNull];
 
     self.answerBackString = dict[kTerminalStateAnswerBackStringKey];
@@ -4812,11 +4941,11 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     self.keypadMode = [dict[kTerminalStateKeypadModeKey] boolValue];
     self.reportKeyUp = [dict[kTerminalStateReportKeyUp] boolValue];
     self.metaSendsEscape = [dict[kTerminalStateMetaSendsEscape] boolValue];
-    _alternateScrollMode = [dict[kTerminalStateAlternateScrollMode] boolValue];
+    self.alternateScrollMode = [dict[kTerminalStateAlternateScrollMode] boolValue];
     [self setSGRStack:dict[kTerminalStateSGRStack]];
     _decsaceRectangleMode = [dict[kTerminalStateDECSACE] boolValue];
     self.synchronizedUpdates = [dict[kTerminalStateSynchronizedUpdates] boolValue];
-    _preserveScreenOnDECCOLM = [dict[kTerminalStatePreserveScreenOnDECCOLM] boolValue];
+    self.preserveScreenOnDECCOLM = [dict[kTerminalStatePreserveScreenOnDECCOLM] boolValue];
     _savedColors = [VT100SavedColors fromData:[NSData castFrom:dict[kTerminalStateSavedColors]]] ?: [[VT100SavedColors alloc] init];
     self.protectedMode = [dict[kTerminalStateProtectedMode] unsignedIntegerValue];
 
@@ -4906,6 +5035,7 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
 }
 
 - (void)setSGRStack:(id)obj {
+    self.dirty = YES;
     NSArray *array = [NSArray castFrom:obj];
     if (!array) {
         _sgrStackSize = 0;

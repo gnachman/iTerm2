@@ -6,7 +6,6 @@
 //
 
 #import "VT100Screen+Resizing.h"
-#import "VT100Screen+Mutation.h"
 #import "VT100Screen+Private.h"
 #import "VT100ScreenMutableState+Resizing.h"
 
