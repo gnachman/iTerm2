@@ -217,6 +217,16 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     _shouldUpdateIdempotentTriggers = YES;
 }
 
+- (BOOL)haveTriggersOrExpectations {
+    if (_triggers.count) {
+        return YES;
+    }
+    if (_expect.expectations.count) {
+        return YES;
+    }
+    return NO;
+}
+
 - (NSString *)appendAsciiDataToCurrentLine:(AsciiData *)asciiData {
     if (![_triggers count] && !_expect.expectations.count) {
         return nil;

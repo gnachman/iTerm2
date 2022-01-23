@@ -53,6 +53,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL unlimitedScrollback;
 @property (nonatomic, readonly) BOOL reduceFlicker;
 @property (nonatomic, readonly) int maxScrollbackLines;
+@property (nonatomic, readonly) BOOL loggingEnabled;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -97,6 +98,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL unlimitedScrollback;
 @property (nonatomic, readwrite) BOOL reduceFlicker;
 @property (nonatomic, readwrite) int maxScrollbackLines;
+@property (nonatomic, readwrite) BOOL loggingEnabled;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 

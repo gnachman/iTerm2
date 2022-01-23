@@ -2872,19 +2872,24 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData {
+    if (!_triggerEvaluator.haveTriggersOrExpectations && !self.config.loggingEnabled) {
+        // Avoid making the string, which could be slow.
+        return YES;
+    }
     NSString *string = [_triggerEvaluator appendAsciiDataToCurrentLine:asciiData];
     if (!string) {
         return NO;
     }
-
-    const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
-    const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenDidAppendStringToCurrentLine:string
-                                         isPlainText:YES
-                                          foreground:foregroundColorCode
-                                          background:backgroundColorCode];
-    }];
+    if (self.config.loggingEnabled) {
+        const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
+        const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenDidAppendStringToCurrentLine:string
+                                             isPlainText:YES
+                                              foreground:foregroundColorCode
+                                              background:backgroundColorCode];
+        }];
+    }
     return YES;
 }
 

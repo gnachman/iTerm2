@@ -12067,6 +12067,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.darkMode = darkMode;
         dirty = YES;
     }
+    const BOOL loggingEnabled = _logging.enabled;
+    if (_config.loggingEnabled != loggingEnabled) {
+        _config.loggingEnabled = loggingEnabled;
+        dirty = YES;
+    }
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                            inProfile:_profile];
