@@ -42,6 +42,7 @@
 @property (nonatomic, readwrite) BOOL unlimitedScrollback;
 @property (nonatomic, readwrite) BOOL reduceFlicker;
 @property (nonatomic, readwrite) int maxScrollbackLines;
+@property (nonatomic, readwrite) BOOL loggingEnabled;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -78,6 +79,7 @@
 @synthesize unlimitedScrollback = _unlimitedScrollback;
 @synthesize reduceFlicker = _reduceFlicker;
 @synthesize maxScrollbackLines = _maxScrollbackLines;
+@synthesize loggingEnabled = _loggingEnabled;
 
 @synthesize isDirty = _isDirty;
 
@@ -116,6 +118,7 @@
         _unlimitedScrollback = other.unlimitedScrollback;
         _reduceFlicker = other.reduceFlicker;
         _maxScrollbackLines = other.maxScrollbackLines;
+        _loggingEnabled = other.loggingEnabled;
 
         _isDirty = other.isDirty;
     }
@@ -163,6 +166,7 @@
                             @"unlimitedScrollback": @(_unlimitedScrollback),
                             @"reduceFlicker": @(_reduceFlicker),
                             @"maxScrollbackLines": @(_maxScrollbackLines),
+                            @"loggingEnabled": @(_loggingEnabled),
 
                             @"isDirty": @(_isDirty),
     };
@@ -209,6 +213,7 @@
 @dynamic unlimitedScrollback;
 @dynamic reduceFlicker;
 @dynamic maxScrollbackLines;
+@dynamic loggingEnabled;
 
 @dynamic isDirty;
 

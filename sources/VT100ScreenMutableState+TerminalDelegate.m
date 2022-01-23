@@ -26,14 +26,16 @@
         [self appendStringAtCursor:string];
     }
     [self appendStringToTriggerLine:string];
-    const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
-    const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenDidAppendStringToCurrentLine:string
-                                          isPlainText:YES
-                                          foreground:foregroundColorCode
-                                          background:backgroundColorCode];
-    }];
+    if (self.config.loggingEnabled) {
+        const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
+        const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenDidAppendStringToCurrentLine:string
+                                              isPlainText:YES
+                                              foreground:foregroundColorCode
+                                              background:backgroundColorCode];
+        }];
+    }
 }
 
 - (void)terminalAppendAsciiData:(AsciiData *)asciiData {
@@ -47,7 +49,7 @@
     // else display string on screen
     [self appendAsciiDataAtCursor:asciiData];
 
-    if (![self appendAsciiDataToTriggerLine:asciiData]) {
+    if (![self appendAsciiDataToTriggerLine:asciiData] && self.config.loggingEnabled) {
         const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
         const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
@@ -63,14 +65,17 @@
     [self appendStringToTriggerLine:@"\a"];
 
     [self activateBell];
-    const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
-    const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenDidAppendStringToCurrentLine:@"\a"
-                                         isPlainText:NO
-                                          foreground:foregroundColorCode
-                                          background:backgroundColorCode];
-    }];
+
+    if (self.config.loggingEnabled) {
+        const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
+        const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenDidAppendStringToCurrentLine:@"\a"
+                                             isPlainText:NO
+                                              foreground:foregroundColorCode
+                                              background:backgroundColorCode];
+        }];
+    }
 }
 
 - (void)terminalBackspace {
@@ -1591,13 +1596,15 @@
                                          length:length
                          externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:self.lastExternalAttribute]];
             [self appendStringToTriggerLine:string];
-            [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-                [delegate screenDidAppendStringToCurrentLine:string
-                                                 isPlainText:(self.lastCharacter.complexChar ||
-                                                              self.lastCharacter.code >= ' ')
-                                                  foreground:foregroundColorCode
-                                                  background:backgroundColorCode];
-            }];
+            if (self.config.loggingEnabled) {
+                [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+                    [delegate screenDidAppendStringToCurrentLine:string
+                                                     isPlainText:(self.lastCharacter.complexChar ||
+                                                                  self.lastCharacter.code >= ' ')
+                                                      foreground:foregroundColorCode
+                                                      background:backgroundColorCode];
+                }];
+            }
         }
     }
 }
