@@ -454,18 +454,7 @@ static NSString *const kGridSizeKey = @"Size";
         [[self lineInfoAtLineNumber:(size_.height - 1)] resetMetadata];
     }
 
-    if (lineBuffer) {
-        // Mark new line at bottom of screen dirty.
-        [self markCharsDirty:YES
-                  inRectFrom:VT100GridCoordMake(0, size_.height - 1)
-                          to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
-    } else {
-        // Mark everything dirty if we're not using the scrollback buffer.
-        // TODO: Test what happens when the alt screen scrolls while it has a selection.
-        [self markCharsDirty:YES
-                  inRectFrom:VT100GridCoordMake(0, 0)
-                          to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
-    }
+    [self markAllCharsDirty:YES];
 
     DLog(@"scrolled screen up by 1 line");
     return numLinesDropped;
@@ -823,6 +812,30 @@ static NSString *const kGridSizeKey = @"Size";
         [self setMetadata:[otherGrid metadataAtLineNumber:i] forLineNumber:i];
     }
     [self markAllCharsDirty:YES];
+}
+
+- (void)copyDirtyFromGrid:(VT100Grid *)otherGrid {
+    if (otherGrid == self) {
+        return;
+    }
+    const BOOL sizeChanged = !VT100GridSizeEquals(self.size, otherGrid.size);
+    [self setSize:otherGrid.size];
+    for (int i = 0; i < size_.height; i++) {
+        const VT100GridRange dirtyRange = [otherGrid dirtyRangeForLine:i];
+        if (!sizeChanged && dirtyRange.length <= 0) {
+            continue;
+        }
+        screen_char_t *dest = [self screenCharsAtLineNumber:i];
+        screen_char_t *source = [otherGrid screenCharsAtLineNumber:i];
+        memmove(dest,
+                source,
+                sizeof(screen_char_t) * (size_.width + 1));
+        [self setMetadata:[otherGrid metadataAtLineNumber:i] forLineNumber:i];
+        if (dirtyRange.length > 0) {
+            [[self lineInfoAtLineNumber:i] setDirty:YES inRange:dirtyRange updateTimestamp:NO];
+        }
+    }
+    [otherGrid copyMiscellaneousStateTo:self];
 }
 
 - (int)scrollLeft {
@@ -2439,6 +2452,14 @@ static void DumpBuf(screen_char_t* p, int n) {
     return [self copyWithZone:nil];
 }
 
+- (void)copyMiscellaneousStateTo:(VT100Grid *)theCopy {
+    theCopy->cursor_ = cursor_;  // Don't use property to avoid delegate call
+    theCopy.scrollRegionRows = scrollRegionRows_;
+    theCopy.scrollRegionCols = scrollRegionCols_;
+    theCopy.useScrollRegionCols = useScrollRegionCols_;
+    theCopy.savedDefaultChar = savedDefaultChar_;
+}
+
 - (id)copyWithZone:(NSZone *)zone {
     VT100Grid *theCopy = [[VT100Grid alloc] initWithSize:size_
                                                 delegate:delegate_];
@@ -2451,11 +2472,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         [theCopy->lineInfos_ addObject:[line copy]];
     }
     theCopy->screenTop_ = screenTop_;
-    theCopy->cursor_ = cursor_;  // Don't use property to avoid delegate call
-    theCopy.scrollRegionRows = scrollRegionRows_;
-    theCopy.scrollRegionCols = scrollRegionCols_;
-    theCopy.useScrollRegionCols = useScrollRegionCols_;
-    theCopy.savedDefaultChar = savedDefaultChar_;
+    [self copyMiscellaneousStateTo:theCopy];
 
     return theCopy;
 }

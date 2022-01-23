@@ -2072,6 +2072,7 @@
 
     // Unset the dirty bit for all chars.
     DebugLog(@"updateDirtyRects resetDirty");
+    [_dataSource resetDirty];
 
     if (foundDirty) {
         [_dataSource saveToDvr:cleanLines];

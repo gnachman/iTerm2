@@ -391,6 +391,7 @@
         self.cumulativeScrollbackOverflow += overflowCount;
     }
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+#warning TODO: Coalesce calls to this.
         [observer intervalTreeVisibleRangeDidChange];
     }];
 }
@@ -2942,8 +2943,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     DLog(@"Did synchronize. Set drewSavedGrid=YES");
     self.temporaryDoubleBuffer.drewSavedGrid = YES;
     self.currentGrid.haveScrolled = NO;
-#warning TODO: Test this well!
-    [self.currentGrid markAllCharsDirty:NO];
 }
 
 - (void)updateExpectFrom:(iTermExpect *)source {

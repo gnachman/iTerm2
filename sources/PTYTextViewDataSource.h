@@ -144,4 +144,6 @@
 - (void)removeAnnotation:(id<PTYAnnotationReading>)annotation;
 - (void)setStringValueOfAnnotation:(id<PTYAnnotationReading>)annotation to:(NSString *)stringValue;
 
+- (void)resetDirty;
+
 @end

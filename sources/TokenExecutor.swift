@@ -76,14 +76,17 @@ private class TokenArray: IteratorProtocol {
     private static var destroyQueue: DispatchQueue = {
         return DispatchQueue(label: "com.iterm2.token-destroyer")
     }()
+    private var semaphore: DispatchSemaphore?
 
     var hasNext: Bool {
         return nextIndex < count
     }
 
-    init(_ cvector: CVector, length: Int) {
+    init(_ cvector: CVector, length: Int, semaphore: DispatchSemaphore?) {
+        precondition(length > 0)
         self.cvector = cvector
         self.length = length
+        self.semaphore = semaphore
         count = CVectorCount(&self.cvector)
     }
 
@@ -93,15 +96,27 @@ private class TokenArray: IteratorProtocol {
         }
         defer {
             nextIndex += 1
+            if nextIndex == count, let semaphore = semaphore {
+                semaphore.signal()
+                self.semaphore = nil
+            }
         }
         return (CVectorGetObject(&cvector, nextIndex) as! VT100Token)
     }
 
     func skipToEnd() {
+        if nextIndex >= count {
+            return
+        }
         nextIndex = count
+        if let semaphore = semaphore {
+            semaphore.signal()
+            self.semaphore = nil
+        }
     }
 
     deinit {
+        semaphore?.signal()
         let temp = cvector
         Self.destroyQueue.async {
             CVectorReleaseObjectsAndDestroy(temp)
@@ -222,10 +237,13 @@ class TokenExecutor: NSObject {
     // You can call this on any queue.
     @objc
     func addTokens(_ vector: CVector, length: Int, highPriority: Bool) {
+        if length == 0 {
+            return
+        }
         if highPriority && onExecutorQueue {
             // Re-entrant code path so that the Inject trigger can do its job synchronously
             // (before other triggers run).
-            reallyAddTokens(vector, length: length, highPriority: highPriority)
+            reallyAddTokens(vector, length: length, highPriority: highPriority, semaphore: nil)
             return
         }
         #warning("TODO: Test inserting a high-pri token from another dispatch queue. It's not yet possible to do off the main queue.")
@@ -233,8 +251,7 @@ class TokenExecutor: NSObject {
         let semaphore = self.semaphore
         _ = semaphore.wait(timeout: .distantFuture)
         queue.async { [weak self] in
-            self?.reallyAddTokens(vector, length: length, highPriority: highPriority)
-            semaphore.signal()
+            self?.reallyAddTokens(vector, length: length, highPriority: highPriority, semaphore: semaphore)
         }
     }
 
@@ -252,8 +269,11 @@ class TokenExecutor: NSObject {
 
     // This takes ownership of vector.
     // You can only call this on `queue`.
-    private func reallyAddTokens(_ vector: CVector, length: Int, highPriority: Bool) {
-        let tokenArray = TokenArray(vector, length: length)
+    private func reallyAddTokens(_ vector: CVector,
+                                 length: Int,
+                                 highPriority: Bool,
+                                 semaphore: DispatchSemaphore?) {
+        let tokenArray = TokenArray(vector, length: length, semaphore: semaphore)
         self.impl.addTokens(tokenArray, highPriority: highPriority)
     }
 
@@ -280,23 +300,79 @@ class TokenExecutor: NSObject {
     }
 }
 
+// This is a low-budget dequeue.
+// Dequeue from the first array with a nonnil member. Rather than deleting the item, which gives
+// quadratic performance, just nil it out. When a TaskArray becomes empty it can be removed from the
+// list of task arrays. Since the list of task arrays will never have more than 2 elements, it's fast.
+// Appends always go to the last task array. If the last task array has already been dequeued from
+// then a new TaskArray is crated and appends to go it.
+//
+// taskArray = [ [] ]
+// append(t1)
+// taskARray = [ [t1] ]
+// append(t2)
+// taskArray = [ [t1, t2] ]
+// dequeue() -> t1
+// taskArray = [ [nil, t2] ]
+// append(t3)
+// taskArray = [ [nil, t2], [ t3 ] ]
+// dequeue() -> t2
+// taskArray = [ [], [ t3 ] ]
+// append(t4)
+// taskArray = [ [], [ t3, t4 ] ]
+// dequeue() -> t3
+// taskArray = [ [t4] ]
+
 private class TaskQueue {
-    private var tasks = [TokenExecutorTask]()
+    class TaskArray {
+        private var tasks: [TokenExecutorTask?] = []
+        // Index to first valid element
+        var head = 0
+        var dequeue: TokenExecutorTask? {
+            if head >= tasks.count {
+                return nil
+            }
+            defer {
+                head += 1
+            }
+            let value = tasks[head]
+            tasks[head] = nil
+            return value
+        }
+
+        var canAppend: Bool {
+            return head == 0
+        }
+
+        func append(_ task: @escaping TokenExecutorTask) {
+            tasks.append(task)
+        }
+    }
+    // This will never be empty
+    private var arrays = [ TaskArray() ]
     private let mutex = Mutex()
 
     func append(_ task: @escaping TokenExecutorTask) {
         mutex.sync {
-            tasks.append(task)
+            if arrays.last!.canAppend {
+                arrays.last!.append(task)
+                return
+            }
+            let newTaskArray = TaskArray()
+            newTaskArray.append(task)
+            arrays.append(newTaskArray)
         }
     }
 
     func dequeue() -> TokenExecutorTask? {
         mutex.sync {
-            guard let value = tasks.first else {
-                return nil
+            while arrays.count > 1 {
+                if let task = arrays[0].dequeue {
+                    return task
+                }
+                arrays.removeFirst()
             }
-            tasks.removeFirst()
-            return value
+            return arrays[0].dequeue
         }
     }
 }

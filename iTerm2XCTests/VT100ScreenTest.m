@@ -16,7 +16,6 @@
 #import "SearchResult.h"
 #import "TmuxStateParser.h"
 #import "VT100Screen.h"
-#import "VT100Screen+Mutation.h"
 #import "VT100Screen+Private.h"
 #import "VT100ScreenConfiguration.h"
 #import "iTermSelection.h"

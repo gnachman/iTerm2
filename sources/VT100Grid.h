@@ -122,6 +122,10 @@
 - (int)appendLines:(int)numLines
       toLineBuffer:(LineBuffer *)lineBuffer;
 
+// This is the sole mutation method. We need it to track which lines need to be redrawn and to reduce
+// the cost of syncing.
+- (void)markAllCharsDirty:(BOOL)dirty;
+
 @end
 
 @interface VT100Grid : NSObject<VT100GridReading>
@@ -177,7 +181,6 @@
 
 // Mark chars dirty in a rectangle, inclusive of endpoints.
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to;
-- (void)markAllCharsDirty:(BOOL)dirty;
 
 // Advances the cursor down one line and scrolls the screen, or part of the screen, if necessary.
 // Returns the number of lines dropped from lineBuffer. lineBuffer may be nil. If a scroll region is
@@ -252,6 +255,9 @@
 
 // Copy chars and size from another grid.
 - (void)copyCharsFromGrid:(VT100Grid *)otherGrid;
+
+// Copy everything from another grid if needed.
+- (void)copyDirtyFromGrid:(VT100Grid *)otherGrid;
 
 // Append a string starting from the cursor's current position.
 // Returns number of scrollback lines dropped from lineBuffer.
