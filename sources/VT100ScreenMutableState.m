@@ -36,11 +36,38 @@
 #import "iTermURLMark.h"
 #import "iTermURLStore.h"
 
+#import <stdatomic.h>
+
+@interface VT100ScreenTokenExecutorUpdate()
+
+@property (nonatomic, readonly) BOOL dirty;
+@property (nonatomic, readwrite) NSInteger estimatedThroughput;
+
+- (void)addBytesExecuted:(NSInteger)size;
+- (void)didHandleInput;
+
+// Returns a copy and resets self.
+- (VT100ScreenTokenExecutorUpdate *)fork;
+
+@end
 
 @implementation VT100ScreenMutableState {
     BOOL _terminalEnabled;
     VT100Terminal *_terminal;
     BOOL _echoProbeShouldSendPassword;
+    _Atomic int _executorUpdatePending;
+    VT100ScreenTokenExecutorUpdate *_executorUpdate;
+    iTermPeriodicScheduler *_executorUpdateScheduler;
+}
+
+static _Atomic int gPerformingJoinedBlock;
+
++ (BOOL)performingJoinedBlock {
+    return atomic_load(&gPerformingJoinedBlock) != 0;
+}
+
++ (void)setPerformingJoinedBlock:(BOOL)performingJoinedBlock {
+    atomic_store(&gPerformingJoinedBlock, performingJoinedBlock ? 1 : 0);
 }
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
@@ -48,6 +75,20 @@
     self = [super initForMutationOnQueue:queue];
     if (self) {
         _queue = queue;
+        _executorUpdate = [[VT100ScreenTokenExecutorUpdate alloc] init];
+        __weak __typeof(self) weakSelf = self;
+        _executorUpdateScheduler = [[iTermPeriodicScheduler alloc] initWithQueue:queue period:1 / 120.0 block:^{
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            VT100ScreenTokenExecutorUpdate *update = [strongSelf->_executorUpdate fork];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf performSideEffect:^(id<VT100ScreenDelegate> delegate) {
+                    [delegate screenExecutorDidUpdate:update];
+                }];
+            });
+        }];
         _derivativeIntervalTree = [[IntervalTree alloc] init];
         _derivativeSavedIntervalTree = [[IntervalTree alloc] init];
         self.intervalTree =
@@ -130,7 +171,7 @@
 #pragma mark - Private
 
 - (void)assertOnMutationThread {
-    assert(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(_queue));
+    [iTermGCD assertMutationQueueSafe];
 }
 
 #pragma mark - Internal
@@ -140,7 +181,7 @@
 // you're doing.
 - (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect {
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-    if (self.performingJoinedBlock) {
+    if (VT100ScreenMutableState.performingJoinedBlock) {
         [self performPausedSideEffect:unpauser block:sideEffect];
         return;
     }
@@ -151,7 +192,7 @@
 }
 
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
-    if (self.performingJoinedBlock) {
+    if (VT100ScreenMutableState.performingJoinedBlock) {
         [self performSideEffect:sideEffect];
         return;
     }
@@ -162,7 +203,7 @@
 }
 
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect {
-    if (self.performingJoinedBlock) {
+    if (VT100ScreenMutableState.performingJoinedBlock) {
         [self performIntervalTreeSideEffect:sideEffect];
     }
     __weak __typeof(self) weakSelf = self;
@@ -177,7 +218,7 @@
 // The main thread will be stopped while running your side effect and you can safely access both
 // mutation and main-thread data in it.
 - (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
-    if (self.performingJoinedBlock) {
+    if (VT100ScreenMutableState.performingJoinedBlock) {
         [self performSideEffect:sideEffect];
         return;
     }
@@ -243,7 +284,7 @@
 #pragma mark - Accessors
 
 - (void)setConfig:(id<VT100ScreenConfiguration>)config {
-    assert(self.performingJoinedBlock);
+    assert(VT100ScreenMutableState.performingJoinedBlock);
     [super setConfig:config];
 
     [_triggerEvaluator loadFromProfileArray:config.triggerProfileDicts];
@@ -390,8 +431,17 @@
         self.scrollbackOverflow += overflowCount;
         self.cumulativeScrollbackOverflow += overflowCount;
     }
+    if (self.intervalTreeChangeSideEffectPending) {
+        return;
+    }
+    self.intervalTreeChangeSideEffectPending = YES;
+    __weak __typeof(self) weakSelf = self;
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
-#warning TODO: Coalesce calls to this.
+        weakSelf.intervalTreeChangeSideEffectPending = NO;
+        // There's a race here, but it's not important. It's possible another update would get queued
+        // at this point (which would be unnecessary) but that is harmless because intervalTreeVisibleRangeDidChange
+        // is idempotent. The purpose of intervalTreeChangeSideEffectPending is to reduce the number
+        // of times this happens and it is still very effective despite its imperfection.
         [observer intervalTreeVisibleRangeDidChange];
     }];
 }
@@ -1987,18 +2037,21 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
         if (trimmedCommand.length) {
             mark = [self markOnLine:self.lastPromptLine - self.cumulativeScrollbackOverflow];
-
-            const VT100GridAbsCoordRange commandRange = VT100GridAbsCoordRangeFromCoordRange(range, self.cumulativeScrollbackOverflow);
-            const VT100GridAbsCoord outputStart = VT100GridAbsCoordMake(self.currentGrid.cursor.x,
-                                                                        self.currentGrid.cursor.y + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.cumulativeScrollbackOverflow);
-            DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
-                 self.lastPromptLine - self.cumulativeScrollbackOverflow, mark, command);
-            [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
-                VT100ScreenMark *mark = (VT100ScreenMark *)obj;
-                mark.command = command;
-                mark.commandRange = commandRange;
-                mark.outputStart = outputStart;
-            }];
+            if (mark) {
+                const VT100GridAbsCoordRange commandRange = VT100GridAbsCoordRangeFromCoordRange(range, self.cumulativeScrollbackOverflow);
+                const VT100GridAbsCoord outputStart = VT100GridAbsCoordMake(self.currentGrid.cursor.x,
+                                                                            self.currentGrid.cursor.y + [self.linebuffer numLinesWithWidth:self.currentGrid.size.width] + self.cumulativeScrollbackOverflow);
+                DLog(@"FinalTerm:  Make the mark on lastPromptLine %lld (%@) a command mark for command %@",
+                     self.lastPromptLine - self.cumulativeScrollbackOverflow, mark, command);
+                [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
+                    VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+                    mark.command = command;
+                    mark.commandRange = commandRange;
+                    mark.outputStart = outputStart;
+                }];
+            } else {
+                DLog(@"No mark");
+            }
         }
     }
     id<VT100RemoteHostReading> remoteHost = command ? [self remoteHostOnLine:range.end.y] : nil;
@@ -2070,12 +2123,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.lastPromptLine = lastPromptLine;
     [self assignCurrentCommandEndDate];
     id<VT100ScreenMarkReading> mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
-    const VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
-    [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
-        VT100ScreenMark *mark = (VT100ScreenMark *)obj;
-        [mark setIsPrompt:YES];
-        mark.promptRange = promptRange;
-    }];
+    if (mark) {
+        const VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
+        [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
+            VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+            [mark setIsPrompt:YES];
+            mark.promptRange = promptRange;
+        }];
+    }
     [self didUpdatePromptLocation];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidStartAtLine:line];
@@ -2125,13 +2180,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                                               self.lastPromptLine,
                                                                               current.start.x,
                                                                               mark.commandRange.end.y);
-        [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
-            VT100ScreenMark *mark = (VT100ScreenMark *)obj;
-            mark.commandRange = commandRange;
-            if (!hadCommand) {
-                mark.promptRange = promptRange;
-            }
-        }];
+        if (mark) {
+            [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
+                VT100ScreenMark *mark = (VT100ScreenMark *)obj;
+                mark.commandRange = commandRange;
+                if (!hadCommand) {
+                    mark.promptRange = promptRange;
+                }
+            }];
+        }
     }
     NSString *command = haveCommand ? [self commandInRange:current] : @"";
 
@@ -2593,6 +2650,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (id<VT100ScreenMarkReading>)updatePromptMarkRangesForPromptEndingOnLine:(int)line {
     id<VT100ScreenMarkReading> mark = [self lastPromptMark];
+    if (!mark) {
+        return nil;
+    }
     const int x = self.currentGrid.cursor.x;
     const long long y = (long long)line + self.cumulativeScrollbackOverflow;
 
@@ -2647,6 +2707,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)incrementClearCountForCommandMark:(id<VT100ScreenMarkReading>)screenMarkDoppelganger {
     id<VT100ScreenMarkReading> mark = [screenMarkDoppelganger progenitor];
+    if (!mark) {
+        return;
+    }
     if (![self.intervalTree containsObject:mark]) {
         return;
     }
@@ -2711,6 +2774,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)setStringValueOfAnnotation:(id<PTYAnnotationReading>)annotation to:(NSString *)stringValue {
     DLog(@"Set progenitor %@ to %@", annotation, stringValue);
+    if (!annotation) {
+        return;
+    }
     [self.mutableIntervalTree mutateObject:annotation block:^(id<IntervalTreeObject> _Nonnull obj) {
         PTYAnnotation *mutableAnnotation = (PTYAnnotation *)obj;
         DLog(@"%@.stringValue=%@", mutableAnnotation, stringValue);
@@ -2931,7 +2997,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - Cross-Thread Sync
 
 - (void)willSynchronize {
-    assert(self.performingJoinedBlock);
+    assert(VT100ScreenMutableState.performingJoinedBlock);
 
     if (self.currentGrid.isAnyCharDirty) {
         [_triggerEvaluator invalidateIdempotentTriggers];
@@ -2953,7 +3019,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     DLog(@"%@", [NSThread callStackSymbols]);
     [iTermGCD assertMainQueueSafe];
 
-    if (self.performingJoinedBlock) {
+    if (VT100ScreenMutableState.performingJoinedBlock) {
         // Reentrant call. Avoid deadlock by running it immediately.
         [self reallyPerformLightweightBlockWithJoinedThreads:block];
         return;
@@ -2974,7 +3040,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
 
-    if (self.performingJoinedBlock) {
+    if (VT100ScreenMutableState.performingJoinedBlock) {
         // Reentrant call. Avoid deadlock by running it immediately.
         [self reallyPerformBlockWithJoinedThreads:block delegate:delegate];
         return;
@@ -3026,11 +3092,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // deadlock.
     // This get-and-set is not a data race because assignment to performingJoinedBlock only happens
     // on the mutation queue.
-    const BOOL previousValue = self.performingJoinedBlock;
-    self.performingJoinedBlock = YES;
+    const BOOL previousValue = VT100ScreenMutableState.performingJoinedBlock;
+    VT100ScreenMutableState.performingJoinedBlock = YES;
 
     // Sync so that the delegate's copy of state will be up-to-date.
     [delegate screenSync:self];
+
+    const NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+    self.primaryGrid.currentDate = now;
+    self.altGrid.currentDate = now;
 
     // Now that the delegate has the most recent state, perform pending side effects which may operate on
     // that state. Don't have the token executor initiate sync because that depends on having a non-
@@ -3051,18 +3121,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         // Sync so that our copy of state will be up-to-date.
         [delegate screenSync:self];
     }
-    self.performingJoinedBlock = previousValue;
+    VT100ScreenMutableState.performingJoinedBlock = previousValue;
 }
 
 - (void)reallyPerformLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *))block {
     // Set `performingJoinedBlock` to YES so that a side-effect that wants to join threads won't
     // deadlock.
-    const BOOL previousValue = self.performingJoinedBlock;
-    self.performingJoinedBlock = YES;
+    const BOOL previousValue = VT100ScreenMutableState.performingJoinedBlock;
+    VT100ScreenMutableState.performingJoinedBlock = YES;
     if (block) {
         block(self);
     }
-    self.performingJoinedBlock = previousValue;
+    VT100ScreenMutableState.performingJoinedBlock = previousValue;
 }
 
 - (void)performBlockAsynchronously:(void (^ _Nullable)(VT100Terminal *terminal,
@@ -3304,7 +3374,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                               visible:(BOOL)visible
                 guidOfLastCommandMark:(NSString *)guidOfLastCommandMark
                              delegate:(id<VT100ScreenDelegate>)delegate {
-    assert(_performingJoinedBlock);
+    assert(VT100ScreenMutableState.performingJoinedBlock);
     id<VT100RemoteHostReading> lastRemoteHost = nil;
     NSMutableDictionary<NSString *, id<CapturedOutputReading>> *markGuidToCapturedOutput = [NSMutableDictionary dictionary];
     for (NSArray *objects in [intervalTree forwardLimitEnumerator]) {
@@ -3337,14 +3407,18 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 // mark that has a CapturedOutput corresponding to this mark and fill it in.
                 id<iTermCapturedOutputMarkReading> capturedOutputMark = (id<iTermCapturedOutputMarkReading>)object;
                 id<CapturedOutputReading> capturedOutput = markGuidToCapturedOutput[capturedOutputMark.guid];
-                [intervalTree mutateObject:capturedOutputMark
-                                     block:^(id<IntervalTreeObject> obj) {
-                    if (obj == (iTermCapturedOutputMark *)capturedOutputMark) {
-                        ((CapturedOutput *)capturedOutput).mark = capturedOutputMark;
-                    } else {
-                        ((CapturedOutput *)capturedOutput.doppelganger).mark = (iTermCapturedOutputMark *)obj;
-                    }
-                }];
+                if (capturedOutput) {
+                    [intervalTree mutateObject:capturedOutputMark
+                                         block:^(id<IntervalTreeObject> obj) {
+                        if (obj == (iTermCapturedOutputMark *)capturedOutputMark) {
+                            ((CapturedOutput *)capturedOutput).mark = capturedOutputMark;
+                        } else {
+                            ((CapturedOutput *)capturedOutput.doppelganger).mark = (iTermCapturedOutputMark *)obj;
+                        }
+                    }];
+                } else {
+                    DLog(@"No mark");
+                }
             } else if ([object isKindOfClass:[PTYAnnotation class]]) {
                 id<PTYAnnotationReading> note = (id<PTYAnnotationReading>)object;
                 if (visible) {
@@ -3400,7 +3474,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                afterSize:(NSInteger)afterSize
                                     name:(NSString *)name
                                 delegate:(id<VT100ScreenDelegate>)delegate {
-    assert(self.performingJoinedBlock);
+    assert(VT100ScreenMutableState.performingJoinedBlock);
 
     if (sizeBefore < VT100ScreenBigFileDownloadThreshold && afterSize > VT100ScreenBigFileDownloadThreshold) {
         if (![delegate screenConfirmDownloadNamed:name
@@ -3972,6 +4046,9 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)triggerSession:(Trigger *)trigger
          setAnnotation:(id<PTYAnnotationReading>)annotation
               stringTo:(NSString *)stringValue {
+    if (!annotation) {
+        return;
+    }
     [self.mutableIntervalTree mutateObject:annotation block:^(id<IntervalTreeObject> _Nonnull obj) {
         PTYAnnotation *mutableAnnotation = (PTYAnnotation *)obj;
         mutableAnnotation.stringValue = stringValue;
@@ -4206,6 +4283,10 @@ launchCoprocessWithCommand:(NSString *)command
 #pragma mark - iTermTokenExecutorDelegate
 
 - (BOOL)tokenExecutorShouldQueueTokens {
+    const NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+    self.primaryGrid.currentDate = now;
+    self.altGrid.currentDate = now;
+
     if (!self.terminalEnabled) {
         return YES;
     }
@@ -4234,22 +4315,10 @@ launchCoprocessWithCommand:(NSString *)command
     return NO;
 }
 
-- (void)tokenExecutorWillEnqueueTokensWithLength:(NSInteger)length {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenWillExecuteTokensOfSize:length];
-    }];
-}
-
-- (void)tokenExecutorDidExecuteWithLength:(NSInteger)length {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenDidExecuteTokensOfSize:length];
-    }];
-}
-
-- (void)tokenExecutorDidHandleInput {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenDidHandleInput];
-    }];
+- (void)tokenExecutorDidExecuteWithLength:(NSInteger)length throughput:(NSInteger)throughput {
+    [_executorUpdate addBytesExecuted:length];
+    _executorUpdate.estimatedThroughput = throughput;
+    [_executorUpdateScheduler markNeedsUpdate];
 }
 
 - (NSString *)tokenExecutorCursorCoordString {
@@ -4266,3 +4335,59 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 @end
+
+
+@implementation VT100ScreenTokenExecutorUpdate {
+    NSInteger _numberOfBytesExecuted;
+    BOOL _inputHandled;
+}
+
+- (void)addBytesExecuted:(NSInteger)size {
+    @synchronized (self) {
+        _dirty = YES;
+        _numberOfBytesExecuted += size;
+    }
+}
+
+- (NSInteger)numberOfBytesExecuted {
+    @synchronized (self) {
+        return _numberOfBytesExecuted;
+    }
+}
+
+- (void)didHandleInput {
+    @synchronized (self) {
+        _dirty = YES;
+        _inputHandled = YES;
+    }
+}
+
+- (BOOL)inputHandled {
+    @synchronized (self) {
+        return _inputHandled;
+    }
+}
+
+- (VT100ScreenTokenExecutorUpdate *)fork {
+    @synchronized (self) {
+        VT100ScreenTokenExecutorUpdate *copy = [self copyWithZone:nil];
+        _numberOfBytesExecuted = 0;
+        _inputHandled = NO;
+        return copy;
+    }
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    @synchronized (self) {
+        VT100ScreenTokenExecutorUpdate *copy = [[VT100ScreenTokenExecutorUpdate alloc] init];
+        [copy addBytesExecuted:_numberOfBytesExecuted];
+        if (_inputHandled) {
+            [copy didHandleInput];
+        }
+        copy.estimatedThroughput = self.estimatedThroughput;
+        return copy;
+    }
+}
+
+@end
+

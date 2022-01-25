@@ -52,6 +52,9 @@ NS_ASSUME_NONNULL_BEGIN
 // expectations get didMatchWithCaptureGroups called.
 @property (nonatomic, readonly) BOOL dry;
 
+// This might lie and say YES if all the expectations have been dealloced.
+@property (nonatomic, readonly) BOOL maybeHasExpectations;
+
 // Dry means that it accepts mutations (add expectation, cancel expectation, reset dirty) but matching
 // will never happen on this object - only on its copies. The main effect is that willExpect: calls
 // are deferred until the next copy.

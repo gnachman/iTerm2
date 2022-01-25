@@ -206,6 +206,9 @@
 }
 
 - (void)removeExpiredExpectations {
+    if (_expectations.count == 0) {
+        return;
+    }
     [_expectations removeObjectsPassingTest:^BOOL(iTermExpectation *expectation) {
         return expectation.deadline != nil && expectation.deadline.timeIntervalSinceNow < 0;
     }];
@@ -214,6 +217,10 @@
 - (NSArray<iTermExpectation *> *)expectations {
     [self removeExpiredExpectations];
     return [_expectations copy];
+}
+
+- (BOOL)maybeHasExpectations {
+    return _expectations.count > 0;
 }
 
 - (void)resetDirty {

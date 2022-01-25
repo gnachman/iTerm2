@@ -179,6 +179,7 @@ typedef struct {
     VT100SavedColors *_savedColors;
     VT100TerminalSGRStackEntry _sgrStack[VT100TerminalMaxSGRStackEntries];
     int _sgrStackSize;
+    BOOL _isScreenLike;
 }
 
 @synthesize receivingFile = receivingFile_;
@@ -309,6 +310,7 @@ static const int kMaxScreenRows = 4096;
     self.dirty = YES;
     DLog(@"setTermType:%@", termtype);
     _termType = [termtype copy];
+    _isScreenLike = [termtype containsString:@"screen"];
 
     self.allowKeypadMode = [_termType rangeOfString:@"xterm"].location != NSNotFound;
     _output.termType = _termType;
@@ -1883,7 +1885,7 @@ static const int kMaxScreenRows = 4096;
         return;
     }
 
-    if ([iTermAdvancedSettingsModel translateScreenToXterm] && [self.termType containsString:@"screen"]) {
+    if (_isScreenLike && [iTermAdvancedSettingsModel translateScreenToXterm]) {
         [token translateFromScreenTerminal];
     }
 

@@ -16,6 +16,15 @@
 @protocol iTermObject;
 @protocol iTermOrderedToken;
 
+@interface VT100ScreenTokenExecutorUpdate: NSObject
+
+@property (nonatomic, readonly) NSInteger estimatedThroughput;
+@property (nonatomic, readonly) NSInteger numberOfBytesExecuted;
+@property (nonatomic, readonly) BOOL inputHandled;
+
+@end
+
+
 @protocol iTermTriggerSideEffectExecutor<NSObject>
 - (void)triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded;
 - (void)triggerSideEffectShowShellIntegrationRequiredAnnouncement;
@@ -75,7 +84,7 @@
                                 foreground:(screen_char_t)fg
                                 background:(screen_char_t)bg;
 
-- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData * _Nonnull)asciiData
+- (void)screenDidAppendAsciiDataToCurrentLine:(NSData * _Nonnull)asciiData
                                    foreground:(screen_char_t)fg
                                    background:(screen_char_t)bg;
 
@@ -352,8 +361,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenUpdateCommandUseWithGuid:(NSString * _Nonnull)screenmarkGuid
                                 onHost:(id<VT100RemoteHostReading> _Nullable)lastRemoteHost
                          toReferToMark:(id<VT100ScreenMarkReading> _Nonnull)screenMark;
-- (void)screenWillExecuteTokensOfSize:(NSInteger)length;
-- (void)screenDidExecuteTokensOfSize:(NSInteger)length;
-- (void)screenDidHandleInput;
+
+- (void)screenExecutorDidUpdate:(VT100ScreenTokenExecutorUpdate * _Nonnull)update;
 
 @end

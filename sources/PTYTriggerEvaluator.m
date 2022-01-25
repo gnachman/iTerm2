@@ -41,7 +41,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
 }
 
 - (void)clearTriggerLine {
-    if ([_triggers count] || _expect.expectations.count) {
+    if ([_triggers count] || _expect.maybeHasExpectations) {
         [self checkTriggers];
         _triggerLineNumber = -1;
     }

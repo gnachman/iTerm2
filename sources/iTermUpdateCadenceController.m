@@ -12,7 +12,6 @@
 #import "NSTimer+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermHistogram.h"
-#import "iTermThroughputEstimator.h"
 #import "iTermWarning.h"
 
 // Timer period for background sessions. This changes the tab item's color
@@ -33,7 +32,6 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
     BOOL _deferredCadenceChange;
 
-    iTermThroughputEstimator *_throughputEstimator;
     NSTimeInterval _lastUpdate;
 
     // Timer period between updates when active (not idle, tab is visible or title bar is changing,
@@ -43,11 +41,10 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     CFTimeInterval _lastKeystrokeTime;
 }
 
-- (instancetype)initWithThroughputEstimator:(iTermThroughputEstimator *)throughputEstimator {
+- (instancetype)init {
     self = [super init];
     if (self) {
         _useGCDUpdateTimer = [iTermAdvancedSettingsModel useGCDUpdateTimer];
-        _throughputEstimator = throughputEstimator;
         _histogram = [[iTermHistogram alloc] init];
         _activeUpdateCadence = 1.0 / MAX(1, [iTermAdvancedSettingsModel activeUpdateCadence]);
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -79,10 +76,9 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
     [self changeCadenceIfNeeded:NO];
 }
 
-- (void)didHandleInput {
+- (void)didHandleInputWithThroughput:(NSInteger)estimatedThroughput {
     DLog(@"didHandleInput");
     const NSInteger kThroughputLimit = 1024;
-    const NSInteger estimatedThroughput = [_throughputEstimator estimatedThroughput];
     if (estimatedThroughput < kThroughputLimit && [self lastKeystrokeWasRecent]) {
         DLog(@"  low bandwidth so call updateDisplay");
         [self updateDisplay];
@@ -173,7 +169,7 @@ static const NSTimeInterval kBackgroundUpdateCadence = 1;
 
     // Adaptive framerate path - the session is active and visible
     const NSInteger kThroughputLimit = state.adaptiveFrameRateThroughputThreshold;
-    const NSInteger estimatedThroughput = [_throughputEstimator estimatedThroughput];
+    const NSInteger estimatedThroughput = state.estimatedThroughput;
     if (estimatedThroughput < kThroughputLimit && estimatedThroughput > 0) {
         DLog(@"select fast cadence");
         [self setUpdateCadence:[self fastAdaptiveInterval]

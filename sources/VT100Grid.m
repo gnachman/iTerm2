@@ -176,12 +176,20 @@ static NSString *const kGridSizeKey = @"Size";
     return [[lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height] mutableBytes];
 }
 
-- (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber {
-    if (lineNumber >= 0 && lineNumber < size_.height) {
-        return [lineInfos_ objectAtIndex:(screenTop_ + lineNumber) % size_.height];
+static int VT100GridIndex(int screenTop, int lineNumber, int height) {
+    if (lineNumber >= 0 && lineNumber < height) {
+        return (screenTop + lineNumber) % height;
     } else {
+        return -1;
+    }
+}
+
+- (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber {
+    const int index = VT100GridIndex(screenTop_, lineNumber, size_.height);
+    if (index < 0) {
         return nil;
     }
+    return lineInfos_[index];
 }
 
 - (NSArray<VT100LineInfo *> *)metadataArray {
@@ -201,7 +209,7 @@ static NSString *const kGridSizeKey = @"Size";
     VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:coord.y];
     [lineInfo setDirty:dirty
                inRange:VT100GridRangeMake(coord.x, 1)
-       updateTimestamp:updateTimestamp];
+     updateTimestampTo:updateTimestamp ? self.currentDate : 0];
 }
 
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
@@ -210,11 +218,16 @@ static NSString *const kGridSizeKey = @"Size";
     if (!dirty) {
         allDirty_ = NO;
     }
+    const VT100GridRange xrange = VT100GridRangeMake(from.x, to.x - from.x + 1);
+    const NSTimeInterval timestamp = self.currentDate;
     for (int y = from.y; y <= to.y; y++) {
-        VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
-        [lineInfo setDirty:dirty
-                   inRange:VT100GridRangeMake(from.x, to.x - from.x + 1)
-           updateTimestamp:YES];
+        const int index = VT100GridIndex(screenTop_, y, size_.height);
+        if (index < 0) {
+            continue;
+        }
+        [lineInfos_[index] setDirty:dirty
+                            inRange:xrange
+                  updateTimestampTo:timestamp];
     }
 }
 
@@ -832,7 +845,7 @@ static NSString *const kGridSizeKey = @"Size";
                 sizeof(screen_char_t) * (size_.width + 1));
         [self setMetadata:[otherGrid metadataAtLineNumber:i] forLineNumber:i];
         if (dirtyRange.length > 0) {
-            [[self lineInfoAtLineNumber:i] setDirty:YES inRange:dirtyRange updateTimestamp:NO];
+            [[self lineInfoAtLineNumber:i] setDirty:YES inRange:dirtyRange updateTimestampTo:0];
         }
     }
     [otherGrid copyMiscellaneousStateTo:self];

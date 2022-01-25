@@ -159,6 +159,8 @@
 // DEPRECATED - use encode: instead.
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 @property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
+// Time of last update. Used for setting timestamps.
+@property(nonatomic) NSTimeInterval currentDate;
 
 + (VT100GridSize)sizeInStateDictionary:(NSDictionary *)dict;
 
