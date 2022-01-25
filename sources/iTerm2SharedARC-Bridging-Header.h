@@ -19,6 +19,7 @@
 #import "iTermStoplightHotbox.h"
 #import "iTermSwiftyString.h"
 #import "iTermTemporaryDoubleBufferedGridController.h"
+#import "iTermThroughputEstimator.h"
 #import "iTermTuple.h"
 #import "iTermVariableScope.h"
 #import "iTermVariables.h"

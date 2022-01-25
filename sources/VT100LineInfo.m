@@ -21,7 +21,7 @@
         width_ = width;
         start_ = -1;
         bound_ = -1;
-        [self setDirty:NO inRange:VT100GridRangeMake(0, width) updateTimestamp:NO];
+        [self setDirty:NO inRange:VT100GridRangeMake(0, width) updateTimestampTo:0];
         iTermMetadataInit(&_metadata, 0, nil);
     }
     return self;
@@ -31,14 +31,14 @@
     iTermMetadataRelease(_metadata);
 }
 
-- (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestamp:(BOOL)updateTimestamp {
+- (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestampTo:(NSTimeInterval)now {
 #ifdef ITERM_DEBUG
     assert(range.location >= 0);
     assert(range.length >= 0);
     assert(range.location + range.length <= width_);
 #endif
-    if (dirty && updateTimestamp) {
-        [self updateTimestamp];
+    if (dirty && now) {
+        [self updateTimestamp:now];
     }
     if (dirty) {
         if (start_ < 0) {
@@ -72,8 +72,9 @@
     return VT100GridRangeMake(start_, bound_ - start_);
 }
 
-- (void)updateTimestamp {
-    _metadata.timestamp = [NSDate timeIntervalSinceReferenceDate];
+- (void)updateTimestamp:(NSTimeInterval)now {
+    assert(now > 0);
+    _metadata.timestamp = now;
     _cachedEncodedMetadata = nil;
 }
 

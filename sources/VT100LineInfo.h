@@ -28,7 +28,8 @@
 @property(nonatomic) iTermMetadata metadata;
 
 - (instancetype)initWithWidth:(int)width;
-- (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestamp:(BOOL)updateTimestamp;
+// Does nothing if now=0
+- (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestampTo:(NSTimeInterval)now;
 - (BOOL)isDirtyAtOffset:(int)x;
 - (BOOL)anyCharIsDirty;
 - (VT100GridRange)dirtyRange;

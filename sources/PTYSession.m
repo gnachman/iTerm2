@@ -460,9 +460,6 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     // Cached advanced setting
     NSTimeInterval _idleTime;
 
-    // Estimates throughput for adaptive framerate.
-    iTermThroughputEstimator *_throughputEstimator;
-
     // Current unicode version.
     NSInteger _unicodeVersion;
 
@@ -578,6 +575,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     VT100MutableScreenConfiguration *_config;
 
     BOOL _profileDidChange;
+    NSInteger _estimatedThroughput;
 }
 
 @synthesize isDivorced = _divorced;
@@ -702,8 +700,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
         _hosts = [[NSMutableArray alloc] init];
         _hostnameToShell = [[NSMutableDictionary alloc] init];
         _automaticProfileSwitcher = [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:self];
-        _throughputEstimator = [[iTermThroughputEstimator alloc] initWithHistoryOfDuration:5.0 / 30.0 secondsPerBucket:1 / 30.0];
-        _cadenceController = [[iTermUpdateCadenceController alloc] initWithThroughputEstimator:_throughputEstimator];
+        _cadenceController = [[iTermUpdateCadenceController alloc] init];
         _cadenceController.delegate = self;
 
         _keystrokeSubscriptions = [[NSMutableDictionary alloc] init];
@@ -877,7 +874,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_lastCommand release];
     [_substitutions release];
     [_automaticProfileSwitcher release];
-    [_throughputEstimator release];
 
     [_keyLabels release];
     [_keyLabelsStack release];
@@ -10635,12 +10631,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (void)screenDidAppendAsciiDataToCurrentLine:(AsciiData *)asciiData
+- (void)screenDidAppendAsciiDataToCurrentLine:(NSData *)asciiData
                                    foreground:(screen_char_t)fg
                                    background:(screen_char_t)bg {
     if (_logging.enabled) {
-        [self logCooked:[NSData dataWithBytes:asciiData->buffer
-                                       length:asciiData->length]
+        [self logCooked:asciiData
              foreground:fg
              background:bg];
     }
@@ -12991,30 +12986,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     commandUse.mark = screenMark;
 }
 
-- (void)screenWillExecuteTokensOfSize:(NSInteger)length {
-    if (_useAdaptiveFrameRate) {
-#warning TODO: Is throughput estimation responsive enough?
-        [_throughputEstimator addByteCount:length];
+- (void)screenExecutorDidUpdate:(VT100ScreenTokenExecutorUpdate *)update {
+    _estimatedThroughput = update.estimatedThroughput;
+    DLog(@"estimated throughput: %@", @(_estimatedThroughput));
+
+    if (update.numberOfBytesExecuted > 0) {
+        DLog(@"Session %@ (%@) is processing", self, _nameController.presentationSessionTitle);
+        if (![self haveResizedRecently]) {
+            _lastOutputIgnoringOutputAfterResizing = [NSDate timeIntervalSinceReferenceDate];
+        }
+        _newOutput = YES;
+
+        // Make sure the screen gets redrawn soonish
+        self.active = YES;
+
+        if (self.shell.pid > 0 || [[[self variablesScope] valueForVariableName:@"jobName"] length] > 0) {
+            [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+        }
     }
-}
 
-- (void)screenDidExecuteTokensOfSize:(NSInteger)length {
-    DLog(@"Session %@ (%@) is processing", self, _nameController.presentationSessionTitle);
-    if (![self haveResizedRecently]) {
-        _lastOutputIgnoringOutputAfterResizing = [NSDate timeIntervalSinceReferenceDate];
-    }
-    _newOutput = YES;
-
-    // Make sure the screen gets redrawn soonish
-    self.active = YES;
-
-    if (self.shell.pid > 0 || [[[self variablesScope] valueForVariableName:@"jobName"] length] > 0) {
-        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-    }
-}
-
-- (void)screenDidHandleInput {
-    [_cadenceController didHandleInput];
+    [_cadenceController didHandleInputWithThroughput:_estimatedThroughput];
 }
 
 - (VT100Screen *)popupVT100Screen {
@@ -13609,6 +13600,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     state.slowFrameRate = self.useMetal ? [iTermAdvancedSettingsModel metalSlowFrameRate] : [iTermAdvancedSettingsModel slowFrameRate];
     state.liveResizing = _inLiveResize;
     state.proMotion = [NSProcessInfo it_hasARMProcessor] && [_textview.window.screen it_supportsHighFrameRates];
+    state.estimatedThroughput = _estimatedThroughput;
     return state;
 }
 

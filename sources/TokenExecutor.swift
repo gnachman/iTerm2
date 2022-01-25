@@ -22,16 +22,9 @@ protocol TokenExecutorDelegate: AnyObject {
     // Should tokens be freed without use? Do this during a mute coprocess, for example.
     func tokenExecutorShouldDiscardTokens() -> Bool
 
-    // `length` is the number of bytes of input that created the just-processed tokens.
-    // Tokens may not actually be executed after this is called (e.g., if shouldDiscardTokens() returns true).
-    func tokenExecutorWillEnqueueTokens(length: Int)
-
     // Called only when tokens are actually executed. `length` gives the number of bytes of input
     // that were executed.
-    func tokenExecutorDidExecute(length: Int)
-
-    // This is called even when paused. Every call to addTokens results in a call to didHandleInput().
-    func tokenExecutorDidHandleInput()
+    func tokenExecutorDidExecute(length: Int, throughput: Int)
 
     // Remove this eventually
     func tokenExecutorCursorCoordString() -> NSString
@@ -40,13 +33,15 @@ protocol TokenExecutorDelegate: AnyObject {
     func tokenExecutorSync()
 }
 
+// Uncomment the stack tracing code to debug stuck paused executors.
 @objc(iTermTokenExecutorUnpauser)
 class Unpauser: NSObject {
     private weak var delegate: UnpauserDelegate?
     private let mutex = Mutex()
-
+    // @objc var stack: String
     init(_ delegate: UnpauserDelegate) {
         self.delegate = delegate
+        // stack = Thread.callStackSymbols.joined(separator: "\n")
     }
 
     @objc
@@ -55,6 +50,7 @@ class Unpauser: NSObject {
             guard let temp = delegate else {
                 return
             }
+            // stack = ""
             delegate = nil
             temp.unpause()
         }
@@ -212,7 +208,6 @@ class TokenExecutor: NSObject {
         return DispatchQueue.getSpecific(key: Self.isTokenExecutorSpecificKey) == true
     }
 
-
     @objc(initWithTerminal:slownessDetector:queue:)
     init(_ terminal: VT100Terminal,
          slownessDetector: iTermSlownessDetector,
@@ -340,6 +335,10 @@ private class TaskQueue {
             return value
         }
 
+        var count: Int {
+            return tasks.count
+        }
+
         var canAppend: Bool {
             return head == 0
         }
@@ -351,6 +350,12 @@ private class TaskQueue {
     // This will never be empty
     private var arrays = [ TaskArray() ]
     private let mutex = Mutex()
+    var count: Int {
+        return mutex.sync {
+            let counts = arrays.map { $0.count }
+            return counts.reduce(0) { $0 + $1 }
+        }
+    }
 
     func append(_ task: @escaping TokenExecutorTask) {
         mutex.sync {
@@ -377,6 +382,12 @@ private class TaskQueue {
     }
 }
 
+extension TaskQueue: CustomDebugStringConvertible {
+    var debugDescription: String {
+        return "<TaskQueue: \(Unmanaged.passUnretained(self).toOpaque()) count=\(count)>"
+    }
+}
+
 private class TokenExecutorImpl {
     private let terminal: VT100Terminal
     private let queue: DispatchQueue
@@ -388,7 +399,9 @@ private class TokenExecutorImpl {
     private var pauseCount = MutableAtomicObject(0)
     private var executingCount = 0
     private let executingSideEffects = MutableAtomicObject(false)
-
+    private var sideEffectScheduler: PeriodicScheduler! = nil
+    private let throughputEstimator = iTermThroughputEstimator(historyOfDuration: 5.0 / 30.0,
+                                                               secondsPerBucket: 1.0 / 30.0)
     weak var delegate: TokenExecutorDelegate?
 
     init(_ terminal: VT100Terminal,
@@ -399,6 +412,14 @@ private class TokenExecutorImpl {
         self.queue = queue
         self.slownessDetector = slownessDetector
         self.semaphore = semaphore
+        sideEffectScheduler = PeriodicScheduler(DispatchQueue.main, period: 1 / 30.0, action: { [weak self] in
+            guard let self = self else {
+                return
+            }
+            DispatchQueue.main.async { [weak self] in
+                self?.executeSideEffects(syncFirst: true)
+            }
+        })
     }
 
     func pause() -> Unpauser {
@@ -421,7 +442,7 @@ private class TokenExecutorImpl {
 
     func addTokens(_ tokenArray: TokenArray, highPriority: Bool) {
         assertQueue()
-        delegate?.tokenExecutorWillEnqueueTokens(length: tokenArray.length)
+        throughputEstimator.addByteCount(tokenArray.length)
         tokenQueue.addTokens(tokenArray, highPriority: highPriority)
         execute()
     }
@@ -449,9 +470,7 @@ private class TokenExecutorImpl {
     // Any queue
     func addSideEffect(_ task: @escaping TokenExecutorTask) {
         sideEffects.append(task)
-        DispatchQueue.main.async { [weak self] in
-            self?.executeSideEffects(syncFirst: true)
-        }
+        sideEffectScheduler.markNeedsUpdate()
     }
 
     func executeSideEffects(syncFirst: Bool) {
@@ -489,26 +508,21 @@ private class TokenExecutorImpl {
             return
         }
         let hadTokens = !tokenQueue.isEmpty
-        defer {
-            if hadTokens {
-                delegate.tokenExecutorDidHandleInput()
-            }
-        }
-        if delegate.tokenExecutorShouldQueueTokens() {
-            #warning("TODO: Apply backpressure when queueing to avoid building up a huge queue (e.g., in copy mode while running yes)")
-            return
-        }
         var accumulatedLength = 0
-        slownessDetector.measureEvent(PTYSessionSlownessEventExecute) {
-            tokenQueue.enumerateTokenArrays { (vector, priority) in
-                return executeTokens(vector,
-                                     priority: priority,
-                                     accumulatedLength: &accumulatedLength,
-                                     delegate: delegate)
+        if !delegate.tokenExecutorShouldQueueTokens() {
+            #warning("TODO: Apply backpressure when queueing to avoid building up a huge queue (e.g., in copy mode while running yes)")
+            slownessDetector.measureEvent(PTYSessionSlownessEventExecute) {
+                tokenQueue.enumerateTokenArrays { (vector, priority) in
+                    return executeTokens(vector,
+                                         priority: priority,
+                                         accumulatedLength: &accumulatedLength,
+                                         delegate: delegate)
+                }
             }
         }
-        if accumulatedLength > 0 {
-            delegate.tokenExecutorDidExecute(length: accumulatedLength)
+        if accumulatedLength > 0 || hadTokens {
+            delegate.tokenExecutorDidExecute(length: accumulatedLength,
+                                             throughput: throughputEstimator.estimatedThroughput)
         }
     }
 
@@ -563,6 +577,12 @@ private class TokenExecutorImpl {
     }
 }
 
+extension TokenExecutorImpl: CustomDebugStringConvertible {
+    var debugDescription: String {
+        return "<TokenExecutorImpl: \(Unmanaged.passUnretained(self).toOpaque()): queue=\(queue.debugDescription) taskQueue=\(taskQueue.count) sideEffects=\(sideEffects.count) pauseCount=\(pauseCount.value) throughput=\(throughputEstimator.estimatedThroughput) delegate=\(String(describing: delegate))>"
+    }
+}
+
 extension TokenExecutorImpl: UnpauserDelegate {
     // You can call this on any queue.
     func unpause() {
@@ -581,3 +601,70 @@ extension TokenExecutor: IdempotentOperationScheduler {
         addSideEffect(closure)
     }
 }
+
+// Run a closure but not too often.
+@objc(iTermPeriodicScheduler)
+class PeriodicScheduler: NSObject {
+    private var updatePending: Bool {
+        return mutex.sync { _updatePending }
+    }
+    private var _updatePending = false
+    private var needsUpdate: Bool {
+        get {
+            return mutex.sync { _needsUpdate }
+        }
+        set {
+            mutex.sync { _needsUpdate = newValue }
+        }
+    }
+    private var _needsUpdate = false
+    private let queue: DispatchQueue
+    private let mutex = Mutex()
+    private let period: TimeInterval
+    private let action: () -> ()
+
+    @objc(initWithQueue:period:block:)
+    init(_ queue: DispatchQueue, period: TimeInterval, action: @escaping () -> ()) {
+        self.queue = queue
+        self.period = period
+        self.action = action
+    }
+
+    @objc func markNeedsUpdate() {
+        needsUpdate = true
+        schedule(reset: false)
+    }
+
+    @objc func schedule() {
+        schedule(reset: false)
+    }
+
+    private func schedule(reset: Bool) {
+        mutex.sync {
+            if reset {
+                _updatePending = false
+            }
+            guard _needsUpdate else {
+                // Nothing changed.
+                return
+            }
+            let wasPending = _updatePending
+            _updatePending = true
+
+            if wasPending {
+                // Too soon to update.
+                return
+            }
+
+            queue.asyncAfter(deadline: .now() + period) { [weak self] in
+                guard let self = self else {
+                    return
+                }
+                self.schedule(reset: true)
+            }
+            _needsUpdate = false
+            action()
+        }
+    }
+}
+

@@ -52,8 +52,10 @@
     if (![self appendAsciiDataToTriggerLine:asciiData] && self.config.loggingEnabled) {
         const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
         const screen_char_t backgroundColorCode = self.terminal.backgroundColorCode;
+        NSData *data = [NSData dataWithBytes:asciiData->buffer
+                                      length:asciiData->length];
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            [delegate screenDidAppendAsciiDataToCurrentLine:asciiData
+            [delegate screenDidAppendAsciiDataToCurrentLine:data
                                                  foreground:foregroundColorCode
                                                  background:backgroundColorCode];
         }];
@@ -317,7 +319,7 @@
           moveCursorTo:(VT100GridCoord)newCursorCoord
               delegate:(id<VT100ScreenDelegate>)delegate
             completion:(void (^)(void))completion {
-    assert(self.performingJoinedBlock);
+    assert(VT100ScreenMutableState.performingJoinedBlock);
     if ([delegate screenShouldInitiateWindowResize] &&
         ![delegate screenWindowIsFullscreen]) {
         // set the column
@@ -958,6 +960,7 @@
 }
 
 - (void)terminalSetUserVar:(NSString *)kvp {
+#warning TODO: Use addPausedSideEffect here instead of this.
     iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetUserVar:kvp];
@@ -1358,7 +1361,7 @@
                                      inset:(NSEdgeInsets)inset
                                 delegate:(id<VT100ScreenDelegate>)delegate
                                 completion:(void (^)(BOOL ok))completion {
-    assert(self.performingJoinedBlock);
+    assert(VT100ScreenMutableState.performingJoinedBlock);
     BOOL promptIfBig = YES;
     if (![delegate screenConfirmDownloadAllowed:name
                                            size:size
