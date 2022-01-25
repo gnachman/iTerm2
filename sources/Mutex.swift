@@ -16,7 +16,7 @@ class Mutex {
     private func unlock() {
         sema.signal()
     }
-    func sync<T>(_ closure: () throws -> T) rethrows -> T{
+    func sync<T>(_ closure: () throws -> T) rethrows -> T {
         lock()
         defer {
             unlock()

@@ -40,7 +40,12 @@ iTermTriggerScopeProvider> {
 }
 
 @property (atomic) BOOL hadCommand;
-@property (atomic) BOOL performingJoinedBlock;
+// This is a class variable because there is a single mutation queue. If that queue gets locked up
+// in a joined block, then any VT100ScreenMutableState can consider itself joined while on the
+// main thread. This can happen when performBlockWithJoinedThreads is reentrant with two different
+// VT100ScreenMutableState objects (for example, when detaching in tmux mode).
+@property (class, atomic) BOOL performingJoinedBlock;
+@property (atomic) BOOL intervalTreeChangeSideEffectPending;
 
 - (iTermColorMap *)colorMap;
 
