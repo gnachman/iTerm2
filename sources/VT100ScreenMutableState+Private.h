@@ -57,5 +57,6 @@ iTermTriggerScopeProvider> {
 // Main thread/synchronized access only.
 @property (nonatomic, readonly) IntervalTree *derivativeSavedIntervalTree;
 
+- (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect;
 
 @end

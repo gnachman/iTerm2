@@ -217,11 +217,10 @@
 
 - (void)terminalSetCursorType:(ITermCursorType)cursorType {
     // Pause because cursor type and blink are reportable.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
     if (self.currentGrid.cursor.x < self.currentGrid.size.width) {
         [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
     }
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetCursorType:cursorType];
         [unpauser unpause];
     }];
@@ -229,8 +228,7 @@
 
 - (void)terminalSetCursorBlinking:(BOOL)blinking {
     // Pause because cursor type and blink are reportable.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetCursorBlinking:blinking];
         [unpauser unpause];
     }];
@@ -238,10 +236,9 @@
 
 - (iTermPromise<NSNumber *> *)terminalCursorIsBlinkingPromise {
     // Pause to avoid processing any more tokens since this is used for a report.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
     dispatch_queue_t queue = _queue;
     return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
-        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
             const BOOL value = [delegate screenCursorIsBlinking];
             // VT100Terminal is blithely unaware of dispatch queues so make sure to give it a result
             // on the queue it expects to run on.
@@ -255,9 +252,8 @@
 
 - (void)terminalGetCursorInfoWithCompletion:(void (^)(ITermCursorType type, BOOL blinking))completion {
     // Pause to avoid processing any more tokens since this is used for a report.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
     dispatch_queue_t queue = _queue;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         ITermCursorType type = CURSOR_BOX;
         BOOL blinking = YES;
         [delegate screenGetCursorType:&type blinking:&blinking];
@@ -270,8 +266,7 @@
 
 - (void)terminalResetCursorTypeAndBlink {
     // Pause because cursor type and blink are reportable.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenResetCursorTypeAndBlink];
         [unpauser unpause];
     }];
@@ -304,8 +299,7 @@
 }
 
 - (void)terminalSetRows:(int)rows andColumns:(int)columns {
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetSize:VT100GridSizeMake(rows, columns)];
         [unpauser unpause];
     }];
@@ -400,8 +394,7 @@
     self.collectInputForPrinting = NO;
 
     // Pause so we print the current state and not future updates.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenPrintVisibleAreaIfAllowed];
         [unpauser unpause];
     }];
@@ -420,8 +413,7 @@
     DLog(@"terminalSetWindowTitle:%@", title);
 
     // Pause because a title change affects a variable, and that is observable by token execution.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         if ([delegate screenAllowTitleSetting]) {
             [delegate screenSetWindowTitle:title];
         }
@@ -450,8 +442,7 @@
 
 - (void)terminalSetIconTitle:(NSString *)title {
     // Pause because a title change affects a variable, and that is observable by token execution.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         if ([delegate screenAllowTitleSetting]) {
             [delegate screenSetIconName:title];
         }
@@ -586,8 +577,7 @@
 }
 
 - (void)terminalSetPixelWidth:(int)width height:(int)height {
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetPointSize:NSMakeSize(width, height)];
         [unpauser unpause];
     }];
@@ -595,8 +585,7 @@
 
 - (void)terminalMoveWindowTopLeftPointTo:(NSPoint)point {
     // Pause because you can query for window location.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         if ([delegate screenShouldInitiateWindowResize] &&
             ![delegate screenWindowIsFullscreen]) {
             // TODO: Only allow this if there is a single session in the tab.
@@ -608,8 +597,7 @@
 
 - (void)terminalMiniaturize:(BOOL)mini {
     // Paseu becasue miniaturization status is reportable.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         // TODO: Only allow this if there is a single session in the tab.
         if ([delegate screenShouldInitiateWindowResize] &&
             ![delegate screenWindowIsFullscreen]) {
@@ -620,8 +608,7 @@
 }
 
 - (void)terminalRaise:(BOOL)raise {
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         if ([delegate screenShouldInitiateWindowResize]) {
             [delegate screenRaise:raise];
         }
@@ -705,8 +692,7 @@
 
 - (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow {
     // Pause because this sets the title, which is observable.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         if ([delegate screenAllowTitleSetting]) {
             [delegate screenPopCurrentTitleForWindow:isWindow];
         }
@@ -752,8 +738,7 @@
 
 - (void)terminalMouseModeDidChangeTo:(MouseMode)mouseMode {
     // Pause because this updates a variable.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenMouseModeDidChange];
         [unpauser unpause];
     }];
@@ -845,8 +830,7 @@
 
 - (void)terminalProfileShouldChangeTo:(NSString *)value {
     [self forceCheckTriggers];
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetProfileToProfileNamed:value];
         [unpauser unpause];
     }];
@@ -952,23 +936,20 @@
 
 - (void)terminalSetBadgeFormat:(NSString *)badge {
     // Pause because this changes a variable.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetBadgeFormat:badge];
         [unpauser unpause];
     }];
 }
 
 - (void)terminalSetUserVar:(NSString *)kvp {
-#warning TODO: Use addPausedSideEffect here instead of this.
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetUserVar:kvp];
         [unpauser unpause];
     }];
 }
 
-#warning TODO: I think it's a problem that this uses a joined side effect because when starting/stopping vim this forces a redraw. 
+#warning TODO: I think it's a problem that this uses a joined side effect because when starting/stopping vim this forces a redraw.
 - (void)terminalResetColor:(VT100TerminalColorIndex)n {
     const int key = [self colorMapKeyForTerminalColorIndex:n];
     DLog(@"Key for %@ is %@", @(n), @(key));
@@ -1043,32 +1024,28 @@
 }
 
 - (void)terminalSetCurrentTabColor:(NSColor *)color {
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetCurrentTabColor:color];
         [unpauser unpause];
     }];
 }
 
 - (void)terminalSetTabColorRedComponentTo:(CGFloat)color {
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetTabColorRedComponentTo:color];
         [unpauser unpause];
     }];
 }
 
 - (void)terminalSetTabColorGreenComponentTo:(CGFloat)color {
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetTabColorGreenComponentTo:color];
         [unpauser unpause];
     }];
 }
 
 - (void)terminalSetTabColorBlueComponentTo:(CGFloat)color {
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetTabColorBlueComponentTo:color];
         [unpauser unpause];
     }];
@@ -1654,8 +1631,7 @@
                                                      characters:(NSString *)characters
                                     charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
     return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
-        iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
             NSString *value = [delegate screenStringForKeypressWithCode:keyCode
                                                                   flags:flags
                                                              characters:characters
@@ -1679,8 +1655,7 @@
 }
 
 - (void)terminalApplicationKeypadModeDidChange:(BOOL)mode {
-    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenApplicationKeypadModeDidChange:mode];
         [unpauser unpause];
     }];
