@@ -212,6 +212,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     _config = source.config;
 }
 
+#warning TODO: Make this fast when nothing has changed.
 - (void)copySlowStuffFrom:(VT100ScreenMutableState *)source {
     _markCache = [NSMutableDictionary dictionary];
     [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {

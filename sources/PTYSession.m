@@ -3769,6 +3769,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)loadColorsFromProfile:(Profile *)aDict {
     const BOOL dark = (self.view.effectiveAppearance ?: [NSApp effectiveAppearance]).it_isDark;
     NSDictionary<NSNumber *, NSString *> *keyMap = [self colorTableForProfile:aDict darkMode:dark];
+
     for (NSNumber *colorKey in keyMap) {
         NSString *profileKey = keyMap[colorKey];
 
@@ -7724,7 +7725,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                         resetOverflow:resetOverflow
                                                          mutableState:mutableState];
     _textview.colorMap = _screen.colorMap;
-    _config.isDirty = NO;
     return syncResult;
 }
 
