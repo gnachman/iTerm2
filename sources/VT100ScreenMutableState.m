@@ -219,7 +219,22 @@ static _Atomic int gPerformingJoinedBlock;
 // mutation and main-thread data in it.
 - (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
     if (VT100ScreenMutableState.performingJoinedBlock) {
-        [self performSideEffect:sideEffect];
+        id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+        const NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+        self.primaryGrid.currentDate = now;
+        self.altGrid.currentDate = now;
+        // Sync because the delegate expects to see the changes it made reflected in its immutable state.
+        // For example:
+        //   [mutableState performBlockWithJoinedThreads]
+        //     [mutableState setColor:forKey:];
+        //       [colorMap setColor:forKey:]
+        //         [mutableState colorMap:didChangeColorForKey:]
+        //           [mutableState addJoinedSideEffect:]
+        //             <better sync right here!>
+        //             [delegate immutableColorMap:didChangeColorForKey:]  // the immutable colormap needs to be up to date with mutable one changed above!
+        [delegate screenSync:self];
+        sideEffect(delegate);
+        [delegate screenSync:self];
         return;
     }
     __weak __typeof(self) weakSelf = self;
@@ -4214,7 +4229,7 @@ launchCoprocessWithCommand:(NSString *)command
 
 #pragma mark - iTermColorMapDelegate
 
-// Note: we use joined side effects here to ensure the mainThreadCopy.colorMap is current.
+#warning TODO: Rather than proxying delegate calls, I should do what I did with interval trees and mirror the updates in the mainthread copy. Using joined side effects is slow (two syncs each).
 - (void)colorMap:(iTermColorMap *)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
     __weak __typeof(self) weakSelf = self;
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {

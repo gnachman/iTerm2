@@ -23,6 +23,7 @@
 @class IntervalTree;
 @class PTYTask;
 @class VT100Grid;
+@class VT100MutableScreenConfiguration;
 @protocol VT100RemoteHostReading;
 @class VT100ScreenMark;
 @protocol VT100ScreenMarkReading;
@@ -209,7 +210,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
     VT100ScreenTriggerCheckTypeFullLines
 };
 
-- (VT100SyncResult)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
+- (VT100SyncResult)synchronizeWithConfig:(VT100MutableScreenConfiguration *)sourceConfig
                                   expect:(iTermExpect *)maybeExpect
                            checkTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                            resetOverflow:(BOOL)resetOverflow

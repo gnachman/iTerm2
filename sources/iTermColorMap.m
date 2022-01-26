@@ -79,6 +79,9 @@ const int kColorMapAnsiBrightModifier = 8;
 }
 
 - (void)setMutingAmount:(double)mutingAmount {
+    if (_mutingAmount == mutingAmount) {
+        return;
+    }
     _mutingAmount = mutingAmount;
     [_delegate colorMap:self mutingAmountDidChangeTo:mutingAmount];
 }
@@ -156,6 +159,9 @@ const int kColorMapAnsiBrightModifier = 8;
 }
 
 - (void)setDimOnlyText:(BOOL)dimOnlyText {
+    if (dimOnlyText == _dimOnlyText) {
+        return;
+    }
     _dimOnlyText = dimOnlyText;
     [_delegate colorMap:self dimmingAmountDidChangeTo:_dimmingAmount];
 }

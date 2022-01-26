@@ -968,6 +968,7 @@
     }];
 }
 
+#warning TODO: I think it's a problem that this uses a joined side effect because when starting/stopping vim this forces a redraw. 
 - (void)terminalResetColor:(VT100TerminalColorIndex)n {
     const int key = [self colorMapKeyForTerminalColorIndex:n];
     DLog(@"Key for %@ is %@", @(n), @(key));

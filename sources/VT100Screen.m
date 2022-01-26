@@ -1057,7 +1057,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_mutableState performBlockAsynchronously:block];
 }
 
-- (VT100SyncResult)synchronizeWithConfig:(id<VT100ScreenConfiguration>)sourceConfig
+- (VT100SyncResult)synchronizeWithConfig:(VT100MutableScreenConfiguration *)sourceConfig
                                   expect:(iTermExpect *)maybeExpect
                            checkTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                            resetOverflow:(BOOL)resetOverflow
@@ -1075,6 +1075,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             break;
     }
     if (sourceConfig.isDirty) {
+        // Prevents reentrant sync from setting config more than once.
+        sourceConfig.isDirty = NO;
         mutableState.config = sourceConfig;
     }
     if (maybeExpect) {
