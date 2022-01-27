@@ -34,10 +34,6 @@ static NSString *const kMarkGuidKey = @"Guid";
     return self;
 }
 
-- (BOOL)isVisible {
-    return NO;
-}
-
 - (NSDictionary *)dictionaryValue {
     NSMutableDictionary *dict = [[super dictionaryValue] mutableCopy];
     dict[kMarkGuidKey] = self.guid;

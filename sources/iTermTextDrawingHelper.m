@@ -921,7 +921,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                 leftMarginRect:(NSRect)leftMargin
                  virtualOffset:(CGFloat)virtualOffset {
     id<VT100ScreenMarkReading> mark = [self.delegate drawingHelperMarkOnLine:line];
-    if (mark.isVisible && self.drawMarkIndicators) {
+    if (mark != nil && self.drawMarkIndicators) {
         NSRect insetLeftMargin = leftMargin;
         insetLeftMargin.origin.x += 1;
         insetLeftMargin.size.width -= 1;

@@ -71,7 +71,7 @@ NS_ASSUME_NONNULL_BEGIN
     }
 
     id<VT100ScreenMarkReading> mark = [textView.dataSource markOnLine:i];
-    if (!mark.isVisible) {
+    if (!mark) {
         return iTermMarkStyleNone;
     }
     if (mark.code == 0) {

@@ -10,11 +10,6 @@
 #import "IntervalTree.h"
 
 @protocol iTermMark <NSObject, IntervalTreeImmutableObject>
-
-// Should the mark be seen by the user? Returns YES by default.
-#warning TODO: This should move to VT100ScreenMark.
-@property(nonatomic, readonly) BOOL isVisible;
-
 @end
 
 // This is a base class for marks but should never be used directly.
