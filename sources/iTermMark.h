@@ -19,5 +19,6 @@
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 - (NSDictionary *)dictionaryValue;
 - (id<iTermMark>)progenitor;
+- (id<iTermMark>)doppelganger;
 
 @end

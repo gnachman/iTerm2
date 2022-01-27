@@ -31,7 +31,7 @@
     return [[self.class alloc] init];
 }
 
-- (id<IntervalTreeObject>)doppelganger {
+- (id<iTermMark>)doppelganger {
     @synchronized ([iTermMark class]) {
         assert(!_isDoppelganger);
         if (!_doppelganger) {

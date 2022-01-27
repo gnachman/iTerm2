@@ -127,7 +127,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     if (self) {
         _animatedLines = [NSMutableIndexSet indexSet];
         _commandStartCoord = VT100GridAbsCoordMake(-1, -1);
-        _markCache = [[NSMutableDictionary alloc] init];
+        _markCache = [[iTermMarkCache alloc] init];
         _maxScrollbackLines = -1;
         _tabStops = [[NSMutableSet alloc] init];
         _charsetUsesLineDrawingMode = [NSMutableSet set];
@@ -214,10 +214,9 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 
 #warning TODO: Make this fast when nothing has changed.
 - (void)copySlowStuffFrom:(VT100ScreenMutableState *)source {
-    _markCache = [NSMutableDictionary dictionary];
-    [source.markCache enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id<iTermMark>  _Nonnull obj, BOOL * _Nonnull stop) {
-        _markCache[key] = (id<iTermMark>)[obj doppelganger];
-    }];
+    if (!_markCache || source.markCache.dirty) {
+        _markCache = source.markCache.copy;
+    }
     _animatedLines = [source.animatedLines copy];
     if (!_colorMap) {
         _colorMap = [source.colorMap copy];
@@ -638,7 +637,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 }
 
 - (id<VT100ScreenMarkReading>)markOnLine:(int)line {
-    return [VT100ScreenMark castFrom:self.markCache[@(self.cumulativeScrollbackOverflow + line)]];
+    return [VT100ScreenMark castFrom:self.markCache[self.cumulativeScrollbackOverflow + line]];
 }
 
 - (NSString *)commandInRange:(VT100GridCoordRange)range {

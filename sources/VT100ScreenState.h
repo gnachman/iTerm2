@@ -104,7 +104,7 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, readonly) VT100GridAbsCoord commandStartCoord;
 
 // Maps an absolute line number to a VT100ScreenMark.
-@property (nonatomic, strong, readonly) NSDictionary<NSNumber *, id<iTermMark>> *markCache;
+@property (nonatomic, strong, readonly) id<iTermMarkCacheReading> markCache;
 
 // Max size of scrollback buffer
 @property (nonatomic, readonly) unsigned int maxScrollbackLines;
@@ -219,7 +219,7 @@ extern NSString *const kScreenStateProtectedMode;
 // -resetScrollbackOverflow.
 @property (nonatomic, readwrite) int scrollbackOverflow;
 @property (nonatomic, readwrite) VT100GridAbsCoord commandStartCoord;
-@property (nonatomic, strong, readwrite) NSMutableDictionary<NSNumber *, id<iTermMark>> *markCache;
+@property (nonatomic, strong, readwrite) iTermMarkCache *markCache;
 @property (nonatomic, readwrite) unsigned int maxScrollbackLines;
 @property (nonatomic, strong, readwrite) NSMutableSet<NSNumber *> *tabStops;
 @property (nonatomic, strong) NSMutableSet<NSNumber *> *charsetUsesLineDrawingMode;

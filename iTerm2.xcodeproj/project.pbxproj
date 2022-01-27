@@ -3586,6 +3586,7 @@
 		A6EC937D24E856F100EEADEF /* iTermAnnouncementView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AE1EDC192723F700780C19 /* iTermAnnouncementView.m */; };
 		A6EC937E24E859D100EEADEF /* ToolDirectoriesView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D49834F1912FC0B002E942D /* ToolDirectoriesView.m */; };
 		A6EC937F24E85CEF00EEADEF /* PasteboardHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C18801275D22900461E55 /* PasteboardHistory.m */; };
+		A6ED047627A357BE00E41D13 /* MarkCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6ED047527A357BE00E41D13 /* MarkCache.swift */; };
 		A6EE7AEC2708D6C100C86D38 /* iTermColorMap.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A13AA118C2D23300B241ED /* iTermColorMap.m */; };
 		A6EE7F33234082BE00D0F724 /* iTermMalloc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EE7F31234082BE00D0F724 /* iTermMalloc.h */; };
 		A6EE7F34234082BE00D0F724 /* iTermMalloc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EE7F32234082BE00D0F724 /* iTermMalloc.m */; };
@@ -6606,6 +6607,7 @@
 		A6EC937124E78A5100EEADEF /* iTermEditSnippetWindowController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermEditSnippetWindowController.h; sourceTree = "<group>"; };
 		A6EC937224E78A5100EEADEF /* iTermEditSnippetWindowController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermEditSnippetWindowController.m; sourceTree = "<group>"; };
 		A6EC937324E78A5100EEADEF /* iTermEditSnippetWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermEditSnippetWindowController.xib; sourceTree = "<group>"; };
+		A6ED047527A357BE00E41D13 /* MarkCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkCache.swift; sourceTree = "<group>"; };
 		A6EE7F31234082BE00D0F724 /* iTermMalloc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMalloc.h; sourceTree = "<group>"; };
 		A6EE7F32234082BE00D0F724 /* iTermMalloc.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMalloc.m; sourceTree = "<group>"; };
 		A6EEA6661C83B95C00FA1594 /* iTermAutomaticProfileSwitcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermAutomaticProfileSwitcher.h; sourceTree = "<group>"; };
@@ -9918,6 +9920,7 @@
 				A6C4E8DD1846E13800CFAA77 /* IntervalTree.h */,
 				A6C4E8DC1846E13800CFAA77 /* IntervalTree.m */,
 				A6F0E2592797536A00022D20 /* JournalingIntervalTree.swift */,
+				A6ED047527A357BE00E41D13 /* MarkCache.swift */,
 			);
 			name = "Data Structures";
 			sourceTree = "<group>";
@@ -14107,6 +14110,7 @@
 				A667C23E276C7A44006B4DEF /* HighlightTrigger.m in Sources */,
 				A6A4B2B02426B8D600184EAC /* iTermTouchbarMappings.m in Sources */,
 				A6AFD68524496EC2007D0660 /* iTermMultiServerMessage.m in Sources */,
+				A6ED047627A357BE00E41D13 /* MarkCache.swift in Sources */,
 				A655E6962066C78700DC21B9 /* iTermScrollAccumulator.m in Sources */,
 				A648DAC72427E8E900C2FF02 /* iTermSearchQueryDidChangeNotification.m in Sources */,
 				A667C23B276BD931006B4DEF /* VT100StateTransition.m in Sources */,

@@ -1993,7 +1993,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                         limit);
     }
     if ([mark isKindOfClass:[VT100ScreenMark class]]) {
-        self.markCache[@(self.cumulativeScrollbackOverflow + range.end.y)] = mark;
+        self.markCache[self.cumulativeScrollbackOverflow + range.end.y] = mark;
     }
     DLog(@"addMarkStartingAtAbsoluteLine: %@", mark);
     [self.mutableIntervalTree addObject:mark withInterval:[self intervalForGridCoordRange:range]];
@@ -2014,7 +2014,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if ([obj isKindOfClass:[VT100ScreenMark class]]) {
         long long theKey = (totalScrollbackOverflow +
                             [self coordRangeForInterval:obj.entry.interval].end.y);
-        [self.markCache removeObjectForKey:@(theKey)];
+        [self.markCache remove:theKey];
         self.lastCommandMark = nil;
     }
     if ([obj isKindOfClass:[PTYAnnotation class]]) {
@@ -2602,12 +2602,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)reloadMarkCache {
     long long totalScrollbackOverflow = self.cumulativeScrollbackOverflow;
-    [self.markCache removeAllObjects];
+    [self.markCache removeAll];
     for (id<IntervalTreeObject> obj in [self.intervalTree allObjects]) {
         if ([obj isKindOfClass:[VT100ScreenMark class]]) {
             VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
             id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)obj;
-            self.markCache[@(totalScrollbackOverflow + range.end.y)] = mark;
+            self.markCache[totalScrollbackOverflow + range.end.y] = mark;
         }
     }
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
