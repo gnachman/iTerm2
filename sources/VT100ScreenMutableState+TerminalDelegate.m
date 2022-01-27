@@ -949,19 +949,53 @@
     }];
 }
 
-#warning TODO: I think it's a problem that this uses a joined side effect because when starting/stopping vim this forces a redraw.
 - (void)terminalResetColor:(VT100TerminalColorIndex)n {
     const int key = [self colorMapKeyForTerminalColorIndex:n];
     DLog(@"Key for %@ is %@", @(n), @(key));
     if (key < 0) {
         return;
     }
+    if (key >= kColorMap8bitBase && key < kColorMap8bitBase + 256) {
+        if (key >= kColorMap8bitBase + 16 && key < kColorMap8bitBase + 256) {
+            // ANSI colors above 16 don't come from the profile. They have hard-coded defaults.
+            NSColor *theColor = [NSColor colorForAnsi256ColorIndex:key - kColorMap8bitBase];
+            [self mutateColorMap:^(iTermColorMap * _Nonnull colorMap) {
+                [colorMap setColor:theColor forKey:key];
+            }];
+            return;
+        }
+        // If you get here then it's one of the 16 ANSI colors and it is allowed to be changed.
+    } else {
+        // Non-ANSI color. Only some of them may be reset.
+        DLog(@"Reset dynamic color with colormap key %d", key);
+        NSArray<NSNumber *> *allowed = @[
+            @(kColorMapForeground),
+            @(kColorMapBackground),
+            @(kColorMapCursor),
+            @(kColorMapSelection),
+            @(kColorMapSelectedText),
+        ];
+        if (![allowed containsObject:@(key)]) {
+            DLog(@"Unexpected key");
+            return;
+        }
+    }
     iTermColorMap *colorMap = self.colorMap;
+    __weak __typeof(self) weakSelf = self;
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenResetColorsWithColorMapKey:key colorMap:colorMap];
+        // If we're lucky we get back a dictionary and it's fast. Otherwise the delegate will
+        // need to change the profile and it's slow.
+        NSDictionary<NSNumber *, id> *mutations = [delegate screenResetColorWithColorMapKey:key
+                                                                                 profileKey:[colorMap profileKeyForColorMapKey:key]
+                                                                                       dark:colorMap.darkMode];
+        if (mutations.count) {
+            [weakSelf setColorsFromDictionary:mutations];
+        }
     }];
 }
 
+// These calls to `screenSetColor:` will modify the profile and will themselves join the mutation
+// thread so don't bother trying to make them regular side-effects.
 - (void)terminalSetForegroundColor:(NSColor *)color {
     iTermColorMap *colorMap = self.colorMap;
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {

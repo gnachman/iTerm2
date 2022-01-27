@@ -109,7 +109,7 @@ extern const int kColorMap24bitBase;
                    isBackground:(BOOL)isBackground
              useCustomBoldColor:(BOOL)useCustomBoldColor
                    brightenBold:(BOOL)brightenBold;
-- (id<iTermColorMapReading>)copy;
+- (iTermColorMap *)copy;
 @end
 
 // This class holds the collection of colors used by a single session. Some colors are index-mapped

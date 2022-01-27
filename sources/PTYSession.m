@@ -3770,25 +3770,24 @@ ITERM_WEAKLY_REFERENCEABLE
     const BOOL dark = (self.view.effectiveAppearance ?: [NSApp effectiveAppearance]).it_isDark;
     NSDictionary<NSNumber *, NSString *> *keyMap = [self colorTableForProfile:aDict darkMode:dark];
 
-    for (NSNumber *colorKey in keyMap) {
-        NSString *profileKey = keyMap[colorKey];
-
+    NSMutableDictionary<NSNumber *, id> *colorTable =
+    [[[keyMap mapValuesWithBlock:^id(NSNumber *colorKey, NSString *profileKey) {
         if ([profileKey isKindOfClass:[NSString class]]) {
-            [_screen setColor:[iTermProfilePreferences colorForKey:profileKey
-                                                              dark:dark
-                                                           profile:aDict]
-                       forKey:[colorKey intValue]];
+            return [iTermProfilePreferences colorForKey:profileKey
+                                                   dark:dark
+                                                profile:aDict] ?: [NSNull null];
         } else {
-            [_screen setColor:nil forKey:[colorKey intValue]];
+            return [NSNull null];
         }
-    }
+    }] mutableCopy] autorelease];
+    [self load16ANSIColorsFromProfile:aDict darkMode:dark into:colorTable];
+    [_screen setColorsFromDictionary:colorTable];
     self.cursorGuideColor = [[iTermProfilePreferences objectForKey:iTermAmendedColorKey(KEY_CURSOR_GUIDE_COLOR, aDict, dark)
                                                          inProfile:aDict] colorValueForKey:iTermAmendedColorKey(KEY_CURSOR_GUIDE_COLOR, aDict, dark)];
     if (!_cursorGuideSettingHasChanged) {
         _textview.highlightCursorLine = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_USE_CURSOR_GUIDE, aDict, dark)
                                                                   inProfile:aDict];
     }
-    [self load16ANSIColorsFromProfile:aDict darkMode:dark];
 
     [self setSmartCursorColor:[iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_SMART_CURSOR_COLOR, aDict, dark)
                                                         inProfile:aDict]];
@@ -3816,48 +3815,40 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 // Restore a color to the value in `profile`.
-- (void)resetColorWithKey:(int)colorKey
-              fromProfile:(Profile *)profile
-                 colorMap:(iTermColorMap *)colorMap {
+- (NSDictionary<NSNumber *, id> *)resetColorWithKey:(int)colorKey
+                                        fromProfile:(Profile *)profile
+                                         profileKey:(NSString *)profileKey
+                                               dark:(BOOL)dark {
     DLog(@"resetColorWithKey:%d fromProfile:%@", colorKey, profile[KEY_GUID]);
-    if (!_originalProfile) {
+    if (!profile) {
         DLog(@"No original profile");
-        return;
+        return @{};
     }
 
-    if (colorKey >= kColorMap8bitBase + 16 && colorKey < kColorMap8bitBase + 256) {
-        // ANSI colors above 16 don't come from the profile. They have hard-coded defaults.
-        [self resetNonAnsiColorWithKey:colorKey colorMap:colorMap];
-        return;
-    }
-    // Note that we use _profile here since that tracks stuff like whether we have separate
-    // light/dark colors and whether there is a custom underline color. Later we use
-    // `originalProfile` to get the color to reset.
-    NSString *profileKey = [colorMap profileKeyForColorMapKey:colorKey];
-    DLog(@"profileKey=%@", profileKey);
     NSColor *color = [iTermProfilePreferences colorForKey:profileKey
-                                                     dark:colorMap.darkMode
+                                                     dark:dark
                                                   profile:profile];
-    [self reallySetColor:color forKey:colorKey colorMap:colorMap];
+    if (!color) {
+        return @{};
+    }
+    if (profileKey) {
+        [self setSessionSpecificProfileValues:@{ profileKey: [color dictionaryValue] }];
+        return @{};
+    }
+    return @{ @(colorKey): color };
 }
 
-- (void)resetNonAnsiColorWithKey:(int)colorKey
-                        colorMap:(iTermColorMap *)colorMap {
-    NSColor *theColor = [NSColor colorForAnsi256ColorIndex:colorKey - kColorMap8bitBase];
-    [colorMap setColor:theColor forKey:colorKey];
-}
-
-- (void)load16ANSIColorsFromProfile:(Profile *)aDict darkMode:(BOOL)dark {
+- (void)load16ANSIColorsFromProfile:(Profile *)aDict darkMode:(BOOL)dark into:(NSMutableDictionary<NSNumber *, id> *)dict {
     for (int i = 0; i < 16; i++) {
-        [self loadANSIColor:i fromProfile:aDict darkMode:dark];
+        [self loadANSIColor:i fromProfile:aDict darkMode:dark to:dict];
     }
 }
 
-- (void)loadANSIColor:(int)i fromProfile:(Profile *)aDict darkMode:(BOOL)dark {
+- (void)loadANSIColor:(int)i fromProfile:(Profile *)aDict darkMode:(BOOL)dark to:(NSMutableDictionary<NSNumber *, id> *)dict {
     NSString *baseKey = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i];
     NSString *profileKey = iTermAmendedColorKey(baseKey, aDict, dark);
     NSColor *theColor = [ITAddressBookMgr decodeColor:aDict[profileKey]];
-    [_screen setColor:theColor forKey:kColorMap8bitBase + i];
+    dict[@(kColorMap8bitBase + i)] = theColor ?: [NSNull null];
 }
 
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs {
@@ -11527,29 +11518,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // 8-15 are ansi bright colors,
 // 16-255 are 256 color-mode colors.
 // If empty, reset all.
-- (void)screenResetColorsWithColorMapKey:(int)key
-                                colorMap:(iTermColorMap *)colorMap {
-    DLog(@"key=%d", key);
-
-    if (key >= kColorMap8bitBase && key < kColorMap8bitBase + 256) {
-        DLog(@"Reset ANSI color %@", @(key));
-        [self resetColorWithKey:key fromProfile:_originalProfile colorMap:colorMap];
-        return;
-    }
-    DLog(@"Reset dynamic color with colormap key %d", key);
-    NSArray<NSNumber *> *allowed = @[
-        @(kColorMapForeground),
-        @(kColorMapBackground),
-        @(kColorMapCursor),
-        @(kColorMapSelection),
-        @(kColorMapSelectedText),
-    ];
-    if (![allowed containsObject:@(key)]) {
-        DLog(@"Unexpected key");
-        return;
-    }
-
-    [self resetColorWithKey:key fromProfile:_originalProfile colorMap:colorMap];
+- (NSDictionary<NSNumber *, id> *)screenResetColorWithColorMapKey:(int)key
+                                                       profileKey:(NSString *)profileKey
+                                                             dark:(BOOL)dark {
+    DLog(@"key=%d profileKey=%@ dark=%d", key, profileKey, dark);
+    return [self resetColorWithKey:key
+                       fromProfile:_originalProfile
+                        profileKey:profileKey
+                              dark:dark];
 }
 
 - (void)screenSetColor:(NSColor *)color forKey:(int)key colorMap:(iTermColorMap *)colorMap {

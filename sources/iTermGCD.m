@@ -47,11 +47,7 @@ static const char *iTermGCDMutationQueueLabel = "com.iterm2.mutation";
 }
 
 + (dispatch_queue_t)mutationQueue {
-    if ([iTermAdvancedSettingsModel concurrentMutation]) {
-        return [self _mutationQueue];
-    }
-    return dispatch_get_main_queue();
-
+    return [self _mutationQueue];
 }
 
 + (void)assertMainQueueSafe {

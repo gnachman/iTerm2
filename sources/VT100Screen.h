@@ -194,6 +194,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)enumerateLinesInRange:(NSRange)range block:(void (^)(int line, ScreenCharArray *, iTermImmutableMetadata, BOOL *))block;
 
 - (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block;
+- (void)setColorsFromDictionary:(NSDictionary<NSNumber *, id> *)dict;
 - (void)setColor:(NSColor *)color forKey:(int)key;
 - (void)userDidPressReturn;
 

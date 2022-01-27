@@ -272,8 +272,10 @@
 - (void)screenSetColor:(NSColor * _Nullable)color
                 forKey:(int)key
               colorMap:(iTermColorMap * _Nonnull)colorMap;
-- (void)screenResetColorsWithColorMapKey:(int)key
-                                colorMap:(iTermColorMap * _Nonnull)colorMap;
+- (NSDictionary<NSNumber *, id> * _Nonnull)screenResetColorWithColorMapKey:(int)key
+                                                                profileKey:(NSString * _Nonnull)profileKey
+                                                                      dark:(BOOL)dark;
+
 - (void)screenSelectColorPresetNamed:(NSString * _Nonnull)name;
 
 - (void)screenCurrentHostDidChange:(id<VT100RemoteHostReading> _Nonnull)host

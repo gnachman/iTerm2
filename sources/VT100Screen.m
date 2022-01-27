@@ -67,7 +67,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (instancetype)init {
     self = [super init];
     if (self) {
-#warning TODO: update colormap's darkMode through VT100ScreenConfiguration
         _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
         _state = [_mutableState copy];
         _mutableState.mainThreadCopy = _state;
@@ -154,6 +153,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (VT100GridAbsCoord)commandStartCoord {
     return _state.commandStartCoord;
+}
+
+- (void)setColorsFromDictionary:(NSDictionary<NSNumber *, id> *)dict {
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState setColorsFromDictionary:dict];
+    }];
 }
 
 - (void)setColor:(NSColor *)color forKey:(int)key {

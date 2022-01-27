@@ -219,7 +219,9 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
         _markCache[key] = (id<iTermMark>)[obj doppelganger];
     }];
     _animatedLines = [source.animatedLines copy];
-    _colorMap = [source.colorMap copy];
+    if (!_colorMap) {
+        _colorMap = [source.colorMap copy];
+    }
     _temporaryDoubleBuffer = [source.unconditionalTemporaryDoubleBuffer copy];
     _temporaryDoubleBuffer.queue = dispatch_get_main_queue();
     _primaryGrid.delegate = self;

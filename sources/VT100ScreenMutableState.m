@@ -121,14 +121,27 @@ static _Atomic int gPerformingJoinedBlock;
         _tokenExecutor.delegate = self;
         _echoProbe = [[iTermEchoProbe alloc] init];
         _echoProbe.delegate = self;
-        self.colorMap.delegate = self;
         self.unconditionalTemporaryDoubleBuffer.delegate = self;
     }
     return self;
 }
 
-- (iTermColorMap *)colorMap {
-    return (iTermColorMap *)[super colorMap];
+// The block will be called twice, once for the mutable-thread copy and later with the main-thread copy.
+- (void)mutateColorMap:(void (^)(iTermColorMap *colorMap))block {
+    // Mutate mutation thread instance.
+    block((iTermColorMap *)[super colorMap]);
+
+    // Schedule a side-effect to mutate the main-thread instance.
+    __weak __typeof(self) weakSelf = self;
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        iTermColorMap *mainThreadColorMap = (iTermColorMap *)strongSelf.mainThreadCopy.colorMap;
+        mainThreadColorMap.delegate = strongSelf;
+        block(mainThreadColorMap);
+    }];
 }
 
 - (VT100Terminal *)terminal {
@@ -193,6 +206,7 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
     if (VT100ScreenMutableState.performingJoinedBlock) {
+#warning TODO: The absence of a sync could be a problem here. Look for code that modifies mutation-thread state and then calls into the delegate, leaving it with out-of-date state. Maybe the right solution is to instantly mutate both copies of state while joined!!! <- good idea i think
         [self performSideEffect:sideEffect];
         return;
     }
@@ -304,11 +318,13 @@ static _Atomic int gPerformingJoinedBlock;
 
     [_triggerEvaluator loadFromProfileArray:config.triggerProfileDicts];
     _triggerEvaluator.triggerParametersUseInterpolatedStrings = config.triggerParametersUseInterpolatedStrings;
-    self.colorMap.dimOnlyText = config.dimOnlyText;
-    self.colorMap.darkMode = config.darkMode;
-    self.colorMap.useSeparateColorsForLightAndDarkMode = config.useSeparateColorsForLightAndDarkMode;
-    self.colorMap.minimumContrast = config.minimumContrast;
-    self.colorMap.mutingAmount = config.mutingAmount;
+    [self mutateColorMap:^(iTermColorMap *colorMap) {
+        colorMap.dimOnlyText = config.dimOnlyText;
+        colorMap.darkMode = config.darkMode;
+        colorMap.useSeparateColorsForLightAndDarkMode = config.useSeparateColorsForLightAndDarkMode;
+        colorMap.minimumContrast = config.minimumContrast;
+        colorMap.mutingAmount = config.mutingAmount;
+    }];
     if (config.maxScrollbackLines != self.maxScrollbackLines) {
         self.maxScrollbackLines = config.maxScrollbackLines;
         [self.linebuffer setMaxLines:config.maxScrollbackLines];
@@ -2982,31 +2998,51 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - Color
 
 - (void)loadInitialColorTable {
-    for (int i = 16; i < 256; i++) {
-        NSColor *theColor = [NSColor colorForAnsi256ColorIndex:i];
-        [self.colorMap setColor:theColor forKey:kColorMap8bitBase + i];
-    }
+    [self mutateColorMap:^(iTermColorMap *colorMap) {
+        for (int i = 16; i < 256; i++) {
+            NSColor *theColor = [NSColor colorForAnsi256ColorIndex:i];
+            [colorMap setColor:theColor forKey:kColorMap8bitBase + i];
+        }
+    }];
+}
+
+- (void)setColorsFromDictionary:(NSDictionary<NSNumber *, id> *)dict {
+    [self mutateColorMap:^(iTermColorMap *colorMap) {
+        [dict enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+            if ([obj isKindOfClass:[NSNull class]]) {
+                [colorMap setColor:nil forKey:key.intValue];
+            } else {
+                [colorMap setColor:(NSColor *)obj forKey:key.intValue];
+            }
+        }];
+    }];
 }
 
 #warning TODO: Ensure all calls to changing the color map funnel through here to get the call to sync.
 - (void)setColor:(NSColor *)color forKey:(int)key {
-    [self.colorMap setColor:color forKey:key];
+    [self mutateColorMap:^(iTermColorMap *colorMap) {
+        [colorMap setColor:color forKey:key];
+    }];
     // Sync so that HTML logging will have an up-to-date colormap.
     [self sync];
 }
 
 - (void)restoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
     const int limit = MIN(kColorMapNumberOf8BitColors, slot.indexedColors.count);
+    NSMutableDictionary<NSNumber *, id> *dict = [NSMutableDictionary dictionary];
     for (int i = 16; i < limit; i++) {
-        [self setColor:slot.indexedColors[i] forKey:kColorMap8bitBase + i];
+        dict[@(kColorMap8bitBase + i)] = slot.indexedColors[i] ?: [NSNull null];
     }
+    [self setColorsFromDictionary:dict];
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenRestoreColorsFromSlot:slot];
     }];
 }
 
 - (void)setDimmingAmount:(double)value {
-    self.colorMap.dimmingAmount = value;
+    [self mutateColorMap:^(iTermColorMap *colorMap) {
+        colorMap.dimmingAmount = value;
+    }];
 }
 
 #pragma mark - Cross-Thread Sync
@@ -4229,26 +4265,22 @@ launchCoprocessWithCommand:(NSString *)command
 
 #pragma mark - iTermColorMapDelegate
 
-#warning TODO: Rather than proxying delegate calls, I should do what I did with interval trees and mirror the updates in the mainthread copy. Using joined side effects is slow (two syncs each).
 - (void)colorMap:(iTermColorMap *)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
-    __weak __typeof(self) weakSelf = self;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate immutableColorMap:weakSelf.mainThreadCopy.colorMap didChangeColorForKey:theKey];
-    }];
+    [iTermGCD assertMainQueueSafe];
+    id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate immutableColorMap:self.mainThreadCopy.colorMap didChangeColorForKey:theKey];
 }
 
 - (void)colorMap:(iTermColorMap *)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount {
-    __weak __typeof(self) weakSelf = self;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate immutableColorMap:weakSelf.mainThreadCopy.colorMap dimmingAmountDidChangeTo:dimmingAmount];
-    }];
+    [iTermGCD assertMainQueueSafe];
+    id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate immutableColorMap:self.mainThreadCopy.colorMap dimmingAmountDidChangeTo:dimmingAmount];
 
 }
 - (void)colorMap:(iTermColorMap *)colorMap mutingAmountDidChangeTo:(double)mutingAmount {
-    __weak __typeof(self) weakSelf = self;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate immutableColorMap:weakSelf.mainThreadCopy.colorMap mutingAmountDidChangeTo:mutingAmount];
-    }];
+    [iTermGCD assertMainQueueSafe];
+    id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+    [delegate immutableColorMap:self.mainThreadCopy.colorMap mutingAmountDidChangeTo:mutingAmount];
 }
 
 #pragma mark - iTermTemporaryDoubleBufferedGridControllerDelegate
