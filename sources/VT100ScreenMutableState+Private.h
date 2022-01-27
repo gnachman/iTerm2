@@ -47,8 +47,6 @@ iTermTriggerScopeProvider> {
 @property (class, atomic) BOOL performingJoinedBlock;
 @property (atomic) BOOL intervalTreeChangeSideEffectPending;
 
-- (iTermColorMap *)colorMap;
-
 - (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
 
 // Main thread/synchronized access only.

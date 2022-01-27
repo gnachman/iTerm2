@@ -16,11 +16,9 @@ class ComplexCharRegistry: NSObject {
     private let mutex = Mutex()
 
     @objc var complexCharMap: [NSNumber: NSString] {
-        #warning("TODO: Make sure we return an immutable copy")
         return mutex.sync { impl.complexCharMap }
     }
     @objc var inverseComplexCharMap: [NSString: NSNumber] {
-        #warning("TODO: Make sure we return an immutable copy")
         return mutex.sync { impl.inverseComplexCharMap }
     }
     @objc var spacingCombiningMarkCodeNumbers: Set<NSNumber> {

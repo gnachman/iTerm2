@@ -9,8 +9,6 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermImage.h"
 
-#warning TODO: Expose a readonly protocol for this to the main thread.
-
 // Posted when a lazily loaded image is loaded.
 extern NSString *const iTermImageDidLoad;
 

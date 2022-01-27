@@ -31,7 +31,6 @@
 @property(nonatomic, readonly) BOOL hasCode;
 
 // Command for this mark.
-#warning TODO: readonlyments to command must happen on the mutation thread safely!
 @property(nonatomic, copy, readonly) NSString *command;
 
 // Time the command was set at (and presumably began running).
@@ -64,7 +63,6 @@
 @property(nonatomic, readwrite) int code;
 
 // Command for this mark.
-#warning TODO: Assignments to command must happen on the mutation thread safely!
 @property(nonatomic, copy, readwrite) NSString *command;
 
 // Time the command was set at (and presumably began running).
