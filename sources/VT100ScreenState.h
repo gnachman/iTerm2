@@ -68,9 +68,6 @@ extern NSString *const kScreenStateProtectedMode;
 
 @property (nonatomic, readonly) NSTimeInterval lastBell;
 
-// Line numbers containing animated GIFs that need to be redrawn for the next frame.
-@property (nonatomic, strong, readonly) NSIndexSet *animatedLines;
-
 // base64 value to copy to pasteboard, being built up bit by bit.
 @property (nullable, nonatomic, strong, readonly) NSString *pasteboardString;
 
@@ -201,7 +198,6 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *printBuffer;
 @property (nonatomic, readwrite) BOOL allowTitleReporting;
 @property (nonatomic, readwrite) NSTimeInterval lastBell;
-@property (nonatomic, strong, readwrite) NSMutableIndexSet *animatedLines;
 @property (nullable, nonatomic, strong, readwrite) NSMutableString *pasteboardString;
 @property (nonatomic, strong, readwrite) id<IntervalTreeReading> intervalTree;
 

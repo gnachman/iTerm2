@@ -54,7 +54,6 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 @synthesize printBuffer = _printBuffer;
 @synthesize allowTitleReporting = _allowTitleReporting;
 @synthesize lastBell = _lastBell;
-@synthesize animatedLines = _animatedLines;
 @synthesize pasteboardString = _pasteboardString;
 @synthesize intervalTree = _intervalTree;
 @synthesize primaryGrid = _primaryGrid;
@@ -125,7 +124,6 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 - (instancetype)initForMutationOnQueue:(dispatch_queue_t)queue {
     self = [super init];
     if (self) {
-        _animatedLines = [NSMutableIndexSet indexSet];
         _commandStartCoord = VT100GridAbsCoordMake(-1, -1);
         _markCache = [[iTermMarkCache alloc] init];
         _maxScrollbackLines = -1;
@@ -217,7 +215,6 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     if (!_markCache || source.markCache.dirty) {
         _markCache = source.markCache.copy;
     }
-    _animatedLines = [source.animatedLines copy];
     if (!_colorMap) {
         _colorMap = [source.colorMap copy];
     }

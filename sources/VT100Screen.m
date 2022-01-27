@@ -59,6 +59,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // This is an inherently shared mutable data structure. I don't think it can be easily moved into
     // the VT100ScreenState model. Instad it will need lots of mutexes :(
     DVR* dvr_;
+    NSMutableIndexSet *_animatedLines;
 }
 
 @synthesize dvr = dvr_;
@@ -68,6 +69,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     self = [super init];
     if (self) {
         _mutableState = [[VT100ScreenMutableState alloc] initWithSideEffectPerformer:self];
+        _animatedLines = [[NSMutableIndexSet alloc] init];
         _state = [_mutableState copy];
         _mutableState.mainThreadCopy = _state;
         _findContext = [[FindContext alloc] init];
@@ -85,6 +87,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_state release];
     [_mutableState release];
     [_findContext release];
+    [_animatedLines release];
 
     [super dealloc];
 }
@@ -379,11 +382,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)setRangeOfCharsAnimated:(NSRange)range onLine:(int)line {
     // TODO: Store range
-    [_mutableState.animatedLines addIndex:line];
+    [_animatedLines addIndex:line];
 }
 
 - (void)resetAnimatedLines {
-    [_mutableState.animatedLines removeAllIndexes];
+    [_animatedLines removeAllIndexes];
 }
 
 - (BOOL)isDirtyAtX:(int)x Y:(int)y {
@@ -1423,7 +1426,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (NSIndexSet *)animatedLines {
-    return _state.animatedLines;
+    return _animatedLines;
 }
 
 #pragma mark - VT100ScreenSideEffectPerforming
