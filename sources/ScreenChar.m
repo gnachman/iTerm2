@@ -28,7 +28,6 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#warning TODO: Audit this file for thread safety
 #import "ScreenChar.h"
 
 #import "DebugLogging.h"
@@ -599,10 +598,10 @@ void ScreenCharClearProvisionalFlagForImageWithCode(int code) {
 
 void ScreenCharDecodeRestorableState(NSDictionary *state) {
     [GetComplexCharRegistry() loadCharMap:state[kScreenCharComplexCharMapKey]
-                                     spacingCombiningMarks:state[kScreenCharSpacingCombiningMarksKey]
-                                                inverseMap:state[kScreenCharInverseComplexCharMapKey]
-                                                   nextKey:[state[kScreenCharCCMNextKeyKey] intValue]
-                                                hasWrapped:[state[kScreenCharHasWrappedKey] boolValue]];
+                    spacingCombiningMarks:state[kScreenCharSpacingCombiningMarksKey]
+                               inverseMap:state[kScreenCharInverseComplexCharMapKey]
+                                  nextKey:[state[kScreenCharCCMNextKeyKey] intValue]
+                               hasWrapped:[state[kScreenCharHasWrappedKey] boolValue]];
     [[iTermImageRegistry sharedInstance] restoreFrom:state[kScreenCharImageMapKey]];
 }
 
