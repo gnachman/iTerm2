@@ -38,6 +38,9 @@
 
 #import <stdatomic.h>
 
+static NSString *VT100ScreenMutableStateSideEffectStateKeyNeedsRedraw = @"Needs Redraw";
+static NSString *VT100ScreenMutableStateSideEffectStateKeyIntervalTreeVisibleRangeDidChange = @"Interval Tree Visible Range Did Change";
+
 @interface VT100ScreenTokenExecutorUpdate()
 
 @property (nonatomic, readonly) BOOL dirty;
@@ -298,16 +301,7 @@ static _Atomic int gPerformingJoinedBlock;
 }
 
 - (void)setNeedsRedraw {
-    if (self.needsRedraw) {
-        return;
-    }
-    self.needsRedraw = YES;
-    __weak __typeof(self) weakSelf = self;
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-#warning TODO: When a general syncing mechanism is developed, the assignment should occur there. This is kinda racey.
-        weakSelf.needsRedraw = NO;
-        [delegate screenNeedsRedraw];
-    }];
+    [_tokenExecutor setSideEffectStateWithKey:VT100ScreenMutableStateSideEffectStateKeyNeedsRedraw value:@YES];
 }
 
 #pragma mark - Accessors
@@ -462,19 +456,7 @@ static _Atomic int gPerformingJoinedBlock;
         self.scrollbackOverflow += overflowCount;
         self.cumulativeScrollbackOverflow += overflowCount;
     }
-    if (self.intervalTreeChangeSideEffectPending) {
-        return;
-    }
-    self.intervalTreeChangeSideEffectPending = YES;
-    __weak __typeof(self) weakSelf = self;
-    [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
-        weakSelf.intervalTreeChangeSideEffectPending = NO;
-        // There's a race here, but it's not important. It's possible another update would get queued
-        // at this point (which would be unnecessary) but that is harmless because intervalTreeVisibleRangeDidChange
-        // is idempotent. The purpose of intervalTreeChangeSideEffectPending is to reduce the number
-        // of times this happens and it is still very effective despite its imperfection.
-        [observer intervalTreeVisibleRangeDidChange];
-    }];
+    [_tokenExecutor setSideEffectStateWithKey:VT100ScreenMutableStateSideEffectStateKeyIntervalTreeVisibleRangeDidChange value:@YES];
 }
 
 #pragma mark - Terminal Fundamentals
@@ -4379,6 +4361,20 @@ launchCoprocessWithCommand:(NSString *)command
             [delegate screenSync:mutableState];
         }];
     }];
+}
+
+// Stuff that happens before the first task in side-effects. Run on the main thread or while joined.
+- (void)tokenExecutorHandleSideEffectState:(NSDictionary<NSString *,id> *)state {
+    if (state[VT100ScreenMutableStateSideEffectStateKeyNeedsRedraw]) {
+        [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenNeedsRedraw];
+        }];
+    }
+    if (state[VT100ScreenMutableStateSideEffectStateKeyIntervalTreeVisibleRangeDidChange]) {
+        [self performIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> observer) {
+            [observer intervalTreeVisibleRangeDidChange];
+        }];
+    }
 }
 
 @end

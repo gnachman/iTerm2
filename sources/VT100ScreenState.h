@@ -157,7 +157,6 @@ extern NSString *const kScreenStateProtectedMode;
 // Did we get FinalTerm codes that report info about prompt? Used to decide if advanced paste
 // can wait for prompts.
 @property (nonatomic, readonly) BOOL shouldExpectPromptMarks;
-@property (nonatomic, readonly) BOOL needsRedraw;
 @property (nonatomic, readonly) BOOL echoProbeIsActive;
 
 // From VT100Terminal - no mutable equivalents provided.
@@ -240,7 +239,6 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, readwrite) long long lastPromptLine;
 @property (nonatomic, readwrite) BOOL shouldExpectPromptMarks;
 @property (nonatomic, copy, readwrite) id<VT100ScreenConfiguration> config;
-@property (nonatomic) BOOL needsRedraw;
 @end
 
 @interface VT100ScreenState: NSObject<

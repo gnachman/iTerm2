@@ -31,6 +31,9 @@ protocol TokenExecutorDelegate: AnyObject {
 
     // Synchronize state between threads.
     func tokenExecutorSync()
+
+    // Side-effect state found.
+    func tokenExecutorHandleSideEffectState(_ state: [String: AnyObject])
 }
 
 // Uncomment the stack tracing code to debug stuck paused executors.
@@ -257,6 +260,12 @@ class TokenExecutor: NSObject {
         impl.addSideEffect(task)
     }
 
+    // Any queue
+    @objc
+    func setSideEffectState(key: String, value: AnyObject) {
+        impl.setSideEffectState(key: key, value: value)
+    }
+
     // This can run on the main queue, or else on the mutation queue when joined.
     @objc(executeSideEffectsImmediatelySyncingFirst:)
     func executeSideEffectsImmediately(syncFirst: Bool) {
@@ -351,6 +360,8 @@ private class TaskQueue {
     // This will never be empty
     private var arrays = [ TaskArray() ]
     private let mutex = Mutex()
+    private var state = [String: AnyObject]()
+
     var count: Int {
         return mutex.sync {
             let counts = arrays.map { $0.count }
@@ -379,6 +390,20 @@ private class TaskQueue {
                 arrays.removeFirst()
             }
             return arrays[0].dequeue
+        }
+    }
+
+    func setState(key: String, value: AnyObject) {
+        mutex.sync {
+            state[key] = value
+        }
+    }
+
+    func getAndResetState() -> [String: AnyObject] {
+        return mutex.sync {
+            let temp = state
+            state = [:]
+            return temp
         }
     }
 }
@@ -474,6 +499,13 @@ private class TokenExecutorImpl {
         sideEffectScheduler.markNeedsUpdate()
     }
 
+    // Any queue
+    func setSideEffectState(key: String, value: AnyObject) {
+        sideEffects.setState(key: key, value: value)
+        sideEffectScheduler.markNeedsUpdate()
+    }
+
+    // This can run on the main queue, or else on the mutation queue when joined.
     func executeSideEffects(syncFirst: Bool) {
         iTermGCD.assertMainQueueSafe()
         if executingSideEffects.getAndSet(true) {
@@ -489,7 +521,21 @@ private class TokenExecutorImpl {
                 delegate?.tokenExecutorSync()
                 shouldSync = false
             }
+            let state = sideEffects.getAndResetState()
+            if !state.isEmpty {
+                delegate?.tokenExecutorHandleSideEffectState(state)
+            }
             task()
+        }
+
+        // In case there were no tasks but there was state:
+        let state = sideEffects.getAndResetState()
+        if !state.isEmpty {
+            if shouldSync {
+                delegate?.tokenExecutorSync()
+                shouldSync = false
+            }
+            delegate?.tokenExecutorHandleSideEffectState(state)
         }
     }
 

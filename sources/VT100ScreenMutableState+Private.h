@@ -45,7 +45,6 @@ iTermTriggerScopeProvider> {
 // main thread. This can happen when performBlockWithJoinedThreads is reentrant with two different
 // VT100ScreenMutableState objects (for example, when detaching in tmux mode).
 @property (class, atomic) BOOL performingJoinedBlock;
-@property (atomic) BOOL intervalTreeChangeSideEffectPending;
 
 - (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
 
