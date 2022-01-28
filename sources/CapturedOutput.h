@@ -34,7 +34,6 @@
 @property(nonatomic, copy, readwrite) NSArray *values;
 @property(nonatomic, retain, readwrite) iTermPromise<NSString *> *promisedCommand;
 @property(nonatomic, assign, readwrite) BOOL state;  // user-defined state
-#warning TODO: Which threads can access mark? Who can change it? This is risky.
 @property(nonatomic, retain, readwrite) id<iTermCapturedOutputMarkReading> mark;
 @property(nonatomic, assign, readwrite) long long absoluteLineNumber;
 @property(nonatomic, readonly) BOOL isDoppelganger;

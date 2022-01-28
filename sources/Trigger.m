@@ -315,12 +315,16 @@ NSString * const kTriggerDisabledKey = @"disabled";
 - (void)reloadData {
 }
 
+- (NSDictionary *)dictionaryValue {
+    return @{ kTriggerActionKey: NSStringFromClass(self.class),
+              kTriggerRegexKey: self.regex ?: @"",
+              kTriggerParameterKey: self.param ?: @"",
+              kTriggerPartialLineKey: @(self.partialLine),
+              kTriggerDisabledKey: @(self.disabled) };
+}
+
 - (NSData *)digest {
-    NSDictionary *triggerDictionary = @{ kTriggerActionKey: NSStringFromClass(self.class),
-                                         kTriggerRegexKey: self.regex ?: @"",
-                                         kTriggerParameterKey: self.param ?: @"",
-                                         kTriggerPartialLineKey: @(self.partialLine),
-                                         kTriggerDisabledKey: @(self.disabled) };
+    NSDictionary *triggerDictionary = [self dictionaryValue];
     
     // Glom all the data together as key=value\nkey=value\n...
     NSMutableString *temp = [NSMutableString string];
@@ -336,6 +340,20 @@ NSString * const kTriggerDisabledKey = @"disabled";
     } else {
         return data;
     }
+}
+
++ (NSDictionary *)triggerNormalizedDictionary:(NSDictionary *)dict {
+    NSMutableDictionary *temp = [dict mutableCopy];
+    if (!temp[kTriggerPartialLineKey]) {
+        temp[kTriggerPartialLineKey] = @NO;
+    }
+    if (!temp[kTriggerDisabledKey]) {
+        temp[kTriggerDisabledKey] = @NO;
+    }
+    if (!temp[kTriggerParameterKey]) {
+        temp[kTriggerParameterKey] = @"";
+    }
+    return temp;
 }
 
 #pragma mark - iTermObject

@@ -309,7 +309,7 @@ static _Atomic int gPerformingJoinedBlock;
 - (void)setConfig:(id<VT100ScreenConfiguration>)config {
     assert(VT100ScreenMutableState.performingJoinedBlock);
     [super setConfig:config];
-
+#warning TODO: avoid making unnecessary changes, like updating triggers when no trigger changed.
     [_triggerEvaluator loadFromProfileArray:config.triggerProfileDicts];
     _triggerEvaluator.triggerParametersUseInterpolatedStrings = config.triggerParametersUseInterpolatedStrings;
     [self mutateColorMap:^(iTermColorMap *colorMap) {

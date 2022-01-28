@@ -173,6 +173,10 @@ extern NSString * const kTriggerDisabledKey;
 
 - (id<iTermFocusReportingTextFieldDelegate> _Nullable)newParameterDelegateWithPassthrough:(id<NSTextFieldDelegate>)passthrough;
 
++ (NSDictionary *)triggerNormalizedDictionary:(NSDictionary *)dict;
+
+- (NSDictionary *)dictionaryValue;
+
 @end
 
 NS_ASSUME_NONNULL_END
