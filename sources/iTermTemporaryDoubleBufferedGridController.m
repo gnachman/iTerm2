@@ -40,6 +40,7 @@
 - (void)startExplicitly {
     DLog(@"%@ startExplicitly", self.delegate);
     _explicit = YES;
+    self.dirty = YES;
     if (_savedState) {
         [self scheduleTimer];
     } else {
@@ -52,6 +53,7 @@
         return;
     }
     DLog(@"Reset saved grid (delegate=%@)", _delegate);
+    self.dirty = YES;
     BOOL hadSavedGrid = _savedState != nil;
     self.savedState = nil;
     [_timer invalidate];
@@ -62,6 +64,7 @@
 }
 
 - (void)resetExplicitly {
+    self.dirty = YES;
     _explicit = NO;
     [self reset];
 }
@@ -69,6 +72,7 @@
 #pragma mark - Private
 
 - (void)snapshot {
+    self.dirty = YES;
     DLog(@"Take a snapshot of the grid because cursor was hidden (delegate=%@)", _delegate);
     self.savedState = [_delegate temporaryDoubleBufferedGridSavedState];
 
@@ -100,6 +104,7 @@
     copy->_explicit = _explicit;
     copy.drewSavedGrid = _drewSavedGrid;
     copy.savedState = [self.savedState copy];
+    self.dirty = NO;
     return copy;
 }
 

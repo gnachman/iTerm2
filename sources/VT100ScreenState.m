@@ -218,8 +218,10 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     if (!_colorMap) {
         _colorMap = [source.colorMap copy];
     }
-    _temporaryDoubleBuffer = [source.unconditionalTemporaryDoubleBuffer copy];
-    _temporaryDoubleBuffer.queue = dispatch_get_main_queue();
+    if (!_temporaryDoubleBuffer || source.unconditionalTemporaryDoubleBuffer.dirty) {
+        _temporaryDoubleBuffer = [source.unconditionalTemporaryDoubleBuffer copy];
+        _temporaryDoubleBuffer.queue = dispatch_get_main_queue();
+    }
     _primaryGrid.delegate = self;
     _altGrid.delegate = self;
     if (source.currentGrid == source.primaryGrid) {

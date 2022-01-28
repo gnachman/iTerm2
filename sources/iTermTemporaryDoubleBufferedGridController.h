@@ -51,6 +51,7 @@
 // when it expires.
 @property(nonatomic) BOOL drewSavedGrid;
 @property(nonatomic, strong) dispatch_queue_t queue;
+@property(atomic) BOOL dirty;
 
 - (instancetype)initWithQueue:(dispatch_queue_t)queue NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
