@@ -359,11 +359,7 @@ NSString* CharArrayToString(unichar* charHaystack, int o)
     // with a ppc-only binary. Oddly, testing for defined(LITTLE_ENDIAN) does
     // not produce the correct results under ppc+Rosetta.
     int encoding;
-#if defined(__ppc__) || defined(__ppc64__)
-    encoding = NSUTF16BigEndianStringEncoding;
-#else
     encoding = NSUTF16LittleEndianStringEncoding;
-#endif
     return [[NSString alloc] initWithBytesNoCopy:charHaystack
                                           length:o * sizeof(unichar)
                                         encoding:encoding
