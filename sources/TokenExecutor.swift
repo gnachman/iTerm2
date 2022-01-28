@@ -511,7 +511,6 @@ private class TokenExecutorImpl {
         let hadTokens = !tokenQueue.isEmpty
         var accumulatedLength = 0
         if !delegate.tokenExecutorShouldQueueTokens() {
-            #warning("TODO: Apply backpressure when queueing to avoid building up a huge queue (e.g., in copy mode while running yes)")
             slownessDetector.measureEvent(PTYSessionSlownessEventExecute) {
                 tokenQueue.enumerateTokenArrays { (vector, priority) in
                     return executeTokens(vector,
