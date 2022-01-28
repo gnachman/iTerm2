@@ -141,6 +141,7 @@ static NSString *const kGridSizeKey = @"Size";
             memmove(&savedDefaultChar_, data.bytes, sizeof(savedDefaultChar_));
         }
         _preferredCursorPosition = cursor_;
+        [self markAllCharsDirty:YES];
     }
     return self;
 }
