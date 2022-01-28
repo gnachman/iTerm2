@@ -210,7 +210,6 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     _config = source.config;
 }
 
-#warning TODO: Make this fast when nothing has changed.
 - (void)copySlowStuffFrom:(VT100ScreenMutableState *)source {
     if (!_markCache || source.markCache.dirty) {
         _markCache = source.markCache.copy;
@@ -231,7 +230,6 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     }
 }
 
-#warning TODO: avoid making the copy if nothing has changed. This is important because joined threads perform two syncs and the copy is slow.
 - (void)mergeFrom:(VT100ScreenMutableState *)source {
     [self copyFastStuffFrom:source];
 
