@@ -877,6 +877,28 @@ static _Atomic int gPerformingJoinedBlock;
     }
 }
 
+// Returns -1 if none.
+- (int)lastGridLineWithVisibleMarkOrAnnotation {
+    const int firstGridLine = [self numberOfScrollbackLines];
+    NSEnumerator *enumerator = [self.intervalTree reverseLimitEnumerator];
+    NSArray *objects = [enumerator nextObject];
+    while (objects) {
+        for (id obj in objects) {
+            id<IntervalTreeObject> ito = obj;
+            const VT100GridCoordRange coordRange = [self coordRangeForInterval:ito.entry.interval];
+            if (coordRange.start.y < firstGridLine) {
+                return -1;
+            }
+            if ([obj isKindOfClass:[VT100ScreenMark class]] ||
+                [obj isKindOfClass:[PTYAnnotation class]]) {
+                return coordRange.start.y - firstGridLine;
+            }
+        }
+        objects = [enumerator nextObject];
+    }
+    return -1;
+}
+
 - (void)scrollScreenIntoHistory {
     // Scroll the top lines of the screen into history, up to and including the last non-
     // empty line.
@@ -886,7 +908,8 @@ static _Atomic int gPerformingJoinedBlock;
     } else {
         lineBuffer = self.linebuffer;
     }
-    const int n = [self.currentGrid numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES];
+    const int n = MAX(self.lastGridLineWithVisibleMarkOrAnnotation + 1,
+                      [self.currentGrid numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:YES]);
     for (int i = 0; i < n; i++) {
         [self incrementOverflowBy:
          [self.currentGrid scrollWholeScreenUpIntoLineBuffer:lineBuffer
