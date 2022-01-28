@@ -229,19 +229,20 @@ class TokenExecutor: NSObject {
     }
 
     // This takes ownership of vector.
-    // You can call this on any queue.
+    // You can call this on any queue when not high priority.
+    // If high priority, then you must be on the main queue or have joined the main & mutation queue.
     @objc
     func addTokens(_ vector: CVector, length: Int, highPriority: Bool) {
         if length == 0 {
             return
         }
-        if highPriority && onExecutorQueue {
+        if highPriority {
+            iTermGCD.assertMutationQueueSafe()
             // Re-entrant code path so that the Inject trigger can do its job synchronously
             // (before other triggers run).
             reallyAddTokens(vector, length: length, highPriority: highPriority, semaphore: nil)
             return
         }
-        #warning("TODO: Test inserting a high-pri token from another dispatch queue. It's not yet possible to do off the main queue.")
         // Normal code path for tokens from PTY. Use the semaphore to give backpressure to reading.
         let semaphore = self.semaphore
         _ = semaphore.wait(timeout: .distantFuture)
