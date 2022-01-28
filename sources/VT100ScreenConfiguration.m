@@ -179,7 +179,9 @@
 }
 @end
 
-@implementation VT100MutableScreenConfiguration
+@implementation VT100MutableScreenConfiguration {
+    NSMutableSet<NSString *> *_dirtyKeyPaths;
+}
 
 @dynamic shouldPlacePromptAtFirstColumn;
 @dynamic sessionGuid;
@@ -217,12 +219,50 @@
 
 @dynamic isDirty;
 
+static char VT100MutableScreenConfigurationKVOKey;
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _dirtyKeyPaths = [NSMutableSet set];
+        [VT100MutableScreenConfiguration it_enumerateDynamicProperties:^(NSString * _Nonnull name) {
+            [self addObserver:self
+                   forKeyPath:name
+                      options:NSKeyValueObservingOptionNew
+                      context:&VT100MutableScreenConfigurationKVOKey];
+        }];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [VT100MutableScreenConfiguration it_enumerateDynamicProperties:^(NSString * _Nonnull selectorString) {
+        [self removeObserver:self
+                  forKeyPath:selectorString];
+    }];
+}
+
 - (id)copy {
     return [self copyWithZone:nil];
 }
 
 - (id)copyWithZone:(NSZone *)zone {
     return [[VT100ScreenConfiguration alloc] initFrom:self];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary *)change
+                       context:(void *)context {
+    if (context == &VT100MutableScreenConfigurationKVOKey) {
+        [_dirtyKeyPaths addObject:keyPath];
+    }
+}
+
+- (NSSet<NSString *> *)dirtyKeyPaths {
+    NSSet<NSString *> *result = [_dirtyKeyPaths copy];
+    [_dirtyKeyPaths removeAllObjects];
+    return result;
 }
 
 @end

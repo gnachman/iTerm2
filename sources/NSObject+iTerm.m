@@ -137,6 +137,22 @@
     return result;
 }
 
++ (void)it_enumerateDynamicProperties:(void (^)(NSString *name))block {
+    unsigned int propcount = 0;
+    objc_property_t *props = class_copyPropertyList(self, &propcount);
+    for (unsigned int i = 0; i < propcount; i++) {
+        objc_property_t prop = props[i];
+        char *value = property_copyAttributeValue(prop, "D");
+        if (value == nil) {
+            continue;
+        }
+        free(value);
+        const char *name = property_getName(prop);
+        block([NSString stringWithUTF8String:name]);
+    }
+    free(props);
+}
+
 - (void)performSelectorWithObjects:(NSArray *)tuple {
     SEL selector = NSSelectorFromString(tuple[0]);
     NSArray *objects = tuple[1];

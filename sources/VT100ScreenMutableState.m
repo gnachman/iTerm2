@@ -306,19 +306,36 @@ static _Atomic int gPerformingJoinedBlock;
 
 #pragma mark - Accessors
 
-- (void)setConfig:(id<VT100ScreenConfiguration>)config {
+- (void)setConfig:(VT100MutableScreenConfiguration *)config {
     assert(VT100ScreenMutableState.performingJoinedBlock);
     [super setConfig:config];
-#warning TODO: avoid making unnecessary changes, like updating triggers when no trigger changed.
-    [_triggerEvaluator loadFromProfileArray:config.triggerProfileDicts];
-    _triggerEvaluator.triggerParametersUseInterpolatedStrings = config.triggerParametersUseInterpolatedStrings;
-    [self mutateColorMap:^(iTermColorMap *colorMap) {
-        colorMap.dimOnlyText = config.dimOnlyText;
-        colorMap.darkMode = config.darkMode;
-        colorMap.useSeparateColorsForLightAndDarkMode = config.useSeparateColorsForLightAndDarkMode;
-        colorMap.minimumContrast = config.minimumContrast;
-        colorMap.mutingAmount = config.mutingAmount;
-    }];
+    NSSet<NSString *> *dirty = [config dirtyKeyPaths];
+    if ([dirty containsObject:@"triggerProfileDicts"]) {
+        [_triggerEvaluator loadFromProfileArray:config.triggerProfileDicts];
+    }
+    if ([dirty containsObject:@"triggerParametersUseInterpolatedStrings"]) {
+        _triggerEvaluator.triggerParametersUseInterpolatedStrings = config.triggerParametersUseInterpolatedStrings;
+    }
+    static NSSet<NSString *> *colorMapKeyPaths;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        colorMapKeyPaths = [NSSet setWithArray:@[
+            @"dimOnlyText",
+            @"darkMode",
+            @"useSeparateColorsForLightAndDarkMode",
+            @"minimumContrast",
+            @"mutingAmount",
+        ]];
+    });
+    if ([dirty intersectsSet:colorMapKeyPaths]) {
+        [self mutateColorMap:^(iTermColorMap *colorMap) {
+            colorMap.dimOnlyText = config.dimOnlyText;
+            colorMap.darkMode = config.darkMode;
+            colorMap.useSeparateColorsForLightAndDarkMode = config.useSeparateColorsForLightAndDarkMode;
+            colorMap.minimumContrast = config.minimumContrast;
+            colorMap.mutingAmount = config.mutingAmount;
+        }];
+    }
     if (config.maxScrollbackLines != self.maxScrollbackLines) {
         self.maxScrollbackLines = config.maxScrollbackLines;
         [self.linebuffer setMaxLines:config.maxScrollbackLines];

@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <objc/runtime.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -58,6 +59,8 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 + (instancetype)forceCastFrom:(id)object;
 
 - (void)performSelectorOnMainThread:(SEL)selector withObjects:(NSArray * _Nullable)objects;
+
++ (void)it_enumerateDynamicProperties:(void (^)(NSString *name))block;
 
 // Retains self for |delay| time, whether canceled or not.
 // Set canceled=YES on the result to keep the block from running. Its completed flag will be set to

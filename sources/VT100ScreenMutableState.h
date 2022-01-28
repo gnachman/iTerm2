@@ -39,6 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (iTermEventuallyConsistentIntervalTree *)mutableIntervalTree;
 - (iTermEventuallyConsistentIntervalTree *)mutableSavedIntervalTree;
+- (void)setConfig:(VT100MutableScreenConfiguration *)config;
 
 #pragma mark - Internal
 

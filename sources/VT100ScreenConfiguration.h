@@ -102,6 +102,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, readwrite) BOOL isDirty;
 
+- (NSSet<NSString *> *)dirtyKeyPaths;
+
 @end
 
 NS_ASSUME_NONNULL_END
