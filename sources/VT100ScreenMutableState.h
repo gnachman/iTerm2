@@ -314,7 +314,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)willSynchronize;
 - (void)updateExpectFrom:(iTermExpect *)source;
-- (void)didSynchronize;
+- (void)didSynchronize:(BOOL)resetOverflow;
 
 // Call this on the main thread to sync with the mutation thread. In the block you can adjust
 // mutable state and main thread state safely. The block does not escape and is called synchronously.

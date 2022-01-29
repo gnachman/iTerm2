@@ -1101,9 +1101,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         _state = [mutableState copy];
     }
     mutableState.mainThreadCopy = _state;
-    if (resetOverflow) {
-        [mutableState didSynchronize];
-    }
+    [mutableState didSynchronize:resetOverflow];
     DLog(@"End");
     return (VT100SyncResult) {
         .overflow = overflow,

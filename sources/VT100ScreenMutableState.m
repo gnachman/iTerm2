@@ -3083,11 +3083,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self removeInaccessibleIntervalTreeObjects];
 }
 
-- (void)didSynchronize {
+- (void)didSynchronize:(BOOL)resetOverflow {
     DLog(@"Did synchronize. Set drewSavedGrid=YES");
 #warning TODO: Maybe I shouldn't do this when not resetting scrollback overflow
-    self.temporaryDoubleBuffer.drewSavedGrid = YES;
-    self.currentGrid.haveScrolled = NO;
+    if (resetOverflow) {
+        self.temporaryDoubleBuffer.drewSavedGrid = YES;
+        self.currentGrid.haveScrolled = NO;
+    }
 #warning TODO: Consider setting grid's currentDate here.
 #warning TODO: Consider running side effects immediately here.
 }
