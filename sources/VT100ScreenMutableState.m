@@ -198,6 +198,7 @@ static _Atomic int gPerformingJoinedBlock;
 - (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect {
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     if (VT100ScreenMutableState.performingJoinedBlock) {
+        #warning TODO: While joined perform side effects synchronously with locked-up state. Figure out how to avoid having any side effects while syncing.
         [self performPausedSideEffect:unpauser block:sideEffect];
         return;
     }
@@ -209,7 +210,7 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
     if (VT100ScreenMutableState.performingJoinedBlock) {
-#warning TODO: The absence of a sync could be a problem here. Look for code that modifies mutation-thread state and then calls into the delegate, leaving it with out-of-date state. Maybe the right solution is to instantly mutate both copies of state while joined!!! <- good idea i think
+        #warning TODO: While joined perform side effects synchronously with locked-up state. Figure out how to avoid having any side effects while syncing.
         [self performSideEffect:sideEffect];
         return;
     }
@@ -221,7 +222,9 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect {
     if (VT100ScreenMutableState.performingJoinedBlock) {
+        #warning TODO: While joined perform side effects synchronously with locked-up state. Figure out how to avoid having any side effects while syncing.
         [self performIntervalTreeSideEffect:sideEffect];
+        return;
     }
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
@@ -342,6 +345,7 @@ static _Atomic int gPerformingJoinedBlock;
         if (!self.unlimitedScrollback) {
             [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:self.currentGrid.size.width]];
         }
+#warning TOOD: Don't remove objects here because the delegate calls will go to a screen with out-of-date state.
         [self removeInaccessibleIntervalTreeObjects];
     }
 }
@@ -3075,13 +3079,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (self.currentGrid.isAnyCharDirty) {
         [_triggerEvaluator invalidateIdempotentTriggers];
     }
+#warning TODO: Ensure this is correct. Won't the delegate have out-of-date state here?
     [self removeInaccessibleIntervalTreeObjects];
 }
 
 - (void)didSynchronize {
     DLog(@"Did synchronize. Set drewSavedGrid=YES");
+#warning TODO: Maybe I shouldn't do this when not resetting scrollback overflow
     self.temporaryDoubleBuffer.drewSavedGrid = YES;
     self.currentGrid.haveScrolled = NO;
+#warning TODO: Consider setting grid's currentDate here.
+#warning TODO: Consider running side effects immediately here.
 }
 
 - (void)updateExpectFrom:(iTermExpect *)source {
@@ -3171,6 +3179,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // Sync so that the delegate's copy of state will be up-to-date.
     [delegate screenSync:self];
 
+#warning TODO: Consider moving currentDate-setting and side-effect-execution to didSynchronize
     const NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
     self.primaryGrid.currentDate = now;
     self.altGrid.currentDate = now;

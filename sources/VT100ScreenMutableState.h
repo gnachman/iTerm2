@@ -181,6 +181,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 // IMPORTANT: Call -reloadMarkCache after this.
 - (void)swapOnscreenIntervalTreeObjects;
 
+- (BOOL)removeInaccessibleIntervalTreeObjects;
+
 #pragma mark Tabstops
 
 - (void)setTabStopAtCursor;
