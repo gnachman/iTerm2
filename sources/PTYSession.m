@@ -7700,7 +7700,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         result = [self syncCheckingTriggers:checkTriggers
                               resetOverflow:resetOverflow
                                mutableState:mutableState];
-
 #warning TODO: Move trigger check to here because we need to have updated state in VT100Screen._state for the side effects to work correctly
 #warning TODO: Move removeInaccessibleIntervalTreeObjects here so that the delegate callbacks have up-to-date state. Then sync again.
     }];
@@ -7708,8 +7707,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 // This is a funnel that all syncs go through.
-- (VT100SyncResult)syncResettingOverflow:(BOOL)resetOverflow
-                            mutableState:(VT100ScreenMutableState *)mutableState {
+- (VT100SyncResult)syncCheckingTriggers:(VT100ScreenTriggerCheckType)checkTriggers
+                          resetOverflow:(BOOL)resetOverflow
+                           mutableState:(VT100ScreenMutableState *)mutableState {
     [self updateConfigurationFields];
     const BOOL expectWasDirty = _expect.dirty;
     [_expect resetDirty];
