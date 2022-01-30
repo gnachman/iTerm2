@@ -3150,7 +3150,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)performSynchroDanceWithBlock:(void (^)(void))block {
     assert(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue()));
-    NSString *stack = [NSThread callStackSymbols];
     [iTermGCD setMainQueueSafe:YES];
 
     dispatch_group_t group = dispatch_group_create();
@@ -3166,7 +3165,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
         // Wait for the main queue to finish.
         dispatch_group_wait(group2, DISPATCH_TIME_FOREVER);
-        DLog(@"%@", stack);
     }];
 
     // Wait for the high-pri task to begin.
@@ -3177,7 +3175,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [iTermGCD setMainQueueSafe:NO];
     // Unblock the token executor
     dispatch_group_leave(group2);
-    DLog(@"%@", stack);
 }
 
 // This runs on the main queue while the mutation queue waits on `group`.
