@@ -15,6 +15,9 @@
 @class iTermSelection;
 @protocol iTermObject;
 @protocol iTermOrderedToken;
+@class VT100ScreenState;
+@class VT100ScreenConfiguration;
+@class VT100MutableScreenConfiguration;
 
 @interface VT100ScreenTokenExecutorUpdate: NSObject
 
@@ -365,5 +368,9 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                          toReferToMark:(id<VT100ScreenMarkReading> _Nonnull)screenMark;
 
 - (void)screenExecutorDidUpdate:(VT100ScreenTokenExecutorUpdate * _Nonnull)update;
+- (VT100ScreenState * _Nonnull)screenSwitchToSharedState;
+- (void)screenRestoreState:(VT100ScreenState * _Nonnull)state;
+- (VT100MutableScreenConfiguration * _Nonnull)screenConfiguration;
+- (void)screenSyncExpect:(VT100ScreenMutableState * _Nonnull)mutableState;
 
 @end

@@ -33,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // A parallel object whose state will be eventually consistent with this one.
 - (id<IntervalTreeObject>)doppelganger;
+- (id<IntervalTreeObject>)progenitor;
 @end
 
 @protocol IntervalTreeObject <IntervalTreeImmutableObject, NSObject>
@@ -116,6 +117,17 @@ NS_ASSUME_NONNULL_BEGIN
 // For subclasses;
 - (void)restoreFromDictionary:(NSDictionary *)dict;
 
+@end
+
+// While the main and mutation threads are joined, any access by the "main app" (i.e., not
+// VT100ScreenMutableState) to its immutable copy of state should get silently redirected to the
+// mutable state. This relieves us of having to sync constantly.
+// This object presents the intervace of a read-only interval tree. It proxies calls to the mutable
+// interval tree but modifies results to be doppelgangers in case they get held on to for later use
+// in the main thread.
+@interface iTermIntervalTreeSanitizingAdapter: NSObject<IntervalTreeReading>
+- (instancetype)initWithSource:(IntervalTree *)source NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
 @end
 
 NS_ASSUME_NONNULL_END

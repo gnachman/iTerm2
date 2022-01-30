@@ -46,6 +46,10 @@ iTermTriggerScopeProvider> {
 // VT100ScreenMutableState objects (for example, when detaching in tmux mode).
 @property (class, atomic) BOOL performingJoinedBlock;
 
+- (iTermEventuallyConsistentIntervalTree *)mutableIntervalTree;
+- (iTermEventuallyConsistentIntervalTree *)mutableSavedIntervalTree;
+- (iTermColorMap *)mutableColorMap;
+
 - (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
 
 // Main thread/synchronized access only.

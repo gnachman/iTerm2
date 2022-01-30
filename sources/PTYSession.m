@@ -7677,10 +7677,32 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                         resetOverflow:YES];
 }
 
+- (VT100ScreenState *)screenSwitchToSharedState {
+    return [_screen switchToSharedState];
+}
+
+- (void)screenRestoreState:(VT100ScreenState *)state {
+    [_screen restoreState:state];
+    _textview.colorMap = state.colorMap;
+}
+
+- (VT100MutableScreenConfiguration *)screenConfiguration {
+    [self updateConfigurationFields];
+    return _config;
+}
+
 - (void)screenSync:(VT100ScreenMutableState *)mutableState {
     [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
                  resetOverflow:NO
                   mutableState:mutableState];
+}
+
+- (void)screenSyncExpect:(VT100ScreenMutableState *)mutableState {
+    const BOOL expectWasDirty = _expect.dirty;
+    [_expect resetDirty];
+    if (expectWasDirty) {
+        [mutableState updateExpectFrom:_expect];
+    }
 }
 
 - (void)sync {

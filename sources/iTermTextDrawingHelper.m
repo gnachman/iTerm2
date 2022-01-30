@@ -2119,14 +2119,17 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
     if (isMatch) {
         // Black-on-yellow search result.
         rawColor = [NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1];
+        assert(rawColor);
         context->havePreviousCharacterAttributes = NO;
     } else if (inUnderlinedRange) {
         // Blue link text.
         rawColor = [context->colorMap colorForKey:kColorMapLink];
+        assert(rawColor);
         context->havePreviousCharacterAttributes = NO;
     } else if (context->hasSelectedText) {
         // Selected text.
         rawColor = [context->colorMap colorForKey:kColorMapSelectedText];
+        assert(rawColor);
         context->havePreviousCharacterAttributes = NO;
     } else if (context->reverseVideo &&
                ((c->foregroundColor == ALTSEM_DEFAULT && c->foregroundColorMode == ColorModeAlternate) ||
@@ -2134,6 +2137,7 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
         // Reverse video is on. Either is cursor or has default foreground color. Use
         // background color.
         rawColor = [context->colorMap colorForKey:kColorMapBackground];
+        assert(rawColor);
         context->havePreviousCharacterAttributes = NO;
     } else if (!context->havePreviousCharacterAttributes ||
                c->foregroundColor != context->previousCharacterAttributes.foregroundColor ||
@@ -2153,12 +2157,14 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
                                                            bold:c->bold
                                                           faint:c->faint
                                                    isBackground:NO];
+        assert(rawColor);
     } else {
         // Foreground attributes are just like the last character. There is a cached foreground color.
         if (needsProcessing && context->backgroundColor != context->previousBackgroundColor) {
             // Process the text color for the current background color, which has changed since
             // the last cell.
             rawColor = context->lastUnprocessedColor;
+            assert(rawColor);
         } else {
             // Text color is unchanged. Either it's independent of the background color or the
             // background color has not changed.

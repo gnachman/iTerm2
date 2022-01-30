@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)setMainQueueSafe:(BOOL)safe;
 
 + (BOOL)onMutationQueue;
++ (BOOL)onMainQueue;
 
 @end
 

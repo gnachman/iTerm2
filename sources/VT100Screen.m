@@ -1,7 +1,6 @@
 
 #import "VT100Screen.h"
 #import "VT100Screen+Private.h"
-#import "VT100Screen+Resizing.h"
 #import "VT100Screen+Search.h"
 
 #import "CapturedOutput.h"
@@ -1065,6 +1064,18 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_mutableState performBlockAsynchronously:block];
 }
 
+- (VT100ScreenState *)switchToSharedState {
+    VT100ScreenState *savedState = [_state autorelease];
+    _state = [[_mutableState sanitizingAdapter] retain];
+    return savedState;
+}
+
+- (void)restoreState:(VT100ScreenState *)state {
+    [_state autorelease];
+    _state = [state retain];
+    [_state mergeFrom:_mutableState];
+}
+
 - (VT100SyncResult)synchronizeWithConfig:(VT100MutableScreenConfiguration *)sourceConfig
                                   expect:(iTermExpect *)maybeExpect
                            checkTriggers:(VT100ScreenTriggerCheckType)checkTriggers
@@ -1100,7 +1111,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         [_state autorelease];
         _state = [mutableState copy];
     }
-    mutableState.mainThreadCopy = _state;
     [mutableState didSynchronize:resetOverflow];
     DLog(@"End");
     return (VT100SyncResult) {
@@ -1255,7 +1265,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.terminalBracketedPasteMode;
 }
 
-- (NSMutableArray<NSNumber *> *)terminalSendModifiers {
+- (NSArray<NSNumber *> *)terminalSendModifiers {
     return _state.terminalSendModifiers;
 }
 

@@ -44,6 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Internal
 
 @property (nonatomic) BOOL terminalEnabled;
+@property (nonatomic, readonly) VT100ScreenState *sanitizingAdapter;
 
 // This is how mutation code schedules work to be done on the main thread later. In particular, this
 // is the only way for it to call delegate methods. It will be performed asynchronously at some
@@ -181,7 +182,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 // IMPORTANT: Call -reloadMarkCache after this.
 - (void)swapOnscreenIntervalTreeObjects;
 
-- (BOOL)removeInaccessibleIntervalTreeObjects;
+- (void)removeInaccessibleIntervalTreeObjects;
 
 #pragma mark Tabstops
 

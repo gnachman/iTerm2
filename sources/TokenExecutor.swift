@@ -346,7 +346,7 @@ private class TaskQueue {
         }
 
         var count: Int {
-            return tasks.count
+            return tasks.count - head
         }
 
         var canAppend: Bool {

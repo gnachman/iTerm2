@@ -59,6 +59,12 @@ static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Dir
     }
 }
 
+- (id<IntervalTreeObject>)progenitor {
+    @synchronized ([VT100WorkingDirectory class]) {
+        return _progenitor;
+    }
+}
+
 - (instancetype)copyOfIntervalTreeObject {
     return [[VT100WorkingDirectory alloc] initWithDirectory:self.workingDirectory];
 }

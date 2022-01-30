@@ -19,6 +19,9 @@ protocol MarkCacheReading: AnyObject {
 class MarkCache: NSObject, NSCopying, MarkCacheReading {
     private var dict = [Int: iTermMarkProtocol]()
     @objc private(set) var dirty = false
+    @objc lazy var sanitizingAdapter: MarkCache = {
+        return MarkCacheSanitizingAdapter(self)
+    }()
 
     @objc
     override init() {
@@ -64,3 +67,43 @@ class MarkCache: NSObject, NSCopying, MarkCacheReading {
         }
     }
 }
+
+fileprivate class MarkCacheSanitizingAdapter: MarkCache {
+    private weak var source: MarkCache?
+    init(_ source: MarkCache) {
+        self.source = source
+    }
+
+    @objc(remove:)
+    override func remove(line: Int) {
+        fatalError()
+    }
+
+    @objc
+    override func removeAll() {
+        fatalError()
+    }
+
+    @objc
+    override func copy(with zone: NSZone? = nil) -> Any {
+        fatalError()
+    }
+
+    @objc
+    override subscript(line: Int) -> iTermMarkProtocol? {
+        get {
+            guard let source = source else {
+                return nil
+            }
+            let maybeMark: iTermMarkProtocol? = source[line]
+            guard let downcast = maybeMark as? iTermMark else {
+                return maybeMark
+            }
+            return downcast.doppelganger() as iTermMarkProtocol
+        }
+        set {
+            fatalError()
+        }
+    }
+}
+

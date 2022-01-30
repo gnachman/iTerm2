@@ -128,6 +128,7 @@ extern const int kColorMap24bitBase;
 @property(nonatomic, assign) double minimumContrast;
 @property(nonatomic, assign) BOOL useSeparateColorsForLightAndDarkMode;
 @property(nonatomic, assign) BOOL darkMode;
+@property(nonatomic, readonly) id<iTermColorMapReading> sanitizingAdapter;
 
 + (iTermColorMapKey)keyFor8bitRed:(int)red
                             green:(int)green

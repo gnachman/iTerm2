@@ -211,6 +211,9 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
     VT100ScreenTriggerCheckTypeFullLines
 };
 
+- (VT100ScreenState *)switchToSharedState;
+- (void)restoreState:(VT100ScreenState *)state;
+
 - (VT100SyncResult)synchronizeWithConfig:(VT100MutableScreenConfiguration *)sourceConfig
                                   expect:(iTermExpect *)maybeExpect
                            checkTriggers:(VT100ScreenTriggerCheckType)checkTriggers

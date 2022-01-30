@@ -101,4 +101,8 @@ static const char *iTermGCDMutationQueueLabel = "com.iterm2.mutation";
     return dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == iTermGCDMutationQueueLabel;
 }
 
++ (BOOL)onMainQueue {
+    return dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue());
+}
+
 @end

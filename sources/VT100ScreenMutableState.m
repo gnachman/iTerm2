@@ -24,6 +24,7 @@
 #import "VT100RemoteHost.h"
 #import "VT100ScreenConfiguration.h"
 #import "VT100ScreenDelegate.h"
+#import "VT100ScreenStateSanitizingAdapter.h"
 #import "VT100WorkingDirectory.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -61,6 +62,7 @@ static NSString *VT100ScreenMutableStateSideEffectStateKeyIntervalTreeVisibleRan
     _Atomic int _executorUpdatePending;
     VT100ScreenTokenExecutorUpdate *_executorUpdate;
     iTermPeriodicScheduler *_executorUpdateScheduler;
+    BOOL _screenNeedsUpdate;
 }
 
 static _Atomic int gPerformingJoinedBlock;
@@ -125,6 +127,7 @@ static _Atomic int gPerformingJoinedBlock;
         _echoProbe = [[iTermEchoProbe alloc] init];
         _echoProbe.delegate = self;
         self.unconditionalTemporaryDoubleBuffer.delegate = self;
+        _sanitizingAdapter = (VT100ScreenState *)[[VT100ScreenStateSanitizingAdapter alloc] initWithSource:self];
     }
     return self;
 }
@@ -132,7 +135,7 @@ static _Atomic int gPerformingJoinedBlock;
 // The block will be called twice, once for the mutable-thread copy and later with the main-thread copy.
 - (void)mutateColorMap:(void (^)(iTermColorMap *colorMap))block {
     // Mutate mutation thread instance.
-    block((iTermColorMap *)[super colorMap]);
+    block([self mutableColorMap]);
 
     // Schedule a side-effect to mutate the main-thread instance.
     __weak __typeof(self) weakSelf = self;
@@ -243,18 +246,7 @@ static _Atomic int gPerformingJoinedBlock;
         const NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
         self.primaryGrid.currentDate = now;
         self.altGrid.currentDate = now;
-        // Sync because the delegate expects to see the changes it made reflected in its immutable state.
-        // For example:
-        //   [mutableState performBlockWithJoinedThreads]
-        //     [mutableState setColor:forKey:];
-        //       [colorMap setColor:forKey:]
-        //         [mutableState colorMap:didChangeColorForKey:]
-        //           [mutableState addJoinedSideEffect:]
-        //             <better sync right here!>
-        //             [delegate immutableColorMap:didChangeColorForKey:]  // the immutable colormap needs to be up to date with mutable one changed above!
-        [delegate screenSync:self];
         sideEffect(delegate);
-        [delegate screenSync:self];
         return;
     }
     __weak __typeof(self) weakSelf = self;
@@ -1265,9 +1257,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self clearScrollbackBuffer];
 
     // Redraw soon.
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenUpdateDisplay:NO];
-    }];
+    [self redrawSoon];
 
     if (savePrompt && newCommandStart.x >= 0) {
         // Create a new mark and inform the delegate that there's new command start coord.
@@ -1275,6 +1265,18 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self commandDidStartAtScreenCoord:newCommandStart];
     }
     [self.terminal resetSavedCursorPositions];
+}
+
+// Calling -screenUpdateDisplay: while joined erases the dirty bits which breaks syncing grid
+// content back to the main thread.
+- (void)redrawSoon {
+    if (VT100ScreenMutableState.performingJoinedBlock) {
+        _screenNeedsUpdate = YES;
+        return;
+    }
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenUpdateDisplay:NO];
+    }];
 }
 
 
@@ -1984,6 +1986,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (iTermEventuallyConsistentIntervalTree *)mutableSavedIntervalTree {
     return [iTermEventuallyConsistentIntervalTree castFrom:self.savedIntervalTree];
+}
+
+- (iTermColorMap *)mutableColorMap {
+    return (iTermColorMap *)[super colorMap];
 }
 
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
@@ -3044,13 +3050,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-#warning TODO: Ensure all calls to changing the color map funnel through here to get the call to sync.
 - (void)setColor:(NSColor *)color forKey:(int)key {
+    assert(VT100ScreenMutableState.performingJoinedBlock);
     [self mutateColorMap:^(iTermColorMap *colorMap) {
         [colorMap setColor:color forKey:key];
     }];
-    // Sync so that HTML logging will have an up-to-date colormap.
-    [self sync];
 }
 
 - (void)restoreColorsFromSlot:(VT100SavedColorsSlot *)slot {
@@ -3060,6 +3064,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         dict[@(kColorMap8bitBase + i)] = slot.indexedColors[i] ?: [NSNull null];
     }
     [self setColorsFromDictionary:dict];
+    // Doing a joined side effect here ensures that HTML logging gets an up-to-date colormap before the next token.
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenRestoreColorsFromSlot:slot];
     }];
@@ -3114,7 +3119,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }];
 }
 
-
+// This is called on the main thread (externally) or while locked up (internally)
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block {
@@ -3123,24 +3128,31 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
 
-    if (VT100ScreenMutableState.performingJoinedBlock) {
+    if (gPerformingJoinedBlock) {
         // Reentrant call. Avoid deadlock by running it immediately.
-        [self reallyPerformBlockWithJoinedThreads:block delegate:delegate];
-        return;
-    }
+        [self reallyPerformBlockWithJoinedThreads:block delegate:delegate topmost:NO];
+    } else {
+        assert([iTermGCD onMainQueue]);
 
-    // Wait for the mutation thread to finish its current tasks+tokens, then run the block.
-    __weak __typeof(self) weakSelf = self;
-    [self performSynchroDanceWithBlock:^{
-        [weakSelf reallyPerformBlockWithJoinedThreads:block
-                                             delegate:delegate];
-    }];
+        // Wait for the mutation thread to finish its current tasks+tokens, then run the block.
+        __weak __typeof(self) weakSelf = self;
+        [self performSynchroDanceWithBlock:^{
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                return;
+            }
+            [weakSelf reallyPerformBlockWithJoinedThreads:block
+                                                 delegate:delegate
+                                                  topmost:YES];
+        }];
+    }
 }
 
 - (void)performSynchroDanceWithBlock:(void (^)(void))block {
     assert(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue()));
-
+    NSString *stack = [NSThread callStackSymbols];
     [iTermGCD setMainQueueSafe:YES];
+
     dispatch_group_t group = dispatch_group_create();
     dispatch_group_enter(group);
 
@@ -3154,6 +3166,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
         // Wait for the main queue to finish.
         dispatch_group_wait(group2, DISPATCH_TIME_FOREVER);
+        DLog(@"%@", stack);
     }];
 
     // Wait for the high-pri task to begin.
@@ -3164,22 +3177,23 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [iTermGCD setMainQueueSafe:NO];
     // Unblock the token executor
     dispatch_group_leave(group2);
+    DLog(@"%@", stack);
 }
 
-// This runs on the mutation queue while the main thread waits on `group`.
+// This runs on the main queue while the mutation queue waits on `group`.
 - (void)reallyPerformBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *,
                                                                   VT100ScreenMutableState *,
                                                                   id<VT100ScreenDelegate>))block
-                                   delegate:(id<VT100ScreenDelegate>)delegate {
+                                   delegate:(id<VT100ScreenDelegate>)delegate
+                                    topmost:(BOOL)topmost {
     // Set `performingJoinedBlock` to YES so that a side-effect that wants to join threads won't
     // deadlock.
     // This get-and-set is not a data race because assignment to performingJoinedBlock only happens
     // on the mutation queue.
-    const BOOL previousValue = VT100ScreenMutableState.performingJoinedBlock;
-    VT100ScreenMutableState.performingJoinedBlock = YES;
+    const BOOL wasPerformingJoinedBlock = atomic_exchange(&gPerformingJoinedBlock, 1);
 
-    // Sync so that the delegate's copy of state will be up-to-date.
-    [delegate screenSync:self];
+    VT100ScreenState *oldState = [delegate screenSwitchToSharedState];
+    [self loadConfigIfNeededFromDelegate:delegate];
 
 #warning TODO: Consider moving currentDate-setting and side-effect-execution to didSynchronize
     const NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
@@ -3202,10 +3216,25 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     if (block) {
         block(self.terminal, self, delegate);
-        // Sync so that our copy of state will be up-to-date.
-        [delegate screenSync:self];
     }
-    VT100ScreenMutableState.performingJoinedBlock = previousValue;
+    [delegate screenRestoreState:oldState];
+    [self loadConfigIfNeededFromDelegate:delegate];
+    [delegate screenSyncExpect:self];
+
+    if (topmost && _screenNeedsUpdate) {
+        [delegate screenUpdateDisplay:NO];
+        _screenNeedsUpdate = NO;
+    }
+
+    VT100ScreenMutableState.performingJoinedBlock = wasPerformingJoinedBlock;
+}
+
+- (void)loadConfigIfNeededFromDelegate:(id<VT100ScreenDelegate>)delegate {
+    assert(VT100ScreenMutableState.performingJoinedBlock);
+    VT100MutableScreenConfiguration *config = [delegate screenConfiguration];
+    if (config.isDirty) {
+        self.config = config;
+    }
 }
 
 - (void)reallyPerformLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *))block {
@@ -3232,10 +3261,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
         block(strongSelf.terminal, strongSelf, delegate);
     }];
-}
-
-- (void)sync {
-    [self performBlockWithJoinedThreads:nil];
 }
 
 #pragma mark - State Restoration
@@ -4336,9 +4361,7 @@ launchCoprocessWithCommand:(NSString *)command
     // Force the screen to redraw right away. Some users reported lag and this seems to fix it.
     // I think the update timer was hitting a worst case scenario which made the lag visible.
     // See issue 3537.
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenUpdateDisplay:NO];
-    }];
+    [self redrawSoon];
 }
 
 #pragma mark - PTYAnnotationDelegate

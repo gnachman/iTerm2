@@ -97,5 +97,11 @@ static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
     }
 }
 
+- (id<PTYAnnotationReading>)progenitor {
+    @synchronized ([PTYAnnotation class]) {
+        return _progenitor;
+    }
+}
+
 @end
 

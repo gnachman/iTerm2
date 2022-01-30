@@ -76,4 +76,10 @@
     }
 }
 
+- (id<iTermMark>)progenitor {
+    @synchronized ([iTermImageMark class]) {
+        return _progenitor;
+    }
+}
+
 @end

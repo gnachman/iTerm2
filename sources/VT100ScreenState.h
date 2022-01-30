@@ -167,7 +167,7 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, readonly) VT100Output *terminalOutput;
 @property (nonatomic, readonly) BOOL terminalAllowPasteBracketing;
 @property (nonatomic, readonly) BOOL terminalBracketedPasteMode;
-@property (nonatomic, readonly) NSMutableArray<NSNumber *> *terminalSendModifiers;
+@property (nonatomic, readonly) NSArray<NSNumber *> *terminalSendModifiers;
 @property (nonatomic, readonly) VT100TerminalKeyReportingFlags terminalKeyReportingFlags;
 @property (nonatomic, readonly) BOOL terminalReportFocus;
 @property (nonatomic, readonly) BOOL terminalReportKeyUp;
@@ -293,6 +293,8 @@ extern NSString *const kScreenStateProtectedMode;
 
 #pragma mark - Interval Tree
 
+// WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
+
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range;
@@ -301,7 +303,11 @@ extern NSString *const kScreenStateProtectedMode;
                             linesOffset:(long long)linesOffset;
 - (__kindof id<IntervalTreeImmutableObject>)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
 
+// WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
+
 #pragma mark - Shell Integration
+
+// WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
 
 @property (nonatomic, readonly) id<VT100RemoteHostReading> lastRemoteHost;
 @property (nonatomic, readonly) id<VT100ScreenMarkReading> lastPromptMark;
@@ -321,6 +327,8 @@ extern NSString *const kScreenStateProtectedMode;
 - (id<VT100RemoteHostReading>)remoteHostOnLine:(int)line;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
+
+// WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
 
 #pragma mark - Colors
 

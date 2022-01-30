@@ -1,5 +1,6 @@
 #import "IntervalTree.h"
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 
 static const long long kMinLocation = LLONG_MIN / 2;
 static const long long kMaxLimit = kMinLocation + LLONG_MAX;
@@ -184,6 +185,47 @@ static NSString *const kIntervalLengthKey = @"Length";
         previousLocation_ = [obj.entry.interval location];
         return objects;
     }
+}
+
+@end
+
+@interface IntervalTreeSanitizingEnumerator<T>: NSEnumerator<T>
+
++ (instancetype)with:(NSEnumerator<IntervalTreeImmutableObject> *)source;
+
+@end
+
+@implementation IntervalTreeSanitizingEnumerator  {
+    NSEnumerator<IntervalTreeImmutableObject> *_source;
+}
+
++ (instancetype)with:(NSEnumerator<IntervalTreeImmutableObject> *)source {
+    return [[[self alloc] initWithSource:source] autorelease];
+}
+
+- (instancetype)initWithSource:(NSEnumerator<IntervalTreeImmutableObject> *)source {
+    self = [super init];
+    if (self) {
+        _source = [source retain];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_source release];
+    [super dealloc];
+}
+
+- (id)nextObject {
+    return [[_source nextObject] doppelganger];
+}
+
+- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state
+                                  objects:(id __unsafe_unretained _Nullable [_Nonnull])buffer
+                                    count:(NSUInteger)len {
+    return [_source countByEnumeratingWithState:state
+                                        objects:buffer
+                                          count:len];
 }
 
 @end
@@ -991,3 +1033,99 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 @end
+
+@implementation iTermIntervalTreeSanitizingAdapter {
+    __weak IntervalTree *_source;
+}
+
+- (instancetype)initWithSource:(IntervalTree *)source {
+    self = [super init];
+    if (self) {
+        _source = source;
+    }
+    return self;
+}
+
+- (NSString *)debugString {
+    return [_source debugString];
+}
+
+- (NSArray<id<IntervalTreeImmutableObject>> *)objectsInInterval:(Interval *)interval {
+    return [[_source objectsInInterval:interval] mapWithBlock:^id(id<IntervalTreeImmutableObject> anObject) {
+        return [anObject doppelganger];
+    }];
+}
+
+- (NSArray<id<IntervalTreeImmutableObject>> *)allObjects {
+    return [[_source allObjects] mapWithBlock:^id(id<IntervalTreeImmutableObject> anObject) {
+        return [anObject doppelganger];
+    }];
+}
+
+- (BOOL)containsObject:(id<IntervalTreeImmutableObject> _Nullable)object {
+    return [_source containsObject:[object progenitor]];
+}
+
+- (NSArray<id<IntervalTreeImmutableObject>> * _Nullable)objectsWithLargestLimit {
+    return [[_source objectsWithLargestLimit] mapWithBlock:^id(id<IntervalTreeImmutableObject> anObject) {
+        return [anObject doppelganger];
+    }];
+}
+
+- (NSArray<id<IntervalTreeImmutableObject>> * _Nullable)objectsWithSmallestLimit {
+    return [[_source objectsWithSmallestLimit] mapWithBlock:^id(id<IntervalTreeImmutableObject> anObject) {
+        return[ anObject doppelganger];
+    }];
+}
+
+- (NSArray<id<IntervalTreeImmutableObject>> *_Nullable)objectsWithLargestLocation {
+    return [[_source objectsWithLargestLocation] mapWithBlock:^id(id<IntervalTreeImmutableObject> anObject) {
+        return [anObject doppelganger];
+    }];
+}
+
+- (NSArray<id<IntervalTreeImmutableObject>> *_Nullable)objectsWithLargestLocationBefore:(long long)location {
+    return [[_source objectsWithLargestLocationBefore:location] mapWithBlock:^id(id<IntervalTreeImmutableObject> anObject) {
+        return [anObject doppelganger];
+    }];
+}
+
+- (NSArray<id<IntervalTreeImmutableObject>> *_Nullable)objectsWithLargestLimitBefore:(long long)limit {
+    return [[_source objectsWithLargestLimitBefore:limit] mapWithBlock:^id(id anObject) {
+        return [anObject doppelganger];
+    }];
+}
+
+- (NSArray<id<IntervalTreeImmutableObject>> *_Nullable)objectsWithSmallestLimitAfter:(long long)limit {
+    return [[_source objectsWithSmallestLimitAfter:limit] mapWithBlock:^id(id<IntervalTreeImmutableObject> anObject) {
+        return [anObject doppelganger];
+    }];
+}
+
+- (NSEnumerator<IntervalTreeImmutableObject> *)reverseEnumeratorAt:(long long)start {
+    return [IntervalTreeSanitizingEnumerator<IntervalTreeImmutableObject> with:[_source reverseEnumeratorAt:start]];
+}
+
+- (NSEnumerator<IntervalTreeImmutableObject> *)reverseLimitEnumeratorAt:(long long)start {
+    return [IntervalTreeSanitizingEnumerator<IntervalTreeImmutableObject> with:[_source reverseLimitEnumeratorAt:start]];
+}
+
+
+- (NSEnumerator<IntervalTreeImmutableObject> *)forwardLimitEnumeratorAt:(long long)start {
+    return [IntervalTreeSanitizingEnumerator<IntervalTreeImmutableObject> with:[_source forwardLimitEnumeratorAt:start]];
+}
+
+- (NSEnumerator<IntervalTreeImmutableObject> *)reverseLimitEnumerator {
+    return [IntervalTreeSanitizingEnumerator<IntervalTreeImmutableObject> with:[_source reverseLimitEnumerator]];
+}
+
+- (NSEnumerator<IntervalTreeImmutableObject> *)forwardLimitEnumerator {
+    return [IntervalTreeSanitizingEnumerator<IntervalTreeImmutableObject> with:[_source forwardLimitEnumerator]];
+}
+
+- (NSDictionary *)dictionaryValueWithOffset:(long long)offset {
+    return [_source dictionaryValueWithOffset:offset];
+}
+
+@end
+

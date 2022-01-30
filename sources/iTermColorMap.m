@@ -39,6 +39,11 @@ const int kColorMapAnsiCyan = kColorMap8bitBase + 6;
 const int kColorMapAnsiWhite = kColorMap8bitBase + 7;
 const int kColorMapAnsiBrightModifier = 8;
 
+@interface iTermColorMapSanitizingAdapter: NSProxy<iTermColorMapReading>
+- (instancetype)initWithSource:(iTermColorMap *)source;
+- (instancetype)init NS_UNAVAILABLE;
+@end
+
 @interface iTermColorMap ()
 @property(nonatomic, strong) NSMutableDictionary *map;
 @end
@@ -56,6 +61,7 @@ const int kColorMapAnsiBrightModifier = 8;
     NSColor *_lastBackgroundColor;
 
     NSMutableDictionary<NSNumber *, NSData *> *_fastMap;
+    id<iTermColorMapReading> _sanitizingAdapter;
 }
 
 + (iTermColorMapKey)keyFor8bitRed:(int)red
@@ -75,7 +81,7 @@ const int kColorMapAnsiBrightModifier = 8;
 
 - (void)setDimmingAmount:(double)dimmingAmount {
     _dimmingAmount = dimmingAmount;
-    [_delegate colorMap:self dimmingAmountDidChangeTo:dimmingAmount];
+    [self.delegate colorMap:self dimmingAmountDidChangeTo:dimmingAmount];
 }
 
 - (void)setMutingAmount:(double)mutingAmount {
@@ -83,7 +89,7 @@ const int kColorMapAnsiBrightModifier = 8;
         return;
     }
     _mutingAmount = mutingAmount;
-    [_delegate colorMap:self mutingAmountDidChangeTo:mutingAmount];
+    [self.delegate colorMap:self mutingAmountDidChangeTo:mutingAmount];
 }
 
 - (void)setColor:(NSColor *)colorInArbitrarySpace forKey:(iTermColorMapKey)theKey {
@@ -121,7 +127,7 @@ const int kColorMapAnsiBrightModifier = 8;
         (float)components[3]
    };
     _fastMap[@(theKey)] = [NSData dataWithBytes:&value length:sizeof(value)];
-    [_delegate colorMap:self didChangeColorForKey:theKey];
+    [self.delegate colorMap:self didChangeColorForKey:theKey];
 }
 
 - (NSColor *)colorForKey:(iTermColorMapKey)theKey {
@@ -163,7 +169,7 @@ const int kColorMapAnsiBrightModifier = 8;
         return;
     }
     _dimOnlyText = dimOnlyText;
-    [_delegate colorMap:self dimmingAmountDidChangeTo:_dimmingAmount];
+    [self.delegate colorMap:self dimmingAmountDidChangeTo:_dimmingAmount];
 }
 
 // There is an issue where where the passed-in color can be in a different color space than the
@@ -503,7 +509,7 @@ const int kColorMapAnsiBrightModifier = 8;
 
     other->_minimumContrast = _minimumContrast;
 
-    other->_delegate = _delegate;
+    other->_delegate = self.delegate;
 
     other->_map = [_map mutableCopy];
 
@@ -586,4 +592,72 @@ const int kColorMapAnsiBrightModifier = 8;
     return kColorMapInvalid;
 }
 
+- (id<iTermColorMapReading>)sanitizingAdapter {
+    if (!_sanitizingAdapter) {
+        _sanitizingAdapter = [[iTermColorMapSanitizingAdapter alloc] initWithSource:self];
+    }
+    return _sanitizingAdapter;
+}
+
 @end
+
+@interface iTermColorMapSanitizingAdapterImpl: NSObject
+@end
+
+@implementation iTermColorMapSanitizingAdapterImpl {
+    __weak id<iTermColorMapDelegate> _delegate;
+}
+
+- (id<iTermColorMapDelegate>)delegate {
+    return _delegate;
+}
+
+- (void)setDelegate:(id<iTermColorMapDelegate>)delegate {
+    _delegate = delegate;
+}
+
+@end
+
+// Proxies calls to iTermColorMap but maintains a separate delegate. This is
+// useful while main & mutation queues are joined.
+@implementation iTermColorMapSanitizingAdapter {
+    iTermColorMapSanitizingAdapterImpl *_impl;
+    __weak iTermColorMap *_source;
+}
+
+@dynamic dimOnlyText;
+@dynamic dimmingAmount;
+@dynamic mutingAmount;
+@dynamic minimumContrast;
+@dynamic useSeparateColorsForLightAndDarkMode;
+@dynamic darkMode;
+
+- (instancetype)initWithSource:(iTermColorMap *)source {
+    _impl = [[iTermColorMapSanitizingAdapterImpl alloc] init];
+    _impl.delegate = source.delegate;
+    _source = source;
+    return self;
+}
+
+- (id)forwardingTargetForSelector:(SEL)aSelector {
+    if ([_impl respondsToSelector:aSelector]) {
+        return _impl;
+    }
+    return _source;
+}
+
+- (BOOL)respondsToSelector:(SEL)aSelector {
+    return [_impl respondsToSelector:aSelector] || [_source respondsToSelector:aSelector];
+}
+
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector {
+    return [_source methodSignatureForSelector:aSelector];
+}
+
+- (void)forwardInvocation:(NSInvocation *)anInvocation {
+    anInvocation.target = [_impl respondsToSelector:anInvocation.selector] ? _impl : _source;
+    [anInvocation invoke];
+}
+
+@end
+

@@ -83,12 +83,21 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
 }
 
 - (id<IntervalTreeObject>)doppelganger {
-    assert(!_isDoppelganger);
-    if (!_doppelganger) {
-        _doppelganger = [self copyOfIntervalTreeObject];
-        _doppelganger->_isDoppelganger = YES;
+    @synchronized ([VT100RemoteHost class]) {
+        assert(!_isDoppelganger);
+        if (!_doppelganger) {
+            _doppelganger = [self copyOfIntervalTreeObject];
+            _doppelganger->_isDoppelganger = YES;
+            _doppelganger->_progenitor = self;
+        }
+        return _doppelganger;
     }
-    return _doppelganger;
+}
+
+- (id<IntervalTreeObject>)progenitor {
+    @synchronized ([VT100RemoteHost class]) {
+        return _progenitor;
+    }
 }
 
 @end
