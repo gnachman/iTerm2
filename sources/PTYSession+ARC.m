@@ -232,9 +232,12 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
         continuation.code = EOL_HARD;
         empty = [[ScreenCharArray alloc] initWithLine:&placeholder length:0 continuation:continuation];
     });
-    for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
-        [subscriber deliver:empty metadata:iTermMetadataMakeImmutable(iTermMetadataDefault())];
-    }
+    // Dispatch because side-effects can't join the mutation queue.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
+            [subscriber deliver:empty metadata:iTermMetadataMakeImmutable(iTermMetadataDefault())];
+        }
+    });
 }
 
 - (void)publishScreenCharArray:(ScreenCharArray *)array
@@ -242,9 +245,12 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     if (self.contentSubscribers.count == 0) {
         return;
     }
-    for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
-        [subscriber deliver:array metadata:metadata];
-    }
+    // Side-effects are not allowed to join the mutation thread so publish not as a side-effect.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        for (id<iTermContentSubscriber> subscriber in self.contentSubscribers) {
+            [subscriber deliver:array metadata:metadata];
+        }
+    });
 }
 
 @end

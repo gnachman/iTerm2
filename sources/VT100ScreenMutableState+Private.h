@@ -44,7 +44,7 @@ iTermTriggerScopeProvider> {
 // in a joined block, then any VT100ScreenMutableState can consider itself joined while on the
 // main thread. This can happen when performBlockWithJoinedThreads is reentrant with two different
 // VT100ScreenMutableState objects (for example, when detaching in tmux mode).
-@property (class, atomic) BOOL performingJoinedBlock;
+@property (class, atomic, readwrite) BOOL performingJoinedBlock;
 
 - (iTermEventuallyConsistentIntervalTree *)mutableIntervalTree;
 - (iTermEventuallyConsistentIntervalTree *)mutableSavedIntervalTree;

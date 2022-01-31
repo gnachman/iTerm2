@@ -552,6 +552,9 @@ private class TokenExecutorImpl {
         }
         executeHighPriorityTasks()
         guard let delegate = delegate else {
+            // This is necessary to avoid deadlock. If the terminal is disabled then the token queue
+            // will hold semaphores that need to be signaled.
+            tokenQueue.removeAll()
             return
         }
         let hadTokens = !tokenQueue.isEmpty

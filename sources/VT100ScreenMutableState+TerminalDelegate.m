@@ -719,7 +719,23 @@
 }
 
 - (void)terminalHandleTmuxInput:(VT100Token *)token {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    if (token->type == TMUX_EXIT) {
+        // Pause so that the "Detached" message can be appended before any more tokens
+        // are handled. That's added as a high-pri task and will therefore run before
+        // the token executor handles another token post-unpause.
+        [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+            [delegate screenHandleTmuxInput:token];
+            [unpauser unpause];
+        }];
+        return;
+    }
+
+    // For performance, non-exit tmux lines are handled as side-effects. If tmux mode
+    // is exited because of an unexpected token, some number of subsequent tokens may take
+    // this path since the call to forceUnhookDCS happens concurrent to future token
+    // execution. But weird things always happens when tmux mode unexpectedly exits and
+    // it's worth the perf win.
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenHandleTmuxInput:token];
     }];
 }

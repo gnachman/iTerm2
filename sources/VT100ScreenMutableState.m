@@ -265,15 +265,16 @@ static _Atomic int gPerformingJoinedBlock;
     }];
 }
 
-// This is normally run on the main queue. If the mutation queue is joined with the main queue
-// then it may run on the mutation queue while the main queue twiddles its thumbs on a dispatch
-// group.
+// This is run on the main queue.
 - (void)performSideEffect:(void (^)(id<VT100ScreenDelegate>))block {
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
     if (!delegate) {
         return;
     }
+    const BOOL saved = self.performingSideEffect;
+    self.performingSideEffect = YES;
     block(delegate);
+    self.performingSideEffect = saved;
 }
 
 - (void)performPausedSideEffect:(iTermTokenExecutorUnpauser *)unpauser
@@ -283,7 +284,13 @@ static _Atomic int gPerformingJoinedBlock;
         [unpauser unpause];
         return;
     }
+    const BOOL savedSideEffect = self.performingSideEffect;
+    const BOOL savedPausedSideEffect = self.performingPausedSideEffect;
+    self.performingSideEffect = YES;
+    self.performingPausedSideEffect = YES;
     block(delegate, unpauser);
+    self.performingPausedSideEffect = savedPausedSideEffect;
+    self.performingSideEffect = savedSideEffect;
 }
 
 // See threading notes on performSideEffect:.
@@ -292,7 +299,10 @@ static _Atomic int gPerformingJoinedBlock;
     if (!observer) {
         return;
     }
+    const BOOL saved = self.performingSideEffect;
+    self.performingSideEffect = YES;
     block(observer);
+    self.performingSideEffect = saved;
 }
 
 - (void)setNeedsRedraw {
@@ -1162,6 +1172,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)resetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
     __weak __typeof(self) weakSelf = self;
+    assert(self.performingPausedSideEffect ||
+           !self.performingSideEffect ||
+           VT100ScreenMutableState.performingJoinedBlock);
+
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [weakSelf reallyResetPreservingPrompt:preservePrompt
                                 modifyContent:modifyContent
@@ -2464,6 +2478,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
         const int line = [self numberOfScrollbackLines] + self.cursorY;
         NSString *pwd = [self workingDirectoryOnLine:line];
+        assert(self.performingPausedSideEffect ||
+               !self.performingSideEffect ||
+               VT100ScreenMutableState.performingJoinedBlock);
+
         [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenCurrentHostDidChange:remoteHostObj pwd:pwd];
         }];
@@ -3065,6 +3083,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
     [self setColorsFromDictionary:dict];
     // Doing a joined side effect here ensures that HTML logging gets an up-to-date colormap before the next token.
+    assert(self.performingPausedSideEffect ||
+           !self.performingSideEffect ||
+           VT100ScreenMutableState.performingJoinedBlock);
+
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenRestoreColorsFromSlot:slot];
     }];
@@ -3600,6 +3622,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)fileReceiptEndedUnexpectedly {
     self.inlineImageHelper = nil;
+    assert(self.performingPausedSideEffect ||
+           !self.performingSideEffect ||
+           VT100ScreenMutableState.performingJoinedBlock);
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenFileReceiptEndedUnexpectedly];
     }];

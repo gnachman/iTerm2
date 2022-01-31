@@ -140,11 +140,17 @@ static NSMutableArray<iTermBroadcastPasswordHelper *> *sBroadcastPasswordHelpers
 @implementation iTermEchoProbeDelegateProxy
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeString:(NSString *)string {
-    [self.session writeTaskNoBroadcast:string];
+    // Dispatch because this will join threads.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.session writeTaskNoBroadcast:string];
+    });
 }
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeData:(NSData *)data {
-    [self.session writeLatin1EncodedData:data broadcastAllowed:NO];
+    // Dispatch because this will join threads.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.session writeLatin1EncodedData:data broadcastAllowed:NO];
+    });
 }
 
 - (void)echoProbeDidSucceed:(iTermEchoProbe *)echoProbe {

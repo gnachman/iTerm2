@@ -6525,10 +6525,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     @synchronized ([TmuxGateway class]) {
         _tmuxMode = tmuxMode;
     }
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        mutableState.isTmuxGateway = (tmuxMode == TMUX_GATEWAY);
-    }];
-    if (tmuxMode == TMUX_CLIENT) {
+    if (tmuxMode == TMUX_GATEWAY) {
+        [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            mutableState.isTmuxGateway = (tmuxMode == TMUX_GATEWAY);
+        }];
+    } else if (tmuxMode == TMUX_NONE) {
+        // We got here through a paused side-effect so we cvan't join.
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            mutableState.isTmuxGateway = NO;
+        }];
+    } else if (tmuxMode == TMUX_CLIENT) {
         [self setUpTmuxPipe];
     }
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -7185,8 +7191,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)tmuxInitialCommandDidFailWithError:(NSString *)error {
-    // Let the user know what went wrong.
-    [self printTmuxMessage:[NSString stringWithFormat:@"tmux failed with error: “%@”", error]];
+    // Let the user know what went wrong. Do it async because this runs as a side-effect.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self printTmuxMessage:[NSString stringWithFormat:@"tmux failed with error: “%@”", error]];
+    });
 }
 
 - (void)tmuxPrintLine:(NSString *)line {
@@ -7244,31 +7252,31 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)tmuxHostDisconnected:(NSString *)dcsID {
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        _hideAfterTmuxWindowOpens = NO;
+    _hideAfterTmuxWindowOpens = NO;
 
-        if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
-            [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
-            // Do this before detaching because it may be the only tab in a hotkey window. If all the
-            // tabs close the window is destroyed and it breaks the reference from iTermProfileHotkey.
-            // See issue 7384.
-            [[iTermBuriedSessions sharedInstance] restoreSession:self];
-        }
+    if ([iTermPreferences boolForKey:kPreferenceKeyAutoHideTmuxClientSession] &&
+        [[[iTermBuriedSessions sharedInstance] buriedSessions] containsObject:self]) {
+        // Do this before detaching because it may be the only tab in a hotkey window. If all the
+        // tabs close the window is destroyed and it breaks the reference from iTermProfileHotkey.
+        // See issue 7384.
+        [[iTermBuriedSessions sharedInstance] restoreSession:self];
+    }
 
-        [_tmuxController detach];
-        // Autorelease the gateway because it called this function so we can't free
-        // it immediately.
-        [_tmuxGateway autorelease];
-        _tmuxGateway = nil;
-        [_tmuxController release];
-        _tmuxController = nil;
+    [_tmuxController detach];
+    // Autorelease the gateway because it called this function so we can't free
+    // it immediately.
+    [_tmuxGateway autorelease];
+    _tmuxGateway = nil;
+    [_tmuxController release];
+    _tmuxController = nil;
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState appendStringAtCursor:@"Detached"];
         [mutableState appendCarriageReturnLineFeed];
         [terminal.parser forceUnhookDCS:dcsID];
-        self.tmuxMode = TMUX_NONE;
-        [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
-        [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
     }];
+    self.tmuxMode = TMUX_NONE;
+    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
+    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
 }
 
 - (void)tmuxCannotSendCharactersInSupplementaryPlanes:(NSString *)string windowPane:(int)windowPane {
@@ -10498,9 +10506,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_exited) {
         return;
     }
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
-                                             VT100ScreenMutableState *mutableState,
-                                             id<VT100ScreenDelegate> delegate) {
+    // Use mutateAsync because you get here from a side-effect.
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal,
+                                    VT100ScreenMutableState *mutableState,
+                                    id<VT100ScreenDelegate> delegate) {
         screen_char_t savedFgColor = [terminal foregroundColorCode];
         screen_char_t savedBgColor = [terminal backgroundColorCode];
         [terminal setForegroundColor:ALTSEM_DEFAULT
@@ -10903,6 +10912,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenWriteDataToTask:(NSData *)data {
     if (_shell == nil) {
+        return;
+    }
+    if (self.tmuxMode == TMUX_GATEWAY) {
+        // Prevent joining threads when writing the tmux message. Also, this doesn't make sense to do.
         return;
     }
     [self writeLatin1EncodedData:data broadcastAllowed:NO];
@@ -13942,10 +13955,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermEchoProbeDelegate
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeString:(NSString *)string {
+    if (self.tmuxMode == TMUX_GATEWAY) {
+        return;
+    }
     [self writeTaskNoBroadcast:string];
 }
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeData:(NSData *)data {
+    if (self.tmuxMode == TMUX_GATEWAY) {
+        return;
+    }
     [self writeLatin1EncodedData:data broadcastAllowed:NO];
 }
 
@@ -15234,6 +15253,18 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
                                     rateLimit:(iTermRateLimitedUpdate *)rateLimit
                                       disable:(void (^)(void))disable {
     [iTermGCD assertMainQueueSafe];
+    __weak __typeof(self) weakSelf = self;
+    // Dispatch because it's not safe to start a runloop in a side-effect.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf reallyShowTriggerAlertWithMessage:message
+                                          rateLimit:rateLimit
+                                            disable:disable];
+    });
+}
+
+- (void)reallyShowTriggerAlertWithMessage:(NSString *)message
+                                rateLimit:(iTermRateLimitedUpdate *)rateLimit
+                                  disable:(void (^)(void))disable {
     __weak __typeof(self) weakSelf = self;
     [rateLimit performRateLimitedBlock:^{
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];

@@ -139,13 +139,17 @@ static NSString *kCommandTimestamp = @"timestamp";
                           title:@"tmux Reported a Problem"];
 }
 
+// TODO: be more forgiving of errors.
 - (void)abortWithErrorMessage:(NSString *)message title:(NSString *)title {
-    // TODO: be more forgiving of errors.
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-    alert.messageText = title;
-    alert.informativeText = message;
-    [alert addButtonWithTitle:@"OK"];
-    [alert runModal];
+    // This can run in a side-effect and it's not safe to start a runloop in a side effect.
+#warning TODO: Audit that no side-effects start runloops.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        alert.messageText = title;
+        alert.informativeText = message;
+        [alert addButtonWithTitle:@"OK"];
+        [alert runModal];
+    });
     [self detach];
     [delegate_ tmuxHostDisconnected:[[_dcsID copy] autorelease]];  // Force the client to quit
 }

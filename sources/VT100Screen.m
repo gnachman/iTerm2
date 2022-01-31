@@ -59,6 +59,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // the VT100ScreenState model. Instad it will need lots of mutexes :(
     DVR* dvr_;
     NSMutableIndexSet *_animatedLines;
+    // If positive, _state is a sanitizing adapter of _mutableState. Changes to the current grid are immediately reflected in the mutable state.
+    NSInteger _sharedStateCount;
+
+    // If YES, we reset dirty on a shared grid and the grid must be merged regardless of its dirty bits.
+    BOOL _forceMergeGrids;
 }
 
 @synthesize dvr = dvr_;
@@ -180,6 +185,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 #pragma mark - PTYTextViewDataSource
 
 - (void)resetDirty {
+    if (_sharedStateCount && !_forceMergeGrids && _state.currentGrid.isAnyCharDirty) {
+        // We're resetting dirty in a grid shared by mutable & immutable state. That means when sync
+        // ends the mutable grid won't be synced over, leaving the immutable one out-of-date. Set
+        // this flag to ensure that doesn't happen.
+        _forceMergeGrids = YES;
+    }
     [_state.currentGrid markAllCharsDirty:NO];
 }
 
@@ -1055,6 +1066,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block {
+    // We don't want to allow joining inside a side-effect because that causes side-effects to run
+    // out of order (joining runs remaining side-effects immediately, which is out of order since
+    // the current one isn't done yet).
+    assert(!_mutableState.performingSideEffect ||
+           _mutableState.performingPausedSideEffect ||
+           VT100ScreenMutableState.performingJoinedBlock);
     [_mutableState performBlockWithJoinedThreads:block];
 }
 
@@ -1065,15 +1082,28 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (VT100ScreenState *)switchToSharedState {
+    ++_sharedStateCount;
     VT100ScreenState *savedState = [_state autorelease];
     _state = [[_mutableState sanitizingAdapter] retain];
     return savedState;
 }
 
 - (void)restoreState:(VT100ScreenState *)state {
+    --_sharedStateCount;
     [_state autorelease];
     _state = [state retain];
+    BOOL resetDirty = NO;
+    if (_forceMergeGrids) {
+        _forceMergeGrids = NO;
+        resetDirty = _mutableState.currentGrid.isAnyCharDirty;
+        [_mutableState.primaryGrid markAllCharsDirty:YES];
+        [_mutableState.altGrid markAllCharsDirty:YES];
+    }
     [_state mergeFrom:_mutableState];
+    if (resetDirty) {
+        // More cells in the mutable grid were marked dirty since the last refresh.
+        [_state.currentGrid markAllCharsDirty:YES];
+    }
 }
 
 - (VT100SyncResult)synchronizeWithConfig:(VT100MutableScreenConfiguration *)sourceConfig

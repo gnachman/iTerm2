@@ -46,7 +46,7 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p hostname=%@ username=%@ doppelganger=%@ (%@) progenitor=%@>",
+    return [NSString stringWithFormat:@"<%@: %p hostname=%@ username=%@ doppelganger=%p (%@) progenitor=%p>",
             self.class, self, self.hostname, self.username, _doppelganger, _isDoppelganger ? @"IsDop" : @"NotDop", _progenitor];
 }
 
