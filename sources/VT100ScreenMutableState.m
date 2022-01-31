@@ -1172,10 +1172,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)resetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
     __weak __typeof(self) weakSelf = self;
-    assert(self.performingPausedSideEffect ||
-           !self.performingSideEffect ||
-           VT100ScreenMutableState.performingJoinedBlock);
-
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [weakSelf reallyResetPreservingPrompt:preservePrompt
                                 modifyContent:modifyContent
@@ -2478,10 +2474,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
         const int line = [self numberOfScrollbackLines] + self.cursorY;
         NSString *pwd = [self workingDirectoryOnLine:line];
-        assert(self.performingPausedSideEffect ||
-               !self.performingSideEffect ||
-               VT100ScreenMutableState.performingJoinedBlock);
-
         [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenCurrentHostDidChange:remoteHostObj pwd:pwd];
         }];
@@ -3083,10 +3075,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
     [self setColorsFromDictionary:dict];
     // Doing a joined side effect here ensures that HTML logging gets an up-to-date colormap before the next token.
-    assert(self.performingPausedSideEffect ||
-           !self.performingSideEffect ||
-           VT100ScreenMutableState.performingJoinedBlock);
-
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenRestoreColorsFromSlot:slot];
     }];
@@ -3622,9 +3610,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)fileReceiptEndedUnexpectedly {
     self.inlineImageHelper = nil;
-    assert(self.performingPausedSideEffect ||
-           !self.performingSideEffect ||
-           VT100ScreenMutableState.performingJoinedBlock);
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenFileReceiptEndedUnexpectedly];
     }];
