@@ -2615,7 +2615,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setExited:(BOOL)exited {
     _exited = exited;
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.exited = exited;
     }];
 }

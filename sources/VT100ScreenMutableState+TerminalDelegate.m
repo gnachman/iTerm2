@@ -809,7 +809,7 @@
     // prompt to be the last line on the screen (such lines are scrolled to the center of
     // the screen).
     if ([argument isEqualToString:@"saveScrollPosition"]) {
-        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenSaveScrollPosition];
         }];
     } else {  // implicitly "saveCursorLine"
