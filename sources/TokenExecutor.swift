@@ -45,11 +45,14 @@ class Unpauser: NSObject {
     init(_ delegate: UnpauserDelegate) {
         self.delegate = delegate
         // stack = Thread.callStackSymbols.joined(separator: "\n")
+        super.init()
+        // print("Pause \(self) from\n\(stack)")
     }
 
     @objc
     func unpause() {
         mutex.sync {
+            // print("Unpause \(self)")
             guard let temp = delegate else {
                 return
             }
@@ -58,6 +61,12 @@ class Unpauser: NSObject {
             temp.unpause()
         }
     }
+
+//    deinit {
+//        if stack != "" {
+//            fatalError()
+//        }
+//    }
 }
 
 func CVectorReleaseObjectsAndDestroy(_ vector: CVector) {
@@ -508,12 +517,10 @@ private class TokenExecutorImpl {
     // This can run on the main queue, or else on the mutation queue when joined.
     func executeSideEffects(syncFirst: Bool) {
         iTermGCD.assertMainQueueSafe()
+
         if executingSideEffects.getAndSet(true) {
             // Do not allow re-entrant side-effects.
             return
-        }
-        defer {
-            executingSideEffects.set(false)
         }
         var shouldSync = syncFirst
         while let task = sideEffects.dequeue() {
@@ -521,19 +528,15 @@ private class TokenExecutorImpl {
                 delegate?.tokenExecutorSync()
                 shouldSync = false
             }
-            let state = sideEffects.getAndResetState()
-            if !state.isEmpty {
-                delegate?.tokenExecutorHandleSideEffectState(state)
-            }
             task()
         }
+        executingSideEffects.set(false)
 
-        // In case there were no tasks but there was state:
+        // Do this last because it might join.
         let state = sideEffects.getAndResetState()
         if !state.isEmpty {
             if shouldSync {
                 delegate?.tokenExecutorSync()
-                shouldSync = false
             }
             delegate?.tokenExecutorHandleSideEffectState(state)
         }

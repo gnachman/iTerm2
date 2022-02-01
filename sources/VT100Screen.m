@@ -501,8 +501,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)removeAnnotation:(id<PTYAnnotationReading>)annotation {
+    id<PTYAnnotationReading> progenitor = annotation.progenitor;
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState removeAnnotation:annotation];
+        [mutableState removeAnnotation:progenitor];
     }];
 }
 

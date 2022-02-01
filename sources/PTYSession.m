@@ -2517,100 +2517,100 @@ ITERM_WEAKLY_REFERENCEABLE
 // "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {
     DLog(@"terminate called from %@", [NSThread callStackSymbols]);
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
-                                             VT100ScreenMutableState *mutableState,
-                                             id<VT100ScreenDelegate> delegate) {
+    if ([[self textview] isFindingCursor]) {
+        [[self textview] endFindCursor];
+    }
+    if (_exited && !_shortLivedSingleUse) {
+        [self _maybeWarnAboutShortLivedSessions];
+    }
+    if (self.tmuxMode == TMUX_CLIENT) {
+        assert([_delegate tmuxWindow] >= 0);
+        [_tmuxController deregisterWindow:[_delegate tmuxWindow]
+                               windowPane:self.tmuxPane
+                                  session:self];
+        // This call to fitLayoutToWindows is necessary to handle the case where
+        // a small window closes and leaves behind a larger (e.g., fullscreen)
+        // window. We want to set the client size to that of the smallest
+        // remaining window.
+        int n = [[_delegate sessions] count];
+        if ([[_delegate sessions] indexOfObjectIdenticalTo:self] != NSNotFound) {
+            n--;
+        }
+        if (n == 0) {
+            // The last session in this tab closed so check if the client has
+            // changed size
+            DLog(@"Last session in tab closed. Check if the client has changed size");
+            [_tmuxController fitLayoutToWindows];
+        }
+        _tmuxStatusBarMonitor.active = NO;
+        [_tmuxStatusBarMonitor release];
+        _tmuxStatusBarMonitor = nil;
 
-        if ([[self textview] isFindingCursor]) {
-            [[self textview] endFindCursor];
-        }
-        if (_exited && !_shortLivedSingleUse) {
-            [self _maybeWarnAboutShortLivedSessions];
-        }
-        if (self.tmuxMode == TMUX_CLIENT) {
-            assert([_delegate tmuxWindow] >= 0);
-            [_tmuxController deregisterWindow:[_delegate tmuxWindow]
-                                   windowPane:self.tmuxPane
-                                      session:self];
-            // This call to fitLayoutToWindows is necessary to handle the case where
-            // a small window closes and leaves behind a larger (e.g., fullscreen)
-            // window. We want to set the client size to that of the smallest
-            // remaining window.
-            int n = [[_delegate sessions] count];
-            if ([[_delegate sessions] indexOfObjectIdenticalTo:self] != NSNotFound) {
-                n--;
-            }
-            if (n == 0) {
-                // The last session in this tab closed so check if the client has
-                // changed size
-                DLog(@"Last session in tab closed. Check if the client has changed size");
-                [_tmuxController fitLayoutToWindows];
-            }
-            _tmuxStatusBarMonitor.active = NO;
-            [_tmuxStatusBarMonitor release];
-            _tmuxStatusBarMonitor = nil;
-
-            [self uninstallTmuxTitleMonitor];
-            [self uninstallTmuxForegroundJobMonitor];
-        } else if (self.tmuxMode == TMUX_GATEWAY) {
-            [_tmuxController detach];
-            [_tmuxGateway release];
-            _tmuxGateway = nil;
-        }
-        BOOL undoable = (![self isTmuxClient] &&
-                         !_shouldRestart &&
-                         !_synthetic &&
-                         ![[iTermController sharedInstance] applicationIsQuitting]);
+        [self uninstallTmuxTitleMonitor];
+        [self uninstallTmuxForegroundJobMonitor];
+    } else if (self.tmuxMode == TMUX_GATEWAY) {
+        [_tmuxController detach];
+        [_tmuxGateway release];
+        _tmuxGateway = nil;
+    }
+    BOOL undoable = (![self isTmuxClient] &&
+                     !_shouldRestart &&
+                     !_synthetic &&
+                     ![[iTermController sharedInstance] applicationIsQuitting]);
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [terminal.parser forceUnhookDCS:nil];
-        self.tmuxMode = TMUX_NONE;
-        [_tmuxController release];
-        _hideAfterTmuxWindowOpens = NO;
-        _tmuxController = nil;
-        [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
-        [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
-
-        // The source pane may have just exited. Dogs and cats living together!
-        // Mass hysteria!
-        [[MovePaneController sharedInstance] exitMovePaneMode];
-
-        // deregister from the notification center
-        [[NSNotificationCenter defaultCenter] removeObserver:self];
-
-        if (_liveSession) {
-            [_liveSession terminate];
-        }
-
-        DLog(@"  terminate: exited = YES");
-        [self setExited:YES];
-        [_view retain];  // hardstop and revive will release this.
-        if (undoable) {
-            [self makeTerminationUndoable];
-        } else {
-            [self hardStop];
-        }
-        [[iTermSessionHotkeyController sharedInstance] removeSession:self];
-
-        // final update of display
-        [self updateDisplayBecause:@"terminate session"];
-
-        [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionWillTerminateNotification
-                                                            object:self];
-        [_delegate removeSession:self];
-
-        _screen.delegate = nil;
-        _screen.intervalTreeObserver = nil;
-
-        _screen.terminalEnabled = NO;
-        if (_view.findDriverDelegate == self) {
-            _view.findDriverDelegate = nil;
-        }
-
-        [_pasteHelper abort];
-
-        [[_delegate realParentWindow] sessionDidTerminate:self];
-
-        _delegate = nil;
     }];
+    self.tmuxMode = TMUX_NONE;
+    [_tmuxController release];
+    _hideAfterTmuxWindowOpens = NO;
+    _tmuxController = nil;
+    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxClientName];
+    [self.variablesScope setValue:nil forVariableNamed:iTermVariableKeySessionTmuxPaneTitle];
+
+    // The source pane may have just exited. Dogs and cats living together!
+    // Mass hysteria!
+    [[MovePaneController sharedInstance] exitMovePaneMode];
+
+    // deregister from the notification center
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    if (_liveSession) {
+        [_liveSession terminate];
+    }
+
+    DLog(@"  terminate: exited = YES");
+    [self setExited:YES];
+    [_view retain];  // hardstop and revive will release this.
+    if (undoable) {
+        [self makeTerminationUndoable];
+    } else {
+        [self hardStop];
+    }
+    [[iTermSessionHotkeyController sharedInstance] removeSession:self];
+
+    // final update of display. Do it async to avoid a join from a side effect.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf updateDisplayBecause:@"terminate session"];
+    });
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionWillTerminateNotification
+                                                        object:self];
+    [_delegate removeSession:self];
+
+    _screen.delegate = nil;
+    _screen.intervalTreeObserver = nil;
+
+    _screen.terminalEnabled = NO;
+    if (_view.findDriverDelegate == self) {
+        _view.findDriverDelegate = nil;
+    }
+
+    [_pasteHelper abort];
+
+    [[_delegate realParentWindow] sessionDidTerminate:self];
+
+    _delegate = nil;
 }
 
 - (void)setExited:(BOOL)exited {
@@ -5097,10 +5097,14 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
                      forVariableNamed:iTermVariableKeySessionChildPid];
     }
 
-    [self tryAutoProfileSwitchWithHostname:self.variablesScope.hostname
-                                  username:self.variablesScope.username
-                                      path:self.variablesScope.path
-                                       job:processInfo.name];
+    // Avoid join from side-effect.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf tryAutoProfileSwitchWithHostname:weakSelf.variablesScope.hostname
+                                      username:weakSelf.variablesScope.username
+                                          path:weakSelf.variablesScope.path
+                                           job:processInfo.name];
+    });
 }
 
 - (void)refresh {
@@ -12908,6 +12912,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self publishScreenCharArray:sca metadata:metadata];
 }
 
+#warning TODO: It's way too slow to round-trip to the main thread to get these. Precalculate them and pass in VT100ScreenConfig.
 - (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode
                                         flags:(NSEventModifierFlags)flags
                                    characters:(NSString *)characters
@@ -13969,6 +13974,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)echoProbeDidFail:(iTermEchoProbe *)echoProbe {
+    // Not allowed to use a runloop in a side-effect.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self sendPasswordAfterGettingPermission];
+    });
+}
+
+- (void)sendPasswordAfterGettingPermission {
     BOOL ok = ([iTermWarning showWarningWithTitle:@"Are you really at a password prompt? It looks "
                 @"like what you're typing is echoed to the screen."
                                           actions:@[ @"Cancel", @"Enter Password" ]
@@ -14385,7 +14397,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // Updates the mark
     DLog(@"Will create a mark");
     const long absLine = _screen.lineNumberOfCursor + _screen.totalScrollbackOverflow;
-    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState setWorkingDirectory:pwd
                                 onAbsLine:absLine
                                    pushed:NO

@@ -30,6 +30,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id<iTermEchoProbeDelegate> delegate;
 @property (nonatomic, readonly) BOOL isActive;
 
+- (instancetype)initWithQueue:(dispatch_queue_t)queue NS_DESIGNATED_INITIALIZER;
+- (instancetype)init NS_UNAVAILABLE;
+
 - (void)beginProbeWithBackspace:(NSData *)backspaceData
                        password:(NSString *)password;
 - (void)updateEchoProbeStateWithTokenCVector:(CVector *)vector;

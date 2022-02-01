@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermGCDTimer.h"
 #import "iTermUserDefaults.h"
 #import "VT100Token.h"
 
@@ -25,6 +26,16 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
 @implementation iTermEchoProbe {
     NSString *_password;
     iTermEchoProbeState _state;
+    iTermGCDTimer *_timer;
+    dispatch_queue_t _queue;
+}
+
+- (instancetype)initWithQueue:(dispatch_queue_t)queue {
+    self = [super init];
+    if (self) {
+        _queue = queue;
+    }
+    return self;
 }
 
 - (void)setDelegate:(id<iTermEchoProbeDelegate>)delegate {
@@ -38,7 +49,8 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
 - (void)beginProbeWithBackspace:(NSData *)backspace
                        password:(nonnull NSString *)password {
     _password = [password copy];
-    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(timeout) object:nil];
+    [_timer invalidate];
+    _timer = nil;
 
     if (![iTermUserDefaults probeForPassword] || [iTermAdvancedSettingsModel echoProbeDuration] == 0) {
         [self enterPassword];
@@ -54,9 +66,10 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
         @synchronized(self) {
             _state = iTermEchoProbeWaiting;
         }
-        [self performSelector:@selector(timeout)
-                   withObject:nil
-                   afterDelay:[iTermAdvancedSettingsModel echoProbeDuration]];
+        _timer = [[iTermGCDTimer alloc] initWithInterval:[iTermAdvancedSettingsModel echoProbeDuration]
+                                                   queue:_queue
+                                                  target:self
+                                                selector:@selector(timeout)];
     } else {
         // Rare case: we don't know how to send a backspace. Just enter the password.
         [self enterPassword];
@@ -142,12 +155,14 @@ iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100T
 - (void)reset {
     _password = nil;
     _state = iTermEchoProbeOff;
-    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(timeout) object:nil];
+    [_timer invalidate];
+    _timer = nil;
 }
 
 #pragma mark - Private
 
 - (void)timeout {
+    _timer = nil;
     @synchronized (self) {
         switch (_state) {
             case iTermEchoProbeWaiting:

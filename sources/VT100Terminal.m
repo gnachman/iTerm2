@@ -2960,6 +2960,8 @@ static const int kMaxScreenRows = 4096;
     for (int i = 0; i < token.csi->count; i++) {
         NSString *stringKey = inverseMap[@(token.csi->p[i])];
         NSString *hexEncodedKey = [stringKey hexEncodedString];
+        DLog(@"requestTermcapTerminfo for key %@", stringKey);
+        NSLog(@"promise %@ for %@", stringKey, token);
         void (^add)(unsigned short, NSEventModifierFlags, NSString *, NSString *) =
             ^void(unsigned short keyCode,
                   NSEventModifierFlags flags,
@@ -2978,6 +2980,7 @@ static const int kMaxScreenRows = 4096;
                         [seal rejectWithDefaultError];
                     }];
                 }];
+                DLog(@"Add %@", promise.maybeValue);
                 [parts addObject:promise];
                 ok = YES;
             };
@@ -3147,13 +3150,17 @@ static const int kMaxScreenRows = 4096;
     }
 
     __weak __typeof(self) weakSelf = self;
+    DLog(@"Gather parts...");
     iTermTokenExecutorUnpauser *unpauser = [self.delegate terminalPause];
     [iTermPromise gather:parts queue:[self.delegate terminalQueue] completion:^(NSArray<iTermOr<id, NSError *> *> * _Nonnull values) {
         NSArray<NSString *> *strings = [values mapWithBlock:^id(iTermOr<id,NSError *> *or) {
             return or.maybeFirst;
         }];
+        DLog(@"Got them all. It is %@", strings);
+        NSLog(@"result is %@ for %@", [strings componentsJoinedByString:@", "], token);
         [weakSelf finishRequestTermcapTerminfoWithValues:strings
                                                       ok:ok];
+        DLog(@"Unpause");
         [unpauser unpause];
     }];
 }

@@ -299,9 +299,8 @@
 }
 
 - (void)terminalSetRows:(int)rows andColumns:(int)columns {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenSetSize:VT100GridSizeMake(rows, columns)];
-        [unpauser unpause];
     }];
 }
 
@@ -451,10 +450,12 @@
 }
 
 - (void)terminalSetSubtitle:(NSString *)subtitle {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    // Paused because it can change the profile.
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         if ([delegate screenAllowTitleSetting]) {
             [delegate screenSetSubtitle:subtitle];
         }
+        [unpauser unpause];
     }];
 }
 
@@ -590,8 +591,8 @@
             ![delegate screenWindowIsFullscreen]) {
             // TODO: Only allow this if there is a single session in the tab.
             [delegate screenMoveWindowTopLeftPointTo:point];
-            [unpauser unpause];
         }
+        [unpauser unpause];
     }];
 }
 
@@ -945,8 +946,10 @@
 }
 
 - (void)terminalSetBackgroundImageFile:(NSString *)filename {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    // Paused because it may modify the profile.
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetBackgroundImageFile:filename];
+        [unpauser unpause];
     }];
 }
 

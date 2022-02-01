@@ -88,10 +88,11 @@ static _Atomic int gPerformingJoinedBlock;
                 return;
             }
             VT100ScreenTokenExecutorUpdate *update = [strongSelf->_executorUpdate fork];
+
+            // Not a side-effect since it might join.
             dispatch_async(dispatch_get_main_queue(), ^{
-                [weakSelf performSideEffect:^(id<VT100ScreenDelegate> delegate) {
-                    [delegate screenExecutorDidUpdate:update];
-                }];
+                id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+                [delegate screenExecutorDidUpdate:update];
             });
         }];
         _derivativeIntervalTree = [[IntervalTree alloc] init];
@@ -124,7 +125,7 @@ static _Atomic int gPerformingJoinedBlock;
                                                      slownessDetector:_triggerEvaluator.triggersSlownessDetector
                                                                 queue:_queue];
         _tokenExecutor.delegate = self;
-        _echoProbe = [[iTermEchoProbe alloc] init];
+        _echoProbe = [[iTermEchoProbe alloc] initWithQueue:_queue];
         _echoProbe.delegate = self;
         self.unconditionalTemporaryDoubleBuffer.delegate = self;
         _sanitizingAdapter = (VT100ScreenState *)[[VT100ScreenStateSanitizingAdapter alloc] initWithSource:self];
@@ -1284,9 +1285,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         _screenNeedsUpdate = YES;
         return;
     }
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    // Can't do this from a side-effect because it might detect a current job change and join.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        id<VT100ScreenDelegate> delegate = weakSelf.sideEffectPerformer.sideEffectPerformingScreenDelegate;
         [delegate screenUpdateDisplay:NO];
-    }];
+    });
 }
 
 
@@ -1386,8 +1390,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self reloadMarkCache];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenRemoveSelection];
-        [delegate screenNeedsRedraw];
     }];
+    [self setNeedsRedraw];
 }
 
 
@@ -1569,10 +1573,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
     // Force annotations frames to be updated.
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
-#warning TODO: Coalesce calls to screenNeedsRedraw
-        [delegate screenNeedsRedraw];
         [unpauser unpause];
     }];
+    [self setNeedsRedraw];
 }
 
 - (void)insertColumns:(int)n {
@@ -2399,7 +2402,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                        pushed:YES
                         token:nil];
     if (willChange) {
-        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        // Joined because it may cause APS to change profile.
+        [self addJoinedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenCurrentDirectoryDidChangeTo:dir];
         }];
     }
@@ -2428,7 +2432,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             if (![token commit]) {
                 return;
             }
-            [weakSelf currentDirectoryReallyDidChangeTo:workingDirectory onAbsLine:cursorAbsLine];
+            [weakSelf performBlockAsynchronously:^(VT100Terminal * _Nonnull terminal,
+                                                   VT100ScreenMutableState * _Nonnull mutableState,
+                                                   id<VT100ScreenDelegate>  _Nonnull delegate) {
+                [mutableState currentDirectoryReallyDidChangeTo:workingDirectory onAbsLine:cursorAbsLine];
+            }];
         }];
     }];
 }
@@ -3900,10 +3908,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
     [self resetScrollbackOverflow];
     // Unpause so tail find can continue after resetting it.
+    [self setNeedsRedraw];
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenResetTailFind];
         [delegate screenRemoveSelection];
-        [delegate screenNeedsRedraw];
         [unpauser unpause];
     }];
     [self.currentGrid markAllCharsDirty:YES];
@@ -3919,9 +3927,14 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)triggerEvaluatorOfferToDisableTriggersInInteractiveApps:(PTYTriggerEvaluator *)evaluator {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenOfferToDisableTriggersInInteractiveApps];
-    }];
+    // Use unmanaged concurrency because this will be rare and it can't run as a regular side-
+    // effect since it modifies the profile.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf performSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenOfferToDisableTriggersInInteractiveApps];
+        }];
+    });
 }
 
 #pragma mark - iTermTriggerScopeProvider
@@ -4095,8 +4108,8 @@ launchCoprocessWithCommand:(NSString *)command
     [self currentDirectoryDidChangeTo:currentDirectory];
 }
 
-// STOP THE WORLD - sync
 - (void)triggerSession:(Trigger *)trigger didChangeNameTo:(NSString *)newName {
+    // This updates the profile so it must be paused.
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate triggerSideEffectSetTitle:newName];
         [unpauser unpause];
@@ -4267,9 +4280,7 @@ launchCoprocessWithCommand:(NSString *)command
                          line);
     iTermImageMark *mark = [[iTermImageMark alloc] initWithImageCode:@(code)];
     mark = (iTermImageMark *)[self addMark:mark onLine:absLine singleLine:YES];
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenNeedsRedraw];
-    }];
+    [self setNeedsRedraw];
 }
 
 - (void)inlineImageDidFinishWithImageData:(NSData *)imageData {
@@ -4444,7 +4455,7 @@ launchCoprocessWithCommand:(NSString *)command
     }];
 }
 
-// Stuff that happens before the first task in side-effects. Run on the main thread or while joined.
+// Runs on the main thread or while joined.
 - (void)tokenExecutorHandleSideEffectState:(NSDictionary<NSString *,id> *)state {
     if (state[VT100ScreenMutableStateSideEffectStateKeyNeedsRedraw]) {
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
