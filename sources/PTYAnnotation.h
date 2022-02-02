@@ -17,6 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)annotationDidRequestHide:(id<PTYAnnotationReading>)annotation;
 - (void)annotationStringDidChange:(id<PTYAnnotationReading>)annotation;
 - (void)annotationWillBeRemoved:(id<PTYAnnotationReading>)annotation;
+- (BOOL)setNoteHidden:(BOOL)hidden;
+- (void)highlight;
 @end
 
 @protocol PTYAnnotationReading<NSObject, IntervalTreeImmutableObject>

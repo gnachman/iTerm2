@@ -6982,8 +6982,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         id<PTYAnnotationReading> annotation = [PTYAnnotation castFrom:obj];
         if (annotation) {
-#warning TODO: This is dumb. Just add delegate methods and avoid the cast.
-            PTYNoteViewController *note = (PTYNoteViewController *)annotation.delegate;
+            id<PTYAnnotationDelegate> note = annotation.delegate;
             [note setNoteHidden:NO];
             [note highlight];
         }
