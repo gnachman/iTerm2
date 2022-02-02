@@ -149,10 +149,8 @@
 }
 
 - (void)terminalReportVariableNamed:(NSString *)variable {
-    // Pause so we don't hit another report that could be responded to synchronously, causing out-of-order responses.
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenReportVariableNamed:variable];
-        [unpauser unpause];
     }];
 }
 
