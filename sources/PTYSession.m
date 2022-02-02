@@ -10778,7 +10778,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[_delegate realParentWindow] setFrameSize:NSMakeSize(width, height)];
 }
 
-- (void)screenPrintStringIfAllowed:(NSString *)string {
+- (void)screenPrintStringIfAllowed:(NSString *)string
+                        completion:(void (^)(void))completion {
+    // Dispatch because this may show an alert and you can't have a runloop in a side effect.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self reallyTryToPrintString:string];
+        completion();
+    });
+}
+
+- (void)reallyTryToPrintString:(NSString *)string {
     if (![self shouldBeginPrinting:YES]) {
         return;
     }
@@ -11203,6 +11212,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenStealFocus {
+    // Dispatch because you can't have a runloop in a side-effect.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self maybeStealFocus];
+    });
+}
+
+- (void)maybeStealFocus {
     NSString *const identifier = @"NoSyncAllowDenyStealFocus";
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:@"A control sequence attempted to activate a session. Allow it?"
@@ -11362,7 +11378,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     self.download = nil;
 }
 
-- (void)screenRequestUpload:(NSString *)args {
+- (void)screenRequestUpload:(NSString *)args completion:(void (^)(void))completion {
+    // Dispatch out of fear that NSOpenPanel might do something funky with ruloops even though it doesn't seem to currently.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self requestUpload];
+        completion();
+    });
+}
+
+- (void)requestUpload {
     NSOpenPanel *panel = [NSOpenPanel openPanel];
     panel.canChooseDirectories = YES;
     panel.canChooseFiles = YES;
@@ -15549,9 +15573,12 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)triggerSideEffectOpenPasswordManagerToAccountName:(NSString * _Nullable)accountName {
     [iTermGCD assertMainQueueSafe];
-    iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-    [itad openPasswordManagerToAccountName:accountName
-                                     inSession:self];
+    // Dispatch because you can't have a runloop in a side-effect and the password manager is a bunch of modal UI - why take chances?
+    dispatch_async(dispatch_get_main_queue(), ^{
+        iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
+        [itad openPasswordManagerToAccountName:accountName
+                                         inSession:self];
+    });
 }
 
 - (void)triggerSideEffectRunBackgroundCommand:(NSString *)command pool:(iTermBackgroundCommandRunnerPool *)pool {

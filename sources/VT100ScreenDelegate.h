@@ -189,7 +189,7 @@
                             quell:(BOOL)quell;
 
 // Request that a string be sent for printing.
-- (void)screenPrintStringIfAllowed:(NSString * _Nonnull)printBuffer;
+- (void)screenPrintStringIfAllowed:(NSString * _Nonnull)printBuffer completion:(void (^)(void))completion;
 
 // Request that the currently visible area of the screen be sent for printing.
 - (void)screenPrintVisibleAreaIfAllowed;
@@ -266,7 +266,7 @@
                                                                       NSInteger lengthAfter))confirm;
 - (void)screenFileReceiptEndedUnexpectedly;
 
-- (void)screenRequestUpload:(NSString * _Nonnull)args;
+- (void)screenRequestUpload:(NSString * _Nonnull)args completion:(void (^)(void))completion;
 
 - (void)screenSetCurrentTabColor:(NSColor * _Nullable)color;
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color;

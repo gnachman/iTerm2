@@ -4081,8 +4081,10 @@ launchCoprocessWithCommand:(NSString *)command
         return;
     }
     const long long line = self.cumulativeScrollbackOverflow + self.numberOfScrollbackLines + self.currentGrid.cursorY;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    // Pause to avoid a visual stutter if more tokens cause scrolling.
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate triggerSideEffectStopScrollingAtLine:line];
+        [unpauser unpause];
     }];
 }
 

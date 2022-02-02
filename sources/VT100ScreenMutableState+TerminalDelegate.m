@@ -149,8 +149,10 @@
 }
 
 - (void)terminalReportVariableNamed:(NSString *)variable {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    // Pause so we don't hit another report that could be responded to synchronously, causing out-of-order responses.
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenReportVariableNamed:variable];
+        [unpauser unpause];
     }];
 }
 
@@ -382,8 +384,11 @@
     NSString *string = [self.printBuffer copy];
     self.printBuffer = nil;
     self.collectInputForPrinting = NO;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenPrintStringIfAllowed:string];
+    // Pause so that attributes like colors don't change until printing (which is async) can begin.
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenPrintStringIfAllowed:string completion:^{
+            [unpauser unpause];
+        }];
     }];
 }
 
@@ -1881,8 +1886,10 @@
 }
 
 - (void)terminalRequestUpload:(NSString *)args {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenRequestUpload:args];
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenRequestUpload:args completion:^{
+            [unpauser unpause];
+        }];
     }];
 }
 
