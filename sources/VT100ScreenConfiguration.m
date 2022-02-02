@@ -43,6 +43,7 @@
 @property (nonatomic, readwrite) BOOL reduceFlicker;
 @property (nonatomic, readwrite) int maxScrollbackLines;
 @property (nonatomic, readwrite) BOOL loggingEnabled;
+@property (nonatomic, copy, readwrite) NSDictionary<NSNumber *, id> *stringForKeypress;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -82,6 +83,7 @@
 @synthesize loggingEnabled = _loggingEnabled;
 
 @synthesize isDirty = _isDirty;
+@synthesize stringForKeypress = _stringForKeypress;
 
 - (instancetype)initFrom:(VT100ScreenConfiguration *)other {
     self = [super init];
@@ -119,6 +121,7 @@
         _reduceFlicker = other.reduceFlicker;
         _maxScrollbackLines = other.maxScrollbackLines;
         _loggingEnabled = other.loggingEnabled;
+        _stringForKeypress = other.stringForKeypress;
 
         _isDirty = other.isDirty;
     }
@@ -167,6 +170,7 @@
                             @"reduceFlicker": @(_reduceFlicker),
                             @"maxScrollbackLines": @(_maxScrollbackLines),
                             @"loggingEnabled": @(_loggingEnabled),
+                            @"stringForKeypress": _stringForKeypress ?: @"",
 
                             @"isDirty": @(_isDirty),
     };
@@ -216,6 +220,7 @@
 @dynamic reduceFlicker;
 @dynamic maxScrollbackLines;
 @dynamic loggingEnabled;
+@dynamic stringForKeypress;
 
 @dynamic isDirty;
 
@@ -267,3 +272,20 @@ static char VT100MutableScreenConfigurationKVOKey;
 
 @end
 
+
+NSDictionary *VT100ScreenConfigKeypressIdentifier(unsigned short keyCode,
+                                                  NSEventModifierFlags flags,
+                                                  NSString *characters,
+                                                  NSString *charactersIgnoringModifiers) {
+    const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                       NSEventModifierFlagCommand |
+                                       NSEventModifierFlagControl |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagFunction |
+                                       NSEventModifierFlagNumericPad);
+    return @{ @"keyCode": @(keyCode),
+              @"flags": @(flags & mask),
+              @"characters": characters ?: @"",
+              @"charactersIgnoringModifiers": charactersIgnoringModifiers ?: @""
+    };
+}

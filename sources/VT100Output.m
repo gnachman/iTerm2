@@ -118,6 +118,16 @@ typedef enum {
     return self;
 }
 
+- (NSDictionary *)configDictionary {
+    return @{ @"termType": _termType ?: @"",
+              @"keypadMode": @(_keypadMode),
+              @"mouseFormat": @(_mouseFormat),
+              @"cursorMode": @(_cursorMode),
+              @"optionIsMetaForSpecialKeys": @(_optionIsMetaForSpecialKeys),
+              @"vtLevel": @(_vtLevel)
+    };
+}
+
 - (void)dealloc {
     for (int i = 0; i < TERMINFO_KEYS; i ++) {
         if (_keyStrings[i]) {

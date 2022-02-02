@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class iTermTermkeyKeyMapper;
 
+// Update iTermTermkeyKeyMapperConfigurationDictionary when modifying this.
 typedef struct {
     NSStringEncoding encoding;
     iTermOptionKeyBehavior leftOptionKey;
@@ -22,6 +23,8 @@ typedef struct {
     BOOL applicationCursorMode;
     BOOL applicationKeypadMode;
 } iTermTermkeyKeyMapperConfiguration;
+
+NSDictionary *iTermTermkeyKeyMapperConfigurationDictionary(iTermTermkeyKeyMapperConfiguration *config);
 
 @protocol iTermTermkeyKeyMapperDelegate<NSObject>
 - (void)termkeyKeyMapperWillMapKey:(iTermTermkeyKeyMapper *)termkeyKeyMaper;

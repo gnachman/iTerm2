@@ -48,6 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 // if the key mapper is interested in it.
 - (BOOL)keyMapperWantsKeyEquivalent:(NSEvent *)event;
 
+- (NSDictionary *)keyMapperDictionaryValue;
 @optional
 - (void)setDelegate:(id)delegate;
 

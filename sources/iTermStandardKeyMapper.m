@@ -476,4 +476,18 @@
     return NO;
 }
 
+- (NSDictionary *)keyMapperDictionaryValue {
+    [self.delegate standardKeyMapperWillMapKey:self];
+    return iTermStandardKeyMapperConfigurationDictionaryValue(_configuration);
+}
+
 @end
+
+NSDictionary *iTermStandardKeyMapperConfigurationDictionaryValue(iTermStandardKeyMapperConfiguration config) {
+    return @{ @"output": config.outputFactory.configDictionary ?: @{},
+              @"encoding": @(config.encoding),
+              @"leftOptionKey": @(config.leftOptionKey),
+              @"rightOptionKey": @(config.rightOptionKey),
+              @"screenlike": @(config.screenlike)
+    };
+}

@@ -27,6 +27,9 @@ typedef NS_ENUM(NSInteger, DcsTermcapTerminfoRequestName) {
     kDcsTermcapTerminfoRequestTerminalName,
     kDcsTermcapTerminfoRequestiTerm2ProfileName,
     kDcsTermcapTerminfoRequestTerminfoName,
+    kDcsTermcapTerminfoRequestNumberOfColors,
+    kDcsTermcapTerminfoRequestNumberOfColors2,
+    kDcsTermcapTerminfoRequestDirectColorWidth,
 
     // key_backspace               kbs       kb     backspace key
     kDcsTermcapTerminfoRequestKey_kb,

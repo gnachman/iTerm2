@@ -2958,6 +2958,17 @@ static const int kMaxScreenRows = 4096;
     NSMutableArray<iTermPromise<NSString *> *> *parts = [NSMutableArray array];
     NSDictionary *inverseMap = [VT100DCSParser termcapTerminfoInverseNameDictionary];
     for (int i = 0; i < token.csi->count; i++) {
+        NSString *cached = self.stringForKeypress[@(token.csi->p[i])];
+        if (cached) {
+            if ([cached isKindOfClass:[NSNull class]]) {
+                [parts addObject:[iTermPromise promiseDefaultError]];
+            } else {
+                DLog(@"Use cached value %@ -> %@", @(token.csi->p[i]), cached);
+                [parts addObject:[iTermPromise promiseValue:cached]];
+            }
+            ok = YES;
+            continue;
+        }
         NSString *stringKey = inverseMap[@(token.csi->p[i])];
         NSString *hexEncodedKey = [stringKey hexEncodedString];
         DLog(@"requestTermcapTerminfo for key %@", stringKey);
@@ -3005,6 +3016,22 @@ static const int kMaxScreenRows = 4096;
                 break;
             case kDcsTermcapTerminfoRequestUnrecognizedName:
                 break;
+            case kDcsTermcapTerminfoRequestNumberOfColors:
+                [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
+                                                             hexEncodedKey,
+                                                             [@"256" hexEncodedString]]]];
+                break;
+            case kDcsTermcapTerminfoRequestNumberOfColors2:
+                [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
+                                                             hexEncodedKey,
+                                                             [@"256" hexEncodedString]]]];
+                break;
+            case kDcsTermcapTerminfoRequestDirectColorWidth:
+                [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
+                                                             hexEncodedKey,
+                                                             [@"8" hexEncodedString]]]];
+                break;
+
             // key_backspace               kbs       kb     backspace key
             case kDcsTermcapTerminfoRequestKey_kb:
                 add(kVK_Delete, 0, @"\x7f", @"\x7f");

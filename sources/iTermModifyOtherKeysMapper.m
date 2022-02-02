@@ -375,8 +375,24 @@ static BOOL CodePointInPrivateUseArea(unichar c) {
     return !cmdPressed;
 }
 
+- (NSDictionary *)keyMapperDictionaryValue {
+    return iTermModifyOtherKeysMapperDictionary(self, self.delegate);
+}
+
 @end
 
 @implementation iTermModifyOtherKeysMapper2
 @end
 
+
+NSDictionary *iTermModifyOtherKeysMapperDictionary(iTermModifyOtherKeysMapper *self,
+                                                   id<iTermModifyOtherKeysMapperDelegate> delegate) {
+    iTermOptionKeyBehavior left, right;
+    [delegate modifyOtherKeys:self getOptionKeyBehaviorLeft:&left right:&right];
+    VT100Output *output = [delegate modifyOtherKeysOutputFactory:self];
+    return @{ @"encoding": @([delegate modifiyOtherKeysDelegateEncoding:self]),
+              @"leftOptionKeyBehavior": @(left),
+              @"rightOptionKeyBehavior": @(right),
+              @"output": [output configDictionary] ?: @{},
+              @"screenLike": @([delegate modifyOtherKeysTerminalIsScreenlike:self]) };
+}

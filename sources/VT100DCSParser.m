@@ -85,9 +85,9 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     return @{ @"TN": @(kDcsTermcapTerminfoRequestTerminalName),
               @"name": @(kDcsTermcapTerminfoRequestTerminfoName),
               @"iTerm2Profile": @(kDcsTermcapTerminfoRequestiTerm2ProfileName),
-              @"Co": @"256",  // number of colors
-              @"colors": @"256",  // number of colors
-              @"RGB": @"8",  // Width of direct color. This is just a guess?
+              @"Co": @(kDcsTermcapTerminfoRequestNumberOfColors),
+              @"colors": @(kDcsTermcapTerminfoRequestNumberOfColors2),
+              @"RGB": @(kDcsTermcapTerminfoRequestDirectColorWidth),
 
               @"kb": @(kDcsTermcapTerminfoRequestKey_kb),
               @"kD": @(kDcsTermcapTerminfoRequestKey_kD),
@@ -773,6 +773,12 @@ NSString *VT100DCSNameForTerminfoRequest(DcsTermcapTerminfoRequestName code) {
             return @"iTerm2 profile";
         case kDcsTermcapTerminfoRequestTerminfoName:
             return @"terminfo";
+        case kDcsTermcapTerminfoRequestNumberOfColors:
+            return @"colors";
+        case kDcsTermcapTerminfoRequestNumberOfColors2:
+            return @"colors";
+        case kDcsTermcapTerminfoRequestDirectColorWidth:
+            return @"color width";
         case kDcsTermcapTerminfoRequestKey_kb:
             return @"backspace key";
         case kDcsTermcapTerminfoRequestKey_kD:

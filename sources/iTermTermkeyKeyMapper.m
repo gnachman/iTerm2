@@ -635,4 +635,19 @@ static NSRange iTermMakeRange(NSInteger smallestValueInRange,
     return !cmdPressed;
 }
 
+- (NSDictionary *)keyMapperDictionaryValue {
+    [self.delegate termkeyKeyMapperWillMapKey:self];
+    return iTermTermkeyKeyMapperConfigurationDictionary(&_configuration);
+}
+
 @end
+
+NSDictionary *iTermTermkeyKeyMapperConfigurationDictionary(iTermTermkeyKeyMapperConfiguration *config) {
+    return @{
+        @"encoding": @(config->encoding),
+        @"leftOptionKey": @(config->leftOptionKey),
+        @"rightOptionKey": @(config->rightOptionKey),
+        @"applicationCursorMode": @(config->applicationCursorMode),
+        @"applicationKeypadMode": @(config->applicationKeypadMode),
+    };
+}

@@ -351,6 +351,7 @@ static _Atomic int gPerformingJoinedBlock;
 #warning TOOD: Don't remove objects here because the delegate calls will go to a screen with out-of-date state.
         [self removeInaccessibleIntervalTreeObjects];
     }
+    _terminal.stringForKeypress = config.stringForKeypress;
 }
 
 - (void)setExited:(BOOL)exited {

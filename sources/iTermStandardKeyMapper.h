@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermStandardKeyMapper;
 @class VT100Output;
 
+// Update keyMapperDictionaryValue when changing this
 typedef struct {
     VT100Output *outputFactory;
     NSStringEncoding encoding;
@@ -22,6 +23,8 @@ typedef struct {
     iTermOptionKeyBehavior rightOptionKey;
     BOOL screenlike;
 } iTermStandardKeyMapperConfiguration;
+
+NSDictionary *iTermStandardKeyMapperConfigurationDictionaryValue(iTermStandardKeyMapperConfiguration config);
 
 @protocol iTermStandardKeyMapperDelegate<NSObject>
 

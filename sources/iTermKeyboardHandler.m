@@ -51,6 +51,11 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
     return self;
 }
 
+- (NSDictionary *)dictionaryValue {
+    return @{ @"mapper": NSStringFromClass(self.keyMapper.class) ?: @"",
+              @"mapperConfig": self.keyMapper.keyMapperDictionaryValue ?: @{} };
+}
+
 - (nullable NSString *)stringForEventWithoutSideEffects:(NSEvent *)event encoding:(NSStringEncoding)encoding {
     return [[NSString alloc] initWithData:[_keyMapper keyMapperDataForPostCocoaEvent:event] encoding:encoding];
 }

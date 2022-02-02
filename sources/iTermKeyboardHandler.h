@@ -58,6 +58,7 @@ typedef struct {
 @property (nonatomic, weak) id<iTermKeyboardHandlerDelegate> delegate;
 @property (nonatomic, readonly) BOOL keyIsARepeat;
 @property (nonatomic, strong) id<iTermKeyMapper> keyMapper;
+@property (nonatomic, readonly) NSDictionary *dictionaryValue;
 
 - (void)keyDown:(NSEvent *)event inputContext:(NSTextInputContext *)inputContext;
 - (void)doCommandBySelector:(SEL)aSelector;

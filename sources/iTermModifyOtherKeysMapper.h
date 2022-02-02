@@ -28,6 +28,9 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 @end
 
+NSDictionary *iTermModifyOtherKeysMapperDictionary(iTermModifyOtherKeysMapper *,
+                                                   id<iTermModifyOtherKeysMapperDelegate> delegate);
+
 @interface iTermModifyOtherKeysMapper : NSObject<iTermKeyMapper>
 @property (nonatomic, weak) id<iTermModifyOtherKeysMapperDelegate> delegate;
 @end

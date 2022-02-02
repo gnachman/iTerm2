@@ -54,6 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL reduceFlicker;
 @property (nonatomic, readonly) int maxScrollbackLines;
 @property (nonatomic, readonly) BOOL loggingEnabled;
+@property (nonatomic, copy, readonly) NSDictionary<NSNumber *, id> *stringForKeypress;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -99,11 +100,18 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL reduceFlicker;
 @property (nonatomic, readwrite) int maxScrollbackLines;
 @property (nonatomic, readwrite) BOOL loggingEnabled;
+@property (nonatomic, copy, readwrite) NSDictionary<NSNumber *, id> *stringForKeypress;
+@property (nonatomic, copy) NSDictionary *stringForKeypressConfig;  // Used to tell if stringForKeypress needs to be updated.
 
 @property (nonatomic, readwrite) BOOL isDirty;
 
 - (NSSet<NSString *> *)dirtyKeyPaths;
 
 @end
+
+NSDictionary *VT100ScreenConfigKeypressIdentifier(unsigned short keyCode,
+                                                  NSEventModifierFlags flags,
+                                                  NSString *characters,
+                                                  NSString *charactersIgnoringModifiers);
 
 NS_ASSUME_NONNULL_END

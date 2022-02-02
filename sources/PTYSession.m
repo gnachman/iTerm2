@@ -177,6 +177,7 @@
 #import "TmuxStateParser.h"
 #import "TmuxWindowOpener.h"
 #import "Trigger.h"
+#import "VT100DCSParser.h"
 #import "VT100RemoteHost.h"
 #import "VT100Screen.h"
 #import "VT100ScreenConfiguration.h"
@@ -12085,6 +12086,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.loggingEnabled = loggingEnabled;
         dirty = YES;
     }
+    NSDictionary *stringForKeypressConfig = [self stringForKeypressConfig];
+    if (![_config.stringForKeypressConfig isEqual:stringForKeypressConfig]) {
+        _config.stringForKeypressConfig = stringForKeypressConfig;
+        _config.stringForKeypress = [self stringForKeypress];
+        dirty = YES;
+    }
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                            inProfile:_profile];
@@ -12117,6 +12124,64 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (dirty) {
         _config.isDirty = dirty;
     }
+}
+
+// As long as this is constant, stringForKeypress will return the same value.
+- (NSDictionary *)stringForKeypressConfig {
+    return _textview.keyboardHandler.dictionaryValue ?: @{};
+}
+
+- (NSDictionary *)stringForKeypress {
+    id (^stringForKeypress)(unsigned short, NSEventModifierFlags, NSString *, NSString *) =
+    ^id(unsigned short keyCode,
+                NSEventModifierFlags flags,
+                NSString *characters,
+                NSString *charactersIgnoringModifiers) {
+        return [self stringForKeyCode:keyCode
+                                flags:flags
+                           characters:characters
+          charactersIgnoringModifiers:charactersIgnoringModifiers] ?: [NSNull null];
+    };
+    NSString *(^c)(UTF32Char c) = ^NSString *(UTF32Char c) {
+        return [NSString stringWithLongCharacter:c];
+    };
+    return @{
+        @(kDcsTermcapTerminfoRequestKey_kb):  stringForKeypress(kVK_Delete, 0, @"\x7f", @"\x7f"),
+        @(kDcsTermcapTerminfoRequestKey_kD):  stringForKeypress(kVK_ForwardDelete, NSEventModifierFlagFunction, c(NSDeleteFunctionKey), c(NSDeleteFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_kd):  stringForKeypress(kVK_DownArrow, NSEventModifierFlagFunction, c(NSDownArrowFunctionKey), c(NSDownArrowFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_at_7):  stringForKeypress(kVK_End, NSEventModifierFlagFunction, c(NSEndFunctionKey), c(NSEndFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_at_8):  stringForKeypress(kVK_Return, NSEventModifierFlagFunction, @"\r", @"\r"),
+        @(kDcsTermcapTerminfoRequestKey_k1):  stringForKeypress(kVK_F1, NSEventModifierFlagFunction, c(NSF1FunctionKey), c(NSF1FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_k2):  stringForKeypress(kVK_F2, NSEventModifierFlagFunction, c(NSF2FunctionKey), c(NSF2FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_k3):  stringForKeypress(kVK_F3, NSEventModifierFlagFunction, c(NSF3FunctionKey), c(NSF3FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_k4):  stringForKeypress(kVK_F4, NSEventModifierFlagFunction, c(NSF4FunctionKey), c(NSF4FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_k5):  stringForKeypress(kVK_F5, NSEventModifierFlagFunction, c(NSF5FunctionKey), c(NSF5FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_k6):  stringForKeypress(kVK_F6, NSEventModifierFlagFunction, c(NSF6FunctionKey), c(NSF6FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_k7):  stringForKeypress(kVK_F7, NSEventModifierFlagFunction, c(NSF7FunctionKey), c(NSF7FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_k8):  stringForKeypress(kVK_F8, NSEventModifierFlagFunction, c(NSF8FunctionKey), c(NSF8FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_k9):  stringForKeypress(kVK_F9, NSEventModifierFlagFunction, c(NSF9FunctionKey), c(NSF9FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_k_semi):  stringForKeypress(kVK_F10, NSEventModifierFlagFunction, c(NSF10FunctionKey), c(NSF10FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_F1):  stringForKeypress(kVK_F11, NSEventModifierFlagFunction, c(NSF11FunctionKey), c(NSF11FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_F2):  stringForKeypress(kVK_F12, NSEventModifierFlagFunction, c(NSF12FunctionKey), c(NSF12FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_F3):  stringForKeypress(kVK_F13, NSEventModifierFlagFunction, c(NSF13FunctionKey), c(NSF13FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_F4):  stringForKeypress(kVK_F14, NSEventModifierFlagFunction, c(NSF14FunctionKey), c(NSF14FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_F5):  stringForKeypress(kVK_F15, NSEventModifierFlagFunction, c(NSF15FunctionKey), c(NSF15FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_F6):  stringForKeypress(kVK_F16, NSEventModifierFlagFunction, c(NSF16FunctionKey), c(NSF16FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_F7):  stringForKeypress(kVK_F17, NSEventModifierFlagFunction, c(NSF17FunctionKey), c(NSF17FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_F8):  stringForKeypress(kVK_F18, NSEventModifierFlagFunction, c(NSF18FunctionKey), c(NSF18FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_F9):  stringForKeypress(kVK_F19, NSEventModifierFlagFunction, c(NSF19FunctionKey), c(NSF19FunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_kh):  stringForKeypress(kVK_Home, NSEventModifierFlagFunction, c(NSHomeFunctionKey), c(NSHomeFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_kl):  stringForKeypress(kVK_LeftArrow, NSEventModifierFlagFunction, c(NSLeftArrowFunctionKey), c(NSLeftArrowFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_kN):  stringForKeypress(kVK_PageDown, NSEventModifierFlagFunction, c(NSPageDownFunctionKey), c(NSPageDownFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_kP):  stringForKeypress(kVK_PageUp, NSEventModifierFlagFunction, c(NSPageUpFunctionKey), c(NSPageUpFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_kr):  stringForKeypress(kVK_RightArrow, NSEventModifierFlagFunction, c(NSRightArrowFunctionKey), c(NSRightArrowFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_star_4):  stringForKeypress(kVK_ForwardDelete,NSEventModifierFlagFunction |  NSEventModifierFlagShift, c(NSDeleteFunctionKey), c(NSDeleteFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_star_7):  stringForKeypress(kVK_End, NSEventModifierFlagFunction | NSEventModifierFlagShift, c(NSEndFunctionKey), c(NSEndFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_pound_2):  stringForKeypress(kVK_Home, NSEventModifierFlagFunction | NSEventModifierFlagShift, c(NSHomeFunctionKey), c(NSHomeFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_pound_4):  stringForKeypress(kVK_LeftArrow, NSEventModifierFlagFunction | NSEventModifierFlagNumericPad | NSEventModifierFlagShift, c(NSLeftArrowFunctionKey), c(NSLeftArrowFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_pct_i):  stringForKeypress(kVK_RightArrow, NSEventModifierFlagFunction | NSEventModifierFlagNumericPad | NSEventModifierFlagShift, c(NSRightArrowFunctionKey), c(NSRightArrowFunctionKey)),
+        @(kDcsTermcapTerminfoRequestKey_ku):  stringForKeypress(kVK_UpArrow, NSEventModifierFlagFunction, c(NSUpArrowFunctionKey), c(NSUpArrowFunctionKey)),
+    };
 }
 
 - (BOOL)shouldPostTerminalGeneratedAlert {
@@ -12916,7 +12981,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode
                                         flags:(NSEventModifierFlags)flags
                                    characters:(NSString *)characters
-                  charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers  {
+                  charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
+    return [self stringForKeyCode:keycode flags:flags characters:characters charactersIgnoringModifiers:charactersIgnoringModifiers];
+}
+
+- (NSString *)stringForKeyCode:(unsigned short)keycode
+                         flags:(NSEventModifierFlags)flags
+                    characters:(NSString *)characters
+   charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers {
     NSEvent *event = [NSEvent keyEventWithType:NSEventTypeKeyDown
                                       location:NSZeroPoint
                                  modifierFlags:flags
@@ -12928,7 +13000,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                      isARepeat:NO
                                        keyCode:keycode];
     return [_textview.keyboardHandler stringForEventWithoutSideEffects:event
-                                                              encoding:_screen.terminalEncoding];
+                                                              encoding:_screen.terminalEncoding ?: NSUTF8StringEncoding];
 }
 
 - (void)screenApplicationKeypadModeDidChange:(BOOL)mode {
@@ -14409,9 +14481,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermStandardKeyMapperDelegate
 
 - (void)standardKeyMapperWillMapKey:(iTermStandardKeyMapper *)standardKeyMapper {
+    // Don't use terminalEncoding because it may not be initialized yet.
     iTermStandardKeyMapperConfiguration configuration = {
         .outputFactory = [_screen.terminalOutput retain],
-        .encoding = _screen.terminalEncoding,
+        .encoding = [iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:self.profile],
         .leftOptionKey = self.optionKey,
         .rightOptionKey = self.rightOptionKey,
         .screenlike = self.isTmuxClient
@@ -14422,8 +14495,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermTermkeyKeyMapperDelegate
 
 - (void)termkeyKeyMapperWillMapKey:(iTermTermkeyKeyMapper *)termkeyKeyMaper {
+    // Don't use terminalEncoding because it may not be initialized yet.
     iTermTermkeyKeyMapperConfiguration configuration = {
-        .encoding = _screen.terminalEncoding,
+        .encoding = [iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:self.profile],
         .leftOptionKey = self.optionKey,
         .rightOptionKey = self.rightOptionKey,
         .applicationCursorMode = _screen.terminalOutput.cursorMode,

@@ -128,6 +128,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic, readonly) BOOL decsaceRectangleMode;
 @property(nonatomic, readonly) VT100TerminalProtectedMode protectedMode;
 @property(nonatomic, strong, readonly) VT100Token *lastToken;
+@property(nonatomic, copy) NSDictionary<NSNumber *, id> *stringForKeypress;
 @property(atomic) BOOL dirty;
 
 + (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c

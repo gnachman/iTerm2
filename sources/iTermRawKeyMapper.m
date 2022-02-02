@@ -36,6 +36,10 @@
     return YES;
 }
 
+- (NSDictionary *)keyMapperDictionaryValue {
+    return @{};
+}
+
 #pragma mark - Private
 static BOOL HasBits(NSUInteger value, NSUInteger required) {
     return ((value & required) == required);
