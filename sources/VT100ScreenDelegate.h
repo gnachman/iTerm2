@@ -242,7 +242,7 @@
 
 // Save the current scroll position
 - (void)screenSaveScrollPosition;
-- (void)screenDidAddMark:(id<iTermMark> _Nonnull)mark;
+- (void)screenDidAddMark:(id<iTermMark> _Nonnull)mark alert:(BOOL)alert completion:(void (^)(void))completion;
 - (void)screenPromptDidStartAtLine:(int)line;
 - (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading> _Nonnull)mark;
 

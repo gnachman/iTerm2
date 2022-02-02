@@ -712,22 +712,71 @@
 }
 
 - (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
-    // Use a joined side-effect because we need to change the token executor's discarding behavior
-    // synchronously.
+    if (!_tmuxGroup) {
+        _tmuxGroup = dispatch_group_create();
+    }
+    dispatch_group_enter(_tmuxGroup);
+
+    // Join to force a sync so the main thread is up-to-date and so it can do
+    // mutableState.isTmuxGateway=NO before any more tokens get to run. Furthemore, this pauses
+    // token execution. Subsequent tmux tokens can't run until after this one finishes on the
+    // main thread. Since they use dispatch_async, they might run before the side-effect.
+    // Side effects don't get enqueued on the main thread immediately.
+    dispatch_group_t group = _tmuxGroup;
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenStartTmuxModeWithDCSIdentifier:dcsID];
+        dispatch_group_leave(group);
     }];
 }
 
+// Tmux tokens are *not* side effects because it's basically impossible to avoid them having runloops.
+// See the note about reentrant runloops in -reallyPerformBlockWithJoinedThreads:delegate:topmost:.
+// This is OK because tmux token execution is not ordered meaningfully relative to the execution
+// of any other token. As long as TMUX_LINE and TMUX_EXIT are handled in order w/r/t each other then
+// all is well. The trick we play is that when we get a non-tmux token after a tmux token, we pause
+// token execution until all previous tmux tokens are done being executed.
+//
+// Here is a sample token stream:
+//
+// VT100_ASCIISTRING("tmux -CC")
+// DCS_TMUX_HOOK
+// TMUX_LINE
+// …many more
+// TMUX_LINE("%output hello")
+// TMUX_LINE("%output world")
+// TMUX_EXIT("%exit")
+// VT100_ASCIISTRING
+//
+// It would produce the following side-effects and other main-thread blocks:
+// TokenExecutor.executeSideEffects(syncFirst:) {
+//   [delegate screenDidAppendAsciiDataToCurrentLine:@"tmux -CC"]
+//   [delegate screenStartTmuxModeWithDCSIdentifier:dcsID]
+// }
+// DispatchQueue.main.async { [delegate screenHandleTmuxInput:@"%output hello"] }
+// DispatchQueue.main.async { [delegate screenHandleTmuxInput:@"%output world"] }
+// DispatchQueue.main.async { [delegate screenHandleTmuxInput:@"%exit"] }
+//
+// Since starting tmux mode pauses token execution, there is no race. THe side-effect gets to run
+// before the manually dispatched calls to screenHandleTmuxInput and all is well.
+//
+// Similarly, the first non-tmux token won't be executed until we know (via the dispatch group)
+// that all previously dispatched screenHandleTmuxInput calls have completed.
 - (void)terminalHandleTmuxInput:(VT100Token *)token {
+    if (!_tmuxGroup) {
+        _tmuxGroup = dispatch_group_create();
+    }
+    dispatch_group_enter(_tmuxGroup);
     if (token->type == TMUX_EXIT) {
         // Pause so that the "Detached" message can be appended before any more tokens
         // are handled. That's added as a high-pri task and will therefore run before
         // the token executor handles another token post-unpause.
-        [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
             [delegate screenHandleTmuxInput:token];
             [unpauser unpause];
-        }];
+            dispatch_group_leave(self->_tmuxGroup);
+        });
         return;
     }
 
@@ -736,9 +785,23 @@
     // this path since the call to forceUnhookDCS happens concurrent to future token
     // execution. But weird things always happens when tmux mode unexpectedly exits and
     // it's worth the perf win.
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
         [delegate screenHandleTmuxInput:token];
-    }];
+        dispatch_group_leave(self->_tmuxGroup);
+    });
+}
+
+- (void)terminalDidTransitionOutOfTmuxMode {
+    // Let's try this token again next time.
+    [self.tokenExecutor rollBackCurrentToken];
+
+    // Unpause when all pending tmux handlers are done. These were enqueued with dispatch_async
+    // rather than as side-effects.
+    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
+    dispatch_group_notify(_tmuxGroup, _queue, ^{
+        [unpauser unpause];
+    });
 }
 
 - (void)terminalSynchronizedUpdate:(BOOL)begin {

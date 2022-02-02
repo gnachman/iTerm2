@@ -63,6 +63,7 @@ static NSString *VT100ScreenMutableStateSideEffectStateKeyIntervalTreeVisibleRan
     VT100ScreenTokenExecutorUpdate *_executorUpdate;
     iTermPeriodicScheduler *_executorUpdateScheduler;
     BOOL _screenNeedsUpdate;
+    BOOL _alertOnNextMark;
 }
 
 static _Atomic int gPerformingJoinedBlock;
@@ -352,6 +353,7 @@ static _Atomic int gPerformingJoinedBlock;
         [self removeInaccessibleIntervalTreeObjects];
     }
     _terminal.stringForKeypress = config.stringForKeypress;
+    _alertOnNextMark = config.alertOnNextMark;
 }
 
 - (void)setExited:(BOOL)exited {
@@ -2181,9 +2183,18 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     id<iTermMark> newMark = [self addMarkStartingAtAbsoluteLine:self.cumulativeScrollbackOverflow + line
                                                         oneLine:YES
                                                         ofClass:markClass];
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenDidAddMark:newMark];
-    }];
+    if (_alertOnNextMark) {
+        _alertOnNextMark = NO;
+        [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+            [delegate screenDidAddMark:newMark
+                                 alert:YES
+                            completion:^{ [unpauser unpause]; }];
+        }];
+    } else {
+        [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenDidAddMark:newMark alert:NO completion:^{}];
+        }];
+    }
     return newMark;
 }
 
@@ -2514,6 +2525,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)setReturnCodeOfLastCommand:(int)returnCode {
     DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
     id<VT100ScreenMarkReading> mark = self.lastCommandMark;
+    id<VT100ScreenMarkReading> doppelganger = mark.doppelganger;
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
         const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
@@ -2528,17 +2540,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                               onLine:line];
         }];
         id<VT100RemoteHostReading> remoteHost = [self remoteHostOnLine:self.numberOfLines];
-#warning TODO: mark is mutable shared state. Don't pass to main thread like this.
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            [delegate screenDidUpdateReturnCodeForMark:mark
+            [delegate screenDidUpdateReturnCodeForMark:doppelganger
                                             remoteHost:remoteHost];
         }];
     } else {
         DLog(@"No last command mark found.");
     }
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-#warning TODO: mark is mutable shared state. Don't pass to main thread like this.
-        [delegate screenCommandDidExitWithCode:returnCode mark:mark];
+        [delegate screenCommandDidExitWithCode:returnCode mark:doppelganger];
     }];
 }
 
@@ -2844,13 +2854,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.mutableIntervalTree addObject:annotation withInterval:[self intervalForGridCoordRange:range]];
     [self.currentGrid markAllCharsDirty:YES];
     id<PTYAnnotationReading> doppelganger = annotation.doppelganger;
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenDidAddNote:doppelganger focus:focus];
-    }];
     const long long line = range.start.y + self.cumulativeScrollbackOverflow;
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
         [observer intervalTreeDidAddObjectOfType:iTermIntervalTreeObjectTypeAnnotation
                                           onLine:line];
+    }];
+    // Because -refresh gets called.
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenDidAddNote:doppelganger focus:focus];
     }];
 }
 
@@ -3793,7 +3804,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     self.currentGrid.scrollRegionRows = VT100GridRangeMake(top, bottom - top + 1);
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetCursorVisible:[state[kStateDictCursorMode] boolValue]];
-#warning TODO: Maybe need to mark the grid dirty to force the cursor to be redrawn.
     }];
 
     [self.tabStops removeAllObjects];

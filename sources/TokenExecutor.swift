@@ -112,6 +112,25 @@ private class TokenArray: IteratorProtocol {
         return (CVectorGetObject(&cvector, nextIndex) as! VT100Token)
     }
 
+    // Returns whether you should try again.
+    // Closure returns true if the token was consumed or false if it needs to be retried later.
+    func withNext(_ closure: (VT100Token) -> Bool) -> Bool {
+        guard hasNext else {
+            return false
+        }
+        let commit = closure(CVectorGetObject(&cvector, nextIndex) as! VT100Token)
+        guard commit else {
+            return false
+        }
+        // Commit
+        nextIndex += 1
+        if nextIndex == count, let semaphore = semaphore {
+            semaphore.signal()
+            self.semaphore = nil
+        }
+        return hasNext
+    }
+
     func skipToEnd() {
         if nextIndex >= count {
             return
@@ -261,6 +280,14 @@ class TokenExecutor: NSObject {
         queue.async { [weak self] in
             self?.reallyAddTokens(vector, length: length, highPriority: highPriority, semaphore: semaphore)
         }
+    }
+
+    // Call this while a token is being executed to cause it to be re-executed next time execution
+    // is scheduled.
+    @objc
+    func rollBackCurrentToken() {
+        iTermGCD.assertMutationQueueSafe()
+        impl.rollBackCurrentToken()
     }
 
     // Any queue
@@ -437,6 +464,7 @@ private class TokenExecutorImpl {
     private var sideEffectScheduler: PeriodicScheduler! = nil
     private let throughputEstimator = iTermThroughputEstimator(historyOfDuration: 5.0 / 30.0,
                                                                secondsPerBucket: 1.0 / 30.0)
+    private var commit = true
     weak var delegate: TokenExecutorDelegate?
 
     init(_ terminal: VT100Terminal,
@@ -585,21 +613,36 @@ private class TokenExecutorImpl {
         defer {
             executeHighPriorityTasks()
         }
-        while !isPaused, let token = vector.next() {
-            executeHighPriorityTasks()
-            if execute(token: token,
-                       from: vector,
-                       priority: priority,
-                       accumulatedLength: &accumulatedLength,
-                       delegate: delegate) {
-                return true
+        var quitVectorEarly = false
+        var vectorHasNext = true
+        while !isPaused && !quitVectorEarly && vectorHasNext {
+            vectorHasNext = vector.withNext { token -> Bool in
+                executeHighPriorityTasks()
+                commit = true
+                if execute(token: token,
+                           from: vector,
+                           priority: priority,
+                           accumulatedLength: &accumulatedLength,
+                           delegate: delegate) {
+                    quitVectorEarly = true
+                    return true
+                }
+                return commit
             }
+        }
+        if quitVectorEarly {
+            return true
         }
         if isPaused {
             return false
         }
         accumulatedLength += vector.length
         return true
+    }
+
+    func rollBackCurrentToken() {
+        assertQueue()
+        commit = false
     }
 
     // Returns true to stop processing tokens in this vector and move on to the next one, if any.

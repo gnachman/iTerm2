@@ -1870,7 +1870,22 @@ static const int kMaxScreenRows = 4096;
     return savedCursor->position;
 }
 
+static BOOL VT100TokenIsTmux(VT100Token *token) {
+    return (token->type == TMUX_EXIT ||
+            token->type == TMUX_LINE ||
+            token->type == DCS_TMUX_HOOK);
+}
+
 - (void)executeToken:(VT100Token *)token {
+    if (_lastToken != nil &&
+        VT100TokenIsTmux(_lastToken) &&
+        !VT100TokenIsTmux(token)) {
+        // Have the delegate roll back this token and pause execution.fdslfj
+        [_delegate terminalDidTransitionOutOfTmuxMode];
+        // Nil out last token so we don't take this code path a second time.
+        _lastToken = nil;
+        return;
+    }
     [self reallyExecuteToken:token];
     _lastToken = token;
 }

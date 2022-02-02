@@ -188,7 +188,10 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
         NSError *error = nil;
         const BOOL ok = [[NSFileManager defaultManager] removeItemAtPath:self.localPath error:&error];
         if (!ok || error) {
-            [self failedToRemoveUnquarantinedFileAt:self.localPath];
+            // Avoid runloop in side-effect.
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self failedToRemoveUnquarantinedFileAt:self.localPath];
+            });
         }
         return;
     }

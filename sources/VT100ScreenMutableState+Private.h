@@ -37,6 +37,7 @@ iTermTriggerScopeProvider> {
     iTermIdempotentOperationJoiner *_commandRangeChangeJoiner;
     dispatch_queue_t _queue;
     PTYTriggerEvaluator *_triggerEvaluator;
+    dispatch_group_t _tmuxGroup;
 }
 
 @property (atomic) BOOL hadCommand;

@@ -44,6 +44,7 @@
 @property (nonatomic, readwrite) int maxScrollbackLines;
 @property (nonatomic, readwrite) BOOL loggingEnabled;
 @property (nonatomic, copy, readwrite) NSDictionary<NSNumber *, id> *stringForKeypress;
+@property (nonatomic, readwrite) BOOL alertOnNextMark;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -81,6 +82,7 @@
 @synthesize reduceFlicker = _reduceFlicker;
 @synthesize maxScrollbackLines = _maxScrollbackLines;
 @synthesize loggingEnabled = _loggingEnabled;
+@synthesize alertOnNextMark = _alertOnNextMark;
 
 @synthesize isDirty = _isDirty;
 @synthesize stringForKeypress = _stringForKeypress;
@@ -122,6 +124,7 @@
         _maxScrollbackLines = other.maxScrollbackLines;
         _loggingEnabled = other.loggingEnabled;
         _stringForKeypress = other.stringForKeypress;
+        _alertOnNextMark = other.alertOnNextMark;
 
         _isDirty = other.isDirty;
     }
@@ -171,6 +174,7 @@
                             @"maxScrollbackLines": @(_maxScrollbackLines),
                             @"loggingEnabled": @(_loggingEnabled),
                             @"stringForKeypress": _stringForKeypress ?: @"",
+                            @"alertOnNextMark": @(_alertOnNextMark),
 
                             @"isDirty": @(_isDirty),
     };
@@ -221,6 +225,7 @@
 @dynamic maxScrollbackLines;
 @dynamic loggingEnabled;
 @dynamic stringForKeypress;
+@dynamic alertOnNextMark;
 
 @dynamic isDirty;
 

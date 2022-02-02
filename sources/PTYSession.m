@@ -11125,33 +11125,45 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate sessionActivate:self];
 }
 
-- (void)screenDidAddMark:(id<iTermMark>)newMark {
+- (void)screenDidAddMark:(id<iTermMark>)newMark alert:(BOOL)alert completion:(void (^)(void))completion {
     if ([self markIsNavigable:newMark]) {
         // currentMarkOrNotePosition is used for navigating next/previous
         self.currentMarkOrNotePosition = newMark.entry.interval;
     }
-    if (self.alertOnNextMark) {
-        NSString *action = [iTermApplication.sharedApplication delegate].markAlertAction;
-        if ([action isEqualToString:kMarkAlertActionPostNotification]) {
-            [[iTermNotificationController sharedInstance] notify:@"Mark Set"
-                                                 withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
-                                                                  [[self name] removingHTMLFromTabTitleIfNeeded],
-                                                                  [_delegate tabNumber]]
-                                                     windowIndex:[self screenWindowIndex]
-                                                        tabIndex:[self screenTabIndex]
-                                                       viewIndex:[self screenViewIndex]
-                                                          sticky:YES];
-        } else {
-            NSAlert *alert = [[[NSAlert alloc] init] autorelease];
-            alert.messageText = @"Alert";
-            alert.informativeText = [NSString stringWithFormat:@"Mark set in session “%@.”", [self name]];
-            [alert addButtonWithTitle:@"Reveal"];
-            [alert addButtonWithTitle:@"OK"];
-            if ([alert runModal] == NSAlertFirstButtonReturn) {
-                [self reveal];
-            }
-        }
-        self.alertOnNextMark = NO;
+    if (!alert) {
+        completion();
+        return;
+    }
+    self.alertOnNextMark = NO;
+    NSString *action = [iTermApplication.sharedApplication delegate].markAlertAction;
+    if ([action isEqualToString:kMarkAlertActionPostNotification]) {
+        [[iTermNotificationController sharedInstance] notify:@"Mark Set"
+                                             withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
+                                                              [[self name] removingHTMLFromTabTitleIfNeeded],
+                                                              [_delegate tabNumber]]
+                                                 windowIndex:[self screenWindowIndex]
+                                                    tabIndex:[self screenTabIndex]
+                                                   viewIndex:[self screenViewIndex]
+                                                      sticky:YES];
+        completion();
+        return;
+    }
+    // Dispatch so that we don't get a runloop in a side-effect, which can do weird re-entrant things.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf showMarkSetAlert];
+        completion();
+    });
+}
+
+- (void)showMarkSetAlert {
+    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    alert.messageText = @"Alert";
+    alert.informativeText = [NSString stringWithFormat:@"Mark set in session “%@.”", [self name]];
+    [alert addButtonWithTitle:@"Reveal"];
+    [alert addButtonWithTitle:@"OK"];
+    if ([alert runModal] == NSAlertFirstButtonReturn) {
+        [self reveal];
     }
 }
 
@@ -11432,6 +11444,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)setAlertOnNextMark:(BOOL)alertOnNextMark {
     _alertOnNextMark = alertOnNextMark;
     [_textview setNeedsDisplay:YES];
+    [self sync];
 }
 
 - (void)screenRequestAttention:(VT100AttentionRequestType)request {
@@ -12090,6 +12103,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (![_config.stringForKeypressConfig isEqual:stringForKeypressConfig]) {
         _config.stringForKeypressConfig = stringForKeypressConfig;
         _config.stringForKeypress = [self stringForKeypress];
+        dirty = YES;
+    }
+    if (self.alertOnNextMark != _config.alertOnNextMark) {
+        _config.alertOnNextMark = self.alertOnNextMark;
         dirty = YES;
     }
     if (_profileDidChange) {
