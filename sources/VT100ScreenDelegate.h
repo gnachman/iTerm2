@@ -189,7 +189,8 @@
                             quell:(BOOL)quell;
 
 // Request that a string be sent for printing.
-- (void)screenPrintStringIfAllowed:(NSString * _Nonnull)printBuffer completion:(void (^)(void))completion;
+- (void)screenPrintStringIfAllowed:(NSString * _Nonnull)printBuffer
+                        completion:(void (^ _Nonnull)(void))completion;
 
 // Request that the currently visible area of the screen be sent for printing.
 - (void)screenPrintVisibleAreaIfAllowed;
@@ -242,7 +243,9 @@
 
 // Save the current scroll position
 - (void)screenSaveScrollPosition;
-- (void)screenDidAddMark:(id<iTermMark> _Nonnull)mark alert:(BOOL)alert completion:(void (^)(void))completion;
+- (void)screenDidAddMark:(id<iTermMark> _Nonnull)mark
+                   alert:(BOOL)alert
+              completion:(void (^ _Nonnull)(void))completion;
 - (void)screenPromptDidStartAtLine:(int)line;
 - (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading> _Nonnull)mark;
 
@@ -266,7 +269,8 @@
                                                                       NSInteger lengthAfter))confirm;
 - (void)screenFileReceiptEndedUnexpectedly;
 
-- (void)screenRequestUpload:(NSString * _Nonnull)args completion:(void (^)(void))completion;
+- (void)screenRequestUpload:(NSString * _Nonnull)args
+                 completion:(void (^ _Nonnull)(void))completion;
 
 - (void)screenSetCurrentTabColor:(NSColor * _Nullable)color;
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color;

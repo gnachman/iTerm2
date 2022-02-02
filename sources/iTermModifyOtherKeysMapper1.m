@@ -99,7 +99,7 @@ typedef enum {
 - (NSDictionary *)keyMapperDictionaryValue {
     [_standard.delegate standardKeyMapperWillMapKey:_standard];
     return @{ @"standard": iTermStandardKeyMapperConfigurationDictionaryValue(_standard.configuration),
-              @"modifyOther": iTermModifyOtherKeysMapperDictionary(self, self.delegate) };
+              @"modifyOther": iTermModifyOtherKeysMapperDictionary(_modifyOther, self.delegate) };
 }
 
 - (iTermModifyOtherKeysMapper1KeyType)keyTypeForEvent:(NSEvent *)event {
