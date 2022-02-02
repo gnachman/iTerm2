@@ -3184,7 +3184,7 @@ static const int kMaxScreenRows = 4096;
             return or.maybeFirst;
         }];
         DLog(@"Got them all. It is %@", strings);
-        NSLog(@"result is %@ for %@", [strings componentsJoinedByString:@", "], token);
+        DLog(@"result is %@ for %@", [strings componentsJoinedByString:@", "], token);
         [weakSelf finishRequestTermcapTerminfoWithValues:strings
                                                       ok:ok];
         DLog(@"Unpause");
