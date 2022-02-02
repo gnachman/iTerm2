@@ -332,6 +332,7 @@ static _Atomic int gPerformingJoinedBlock;
             @"useSeparateColorsForLightAndDarkMode",
             @"minimumContrast",
             @"mutingAmount",
+            @"dimmingAmount"
         ]];
     });
     if ([dirty intersectsSet:colorMapKeyPaths]) {
@@ -341,6 +342,7 @@ static _Atomic int gPerformingJoinedBlock;
             colorMap.useSeparateColorsForLightAndDarkMode = config.useSeparateColorsForLightAndDarkMode;
             colorMap.minimumContrast = config.minimumContrast;
             colorMap.mutingAmount = config.mutingAmount;
+            colorMap.dimmingAmount = config.dimmingAmount;
         }];
     }
     if (config.maxScrollbackLines != self.maxScrollbackLines) {
@@ -3097,12 +3099,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // Doing a joined side effect here ensures that HTML logging gets an up-to-date colormap before the next token.
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenRestoreColorsFromSlot:slot];
-    }];
-}
-
-- (void)setDimmingAmount:(double)value {
-    [self mutateColorMap:^(iTermColorMap *colorMap) {
-        colorMap.dimmingAmount = value;
     }];
 }
 

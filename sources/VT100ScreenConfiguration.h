@@ -56,6 +56,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL loggingEnabled;
 @property (nonatomic, copy, readonly) NSDictionary<NSNumber *, id> *stringForKeypress;
 @property (nonatomic, readonly) BOOL alertOnNextMark;
+@property (nonatomic, readonly) double dimmingAmount;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -104,6 +105,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readwrite) NSDictionary<NSNumber *, id> *stringForKeypress;
 @property (nonatomic, copy) NSDictionary *stringForKeypressConfig;  // Used to tell if stringForKeypress needs to be updated.
 @property (nonatomic, readwrite) BOOL alertOnNextMark;
+@property (nonatomic, readwrite) double dimmingAmount;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 

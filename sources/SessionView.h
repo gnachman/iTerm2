@@ -182,6 +182,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, strong) iTermImageWrapper *image;
 @property(nonatomic) iTermBackgroundImageMode imageMode;
 @property(nonatomic, readonly) BOOL statusBarIsInPaneTitleBar;
+@property(nonatomic, readonly) double adjustedDimmingAmount;
 
 // For macOS 10.14+ when subpixel AA is OFF, this draws the default background color. When there's
 // a background image it will be translucent to effect blending. When subpixel AA is ON or the OS

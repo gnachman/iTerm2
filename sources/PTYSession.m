@@ -12133,6 +12133,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.alertOnNextMark = self.alertOnNextMark;
         dirty = YES;
     }
+    const double dimmingAmount = _view.adjustedDimmingAmount;
+    if (_config.dimmingAmount != dimmingAmount) {
+        _config.dimmingAmount = dimmingAmount;
+        dirty = YES;
+    }
     if (_profileDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                            inProfile:_profile];
@@ -13332,9 +13337,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sessionViewDimmingAmountDidChange:(CGFloat)newDimmingAmount {
-    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        mutableState.dimmingAmount = newDimmingAmount;
-    }];
+    [self sync];
 }
 
 - (BOOL)sessionViewIsVisible {

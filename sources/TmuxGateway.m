@@ -142,7 +142,6 @@ static NSString *kCommandTimestamp = @"timestamp";
 // TODO: be more forgiving of errors.
 - (void)abortWithErrorMessage:(NSString *)message title:(NSString *)title {
     // This can run in a side-effect and it's not safe to start a runloop in a side effect.
-#warning TODO: Audit that no side-effects start runloops.
     dispatch_async(dispatch_get_main_queue(), ^{
         NSAlert *alert = [[[NSAlert alloc] init] autorelease];
         alert.messageText = title;

@@ -310,8 +310,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)restoreColorsFromSlot:(VT100SavedColorsSlot *)slot;
 - (void)setColorsFromDictionary:(NSDictionary<NSNumber *, id> *)dict;
 
-#warning TODO: I think all of these could go through VT100ScreenConfiguration
-- (void)setDimmingAmount:(double)value;
+// This is the only safe way to modify the color map. Call it from the mutation thread.
 - (void)mutateColorMap:(void (^)(iTermColorMap *colorMap))block;
 
 #pragma mark - Cross-Thread Sync

@@ -45,6 +45,7 @@
 @property (nonatomic, readwrite) BOOL loggingEnabled;
 @property (nonatomic, copy, readwrite) NSDictionary<NSNumber *, id> *stringForKeypress;
 @property (nonatomic, readwrite) BOOL alertOnNextMark;
+@property (nonatomic, readwrite) double dimmingAmount;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -83,6 +84,7 @@
 @synthesize maxScrollbackLines = _maxScrollbackLines;
 @synthesize loggingEnabled = _loggingEnabled;
 @synthesize alertOnNextMark = _alertOnNextMark;
+@synthesize dimmingAmount = _dimmingAmount;
 
 @synthesize isDirty = _isDirty;
 @synthesize stringForKeypress = _stringForKeypress;
@@ -125,6 +127,7 @@
         _loggingEnabled = other.loggingEnabled;
         _stringForKeypress = other.stringForKeypress;
         _alertOnNextMark = other.alertOnNextMark;
+        _dimmingAmount = other.dimmingAmount;
 
         _isDirty = other.isDirty;
     }
@@ -175,6 +178,7 @@
                             @"loggingEnabled": @(_loggingEnabled),
                             @"stringForKeypress": _stringForKeypress ?: @"",
                             @"alertOnNextMark": @(_alertOnNextMark),
+                            @"dimmingAmount": @(_dimmingAmount),
 
                             @"isDirty": @(_isDirty),
     };
@@ -226,6 +230,7 @@
 @dynamic loggingEnabled;
 @dynamic stringForKeypress;
 @dynamic alertOnNextMark;
+@dynamic dimmingAmount;
 
 @dynamic isDirty;
 
