@@ -7683,7 +7683,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return NO;
 }
 
-#warning TODO: Synchornize properly.
 - (VT100SyncResult)textViewWillRefresh {
     return [self syncCheckingTriggers:VT100ScreenTriggerCheckTypePartialLines
                         resetOverflow:YES];
@@ -7734,7 +7733,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         result = [self syncCheckingTriggers:checkTriggers
                               resetOverflow:resetOverflow
                                mutableState:mutableState];
-#warning TODO: Move trigger check to here because we need to have updated state in VT100Screen._state for the side effects to work correctly
 #warning TODO: Move removeInaccessibleIntervalTreeObjects here so that the delegate callbacks have up-to-date state. Then sync again.
     }];
     return result;

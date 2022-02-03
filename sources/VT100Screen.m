@@ -1118,9 +1118,15 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         case VT100ScreenTriggerCheckTypeNone:
             break;
         case VT100ScreenTriggerCheckTypePartialLines:
+            // It's ok for this to run before syncing; although it would be slightly sad for
+            // self.config to have changed and this not to pick it up, it's not *wrong* because
+            // there's an inherent race between changing config and applying it to input (which can
+            // be resolved by using a paused side-effect).
             [mutableState performPeriodicTriggerCheck];
             break;
         case VT100ScreenTriggerCheckTypeFullLines:
+            // This intentionally runs before updating VT100Screen.state because it's done prior
+            // to changing profiles and we want to activate triggers on the old profile.
             [mutableState forceCheckTriggers];
             break;
     }
