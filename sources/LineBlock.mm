@@ -48,7 +48,7 @@ NSString *const kLineBlockGuid = @"GUID";
 - (void)invalidate;
 @end
 
-// ONLY -willModify should create this!
+// ONLY -validMutationCertificate should create this!
 @interface iTermLineBlockMutator: NSObject<iTermLineBlockMutationCertificate>
 - (instancetype)initWithLineBlock:(LineBlock *)lineBlock NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
@@ -206,14 +206,14 @@ struct iTermNumFullLinesCacheKeyHasher {
 // When a client gets dealloced it does not need to free memory.
 // An owner "owns" the memory and is responsible for freeing it.
 // When owner is nonnil or clients is not empty, a copy must be made before mutation.
-// Use -willModify to get a iTermLineBlockMutationCertificate which allows mutation safely because
+// Use -modifyWithBlock: to get a iTermLineBlockMutationCertificate which allows mutation safely because
 // you can't get a certificate without copying (if needed).
 @property(nonatomic) LineBlock *owner;  // nil if I am an owner. This is the line block that is responsible for freeing malloced data.
 @property(nonatomic) NSMutableArray<iTermWeakBox<LineBlock *> *> *clients;  // Copy-on write instances that still exist and have me as the owner.
 @end
 
 // Use iTermAssignToConstPointer if you need to change anything that is `const T * const` to make
-// these calls auditable to ensure we call willModify appropriately.
+// these calls auditable to ensure we call validMutationCertificate appropriately.
 @implementation LineBlock {
 @public
     // The raw lines, end-to-end. There is no delimiter between each line.
@@ -254,7 +254,7 @@ struct iTermNumFullLinesCacheKeyHasher {
     NSMutableArray<iTermWeakBox<id<iTermLineBlockObserver>> *> *_observers;
     NSString *_guid;
 
-    NSObject *_cachedMutationCert;  // DON'T USE DIRECTLY THIS UNLESS YOU LOVE PAIN. Only -willModify should touch it.
+    NSObject *_cachedMutationCert;  // DON'T USE DIRECTLY THIS UNLESS YOU LOVE PAIN. Only -validMutationCertificate should touch it.
 }
 
 NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock) {
@@ -675,6 +675,27 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
              width:(int)width
           metadata:(iTermImmutableMetadata)lineMetadata
       continuation:(screen_char_t)continuation {
+    NSNumber *number =
+    [self modifyWithBlock:^id(id<iTermLineBlockMutationCertificate> cert) {
+        const BOOL result = [self reallyAppendLine:buffer
+                                            length:length
+                                           partial:partial
+                                             width:width
+                                          metadata:lineMetadata
+                                      continuation:continuation
+                                              cert:cert];
+        return @(result);
+    }];
+    return number.boolValue;
+}
+
+- (BOOL)reallyAppendLine:(const screen_char_t*)buffer
+                  length:(int)length
+                 partial:(BOOL)partial
+                   width:(int)width
+                metadata:(iTermImmutableMetadata)lineMetadata
+            continuation:(screen_char_t)continuation
+                    cert:(id<iTermLineBlockMutationCertificate>)cert {
     _numberOfFullLinesCache.clear();
     const int space_used = [self rawSpaceUsed];
     const int free_space = buffer_size - space_used - start_offset;
@@ -687,7 +708,6 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     if (cll_entries >= iTermLineBlockMaxLines) {
         return NO;
     }
-    id< iTermLineBlockMutationCertificate> cert = [self willModify];
     memcpy(cert.mutableRawBuffer + space_used,
            buffer,
            sizeof(screen_char_t) * length);
@@ -1196,11 +1216,29 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
               upToWidth:(int)width
                metadata:(out iTermImmutableMetadata *)metadataPtr
            continuation:(screen_char_t *)continuationPtr {
+    NSNumber *number =
+    [self modifyWithBlock:^id(id<iTermLineBlockMutationCertificate> cert) {
+        const BOOL result = [self reallyPopLastLineInto:ptr
+                                             withLength:length
+                                              upToWidth:width
+                                               metadata:metadataPtr
+                                           continuation:continuationPtr
+                                                   cert:cert];
+        return @(result);
+    }];
+    return number.boolValue;
+}
+
+- (BOOL)reallyPopLastLineInto:(screen_char_t const **)ptr
+                   withLength:(int *)length
+                    upToWidth:(int)width
+                     metadata:(out iTermImmutableMetadata *)metadataPtr
+                 continuation:(screen_char_t *)continuationPtr
+                         cert:(id<iTermLineBlockMutationCertificate>)cert {
     if (cll_entries == first_entry) {
         // There is no last line to pop.
         return NO;
     }
-    id<iTermLineBlockMutationCertificate> cert = [self willModify];
     _numberOfFullLinesCache.clear();
     int start;
     if (cll_entries == first_entry + 1) {
@@ -1329,7 +1367,10 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (void)changeBufferSize:(int)capacity {
-    [self changeBufferSize:capacity cert:[self willModify]];
+    [self modifyWithBlock:^id(id<iTermLineBlockMutationCertificate> cert) {
+        [self changeBufferSize:capacity cert:cert];
+        return nil;
+    }];
 }
 
 - (void)changeBufferSize:(int)capacity cert:(id<iTermLineBlockMutationCertificate>)cert {
@@ -1360,7 +1401,10 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (void)shrinkToFit {
-    [self changeBufferSize:[self rawSpaceUsed] cert:[self willModify]];
+    [self modifyWithBlock:^id(id<iTermLineBlockMutationCertificate> cert) {
+        [self changeBufferSize:[self rawSpaceUsed] cert:cert];
+        return nil;
+    }];
 }
 
 - (int)dropLines:(int)n withWidth:(int)width chars:(int *)charsDropped {
@@ -2029,14 +2073,21 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
     return dest;
 }
 
+- (id)modifyWithBlock:(id (^)(id<iTermLineBlockMutationCertificate>))block {
+    // Synchronize for the duration of the mutation because -cowCopy will invalidate and nil out the certificate.
+    @synchronized([LineBlock class]) {
+        return block([self validMutationCertificate]);
+    }
+}
+
 // On exit, these postconditions are guaranteed:
 // self.owner==nil
 // self.clients.arrayByStrongifyingWeakBoxes.count==0.
-- (id<iTermLineBlockMutationCertificate>)willModify {
-    if (!_cachedMutationCert) {
-        _cachedMutationCert = [[iTermLineBlockMutator alloc] initWithLineBlock:self];
-    }
+- (id<iTermLineBlockMutationCertificate>)validMutationCertificate {
     @synchronized([LineBlock class]) {
+        if (!_cachedMutationCert) {
+            _cachedMutationCert = [[iTermLineBlockMutator alloc] initWithLineBlock:self];
+        }
         assert(self.clients != nil);
 
         NSArray<LineBlock *> *myClients = self.clients.arrayByStrongifyingWeakBoxes;
@@ -2061,7 +2112,7 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
         }
 
         if (myClients.count == 0) {
-            // I was (but no longer am) a client and I have no clients.
+            // I have no clients.
             // Nothing else to do since my owner pointer was already nilled out.
             [self.clients removeAllObjects];
             return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
@@ -2086,8 +2137,8 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
 
         // All clients were transferred and now I should have none.
         [self.clients removeAllObjects];
+        return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
     }
-    return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
 }
 
 - (LineBlock *)cowCopy {
