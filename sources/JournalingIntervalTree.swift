@@ -82,7 +82,7 @@ class EventuallyConsistentIntervalTree: IntervalTree {
         return result
     }
 
-    // This is faster than calling `remove(_:)` on each object int he tree.
+    // This is faster than calling `remove(_:)` on each object in the tree.
     @objc
     override func removeAllObjects() {
         super.removeAllObjects()
