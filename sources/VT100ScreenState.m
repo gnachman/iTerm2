@@ -322,6 +322,25 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     return _savedIntervalTree;
 }
 
+- (VT100GridAbsCoordRange)absCoordRangeForInterval:(Interval *)interval {
+    VT100GridAbsCoordRange result;
+    const int w = self.width + 1;
+    result.start.y = interval.location / w;
+    result.start.x = interval.location % w;
+    result.end.y = interval.limit / w;
+    result.end.x = interval.limit % w;
+
+    if (result.start.y < 0) {
+        result.start.y = 0;
+        result.start.x = 0;
+    }
+    if (result.start.x == self.width) {
+        result.start.y += 1;
+        result.start.x = 0;
+    }
+    return result;
+}
+
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval {
     VT100GridCoordRange result;
     const int w = self.width + 1;
@@ -346,25 +365,26 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     return VT100GridRangeMake(range.start.y, range.end.y - range.start.y + 1);
 }
 
-- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range {
-    return [self intervalForGridCoordRange:range
-                                     width:self.width
-                               linesOffset:self.cumulativeScrollbackOverflow];
+- (Interval *)intervalForGridAbsCoordRange:(VT100GridAbsCoordRange)range {
+    return [self intervalForGridAbsCoordRange:range
+                                        width:self.width];
 }
 
-- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
-                                  width:(int)width
-                            linesOffset:(long long)linesOffset {
-    VT100GridCoord start = range.start;
-    VT100GridCoord end = range.end;
-    long long si = start.y;
-    si += linesOffset;
+- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range {
+    return [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeFromCoordRange(range, self.cumulativeScrollbackOverflow)
+                                        width:self.width];
+}
+
+- (Interval *)intervalForGridAbsCoordRange:(VT100GridAbsCoordRange)absRange
+                                     width:(int)width {
+    VT100GridAbsCoord absStart = absRange.start;
+    VT100GridAbsCoord absEnd = absRange.end;
+    long long si = absStart.y;
     si *= (width + 1);
-    si += start.x;
-    long long ei = end.y;
-    ei += linesOffset;
+    si += absStart.x;
+    long long ei = absEnd.y;
     ei *= (width + 1);
-    ei += end.x;
+    ei += absEnd.x;
     if (ei < si) {
         long long temp = ei;
         ei = si;

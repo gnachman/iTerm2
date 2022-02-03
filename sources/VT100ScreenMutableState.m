@@ -351,8 +351,6 @@ static _Atomic int gPerformingJoinedBlock;
         if (!self.unlimitedScrollback) {
             [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:self.currentGrid.size.width]];
         }
-#warning TOOD: Don't remove objects here because the delegate calls will go to a screen with out-of-date state.
-        [self removeInaccessibleIntervalTreeObjects];
     }
     _terminal.stringForKeypress = config.stringForKeypress;
     _alertOnNextMark = config.alertOnNextMark;
@@ -482,6 +480,7 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)incrementOverflowBy:(int)overflowCount {
     if (overflowCount > 0) {
+        DLog(@"Increment overflow by %d", overflowCount);
         self.scrollbackOverflow += overflowCount;
         self.cumulativeScrollbackOverflow += overflowCount;
     }
@@ -1229,10 +1228,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     [self resetScrollbackOverflow];
     [self.currentGrid markAllCharsDirty:YES];
+    // TODO: There's a bug here - marks on the grid seem to disappear. I think cumulative scrollback overflow is wrong.
     [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
                                                                    0,
                                                                    self.width, self.numberOfScrollbackLines + self.height)];
-    [self.mutableIntervalTree removeAllObjects];
+    [self removeInaccessibleIntervalTreeObjects];
     [self reloadMarkCache];
     self.lastCommandMark = nil;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
@@ -1248,7 +1248,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)clearBufferSavingPrompt:(BOOL)savePrompt {
     // Cancel out the current command if shell integration is in use and we are
     // at the shell prompt.
-
+    DLog(@"clear buffer saving prompt");
     const int linesToSave = savePrompt ? [self numberOfLinesToPreserveWhenClearingScreen] : 0;
     // NOTE: This is in screen coords (y=0 is the top)
     VT100GridCoord newCommandStart = VT100GridCoordMake(-1, -1);
@@ -1266,6 +1266,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     // There is no last command after clearing the screen, so reset it.
     self.lastCommandOutputRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+
+    DLog(@"Erase interval tree objects above grid");
+    // Erase interval tree objects above grid.
+    [self removeIntervalTreeObjectsInAbsRange:VT100GridAbsCoordRangeMake(0, 0, self.width, self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)
+                          exceptAbsCoordRange:VT100GridAbsCoordRangeMake(-1, -1, -1, -1)];
 
     // Clear the grid by scrolling it up into history.
     [self clearAndResetScreenSavingLines:linesToSave];
@@ -1302,6 +1307,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 // This clears the screen, leaving the cursor's line at the top and preserves the cursor's x
 // coordinate. Scroll regions and the saved cursor position are reset.
 - (void)clearAndResetScreenSavingLines:(int)linesToSave {
+    DLog(@"clear grid. numberOfScrollbackLines=%@, cumulative overflow=%@", @(self.numberOfScrollbackLines), @(self.cumulativeScrollbackOverflow));
     [self clearTriggerLine];
     // This clears the screen.
     int x = self.currentGrid.cursorX;
@@ -1311,10 +1317,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                               additionalLinesToSave:MAX(0, linesToSave - 1)]];
     self.currentGrid.cursorX = x;
     self.currentGrid.cursorY = linesToSave - 1;
+    DLog(@"will remove interval tree objects in grid. numberOfScrollbackLines=%@, cumulative overflow=%@", @(self.numberOfScrollbackLines), @(self.cumulativeScrollbackOverflow));
     [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
                                                                    self.numberOfScrollbackLines,
                                                                    self.width,
                                                                    self.numberOfScrollbackLines + self.height)];
+    DLog(@"done clearing grid");
 }
 
 - (void)clearFromAbsoluteLineToEnd:(long long)unsafeAbsLine {
@@ -2027,29 +2035,27 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (line < totalOverflow || line > totalOverflow + self.numberOfLines) {
         return nil;
     }
-    int nonAbsoluteLine = line - totalOverflow;
-    VT100GridCoordRange range;
+    VT100GridAbsCoordRange absRange;
     if (oneLine) {
-        range = VT100GridCoordRangeMake(0, nonAbsoluteLine, self.width, nonAbsoluteLine);
+        absRange = VT100GridAbsCoordRangeMake(0, line, self.width, line);
     } else {
         // Interval is whole screen
-        int limit = nonAbsoluteLine + self.height - 1;
-        if (limit >= self.numberOfScrollbackLines + [self.currentGrid numberOfLinesUsed]) {
-            limit = self.numberOfScrollbackLines + [self.currentGrid numberOfLinesUsed] - 1;
+        long long absLimit = line + self.height - 1;
+        const long long maxAbsLimit = self.cumulativeScrollbackOverflow + self.numberOfScrollbackLines + [self.currentGrid numberOfLinesUsed];
+        if (absLimit >= maxAbsLimit) {
+            absLimit = maxAbsLimit - 1;
         }
-        range = VT100GridCoordRangeMake(0,
-                                        nonAbsoluteLine,
-                                        self.width,
-                                        limit);
+        absRange = VT100GridAbsCoordRangeMake(0, line, self.width, absLimit);
     }
     if ([mark isKindOfClass:[VT100ScreenMark class]]) {
-        self.markCache[self.cumulativeScrollbackOverflow + range.end.y] = mark;
+        self.markCache[absRange.end.y] = mark;
     }
     DLog(@"addMarkStartingAtAbsoluteLine: %@", mark);
-    [self.mutableIntervalTree addObject:mark withInterval:[self intervalForGridCoordRange:range]];
+    [self.mutableIntervalTree addObject:mark withInterval:[self intervalForGridAbsCoordRange:absRange]];
 
     const iTermIntervalTreeObjectType objectType = iTermIntervalTreeObjectTypeForObject(mark);
-    const long long absLine = range.start.y + self.cumulativeScrollbackOverflow;
+    const long long absLine = absRange.start.y;
+    DLog(@"Add mark %p with abs range %@", mark, VT100GridAbsCoordRangeDescription(absRange));
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
         [observer intervalTreeDidAddObjectOfType:objectType
                                           onLine:absLine];
@@ -2074,11 +2080,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }];
     }
     DLog(@"removeObjectFromIntervalTree: %@", obj);
+    const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:obj.entry.interval];
     const BOOL removed = [self.mutableIntervalTree removeObject:obj];
     iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(obj);
     if (type != iTermIntervalTreeObjectTypeUnknown) {
-        VT100GridCoordRange range = [self coordRangeForInterval:obj.entry.interval];
-        const long long line = range.start.y + self.cumulativeScrollbackOverflow;
+        const long long line = range.start.y;
         [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
             [observer intervalTreeDidRemoveObjectOfType:type
                                                  onLine:line];
@@ -2092,14 +2098,29 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                           exceptCoordRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
 }
 
-- (NSMutableArray<id<IntervalTreeObject>> *)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange exceptCoordRange:(VT100GridCoordRange)coordRangeToSave {
-    Interval *intervalToClear = [self intervalForGridCoordRange:coordRange];
+- (NSMutableArray<id<IntervalTreeObject>> *)removeIntervalTreeObjectsInRange:(VT100GridCoordRange)coordRange
+                                                            exceptCoordRange:(VT100GridCoordRange)coordRangeToSave {
+    VT100GridAbsCoordRange absCoordRangeToSave;
+    if (coordRangeToSave.start.x < 0) {
+        absCoordRangeToSave = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+    } else {
+        absCoordRangeToSave = VT100GridAbsCoordRangeFromCoordRange(coordRangeToSave, self.cumulativeScrollbackOverflow);
+    }
+    return [self removeIntervalTreeObjectsInAbsRange:VT100GridAbsCoordRangeFromCoordRange(coordRange, self.cumulativeScrollbackOverflow)
+                                 exceptAbsCoordRange:absCoordRangeToSave];
+}
+
+- (NSMutableArray<id<IntervalTreeObject>> *)removeIntervalTreeObjectsInAbsRange:(VT100GridAbsCoordRange)absCoordRange
+                                                            exceptAbsCoordRange:(VT100GridAbsCoordRange)absCoordRangeToSave {
+    DLog(@"Remove interval tree objects in range %@", VT100GridAbsCoordRangeDescription(absCoordRange));
+    Interval *intervalToClear = [self intervalForGridAbsCoordRange:absCoordRange];
     NSMutableArray<id<IntervalTreeObject>> *marksToMove = [NSMutableArray array];
     for (id<IntervalTreeObject> obj in [self.intervalTree objectsInInterval:intervalToClear]) {
-        const VT100GridCoordRange markRange = [self coordRangeForInterval:obj.entry.interval];
-        if (VT100GridCoordRangeContainsCoord(coordRangeToSave, markRange.start)) {
+        const VT100GridAbsCoordRange absMarkRange = [self absCoordRangeForInterval:obj.entry.interval];
+        if (VT100GridAbsCoordRangeContainsAbsCoord(absCoordRangeToSave, absMarkRange.start)) {
             [marksToMove addObject:obj];
         } else {
+            DLog(@"Remove %p with range %@", obj, VT100GridAbsCoordRangeDescription([self absCoordRangeForInterval:obj.entry.interval]));
             DLog(@"Remove in range: %@", obj);
             const BOOL removed = [self removeObjectFromIntervalTree:obj];
             assert(removed);
@@ -3110,8 +3131,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (self.currentGrid.isAnyCharDirty) {
         [_triggerEvaluator invalidateIdempotentTriggers];
     }
-#warning TODO: Ensure this is correct. Won't the delegate have out-of-date state here?
-    [self removeInaccessibleIntervalTreeObjects];
 }
 
 - (void)didSynchronize:(BOOL)resetOverflow {
@@ -3121,8 +3140,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         self.temporaryDoubleBuffer.drewSavedGrid = YES;
         self.currentGrid.haveScrolled = NO;
     }
+    [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
+    [self removeInaccessibleIntervalTreeObjects];
 #warning TODO: Consider setting grid's currentDate here.
-#warning TODO: Consider running side effects immediately here.
 }
 
 - (void)updateExpectFrom:(iTermExpect *)source {

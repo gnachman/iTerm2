@@ -296,11 +296,13 @@ extern NSString *const kScreenStateProtectedMode;
 // WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter
 
 - (VT100GridCoordRange)coordRangeForInterval:(Interval *)interval;
+- (VT100GridAbsCoordRange)absCoordRangeForInterval:(Interval *)interval;
 - (VT100GridRange)lineNumberRangeOfInterval:(Interval *)interval;
 - (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range;
-- (Interval *)intervalForGridCoordRange:(VT100GridCoordRange)range
-                                  width:(int)width
-                            linesOffset:(long long)linesOffset;
+- (Interval *)intervalForGridAbsCoordRange:(VT100GridAbsCoordRange)range;
+- (Interval *)intervalForGridAbsCoordRange:(VT100GridAbsCoordRange)absRange
+                                     width:(int)width;
+
 - (__kindof id<IntervalTreeImmutableObject>)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
 
 // WARNING - If you add any new APIs that return interval tree objects update VT100ScreenStateSanitizingAdapter

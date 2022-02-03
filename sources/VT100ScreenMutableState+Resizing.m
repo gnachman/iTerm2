@@ -569,9 +569,8 @@ static void SwapInt(int *a, int *b) {
         }
         assert(noteRange.start.y >= 0);
         assert(noteRange.end.y >= 0);
-        Interval *newInterval = [self intervalForGridCoordRange:newRange
-                                                          width:newWidth
-                                                    linesOffset:self.cumulativeScrollbackOverflow];
+        Interval *newInterval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeFromCoordRange(newRange, self.cumulativeScrollbackOverflow)
+                                                             width:newWidth];
         note.entry = nil;
         note.doppelganger.entry = nil;
         [self.mutableIntervalTree addObject:note withInterval:newInterval];
@@ -784,9 +783,8 @@ static void SwapInt(int *a, int *b) {
                                                  linesMovedUp:linesMovedUp];
         if (ok) {
             DLog(@"  New range=%@", VT100GridCoordRangeDescription(newRange));
-            Interval *interval = [self intervalForGridCoordRange:newRange
-                                                                    width:newSize.width
-                                                              linesOffset:self.cumulativeScrollbackOverflow];
+            Interval *interval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeFromCoordRange(newRange, self.cumulativeScrollbackOverflow)
+                                                              width:newSize.width];
             [self.mutableIntervalTree addObject:note withInterval:interval];
         } else {
             DLog(@"  *FAILED TO CONVERT*");
@@ -910,9 +908,8 @@ static void SwapInt(int *a, int *b) {
         }
         DLog(@"  Its new range is %@ including %d lines dropped from top. Remove %@", VT100GridCoordRangeDescription(objectRange), numLinesDroppedFromTop, object);
         if (newRange.end.y > 0 || (newRange.end.y == 0 && newRange.end.x > 0)) {
-            Interval *newInterval = [self intervalForGridCoordRange:newRange
-                                                              width:newWidth
-                                                        linesOffset:0];
+            Interval *newInterval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeFromCoordRange(newRange, 0)
+                                                              width:newWidth];
             object.entry = nil;
             object.doppelganger.entry = nil;
             [self.mutableSavedIntervalTree addObject:object withInterval:newInterval];
