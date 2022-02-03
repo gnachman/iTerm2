@@ -15150,6 +15150,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)intervalTreeDidAddObjectOfType:(iTermIntervalTreeObjectType)type
                                 onLine:(NSInteger)line {
+    DLog(@"Add at %@", @(line));
     [iTermGCD assertMainQueueSafe];
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
@@ -15159,6 +15160,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)intervalTreeDidRemoveObjectOfType:(iTermIntervalTreeObjectType)type
                                    onLine:(NSInteger)line {
+    DLog(@"Remove at %@", @(line));
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
