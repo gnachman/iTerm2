@@ -3135,14 +3135,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)didSynchronize:(BOOL)resetOverflow {
     DLog(@"Did synchronize. Set drewSavedGrid=YES");
-#warning TODO: Maybe I shouldn't do this when not resetting scrollback overflow
     if (resetOverflow) {
         self.temporaryDoubleBuffer.drewSavedGrid = YES;
         self.currentGrid.haveScrolled = NO;
     }
     [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
     [self removeInaccessibleIntervalTreeObjects];
-#warning TODO: Consider setting grid's currentDate here.
 }
 
 - (void)updateExpectFrom:(iTermExpect *)source {
@@ -3238,7 +3236,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     VT100ScreenState *oldState = [delegate screenSwitchToSharedState];
     [self loadConfigIfNeededFromDelegate:delegate];
 
-#warning TODO: Consider moving currentDate-setting and side-effect-execution to didSynchronize
     const NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
     self.primaryGrid.currentDate = now;
     self.altGrid.currentDate = now;
