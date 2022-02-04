@@ -13019,7 +13019,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self publishScreenCharArray:sca metadata:metadata];
 }
 
-#warning TODO: It's way too slow to round-trip to the main thread to get these. Precalculate them and pass in VT100ScreenConfig.
 - (NSString *)screenStringForKeypressWithCode:(unsigned short)keycode
                                         flags:(NSEventModifierFlags)flags
                                    characters:(NSString *)characters
