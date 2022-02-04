@@ -449,6 +449,9 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 - (void)removeAllObjects {
+    for (id<IntervalTreeObject> obj in [self objectsInInterval:[Interval maxInterval]]) {
+        obj.entry = nil;
+    }
     _tree.delegate = nil;
     _count = 0;
     _tree = [[AATree alloc] initWithKeyComparator:^(NSNumber *key1, NSNumber *key2) {
