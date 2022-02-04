@@ -25,7 +25,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL enableTriggersInInteractiveApps;
 @property (nonatomic, readonly) BOOL triggerParametersUseInterpolatedStrings;
 @property (nonatomic, copy, readonly) NSArray<NSDictionary *> *triggerProfileDicts;
-@property (nonatomic, readonly) BOOL notifyOfAppend;
 @property (nonatomic, readonly) BOOL isTmuxClient;
 @property (nonatomic, readonly) BOOL clipboardAccessAllowed;
 @property (nonatomic, readonly) BOOL miniaturized;
@@ -57,6 +56,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy, readonly) NSDictionary<NSNumber *, id> *stringForKeypress;
 @property (nonatomic, readonly) BOOL alertOnNextMark;
 @property (nonatomic, readonly) double dimmingAmount;
+@property (nonatomic, readonly) BOOL publishing;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -76,7 +76,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL enableTriggersInInteractiveApps;
 @property (nonatomic, readwrite) BOOL triggerParametersUseInterpolatedStrings;
 @property (nonatomic, copy, readwrite) NSArray<NSDictionary *> *triggerProfileDicts;
-@property (nonatomic, readwrite) BOOL notifyOfAppend;
 @property (nonatomic, readwrite) BOOL isTmuxClient;
 @property (nonatomic, readwrite) BOOL printingAllowed;
 @property (nonatomic, readwrite) BOOL clipboardAccessAllowed;
@@ -106,6 +105,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSDictionary *stringForKeypressConfig;  // Used to tell if stringForKeypress needs to be updated.
 @property (nonatomic, readwrite) BOOL alertOnNextMark;
 @property (nonatomic, readwrite) double dimmingAmount;
+@property (nonatomic, readwrite) BOOL publishing;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 

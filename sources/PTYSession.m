@@ -12040,11 +12040,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.unicodeVersion = _unicodeVersion;
         dirty = YES;
     }
-    const BOOL notifyOfAppend = self.contentSubscribers.count > 0;
-    if (_config.notifyOfAppend != notifyOfAppend) {
-        _config.notifyOfAppend = notifyOfAppend;
-        dirty = YES;
-    }
     if (_config.isTmuxClient != self.isTmuxClient) {
         _config.isTmuxClient = self.isTmuxClient;
         dirty = YES;
@@ -12131,6 +12126,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     const double dimmingAmount = _view.adjustedDimmingAmount;
     if (_config.dimmingAmount != dimmingAmount) {
         _config.dimmingAmount = dimmingAmount;
+        dirty = YES;
+    }
+
+    const BOOL publishing = (self.contentSubscribers.count > 0);
+    if (_config.publishing != publishing) {
+        _config.publishing = publishing;
         dirty = YES;
     }
     if (_profileDidChange) {

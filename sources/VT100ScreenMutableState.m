@@ -41,6 +41,7 @@
 
 static NSString *VT100ScreenMutableStateSideEffectStateKeyNeedsRedraw = @"Needs Redraw";
 static NSString *VT100ScreenMutableStateSideEffectStateKeyIntervalTreeVisibleRangeDidChange = @"Interval Tree Visible Range Did Change";
+NSString *VT100ScreenMutableStateSideEffectStateKeyDidReceiveLineFeed = @"DidReceiveLineFeed";
 
 @interface VT100ScreenTokenExecutorUpdate()
 
@@ -685,7 +686,7 @@ static _Atomic int gPerformingJoinedBlock;
                                                                  insert:self.insert
                                                  externalAttributeIndex:externalAttributes]];
 
-        if (self.config.notifyOfAppend) {
+        if (self.config.publishing) {
             iTermImmutableMetadata temp;
             iTermImmutableMetadataInit(&temp, 0, externalAttributes);
 
@@ -4491,6 +4492,11 @@ launchCoprocessWithCommand:(NSString *)command
     if (state[VT100ScreenMutableStateSideEffectStateKeyIntervalTreeVisibleRangeDidChange]) {
         [self performIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> observer) {
             [observer intervalTreeVisibleRangeDidChange];
+        }];
+    }
+    if (state[VT100ScreenMutableStateSideEffectStateKeyDidReceiveLineFeed]) {
+        [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenDidReceiveLineFeed];
         }];
     }
 }

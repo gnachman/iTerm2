@@ -19,6 +19,8 @@
 #import "iTermMark.h"
 #import "iTermTemporaryDoubleBufferedGridController.h"
 
+extern NSString *VT100ScreenMutableStateSideEffectStateKeyDidReceiveLineFeed;
+
 @interface VT100ScreenMutableState()<
 PTYAnnotationDelegate,
 PTYTriggerEvaluatorDelegate,

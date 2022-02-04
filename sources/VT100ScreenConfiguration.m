@@ -16,7 +16,6 @@
 @property (nonatomic, readwrite) BOOL enableTriggersInInteractiveApps;
 @property (nonatomic, readwrite) BOOL triggerParametersUseInterpolatedStrings;
 @property (nonatomic, copy, readwrite) NSArray<NSDictionary *> *triggerProfileDicts;
-@property (nonatomic, readwrite) BOOL notifyOfAppend;
 @property (nonatomic, readwrite) BOOL isDirty;
 @property (nonatomic, readwrite) BOOL isTmuxClient;
 @property (nonatomic, readwrite) BOOL printingAllowed;
@@ -46,6 +45,7 @@
 @property (nonatomic, copy, readwrite) NSDictionary<NSNumber *, id> *stringForKeypress;
 @property (nonatomic, readwrite) BOOL alertOnNextMark;
 @property (nonatomic, readwrite) double dimmingAmount;
+@property (nonatomic, readwrite) BOOL publishing;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -57,7 +57,6 @@
 @synthesize enableTriggersInInteractiveApps = _enableTriggersInInteractiveApps;
 @synthesize triggerParametersUseInterpolatedStrings = _triggerParametersUseInterpolatedStrings;
 @synthesize triggerProfileDicts = _triggerProfileDicts;
-@synthesize notifyOfAppend = _notifyOfAppend;
 @synthesize isTmuxClient = _isTmuxClient;
 @synthesize printingAllowed = _printingAllowed;
 @synthesize clipboardAccessAllowed = _clipboardAccessAllowed;
@@ -85,6 +84,7 @@
 @synthesize loggingEnabled = _loggingEnabled;
 @synthesize alertOnNextMark = _alertOnNextMark;
 @synthesize dimmingAmount = _dimmingAmount;
+@synthesize publishing = _publishing;
 
 @synthesize isDirty = _isDirty;
 @synthesize stringForKeypress = _stringForKeypress;
@@ -99,7 +99,6 @@
         _enableTriggersInInteractiveApps = other.enableTriggersInInteractiveApps;
         _triggerParametersUseInterpolatedStrings = other.triggerParametersUseInterpolatedStrings;
         _triggerProfileDicts = [other.triggerProfileDicts copy];
-        _notifyOfAppend = other.notifyOfAppend;
         _isTmuxClient = other.isTmuxClient;
         _printingAllowed = other.printingAllowed;
         _clipboardAccessAllowed = other.clipboardAccessAllowed;
@@ -128,6 +127,7 @@
         _stringForKeypress = other.stringForKeypress;
         _alertOnNextMark = other.alertOnNextMark;
         _dimmingAmount = other.dimmingAmount;
+        _publishing = other.publishing;
 
         _isDirty = other.isDirty;
     }
@@ -150,7 +150,6 @@
                             @"enableTriggersInInteractiveApps": @(_enableTriggersInInteractiveApps),
                             @"triggerParametersUseInterpolatedStrings": @(_triggerParametersUseInterpolatedStrings),
                             @"triggerProfileDicts (count)": @(_triggerProfileDicts.count),
-                            @"notifyOfAppend": @(_notifyOfAppend),
                             @"isTmuxClient": @(_isTmuxClient),
                             @"printingAllowed": @(_printingAllowed),
                             @"clipboardAccessAllowed": @(_clipboardAccessAllowed),
@@ -179,6 +178,7 @@
                             @"stringForKeypress": _stringForKeypress ?: @"",
                             @"alertOnNextMark": @(_alertOnNextMark),
                             @"dimmingAmount": @(_dimmingAmount),
+                            @"publishing": @(_publishing),
 
                             @"isDirty": @(_isDirty),
     };
@@ -202,7 +202,6 @@
 @dynamic enableTriggersInInteractiveApps;
 @dynamic triggerParametersUseInterpolatedStrings;
 @dynamic triggerProfileDicts;
-@dynamic notifyOfAppend;
 @dynamic isTmuxClient;
 @dynamic printingAllowed;
 @dynamic clipboardAccessAllowed;
@@ -231,6 +230,7 @@
 @dynamic stringForKeypress;
 @dynamic alertOnNextMark;
 @dynamic dimmingAmount;
+@dynamic publishing;
 
 @dynamic isDirty;
 
