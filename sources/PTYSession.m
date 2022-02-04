@@ -11198,8 +11198,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenSaveScrollPosition {
     DLog(@"Session %@ calling refresh", self);
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-#warning When moving to multiple threads test this unusual reentrancy
-        [_textview refresh];  // In case text was appended
+        [_textview refresh];  // Handle scrollback overflow so we have the most recent scroll position
         id<iTermMark> mark = [mutableState addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
                                                                  oneLine:NO
                                                                  ofClass:[VT100ScreenMark class]];
