@@ -470,7 +470,6 @@ static _Atomic int gPerformingJoinedBlock;
 }
 
 - (NSDictionary *)terminalState {
-#warning TODO: Find an optimization to allow us to avoid computing this every time.
     return self.terminal.stateDictionary;
 }
 
