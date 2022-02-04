@@ -1401,7 +1401,6 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
 
 #pragma mark - NSCopying
 
-#warning TODO: Test this, ensure I got all state copied
 - (id)copyWithZone:(NSZone *)zone {
     return [[VT100Output alloc] initWithOutput:self];
 }
