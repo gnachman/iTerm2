@@ -7733,7 +7733,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         result = [self syncCheckingTriggers:checkTriggers
                               resetOverflow:resetOverflow
                                mutableState:mutableState];
-#warning TODO: Move removeInaccessibleIntervalTreeObjects here so that the delegate callbacks have up-to-date state. Then sync again.
     }];
     return result;
 }
