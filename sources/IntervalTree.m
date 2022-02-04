@@ -454,6 +454,7 @@ static NSString *const kIntervalLengthKey = @"Length";
     }
     _tree.delegate = nil;
     _count = 0;
+    [_tree autorelease];
     _tree = [[AATree alloc] initWithKeyComparator:^(NSNumber *key1, NSNumber *key2) {
         return [key1 compare:key2];
     }];
