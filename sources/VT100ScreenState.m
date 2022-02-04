@@ -232,7 +232,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     [self copyFastStuffFrom:source];
 
     if (!_linebuffer || source.linebuffer.dirty) {
-#warning TODO: More optimization to be done here.
+         // TODO: There are opportunitize for optimization here.
         _linebuffer = [source.linebuffer copy];
         source.linebuffer.dirty = NO;
     }
