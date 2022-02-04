@@ -254,7 +254,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)addAnnotation:(id<PTYAnnotationReading>)annotation
               inRange:(VT100GridCoordRange)range
-                focus:(BOOL)focus;
+                focus:(BOOL)focus
+              visible:(BOOL)visible;
 
 - (void)setStringValueOfAnnotation:(id<PTYAnnotationReading>)annotation to:(NSString *)stringValue;
 

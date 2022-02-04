@@ -1261,7 +1261,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         inRange:(VT100GridCoordRange)range
           focus:(BOOL)focus {
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState addAnnotation:note inRange:range focus:focus];
+        [mutableState addAnnotation:note inRange:range focus:focus visible:YES];
     }];
 }
 

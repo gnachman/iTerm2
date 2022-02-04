@@ -1383,7 +1383,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                 id<PTYAnnotationReading> annotation = [PTYAnnotation castFrom:obj];
                 if (annotation) {
                     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
-                        [delegate screenDidAddNote:annotation focus:NO];
+                        [delegate screenDidAddNote:annotation focus:NO visible:YES];
                     }];
                 }
                 [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
@@ -1578,7 +1578,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             note.entry.interval.length = screenInterval.location - note.entry.interval.location;
         }
         PTYAnnotation *annotation = [PTYAnnotation castFrom:note];
-#warning TODO: Coalesce showing/hiding since it's animated
         [annotation hide];
     }];
     // Force annotations frames to be updated.
@@ -2841,7 +2840,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     PTYAnnotation *annotation = [[PTYAnnotation alloc] init];
     annotation.stringValue = text;
-    [self addAnnotation:annotation inRange:range focus:NO];
+    [self addAnnotation:annotation inRange:range focus:NO visible:YES];
     return annotation;
 }
 
@@ -2868,7 +2867,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)addAnnotation:(PTYAnnotation *)annotation
               inRange:(VT100GridCoordRange)range
-                focus:(BOOL)focus {
+                focus:(BOOL)focus
+              visible:(BOOL)visible {
     annotation.delegate = self;
     DLog(@"addAnnotation:inRange:focus:");
     [self.mutableIntervalTree addObject:annotation withInterval:[self intervalForGridCoordRange:range]];
@@ -2881,7 +2881,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
     // Because -refresh gets called.
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenDidAddNote:doppelganger focus:focus];
+        [delegate screenDidAddNote:doppelganger focus:focus visible:visible];
     }];
 }
 
@@ -3568,7 +3568,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             } else if ([object isKindOfClass:[PTYAnnotation class]]) {
                 id<PTYAnnotationReading> note = (id<PTYAnnotationReading>)object;
                 if (visible) {
-                    [delegate screenDidAddNote:note.doppelganger focus:NO];
+                    [delegate screenDidAddNote:note.doppelganger focus:NO visible:YES];
                 }
             } else if ([object isKindOfClass:[iTermImageMark class]]) {
                 id<iTermImageMarkReading> imageMark = (id<iTermImageMarkReading>)object;

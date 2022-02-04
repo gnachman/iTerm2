@@ -3053,7 +3053,7 @@
 
 #pragma mark - Annotations
 
-- (void)addViewForNote:(id<PTYAnnotationReading>)annotation focus:(BOOL)focus {
+- (void)addViewForNote:(id<PTYAnnotationReading>)annotation focus:(BOOL)focus visible:(BOOL)visible {
     PTYNoteViewController *note = [[[PTYNoteViewController alloc] initWithAnnotation:annotation] autorelease];
     note.delegate = self;
     [_notes addObject:note];
@@ -3065,12 +3065,14 @@
     [note.view removeFromSuperview];
     [self addSubview:note.view];
     [self updateNoteViewFrames];
-    [note setNoteHidden:NO];
-    [self setNeedsDisplay:YES];
-    if (focus) {
-        [note makeFirstResponder];
+    [note setNoteHidden:!visible];
+    if (visible) {
+        [self setNeedsDisplay:YES];
+        if (focus) {
+            [note makeFirstResponder];
+        }
+        [self updateAlphaValue];
     }
-    [self updateAlphaValue];
 }
 
 - (void)addNote {

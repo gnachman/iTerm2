@@ -11294,8 +11294,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidAddNote:(id<PTYAnnotationReading>)note
-                   focus:(BOOL)focus {
-    [_textview addViewForNote:note focus:focus];
+                   focus:(BOOL)focus
+                 visible:(BOOL)visible {
+    [_textview addViewForNote:note focus:focus visible:visible];
     [self.delegate sessionUpdateMetalAllowed];
 }
 

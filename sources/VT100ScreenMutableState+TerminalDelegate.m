@@ -961,13 +961,8 @@
                                                     location.y + self.numberOfScrollbackLines,
                                                     end.x,
                                                     end.y + self.numberOfScrollbackLines)
-                      focus:NO];
-        if (!show) {
-            [self.mutableIntervalTree mutateObject:note block:^(id<IntervalTreeObject> _Nonnull obj) {
-                PTYAnnotation *mutableNote = (PTYAnnotation *)obj;
-                [mutableNote hide];
-            }];
-        }
+                      focus:NO
+                    visible:show];
     }
 }
 

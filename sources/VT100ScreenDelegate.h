@@ -253,7 +253,7 @@
 
 - (void)screenSetProfileToProfileNamed:(NSString * _Nonnull)value;
 - (void)screenSetPasteboard:(NSString * _Nonnull)value;
-- (void)screenDidAddNote:(id<PTYAnnotationReading> _Nonnull)note focus:(BOOL)focus;
+- (void)screenDidAddNote:(id<PTYAnnotationReading> _Nonnull)note focus:(BOOL)focus visible:(BOOL)visible;
 - (void)screenCopyBufferToPasteboard;
 - (void)screenAppendDataToPasteboard:(NSData * _Nonnull)data;
 
