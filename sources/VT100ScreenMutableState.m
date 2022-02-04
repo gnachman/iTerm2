@@ -204,7 +204,6 @@ static _Atomic int gPerformingJoinedBlock;
 - (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect {
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     if (VT100ScreenMutableState.performingJoinedBlock) {
-        #warning TODO: While joined perform side effects synchronously with locked-up state. Figure out how to avoid having any side effects while syncing.
         [self performPausedSideEffect:unpauser block:sideEffect];
         return;
     }
@@ -216,7 +215,6 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
     if (VT100ScreenMutableState.performingJoinedBlock) {
-        #warning TODO: While joined perform side effects synchronously with locked-up state. Figure out how to avoid having any side effects while syncing.
         [self performSideEffect:sideEffect];
         return;
     }
@@ -228,7 +226,6 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect {
     if (VT100ScreenMutableState.performingJoinedBlock) {
-        #warning TODO: While joined perform side effects synchronously with locked-up state. Figure out how to avoid having any side effects while syncing.
         [self performIntervalTreeSideEffect:sideEffect];
         return;
     }
