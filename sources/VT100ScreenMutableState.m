@@ -4420,6 +4420,13 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)annotationWillBeRemoved:(id<PTYAnnotationReading>)annotation {
 }
 
+- (void)highlight {
+}
+
+- (BOOL)setNoteHidden:(BOOL)hidden {
+    return NO;
+}
+
 #pragma mark - iTermEventuallyConsistentIntervalTreeSideEffectPerformer
 
 - (void)addEventuallyConsistentIntervalTreeSideEffect:(void (^)(void))block {
