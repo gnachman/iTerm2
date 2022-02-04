@@ -2636,7 +2636,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                                                historyLines,
                                                                                1,
                                                                                historyLines)];
-#warning TODO: Test this a lot, it's quite different than the original. May leak or have unexpected side-effects.
+
     IntervalTree *tempDerivative = [[IntervalTree alloc] init];
     iTermEventuallyConsistentIntervalTree *temp =
     [[iTermEventuallyConsistentIntervalTree alloc] initWithSideEffectPerformer:self
