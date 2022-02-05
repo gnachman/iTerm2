@@ -953,15 +953,19 @@ typedef enum {
             [self configurePasteSpecialWithArgument:currentArg];
             break;
 
-        case kMenuItemArg:
+        case kMenuItemArg: {
             editArgumentLabel_.hidden = YES;
             editArgumentField_.hidden = YES;
             editArgumentButton_.hidden = YES;
             _pasteSpecialViewContainer.hidden = YES;
             _menuItemPopupView.hidden = NO;
             [_menuItemPopupView reloadData];
-            (void)[_menuItemPopupView selectItemWithIdentifier:currentArg];
+            NSArray<NSString *> *parts = [currentArg componentsSeparatedByString:@"\n"];
+            if (parts.count > 0) {
+                (void)[_menuItemPopupView selectItemWithIdentifier:parts.firstObject];
+            }
             break;
+        }
 
     }
     [self updateWindowFrame];
