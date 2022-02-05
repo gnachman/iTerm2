@@ -23,11 +23,11 @@
                 inContext:(FindContext *)context
           multipleResults:(BOOL)multipleResults {
     DLog(@"begin self=%@ aString=%@", self, aString);
-    LineBuffer *tempLineBuffer = [_mutableState.linebuffer copy];
+    LineBuffer *tempLineBuffer = [_state.linebuffer copy];
 
     // Append the screen contents to the scrollback buffer so they are included in the search.
-    [_mutableState.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
-                              toLineBuffer:tempLineBuffer];
+    [_state.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
+                       toLineBuffer:tempLineBuffer];
 
     // Get the start position of (x,y)
     LineBufferPosition *startPos;
@@ -133,8 +133,8 @@
     // Append the screen contents to the scrollback buffer so they are included in the search.
     LineBuffer *temporaryLineBuffer = [_state.linebuffer copy];
 
-    [_mutableState.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
-                              toLineBuffer:temporaryLineBuffer];
+    [_state.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
+                        toLineBuffer:temporaryLineBuffer];
 
     // Search one block.
     LineBufferPosition *stopAt;
@@ -166,8 +166,8 @@
 
                     result.startX = xyrange->xStart;
                     result.endX = xyrange->xEnd;
-                    result.absStartY = xyrange->yStart + _mutableState.cumulativeScrollbackOverflow;
-                    result.absEndY = xyrange->yEnd + _mutableState.cumulativeScrollbackOverflow;
+                    result.absStartY = xyrange->yStart + _state.cumulativeScrollbackOverflow;
+                    result.absEndY = xyrange->yEnd + _state.cumulativeScrollbackOverflow;
 
                     [results addObject:result];
 

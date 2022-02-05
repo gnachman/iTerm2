@@ -9021,6 +9021,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                  toConnectionKey:key];
         }];
     }
+
+    // Remove the tail-find timer so that a new tail find can begin. This is necessary so that
+    // shouldSEndContentsChangedNotification will return YES.
+    [_tailFindTimer invalidate];
+    _tailFindTimer = nil;
 }
 
 - (void)textViewBeginDrag
