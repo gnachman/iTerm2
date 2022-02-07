@@ -188,6 +188,9 @@
     if (!_zippy) {
         _canUseFastPath &= iTermCharacterSupportsFastPath(code, _asciiLigaturesAvailable);
     }
+    if (code >= 0xe000 && code <= 0xf8ff) {
+        _canUseFastPath = NO;
+    }
     if (!_characterData) {
         _characterData = [[NSMutableData alloc] initWithCapacity:20];
     }
