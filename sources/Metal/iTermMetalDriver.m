@@ -207,7 +207,17 @@ typedef struct {
 
         _commandQueue = [device newCommandQueue];
 #if ENABLE_PRIVATE_QUEUE
-        _queue = dispatch_queue_create("com.iterm2.metalDriver", NULL);
+        // TexturePageCollection, TexturePage, and iTermTexturePageCollectionSharedPointer are shared
+        // among all sessions but are not thread-safe. For now move all metal drivers to a single
+        // queue to serialize access to these data structures to avoid data races. Longer term I
+        // think I should rewrite them in thread-safe Swift because they are nearly incomprehensible
+        // in their current form.
+        static dispatch_queue_t queue;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            queue = dispatch_queue_create("com.iterm2.metalDriver", NULL);;
+        });
+        _queue = queue;
 #endif
 #if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
         _familiarTextures = [NSPointerArray weakObjectsPointerArray];
