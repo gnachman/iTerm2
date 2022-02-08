@@ -7,13 +7,15 @@
 
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface iTermTuple<T1, T2> : NSObject<NSCoding, NSCopying>
 
-@property (nonatomic, strong) T1 firstObject;
-@property (nonatomic, strong) T2 secondObject;
+@property (nullable, nonatomic, strong) T1 firstObject;
+@property (nullable, nonatomic, strong) T2 secondObject;
 @property (nonatomic, readonly) id plistValue;
 
-+ (instancetype)tupleWithObject:(T1)firstObject andObject:(T2)secondObject;
++ (instancetype)tupleWithObject:(nullable T1)firstObject andObject:(nullable T2)secondObject;
 + (instancetype)fromPlistValue:(id)plistValue;
 + (NSArray<iTermTuple<T1, T2> *> *)cartesianProductOfArray:(NSArray<T1> *)a1
                                                       with:(NSArray<T2> *)a2;
@@ -22,9 +24,12 @@
 
 @interface iTermTriple<T1, T2, T3> : iTermTuple<NSCoding, NSCopying>
 
-@property (nonatomic, strong) T3 thirdObject;
+@property (nullable, nonatomic, strong) T3 thirdObject;
 
-+ (instancetype)tupleWithObject:(T1)firstObject andObject:(T2)secondObject NS_UNAVAILABLE;
-+ (instancetype)tripleWithObject:(T1)firstObject andObject:(T2)secondObject object:(T3)thirdObject;
++ (instancetype)tupleWithObject:(nullable T1)firstObject andObject:(nullable T2)secondObject NS_UNAVAILABLE;
++ (instancetype)tripleWithObject:(nullable T1)firstObject andObject:(nullable T2)secondObject object:(nullable T3)thirdObject;
 
 @end
+
+NS_ASSUME_NONNULL_END
+

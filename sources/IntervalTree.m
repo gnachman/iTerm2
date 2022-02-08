@@ -429,25 +429,6 @@ static NSString *const kIntervalLengthKey = @"Length";
     }
 }
 
-- (iTermTuple<Interval *, id<IntervalTreeObject>> *)dropFirst {
-    NSEnumerator *enumerator = [self forwardLimitEnumeratorAt:0];
-    if (!enumerator) {
-        return nil;
-    }
-    NSArray<id<IntervalTreeObject>> *array = [enumerator nextObject];
-    if (!array) {
-        return nil;
-    }
-    id<IntervalTreeObject> obj = array.firstObject;
-    Interval *interval = [[obj.entry.interval copy] autorelease];
-    const BOOL removed = [self removeObject:obj];
-    assert(removed);
-    if (!obj) {
-        return nil;
-    }
-    return [iTermTuple tupleWithObject:interval andObject:obj];
-}
-
 - (void)removeAllObjects {
     for (id<IntervalTreeObject> obj in [self objectsInInterval:[Interval maxInterval]]) {
         obj.entry = nil;

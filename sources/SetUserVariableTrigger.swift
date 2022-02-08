@@ -11,19 +11,36 @@ import Foundation
     // Two-string parameters are encoded as <first string> <separator character> <second string>
     private static let separator = "\u{1}"
 
-    private static func clean(_ string: NSString) -> String {
+    private static func clean(_ string: String) -> String {
         return string.replacingOccurrences(of: separator, with: "")
     }
 
-    @objc(stringFromTuple:) static func convert(tuple: iTermTuple<NSString, NSString>) -> String {
-        return clean(tuple.firstObject) + separator + clean(tuple.secondObject)
+    @objc(stringFromTuple:) static func objc_convert(tuple: iTermTuple<NSString, NSString>) -> String {
+        let stringTuple: (String, String) = (tuple.firstObject as String? ?? "",
+                                             tuple.secondObject as String? ?? "")
+        return convert(tuple: stringTuple)
     }
 
-    @objc(tupleFromString:) static func convert(string: NSString?) -> iTermTuple<NSString, NSString> {
-        guard let pair = string?.it_stringBySplitting(onFirstSubstring: separator) else {
+    static func convert(tuple: (String, String)) -> String {
+        return clean(tuple.0) + separator + clean(tuple.1)
+    }
+
+    @objc(tupleFromString:) static func objc_convert(string: NSString?) -> iTermTuple<NSString, NSString> {
+        guard let string = string as String? else {
             return iTermTuple(object: "", andObject: "")
         }
-        return pair
+        let tuple = convert(string: string)
+        return iTermTuple<NSString, NSString>(object: tuple.0 as NSString,
+                                              andObject: tuple.1 as NSString)
+    }
+
+    static func convert(string: String?) -> (String, String) {
+        guard let pair = string?.it_stringBySplitting(onFirstSubstring: separator),
+              let key = pair.firstObject as String?,
+              let value = pair.secondObject as String? else {
+                  return ("", "")
+              }
+        return (key, value)
     }
 }
 
@@ -33,12 +50,11 @@ class SetUserVariableTrigger: Trigger {
     private static let valueKey = "value"
 
     private func variableNameAndValue(_ param: String) -> (String, String)? {
-        let tuple = TwoParameterTriggerCodec.convert(string: param as NSString)
-        guard !tuple.firstObject.contains(".") else {
+        let (key, value) = TwoParameterTriggerCodec.convert(string: param)
+        guard !key.contains(".") else {
             return nil
         }
-        return (tuple.firstObject.removingPrefix("user.") as String,
-                tuple.secondObject as String)
+        return (key.removingPrefix("user."), value)
     }
 
     override static var title: String {

@@ -33,7 +33,7 @@ protocol TokenExecutorDelegate: AnyObject {
     func tokenExecutorSync()
 
     // Side-effect state found.
-    func tokenExecutorHandleSideEffectState(_ state: [String: AnyObject])
+    func tokenExecutorHandleSideEffectFlags(_ flags: Int)
 }
 
 // Uncomment the stack tracing code to debug stuck paused executors.
@@ -298,8 +298,8 @@ class TokenExecutor: NSObject {
 
     // Any queue
     @objc
-    func setSideEffectState(key: String, value: AnyObject) {
-        impl.setSideEffectState(key: key, value: value)
+    func setSideEffectFlag(value: Int) {
+        impl.setSideEffectFlag(value: value)
     }
 
     // This can run on the main queue, or else on the mutation queue when joined.
@@ -328,6 +328,10 @@ class TokenExecutor: NSObject {
     @objc
     func schedule() {
         impl.schedule()
+    }
+
+    @objc var syncronousSideEffectsAreSafe: Bool {
+        return impl.syncronousSideEffectsAreSafe
     }
 
     // Note that the task may be run either synchronously or asynchronously.
@@ -396,7 +400,7 @@ private class TaskQueue {
     // This will never be empty
     private var arrays = [ TaskArray() ]
     private let mutex = Mutex()
-    private var state = [String: AnyObject]()
+    private var flags = 0
 
     var count: Int {
         return mutex.sync {
@@ -429,16 +433,16 @@ private class TaskQueue {
         }
     }
 
-    func setState(key: String, value: AnyObject) {
+    func setFlag(value: Int) {
         mutex.sync {
-            state[key] = value
+            flags |= value
         }
     }
 
-    func getAndResetState() -> [String: AnyObject] {
+    func getAndResetFlags() -> Int {
         return mutex.sync {
-            let temp = state
-            state = [:]
+            let temp = flags
+            flags = 0
             return temp
         }
     }
@@ -537,9 +541,13 @@ private class TokenExecutorImpl {
     }
 
     // Any queue
-    func setSideEffectState(key: String, value: AnyObject) {
-        sideEffects.setState(key: key, value: value)
+    func setSideEffectFlag(value: Int) {
+        sideEffects.setFlag(value: value)
         sideEffectScheduler.markNeedsUpdate()
+    }
+
+    var syncronousSideEffectsAreSafe: Bool {
+        return sideEffects.count == 0 && !executingSideEffects.value
     }
 
     // This can run on the main queue, or else on the mutation queue when joined.
@@ -561,12 +569,12 @@ private class TokenExecutorImpl {
         executingSideEffects.set(false)
 
         // Do this last because it might join.
-        let state = sideEffects.getAndResetState()
-        if !state.isEmpty {
+        let flags = sideEffects.getAndResetFlags()
+        if flags != 0 {
             if shouldSync {
                 delegate?.tokenExecutorSync()
             }
-            delegate?.tokenExecutorHandleSideEffectState(state)
+            delegate?.tokenExecutorHandleSideEffectFlags(flags)
         }
     }
 

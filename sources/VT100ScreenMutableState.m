@@ -39,9 +39,9 @@
 
 #import <stdatomic.h>
 
-static NSString *VT100ScreenMutableStateSideEffectStateKeyNeedsRedraw = @"Needs Redraw";
-static NSString *VT100ScreenMutableStateSideEffectStateKeyIntervalTreeVisibleRangeDidChange = @"Interval Tree Visible Range Did Change";
-NSString *VT100ScreenMutableStateSideEffectStateKeyDidReceiveLineFeed = @"DidReceiveLineFeed";
+static const NSInteger VT100ScreenMutableStateSideEffectFlagNeedsRedraw = (1 << 0);
+static const NSInteger VT100ScreenMutableStateSideEffectFlagIntervalTreeVisibleRangeDidChange = (1 << 1);
+const NSInteger VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed = (1 << 2);
 
 @interface VT100ScreenTokenExecutorUpdate()
 
@@ -204,6 +204,7 @@ static _Atomic int gPerformingJoinedBlock;
 - (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect {
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     if (VT100ScreenMutableState.performingJoinedBlock) {
+        assert(_tokenExecutor.syncronousSideEffectsAreSafe);
         [self performPausedSideEffect:unpauser block:sideEffect];
         return;
     }
@@ -215,6 +216,7 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
     if (VT100ScreenMutableState.performingJoinedBlock) {
+        assert(_tokenExecutor.syncronousSideEffectsAreSafe);
         [self performSideEffect:sideEffect];
         return;
     }
@@ -226,6 +228,7 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect {
     if (VT100ScreenMutableState.performingJoinedBlock) {
+        assert(_tokenExecutor.syncronousSideEffectsAreSafe);
         [self performIntervalTreeSideEffect:sideEffect];
         return;
     }
@@ -306,7 +309,7 @@ static _Atomic int gPerformingJoinedBlock;
 }
 
 - (void)setNeedsRedraw {
-    [_tokenExecutor setSideEffectStateWithKey:VT100ScreenMutableStateSideEffectStateKeyNeedsRedraw value:@YES];
+    [_tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagNeedsRedraw];
 }
 
 #pragma mark - Accessors
@@ -481,7 +484,7 @@ static _Atomic int gPerformingJoinedBlock;
         self.scrollbackOverflow += overflowCount;
         self.cumulativeScrollbackOverflow += overflowCount;
     }
-    [_tokenExecutor setSideEffectStateWithKey:VT100ScreenMutableStateSideEffectStateKeyIntervalTreeVisibleRangeDidChange value:@YES];
+    [_tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagIntervalTreeVisibleRangeDidChange];
 }
 
 #pragma mark - Terminal Fundamentals
@@ -2630,6 +2633,31 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
+- (NSArray<iTermTuple<id<IntervalTreeObject>, Interval *> *> *)removeNotesOnScreenFrom:(IntervalTree *)source
+                                                                                offset:(long long)offset
+                                                                          screenOrigin:(int)screenOrigin {
+    VT100GridCoordRange screenRange =
+    VT100GridCoordRangeMake(0,
+                            screenOrigin,
+                            self.width,
+                            screenOrigin + self.height);
+    DLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
+    Interval *sourceInterval = [self intervalForGridCoordRange:screenRange];
+    self.lastCommandMark = nil;
+    NSMutableArray<iTermTuple<id<IntervalTreeObject>, Interval *> *> *objects = [NSMutableArray array];
+    for (id<IntervalTreeObject> obj in [source objectsInInterval:sourceInterval]) {
+        Interval *interval = obj.entry.interval;
+        DLog(@"  found note with interval %@. Remove %@", interval, obj);
+        const BOOL removed = [source removeObject:obj];
+        assert(removed);
+        Interval *newInterval = [Interval intervalWithLocation:interval.location + offset
+                                                        length:interval.length];
+        DLog(@"  new interval is %@", interval);
+        [objects addObject:[iTermTuple tupleWithObject:obj andObject:newInterval]];
+    }
+    return objects;
+}
+
 - (void)swapOnscreenIntervalTreeObjects {
     int historyLines = self.numberOfScrollbackLines;
     Interval *origin = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0,
@@ -2637,20 +2665,16 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                                                1,
                                                                                historyLines)];
 
-    IntervalTree *tempDerivative = [[IntervalTree alloc] init];
-    iTermEventuallyConsistentIntervalTree *temp =
-    [[iTermEventuallyConsistentIntervalTree alloc] initWithSideEffectPerformer:self
-                                                        derivativeIntervalTree:tempDerivative];
     DLog(@"- begin swap -");
     DLog(@"moving onscreen notes into savedNotes");
     DLog(@"primary:\n%@", self.mutableIntervalTree);
     // primary -> temp
-    [self moveNotesOnScreenFrom:self.mutableIntervalTree
-                             to:temp
-                         offset:-origin.location
-                   screenOrigin:self.numberOfScrollbackLines];
+    NSArray<iTermTuple<id<IntervalTreeObject>, Interval *> *> *formerlyInPrimary =
+    [self removeNotesOnScreenFrom:self.mutableIntervalTree
+                           offset:-origin.location
+                     screenOrigin:self.numberOfScrollbackLines];
     DLog(@"after moving primary -> temp, primary:\n%@", self.mutableIntervalTree);
-    DLog(@"after moving primary -> temp, temp:\n%@", temp);
+    DLog(@"after moving primary -> temp, formerlyInPrimary:\n%@", formerlyInPrimary);
 
     DLog(@"moving onscreen savedNotes into notes");
     // alt -> primary
@@ -2668,13 +2692,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.mutableSavedIntervalTree removeAllObjects];
 
     DLog(@"after removing all from saved, saved:\n%@", self.mutableSavedIntervalTree);
-    DLog(@"moving temp -> saved");
-    // temp -> alt
-    while (temp.count > 0) {
-        iTermTuple<Interval *, id<IntervalTreeObject>> *tuple = [temp dropFirst];
+    DLog(@"moving formerlyInPrimary -> saved");
+    for (iTermTuple<id<IntervalTreeObject>, Interval *> *tuple in formerlyInPrimary) {
         DLog(@"swapOnscreenIntervalTreeObjects: %@", tuple);
-        [self.mutableSavedIntervalTree addObject:tuple.secondObject
-                                    withInterval:tuple.firstObject];
+        [self.mutableSavedIntervalTree addObject:tuple.firstObject
+                                    withInterval:tuple.secondObject];
     }
     DLog(@"after moving temp to saved, saved:\n%@", self.mutableSavedIntervalTree);;
     DLog(@"- done -");
@@ -4486,18 +4508,18 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 // Runs on the main thread or while joined.
-- (void)tokenExecutorHandleSideEffectState:(NSDictionary<NSString *,id> *)state {
-    if (state[VT100ScreenMutableStateSideEffectStateKeyNeedsRedraw]) {
+- (void)tokenExecutorHandleSideEffectFlags:(NSInteger)flags {
+    if (flags & VT100ScreenMutableStateSideEffectFlagNeedsRedraw) {
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenNeedsRedraw];
         }];
     }
-    if (state[VT100ScreenMutableStateSideEffectStateKeyIntervalTreeVisibleRangeDidChange]) {
+    if (flags & VT100ScreenMutableStateSideEffectFlagIntervalTreeVisibleRangeDidChange) {
         [self performIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver> observer) {
             [observer intervalTreeVisibleRangeDidChange];
         }];
     }
-    if (state[VT100ScreenMutableStateSideEffectStateKeyDidReceiveLineFeed]) {
+    if (flags & VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed) {
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenDidReceiveLineFeed];
         }];

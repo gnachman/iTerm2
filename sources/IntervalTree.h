@@ -110,7 +110,6 @@ NS_ASSUME_NONNULL_BEGIN
 // NOTE: This leaves the entry set on objects so you can recover the interval. You must nil it out
 // before adding an object to another tree.
 - (void)removeAllObjects;
-- (iTermTuple<Interval *, id<IntervalTreeObject>> *)dropFirst;
 
 - (void)sanityCheck;
 

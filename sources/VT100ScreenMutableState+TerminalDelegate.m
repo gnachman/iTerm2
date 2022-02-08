@@ -119,8 +119,7 @@
             [delegate screenDidReceiveLineFeed];
         }];
     } else {
-        [self.tokenExecutor setSideEffectStateWithKey:VT100ScreenMutableStateSideEffectStateKeyDidReceiveLineFeed
-                                                value:@YES];
+        [self.tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed];
     }
 }
 
