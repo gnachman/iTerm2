@@ -46,6 +46,7 @@ static NSString *const kGridSizeKey = @"Size";
     NSMutableData *cachedDefaultLine_;
     NSMutableData *resultLine_;
     screen_char_t savedDefaultChar_;
+    NSTimeInterval _allDirtyTimestamp;
 }
 
 @synthesize size = size_;
@@ -235,6 +236,21 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
 - (void)markAllCharsDirty:(BOOL)dirty {
     DLog(@"Mark all chars dirty=%@ delegate=%@", @(dirty), delegate_);
 
+    if (dirty) {
+        // Fast path
+        const VT100GridRange horizontalRange = VT100GridRangeMake(0, size_.width);
+        const NSTimeInterval timestamp = self.currentDate;
+        if (allDirty_ && _allDirtyTimestamp == timestamp) {
+            // Nothing changed.
+            return;
+        }
+        allDirty_ = YES;
+        _allDirtyTimestamp = timestamp;
+        [lineInfos_ enumerateObjectsUsingBlock:^(VT100LineInfo * _Nonnull lineInfo, NSUInteger idx, BOOL * _Nonnull stop) {
+            [lineInfo setDirty:YES inRange:horizontalRange updateTimestampTo:timestamp];
+        }];
+        return;
+    }
     allDirty_ = dirty;
     [self markCharsDirty:dirty
               inRectFrom:VT100GridCoordMake(0, 0)

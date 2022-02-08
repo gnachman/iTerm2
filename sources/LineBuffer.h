@@ -256,6 +256,8 @@ NS_ASSUME_NONNULL_BEGIN
 // If the last block is non-empty, make a new block to avoid having to copy it on write.
 - (void)seal;
 
+- (void)mergeFrom:(LineBuffer *)source;
+
 @end
 
 NS_ASSUME_NONNULL_END

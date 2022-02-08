@@ -1407,8 +1407,8 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     }];
 }
 
-- (int)dropLines:(int)n withWidth:(int)width chars:(int *)charsDropped {
-    int orig_n = n;
+- (int)dropLines:(int)orig_n withWidth:(int)width chars:(int *)charsDropped {
+    int n = orig_n;
     int prev = 0;
     int length;
     int i;
@@ -1472,6 +1472,42 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     *charsDropped = [self rawSpaceUsed];
     iTermLineBlockDidChange(self);
     return orig_n - n;
+}
+
+- (void)dropMirroringProgenitor:(LineBlock *)other {
+    assert(_progenitor == other);
+    assert(self.owner == other);
+    assert(cll_capacity == other->cll_capacity);
+    if (start_offset == other->start_offset) {
+        DLog(@"No change");
+        return;
+    }
+
+    DLog(@"start_offset %@ -> %@", @(start_offset), @(other->start_offset));
+    start_offset = other->start_offset;
+    buffer_start = raw_buffer + start_offset;
+    cached_numlines_width = -1;
+
+    while (first_entry < other->first_entry) {
+        if (gEnableDoubleWidthCharacterLineCache) {
+            metadata_[first_entry].double_width_characters = nil;
+        }
+        DLog(@"Drop entry");
+        iTermMetadataSetExternalAttributes(&metadata_[first_entry].lineMetadata, nil);
+        first_entry += 1;
+    }
+#ifdef TEST_LINEBUFFER_SANITY
+    [self checkAndResetCachedNumlines:"dropLines" width: width];
+#endif
+    iTermLineBlockDidChange(self);
+}
+
+- (BOOL)isSynchronizedWithProgenitor {
+    if (!_progenitor) {
+        return NO;
+    }
+    // Mutating an object nils its owner and points its clients at a different or nil owner.
+    return _progenitor == _owner;
 }
 
 - (int) _lineRawOffset: (int) anIndex
@@ -2158,7 +2194,8 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
 
         [(id<iTermLineBlockMutationCertificate>)_cachedMutationCert invalidate];
         _cachedMutationCert = nil;
-
+        copy->_progenitor = self;
+        
         return copy;
     }
 }

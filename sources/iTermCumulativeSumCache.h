@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 // - Sum a subrange of values
 @interface iTermCumulativeSumCache : NSObject<NSCopying>
 
+// The offset is added to entries in _sums to get the *actual* sum.
 @property (nonatomic) NSInteger offset;
 @property (nonatomic, readonly) NSInteger sumOfAllValues;
 @property (nonatomic, readonly) NSInteger count;

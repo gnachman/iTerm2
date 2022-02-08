@@ -28,6 +28,7 @@
 - (void)setFirstValueWithBlock:(NSInteger (^)(int width))block;
 - (void)setLastValueWithBlock:(NSInteger (^)(int width))block;
 - (void)appendValue:(NSInteger)value;
+- (NSSet<NSNumber *> *)cachedWidths;
 @end
 
 @implementation iTermLineBlockCacheCollection {
@@ -52,8 +53,26 @@
     return theCopy;
 }
 
+- (NSString *)dumpWidths:(NSSet<NSNumber *> *)widths {
+    return [[_caches mapWithBlock:^id(iTermTuple<NSNumber *,iTermCumulativeSumCache *> *anObject) {
+        if ([widths containsObject:anObject.firstObject]) {
+            return [NSString stringWithFormat:@"Cache for width %@:\n%@", anObject.firstObject, anObject.secondObject];
+        } else {
+            return nil;
+        }
+    }] componentsJoinedByString:@"\n\n"];
+}
+
 - (NSString *)dumpForCrashlog {
-    return [_caches debugDescription];
+    return [[_caches mapWithBlock:^id(iTermTuple<NSNumber *,iTermCumulativeSumCache *> *anObject) {
+        return [NSString stringWithFormat:@"Cache for width %@:\n%@", anObject.firstObject, anObject.secondObject];
+    }] componentsJoinedByString:@"\n\n"];
+}
+
+- (NSSet<NSNumber *> *)cachedWidths {
+    return [NSSet setWithArray:[_caches mapWithBlock:^id(iTermTuple<NSNumber *,iTermCumulativeSumCache *> *anObject) {
+        return [anObject firstObject];
+    }]];
 }
 
 - (void)setCapacity:(int)capacity {
@@ -164,6 +183,14 @@
 
 - (NSString *)dumpForCrashlog {
     return [_numLinesCaches dumpForCrashlog];
+}
+
+- (NSString *)dumpWidths:(NSSet<NSNumber *> *)widths {
+    return [_numLinesCaches dumpWidths:widths];
+}
+
+- (NSSet<NSNumber *> *)cachedWidths {
+    return _numLinesCaches.cachedWidths;
 }
 
 #pragma mark - High level methods
@@ -553,6 +580,10 @@
     return _blocks.lastObject;
 }
 
+- (LineBlock *)firstBlock {
+    return _blocks.firstObject;
+}
+
 - (void)updateCacheForBlock:(LineBlock *)block {
     if (_rawSpaceCache) {
         assert(_rawSpaceCache.count == _blocks.count);
@@ -563,14 +594,16 @@
     if (block == _blocks.firstObject) {
         _headDirty = NO;
         [_numLinesCaches setFirstValueWithBlock:^NSInteger(int width) {
-            return [block getNumLinesWithWrapWidth:width];
+            const int value = [block getNumLinesWithWrapWidth:width];
+            return value;
         }];
         [_rawSpaceCache setFirstValue:[block rawSpaceUsed]];
         [_rawLinesCache setFirstValue:[block numRawLines]];
     } else if (block == _blocks.lastObject) {
         _tailDirty = NO;
         [_numLinesCaches setLastValueWithBlock:^NSInteger(int width) {
-            return [block getNumLinesWithWrapWidth:width];
+            const int value = [block getNumLinesWithWrapWidth:width];
+            return value;
         }];
         [_rawSpaceCache setLastValue:[block rawSpaceUsed]];
         [_rawLinesCache setLastValue:[block numRawLines]];
@@ -584,11 +617,15 @@
     if (_rawLinesCache == nil) {
         return;
     }
-    [self updateCacheIfNeeded];
+    [self reallyUpdateCacheIfNeeded];
+    const int w = [[[self cachedWidths] anyObject] intValue];
     for (int i = 0; i < _blocks.count; i++) {
         LineBlock *block = _blocks[i];
         assert([block hasObserver:self]);
         BOOL ok = [block numRawLines] == [_rawLinesCache valueAtIndex:i];
+        if (ok && w > 0) {
+            ok = [block getNumLinesWithWrapWidth:w] == [[_numLinesCaches numLinesCacheForWidth:w] valueAtIndex:i];
+        }
         if (!ok) {
             [self oopsWithWidth:0 block:^{
                 DLog(@"Sanity check failed");
@@ -599,6 +636,13 @@
 }
 
 - (void)updateCacheIfNeeded {
+    [self reallyUpdateCacheIfNeeded];
+#ifdef DEBUG_LINEBUFFER_MERGE
+    [self sanityCheck];
+#endif
+}
+
+- (void)reallyUpdateCacheIfNeeded {
     if (_headDirty) {
         [self updateCacheForBlock:_blocks.firstObject];
     }

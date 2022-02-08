@@ -28,8 +28,8 @@
 @property(nonatomic) iTermMetadata metadata;
 
 - (instancetype)initWithWidth:(int)width;
-// Does nothing if now=0
-- (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestampTo:(NSTimeInterval)now;
+// Does nothing if now=0. This was super-hot when profiling spam.cc so make it direct. Good luck future me.
+- (void)setDirty:(BOOL)dirty inRange:(VT100GridRange)range updateTimestampTo:(NSTimeInterval)now __attribute__((objc_direct));
 - (BOOL)isDirtyAtOffset:(int)x;
 - (BOOL)anyCharIsDirty;
 - (VT100GridRange)dirtyRange;

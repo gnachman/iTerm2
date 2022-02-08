@@ -44,6 +44,9 @@ typedef struct {
 @property(nonatomic, readonly) int numberOfCharacters;
 @property(nonatomic, readonly) NSInteger generation;
 
+// Block this was copied from.
+@property(nonatomic, weak, readonly) LineBlock *progenitor;
+
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary;
 
 - (instancetype)initWithRawBufferSize:(int)size;
@@ -233,5 +236,7 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (LineBlockMetadata)internalMetadataForLine:(int)line;
 - (NSInteger)numberOfClients;
 - (BOOL)hasOwner;
+- (void)dropMirroringProgenitor:(LineBlock *)other;
+- (BOOL)isSynchronizedWithProgenitor;
 
 @end

@@ -38,6 +38,7 @@
 #import "LineBlock.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
+#import "NSSet+iTerm.h"
 #import "RegexKitLite.h"
 
 static NSString *const kLineBufferVersionKey = @"Version";
@@ -1404,6 +1405,94 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         return;
     }
     [self _addBlockOfSize:block_size];
+}
+
+- (void)mergeFrom:(LineBuffer *)source {
+    // State used when debugging
+    NSSet<NSNumber *> *commonWidths = nil;
+    NSString *before = nil;
+    NSString *stage1 = nil;
+    NSString *stage2 = nil;
+    NSString *stage3 = nil;
+    NSString *stage4 = nil;
+
+    if (gDebugLogging) {
+        DLog(@"merge");
+        [_lineBlocks sanityCheck];
+        [source->_lineBlocks sanityCheck];
+        commonWidths = [[_lineBlocks cachedWidths] setByIntersectingWithSet:source->_lineBlocks.cachedWidths];
+        before = [_lineBlocks dumpWidths:commonWidths];
+    }
+
+    assert(source != nil);
+    if (!source.dirty) {
+        return;
+    }
+    source.dirty = NO;
+
+    cursor_x = source->cursor_x;
+    cursor_rawline = source->cursor_rawline;
+    max_lines = source->max_lines;
+    num_wrapped_lines_cache = source->num_wrapped_lines_cache;
+    num_wrapped_lines_width = source->num_wrapped_lines_width;
+    droppedChars = source->droppedChars;
+    _mayHaveDoubleWidthCharacter = source->_mayHaveDoubleWidthCharacter;
+
+    // Drop initial blocks
+    while (_lineBlocks.firstBlock != nil &&
+           _lineBlocks.firstBlock.progenitor != source->_lineBlocks.firstBlock) {
+        DLog(@"Drop initial");
+        [_lineBlocks removeFirstBlock];
+        ++num_dropped_blocks;
+    }
+    if (gDebugLogging) {
+        stage1 = [_lineBlocks dumpWidths:commonWidths];
+    }
+
+    // Drop blocks from the end until we get to one that is in sync.
+    // Note that if the first block has experienced drops but not appends then it will still have
+    // its progenitor as its owner and be considered "synchronized".
+    while (_lineBlocks.count > 0 && ![_lineBlocks.lastBlock isSynchronizedWithProgenitor]) {
+        DLog(@"remove last");
+        [_lineBlocks removeLastBlock];
+    }
+    if (gDebugLogging) {
+        stage2 = [_lineBlocks dumpWidths:commonWidths];
+    }
+
+    if (_lineBlocks.count > 0) {
+        DLog(@"mirror first");
+        [_lineBlocks.firstBlock dropMirroringProgenitor:source->_lineBlocks.firstBlock];
+    }
+    if (gDebugLogging) {
+        stage3 = [_lineBlocks dumpWidths:commonWidths];
+    }
+
+    // Add copies of terminal blocks.
+    while (_lineBlocks.count < source->_lineBlocks.count) {
+        DLog(@"append");
+        LineBlock *sourceBlock = source->_lineBlocks[_lineBlocks.count];
+        LineBlock *theCopy = [sourceBlock cowCopy];
+        [_lineBlocks addBlock:theCopy];
+        if (gDebugLogging) {
+            [_lineBlocks sanityCheck];
+        }
+    }
+
+    if (gDebugLogging) {
+        stage4 = [_lineBlocks dumpWidths:commonWidths];
+
+        if (![[_lineBlocks dumpWidths:commonWidths] isEqual:[source->_lineBlocks dumpWidths:commonWidths]]) {
+            DLog(@"Before:\n%@\nAfter:\n%@\nExpected:\n%@",
+                 before,
+                 [_lineBlocks dumpWidths:commonWidths],
+                 [source->_lineBlocks dumpWidths:commonWidths]);
+            DLog(@"Stage 1:\n%@", stage1);
+            DLog(@"Stage 2:\n%@", stage2);
+            DLog(@"Stage 3:\n%@", stage3);
+            DLog(@"Stage 4:\n%@", stage4);
+        }
+    }
 }
 
 @end

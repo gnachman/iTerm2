@@ -18,8 +18,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSArray<LineBlock *> *blocks;
 @property (nonatomic, readonly) NSUInteger count;
 @property (nonatomic, readonly) LineBlock *lastBlock;
+@property (nonatomic, readonly) LineBlock *firstBlock;
 @property (nonatomic) BOOL resizing;
 @property (nonatomic, readonly) NSString *dumpForCrashlog;
+
+- (NSString *)dumpWidths:(NSSet<NSNumber *> *)widths;
 
 // NOTE: Update -copyWithZone: if you add properties.
 
@@ -54,6 +57,7 @@ NS_ASSUME_NONNULL_BEGIN
                                  index:(nullable int *)indexPtr;
 - (void)sanityCheck;
 - (void)oopsWithWidth:(int)width block:(void (^)(void))block;
+- (NSSet<NSNumber *> *)cachedWidths;
 
 @end
 

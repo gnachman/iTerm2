@@ -21,7 +21,7 @@ extern "C" {
 - (void)dump {
     int i = 0;
     for (auto sum_i : _sums) {
-        DLog(@"_sums[%@] = %@", @(i++), @(sum_i));
+        DLog(@"_sums[%@] = %@", @(i++), @(sum_i + _offset));
     }
 
     i = 0;
@@ -34,7 +34,7 @@ extern "C" {
     NSMutableString *result = [NSMutableString string];
     int i = 0;
     for (auto sum_i : _sums) {
-        [result appendFormat:@"_sums[%@] = %@\n", @(i++), @(sum_i)];
+        [result appendFormat:@"_sums[%@] = %@\n", @(i++), @(sum_i + _offset)];
     }
 
     i = 0;
@@ -128,7 +128,8 @@ extern "C" {
 }
 
 - (void)removeFirstValue {
-    _offset -= _values[0];
+    const int delta = _values[0];
+    _offset -= delta;
     _sums.erase(_sums.begin());
     _values.erase(_values.begin());
     if (_sums.empty()) {
