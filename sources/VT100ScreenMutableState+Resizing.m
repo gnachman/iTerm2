@@ -8,6 +8,7 @@
 #import "VT100ScreenMutableState+Resizing.h"
 
 #import "DebugLogging.h"
+#import "NSArray+iTerm.h"
 #import "PTYAnnotation.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenDelegate.h"
@@ -373,7 +374,7 @@ static void SwapInt(int *a, int *b) {
     return altScreenSubSelectionTuples;
 }
 
-- (BOOL)intervalTreeObjectMayBeEmpty:(id<IntervalTreeObject>)note {
+- (BOOL)intervalTreeObjectMayBeEmpty:(id<IntervalTreeImmutableObject>)note {
     // These kinds of ranges are allowed to be empty because
     // although they nominally refer to an entire line, sometimes
     // that line is blank such as just before the prompt is
@@ -550,31 +551,35 @@ static void SwapInt(int *a, int *b) {
 }
 
 - (void)updateIntervalTreeWithWidth:(int)newWidth {
-    NSArray<id<IntervalTreeImmutableObject>> *objects = [self.intervalTree allObjects];
+    NSArray<id<IntervalTreeObject>> *objects = [self.mutableIntervalTree mutableObjects];
+    NSArray<id<IntervalTreeImmutableEntry>> *entries = [objects mapWithBlock:^id(id<IntervalTreeImmutableObject> anObject) {
+        return anObject.entry;
+    }];
+
+    // This is OK because we nil the entries ourselves.
     [self.mutableIntervalTree removeAllObjects];
 
     // Convert ranges of notes to their new coordinates and replace the interval tree.
-    for (id<IntervalTreeObject> note in objects) {
-        VT100GridCoordRange noteRange = [self coordRangeForInterval:note.entry.interval];
+    [objects enumerateObjectsUsingBlock:^(id<IntervalTreeObject>  _Nonnull note, NSUInteger idx, BOOL * _Nonnull stop) {
+        id<IntervalTreeImmutableEntry> entry = entries[idx];
+        VT100GridCoordRange noteRange = [self coordRangeForInterval:entry.interval];
         VT100GridCoordRange newRange;
         if (noteRange.end.x < 0 && noteRange.start.y == 0 && noteRange.end.y < 0) {
-            continue;
+            return;
         }
         if (![self convertRange:noteRange
                        toWidth:newWidth
                             to:&newRange
                   inLineBuffer:self.linebuffer
                  tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
-            continue;
+            return;
         }
         assert(noteRange.start.y >= 0);
         assert(noteRange.end.y >= 0);
         Interval *newInterval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeFromCoordRange(newRange, self.cumulativeScrollbackOverflow)
                                                              width:newWidth];
-        note.entry = nil;
-        note.doppelganger.entry = nil;
         [self.mutableIntervalTree addObject:note withInterval:newInterval];
-    }
+    }];
 }
 
 - (void)fixUpPrimaryGridIntervalTreeForNewSize:(VT100GridSize)newSize

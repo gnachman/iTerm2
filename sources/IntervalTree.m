@@ -576,14 +576,22 @@ static NSString *const kIntervalLengthKey = @"Length";
     }
 }
 
-- (NSArray *)objectsInInterval:(Interval *)interval {
+- (NSArray<id<IntervalTreeObject>> *)mutableObjectsInInterval:(Interval *)interval {
     NSMutableArray *array = [NSMutableArray array];
     [self addObjectsInInterval:interval toArray:array fromNode:_tree.root];
     return array;
 }
 
+- (NSArray<id<IntervalTreeImmutableObject>> *)objectsInInterval:(Interval *)interval {
+    return [self mutableObjectsInInterval:interval];
+}
+
 - (NSArray *)allObjects {
     return [self objectsInInterval:[Interval maxInterval]];
+}
+
+- (NSArray<id<IntervalTreeObject>> *)mutableObjects {
+    return [self mutableObjectsInInterval:[Interval maxInterval]];
 }
 
 - (NSInteger)count {

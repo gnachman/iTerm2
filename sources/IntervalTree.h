@@ -99,6 +99,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface IntervalTree : NSObject <AATreeDelegate, IntervalTreeReading>
 
 @property(nonatomic, readonly) NSInteger count;
+@property(nonatomic, readonly) NSArray<id<IntervalTreeObject>> *mutableObjects;
 
 // Deserialize
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
