@@ -1050,14 +1050,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
 }
 
-#pragma mark - iTermLineBufferDelegate
-
-- (void)lineBufferDidDropLines:(LineBuffer *)lineBuffer {
-    if (lineBuffer == _state.linebuffer) {
-        [delegate_ screenRefreshFindOnPageView];
-    }
-}
-
 #pragma mark - Mutation Wrappers
 
 - (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block {

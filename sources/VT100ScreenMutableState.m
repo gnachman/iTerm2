@@ -42,6 +42,7 @@
 static const NSInteger VT100ScreenMutableStateSideEffectFlagNeedsRedraw = (1 << 0);
 static const NSInteger VT100ScreenMutableStateSideEffectFlagIntervalTreeVisibleRangeDidChange = (1 << 1);
 const NSInteger VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed = (1 << 2);
+static const NSInteger VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines = (1 << 3);
 
 @interface VT100ScreenTokenExecutorUpdate()
 
@@ -131,6 +132,7 @@ static _Atomic int gPerformingJoinedBlock;
         _echoProbe.delegate = self;
         self.unconditionalTemporaryDoubleBuffer.delegate = self;
         _sanitizingAdapter = (VT100ScreenState *)[[VT100ScreenStateSanitizingAdapter alloc] initWithSource:self];
+        self.linebuffer.delegate = self;
     }
     return self;
 }
@@ -3386,6 +3388,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         if (!self.unlimitedScrollback) {
             [lineBuffer dropExcessLinesWithWidth:self.width];
         }
+        lineBuffer.delegate = self;
         self.linebuffer = lineBuffer;
     }
     BOOL addedBanner = NO;
@@ -4509,6 +4512,19 @@ launchCoprocessWithCommand:(NSString *)command
             [delegate screenDidReceiveLineFeed];
         }];
     }
+    if (flags & VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines) {
+        [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
+            [delegate screenRefreshFindOnPageView];
+        }];
+    }
+}
+
+#pragma mark - iTermLineBufferDelegate
+
+- (void)lineBufferDidDropLines:(LineBuffer *)lineBuffer {
+    if (lineBuffer == self.linebuffer) {
+        [_tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines];
+     }
 }
 
 @end

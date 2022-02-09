@@ -34,7 +34,6 @@ extern NSString *const kScreenStateCursorCoord;
 extern NSString *const kScreenStateProtectedMode;
 
 @interface VT100Screen () <
-iTermLineBufferDelegate,
 VT100ScreenSideEffectPerforming> {
     VT100ScreenState *_state;
     VT100ScreenMutableState *_mutableState;
