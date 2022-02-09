@@ -148,7 +148,12 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
 }
 
 - (NSDictionary *)attributes {
-    return @{ NSForegroundColorAttributeName: [NSColor controlTextColor] };
+    NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
+    [style setMinimumLineHeight:18];
+    [style setMaximumLineHeight:18];
+
+    return @{ NSForegroundColorAttributeName: [NSColor controlTextColor],
+              NSParagraphStyleAttributeName: style };
 }
 
 - (void)setPatrons:(NSArray *)patronNames {
