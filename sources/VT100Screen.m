@@ -1063,8 +1063,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     // out of order (joining runs remaining side-effects immediately, which is out of order since
     // the current one isn't done yet).
     assert(!_mutableState.performingSideEffect ||
-           _mutableState.performingPausedSideEffect ||
-           VT100ScreenMutableState.performingJoinedBlock);
+           _mutableState.performingPausedSideEffect);
     [_mutableState performBlockWithJoinedThreads:block];
 }
 
@@ -1221,8 +1220,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                           id<VT100ScreenDelegate> delegate) {
         [mutableState restoreFromDictionary:dictionary
                    includeRestorationBanner:includeRestorationBanner
-                                 reattached:reattached
-                                   delegate:delegate];
+                                 reattached:reattached];
     }];
 }
 

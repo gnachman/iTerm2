@@ -66,6 +66,7 @@ static const NSInteger VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLin
     iTermPeriodicScheduler *_executorUpdateScheduler;
     BOOL _screenNeedsUpdate;
     BOOL _alertOnNextMark;
+    BOOL _runSideEffectAfterTopJoinFinishes;
 }
 
 static _Atomic int gPerformingJoinedBlock;
@@ -226,23 +227,20 @@ static _Atomic int gPerformingJoinedBlock;
 }
 
 // Called on the mutation thread.
-// Runs sideEffect either synchrnously or asynchronously.
+// Runs sideEffect asynchronously.
 // No more tokens will be executed until it completes.
 // The main thread will be stopped while running your side effect and you can safely access both
 // mutation and main-thread data in it.
 - (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
-    if (VT100ScreenMutableState.performingJoinedBlock) {
-        id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-        const NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
-        self.primaryGrid.currentDate = now;
-        self.altGrid.currentDate = now;
-        sideEffect(delegate);
-        return;
-    }
     __weak __typeof(self) weakSelf = self;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
+            [unpauser unpause];
+            return;
+        }
+        if (VT100ScreenMutableState.performingJoinedBlock) {
+            sideEffect(delegate);
             [unpauser unpause];
             return;
         }
@@ -1163,18 +1161,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)resetPreservingPrompt:(BOOL)preservePrompt modifyContent:(BOOL)modifyContent {
-    __weak __typeof(self) weakSelf = self;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [weakSelf reallyResetPreservingPrompt:preservePrompt
-                                modifyContent:modifyContent
-                                     delegate:delegate];
-    }];
-}
-
-// Queues are joined within this method.
-- (void)reallyResetPreservingPrompt:(BOOL)preservePrompt
-                      modifyContent:(BOOL)modifyContent
-                           delegate:(id<VT100ScreenDelegate>)delegate {
     if (modifyContent) {
         const int linesToSave = [self numberOfLinesToPreserveWhenClearingScreen];
         [self clearTriggerLine];
@@ -1188,6 +1174,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }
     }
 
+    // Execute any pending side effects (including those possibly added by clearTriggerLine above)
+    // and then continue.
+    __weak __typeof(self) weakSelf = self;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [weakSelf continueResettingWithModifyContent:modifyContent];
+    }];
+}
+
+- (void)continueResettingWithModifyContent:(BOOL)modifyContent {
     [self setInitialTabStops];
 
     for (int i = 0; i < NUM_CHARSETS; i++) {
@@ -1196,11 +1191,28 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     [self loadInitialColorTable];
     if (modifyContent) {
-        // Pause because the delegate will change colors and they could be queried for.
-        [delegate screenDidReset];
+        // Unmanaged because there are various things that add joined blocks, such as changing
+        // whether cursor line movement is tracked or resetting colors. Paused because this will change
+        // colors that could be queried for.
+        dispatch_queue_t queue = _queue;
+        __weak __typeof(self) weakSelf = self;
+        [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+            [delegate screenDidReset];  // This could change the profile
+            dispatch_async(queue, ^{
+                [weakSelf finishResetting];
+                [unpauser unpause];
+            });
+        }];
+    } else {
+        [self finishResetting];
     }
+}
+
+- (void)finishResetting {
     [self invalidateCommandStartCoordWithoutSideEffects];
-    [delegate screenSetCursorVisible:YES];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenSetCursorVisible:YES];
+    }];
     [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
 }
 
@@ -2142,11 +2154,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             }
         }
     }
-    id<VT100RemoteHostReading> remoteHost = command ? [self remoteHostOnLine:range.end.y] : nil;
+    id<VT100RemoteHostReading> remoteHost = command ? [[self remoteHostOnLine:range.end.y] doppelganger] : nil;
     NSString *workingDirectory = command ? [self workingDirectoryOnLine:range.end.y] : nil;
     if (!command) {
         mark = nil;
     }
+    mark = [mark doppelganger];
     // Pause because delegate will change variables.
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenDidExecuteCommand:command
@@ -2395,7 +2408,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                    withInterval:[self intervalForGridCoordRange:range]];
         }
     }
-    id<VT100RemoteHostReading> remoteHost = [self remoteHostOnLine:line];
+    id<VT100RemoteHostReading> remoteHost = [[self remoteHostOnLine:line] doppelganger];
     VT100ScreenWorkingDirectoryPushType pushType;
     if (!pushed) {
         pushType = VT100ScreenWorkingDirectoryPushTypePull;
@@ -2415,7 +2428,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)currentDirectoryReallyDidChangeTo:(NSString *)dir
-                                onAbsLine:(long long)cursorAbsLine {
+                                onAbsLine:(long long)cursorAbsLine
+                               completion:(void (^)(void))completion {
     DLog(@"currentDirectoryReallyDidChangeTo:%@ onAbsLine:%@", dir, @(cursorAbsLine));
     BOOL willChange = ![dir isEqualToString:[self workingDirectoryOnLine:cursorAbsLine - self.cumulativeScrollbackOverflow]];
     [self setWorkingDirectory:dir
@@ -2423,14 +2437,30 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                        pushed:YES
                         token:nil];
     if (willChange) {
-        // Joined because it may cause APS to change profile.
-        [self addJoinedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            [delegate screenCurrentDirectoryDidChangeTo:dir];
+        int line = [self numberOfScrollbackLines] + self.cursorY;
+        id<VT100RemoteHostReading> remoteHost = [[self remoteHostOnLine:line] doppelganger];
+        dispatch_queue_t queue = _queue;
+        // Use an unmanaged side effect because APS might change the profile which would cause it
+        // to call sync. Running side-effects happens from sync. Reentrant syncs are too hard to
+        // understand. This should make the profile change behave like it was the session's idea
+        // from "out of the blue" rather than originated here.
+        // If you get here from a trigger, the profile change will happen after remaining triggers
+        // run but before side-effects they add.
+        [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate> delegate,
+                                             iTermTokenExecutorUnpauser *unpauser) {
+            [delegate screenCurrentDirectoryDidChangeTo:dir removeHost:remoteHost];
+            dispatch_async(queue, ^{
+                completion();
+                [unpauser unpause];
+            });
         }];
+    } else {
+        completion();
     }
 }
 
-- (void)currentDirectoryDidChangeTo:(NSString *)dir {
+- (void)currentDirectoryDidChangeTo:(NSString *)dir
+                         completion:(void (^)(void))completion {
     DLog(@"%p: currentDirectoryDidChangeTo:%@", self, dir);
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetPreferredProxyIcon:nil]; // Clear current proxy icon if exists.
@@ -2439,7 +2469,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     const int cursorLine = self.numberOfLines - self.height + self.currentGrid.cursorY;
     const long long cursorAbsLine = self.cumulativeScrollbackOverflow + cursorLine;
     if (dir.length) {
-        [self currentDirectoryReallyDidChangeTo:dir onAbsLine:cursorAbsLine];
+        [self currentDirectoryReallyDidChangeTo:dir onAbsLine:cursorAbsLine completion:completion];
         return;
     }
 
@@ -2456,7 +2486,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             [weakSelf performBlockAsynchronously:^(VT100Terminal * _Nonnull terminal,
                                                    VT100ScreenMutableState * _Nonnull mutableState,
                                                    id<VT100ScreenDelegate>  _Nonnull delegate) {
-                [mutableState currentDirectoryReallyDidChangeTo:workingDirectory onAbsLine:cursorAbsLine];
+                [mutableState currentDirectoryReallyDidChangeTo:workingDirectory
+                                                      onAbsLine:cursorAbsLine
+                                                     completion:completion];
             }];
         }];
     }];
@@ -2478,10 +2510,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         host = remoteHost;
     }
 
-    [self setHost:host user:user];
+    [self setHost:host user:user completion:^{}];
 }
 
-- (void)setHost:(NSString *)host user:(NSString *)user {
+- (void)setHost:(NSString *)host user:(NSString *)user completion:(void (^)(void))completion {
     DLog(@"setHost:%@ user:%@ %@", host, user, self);
     id<VT100RemoteHostReading> currentHost = [self remoteHostOnLine:self.numberOfLines];
     if (!host || !user) {
@@ -2498,14 +2530,22 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 
     const int cursorLine = self.numberOfLines - self.height + self.currentGrid.cursorY;
-    id<VT100RemoteHostReading> remoteHostObj = [self setRemoteHost:host user:user onLine:cursorLine];
+    id<VT100RemoteHostReading> remoteHostObj = [[self setRemoteHost:host user:user onLine:cursorLine] doppelganger];
 
     if (![remoteHostObj isEqualToRemoteHost:currentHost]) {
         const int line = [self numberOfScrollbackLines] + self.cursorY;
         NSString *pwd = [self workingDirectoryOnLine:line];
-        [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        dispatch_queue_t queue = _queue;
+        // Unmanaged because this can make APS change profile.
+        [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate, iTermTokenExecutorUnpauser * _Nonnull unpauser) {
             [delegate screenCurrentHostDidChange:remoteHostObj pwd:pwd];
+            dispatch_async(queue, ^{
+                completion();
+                [unpauser unpause];
+            });
         }];
+    } else {
+        completion();
     }
 }
 
@@ -2548,7 +2588,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             [observer intervalTreeDidAddObjectOfType:type
                                               onLine:line];
         }];
-        id<VT100RemoteHostReading> remoteHost = [self remoteHostOnLine:self.numberOfLines];
+        id<VT100RemoteHostReading> remoteHost = [[self remoteHostOnLine:self.numberOfLines] doppelganger];
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             [delegate screenDidUpdateReturnCodeForMark:doppelganger
                                             remoteHost:remoteHost];
@@ -2720,10 +2760,24 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     NSString *path = components.path;
 
     if (host || user) {
-        [self setHost:host user:user];
+        __weak __typeof(self) weakSelf = self;
+        [self setHost:host user:user completion:^{
+            [weakSelf setPathFromURL:path];
+        }];
+    } else {
+        [self setPathFromURL:path];
     }
-    [self currentDirectoryDidChangeTo:path];
-    [self setPromptStartLine:self.numberOfScrollbackLines + self.cursorY - 1];
+}
+
+- (void)setPathFromURL:(NSString *)path {
+    __weak __typeof(self) weakSelf = self;
+    [self currentDirectoryDidChangeTo:path completion:^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        [strongSelf setPromptStartLine:strongSelf.numberOfScrollbackLines + strongSelf.cursorY - 1];
+    }];
 }
 
 - (void)commandWasAborted {
@@ -2762,7 +2816,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                          self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
     [self commandDidStartAtScreenCoord:self.currentGrid.cursor];
     const int line = self.numberOfScrollbackLines + self.cursorY - 1;
-    id<VT100ScreenMarkReading> mark = [self updatePromptMarkRangesForPromptEndingOnLine:line];
+    id<VT100ScreenMarkReading> mark = [[self updatePromptMarkRangesForPromptEndingOnLine:line] doppelganger];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidEndWithMark:mark];
     }];
@@ -2825,11 +2879,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 }
 
-- (void)incrementClearCountForCommandMark:(id<VT100ScreenMarkReading>)screenMarkDoppelganger {
-    id<VT100ScreenMarkReading> mark = [screenMarkDoppelganger progenitor];
-    if (!mark) {
-        return;
-    }
+- (void)incrementClearCountForCommandMark:(id<VT100ScreenMarkReading>)mark {
     if (![self.intervalTree containsObject:mark]) {
         return;
     }
@@ -3110,7 +3160,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)setColor:(NSColor *)color forKey:(int)key {
-    assert(VT100ScreenMutableState.performingJoinedBlock);
     [self mutateColorMap:^(iTermColorMap *colorMap) {
         [colorMap setColor:color forKey:key];
     }];
@@ -3123,9 +3172,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         dict[@(kColorMap8bitBase + i)] = slot.indexedColors[i] ?: [NSNull null];
     }
     [self setColorsFromDictionary:dict];
-    // Doing a joined side effect here ensures that HTML logging gets an up-to-date colormap before the next token.
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    // Pause so that HTML logging gets an up-to-date colormap before the next token.
+    // Unmanaged because it will set the profile and this avoids reentrant syncs/joined side effects.
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenRestoreColorsFromSlot:slot];
+        [unpauser unpause];
     }];
 }
 
@@ -3145,7 +3197,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         self.temporaryDoubleBuffer.drewSavedGrid = YES;
         self.currentGrid.haveScrolled = NO;
     }
-    [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
+    // We don't want to run side effects while joined because that causes syncing to be skipped if
+    // one of the side effects adds a joined block.
+    _runSideEffectAfterTopJoinFinishes = YES;
     [self removeInaccessibleIntervalTreeObjects];
 }
 
@@ -3167,6 +3221,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     [self performSynchroDanceWithBlock:^{
         [weakSelf reallyPerformLightweightBlockWithJoinedThreads:block];
     }];
+    if (_runSideEffectAfterTopJoinFinishes) {
+        [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
+        _runSideEffectAfterTopJoinFinishes = NO;
+    }
 }
 
 // This is called on the main thread (externally) or while locked up (internally)
@@ -3263,6 +3321,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     if (block) {
         block(self.terminal, self, delegate);
     }
+    // Run any side-effects enqueued by the block, taking advantage of the fact that state is in sync.
+    [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
     [delegate screenRestoreState:oldState];
     [self loadConfigIfNeededFromDelegate:delegate];
     [delegate screenSyncExpect:self];
@@ -3313,8 +3373,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
-                   reattached:(BOOL)reattached
-                     delegate:(id<VT100ScreenDelegate>)delegate {
+                   reattached:(BOOL)reattached {
+    const BOOL newFormat = (dictionary[@"PrimaryGrid"] != nil);
+    if (!newFormat) {
+        return;
+    }
     if (!self.altGrid) {
         self.altGrid = [self.primaryGrid copy];
 
@@ -3328,57 +3391,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
     }
 
-    const BOOL newFormat = (dictionary[@"PrimaryGrid"] != nil);
-    if (!newFormat) {
-        LineBuffer *lineBuffer = [[LineBuffer alloc] initWithDictionary:dictionary];
-        [lineBuffer setMaxLines:self.maxScrollbackLines + self.height];
-        if (!self.unlimitedScrollback) {
-            [lineBuffer dropExcessLinesWithWidth:self.width];
-        }
-        self.linebuffer = lineBuffer;
-        int maxLinesToRestore;
-        if ([iTermAdvancedSettingsModel runJobsInServers] && reattached) {
-            maxLinesToRestore = self.currentGrid.size.height;
-        } else {
-            maxLinesToRestore = self.currentGrid.size.height - 1;
-        }
-        const int linesRestored = MIN(MAX(0, maxLinesToRestore),
-                                      [lineBuffer numLinesWithWidth:self.width]);
-        BOOL setCursorPosition = [self.currentGrid restoreScreenFromLineBuffer:self.linebuffer
-                                                               withDefaultChar:[self.currentGrid defaultChar]
-                                                             maxLinesToRestore:linesRestored];
-        DLog(@"appendFromDictionary: Grid size is %dx%d", self.currentGrid.size.width, self.currentGrid.size.height);
-        DLog(@"Restored %d wrapped lines from dictionary", self.numberOfScrollbackLines + linesRestored);
-        DLog(@"setCursorPosition=%@", @(setCursorPosition));
-        if (!setCursorPosition) {
-            VT100GridCoord coord;
-            if (VT100GridCoordFromDictionary(screenState[kScreenStateCursorCoord], &coord)) {
-                // The initial size of this session might be smaller than its eventual size.
-                // Save the coord because after the window is set to its correct size it might be
-                // possible to place the cursor in this position.
-                self.currentGrid.preferredCursorPosition = coord;
-                DLog(@"Save preferred cursor position %@", VT100GridCoordDescription(coord));
-                if (coord.x >= 0 &&
-                    coord.y >= 0 &&
-                    coord.x <= self.width &&
-                    coord.y < self.height) {
-                    DLog(@"Also set the cursor to this position");
-                    self.currentGrid.cursor = coord;
-                    setCursorPosition = YES;
-                }
-            }
-        }
-        if (!setCursorPosition) {
-            DLog(@"Place the cursor on the first column of the last line");
-            self.currentGrid.cursorY = linesRestored + 1;
-            self.currentGrid.cursorX = 0;
-        }
-        // Reduce line buffer's max size to not include the grid height. This is its final state.
-        [lineBuffer setMaxLines:self.maxScrollbackLines];
-        if (!self.unlimitedScrollback) {
-            [lineBuffer dropExcessLinesWithWidth:self.width];
-        }
-    } else if (screenState) {
+    if (screenState) {
         // New format
         [self restoreFromDictionary:dictionary
            includeRestorationBanner:includeRestorationBanner];
@@ -3408,21 +3421,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             [self setCharacterSet:i usesLineDrawingMode:array[i].boolValue];
         }
 
-        if (!newFormat) {
-            // Legacy content format restoration
-            VT100Grid *otherGrid = (self.currentGrid == self.primaryGrid) ? self.altGrid : self.primaryGrid;
-            LineBuffer *otherLineBuffer = [[LineBuffer alloc] initWithDictionary:screenState[kScreenStateNonCurrentGridKey]];
-            [otherGrid restoreScreenFromLineBuffer:otherLineBuffer
-                                   withDefaultChar:[self.altGrid defaultChar]
-                                 maxLinesToRestore:self.altGrid.size.height];
-            VT100GridCoord savedCursor = self.primaryGrid.cursor;
-            [self.primaryGrid setStateFromDictionary:screenState[kScreenStatePrimaryGridStateKey]];
-            if (addedBanner && self.currentGrid.preferredCursorPosition.x < 0 && self.currentGrid.preferredCursorPosition.y < 0) {
-                self.primaryGrid.cursor = savedCursor;
-            }
-            [self.altGrid setStateFromDictionary:screenState[kScreenStateAlternateGridStateKey]];
-        }
-
         NSString *guidOfLastCommandMark = screenState[kScreenStateLastCommandMarkKey];
         if (reattached) {
             [self setCommandStartCoordWithoutSideEffects:VT100GridAbsCoordMake([screenState[kScreenStateCommandStartXKey] intValue],
@@ -3435,33 +3433,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         self.shellIntegrationInstalled = [screenState[kScreenStateShellIntegrationInstalledKey] boolValue];
 
 
-        if (!newFormat) {
-            self.initialSize = self.currentGrid.size;
-            // Change the size to how big it was when state was saved so that
-            // interval trees can be fixed up properly when it is set back later by
-            // restoreInitialSize. Interval tree ranges cannot be interpreted
-            // outside the context of the data they annotate because when an
-            // annotation affects all the trailing nulls on a line, the length of
-            // that annotation is dependent on the screen size and how text laid
-            // out (maybe there are no nulls after reflow!).
-            VT100GridSize savedSize = [VT100Grid sizeInStateDictionary:screenState[kScreenStatePrimaryGridStateKey]];
-            [self setSize:savedSize
-             visibleLines:[delegate screenRangeOfVisibleLines]
-                selection:[delegate screenSelection]
-                  hasView:[delegate screenHasView]
-                 delegate:delegate];
-        }
         [self.mutableIntervalTree restoreFromDictionary:screenState[kScreenStateIntervalTreeKey]];
         [self fixUpDeserializedIntervalTree:self.mutableIntervalTree
                                     visible:YES
-                      guidOfLastCommandMark:guidOfLastCommandMark
-                                   delegate:delegate];
+                      guidOfLastCommandMark:guidOfLastCommandMark];
 
         [self.mutableSavedIntervalTree restoreFromDictionary:screenState[kScreenStateSavedIntervalTreeKey]];
         [self fixUpDeserializedIntervalTree:self.mutableSavedIntervalTree
                                     visible:NO
-                      guidOfLastCommandMark:guidOfLastCommandMark
-                                   delegate:delegate];
+                      guidOfLastCommandMark:guidOfLastCommandMark];
 
         Interval *interval = [self lastPromptMark].entry.interval;
         if (interval) {
@@ -3470,7 +3450,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         }
 
         [self reloadMarkCache];
-        [delegate screenSendModifiersDidChange];
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenSendModifiersDidChange];
+        }];
 
         if (gDebugLogging) {
             DLog(@"Notes after restoring with width=%@", @(self.width));
@@ -3528,8 +3510,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // Notify delegate of annotations so they get added as subviews, and set the delegate of not view controllers to self.
 - (void)fixUpDeserializedIntervalTree:(iTermEventuallyConsistentIntervalTree *)intervalTree
                               visible:(BOOL)visible
-                guidOfLastCommandMark:(NSString *)guidOfLastCommandMark
-                             delegate:(id<VT100ScreenDelegate>)delegate {
+                guidOfLastCommandMark:(NSString *)guidOfLastCommandMark {
     assert(VT100ScreenMutableState.performingJoinedBlock);
     id<VT100RemoteHostReading> lastRemoteHost = nil;
     NSMutableDictionary<NSString *, id<CapturedOutputReading>> *markGuidToCapturedOutput = [NSMutableDictionary dictionary];
@@ -3551,9 +3532,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 }
                 if (screenMark.command) {
                     // Find the matching object in command history and link it.
-                    [delegate screenUpdateCommandUseWithGuid:screenMark.guid
-                                                      onHost:(id<VT100RemoteHostReading>)lastRemoteHost.doppelganger
-                                               toReferToMark:screenMark.doppelganger];
+                    id<VT100RemoteHostReading> lastRemoteHostDoppelganger = lastRemoteHost.doppelganger;
+                    id<VT100ScreenMarkReading> screenMarkDoppelganger = screenMark.doppelganger;
+                    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+                        [delegate screenUpdateCommandUseWithGuid:screenMark.guid
+                                                          onHost:lastRemoteHostDoppelganger
+                                                   toReferToMark:screenMarkDoppelganger];
+                    }];
                 }
                 if ([screenMark.guid isEqualToString:guidOfLastCommandMark]) {
                     self.lastCommandMark = screenMark;
@@ -3576,9 +3561,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                     DLog(@"No mark");
                 }
             } else if ([object isKindOfClass:[PTYAnnotation class]]) {
-                id<PTYAnnotationReading> note = (id<PTYAnnotationReading>)object;
+                id<PTYAnnotationReading> note = (id<PTYAnnotationReading>)[object doppelganger];
                 if (visible) {
-                    [delegate screenDidAddNote:note.doppelganger focus:NO visible:YES];
+                    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+                        [delegate screenDidAddNote:note focus:NO visible:YES];
+                    }];
                 }
             } else if ([object isKindOfClass:[iTermImageMark class]]) {
                 id<iTermImageMarkReading> imageMark = (id<iTermImageMarkReading>)object;
@@ -3960,10 +3947,34 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)triggerEvaluatorOfferToDisableTriggersInInteractiveApps:(PTYTriggerEvaluator *)evaluator {
     // Use unmanaged concurrency because this will be rare and it can't run as a regular side-
     // effect since it modifies the profile.
+    [self addUnmanagedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [delegate screenOfferToDisableTriggersInInteractiveApps];
+    }];
+}
+
+- (void)addUnmanagedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))block {
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf performSideEffect:^(id<VT100ScreenDelegate> delegate) {
-            [delegate screenOfferToDisableTriggersInInteractiveApps];
+            block(delegate);
+        }];
+    });
+}
+
+- (void)addUnmanagedPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))block {
+    __weak __typeof(self) weakSelf = self;
+    iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            [unpauser unpause];
+            return;
+        }
+        [strongSelf.tokenExecutor executeSideEffectsImmediatelySyncingFirst:YES];
+        [strongSelf performPausedSideEffect:unpauser
+                                      block:^(id<VT100ScreenDelegate> delegate,
+                                              iTermTokenExecutorUnpauser *unpauser) {
+            block(delegate, unpauser);
         }];
     });
 }
@@ -4138,7 +4149,7 @@ launchCoprocessWithCommand:(NSString *)command
         [delegate triggerSideEffectCurrentDirectoryDidChange];
     }];
     // This can be sync
-    [self currentDirectoryDidChangeTo:currentDirectory];
+    [self currentDirectoryDidChangeTo:currentDirectory completion:^{}];
 }
 
 - (void)triggerSession:(Trigger *)trigger didChangeNameTo:(NSString *)newName {

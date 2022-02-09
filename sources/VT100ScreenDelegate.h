@@ -276,9 +276,9 @@
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color;
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color;
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
-- (void)screenSetColor:(NSColor * _Nullable)color
+- (BOOL)screenSetColor:(NSColor * _Nullable)color
                 forKey:(int)key
-              colorMap:(iTermColorMap * _Nonnull)colorMap;
+              colorMap:(id<iTermColorMapReading> _Nonnull)colorMap;
 - (NSDictionary<NSNumber *, id> * _Nonnull)screenResetColorWithColorMapKey:(int)key
                                                                 profileKey:(NSString * _Nonnull)profileKey
                                                                       dark:(BOOL)dark;
@@ -287,7 +287,9 @@
 
 - (void)screenCurrentHostDidChange:(id<VT100RemoteHostReading> _Nonnull)host
                                pwd:(NSString * _Nullable)workingDirectory;
-- (void)screenCurrentDirectoryDidChangeTo:(NSString * _Nullable)newPath;
+- (void)screenCurrentDirectoryDidChangeTo:(NSString * _Nullable)newPath
+                               removeHost:(id<VT100RemoteHostReading> _Nullable)remoteHost;
+
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> * _Nonnull)parameters
                                                    payload:(NSString * _Nonnull)payload;
 - (void)screenReportVariableNamed:(NSString * _Nonnull)name;

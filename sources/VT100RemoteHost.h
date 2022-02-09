@@ -20,6 +20,8 @@
 
 // Returns username@hostname.
 - (NSString *)usernameAndHostname;
+
+- (id<VT100RemoteHostReading>)doppelganger;
 @end
 
 @interface VT100RemoteHost : NSObject <IntervalTreeObject, VT100RemoteHostReading>
