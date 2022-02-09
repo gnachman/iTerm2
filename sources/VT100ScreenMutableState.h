@@ -54,6 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
 // later time.
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect;
+- (void)addUnmanagedPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))block;
 
 - (void)setNeedsRedraw;
 - (iTermTokenExecutorUnpauser *)pauseTokenExecution;
@@ -238,7 +239,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                      pushed:(BOOL)pushed
                       token:(id<iTermOrderedToken> _Nullable)token;
 
-- (void)currentDirectoryDidChangeTo:(NSString *)dir;
+// This is async because it could trigger a profile change.
+- (void)currentDirectoryDidChangeTo:(NSString *)dir
+                         completion:(void (^)(void))completion;
+
 - (void)setWorkingDirectoryFromURLString:(NSString *)URLString;
 
 #pragma mark Remote Host
@@ -340,8 +344,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)restoreFromDictionary:(NSDictionary *)dictionary
      includeRestorationBanner:(BOOL)includeRestorationBanner
-                   reattached:(BOOL)reattache
-                     delegate:(id<VT100ScreenDelegate>)delegate;
+                   reattached:(BOOL)reattached;
 
 // Sets the primary grid's contents and scrollback history. `history` is an array of NSData
 // containing screen_char_t's. It contains a bizarre workaround for tmux bugs.

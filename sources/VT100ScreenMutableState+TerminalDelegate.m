@@ -864,7 +864,7 @@
 }
 
 - (void)terminalCurrentDirectoryDidChangeTo:(NSString *)dir {
-    [self currentDirectoryDidChangeTo:dir];
+    [self currentDirectoryDidChangeTo:dir completion:^{}];
 }
 
 - (void)terminalClearScreen {
@@ -880,8 +880,11 @@
     // prompt to be the last line on the screen (such lines are scrolled to the center of
     // the screen).
     if ([argument isEqualToString:@"saveScrollPosition"]) {
-        [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        // Unmanaged because it will call refresh and then perform a joined block.
+        [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                             iTermTokenExecutorUnpauser * _Nonnull unpauser) {
             [delegate screenSaveScrollPosition];
+            [unpauser unpause];
         }];
     } else {  // implicitly "saveCursorLine"
         [self saveCursorLine];
@@ -1065,15 +1068,26 @@
         }
     }
     iTermColorMap *colorMap = self.colorMap;
+    NSString *profileKey = [self.colorMap profileKeyForColorMapKey:key];
+    const BOOL darkMode = colorMap.darkMode;
     __weak __typeof(self) weakSelf = self;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    dispatch_queue_t queue = _queue;
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate, iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         // If we're lucky we get back a dictionary and it's fast. Otherwise the delegate will
-        // need to change the profile and it's slow.
+        // need to change the profile and it's slow. In that case, it has to be unmanaged.
         NSDictionary<NSNumber *, id> *mutations = [delegate screenResetColorWithColorMapKey:key
-                                                                                 profileKey:[colorMap profileKeyForColorMapKey:key]
-                                                                                       dark:colorMap.darkMode];
+                                                                                 profileKey:profileKey
+                                                                                       dark:darkMode];
         if (mutations.count) {
-            [weakSelf setColorsFromDictionary:mutations];
+            // I think this is unreachable. You're only called with inputs in [-5,255].
+            // The negatives and 0-15 map to profile keys.
+            // 16-255 cause an early return.
+            dispatch_async(queue, ^{
+                [weakSelf setColorsFromDictionary:mutations];
+                [unpauser unpause];
+            });
+        } else {
+            [unpauser unpause];
         }
     }];
 }
@@ -1135,9 +1149,16 @@
     if (key < 0) {
         return;
     }
+
     iTermColorMap *colorMap = self.colorMap;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenSetColor:color forKey:key colorMap:colorMap];
+    __weak __typeof(self) weakSelf = self;
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
+        const BOOL assign = [delegate screenSetColor:color forKey:key colorMap:colorMap];
+        if (assign) {
+            [weakSelf setColor:color forKey:key];
+        }
+        [unpauser unpause];
     }];
 }
 
@@ -1210,8 +1231,11 @@
 }
 
 - (void)terminalClearCapturedOutput {
-    // Join because delegate wants to change a mark.
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    id<VT100ScreenMarkReading> commandMark = self.lastCommandMark;
+    if (commandMark.capturedOutput.count) {
+        [self incrementClearCountForCommandMark:commandMark];
+    }
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenClearCapturedOutput];
     }];
 }
@@ -1861,6 +1885,8 @@
 }
 
 - (void)terminalKeyReportingFlagsDidChange {
+    // It's safe to do this because it won't be reeentrant and it's necessary because it syncs
+    // afterwards (this change is reporable).
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenKeyReportingFlagsDidChange];
     }];

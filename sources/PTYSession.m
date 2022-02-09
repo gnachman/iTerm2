@@ -11063,12 +11063,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenClearCapturedOutput {
-    if (self.screen.lastCommandMark.capturedOutput.count) {
-        id<VT100ScreenMarkReading> commandMark = self.screen.lastCommandMark;
-        [self.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-            [mutableState incrementClearCountForCommandMark:commandMark];
-        }];
-    }
     [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionCapturedOutputDidChange
                                                         object:nil];
 }
@@ -11202,12 +11196,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // Save the current scroll position
 - (void)screenSaveScrollPosition {
     DLog(@"Session %@ calling refresh", self);
+    [_textview refresh];  // Handle scrollback overflow so we have the most recent scroll position
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [_textview refresh];  // Handle scrollback overflow so we have the most recent scroll position
         id<iTermMark> mark = [mutableState addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
-                                                                 oneLine:NO
-                                                                 ofClass:[VT100ScreenMark class]];
-        self.currentMarkOrNotePosition = mark.entry.interval;
+                                                             oneLine:NO
+                                                             ofClass:[VT100ScreenMark class]];
+        self.currentMarkOrNotePosition = mark.doppelganger.entry.interval;
     }];
 }
 
@@ -11609,21 +11603,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                               dark:dark];
 }
 
-- (void)screenSetColor:(NSColor *)color forKey:(int)key colorMap:(iTermColorMap *)colorMap {
-    [self reallySetColor:color forKey:key colorMap:colorMap];
-}
-
-- (void)reallySetColor:(NSColor *)color forKey:(int)key colorMap:(iTermColorMap *)colorMap {
+- (BOOL)screenSetColor:(NSColor *)color forKey:(int)key colorMap:(id<iTermColorMapReading>)colorMap {
     if (!color) {
-        return;
+        return NO;
     }
 
     NSString *profileKey = [colorMap profileKeyForColorMapKey:key];
     if (profileKey) {
         [self setSessionSpecificProfileValues:@{ profileKey: [color dictionaryValue] }];
-    } else {
-        [colorMap setColor:color forKey:key];
+        return NO;
     }
+    return YES;
 }
 
 - (void)screenSelectColorPresetNamed:(NSString *)name {
@@ -11855,13 +11845,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 // This is called when we get a high-confidence working directory (e.g., CurrentDir=).
-- (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath {
+- (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath
+                               removeHost:(id<VT100RemoteHostReading> _Nullable)remoteHost {
     DLog(@"%@\n%@", newPath, [NSThread callStackSymbols]);
     [self didUpdateCurrentDirectory];
     [self.variablesScope setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
 
-    int line = [_screen numberOfScrollbackLines] + _screen.cursorY;
-    id<VT100RemoteHostReading> remoteHost = [_screen remoteHostOnLine:line];
     [self tryAutoProfileSwitchWithHostname:remoteHost.hostname
                                   username:remoteHost.username
                                       path:newPath
