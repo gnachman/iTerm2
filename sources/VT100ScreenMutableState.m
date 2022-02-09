@@ -203,11 +203,6 @@ static _Atomic int gPerformingJoinedBlock;
 // you're doing.
 - (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect {
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
-    if (VT100ScreenMutableState.performingJoinedBlock) {
-        assert(_tokenExecutor.syncronousSideEffectsAreSafe);
-        [self performPausedSideEffect:unpauser block:sideEffect];
-        return;
-    }
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
         [weakSelf performPausedSideEffect:unpauser block:sideEffect];
@@ -215,11 +210,6 @@ static _Atomic int gPerformingJoinedBlock;
 }
 
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
-    if (VT100ScreenMutableState.performingJoinedBlock) {
-        assert(_tokenExecutor.syncronousSideEffectsAreSafe);
-        [self performSideEffect:sideEffect];
-        return;
-    }
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
         [weakSelf performSideEffect:sideEffect];
@@ -227,11 +217,6 @@ static _Atomic int gPerformingJoinedBlock;
 }
 
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect {
-    if (VT100ScreenMutableState.performingJoinedBlock) {
-        assert(_tokenExecutor.syncronousSideEffectsAreSafe);
-        [self performIntervalTreeSideEffect:sideEffect];
-        return;
-    }
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
         [weakSelf performIntervalTreeSideEffect:sideEffect];

@@ -330,8 +330,8 @@ class TokenExecutor: NSObject {
         impl.schedule()
     }
 
-    @objc var syncronousSideEffectsAreSafe: Bool {
-        return impl.syncronousSideEffectsAreSafe
+    @objc func assertSynchronousSideEffectsAreSafe() {
+        impl.assertSynchronousSideEffectsAreSafe()
     }
 
     // Note that the task may be run either synchronously or asynchronously.
@@ -546,8 +546,8 @@ private class TokenExecutorImpl {
         sideEffectScheduler.markNeedsUpdate()
     }
 
-    var syncronousSideEffectsAreSafe: Bool {
-        return sideEffects.count == 0 && !executingSideEffects.value
+    func assertSynchronousSideEffectsAreSafe() {
+        precondition(sideEffects.count == 0 && !executingSideEffects.value)
     }
 
     // This can run on the main queue, or else on the mutation queue when joined.
