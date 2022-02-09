@@ -9,7 +9,7 @@
 import Foundation
 
 @objc(BFPAffordanceDelegate)
-public protocol AffordanceDelegate: class {
+public protocol AffordanceDelegate: AnyObject {
     func affordance(_ affordance: Affordance, didSelectFontFamily fontFamily: String)
 }
 

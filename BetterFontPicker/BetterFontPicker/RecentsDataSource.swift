@@ -8,7 +8,7 @@
 
 import Cocoa
 
-protocol RecentsDataSourceDelegate: class {
+protocol RecentsDataSourceDelegate: AnyObject {
     func recentsDataSourceDidChange(_ dataSource: RecentsDataSource,
                                     netAdditions: Int)
 }
