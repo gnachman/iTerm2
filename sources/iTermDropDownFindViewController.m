@@ -199,7 +199,7 @@ static const CGFloat kFilterHeight = 30;
 }
 
 - (BOOL)shouldSearchAutomatically {
-    return [findBarTextField_ textFieldIsFirstResponder];
+    return YES;
 }
 
 - (void)setFilter:(NSString *)filter {
