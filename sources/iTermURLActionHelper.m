@@ -135,6 +135,8 @@
 
     NSDictionary *attributes = [self.delegate urlActionHelperAttributes:self];
     NSSize size = [name sizeWithAttributes:attributes];
+    size.width = MAX(1, size.width);
+    size.height = MAX(1, size.height);
     size.height = [self.delegate urlActionHelperLineHeight:self];
     NSImage *const image = [[NSImage alloc] initWithSize:size];
     [image lockFocus];
@@ -316,6 +318,7 @@
                 NSURL *url = [NSURL URLWithUserSuppliedString:action.string];
                 if ([url.scheme isEqualToString:@"file"] &&
                     url.host.length > 0 &&
+                    url.path.length > 0 &&
                     ![url.host isEqualToString:[NSHost fullyQualifiedDomainName]]) {
                     SCPPath *path = [[SCPPath alloc] init];
                     path.path = url.path;
