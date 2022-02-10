@@ -288,7 +288,7 @@
 - (void)screenCurrentHostDidChange:(id<VT100RemoteHostReading> _Nonnull)host
                                pwd:(NSString * _Nullable)workingDirectory;
 - (void)screenCurrentDirectoryDidChangeTo:(NSString * _Nullable)newPath
-                               removeHost:(id<VT100RemoteHostReading> _Nullable)remoteHost;
+                               remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost;
 
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> * _Nonnull)parameters
                                                    payload:(NSString * _Nonnull)payload;
