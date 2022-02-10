@@ -914,7 +914,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)performActionForCapturedOutput:(CapturedOutput *)capturedOutput;
 - (void)userInitiatedReset;
 - (void)resetForRelaunch;
-- (void)saveScrollPosition;
 
 #pragma mark - API
 

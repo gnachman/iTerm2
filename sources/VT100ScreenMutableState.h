@@ -248,7 +248,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 #pragma mark Remote Host
 
 - (void)setRemoteHostFromString:(NSString *)remoteHost;
-- (void)setHost:(NSString * _Nullable)host user:(NSString * _Nullable)user;
 
 #pragma mark - Annotations
 
