@@ -1174,8 +1174,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }
     }
 
-    // Execute any pending side effects (including those possibly added by clearTriggerLine above)
-    // and then continue.
+    // Use a joined side effect to force any pending side effects (including those possibly added by
+    // clearTriggerLine above) to execute.
     __weak __typeof(self) weakSelf = self;
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [weakSelf continueResettingWithModifyContent:modifyContent];
@@ -2939,8 +2939,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                           onLine:line];
     }];
     // Because -refresh gets called.
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenDidAddNote:doppelganger focus:focus visible:visible];
+        [unpauser unpause];
     }];
 }
 
@@ -3616,17 +3618,22 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (BOOL)confirmBigDownloadWithBeforeSize:(NSInteger)sizeBefore
                                afterSize:(NSInteger)afterSize
                                     name:(NSString *)name
-                                delegate:(id<VT100ScreenDelegate>)delegate {
-    assert(VT100ScreenMutableState.performingJoinedBlock);
-
-    if (sizeBefore < VT100ScreenBigFileDownloadThreshold && afterSize > VT100ScreenBigFileDownloadThreshold) {
+                                delegate:(id<VT100ScreenDelegate>)delegate
+                                   queue:(dispatch_queue_t)queue
+                                unpauser:(iTermTokenExecutorUnpauser *)unpauser {
+    if (sizeBefore < VT100ScreenBigFileDownloadThreshold && afterSize >= VT100ScreenBigFileDownloadThreshold) {
         if (![delegate screenConfirmDownloadNamed:name
                                     canExceedSize:VT100ScreenBigFileDownloadThreshold]) {
             DLog(@"Aborting big download");
-            [self stopTerminalReceivingFile];
+            __weak __typeof(self) weakSelf = self;
+            dispatch_async(queue, ^{
+                [weakSelf stopTerminalReceivingFile];
+                [unpauser unpause];
+            });
             return NO;
         }
     }
+    [unpauser unpause];
     return YES;
 }
 
@@ -3637,8 +3644,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)fileReceiptEndedUnexpectedly {
     self.inlineImageHelper = nil;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    // Delegate may join to call [terminal stopReceivingFile], so use unamanged to avoid reentrancy.
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenFileReceiptEndedUnexpectedly];
+        [unpauser unpause];
     }];
 }
 
@@ -3961,6 +3971,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     });
 }
 
+// Use this when the delegate can cause a sync. It completely prevents reentrant syncs, which are
+// very hard to reason about and are almost certainly incorrect.
 - (void)addUnmanagedPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))block {
     __weak __typeof(self) weakSelf = self;
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
@@ -4300,12 +4312,23 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)inlineImageConfirmBigDownloadWithBeforeSize:(NSInteger)lengthBefore
                                           afterSize:(NSInteger)lengthAfter
                                                name:(NSString *)name {
+    dispatch_queue_t queue = _queue;
     __weak __typeof(self) weakSelf = self;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [weakSelf confirmBigDownloadWithBeforeSize:lengthBefore
-                                         afterSize:lengthAfter
-                                              name:name
-                                          delegate:delegate];
+    // Unamanged because this will have a runloop.
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            [unpauser unpause];
+            return;
+        }
+        [strongSelf confirmBigDownloadWithBeforeSize:lengthBefore
+                                           afterSize:lengthAfter
+                                                name:name
+                                            delegate:delegate
+                                               queue:queue
+                                            unpauser:unpauser];
+        [unpauser unpause];
     }];
 }
 

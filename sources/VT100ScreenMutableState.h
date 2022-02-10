@@ -358,10 +358,13 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)stopTerminalReceivingFile;
 - (void)fileReceiptEndedUnexpectedly;
 - (void)appendNativeImageAtCursorWithName:(NSString *)name width:(int)width;
+// Main queue
 - (BOOL)confirmBigDownloadWithBeforeSize:(NSInteger)sizeBefore
                                afterSize:(NSInteger)afterSize
                                     name:(NSString *)name
-                                delegate:(id<VT100ScreenDelegate>)delegate;
+                                delegate:(id<VT100ScreenDelegate>)delegate
+                                   queue:(dispatch_queue_t)queue
+                                unpauser:(iTermTokenExecutorUnpauser *)unpauser;
 
 #pragma mark - Tmux
 

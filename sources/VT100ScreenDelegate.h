@@ -278,7 +278,7 @@
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
 - (BOOL)screenSetColor:(NSColor * _Nullable)color
                 forKey:(int)key
-              colorMap:(id<iTermColorMapReading> _Nonnull)colorMap;
+            profileKey:(NSString * _Nullable)profileKey;
 - (NSDictionary<NSNumber *, id> * _Nonnull)screenResetColorWithColorMapKey:(int)key
                                                                 profileKey:(NSString * _Nonnull)profileKey
                                                                       dark:(BOOL)dark;
