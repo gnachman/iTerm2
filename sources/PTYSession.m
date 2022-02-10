@@ -11196,8 +11196,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // Save the current scroll position
 - (void)screenSaveScrollPosition {
     DLog(@"Session %@ calling refresh", self);
-    [_textview refresh];  // Handle scrollback overflow so we have the most recent scroll position
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [_textview refresh];  // Handle scrollback overflow so we have the most recent scroll position
         id<iTermMark> mark = [mutableState addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
                                                              oneLine:NO
                                                              ofClass:[VT100ScreenMark class]];
@@ -11845,7 +11845,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 // This is called when we get a high-confidence working directory (e.g., CurrentDir=).
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath
-                               removeHost:(id<VT100RemoteHostReading> _Nullable)remoteHost {
+                               remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost {
     DLog(@"%@\n%@", newPath, [NSThread callStackSymbols]);
     [self didUpdateCurrentDirectory];
     [self.variablesScope setValue:newPath forVariableNamed:iTermVariableKeySessionPath];

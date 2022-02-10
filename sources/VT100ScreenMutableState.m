@@ -2448,7 +2448,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         // run but before side-effects they add.
         [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate> delegate,
                                              iTermTokenExecutorUnpauser *unpauser) {
-            [delegate screenCurrentDirectoryDidChangeTo:dir removeHost:remoteHost];
+            [delegate screenCurrentDirectoryDidChangeTo:dir remoteHost:remoteHost];
             dispatch_async(queue, ^{
                 completion();
                 [unpauser unpause];
