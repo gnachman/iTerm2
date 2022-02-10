@@ -11603,12 +11603,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                               dark:dark];
 }
 
-- (BOOL)screenSetColor:(NSColor *)color forKey:(int)key colorMap:(id<iTermColorMapReading>)colorMap {
+- (BOOL)screenSetColor:(NSColor *)color forKey:(int)key profileKey:(NSString *)profileKey {
     if (!color) {
         return NO;
     }
 
-    NSString *profileKey = [colorMap profileKeyForColorMapKey:key];
     if (profileKey) {
         [self setSessionSpecificProfileValues:@{ profileKey: [color dictionaryValue] }];
         return NO;
@@ -11644,9 +11643,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenSetTabColorRedComponentTo:(CGFloat)color {
     NSColor *curColor = [self tabColor] ?: [NSColor it_colorInDefaultColorSpaceWithRed:0 green:0 blue:0 alpha:0];
-    [self setTabColor:[curColor it_colorWithRed:curColor.redComponent
+    [self setTabColor:[curColor it_colorWithRed:color
                                           green:curColor.greenComponent
-                                           blue:color
+                                           blue:curColor.blueComponent
                                           alpha:1]];
     [[_delegate parentWindow] updateTabColors];
 }

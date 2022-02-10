@@ -289,44 +289,60 @@
            updateRegions:(BOOL)updateRegions
             moveCursorTo:(VT100GridCoord)newCursorCoord
               completion:(void (^)(void))completion {
-    const int height = self.currentGrid.size.height;
     __weak __typeof(self) weakSelf = self;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [weakSelf reallySetWidth:width
-                          height:height
-                  preserveScreen:preserveScreen
-                   updateRegions:updateRegions
-                    moveCursorTo:newCursorCoord
-                        delegate:delegate
-                      completion:completion];
+    const int height = self.currentGrid.size.height;
+    dispatch_queue_t queue = _queue;
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
+        const BOOL shouldResize = ([delegate screenShouldInitiateWindowResize] &&
+                                   ![delegate screenWindowIsFullscreen]);
+        if (shouldResize) {
+            [delegate screenResizeToWidth:width
+                                   height:height];
+        }
+        dispatch_async(queue, ^{
+            __strong __typeof(self) strongSelf = weakSelf;
+            if (!strongSelf) {
+                [unpauser unpause];
+                if (completion) {
+                    completion();
+                }
+                return;
+            }
+            [strongSelf finishAfterResizing:shouldResize
+                             preserveScreen:preserveScreen
+                              updateRegions:updateRegions
+                               moveCursorTo:newCursorCoord
+                                   delegate:delegate
+                                 completion:^{
+                if (completion) {
+                    completion();
+                }
+                [unpauser unpause];
+            }];
+        });
     }];
 }
 
 - (void)terminalSetRows:(int)rows andColumns:(int)columns {
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenSetSize:VT100GridSizeMake(rows, columns)];
+        [unpauser unpause];
     }];
 }
 
-
-- (void)reallySetWidth:(int)width
-                height:(int)height
-        preserveScreen:(BOOL)preserveScreen
-         updateRegions:(BOOL)updateRegions
-          moveCursorTo:(VT100GridCoord)newCursorCoord
-              delegate:(id<VT100ScreenDelegate>)delegate
-            completion:(void (^)(void))completion {
-    assert(VT100ScreenMutableState.performingJoinedBlock);
-    if ([delegate screenShouldInitiateWindowResize] &&
-        ![delegate screenWindowIsFullscreen]) {
-        // set the column
-        [delegate screenResizeToWidth:width
-                               height:height];
-        if (!preserveScreen) {
-            [self eraseInDisplayBeforeCursor:YES afterCursor:YES decProtect:NO];  // erase the screen
-            self.currentGrid.cursorX = 0;
-            self.currentGrid.cursorY = 0;
-        }
+// This runs on the mutation queue.
+- (void)finishAfterResizing:(BOOL)didResize
+             preserveScreen:(BOOL)preserveScreen
+              updateRegions:(BOOL)updateRegions
+               moveCursorTo:(VT100GridCoord)newCursorCoord
+                   delegate:(id<VT100ScreenDelegate>)delegate
+                 completion:(void (^)(void))completion {
+    if (didResize && !preserveScreen) {
+        [self eraseInDisplayBeforeCursor:YES afterCursor:YES decProtect:NO];  // erase the screen
+        self.currentGrid.cursorX = 0;
+        self.currentGrid.cursorY = 0;
     }
     if (updateRegions) {
         [self setUseColumnScrollRegion:NO];
@@ -722,17 +738,27 @@
     if (!_tmuxGroup) {
         _tmuxGroup = dispatch_group_create();
     }
+    // Use the group to ensure all tmux tokens are handled completely before the first token that
+    // follows them.
     dispatch_group_enter(_tmuxGroup);
-
-    // Join to force a sync so the main thread is up-to-date and so it can do
-    // mutableState.isTmuxGateway=NO before any more tokens get to run. Furthemore, this pauses
-    // token execution. Subsequent tmux tokens can't run until after this one finishes on the
-    // main thread. Since they use dispatch_async, they might run before the side-effect.
-    // Side effects don't get enqueued on the main thread immediately.
     dispatch_group_t group = _tmuxGroup;
+
+    // Force a sync.
+    __weak __typeof(self) weakSelf = self;
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenStartTmuxModeWithDCSIdentifier:dcsID];
-        dispatch_group_leave(group);
+        // Use an unmanaged side effect to avoid reentrancy. It's safe to assume the delegate will
+        // do basically anything here so we want to keep it simple. We'll keep it paused so that
+        // tmux tokens get get handled.
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            dispatch_group_leave(group);
+            return;
+        }
+        [strongSelf addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate, iTermTokenExecutorUnpauser * _Nonnull unpauser) {
+            [delegate screenStartTmuxModeWithDCSIdentifier:dcsID];
+            dispatch_group_leave(group);
+            [unpauser unpause];
+        }];
     }];
 }
 
@@ -1095,51 +1121,39 @@
 // These calls to `screenSetColor:` will modify the profile and will themselves join the mutation
 // thread so don't bother trying to make them regular side-effects.
 - (void)terminalSetForegroundColor:(NSColor *)color {
-    iTermColorMap *colorMap = self.colorMap;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenSetColor:color forKey:kColorMapForeground colorMap:colorMap];
-    }];
+    [self makeDelegateSetColor:color forKey:kColorMapForeground];
 }
 
 - (void)terminalSetBackgroundColor:(NSColor *)color {
-    iTermColorMap *colorMap = self.colorMap;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenSetColor:color forKey:kColorMapBackground colorMap:colorMap];
-    }];
+    [self makeDelegateSetColor:color forKey:kColorMapBackground];
 }
 
 - (void)terminalSetBoldColor:(NSColor *)color {
-    iTermColorMap *colorMap = self.colorMap;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenSetColor:color forKey:kColorMapBold colorMap:colorMap];
-    }];
+    [self makeDelegateSetColor:color forKey:kColorMapBold];
 }
 
 - (void)terminalSetSelectionColor:(NSColor *)color {
-    iTermColorMap *colorMap = self.colorMap;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenSetColor:color forKey:kColorMapSelection colorMap:colorMap];
-    }];
+    [self makeDelegateSetColor:color forKey:kColorMapSelection];
 }
 
 - (void)terminalSetSelectedTextColor:(NSColor *)color {
-    iTermColorMap *colorMap = self.colorMap;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenSetColor:color forKey:kColorMapSelectedText colorMap:colorMap];
-    }];
+    [self makeDelegateSetColor:color forKey:kColorMapSelectedText];
 }
 
 - (void)terminalSetCursorColor:(NSColor *)color {
-    iTermColorMap *colorMap = self.colorMap;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenSetColor:color forKey:kColorMapCursor colorMap:colorMap];
-    }];
+    [self makeDelegateSetColor:color forKey:kColorMapCursor];
 }
 
 - (void)terminalSetCursorTextColor:(NSColor *)color {
-    iTermColorMap *colorMap = self.colorMap;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
-        [delegate screenSetColor:color forKey:kColorMapCursorText colorMap:colorMap];
+    [self makeDelegateSetColor:color forKey:kColorMapCursorText];
+}
+
+- (void)makeDelegateSetColor:(NSColor *)color forKey:(int)key {
+    VT100ScreenState *state = self.mainThreadCopy;
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate, iTermTokenExecutorUnpauser * _Nonnull unpauser) {
+        NSString *profileKey = [state.colorMap profileKeyForColorMapKey:key];
+        [delegate screenSetColor:color forKey:key profileKey:profileKey];
+        [unpauser unpause];
     }];
 }
 
@@ -1150,11 +1164,12 @@
         return;
     }
 
-    iTermColorMap *colorMap = self.colorMap;
+    VT100ScreenState *state = self.mainThreadCopy;
     __weak __typeof(self) weakSelf = self;
     [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
-        const BOOL assign = [delegate screenSetColor:color forKey:key colorMap:colorMap];
+        NSString *profileKey = [state.colorMap profileKeyForColorMapKey:key];
+        const BOOL assign = [delegate screenSetColor:color forKey:key profileKey:profileKey];
         if (assign) {
             [weakSelf setColor:color forKey:key];
         }
@@ -1163,28 +1178,32 @@
 }
 
 - (void)terminalSetCurrentTabColor:(NSColor *)color {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenSetCurrentTabColor:color];
         [unpauser unpause];
     }];
 }
 
 - (void)terminalSetTabColorRedComponentTo:(CGFloat)color {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenSetTabColorRedComponentTo:color];
         [unpauser unpause];
     }];
 }
 
 - (void)terminalSetTabColorGreenComponentTo:(CGFloat)color {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenSetTabColorGreenComponentTo:color];
         [unpauser unpause];
     }];
 }
 
 - (void)terminalSetTabColorBlueComponentTo:(CGFloat)color {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenSetTabColorBlueComponentTo:color];
         [unpauser unpause];
     }];
@@ -1425,20 +1444,28 @@
 - (void)terminalWillReceiveFileNamed:(NSString *)name
                               ofSize:(NSInteger)size
                           completion:(void (^)(BOOL ok))completion {
-    // Use a joined side effect so we can safely call the completion block from the main thread.
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    dispatch_queue_t queue = _queue;
+    __weak __typeof(self) weakSelf = self;
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            [unpauser unpause];
+            return;
+        }
         BOOL promptIfBig = YES;
+        // This has a runloop
         const BOOL ok = [delegate screenConfirmDownloadAllowed:name
                                                           size:size
                                                  displayInline:NO
                                                    promptIfBig:&promptIfBig];
-        if (!ok) {
-            completion(NO);
-            return;
+        if (ok) {
+            [delegate screenWillReceiveFileNamed:name ofSize:size preconfirmed:!promptIfBig];
         }
-
-        [delegate screenWillReceiveFileNamed:name ofSize:size preconfirmed:!promptIfBig];
-        completion(YES);
+        dispatch_async(queue, ^{
+            completion(ok);
+            [unpauser unpause];
+        });
     }];
 };
 
@@ -1452,10 +1479,13 @@
                                      inset:(NSEdgeInsets)inset
                                 completion:(void (^)(BOOL ok))completion {
     __weak __typeof(self) weakSelf = self;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    dispatch_queue_t queue = _queue;
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             completion(NO);
+            [unpauser unpause];
             return;
         }
         [weakSelf reallyWillReceiveInlineFileNamed:name
@@ -1467,10 +1497,16 @@
                                preserveAspectRatio:preserveAspectRatio
                                              inset:inset
                                           delegate:delegate
-                                        completion:completion];
+                                             queue:queue
+                                        completion:^(BOOL ok) {
+            // Runs on queue
+            completion(ok);
+            [unpauser unpause];
+        }];
     }];
 }
 
+// Main queue, unmanaged
 - (void)reallyWillReceiveInlineFileNamed:(NSString *)name
                                     ofSize:(NSInteger)size
                                      width:(int)width
@@ -1480,28 +1516,34 @@
                        preserveAspectRatio:(BOOL)preserveAspectRatio
                                      inset:(NSEdgeInsets)inset
                                 delegate:(id<VT100ScreenDelegate>)delegate
+                                   queue:(dispatch_queue_t)queue
                                 completion:(void (^)(BOOL ok))completion {
-    assert(VT100ScreenMutableState.performingJoinedBlock);
     BOOL promptIfBig = YES;
-    if (![delegate screenConfirmDownloadAllowed:name
-                                           size:size
-                                  displayInline:YES
-                                    promptIfBig:&promptIfBig]) {
-        completion(NO);
-        return;
-    }
-    const CGFloat scale = self.config.backingScaleFactor;
-    self.inlineImageHelper = [[VT100InlineImageHelper alloc] initWithName:name
-                                                                    width:width
-                                                               widthUnits:widthUnits
-                                                                   height:height
-                                                              heightUnits:heightUnits
-                                                              scaleFactor:scale
-                                                      preserveAspectRatio:preserveAspectRatio
-                                                                    inset:inset
-                                                             preconfirmed:!promptIfBig];
-    self.inlineImageHelper.delegate = self;
-    completion(YES);
+    const BOOL allowed = [delegate screenConfirmDownloadAllowed:name
+                                                           size:size
+                                                  displayInline:YES
+                                                    promptIfBig:&promptIfBig];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(queue, ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf || !allowed) {
+            completion(NO);
+            return;
+        }
+
+        const CGFloat scale = strongSelf.config.backingScaleFactor;
+        strongSelf.inlineImageHelper = [[VT100InlineImageHelper alloc] initWithName:name
+                                                                              width:width
+                                                                         widthUnits:widthUnits
+                                                                             height:height
+                                                                        heightUnits:heightUnits
+                                                                        scaleFactor:scale
+                                                                preserveAspectRatio:preserveAspectRatio
+                                                                              inset:inset
+                                                                       preconfirmed:!promptIfBig];
+        strongSelf.inlineImageHelper.delegate = self;
+        completion(YES);
+    });
 }
 
 - (void)terminalFileReceiptEndedUnexpectedly {
@@ -1512,16 +1554,25 @@
     if (self.inlineImageHelper) {
         [self.inlineImageHelper appendBase64EncodedData:data];
     } else {
+        dispatch_queue_t queue = _queue;
         __weak __typeof(self) weakSelf = self;
-        [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                             iTermTokenExecutorUnpauser * _Nonnull unpauser) {
             [delegate screenDidReceiveBase64FileData:data
                                              confirm:^void(NSString *name,
                                                            NSInteger lengthBefore,
                                                            NSInteger lengthAfter) {
-                [weakSelf confirmBigDownloadWithBeforeSize:lengthBefore
-                                                 afterSize:lengthAfter
-                                                      name:name
-                                                  delegate:delegate];
+                __strong __typeof(self) strongSelf = weakSelf;
+                if (!strongSelf) {
+                    [unpauser unpause];
+                    return;
+                }
+                [strongSelf confirmBigDownloadWithBeforeSize:lengthBefore
+                                                   afterSize:lengthAfter
+                                                        name:name
+                                                    delegate:delegate
+                                                       queue:queue
+                                                    unpauser:unpauser];
             }];
         }];
     }
@@ -1541,10 +1592,11 @@
 }
 
 - (void)terminalSetUnicodeVersion:(NSInteger)unicodeVersion {
-    // This is joined mostly out of caution. It changes the profile and so could unexpectedly do
-    // something observable.
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    // This will change the profile. Use unmanaged+paused to avoid reentrancy.
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         [delegate screenSetUnicodeVersion:unicodeVersion];
+        [unpauser unpause];
     }];
 }
 
@@ -1573,14 +1625,18 @@
 // fg=ff0080,bg=srgb:808080
 - (void)terminalSetColorNamed:(NSString *)name to:(NSString *)colorString {
     if ([name isEqualToString:@"preset"]) {
-        [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                             iTermTokenExecutorUnpauser * _Nonnull unpauser) {
             [delegate screenSelectColorPresetNamed:colorString];
+            [unpauser unpause];
         }];
         return;
     }
     if ([colorString isEqualToString:@"default"] && [name isEqualToString:@"tab"]) {
-        [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                             iTermTokenExecutorUnpauser * _Nonnull unpauser) {
             [delegate screenSetCurrentTabColor:nil];
+            [unpauser unpause];
         }];
         return;
     }
@@ -1638,8 +1694,10 @@
     }
 
     if ([name isEqualToString:@"tab"]) {
-        [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                             iTermTokenExecutorUnpauser * _Nonnull unpauser) {
             [delegate screenSetCurrentTabColor:color];
+            [unpauser unpause];
         }];
         return;
     }
@@ -1679,12 +1737,16 @@
     NSInteger key = [keyNumber integerValue];
 
     __weak __typeof(self) weakSelf = self;
-    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
+                                         iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             return;
         }
-        [delegate screenSetColor:color forKey:key colorMap:strongSelf.colorMap];
+        [delegate screenSetColor:color
+                          forKey:key
+                      profileKey:[strongSelf.mainThreadCopy.colorMap profileKeyForColorMapKey:key]];
+        [unpauser unpause];
     }];
 }
 
@@ -1879,6 +1941,8 @@
     // xterm's control sequences. Lots of strange problems appear with vim. For example, mailing
     // list thread with subject "Control Keys Failing After System Bell".
     // TODO: terminal_.sendModifiers[i] holds the settings. See xterm's modifyOtherKeys and friends.
+    // Use a joined side effect so that this object gets an updated config, which is used to report
+    // keystrokes via DCS_REQUEST_TERMCAP_TERMINFO.
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSendModifiersDidChange];
     }];
@@ -1886,7 +1950,8 @@
 
 - (void)terminalKeyReportingFlagsDidChange {
     // It's safe to do this because it won't be reeentrant and it's necessary because it syncs
-    // afterwards (this change is reporable).
+    // afterwards (this change is reporable). It's joined so we get the updated config and can
+    // respond to DCS_REQUEST_TERMCAP_TERMINFO properly.
     [self addJoinedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenKeyReportingFlagsDidChange];
     }];
