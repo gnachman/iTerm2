@@ -484,17 +484,7 @@ static _Atomic int gPerformingJoinedBlock;
     [self incrementOverflowBy:[self.currentGrid moveCursorDownOneLineScrollingIntoLineBuffer:lineBufferToUse
                                                                          unlimitedScrollback:self.unlimitedScrollback
                                                                      useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
-                                                                                  willScroll:^{
-        if (noScrollback) {
-            [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-                // This isn't really necessary, although it has been this way for a very long time.
-                // In theory we could truncate the selection to not begin in scrollback history.
-                // Note that this happens in alternate screen mode when not adding to history.
-                // Regardless of what we do the behavior is going to be strange.
-                [delegate screenRemoveSelection];
-            }];
-        }
-    }]];
+                                                                                  willScroll:nil]];
 }
 
 - (void)appendCarriageReturnLineFeed {
