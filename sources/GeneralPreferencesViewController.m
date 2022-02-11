@@ -43,6 +43,7 @@ enum {
     IBOutlet NSTextField *_openWindowsAtStartupLabel;
     IBOutlet NSButton *_alwaysOpenWindowAtStartup;
     IBOutlet NSTextField *_alwaysOpenLegend;
+    IBOutlet NSButton *_restoreWindowsToSameSpaces;
 
     IBOutlet NSMenuItem *_openDefaultWindowArrangementItem;
 
@@ -222,6 +223,11 @@ enum {
              return YES;
          }];
     [_openDefaultWindowArrangementItem setEnabled:[WindowArrangements count] > 0];
+
+    [self defineControl:_restoreWindowsToSameSpaces
+                    key:kPreferenceKeyRestoreWindowsToSameSpaces
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_alwaysOpenWindowAtStartup
                     key:kPreferenceKeyAlwaysOpenWindowAtStartup
@@ -577,6 +583,7 @@ enum {
     const BOOL systemRestorationEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"NSQuitAlwaysKeepsWindows"];
     _warningButton.hidden = (!useSystemWindowRestoration || systemRestorationEnabled);
     _alwaysOpenWindowAtStartup.enabled = [self shouldEnableAlwaysOpenWindowAtStartup];
+    _restoreWindowsToSameSpaces.enabled = systemRestorationEnabled && useSystemWindowRestoration;
 }
 
 - (void)updateAdvancedGPUEnabled {

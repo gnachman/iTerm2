@@ -25,6 +25,7 @@
 NSString *const kPreferenceKeyOpenBookmark = @"OpenBookmark";
 NSString *const kPreferenceKeyOpenArrangementAtStartup = @"OpenArrangementAtStartup";
 NSString *const kPreferenceKeyAlwaysOpenWindowAtStartup = @"AlwaysOpenWindowAtStartup";
+NSString *const kPreferenceKeyRestoreWindowsToSameSpaces = @"RestoreWindowsToSameSpaces";
 NSString *const kPreferenceKeyOpenNoWindowsAtStartup = @"OpenNoWindowsAtStartup";
 NSString *const kPreferenceKeyQuitWhenAllWindowsClosed = @"QuitWhenAllWindowsClosed";
 NSString *const kPreferenceKeyConfirmClosingMultipleTabs = @"OnlyWhenMoreTabs";  // The key predates split panes
@@ -309,6 +310,7 @@ static NSString *sPreviousVersion;
         dict = @{ kPreferenceKeyOpenBookmark: @NO,
                   kPreferenceKeyOpenArrangementAtStartup: @NO,
                   kPreferenceKeyAlwaysOpenWindowAtStartup: @NO,
+                  kPreferenceKeyRestoreWindowsToSameSpaces: @NO,
                   kPreferenceKeyOpenNoWindowsAtStartup: @NO,
                   kPreferenceKeyQuitWhenAllWindowsClosed: @NO,
                   kPreferenceKeyConfirmClosingMultipleTabs: @YES,

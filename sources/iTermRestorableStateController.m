@@ -74,6 +74,7 @@ static BOOL gForceSaveState;
 
 + (void)setForceSaveState:(BOOL)forceSaveState {
     gForceSaveState = forceSaveState;
+    [[NSUserDefaults standardUserDefaults] setBool:forceSaveState forKey:@"NoSyncWindowRestoresWorkspaceAtLaunch"];
 }
 
 - (instancetype)init {

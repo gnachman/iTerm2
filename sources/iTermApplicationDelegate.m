@@ -1049,6 +1049,17 @@ void TurnOnDebugLoggingAutomatically(void) {
     [iTermPreferences initializeUserDefaults];
     [iTermUserDefaults performMigrations];
 
+    // Enable restoring windows to their original Spaces if needed.
+    // This has to happen after -initializeUserDefaults and before this method returns.
+    const BOOL restoreWorkspace = ([[NSUserDefaults standardUserDefaults] boolForKey:@"NoSyncWindowRestoresWorkspaceAtLaunch"] ||
+                                   [iTermPreferences boolForKey:kPreferenceKeyRestoreWindowsToSameSpaces]);
+    if (restoreWorkspace) {
+        // Based on https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/browser/chrome_browser_main_mac.mm#128:
+        // Windows don't go back to their original workspaces, except on restart. When Sparkle
+        // upgrades, treat it like a system restart.
+        [[NSUserDefaults standardUserDefaults] registerDefaults:@{ @"NSWindowRestoresWorkspaceAtLaunch": @YES }];
+    }
+
     // This sets up bonjour and migrates bookmarks if needed.
     [ITAddressBookMgr sharedInstance];
 
@@ -2563,6 +2574,11 @@ void TurnOnDebugLoggingAutomatically(void) {
     DLog(@"All restorations requested. Set external restoration complete");
     [PseudoTerminalRestorer runQueuedBlocks];
     [PseudoTerminalRestorer externalRestorationDidComplete];
+
+    if (!iTermRestorableStateController.forceSaveState) {
+        // Reset this because it's only meant to be temporary.
+        [iTermPreferences setBool:NO forKey:@"NoSyncWindowRestoresWorkspaceAtLaunch"];
+    }
 }
 
 - (NSArray<NSWindow *> *)restorableStateWindows {
