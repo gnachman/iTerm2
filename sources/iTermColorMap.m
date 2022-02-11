@@ -606,6 +606,15 @@ const int kColorMapAnsiBrightModifier = 8;
 
 @implementation iTermColorMapSanitizingAdapterImpl {
     __weak id<iTermColorMapDelegate> _delegate;
+    __weak iTermColorMap *_source;
+}
+
+- (instancetype)initWithSource:(iTermColorMap *)source {
+    self = [super init];
+    if (self) {
+        _source = source;
+    }
+    return self;
 }
 
 - (id<iTermColorMapDelegate>)delegate {
@@ -614,6 +623,10 @@ const int kColorMapAnsiBrightModifier = 8;
 
 - (void)setDelegate:(id<iTermColorMapDelegate>)delegate {
     _delegate = delegate;
+}
+
+- (id)copyWithZone:(NSZone *)zone {
+    return [_source copyWithZone:zone];
 }
 
 @end
@@ -633,7 +646,7 @@ const int kColorMapAnsiBrightModifier = 8;
 @dynamic darkMode;
 
 - (instancetype)initWithSource:(iTermColorMap *)source {
-    _impl = [[iTermColorMapSanitizingAdapterImpl alloc] init];
+    _impl = [[iTermColorMapSanitizingAdapterImpl alloc] initWithSource:source];
     _impl.delegate = source.delegate;
     _source = source;
     return self;

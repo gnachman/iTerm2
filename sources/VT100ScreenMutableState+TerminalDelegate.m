@@ -114,13 +114,6 @@
         [self appendLineFeed];
     }
     [self clearTriggerLine];
-    if (self.config.publishing || self.config.loggingEnabled) {
-        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-            [delegate screenDidReceiveLineFeed];
-        }];
-    } else {
-        [self.tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed];
-    }
 }
 
 - (void)terminalCursorLeft:(int)n {

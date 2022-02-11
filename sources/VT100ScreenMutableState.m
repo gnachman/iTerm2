@@ -485,6 +485,13 @@ static _Atomic int gPerformingJoinedBlock;
                                                                          unlimitedScrollback:self.unlimitedScrollback
                                                                      useScrollbackWithRegion:self.appendToScrollbackWithStatusBar
                                                                                   willScroll:nil]];
+    if (self.config.publishing || self.config.loggingEnabled) {
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenDidReceiveLineFeed];
+        }];
+    } else {
+        [self.tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed];
+    }
 }
 
 - (void)appendCarriageReturnLineFeed {
@@ -3289,7 +3296,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // on the mutation queue.
     const BOOL wasPerformingJoinedBlock = atomic_exchange(&gPerformingJoinedBlock, 1);
 
-    VT100ScreenState *oldState = [delegate screenSwitchToSharedState];
+    VT100ScreenState *oldState;
+    if (!wasPerformingJoinedBlock) {
+        oldState = [delegate screenSwitchToSharedState];
+    }
     [self loadConfigIfNeededFromDelegate:delegate];
 
     const NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
@@ -3315,7 +3325,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
     // Run any side-effects enqueued by the block, taking advantage of the fact that state is in sync.
     [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
-    [delegate screenRestoreState:oldState];
+    if (!wasPerformingJoinedBlock) {
+        [delegate screenRestoreState:oldState];
+    }
     [self loadConfigIfNeededFromDelegate:delegate];
     [delegate screenSyncExpect:self];
 
