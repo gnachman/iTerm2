@@ -1088,7 +1088,8 @@
         DLog(@"Ignore mouse exited because app is not active");
     }
     [self updateUnderlinedURLs:event];
-    [_delegate textViewShowHoverURL:nil];
+    [_delegate textViewShowHoverURL:nil
+                             anchor:VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), -1, -1)];
 }
 
 - (void)mouseEntered:(NSEvent *)event {
@@ -4154,14 +4155,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark - Find Cursor
 
-- (NSRect)cursorFrame {
-    int lineStart = [_dataSource numberOfLines] - [_dataSource height];
-    int cursorX = [_dataSource cursorX] - 1;
-    int cursorY = [_dataSource cursorY] - 1;
-    return NSMakeRect([iTermPreferences intForKey:kPreferenceKeySideMargins] + cursorX * _charWidth,
-                      (lineStart + cursorY) * _lineHeight,
+- (NSRect)rectForCoord:(VT100GridCoord)coord {
+    return NSMakeRect([iTermPreferences intForKey:kPreferenceKeySideMargins] + coord.x * _charWidth,
+                      coord.y * _lineHeight,
                       _charWidth,
                       _lineHeight);
+}
+
+- (NSRect)rectForGridCoord:(VT100GridCoord)coord {
+    const int firstGridLine = [_dataSource numberOfLines] - [_dataSource height];
+    return [self rectForCoord:VT100GridCoordMake(coord.x, firstGridLine + coord.y)];
+}
+
+- (NSRect)cursorFrame {
+    return [self rectForGridCoord:VT100GridCoordMake(_dataSource.cursorX - 1,
+                                                     _dataSource.cursorY - 1)];
 }
 
 - (CGFloat)verticalOffset {

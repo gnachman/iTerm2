@@ -9744,8 +9744,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self bury];
 }
 
-- (BOOL)textViewShowHoverURL:(NSString *)url {
-    return [_view setHoverURL:url];
+- (NSRect)boundingFrameForWindowedRange:(VT100GridWindowedRange)range {
+    const NSRect visibleRect = _textview.enclosingScrollView.documentVisibleRect;
+    const VT100GridRect gridRect = VT100GridWindowedRangeBoundingRect(range);
+    const NSRect topLeft = [_textview rectForCoord:VT100GridRectTopLeft(gridRect)];
+    const NSRect topRight = [_textview rectForCoord:VT100GridRectTopRight(gridRect)];
+    const NSRect bottomLeft = [_textview rectForCoord:VT100GridRectBottomLeft(gridRect)];
+    const NSRect bottomRight = [_textview rectForCoord:VT100GridRectBottomRight(gridRect)];
+    const NSRect anchorRect = NSUnionRect(NSUnionRect(NSUnionRect(topLeft, topRight), bottomLeft), bottomRight);
+    const NSRect visibleAnchorRect = NSIntersectionRect(anchorRect, visibleRect);
+    return [_view convertRect:visibleAnchorRect fromView:_textview];
+}
+
+- (BOOL)textViewShowHoverURL:(NSString *)url anchor:(VT100GridWindowedRange)anchor {
+    return [_view setHoverURL:url
+                  anchorFrame:url ? [self boundingFrameForWindowedRange:anchor] : NSZeroRect];
 }
 
 - (BOOL)textViewCopyMode {

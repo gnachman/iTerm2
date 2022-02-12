@@ -207,6 +207,24 @@ NS_INLINE VT100GridAbsWindowedRange VT100GridAbsWindowedRangeMake(VT100GridAbsCo
     return windowedRange;
 }
 
+NS_INLINE VT100GridRect VT100GridWindowedRangeBoundingRect(VT100GridWindowedRange range) {
+    if (range.coordRange.start.y != range.coordRange.end.y) {
+        // Spans multiple lines so it covers the full width of the column window.
+        return VT100GridRectMake(range.columnWindow.location,
+                                 range.coordRange.start.y,
+                                 range.columnWindow.length,
+                                 range.coordRange.end.y - range.coordRange.start.y + 1);
+    }
+    const int minX = MAX(range.columnWindow.location, range.coordRange.start.x);
+    const int maxX = MIN(range.columnWindow.location + range.columnWindow.length,
+                         range.coordRange.end.x);
+
+    return VT100GridRectMake(minX,
+                             range.coordRange.start.y,
+                             maxX - minX + 1,
+                             range.coordRange.end.y - range.coordRange.start.y + 1);
+}
+
 NS_INLINE VT100GridCoord VT100GridWindowedRangeStart(VT100GridWindowedRange range) {
     VT100GridCoord coord = range.coordRange.start;
     if (range.columnWindow.length) {
@@ -587,6 +605,22 @@ NS_INLINE BOOL VT100GridCoordInRect(VT100GridCoord coord, VT100GridRect rect) {
             coord.y >= rect.origin.y &&
             coord.x < rect.origin.x + rect.size.width &&
             coord.y < rect.origin.y + rect.size.height);
+}
+
+NS_INLINE VT100GridCoord VT100GridRectTopLeft(VT100GridRect rect) {
+    return VT100GridCoordMake(rect.origin.x, rect.origin.y);
+}
+
+NS_INLINE VT100GridCoord VT100GridRectTopRight(VT100GridRect rect) {
+    return VT100GridCoordMake(rect.origin.x + rect.size.width - 1, rect.origin.y);
+}
+
+NS_INLINE VT100GridCoord VT100GridRectBottomLeft(VT100GridRect rect) {
+    return VT100GridCoordMake(rect.origin.x, rect.origin.y + rect.size.height - 1);
+}
+
+NS_INLINE VT100GridCoord VT100GridRectBottomRight(VT100GridRect rect) {
+    return VT100GridCoordMake(rect.origin.x + rect.size.width - 1, rect.origin.y + rect.size.height - 1);
 }
 
 // Creates a run between two coords, not inclusive of end.

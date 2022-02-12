@@ -201,7 +201,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 // Describes the current user, host, and path.
 - (NSURL *)textViewCurrentLocation;
 - (void)textViewBurySession;
-- (BOOL)textViewShowHoverURL:(NSString *)url;
+- (BOOL)textViewShowHoverURL:(NSString *)url anchor:(VT100GridWindowedRange)anchor;
 
 - (BOOL)textViewCopyMode;
 - (BOOL)textViewCopyModeSelecting;
@@ -673,6 +673,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)drawRect:(NSRect)rect inView:(NSView *)view;
 
 - (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
+- (NSRect)rectForCoord:(VT100GridCoord)coord;
 
 #pragma mark - Testing only
 

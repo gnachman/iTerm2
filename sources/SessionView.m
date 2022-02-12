@@ -202,6 +202,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     iTermHoverContainerView *_hoverURLView;
     NSTextField *_hoverURLTextField;
+    NSRect _urlAnchorFrame;
 
     BOOL _useMetal;
     iTermMetalClipView *_metalClipView;
@@ -969,16 +970,26 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
     if (_hoverURLView) {
         [_hoverURLTextField sizeToFit];
-        NSRect frame = _hoverURLTextField.bounds;
+
         const CGFloat horizontalPadding = 8;
         const CGFloat verticalPadding = 4;
-        frame.size.width += horizontalPadding * 2;
-        frame.size.height += verticalPadding * 2;
-        frame.origin.x = 4;
-        frame.origin.y = 4;
-        _hoverURLView.frame = frame;
 
-        frame = _hoverURLTextField.frame;
+        NSArray<NSValue *> *proposedFrames = [self framesForURLPreviewWithPadding:NSMakeSize(horizontalPadding, verticalPadding)];
+        NSValue *bestFrameValue = [proposedFrames maxWithBlock:^NSComparisonResult(NSValue *obj1, NSValue *obj2) {
+            const NSRect lhs = obj1.rectValue;
+            const NSRect rhs = obj2.rectValue;
+
+            const NSRect leftIntersection = NSIntersectionRect(lhs, self->_urlAnchorFrame);
+            const NSRect rightIntersection = NSIntersectionRect(rhs, self->_urlAnchorFrame);
+
+            const CGFloat leftArea = leftIntersection.size.width * leftIntersection.size.height;
+            const CGFloat rightArea = rightIntersection.size.width * rightIntersection.size.height;
+
+            return [@(rightArea) compare: @(leftArea)];
+        }];
+        _hoverURLView.frame = bestFrameValue.rectValue;
+
+        NSRect frame = _hoverURLTextField.frame;
         frame.origin = NSMakePoint(horizontalPadding, verticalPadding);
         _hoverURLTextField.frame = frame;
     }
@@ -988,6 +999,23 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [self updateMetalViewFrame];
     }
     DLog(@"After:\n%@", [self iterm_recursiveDescription]);
+}
+
+- (NSArray<NSValue *> *)framesForURLPreviewWithPadding:(NSSize)padding {
+    NSRect frame = _hoverURLTextField.bounds;
+    frame.size.width += padding.width * 2;
+    frame.size.height += padding.height * 2;
+
+    const CGFloat minX = 4;
+    const CGFloat minY = 4;
+    const CGFloat maxX = NSWidth(self.bounds) - NSWidth(frame) - 4;
+    const CGFloat maxY = NSHeight(self.bounds) - NSHeight(frame) - 4;
+    return @[
+        [NSValue valueWithRect:NSMakeRect(minX, minY, frame.size.width, frame.size.height)],
+        [NSValue valueWithRect:NSMakeRect(maxX, minY, frame.size.width, frame.size.height)],
+        [NSValue valueWithRect:NSMakeRect(minX, maxY, frame.size.width, frame.size.height)],
+        [NSValue valueWithRect:NSMakeRect(maxX, maxY, frame.size.width, frame.size.height)],
+    ];
 }
 
 - (void)updateLegacyViewFrame {
@@ -1342,8 +1370,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return _hoverURLView != nil;
 }
 
-- (BOOL)setHoverURL:(NSString *)url {
+- (BOOL)setHoverURL:(NSString *)url anchorFrame:(NSRect)anchorFrame {
     if ([NSObject object:url isEqualToObject:_hoverURLView.url]) {
+        if (!NSEqualRects(anchorFrame, _urlAnchorFrame)) {
+            _urlAnchorFrame = anchorFrame;
+            [self updateLayout];
+        }
         return NO;
     }
     if (_hoverURLView == nil) {

@@ -2779,7 +2779,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
     return YES;
 }
 
-- (BOOL)textViewShowHoverURL:(NSString *)url {
+- (BOOL)textViewShowHoverURL:(NSString *)url anchor:(VT100GridWindowedRange)anchorAbsRange {
     return NO;
 }
 

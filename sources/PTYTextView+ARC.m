@@ -309,6 +309,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 - (BOOL)updateCursor:(NSEvent *)event action:(URLAction *)action {
     NSString *hover = nil;
+    VT100GridWindowedRange anchorRange = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(-1, -1, -1, -1), -1, -1);
     BOOL changed = NO;
     if (([event it_modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         changed = [self setCursor:[NSCursor openHandCursor]];
@@ -319,6 +320,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
         changed = [self setCursor:[NSCursor pointingHandCursor]];
         if (action.hover && action.string.length) {
             hover = action.string;
+            anchorRange = action.range;
         }
     } else if ([self mouseIsOverImageInEvent:event]) {
         changed = [self setCursor:[NSCursor arrowCursor]];
@@ -331,7 +333,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     if (changed) {
         [self.enclosingScrollView setDocumentCursor:cursor_];
     }
-    return [self.delegate textViewShowHoverURL:hover];
+    return [self.delegate textViewShowHoverURL:hover anchor:anchorRange];
 }
 
 - (BOOL)setCursor:(NSCursor *)cursor {
