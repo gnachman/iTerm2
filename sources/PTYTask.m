@@ -78,6 +78,13 @@ static void HandleSigChld(int n) {
     BOOL _haveBumpedProcessCache;
     dispatch_queue_t _jobManagerQueue;
     BOOL _isTmuxTask;
+
+
+    NSInteger _deferResizeCount;
+    BOOL _haveDeferredResize;
+    VT100GridSize _deferredSize;
+    NSSize _deferredViewSize;
+    CGFloat _deferredScaleFactor;
 }
 
 - (instancetype)init {
@@ -399,9 +406,38 @@ static void HandleSigChld(int n) {
     }
 }
 
+- (void)incrementDeferResizeCount:(NSInteger)delta {
+    if (delta == 0) {
+        return;
+    }
+    assert(delta >= -1 && delta <= 1);
+    _deferResizeCount += delta;
+    assert(_deferResizeCount >= 0);
+    DLog(@"For %@, delta=%@ count=%@", self, @(delta), @(_deferResizeCount));
+    if (_deferResizeCount == 0 && _haveDeferredResize) {
+        _haveDeferredResize = NO;
+        [self setSize:_deferredSize
+             viewSize:_deferredViewSize
+          scaleFactor:_deferredScaleFactor];
+    }
+}
+
 // NOTE: maybeScaleFactor will be 0 if the session is not attached to a window. For example, if
 // a different space is active.
-- (BOOL)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize scaleFactor:(CGFloat)maybeScaleFactor {
+- (BOOL)setSize:(VT100GridSize)size
+       viewSize:(NSSize)viewSize
+    scaleFactor:(CGFloat)maybeScaleFactor {
+
+    if (_deferResizeCount > 0) {
+        DLog(@"Defer resize to %@ because count is %@",
+             VT100GridSizeDescription(size), @(_deferResizeCount));
+        _haveDeferredResize = YES;
+        _deferredSize = size;
+        _deferredViewSize = viewSize;
+        _deferredScaleFactor = maybeScaleFactor;
+        return YES;
+    }
+
     CGFloat scaleFactor = maybeScaleFactor;
     if (scaleFactor < 1) {
         scaleFactor = _lastScaleFactor;

@@ -1926,6 +1926,10 @@ ITERM_WEAKLY_REFERENCEABLE
         scaleFactor:scaleFactor];
 }
 
+- (void)incrementDeferResizeCount:(NSInteger)delta {
+    [_shell incrementDeferResizeCount:delta];
+}
+
 - (void)setSize:(VT100GridSize)size {
     ITBetaAssert(size.width > 0, @"Nonpositive width %d", size.width);
     ITBetaAssert(size.height > 0, @"Nonpositive height %d", size.height);

@@ -198,6 +198,7 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // Returns NO if it could not be set because we don't yet have a file descriptor. Returns YES if
 // it was either set or nothing was done because the value didn't change.
 - (BOOL)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize scaleFactor:(CGFloat)scaleFactor;
+- (void)incrementDeferResizeCount:(NSInteger)delta;
 
 - (void)stop;
 

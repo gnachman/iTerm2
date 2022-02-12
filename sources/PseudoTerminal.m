@@ -5588,6 +5588,12 @@ ITERM_WEAKLY_REFERENCEABLE
             return;
         }
 
+        // Defer sending TIOCSWINSZ until things have settled. The call to -safelySetSessionSize:rows:columns: may provide a size that's too big for the display.
+        // It's only after fitWindowToTab that the final size is known.
+        NSArray<PTYSession *> *sessions = [self allSessions];
+        [sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull session, NSUInteger idx, BOOL * _Nonnull stop) {
+            [session incrementDeferResizeCount:1];
+        }];
         PTYTab *tab = [self tabForSession:session];
         [tab setLockedSession:session];
         [self safelySetSessionSize:session rows:height columns:width];
@@ -5596,6 +5602,9 @@ ITERM_WEAKLY_REFERENCEABLE
         PtyLog(@"sessionInitiatedResize - calling fitTabsToWindow");
         [self fitTabsToWindow];
         [tab setLockedSession:nil];
+        [sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull session, NSUInteger idx, BOOL * _Nonnull stop) {
+            [session incrementDeferResizeCount:-1];
+        }];
         result = YES;
     }];
     return result;
@@ -9745,6 +9754,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
             height -= error;
         }
         PtyLog(@"safelySetSessionSize - set to %dx%d", width, height);
+        // Note that this typically gets deferred. See the comment in sessionInitiatedResize:width:height:.
         [aSession setSize:VT100GridSizeMake(width, height)];
         [[aSession.view scrollview] setHasVerticalScroller:hasScrollbar];
         [[aSession.view scrollview] setLineScroll:[[aSession textview] lineHeight]];
