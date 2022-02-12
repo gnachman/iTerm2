@@ -6347,6 +6347,10 @@ typedef struct {
 }
 
 - (void)sessionDuplicateTab {
+    if ([self isTmuxTab]) {
+        DLog(@"Declining to dup tmux tab");
+        return;
+    }
     [parentWindow_ createDuplicateOfTab:self];
 }
 
