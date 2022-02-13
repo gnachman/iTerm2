@@ -907,7 +907,8 @@ error:
 
 - (BOOL)canSendAsLiteralCharacter:(NSNumber *)codePoint {
     const unichar c = codePoint.unsignedShortValue;
-    return isascii(c) && isalnum(c);
+    const char *badCharactersForTmuxCC = " \"#';\\{}";  // including a space
+    return isprint(c) && !strchr(badCharactersForTmuxCC, c);
 }
 
 - (NSString *)numbersAsLiteralCharacters:(NSArray<NSNumber *> *)codePoints {
