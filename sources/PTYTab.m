@@ -664,11 +664,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (NSString *)stringByAppendingSubtitleForActiveSession:(NSString *)title {
     NSString *subtitle = self.activeSession.subtitle;
-    if (subtitle.length) {
-        return [NSString stringWithFormat:@"%@\n%@", title, subtitle];
-    } else{
-        return title;
-    }
+    return [NSString stringWithFormat:@"%@\n%@", title, subtitle];
 }
 
 - (void)_refreshLabels:(id)sender {

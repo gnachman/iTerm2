@@ -2522,9 +2522,11 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
         case XTERMCC_WINICON_TITLE: {
             NSString *title = [[self stringBeforeNewline:token.string] stringByReplacingControlCharactersWithCaretLetter];
-            [_delegate terminalSetWindowTitle:title];
-            [_delegate terminalSetIconTitle:title];
             NSString *subtitle = [[self subtitleFromIconTitle:token.string] stringByReplacingControlCharactersWithCaretLetter];
+            if (!subtitle || title.length > 0) {
+                [_delegate terminalSetWindowTitle:title];
+                [_delegate terminalSetIconTitle:title];
+            }
             if (subtitle) {
                 [_delegate terminalSetSubtitle:subtitle];
             }
@@ -2592,8 +2594,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [self executeFinalTermToken:token];
             break;
         case XTERMCC_ICON_TITLE: {
-            [_delegate terminalSetIconTitle:[[self stringBeforeNewline:token.string] stringByReplacingControlCharactersWithCaretLetter]];
             NSString *subtitle = [[self subtitleFromIconTitle:token.string] stringByReplacingControlCharactersWithCaretLetter];
+            if (!subtitle || token.string.length > 0) {
+                [_delegate terminalSetIconTitle:[[self stringBeforeNewline:token.string] stringByReplacingControlCharactersWithCaretLetter]];
+            }
             if (subtitle) {
                 [_delegate terminalSetSubtitle:subtitle];
             }

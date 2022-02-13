@@ -4072,20 +4072,25 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
         return;
     }
     __weak __typeof(self) weakSelf = self;
-    [_subtitleSwiftyString invalidate];
-    [_subtitleSwiftyString autorelease];
-    _subtitleSwiftyString = [[iTermSwiftyString alloc] initWithString:subtitleFormat
-                                                                scope:self.variablesScope
-                                                             observer:^NSString *(NSString * _Nonnull newValue, NSError *error) {
-        if (error) {
-            return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
-        }
-        __typeof(self) strongSelf = weakSelf;
-        if (strongSelf) {
-            [strongSelf.delegate sessionSubtitleDidChange:strongSelf];
-        }
-        return newValue;
-    }];
+    if (!_subtitleSwiftyString) {
+        // Create it with an initially empty string because the delegate will
+        // ask for our subtitle value and it won't be right before
+        // _subtitleSwiftyString is assigned to.
+        _subtitleSwiftyString = [[iTermSwiftyString alloc] initWithString:@""
+                                                                    scope:self.variablesScope
+                                                                 observer:^NSString *(NSString * _Nonnull newValue,
+                                                        NSError *error) {
+            if (error) {
+                return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
+            }
+            __typeof(self) strongSelf = weakSelf;
+            if (strongSelf) {
+                [strongSelf.delegate sessionSubtitleDidChange:strongSelf];
+            }
+            return newValue;
+        }];
+    }
+    _subtitleSwiftyString.swiftyString = subtitleFormat;
 }
 
 - (void)setBadgeFormat:(NSString *)badgeFormat {
