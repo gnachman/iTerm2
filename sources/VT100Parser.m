@@ -45,9 +45,11 @@
 }
 
 - (void)forceUnhookDCS:(NSString *)uniqueID {
-    if (uniqueID == nil || [_controlParser shouldUnhook:uniqueID]) {
-        _dcsHooked = NO;
-        [_controlParser unhookDCS];
+    @synchronized (self) {
+        if (uniqueID == nil || [_controlParser shouldUnhook:uniqueID]) {
+            _dcsHooked = NO;
+            [_controlParser unhookDCS];
+        }
     }
 }
 
