@@ -4410,10 +4410,10 @@ launchCoprocessWithCommand:(NSString *)command
 
 #pragma mark - iTermColorMapDelegate
 
-- (void)colorMap:(iTermColorMap *)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
+- (void)colorMap:(iTermColorMap *)colorMap didChangeColorForKey:(iTermColorMapKey)theKey from:(NSColor *)before to:(NSColor *)after {
     [iTermGCD assertMainQueueSafe];
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-    [delegate immutableColorMap:self.mainThreadCopy.colorMap didChangeColorForKey:theKey];
+    [delegate immutableColorMap:self.mainThreadCopy.colorMap didChangeColorForKey:theKey from:before to:after];
 }
 
 - (void)colorMap:(iTermColorMap *)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount {

@@ -103,8 +103,8 @@ const int kColorMapAnsiBrightModifier = 8;
     }
 
     NSColor *theColor = [colorInArbitrarySpace colorUsingColorSpace:[NSColorSpace it_defaultColorSpace]];
+    NSColor *oldColor = _map[@(theKey)];
     {
-        NSColor *oldColor = _map[@(theKey)];
         if (theColor == oldColor || [theColor isEqual:oldColor]) {
             DLog(@"Color with key %@ unchanged (%@)", @(theKey), oldColor);
             return;
@@ -127,7 +127,7 @@ const int kColorMapAnsiBrightModifier = 8;
         (float)components[3]
    };
     _fastMap[@(theKey)] = [NSData dataWithBytes:&value length:sizeof(value)];
-    [self.delegate colorMap:self didChangeColorForKey:theKey];
+    [self.delegate colorMap:self didChangeColorForKey:theKey from:oldColor to:theColor];
 }
 
 - (NSColor *)colorForKey:(iTermColorMapKey)theKey {

@@ -4493,16 +4493,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 #pragma mark - iTermColorMapDelegate
 
-- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
+- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap didChangeColorForKey:(iTermColorMapKey)theKey from:(NSColor *)before to:(NSColor *)after {
     if (theKey == kColorMapBackground) {
         [self updateScrollerForBackgroundColor];
         [[self enclosingScrollView] setBackgroundColor:[colorMap colorForKey:theKey]];
         [self recomputeBadgeLabel];
-        [_delegate textViewBackgroundColorDidChange];
+        [_delegate textViewBackgroundColorDidChangeFrom:before to:after];
         [_delegate textViewProcessedBackgroundColorDidChange];
     } else if (theKey == kColorMapForeground) {
         [self recomputeBadgeLabel];
-        [_delegate textViewForegroundColorDidChange];
+        [_delegate textViewForegroundColorDidChangeFrom:before to:after];
     } else if (theKey == kColorMapSelection) {
         _drawingHelper.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
                                                                               towardsGrayLevel:0.5];

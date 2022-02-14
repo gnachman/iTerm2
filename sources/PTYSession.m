@@ -9689,9 +9689,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [[_delegate realParentWindow] currentSessionWordAtCursorDidBecome:word];
 }
 
-- (void)textViewBackgroundColorDidChange {
+- (void)textViewBackgroundColorDidChangeFrom:(NSColor *)before to:(NSColor *)after {
     DLog(@"%@", [NSThread callStackSymbols]);
-    [self backgroundColorDidChangeJigglingIfNeeded:YES];
+    [self backgroundColorDidChangeJigglingIfNeeded:before.isDark != after.isDark];
 }
 
 - (void)textViewTransparencyDidChange {
@@ -9709,9 +9709,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         self.needsJiggle = YES;
     }
 }
-- (void)textViewForegroundColorDidChange {
+- (void)textViewForegroundColorDidChangeFrom:(NSColor *)before to:(NSColor *)after {
     DLog(@"%@", [NSThread callStackSymbols]);
-    if (_profileInitialized) {
+    if (_profileInitialized && before.isDark != after.isDark) {
         self.needsJiggle = YES;
     }
 }
@@ -15345,8 +15345,8 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 #pragma mark - iTermImmutableColorMapDelegate
 
-- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap didChangeColorForKey:(iTermColorMapKey)theKey {
-    [_textview immutableColorMap:colorMap didChangeColorForKey:theKey];
+- (void)immutableColorMap:(id<iTermColorMapReading>)colorMap didChangeColorForKey:(iTermColorMapKey)theKey from:(NSColor *)before to:(NSColor *)after {
+    [_textview immutableColorMap:colorMap didChangeColorForKey:theKey from:before to:after];
 }
 
 - (void)immutableColorMap:(id<iTermColorMapReading>)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount {

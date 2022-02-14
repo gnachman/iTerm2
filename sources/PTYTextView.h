@@ -193,8 +193,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (void)textViewDidRefresh;
 
 // The background color in the color map changed.
-- (void)textViewBackgroundColorDidChange;
-- (void)textViewForegroundColorDidChange;
+- (void)textViewBackgroundColorDidChangeFrom:(NSColor *)before to:(NSColor *)after;
+- (void)textViewForegroundColorDidChangeFrom:(NSColor *)before to:(NSColor *)after;
 - (void)textViewTransparencyDidChange;
 - (void)textViewProcessedBackgroundColorDidChange;
 
