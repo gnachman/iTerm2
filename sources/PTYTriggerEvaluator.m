@@ -30,9 +30,10 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
     iTermRateLimitedUpdate *_idempotentTriggerRateLimit;
 }
 
-- (instancetype)init {
+- (instancetype)initWithQueue:(dispatch_queue_t)queue {
     self = [super init];
     if (self) {
+        _queue = queue;
         _triggerLineNumber = -1;
         _expect = [[iTermExpect alloc] initDry:NO];
         _triggersSlownessDetector = [[iTermSlownessDetector alloc] init];
@@ -193,6 +194,7 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
         if (!_idempotentTriggerRateLimit) {
             _idempotentTriggerRateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"idempotent triggers"
                                                                        minimumInterval:interval];
+            _idempotentTriggerRateLimit.queue = _queue;
         } else {
             _idempotentTriggerRateLimit.minimumInterval = interval;
         }

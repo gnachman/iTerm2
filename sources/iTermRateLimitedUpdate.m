@@ -11,10 +11,11 @@
 #import "DebugLogging.h"
 #import "NSTimer+iTerm.h"
 #import "iTermGCD.h"
+#import "iTermGCDTimer.h"
 
 @implementation iTermRateLimitedUpdate {
     // While nonnil, block will not be performed.
-    NSTimer *_timer;
+    id<iTermTimer> _timer;
     void (^_block)(void);
 }
 
@@ -73,11 +74,18 @@
         DLog(@"Schedule timer after delay %@", @(delay));
     }
     [_timer invalidate];
-    _timer = [NSTimer scheduledWeakTimerWithTimeInterval:delay
-                                                  target:self
-                                                selector:@selector(performBlockIfNeeded:)
-                                                userInfo:nil
-                                                 repeats:NO];
+    if (_queue) {
+        _timer = [iTermGCDTimer scheduledWeakTimerWithTimeInterval:delay
+                                                            target:self
+                                                          selector:@selector(performBlockIfNeeded:)
+                                                             queue:_queue];
+    } else {
+        _timer = [NSTimer scheduledWeakTimerWithTimeInterval:delay
+                                                      target:self
+                                                    selector:@selector(performBlockIfNeeded:)
+                                                    userInfo:nil
+                                                     repeats:NO];
+    }
 }
 
 - (void)setMinimumInterval:(NSTimeInterval)minimumInterval {

@@ -114,7 +114,7 @@ static _Atomic int gPerformingJoinedBlock;
         _setWorkingDirectoryOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _previousCommandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
-        _triggerEvaluator = [[PTYTriggerEvaluator alloc] init];
+        _triggerEvaluator = [[PTYTriggerEvaluator alloc] initWithQueue:queue];
         _triggerEvaluator.delegate = self;
         _triggerEvaluator.dataSource = self;
         const int defaultWidth = 80;

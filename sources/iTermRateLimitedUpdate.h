@@ -17,6 +17,7 @@
 // When suppression mode is off, the last invocation during the idle time will run after the idle time ends.
 // When suppression mode is on, any invocations during the idle time will be ignored.
 @property (nonatomic) BOOL suppressionMode;
+@property (nonatomic, strong) dispatch_queue_t queue;
 
 - (instancetype)initWithName:(NSString *)name
                 minimumInterval:(NSTimeInterval)minimumInterval NS_DESIGNATED_INITIALIZER;
