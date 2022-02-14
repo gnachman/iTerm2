@@ -622,8 +622,18 @@ static NSString *gSearchString;
 
 - (NSArray<NSString *> *)completionsForText:(NSString *)text
                                       range:(NSRange)range {
-    return [[[iTermSearchHistory sharedInstance] queries] filteredArrayUsingBlock:^BOOL(NSString *historyEntry) {
-        return [[historyEntry localizedLowercaseString] it_hasPrefix:[text localizedLowercaseString]];
+    NSArray<NSString *> *history = [[iTermSearchHistory sharedInstance] queries];
+    if (text.length == 0) {
+        return history;
+    }
+    if (range.location == NSNotFound) {
+        return history;
+    }
+    NSString *prefix = [[text substringWithRange:range] localizedLowercaseString];
+    return [[history flatMapWithBlock:^NSArray *(NSString *line) {
+        return [line componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    }] filteredArrayUsingBlock:^BOOL(NSString *word) {
+        return [[word localizedLowercaseString] it_hasPrefix:prefix];
     }];
 }
 
