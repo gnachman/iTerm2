@@ -66,7 +66,13 @@
     self = [super initWithFrame:NSMakeRect(0, 0, 100, 100)];
     if (self) {
         self.autoresizesSubviews = YES;
-
+        // This view ignores its alpha value sometimes unless it has a layer. Like setAlpha: is
+        // flaky (it works if you do it after a spin of the runloop). I guess if you have a subviews
+        // with layers and you want alpha to work you must yourself have a layer? I don't think I'll
+        // ever understand layers on macOS and I will be forever grateful that I don't have to
+        // maintain the spaghetti that must implement them.
+        self.wantsLayer = YES;
+        self.layer = [[CALayer alloc] init];
         _backgroundColorView = [[iTermImageBackgroundColorView alloc] initWithFrame:NSMakeRect(0, 0, 100, 100)];
         _backgroundColorView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
         [self addSubview:_backgroundColorView];
