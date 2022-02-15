@@ -1129,8 +1129,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                     ctx:(CGContextRef)ctx
                                           virtualOffset:(CGFloat)virtualOffset {
     // Combine runs on each line, except those with different values of
-    // `selected` or `match`. Those properties affect foreground color and must
-    // split ligatures up.
+    // `selected` or `match`, or when faint text is present.
+    // Those properties affect foreground color and must split ligatures up and process foreground
+    // color separately.
     NSArray<iTermBackgroundColorRunsInLine *> *fakeRunArrays = [backgroundRunArrays mapWithBlock:^id(iTermBackgroundColorRunsInLine *runs) {
         NSMutableArray<iTermBoxedBackgroundColorRun *> *combinedRuns = [NSMutableArray array];
         iTermBackgroundColorRun previousRun = { {0} };
@@ -1140,9 +1141,13 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                 havePreviousRun = YES;
                 previousRun = *run.valuePointer;
             } else if (run.valuePointer->selected == previousRun.selected &&
-                       run.valuePointer->isMatch == previousRun.isMatch) {
+                       run.valuePointer->isMatch == previousRun.isMatch &&
+                       !run.valuePointer->beneathFaintText &&
+                       !previousRun.beneathFaintText) {
+                // Combine with preceding run.
                 previousRun.range = NSUnionRange(previousRun.range, run.valuePointer->range);
             } else {
+                // Allow this run to remain.
                 [combinedRuns addObject:[iTermBoxedBackgroundColorRun boxedBackgroundColorRunWithValue:previousRun]];
                 previousRun = *run.valuePointer;
             }

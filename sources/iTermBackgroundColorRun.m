@@ -37,6 +37,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
         run->bgGreen = theLine[coord.x].bgGreen;
         run->bgBlue = theLine[coord.x].bgBlue;
         run->bgColorMode = theLine[coord.x].backgroundColorMode;
+        run->beneathFaintText = !!theLine[coord.x].faint;
     }
 }
 
