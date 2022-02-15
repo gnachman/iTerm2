@@ -2990,8 +2990,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         }
         NSString *stringKey = inverseMap[@(token.csi->p[i])];
         NSString *hexEncodedKey = [stringKey hexEncodedString];
-        DLog(@"requestTermcapTerminfo for key %@", stringKey);
-        NSLog(@"promise %@ for %@", stringKey, token);
+        DLog(@"requestTermcapTerminfo key=%@ for %@", stringKey, token);
         void (^add)(unsigned short, NSEventModifierFlags, NSString *, NSString *) =
             ^void(unsigned short keyCode,
                   NSEventModifierFlags flags,
