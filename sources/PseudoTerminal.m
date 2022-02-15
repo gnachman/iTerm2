@@ -5032,7 +5032,7 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         [CATransaction begin];
         [CATransaction setDisableActions:YES];
-        self.contentView.backgroundImage.hidden = NO;
+        self.contentView.backgroundImage.hidden = !iTermTextIsMonochrome() || (self.contentView.backgroundImage.image == nil);
         const CGFloat transparency = 1 - self.currentSession.textview.transparencyAlpha;
         self.contentView.backgroundImage.transparency = transparency;
         self.contentView.backgroundImage.blend = self.currentSession.desiredBlend;
