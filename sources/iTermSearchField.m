@@ -33,6 +33,11 @@
 
 @implementation iTermSearchField
 
+- (void)setStringValue:(NSString *)stringValue {
+    [super setStringValue:stringValue];
+    DLog(@"%@ Set string value to %@\n%@", self, stringValue, [NSThread callStackSymbols]);
+}
+
 - (void)setArrowHandler:(id)handler
 {
     arrowHandler_ = handler;
@@ -40,6 +45,7 @@
 
 - (BOOL)performKeyEquivalent:(NSEvent *)theEvent
 {
+    DLog(@"%@", theEvent);
     unsigned int modflag;
     unsigned short keycode;
     modflag = [theEvent it_modifierFlags];
