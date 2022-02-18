@@ -39,7 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@protocol iTermExternalAttributeIndexReading<NSMutableCopying, NSObject>
+@protocol iTermExternalAttributeIndexReading<NSCopying, NSMutableCopying, NSObject>
 @property (nonatomic, readonly) NSDictionary<NSNumber *, iTermExternalAttribute *> *attributes;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 - (NSData *)data;
@@ -48,6 +48,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index;
 - (iTermExternalAttributeIndex *)subAttributesFromIndex:(int)index maximumLength:(int)maxLength;
 - (iTermExternalAttribute * _Nullable)objectAtIndexedSubscript:(NSInteger)idx;
+- (id<iTermExternalAttributeIndexReading>)copy;
 @end
 
 @interface iTermExternalAttributeIndex: NSObject<iTermExternalAttributeIndexReading>

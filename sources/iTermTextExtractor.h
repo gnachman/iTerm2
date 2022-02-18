@@ -12,6 +12,8 @@
 #import "SmartMatch.h"
 #import "PTYTextViewDataSource.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
     // Any kind of white space.
     kTextExtractorClassWhitespace,
@@ -45,7 +47,8 @@ extern const NSInteger kLongMaximumWordLength;
 
 @property(nonatomic, assign) VT100GridRange logicalWindow;
 @property(nonatomic, readonly) BOOL hasLogicalWindow;
-@property(nonatomic, weak, readonly) id<iTermTextDataSource> dataSource;
+@property(nullable, nonatomic, weak, readonly) id<iTermTextDataSource> dataSource;
+@property(atomic) BOOL stopAsSoonAsPossible;
 
 // Characters that divide words.
 + (NSCharacterSet *)wordSeparatorCharacterSet;
@@ -77,11 +80,11 @@ extern const NSInteger kLongMaximumWordLength;
 // |actionRequired| is set then rules without an action are ignored. If a rule is matched, it is
 // returned and |range| is set to the range of matching characters. The returned match will be
 // populated and the matching text will be in smartMatch.components[0].
-- (SmartMatch *)smartSelectionAt:(VT100GridCoord)location
-                       withRules:(NSArray *)rules
-                  actionRequired:(BOOL)actionRequired
-                           range:(VT100GridWindowedRange *)range
-                ignoringNewlines:(BOOL)ignoringNewlines;
+- (SmartMatch * _Nullable)smartSelectionAt:(VT100GridCoord)location
+                                 withRules:(NSArray * _Nullable)rules
+                            actionRequired:(BOOL)actionRequired
+                                     range:(VT100GridWindowedRange * _Nullable)range  // unused
+                          ignoringNewlines:(BOOL)ignoringNewlines;
 
 // Returns the range of the whole wrapped line including |coord|.
 - (VT100GridWindowedRange)rangeForWrappedLineEncompassing:(VT100GridCoord)coord
@@ -142,26 +145,26 @@ extern const NSInteger kLongMaximumWordLength;
 // if |maxBytes| is positive then the result will not exceed that size. |truncateTail| determines
 // whether the tail or head of the string is shortened to fit.
 - (id)contentInRange:(VT100GridWindowedRange)range
-   attributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider
+   attributeProvider:(NSDictionary *(^ _Nullable)(screen_char_t, iTermExternalAttribute *))attributeProvider
           nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
                  pad:(BOOL)pad
   includeLastNewline:(BOOL)includeLastNewline
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
               cappedAtSize:(int)maxBytes
         truncateTail:(BOOL)truncateTail
-         continuationChars:(NSMutableIndexSet *)continuationChars
-              coords:(NSMutableArray *)coords;
+   continuationChars:(NSMutableIndexSet * _Nullable)continuationChars
+              coords:(NSMutableArray * _Nullable)coords;
 
 // Returns an iTermLocated[Attributed]String
 - (id)locatedStringInRange:(VT100GridWindowedRange)range
-         attributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider
+         attributeProvider:(NSDictionary *(^ _Nullable)(screen_char_t, iTermExternalAttribute *))attributeProvider
                 nullPolicy:(iTermTextExtractorNullPolicy)nullPolicy
                        pad:(BOOL)pad
         includeLastNewline:(BOOL)includeLastNewline
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
               cappedAtSize:(int)maxBytes
               truncateTail:(BOOL)truncateTail
-         continuationChars:(NSMutableIndexSet *)continuationChars;
+         continuationChars:(NSMutableIndexSet * _Nullable)continuationChars;
 
 - (NSIndexSet *)indexesOnLine:(int)line containingCharacter:(unichar)c inRange:(NSRange)range;
 
@@ -169,8 +172,8 @@ extern const NSInteger kLongMaximumWordLength;
 - (int)lengthOfAbsLine:(long long)absLine;
 
 - (void)enumerateCharsInRange:(VT100GridWindowedRange)range
-                    charBlock:(BOOL (^NS_NOESCAPE)(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *, VT100GridCoord coord))charBlock
-                     eolBlock:(BOOL (^NS_NOESCAPE)(unichar code, int numPreceedingNulls, int line))eolBlock;
+                    charBlock:(BOOL (^ _Nullable NS_NOESCAPE)(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute * _Nullable, VT100GridCoord coord))charBlock
+                     eolBlock:(BOOL (^ _Nullable NS_NOESCAPE)(unichar code, int numPreceedingNulls, int line))eolBlock;
 
 - (void)enumerateWrappedLinesIntersectingRange:(VT100GridRange)range
                                          block:(void (^)(iTermStringLine *, VT100GridWindowedRange, BOOL *))block;
@@ -188,7 +191,7 @@ extern const NSInteger kLongMaximumWordLength;
                                        forward:(BOOL)forward
                            respectHardNewlines:(BOOL)respectHardNewlines
                                       maxChars:(int)maxChars
-                             continuationChars:(NSMutableIndexSet *)continuationChars
+                             continuationChars:(NSMutableIndexSet * _Nullable)continuationChars
                            convertNullsToSpace:(BOOL)convertNullsToSpace;
 
 - (ScreenCharArray *)combinedLinesInRange:(NSRange)range;
@@ -196,7 +199,7 @@ extern const NSInteger kLongMaximumWordLength;
 - (screen_char_t)characterAt:(VT100GridCoord)coord;
 - (screen_char_t)characterAtAbsCoord:(VT100GridAbsCoord)coord;
 
-- (iTermExternalAttribute *)externalAttributesAt:(VT100GridCoord)coord;
+- (iTermExternalAttribute * _Nullable)externalAttributesAt:(VT100GridCoord)coord;
 
 // Returns a subset of `range` by removing leading and trailing whitespace.
 - (VT100GridAbsCoordRange)rangeByTrimmingWhitespaceFromRange:(VT100GridAbsCoordRange)range;
@@ -222,16 +225,16 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
 // Gets the word at a location. Doesn't sweat fancy word segmentation, and won't return anything
 // terribly long. Also uses a stricter definition of what characters can be in a word, excluding
 // all punctuation except -.
-- (NSString *)fastWordAt:(VT100GridCoord)location;
+- (NSString * _Nullable)fastWordAt:(VT100GridCoord)location;
 
-- (NSURL *)urlOfHypertextLinkAt:(VT100GridCoord)coord urlId:(out NSString **)urlId;
+- (NSURL * _Nullable)urlOfHypertextLinkAt:(VT100GridCoord)coord urlId:(out NSString * _Nullable * _Nonnull)urlId;
 
 // Searches before and after `coord` until a coordinate is found that does not pass the test.
 // Returns the resulting range.
 - (VT100GridWindowedRange)rangeOfCoordinatesAround:(VT100GridCoord)coord
                                    maximumDistance:(int)maximumDistance
                                        passingTest:(BOOL(^)(screen_char_t *c,
-                                                            iTermExternalAttribute *ea,
+                                                            iTermExternalAttribute * _Nullable ea,
                                                             VT100GridCoord coord))block;
 
 - (int)startOfIndentationOnLine:(int)line;
@@ -244,3 +247,5 @@ typedef NS_ENUM(NSUInteger, iTermTextExtractorTrimTrailingWhitespace) {
           searchingBackwardFrom:(NSInteger)start;
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -37,6 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, readonly) BOOL hasValue;
 @property(nonatomic, nullable, readonly) T maybeValue;
+@property(nonatomic, nullable, readonly) NSError *maybeError;
 
 + (instancetype)promise:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal> seal))block;
 // Nil gives default error
@@ -56,6 +57,20 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermPromise<T> *)onQueue:(dispatch_queue_t)queue then:(void (^)(T value))block;
 - (iTermPromise<T> *)onQueue:(dispatch_queue_t)queue catchError:(void (^)(NSError *error))block;
 
+- (iTermOr<T, NSError *> *)wait;
+
 @end
+
+@interface iTermRenegablePromise<T>: iTermPromise
+@property (nonatomic, readonly, copy) void (^renegeBlock)(void);
+
++ (instancetype)promise:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal> seal))block NS_UNAVAILABLE;
++ (instancetype)promise:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal> seal))block
+                renege:(void (^)(void))renege;
+
+- (void)renege;
+
+@end
+
 
 NS_ASSUME_NONNULL_END

@@ -3250,7 +3250,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 }
 
 - (NSString *)decrqssSGR {
-    NSArray<NSString *> *codes = [[VT100Terminal sgrCodesForGraphicRendition:graphicRendition_].allObjects sortedArrayUsingSelector:@selector(compare:)];
+    NSArray<NSString *> *codes = [[VT100Terminal sgrCodesForGraphicRendition:graphicRendition_].array sortedArrayUsingSelector:@selector(compare:)];
     return [codes componentsJoinedByString:@";"];
 }
 
@@ -3348,8 +3348,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     return [iTermPromise promiseDefaultError];
 }
 
-+ (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
-                         externalAttributes:(iTermExternalAttribute *)ea {
++ (NSOrderedSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
+                                externalAttributes:(iTermExternalAttribute *)ea {
     VT100GraphicRendition g = {
         .bold = c.bold,
         .blink = c.blink,
@@ -3376,8 +3376,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     return [self sgrCodesForGraphicRendition:g];
 }
 
-+ (NSSet<NSString *> *)sgrCodesForGraphicRendition:(VT100GraphicRendition)graphicRendition {
-    NSMutableSet<NSString *> *result = [NSMutableSet set];
++ (NSOrderedSet<NSString *> *)sgrCodesForGraphicRendition:(VT100GraphicRendition)graphicRendition {
+    NSMutableOrderedSet<NSString *> *result = [NSMutableOrderedSet orderedSet];
     [result addObject:@"0"];  // for xterm compatibility. Also makes esctest happy.
     switch (graphicRendition.fgColorMode) {
         case ColorModeNormal:

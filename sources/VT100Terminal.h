@@ -131,8 +131,8 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic, copy) NSDictionary<NSNumber *, id> *stringForKeypress;
 @property(atomic) BOOL dirty;
 
-+ (NSSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
-                         externalAttributes:(iTermExternalAttribute *)ea;
++ (NSOrderedSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
+                                externalAttributes:(iTermExternalAttribute *)ea;
 
 - (void)setStateFromDictionary:(NSDictionary *)dict;
 

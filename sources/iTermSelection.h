@@ -124,6 +124,8 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 // Has clearColumnWindowForLiveSelection been called?
 @property(nonatomic, readonly) BOOL haveClearedColumnWindow;
 
+@property(nonatomic, readonly) int approximateNumberOfLines;
+
 // Returns the debugging name for a selection mode.
 + (NSString *)nameForMode:(iTermSelectionMode)mode;
 

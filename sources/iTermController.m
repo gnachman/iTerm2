@@ -210,7 +210,7 @@ static iTermController *gSharedInstance;
     [_restorableSessions release];
     [_currentRestorableSessionsStack release];
     [_fullScreenWindowManager release];
-    [_lastSelection release];
+    [_lastSelectionPromise release];
     [_setCurrentTerminalHelper release];
     [super dealloc];
 }

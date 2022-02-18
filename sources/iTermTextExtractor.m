@@ -1911,6 +1911,10 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                       range.columnWindow.length <= 0);
     int left = range.columnWindow.length ? range.columnWindow.location : 0;
     for (int y = MAX(0, range.coordRange.start.y); y <= MIN(bound, range.coordRange.end.y); y++) {
+        if (self.stopAsSoonAsPossible) {
+            DLog(@"Aborted");
+            break;
+        }
         if (y == range.coordRange.end.y) {
             // Reduce endx for last line.
             const int reducedEndX = range.columnWindow.length ? VT100GridWindowedRangeEnd(range).x : range.coordRange.end.x;
@@ -1980,6 +1984,10 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     for (int y = MIN([_dataSource numberOfLines] - 1, range.coordRange.end.y);
          y >= yLimit;
          y--) {
+        if (self.stopAsSoonAsPossible) {
+            DLog(@"Aborted");
+            break;
+        }
         ScreenCharArray *sca = [_dataSource screenCharArrayForLine:y];
         const screen_char_t *theLine = sca.line;
         int x = initialX;

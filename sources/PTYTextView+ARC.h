@@ -88,6 +88,27 @@ iTermURLActionHelperDelegate>
 
 - (void)showIndicatorMessage:(NSString *)message at:(NSPoint)point;
 
+#pragma mark - Selected Text
+
+// A rough heuristic for whether it will be noticeably slow to extract the selection to a string.
+- (BOOL)selectionIsBig;
+
+// Saves the selection as the "last" selection app-wide and returns a promise in case you need the value.
+- (iTermPromise<NSString *> *)recordSelection;
+
+- (id)selectedTextWithStyle:(iTermCopyTextStyle)style
+               cappedAtSize:(int)maxBytes
+          minimumLineNumber:(int)minimumLineNumber;
+
+- (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad;
+
+- (NSString *)selectedTextCappedAtSize:(int)maxBytes
+                     minimumLineNumber:(int)minimumLineNumber;
+
+- (void)asynchronouslyVendSelectedTextWithStyle:(iTermCopyTextStyle)style
+                                   cappedAtSize:(int)maxBytes
+                              minimumLineNumber:(int)minimumLineNumber;
+
 @end
 
 NS_ASSUME_NONNULL_END

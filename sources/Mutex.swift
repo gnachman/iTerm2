@@ -66,5 +66,11 @@ class MutableAtomicObject<T> {
             _value = newValue
         }
     }
+
+    func access(_ block: (T) -> Void) {
+        mutex.sync {
+            block(_value)
+        }
+    }
 }
 

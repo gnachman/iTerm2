@@ -1403,7 +1403,7 @@
 }
 
 - (NSArray<NSString *> *)terminalSGRCodesInRectangle:(VT100GridRect)screenRect {
-    __block NSMutableSet<NSString *> *codes = nil;
+    __block NSMutableOrderedSet<NSString *> *codes = nil;
     VT100GridRect rect = screenRect;
     rect.origin.y += [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
     [self enumerateLinesInRange:NSMakeRange(rect.origin.y, rect.size.height)
@@ -1418,12 +1418,12 @@
             if (c.code == 0 && !c.complexChar && !c.image) {
                 continue;
             }
-            NSSet<NSString *> *charCodes = [VT100Terminal sgrCodesForCharacter:c
-                                                            externalAttributes:eaIndex[x]];
+            NSOrderedSet<NSString *> *charCodes = [VT100Terminal sgrCodesForCharacter:c
+                                                                   externalAttributes:eaIndex[x]];
             if (!codes) {
                 codes = [charCodes mutableCopy];
             } else {
-                [codes intersectSet:charCodes];
+                [codes intersectSet:charCodes.set];
                 if (!codes.count) {
                     *stop = YES;
                     return;
@@ -1431,7 +1431,7 @@
             }
         }
     }];
-    return codes.allObjects ?: @[];
+    return codes.array ?: @[];
 }
 
 - (void)terminalWillReceiveFileNamed:(NSString *)name

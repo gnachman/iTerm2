@@ -140,6 +140,11 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
             self.selectionMode == other.selectionMode &&
             self.connected == other.connected);
 }
+
+- (int)approximateNumberOfLines {
+    return self.absRange.coordRange.end.y - self.absRange.coordRange.start.y + 1;
+}
+
 @end
 
 @implementation iTermSelection {
@@ -147,7 +152,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     VT100GridAbsWindowedRange _initialAbsRange;
     BOOL _live;
     BOOL _extend;
-    NSMutableArray *_subSelections;  // iTermSubSelection array
+    NSMutableArray<iTermSubSelection *> *_subSelections;
 }
 
 + (NSString *)nameForMode:(iTermSelectionMode)mode {
@@ -1141,6 +1146,14 @@ static NSRange iTermMakeRange(NSInteger location, NSInteger length) {
             break;
         }
     }
+}
+
+- (int)approximateNumberOfLines {
+    __block int sum = 0;
+    [_subSelections enumerateObjectsUsingBlock:^(iTermSubSelection * _Nonnull sub, NSUInteger idx, BOOL * _Nonnull stop) {
+        sum += sub.approximateNumberOfLines;
+    }];
+    return sum;
 }
 
 #pragma mark - Serialization

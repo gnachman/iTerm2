@@ -109,6 +109,17 @@ extern const int kColorMap24bitBase;
                    isBackground:(BOOL)isBackground
              useCustomBoldColor:(BOOL)useCustomBoldColor
                    brightenBold:(BOOL)brightenBold;
+
+- (NSColor *)colorForCode:(int)theIndex
+                    green:(int)green
+                     blue:(int)blue
+                colorMode:(ColorMode)theMode
+                     bold:(BOOL)isBold
+                    faint:(BOOL)isFaint
+             isBackground:(BOOL)isBackground
+       useCustomBoldColor:(BOOL)useCustomBoldColor
+             brightenBold:(BOOL)brightenBold;
+
 - (iTermColorMap *)copy;
 @end
 

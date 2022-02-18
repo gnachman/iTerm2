@@ -484,6 +484,30 @@ const int kColorMapAnsiBrightModifier = 8;
     return dict;
 }
 
+- (NSColor *)colorForCode:(int)theIndex
+                    green:(int)green
+                     blue:(int)blue
+                colorMode:(ColorMode)theMode
+                     bold:(BOOL)isBold
+                    faint:(BOOL)isFaint
+             isBackground:(BOOL)isBackground
+       useCustomBoldColor:(BOOL)useCustomBoldColor
+             brightenBold:(BOOL)brightenBold {
+    iTermColorMapKey key = [self keyForColor:theIndex
+                                       green:green
+                                        blue:blue
+                                   colorMode:theMode
+                                        bold:isBold
+                                isBackground:isBackground
+                          useCustomBoldColor:useCustomBoldColor
+                                brightenBold:brightenBold];
+    NSColor *color  = [self colorForKey:key];;
+    if (!isBackground && isFaint) {
+        color = [color colorWithAlphaComponent:0.5];
+    }
+    return color;
+}
+
 - (iTermColorMap *)copy {
     return [self copyWithZone:nil];
 }

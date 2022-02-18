@@ -1,0 +1,290 @@
+//
+//  SelectionPromise.swift
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 2/15/22.
+//
+
+import AppKit
+import UniformTypeIdentifiers
+
+fileprivate protocol Destination {
+    var length: Int { get }
+    func appendSelectionContent(_ value: Any, newline: Bool)
+}
+
+extension NSMutableString: Destination {
+    func appendSelectionContent(_ value: Any, newline: Bool) {
+        let string = String(value as! NSString)
+        append(string)
+        if newline && !string.hasSuffix("\n") {
+            append("\n")
+        }
+    }
+
+}
+extension NSMutableAttributedString: Destination {
+    func appendSelectionContent(_ value: Any, newline: Bool) {
+        let attributedString = value as! NSAttributedString
+        append(attributedString)
+        if newline && !attributedString.string.hasSuffix("\n") {
+            iterm_appendString("\n")
+        }
+    }
+}
+
+@objc(iTermSelectionExtractor)
+class SelectionExtractor: NSObject {
+    fileprivate let selection: iTermSelection
+    fileprivate let snapshot: TerminalContentSnapshot
+    fileprivate let options: iTermSelectionExtractorOptions
+    private let maxBytes: Int32
+    private let minimumLineNumber: Int32
+    private var atomicExtractor = MutableAtomicObject<iTermTextExtractor?>(nil)
+    private var _canceled = MutableAtomicObject<Bool>(false)
+    fileprivate var canceled: Bool {
+        return _canceled.value
+    }
+
+    // Does not include selected text on lines before |minimumLineNumber|.
+    // Returns an NSAttributedString* if style is iTermCopyTextStyleAttributed, or an NSString* if not.
+    @objc
+    init(selection: iTermSelection,
+         snapshot: TerminalContentSnapshot,
+         options: iTermSelectionExtractorOptions,
+         maxBytes: Int32,
+         minimumLineNumber: Int32) {
+        self.selection = selection.copy() as! iTermSelection  // TODO: nil delegate
+        self.snapshot = snapshot
+        self.options = options
+        self.maxBytes = maxBytes
+        self.minimumLineNumber = minimumLineNumber
+    }
+
+    func withRelativeWindowedRange(_ range: VT100GridAbsWindowedRange, closure: (VT100GridWindowedRange) -> Void) -> Bool {
+        if range.coordRange.start.y < snapshot.cumulativeOverflow || range.coordRange.start.y - snapshot.cumulativeOverflow > Int32.max {
+            return false
+        }
+        if range.coordRange.end.y < snapshot.cumulativeOverflow || range.coordRange.end.y - snapshot.cumulativeOverflow > Int32.max {
+            return false
+        }
+        let relative = VT100GridWindowedRangeFromAbsWindowedRange(range, snapshot.cumulativeOverflow)
+        closure(relative)
+        return true
+
+    }
+
+    fileprivate func extract(_ result: Destination,
+                             attributeProvider: ((screen_char_t, iTermExternalAttribute) -> [AnyHashable: Any])?) {
+        DLog("Begin extracting \(String(describing: selection.allSubSelections)) self=\(self)")
+        var cap = maxBytes > 0 ? maxBytes : Int32.max
+        selection.enumerateSelectedAbsoluteRanges { [unowned self] absRange, stopPtr, eol in
+            if _canceled.value {
+                return
+            }
+            _ = self.withRelativeWindowedRange(absRange) { [unowned self] proposedRange in
+                if proposedRange.coordRange.end.y < minimumLineNumber {
+                    return
+                }
+                let range = VT100GridWindowedRangeMake(
+                    VT100GridCoordRangeMake(proposedRange.coordRange.start.x,
+                                            max(proposedRange.coordRange.start.y, minimumLineNumber),
+                                            proposedRange.coordRange.end.x,
+                                            proposedRange.coordRange.end.y),
+                    proposedRange.columnWindow.location,
+                    proposedRange.columnWindow.length)
+                if maxBytes > 0 {
+                    cap = maxBytes - Int32(result.length)
+                    if cap <= 0 {
+                        stopPtr?.pointee = ObjCBool(true)
+                        return
+                    }
+                }
+                let extractor = iTermTextExtractor(dataSource: snapshot)
+                atomicExtractor.set(extractor)
+                let content = extractor.content(in: range,
+                                                attributeProvider: attributeProvider,
+                                                nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
+                                                pad: false,
+                                                includeLastNewline: options.contains(.copyLastNewline),
+                                                trimTrailingWhitespace: options.contains(.trimWhitespace),
+                                                cappedAtSize: cap,
+                                                truncateTail: true,
+                                                continuationChars: nil,
+                                                coords: nil)
+                atomicExtractor.set(nil)
+                result.appendSelectionContent(content, newline: eol)
+            }
+        }
+        DLog("Finish extracting \(String(describing: selection.allSubSelections)). canceled=\(_canceled.value) self=\(self)")
+    }
+
+    fileprivate func cancel() {
+        DLog("Cancel self=\(self)")
+        _canceled.set(true)
+        atomicExtractor.access { maybeExtractor in
+            maybeExtractor?.stopAsSoonAsPossible = true
+        }
+    }
+}
+
+@objc(iTermStringSelectionExtractor)
+class StringSelectionExtractor: SelectionExtractor {
+    func extract() -> NSString {
+        if !selection.hasSelection {
+            return ""
+        }
+
+        let result = NSMutableString()
+        super.extract(result, attributeProvider: nil)
+        return result
+    }
+}
+
+@objc(iTermSGRSelectionExtractor)
+class SGRSelectionExtractor: StringSelectionExtractor {
+    override func extract() -> NSString {
+        if !selection.hasSelection {
+            return ""
+        }
+        let sgrAttribute = NSAttributedString.Key("iTermSGR");
+        let attributeProvider = { (c: screen_char_t, ea: iTermExternalAttribute?) -> [AnyHashable: Any] in
+            let codes = VT100Terminal.sgrCodes(forCharacter: c, externalAttributes: ea)!
+            return [sgrAttribute: codes.array]
+        }
+        let temp = NSMutableAttributedString()
+        super.extract(temp, attributeProvider: attributeProvider)
+        let result = NSMutableString()
+        let sgr0 = "\u{1b}[0"
+        temp.enumerateAttribute(sgrAttribute,
+                                in: NSMakeRange(0, temp.length),
+                                options: []) { value, range, stop in
+            let params = value as! [String]
+            let code = "\u{1b}[" + params.joined(separator: ";") + "m"
+            result.append(code)
+            let swiftRange = Range(range, in: temp.string)!
+            result.append(String(temp.string[swiftRange]))
+        }
+        result.append(sgr0)
+        result.replaceOccurrences(of: "\n",
+                                  with: sgr0 + "\n",
+                                  options: [],
+                                  range: NSRange(location: 0,
+                                                 length: result.length))
+        return result
+    }
+}
+
+@objc(iTermAttributedStringSelectionExtractor)
+class AttributedStringSelectionExtractor: SelectionExtractor {
+    func extract(_ characterAttributesProvider: CharacterAttributesProvider) -> NSAttributedString {
+        let result = NSMutableAttributedString()
+        if !selection.hasSelection {
+            return result
+        }
+
+        let attributeProvider = { (c, ea) -> [AnyHashable: Any] in
+            return characterAttributesProvider.attributes(c, externalAttributes: ea)
+        }
+        super.extract(result, attributeProvider: attributeProvider)
+        return result
+    }
+}
+
+@objc(iTermSelectionPromise)
+class SelectionPromise: NSObject {
+    private static let queue = DispatchQueue(label: "com.iterm2.selection")
+
+    @objc
+    class func string(_ extractor: StringSelectionExtractor,
+                      allowEmpty: Bool) -> iTermRenegablePromise<NSString> {
+        return iTermRenegablePromise<NSString>.init { seal in
+            Self.queue.async {
+                let value = extractor.extract()
+                if extractor.canceled {
+                    seal.rejectWithDefaultError()
+                    return
+                }
+                if value.length == 0 && !allowEmpty {
+                    seal.rejectWithDefaultError()
+                    return
+                }
+                seal.fulfill(value)
+            }
+        } renege: {
+            extractor.cancel()
+        }
+    }
+
+    @objc
+    class func attributedString(_ extractor: AttributedStringSelectionExtractor,
+                                characterAttributesProvider: CharacterAttributesProvider,
+                                allowEmpty: Bool) -> iTermRenegablePromise<NSAttributedString> {
+        return iTermRenegablePromise<NSAttributedString>.init { seal in
+            Self.queue.async {
+                let value = extractor.extract(characterAttributesProvider)
+                if extractor.canceled {
+                    seal.rejectWithDefaultError()
+                    return
+                }
+                if value.length == 0 && !allowEmpty {
+                    seal.rejectWithDefaultError()
+                    return
+                }
+                seal.fulfill(value)
+            }
+        } renege: {
+            extractor.cancel()
+        }
+    }
+}
+
+@objc(iTermAsyncSelectionProvider)
+class AsyncSelectionProvider: NSObject, NSPasteboardWriting {
+    @objc static var currentProvider: AsyncSelectionProvider? = nil
+
+    @objc(copyPromise:type:)
+    static func copy(_ promise: iTermRenegablePromise<AnyObject>,
+                     type: NSPasteboard.PasteboardType) {
+        let provider = AsyncSelectionProvider(promise, type: type)
+        Self.currentProvider?.cancel()
+        Self.currentProvider = provider
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.writeObjects([provider])
+    }
+
+    private let promise: iTermRenegablePromise<AnyObject>
+    private let pasteboardType: NSPasteboard.PasteboardType
+
+    private init(_ promise: iTermRenegablePromise<AnyObject>,
+                 type: NSPasteboard.PasteboardType) {
+        self.promise = promise
+        self.pasteboardType = type
+    }
+
+    @objc func cancel() {
+        promise.renege()
+    }
+
+    func writableTypes(for pasteboard: NSPasteboard) -> [NSPasteboard.PasteboardType] {
+        return [pasteboardType]
+    }
+
+    func pasteboardPropertyList(forType pasteboardType: NSPasteboard.PasteboardType) -> Any? {
+        DLog("Blocking on value")
+        let or = promise.wait()
+        let result = or.maybeFirst
+        if let obj = result as? NSObject {
+            let length = (result as? Destination)?.length ?? -1
+            DLog("Return result of length \(length), type \(NSStringFromClass(type(of: obj)))")
+            return result
+        }
+        DLog("error \(or.maybeSecond?.description ?? "(nil)")")
+        return nil
+    }
+
+    func writingOptions(forType type: NSPasteboard.PasteboardType,
+                        pasteboard: NSPasteboard) -> NSPasteboard.WritingOptions {
+        return .promised
+    }
+}

@@ -160,11 +160,13 @@ typedef void (^iTermPromiseCallback)(iTermOr<id, NSError *> *);
 @end
 
 @implementation iTermPromise {
+@protected
     NSObject *_lock;
+    BOOL _waited;
 }
 
 + (instancetype)promise:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal>))block {
-    return [[iTermPromise alloc] initPrivate:block];
+    return [[self alloc] initPrivate:block];
 }
 
 + (instancetype)promiseValue:(id)value {
@@ -357,6 +359,62 @@ static void iTermPromiseRunBlockOnQueue(dispatch_queue_t queue, id parameter, vo
         }];
     }
     return result;
+}
+
+- (id)maybeError {
+    __block NSError *result = nil;
+    @synchronized (_lock) {
+        [self.value whenFirst:^(id  _Nonnull object) {
+            result = nil;
+        } second:^(NSError * _Nonnull error) {
+            result = error;
+        }];
+    }
+    return result;
+}
+
+- (iTermOr<id, NSError *> *)wait {
+    dispatch_group_t group = dispatch_group_create();
+    @synchronized (_lock) {
+        if (self.hasValue) {
+            return self.value;
+        }
+        dispatch_group_enter(group);
+        _waited = YES;
+        [self addCallback:^(iTermOr<id, NSError *> *result) {
+            dispatch_group_leave(group);
+        }];
+    }
+    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    @synchronized (_lock) {
+        return self.value;
+    }
+}
+
+@end
+
+@implementation iTermRenegablePromise
+
++ (instancetype)promise:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal> seal))block
+                renege:(void (^)(void))renege {
+    iTermRenegablePromise *promise = [super promise:block];
+    if (promise) {
+        promise->_renegeBlock = [renege copy];
+    }
+    return promise;
+}
+
+- (void)renege {
+    @synchronized (_lock) {
+        if (self.value || _waited) {
+            return;
+        }
+        if (_renegeBlock) {
+            void (^block)(void) = _renegeBlock;
+            _renegeBlock = nil;
+            block();
+        }
+    }
 }
 
 @end

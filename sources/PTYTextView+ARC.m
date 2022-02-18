@@ -592,6 +592,153 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                                          preferredEdge:NSRectEdgeMaxY];
 }
 
+#pragma mark - Selected Text
+
+- (iTermPromise<NSString *> *)recordSelection {
+    const NSInteger maxSize = 10 * 1000 * 1000;
+    NSLog(@"Renege on last selection promise");
+    // No need to keep working on the last one; if it hasn't been waited on then it'll never be used.
+    [[[iTermController sharedInstance] lastSelectionPromise] renege];
+
+    iTermRenegablePromise<NSString *> *promise = [self promisedStringForSelectedTextCappedAtSize:maxSize minimumLineNumber:0];
+    [[iTermController sharedInstance] setLastSelectionPromise:promise];
+    return promise;
+}
+
+- (BOOL)selectionIsBig {
+    return self.selection.approximateNumberOfLines > 1000;
+}
+
+
+- (iTermSelectionExtractorOptions)commonSelectionOptions {
+    iTermSelectionExtractorOptions options = 0;
+    const BOOL copyLastNewline = [iTermPreferences boolForKey:kPreferenceKeyCopyLastNewline];
+    if (copyLastNewline) {
+        options |= iTermSelectionExtractorOptionsCopyLastNewline;
+    }
+    const BOOL trimWhitespace = [iTermAdvancedSettingsModel trimWhitespaceOnCopy];
+    if (trimWhitespace) {
+        options |= iTermSelectionExtractorOptionsTrimWhitespace;
+    }
+    if (self.useCustomBoldColor) {
+        options |= iTermSelectionExtractorOptionsUseCustomBoldColor;
+    }
+    if (self.brightenBold) {
+        options |= iTermSelectionExtractorOptionsBrightenBold;
+    }
+    return options;
+}
+
+- (iTermRenegablePromise<NSString *> *)promisedStringForSelectedTextCappedAtSize:(int)maxBytes
+                                                               minimumLineNumber:(int)minimumLineNumber {
+    iTermStringSelectionExtractor *extractor =
+    [[iTermStringSelectionExtractor alloc] initWithSelection:self.selection
+                                                    snapshot:[self.dataSource snapshotDataSource]
+                                                     options:[self commonSelectionOptions]
+                                                    maxBytes:maxBytes
+                                           minimumLineNumber:minimumLineNumber];
+    return [iTermSelectionPromise string:extractor
+                              allowEmpty:![iTermAdvancedSettingsModel disallowCopyEmptyString]];
+}
+
+- (iTermRenegablePromise<NSString *> *)promisedSGRStringForSelectedTextCappedAtSize:(int)maxBytes
+                                                                  minimumLineNumber:(int)minimumLineNumber {
+    iTermSGRSelectionExtractor *extractor =
+    [[iTermSGRSelectionExtractor alloc] initWithSelection:self.selection
+                                                 snapshot:[self.dataSource snapshotDataSource]
+                                                  options:[self commonSelectionOptions]
+                                                 maxBytes:maxBytes
+                                        minimumLineNumber:minimumLineNumber];
+    return [iTermSelectionPromise string:extractor
+                              allowEmpty:![iTermAdvancedSettingsModel disallowCopyEmptyString]];
+}
+
+- (iTermRenegablePromise<NSAttributedString *> *)promisedAttributedStringForSelectedTextCappedAtSize:(int)maxBytes
+                                                                                   minimumLineNumber:(int)minimumLineNumber {
+    iTermCharacterAttributesProvider *provider =
+    [[iTermCharacterAttributesProvider alloc] initWithColorMap:self.colorMap
+                                            useCustomBoldColor:self.useCustomBoldColor
+                                                  brightenBold:self.brightenBold
+                                                   useBoldFont:self.useBoldFont
+                                                 useItalicFont:self.useItalicFont
+                                               useNonAsciiFont:self.useNonAsciiFont
+                                           copyBackgroundColor:[iTermAdvancedSettingsModel copyBackgroundColor]
+                        excludeBackgroundColorsFromCopiedStyle:[iTermAdvancedSettingsModel excludeBackgroundColorsFromCopiedStyle]
+                                                     asciiFont:self.primaryFont
+                                                  nonAsciiFont:self.secondaryFont];
+
+    iTermAttributedStringSelectionExtractor *extractor =
+    [[iTermAttributedStringSelectionExtractor alloc] initWithSelection:self.selection
+                                                              snapshot:[self.dataSource snapshotDataSource]
+                                                               options:[self commonSelectionOptions]
+                                                              maxBytes:maxBytes
+                                                     minimumLineNumber:minimumLineNumber];
+
+    return [iTermSelectionPromise attributedString:extractor
+                       characterAttributesProvider:provider
+                                        allowEmpty:![iTermAdvancedSettingsModel disallowCopyEmptyString]];
+}
+
+- (void)asynchronouslyVendSelectedTextWithStyle:(iTermCopyTextStyle)style
+                                   cappedAtSize:(int)maxBytes
+                              minimumLineNumber:(int)minimumLineNumber {
+    iTermRenegablePromise *promise = nil;
+    NSPasteboardType type = NSPasteboardTypeString;
+    switch (style) {
+        case iTermCopyTextStyleAttributed:
+            promise = [self promisedAttributedStringForSelectedTextCappedAtSize:maxBytes
+                                                              minimumLineNumber:minimumLineNumber];
+            type = NSPasteboardTypeRTF;
+            break;
+
+        case iTermCopyTextStylePlainText:
+            promise = [self promisedStringForSelectedTextCappedAtSize:maxBytes
+                                                    minimumLineNumber:minimumLineNumber];
+            type = NSPasteboardTypeString;
+            break;
+
+        case iTermCopyTextStyleWithControlSequences:
+            promise = [self promisedSGRStringForSelectedTextCappedAtSize:maxBytes
+                                                       minimumLineNumber:minimumLineNumber];
+            type = NSPasteboardTypeString;
+            break;
+    }
+    [iTermAsyncSelectionProvider copyPromise:promise type:type];
+}
+
+- (id)selectedTextWithStyle:(iTermCopyTextStyle)style
+               cappedAtSize:(int)maxBytes
+          minimumLineNumber:(int)minimumLineNumber {
+    if (@available(macOS 11.0, *)) {
+        [[iTermAsyncSelectionProvider currentProvider] cancel];
+    }
+    switch (style) {
+        case iTermCopyTextStyleAttributed:
+            return [[self promisedAttributedStringForSelectedTextCappedAtSize:maxBytes
+                                                            minimumLineNumber:minimumLineNumber] wait].maybeFirst;
+
+        case iTermCopyTextStylePlainText:
+            return [[self promisedStringForSelectedTextCappedAtSize:maxBytes
+                                                  minimumLineNumber:minimumLineNumber] wait].maybeFirst;
+
+        case iTermCopyTextStyleWithControlSequences:
+            return [[self promisedSGRStringForSelectedTextCappedAtSize:maxBytes
+                                                     minimumLineNumber:minimumLineNumber] wait].maybeFirst;
+    }
+}
+
+- (NSString *)selectedTextCappedAtSize:(int)maxBytes
+                     minimumLineNumber:(int)minimumLineNumber {
+    return [self selectedTextWithStyle:iTermCopyTextStylePlainText
+                          cappedAtSize:maxBytes
+                     minimumLineNumber:minimumLineNumber];
+}
+
+- (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad {
+    return [self selectedTextWithStyle:iTermCopyTextStyleAttributed cappedAtSize:0 minimumLineNumber:0];
+}
+
+
 #pragma mark - iTermURLActionHelperDelegate
 
 - (BOOL)urlActionHelperShouldIgnoreHardNewlines:(iTermURLActionHelper *)helper {

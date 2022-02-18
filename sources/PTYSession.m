@@ -8309,7 +8309,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             break;
 
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION: {
-            NSString *string = [[iTermController sharedInstance] lastSelection];
+            NSString *string = [[iTermController sharedInstance] lastSelectionPromise].wait.maybeFirst;
             if (string.length) {
                 [_pasteHelper pasteString:string
                              stringConfig:action.parameter];
@@ -9204,7 +9204,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)textViewPasteSpecialWithStringConfiguration:(NSString *)configuration
                                       fromSelection:(BOOL)fromSelection {
-    NSString *string = fromSelection ? [[iTermController sharedInstance] lastSelection] : [NSString stringFromPasteboard];
+    NSString *string = fromSelection ? [[iTermController sharedInstance] lastSelectionPromise].wait.maybeFirst : [NSString stringFromPasteboard];
     [_pasteHelper pasteString:string
                  stringConfig:configuration];
 }
@@ -9227,7 +9227,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewPasteFromSessionWithMostRecentSelection:(PTYSessionPasteFlags)flags {
-    NSString *string = [[iTermController sharedInstance] lastSelection];
+    NSString *string = [[iTermController sharedInstance] lastSelectionPromise].wait.maybeFirst;
     if (string) {
         [self pasteString:string flags:flags];
     }

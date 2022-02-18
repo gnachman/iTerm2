@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface NSMutableAttributedString (iTerm)
 
 - (void)iterm_appendString:(NSString *)string;
@@ -27,3 +29,5 @@
 - (NSAttributedString *)attributedStringByRemovingColor;
 
 @end
+
+NS_ASSUME_NONNULL_END

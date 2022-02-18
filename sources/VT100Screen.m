@@ -184,6 +184,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 #pragma mark - PTYTextViewDataSource
 
+- (id<iTermTextDataSource>)snapshotDataSource {
+    return [[[iTermTerminalContentSnapshot alloc] initWithLineBuffer:_state.linebuffer
+                                                                grid:_state.currentGrid
+                                                  cumulativeOverflow:_state.cumulativeScrollbackOverflow] autorelease];
+}
+
 - (void)resetDirty {
     if (_sharedStateCount && !_forceMergeGrids && _state.currentGrid.isAnyCharDirty) {
         // We're resetting dirty in a grid shared by mutable & immutable state. That means when sync
@@ -202,7 +208,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.currentGrid == _state.altGrid;
 }
 
-- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
+- (NSOrderedSet<NSString *> *)sgrCodesForChar:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
     return [VT100Terminal sgrCodesForCharacter:c externalAttributes:ea];
 }
 

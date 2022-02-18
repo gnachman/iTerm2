@@ -38,6 +38,7 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 };
 
 @protocol iTermWindowController;
+@class iTermRenegablePromise<T>;
 @class iTermRestorableSession;
 @class PasteboardHistory;
 @class PseudoTerminal;
@@ -61,7 +62,7 @@ typedef NS_ENUM(NSUInteger, iTermHotkeyWindowType) {
 @property(nonatomic, readonly) BOOL anyWindowIsMain;
 @property(nonatomic, readonly) NSArray<iTermTerminalWindow *> *keyTerminalWindows;
 @property(nonatomic, readonly) NSInteger numberOfDecodesPending;
-@property(nonatomic, copy) NSString *lastSelection;
+@property(nonatomic, strong) iTermRenegablePromise<NSString *> *lastSelectionPromise;
 
 + (iTermController*)sharedInstance;
 + (void)releaseSharedInstance;

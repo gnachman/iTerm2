@@ -683,9 +683,5 @@ typedef NS_ENUM(NSUInteger, iTermCopyTextStyle) {
     iTermCopyTextStyleWithControlSequences
 };
 
-- (id)selectedTextWithStyle:(iTermCopyTextStyle)style
-               cappedAtSize:(int)maxBytes
-          minimumLineNumber:(int)minimumLineNumber;
-
 @end
 

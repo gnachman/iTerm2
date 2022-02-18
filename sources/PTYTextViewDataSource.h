@@ -3,6 +3,7 @@
 #import "iTermCursor.h"
 #import "iTermFindDriver.h"
 #import "iTermLogicalMovementHelper.h"
+#import "iTermTextDataSource.h"
 #import "ScreenChar.h"
 #import "LineBuffer.h"
 #import "VT100Grid.h"
@@ -33,20 +34,6 @@
 @property (nonatomic) BOOL cursorVisible;
 @property (nonatomic, strong) iTermColorMap *colorMap;
 @end
-
-@protocol iTermTextDataSource <NSObject>
-
-- (int)width;
-- (int)numberOfLines;
-// Deprecated - use fetchLine:block: instead because it manages the lifetime of the ScreenCharArray safely.
-- (ScreenCharArray *)screenCharArrayForLine:(int)line;
-- (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index;
-- (long long)totalScrollbackOverflow;
-- (iTermExternalAttributeIndex *)externalAttributeIndexForLine:(int)y;
-- (id)fetchLine:(int)line block:(id (^ NS_NOESCAPE)(ScreenCharArray *sct))block;
-
-@end
-
 
 @protocol PTYTextViewDataSource <iTermLogicalMovementHelperDelegate, iTermTextDataSource>
 
@@ -136,8 +123,8 @@
 - (void)performBlockWithSavedGrid:(void (^)(id<PTYTextViewSynchronousUpdateStateReading> state))block;
 
 - (NSString *)compactLineDumpWithContinuationMarks;
-- (NSSet<NSString *> *)sgrCodesForChar:(screen_char_t)c
-                    externalAttributes:(iTermExternalAttribute *)ea;
+- (NSOrderedSet<NSString *> *)sgrCodesForChar:(screen_char_t)c
+                           externalAttributes:(iTermExternalAttribute *)ea;
 
 - (void)setColor:(NSColor *)color forKey:(int)key;
 - (id<iTermColorMapReading>)colorMap;
@@ -145,5 +132,7 @@
 - (void)setStringValueOfAnnotation:(id<PTYAnnotationReading>)annotation to:(NSString *)stringValue;
 
 - (void)resetDirty;
+
+- (id<iTermTextDataSource>)snapshotDataSource;
 
 @end

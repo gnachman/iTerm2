@@ -466,7 +466,7 @@
         // These commands are allowed only if there is a selection.
         return [_selection hasSelection];
     } else if ([item action]==@selector(pasteSelection:)) {
-        return [[iTermController sharedInstance] lastSelection] != nil;
+        return [[iTermController sharedInstance] lastSelectionPromise] != nil && [[iTermController sharedInstance] lastSelectionPromise].maybeError == nil;
     } else if ([item action]==@selector(selectOutputOfLastCommand:)) {
         return [_delegate textViewCanSelectOutputOfLastCommand];
     } else if ([item action]==@selector(selectCurrentCommand:)) {
@@ -2453,113 +2453,6 @@
     return [self selectedTextWithStyle:iTermCopyTextStylePlainText cappedAtSize:maxBytes minimumLineNumber:0];
 }
 
-// Does not include selected text on lines before |minimumLineNumber|.
-// Returns an NSAttributedString* if style is iTermCopyTextStyleAttributed, or an NSString* if not.
-- (id)selectedTextWithStyle:(iTermCopyTextStyle)style
-               cappedAtSize:(int)maxBytes
-          minimumLineNumber:(int)minimumLineNumber {
-    if (![_selection hasSelection]) {
-        DLog(@"startx < 0 so there is no selected text");
-        return nil;
-    }
-    BOOL copyLastNewline = [iTermPreferences boolForKey:kPreferenceKeyCopyLastNewline];
-    BOOL trimWhitespace = [iTermAdvancedSettingsModel trimWhitespaceOnCopy];
-    id theSelectedText;
-    NSAttributedStringKey sgrAttribute = @"iTermSGR";
-    NSDictionary *(^attributeProvider)(screen_char_t, iTermExternalAttribute *ea);
-    switch (style) {
-        case iTermCopyTextStyleAttributed:
-            theSelectedText = [[[NSMutableAttributedString alloc] init] autorelease];
-            attributeProvider = ^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-                return [self charAttributes:theChar externalAttributes:ea];
-            };
-            break;
-
-        case iTermCopyTextStylePlainText:
-            theSelectedText = [[[NSMutableString alloc] init] autorelease];
-            attributeProvider = nil;
-            break;
-
-        case iTermCopyTextStyleWithControlSequences:
-            theSelectedText = [[[NSMutableAttributedString alloc] init] autorelease];
-            attributeProvider = ^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-                return @{ sgrAttribute: [self.dataSource sgrCodesForChar:theChar
-                                                      externalAttributes:ea] };
-            };
-            break;
-    }
-
-    [_selection enumerateSelectedAbsoluteRanges:^(VT100GridAbsWindowedRange absRange, BOOL *stop, BOOL eol) {
-        [self withRelativeWindowedRange:absRange block:^(VT100GridWindowedRange range) {
-            if (range.coordRange.end.y < minimumLineNumber) {
-                return;
-            } else {
-                range.coordRange.start.y = MAX(range.coordRange.start.y, minimumLineNumber);
-            }
-            int cap = INT_MAX;
-            if (maxBytes > 0) {
-                cap = maxBytes - [theSelectedText length];
-                if (cap <= 0) {
-                    *stop = YES;
-                    return;
-                }
-            }
-            iTermTextExtractor *extractor =
-            [iTermTextExtractor textExtractorWithDataSource:_dataSource];
-            id content = [extractor contentInRange:range
-                                 attributeProvider:attributeProvider
-                                        nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
-                                               pad:NO
-                                includeLastNewline:copyLastNewline
-                            trimTrailingWhitespace:trimWhitespace
-                                      cappedAtSize:cap
-                                      truncateTail:YES
-                                 continuationChars:nil
-                                            coords:nil];
-            if (attributeProvider != nil) {
-                [theSelectedText appendAttributedString:content];
-            } else {
-                [theSelectedText appendString:content];
-            }
-            NSString *contentString = (attributeProvider != nil) ? [content string] : content;
-            if (eol && ![contentString hasSuffix:@"\n"]) {
-                if (attributeProvider != nil) {
-                    [theSelectedText iterm_appendString:@"\n"];
-                } else {
-                    [theSelectedText appendString:@"\n"];
-                }
-            }
-        }];
-    }];
-
-    if (style == iTermCopyTextStyleWithControlSequences) {
-        NSAttributedString *attributedString = theSelectedText;
-        NSMutableString *string = [NSMutableString string];
-        [attributedString enumerateAttribute:sgrAttribute
-                                     inRange:NSMakeRange(0, attributedString.length)
-                                     options:0
-                                  usingBlock:^(NSSet *_Nullable value, NSRange range, BOOL * _Nonnull stop) {
-            NSString *code = [NSString stringWithFormat:@"%c[%@m", VT100CC_ESC, [value.allObjects componentsJoinedByString:@";"]];
-            [string appendString:code];
-            [string appendString:[attributedString.string substringWithRange:range]];
-        }];
-        return string;
-    }
-
-    return theSelectedText;
-}
-
-- (NSString *)selectedTextCappedAtSize:(int)maxBytes
-                     minimumLineNumber:(int)minimumLineNumber {
-    return [self selectedTextWithStyle:iTermCopyTextStylePlainText
-                          cappedAtSize:maxBytes
-                     minimumLineNumber:minimumLineNumber];
-}
-
-- (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad {
-    return [self selectedTextWithStyle:iTermCopyTextStyleAttributed cappedAtSize:0 minimumLineNumber:0];
-}
-
 - (BOOL)_haveShortSelection {
     int width = [_dataSource width];
     return [_selection hasSelection] && [_selection length] <= width;
@@ -2720,10 +2613,19 @@
     // TODO: iTermSelection should use absolute coordinates everywhere. Until that is done, we must
     // call refresh here to take care of any scrollback overflow that would cause the selected range
     // to not match reality.
+    // Update: I think this isn't true post-mutable-thread because there should never be
+    // scrollback overflow on the main thread. I can probably remove this.
     [self refresh];
 
     DLog(@"-[PTYTextView copy:] called");
     DLog(@"%@", [NSThread callStackSymbols]);
+
+    if ([self selectionIsBig]) {
+        [self asynchronouslyVendSelectedTextWithStyle:iTermCopyTextStylePlainText
+                                         cappedAtSize:INT_MAX
+                                    minimumLineNumber:0];
+        return;
+    }
 
     NSString *copyString = [self selectedText];
     [self copyString:copyString];
@@ -2745,6 +2647,13 @@
 }
 
 - (IBAction)copyWithStyles:(id)sender {
+    if ([self selectionIsBig]) {
+        [self asynchronouslyVendSelectedTextWithStyle:iTermCopyTextStyleAttributed
+                                         cappedAtSize:INT_MAX
+                                    minimumLineNumber:0];
+        return;
+    }
+
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
 
     DLog(@"-[PTYTextView copyWithStyles:] called");
@@ -4331,16 +4240,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - iTermSelectionDelegate
 
 - (void)selectionDidChange:(iTermSelection *)selection {
-    NSString *selectionString = @"";
     DLog(@"selectionDidChange to %@", selection);
     [_delegate refresh];
     if (!_selection.live && selection.hasSelection) {
-        const NSInteger MAX_SELECTION_SIZE = 10 * 1000 * 1000;
-        selectionString = [self selectedTextCappedAtSize:MAX_SELECTION_SIZE minimumLineNumber:0];
-        [[iTermController sharedInstance] setLastSelection:
-            selectionString.length < MAX_SELECTION_SIZE ? selectionString : nil];
+        iTermPromise<NSString *> *promise = [self recordSelection];
+        [promise then:^(NSString * _Nonnull value) {
+            DLog(@"Update scope variables for selection");
+            [_delegate textViewSelectionDidChangeToTruncatedString:value];
+        }];
+    } else {
+        [_delegate textViewSelectionDidChangeToTruncatedString:@""];
     }
-    [_delegate textViewSelectionDidChangeToTruncatedString:selectionString];
     DLog(@"Selection did change: selection=%@. stack=%@",
          selection, [NSThread callStackSymbols]);
 }
