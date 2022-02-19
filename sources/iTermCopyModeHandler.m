@@ -55,6 +55,16 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
 @implementation iTermCopyModeHandler
 
 - (void)setEnabled:(BOOL)copyMode {
+    if (copyMode && [self shouldAutoEnterWithEventIgnoringPrefs:NSApp.currentEvent]) {
+        // This is a cute hack. If you bind a keystroke to enable copy mode then we treat it as an
+        // auto-enter if possible so the cursor will be at the right side of the selection. Issue 10164.
+        [self handleAutoEnteringEvent:NSApp.currentEvent];
+        return;
+    }
+    [self setEnabledWithoutCleverness:copyMode];
+}
+
+- (void)setEnabledWithoutCleverness:(BOOL)copyMode {
     if (copyMode) {
         NSString *const key = @"NoSyncHaveUsedCopyMode";
         if ([[NSUserDefaults standardUserDefaults] objectForKey:key] == nil) {
@@ -112,6 +122,10 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
     if (![iTermPreferences boolForKey:kPreferenceKeyEnterCopyModeAutomatically]) {
         return NO;
     }
+    return [self shouldAutoEnterWithEventIgnoringPrefs:event];
+}
+
+- (BOOL)shouldAutoEnterWithEventIgnoringPrefs:(NSEvent *)event {
     if ([self autoEnterEventDirection:event] == 0) {
         return NO;
     }
@@ -136,7 +150,7 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
 - (void)handleAutoEnteringEvent:(NSEvent *)event {
     const NSInteger direction = [self autoEnterEventDirection:event];
     assert(direction != 0);
-    self.enabled = YES;
+    [self setEnabledWithoutCleverness:YES];
     if (direction < 0) {
         [_state swap];
     }
