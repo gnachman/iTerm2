@@ -126,7 +126,7 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
 }
 
 - (BOOL)shouldAutoEnterWithEventIgnoringPrefs:(NSEvent *)event {
-    if ([self autoEnterEventDirection:event] == 0) {
+     if ([self autoEnterEventDirection:event] == 0) {
         return NO;
     }
     const NSEventModifierFlags masks[] = {

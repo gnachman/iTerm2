@@ -34,7 +34,7 @@ NSString *kVSCodiumIdentifier = @"com.visualstudio.code.oss";
 NSString *kVSCodeInsidersIdentifier = @"com.microsoft.VSCodeInsiders";
 NSString *kEmacsAppIdentifier = @"org.gnu.Emacs";
 NSString *kIntelliJIDEAIdentifier = @"com.jetbrains.intellij.ce";
-
+NSString *kNovaIdentifier = @"com.panic.Nova";
 NSString *kSemanticHistoryBestEditorAction = @"best editor";
 NSString *kSemanticHistoryUrlAction = @"url";
 NSString *kSemanticHistoryEditorAction = @"editor";
@@ -82,7 +82,8 @@ enum {
     kVSCodeInsidersTag,
     kEmacsAppTag,
     kVSCodiumTag,
-    kIntelliJTag
+    kIntelliJTag,
+    kNovaTag
     // Only append to the end of the list; never delete or change.
 };
 
@@ -130,7 +131,9 @@ enum {
                                kVSCodiumIdentifier: @"vscodium",
                                kVSCodeInsidersIdentifier: @"vscode",
                                kEmacsAppIdentifier: @"",
-                               kIntelliJIDEAIdentifier: @"" };
+                               kIntelliJIDEAIdentifier: @"",
+                               kNovaIdentifier: @"nova"
+    };
     return schemes[editor];
 }
 
@@ -148,7 +151,8 @@ enum {
               kVSCodiumIdentifier,
               kVSCodeInsidersIdentifier,
               kEmacsAppIdentifier,
-              kIntelliJIDEAIdentifier ];
+              kIntelliJIDEAIdentifier,
+              kNovaIdentifier];
 }
 
 + (NSString *)bestEditor {
@@ -173,7 +177,8 @@ enum {
                                   kVSCodiumIdentifier,
                                   kVSCodeInsidersIdentifier,
                                   kEmacsAppIdentifier,
-                                  kIntelliJIDEAIdentifier ];
+                                  kIntelliJIDEAIdentifier,
+                                  kNovaIdentifier ];
     return [editorBundleIds containsObject:bundleId];
 }
 
@@ -190,7 +195,9 @@ enum {
                                 kVSCodiumIdentifier: @(kVSCodiumTag),
                           kVSCodeInsidersIdentifier: @(kVSCodeInsidersTag),
                                 kEmacsAppIdentifier: @(kEmacsAppTag),
-                            kIntelliJIDEAIdentifier: @(kIntelliJTag) };
+                            kIntelliJIDEAIdentifier: @(kIntelliJTag),
+                                    kNovaIdentifier: @(kNovaTag)
+    };
     return tags;
 }
 
@@ -230,7 +237,9 @@ enum {
                                  kVSCodiumIdentifier: @"VS Codium",
                            kVSCodeInsidersIdentifier: @"VS Code Insiders",
                                  kEmacsAppIdentifier: @"Emacs.app",
-                             kIntelliJIDEAIdentifier: @"IntelliJ IDEA" };
+                             kIntelliJIDEAIdentifier: @"IntelliJ IDEA",
+                                     kNovaIdentifier: @"Nova"
+    };
 
     NSDictionary *tags = [[self class] identifierToTagMap];
 
@@ -298,7 +307,9 @@ enum {
                                @(kVSCodiumTag): kVSCodiumIdentifier,
                          @(kVSCodeInsidersTag): kVSCodeInsidersIdentifier,
                                @(kEmacsAppTag): kEmacsAppIdentifier,
-                           @(kIntelliJTag): kIntelliJIDEAIdentifier };
+                               @(kIntelliJTag): kIntelliJIDEAIdentifier,
+                                   @(kNovaTag): kNovaIdentifier,
+    };
     return map[@([[editors_ selectedItem] tag])];
 }
 
