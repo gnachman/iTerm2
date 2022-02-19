@@ -366,6 +366,14 @@ NS_INLINE VT100GridWindowedRange VT100GridWindowedRangeFromAbsWindowedRange(VT10
                                       absrange.columnWindow.length);
 }
 
+NS_INLINE BOOL VT100GridAbsCoordIsValid(VT100GridAbsCoord coord) {
+    return coord.x >= 0 && coord.y >= 0;
+}
+
+NS_INLINE BOOL VT100GridAbsCoordRangeIsValid(VT100GridAbsCoordRange range) {
+    return VT100GridAbsCoordIsValid(range.start) && VT100GridAbsCoordIsValid(range.end);
+}
+
 NS_INLINE VT100GridAbsCoordRange VT100GridAbsCoordRangeFromCoordRange(VT100GridCoordRange range,
                                                                       long long offset) {
     return VT100GridAbsCoordRangeMake(range.start.x, range.start.y + offset, range.end.x, range.end.y + offset);

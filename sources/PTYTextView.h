@@ -586,6 +586,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 // Add a search result for highlighting in yellow.
 - (void)addSearchResult:(SearchResult *)searchResult;
+- (void)removeSearchResultsInRange:(VT100GridAbsCoordRange)range;
 
 // When a new note is created, call this to add a view for it.
 - (void)addViewForNote:(id<PTYAnnotationReading>)annotation focus:(BOOL)focus visible:(BOOL)visible;

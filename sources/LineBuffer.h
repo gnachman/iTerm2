@@ -127,6 +127,8 @@ NS_ASSUME_NONNULL_BEGIN
                            extendsRight:(BOOL)extendsRight
                                      ok:(BOOL * _Nullable)ok;
 
+- (LineBufferPosition *)positionOfFindContext:(FindContext *)context width:(int)width;
+
 - (LineBufferPosition * _Nonnull)firstPosition;
 - (LineBufferPosition * _Nonnull)lastPosition;
 - (LineBufferPosition * _Nonnull)positionForStartOfLastLine;

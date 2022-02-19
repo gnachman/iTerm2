@@ -87,13 +87,15 @@
 }
 
 - (BOOL)continueFindAllResultsImpl:(NSMutableArray<SearchResult *> *)results
-                         inContext:(FindContext *)context {
+                         inContext:(FindContext *)context
+                     rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
     context.hasWrapped = YES;
     NSDate* start = [NSDate date];
     BOOL keepSearching;
     do {
         keepSearching = [self continueFindResultsInContext:context
-                                                      toArray:results];
+                                                      toArray:results
+                                             rangeSearched:rangeSearched];
     } while (keepSearching &&
              [[NSDate date] timeIntervalSinceDate:start] < context.maxTime);
     if (results.count > 0) {
@@ -128,8 +130,23 @@
 
 #pragma mark - Private
 
+- (VT100GridAbsCoord)absCoordOfFindContext:(FindContext *)context lineBuffer:(LineBuffer *)temporaryLineBuffer {
+    LineBufferPosition *startPosition = [temporaryLineBuffer positionOfFindContext:context
+                                                                             width:self.width];
+    BOOL ok = NO;
+    const VT100GridCoord coord = [temporaryLineBuffer coordinateForPosition:startPosition
+                                                                      width:self.width
+                                                               extendsRight:NO
+                                                                         ok:&ok];
+    if (!ok) {
+        return VT100GridAbsCoordMake(-1, -1);
+    }
+    return VT100GridAbsCoordFromCoord(coord, self.totalScrollbackOverflow);
+}
+
 - (BOOL)continueFindResultsInContext:(FindContext *)context
-                             toArray:(NSMutableArray *)results {
+                             toArray:(NSMutableArray *)results
+                       rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     LineBuffer *temporaryLineBuffer = [_state.linebuffer copy];
 
@@ -144,6 +161,9 @@
         stopAt = [temporaryLineBuffer firstPosition];
     }
 
+    if (rangeSearched) {
+        rangeSearched->start = [self absCoordOfFindContext:context lineBuffer:temporaryLineBuffer];
+    }
     struct timeval begintime;
     gettimeofday(&begintime, NULL);
     BOOL keepSearching = NO;
@@ -246,6 +266,9 @@
     }
     // NSLog(@"Did %d iterations in %dms. Average time per block was %dms", iterations, ms_diff, ms_diff/iterations);
 
+    if (rangeSearched) {
+        rangeSearched->end = [self absCoordOfFindContext:context lineBuffer:temporaryLineBuffer];
+    }
     return keepSearching;
 }
 

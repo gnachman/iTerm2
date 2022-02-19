@@ -220,7 +220,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_findInProgress) {
         // Collect more results.
         more = [_delegate continueFindAllResults:newSearchResults
-                                       inContext:context];
+                                       inContext:context
+                                   rangeSearched:NULL];
         *progress = [context progress];
     } else {
         *progress = 1;

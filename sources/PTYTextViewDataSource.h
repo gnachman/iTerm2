@@ -56,7 +56,8 @@
 - (int)scrollbackOverflow;
 - (long long)absoluteLineNumberOfCursor;
 - (BOOL)continueFindAllResults:(NSMutableArray*)results
-                     inContext:(FindContext*)context;
+                     inContext:(FindContext*)context
+                 rangeSearched:(VT100GridAbsCoordRange *)VT100GridAbsCoordRange;
 - (FindContext*)findContext;
 
 // Initialize the find context.

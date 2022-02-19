@@ -103,7 +103,9 @@
 
 - (BOOL)searchWithCursor:(iTermGlobalSearchEngineCursor *)cursor {
     NSMutableArray<SearchResult *> *results = [NSMutableArray array];
-    const BOOL more = [cursor.session.screen continueFindAllResults:results inContext:cursor.findContext];
+    const BOOL more = [cursor.session.screen continueFindAllResults:results
+                                                          inContext:cursor.findContext
+                                                      rangeSearched:NULL];
     iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:cursor.session.screen];
     NSArray<iTermGlobalSearchResult *> *mapped = [results mapWithBlock:^id(SearchResult *anObject) {
         iTermGlobalSearchResult *result = [[iTermGlobalSearchResult alloc] init];

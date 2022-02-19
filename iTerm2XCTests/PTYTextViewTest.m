@@ -567,7 +567,9 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewNeedsDisplayInRect:(NSRect)rect {
 }
 
-- (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
+- (BOOL)continueFindAllResults:(NSMutableArray *)results
+                     inContext:(FindContext *)context
+                 rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
     return NO;
 }
 

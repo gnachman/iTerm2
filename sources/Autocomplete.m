@@ -488,7 +488,8 @@ const int kMaxResultContextWords = 4;
             assert(more_);
             AcLog(@"Do another search");
             more_ = [screen continueFindAllResults:findResults_
-                                            inContext:findContext_];
+                                            inContext:findContext_
+                                     rangeSearched:NULL];
         }
         AcLog(@"This iteration found %d results in %lf sec", (int) [findResults_ count], [[NSDate date] timeIntervalSinceDate:cs]);
         NSDate* ps = [NSDate date];

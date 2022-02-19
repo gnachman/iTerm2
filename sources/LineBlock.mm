@@ -1860,7 +1860,7 @@ static int Search(NSString *needle,
                 if (!multipleResults) {
                     break;
                 }
-                skip = tempPosition + 1;
+                skip = tempPosition + tempResultLength;
                 if (options & FindOneResultPerRawLine) {
                     break;
                 }

@@ -347,8 +347,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.lineNumberOfCursor;
 }
 
-- (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
-    return [self continueFindAllResultsImpl:results inContext:context];
+- (BOOL)continueFindAllResults:(NSMutableArray *)results
+                     inContext:(FindContext *)context
+                 rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
+    return [self continueFindAllResultsImpl:results inContext:context rangeSearched:rangeSearched];
 }
 
 - (NSString *)debugString {

@@ -975,6 +975,20 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return result;
 }
 
+- (LineBufferPosition *)positionOfFindContext:(FindContext *)context width:(int)width {
+    if (context.absBlockNum > num_dropped_blocks) {
+        // Before beginning
+        return [self firstPosition];
+    }
+    int blockNumber = context.absBlockNum - num_dropped_blocks;
+    LineBufferPosition *position = [LineBufferPosition position];
+    const long long precedingBlocksLength = [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, blockNumber)];
+    position.absolutePosition = precedingBlocksLength + context.offset;
+    position.yOffset = 0;
+    position.extendsToEndOfLine = NO;
+    return position;
+}
+
 - (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord
                                         width:(int)width
                                        offset:(int)offset {

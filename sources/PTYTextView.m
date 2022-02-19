@@ -3874,6 +3874,10 @@
     return _findOnPageHelper.findInProgress;
 }
 
+- (void)removeSearchResultsInRange:(VT100GridAbsCoordRange)range {
+    [_findOnPageHelper removeSearchResultsInRange:NSMakeRange(range.start.y, range.end.y - range.start.y)];
+}
+
 - (void)addSearchResult:(SearchResult *)searchResult {
     [_findOnPageHelper addSearchResult:searchResult width:[_dataSource width]];
 }
@@ -3890,8 +3894,12 @@
                         overflowAdjustment:[_dataSource totalScrollbackOverflow] - [_dataSource scrollbackOverflow]];
 }
 
-- (BOOL)continueFindAllResults:(NSMutableArray *)results inContext:(FindContext *)context {
-    return [_dataSource continueFindAllResults:results inContext:context];
+- (BOOL)continueFindAllResults:(NSMutableArray *)results
+                     inContext:(FindContext *)context
+                 rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
+    return [_dataSource continueFindAllResults:results
+                                     inContext:context
+                                 rangeSearched:rangeSearched];
 }
 
 - (void)findOnPageSetFindString:(NSString*)aString

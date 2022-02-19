@@ -10445,9 +10445,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)continueTailFind {
     NSMutableArray<SearchResult *> *results = [NSMutableArray array];
     BOOL more;
+    VT100GridAbsCoordRange rangeSearched = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     more = [_screen continueFindAllResults:results
-                                 inContext:_tailFindContext];
+                                 inContext:_tailFindContext
+                             rangeSearched:&rangeSearched];
     DLog(@"Continue tail find found %@ results, more=%@", @(results.count), @(more));
+    if (VT100GridAbsCoordRangeIsValid(rangeSearched)) {
+        [_textview removeSearchResultsInRange:rangeSearched];
+    }
     for (SearchResult *r in results) {
         [_textview addSearchResult:r];
     }

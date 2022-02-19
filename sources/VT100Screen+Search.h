@@ -24,7 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
           multipleResults:(BOOL)multipleResults;
 
 - (BOOL)continueFindAllResultsImpl:(NSMutableArray<SearchResult *> *)results
-                         inContext:(FindContext *)context;
+                         inContext:(FindContext *)context
+                     rangeSearched:(VT100GridAbsCoordRange *)rangeSearched;
 
 #pragma mark - Tail Find
 

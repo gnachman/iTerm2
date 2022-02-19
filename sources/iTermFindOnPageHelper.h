@@ -32,7 +32,8 @@
 
 // Find more, fill in results.
 - (BOOL)continueFindAllResults:(NSMutableArray *)results
-                     inContext:(FindContext*)context;
+                     inContext:(FindContext *)context
+                 rangeSearched:(VT100GridAbsCoordRange *)rangeSearched;
 
 // Select a range.
 - (void)findOnPageSelectRange:(VT100GridCoordRange)range wrapped:(BOOL)wrapped;
