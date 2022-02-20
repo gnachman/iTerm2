@@ -219,6 +219,10 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
                                                 iTermMetalUnderlineDescriptor,
                                                 BOOL underlined,
                                                 BOOL emoji))block {
+    // ASCII glyphs are shifted by self.asciiOffset.height pixels relative to non-ascii glyphs.
+    // The underlines would come along with them so we adjust them here. Issue 10168.
+    iTermMetalUnderlineDescriptor adjustedASCIIUnderlineDescriptor = _asciiUnderlineDescriptor;
+    adjustedASCIIUnderlineDescriptor.offset -= self.asciiOffset.height / self.configuration.scale;
     for (int i = 0; i < iTermNumberOfPIUArrays; i++) {
         const int n = piuArrays[i].get_number_of_segments();
         iTermASCIITexture *asciiTexture = [_asciiTextureGroup asciiTextureForAttributes:(iTermASCIITextureAttributes)i];
@@ -230,7 +234,7 @@ static const size_t iTermNumberOfPIUArrays = iTermASCIITextureAttributesMax * 2;
                       asciiTexture.textureArray.texture,
                       CGSizeToVectorUInt2(asciiTexture.textureArray.atlasSize),
                       CGSizeToVectorUInt2(_asciiTextureGroup.glyphSize),
-                      _asciiUnderlineDescriptor,
+                      adjustedASCIIUnderlineDescriptor,
                       _strikethroughUnderlineDescriptor,
                       underlined,
                       emoji);
