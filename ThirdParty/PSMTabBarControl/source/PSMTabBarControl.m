@@ -66,6 +66,62 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionAttachedToTitleBar = @"PSMTabBar
 PSMTabBarControlOptionKey PSMTabBarControlOptionHTMLTabTitles = @"PSMTabBarControlOptionHTMLTabTitles";
 PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalNonSelectedColoredTabAlpha = @"PSMTabBarControlOptionMinimalNonSelectedColoredTabAlpha";
 
+@interface PSMToolTip: NSObject
+@property (nonatomic, readonly) NSRect rect;
+@property (nonatomic, weak, readonly) id owner;
+@property (nonatomic, copy, readonly) NSData *data;
+@property (nonatomic, strong) NSNumber *tag;
+
++ (instancetype)toolTipWithRect:(NSRect)rect owner:(id)owner userData:(NSData *)data tag:(NSNumber *)tag;
+@end
+
+@implementation PSMToolTip
+
++ (instancetype)toolTipWithRect:(NSRect)rect owner:(id)owner userData:(NSData *)data tag:(NSNumber *)tag {
+    return [[[self alloc] initWithRect:rect owner:owner userData:data tag:tag] autorelease];
+}
+
+- (instancetype)initWithRect:(NSRect)rect owner:(id)owner userData:(NSData *)data tag:(NSNumber *)tag {
+    self = [super init];
+    if (self) {
+        _rect = rect;
+        _owner = owner;
+        _data = [data copy];
+        _tag = [tag retain];
+    }
+    return self;
+}
+
+- (void)dealloc {
+    [_data release];
+    [_tag release];
+    [super dealloc];
+}
+
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p rect=%@ owner=%@ tag=%@>",
+            NSStringFromClass([self class]), self, NSStringFromRect(_rect), _owner, _tag];
+}
+- (BOOL)isEqual:(id)object {
+    if (![object isKindOfClass:[PSMToolTip class]]) {
+        return NO;
+    }
+    PSMToolTip *other = object;
+    if (!NSEqualRects(self.rect, other.rect)) {
+        return NO;
+    }
+    if (self.owner != other.owner && ![self.owner isEqual:other.owner]) {
+        return NO;
+    }
+    if (self.data != other.data && ![self.data isEqual:other.data]) {
+        return NO;
+    }
+    // Don't compare tags because we might not know what they are yet.
+    return YES;
+}
+
+@end
+
 @interface PSMTabBarControl ()<PSMTabBarControlProtocol>
 @end
 
@@ -105,6 +161,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalNonSelectedColoredTabAlph
     BOOL _needsUpdateAnimate;
     BOOL _needsUpdate;
     NSInteger _preDragSelectedTabIndex;  // or NSNotFound
+    NSMutableArray<PSMToolTip *> *_tooltips;
+    NSInteger _toolTipCoalescing;
 }
 
 #pragma mark -
@@ -225,6 +283,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalNonSelectedColoredTabAlph
                                                  selector:@selector(modifierChanged:)
                                                      name:kPSMModifierChangedNotification
                                                    object:nil];
+        _tooltips = [[NSMutableArray alloc] init];
     }
     [self setTarget:self];
     return self;
@@ -250,6 +309,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalNonSelectedColoredTabAlph
     [_lastMouseDownEvent release];
     [_lastMiddleMouseDownEvent release];
     [_style release];
+    [_tooltips release];
 
     [self unregisterDraggedTypes];
 
@@ -908,6 +968,63 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalNonSelectedColoredTabAlph
         [self hideTabBar:NO animate:YES];
     }
 
+    [self coalesceToolTipUpdates:^{
+        [self reallyUpdate:animate];
+    }];
+}
+
+- (void)coalesceToolTipUpdates:(void (^)(void))block {
+    NSArray<PSMToolTip *> *before = [[_tooltips copy] autorelease];
+    _toolTipCoalescing += 1;
+    block();
+    _toolTipCoalescing -= 1;
+    if (_toolTipCoalescing > 0) {
+        return;
+    }
+    if ([_tooltips isEqual:before]) {
+        // Copy old objects back so we can have the tags set.
+        [_tooltips removeAllObjects];
+        [_tooltips addObjectsFromArray:before];
+        return;
+    }
+    [super removeAllToolTips];
+    [_tooltips enumerateObjectsUsingBlock:^(PSMToolTip * _Nonnull tip, NSUInteger idx, BOOL * _Nonnull stop) {
+        const NSToolTipTag tag = [super addToolTipRect:tip.rect owner:tip.owner userData:tip.data];
+        tip.tag = @(tag);
+    }];
+}
+
+- (void)removeAllToolTips {
+    [_tooltips removeAllObjects];
+    if (!_toolTipCoalescing) {
+        [super removeAllToolTips];
+    }
+}
+
+- (NSToolTipTag)addToolTipRect:(NSRect)rect owner:(id)owner userData:(nullable void *)data {
+    NSNumber *tagNumber = nil;
+    if (!_toolTipCoalescing) {
+        const NSToolTipTag tag = [super addToolTipRect:rect owner:owner userData:data];
+        tagNumber = @(tag);
+    }
+    [_tooltips addObject:[PSMToolTip toolTipWithRect:rect owner:owner userData:data tag:tagNumber]];
+    return tagNumber.integerValue;
+}
+
+- (void)removeToolTip:(NSToolTipTag)tag {
+    NSUInteger index = [_tooltips indexOfObjectPassingTest:^BOOL(PSMToolTip * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return obj.tag != nil && obj.tag.integerValue == tag;
+    }];
+    if (index != NSNotFound) {
+        [_tooltips removeObjectAtIndex:index];
+    }
+
+    if (!_toolTipCoalescing) {
+        [super removeToolTip:tag];
+    }
+}
+
+- (void)reallyUpdate:(BOOL)animate {
     [self _removeCellTrackingRects];
 
     NSLineBreakMode truncationStyle = [self truncationStyle];
@@ -2087,6 +2204,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalNonSelectedColoredTabAlph
             _automaticallyAnimates = [aDecoder decodeBoolForKey:@"PSMautomaticallyAnimates"];
             _delegate = [[aDecoder decodeObjectForKey:@"PSMdelegate"] retain];
         }
+        _tooltips = [[NSMutableArray alloc] init];
     }
     return self;
 }
