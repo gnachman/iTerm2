@@ -310,6 +310,7 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionMinimalNonSelectedColoredTabAlph
     [_lastMiddleMouseDownEvent release];
     [_style release];
     [_tooltips release];
+    _tooltips = nil;
 
     [self unregisterDraggedTypes];
 
