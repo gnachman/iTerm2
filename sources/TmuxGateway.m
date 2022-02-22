@@ -907,6 +907,9 @@ error:
 
 - (BOOL)canSendAsLiteralCharacter:(NSNumber *)codePoint {
     const unichar c = codePoint.unsignedShortValue;
+    if (c == '+' || c == '/' || c == ')' || c == ':' || c == ',' || c == '_') {
+        return YES;
+    }
     return isascii(c) && isalnum(c);
 }
 
