@@ -116,7 +116,6 @@ const CGFloat kDefaultTagsWidth = 80;
     int margin_;
     ProfileTagsView *tagsView_;
     NSSplitView *splitView_;
-    CGFloat lastTagsWidth_;
     NSMutableDictionary<NSNumber *, NSNumber *> *_savedHeights;
 
     // Cached row height info
@@ -240,8 +239,7 @@ const CGFloat kDefaultTagsWidth = 80;
 
         // Tags view -------------------------------------------------------------------------------
         NSRect tagsViewFrame = NSMakeRect(0, 0, kTagsViewWidth, splitViewFrame.size.height);
-        lastTagsWidth_ = kDefaultTagsWidth;
-        tagsViewIsCollapsed_ = (tagsView_.frame.size.width == 0);
+        tagsViewIsCollapsed_ = tagsViewFrame.size.width > 0;
         tagsView_ = [[[ProfileTagsView alloc] initWithFrame:tagsViewFrame] autorelease];
         tagsView_.delegate = self;
         [splitView_ addSubview:tagsView_];
@@ -1115,28 +1113,36 @@ const CGFloat kDefaultTagsWidth = 80;
     if (open == self.tagsVisible) {
         return;
     }
-    CGFloat newTagsWidth;
-    if (open) {
-        newTagsWidth = lastTagsWidth_;
-    } else {
-        lastTagsWidth_ = tagsView_.frame.size.width;
-        newTagsWidth = 0;
-    }
+
     const CGFloat oldDividerPosition = NSWidth(tagsView_.frame);
-    if (animated) {
+    if (open && NSWidth(tagsView_.frame) < 4) {
+        const CGFloat newTagsWidth = kDefaultTagsWidth;
+        if (animated) {
+            [[[[iTermSplitViewAnimation alloc] initWithSplitView:splitView_
+                                                  dividerAtIndex:0
+                                                            from:oldDividerPosition
+                                                              to:newTagsWidth
+                                                        duration:0.125
+                                                      completion:nil] autorelease] startAnimation];
+        } else {
+            [splitView_.animator setPosition:newTagsWidth ofDividerAtIndex:0];
+        }
+        tagsView_.hidden = !open;
+    } else if (!open) {
         [[[[iTermSplitViewAnimation alloc] initWithSplitView:splitView_
                                               dividerAtIndex:0
                                                         from:oldDividerPosition
-                                                          to:newTagsWidth
+                                                          to:0
                                                     duration:0.125
-                                                  completion:nil] autorelease] startAnimation];
-    } else {
-        [splitView_.animator setPosition:newTagsWidth ofDividerAtIndex:0];
+                                                  completion:^{
+            tagsView_.hidden = YES;
+        }] autorelease] startAnimation];
     }
+
 }
 
 - (BOOL)tagsVisible {
-    return tagsView_.frame.size.width > 0;
+    return !tagsView_.isHidden;
 }
 
 - (CGFloat)tagsFraction {
@@ -1185,11 +1191,14 @@ const CGFloat kDefaultTagsWidth = 80;
 #pragma mark - NSSplitViewDelegate
 
 - (void)splitViewDidResizeSubviews:(NSNotification *)notification {
-    if ((tagsView_.frame.size.width == 0) != tagsViewIsCollapsed_ &&
+    if (!tagsViewIsCollapsed_ && NSWidth(tagsView_.frame) < 4) {
+        tagsView_.hidden = YES;
+    }
+    if (tagsView_.isHidden != tagsViewIsCollapsed_ &&
         [self.delegate respondsToSelector:@selector(profileTableTagsVisibilityDidChange:)]) {
         [self.delegate profileTableTagsVisibilityDidChange:self];
     }
-    tagsViewIsCollapsed_ = (tagsView_.frame.size.width == 0);
+    tagsViewIsCollapsed_ = (tagsView_.isHidden);
     [self.window invalidateRestorableState];
 }
 
