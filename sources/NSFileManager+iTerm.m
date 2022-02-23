@@ -164,9 +164,20 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
         [[[NSBundle mainBundle] infoDictionary] objectForKey:(id)kCFBundleExecutableKey];
     NSString *realFolder = [realAppSupport stringByAppendingPathComponent:executableName];
 
-    [[NSFileManager defaultManager] createSymbolicLinkAtPath:linkName
-                                         withDestinationPath:realFolder
-                                                       error:nil];
+    const BOOL created = [[NSFileManager defaultManager] createSymbolicLinkAtPath:linkName
+                                                              withDestinationPath:realFolder
+                                                                            error:nil];
+    if (!created) {
+        NSDictionary<NSFileAttributeKey, id> *attributes =
+            [[NSFileManager defaultManager] attributesOfItemAtPath:linkName error:nil];
+        if ([attributes.fileType isEqual:NSFileTypeSymbolicLink]) {
+            NSString *temp = [linkName stringByAppendingString:[NSUUID UUID].UUIDString];
+            [[NSFileManager defaultManager] createSymbolicLinkAtPath:temp
+                                                 withDestinationPath:realFolder
+                                                               error:nil];
+            renameat(AT_FDCWD, temp.UTF8String, AT_FDCWD, linkName.UTF8String);
+        }
+    }
 
     return linkName;
 }
