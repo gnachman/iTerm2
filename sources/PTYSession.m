@@ -7750,6 +7750,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (VT100SyncResult)syncCheckingTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                           resetOverflow:(BOOL)resetOverflow
                            mutableState:(VT100ScreenMutableState *)mutableState {
+    DLog(@"BEGIN syncCheckingTriggers");
     [self updateConfigurationFields];
     const BOOL expectWasDirty = _expect.dirty;
     [_expect resetDirty];
@@ -7759,6 +7760,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                         resetOverflow:resetOverflow
                                                          mutableState:mutableState];
     _textview.colorMap = _screen.colorMap;
+    DLog(@"END syncCheckingTriggers");
     return syncResult;
 }
 
@@ -14542,13 +14544,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)standardKeyMapperWillMapKey:(iTermStandardKeyMapper *)standardKeyMapper {
     // Don't use terminalEncoding because it may not be initialized yet.
-    iTermStandardKeyMapperConfiguration configuration = {
-        .outputFactory = [_screen.terminalOutput retain],
-        .encoding = [iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:self.profile],
-        .leftOptionKey = self.optionKey,
-        .rightOptionKey = self.rightOptionKey,
-        .screenlike = self.isTmuxClient
-    };
+    iTermStandardKeyMapperConfiguration *configuration = [[[iTermStandardKeyMapperConfiguration alloc] init] autorelease];
+
+    configuration.outputFactory = _screen.terminalOutput;
+    configuration.encoding = [iTermProfilePreferences unsignedIntegerForKey:KEY_CHARACTER_ENCODING inProfile:self.profile];
+    configuration.leftOptionKey = self.optionKey;
+    configuration.rightOptionKey = self.rightOptionKey;
+    configuration.screenlike = self.isTmuxClient;
     standardKeyMapper.configuration = configuration;
 }
 

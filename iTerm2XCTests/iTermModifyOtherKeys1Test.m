@@ -83,13 +83,12 @@ charactersIgnoringModifiers:(NSString *)charactersIgnoringModifiers
 #pragma mark - iTermStandardKeyMapperDelegate
 
 - (void)standardKeyMapperWillMapKey:(iTermStandardKeyMapper *)standardKeyMapper {
-    iTermStandardKeyMapperConfiguration configuration = {
-        .outputFactory = [_output retain],
-        .encoding = NSUTF8StringEncoding,
-        .leftOptionKey = OPT_ESC,
-        .rightOptionKey = OPT_ESC,
-        .screenlike = NO
-    };
+    iTermStandardKeyMapperConfiguration *configuration = [[[iTermStandardKeyMapperConfiguration alloc] init] autorelease];
+    configuration.outputFactory = _output;
+    configuration.encoding = NSUTF8StringEncoding;
+    configuration.leftOptionKey = OPT_ESC;
+    configuration.rightOptionKey = OPT_ESC;
+    configuration.screenlike = NO;
     standardKeyMapper.configuration = configuration;
 }
 

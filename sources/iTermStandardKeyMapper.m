@@ -483,7 +483,7 @@
 
 @end
 
-NSDictionary *iTermStandardKeyMapperConfigurationDictionaryValue(iTermStandardKeyMapperConfiguration config) {
+NSDictionary *iTermStandardKeyMapperConfigurationDictionaryValue(iTermStandardKeyMapperConfiguration *config) {
     return @{ @"output": config.outputFactory.configDictionary ?: @{},
               @"encoding": @(config.encoding),
               @"leftOptionKey": @(config.leftOptionKey),
@@ -491,3 +491,7 @@ NSDictionary *iTermStandardKeyMapperConfigurationDictionaryValue(iTermStandardKe
               @"screenlike": @(config.screenlike)
     };
 }
+
+@implementation iTermStandardKeyMapperConfiguration
+@end
+
