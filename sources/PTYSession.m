@@ -1775,7 +1775,7 @@ ITERM_WEAKLY_REFERENCEABLE
 // Session specific methods
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent {
     _screen.delegate = self;
-    if ([iTermAdvancedSettingsModel showLocationsInScrollbar]) {
+    if ([iTermAdvancedSettingsModel showLocationsInScrollbar] && [iTermAdvancedSettingsModel showMarksInScrollbar]) {
         _screen.intervalTreeObserver = self;
     }
 
@@ -2686,7 +2686,7 @@ ITERM_WEAKLY_REFERENCEABLE
         _textview.delegate = self;
         _screen.terminalEnabled = YES;
         _screen.delegate = self;
-        if ([iTermAdvancedSettingsModel showLocationsInScrollbar]) {
+        if ([iTermAdvancedSettingsModel showLocationsInScrollbar] && [iTermAdvancedSettingsModel showMarksInScrollbar]) {
             _screen.intervalTreeObserver = self;
         }
         _shell.paused = NO;
@@ -15146,6 +15146,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
+    if (![iTermAdvancedSettingsModel showMarksInScrollbar]) {
+        return;
+    }
     [self initializeMarksMinimap];
 }
 
@@ -15174,6 +15177,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
+    if (![iTermAdvancedSettingsModel showMarksInScrollbar]) {
+        return;
+    }
     [_view.marksMinimap addObjectOfType:type onLine:line];
 }
 
@@ -15181,6 +15187,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                    onLine:(NSInteger)line {
     DLog(@"Remove at %@", @(line));
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
+        return;
+    }
+    if (![iTermAdvancedSettingsModel showMarksInScrollbar]) {
         return;
     }
     [_view.marksMinimap removeObjectOfType:type fromLine:line];
