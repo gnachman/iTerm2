@@ -28,6 +28,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermProfileModelJournal.h"
 #import "iTermProfileSearchToken.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSThread+iTerm.h"
@@ -189,7 +190,7 @@ static NSMutableArray<NSString *> *_combinedLog;
                               defaultAttributes:(NSDictionary *)defaultAttributes
                           highlightedAttributes:(NSDictionary *)highlightedAttributes {
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
-    NSArray* tokens = [self parseFilter:filter];
+    NSArray<iTermProfileSearchToken *> *tokens = [self parseFilter:filter];
     [self doesProfileWithName:name tags:@[] matchFilter:tokens nameIndexSet:indexes tagIndexSets:nil];
     NSMutableAttributedString *result =
         [[[NSMutableAttributedString alloc] initWithString:name
@@ -238,17 +239,19 @@ static NSMutableArray<NSString *> *_combinedLog;
 
 + (BOOL)doesProfileWithName:(NSString *)name
                        tags:(NSArray *)tags
-                matchFilter:(NSArray *)tokens
+                matchFilter:(NSArray<iTermProfileSearchToken *> *)tokens
                nameIndexSet:(NSMutableIndexSet *)nameIndexSet
                tagIndexSets:(NSArray *)tagIndexSets {
     NSArray* nameWords = [name componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-    for (int i = 0; i < [tokens count]; ++i) {
-        iTermProfileSearchToken *token = [tokens objectAtIndex:i];
+    for (iTermProfileSearchToken *token in tokens) {
         // Search each word in tag until one has this token as a prefix.
         // First see if this token occurs in the title
         BOOL found = [token matchesAnyWordInNameWords:nameWords];
 
         if (found) {
+            if (token.negated) {
+                return NO;
+            }
             [nameIndexSet addIndexesInRange:token.range];
         }
         // If not try each tag.
@@ -257,12 +260,15 @@ static NSMutableArray<NSString *> *_combinedLog;
             NSArray* tagWords = [[tags objectAtIndex:j] componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
             found = [token matchesAnyWordInTagWords:tagWords];
             if (found) {
+                if (token.negated) {
+                    return NO;
+                }
                 NSMutableIndexSet *indexSet = tagIndexSets[j];
                 [indexSet addIndexesInRange:token.range];
             }
         }
-        if (!found && name != nil) {
-            // No tag had token i as a prefix. If name is nil then we don't really care about the
+        if (!token.negated && !found && name != nil) {
+            // Failed to match a non-negated token. If name is nil then we don't really care about the
             // answer and we just want index sets.
             return NO;
         }
@@ -270,9 +276,9 @@ static NSMutableArray<NSString *> *_combinedLog;
     return YES;
 }
 
-+ (NSArray *)parseFilter:(NSString*)filter {
++ (NSArray<iTermProfileSearchToken *> *)parseFilter:(NSString*)filter {
     NSArray *phrases = [filter componentsBySplittingProfileListQuery];
-    NSMutableArray *tokens = [NSMutableArray array];
+    NSMutableArray<iTermProfileSearchToken *> *tokens = [NSMutableArray array];
     for (NSString *phrase in phrases) {
         iTermProfileSearchToken *token = [[[iTermProfileSearchToken alloc] initWithPhrase:phrase] autorelease];
         [tokens addObject:token];

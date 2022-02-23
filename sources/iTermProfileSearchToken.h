@@ -11,6 +11,7 @@
 @interface iTermProfileSearchToken : NSObject
 
 @property(nonatomic, readonly) NSRange range;
+@property(nonatomic, readonly) BOOL negated;
 
 - (instancetype)initWithPhrase:(NSString *)phrase;
 
