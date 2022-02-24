@@ -22,6 +22,7 @@
 // This code has been altered.
 
 #import <Foundation/Foundation.h>
+#import "NSFileManager+CommonAdditions.h"
 
 @interface NSFileManager (iTerm)
 
@@ -40,18 +41,6 @@
 - (NSString *)downloadsDirectory;
 
 - (BOOL)directoryIsWritable:(NSString *)dir;
-
-// Returns YES if the file looks like it might be on a local filesystem, but doesn't check if it
-// actually exists.
-- (BOOL)fileIsLocal:(NSString *)filename
-additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths;
-
-// Returns YES if the file exists on a local (non-network) filesystem.
-- (BOOL)fileExistsAtPathLocally:(NSString *)filename
-         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkpaths;
-
-- (BOOL)fileHasForbiddenPrefix:(NSString *)filename
-        additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkpaths;
 
 // Returns the path to the user's desktop.
 - (NSString *)desktopDirectory;

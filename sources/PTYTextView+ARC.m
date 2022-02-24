@@ -271,6 +271,8 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
     __weak __typeof(self) weakSelf = self;
     DLog(@"updateUnderlinedURLs in screen:\n%@", [self.dataSource compactLineDumpWithContinuationMarks]);
+    [self.lastUrlActionCanceler cancelOperation];
+    self.lastUrlActionCanceler =
     [_urlActionHelper urlActionForClickAtCoord:coord completion:^(URLAction *action) {
         [weakSelf finishUpdatingUnderlinesWithAction:action
                                                event:event];

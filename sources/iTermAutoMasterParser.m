@@ -9,7 +9,7 @@
 #import "iTermAutoMasterParser.h"
 
 #import "DebugLogging.h"
-#import "NSArray+iTerm.h"
+#import "NSArray+CommonAdditions.h"
 
 // Represents an entry in /etc/auto_master.
 @interface iTermAutoMasterEntry : NSObject
@@ -33,7 +33,7 @@
         }
     }
 
-    NSScanner *scanner = [[[NSScanner alloc] initWithString:line] autorelease];
+    NSScanner *scanner = [[NSScanner alloc] initWithString:line];
     NSString *mountpoint = nil;
     NSString *map = nil;
     NSString *options = nil;
@@ -51,18 +51,11 @@
     [scanner scanUpToCharactersFromSet:[NSCharacterSet whitespaceCharacterSet]
                             intoString:&options];
 
-    iTermAutoMasterEntry *entry = [[[iTermAutoMasterEntry alloc] init] autorelease];
+    iTermAutoMasterEntry *entry = [[iTermAutoMasterEntry alloc] init];
     entry.mountpoint = mountpoint;
     entry.map = map;
     entry.options = options;
     return entry;
-}
-
-- (void)dealloc {
-    [_mountpoint release];
-    [_map release];
-    [_options release];
-    [super dealloc];
 }
 
 @end
@@ -86,7 +79,7 @@
         NSMutableArray<iTermAutoMasterEntry *> *entries = [NSMutableArray array];
         NSData *data = [NSData dataWithContentsOfFile:@"/etc/auto_master"];
         // The actual character set for this file doesn't seem to be defined. This is my guess.
-        NSString *string = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+        NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
         NSArray<NSString *> *lines = [string componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
 
         for (NSString *line in lines) {
@@ -95,7 +88,7 @@
                 [entries addObject:entry];
             }
         }
-        _entries = [entries retain];
+        _entries = entries;
     }
     return self;
 }

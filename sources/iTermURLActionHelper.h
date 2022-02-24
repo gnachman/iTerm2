@@ -12,6 +12,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol iTermCancelable;
 @protocol iTermImageInfoReading;
 @protocol iTermObject;
 @class iTermSelection;
@@ -70,12 +71,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)ignoreHardNewlinesInURLs;
 
-- (void)urlActionForClickAtCoord:(VT100GridCoord)coord
-                      completion:(void (^)(URLAction * _Nullable))completion;
+- (id<iTermCancelable>)urlActionForClickAtCoord:(VT100GridCoord)coord
+                                     completion:(void (^)(URLAction * _Nullable))completion;
 
-- (void)urlActionForClickAtCoord:(VT100GridCoord)coord
-          respectingHardNewlines:(BOOL)respectHardNewlines
-                      completion:(void (^)(URLAction * _Nullable))completion;
+- (id<iTermCancelable>)urlActionForClickAtCoord:(VT100GridCoord)coord
+                         respectingHardNewlines:(BOOL)respectHardNewlines
+                                     completion:(void (^)(URLAction * _Nullable))completion;
 
 - (void)openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground;
 

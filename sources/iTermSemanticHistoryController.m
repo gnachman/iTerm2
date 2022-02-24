@@ -36,6 +36,7 @@
 #import "iTermPathCleaner.h"
 #import "iTermPathFinder.h"
 #import "iTermSemanticHistoryPrefsController.h"
+#import "iTermSlowOperationGateway.h"
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "NSArray+iTerm.h"
@@ -80,7 +81,9 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
                        columnNumber:(NSString **)columnNumber {
     iTermPathCleaner *cleaner = [[iTermPathCleaner alloc] initWithPath:path
                                                                 suffix:suffix
-                                                      workingDirectory:workingDirectory];
+                                                      workingDirectory:workingDirectory
+                                                                ignore:[iTermAdvancedSettingsModel pathsToIgnore]
+                                                    allowNetworkMounts:[iTermAdvancedSettingsModel enableSemanticHistoryOnNetworkMounts]];
     cleaner.fileManager = self.fileManager;
     [cleaner cleanSynchronously];
     if (lineNumber) {
@@ -764,7 +767,9 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     iTermPathFinder *pathfinder = [[iTermPathFinder alloc] initWithPrefix:beforeStringIn
                                                                    suffix:afterStringIn
                                                          workingDirectory:workingDirectory
-                                                           trimWhitespace:trimWhitespace];
+                                                           trimWhitespace:trimWhitespace
+                                                                   ignore:[iTermAdvancedSettingsModel pathsToIgnore]
+                                                       allowNetworkMounts:[iTermAdvancedSettingsModel enableSemanticHistoryOnNetworkMounts]];
     pathfinder.fileManager = self.fileManager;
     [pathfinder searchSynchronously];
     if (charsTakenFromPrefixPtr) {
@@ -776,31 +781,26 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     return pathfinder.path;
 }
 
-- (iTermPathFinder *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
-                                                suffix:(NSString *)afterStringIn
-                                      workingDirectory:(NSString *)workingDirectory
-                                        trimWhitespace:(BOOL)trimWhitespace
-                                            completion:(void (^)(NSString *path,
-                                                                 int prefixChars,
-                                                                 int suffixChars,
-                                                                 BOOL workingDirectoryIsLocal))completion {
-    iTermPathFinder *pathfinder = [[iTermPathFinder alloc] initWithPrefix:beforeStringIn
-                                                                   suffix:afterStringIn
-                                                         workingDirectory:workingDirectory
-                                                           trimWhitespace:trimWhitespace];
-    pathfinder.fileManager = self.fileManager;
-    __weak __typeof(pathfinder) weakPathfinder = pathfinder;
-    [pathfinder searchWithCompletion:^{
-        __strong __typeof(pathfinder) strongPathfinder = weakPathfinder;
-        if (!strongPathfinder) {
-            return;
-        }
-        completion(strongPathfinder.path,
-                   strongPathfinder.prefixChars,
-                   strongPathfinder.suffixChars,
-                   pathfinder.workingDirectoryIsLocal);
-    }];
-    return pathfinder;
+- (id<iTermCancelable>)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
+                                                  suffix:(NSString *)afterStringIn
+                                        workingDirectory:(NSString *)workingDirectory
+                                          trimWhitespace:(BOOL)trimWhitespace
+                                              completion:(void (^)(NSString *path,
+                                                                   int prefixChars,
+                                                                   int suffixChars,
+                                                                   BOOL workingDirectoryIsLocal))completion {
+    DLog(@"SemanticHistoryController got request for %@ + %@",
+          [beforeStringIn substringFromIndex:MAX(10, beforeStringIn.length) - 10],
+          [afterStringIn substringToIndex:MIN(afterStringIn.length, 10)]);
+    id<iTermCancelable> canceler =
+    [[iTermSlowOperationGateway sharedInstance] findExistingFileWithPrefix:beforeStringIn
+                                                                    suffix:afterStringIn
+                                                          workingDirectory:workingDirectory
+                                                            trimWhitespace:trimWhitespace
+                                                             pathsToIgnore:[iTermAdvancedSettingsModel pathsToIgnore]
+                                                        allowNetworkMounts:[iTermAdvancedSettingsModel enableSemanticHistoryOnNetworkMounts]
+                                                                completion:completion];
+    return canceler;
 }
 
 - (NSFileManager *)fileManager {

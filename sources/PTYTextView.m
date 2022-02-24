@@ -376,6 +376,7 @@
     [_urlActionHelper release];
     [_indicatorMessagePopoverViewController release];
     [_notes release];
+    [_lastUrlActionCanceler release];
 
     [super dealloc];
 }

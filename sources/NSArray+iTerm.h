@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "NSArray+CommonAdditions.h"
 
 @class iTermTuple;
 
@@ -22,8 +23,6 @@
 - (NSArray *)objectsOfClasses:(NSArray<Class> *)classes;
 - (NSAttributedString *)attributedComponentsJoinedByAttributedString:(NSAttributedString *)joiner;
 
-// Returns an array where each object in self is replaced with block(object).
-- (NSArray *)mapWithBlock:(id (^NS_NOESCAPE)(ObjectType anObject))block;
 - (NSArray *)mapEnumeratedWithBlock:(id (^NS_NOESCAPE)(NSUInteger i, id object, BOOL *stop))block;
 - (NSArray *)flatMapWithBlock:(NSArray *(^)(ObjectType anObject))block;
 
@@ -98,7 +97,6 @@
 // returns /a/b
 - (NSURL *)lowestCommonAncestorOfURLs;
 
-- (NSArray<ObjectType> *)subarrayFromIndex:(NSUInteger)index;
 - (NSArray<ObjectType> *)subarrayToIndex:(NSUInteger)index;
 - (NSArray<ObjectType> *)subarrayToIndexInclusive:(NSUInteger)index;
 

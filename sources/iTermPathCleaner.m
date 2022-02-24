@@ -8,10 +8,9 @@
 #import "iTermPathCleaner.h"
 
 #import "DebugLogging.h"
-#import "iTermAdvancedSettingsModel.h"
-#import "NSArray+iTerm.h"
-#import "NSFileManager+iTerm.h"
-#import "NSStringITerm.h"
+#import "NSArray+CommonAdditions.h"
+#import "NSFileManager+CommonAdditions.h"
+#import "NSString+CommonAdditions.h"
 #import "RegexKitLite.h"
 
 static dispatch_queue_t iTermPathCleanerQueue(void) {
@@ -34,18 +33,22 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
     NSString *_suffix;
     NSString *_workingDirectory;
     NSArray<NSString *> *_pathsToIgnore;
+    BOOL _allowNetworkMounts;
 }
 
 - (instancetype)initWithPath:(NSString *)path
                       suffix:(NSString *)suffix
-            workingDirectory:(NSString *)workingDirectory {
+            workingDirectory:(NSString *)workingDirectory
+                      ignore:(NSString *)pathsToIgnore
+          allowNetworkMounts:(BOOL)allowNetworkMounts {
     self = [super init];
     if (self) {
         _path = [path copy];
         _suffix = [suffix copy];
         _workingDirectory = [workingDirectory copy];
         _fileManager = [NSFileManager defaultManager];
-        _pathsToIgnore = [[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","];
+        _pathsToIgnore = [pathsToIgnore componentsSeparatedByString:@","];
+        _allowNetworkMounts = allowNetworkMounts;
     }
     return self;
 }
@@ -95,43 +98,43 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
     }
 
     // Repeat the cleanup.
-    DLog(@"  Treating as diff path");
+    DLog(@"[%d]  Treating as diff path", _reqid);
     return [self getFullPath:pathWithoutNearbyGunk workingDirectory:_workingDirectory];
 }
 
 - (NSString *)getFullPath:(NSString *)pathExLineNumberAndColumn
          workingDirectory:(NSString *)workingDirectory {
-    DLog(@"Check if %@ is a valid path in %@", pathExLineNumberAndColumn, workingDirectory);
+    DLog(@"[%d] Check if %@ is a valid path in %@", _reqid, pathExLineNumberAndColumn, workingDirectory);
     // TODO(chendo): Move regex, define capture semantics in config file/prefs
     if (!pathExLineNumberAndColumn || [pathExLineNumberAndColumn length] == 0) {
-        DLog(@"  no: it is empty");
+        DLog(@"[%d]  no: it is empty", _reqid);
         return nil;
     }
 
     NSString *path = [pathExLineNumberAndColumn stringByExpandingTildeInPath];
-    DLog(@"  Strip line number suffix leaving %@", path);
+    DLog(@"[%d]  Strip line number suffix leaving %@", _reqid, path);
     if ([path length] == 0) {
         // Everything was stripped out, meaning we'd try to open the working directory.
         return nil;
     }
     if (![path hasPrefix:@"/"]) {
         path = [workingDirectory stringByAppendingPathComponent:path];
-        DLog(@"  Prepend working directory, giving %@", path);
+        DLog(@"[%d]  Prepend working directory, giving %@", _reqid, path);
     }
 
     // NOTE: The path used to be standardized first. While that would allow us to catch
     // network paths, it also caused filesystem access that would hit network paths.
     // That was also true for fileURLWithPath:.
-    DLog(@"    Check path for forbidden prefix %@", path);
+    DLog(@"[%d]    Check path for forbidden prefix %@", _reqid, path);
     if ([self fileHasForbiddenPrefix:path]) {
-        DLog(@"    NO: Path has forbidden prefix.");
+        DLog(@"[%d]    NO: Path has forbidden prefix.", _reqid);
         return nil;
     }
 
 
-    DLog(@"  Checking if file exists locally: %@", path);
+    DLog(@"[%d]  Checking if file exists locally: %@", _reqid, path);
     if ([self fileExistsAtPathLocally:path]) {
-        DLog(@"    YES: A file exists at %@", path);
+        DLog(@"[%d]    YES: A file exists at %@", _reqid, path);
         NSURL *url = [NSURL fileURLWithPath:path];
 
         // Resolve path by removing ./ and ../ etc
@@ -139,7 +142,7 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
 
         return path;
     }
-    DLog(@"     NO: no valid path found");
+    DLog(@"[%d]     NO: no valid path found", _reqid);
     return nil;
 }
 
@@ -157,7 +160,7 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
             // If part of `suffix` would remain, we can't use it.
             continue;
         }
-        DLog(@"  Suffix of %@ matches regex %@", suffix, regex);
+        DLog(@"[%d]  Suffix of %@ matches regex %@", _reqid, suffix, regex);
         NSArray<NSArray<NSString *> *> *matches = [suffix arrayOfCaptureComponentsMatchedByRegex:regex];
         NSArray<NSString *> *captures = matches.firstObject;
         if (captures.count > 1) {
@@ -185,7 +188,7 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
 - (NSString *)pathByStrippingEnclosingPunctuationFromPath:(NSString *)path
                                        lineAndColumnMatch:(NSString **)lineAndColumnMatch {
     if (!path || [path length] == 0) {
-        DLog(@"  no: it is empty");
+        DLog(@"[%d]  no: it is empty", _reqid);
         return nil;
     }
 
@@ -224,7 +227,8 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
 
 - (BOOL)fileExistsAtPathLocally:(NSString *)path {
     return [self.fileManager fileExistsAtPathLocally:path
-                              additionalNetworkPaths:_pathsToIgnore];
+                              additionalNetworkPaths:_pathsToIgnore
+                                  allowNetworkMounts:_allowNetworkMounts];
 }
 
 - (BOOL)fileHasForbiddenPrefix:(NSString *)path {

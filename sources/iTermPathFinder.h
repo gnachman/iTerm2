@@ -27,11 +27,17 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSFileManager *fileManager;
 // Set by -searchSynchronously
 @property (nonatomic, readonly) BOOL workingDirectoryIsLocal;
+@property (nonatomic, readonly, copy) NSString *pathsToIgnore;
+@property (nonatomic, readonly) BOOL allowNetworkMounts;
+@property (atomic, readonly) BOOL canceled;
+@property (nonatomic) int reqid;
 
 - (instancetype)initWithPrefix:(NSString *)beforeStringIn
                         suffix:(NSString *)afterStringIn
               workingDirectory:(NSString *)workingDirectory
-                trimWhitespace:(BOOL)trimWhitespace NS_DESIGNATED_INITIALIZER;
+                trimWhitespace:(BOOL)trimWhitespace
+                        ignore:(NSString *)pathsToIgnore
+            allowNetworkMounts:(BOOL)allowNetworkMounts NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 

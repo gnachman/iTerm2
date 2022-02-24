@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermCancelable.h"
 
 @class iTermGitState;
 
@@ -57,6 +58,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)fetchRecentBranchesAt:(NSString *)path count:(NSInteger)maxCount completion:(void (^)(NSArray<NSString *> *))reply;
 
+// If canceled, the completion block won't be run. Canceling is not always successful, though.
+- (id<iTermCancelable>)findExistingFileWithPrefix:(NSString *)prefix
+                                           suffix:(NSString *)suffix
+                                 workingDirectory:(NSString *)workingDirectory
+                                   trimWhitespace:(BOOL)trimWhitespace
+                                    pathsToIgnore:(NSString *)pathsToIgnore
+                               allowNetworkMounts:(BOOL)allowNetworkMounts
+                                       completion:(void (^)(NSString *path, int prefixChars, int suffixChars, BOOL workingDirectoryIsLocal))completion;
 @end
 
 NS_ASSUME_NONNULL_END

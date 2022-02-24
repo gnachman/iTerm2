@@ -9,6 +9,7 @@
 
 #import "iTermFileDescriptorServerShared.h"
 #import "iTermGitClient.h"
+#import "iTermPathFinder.h"
 #import "pidinfo-Swift.h"
 #include <libproc.h>
 #include <mach-o/dyld.h>
@@ -624,6 +625,70 @@ static const char *GetPathToSelf(void) {
         }
     }
     return results;
+}
+
+void iTermMutatePathFindersDict(void (^NS_NOESCAPE block)(NSMutableDictionary<NSNumber *, iTermPathFinder *> *dict)) {
+    static NSMutableDictionary<NSNumber *, iTermPathFinder *> *instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [NSMutableDictionary dictionary];
+    });
+    @synchronized (instance) {
+        block(instance);
+    }
+}
+
+- (void)findExistingFileWithPrefix:(NSString *)prefix
+                            suffix:(NSString *)suffix
+                  workingDirectory:(NSString *)workingDirectory
+                    trimWhitespace:(BOOL)trimWhitespace
+                     pathsToIgnore:(NSString *)pathsToIgnore
+                allowNetworkMounts:(BOOL)allowNetworkMounts
+                             reqid:(int)reqid
+                             reply:(void (^)(NSString *path, int prefixChars, int suffixChars, BOOL workingDirectoryIsLocal))reply {
+    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^completion)(void)) {
+        if (!shouldPerform) {
+            reply(nil, 0, 0, NO);
+            syslog(LOG_WARNING, "pidinfo wedged in findExistingFile %d. count=%d", reqid, self->_numWedged);
+            return;
+        }
+
+        iTermPathFinder *pathfinder = [[iTermPathFinder alloc] initWithPrefix:prefix
+                                                                       suffix:suffix
+                                                             workingDirectory:workingDirectory
+                                                               trimWhitespace:trimWhitespace
+                                                                       ignore:pathsToIgnore
+                                                           allowNetworkMounts:allowNetworkMounts];
+        pathfinder.reqid = reqid;
+        iTermMutatePathFindersDict(^(NSMutableDictionary<NSNumber *, iTermPathFinder *> *dict) {
+            dict[@(reqid)] = pathfinder;
+        });
+        pathfinder.fileManager = [NSFileManager defaultManager];
+        __weak __typeof(pathfinder) weakPathfinder = pathfinder;
+        DLog(@"[%d] Start %@ + %@", reqid,
+             [prefix substringFromIndex:MAX(10, prefix.length) - 10],
+             [suffix substringToIndex:MIN(suffix.length, 10)]);
+        [pathfinder searchSynchronously];
+        if (!completion()) {
+            syslog(LOG_INFO, "findExistingFile %d finished after timing out.", reqid);
+        }
+        DLog(@"[%d] Finish with result %@", reqid, weakPathfinder.path);
+        reply(weakPathfinder.path,
+              weakPathfinder.prefixChars,
+              weakPathfinder.suffixChars,
+              weakPathfinder.workingDirectoryIsLocal);
+    }];
+}
+
+- (void)cancelFindExistingFileRequest:(int)reqid reply:(void (^)(void))reply {
+    __block iTermPathFinder *pathFinder;
+    DLog(@"[%d] Cancel", reqid);
+    iTermMutatePathFindersDict(^(NSMutableDictionary<NSNumber *, iTermPathFinder *> *dict) {
+        pathFinder = dict[@(reqid)];
+        dict[@(reqid)] = nil;
+    });
+    [pathFinder cancel];
+    reply();
 }
 
 @end

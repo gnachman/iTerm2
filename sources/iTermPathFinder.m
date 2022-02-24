@@ -8,10 +8,9 @@
 #import "iTermPathFinder.h"
 
 #import "DebugLogging.h"
-#import "iTermAdvancedSettingsModel.h"
 #import "iTermPathCleaner.h"
-#import "NSArray+iTerm.h"
-#import "NSFileManager+iTerm.h"
+#import "NSArray+CommonAdditions.h"
+#import "NSFileManager+CommonAdditions.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 
@@ -25,7 +24,7 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
 }
 
 @interface iTermPathFinder()
-@property (atomic) BOOL canceled;
+@property (atomic, readwrite) BOOL canceled;
 @end
 
 @implementation iTermPathFinder {
@@ -38,7 +37,9 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
 - (instancetype)initWithPrefix:(NSString *)beforeStringIn
                         suffix:(NSString *)afterStringIn
               workingDirectory:(NSString *)workingDirectory
-                trimWhitespace:(BOOL)trimWhitespace {
+                trimWhitespace:(BOOL)trimWhitespace
+                        ignore:(NSString *)pathsToIgnore
+            allowNetworkMounts:(BOOL)allowNetworkMounts {
     self = [super init];
     if (self) {
         _beforeStringIn = [beforeStringIn copy];
@@ -46,6 +47,8 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
         _workingDirectory = [workingDirectory copy];
         _trimWhitespace = trimWhitespace;
         _fileManager = [NSFileManager defaultManager];
+        _pathsToIgnore = [pathsToIgnore copy];
+        _allowNetworkMounts = allowNetworkMounts;
     }
     return self;
 }
@@ -81,7 +84,7 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
     int iterationsBeforeQuitting = 100;  // Bail after 100 iterations if nothing is still found.
     NSMutableSet *paths = [NSMutableSet set];
     NSCharacterSet *whitespaceCharset = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-    for (int i = [beforeChunks count]; i >= 0; i--) {
+    for (NSUInteger i = [beforeChunks count]; i >= 0; i--) {
         if (self.canceled) {
             _path = nil;
             return;
@@ -136,7 +139,10 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
                 if (workingDirectoryIsOk || [modifiedPossiblePath hasPrefix:@"/"]) {
                     iTermPathCleaner *cleaner = [[iTermPathCleaner alloc] initWithPath:modifiedPossiblePath
                                                                                 suffix:nil
-                                                                      workingDirectory:_workingDirectory];
+                                                                      workingDirectory:_workingDirectory
+                                                                                ignore:_pathsToIgnore
+                                                                    allowNetworkMounts:_allowNetworkMounts];
+                    cleaner.reqid = self.reqid;
                     cleaner.fileManager = self.fileManager;
                     [cleaner cleanSynchronously];
                     exists = (cleaner.cleanPath != nil);
@@ -154,16 +160,16 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
                         // trimmedPath is trim(left + right). If trim(right) is empty
                         // then we don't want to count trailing whitespace from left in the chars
                         // taken from prefix.
-                        _prefixChars = [[left stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length];
+                        _prefixChars = (int)[[left stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length];
                     } else {
-                        _prefixChars = left.length;
+                        _prefixChars = (int)left.length;
                     }
                     NSInteger lengthOfBadSuffix = extra.length ? 0 : trimmedPath.length - modifiedPossiblePath.length;
                     int n;
                     if (_trimWhitespace) {
-                        n = [[right stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length] - lengthOfBadSuffix;
+                        n = (int)([[right stringByTrimmingTrailingCharactersFromCharacterSet:whitespaceCharset] length] - lengthOfBadSuffix);
                     } else {
-                        n = right.length - lengthOfBadSuffix;
+                        n = (int)(right.length - lengthOfBadSuffix);
                     }
                     _suffixChars = MAX(0, n);
                     DLog(@"Using path %@", extendedPath);
@@ -187,7 +193,8 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
 
 - (BOOL)fileExistsAtPathLocally:(NSString *)path {
     _workingDirectoryIsLocal = [self.fileManager fileIsLocal:path
-                                      additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]];
+                                      additionalNetworkPaths:[_pathsToIgnore componentsSeparatedByString:@","]
+                                          allowNetworkMounts:_allowNetworkMounts];
     if (!_workingDirectoryIsLocal) {
         return NO;
     }
@@ -196,7 +203,7 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
 
 - (BOOL)fileHasForbiddenPrefix:(NSString *)path {
     return [self.fileManager fileHasForbiddenPrefix:path
-                             additionalNetworkPaths:[[iTermAdvancedSettingsModel pathsToIgnore] componentsSeparatedByString:@","]];
+                             additionalNetworkPaths:[_pathsToIgnore componentsSeparatedByString:@","]];
 }
 
 #pragma mark String Manipulation

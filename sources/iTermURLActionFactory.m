@@ -11,6 +11,7 @@
 #import "ContextMenuActionPrefsController.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermCancelable.h"
 #import "iTermLocatedString.h"
 #import "iTermPathFinder.h"
 #import "iTermSemanticHistoryController.h"
@@ -24,8 +25,6 @@
 #import "SmartSelectionController.h"
 #import "URLAction.h"
 #import "VT100RemoteHost.h"
-
-static NSString *const iTermURLActionFactoryCancelPathfinders = @"iTermURLActionFactoryCancelPathfinders";
 
 typedef enum {
     iTermURLActionFactoryPhaseHypertextLink,
@@ -62,21 +61,23 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
 
 @implementation iTermURLActionFactory {
     BOOL _finished;
-    iTermPathFinder *_pathfinder;
+    id<iTermCancelable> _pathFinderCanceler;
 }
 
-+ (void)urlActionAtCoord:(VT100GridCoord)coord
-     respectHardNewlines:(BOOL)respectHardNewlines
-        workingDirectory:(NSString *)workingDirectory
-                   scope:(iTermVariableScope *)scope
-                   owner:(id<iTermObject>)owner
-              remoteHost:(id<VT100RemoteHostReading>)remoteHost
-               selectors:(NSDictionary<NSNumber *, NSString *> *)selectors
-                   rules:(NSArray *)rules
-               extractor:(iTermTextExtractor *)extractor
-semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController
-             pathFactory:(SCPPath *(^)(NSString *, int))pathFactory
-              completion:(void (^)(URLAction *))completion {
++ (instancetype)urlActionAtCoord:(VT100GridCoord)coord
+             respectHardNewlines:(BOOL)respectHardNewlines
+                workingDirectory:(NSString *)workingDirectory
+                           scope:(iTermVariableScope *)scope
+                           owner:(id<iTermObject>)owner
+                      remoteHost:(id<VT100RemoteHostReading>)remoteHost
+                       selectors:(NSDictionary<NSNumber *, NSString *> *)selectors
+                           rules:(NSArray *)rules
+                       extractor:(iTermTextExtractor *)extractor
+       semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryController
+                     pathFactory:(SCPPath *(^)(NSString *, int))pathFactory
+                      completion:(void (^)(URLAction *))completion {
+    DLog(@"URLActionFactory start at %@", VT100GridCoordDescription(coord));
+
     iTermURLActionFactory *factory = [[iTermURLActionFactory alloc] init];
     factory.coord = coord;
     factory.respectHardNewlines = respectHardNewlines;
@@ -91,18 +92,22 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     factory.pathFactory = pathFactory;
     factory.completion = completion;
     factory.phase = iTermURLActionFactoryPhaseHypertextLink;
-    [[NSNotificationCenter defaultCenter] addObserver:factory
-                                             selector:@selector(cancelPathfinders:)
-                                                 name:iTermURLActionFactoryCancelPathfinders
-                                               object:nil];
 
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         sFactories = [NSMutableArray array];
     });
+    DLog(@"Created %@", self);
 
     [sFactories addObject:factory];
     [factory tryCurrentPhase];
+    return factory;
+}
+
+- (void)cancelOperation {
+    DLog(@"Cancel %@", self);
+    [_pathFinderCanceler cancelOperation];
+    [sFactories removeObject:self];
 }
 
 - (iTermTextExtractor *)extractor {
@@ -308,20 +313,18 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
                               charsTakenFromPrefix:NULL];
     DLog(@"Prefix=%@", possibleFilePart1);
     DLog(@"Suffix=%@", possibleFilePart2);
+    DLog(@"URLActionFactory sending request for %@ + %@",
+         [possibleFilePart1 substringFromIndex:MAX(10, possibleFilePart1.length) - 10],
+         [possibleFilePart2 substringToIndex:MIN(possibleFilePart2.length, 10)]);
 
-    // Because path finders cache their results, this is not a disaster. Since the inputs tend to
-    // be the same, whatever work was already done can be exploited this time around.
-    [[NSNotificationCenter defaultCenter] postNotificationName:iTermURLActionFactoryCancelPathfinders
-                                                        object:nil];
-
-    _pathfinder = [self.semanticHistoryController pathOfExistingFileFoundWithPrefix:possibleFilePart1
-                                                                             suffix:possibleFilePart2
-                                                                   workingDirectory:self.workingDirectory
-                                                                     trimWhitespace:NO
-                                                                         completion:^(NSString *filename,
-                                                                                      int prefixChars,
-                                                                                      int suffixChars,
-                                                                                      BOOL workingDirectoryIsLocal) {
+    _pathFinderCanceler = [self.semanticHistoryController pathOfExistingFileFoundWithPrefix:possibleFilePart1
+                                                                                     suffix:possibleFilePart2
+                                                                           workingDirectory:self.workingDirectory
+                                                                             trimWhitespace:NO
+                                                                                 completion:^(NSString *filename,
+                                                                                              int prefixChars,
+                                                                                              int suffixChars,
+                                                                                              BOOL workingDirectoryIsLocal) {
         DLog(@"Semantic history controller returned filename %@ with %@ prefix and %@ suffix chars", filename, @(prefixChars), @(suffixChars));
         URLAction *action = [self urlActionForFilename:filename
                                          locatedPrefix:locatedPrefix
@@ -680,12 +683,6 @@ semanticHistoryController:(iTermSemanticHistoryController *)semanticHistoryContr
     }
 
     return NO;
-}
-
-#pragma mark - Notifications
-
-- (void)cancelPathfinders:(NSNotification *)notification {
-    [_pathfinder cancel];
 }
 
 @end

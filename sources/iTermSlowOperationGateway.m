@@ -277,4 +277,50 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     }
     box.block(branches);
 }
+
+- (id<iTermCancelable>)findExistingFileWithPrefix:(NSString *)prefix
+                                           suffix:(NSString *)suffix
+                                 workingDirectory:(NSString *)workingDirectory
+                                   trimWhitespace:(BOOL)trimWhitespace
+                                    pathsToIgnore:(NSString *)pathsToIgnore
+                               allowNetworkMounts:(BOOL)allowNetworkMounts
+                                       completion:(void (^)(NSString *path, int prefixChars, int suffixChars, BOOL workingDirectoryIsLocal))completion {
+    static int nextRequestID;
+    const int reqid = nextRequestID++;
+    __weak __typeof(self) weakSelf = self;
+    id<pidinfoProtocol> proxy = [_connectionToService remoteObjectProxy];
+    __block BOOL canceled = NO;
+    DLog(@"[%d] Main app request %@ ... %@]", reqid,
+         [prefix substringFromIndex:MAX(10, prefix.length) - 10],
+         [suffix substringToIndex:MIN(suffix.length, 10)]);
+    [proxy findExistingFileWithPrefix:prefix
+                               suffix:suffix
+                     workingDirectory:workingDirectory
+                       trimWhitespace:trimWhitespace
+                        pathsToIgnore:pathsToIgnore
+                   allowNetworkMounts:allowNetworkMounts
+                                reqid:reqid
+                                reply:^(NSString *path, int prefixChars, int suffixChars, BOOL workingDirectoryIsLocal) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (canceled) {
+                DLog(@"Drop result for %d because canceled", reqid);
+                return;
+            }
+            DLog(@"Accept result for %d", reqid);
+            completion(path, prefixChars, suffixChars, workingDirectoryIsLocal);
+        });
+    }];
+    
+    iTermBlockCanceller *cancel = [[iTermBlockCanceller alloc] initWithBlock:^{
+        canceled = YES;
+        [weakSelf cancelFindExistingFileRequest:reqid];
+    }];
+    return cancel;
+}
+
+- (void)cancelFindExistingFileRequest:(int)reqid {
+    id<pidinfoProtocol> proxy = [_connectionToService remoteObjectProxy];
+    [proxy cancelFindExistingFileRequest:reqid reply:^{}];
+}
+
 @end

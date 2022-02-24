@@ -25,6 +25,7 @@
  */
 
 #import <Foundation/Foundation.h>
+#import "iTermCancelable.h"
 
 // Keys for substitutions of openPath:workingDirectory:substitutions:.
 extern NSString *const kSemanticHistoryPathSubstitutionKey;
@@ -113,14 +114,14 @@ extern NSString *const kSemanticHistoryColumnNumberKey;
                            charsTakenFromSuffix:(int *)suffixChars
                                  trimWhitespace:(BOOL)trimWhitespace;
 
-- (iTermPathFinder *)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
-                                                suffix:(NSString *)afterStringIn
-                                      workingDirectory:(NSString *)workingDirectory
-                                        trimWhitespace:(BOOL)trimWhitespace
-                                            completion:(void (^)(NSString *path,
-                                                                 int prefixChars,
-                                                                 int suffixChars,
-                                                                 BOOL workingDirectoryIsLocal))completion;
+- (id<iTermCancelable>)pathOfExistingFileFoundWithPrefix:(NSString *)beforeStringIn
+                                                  suffix:(NSString *)afterStringIn
+                                        workingDirectory:(NSString *)workingDirectory
+                                          trimWhitespace:(BOOL)trimWhitespace
+                                              completion:(void (^)(NSString *path,
+                                                                   int prefixChars,
+                                                                   int suffixChars,
+                                                                   BOOL workingDirectoryIsLocal))completion;
 
 #pragma mark - Testing
 

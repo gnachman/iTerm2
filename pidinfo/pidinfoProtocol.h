@@ -45,6 +45,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)fetchRecentBranchesAt:(NSString *)path count:(NSInteger)maxCount completion:(void (^)(NSArray<NSString *> *))reply;
 
+- (void)findExistingFileWithPrefix:(NSString *)prefix
+                            suffix:(NSString *)suffix
+                  workingDirectory:(NSString *)workingDirectory
+                    trimWhitespace:(BOOL)trimWhitespace
+                     pathsToIgnore:(NSString *)pathsToIgnore
+                allowNetworkMounts:(BOOL)allowNetworkMounts
+                             reqid:(int)reqid
+                             reply:(void (^)(NSString * _Nullable path,
+                                             int prefixChars,
+                                             int suffixChars,
+                                             BOOL workingDirectoryIsLocal))reply;
+
+- (void)cancelFindExistingFileRequest:(int)reqid
+                               reply:(void (^)(void))reply;
+
 @end
 
 NS_ASSUME_NONNULL_END

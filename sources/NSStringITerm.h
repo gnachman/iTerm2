@@ -36,6 +36,7 @@
 
 #import "iTermOrderedDictionary.h"
 #import "iTermTuple.h"
+#import "NSString+CommonAdditions.h"
 
 @class iTermVariableScope;
 
@@ -157,7 +158,6 @@ int decode_utf8_char(const unsigned char * restrict datap,
 //    "*http://example.com" -> "http://example.com"
 - (NSRange)rangeOfURLInString;
 
-- (NSString *)stringByRemovingEnclosingBrackets;
 - (NSString *)stringByRemovingSuffix:(NSString *)suffix;
 - (NSString *)stringByRemovingPrefix:(NSString *)prefix;
 
@@ -314,7 +314,6 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // If this is a 2+ part version number, return a 2 part version number. Otherwise, nil.
 - (NSString *)it_twoPartVersionNumber;
 - (NSString *)stringByEscapingForSandboxLiteral;
-- (NSString *)stringByDroppingLastCharacters:(NSInteger)count;
 - (NSString *)stringByKeepingLastCharacters:(NSInteger)count;
 - (NSString *)stringByTrimmingOrphanedSurrogates;
 

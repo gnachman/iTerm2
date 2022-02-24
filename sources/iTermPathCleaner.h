@@ -34,10 +34,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, atomic, readonly) NSString *lineNumber;
 @property (nullable, atomic, readonly) NSString *columnNumber;
 @property (nonatomic, strong) NSFileManager *fileManager;
+@property (nonatomic) int reqid;
 
 - (instancetype)initWithPath:(NSString *)path
                       suffix:(nullable NSString *)suffix
-            workingDirectory:(NSString *)workingDirectory NS_DESIGNATED_INITIALIZER;
+            workingDirectory:(NSString *)workingDirectory
+                      ignore:(NSString *)pathsToIgnore
+          allowNetworkMounts:(BOOL)allowNetworkMounts NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)init NS_UNAVAILABLE;
 

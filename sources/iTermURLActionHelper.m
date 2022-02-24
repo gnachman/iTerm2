@@ -45,37 +45,42 @@
     return [self.delegate urlActionHelperShouldIgnoreHardNewlines:self];
 }
 
-- (void)urlActionForClickAtCoord:(VT100GridCoord)coord
-                      completion:(void (^)(URLAction *))completion {
-    [self urlActionForClickAtCoord:coord
-            respectingHardNewlines:![self ignoreHardNewlinesInURLs]
-                        completion:completion];
+- (id<iTermCancelable>)urlActionForClickAtCoord:(VT100GridCoord)coord
+                                     completion:(void (^)(URLAction *))completion {
+    return [self urlActionForClickAtCoord:coord
+                   respectingHardNewlines:![self ignoreHardNewlinesInURLs]
+                               completion:completion];
 }
 
-- (void)urlActionForClickAtCoord:(VT100GridCoord)coord
-          respectingHardNewlines:(BOOL)respectHardNewlines
-                      completion:(void (^)(URLAction *))completion {
+- (id<iTermCancelable>)urlActionForClickAtCoord:(VT100GridCoord)coord
+                         respectingHardNewlines:(BOOL)respectHardNewlines
+                                     completion:(void (^)(URLAction *))completion {
     DLog(@"urlActionForClickAt:%@ respectingHardNewlines:%@",
          VT100GridCoordDescription(coord), @(respectHardNewlines));
     if (coord.y < 0) {
         completion(nil);
-        return;
+        return nil;
     }
     id<iTermImageInfoReading> imageInfo = [self.delegate urlActionHelper:self imageInfoAt:coord];
     if (imageInfo) {
         completion([URLAction urlActionToOpenImage:imageInfo]);
-        return;
+        return nil;
     }
     iTermTextExtractor *extractor = [self.delegate urlActionHelperNewTextExtractor:self];
     if ([extractor characterAt:coord].code == 0) {
         completion(nil);
-        return;
+        return nil;
     }
     [extractor restrictToLogicalWindowIncludingCoord:coord];
 
+    __block id<iTermCancelable> urlActionFactoryCanceler = nil;
+    iTermBlockCanceller *canceller = [[iTermBlockCanceller alloc] initWithBlock:^{
+        [urlActionFactoryCanceler cancelOperation];
+    }];
     [self.delegate urlActionHelper:self
             workingDirectoryOnLine:coord.y
                         completion:^(NSString *workingDirectory) {
+        urlActionFactoryCanceler =
         [iTermURLActionFactory urlActionAtCoord:coord
                             respectHardNewlines:respectHardNewlines
                                workingDirectory:workingDirectory ?: @""
@@ -91,6 +96,7 @@
                                     }
                                      completion:completion];
     }];
+    return canceller;
 }
 
 - (void)openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground {

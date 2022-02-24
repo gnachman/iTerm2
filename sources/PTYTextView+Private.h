@@ -22,6 +22,7 @@
 #import "iTermSelectionScrollHelper.h"
 #import "iTermTextPopoverViewController.h"
 
+@protocol iTermCancelable;
 @class iTermShellIntegrationWindowController;
 @class iTermURLActionHelper;
 @class PTYMouseHandler;
@@ -52,6 +53,7 @@ NSPopoverDelegate> {
 @property(nonatomic, strong) iTermQuickLookController *quickLookController;
 @property(strong, readwrite) NSTouchBar *touchBar NS_AVAILABLE_MAC(10_12_2);
 @property(nonatomic, readonly) BOOL hasUnderline;
+@property(nonatomic, strong) id<iTermCancelable> lastUrlActionCanceler;
 
 - (void)addNote;
 - (NSString *)selectedTextCappedAtSize:(int)maxBytes;
