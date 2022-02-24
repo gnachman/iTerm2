@@ -94,7 +94,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 @property(nonatomic, readonly) BOOL live;
 
 // All sub selections, including the live one if applicable.
-@property(nonatomic, readonly) NSArray *allSubSelections;
+@property(nonatomic, readonly) NSArray<iTermSubSelection *> *allSubSelections;
 
 // The last range, including the live one if applicable. Ranges are ordered by endpoint.
 // The range will be -1,-1,-1,-1 if there are none.

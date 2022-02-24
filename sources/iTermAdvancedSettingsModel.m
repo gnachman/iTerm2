@@ -646,6 +646,7 @@ DEFINE_BOOL(synergyModifierRemappingEnabled, YES, SECTION_EXPERIMENTAL @"Support
 DEFINE_BOOL(shouldSetLCTerminal, YES, SECTION_EXPERIMENTAL @"Set LC_TERMINAL=iTerm2.\nopenssh and mosh pass this to hosts you connect to. It communicates the current terminal emulator. This is useful for enabling terminal emulator-specific features.");
 DEFINE_BOOL(clearBellIconAggressively, YES, SECTION_EXPERIMENTAL @"Clear bell icon when a session becomes active.\nWhen off, you must type in the session to clear the bell icon.");
 DEFINE_BOOL(workAroundNumericKeypadBug, YES, SECTION_EXPERIMENTAL @"Treat the equals sign on the numeric keypad as a key on the numeric keypad.\nFor mysterious reasons, macOS does not treat this key as belonging to the numeric keypad. Enable this setting to work around the bug.");
+DEFINE_BOOL(enableCharacterAccentMenu, NO, SECTION_EXPERIMENTAL @"Enable character accent menu.\nThis disables the ordinary key repeat behavior for press-and-hold. You must restart iTerm2 for this change to take effect.");
 DEFINE_BOOL(accelerateUploads, YES, SECTION_EXPERIMENTAL @"Make uploads with it2ul really fast.");
 DEFINE_BOOL(multiserver, YES, SECTION_EXPERIMENTAL @"Enable multi-server daemon.\nA new implementation of session restoration that combines daemon processes.");
 DEFINE_BOOL(useRestorableStateController, YES, SECTION_EXPERIMENTAL @"Enable restorable state controller?\nThis makes window restoration more reliable.");

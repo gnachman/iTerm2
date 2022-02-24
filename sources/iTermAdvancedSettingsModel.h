@@ -123,6 +123,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)dynamicProfilesPath;
 + (double)echoProbeDuration;
 + (void)setEchoProbeDuration:(double)value;
++ (BOOL)enableCharacterAccentMenu;
 + (BOOL)enableSemanticHistoryOnNetworkMounts;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
 + (BOOL)escapeWithQuotes;

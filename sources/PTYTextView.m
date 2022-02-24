@@ -3780,7 +3780,31 @@
 }
 
 - (NSRange)selectedRange {
-    return NSMakeRange(0, 0);
+    DLog(@"selectedRange");
+    if (_selection.hasSelection) {
+        DLog(@"Use range of selection");
+        return [self nsRangeForAbsCoordRange:_selection.allSubSelections.lastObject.absRange.coordRange];
+    }
+    DLog(@"Use range of cursor");
+    return [self nsrangeOfCursor];
+}
+
+- (NSRange)nsrangeOfCursor {
+    const int y = [_dataSource cursorY] - 1;
+    const int x = [_dataSource cursorX] - 1;
+    const long long offset = _dataSource.totalScrollbackOverflow + _dataSource.numberOfScrollbackLines;
+    VT100GridAbsCoordRange range = VT100GridAbsCoordRangeMake(x,
+                                                              offset + y,
+                                                              x,
+                                                              offset + y);
+    return [self nsRangeForAbsCoordRange:range];
+}
+
+- (NSRange)nsRangeForAbsCoordRange:(VT100GridAbsCoordRange)range {
+    DLog(@"%@", VT100GridAbsCoordRangeDescription(range));
+    const long long width = _dataSource.width;
+    return NSMakeRange(range.start.x + range.start.y * width,
+                       VT100GridAbsCoordDistance(range.start, range.end, width));
 }
 
 - (NSArray *)validAttributesForMarkedText {
@@ -4968,6 +4992,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // In case imeOffset changed, the frame height must adjust.
         [_delegate refresh];
     }
+}
+
+- (NSInteger)keyboardHandlerWindowNumber:(iTermKeyboardHandler *)keyboardhandler {
+    return self.window.windowNumber;
+}
+
+- (BOOL)keyboardHandler:(iTermKeyboardHandler *)keyboardhandler shouldBackspaceAt:(NSUInteger)location {
+    const NSRange cursorRange = [self nsrangeOfCursor];
+    DLog(@"cursor range=%@ location=%@", @(NSMaxRange(cursorRange)), @(location));
+    return NSMaxRange(cursorRange) == location;
 }
 
 #pragma mark - iTermBadgeLabelDelegate

@@ -12,6 +12,8 @@
 // Optionally, it may have a function that computes its value (set in +computedObjectDictionary)
 // and the view controller may customize how its control's appearance changes dynamically.
 
+#import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermNotificationCenter.h"
 #import "iTermPreferenceDidChangeNotification.h"
 #import "iTermPreferences.h"
@@ -300,6 +302,11 @@ static NSString *sPreviousVersion;
 
     // Load prefs from remote.
     [[iTermRemotePreferences sharedInstance] copyRemotePrefsToLocalUserDefaultsPreserving:self.systemPreferenceOverrides.allKeys];
+
+    if ([iTermAdvancedSettingsModel enableCharacterAccentMenu]) {
+        DLog(@"Accent menu enabled");
+        [userDefaults setBool:YES forKey:@"ApplePressAndHoldEnabled"];
+    }
 }
 
 #pragma mark - Default values

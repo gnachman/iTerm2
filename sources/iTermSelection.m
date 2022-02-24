@@ -772,7 +772,7 @@ static NSString *const kiTermSubSelectionMode = @"Mode";
     }
 }
 
-- (NSArray *)allSubSelections {
+- (NSArray<iTermSubSelection *> *)allSubSelections {
     if ([self haveLiveSelection]) {
         NSMutableArray *subs = [NSMutableArray array];
         [subs addObjectsFromArray:_subSelections];
