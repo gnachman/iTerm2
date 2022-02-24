@@ -141,8 +141,40 @@
     }
 }
 
+// This is a complicated little mess.
+// In issue 10206 we see that the cursor is drawn while hidden on every keystroke. The reason is that
+// emacs hides the cursor, resets blink, and then shows the cursor. The blink reset used to pause and
+// sync because it's reportable state (using VT100CSI_DECRQM_DEC).
+// That was dumb because it didn't do anything 99% of the time (emacs never turns blink on, it just
+// repeatedly turns it off). To avoid the unnecessary syncs and undesirable ill-timed draws, we don't
+// want to pause & sync when mutating reportable state. Instead, pause and sync before sending a
+// report becuse reports are pretty rare compared to decset and friends.
+//
+// All reports go through -terminalShouldSendReport. I know this because any that don't will break
+// tmux integration.
+//
+// When you get a report, roll back the token (so it will be executed again later) and pause. Force
+// a sync and unpause. The allowNextReport flag is temporarily set to allow the report to go through.
 - (BOOL)terminalShouldSendReport {
-    return !self.config.isTmuxClient;
+    if (self.config.isTmuxClient) {
+        return NO;
+    }
+    if (self.allowNextReport) {
+        DLog(@"Allowing report to go through");
+        self.allowNextReport = NO;
+        return YES;
+    }
+    DLog(@"Will send a report. Rollback and pause");
+    [self.tokenExecutor rollBackCurrentToken];
+    iTermTokenExecutorUnpauser *unpauser = [self.tokenExecutor pause];
+    __weak __typeof(self) weakSelf = self;
+    [self addJoinedSideEffect:^(id<VT100ScreenDelegate> delegate) {
+        DLog(@"Now that I have synced, unpause and allow the report to go through");
+        [unpauser unpause];
+        weakSelf.allowNextReport = YES;
+    }];
+    DLog(@"Decline report");
+    return NO;
 }
 
 - (void)terminalReportVariableNamed:(NSString *)variable {
@@ -213,21 +245,17 @@
 }
 
 - (void)terminalSetCursorType:(ITermCursorType)cursorType {
-    // Pause because cursor type and blink are reportable.
     if (self.currentGrid.cursor.x < self.currentGrid.size.width) {
         [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
     }
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenSetCursorType:cursorType];
-        [unpauser unpause];
     }];
 }
 
 - (void)terminalSetCursorBlinking:(BOOL)blinking {
-    // Pause because cursor type and blink are reportable.
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSetCursorBlinking:blinking];
-        [unpauser unpause];
     }];
 }
 
@@ -262,10 +290,8 @@
 }
 
 - (void)terminalResetCursorTypeAndBlink {
-    // Pause because cursor type and blink are reportable.
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenResetCursorTypeAndBlink];
-        [unpauser unpause];
     }];
 }
 
@@ -427,12 +453,10 @@
 - (void)terminalSetWindowTitle:(NSString *)title {
     DLog(@"terminalSetWindowTitle:%@", title);
 
-    // Pause because a title change affects a variable, and that is observable by token execution.
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         if ([delegate screenAllowTitleSetting]) {
             [delegate screenSetWindowTitle:title];
         }
-        [unpauser unpause];
     }];
 
     // If you know to use RemoteHost then assume you also use CurrentDirectory. Innocent window title
@@ -456,7 +480,7 @@
 }
 
 - (void)terminalSetIconTitle:(NSString *)title {
-    // Pause because a title change affects a variable, and that is observable by token execution.
+    // Pause because this changes the profile
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         if ([delegate screenAllowTitleSetting]) {
             [delegate screenSetIconName:title];
@@ -601,35 +625,30 @@
 }
 
 - (void)terminalMoveWindowTopLeftPointTo:(NSPoint)point {
-    // Pause because you can query for window location.
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         if ([delegate screenShouldInitiateWindowResize] &&
             ![delegate screenWindowIsFullscreen]) {
             // TODO: Only allow this if there is a single session in the tab.
             [delegate screenMoveWindowTopLeftPointTo:point];
         }
-        [unpauser unpause];
     }];
 }
 
 - (void)terminalMiniaturize:(BOOL)mini {
-    // Paseu becasue miniaturization status is reportable.
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         // TODO: Only allow this if there is a single session in the tab.
         if ([delegate screenShouldInitiateWindowResize] &&
             ![delegate screenWindowIsFullscreen]) {
             [delegate screenMiniaturizeWindow:mini];
         }
-        [unpauser unpause];
     }];
 }
 
 - (void)terminalRaise:(BOOL)raise {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         if ([delegate screenShouldInitiateWindowResize]) {
             [delegate screenRaise:raise];
         }
-        [unpauser unpause];
     }];
 }
 
@@ -708,12 +727,10 @@
 }
 
 - (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow {
-    // Pause because this sets the title, which is observable.
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         if ([delegate screenAllowTitleSetting]) {
             [delegate screenPopCurrentTitleForWindow:isWindow];
         }
-        [unpauser unpause];
     }];
 }
 
@@ -843,10 +860,8 @@
 }
 
 - (void)terminalMouseModeDidChangeTo:(MouseMode)mouseMode {
-    // Pause because this updates a variable.
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenMouseModeDidChange];
-        [unpauser unpause];
     }];
 }
 
@@ -1041,7 +1056,7 @@
 }
 
 - (void)terminalSetBadgeFormat:(NSString *)badge {
-    // Pause because this changes a variable.
+    // Pause because this changes the profile.
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenSetBadgeFormat:badge];
         [unpauser unpause];
@@ -1049,9 +1064,8 @@
 }
 
 - (void)terminalSetUserVar:(NSString *)kvp {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenSetUserVar:kvp];
-        [unpauser unpause];
     }];
 }
 
@@ -1852,9 +1866,8 @@
 }
 
 - (void)terminalApplicationKeypadModeDidChange:(BOOL)mode {
-    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenApplicationKeypadModeDidChange:mode];
-        [unpauser unpause];
     }];
 }
 

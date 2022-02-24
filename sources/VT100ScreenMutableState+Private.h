@@ -49,6 +49,7 @@ iTermTriggerScopeProvider> {
 // main thread. This can happen when performBlockWithJoinedThreads is reentrant with two different
 // VT100ScreenMutableState objects (for example, when detaching in tmux mode).
 @property (class, atomic, readwrite) BOOL performingJoinedBlock;
+@property (nonatomic) BOOL allowNextReport;
 
 - (iTermEventuallyConsistentIntervalTree *)mutableIntervalTree;
 - (iTermEventuallyConsistentIntervalTree *)mutableSavedIntervalTree;
