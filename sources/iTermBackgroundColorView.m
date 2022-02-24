@@ -52,6 +52,10 @@
     return (self.window.styleMask & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen;
 }
 
+- (void)viewDidMoveToWindow {
+    [self updateBackgroundColor];
+}
+
 - (CGFloat)desiredAlphaValue {
     if (self.inFullScreenWindow &&
         self.blend == 0) {

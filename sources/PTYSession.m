@@ -13544,6 +13544,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sessionViewDidChangeWindow {
+    [self invalidateBlend];
     [self updateMetalDriver];
     if (!_shell.ttySizeInitialized) {
         if ([self updateTTYSize]) {
