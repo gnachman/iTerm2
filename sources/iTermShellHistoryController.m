@@ -537,8 +537,12 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
         }
     }
 
-    // TODO: Cache this.
-    NSArray *sortedEntries = [result sortedArrayUsingSelector:@selector(compare:)];
+    NSArray *sortedEntries;
+    if (partialCommand.length == 0) {
+        sortedEntries = [result sortedArrayUsingSelector:@selector(compareUseTime:)];
+    } else {
+        sortedEntries = [result sortedArrayUsingSelector:@selector(compare:)];
+    }
     return [sortedEntries subarrayWithRange:NSMakeRange(0, MIN(kMaxResults, sortedEntries.count))];
 }
 
