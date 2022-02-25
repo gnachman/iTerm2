@@ -44,6 +44,7 @@
 
 @implementation iTermModifierRemapper {
     iTermEventTap *_keyDown;
+    iTermEventTap *_keyUp;
 }
 
 + (NSInteger)_cgMaskForMod:(int)mod {
@@ -278,6 +279,7 @@
 
 - (void)dealloc {
     [_keyDown release];
+    [_keyUp release];
     [super dealloc];
 }
 
@@ -336,9 +338,20 @@
     return _keyDown;
 }
 
+- (iTermEventTap *)keyUp {
+    if ([iTermAdvancedSettingsModel remapModifiersWithoutEventTap]) {
+        return nil;
+    }
+    if (!_keyUp) {
+        _keyUp = [[iTermEventTap alloc] initWithEventTypes:CGEventMaskBit(kCGEventKeyUp)];
+    }
+    return _keyUp;
+}
+
 - (void)beginRemappingModifiers {
     DLog(@"Begin remapping modifiers");
     [self.keyDown setRemappingDelegate:self];
+    [self.keyUp setRemappingDelegate:self];
     if ([iTermAdvancedSettingsModel remapModifiersWithoutEventTap]) {
         return;
     }
@@ -353,6 +366,7 @@
 
 - (void)stopRemappingModifiers {
     [_keyDown setRemappingDelegate:nil];
+    [_keyUp setRemappingDelegate:nil];
     [[iTermFlagsChangedEventTap sharedInstanceCreatingIfNeeded:NO] setRemappingDelegate:nil];
 }
 
