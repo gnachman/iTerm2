@@ -18,6 +18,7 @@
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSWindow+iTerm.h"
 #import <LocalAuthentication/LocalAuthentication.h>
 #import <SSKeychain.h>
 #import <Security/Security.h>
@@ -86,6 +87,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 @interface iTermPasswordManagerWindowController () <
     NSTableViewDataSource,
     NSTableViewDelegate,
+    NSControlTextEditingDelegate,
     NSWindowDelegate>
 @end
 
@@ -101,6 +103,12 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     IBOutlet iTermSearchField *_searchField;
     IBOutlet NSButton *_broadcastButton;
     IBOutlet NSTextField *_twoFactorCode;
+    IBOutlet NSPanel *_newAccountPanel;
+    IBOutlet NSTextField *_newPassword;
+    IBOutlet NSTextField *_newUserName;
+    IBOutlet NSTextField *_newAccount;
+    IBOutlet NSButton *_newAccountOkButton;
+    
     NSArray<iTermPasswordEntry *> *_entries;
     NSString *_accountNameToSelectAfterAuthentication;
     id _eventMonitor;
@@ -356,17 +364,55 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 }
 
 - (IBAction)add:(id)sender {
-    if (sAuthenticated) {
-        NSString *name = [self nameForNewAccount];
-        if ([[self keychain] setPassword:@"" forService:kServiceName account:name]) {
-            [self reloadAccounts];
-            NSUInteger index = [self indexOfAccountName:name];
-            if (index != NSNotFound) {
-                [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
-            }
+    if (!sAuthenticated) {
+        return;
+    }
+    _newAccountOkButton.enabled = NO;
+    [self.window beginSheet:_newAccountPanel completionHandler:^(NSModalResponse response){
+        [NSApp stopModal];
+    }];
+    [NSApp runModalForWindow:_newAccountPanel];
+}
+
+- (IBAction)cancelNewAccount:(id)sender {
+    _newPassword.stringValue = @"";
+    _newUserName.stringValue = @"";
+    _newAccount.stringValue = @"";
+    [self.window endSheet:_newAccountPanel];
+    [_newAccountPanel orderOut:nil];
+}
+
+- (IBAction)reallyAdd:(id)sender {
+    NSString *combined;
+    if (_newUserName.stringValue.length > 0) {
+        combined = [NSString stringWithFormat:@"%@%@%@",
+                    _newAccount.stringValue,
+                    iTermPasswordManagerAccountNameUserNameSeparator,
+                    _newUserName.stringValue];
+    } else {
+        combined = _newAccount.stringValue;
+    }
+    if (_newAccount.stringValue.length == 0) {
+        [_newAccountPanel it_shakeNo];
+        return;
+    }
+    if ([self indexOfAccountName:combined] != NSNotFound) {
+        [_newAccountPanel it_shakeNo];
+        return;
+    }
+    if ([[self keychain] setPassword:_newPassword.stringValue forService:kServiceName account:combined]) {
+        [self reloadAccounts];
+        NSUInteger index = [self indexOfAccountName:combined];
+        if (index != NSNotFound) {
+            [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
         }
         [self passwordsDidChange];
     }
+    _newPassword.stringValue = @"";
+    _newUserName.stringValue = @"";
+    _newAccount.stringValue = @"";
+    [self.window endSheet:_newAccountPanel];
+    [_newAccountPanel orderOut:nil];
 }
 
 - (IBAction)remove:(id)sender {
@@ -486,9 +532,10 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
             alert.messageText = [NSString stringWithFormat:@"Password for %@", accountName];
             NSString *password = [self selectedPassword];
             if (!password) {
-                return;
+                alert.messageText = [NSString stringWithFormat:@"Account “%@” has no password", accountName];
+            } else {
+                alert.informativeText = password;
             }
-            alert.informativeText = password;
             [alert addButtonWithTitle:@"OK"];
             [alert addButtonWithTitle:@"Copy"];
 
@@ -894,6 +941,10 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
 
 - (void)controlTextDidChange:(NSNotification *)aNotification {
     NSTextView *fieldEditor = [aNotification userInfo][@"NSFieldEditor"];
+    if (aNotification.object == _newAccount || (id)[fieldEditor delegate] == _newAccount) {
+        _newAccountOkButton.enabled = _newAccount.stringValue.length > 0;
+        return;
+    }
     if ((id)[fieldEditor delegate] == _searchField) {
         [self reloadAccounts];
     }

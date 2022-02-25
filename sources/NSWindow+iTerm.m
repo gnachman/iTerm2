@@ -10,6 +10,7 @@
 
 #import "iTermApplication.h"
 #import "PTYWindow.h"
+#import <Quartz/Quartz.h>
 
 NSString *const iTermWindowAppearanceDidChange = @"iTermWindowAppearanceDidChange";
 
@@ -102,6 +103,27 @@ static NSView *SearchForViewOfClass(NSView *view, NSString *className, NSView *v
         current = current.superview;
     }
     return SearchForViewOfClass(current, className, self.contentView);
+}
+
+- (void)it_shakeNo {
+    const NSRect frame = self.frame;
+    CAKeyframeAnimation *shakeAnimation = [CAKeyframeAnimation animation];
+
+    CGMutablePathRef shakePath = CGPathCreateMutable();
+    CGPathMoveToPoint(shakePath, NULL, NSMinX(frame), NSMinY(frame));
+    for (NSInteger index = 0; index < 3; index++){
+        const CGFloat radiusFraction = 0.03;
+        CGPathAddLineToPoint(shakePath, NULL, NSMinX(frame) - NSWidth(frame) * radiusFraction, NSMinY(frame));
+        CGPathAddLineToPoint(shakePath, NULL, NSMinX(frame) + NSWidth(frame) * radiusFraction, NSMinY(frame));
+    }
+    CGPathCloseSubpath(shakePath);
+    shakeAnimation.path = shakePath;
+    shakeAnimation.duration = 0.5;
+
+    [self setAnimations:@{ @"frameOrigin": shakeAnimation }];
+    [self.animator setFrameOrigin:self.frame.origin];
+
+    CGPathRelease(shakePath);
 }
 
 @end

@@ -26,5 +26,6 @@ extern NSString *const iTermWindowAppearanceDidChange;
 
 - (NSView *)it_titlebarViewOfClassWithName:(NSString *)className;
 - (void)it_titleBarDoubleClick;
+- (void)it_shakeNo;
 
 @end
