@@ -540,6 +540,7 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
         horizontal:(BOOL)horizontal
       withOverflow:(BOOL)withOverflow {
     [super drawTabBar:bar inRect:rect clipRect:clipRect horizontal:horizontal withOverflow:withOverflow];
+
     const BOOL horizontalOrientation = bar.orientation == PSMTabBarHorizontalOrientation;
 
     const NSInteger selectedIndex = [self selectedIndex:bar];
@@ -736,7 +737,7 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     if (!self.treatLeftInsetAsPartOfFirstTab) {
         [self drawOutlineAboveSelectedTabInVerticalTabBar:bar];
     }
-    [self drawOutlineAroundVerticalTabBarWithFirstTabSelected:bar];
+    [self drawOutlineUnderSelectedTabInVerticalTabBar:bar];
 }
 
 - (void)drawOutlineAroundVerticalTabBarWithFirstTabSelected:(PSMTabBarControl *)bar {
