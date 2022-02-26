@@ -181,6 +181,10 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
+- (void)statusBarDefaultTextColorDidChange {
+    [self updateTextFieldIfNeeded];
+}
+
 - (NSTextField *)newTextField {
     NSTextField *textField = [[NSTextField alloc] initWithFrame:NSZeroRect];
     textField.drawsBackground = NO;
