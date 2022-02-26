@@ -293,6 +293,12 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     DLog(@"[%d] Main app request %@ ... %@]", reqid,
          [prefix substringFromIndex:MAX(10, prefix.length) - 10],
          [suffix substringToIndex:MIN(suffix.length, 10)]);
+    DLog(@"prefix=%@", prefix);
+    DLog(@"suffix=%@", suffix);
+    DLog(@"workingDirectory=%@", workingDirectory);
+    DLog(@"trimWhitespace=%@", @(trimWhitespace));
+    DLog(@"pathsToIgnore=%@", pathsToIgnore);
+    DLog(@"allowNetworkMounts=%@ reqid=%@", @(allowNetworkMounts), @(reqid));
     [proxy findExistingFileWithPrefix:prefix
                                suffix:suffix
                      workingDirectory:workingDirectory
