@@ -97,8 +97,8 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
     } else if ([action isEqualToString:kSelectMenuItemPointerAction]) {
         NSArray<NSString *> *parts = [argument componentsSeparatedByString:@"\n"];
         if (parts.count > 1) {
-            NSString *title = parts[0];
-            NSString *identifier = parts[1];
+            NSString *identifier = parts[0];
+            NSString *title = parts[1];
             [delegate_ selectMenuItemWithIdentifier:identifier title:title event:event];
         }
     } else if ([action isEqualToString:kIgnoreAction]) {
