@@ -310,7 +310,7 @@ SWIFT_CLASS_NAMED("FontPickerCompositeView")
 - (void)sizePickerView:(BFPSizePickerView * _Nonnull)sizePickerView didChangeSizeTo:(double)size;
 @end
 
-typedef SWIFT_ENUM_NAMED(NSInteger, BFPCompositeViewMode, "Mode", closed) {
+typedef SWIFT_ENUM_NAMED(NSInteger, BFPCompositeViewMode, "Mode", open) {
   BFPCompositeViewModeNormal = 0,
   BFPCompositeViewModeFixedPitch = 1,
 };
@@ -701,7 +701,7 @@ SWIFT_CLASS_NAMED("FontPickerCompositeView")
 - (void)sizePickerView:(BFPSizePickerView * _Nonnull)sizePickerView didChangeSizeTo:(double)size;
 @end
 
-typedef SWIFT_ENUM_NAMED(NSInteger, BFPCompositeViewMode, "Mode", closed) {
+typedef SWIFT_ENUM_NAMED(NSInteger, BFPCompositeViewMode, "Mode", open) {
   BFPCompositeViewModeNormal = 0,
   BFPCompositeViewModeFixedPitch = 1,
 };
