@@ -116,7 +116,7 @@
 }
 
 - (BOOL)decodeDouble:(double *)d {
-    if (![self decodeBytes:&d length:sizeof(*d)]) {
+    if (![self decodeBytes:d length:sizeof(*d)]) {
         return NO;
     }
     return YES;
