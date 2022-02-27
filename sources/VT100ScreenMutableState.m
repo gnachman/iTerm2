@@ -1220,10 +1220,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)clearScrollbackBuffer {
     self.linebuffer = [[LineBuffer alloc] init];
     [self.linebuffer setMaxLines:self.maxScrollbackLines];
-    [self.currentGrid markAllCharsDirty:YES];
+    [self.currentGrid markAllCharsDirty:YES updateTimestamps:YES];
 
     [self resetScrollbackOverflow];
-    [self.currentGrid markAllCharsDirty:YES];
+    [self.currentGrid markAllCharsDirty:YES updateTimestamps:YES];
     // TODO: There's a bug here - marks on the grid seem to disappear. I think cumulative scrollback overflow is wrong.
     [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
                                                                    0,
@@ -1533,7 +1533,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self swapOnscreenIntervalTreeObjects];
     [self reloadMarkCache];
 
-    [self.currentGrid markAllCharsDirty:YES];
+    [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRemoveSelection];
@@ -1553,7 +1553,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self swapOnscreenIntervalTreeObjects];
     [self reloadMarkCache];
 
-    [self.currentGrid markAllCharsDirty:YES];
+    [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRemoveSelection];
         [delegate screenScheduleRedrawSoon];
@@ -2928,7 +2928,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     annotation.delegate = self;
     DLog(@"addAnnotation:inRange:focus:");
     [self.mutableIntervalTree addObject:annotation withInterval:[self intervalForGridCoordRange:range]];
-    [self.currentGrid markAllCharsDirty:YES];
+    [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
     id<PTYAnnotationReading> doppelganger = annotation.doppelganger;
     const long long line = range.start.y + self.cumulativeScrollbackOverflow;
     [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
@@ -3944,7 +3944,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         [delegate screenRemoveSelection];
         [unpauser unpause];
     }];
-    [self.currentGrid markAllCharsDirty:YES];
+    [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
 }
 
 #pragma mark - PTYTriggerEvaluatorDelegate

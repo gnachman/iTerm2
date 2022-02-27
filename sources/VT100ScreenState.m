@@ -235,14 +235,14 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
         [_linebuffer mergeFrom:source.linebuffer];
     }
     [_primaryGrid copyDirtyFromGrid:source.primaryGrid];
-    [source.primaryGrid markAllCharsDirty:NO];
+    [source.primaryGrid markAllCharsDirty:NO updateTimestamps:NO];
 
     if (_altGrid && source.altGrid) {
         [_altGrid copyDirtyFromGrid:source.altGrid];
     } else {
         _altGrid = [source.altGrid copy];
     }
-    [source.altGrid markAllCharsDirty:NO];
+    [source.altGrid markAllCharsDirty:NO updateTimestamps:NO];
     if (!_terminalState || source.terminal.dirty) {
         source.terminal.dirty = NO;
         _terminalState = [source.terminalState copy];

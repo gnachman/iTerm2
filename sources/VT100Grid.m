@@ -142,7 +142,7 @@ static NSString *const kGridSizeKey = @"Size";
             memmove(&savedDefaultChar_, data.bytes, sizeof(savedDefaultChar_));
         }
         _preferredCursorPosition = cursor_;
-        [self markAllCharsDirty:YES];
+        [self markAllCharsDirty:YES updateTimestamps:NO];
     }
     return self;
 }
@@ -229,25 +229,27 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
         }
         [lineInfos_[index] setDirty:dirty
                             inRange:xrange
-                  updateTimestampTo:timestamp];
+                  updateTimestampTo:dirty ? timestamp : 0];
     }
 }
 
-- (void)markAllCharsDirty:(BOOL)dirty {
+- (void)markAllCharsDirty:(BOOL)dirty updateTimestamps:(BOOL)updateTimestamps {
     DLog(@"Mark all chars dirty=%@ delegate=%@", @(dirty), delegate_);
 
     if (dirty) {
         // Fast path
         const VT100GridRange horizontalRange = VT100GridRangeMake(0, size_.width);
         const NSTimeInterval timestamp = self.currentDate;
-        if (allDirty_ && _allDirtyTimestamp == timestamp) {
+        if (allDirty_ && (!updateTimestamps || _allDirtyTimestamp == timestamp)) {
             // Nothing changed.
             return;
         }
         allDirty_ = YES;
-        _allDirtyTimestamp = timestamp;
+        if (updateTimestamps) {
+            _allDirtyTimestamp = timestamp;
+        }
         [lineInfos_ enumerateObjectsUsingBlock:^(VT100LineInfo * _Nonnull lineInfo, NSUInteger idx, BOOL * _Nonnull stop) {
-            [lineInfo setDirty:YES inRange:horizontalRange updateTimestampTo:timestamp];
+            [lineInfo setDirty:YES inRange:horizontalRange updateTimestampTo:updateTimestamps ? timestamp : 0];
         }];
         return;
     }
@@ -484,7 +486,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
         [[self lineInfoAtLineNumber:(size_.height - 1)] resetMetadata];
     }
 
-    [self markAllCharsDirty:YES];
+    [self markAllCharsDirty:YES updateTimestamps:NO];
 
     DLog(@"scrolled screen up by 1 line");
     return numLinesDropped;
@@ -826,22 +828,6 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
                   inRectFrom:VT100GridCoordMake(from.x, y)
                           to:VT100GridCoordMake(to.x, y)];
     }
-}
-
-- (void)copyCharsFromGrid:(VT100Grid *)otherGrid {
-    if (otherGrid == self) {
-        return;
-    }
-    [self setSize:otherGrid.size];
-    for (int i = 0; i < size_.height; i++) {
-        screen_char_t *dest = [self screenCharsAtLineNumber:i];
-        screen_char_t *source = [otherGrid screenCharsAtLineNumber:i];
-        memmove(dest,
-                source,
-                sizeof(screen_char_t) * (size_.width + 1));
-        [self setMetadata:[otherGrid metadataAtLineNumber:i] forLineNumber:i];
-    }
-    [self markAllCharsDirty:YES];
 }
 
 - (void)copyDirtyFromGrid:(VT100Grid *)otherGrid {
@@ -1516,7 +1502,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         }
         [self setMetadata:sourceMetadataArray[y] forLine:y];
     }
-    [self markAllCharsDirty:YES];
+    [self markAllCharsDirty:YES updateTimestamps:NO];
 
     const int yOffset = MAX(0, info.height - size_.height);
     self.cursorX = MIN(size_.width - 1, MAX(0, info.cursorX));

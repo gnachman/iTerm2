@@ -124,7 +124,7 @@
 
 // This is the sole mutation method. We need it to track which lines need to be redrawn and to reduce
 // the cost of syncing.
-- (void)markAllCharsDirty:(BOOL)dirty;
+- (void)markAllCharsDirty:(BOOL)dirty updateTimestamps:(BOOL)updateTimestamps;
 
 @end
 
@@ -254,9 +254,6 @@
 
 // Same as above, but for runs.
 - (void)setCharsInRun:(VT100GridRun)run toChar:(unichar)c externalAttributes:(iTermExternalAttribute *)ea;
-
-// Copy chars and size from another grid.
-- (void)copyCharsFromGrid:(VT100Grid *)otherGrid;
 
 // Copy everything from another grid if needed.
 - (void)copyDirtyFromGrid:(VT100Grid *)otherGrid;

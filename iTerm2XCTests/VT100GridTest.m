@@ -377,9 +377,9 @@ do { \
 - (void)testMarkAllCharsDirty {
     VT100Grid *grid = [self smallGrid];
     XCTAssert([[grid compactDirtyDump] isEqualToString:@"cc\ncc"]);
-    [grid markAllCharsDirty:YES];
+    [grid markAllCharsDirty:YES updateTimestamps:NO];
     XCTAssert([[grid compactDirtyDump] isEqualToString:@"dd\ndd"]);
-    [grid markAllCharsDirty:NO];
+    [grid markAllCharsDirty:NO updateTimestamps:NO];
     XCTAssert([[grid compactDirtyDump] isEqualToString:@"cc\ncc"]);
 }
 

@@ -1939,7 +1939,7 @@
 }
 
 - (void)terminalNeedsRedraw {
-    [self.currentGrid markAllCharsDirty:YES];
+    [self.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
 }
 
 - (void)terminalDidChangeSendModifiers {

@@ -78,8 +78,8 @@
         [delegate screenRemoveSelection];
     }];
 
-    [self.primaryGrid markAllCharsDirty:YES];
-    [self.altGrid markAllCharsDirty:YES];
+    [self.primaryGrid markAllCharsDirty:YES updateTimestamps:NO];
+    [self.altGrid markAllCharsDirty:YES updateTimestamps:NO];
 }
 
 #pragma mark - Private

@@ -197,7 +197,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         // this flag to ensure that doesn't happen.
         _forceMergeGrids = YES;
     }
-    [_state.currentGrid markAllCharsDirty:NO];
+    [_state.currentGrid markAllCharsDirty:NO updateTimestamps:NO];
 }
 
 - (void)performBlockWithSavedGrid:(void (^)(id<PTYTextViewSynchronousUpdateStateReading> _Nullable))block {
@@ -1096,13 +1096,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (_forceMergeGrids) {
         _forceMergeGrids = NO;
         resetDirty = _mutableState.currentGrid.isAnyCharDirty;
-        [_mutableState.primaryGrid markAllCharsDirty:YES];
-        [_mutableState.altGrid markAllCharsDirty:YES];
+        [_mutableState.primaryGrid markAllCharsDirty:YES updateTimestamps:NO];
+        [_mutableState.altGrid markAllCharsDirty:YES updateTimestamps:NO];
     }
     [_state mergeFrom:_mutableState];
     if (resetDirty) {
         // More cells in the mutable grid were marked dirty since the last refresh.
-        [_state.currentGrid markAllCharsDirty:YES];
+        [_state.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
     }
 }
 
