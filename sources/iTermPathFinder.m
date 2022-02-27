@@ -84,7 +84,7 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
     int iterationsBeforeQuitting = 100;  // Bail after 100 iterations if nothing is still found.
     NSMutableSet *paths = [NSMutableSet set];
     NSCharacterSet *whitespaceCharset = [NSCharacterSet whitespaceAndNewlineCharacterSet];
-    for (NSUInteger i = [beforeChunks count]; i >= 0; i--) {
+    for (NSInteger i = [beforeChunks count]; i >= 0; i--) {
         if (self.canceled) {
             _path = nil;
             return;
