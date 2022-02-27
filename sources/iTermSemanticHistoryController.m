@@ -210,24 +210,9 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     return executable;
 }
 
-- (NSString *)intelliJIDEALauncherInApplicationBundle:(NSBundle *)bundle {
-    DLog(@"Trying to find IntelliJ IDEA launcher in %@", bundle.bundlePath);
-    return [[[[bundle.bundleURL URLByAppendingPathComponent:@"Contents"] URLByAppendingPathComponent:@"MacOS"] URLByAppendingPathComponent:@"idea"] path];
-}
-
 - (void)launchAppWithBundleIdentifier:(NSString *)bundleIdentifier args:(NSArray *)args {
-    NSBundle *bundle = [self applicationBundleWithIdentifier:bundleIdentifier];
-    if (!bundle) {
-        DLog(@"No bundle for %@", bundleIdentifier);
-        return;
-    }
-    NSString *executable = [self executableInApplicationBundle:bundle];
-    if (!executable) {
-        DLog(@"No executable for %@ in %@", bundleIdentifier, bundle);
-        return;
-    }
-    DLog(@"Launch %@: %@ %@", bundleIdentifier, executable, args);
-    [self launchTaskWithPath:executable arguments:args completion:nil];
+    args = [@[ @"-nb", bundleIdentifier, @"--args" ] arrayByAddingObjectsFromArray: args];
+    [self launchTaskWithPath:@"/usr/bin/open" arguments:args completion:nil];
 }
 
 - (void)launchVSCodeWithPath:(NSString *)path codium:(BOOL)codium {
@@ -289,27 +274,6 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
 }
 
-- (void)launchIntelliJIDEAWithArguments:(NSArray<NSString *> *)args path:(NSString *)path {
-    NSBundle *bundle = [self applicationBundleWithIdentifier:kIntelliJIDEAIdentifier];
-    if (!bundle) {
-        DLog(@"Failed to find IDEA bundle");
-        return;
-    }
-    NSString *launcher = [self intelliJIDEALauncherInApplicationBundle:bundle];
-    if (!launcher) {
-        DLog(@"Failed to find launcher in %@", bundle);
-        if (path) {
-            DLog(@"Launch idea with path %@", path);
-            [self launchAppWithBundleIdentifier:kIntelliJIDEAIdentifier
-                                           path:path];
-        }
-        return;
-    }
-    [self launchTaskWithPath:launcher
-                   arguments:args
-                  completion:nil];
-}
-
 - (NSString *)absolutePathForAppBundleWithIdentifier:(NSString *)bundleId {
     return [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId];
 }
@@ -347,8 +311,11 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               kTextmateIdentifier,
               kTextmate2Identifier,
               kBBEditIdentifier,
-              kEmacsAppIdentifier,
-              kIntelliJIDEAIdentifier ];
+              kEmacsAppIdentifier ];
+}
+
++ (NSArray *)bundleIdPrefixesThatSupportOpeningToLineNumber {
+    return @[ kJetBrainsIdentifierPrefix ];
 }
 
 - (void)openFile:(NSString *)path
@@ -417,7 +384,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         [self launchEmacsWithArguments:args];
         return;
     }
-    if ([identifier isEqualToString:kIntelliJIDEAIdentifier]) {
+    if ([identifier hasPrefix:kJetBrainsIdentifierPrefix]) {
         NSArray<NSString *> *args = @[];
         if (path) {
             if (lineNumber) {
@@ -426,7 +393,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
                 args = @[ path ];
             }
         }
-        [self launchIntelliJIDEAWithArguments:args path:path];
+        [self launchAppWithBundleIdentifier:identifier args:args];
         return;
     }
 
@@ -733,6 +700,11 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 }
 
 - (BOOL)canOpenFileWithLineNumberUsingEditorWithBundleId:(NSString *)appBundleId {
+    for (NSString* prefix in [self.class bundleIdPrefixesThatSupportOpeningToLineNumber]) {
+        if ([appBundleId hasPrefix:prefix]) {
+            return YES;
+        }
+    }
     return [[self.class bundleIdsThatSupportOpeningToLineNumber] containsObject:appBundleId];
 }
 
