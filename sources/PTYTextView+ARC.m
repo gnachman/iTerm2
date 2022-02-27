@@ -598,7 +598,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 - (iTermPromise<NSString *> *)recordSelection {
     const NSInteger maxSize = 10 * 1000 * 1000;
-    NSLog(@"Renege on last selection promise");
+    DLog(@"Renege on last selection promise");
     // No need to keep working on the last one; if it hasn't been waited on then it'll never be used.
     [[[iTermController sharedInstance] lastSelectionPromise] renege];
 
