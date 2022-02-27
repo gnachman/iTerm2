@@ -11922,6 +11922,38 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self screenWriteDataToTask:data];
 }
 
+- (void)screenReportCapabilities {
+    if (self.isTmuxClient) {
+        return;
+    }
+    const BOOL clipboardAccessAllowed = [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
+    VT100Capabilities capabilities =
+        VT100OutputMakeCapabilities(YES,                                // compatibility24Bit
+                                    YES,                                // full24Bit
+                                    clipboardAccessAllowed,             // clipboardWritable
+                                    YES,                                // decslrm
+                                    YES,                                // mouse
+                                    YES,                                // DECSCUSR14
+                                    YES,                                // DECSCUSR56
+                                    YES,                                // DECSCUSR0
+                                    YES,                                // unicode
+                                    _treatAmbiguousWidthAsDoubleWidth,  // ambiguousWide
+                                    _unicodeVersion,                    // unicodeVersion
+                                    YES,                                // titleStacks
+                                    YES,                                // titleSetting
+                                    YES,                                // bracketedPaste
+                                    YES,                                // focusReporting
+                                    YES,                                // strikethrough
+                                    NO,                                 // overline
+                                    YES,                                // sync
+                                    YES,                                // hyperlinks
+                                    YES,                                // notifications
+                                    YES,                                // sixel
+                                    YES);                               // file
+    NSData *data = [_screen.terminalOutput reportCapabilities:capabilities];
+    [self screenWriteDataToTask:data];
+}
+
 - (VT100GridRange)screenRangeOfVisibleLines {
     return [_textview rangeOfVisibleLines];
 }

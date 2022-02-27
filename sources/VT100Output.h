@@ -122,4 +122,50 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
 - (NSData *)reportMemoryChecksum:(int)checksum id:(int)reqid;
 - (NSData *)reportVariableNamed:(NSString *)name value:(NSString *)variableValue;
 
+typedef struct {
+    uint32_t twentyFourBit;  // "T"
+    BOOL clipboardWritable;  // "Cw"
+    BOOL DECSLRM;            // "Lr"
+    BOOL mouse;              // "M"
+    uint32_t DECSCUSR;       // "Sc"
+    BOOL unicodeBasic;       // "U"
+    BOOL ambiguousWide;      // "Aw"
+    uint32_t unicodeWidths;  // "Uw"
+    uint32_t titles;         // "Ts"
+    BOOL bracketedPaste;     // "B"
+    BOOL focusReporting;     // "F"
+    BOOL strikethrough;      // "Gs"
+    BOOL overline;           // "Go"
+    BOOL sync;               // "Sy"
+    BOOL hyperlinks;         // "H"
+    BOOL notifications;      // "No"
+    BOOL sixel;              // "Sx"
+    BOOL file;               // "F"
+} VT100Capabilities;
+
+VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
+                                              BOOL full24Bit,
+                                              BOOL clipboardWritable,
+                                              BOOL decslrm,
+                                              BOOL mouse,
+                                              BOOL DECSCUSR14,
+                                              BOOL DECSCUSR56,
+                                              BOOL DECSCUSR0,
+                                              BOOL unicode,
+                                              BOOL ambiguousWide,
+                                              uint32_t unicodeVersion,
+                                              BOOL titleStacks,
+                                              BOOL titleSetting,
+                                              BOOL bracketedPaste,
+                                              BOOL focusReporting,
+                                              BOOL strikethrough,
+                                              BOOL overline,
+                                              BOOL sync,
+                                              BOOL hyperlinks,
+                                              BOOL notifications,
+                                              BOOL sixel,
+                                              BOOL file);
+
+- (NSData *)reportCapabilities:(VT100Capabilities)capabilities;
+
 @end

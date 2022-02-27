@@ -1399,6 +1399,84 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
     return [report dataUsingEncoding:NSUTF8StringEncoding];
 }
 
+VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
+                                              BOOL full24Bit,
+                                              BOOL clipboardWritable,
+                                              BOOL decslrm,
+                                              BOOL mouse,
+                                              BOOL DECSCUSR14,
+                                              BOOL DECSCUSR56,
+                                              BOOL DECSCUSR0,
+                                              BOOL unicode,
+                                              BOOL ambiguousWide,
+                                              uint32_t unicodeVersion,
+                                              BOOL titleStacks,
+                                              BOOL titleSetting,
+                                              BOOL bracketedPaste,
+                                              BOOL focusReporting,
+                                              BOOL strikethrough,
+                                              BOOL overline,
+                                              BOOL sync,
+                                              BOOL hyperlinks,
+                                              BOOL notifications,
+                                              BOOL sixel,
+                                              BOOL file) {
+    const VT100Capabilities capabilities = {
+        .twentyFourBit = (compatibility24Bit ? 1 : 0) | (full24Bit ? 2 : 0),
+        .clipboardWritable = clipboardWritable,
+        .DECSLRM = decslrm,
+        .mouse = mouse,
+        .DECSCUSR = (DECSCUSR14 ? 1 : 0) | (DECSCUSR56 ? 2 : 0) | (DECSCUSR0 ? 4 : 0),
+        .unicodeBasic = unicode,
+        .ambiguousWide = ambiguousWide,
+        .unicodeWidths = unicodeVersion,
+        .titles = (titleStacks ? 1 : 0) | (titleSetting ? 2 : 0),
+        .bracketedPaste = bracketedPaste,
+        .focusReporting = focusReporting,
+        .strikethrough = strikethrough,
+        .overline = overline,
+        .sync = sync,
+        .hyperlinks = hyperlinks,
+        .notifications = notifications,
+        .sixel = sixel,
+        .file = file,
+    };
+    return capabilities;
+}
+
+- (NSData *)reportCapabilities:(VT100Capabilities)capabilities {
+    NSString *(^formatNumber)(NSString *, uint32_t) = ^NSString *(NSString *code, uint32_t value) {
+        if (value == 0) {
+            return @"";
+        }
+        return [NSString stringWithFormat:@"%@%@", code, @(value)];
+    };
+    NSArray<NSString *> *parts = @[
+        formatNumber(@"T", capabilities.twentyFourBit),
+        capabilities.clipboardWritable ? @"Cw" : @"",
+        capabilities.DECSLRM ? @"Lr" : @"",
+        capabilities.mouse ? @"M" : @"",
+        formatNumber(@"Sc", capabilities.DECSCUSR),
+        capabilities.unicodeBasic ? @"U" : @"",
+        capabilities.ambiguousWide ? @"Aw" : @"",
+        formatNumber(@"Uw", capabilities.unicodeWidths),
+        formatNumber(@"Ts", capabilities.titles),
+        capabilities.bracketedPaste ? @"B" : @"",
+        capabilities.focusReporting ? @"F" : @"",
+        capabilities.strikethrough ? @"Gs" : @"",
+        capabilities.overline ? @"Go" : @"",
+        capabilities.sync ? @"Sy" : @"",
+        capabilities.hyperlinks ? @"H" : @"",
+        capabilities.notifications ? @"No" : @"",
+        capabilities.sixel ? @"Sx" : @"",
+        capabilities.file ? @"F" : @"",
+    ];
+    NSString *encodedValue = [parts componentsJoinedByString:@""];
+    NSString *report = [NSString stringWithFormat:@"\e]1337;Capabilities=%@\a",
+                        encodedValue ?: @""];
+    return [report dataUsingEncoding:NSUTF8StringEncoding];
+}
+
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {

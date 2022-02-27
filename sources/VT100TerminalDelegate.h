@@ -502,5 +502,6 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 - (dispatch_queue_t)terminalQueue;
 - (iTermTokenExecutorUnpauser *)terminalPause;
+- (void)terminalSendCapabilitiesReport;
 
 @end

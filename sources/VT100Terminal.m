@@ -3938,7 +3938,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     } else if ([key isEqualToString:@"Disinter"]) {
         [_delegate terminalDisinterSession];
     } else if ([key isEqualToString:@"ReportVariable"]) {
-        if ([_delegate terminalIsTrusted]) {
+        if ([_delegate terminalIsTrusted] && [_delegate terminalShouldSendReport]) {
             NSData *valueAsData = [value dataUsingEncoding:NSISOLatin1StringEncoding];
             if (!valueAsData) {
                 return;
@@ -3970,6 +3970,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 [_delegate terminalCustomEscapeSequenceWithParameters:parameters
                                                               payload:payload];
             }
+        }
+    } else if ([key isEqualToString:@"Capabilities"]) {
+        if ([_delegate terminalIsTrusted] && [_delegate terminalShouldSendReport]) {
+            [_delegate terminalSendCapabilitiesReport];
         }
     }
 }

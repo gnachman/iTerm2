@@ -293,6 +293,7 @@
 - (void)screenDidReceiveCustomEscapeSequenceWithParameters:(NSDictionary<NSString *, NSString *> * _Nonnull)parameters
                                                    payload:(NSString * _Nonnull)payload;
 - (void)screenReportVariableNamed:(NSString * _Nonnull)name;
+- (void)screenReportCapabilities;
 
 // FinalTerm stuff
 - (void)screenCommandDidChangeTo:(NSString * _Nonnull)command

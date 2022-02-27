@@ -2051,4 +2051,10 @@
     return self.protectedMode;
 }
 
+- (void)terminalSendCapabilitiesReport {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenReportCapabilities];
+    }];
+}
+
 @end
