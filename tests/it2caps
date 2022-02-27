@@ -33,6 +33,7 @@ function read_until() {
 function read_first_response() {
   # If this is an OSC read until terminating BEL and output payload.
   # If this is a CSI then read until 'n' and output nothing.
+  read_bytes 1 > /dev/null
   c=$(read_bytes 1)
   if [ "${c}" = "]" ]; then
     # OSC
