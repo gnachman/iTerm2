@@ -1,0 +1,76 @@
+#!/bin/bash
+# Make sure stdin and stdout are a tty.
+if [ ! -t 0 ] ; then
+  exit 1
+fi
+if [ ! -t 1 ] ; then
+  exit 1
+fi
+
+# Read some bytes from stdin. Pass the number of bytes to read as the first argument.
+function read_bytes()
+{
+  numbytes=$1
+  dd bs=1 count=$numbytes 2>/dev/null
+}
+
+# read_until c
+# Returns bytes read from stdin up to but not including the fist one equal to c
+function read_until() {
+  result=""
+  while :
+  do
+    b=$(read_bytes 1)
+    if [[ $b == $1 ]]
+    then
+      echo "$result"
+      return
+    fi
+    result="$result$b"
+  done
+}
+
+function read_first_response() {
+  # If this is an OSC read until terminating BEL and output payload.
+  # If this is a CSI then read until 'n' and output nothing.
+  c=$(read_bytes 1)
+  if [ "${c}" = "]" ]; then
+    # OSC
+    bel=$(printf "\a")
+    read_until ${bel}
+  else
+    # CSI
+    read_until n > /dev/null
+  fi
+}
+
+trap clean_up EXIT
+_STTY=$(stty -g)      ## Save current terminal setup
+
+function clean_up() {
+  stty "$_STTY"            ## Restore terminal settings
+}
+
+# Enter raw mode and turn off echo so the terminal and I can chat quietly.
+stty -echo -icanon raw
+
+# Send iTerm2-proprietary code. Other terminals ought to ignore it (but are
+# free to use it respectfully). iTerm2 will respond with an OSC code.
+printf "\e]1337;Capabilities\a" >& 2
+
+# Report device status. Responds with esc [ 0 n. All terminals support this. We
+# do this because if the terminal will not respond to iTerm2's custom escape
+# sequence, we can still read from stdin without blocking indefinitely.
+echo -n '[5n' >& 2
+
+response=$(read_first_response)
+if [[ "$response" == *"Capabilities"* ]]; then
+  read_until n > /dev/null
+  payload=$(sed -re "s/.*Capabilities=([A-Za-z0-9]+).*/\1/" <<< $response)
+  clean_up
+  # Format capabilities as one per line. If there is a numeric param, add a
+  # space between the capability name and the parameter.
+  grep -Eo '[A-Z][a-z0-9]*' <<< "$payload"  | sed -re 's/([0-9]+)/ \1/'
+else
+  clean_up
+fi
