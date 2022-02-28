@@ -72,6 +72,7 @@
 #import "AppearancePreferencesViewController.h"
 #import "GeneralPreferencesViewController.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAdvancedSettingsViewController.h"
 #import "iTermApplication.h"
@@ -434,6 +435,8 @@ static iTermPreferencesSearchEngine *gSearchEngine;
                                              selector:@selector(scrimMouseUp:)
                                                  name:iTermPrefsScrimMouseUpNotification
                                                object:nil];
+    iTermDonateViewController *vc = [[iTermDonateViewController alloc] init];
+    [self.window addTitlebarAccessoryViewController:vc];
 }
 
 - (void)layoutSubviewsForEditCurrentSessionMode {

@@ -2619,6 +2619,7 @@
 		A6A73D4D27C80517002E4CCA /* NSString+CommonAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A73D4A27C80517002E4CCA /* NSString+CommonAdditions.m */; };
 		A6A73D4F27C80E6C002E4CCA /* iTermCancelable.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A73D4E27C80E6C002E4CCA /* iTermCancelable.m */; };
 		A6A73D5027C80E6C002E4CCA /* iTermCancelable.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A73D4E27C80E6C002E4CCA /* iTermCancelable.m */; };
+		A6A73D6527CCA408002E4CCA /* DonateViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A73D6427CCA408002E4CCA /* DonateViewController.swift */; };
 		A6A802E0226AD0D200BC70DC /* iTermSearchHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */; };
 		A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */; };
 		A6A802E6226B8C8400BC70DC /* PTYTask.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7560026DDA6303A80106 /* PTYTask.m */; };
@@ -6228,6 +6229,7 @@
 		A6A73D4927C80517002E4CCA /* NSString+CommonAdditions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSString+CommonAdditions.h"; sourceTree = "<group>"; };
 		A6A73D4A27C80517002E4CCA /* NSString+CommonAdditions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSString+CommonAdditions.m"; sourceTree = "<group>"; };
 		A6A73D4E27C80E6C002E4CCA /* iTermCancelable.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCancelable.m; sourceTree = "<group>"; };
+		A6A73D6427CCA408002E4CCA /* DonateViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DonateViewController.swift; sourceTree = "<group>"; };
 		A6A802DE226AD0D200BC70DC /* iTermSearchHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSearchHistory.h; sourceTree = "<group>"; };
 		A6A802DF226AD0D200BC70DC /* iTermSearchHistory.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSearchHistory.m; sourceTree = "<group>"; };
 		A6A802E7226ED20800BC70DC /* iTermPrintGuard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermPrintGuard.h; sourceTree = "<group>"; };
@@ -7852,6 +7854,7 @@
 				A6024B7E254CE2000036D6CF /* iTermAddTriggerViewController.h */,
 				A6024B7F254CE2000036D6CF /* iTermAddTriggerViewController.m */,
 				A6024B80254CE2000036D6CF /* iTermAddTriggerViewController.xib */,
+				A6A73D6427CCA408002E4CCA /* DonateViewController.swift */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -14373,6 +14376,7 @@
 				A630117B20E69C23008114B7 /* iTermStatusBarSwiftyStringComponent.m in Sources */,
 				A629F59323AF49AD00C2F16B /* iTermExpect.m in Sources */,
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,
+				A6A73D6527CCA408002E4CCA /* DonateViewController.swift in Sources */,
 				A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */,
 				A6EC936724E513DB00EEADEF /* iTermSlowOperationGateway.m in Sources */,
 				53E9DFE5220D530E0070C9C0 /* SetDirectoryTrigger.m in Sources */,
