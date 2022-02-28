@@ -534,6 +534,12 @@
     return NO;
 }
 
+- (NSArray *)profilesByRemovingDynamicProfiles:(NSArray *)source {
+    return [source filteredArrayUsingBlock:^BOOL(Profile *profile) {
+        return !profile.profileIsDynamic;
+    }];
+}
+
 #pragma mark - SCEventListenerProtocol
 
 - (void)pathWatcher:(SCEvents *)pathWatcher eventOccurred:(SCEvent *)event {

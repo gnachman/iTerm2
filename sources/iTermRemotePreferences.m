@@ -5,6 +5,7 @@
 #import "iTermRemotePreferences.h"
 
 #import "DebugLogging.h"
+#import "iTermDynamicProfileManager.h"
 #import "iTermPreferences.h"
 #import "iTermUserDefaultsObserver.h"
 #import "iTermWarning.h"
@@ -13,6 +14,8 @@
 #import "NSStringITerm.h"
 #import "NSURL+iTerm.h"
 #import "PreferencePanel.h"
+
+static NSString *iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL = @"NoSyncPromptBeforeLoadingPrefsFromURL";
 
 @interface iTermRemotePreferences ()
 @property(atomic, copy) NSDictionary *savedRemotePrefs;
@@ -107,6 +110,34 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
     NSString *filename = [self remotePrefsLocation];
     NSDictionary *remotePrefs;
     if ([filename stringIsUrlLike]) {
+        NSString *promptURL = [[NSUserDefaults standardUserDefaults] objectForKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
+        if ([promptURL isEqual:filename]) {
+            NSString *theTitle = [NSString stringWithFormat:
+                                  @"Load settings from URL? Some changes were made to the local copy that will be lost."];
+            const iTermWarningSelection selection =
+            [iTermWarning showWarningWithTitle:theTitle
+                                       actions:@[ @"Keep Local Changes",
+                                                  @"Disable Loading from URL",
+                                                  @"Discard Local Changes" ]
+                                    identifier:@"NoSyncPromptBeforeLoadingPrefsFromURL"
+                                   silenceable:kiTermWarningTypePersistent
+                                        window:nil];
+            switch (selection) {
+                case kiTermWarningSelection0:
+                    return nil;
+                case kiTermWarningSelection1:
+                    [iTermPreferences setBool:NO forKey:kPreferenceKeyLoadPrefsFromCustomFolder];
+                    [[NSUserDefaults standardUserDefaults] setObject:nil
+                                                              forKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
+                    return nil;
+                case kiTermWarningSelection2:
+                    [[NSUserDefaults standardUserDefaults] setObject:nil
+                                                              forKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
+                    break;
+                default:
+                    break;
+            }
+        }
         // Download the URL's contents.
         NSURL *url = [NSURL URLWithUserSuppliedString:filename];
         const NSTimeInterval kFetchTimeout = 5.0;
@@ -362,17 +393,25 @@ static NSDictionary *iTermRemotePreferencesSave(NSString *filename, NSArray<NSSt
     return;
 }
 
+- (NSDictionary *)removeDynamicProfiles:(NSDictionary *)source {
+    NSMutableDictionary *copy = [source mutableCopy];
+    copy[KEY_NEW_BOOKMARKS] = [[iTermDynamicProfileManager sharedInstance] profilesByRemovingDynamicProfiles:source[KEY_NEW_BOOKMARKS]];
+    return copy;
+}
+
 - (BOOL)localPrefsDifferFromSavedRemotePrefs
 {
     if (!self.shouldLoadRemotePrefs) {
         return NO;
     }
-    NSDictionary *saved = self.savedRemotePrefs;
+    NSDictionary *saved = [self removeDynamicProfiles:self.savedRemotePrefs];
     if (saved && [saved count]) {
         // Grab all prefs from our bundle only (no globals, etc.).
         NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
         NSDictionary *localPrefs =
             [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
+        localPrefs = [self removeDynamicProfiles:localPrefs];
+
         // Iterate over each set of prefs and validate that the other has the same value for each
         // key.
         for (NSString *key in localPrefs) {
@@ -410,14 +449,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSString *filename, NSArray<NSSt
     if ([self localPrefsDifferFromSavedRemotePrefs]) {
         if (self.remoteLocationIsURL) {
             // If the setting is always copy, then ask. Copying isn't an option.
-            NSString *theTitle = [NSString stringWithFormat:
-                                  @"Changes made to preferences will be lost when iTerm2 is restarted "
-                                  @"because they are loaded from a URL at startup."];
-            [iTermWarning showWarningWithTitle:theTitle
-                                       actions:@[ @"OK" ]
-                                    identifier:@"NoSyncNeverRemindPrefsChangesLostForUrl"
-                                   silenceable:kiTermWarningTypePermanentlySilenceable
-                                        window:nil];
+            [[NSUserDefaults standardUserDefaults] setObject:[self remotePrefsLocation] forKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
         } else {
             // Not a URL
             NSString *theTitle = [NSString stringWithFormat:
@@ -434,6 +466,9 @@ static NSDictionary *iTermRemotePreferencesSave(NSString *filename, NSArray<NSSt
                 [self saveLocalUserDefaultsToRemotePrefs];
             }
         }
+    } else if(self.savedRemotePrefs != nil) {
+        [[NSUserDefaults standardUserDefaults] setObject:nil
+                                                  forKey:iTermRemotePreferencesPromptBeforeLoadingPrefsFromURL];
     }
 }
 
