@@ -94,7 +94,7 @@ class PreferenceKey(enum.Enum):
     PASTE_TAB_TO_STRING_TAB_STOP_SIZE = "PasteTabToStringTabStopSize"  #: When converting tabs to spaces, how many spaces to use?  Takes a nonnegative integer.
     SHOW_FULL_SCREEN_TAB_BAR = "ShowFullScreenTabBar"  #: Show tab bar in full screen?  Takes a boolean.
     DEFAULT_TOOLBELT_WIDTH = "Default Toolbelt Width"  #: Width of toolbelt by default.  Takes a nonnegative integer.
-    SIZE_CHANGES_AFFECT_PROFILE = "Size Changes Affect Profile"  #: Does changing text size with cmd-+ and cmd-- affect only the session or also its profile?
+    SIZE_CHANGES_AFFECT_PROFILE = "Size Changes Affect Profile"  #: DEPRECATED - Use TEXT_SIZE_CHANGES_AFFECT_PROFILE intead.
     STATUS_BAR_POSITION = "StatusBarPosition"  #: Where does the status bar go? Takes an integer. 0=top, 1=bottom.
     PRESERVE_WINDOW_SIZE_WHEN_TAB_BAR_VISIBILITY_CHANGES = "PreserveWindowSizeWhenTabBarVisibilityChanges"  #: Keep window size the same when tabbar shows/hides? Takes a boolean.
     PER_PANE_BACKGROUND_IMAGE = "PerPaneBackgroundImage"  #: Should each split pane have a separate bg image, or one for the whole window? Takes a boolean.
