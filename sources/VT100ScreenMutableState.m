@@ -4496,14 +4496,14 @@ launchCoprocessWithCommand:(NSString *)command
     return NO;
 }
 
-- (BOOL)tokenExecutorShouldDiscardTokens {
+- (BOOL)tokenExecutorShouldDiscardTokensWithHighPriority:(BOOL)highPriority {
     if (self.exited) {
         return YES;
     }
     if (!self.terminalEnabled) {
         return YES;
     }
-    if (!self.isTmuxGateway && self.hasMuteCoprocess) {
+    if (!highPriority && !self.isTmuxGateway && self.hasMuteCoprocess) {
         return YES;
     }
     if (_suppressAllOutput) {

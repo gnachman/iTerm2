@@ -20,7 +20,8 @@ protocol TokenExecutorDelegate: AnyObject {
     func tokenExecutorShouldQueueTokens() -> Bool
 
     // Should tokens be freed without use? Do this during a mute coprocess, for example.
-    func tokenExecutorShouldDiscardTokens() -> Bool
+    @objc(tokenExecutorShouldDiscardTokensWithHighPriority:)
+    func tokenExecutorShouldDiscardTokens(highPriority: Bool) -> Bool
 
     // Called only when tokens are actually executed. `length` gives the number of bytes of input
     // that were executed.
@@ -661,7 +662,7 @@ private class TokenExecutorImpl {
                          priority: Int,
                          accumulatedLength: inout Int,
                          delegate: TokenExecutorDelegate) -> Bool {
-        if delegate.tokenExecutorShouldDiscardTokens() {
+        if delegate.tokenExecutorShouldDiscardTokens(highPriority: priority == 0) {
             vector.skipToEnd()
             return true
         }
