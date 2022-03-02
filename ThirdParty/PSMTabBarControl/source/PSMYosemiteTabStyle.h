@@ -71,4 +71,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (CGFloat)verticalOffsetForTitleWhenSubtitlePresent;
 - (CGFloat)verticalOffsetForSubtitle;
 
+- (BOOL)shouldDrawTopLineSelected:(BOOL)selected
+                         attached:(BOOL)attached
+                         position:(PSMTabPosition)position NS_AVAILABLE_MAC(10_16);
+
 @end

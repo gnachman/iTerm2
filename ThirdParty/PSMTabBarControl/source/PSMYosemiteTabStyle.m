@@ -1157,6 +1157,7 @@
                                   toPoint:NSMakePoint(rect.origin.x + rect.size.width,
                                                       rect.origin.y - 0.5)];
     } else {
+        // Draw a divider between the tabbar and the content.
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x,
                                                       rect.origin.y + 0.5)
                                   toPoint:NSMakePoint(rect.origin.x,
@@ -1283,6 +1284,16 @@
         }
     }
 
+    [self drawDividerBetweenTabBarAndContent:rect bar:bar];
+
+    for (PSMTabBarCell *cell in [bar cells]) {
+        if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], clipRect) && cell.state == NSControlStateValueOn) {
+            [cell drawPostHocDecorationsOnSelectedCell:cell tabBarControl:bar];
+        }
+    }
+}
+
+- (void)drawDividerBetweenTabBarAndContent:(NSRect)rect bar:(PSMTabBarControl *)bar {
     if (_orientation != PSMTabBarHorizontalOrientation) {
         [[self bottomLineColorSelected:NO] set];
         NSRect rightLineRect = rect;
@@ -1304,11 +1315,6 @@
                     NSRectFill(NSMakeRect(0, NSMinY(rect), NSWidth(rect), 1));
                     break;
             }
-        }
-    }
-    for (PSMTabBarCell *cell in [bar cells]) {
-        if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], clipRect) && cell.state == NSControlStateValueOn) {
-            [cell drawPostHocDecorationsOnSelectedCell:cell tabBarControl:bar];
         }
     }
 }

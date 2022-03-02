@@ -175,16 +175,15 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     return weight + (1 - weight) * base;
 }
 
-// Only for non-selected tabs.
 - (CGFloat)backgroundAlphaValue:(BOOL)selected {
     const CGFloat base = [[self.tabBar.delegate tabView:self.tabBar valueOfOption:PSMTabBarControlOptionMinimalBackgroundAlphaValue] doubleValue];
-    if (!selected) {
+    if (selected) {
         return base;
     }
     if (base == 1) {
         return base;
     }
-    return [self alphaValue:base opacifiedBy:0.3];
+    return base * 0.9;
 }
 
 - (NSColor *)nonSelectedTabColor {
@@ -388,7 +387,10 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
         return;
     }
 
-    [super drawBackgroundInRect:rect color:[self nonSelectedTabColor] horizontal:horizontal];
+    PSMTabBarCell *selectedCell = [self selectedCellInTabBarControl:self.tabBar];
+    const CGFloat highlightAmount = [selectedCell highlightAmount];
+    [[self backgroundColorSelected:YES highlightAmount:highlightAmount] set];
+    NSRectFillUsingOperation(rect, NSCompositingOperationSourceOver);
 
     [self drawStartInset];
     [self drawEndInset];
@@ -583,6 +585,22 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
         } else {
             [self drawOutlineAroundBottomTabBarWithInteriorTabSelected:bar];
         }
+    }
+}
+
+- (void)drawDividerBetweenTabBarAndContent:(NSRect)rect bar:(PSMTabBarControl *)bar {
+}
+
+- (BOOL)shouldDrawTopLineSelected:(BOOL)selected
+                         attached:(BOOL)attached
+                         position:(PSMTabPosition)position NS_AVAILABLE_MAC(10_16) {
+    switch (position) {
+        case PSMTab_BottomTab:
+            return NO;
+
+        case PSMTab_LeftTab:
+        case PSMTab_TopTab:
+            return [super shouldDrawTopLineSelected:selected attached:attached position:position];
     }
 }
 

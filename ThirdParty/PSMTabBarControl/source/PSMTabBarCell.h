@@ -56,6 +56,7 @@
 @property(nonatomic, assign) NSLineBreakMode truncationStyle;  // How to truncate title.
 @property(nonatomic, readonly) NSAccessibilityElement *element;
 @property(nonatomic, copy) NSString *subtitleString;
+@property(nonatomic, readonly) CGFloat highlightAmount;
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;
