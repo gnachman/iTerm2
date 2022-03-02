@@ -87,7 +87,9 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     return pow(baseValue, 1 / legibility);
 }
 
-- (NSColor *)textColorDefaultSelected:(BOOL)selected backgroundColor:(NSColor *)backgroundColor windowIsMainAndAppIsActive:(BOOL)mainAndActive {
+- (NSColor *)textColorDefaultSelected:(BOOL)selected
+                      backgroundColor:(NSColor *)backgroundColor
+           windowIsMainAndAppIsActive:(BOOL)mainAndActive {
     const CGFloat backgroundBrightness =
     (backgroundColor ?
      backgroundColor.it_hspBrightness :
@@ -111,6 +113,13 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
         // Push value toward an extreme (black or white) as transparency increases.
         const CGFloat transparencyAlpha = [[self.tabBar.delegate tabView:self.tabBar
                                                            valueOfOption:PSMTabBarControlOptionMinimalBackgroundAlphaValue] doubleValue];
+        if (transparencyAlpha == 1 && backgroundColor == nil) {
+            NSColor *color = [self.tabBar.delegate tabView:self.tabBar valueOfOption:PSMTabBarControlOptionTextColor];
+            if (selected) {
+                return color;
+            }
+            return [color colorWithAlphaComponent:0.5];
+        }
         value = PSMWeightedAverage(value, extremity, pow(1 - transparencyAlpha, 0.5));
 
         CGFloat minAlpha;  // For opaque windows

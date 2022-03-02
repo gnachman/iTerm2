@@ -7028,6 +7028,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return @([iTermPreferences boolForKey:kPreferenceKeyHTMLTabTitles]);
     } else if ([option isEqualToString:PSMTabBarControlOptionMinimalNonSelectedColoredTabAlpha]) {
         return @([iTermAdvancedSettingsModel minimalDeslectedColoredTabAlpha]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionTextColor]) {
+        return [self.currentSession.textview.colorMap colorForKey:kColorMapForeground];
     }
     return nil;
 }
