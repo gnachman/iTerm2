@@ -467,6 +467,12 @@ NS_INLINE NSString *VT100GridCoordDescription(VT100GridCoord c) {
     return [NSString stringWithFormat:@"(%d, %d)", c.x, c.y];
 }
 
+NS_INLINE NSString *VT100GridRectDescription(VT100GridRect rect) {
+    return [NSString stringWithFormat:@"{%@ %@}",
+            VT100GridCoordDescription(rect.origin),
+            VT100GridSizeDescription(rect.size)];
+}
+
 NS_INLINE NSString *VT100GridRunDescription(VT100GridRun run) {
     return [NSString stringWithFormat:@"[origin=%@ length=%@]", VT100GridCoordDescription(run.origin), @(run.length)];
 }

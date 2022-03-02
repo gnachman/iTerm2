@@ -97,7 +97,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p grid:%@>", [self class], self, _state.currentGrid];
+    return [NSString stringWithFormat:@"<%@: %p grid:%@ mutableState:%p>", [self class], self, _state.currentGrid, _mutableState];
 }
 
 #pragma mark - APIs
@@ -1061,12 +1061,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 #pragma mark - Mutation Wrappers
 
 - (void)performLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *mutableState))block {
+    DLog(@"begin");
     [_mutableState performLightweightBlockWithJoinedThreads:block];
 }
 
 - (void)performBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100Terminal *terminal,
                                                             VT100ScreenMutableState *mutableState,
                                                             id<VT100ScreenDelegate> delegate))block {
+    DLog(@"%@", [NSThread callStackSymbols]);
     // We don't want to allow joining inside a side-effect because that causes side-effects to run
     // out of order (joining runs remaining side-effects immediately, which is out of order since
     // the current one isn't done yet).
@@ -1083,6 +1085,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (VT100ScreenState *)switchToSharedState {
     ++_sharedStateCount;
+    DLog(@"switch to shared state. count becomes %@", @(_sharedStateCount));
     VT100ScreenState *savedState = [_state autorelease];
     _state = [[_mutableState sanitizingAdapter] retain];
     return savedState;
@@ -1090,10 +1093,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (void)restoreState:(VT100ScreenState *)state {
     --_sharedStateCount;
+    DLog(@"restore state. count becomes %@", @(_sharedStateCount));
     [_state autorelease];
     _state = [state retain];
     BOOL resetDirty = NO;
     if (_forceMergeGrids) {
+        DLog(@"merge grids");
         _forceMergeGrids = NO;
         resetDirty = _mutableState.currentGrid.isAnyCharDirty;
         [_mutableState.primaryGrid markAllCharsDirty:YES updateTimestamps:NO];
@@ -1101,6 +1106,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
     [_state mergeFrom:_mutableState];
     if (resetDirty) {
+        DLog(@"reset dirty");
         // More cells in the mutable grid were marked dirty since the last refresh.
         [_state.currentGrid markAllCharsDirty:YES updateTimestamps:NO];
     }
@@ -1111,7 +1117,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                            checkTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                            resetOverflow:(BOOL)resetOverflow
                             mutableState:(VT100ScreenMutableState *)mutableState {
-    DLog(@"Begin");
+    DLog(@"Begin %@", self);
     [mutableState willSynchronize];
     switch (checkTriggers) {
         case VT100ScreenTriggerCheckTypeNone:
@@ -1130,11 +1136,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             break;
     }
     if (sourceConfig.isDirty) {
+        DLog(@"source config is dirty");
         // Prevents reentrant sync from setting config more than once.
         sourceConfig.isDirty = NO;
         mutableState.config = sourceConfig;
     }
     if (maybeExpect) {
+        DLog(@"update expect");
         [mutableState updateExpectFrom:maybeExpect];
     }
     const int overflow = [mutableState scrollbackOverflow];
@@ -1142,13 +1150,15 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         [mutableState resetScrollbackOverflow];
     }
     if (_state) {
+        DLog(@"merge state");
         [_state mergeFrom:mutableState];
     } else {
+        DLog(@"copy state");
         [_state autorelease];
         _state = [mutableState copy];
     }
     [mutableState didSynchronize:resetOverflow];
-    DLog(@"End");
+    DLog(@"End overflow=%@ haveScrolled=%@", @(overflow), @(_state.currentGrid.haveScrolled));
     return (VT100SyncResult) {
         .overflow = overflow,
         .haveScrolled = _state.currentGrid.haveScrolled

@@ -140,16 +140,20 @@ static _Atomic int gPerformingJoinedBlock;
 
 // The block will be called twice, once for the mutable-thread copy and later with the main-thread copy.
 - (void)mutateColorMap:(void (^)(iTermColorMap *colorMap))block {
+    DLog(@"begin");
     // Mutate mutation thread instance.
     block([self mutableColorMap]);
+    DLog(@"Schedule side effect");
 
     // Schedule a side-effect to mutate the main-thread instance.
     __weak __typeof(self) weakSelf = self;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
+            DLog(@"dealloced");
             return;
         }
+        DLog(@"Run color map mutation side effect");
         iTermColorMap *mainThreadColorMap = (iTermColorMap *)strongSelf.mainThreadCopy.colorMap;
         mainThreadColorMap.delegate = strongSelf;
         block(mainThreadColorMap);
@@ -158,6 +162,7 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (VT100Terminal *)terminal {
     if (!self.terminalEnabled) {
+        DLog(@"terminal disabled");
         return nil;
     }
     return _terminal;
@@ -167,6 +172,7 @@ static _Atomic int gPerformingJoinedBlock;
     if (enabled == _terminalEnabled) {
         return;
     }
+    DLog(@"setTerminalEnabled:%@", @(enabled));
     _terminalEnabled = enabled;
     if (enabled) {
         _terminal.delegate = self;
@@ -205,6 +211,7 @@ static _Atomic int gPerformingJoinedBlock;
 // doesn't get called to unpause. Use this instead unless you really know what
 // you're doing.
 - (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect {
+    DLog(@"Add paused side effect");
     iTermTokenExecutorUnpauser *unpauser = [_tokenExecutor pause];
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
@@ -213,6 +220,7 @@ static _Atomic int gPerformingJoinedBlock;
 }
 
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
+    DLog(@"Add side effect");
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
         [weakSelf performSideEffect:sideEffect];
@@ -220,6 +228,7 @@ static _Atomic int gPerformingJoinedBlock;
 }
 
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect {
+    DLog(@"Add interval tree side effect");
     __weak __typeof(self) weakSelf = self;
     [_tokenExecutor addSideEffect:^{
         [weakSelf performIntervalTreeSideEffect:sideEffect];
@@ -232,21 +241,25 @@ static _Atomic int gPerformingJoinedBlock;
 // The main thread will be stopped while running your side effect and you can safely access both
 // mutation and main-thread data in it.
 - (void)addJoinedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
+    DLog(@"Add joined side effect");
     __weak __typeof(self) weakSelf = self;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             [unpauser unpause];
+            DLog(@"dealloced");
             return;
         }
         if (VT100ScreenMutableState.performingJoinedBlock) {
             sideEffect(delegate);
             [unpauser unpause];
+            DLog(@"Already performing");
             return;
         }
         [strongSelf performBlockWithJoinedThreads:^(VT100Terminal * _Nonnull terminal,
                                                     VT100ScreenMutableState * _Nonnull mutableState,
                                                     id<VT100ScreenDelegate>  _Nonnull delegate) {
+            DLog(@"finished");
             sideEffect(delegate);
             [unpauser unpause];
         }];
@@ -255,20 +268,25 @@ static _Atomic int gPerformingJoinedBlock;
 
 // This is run on the main queue.
 - (void)performSideEffect:(void (^)(id<VT100ScreenDelegate>))block {
+    DLog(@"begin");
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
     if (!delegate) {
+        DLog(@"no delegate");
         return;
     }
     const BOOL saved = self.performingSideEffect;
     self.performingSideEffect = YES;
+    DLog(@"performing for delegate %@", delegate);
     block(delegate);
     self.performingSideEffect = saved;
 }
 
 - (void)performPausedSideEffect:(iTermTokenExecutorUnpauser *)unpauser
                           block:(void (^)(id<VT100ScreenDelegate>, iTermTokenExecutorUnpauser *))block {
+    DLog(@"begin");
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
     if (!delegate) {
+        DLog(@"dealloced");
         [unpauser unpause];
         return;
     }
@@ -276,6 +294,7 @@ static _Atomic int gPerformingJoinedBlock;
     const BOOL savedPausedSideEffect = self.performingPausedSideEffect;
     self.performingSideEffect = YES;
     self.performingPausedSideEffect = YES;
+    DLog(@"performing for delegate %@", delegate);
     block(delegate, unpauser);
     self.performingPausedSideEffect = savedPausedSideEffect;
     self.performingSideEffect = savedSideEffect;
@@ -283,23 +302,28 @@ static _Atomic int gPerformingJoinedBlock;
 
 // See threading notes on performSideEffect:.
 - (void)performIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver>))block {
+    DLog(@"begin");
     id<iTermIntervalTreeObserver> observer = self.sideEffectPerformer.sideEffectPerformingIntervalTreeObserver;
     if (!observer) {
+        DLog(@"no observer");
         return;
     }
     const BOOL saved = self.performingSideEffect;
     self.performingSideEffect = YES;
+    DLog(@"perform for observer %@", observer);
     block(observer);
     self.performingSideEffect = saved;
 }
 
 - (void)setNeedsRedraw {
+    DLog(@"begin");
     [_tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagNeedsRedraw];
 }
 
 #pragma mark - Accessors
 
 - (void)setConfig:(VT100MutableScreenConfiguration *)config {
+    DLog(@"begin %@", config);
     assert(VT100ScreenMutableState.performingJoinedBlock);
     [super setConfig:config];
     NSSet<NSString *> *dirty = [config dirtyKeyPaths];
@@ -343,11 +367,13 @@ static _Atomic int gPerformingJoinedBlock;
 }
 
 - (void)setExited:(BOOL)exited {
+    DLog(@"begin %@", @(exited));
     _exited = exited;
     _triggerEvaluator.sessionExited = exited;
 }
 
 - (iTermTokenExecutorUnpauser *)pauseTokenExecution {
+    DLog(@"pause\n%@", [NSThread callStackSymbols]);
     return [_tokenExecutor pause];
 }
 
@@ -1214,6 +1240,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)resetScrollbackOverflow {
+    DLog(@"begin %@", @(self.scrollbackOverflow));
     self.scrollbackOverflow = 0;
 }
 
@@ -3097,6 +3124,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 #pragma mark - Triggers
 
 - (void)performPeriodicTriggerCheck {
+    DLog(@"begin");
     [_triggerEvaluator checkPartialLineTriggers];
     [_triggerEvaluator checkIdempotentTriggersIfAllowed];
 }
@@ -3132,6 +3160,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)forceCheckTriggers {
+    DLog(@"begin");
     [_triggerEvaluator forceCheck];
 }
 
@@ -3257,6 +3286,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)performSynchroDanceWithBlock:(void (^)(void))block {
     assert(dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue()));
+    DLog(@"begin");
     [iTermGCD setMainQueueSafe:YES];
 
     dispatch_group_t group = dispatch_group_create();
@@ -3266,21 +3296,29 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     dispatch_group_enter(group2);
 
     // Ask the token executor to run a high-pri task. This will be the next thing it does.
+    DLog(@"schedule high-pri task");
     [_tokenExecutor scheduleHighPriorityTask:^{
+        DLog(@"high-pri task running");
         // Unblock the main queue.
         dispatch_group_leave(group);
 
         // Wait for the main queue to finish.
+        DLog(@"start waiting");
         dispatch_group_wait(group2, DISPATCH_TIME_FOREVER);
+        DLog(@"done waiting");
     }];
 
     // Wait for the high-pri task to begin.
+    DLog(@"will wait");
     dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    DLog(@"done waiting");
 
     // The mutation queue is now blocked on group2.
     block();
+    DLog(@"block finished");
     [iTermGCD setMainQueueSafe:NO];
     // Unblock the token executor
+    DLog(@"unblock executor");
     dispatch_group_leave(group2);
 }
 
@@ -3290,6 +3328,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                                                                   id<VT100ScreenDelegate>))block
                                    delegate:(id<VT100ScreenDelegate>)delegate
                                     topmost:(BOOL)topmost {
+    DLog(@"begin");
     // Set `performingJoinedBlock` to YES so that a side-effect that wants to join threads won't
     // deadlock.
     // This get-and-set is not a data race because assignment to performingJoinedBlock only happens
@@ -3298,6 +3337,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     VT100ScreenState *oldState;
     if (!wasPerformingJoinedBlock) {
+        DLog(@"switch to shared state");
         oldState = [delegate screenSwitchToSharedState];
     }
     [self loadConfigIfNeededFromDelegate:delegate];
@@ -3318,17 +3358,23 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     //          encodeRestorableState
     //            performJoinedBlock
     //              executeSideEffectsImmediatelySyncingFirst (here)
+    DLog(@"Execute side effects without syncing first");
     [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
 
     if (block) {
+        DLog(@"start block");
         block(self.terminal, self, delegate);
+        DLog(@"finish block");
     }
     // Run any side-effects enqueued by the block, taking advantage of the fact that state is in sync.
+    DLog(@"Execute side effects without syncing first (2)");
     [_tokenExecutor executeSideEffectsImmediatelySyncingFirst:NO];
     if (!wasPerformingJoinedBlock) {
+        DLog(@"restore state");
         [delegate screenRestoreState:oldState];
     }
     [self loadConfigIfNeededFromDelegate:delegate];
+    DLog(@"expect");
     [delegate screenSyncExpect:self];
 
     if (topmost && _screenNeedsUpdate) {
@@ -3337,12 +3383,15 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 
     VT100ScreenMutableState.performingJoinedBlock = wasPerformingJoinedBlock;
+    DLog(@"done");
 }
 
 - (void)loadConfigIfNeededFromDelegate:(id<VT100ScreenDelegate>)delegate {
+    DLog(@"begin");
     assert(VT100ScreenMutableState.performingJoinedBlock);
     VT100MutableScreenConfiguration *config = [delegate screenConfiguration];
     if (config.isDirty) {
+        DLog(@"config is dirty");
         self.config = config;
     }
 }
@@ -3350,6 +3399,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)reallyPerformLightweightBlockWithJoinedThreads:(void (^ NS_NOESCAPE)(VT100ScreenMutableState *))block {
     // Set `performingJoinedBlock` to YES so that a side-effect that wants to join threads won't
     // deadlock.
+    DLog(@"begin");
     const BOOL previousValue = VT100ScreenMutableState.performingJoinedBlock;
     VT100ScreenMutableState.performingJoinedBlock = YES;
     if (block) {
@@ -3361,6 +3411,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)performBlockAsynchronously:(void (^ _Nullable)(VT100Terminal *terminal,
                                                        VT100ScreenMutableState *mutableState,
                                                        id<VT100ScreenDelegate> delegate))block {
+    DLog(@"begin %@", [NSThread callStackSymbols]);
     [iTermGCD assertMainQueueSafe];
     id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
     __weak __typeof(self) weakSelf = self;

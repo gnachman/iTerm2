@@ -7726,19 +7726,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sync {
+    DLog(@"sync");
     [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
                  resetOverflow:NO];
 }
 
 - (void)syncCheckingTriggers:(VT100ScreenTriggerCheckType)checkTriggers {
+    DLog(@"syncCheckingTriggers:%@", @(checkTriggers));
     [self syncCheckingTriggers:checkTriggers resetOverflow:NO];
 }
 
 // Only main-thread-initiated syncs take this route.
 - (VT100SyncResult)syncCheckingTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                           resetOverflow:(BOOL)resetOverflow {
+    DLog(@"syncCheckingTriggers:%@ resetOverflow:%@ %@", @(checkTriggers), @(resetOverflow), self);
     __block VT100SyncResult result = { 0 };
     [_screen performLightweightBlockWithJoinedThreads:^(VT100ScreenMutableState *mutableState) {
+        DLog(@"lightweight block running for %@", self);
         result = [self syncCheckingTriggers:checkTriggers
                               resetOverflow:resetOverflow
                                mutableState:mutableState];
@@ -7750,7 +7754,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (VT100SyncResult)syncCheckingTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                           resetOverflow:(BOOL)resetOverflow
                            mutableState:(VT100ScreenMutableState *)mutableState {
-    DLog(@"BEGIN syncCheckingTriggers");
+    DLog(@"syncCheckingTriggers:%@ resetOverflow:%@ mutableState:%@ self:%@",
+         @(checkTriggers), @(resetOverflow), mutableState, self);
     [self updateConfigurationFields];
     const BOOL expectWasDirty = _expect.dirty;
     [_expect resetDirty];

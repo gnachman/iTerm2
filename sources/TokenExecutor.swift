@@ -265,6 +265,7 @@ class TokenExecutor: NSObject {
     // If high priority, then you must be on the main queue or have joined the main & mutation queue.
     @objc
     func addTokens(_ vector: CVector, length: Int, highPriority: Bool) {
+        DLog("Add tokens with length \(length) highpri=\(highPriority)")
         if length == 0 {
             return
         }
@@ -287,6 +288,7 @@ class TokenExecutor: NSObject {
     // is scheduled.
     @objc
     func rollBackCurrentToken() {
+        DLog("Roll back current token")
         iTermGCD.assertMutationQueueSafe()
         impl.rollBackCurrentToken()
     }
@@ -294,18 +296,21 @@ class TokenExecutor: NSObject {
     // Any queue
     @objc
     func addSideEffect(_ task: @escaping TokenExecutorTask) {
+        DLog("add side effect")
         impl.addSideEffect(task)
     }
 
     // Any queue
     @objc
     func setSideEffectFlag(value: Int) {
+        DLog("Set side-effect flag \(value)")
         impl.setSideEffectFlag(value: value)
     }
 
     // This can run on the main queue, or else on the mutation queue when joined.
     @objc(executeSideEffectsImmediatelySyncingFirst:)
     func executeSideEffectsImmediately(syncFirst: Bool) {
+        DLog("Execute side effects immediately syncFirst=\(syncFirst)")
         impl.executeSideEffects(syncFirst: syncFirst)
     }
 
@@ -322,12 +327,14 @@ class TokenExecutor: NSObject {
     // Call this on the token evaluation queue.
     @objc
     func pause() -> Unpauser {
+        DLog("pause")
         return impl.pause()
     }
 
     // You can call this on any queue.
     @objc
     func schedule() {
+        DLog("schedule")
         impl.schedule()
     }
 
@@ -342,6 +349,7 @@ class TokenExecutor: NSObject {
     // You can call this on any queue.
     @objc
     func scheduleHighPriorityTask(_ task: @escaping TokenExecutorTask) {
+        DLog("schedule high-pri task")
         self.impl.scheduleHighPriorityTask(task, syncAllowed: onExecutorQueue)
     }
 }
@@ -553,26 +561,34 @@ private class TokenExecutorImpl {
 
     // This can run on the main queue, or else on the mutation queue when joined.
     func executeSideEffects(syncFirst: Bool) {
+        DLog("begin")
         iTermGCD.assertMainQueueSafe()
 
         if executingSideEffects.getAndSet(true) {
             // Do not allow re-entrant side-effects.
+            DLog("reentrancy detected! aborting")
             return
         }
+        DLog("dequeuing side effects")
         var shouldSync = syncFirst
         while let task = sideEffects.dequeue() {
             if shouldSync {
+                DLog("sync before first side effect")
                 delegate?.tokenExecutorSync()
                 shouldSync = false
             }
+            DLog("execute side effect")
             task()
         }
+        DLog("finished executing side effects")
         executingSideEffects.set(false)
 
         // Do this last because it might join.
         let flags = sideEffects.getAndResetFlags()
         if flags != 0 {
+            DLog("flags=\(flags)")
             if shouldSync {
+                DLog("sync before handling flags")
                 delegate?.tokenExecutorSync()
             }
             delegate?.tokenExecutorHandleSideEffectFlags(flags)
@@ -594,6 +610,7 @@ private class TokenExecutorImpl {
         guard let delegate = delegate else {
             // This is necessary to avoid deadlock. If the terminal is disabled then the token queue
             // will hold semaphores that need to be signaled.
+            DLog("empty queue")
             tokenQueue.removeAll()
             return
         }
@@ -619,12 +636,15 @@ private class TokenExecutorImpl {
                                priority: Int,
                                accumulatedLength: inout Int,
                                delegate: TokenExecutorDelegate) -> Bool {
+        DLog("Begin for \(delegate)")
         defer {
+            DLog("execute tokens cleanup for \(delegate)")
             executeHighPriorityTasks()
         }
         var quitVectorEarly = false
         var vectorHasNext = true
         while !isPaused && !quitVectorEarly && vectorHasNext {
+            DLog("continuing to next token")
             vectorHasNext = vector.withNext { token -> Bool in
                 executeHighPriorityTasks()
                 commit = true
@@ -633,9 +653,11 @@ private class TokenExecutorImpl {
                            priority: priority,
                            accumulatedLength: &accumulatedLength,
                            delegate: delegate) {
+                    DLog("quit early")
                     quitVectorEarly = true
                     return true
                 }
+                DLog("commit=\(commit)")
                 return commit
             }
         }
@@ -643,13 +665,16 @@ private class TokenExecutorImpl {
             return true
         }
         if isPaused {
+            DLog("paused")
             return false
         }
+        DLog("normal termination")
         accumulatedLength += vector.length
         return true
     }
 
     func rollBackCurrentToken() {
+        DLog("roll back current token")
         assertQueue()
         commit = false
     }
@@ -675,9 +700,12 @@ private class TokenExecutorImpl {
     }
 
     private func executeHighPriorityTasks() {
+        DLog("begin")
         while let task = taskQueue.dequeue() {
+            DLog("execute task")
             task()
         }
+        DLog("done")
     }
 }
 
