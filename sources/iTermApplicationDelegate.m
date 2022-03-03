@@ -1054,6 +1054,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     const BOOL restoreWorkspace = ([[NSUserDefaults standardUserDefaults] boolForKey:@"NoSyncWindowRestoresWorkspaceAtLaunch"] ||
                                    [iTermPreferences boolForKey:kPreferenceKeyRestoreWindowsToSameSpaces]);
     if (restoreWorkspace) {
+        DLog(@"Set NSWindowRestoresWorkspaceAtLaunch=YES");
         // Based on https://chromium.googlesource.com/chromium/src/+/refs/heads/main/chrome/browser/chrome_browser_main_mac.mm#128:
         // Windows don't go back to their original workspaces, except on restart. When Sparkle
         // upgrades, treat it like a system restart.
