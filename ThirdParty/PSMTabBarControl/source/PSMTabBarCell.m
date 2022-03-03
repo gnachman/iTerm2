@@ -520,6 +520,8 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     [image addRepresentation:rep];
     NSImage *returnImage = [[NSImage alloc] initWithSize:[rep size]];
     [returnImage lockFocus];
+    [[NSColor windowBackgroundColor] set];
+    NSRectFill(NSMakeRect(0, 0, returnImage.size.width, returnImage.size.height));
     [image drawAtPoint:NSZeroPoint
               fromRect:NSZeroRect
              operation:NSCompositingOperationSourceOver

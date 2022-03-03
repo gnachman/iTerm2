@@ -7068,7 +7068,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 
     // Consider automatic conversion.
-    if (![self themeSupportsAlternateDragModes]) {
+    if (![self themeSupportsAlternateDragModes] && _windowType != WINDOW_TYPE_NO_TITLE_BAR) {
         // Never convert to window drag in traditional themes.
         return NO;
     }
