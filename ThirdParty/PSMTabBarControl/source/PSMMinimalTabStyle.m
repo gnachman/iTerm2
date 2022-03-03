@@ -604,10 +604,6 @@ static CGFloat PSMWeightedAverage(CGFloat l, CGFloat u, CGFloat w) {
     }
 }
 
-- (BOOL)supportsMultiLineLabels {
-    return YES;
-}
-
 - (BOOL)willDrawSubtitle:(PSMCachedTitle *)subtitle {
     return subtitle && !subtitle.isEmpty;
 }

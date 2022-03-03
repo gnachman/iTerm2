@@ -990,15 +990,17 @@
         mainLabelHeight = NSHeight(labelRect);
     }
 
-    [self drawSubtitle:cachedSubtitle
-                     x:labelPosition
-                  cell:cell
-               hasIcon:drewIcon
-              iconRect:iconRect
-         reservedSpace:reservedSpace
-             cellFrame:cellFrame
-           labelOffset:labelOffset
-       mainLabelHeight:mainLabelHeight];
+    if ([self supportsMultiLineLabels]) {
+        [self drawSubtitle:cachedSubtitle
+                         x:labelPosition
+                      cell:cell
+                   hasIcon:drewIcon
+                  iconRect:iconRect
+             reservedSpace:reservedSpace
+                 cellFrame:cellFrame
+               labelOffset:labelOffset
+           mainLabelHeight:mainLabelHeight];
+    }
 }
 
 - (CGFloat)verticalOffsetForTitleWhenSubtitlePresent {
