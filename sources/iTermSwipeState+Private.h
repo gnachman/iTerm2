@@ -31,6 +31,7 @@ typedef struct {
          transition:(iTermScrollWheelStateMachineStateTransition)transition;
 
 - (void)update:(NSTimeInterval)elapsedTime;
+- (void)retire;
 
 @end
 

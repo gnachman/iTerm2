@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
+#import "NSDate+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTimer+iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -68,7 +69,10 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
         return NO;
     }
 
+    NSMutableArray<NSString *> *log = [NSMutableArray array];
+    [log addObject:[event description]];
     DLog(@"Got event %@", iTermShortEventPhasesString(event));
+    NSTimeInterval lastEvent = [NSDate it_timeSinceBoot];
     while (1) {
         @autoreleasepool {
             DLog(@"Continue tracking.");
@@ -83,6 +87,17 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
                                        untilDate:[NSDate dateWithTimeIntervalSinceNow:1.0 / 60.0]
                                           inMode:NSEventTrackingRunLoopMode
                                          dequeue:YES];
+            NSLog(@"%@", event);
+            if (event) {
+                lastEvent = [NSDate it_timeSinceBoot];
+            } else {
+                if ([NSDate it_timeSinceBoot] - lastEvent > 5) {
+                    [self abort];
+                    SetPinnedDebugLogMessage(@"SwipeTracker", [log componentsJoinedByString:@"\n"]);
+                    break;
+                }
+            }
+            [log addObject:[NSString stringWithFormat:@"%f: %@", [NSDate it_timeSinceBoot], [event description]]];
             DLog(@"Got event %@", event);
         }
     }
@@ -120,6 +135,13 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
         return [self createStateForEventIfNeeded:event transition:transition];
     }
     return [_liveState handleEvent:event transition:transition];
+}
+
+- (void)abort {
+    if (!_liveState || _liveState.isRetired) {
+        return;
+    }
+    [_liveState retire];
 }
 
 - (BOOL)createStateForEventIfNeeded:(NSEvent *)event
