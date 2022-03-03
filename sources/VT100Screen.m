@@ -657,6 +657,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             return NO;
         }
         // Found a screen mark above the cursor.
+        const VT100GridAbsCoord cursorAbsCoord = VT100GridAbsCoordFromCoord(intervalStart,
+                                                                            self.totalScrollbackOverflow);
+        if (VT100GridAbsCoordRangeContainsAbsCoord(_state.currentPromptRange, cursorAbsCoord)) {
+            // Mark is within the current command's range.
+            return NO;
+        }
         return YES;
     }];
     long long line = overflow;
