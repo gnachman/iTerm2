@@ -46,6 +46,7 @@
 @property (nonatomic, readwrite) BOOL alertOnNextMark;
 @property (nonatomic, readwrite) double dimmingAmount;
 @property (nonatomic, readwrite) BOOL publishing;
+@property (nonatomic, readwrite) BOOL terminalCanChangeBlink;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -85,6 +86,7 @@
 @synthesize alertOnNextMark = _alertOnNextMark;
 @synthesize dimmingAmount = _dimmingAmount;
 @synthesize publishing = _publishing;
+@synthesize terminalCanChangeBlink = _terminalCanChangeBlink;
 
 @synthesize isDirty = _isDirty;
 @synthesize stringForKeypress = _stringForKeypress;
@@ -128,6 +130,7 @@
         _alertOnNextMark = other.alertOnNextMark;
         _dimmingAmount = other.dimmingAmount;
         _publishing = other.publishing;
+        _terminalCanChangeBlink = other.terminalCanChangeBlink;
 
         _isDirty = other.isDirty;
     }
@@ -179,6 +182,7 @@
                             @"alertOnNextMark": @(_alertOnNextMark),
                             @"dimmingAmount": @(_dimmingAmount),
                             @"publishing": @(_publishing),
+                            @"terminalCanChangeBlink": @(_terminalCanChangeBlink),
 
                             @"isDirty": @(_isDirty),
     };
@@ -231,6 +235,7 @@
 @dynamic alertOnNextMark;
 @dynamic dimmingAmount;
 @dynamic publishing;
+@dynamic terminalCanChangeBlink;
 
 @dynamic isDirty;
 

@@ -288,6 +288,10 @@
 
 - (void)terminalSetCursorBlinking:(BOOL)blinking {
     DLog(@"begin blinking=%@", @(blinking));
+    if (!self.config.terminalCanChangeBlink) {
+        DLog(@"not allowed");
+        return;
+    }
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenSetCursorBlinking:blinking];

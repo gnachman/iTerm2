@@ -219,6 +219,14 @@ static _Atomic int gPerformingJoinedBlock;
     }];
 }
 
+- (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
+    DLog(@"Add deferred side effect");
+    __weak __typeof(self) weakSelf = self;
+    [_tokenExecutor addDeferredSideEffect:^{
+        [weakSelf performSideEffect:sideEffect];
+    }];
+}
+
 - (void)addSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect {
     DLog(@"Add side effect");
     __weak __typeof(self) weakSelf = self;
@@ -490,11 +498,12 @@ static _Atomic int gPerformingJoinedBlock;
 #pragma mark - Scrollback
 
 - (void)incrementOverflowBy:(int)overflowCount {
-    if (overflowCount > 0) {
-        DLog(@"Increment overflow by %d", overflowCount);
-        self.scrollbackOverflow += overflowCount;
-        self.cumulativeScrollbackOverflow += overflowCount;
+    if (overflowCount == 0) {
+        return;
     }
+    DLog(@"Increment overflow by %d", overflowCount);
+    self.scrollbackOverflow += overflowCount;
+    self.cumulativeScrollbackOverflow += overflowCount;
     [_tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagIntervalTreeVisibleRangeDidChange];
 }
 
@@ -1513,9 +1522,17 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             [self.temporaryDoubleBuffer start];
         }
     }
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenSetCursorVisible:visible];
-    }];
+    if (visible) {
+        [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenSetCursorVisible:YES];
+        }];
+    } else {
+        // Wait to hide the cursor because it's pretty likely it'll be shown right away, such as
+        // when editing in emacs. Doing this prevents flicker. See issue 10206.
+        [self addDeferredSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+            [delegate screenSetCursorVisible:NO];
+        }];
+    }
 }
 
 - (void)activateBell {

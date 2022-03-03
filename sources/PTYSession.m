@@ -12220,6 +12220,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.maxScrollbackLines = [iTermProfilePreferences intForKey:KEY_SCROLLBACK_LINES
                                                               inProfile:self.profile];
         _config.profileName = [self profileName];
+        _config.terminalCanChangeBlink = [iTermProfilePreferences boolForKey:KEY_ALLOW_CHANGE_CURSOR_BLINK inProfile:self.profile];
+
         dirty = YES;
         _profileDidChange = NO;
     }

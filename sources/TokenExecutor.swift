@@ -302,6 +302,12 @@ class TokenExecutor: NSObject {
 
     // Any queue
     @objc
+    func addDeferredSideEffect(_ task: @escaping TokenExecutorTask) {
+        impl.addDeferredSideEffect(task)
+    }
+
+    // Any queue
+    @objc
     func setSideEffectFlag(value: Int) {
         DLog("Set side-effect flag \(value)")
         impl.setSideEffectFlag(value: value)
@@ -549,6 +555,11 @@ private class TokenExecutorImpl {
         sideEffectScheduler.markNeedsUpdate()
     }
 
+    func addDeferredSideEffect(_ task: @escaping TokenExecutorTask) {
+        sideEffects.append(task)
+        sideEffectScheduler.markNeedsUpdate(deferred: sideEffectScheduler.period / 2)
+    }
+
     // Any queue
     func setSideEffectFlag(value: Int) {
         sideEffects.setFlag(value: value)
@@ -752,7 +763,7 @@ class PeriodicScheduler: NSObject {
     private var _needsUpdate = false
     private let queue: DispatchQueue
     private let mutex = Mutex()
-    private let period: TimeInterval
+    let period: TimeInterval
     private let action: () -> ()
 
     @objc(initWithQueue:period:block:)
@@ -765,6 +776,13 @@ class PeriodicScheduler: NSObject {
     @objc func markNeedsUpdate() {
         needsUpdate = true
         schedule(reset: false)
+    }
+
+    @objc func markNeedsUpdate(deferred delay: TimeInterval) {
+        needsUpdate = true
+        queue.asyncAfter(deadline: .now() + delay) { [weak self] in
+            self?.schedule(reset: false)
+        }
     }
 
     @objc func schedule() {
@@ -788,14 +806,18 @@ class PeriodicScheduler: NSObject {
                 return
             }
 
-            queue.asyncAfter(deadline: .now() + period) { [weak self] in
-                guard let self = self else {
-                    return
-                }
-                self.schedule(reset: true)
-            }
+            resetAfterDelay()
             _needsUpdate = false
             action()
+        }
+    }
+
+    private func resetAfterDelay() {
+        queue.asyncAfter(deadline: .now() + period) { [weak self] in
+            guard let self = self else {
+                return
+            }
+            self.schedule(reset: true)
         }
     }
 }

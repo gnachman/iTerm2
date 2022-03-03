@@ -65,4 +65,6 @@ iTermTriggerScopeProvider> {
 
 - (void)addPausedSideEffect:(void (^)(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser))sideEffect;
 
+- (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
+
 @end

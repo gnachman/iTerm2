@@ -57,6 +57,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL alertOnNextMark;
 @property (nonatomic, readonly) double dimmingAmount;
 @property (nonatomic, readonly) BOOL publishing;
+@property (nonatomic, readonly) BOOL terminalCanChangeBlink;
 
 @property (nonatomic, readonly) BOOL isDirty;
 
@@ -106,6 +107,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL alertOnNextMark;
 @property (nonatomic, readwrite) double dimmingAmount;
 @property (nonatomic, readwrite) BOOL publishing;
+@property (nonatomic, readwrite) BOOL terminalCanChangeBlink;
 
 @property (nonatomic, readwrite) BOOL isDirty;
 
