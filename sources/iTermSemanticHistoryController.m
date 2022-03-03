@@ -131,6 +131,16 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     return executable;
 }
 
+- (NSString *)novaClientInApplicationBundle:(NSBundle *)bundle {
+    DLog(@"Trying to find nova in %@", bundle.bundlePath);
+    NSURL *url = bundle.bundleURL;
+    NSArray<NSString *> *parts = @[ @"Contents", @"SharedSupport", @"nova" ];
+    for (NSString *part in parts) {
+        url = [url URLByAppendingPathComponent:part];
+    }
+    return url.path;
+}
+
 - (NSString *)emacsClientInApplicationBundle:(NSBundle *)bundle {
     DLog(@"Trying to find emacsclient in %@", bundle.bundlePath);
     struct utsname uts;
@@ -289,6 +299,25 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 
 }
 
+- (void)openDocumentInNova:(NSString *)path line:(NSString *)line column:(NSString *)column {
+    NSBundle *bundle = [self applicationBundleWithIdentifier:kNovaAppIdentifier];
+    if (!bundle) {
+        DLog(@"Failed to find nova bundle");
+        return;
+    }
+    NSString *novaUtil = [self novaClientInApplicationBundle:bundle];
+    NSMutableArray<NSString *> *args = [@[@"open", path] mutableCopy];
+    if (line) {
+        [args addObject:@"-l"];
+        if (column) {
+            [args addObject:[NSString stringWithFormat:@"%@:%@", line, column]];
+        } else {
+            [args addObject:line];
+        }
+    }
+    [self launchTaskWithPath:novaUtil arguments:args completion:nil];
+}
+
 - (void)launchIntelliJIDEAWithArguments:(NSArray<NSString *> *)args path:(NSString *)path {
     NSBundle *bundle = [self applicationBundleWithIdentifier:kIntelliJIDEAIdentifier];
     if (!bundle) {
@@ -348,7 +377,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               kTextmate2Identifier,
               kBBEditIdentifier,
               kEmacsAppIdentifier,
-              kIntelliJIDEAIdentifier ];
+              kIntelliJIDEAIdentifier,
+              kNovaAppIdentifier ];
 }
 
 - (void)openFile:(NSString *)path
@@ -415,6 +445,10 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
             }
         }
         [self launchEmacsWithArguments:args];
+        return;
+    }
+    if ([identifier isEqualToString:kNovaAppIdentifier]) {
+        [self openDocumentInNova:path line:lineNumber column:columnNumber];
         return;
     }
     if ([identifier isEqualToString:kIntelliJIDEAIdentifier]) {
