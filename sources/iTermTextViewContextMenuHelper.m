@@ -1221,7 +1221,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
     numberFormatter.numberStyle = NSNumberFormatterDecimalStyle;
     numberFormatter.maximumFractionDigits = 1000;
-    NSString *formattedNumber = [numberFormatter stringFromNumber: number];
+    NSString *formattedNumber = [numberFormatter stringFromNumber:number];
 
     return [NSString stringWithFormat:@"%@ = %@", self, formattedNumber];
 }
