@@ -203,6 +203,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (NSString *)commandInRange:(VT100GridCoordRange)range;
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
 - (VT100GridCoordRange)commandRange;
+- (VT100GridCoordRange)extendedCommandRange;
 - (void)injectData:(NSData *)data;
 
 typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {

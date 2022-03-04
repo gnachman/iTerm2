@@ -629,6 +629,25 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     }
 }
 
+- (VT100GridCoordRange)extendedCommandRange {
+    const VT100GridCoordRange basicRange = [self commandRange];
+    if (basicRange.start.x < 0) {
+        return basicRange;
+    }
+
+    iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:self];
+    const VT100GridCoord firstNull = [extractor searchFrom:basicRange.end forward:YES forCharacterMatchingFilter:^BOOL(screen_char_t c, VT100GridCoord coord) {
+        return c.code == 0 && !c.complexChar && !c.image;
+    }];
+    if (firstNull.x < 0) {
+        return basicRange;
+    }
+    return (VT100GridCoordRange) {
+        .start = basicRange.start,
+        .end = firstNull
+    };
+}
+
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range {
     if (range.start.x == -1) {
         return NO;

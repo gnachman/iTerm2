@@ -1368,6 +1368,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.commandRange;
 }
 
+- (VT100GridCoordRange)extendedCommandRange {
+    return _state.extendedCommandRange;
+}
+
 - (id<VT100ScreenConfiguration>)config {
     return _state.config;
 }

@@ -318,6 +318,9 @@ extern NSString *const kScreenStateProtectedMode;
 // If not at a prompt (no shell integration or command is running) this is -1,-1,-1,-1.
 @property (nonatomic, readonly) VT100GridCoordRange commandRange;
 
+// Like commandRange but goes past the cursor position if it's in the middle of a command.
+@property (nonatomic, readonly) VT100GridCoordRange extendedCommandRange;
+
 - (BOOL)haveCommandInRange:(VT100GridCoordRange)range;
 
 - (id<VT100ScreenMarkReading> _Nullable)markOnLine:(int)line;

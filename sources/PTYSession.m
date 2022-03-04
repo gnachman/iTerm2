@@ -9587,10 +9587,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         VT100GridAbsCoordRange range;
         iTermTextExtractorTrimTrailingWhitespace trailing;
         if (self.isAtShellPrompt) {
-            range = VT100GridAbsCoordRangeMake(_screen.commandRange.start.x,
-                                               _screen.commandRange.start.y + _screen.totalScrollbackOverflow,
-                                               _screen.commandRange.end.x,
-                                               _screen.commandRange.end.y + _screen.totalScrollbackOverflow);
+            range = VT100GridAbsCoordRangeFromCoordRange(_screen.extendedCommandRange,
+                                                         _screen.totalScrollbackOverflow);
             trailing = iTermTextExtractorTrimTrailingWhitespaceAll;
         } else {
             range = _lastOrCurrentlyRunningCommandAbsRange;
