@@ -292,7 +292,7 @@
         DLog(@"not allowed");
         return;
     }
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addDeferredSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenSetCursorBlinking:blinking];
     }];
