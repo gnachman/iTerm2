@@ -1075,6 +1075,10 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     if (hexOrDecimalConversion) {
         [array addObject:hexOrDecimalConversion];
     }
+    NSString *scientificNotationConversion = [self scientificNotationConversionHelp];
+    if (scientificNotationConversion) {
+        [array addObject:scientificNotationConversion];
+    }
     NSString *timestampConversion = [self timestampConversionHelp];
     if (timestampConversion) {
         [array addObject:timestampConversion];
@@ -1200,6 +1204,26 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                        humanReadableSize];
         }
     }
+}
+
+- (NSString *)scientificNotationConversionHelp {
+    NSString *scientificNotationRegex = @"^-?(0|[1-9]\\d*)?(\\.\\d+)?[eE][+\\-]?\\d+$";
+    const BOOL isScientificNotation = [self isMatchedByRegex:scientificNotationRegex];
+    if (!isScientificNotation) {
+        return nil;
+    }
+
+    NSDecimalNumber *number = [[NSDecimalNumber alloc] initWithString:self];
+    if (!number || [number isEqual:[NSDecimalNumber notANumber]]) {
+        return nil;
+    }
+
+    NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
+    numberFormatter.numberStyle = NSNumberFormatterDecimalStyle;
+    numberFormatter.maximumFractionDigits = 1000;
+    NSString *formattedNumber = [numberFormatter stringFromNumber:number];
+
+    return [NSString stringWithFormat:@"%@ = %@", self, formattedNumber];
 }
 
 - (NSString *)timestampConversionHelp {
