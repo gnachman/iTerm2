@@ -1208,12 +1208,12 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
 - (NSString *)scientificNotationConversionHelp {
     NSString *scientificNotationRegex = @"^-?(0|[1-9]\\d*)?(\\.\\d+)?[eE][+\\-]?\\d+$";
-    BOOL isScientificNotation = [self isMatchedByRegex:scientificNotationRegex];
+    const BOOL isScientificNotation = [self isMatchedByRegex:scientificNotationRegex];
     if (!isScientificNotation) {
         return nil;
     }
 
-    NSDecimalNumber *number = [[NSDecimalNumber alloc] initWithString: self];
+    NSDecimalNumber *number = [[NSDecimalNumber alloc] initWithString:self];
     if (!number || [number isEqual:[NSDecimalNumber notANumber]]) {
         return nil;
     }
