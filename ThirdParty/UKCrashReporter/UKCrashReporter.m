@@ -127,11 +127,24 @@ void    UKCrashReporterCheckForCrash(void)
                 NSString*            numCPUsString = (numCores == 1) ? @"" : [NSString stringWithFormat: @"%dx ",numCores];
                 
                 // Create a string containing Mac and CPU info, crash log and prefs:
-                currentReport = [NSString stringWithFormat:
-                                    @"Model: %@\nCPU Speed: %@%.2f GHz\n%@\n",
-                                    UKMachineName(), numCPUsString, ((float)UKClockSpeed()) / 1000.0f,
-                                    currentReport];
-                
+                if (@available(macOS 12.0, *)) {
+                    NSString *shortVersionString = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+                    NSString *version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+                    currentReport = [NSString stringWithFormat:
+                                     @"Version: %@ (%@)\n"
+                                     @"Model: %@\n"
+                                     @"CPU Speed: %@%.2f GHz\n"
+                                     @"%@\n",
+                                     shortVersionString, version,
+                                     UKMachineName(),
+                                     numCPUsString, ((float)UKClockSpeed()) / 1000.0f,
+                                     currentReport];
+                } else {
+                    currentReport = [NSString stringWithFormat:
+                                        @"Model: %@\nCPU Speed: %@%.2f GHz\n%@\n",
+                                        UKMachineName(), numCPUsString, ((float)UKClockSpeed()) / 1000.0f,
+                                        currentReport];
+                }
                 // Now show a crash reporter window so the user can edit the info to send:
                 [[UKCrashReporter alloc] initWithLogString: currentReport];
             }
@@ -146,8 +159,15 @@ void    UKCrashReporterCheckForCrash(void)
 NSString* UKCrashReporterFindTenFiveCrashReportPath(NSString* appName, NSArray *folders)
 {
     NSString* currName = nil;
-    NSString* crashLogPrefix = [NSString stringWithFormat:@"%@_",appName];
-    NSString* crashLogSuffix = @".crash";
+    NSString* crashLogPrefix;
+    NSString* crashLogSuffix;
+    if (@available(macOS 12.0, *)) {
+        crashLogPrefix = [NSString stringWithFormat:@"%@-",appName];
+        crashLogSuffix = @".ips";
+    } else {
+        crashLogPrefix = [NSString stringWithFormat:@"%@_",appName];
+        crashLogSuffix = @".crash";
+    }
     NSString* foundName = nil;
     NSDate* foundDate = nil;
     NSString* foundFolder = nil;
