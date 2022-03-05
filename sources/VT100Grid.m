@@ -846,7 +846,9 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
         memmove(dest,
                 source,
                 sizeof(screen_char_t) * (size_.width + 1));
-        [self setMetadata:[otherGrid metadataAtLineNumber:i] forLineNumber:i];
+        iTermMetadata metadata = iTermMetadataCopy([otherGrid metadataAtLineNumber:i]);
+        [self setMetadata:metadata forLineNumber:i];
+        iTermMetadataRelease(metadata);
         if (dirtyRange.length > 0) {
             [[self lineInfoAtLineNumber:i] setDirty:YES inRange:dirtyRange updateTimestampTo:0];
         }
