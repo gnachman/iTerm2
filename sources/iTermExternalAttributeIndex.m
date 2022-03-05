@@ -294,6 +294,12 @@
 static NSString *const iTermExternalAttributeKeyUnderlineColor = @"uc";
 static NSString *const iTermExternalAttributeKeyURLCode = @"url";
 
+@interface iTermExternalAttribute()
+@property (atomic, readwrite) BOOL hasUnderlineColor;
+@property (atomic, readwrite) VT100TerminalColorValue underlineColor;
+@property (atomic, readwrite) unsigned int urlCode;
+@end
+
 @implementation iTermExternalAttribute
 
 + (iTermExternalAttribute *)attributeHavingUnderlineColor:(BOOL)hasUnderlineColor
@@ -362,9 +368,9 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
                                urlCode:(unsigned int)urlCode {
     self = [self init];
     if (self) {
-        _hasUnderlineColor = YES;
-        _underlineColor = color;
-        _urlCode = urlCode;
+        self.hasUnderlineColor = YES;
+        self.underlineColor = color;
+        self.urlCode = urlCode;
     }
     return self;
 }
@@ -372,7 +378,7 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
 - (instancetype)initWithURLCode:(unsigned int)urlCode {
     self = [self init];
     if (self) {
-        _urlCode = urlCode;
+        self.urlCode = urlCode;
     }
     return self;
 }

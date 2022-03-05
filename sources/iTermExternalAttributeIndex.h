@@ -17,9 +17,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Immutable
 @interface iTermExternalAttribute: NSObject<NSCopying>
-@property (nonatomic, readonly) BOOL hasUnderlineColor;
-@property (nonatomic, readonly) VT100TerminalColorValue underlineColor;
-@property (nonatomic, readonly) unsigned int urlCode;
+@property (atomic, readonly) BOOL hasUnderlineColor;
+@property (atomic, readonly) VT100TerminalColorValue underlineColor;
+@property (atomic, readonly) unsigned int urlCode;
 @property (nonatomic, readonly) NSString *humanReadableDescription;
 
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
