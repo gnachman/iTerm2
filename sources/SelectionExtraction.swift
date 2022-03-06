@@ -33,6 +33,60 @@ extension NSMutableAttributedString: Destination {
     }
 }
 
+class SelectionExtractorDelegate: NSObject, iTermSelectionDelegate {
+    private var realDelegate: iTermSelectionDelegate?
+    private let width: Int32
+
+    init(_ delegate: iTermSelectionDelegate) {
+        realDelegate = delegate
+        width = delegate.selectionViewportWidth()
+    }
+
+    func selectionDidChange(_ selection: iTermSelection!) {
+    }
+
+    func selectionAbsRangeForParenthetical(at coord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange {
+        return realDelegate!.selectionAbsRangeForParenthetical(at: coord)
+    }
+
+    func selectionAbsRangeForWord(at coord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange {
+        return realDelegate!.selectionAbsRangeForWord(at: coord)
+    }
+
+    func selectionAbsRangeForSmartSelection(at absCoord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange {
+        return realDelegate!.selectionAbsRangeForSmartSelection(at: absCoord)
+    }
+
+    func selectionAbsRangeForWrappedLine(at absCoord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange {
+        return realDelegate!.selectionAbsRangeForWrappedLine(at: absCoord)
+    }
+
+    func selectionAbsRangeForLine(at absCoord: VT100GridAbsCoord) -> VT100GridAbsWindowedRange {
+        return realDelegate!.selectionAbsRangeForLine(at: absCoord)
+    }
+
+    func selectionRangeOfTerminalNulls(onAbsoluteLine absLineNumber: Int64) -> VT100GridRange {
+        return realDelegate!.selectionRangeOfTerminalNulls(onAbsoluteLine: absLineNumber)
+    }
+
+    func selectionPredecessor(of absCoord: VT100GridAbsCoord) -> VT100GridAbsCoord {
+        return realDelegate!.selectionPredecessor(of: absCoord)
+    }
+
+    func selectionViewportWidth() -> Int32 {
+        return width
+    }
+
+    func selectionTotalScrollbackOverflow() -> Int64 {
+        return realDelegate!.selectionTotalScrollbackOverflow()
+    }
+
+    func selectionIndexes(onAbsoluteLine line: Int64, containingCharacter c: unichar, in range: NSRange) -> IndexSet! {
+        return realDelegate!.selectionIndexes(onAbsoluteLine: line, containingCharacter: c, in: range)
+    }
+
+
+}
 @objc(iTermSelectionExtractor)
 class SelectionExtractor: NSObject {
     fileprivate let selection: iTermSelection
@@ -42,6 +96,7 @@ class SelectionExtractor: NSObject {
     private let minimumLineNumber: Int32
     private var atomicExtractor = MutableAtomicObject<iTermTextExtractor?>(nil)
     private var _canceled = MutableAtomicObject<Bool>(false)
+    private let selectionDelegate: SelectionExtractorDelegate
     fileprivate var canceled: Bool {
         return _canceled.value
     }
@@ -54,7 +109,13 @@ class SelectionExtractor: NSObject {
          options: iTermSelectionExtractorOptions,
          maxBytes: Int32,
          minimumLineNumber: Int32) {
-        self.selection = selection.copy() as! iTermSelection  // TODO: nil delegate
+        let selectionDelegate = SelectionExtractorDelegate(selection.delegate!)
+        self.selectionDelegate = selectionDelegate
+
+        self.selection = selection.copy() as! iTermSelection
+        self.selection.delegate = selectionDelegate
+        self.selection.endLive()
+        
         self.snapshot = snapshot
         self.options = options
         self.maxBytes = maxBytes
