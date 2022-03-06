@@ -4277,7 +4277,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate refresh];
     if (!_selection.live && selection.hasSelection) {
         iTermPromise<NSString *> *promise = [self recordSelection];
-        [promise then:^(NSString * _Nonnull value) {
+        [promise onQueue:dispatch_get_main_queue() then:^(NSString * _Nonnull value) {
             DLog(@"Update scope variables for selection");
             [_delegate textViewSelectionDidChangeToTruncatedString:value];
         }];
