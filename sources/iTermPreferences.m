@@ -13,6 +13,7 @@
 // and the view controller may customize how its control's appearance changes dynamically.
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermNotificationCenter.h"
 #import "iTermPreferenceDidChangeNotification.h"
@@ -69,6 +70,7 @@ NSString *const kPreferenceKeyUseTmuxStatusBar = @"UseTmuxStatusBar";
 NSString *const kPreferenceKeyTmuxPauseModeAgeLimit = @"TmuxPauseModeAgeLimit";
 NSString *const kPreferenceKeyTmuxUnpauseAutomatically = @"TmuxUnpauseAutomatically";
 NSString *const kPreferenceKeyTmuxWarnBeforePausing = @"TmuxWarnBeforePausing";
+NSString *const kPreferenceKeyPhonyAllowSendingClipboardContents = @"PhonyAllowSendingClipboardContents";
 
 NSString *const kPreferenceKeyUseMetal = @"UseMetal";
 NSString *const kPreferenceKeyDisableMetalWhenUnplugged = @"disableMetalWhenUnplugged";
@@ -348,6 +350,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyUseTmuxStatusBar: @YES,
                   kPreferenceKeyTmuxPauseModeAgeLimit: @120,
                   kPreferenceKeyTmuxUnpauseAutomatically: @NO,
+                  kPreferenceKeyPhonyAllowSendingClipboardContents: @(iTermPasteboardReporterConfigurationAskEachTime),
                   kPreferenceKeyTmuxWarnBeforePausing: @YES,
                   kPreferenceKeyUseMetal: @YES,
                   kPreferenceKeyDisableMetalWhenUnplugged: @YES,

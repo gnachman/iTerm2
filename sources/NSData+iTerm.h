@@ -8,16 +8,18 @@
 
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface NSData (iTerm)
 
 // Tries to guess, from the first bytes of data, what kind of image it is and
 // returns the corresponding UTI string constant. Not guaranteed to be correct.
-@property(nonatomic, readonly) NSString *uniformTypeIdentifierForImageData;
+@property(nullable, nonatomic, readonly) NSString *uniformTypeIdentifierForImageData;
 
   // Base-64 decodes string and returns data or nil.
-+ (NSData *)dataWithBase64EncodedString:(NSString *)string;
++ (NSData * _Nullable)dataWithBase64EncodedString:(NSString *)string;
 
-+ (NSData *)dataWithTGZContainingFiles:(NSArray<NSString *> *)files relativeToPath:(NSString *)basePath error:(NSError **)error;
++ (NSData * _Nullable)dataWithTGZContainingFiles:(NSArray<NSString *> *)files relativeToPath:(NSString *)basePath error:(NSError * _Nullable __autoreleasing * _Nullable)error;
 
 // returns a string the the data base-64 encoded into 77-column lines divided by lineBreak.
 - (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak;
@@ -34,24 +36,24 @@
 - (BOOL)appendToFile:(NSString *)path addLineBreakIfNeeded:(BOOL)addNewline;
 
 // Converts data into a string using the given encoding.
-- (NSString *)stringWithEncoding:(NSStringEncoding)encoding;
+- (NSString * _Nullable)stringWithEncoding:(NSStringEncoding)encoding;
 
 + (NSData *)it_dataWithArchivedObject:(id<NSCoding>)object;
-- (id)it_unarchivedObjectOfClasses:(NSArray<Class> *)allowedClasses;
+- (id _Nullable)it_unarchivedObjectOfClasses:(NSArray<Class> *)allowedClasses;
 
-+ (NSData *)it_dataWithSecurelyArchivedObject:(id<NSCoding>)object error:(NSError **)error;
-- (id)it_unarchivedObjectOfBasicClassesWithError:(NSError **)error;
++ (NSData *)it_dataWithSecurelyArchivedObject:(id<NSCoding>)object error:(NSError * _Nullable __autoreleasing * _Nullable)error;
+- (id _Nullable)it_unarchivedObjectOfBasicClassesWithError:(NSError * _Nullable __autoreleasing * _Nullable)error;
 
 - (BOOL)isEqualToByte:(unsigned char)byte;
 - (NSData *)it_sha256;
 - (NSString *)it_hexEncoded;
-- (NSData *)it_compressedData;
+- (NSData * _Nullable)it_compressedData;
 
-- (NSData *)aesCBCEncryptedDataWithPCKS7PaddingAndKey:(NSData *)key
-                                                   iv:(NSData *)iv;
+- (NSData * _Nullable)aesCBCEncryptedDataWithPCKS7PaddingAndKey:(NSData *)key
+                                                             iv:(NSData *)iv;
 
-- (NSData *)decryptedAESCBCDataWithPCKS7PaddingAndKey:(NSData *)key
-                                                   iv:(NSData *)iv;
+- (NSData * _Nullable)decryptedAESCBCDataWithPCKS7PaddingAndKey:(NSData *)key
+                                                             iv:(NSData *)iv;
 
 + (NSData *)randomAESKey;
 
@@ -60,3 +62,5 @@
 - (NSData *)dataByAppending:(NSData *)other;
 
 @end
+
+NS_ASSUME_NONNULL_END

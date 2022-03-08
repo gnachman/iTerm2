@@ -2047,10 +2047,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)showUnobtrusiveMessage:(NSString *)message {
+    [self showUnobtrusiveMessage:message duration:1];
+}
+
+- (void)showUnobtrusiveMessage:(NSString *)message duration:(NSTimeInterval)duration {
     if (_unobtrusiveMessage) {
         return;
     }
     _unobtrusiveMessage = [[iTermUnobtrusiveMessage alloc] initWithMessage:message];
+    _unobtrusiveMessage.duration = duration;
     [self addSubviewBelowFindView:_unobtrusiveMessage];
     [_unobtrusiveMessage animateFromTopRightWithCompletion:^{
         [self->_unobtrusiveMessage removeFromSuperview];

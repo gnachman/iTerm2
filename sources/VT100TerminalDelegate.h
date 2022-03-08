@@ -207,6 +207,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 
 // Pastes a string to the shell.
 - (void)terminalCopyStringToPasteboard:(NSString *)string;
+- (void)terminalReportPasteboard:(NSString *)pasteboard;
 
 // Inserts |n| blank chars after the cursor, moving chars to the right of them over.
 - (void)terminalInsertEmptyCharsAtCursor:(int)n;

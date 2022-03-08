@@ -121,6 +121,7 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
 - (NSData *)reportMacroSpace:(int)space;
 - (NSData *)reportMemoryChecksum:(int)checksum id:(int)reqid;
 - (NSData *)reportVariableNamed:(NSString *)name value:(NSString *)variableValue;
+- (NSData *)reportPasteboard:(NSString *)pasteboard contents:(NSString *)string;
 
 typedef struct {
     uint32_t twentyFourBit;  // "T"

@@ -11,6 +11,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 NS_CLASS_AVAILABLE_MAC(10_14)
 @interface iTermUnobtrusiveMessage : NSView
+@property (nonatomic) NSTimeInterval duration;
+
 - (instancetype)initWithMessage:(NSString *)message NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithFrame:(NSRect)frameRect NS_UNAVAILABLE;

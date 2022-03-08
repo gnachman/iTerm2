@@ -8,6 +8,7 @@
 
 #import "GeneralPreferencesViewController.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIHelper.h"
 #import "iTermAdvancedGPUSettingsViewController.h"
 #import "iTermApplicationDelegate.h"
@@ -145,6 +146,9 @@ enum {
     IBOutlet NSButton *_enterCopyModeAutomatically;
     IBOutlet NSButton *_warningButton;
     iTermUserDefaultsObserver *_observer;
+
+    IBOutlet NSPopUpButton *_allowsSendingClipboardContents;
+    IBOutlet NSTextField *_allowsSendingClipboardContentsLabel;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -530,9 +534,22 @@ enum {
                     key:kPreferenceKeyTmuxWarnBeforePausing
             displayName:nil
                    type:kPreferenceInfoTypeCheckbox];
-    
+
+    info = [self defineControl:_allowsSendingClipboardContents
+                           key:kPreferenceKeyPhonyAllowSendingClipboardContents
+                   relatedView:_allowsSendingClipboardContentsLabel
+                          type:kPreferenceInfoTypePopup];
+    info.syntheticGetter = ^id{
+        return @([iTermPasteboardReporter configuration]);
+    };
+    info.syntheticSetter = ^(NSNumber *newValue) {
+        [iTermPasteboardReporter setConfiguration:newValue.intValue];
+    };
+    PreferenceInfo *allowSendingClipboardInfo = info;
+
     [self updateEnabledState];
     [self commitControls];
+    [self updateValueForInfo:allowSendingClipboardInfo];
 }
 
 - (NSString *)alwaysOpenLegend {

@@ -599,6 +599,17 @@
     }];
 }
 
+- (void)terminalReportPasteboard:(NSString *)pasteboard {
+    DLog(@"begin");
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        DLog(@"running");
+        [delegate screenReportPasteboard:pasteboard completion:^{
+            DLog(@"unpausing");
+            [unpauser unpause];
+        }];
+    }];
+}
+
 - (void)terminalBeginCopyToPasteboard {
     DLog(@"begin");
     if (self.config.clipboardAccessAllowed) {

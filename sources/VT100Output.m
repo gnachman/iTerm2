@@ -1477,6 +1477,12 @@ VT100Capabilities VT100OutputMakeCapabilities(BOOL compatibility24Bit,
     return [report dataUsingEncoding:NSUTF8StringEncoding];
 }
 
+- (NSData *)reportPasteboard:(NSString *)pasteboard contents:(NSString *)string {
+    NSString *report = [NSString stringWithFormat:@"\e]52;%@;%@\e\\",
+                        pasteboard, [string base64EncodedWithEncoding:NSUTF8StringEncoding]];
+    return [report dataUsingEncoding:NSUTF8StringEncoding];
+}
+
 #pragma mark - NSCopying
 
 - (id)copyWithZone:(NSZone *)zone {

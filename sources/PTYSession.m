@@ -577,6 +577,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
 
     BOOL _profileDidChange;
     NSInteger _estimatedThroughput;
+    iTermPasteboardReporter *_pasteboardReporter;
 }
 
 @synthesize isDivorced = _divorced;
@@ -953,6 +954,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_savedStateForZoom release];
     [_config release];
     [_expect release];
+    [_pasteboardReporter release];
 
     [super dealloc];
 }
@@ -12857,7 +12859,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if ([self hasAnnouncementWithIdentifier:identifier]) {
         return;
     }
-    NSString *notice = @"The terminal attempted to access the clipboard but it was denied. Enable clipboard access in “Prefs > General > Selection > Applications in terminal may access clipboard”.";
+    NSString *notice = @"The terminal attempted to access the clipboard but it was denied. Enable clipboard access in “Prefs > General > Selection > Applications in terminal may read from clipboard”.";
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:notice
                                                      style:kiTermAnnouncementViewStyleWarning
@@ -13136,6 +13138,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [thePasteboard clearContents];
     [thePasteboard declareTypes:@[ NSPasteboardTypeString ] owner:nil];
     [thePasteboard setString:string forType:NSPasteboardTypeString];
+}
+
+- (void)screenReportPasteboard:(NSString *)pasteboard completion:(void (^)(void))completion {
+    if (!_pasteboardReporter) {
+        _pasteboardReporter = [[iTermPasteboardReporter alloc] init];
+        _pasteboardReporter.delegate = self;
+    }
+    [_pasteboardReporter handleRequestWithPasteboard:pasteboard completion:completion];
 }
 
 - (void)screenOfferToDisableTriggersInInteractiveApps {
@@ -15700,6 +15710,46 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)triggerSideEffectCurrentDirectoryDidChange {
     [iTermGCD assertMainQueueSafe];
     [self didUpdateCurrentDirectory];
+}
+
+#pragma mark - iTermPasteboardReporterDelegate
+
+- (void)pasteboardReporter:(iTermPasteboardReporter *)sender reportPasteboard:(NSString *)pasteboard {
+    NSData *data = [_screen.terminalOutput reportPasteboard:pasteboard
+                                                   contents:[NSString stringFromPasteboard]];
+    [self screenWriteDataToTask:data];
+    [_view showUnobtrusiveMessage:[NSString stringWithFormat:@"Clipboard contents reported"]
+                         duration:3];
+}
+
+- (void)pasteboardReporterRequestPermission:(iTermPasteboardReporter *)sender
+                                 completion:(void (^)(BOOL, BOOL))completion {
+    iTermAnnouncementViewController *announcement =
+    [iTermAnnouncementViewController announcementWithTitle:@"Share clipboard contents with app in terminal?"
+                                                     style:kiTermAnnouncementViewStyleWarning
+                                               withActions:@[ @"Just Once", @"Always", @"Never" ]
+                                                completion:^(int selection) {
+        switch (selection) {
+            case 0:
+                completion(YES, NO);
+                break;
+
+            case 1:
+                completion(YES, YES);
+                break;
+
+            case 2:
+                // Never
+                completion(NO, YES);
+                break;
+
+            default:
+                // Cancel
+                completion(NO, NO);
+                break;
+        }
+    }];
+    [self queueAnnouncement:announcement identifier:[[NSUUID UUID] UUIDString]];
 }
 
 @end

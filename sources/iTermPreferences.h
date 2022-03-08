@@ -104,6 +104,7 @@ extern NSString *const kPreferenceKeyPreferIntegratedGPU;
 extern NSString *const kPreferenceKeyMetalMaximizeThroughput;
 extern NSString *const kPreferenceKeyEnableAPIServer;
 extern NSString *const kPreferenceKeyAPIAuthentication;
+extern NSString *const kPreferenceKeyPhonyAllowSendingClipboardContents;
 
 // Appearance
 extern NSString *const kPreferenceKeyTabStyle_Deprecated;

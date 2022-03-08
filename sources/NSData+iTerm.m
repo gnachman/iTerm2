@@ -56,9 +56,9 @@
     char *bytes = (char *)buffer.mutableBytes;
     while (remaining > 0) {
         @autoreleasepool {
-            NSString *chunk = [[[NSString alloc] initWithBytes:bytes + offset
+            NSString *chunk = [[NSString alloc] initWithBytes:bytes + offset
                                                         length:MIN(77, remaining)
-                                                      encoding:NSUTF8StringEncoding] autorelease];
+                                                     encoding:NSUTF8StringEncoding];
             [string appendString:chunk];
             [string appendString:lineBreak];
             remaining -= chunk.length;
@@ -78,8 +78,8 @@
                                    [NSString stringWithFormat:@"-C%@", basePath] ];  // Base path
     args = [args arrayByAddingObjectsFromArray:files];  // Files to zip
 
-    NSTask *task = [[[NSTask alloc] init] autorelease];
-    NSMutableDictionary<NSString *, NSString *> *environment = [[[[NSProcessInfo processInfo] environment] mutableCopy] autorelease];
+    NSTask *task = [[NSTask alloc] init];
+    NSMutableDictionary<NSString *, NSString *> *environment = [[[NSProcessInfo processInfo] environment] mutableCopy];
     environment[@"COPYFILE_DISABLE"] = @"1";
     [task setEnvironment:environment];
     [task setLaunchPath:@"/usr/bin/tar"];
@@ -152,7 +152,7 @@
     for (int i = 0; i < sizeof(identifiers) / sizeof(*identifiers); i++) {
         if (self.length >= identifiers[i].length &&
             !memcmp(self.bytes, identifiers[i].fingerprint, identifiers[i].length)) {
-            return (NSString *)identifiers[i].uti;
+            return (__bridge NSString *)identifiers[i].uti;
         }
     }
     return nil;
@@ -197,7 +197,7 @@
 }
 
 - (NSString *)stringWithEncoding:(NSStringEncoding)encoding {
-    return [[[NSString alloc] initWithData:self encoding:encoding] autorelease];
+    return [[NSString alloc] initWithData:self encoding:encoding];
 }
 
 + (NSData *)it_dataWithArchivedObject:(id<NSCoding>)object {
@@ -205,13 +205,12 @@
     archiver.requiresSecureCoding = NO;
     [archiver encodeObject:object forKey:@"object"];
     [archiver finishEncoding];
-    [archiver autorelease];
     return archiver.encodedData;
 }
 
 - (id)it_unarchivedObjectOfClasses:(NSArray<Class> *)allowedClasses {
     NSError *error = nil;
-    NSKeyedUnarchiver *unarchiver = [[[NSKeyedUnarchiver alloc] initForReadingFromData:self error:&error] autorelease];
+    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:self error:&error];
     if (error) {
         return nil;
     }
@@ -471,7 +470,7 @@
 }
 
 - (NSData *)dataByAppending:(NSData *)other {
-    NSMutableData *temp = [[self mutableCopy] autorelease];
+    NSMutableData *temp = [self mutableCopy];
     [temp appendData:other];
     return temp;
 }

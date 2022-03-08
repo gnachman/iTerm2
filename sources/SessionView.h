@@ -274,6 +274,7 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 - (void)tabColorDidChange;
 - (void)didBecomeVisible;
 - (void)showUnobtrusiveMessage:(NSString *)message;
+- (void)showUnobtrusiveMessage:(NSString *)message duration:(NSTimeInterval)duration;
 - (void)setSuppressLegacyDrawing:(BOOL)suppressLegacyDrawing;
 - (void)takeFindDriverFrom:(SessionView *)donorView delegate:(id<iTermFindDriverDelegate>)delegate;
 

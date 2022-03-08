@@ -19,6 +19,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
 - (instancetype)initWithMessage:(NSString *)message {
     self = [super initWithFrame:NSZeroRect];
     if (self) {
+        _duration = 1;
         _vev = [[NSVisualEffectView alloc] initWithFrame:NSInsetRect(self.bounds, 9, 9)];
         _vev.wantsLayer = YES;
         _vev.blendingMode = NSVisualEffectBlendingModeWithinWindow;
@@ -64,7 +65,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         self.animator.frame = destination;
     } completion:^(BOOL finished) {
         [NSView animateWithDuration:0.2
-                              delay:1
+                              delay:self.duration
                          animations:^{
             self.animator.frame = outsideFrame;
             self.animator.alphaValue = 0;

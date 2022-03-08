@@ -1600,7 +1600,7 @@ static const int kMaxScreenRows = 4096;
     [_delegate terminalSendReport:[self.output reportSGRCodes:codes]];
 }
 
-- (NSString *)decodedBase64PasteCommand:(NSString *)commandString {
+- (NSString *)decodedBase64PasteCommand:(NSString *)commandString query:(NSString **)query {
     //
     // - write access
     //   ESC ] 5 2 ; Pc ; <base64 encoded string> ST
@@ -1613,7 +1613,9 @@ static const int kMaxScreenRows = 4096;
     //
     // Note: Pc is ignored now.
     //
-    const char *buffer = [commandString UTF8String];
+    const char *bufferStart = [commandString UTF8String];
+    const char *buffer = bufferStart;
+    *query = nil;
 
     // ignore first parameter now
     while (strchr("psc01234567", *buffer)) {
@@ -1625,6 +1627,7 @@ static const int kMaxScreenRows = 4096;
     ++buffer;
     if (*buffer == '?') { // PASTE64(OSC 52) read access
         // Now read access is not implemented due to security issues.
+        *query = [commandString substringToIndex:buffer - bufferStart - 1];
         return nil;
     }
 
@@ -2534,9 +2537,12 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         }
         case XTERMCC_PASTE64: {
             if (token.string) {
-                NSString *decoded = [self decodedBase64PasteCommand:token.string];
+                NSString *query = nil;
+                NSString *decoded = [self decodedBase64PasteCommand:token.string query:&query];
                 if (decoded) {
                     [_delegate terminalCopyStringToPasteboard:decoded];
+                } else if (query && [_delegate terminalShouldSendReport]) {
+                    [_delegate terminalReportPasteboard:query];
                 }
             }
             break;
