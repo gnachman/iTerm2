@@ -133,6 +133,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)fakeNotchHeight;
 + (NSString *)fallbackLCCType;
 + (BOOL)fastForegroundJobUpdates;
++ (BOOL)fastTriggerRegexes;
 + (BOOL)fastTrackpad;
 + (double)findDelaySeconds;
 

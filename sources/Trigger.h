@@ -95,7 +95,7 @@ extern NSString * const kTriggerDisabledKey;
 
 @interface Trigger : NSObject<iTermObject>
 
-@property (nonatomic, copy) NSString *regex;
+@property (nonatomic, copy, readonly) NSString *regex;
 @property (nonatomic, copy) NSString *action;
 @property (nullable, nonatomic, copy) id param;
 @property (nonatomic, assign) BOOL partialLine;

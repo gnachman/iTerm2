@@ -32,6 +32,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
     NSString *regex_;
     id param_;
     iTermSwiftyStringWithBackreferencesEvaluator *_evaluator;
+    NSRegularExpression *_compiledRegex;
 }
 
 @synthesize regex = regex_;
@@ -147,6 +148,47 @@ NSString * const kTriggerDisabledKey = @"disabled";
     return NO;
 }
 
+- (void)setRegex:(NSString *)regex {
+    regex_ = [regex copy];
+    _compiledRegex = [NSRegularExpression regularExpressionWithPattern:regex_ options:0 error:nil];
+}
+
+- (void)enumerateMatchesInString:(NSString *)string
+                           block:(void (^)(NSArray<NSString *> *capturedStrings,
+                                           const NSRange *capturedRanges,
+                                           BOOL *stop))block {
+    const size_t maxStaticRangeCount = 16;
+    __block size_t rangeCapacity = maxStaticRangeCount;
+    NSRange rangeStorage[maxStaticRangeCount];
+    __block NSRange *ranges = rangeStorage;
+    __block NSRange *dynamicRangeStorage = NULL;
+    [_compiledRegex enumerateMatchesInString:string options:0 range:NSMakeRange(0, string.length) usingBlock:^(NSTextCheckingResult * _Nullable result, NSMatchingFlags flags, BOOL * _Nonnull stop) {
+        NSMutableArray<NSString *> *captures = [NSMutableArray arrayWithCapacity:result.numberOfRanges];
+        if (result.numberOfRanges > rangeCapacity) {
+            dynamicRangeStorage = iTermRealloc(dynamicRangeStorage, result.numberOfRanges, sizeof(NSRange));
+            ranges = dynamicRangeStorage;
+            rangeCapacity = result.numberOfRanges;
+        }
+
+        for (NSInteger i = 0; i < result.numberOfRanges; i++) {
+            const NSRange range = [result rangeAtIndex:i];
+            NSString *substring;
+            if (range.length == 0) {
+                substring = @"";
+            } else {
+                substring = [string substringWithRange:range];
+            }
+            [captures addObject:substring];
+            ranges[i] = [result rangeAtIndex:i];
+        }
+        block(captures, ranges, stop);
+
+    }];
+    if (ranges != rangeStorage) {
+        free(ranges);
+    }
+}
+
 - (BOOL)tryString:(iTermStringLine *)stringLine
         inSession:(id<iTermTriggerSession>)aSession
       partialLine:(BOOL)partialLine
@@ -172,25 +214,45 @@ NSString * const kTriggerDisabledKey = @"disabled";
     __block BOOL stopFutureTriggersFromRunningOnThisLine = NO;
     NSString *s = stringLine.stringValue;
     DLog(@"Search for regex %@ in string %@", regex_, s);
-    [s enumerateStringsMatchedByRegex:regex_
-                           usingBlock:^(NSInteger captureCount,
-                                        NSString *const __unsafe_unretained *capturedStrings,
-                                        const NSRange *capturedRanges,
-                                        volatile BOOL *const stopEnumerating) {
-        self->_lastLineNumber = lineNumber;
-        DLog(@"Trigger %@ matched string %@", self, s);
-        NSArray<NSString *> *stringArray = [[NSArray alloc] initWithObjects:capturedStrings
-                                                                      count:captureCount];
-        if (![self performActionWithCapturedStrings:stringArray
-                                     capturedRanges:capturedRanges
-                                          inSession:aSession
-                                           onString:stringLine
-                               atAbsoluteLineNumber:lineNumber
-                                   useInterpolation:useInterpolation
-                                               stop:&stopFutureTriggersFromRunningOnThisLine]) {
-            *stopEnumerating = YES;
-        }
-    }];
+    if (![iTermAdvancedSettingsModel fastTriggerRegexes]) {
+        DLog(@"Use RegexKitLite");
+        [s enumerateStringsMatchedByRegex:regex_
+                               usingBlock:^(NSInteger captureCount,
+                                            NSString *const __unsafe_unretained *capturedStrings,
+                                            const NSRange *capturedRanges,
+                                            volatile BOOL *const stopEnumerating) {
+            self->_lastLineNumber = lineNumber;
+            DLog(@"Trigger %@ matched string %@", self, s);
+            NSArray<NSString *> *stringArray = [[NSArray alloc] initWithObjects:capturedStrings
+                                                                          count:captureCount];
+            if (![self performActionWithCapturedStrings:stringArray
+                                         capturedRanges:capturedRanges
+                                              inSession:aSession
+                                               onString:stringLine
+                                   atAbsoluteLineNumber:lineNumber
+                                       useInterpolation:useInterpolation
+                                                   stop:&stopFutureTriggersFromRunningOnThisLine]) {
+                *stopEnumerating = YES;
+            }
+        }];
+    } else {
+        DLog(@"Use NSRegularExpression");
+        [self enumerateMatchesInString:s block:^(NSArray<NSString *> *stringArray,
+                                                 const NSRange *capturedRanges,
+                                                 BOOL *stopEnumerating) {
+            self->_lastLineNumber = lineNumber;
+            DLog(@"Trigger %@ matched string %@", self, s);
+            if (![self performActionWithCapturedStrings:stringArray
+                                         capturedRanges:capturedRanges
+                                              inSession:aSession
+                                               onString:stringLine
+                                   atAbsoluteLineNumber:lineNumber
+                                       useInterpolation:useInterpolation
+                                                   stop:&stopFutureTriggersFromRunningOnThisLine]) {
+                *stopEnumerating = YES;
+            }
+        }];
+    }
     if (!partialLine) {
         _lastLineNumber = -1;
     }
