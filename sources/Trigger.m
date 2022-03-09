@@ -235,7 +235,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
                 *stopEnumerating = YES;
             }
         }];
-    } else {
+    } else if (s != nil) {
         DLog(@"Use NSRegularExpression");
         [self enumerateMatchesInString:s block:^(NSArray<NSString *> *stringArray,
                                                  const NSRange *capturedRanges,
