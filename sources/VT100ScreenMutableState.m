@@ -147,7 +147,7 @@ static _Atomic int gPerformingJoinedBlock;
 
     // Schedule a side-effect to mutate the main-thread instance.
     __weak __typeof(self) weakSelf = self;
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+    [self addNoDelegateSideEffect:^{
         __strong __typeof(self) strongSelf = weakSelf;
         if (!strongSelf) {
             DLog(@"dealloced");
@@ -235,6 +235,16 @@ static _Atomic int gPerformingJoinedBlock;
     }];
 }
 
+
+- (void)addNoDelegateSideEffect:(void (^)(void))sideEffect {
+    DLog(@"Add side effect");
+    __weak __typeof(self) weakSelf = self;
+    [_tokenExecutor addSideEffect:^{
+        [weakSelf reallyPerformSideEffect:^(id<VT100ScreenDelegate> delegate) { sideEffect(); }
+                                 delegate:nil];
+    }];
+}
+
 - (void)addIntervalTreeSideEffect:(void (^)(id<iTermIntervalTreeObserver> observer))sideEffect {
     DLog(@"Add interval tree side effect");
     __weak __typeof(self) weakSelf = self;
@@ -282,6 +292,11 @@ static _Atomic int gPerformingJoinedBlock;
         DLog(@"no delegate");
         return;
     }
+    [self reallyPerformSideEffect:block delegate:delegate];
+}
+
+- (void)reallyPerformSideEffect:(void (^)(id<VT100ScreenDelegate>))block
+                       delegate:(id<VT100ScreenDelegate>)delegate {
     const BOOL saved = self.performingSideEffect;
     self.performingSideEffect = YES;
     DLog(@"performing for delegate %@", delegate);
@@ -354,10 +369,12 @@ static _Atomic int gPerformingJoinedBlock;
         ]];
     });
     if ([dirty intersectsSet:colorMapKeyPaths]) {
+        DLog(@"Will mutate colormamp. Mine is colormap=%p, main thread's is colormap=%p", [self mutableColorMap], self.mainThreadCopy.colorMap);
         [self mutateColorMap:^(iTermColorMap *colorMap) {
             colorMap.dimOnlyText = config.dimOnlyText;
             colorMap.darkMode = config.darkMode;
             colorMap.useSeparateColorsForLightAndDarkMode = config.useSeparateColorsForLightAndDarkMode;
+            DLog(@"mutable state setting min contrast of colormap=%p to %f", colorMap, config.minimumContrast);
             colorMap.minimumContrast = config.minimumContrast;
             colorMap.mutingAmount = config.mutingAmount;
             colorMap.dimmingAmount = config.dimmingAmount;

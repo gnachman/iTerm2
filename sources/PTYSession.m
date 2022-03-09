@@ -3799,6 +3799,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [self setSmartCursorColor:[iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_SMART_CURSOR_COLOR, aDict, dark)
                                                         inProfile:aDict]];
 
+    DLog(@"set min contrast to %f using key %@", [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, aDict, dark)
+                                                                            inProfile:aDict], iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, aDict, dark));
     [self setMinimumContrast:[iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, aDict, dark)
                                                         inProfile:aDict]];
 }
@@ -12204,6 +12206,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.triggerProfileDicts = [iTermProfilePreferences objectForKey:KEY_TRIGGERS inProfile:self.profile];
         _config.useSeparateColorsForLightAndDarkMode = [iTermProfilePreferences boolForKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE
                                                                                  inProfile:self.profile];
+        DLog(@"Set min contrast in config to %f using key %@",
+             [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, self.profile, darkMode)
+                                        inProfile:self.profile],
+                                        iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, self.profile, darkMode));
         _config.minimumContrast = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, self.profile, darkMode)
                                                              inProfile:self.profile];
         _config.mutingAmount = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_CURSOR_BOOST, self.profile, darkMode)

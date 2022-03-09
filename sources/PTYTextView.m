@@ -1881,6 +1881,7 @@
 }
 
 - (void)setMinimumContrast:(double)value {
+    DLog(@"Text view's min contrast for delegate %p is %f", self.delegate, value);
     _drawingHelper.minimumContrast = value;
 }
 

@@ -67,4 +67,7 @@ iTermTriggerScopeProvider> {
 
 - (void)addDeferredSideEffect:(void (^)(id<VT100ScreenDelegate> delegate))sideEffect;
 
+// Runs even if there is no delegate yet.
+- (void)addNoDelegateSideEffect:(void (^)(void))sideEffect;
+
 @end

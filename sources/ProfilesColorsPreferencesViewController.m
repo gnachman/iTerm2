@@ -192,6 +192,23 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
 
     PreferenceInfo *info;
     __weak __typeof(self) weakSelf = self;
+
+    // The separate colors stuff should be done first because -amendedKey:, which is called when
+    // defining controls, expects it to be correct.
+    const BOOL dark = [NSApp effectiveAppearance].it_isDark;
+    [_mode selectItemWithTag:dark ? 1 : 0];
+    info = [self defineControl:_useSeparateColorsForLightAndDarkMode
+                           key:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.customSettingChangedHandler = ^(id sender) {
+        const BOOL useModes = [sender state] == NSControlStateValueOn;
+        [weakSelf useSeparateColorsDidChange:useModes];
+        // This has to be done after copying colors or else default colors might be used.
+        [weakSelf setBool:useModes forKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
+    };
+
+
     info = [self defineControl:_useTabColor
                            key:KEY_USE_TAB_COLOR
                    relatedView:nil
@@ -237,19 +254,6 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                    displayName:@"Brighten bold text"
                           type:kPreferenceInfoTypeCheckbox];
     info.observer = ^{ [weakSelf updateColorControlsEnabled]; };
-
-    const BOOL dark = [NSApp effectiveAppearance].it_isDark;
-    [_mode selectItemWithTag:dark ? 1 : 0];
-    info = [self defineControl:_useSeparateColorsForLightAndDarkMode
-                           key:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE
-                   relatedView:nil
-                          type:kPreferenceInfoTypeCheckbox];
-    info.customSettingChangedHandler = ^(id sender) {
-        const BOOL useModes = [sender state] == NSControlStateValueOn;
-        [weakSelf useSeparateColorsDidChange:useModes];
-        // This has to be done after copying colors or else default colors might be used.
-        [weakSelf setBool:useModes forKey:KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE];
-    };
 
     [self addViewToSearchIndex:_presetsPopupButton
                    displayName:@"Color presets"
