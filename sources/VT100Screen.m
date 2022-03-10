@@ -1151,7 +1151,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         DLog(@"update expect");
         [mutableState updateExpectFrom:maybeExpect];
     }
-    const int overflow = [mutableState scrollbackOverflow];
+    const int overflow = [mutableState scrollbackOverflow] > 0;
     if (resetOverflow) {
         [mutableState resetScrollbackOverflow];
     }

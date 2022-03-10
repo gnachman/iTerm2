@@ -2185,13 +2185,17 @@
 // Returns YES if blinking text or cursor was found.
 - (BOOL)refresh {
     DLog(@"PTYTextView refresh called with delegate %@", _delegate);
-    if (_dataSource == nil || _inRefresh) {
+    if (_dataSource == nil || _delegate == nil || _inRefresh) {
         return YES;
     }
     // Get the number of lines that have disappeared if scrollback buffer is full.
     const VT100SyncResult syncResult = [self.delegate textViewWillRefresh];
     const int scrollbackOverflow = syncResult.overflow;
     const BOOL frameDidChange = [_delegate textViewResizeFrameIfNeeded];
+
+    assert(_delegate != nil);
+    assert([_dataSource scrollbackOverflow] == 0);
+
     // Perform adjustments if lines were lost from the head of the buffer.
     BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
     if (scrollbackOverflow > 0) {
