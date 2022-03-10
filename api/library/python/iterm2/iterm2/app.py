@@ -34,10 +34,13 @@ async def async_get_app(
     if App.instance is None:
         if create_if_needed:
             App.instance = await App.async_construct(connection)
+            iterm2.connection.add_disconnect_callback(invalidate_app)
     else:
         await App.instance.async_refresh()
     return App.instance
 
+def invalidate_app():
+    App.instance = None
 
 # See note in tmux.async_get_tmux_connections()
 iterm2.tmux.DELEGATE_FACTORY = async_get_app  # type: ignore

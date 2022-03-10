@@ -13,6 +13,8 @@ try:
 except:
   gAppKitAvailable = False
 
+gDisconnectCallbacks = []
+
 # websockets 9.0 moved client into legacy.client and didn't document how to
 # migrate to the new API :(. Stick with the old one until I have time to deal
 # with this.
@@ -237,7 +239,13 @@ class Connection:
 
         loop.set_debug(debug)
         self.loop = loop
-        return loop.run_until_complete(self.async_connect(async_main, retry))
+        result = loop.run_until_complete(self.async_connect(async_main, retry))
+        global gDisconnectCallbacks
+        callbacks = list(gDisconnectCallbacks)
+        gDisconnectCallbacks = []
+        for callback in callbacks:
+            callback()
+        return result
 
     async def async_send_message(self, message):
         """
@@ -527,3 +535,14 @@ def run_forever(
     :param retry: Keep trying to connect until it succeeds?
     """
     Connection().run_forever(coro, retry, debug)
+
+def add_disconnect_callback(callback: typing.Callable[[], None]):
+    """Add a function to run on the next disconnection.
+
+    The provided function gets called next time a connection closes, even if one
+    has not yet been opened.
+
+    :param callback: Takes no arguments.
+    """
+    global gDisconnectCallbacks
+    gDisconnectCallbacks.append(callback)
