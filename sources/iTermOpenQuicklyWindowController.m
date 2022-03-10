@@ -454,8 +454,15 @@
     return theString;
 }
 
-- (NSAttributedString *)openQuicklyModelAttributedStringForDetail:(NSString *)detail {
-    return [self attributedStringFromString:detail
+- (NSAttributedString *)openQuicklyModelAttributedStringForDetail:(NSString *)detail
+                                                      featureName:(NSString *)featureName {
+    NSString *composite;
+    if (featureName) {
+        composite = [NSString stringWithFormat:@"%@: %@", featureName, detail];
+    } else {
+        composite = detail;
+    }
+    return [self attributedStringFromString:composite
                       byHighlightingIndices:nil];
 }
 

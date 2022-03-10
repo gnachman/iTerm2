@@ -37,6 +37,9 @@ static const double kDirectoryMultiplier = 0.9;
 static const double kCommandMultiplier = 0.8;
 static const double kUsernameMultiplier = 0.5;
 
+// Variables like tty and job pid.
+static const double kOtherVariableMultiplier = 0.4;
+
 // Action items (as defined in Prefs > Shortcuts > Snippets)
 static const double kActionMultiplier = 0.4;
 
@@ -146,27 +149,28 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     }
 }
 
-- (NSString *(^)(PTYSession *))detailFunctionForSessions:(NSArray<PTYSession *> *)sessions {
-    NSString *(^pwd)(PTYSession *) = ^NSString *(PTYSession *session) {
-        return session.variablesScope.path;
+// Returns a function PTYSession -> (Feature name, Feature value) that gives the value which most distinguishes sesssions from one another.
+- (iTermTuple<NSString *, NSString *> *(^)(PTYSession *))detailFunctionForSessions:(NSArray<PTYSession *> *)sessions {
+    iTermTuple<NSString *, NSString *> *(^pwd)(PTYSession *) = ^iTermTuple<NSString *, NSString *> *(PTYSession *session) {
+        return [iTermTuple tupleWithObject:@"Directory" andObject:session.variablesScope.path];
     };
-    NSString *(^command)(PTYSession *) = ^NSString *(PTYSession *session) {
-        return session.commands.lastObject;
+    iTermTuple<NSString *, NSString *> *(^command)(PTYSession *) = ^iTermTuple<NSString *, NSString *> *(PTYSession *session) {
+        return [iTermTuple tupleWithObject:@"Command" andObject:session.commands.lastObject];
     };
-    NSString *(^hostname)(PTYSession *) = ^NSString *(PTYSession *session) {
-        return session.currentHost.usernameAndHostname;
+    iTermTuple<NSString *, NSString *> *(^hostname)(PTYSession *) = ^iTermTuple<NSString *, NSString *> *(PTYSession *session) {
+        return [iTermTuple tupleWithObject:@"Host" andObject:session.currentHost.usernameAndHostname];
     };
-    NSString *(^badge)(PTYSession *) = ^NSString *(PTYSession *session) {
-        return session.badgeLabel;
+    iTermTuple<NSString *, NSString *> *(^badge)(PTYSession *) = ^iTermTuple<NSString *, NSString *> *(PTYSession *session) {
+        return [iTermTuple tupleWithObject:@"Badge" andObject:session.badgeLabel];
     };
-    NSArray<NSString *(^)(PTYSession *)> *functions = @[ pwd, command, hostname, badge ];
+    NSArray<iTermTuple<NSString *, NSString *> *(^)(PTYSession *)> *functions = @[ pwd, command, hostname, badge ];
     NSMutableArray<NSMutableArray *> *functionValues = [NSMutableArray array];
-    [functions enumerateObjectsUsingBlock:^(NSString *(^ _Nonnull obj)(PTYSession *), NSUInteger idx, BOOL * _Nonnull stop) {
+    [functions enumerateObjectsUsingBlock:^(iTermTuple<NSString *, NSString *> *(^ _Nonnull obj)(PTYSession *), NSUInteger idx, BOOL * _Nonnull stop) {
         [functionValues addObject:[NSMutableArray array]];
     }];
     [sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull session, NSUInteger sessionIndex, BOOL * _Nonnull stop) {
-        [functions enumerateObjectsUsingBlock:^(NSString *(^ _Nonnull f)(PTYSession *), NSUInteger functionIndex, BOOL * _Nonnull stop) {
-            NSString *value = f(session);
+        [functions enumerateObjectsUsingBlock:^(iTermTuple<NSString *, NSString *> *(^ _Nonnull f)(PTYSession *), NSUInteger functionIndex, BOOL * _Nonnull stop) {
+            iTermTuple<NSString *, NSString *> *value = f(session);
             if (value) {
                 [functionValues[functionIndex] addObject:value];
             }
@@ -179,19 +183,21 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
         }
     }];
 
-    NSMutableArray<NSString *(^)(PTYSession *)> *filteredFunctions = [NSMutableArray array];
+    NSMutableArray<iTermTuple<NSString *, NSString *> *(^)(PTYSession *)> *filteredFunctions = [NSMutableArray array];
     NSMutableArray<NSMutableArray *> *filteredFunctionValues = [NSMutableArray array];
     [indexes enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL * _Nonnull stop) {
         [filteredFunctions addObject:functions[idx]];
         [filteredFunctionValues addObject:functionValues[idx]];
     }];
-    double (^variance)(NSArray<NSString *> *) = ^double(NSArray<NSString *> *strings) {
-        NSSet<NSString *> *set = [NSSet setWithArray:strings];
+    double (^variance)(NSArray<iTermTuple<NSString *, NSString *> *> *) = ^double(NSArray<iTermTuple<NSString *, NSString *> *> *tuples) {
+        NSSet<NSString *> *set = [NSSet setWithArray:[tuples mapWithBlock:^id _Nonnull(iTermTuple<NSString *,NSString *> * _Nonnull tuple) {
+            return tuple.secondObject;
+        }]];
         return set.count;
     };
     const NSUInteger best = [filteredFunctionValues indexOfMaxWithBlock:
-                             ^NSComparisonResult(NSMutableArray<NSString *> *obj1,
-                                                 NSMutableArray<NSString *> *obj2) {
+                             ^NSComparisonResult(NSMutableArray<iTermTuple<NSString *, NSString *> *> *obj1,
+                                                 NSMutableArray<iTermTuple<NSString *, NSString *> *> *obj2) {
         return [@(variance(obj1)) compare:@(variance(obj2))];
     }];
     if (best == NSNotFound) {
@@ -202,7 +208,8 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
 
 - (void)addSessionLocationToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                     withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
-    NSString *(^detailFunction)(PTYSession *) = [self detailFunctionForSessions:self.sessions];
+    // (feature name, display string)
+    iTermTuple<NSString *, NSString *> *(^detailFunction)(PTYSession *) = [self detailFunctionForSessions:self.sessions];
 
     for (PTYSession *session in self.sessions) {
         NSMutableArray *features = [NSMutableArray array];
@@ -218,7 +225,9 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                                   features:features
                             attributedName:attributedName];
         if (item.score > 0) {
-            item.detail = [self detailForSession:session features:features];
+            iTermTuple<NSString *, NSAttributedString *> *detail = [self detailForSession:session features:features];
+            // "Feature: value" giving why this session was recalled.
+            item.detail = detail.secondObject;
             if (attributedName.length) {
                 item.title = attributedName;
             } else {
@@ -229,7 +238,21 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
 
             item.identifier = session.guid;
             if (detailFunction) {
-                item.detail = [self.delegate openQuicklyModelAttributedStringForDetail:detailFunction(session)];
+                iTermTuple<NSString *, NSString *> *detailTuple = detailFunction(session);
+                // "Feature: value" giving identifying info about this session to distinguish it from others. Query-independent.
+                NSAttributedString *refinement =
+                [self.delegate openQuicklyModelAttributedStringForDetail:detailTuple.secondObject
+                                                             featureName:detailTuple.firstObject];
+                if (![detailTuple.firstObject isEqual:detail.firstObject] && item.detail != nil) {
+                    NSMutableAttributedString *temp = [item.detail mutableCopy];
+                    NSAttributedString *emdash = [[NSAttributedString alloc] initWithString:@" — "
+                                                                                 attributes:[item.detail attributesAtIndex:0 effectiveRange:nil]];
+                    [temp appendAttributedString:emdash];
+                    [temp appendAttributedString:refinement];
+                    item.detail = temp;
+                } else {
+                    item.detail = refinement;
+                }
             }
             [items addObject:item];
         }
@@ -638,7 +661,7 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
 // session: The session to score against a query
 // query: The search query (null terminate)
 // length: The length of the query array
-// features: An array that will be populated with tuples of (detail, score).
+// features: An array that will be populated with tuples of (detail, score, feature name).
 //   The detail element is a suitable-for-display NSAttributedString*s
 //   describing features that matched the query, while the score element is the
 //   score assigned to that feature.
@@ -648,7 +671,7 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                   matcher:(iTermMinimumSubsequenceMatcher *)matcher
                  features:(NSMutableArray *)features
            attributedName:(NSMutableAttributedString *)attributedName {
-    double score = 0;
+    __block double score = 0;
     double maxScorePerFeature = 2 + matcher.query.length / 4;
     if (session.name) {
         NSMutableArray *nameFeature = [NSMutableArray array];
@@ -724,6 +747,25 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                                    limit:maxScorePerFeature];
     }
 
+    NSString *tty = [NSString castFrom:[session.variables valueForVariableName:iTermVariableKeySessionTTY]];
+    NSNumber *pid = [NSNumber castFrom:[session.variables valueForVariableName:iTermVariableKeySessionJobPid]];
+    NSDictionary<NSString *, NSString *> *variables = [@{
+        @"tty": tty ?: [NSNull null],
+        @"pid": pid.stringValue ?: [NSNull null]
+    } mapValuesWithBlock:^NSString *(NSString *key, NSString *value) {
+        return [value nilIfNull];
+    }];
+    [variables enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull name,
+                                                   NSString * _Nonnull value,
+                                                   BOOL * _Nonnull stop) {
+        score += [self scoreUsingMatcher:matcher
+                               documents:@[ value ]
+                              multiplier:kOtherVariableMultiplier
+                                    name:name
+                                features:features
+                                   limit:maxScorePerFeature];
+    }];
+
     // TODO: add a bonus for:
     // Doing lots of typing in a session
     // Being newly created
@@ -734,13 +776,16 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
 
 // Given an array of features which are a tuple of (detail, score), return the
 // detail for the highest scoring one.
-- (NSAttributedString *)detailForSession:(PTYSession *)session features:(NSArray *)features {
+// Returns (feature name, display string)
+- (iTermTuple<NSString *, NSAttributedString *> *)detailForSession:(PTYSession *)session
+                                                          features:(NSArray *)features {
     NSArray *sorted = [features sortedArrayUsingComparator:^NSComparisonResult(NSArray *tuple1, NSArray *tuple2) {
         NSNumber *score1 = tuple1[1];
         NSNumber *score2 = tuple2[1];
         return [score1 compare:score2];
     }];
-    return [sorted lastObject][0];
+    NSArray *winner = [sorted lastObject];
+    return [iTermTuple tupleWithObject:winner[2] andObject:winner[0]];
 }
 
 // Returns the total score for a query matching an array of documents. This
@@ -771,7 +816,7 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                 id displayString = [_delegate openQuicklyModelDisplayStringForFeatureNamed:name
                                                                                      value:document
                                                                         highlightedIndexes:[NSIndexSet indexSet]];
-                [features addObject:@[ displayString, @(score) ]];
+                [features addObject:@[ displayString, @(score), name ?: @"" ]];
             }
         }
         return score;
@@ -807,7 +852,7 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
         id displayString = [_delegate openQuicklyModelDisplayStringForFeatureNamed:name
                                                                              value:bestFeature
                                                                 highlightedIndexes:bestIndexSet];
-        [features addObject:@[ displayString, @(score) ]];
+        [features addObject:@[ displayString, @(score), name ?: @"" ]];
     }
 
     return MIN(limit, score);
