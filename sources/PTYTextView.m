@@ -1977,7 +1977,6 @@
 // -[refresh] instead, as it ensures scrollback overflow
 // is dealt with so that this function can dereference
 // [_dataSource dirty] correctly.
-#pragma mark TODO - Dirty bits no longer work in a concurrent environment. I think I need a dirty "generation" and to give up on drawing less than a whole screen at a time.
 - (BOOL)updateDirtyRects:(BOOL *)foundDirtyPtr haveScrolled:(BOOL)haveScrolled {
     BOOL anythingIsBlinking = NO;
     BOOL foundDirty = NO;
