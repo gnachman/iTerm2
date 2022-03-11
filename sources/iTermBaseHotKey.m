@@ -241,7 +241,9 @@ ITERM_WEAKLY_REFERENCEABLE
 #pragma mark - Actions
 
 - (NSArray<iTermBaseHotKey *> *)carbonHotkeyPressed:(NSDictionary *)userInfo siblings:(NSArray<iTermHotKey *> *)siblings {
+    DLog(@"carbonHotkeyPressed running");
     if (![[[iTermApplication sharedApplication] delegate] workspaceSessionActive]) {
+        DLog(@"workspace session inactive");
         return nil;
     }
     if ([NSApp modalWindow]) {
@@ -261,7 +263,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }];
 
     NSArray<iTermBaseHotKey *> *handledBaseHotkeys = [self hotKeyPressedWithSiblings:siblingBaseHotKeys];
-
+    DLog(@"sibs are %@", siblingHotkeys);
     // Return iTermHotkey's that correspond to the handledBaseHotkeys
     return [siblingHotkeys filteredArrayUsingBlock:^BOOL(iTermHotKey *anObject) {
         return [handledBaseHotkeys containsObject:anObject.target];

@@ -302,6 +302,7 @@
 static OSStatus EventHandler(EventHandlerCallRef inHandler,
                              EventRef inEvent,
                              void *inUserData) {
+    DLog(@"EventHandler called");
     if ([[iTermCarbonHotKeyController sharedInstance] handleEvent:inEvent]) {
         DLog(@"Handled hotkey event");
         return noErr;
@@ -320,6 +321,7 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
                           sizeof(EventHotKeyID),
                           NULL,
                           &hotKeyID)) {
+        DLog(@"failed to get event params");
         return NO;
     }
 
@@ -331,7 +333,7 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
     if ([NSApp isActive] &&
         [keyWindow.firstResponder isKindOfClass:[iTermShortcutInputView class]]) {
         // The first responder is a shortcut input view. Let it handle it.
-
+        DLog(@"Send to shortcut input view");
         iTermHotKey *hotKey = hotkeys.firstObject;
         if (!hotKey) {
             return NO;
@@ -356,6 +358,7 @@ static OSStatus EventHandler(EventHandlerCallRef inHandler,
         if ([handled containsObject:hotkey]) {
             continue;
         }
+        DLog(@"Send to %@", hotkey.target);
         // The target returns an array of siblings that were handled at the same time.
         NSArray *handledSiblings = [hotkey.target performSelector:hotkey.selector
                                                        withObject:hotkey.userData

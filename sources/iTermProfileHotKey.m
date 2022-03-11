@@ -7,9 +7,11 @@
 #import "iTermCarbonHotKeyController.h"
 #import "iTermController.h"
 #import "iTermMenuBarObserver.h"
+#import "iTermNotificationController.h"
 #import "iTermPreferences.h"
 #import "iTermPresentationController.h"
 #import "iTermProfilePreferences.h"
+#import "iTermSecureKeyboardEntryController.h"
 #import "iTermSessionLauncher.h"
 #import "NSArray+iTerm.h"
 #import "NSScreen+iTerm.h"
@@ -776,7 +778,16 @@ static NSString *const kArrangement = @"Arrangement";
 
 - (NSArray<iTermBaseHotKey *> *)hotKeyPressedWithSiblings:(NSArray<iTermBaseHotKey *> *)genericSiblings {
     DLog(@"hotKeypressedWithSiblings called on %@ with siblings %@", self, genericSiblings);
-
+    DLog(@"Secure input=%@", @([[iTermSecureKeyboardEntryController sharedInstance] isEnabled]));
+    if (@available(macOS 12.0, *)) {
+        if ([[iTermSecureKeyboardEntryController sharedInstance] isEnabled] &&
+            ![NSApp isActive]) {
+            DLog(@"Notify");
+            [[iTermNotificationController sharedInstance] notify:@"Hotkeys Unavailable"
+                                                 withDescription:@"Another app has enabled cecure keyboard input. That prevents hotkey windows from being shown."];
+            return @[];
+        }
+    }
     genericSiblings = [genericSiblings arrayByAddingObject:self];
 
     NSArray<iTermProfileHotKey *> *siblings = [genericSiblings mapWithBlock:^id(iTermBaseHotKey *anObject) {
@@ -786,11 +797,13 @@ static NSString *const kArrangement = @"Arrangement";
             return nil;
         }
     }];
+    DLog(@"hotkey sibs are %@", siblings);
     // If any sibling is rolling out but we can cancel the rollout, do so. This is after the window
     // has finished animating out but we're in the delay period before activating the app the user
     // was in before pressing the hotkey to reveal the hotkey window.
     for (iTermProfileHotKey *other in siblings) {
         if (other.rollingOut && other.rollOutCancelable) {
+            DLog(@"cancel rollout");
             [other cancelRollOut];
         }
     }
@@ -827,6 +840,7 @@ static NSString *const kArrangement = @"Arrangement";
 }
 
 - (void)handleHotkeyPressWithAllOpen:(BOOL)allSiblingsOpen anyIsKey:(BOOL)anyIsKey {
+    DLog(@"handleHotkeyPressWithAllOpen");
     if (self.windowController.weaklyReferencedObject) {
         DLog(@"already have a hotkey window created");
         if (self.windowController.window.alphaValue == 1) {
@@ -1038,6 +1052,7 @@ static NSString *const kArrangement = @"Arrangement";
         }];
         result = YES;
     } else {
+        DLog(@"reveal existing hotkey window");
         [self rollInAnimated:[iTermProfilePreferences boolForKey:KEY_HOTKEY_ANIMATE inProfile:self.profile]];
     }
     return result;
