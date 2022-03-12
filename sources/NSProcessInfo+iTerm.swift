@@ -27,4 +27,5 @@ extension ProcessInfo {
     @objc static var it_hasARMProcessor: Bool {
         return hasARMProcessor
     }
+
 }

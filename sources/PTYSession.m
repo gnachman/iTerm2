@@ -6456,7 +6456,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute {
     DLog(@"Launch coprocess with command %@. Mute=%@", command, @(mute));
-    Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command];
+    Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command
+                                                            cookie:[[iTermWebSocketCookieJar sharedInstance] randomStringForCookie]];
     coprocess.delegate = self.weakSelf;
     coprocess.mute = mute;
     [_shell setCoprocess:coprocess];

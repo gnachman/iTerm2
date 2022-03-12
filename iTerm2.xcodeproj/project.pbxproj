@@ -1675,6 +1675,7 @@
 		A65B72B41B33C07D00F947A7 /* NextTip@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72B01B33C07D00F947A7 /* NextTip@2x.png */; };
 		A65B72B51B33C07D00F947A7 /* NextTip@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72B01B33C07D00F947A7 /* NextTip@2x.png */; };
 		A65B72B61B33C07D00F947A7 /* NextTip@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72B01B33C07D00F947A7 /* NextTip@2x.png */; };
+		A65C242727DD244A00EBF6A2 /* Coprocess.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DDD9B142E5FBB00275650 /* Coprocess.m */; };
 		A65D7CB021E1EBCA00E3D81C /* StopStatusIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A63F34D221E1EB1B000C9D52 /* StopStatusIcon.png */; };
 		A65D7CB121E1EBCA00E3D81C /* StopStatusIcon@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A63F34D321E1EB1B000C9D52 /* StopStatusIcon@2x.png */; };
 		A65D7CB221E1EBCB00E3D81C /* StopStatusIcon.png in Resources */ = {isa = PBXBuildFile; fileRef = A63F34D221E1EB1B000C9D52 /* StopStatusIcon.png */; };
@@ -2788,7 +2789,6 @@
 		A6C762C11B45C52B00E3C992 /* NSTextField+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */; };
 		A6C762C31B45C52B00E3C992 /* NSView+RecursiveDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */; };
 		A6C762C41B45C52B00E3C992 /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
-		A6C762C51B45C52B00E3C992 /* Coprocess.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DDD9B142E5FBB00275650 /* Coprocess.m */; };
 		A6C762C61B45C52B00E3C992 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		A6C762C71B45C52B00E3C992 /* iTermHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB9D8F1183FE9EF0029F0B5 /* iTermHotKeyController.m */; };
 		A6C762C91B45C52B00E3C992 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
@@ -14442,6 +14442,7 @@
 				A6D1784721BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.m in Sources */,
 				A6A4868020B6817900493302 /* WindowArrangements.m in Sources */,
 				A6F718D8226704920053488E /* PTYSession+ARC.m in Sources */,
+				A65C242727DD244A00EBF6A2 /* Coprocess.m in Sources */,
 				A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */,
 				A629F5A623AFF5BA00C2F16B /* iTermShellIntegrationSecondPageViewController.m in Sources */,
 				5379C59823DBE9F100314F23 /* iTermFocusFollowsMouseController.m in Sources */,
@@ -14748,7 +14749,6 @@
 				A6C763931B45C52B00E3C992 /* iTermFileDescriptorServer.c in Sources */,
 				A6C7638F1B45C52B00E3C992 /* iTermCommandHistoryEntryMO+Additions.m in Sources */,
 				A66E5E531E6268E700E8FE35 /* iTermMutableAttributedStringBuilder.m in Sources */,
-				A6C762C51B45C52B00E3C992 /* Coprocess.m in Sources */,
 				A6C763111B45C52B00E3C992 /* iTermFlippedView.m in Sources */,
 				A66DB83B1C9142C900233E88 /* iTermAltScreenMouseScrollInferrer.m in Sources */,
 				A6C762EA1B45C52B00E3C992 /* AATree.m in Sources */,
