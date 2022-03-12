@@ -784,7 +784,7 @@ static NSString *const kArrangement = @"Arrangement";
             ![NSApp isActive]) {
             DLog(@"Notify");
             [[iTermNotificationController sharedInstance] notify:@"Hotkeys Unavailable"
-                                                 withDescription:@"Another app has enabled cecure keyboard input. That prevents hotkey windows from being shown."];
+                                                 withDescription:@"Another app has enabled secure keyboard input. That prevents hotkey windows from being shown."];
             return @[];
         }
     }
