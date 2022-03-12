@@ -306,25 +306,27 @@
 - (void)reallyUpdate {
     DLog(@"* DOING THE EXPENSIVE THING * Process cache reallyUpdate starting");
 
-    // Do expensive stuff
-    iTermProcessCollection *collection = [self.class newProcessCollection];
+    @autoreleasepool {
+        // Do expensive stuff
+        iTermProcessCollection *collection = [self.class newProcessCollection];
 
-    // Save the tracked PIDs in the cache
-    NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJob = [self newDeepestForegroundJobCacheWithCollection:collection];
+        // Save the tracked PIDs in the cache
+        NSDictionary<NSNumber *, iTermProcessInfo *> *cachedDeepestForegroundJob = [self newDeepestForegroundJobCacheWithCollection:collection];
 
-    // Flip to the new state.
-    dispatch_sync(_lockQueue, ^{
-        self->_cachedDeepestForegroundJobLQ = cachedDeepestForegroundJob;
-        self->_collectionLQ = collection;
-        self->_needsUpdateFlagLQ = NO;
-        [_trackedPidsLQ enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, iTermProcessMonitor * _Nonnull monitor, BOOL * _Nonnull stop) {
-            iTermProcessInfo *info = [collection infoForProcessID:key.intValue];
-            if ([monitor setProcessInfo:info]) {
-                DLog(@"%@ changed! Set dirty", @(info.processID));
-                [_dirtyPIDsLQ addIndex:key.intValue];
-            }
-        }];
-    });
+        // Flip to the new state.
+        dispatch_sync(_lockQueue, ^{
+            self->_cachedDeepestForegroundJobLQ = cachedDeepestForegroundJob;
+            self->_collectionLQ = collection;
+            self->_needsUpdateFlagLQ = NO;
+            [_trackedPidsLQ enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, iTermProcessMonitor * _Nonnull monitor, BOOL * _Nonnull stop) {
+                iTermProcessInfo *info = [collection infoForProcessID:key.intValue];
+                if ([monitor setProcessInfo:info]) {
+                    DLog(@"%@ changed! Set dirty", @(info.processID));
+                    [_dirtyPIDsLQ addIndex:key.intValue];
+                }
+            }];
+        });
+    }
 }
 
 #pragma mark - Notifications
