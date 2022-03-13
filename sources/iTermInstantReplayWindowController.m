@@ -242,11 +242,17 @@ typedef NS_ENUM(NSUInteger, iTermInstantReplayState) {
             break;
         case iTermInstantReplayStateSetStart:
             _firstButton.title = @"Set Start";
+            _slider.floatValue = 0;
+            [_delegate instantReplaySeekTo:0];
+            [self updateInstantReplayView];
             _secondButton.title = @"Cancel";
             _secondButton.hidden = NO;
             break;
         case iTermInstantReplayStateSetEnd:
             _firstButton.title = @"Set End";
+            _slider.floatValue = 1;
+            [_delegate instantReplaySeekTo:1];
+            [self updateInstantReplayView];
             _secondButton.title = @"Cancel";
             _secondButton.hidden = NO;
     }

@@ -9938,12 +9938,19 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     NSString *suggestedFilename = [NSString stringWithFormat:@"iTerm2 Session %@ at %@.txt",
                                    [dateFormatter stringFromDate:now],
                                    [timeFormatter stringFromDate:now]];
-    iTermSavePanel *savePanel = [iTermSavePanel showWithOptions:kSavePanelOptionFileFormatAccessory
-                                                     identifier:@"SaveContents"
-                                               initialDirectory:NSHomeDirectory()
-                                                defaultFilename:suggestedFilename
-                                               allowedFileTypes:@[ @"txt", @"rtf" ]
-                                                         window:self.window];
+
+    __weak __typeof(self) weakSelf = self;
+    [iTermSavePanel asyncShowWithOptions:kSavePanelOptionFileFormatAccessory
+                              identifier:@"SaveContents"
+                        initialDirectory:NSHomeDirectory()
+                         defaultFilename:suggestedFilename
+                        allowedFileTypes:@[ @"txt", @"rtf" ]
+                                  window:self.window completion:^(iTermSavePanel *savePanel) {
+        [weakSelf reallySaveContents:savePanel];
+    }];
+}
+
+- (void)reallySaveContents:(iTermSavePanel *)savePanel {
     if (savePanel.path) {
         NSURL *url = [NSURL fileURLWithPath:savePanel.path];
         if (url) {
@@ -9968,8 +9975,10 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     if (self.currentSession.logging) {
         [[self currentSession] logStop];
     } else {
-        [[self retain] autorelease];  // Prevent self from getting dealloc'ed during modal panel.
-        [[self currentSession] logStart];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[self retain] autorelease];  // Prevent self from getting dealloc'ed during modal panel.
+            [[self currentSession] logStart];
+        });
     }
 }
 

@@ -893,12 +893,19 @@ andEditComponentWithIdentifier:(NSString *)identifier
         return;
     }
 
-    iTermSavePanel *savePanel = [iTermSavePanel showWithOptions:0
-                                                     identifier:@"SaveProfile"
-                                               initialDirectory:NSHomeDirectory()
-                                                defaultFilename:[self.selectedProfile[KEY_NAME] stringByAppendingPathExtension:@"json"] ?: @"UnknownProfile.json"
-                                               allowedFileTypes:@[ @"json" ]
-                                                         window:self.view.window];
+    __weak __typeof(self) weakSelf = self;
+    [iTermSavePanel asyncShowWithOptions:0
+                              identifier:@"SaveProfile"
+                        initialDirectory:NSHomeDirectory()
+                         defaultFilename:[self.selectedProfile[KEY_NAME] stringByAppendingPathExtension:@"json"] ?: @"UnknownProfile.json"
+                        allowedFileTypes:@[ @"json" ]
+                                  window:self.view.window
+                              completion:^(iTermSavePanel *savePanel) {
+        [weakSelf reallySaveProfile:profile asJSON:savePanel];
+    }];
+}
+
+- (void)reallySaveProfile:(Profile *)profile asJSON:(iTermSavePanel *)savePanel {
     if (!savePanel.path) {
         return;
     }
@@ -919,12 +926,19 @@ andEditComponentWithIdentifier:(NSString *)identifier
 }
 
 - (IBAction)saveAllProfilesAsJSON:(id)sender {
-    iTermSavePanel *savePanel = [iTermSavePanel showWithOptions:0
-                                                     identifier:@"SaveProfile"
-                                               initialDirectory:NSHomeDirectory()
-                                                defaultFilename:@"Profiles.json"
-                                               allowedFileTypes:@[ @"json" ]
-                                                         window:self.view.window];
+    __weak __typeof(self) weakSelf = self;
+    [iTermSavePanel asyncShowWithOptions:0
+                              identifier:@"SaveProfile"
+                        initialDirectory:NSHomeDirectory()
+                         defaultFilename:@"Profiles.json"
+                        allowedFileTypes:@[ @"json" ]
+                                  window:self.view.window
+                              completion:^(iTermSavePanel *savePanel) {
+        [weakSelf reallySaveAllProfilesAsJSON:savePanel];
+    }];
+}
+
+- (void)reallySaveAllProfilesAsJSON:(iTermSavePanel *)savePanel {
     if (!savePanel.path) {
         return;
     }

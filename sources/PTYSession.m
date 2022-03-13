@@ -4662,18 +4662,28 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 }
 
 - (void)logStart {
-    iTermSavePanel *savePanel = [iTermSavePanel showWithOptions:kSavePanelOptionAppendOrReplace | kSavePanelOptionLogPlainTextAccessory
-                                                     identifier:@"StartSessionLog"
-                                               initialDirectory:NSHomeDirectory()
-                                                defaultFilename:@""
-                                                         window:self.delegate.realParentWindow.window];
-    if (savePanel.path) {
-        BOOL shouldAppend = (savePanel.replaceOrAppend == kSavePanelReplaceOrAppendSelectionAppend);
-        [[self loggingHelper] setPath:savePanel.path
-                              enabled:YES
-                                style:savePanel.loggingStyle
-                               append:@(shouldAppend)];
-    }
+    __weak __typeof(self) weakSelf = self;
+    [iTermSavePanel asyncShowWithOptions:kSavePanelOptionAppendOrReplace | kSavePanelOptionLogPlainTextAccessory
+                              identifier:@"StartSessionLog"
+                        initialDirectory:NSHomeDirectory()
+                         defaultFilename:@""
+                        allowedFileTypes:nil
+                                  window:self.delegate.realParentWindow.window
+                              completion:^(iTermSavePanel *panel) {
+        NSString *path = panel.path;
+        if (path) {
+            BOOL shouldAppend = (panel.replaceOrAppend == kSavePanelReplaceOrAppendSelectionAppend);
+            [weakSelf startLoggingAt:path append:shouldAppend style:panel.loggingStyle];
+        }
+    }];
+}
+
+- (void)startLoggingAt:(NSString *)path append:(BOOL)shouldAppend style:(iTermLoggingStyle)style {
+    [[self loggingHelper] setPath:path
+                          enabled:YES
+                            style:style
+                asciicastMetadata:[self asciicastMetadata]
+                           append:@(shouldAppend)];
 }
 
 - (void)logStop {

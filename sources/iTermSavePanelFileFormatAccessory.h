@@ -13,6 +13,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) IBOutlet NSPopUpButton *popupButton;
 @property (nonatomic, copy) void (^onChange)(NSInteger);
+
+- (void)popupButtonDidChange:(id)sender;
+
 @end
 
 NS_ASSUME_NONNULL_END

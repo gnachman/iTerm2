@@ -124,64 +124,66 @@
 }
 
 + (void)exportRecording:(PTYSession *)session from:(long long)from to:(long long)to window:(NSWindow *)window {
-    iTermSavePanel *savePanel = [iTermSavePanel showWithOptions:0
-                                                     identifier:@"ExportRecording"
-                                               initialDirectory:NSHomeDirectory()
-                                                defaultFilename:@"Recording.itr"
-                                               allowedFileTypes:@[ @"itr" ]
-                                                         window:window];
-    if (savePanel.path) {
-        NSURL *url = [NSURL fileURLWithPath:savePanel.path];
-        if (url) {
-            NSDictionary *dvrDict = [session.screen.dvr dictionaryValueFrom:from to:to];
-            if (dvrDict) {
-                NSMutableDictionary *profile = [session.profile ?: @{} mutableCopy];
-                // Remove any private info that isn't visible.
-                [profile removeObjectForKey:KEY_NAME];
-                [profile removeObjectForKey:KEY_COMMAND_LINE];
-                [profile removeObjectsForKeys:@[ KEY_NAME, KEY_COMMAND_LINE, KEY_WORKING_DIRECTORY, KEY_AUTOLOG,
-                                                 KEY_LOGGING_STYLE, KEY_DESCRIPTION,
-                                                 KEY_INITIAL_TEXT, KEY_TAGS, KEY_TITLE_COMPONENTS,
-                                                 KEY_ORIGINAL_GUID,
-                                                 KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_DIRECTORY,
-                                                 KEY_AWDS_PANE_DIRECTORY, KEY_LOGDIR, KEY_LOG_FILENAME_FORMAT, KEY_SHOW_STATUS_BAR,
-                                                 KEY_STATUS_BAR_LAYOUT, KEY_HAS_HOTKEY, KEY_TRIGGERS, KEY_TRIGGERS_USE_INTERPOLATED_STRINGS,
-                                                 KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS,
-                                                 KEY_SMART_SELECTION_RULES, KEY_SEMANTIC_HISTORY,
-                                                 KEY_BOUND_HOSTS, KEY_DYNAMIC_PROFILE_PARENT_NAME,
-                                                 KEY_DYNAMIC_PROFILE_PARENT_GUID,
-                                                 KEY_DYNAMIC_PROFILE_FILENAME ]];
+    [iTermSavePanel asyncShowWithOptions:0
+                              identifier:@"ExportRecording"
+                        initialDirectory:NSHomeDirectory()
+                         defaultFilename:@"Recording.itr"
+                        allowedFileTypes:@[ @"itr" ]
+                                  window:window
+                              completion:^(iTermSavePanel *savePanel) {
+        if (savePanel.path) {
+            NSURL *url = [NSURL fileURLWithPath:savePanel.path];
+            if (url) {
+                NSDictionary *dvrDict = [session.screen.dvr dictionaryValueFrom:from to:to];
+                if (dvrDict) {
+                    NSMutableDictionary *profile = [session.profile ?: @{} mutableCopy];
+                    // Remove any private info that isn't visible.
+                    [profile removeObjectForKey:KEY_NAME];
+                    [profile removeObjectForKey:KEY_COMMAND_LINE];
+                    [profile removeObjectsForKeys:@[ KEY_NAME, KEY_COMMAND_LINE, KEY_WORKING_DIRECTORY, KEY_AUTOLOG,
+                                                     KEY_LOGGING_STYLE, KEY_DESCRIPTION,
+                                                     KEY_INITIAL_TEXT, KEY_TAGS, KEY_TITLE_COMPONENTS,
+                                                     KEY_ORIGINAL_GUID,
+                                                     KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_DIRECTORY,
+                                                     KEY_AWDS_PANE_DIRECTORY, KEY_LOGDIR, KEY_LOG_FILENAME_FORMAT, KEY_SHOW_STATUS_BAR,
+                                                     KEY_STATUS_BAR_LAYOUT, KEY_HAS_HOTKEY, KEY_TRIGGERS, KEY_TRIGGERS_USE_INTERPOLATED_STRINGS,
+                                                     KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS,
+                                                     KEY_SMART_SELECTION_RULES, KEY_SEMANTIC_HISTORY,
+                                                     KEY_BOUND_HOSTS, KEY_DYNAMIC_PROFILE_PARENT_NAME,
+                                                     KEY_DYNAMIC_PROFILE_PARENT_GUID,
+                                                     KEY_DYNAMIC_PROFILE_FILENAME ]];
 
-                // Make sure the GUID doesn't match an existing one.
-                profile[KEY_GUID] = [[NSUUID UUID] UUIDString];
+                    // Make sure the GUID doesn't match an existing one.
+                    profile[KEY_GUID] = [[NSUUID UUID] UUIDString];
 
-                // Version 2 added per-line metadata.
-                // Version 3 moved URL codes into external attributes.
-                NSDictionary *dict = @{ @"dvr": dvrDict,
-                                        @"profile": profile,
-                                        @"version": @3 };
-                
-                NSData *dictData = [[NSData it_dataWithArchivedObject:dict] gzippedData];
-                NSError *error = nil;
-                BOOL ok = [dictData writeToURL:url options:0 error:&error];
-                if (!ok) {
-                    [iTermWarning showWarningWithTitle:error.localizedDescription
+                    // Version 2 added per-line metadata.
+                    // Version 3 moved URL codes into external attributes.
+                    NSDictionary *dict = @{ @"dvr": dvrDict,
+                                            @"profile": profile,
+                                            @"version": @3 };
+
+                    NSData *dictData = [[NSData it_dataWithArchivedObject:dict] gzippedData];
+                    NSError *error = nil;
+                    BOOL ok = [dictData writeToURL:url options:0 error:&error];
+                    if (!ok) {
+                        [iTermWarning showWarningWithTitle:error.localizedDescription
+                                                   actions:@[ @"OK" ]
+                                                 accessory:nil
+                                                identifier:@"ErrorSavingRecording"
+                                               silenceable:kiTermWarningTypePersistent
+                                                   heading:@"The recording could not be saved."
+                                                    window:nil];
+                    }
+                } else {
+                    [iTermWarning showWarningWithTitle:@"Error encoding recording."
                                                actions:@[ @"OK" ]
-                                             accessory:nil
                                             identifier:@"ErrorSavingRecording"
                                            silenceable:kiTermWarningTypePersistent
-                                               heading:@"The recording could not be saved."
                                                 window:nil];
                 }
-            } else {
-                [iTermWarning showWarningWithTitle:@"Error encoding recording."
-                                           actions:@[ @"OK" ]
-                                        identifier:@"ErrorSavingRecording"
-                                       silenceable:kiTermWarningTypePersistent
-                                            window:nil];
             }
         }
-    }
+    }];
 }
 
 @end

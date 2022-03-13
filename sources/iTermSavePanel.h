@@ -32,18 +32,12 @@ typedef NS_ENUM(NSInteger, iTermSavePanelReplaceOrAppend) {
 @property(nonatomic, readonly) NSString *path;
 @property (nonatomic, readonly) iTermLoggingStyle loggingStyle;
 
-// Prompts the user and returns a new iTermSavePanel.
-+ (iTermSavePanel *)showWithOptions:(NSInteger)options
-                         identifier:(NSString *)identifier
-                   initialDirectory:(NSString *)initialDirectory
-                    defaultFilename:(NSString *)defaultFilename
-                             window:(NSWindow *)window;
-
-+ (iTermSavePanel *)showWithOptions:(NSInteger)options
-                         identifier:(NSString *)identifier
-                   initialDirectory:(NSString *)initialDirectory
-                    defaultFilename:(NSString *)defaultFilename
-                   allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes
-                             window:(NSWindow *)window;
++ (void)asyncShowWithOptions:(NSInteger)options
+                  identifier:(NSString *)identifier
+            initialDirectory:(NSString *)initialDirectory
+             defaultFilename:(NSString *)defaultFilename
+            allowedFileTypes:(NSArray<NSString *> *)allowedFileTypes
+                      window:(NSWindow *)window
+                  completion:(void (^)(iTermSavePanel *panel))completion;
 
 @end
