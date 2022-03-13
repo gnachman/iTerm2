@@ -11518,7 +11518,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             } else {
                 label = [NSString stringWithFormat:@"%@ plus %ld more", relativePaths.firstObject.lastPathComponent, relativePaths.count - 1];
             }
-            self.upload = [[[TerminalFileUpload alloc] initWithName:label size:base64String.length] autorelease];
+            const NSUInteger size = base64String.length;
+            self.upload = [[[TerminalFileUpload alloc] initWithName:label size:size] autorelease];
             [self.upload upload];
             [_pasteHelper pasteString:base64String
                                slowly:NO
@@ -11528,7 +11529,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                          tabTransform:kTabTransformNone
                          spacesPerTab:0
                              progress:^(NSInteger progress) {
+                DLog(@"upload progress %@/%@", @(progress), @(size));
                 [self.upload didUploadBytes:progress];
+                if (progress == size) {
+                    DLog(@"Finished");
+                    self.upload = nil;
+                }
             }];
         } else {
             [self writeTaskNoBroadcast:@"abort\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
