@@ -437,6 +437,10 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
                   kEncodedColorDictionaryBlueComponent: @(blue),
                   kEncodedColorDictionaryAlphaComponent: @(alpha) };
     }
+    return [self srgbDictionaryValue];
+}
+
+- (NSDictionary *)srgbDictionaryValue {
     NSColor *color = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
     CGFloat red, green, blue, alpha;
     [color getRed:&red green:&green blue:&blue alpha:&alpha];
@@ -469,6 +473,14 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
         int blue = round([dict[kEncodedColorDictionaryBlueComponent] doubleValue] * 65535);
         return [NSString stringWithFormat:@"p3#%04x%04x%04x", red, green, blue];
     }
+    int red = [dict[kEncodedColorDictionaryRedComponent] doubleValue] * 255;
+    int green = [dict[kEncodedColorDictionaryGreenComponent] doubleValue] * 255;
+    int blue = [dict[kEncodedColorDictionaryBlueComponent] doubleValue] * 255;
+    return [NSString stringWithFormat:@"#%02x%02x%02x", red, green, blue];
+}
+
+- (NSString *)srgbHexString {
+    NSDictionary *dict = [self srgbDictionaryValue];
     int red = [dict[kEncodedColorDictionaryRedComponent] doubleValue] * 255;
     int green = [dict[kEncodedColorDictionaryGreenComponent] doubleValue] * 255;
     int blue = [dict[kEncodedColorDictionaryBlueComponent] doubleValue] * 255;

@@ -118,6 +118,12 @@ static NSString *const kInitialDirectoryKey = @"Initial Directory";
             item.tag = iTermLoggingStyleHTML;
             [button.menu addItem:item];
         }
+        {
+            item = [[NSMenuItem alloc] initWithTitle:@"ASCIInema" action:nil keyEquivalent:@""];
+            item.tag = iTermLoggingStyleAsciicast;
+            [button.menu addItem:item];
+        }
+
         [button selectItemWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:loggingStyleKey]];
         [button sizeToFit];
 

@@ -108,7 +108,12 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 // Return the color you'd get by rendering self over background.
 - (NSColor *)colorByPremultiplyingAlphaWithColor:(NSColor *)background;
 
+// p3:#rrggbb
 - (NSString *)hexString;
+
+// #rrggbb
+- (NSString *)srgbHexString;
+
 + (instancetype _Nullable)colorFromHexString:(NSString *)hexString;
 
 - (NSColor *)it_colorByDimmingByAmount:(double)dimmingAmount;

@@ -25,6 +25,29 @@ NS_ASSUME_NONNULL_BEGIN
 extern NSString *const iTermLoggingHelperErrorNotificationName;
 extern NSString *const iTermLoggingHelperErrorNotificationGUIDKey;
 
+@interface iTermAsciicastMetadata: NSObject
+@property (nonatomic, readonly) int width;
+@property (nonatomic, readonly) int height;
+@property (nonatomic, readonly, copy) NSString *command;
+@property (nonatomic, readonly, copy) NSString *title;
+@property (nonatomic, readonly, copy) NSDictionary *environment;
+@property (nonatomic, readonly, readonly) NSTimeInterval startTime;  // since boot
+@property (nonatomic, readonly) NSString *fgString;
+@property (nonatomic, readonly) NSString *bgString;
+@property (nonatomic, readonly) NSString *paletteString;
+
+- (instancetype)initWithWidth:(int)width
+                       height:(int)height
+                      command:(NSString *)command
+                        title:(NSString *)title
+                  environment:(NSDictionary *)environment
+                           fg:(NSColor *)fg
+                           bg:(NSColor *)bg
+                         ansi:(NSArray<NSColor *> *)ansi NS_DESIGNATED_INITIALIZER;
+
+- (instancetype)init NS_UNAVAILABLE;
+@end
+
 @interface iTermLoggingHelper : NSObject
 
 @property (nullable, nonatomic, readonly) NSString *path;
@@ -34,6 +57,7 @@ extern NSString *const iTermLoggingHelperErrorNotificationGUIDKey;
 @property (nullable, nonatomic, weak) id<iTermLogging> cookedLogger;
 @property (nonatomic, readonly) BOOL appending;
 @property (nonatomic, readonly) iTermVariableScope *scope;
+@property (nonatomic, strong) iTermAsciicastMetadata *asciicastMetadata;
 
 + (void)observeNotificationsWithHandler:(void (^)(NSString *guid))handler;
 
@@ -46,6 +70,7 @@ extern NSString *const iTermLoggingHelperErrorNotificationGUIDKey;
 
 - (void)setPath:(NSString *)path enabled:(BOOL)enabled
           style:(iTermLoggingStyle)style
+asciicastMetadata:(iTermAsciicastMetadata *)asciicastMetadata
          append:(nullable NSNumber *)append;
 - (void)stop;
 

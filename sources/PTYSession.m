@@ -1720,6 +1720,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 [[aSession loggingHelper] setPath:filename
                                           enabled:YES
                                             style:loggingStyle
+                                asciicastMetadata:[aSession asciicastMetadata]
                                            append:@YES];
             }
             [aSession autorelease];
@@ -1735,6 +1736,32 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     return aSession;
+}
+
+- (iTermAsciicastMetadata *)asciicastMetadata {
+    const BOOL dark = [NSApp effectiveAppearance].it_isDark;
+
+    NSArray<NSColor *> *ansi = [[NSArray sequenceWithRange:NSMakeRange(0, 16)] mapWithBlock:^id _Nonnull(NSNumber * _Nonnull n) {
+        NSString *key = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, n.intValue];
+        return [iTermProfilePreferences colorForKey:key
+                                               dark:dark
+                                            profile:self.profile];
+    }];
+    NSString *term = [iTermProfilePreferences stringForKey:KEY_TERMINAL_TYPE inProfile:self.profile];
+    NSDictionary *environment = @{ @"TERM": term ?: @"xterm",
+                                   @"SHELL": [self userShell] };
+    return [[[iTermAsciicastMetadata alloc] initWithWidth:_screen.width
+                                                   height:_screen.height
+                                                  command:_program ?: @""
+                                                    title:[[self name] stringByTrimmingTrailingWhitespace] ?: @""
+                                              environment:environment
+                                                       fg:[iTermProfilePreferences colorForKey:KEY_FOREGROUND_COLOR
+                                                                                          dark:dark
+                                                                                       profile:self.profile]
+                                                       bg:[iTermProfilePreferences colorForKey:KEY_BACKGROUND_COLOR
+                                                                                          dark:dark
+                                                                                       profile:self.profile]
+                                                     ansi:ansi] autorelease];
 }
 
 - (iTermLoggingHelper *)loggingHelper {
@@ -2345,6 +2372,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                       enabled:autoLogFilename != nil
                                         style:iTermLoggingStyleFromUserDefaultsValue([iTermProfilePreferences unsignedIntegerForKey:KEY_LOGGING_STYLE
                                                                                                                           inProfile:self.profile])
+                            asciicastMetadata:[self asciicastMetadata]
                                        append:nil];
                 if (env[PWD_ENVNAME] && arrangementName && _arrangementGUID) {
                     __weak __typeof(self) weakSelf = self;
@@ -10685,6 +10713,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     switch (_logging.style) {
         case iTermLoggingStyleRaw:
+        case iTermLoggingStyleAsciicast:
             break;
         case iTermLoggingStylePlainText:
             [_logging logData:data];
@@ -12909,6 +12938,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_logging.enabled && !self.isTmuxGateway) {
         switch (_logging.style) {
             case iTermLoggingStyleRaw:
+            case iTermLoggingStyleAsciicast:
                 break;
             case iTermLoggingStyleHTML:
                 [_logging logNewline:[@"<br/>\n" dataUsingEncoding:_screen.terminalEncoding]];
@@ -13076,6 +13106,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     switch (_logging.style) {
         case iTermLoggingStyleRaw:
         case iTermLoggingStylePlainText:
+        case iTermLoggingStyleAsciicast:
             break;
         case iTermLoggingStyleHTML:
             [_logging logData:[data inlineHTMLData]];
@@ -14973,6 +15004,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     switch (loggingHelper.style) {
         case iTermLoggingStyleRaw:
+        case iTermLoggingStyleAsciicast:
             return nil;
 
         case iTermLoggingStylePlainText: {

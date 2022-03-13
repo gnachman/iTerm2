@@ -12,11 +12,44 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermNotificationController.h"
 #import "iTermVariableScope+Session.h"
+#import "NSArray+iTerm.h"
+#import "NSColor+iTerm.h"
+#import "NSDate+iTerm.h"
+#import "NSDictionary+iTerm.h"
+#import "NSJSONSerialization+iTerm.h"
 #import "PreferencePanel.h"
 
 NSString *const iTermLoggingHelperErrorNotificationName = @"SessionLogWriteFailed";
 NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
 
+@implementation iTermAsciicastMetadata
+
+- (instancetype)initWithWidth:(int)width
+                       height:(int)height
+                      command:(NSString *)command
+                        title:(NSString *)title
+                  environment:(NSDictionary *)environment
+                           fg:(NSColor *)fg
+                           bg:(NSColor *)bg
+                         ansi:(NSArray<NSColor *> *)ansi {
+    self = [super init];
+    if (self) {
+        _width = width;
+        _height = height;
+        _command = [command copy];
+        _title = [title copy];
+        _environment = [environment copy];
+        _startTime = [NSDate it_timeSinceBoot];
+        _fgString = [fg colorUsingColorSpace:[NSColorSpace sRGBColorSpace]].srgbHexString;
+        _bgString = [bg colorUsingColorSpace:[NSColorSpace sRGBColorSpace]].srgbHexString;
+        _paletteString = [[ansi mapWithBlock:^id _Nonnull(NSColor * _Nonnull color) {
+            return [[color colorUsingColorSpace:[NSColorSpace sRGBColorSpace]] srgbHexString];
+        }] componentsJoinedByString:@":"];
+    }
+    return self;
+}
+
+@end
 @interface iTermLoggingHelper()
 @property (nullable, nonatomic, strong) NSFileHandle *fileHandle;
 @end
@@ -63,6 +96,7 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
 - (void)setPath:(NSString *)path
         enabled:(BOOL)enabled
           style:(iTermLoggingStyle)style
+asciicastMetadata:(iTermAsciicastMetadata *)asciicastMetadata
          append:(nullable NSNumber *)append {
     const BOOL wasLoggingRaw = self.isLoggingRaw;
     const BOOL wasLoggingCooked = self.isLoggingCooked;
@@ -72,6 +106,10 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
     _style = style;
     _appending = append ? append.boolValue : [iTermAdvancedSettingsModel autologAppends];
 
+    if (_style == iTermLoggingStyleAsciicast) {
+        assert(asciicastMetadata != nil);
+        _asciicastMetadata = asciicastMetadata;
+    }
     if (wasLoggingRaw && !self.isLoggingRaw) {
         [_rawLogger loggingHelperStop:self];
         [self close];
@@ -109,32 +147,89 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
     });
 }
 
+// https://github.com/asciinema/asciinema/blob/develop/doc/asciicast-v2.md
+- (void)queueWriteAsciicastPrologue {
+    NSDictionary *payload = @{
+        @"version": @2,
+        @"width": @(_asciicastMetadata.width),
+        @"height": @(_asciicastMetadata.height),
+        @"timestamp": @(round([[NSDate date] timeIntervalSince1970])),
+        @"idle_time_limit": @1,
+        @"command": _asciicastMetadata.command,
+        @"title": _asciicastMetadata.title,
+        @"env": [_asciicastMetadata.environment filteredWithBlock:^BOOL(id key, id value) {
+            return [@[@"SHELL", @"TERM"] containsObject:key];
+        }],
+        @"theme": @{
+            @"fg": _asciicastMetadata.fgString,
+            @"bg": _asciicastMetadata.bgString,
+            @"palette": _asciicastMetadata.paletteString
+        }
+    };
+    NSString *string = [[[NSJSONSerialization it_jsonStringForObject:payload] stringByReplacingOccurrencesOfString:@"\n" withString:@" "] stringByAppendingString:@"\n"];
+    @try {
+        [self.fileHandle writeData:[string dataUsingEncoding:NSUTF8StringEncoding]];
+    } @catch (NSException *exception) {
+        DLog(@"%@", exception);
+    }
+}
+
 - (void)start {
     _scope.logFilename = self.path;
     dispatch_async(_queue, ^{
-        [self.fileHandle closeFile];
-        self.fileHandle = nil;
-        self.fileHandle = [self newFileHandle];
-        if (self.fileHandle) {
-            self->_needsTimestamp = YES;
-        } else {
-            self->_enabled = NO;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Couldn’t write to session log"
-                                                                                 detail:self.path
-                                                               callbackNotificationName:iTermLoggingHelperErrorNotificationName
-                                                           callbackNotificationUserInfo:@{ iTermLoggingHelperErrorNotificationGUIDKey: self->_profileGUID ?: @"" }];
-            });
-        }
+        [self queueStart];
     });
 }
 
+// Called on _queue
+- (void)queueStart {
+    [self.fileHandle closeFile];
+    self.fileHandle = nil;
+    self.fileHandle = [self newFileHandle];
+    if (self.fileHandle) {
+        self->_needsTimestamp = YES;
+        switch (_style) {
+            case iTermLoggingStyleAsciicast:
+                [self queueWriteAsciicastPrologue];
+                break;
+            case iTermLoggingStyleRaw:
+            case iTermLoggingStyleHTML:
+            case iTermLoggingStylePlainText:
+                break;
+        }
+    } else {
+        self->_enabled = NO;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[iTermNotificationController sharedInstance] postNotificationWithTitle:@"Couldn’t write to session log"
+                                                                             detail:self.path
+                                                           callbackNotificationName:iTermLoggingHelperErrorNotificationName
+                                                       callbackNotificationUserInfo:@{ iTermLoggingHelperErrorNotificationGUIDKey: self->_profileGUID ?: @"" }];
+        });
+    }
+}
+
 - (BOOL)isLoggingRaw {
-    return _enabled && _style == iTermLoggingStyleRaw;
+    switch (_style) {
+        case iTermLoggingStyleRaw:
+        case iTermLoggingStyleAsciicast:
+            return _enabled;
+
+        case iTermLoggingStylePlainText:
+        case iTermLoggingStyleHTML:
+            return NO;
+    }
 }
 
 - (BOOL)isLoggingCooked {
-    return _enabled && _style != iTermLoggingStyleRaw;
+    switch (_style) {
+        case iTermLoggingStyleRaw:
+        case iTermLoggingStyleAsciicast:
+            return NO;
+
+        case iTermLoggingStylePlainText:
+        case iTermLoggingStyleHTML:
+            return _enabled;
+    }
 }
 
 - (NSFileHandle *)newFileHandle {
@@ -155,12 +250,25 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
 
 - (void)logData:(NSData *)data {
     dispatch_async(_queue, ^{
-        if (self->_style != iTermLoggingStyleRaw && self->_needsTimestamp) {
-            self->_needsTimestamp = NO;
-            [self queueLogTimestamp];
-        }
-        [self queueLogData:data];
+        [self queueLogDataAndTimestampIfNeeded:data];
     });
+}
+
+// Called on _queue
+- (void)queueLogDataAndTimestampIfNeeded:(NSData *)data {
+    if (_needsTimestamp) {
+        switch (_style) {
+            case iTermLoggingStyleRaw:
+            case iTermLoggingStyleAsciicast:
+                break;
+            case iTermLoggingStyleHTML:
+            case iTermLoggingStylePlainText:
+                _needsTimestamp = NO;
+                [self queueLogTimestamp];
+                break;
+        }
+    }
+    [self queueLogData:data];
 }
 
 - (void)logWithoutTimestamp:(NSData *)data {
@@ -171,6 +279,19 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
 
 // Called on _queue
 - (void)queueLogData:(NSData *)data {
+    switch(_style) {
+        case iTermLoggingStyleRaw:
+        case iTermLoggingStyleHTML:
+        case iTermLoggingStylePlainText:
+            [self queueWriteDataToFileHandle:data];
+            break;
+        case iTermLoggingStyleAsciicast:
+            [self queueWriteDataToAsciicast:data];
+            break;
+    }
+}
+
+- (void)queueWriteDataToFileHandle:(NSData *)data {
     NSFileHandle *fileHandle = self.fileHandle;
     @try {
         [fileHandle writeData:data];
@@ -182,6 +303,16 @@ NSString *const iTermLoggingHelperErrorNotificationGUIDKey = @"guid";
             self->_enabled = NO;
         });
     }
+}
+
+- (void)queueWriteDataToAsciicast:data {
+    const NSTimeInterval now = [NSDate it_timeSinceBoot];
+    NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] ?: [NSString stringWithLongCharacter:0xfffd];
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:@[ @(now - _asciicastMetadata.startTime), @"o", string ]
+                                                       options:0
+                                                         error:nil];
+    [self queueWriteDataToFileHandle:jsonData];
+    [self queueWriteDataToFileHandle:[NSData dataWithBytes:"\n" length:1]];
 }
 
 - (void)logNewline:(NSData *)data {

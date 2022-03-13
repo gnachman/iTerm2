@@ -421,7 +421,8 @@ typedef NS_ENUM(NSUInteger, iTermTimestampsMode) {
 typedef NS_ENUM(NSUInteger, iTermLoggingStyle) {
     iTermLoggingStyleRaw,
     iTermLoggingStylePlainText,
-    iTermLoggingStyleHTML
+    iTermLoggingStyleHTML,
+    iTermLoggingStyleAsciicast
 };
 
 static inline iTermLoggingStyle iTermLoggingStyleFromUserDefaultsValue(NSUInteger value) {
@@ -429,6 +430,7 @@ static inline iTermLoggingStyle iTermLoggingStyleFromUserDefaultsValue(NSUIntege
         case iTermLoggingStyleHTML:
         case iTermLoggingStyleRaw:
         case iTermLoggingStylePlainText:
+        case iTermLoggingStyleAsciicast:
             return (iTermLoggingStyle)value;
     }
     return iTermLoggingStyleRaw;
