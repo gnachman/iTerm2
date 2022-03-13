@@ -443,6 +443,10 @@
                              remainder:(int *)remainderPtr
                            blockOffset:(int *)yoffsetPtr
                                  index:(int *)indexPtr {
+    if (position < 0) {
+        DLog(@"Block with negative position %@ requested, returning nil", @(position));
+        return nil;
+    }
     if (width > 0) {
         [self buildCacheForWidth:width];
     }
