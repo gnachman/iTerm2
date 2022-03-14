@@ -230,6 +230,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)noSyncTipsDisabled;
 + (NSString *)noSyncVariablesToReport;
 + (void)setNoSyncVariablesToReport:(NSString *)value;
++ (double)notificationOcclusionThreshold;
 + (int)numberOfLinesForAccessibility;
 + (BOOL)openFileInNewWindows;
 + (BOOL)openFileOverridesSendText;

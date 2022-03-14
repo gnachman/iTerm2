@@ -288,8 +288,8 @@ static iTermController *gSharedInstance;
 }
 
 - (BOOL)terminalIsObscured:(id<iTermWindowController>)terminal {
-    static const double kOcclusionThreshold = 0.4;
-    return [self terminalIsObscured:terminal threshold:kOcclusionThreshold];
+    return [self terminalIsObscured:terminal
+                          ho threshold:[iTermAdvancedSettingsModel notificationOcclusionThreshold]];
 }
 
 - (BOOL)terminalIsObscured:(id<iTermWindowController>)terminal threshold:(double)threshold {
