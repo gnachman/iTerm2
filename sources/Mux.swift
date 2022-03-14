@@ -11,9 +11,17 @@ import Foundation
 class Mux: NSObject {
     private let group = DispatchGroup()
     private var count = 0
+    private struct Task {
+        let description: String
+    }
+    private var tasks = [Task?]()
+    @objc var pendingDescriptions: [String] {
+        return tasks.compactMap { $0?.description }
+    }
 
-    @objc
-    func add() -> (() -> Void) {
+    func add(_ description: String) -> (() -> Void) {
+        let i = tasks.count
+        tasks.append(Task(description: description))
         group.enter()
         var completed = false
         count += 1
@@ -21,6 +29,7 @@ class Mux: NSObject {
             precondition(!completed)
             completed = true
             self.count -= 1
+            self.tasks[i] = nil
             self.group.leave()
         }
         return completion
@@ -42,15 +51,19 @@ class Mux: NSObject {
 // MARK:- Convenience methods for interpolated strings.
 
 extension Mux {
-    @objc(evaluateInterpolatedString:scope:timeout:success:error:)
+    @objc(evaluateInterpolatedString:scope:timeout:retryTime:success:error:)
     func evaluate(_ interpolatedString: String,
                   scope: iTermVariableScope,
                   timeout: TimeInterval,
+                  retryTime: TimeInterval,
                   success successHandler: @escaping (AnyObject?) -> Void,
                   error errorHandler: @escaping (Error) -> Void) {
-        let completion = add()
+        let completion = add(interpolatedString)
         let evaluator = iTermExpressionEvaluator(interpolatedString: interpolatedString,
                                                  scope: scope)
+        if retryTime > 0 {
+            evaluator.retryUntil = Date().addingTimeInterval(retryTime)
+        }
         evaluator.evaluate(withTimeout: timeout) { evaluator in
             defer {
                 completion()
@@ -63,10 +76,11 @@ extension Mux {
         }
     }
 
-    @objc(evaluateInterpolatedStrings:scope:timeout:success:error:)
+    @objc(evaluateInterpolatedStrings:scope:timeout:retryTime:success:error:)
     func evaluate(_ interpolatedStrings: [String],
                   scope: iTermVariableScope,
                   timeout: TimeInterval,
+                  retryTime: TimeInterval,
                   success successHandler: @escaping ([AnyObject]) -> Void,
                   error errorHandler: @escaping (Error) -> Void) {
         DLog("Mux \(self) evaluating interpolated strings \(interpolatedStrings) with timeout \(timeout) and scope \(scope)")
@@ -88,7 +102,7 @@ extension Mux {
         var results: [Result] = []
         for (i, string) in interpolatedStrings.enumerated() {
             results.append(.pending)
-            evaluate(string, scope: scope, timeout: timeout) { obj in
+            evaluate(string, scope: scope, timeout: timeout, retryTime: retryTime) { obj in
                 DLog("Mux \(self) evaluated \(string) with result \(obj?.debugDescription ?? "(nil)")")
                 results[i] = .value(obj)
             } error: { error in

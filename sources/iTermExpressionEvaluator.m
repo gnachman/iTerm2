@@ -110,21 +110,43 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
 
     [iTermExpressionEvaluatorGlobalStore() addObject:self];
 
-    __weak __typeof(self) weakSelf = self;
     BOOL debug = _debug;
+    [self reallyEvaluateWithTimeout:timeout debug:debug completion:completion];
+}
+
+- (void)reallyEvaluateWithTimeout:(NSTimeInterval)timeout
+                            debug:(BOOL)debug
+                       completion:(void (^)(iTermExpressionEvaluator *))completion {
     NSString *descr = [NSString stringWithFormat:@"%@: %@", self, _invocation];
     if (debug) {
         NSLog(@"Evaluate %@", _parsedExpression);
     }
+    __weak __typeof(self) weakSelf = self;
     [self evaluateParsedExpression:_parsedExpression
                         invocation:_invocation
                        withTimeout:timeout
                         completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
-                            if (debug) {
-                                NSLog(@"%@ result=%@, error=%@, missing=%@", descr, result, error, missing);
-                            }
-                            [weakSelf didCompleteWithResult:result error:error missing:missing completion:completion];
-                        }];
+        DLog(@"%@ result=%@, error=%@, missing=%@", descr, result, error, missing);
+        if (debug) {
+            NSLog(@"%@ result=%@, error=%@, missing=%@", descr, result, error, missing);
+        }
+        if (self.retryUntil.timeIntervalSinceNow > 0 &&
+            [error.domain isEqual:iTermAPIHelperErrorDomain] &&
+            error.code == iTermAPIHelperErrorCodeUnregisteredFunction) {
+            DLog(@"Schedule retry of %@", descr);
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                DLog(@"Retrying");
+                [weakSelf reallyEvaluateWithTimeout:timeout debug:debug completion:completion];
+            });
+            return;
+        }
+
+        if (debug) {
+            NSLog(@"Return result=%@ error=%@", result, error);
+        }
+        DLog(@"Return result=%@ error=%@", result, error);
+        [weakSelf didCompleteWithResult:result error:error missing:missing completion:completion];
+    }];
 }
 
 - (void)didCompleteWithResult:(id)result

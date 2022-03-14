@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, readonly) NSSet<NSString *> *missingValues;
 @property (nonatomic) BOOL debug;
 @property (nullable, nonatomic, copy) NSString *(^escapingFunction)(NSString *string);
+@property (nullable, nonatomic, strong) NSDate *retryUntil;
 
 - (instancetype)initWithParsedExpression:(iTermParsedExpression *)parsedExpression
                               invocation:(NSString *)invocation
