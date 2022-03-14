@@ -5,9 +5,9 @@ This site hosts code for <a href="https://iterm2.com">iTerm2</a>.
 
 <ul>
 <li><a href="https://iterm2.com/bugs">File a bug report here!</a></li>
-<li>Issues are on <a href="https://gitlab.com/gnachman/iterm2/issues">Gitlab</a> because Github doesn't support issue attachments.</li>
+<li>Issues are on <a href="https://gitlab.com/gnachman/iterm2/issues">Gitlab</a> because Github barely supports issue attachments.</li>
 <li><a href="https://gitlab.com/gnachman/iterm2/wikis/HowToBuild">How do I build this thing?</a></li>
+<li><a href="https://gitlab.com/gnachman/iterm2/-/wikis/How-to-Contribute">How do I contribute changes?</a></li>
 <li><a href="https://iterm2.com/downloads.html">Downloads</a>
-<li>Not enough? Try <a href="https://xscode.com/gnachman/iTerm2">paid support via xscode</a>.
 </ul>
 
