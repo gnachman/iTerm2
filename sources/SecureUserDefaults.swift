@@ -53,6 +53,20 @@ extension Bool: SecureUserDefaultStringTranscodable {
 struct SecureUserDefaults {
     static var instance = SecureUserDefaults()
     lazy var allowPaste = { SecureUserDefault<Bool>("AllowPaste", defaultValue: false) }()
+    lazy var requireAuthToOpenPasswordmanager = { SecureUserDefault<Bool>("RequireAuthenticationToOpenPasswordManager", defaultValue: true) }()
+}
+
+@objc
+class iTermSecureUserDefaults: NSObject {
+    @objc static let instance = iTermSecureUserDefaults()
+    @objc var requireAuthToOpenPasswordManager: Bool {
+        get {
+            return SecureUserDefaults.instance.requireAuthToOpenPasswordmanager.value
+        }
+        set {
+            try? SecureUserDefaults.instance.requireAuthToOpenPasswordmanager.set(newValue)
+        }
+    }
 }
 
 // Secure user defaults are a way of saving user preferences that are hard to tamper with.

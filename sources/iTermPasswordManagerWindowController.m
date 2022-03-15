@@ -9,6 +9,7 @@
 #import "iTermPasswordManagerWindowController.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermSearchField.h"
@@ -147,6 +148,12 @@ static NSString *const iTermPasswordManagerKeychainPath = @"NoSyncKeychainPath";
 + (void)authenticateWithPolicy:(LAPolicy)policy context:(LAContext *)myContext reply:(void(^)(BOOL success, NSError * __nullable error))reply {
     DLog(@"Requesting authentication with policy %@", @(policy));
 
+    if (!iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager) {
+        DLog(@"Auth not required by secure user default");
+        sAuthenticated = YES;
+        reply(YES, nil);
+        return;
+    }
     NSString *myLocalizedReasonString = @"open the password manager";
     // You're supposed to hold a reference to the context until it's done doing its thing.
     if (policy == LAPolicyDeviceOwnerAuthentication) {
@@ -598,11 +605,22 @@ static NSString *const iTermPasswordManagerKeychainPath = @"NoSyncKeychainPath";
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
     if (menuItem.action == @selector(toggleRequireAuthenticationAfterScreenLocks:)) {
+        const BOOL allowed = iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager;
+        if (!allowed) {
+            return NO;
+        }
         menuItem.state = [iTermUserDefaults requireAuthenticationAfterScreenLocks] ? NSControlStateValueOn : NSControlStateValueOff;
+    } else if (menuItem.action == @selector(toggleRequireAuthenticationToOpenPasswordManager:)) {
+        const BOOL state = iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager;
+        menuItem.state = state ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(toggleProbe:)) {
         menuItem.state = self.shouldProbe ? NSControlStateValueOn : NSControlStateValueOff;
     }
     return YES;
+}
+
+- (IBAction)toggleRequireAuthenticationToOpenPasswordManager:(id)sender {
+    iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager = !iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager;
 }
 
 - (IBAction)toggleRequireAuthenticationAfterScreenLocks:(id)sender {
@@ -626,7 +644,8 @@ static NSString *const iTermPasswordManagerKeychainPath = @"NoSyncKeychainPath";
 }
 
 - (void)instanceScreenDidLock:(NSNotification *)notification {
-    if ([iTermUserDefaults requireAuthenticationAfterScreenLocks]) {
+    if (iTermSecureUserDefaults.instance.requireAuthToOpenPasswordManager &&
+        [iTermUserDefaults requireAuthenticationAfterScreenLocks]) {
         for (NSWindow *sheet in [self.window.sheets copy]) {
             [self.window endSheet:sheet];
         }
