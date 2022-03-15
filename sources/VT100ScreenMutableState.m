@@ -515,13 +515,13 @@ static _Atomic int gPerformingJoinedBlock;
 #pragma mark - Scrollback
 
 - (void)incrementOverflowBy:(int)overflowCount {
+    [_tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagIntervalTreeVisibleRangeDidChange];
     if (overflowCount == 0) {
         return;
     }
     DLog(@"Increment overflow by %d", overflowCount);
     self.scrollbackOverflow += overflowCount;
     self.cumulativeScrollbackOverflow += overflowCount;
-    [_tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagIntervalTreeVisibleRangeDidChange];
 }
 
 #pragma mark - Terminal Fundamentals
