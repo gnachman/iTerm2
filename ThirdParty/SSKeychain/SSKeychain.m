@@ -18,77 +18,110 @@ NSString *const kSSKeychainLastModifiedKey = @"mdat";
 NSString *const kSSKeychainWhereKey = @"svce";
 
 #if __IPHONE_4_0 && TARGET_OS_IPHONE
-	static CFTypeRef SSKeychainAccessibilityType = NULL;
+    static CFTypeRef SSKeychainAccessibilityType = NULL;
 #endif
+
+static BOOL SSKeychainSynchronized = NO;
+static NSString *SSKeychainPathToKeychain = nil;
 
 @implementation SSKeychain
 
++ (void)setSynchronized:(BOOL)synchronized {
+    SSKeychainSynchronized = synchronized;
+}
+
++ (BOOL)synchronized {
+    return SSKeychainSynchronized;
+}
+
++ (void)setPathToKeychain:(NSString *)pathToKeychain {
+    SSKeychainPathToKeychain = [pathToKeychain copy];
+}
+
++ (NSString *)pathToKeychain {
+    return SSKeychainPathToKeychain;
+}
+
 + (NSString *)passwordForService:(NSString *)serviceName account:(NSString *)account {
-	return [self passwordForService:serviceName account:account error:nil];
+    return [self passwordForService:serviceName account:account error:nil];
 }
 
 
 + (NSString *)passwordForService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing *)error {
-	SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
-	query.service = serviceName;
-	query.account = account;
-	[query fetch:error];
-	return query.password;
+    SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
+    query.service = serviceName;
+    query.account = account;
+    [self updateQuery:query];
+    [query fetch:error];
+    return query.password;
 }
 
 
 + (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account {
-	return [self deletePasswordForService:serviceName account:account error:nil];
+    return [self deletePasswordForService:serviceName account:account error:nil];
 }
 
 
 + (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing *)error {
-	SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
-	query.service = serviceName;
-	query.account = account;
-	return [query deleteItem:error];
+    SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
+    query.service = serviceName;
+    query.account = account;
+    [self updateQuery:query];
+    return [query deleteItem:error];
 }
 
 
 + (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account {
-	return [self setPassword:password forService:serviceName account:account error:nil];
+    return [self setPassword:password forService:serviceName account:account error:nil];
 }
 
 
 + (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing *)error {
-	SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
-	query.service = serviceName;
-	query.account = account;
-	query.password = password;
-	return [query save:error];
+    SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
+    query.service = serviceName;
+    query.account = account;
+    query.password = password;
+    [self updateQuery:query];
+    return [query save:error];
 }
 
 
 + (NSArray *)allAccounts {
-	return [self accountsForService:nil];
+    return [self accountsForService:nil];
 }
 
 
 + (NSArray *)accountsForService:(NSString *)serviceName {
-	SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
-	query.service = serviceName;
-	return [query fetchAll:nil];
+    SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
+    query.service = serviceName;
+    [self updateQuery:query];
+    return [query fetchAll:nil];
 }
 
 
 #if __IPHONE_4_0 && TARGET_OS_IPHONE
 + (CFTypeRef)accessibilityType {
-	return SSKeychainAccessibilityType;
+    return SSKeychainAccessibilityType;
 }
 
 
 + (void)setAccessibilityType:(CFTypeRef)accessibilityType {
-	CFRetain(accessibilityType);
-	if (SSKeychainAccessibilityType) {
-		CFRelease(SSKeychainAccessibilityType);
-	}
-	SSKeychainAccessibilityType = accessibilityType;
+    CFRetain(accessibilityType);
+    if (SSKeychainAccessibilityType) {
+        CFRelease(SSKeychainAccessibilityType);
+    }
+    SSKeychainAccessibilityType = accessibilityType;
 }
 #endif
+
++ (void)updateQuery:(SSKeychainQuery *)query {
+    if (self.synchronized) {
+        query.synchronizationMode = SSKeychainQuerySynchronizationModeYes;
+        return;
+    }
+    if (self.pathToKeychain) {
+        query.pathToKeychain = self.pathToKeychain;
+    }
+}
 
 @end

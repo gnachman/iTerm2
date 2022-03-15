@@ -28,6 +28,7 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 static BOOL sAuthenticated;
 // Looks nice and is unlikely to be used already
 static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u2002—\u2002";
+static NSString *const iTermPasswordManagerKeychainPath = @"NoSyncKeychainPath";
 
 @implementation iTermPasswordEntry
 
@@ -112,6 +113,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     NSArray<iTermPasswordEntry *> *_entries;
     NSString *_accountNameToSelectAfterAuthentication;
     id _eventMonitor;
+    NSOpenPanel *_panel;
 }
 
 + (NSArray<iTermPasswordEntry *> *)entriesWithFilter:(NSString *)maybeEmptyFilter {
@@ -135,7 +137,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
             return nil;
         }
         return passwordEntry;
-    }];
+    }] ?: @[];
 
     return [unsortedEntries sortedArrayUsingComparator:^NSComparisonResult(iTermPasswordEntry * _Nonnull obj1, iTermPasswordEntry * _Nonnull obj2) {
         return [obj1.accountName localizedCaseInsensitiveCompare:obj2.accountName];
@@ -220,6 +222,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 - (instancetype)init {
     self = [self initWithWindowNibName:@"iTermPasswordManager"];
     if (self) {
+        [self updateConfiguration];
         [self requestAuthenticationIfPossible];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(reloadAccounts)
@@ -337,7 +340,42 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     }
 }
 
+#pragma mark - Keychain
+
+- (NSString *)pathToKeychain {
+    NSString *path = [[NSUserDefaults standardUserDefaults] objectForKey:iTermPasswordManagerKeychainPath];
+    return path;
+}
+
+- (void)didChooseKeychainWithModalResponse:(NSModalResponse)response {
+    if (response != NSModalResponseOK) {
+        return;
+    }
+    [[NSUserDefaults standardUserDefaults] setObject:_panel.URL.path forKey:iTermPasswordManagerKeychainPath];
+    [self updateConfiguration];
+}
+
+- (void)updateConfiguration {
+    SSKeychain.pathToKeychain = [self pathToKeychain];
+    if (sAuthenticated) {
+        [self reloadAccounts];
+    }
+}
+
 #pragma mark - Actions
+
+- (IBAction)changeKeychain:(id)sender {
+    _panel = [[NSOpenPanel alloc] init];
+    _panel.directoryURL = [NSURL fileURLWithPath:[NSHomeDirectory() stringByAppendingPathComponents:@[ @"Library", @"Keychains" ]]];
+    _panel.canChooseFiles = YES;
+    _panel.canChooseDirectories = NO;
+    _panel.allowsMultipleSelection = NO;
+    _panel.allowedFileTypes = @[ @"keychain-db" ];
+    __weak __typeof(self) weakSelf = self;
+    [_panel beginWithCompletionHandler:^(NSModalResponse result) {
+        [weakSelf didChooseKeychainWithModalResponse:result];
+    }];
+}
 
 - (IBAction)closeCurrentSession:(id)sender {
     [self orderOutOrEndSheet];

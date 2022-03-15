@@ -58,6 +58,13 @@ extern NSString *const kSSKeychainWhereKey;
  */
 @interface SSKeychain : NSObject
 
+// If set, use iCloud keychain.
+@property (class) BOOL synchronized;
+
+// If set and synchronized is off, gives the path to the keychain to use.
+// If unset and synchronized is off, the login keychain is used.
+@property (class, copy) NSString *pathToKeychain;
+
 #pragma mark - Classic methods
 
 /**

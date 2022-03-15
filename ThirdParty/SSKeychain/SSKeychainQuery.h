@@ -9,18 +9,11 @@
 #import <Foundation/Foundation.h>
 #import <Security/Security.h>
 
-// Keychain synchronization available at compile time; this requires a
-// deployment target of 10.9. Changed for iTerm2 because our SDK differs from
-// our deployment target.
-#define SSKEYCHAIN_SYNCHRONIZATION_AVAILABLE 0
-
-#ifdef SSKEYCHAIN_SYNCHRONIZATION_AVAILABLE
 typedef NS_ENUM(NSUInteger, SSKeychainQuerySynchronizationMode) {
 	SSKeychainQuerySynchronizationModeAny,
 	SSKeychainQuerySynchronizationModeNo,
 	SSKeychainQuerySynchronizationModeYes
 };
-#endif
 
 /**
  Simple interface for querying or modifying keychain items.
@@ -36,15 +29,15 @@ typedef NS_ENUM(NSUInteger, SSKeychainQuerySynchronizationMode) {
 /** kSecAttrLabel */
 @property (nonatomic, copy) NSString *label;
 
+@property (nonatomic, copy) NSString *pathToKeychain;
+
 #if __IPHONE_3_0 && TARGET_OS_IPHONE
 /** kSecAttrAccessGroup (only used on iOS) */
 @property (nonatomic, copy) NSString *accessGroup;
 #endif
 
-#ifdef SSKEYCHAIN_SYNCHRONIZATION_AVAILABLE
 /** kSecAttrSynchronizable */
 @property (nonatomic) SSKeychainQuerySynchronizationMode synchronizationMode;
-#endif
 
 /** Root storage for password information */
 @property (nonatomic, copy) NSData *passwordData;
@@ -107,21 +100,5 @@ typedef NS_ENUM(NSUInteger, SSKeychainQuerySynchronizationMode) {
  @return `YES` if fetching was successful, `NO` otherwise.
  */
 - (BOOL)fetch:(NSError **)error;
-
-
-///-----------------------------
-/// @name Synchronization Status
-///-----------------------------
-
-#ifdef SSKEYCHAIN_SYNCHRONIZATION_AVAILABLE
-/**
- Returns a boolean indicating if keychain synchronization is available on the device at runtime. The #define 
- SSKEYCHAIN_SYNCHRONIZATION_AVAILABLE is only for compile time. If you are checking for the presence of synchronization,
- you should use this method.
- 
- @return A value indicating if keychain synchronization is available
- */
-+ (BOOL)isSynchronizationAvailable;
-#endif
 
 @end
