@@ -136,7 +136,6 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     NSString *logdirInterpolatedString = [iTermProfilePreferences stringForKey:KEY_LOGDIR inProfile:self.profile];
     NSString *filenameInterpolatedString = [iTermProfilePreferences stringForKey:KEY_LOG_FILENAME_FORMAT inProfile:self.profile];
 
-    __weak __typeof(self) weakSelf = self;
     [mux evaluateInterpolatedStrings:@[logdirInterpolatedString, filenameInterpolatedString]
                                scope:self.variablesScope
                              timeout:5
