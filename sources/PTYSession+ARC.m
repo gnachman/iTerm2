@@ -137,46 +137,17 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     NSString *filenameInterpolatedString = [iTermProfilePreferences stringForKey:KEY_LOG_FILENAME_FORMAT inProfile:self.profile];
 
     __weak __typeof(self) weakSelf = self;
-    __block BOOL trying = YES;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (trying) {
-            [weakSelf showStillTryingMessage:mux];
-        }
-    });
     [mux evaluateInterpolatedStrings:@[logdirInterpolatedString, filenameInterpolatedString]
                                scope:self.variablesScope
                              timeout:5
                            retryTime:5
                              success:^(NSArray * _Nonnull values) {
-        trying = NO;
-        [weakSelf removeStillTryingMessage];
         NSString *joined = [self joinedNameWithFolder:values[0] filename:values[1]];
         completion(joined);
     } error:^(NSError * _Nonnull error) {
-        trying = NO;
-        [weakSelf removeStillTryingMessage];
         [self failWithError:error];
         completion(nil);
     }];
-}
-
-- (void)showStillTryingMessage:(iTermMux *)mux {
-    NSString *expression = mux.pendingDescriptions.firstObject;
-    if (expression == nil) {
-        return;
-    }
-    NSString *title = [NSString stringWithFormat:@"Waiting for Python API script to launch to evaluate “%@”…", expression];
-    iTermAnnouncementViewController *announcement =
-    [iTermAnnouncementViewController announcementWithTitle:title
-                                                     style:kiTermAnnouncementViewStyleWarning
-                                               withActions:@[ @"OK" ]
-                                                completion:^(int selection) { }];
-    [self queueAnnouncement:announcement identifier:@"StillTrying"];
-}
-
-- (void)removeStillTryingMessage {
-    [self dismissAnnouncementWithIdentifier:@"StillTrying"];
-    [self removeAnnouncementWithIdentifier:@"StillTrying"];
 }
 
 - (NSString *)joinedNameWithFolder:(NSString *)formattedFolder
