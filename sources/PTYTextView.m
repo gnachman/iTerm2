@@ -686,7 +686,7 @@
     int extra = 0;
     int curX = x;
     for (int i = 0; i < len; ++i) {
-        if (curX == 0 && buf[i].code == DWC_RIGHT) {
+        if (curX == 0 && ScreenCharIsDWC_RIGHT(buf[i])) {
             ++extra;
             ++curX;
         }
@@ -2354,6 +2354,9 @@
             lineY = result.start.y;
             line = [_dataSource screenCharArrayForLine:lineY].line;
         }
+        if (line[result.start.x].complexChar || line[result.start.x].image) {
+            break;
+        }
         unichar code = line[result.start.x].code;
         BOOL trim = ((code == 0) ||
                      (trimSpaces && (code == ' ' || code == '\t' || code == TAB_FILLER)));
@@ -2379,6 +2382,9 @@
         if (lineY != y) {
             lineY = y;
             line = [_dataSource screenCharArrayForLine:y].line;
+        }
+        if (line[x].complexChar || line[x].image) {
+            break;
         }
         unichar code = line[x].code;
         BOOL trim = ((code == 0) ||
@@ -4412,7 +4418,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
              }
 
             theLine = [_dataSource screenCharArrayForLine:coord.y].line;
-        } while (theLine[coord.x].code == DWC_RIGHT);
+        } while (ScreenCharIsDWC_RIGHT(theLine[coord.x]));
         result = VT100GridAbsCoordFromCoord(coord, totalScrollbackOverflow);
     }];
     if (!ok) {

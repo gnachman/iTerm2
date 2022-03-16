@@ -267,7 +267,9 @@ const NSInteger kLongMaximumWordLength = 100000;
     }
     __block int result = 0;
     [self enumerateCharsInRange:VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, line, [_dataSource width], line), _logicalWindow.location, _logicalWindow.length) charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
-        if (!theChar.complexChar && (theChar.code == ' ' || theChar.code == '\t' || theChar.code == 0 || theChar.code == TAB_FILLER)) {
+        if (!theChar.complexChar &&
+            !theChar.image &&
+            (theChar.code == ' ' || theChar.code == '\t' || theChar.code == 0 || theChar.code == TAB_FILLER)) {
             result++;
             return NO;
         } else {
@@ -708,7 +710,7 @@ const NSInteger kLongMaximumWordLength = 100000;
     const screen_char_t *theLine = [_dataSource screenCharArrayForLine:line].line;
     NSMutableIndexSet *indexes = [NSMutableIndexSet indexSet];
     for (int i = range.location; i < range.location + range.length; i++) {
-        if (theLine[i].code == c && !theLine[i].complexChar) {
+        if (theLine[i].code == c && !theLine[i].complexChar && !theLine[i].image) {
             [indexes addIndex:i];
         }
     }
@@ -841,7 +843,7 @@ const NSInteger kLongMaximumWordLength = 100000;
 
 - (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter
                     definitionOfAlphanumeric:(iTermAlphaNumericDefinition)definition {
-    if (!theCharacter.complexChar) {
+    if (!theCharacter.complexChar && !theCharacter.image) {
         if (theCharacter.code == TAB_FILLER) {
             return kTextExtractorClassWhitespace;
         } else if (theCharacter.code == DWC_RIGHT || theCharacter.complexChar == DWC_SKIP) {
@@ -1502,8 +1504,8 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                                       appendString(@" ", theChar, ea, coord);
                                       break;
                               }
-                          } else if (theChar.code != DWC_RIGHT &&
-                                     theChar.code != DWC_SKIP) {
+                          } else if (theChar.complexChar || (theChar.code != DWC_RIGHT &&
+                                                             theChar.code != DWC_SKIP)) {
                               // Normal character. Add it unless it's a backslash at the right edge
                               // of a window.
                               if (continuationChars &&
@@ -1688,7 +1690,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 
 - (BOOL)haveDoubleWidthExtensionAt:(VT100GridCoord)coord {
     screen_char_t sct = [self characterAt:coord];
-    return !sct.complexChar && (sct.code == DWC_RIGHT || sct.code == DWC_SKIP);
+    return !sct.complexChar && !sct.image && (sct.code == DWC_RIGHT || sct.code == DWC_SKIP);
 }
 
 - (BOOL)coord:(VT100GridCoord)coord1 isEqualToCoord:(VT100GridCoord)coord2 {
@@ -1785,7 +1787,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     // non-tab character.
     int xLimit = [self xLimit];
     for (int i = index + 1; i < xLimit; i++) {
-        if (line[i].complexChar) {
+        if (line[i].complexChar || line[i].image) {
             return YES;
         }
         unichar c = line[i].code;

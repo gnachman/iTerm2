@@ -377,7 +377,7 @@ NSString* ScreenCharArrayToStringDebug(const screen_char_t *screenChars,
     NSMutableString* result = [NSMutableString stringWithCapacity:lineLength];
     for (int i = 0; i < lineLength; ++i) {
         const unichar c = screenChars[i].code;
-        if (c != 0 && c != DWC_RIGHT) {
+        if (c != 0 && !ScreenCharIsDWC_RIGHT(screenChars[i])) {
             [result appendString:ScreenCharToStr(&screenChars[i]) ?: @"😮"];
         }
     }
@@ -525,8 +525,7 @@ void StringToScreenChars(NSString *s,
         if (isDoubleWidth) {
             j++;
             buf[j] = buf[j - 1];
-            buf[j].code = DWC_RIGHT;
-            buf[j].complexChar = NO;
+            ScreenCharSetDWC_RIGHT(&buf[j]);
             if (foundDwc) {
                 *foundDwc = YES;
             }

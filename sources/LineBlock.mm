@@ -28,8 +28,9 @@ extern "C" {
 static BOOL gEnableDoubleWidthCharacterLineCache = NO;
 static BOOL gUseCachingNumberOfLines = NO;
 
-NSString *const kLineBlockLegacyRawBufferKey = @"Raw Buffer";  // v1 - uses legacy screen_char_t format.
-NSString *const kLineBlockModernRawBufferKey = @"Raw Buffer v2";
+NSString *const kLineBlockRawBufferV1Key = @"Raw Buffer";  // v1 - uses legacy screen_char_t format.
+NSString *const kLineBlockRawBufferV2Key = @"Raw Buffer v2";  // v2 - used 0xf000-0xf003 for DWC_SKIP and friends.
+NSString *const kLineBlockRawBufferV3Key = @"Raw Buffer v3";  // v3 - uses 0x0001-0x0004 for DWC_SKIP and friends
 NSString *const kLineBlockBufferStartOffsetKey = @"Buffer Start Offset";
 NSString *const kLineBlockStartOffsetKey = @"Start Offset";
 NSString *const kLineBlockFirstEntryKey = @"First Entry";
@@ -332,10 +333,14 @@ static void iTermAssignToConstPointer(void **dest, void *address) {
 
         NSData *data = nil;
         iTermExternalAttributeIndex *migrationIndex = nil;
-        if (dictionary[kLineBlockModernRawBufferKey]) {
-            data = dictionary[kLineBlockModernRawBufferKey];
-        } else if (dictionary[kLineBlockLegacyRawBufferKey]) {
-            data = [dictionary[kLineBlockLegacyRawBufferKey] modernizedScreenCharArray:&migrationIndex];
+        if (dictionary[kLineBlockRawBufferV3Key]) {
+            data = dictionary[kLineBlockRawBufferV3Key];
+        } else if (dictionary[kLineBlockRawBufferV2Key]) {
+            data = [dictionary[kLineBlockRawBufferV2Key] migrateV2ToV3];
+            _generation = 1;
+        } else if (dictionary[kLineBlockRawBufferV1Key]) {
+            data = [dictionary[kLineBlockRawBufferV1Key] migrateV1ToV3:&migrationIndex];
+            _generation = 1;
         }
         if (!data) {
             return nil;
@@ -488,6 +493,11 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
         theCopy->cached_numlines_width = cached_numlines_width;
         theCopy->_numberOfFullLinesCache = _numberOfFullLinesCache;
         theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
+
+        // Preserve these so delta encoding will continue to work when you encode a copy.
+        theCopy->_generation = _generation;
+        theCopy->_guid = [_guid copy];
+
         return theCopy;
     }
     iTermAssignToConstPointer((void **)&theCopy->raw_buffer, iTermMalloc(sizeof(screen_char_t) * buffer_size));
@@ -510,6 +520,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     theCopy->cached_numlines = cached_numlines;
     theCopy->cached_numlines_width = cached_numlines_width;
     theCopy->_generation = _generation;
+    theCopy->_guid = [_guid copy];
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
 
     return theCopy;
@@ -644,7 +655,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     if (width > 1 && mayHaveDoubleWidthCharacter) {
         int fullLines = 0;
         for (int i = width; i < length; i += width) {
-            if (buffer[i].code == DWC_RIGHT) {
+            if (ScreenCharIsDWC_RIGHT(buffer[i])) {
                 --i;
             }
             ++fullLines;
@@ -852,7 +863,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
         // Advance i to the start of the next line
         i += width;
         ++lines;
-        if (p[i].code == DWC_RIGHT) {
+        if (ScreenCharIsDWC_RIGHT(p[i])) {
             // Oops, the line starts with the second half of a double-width
             // character. Wrap the last character of the previous line on to
             // this line.
@@ -906,7 +917,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             i += width;
             ++lines;
             assert(i < length);
-            if (p[i].code == DWC_RIGHT) {
+            if (ScreenCharIsDWC_RIGHT(p[i])) {
                 // Oops, the line starts with the second half of a double-width
                 // character. Wrap the last character of the previous line on to
                 // this line.
@@ -987,7 +998,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     *lineLength = location.length - offset;  // the length of the suffix of the raw line, beginning at the wrapped line we want
     if (*lineLength > width) {
         // return an infix of the full line
-        if (width > 1 && buffer_start[location.prev + offset + width].code == DWC_RIGHT) {
+        if (width > 1 && ScreenCharIsDWC_RIGHT(buffer_start[location.prev + offset + width])) {
             // Result would end with the first half of a double-width character
             *lineLength = width - 1;
             *includesEndOfLine = EOL_DWC;
@@ -1993,7 +2004,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
             if (bytes_to_consume_in_this_line < line_length &&
                 prev + bytes_to_consume_in_this_line + 1 < eol) {
                 assert(prev + bytes_to_consume_in_this_line + 1 < buffer_size);
-                if (width > 1 && raw_buffer[prev + bytes_to_consume_in_this_line + 1].code == DWC_RIGHT) {
+                if (width > 1 && ScreenCharIsDWC_RIGHT(raw_buffer[prev + bytes_to_consume_in_this_line + 1])) {
                     ++dwc_peek;
                 }
             }
@@ -2048,7 +2059,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 - (NSDictionary *)dictionary {
     NSData *rawBufferData = [NSData dataWithBytes:raw_buffer
                                            length:[self rawSpaceUsed] * sizeof(screen_char_t)];
-    return @{ kLineBlockModernRawBufferKey: rawBufferData,
+    return @{ kLineBlockRawBufferV3Key: rawBufferData,
               kLineBlockBufferStartOffsetKey: @(buffer_start - raw_buffer),
               kLineBlockStartOffsetKey: @(start_offset),
               kLineBlockFirstEntryKey: @(first_entry),

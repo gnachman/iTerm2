@@ -238,8 +238,7 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
         eol = EOL_DWC;
     }
     if (eol == EOL_DWC) {
-        buffer[length - 1].code = DWC_SKIP;
-        buffer[length - 1].complexChar = NO;
+        ScreenCharSetDWC_SKIP(&buffer[length - 1]);
     }
     screen_char_t continuation = self.continuation;
     continuation.code = eol;

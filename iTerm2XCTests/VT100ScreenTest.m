@@ -2003,7 +2003,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
         0xDD50,
         // x=4,5
         0xff25, //  dwc E
-        0xf000, //  item private
+        DWC_RIGHT, //  item private
         // x=6
         0xfeff, //  zw-no-break space
         0x200b, //  zw-space (not preserved)

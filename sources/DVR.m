@@ -154,7 +154,7 @@
     } else {
         dvr = [[self copyWithFramesFrom:from to:to] autorelease];
     }
-    return @{ @"version": @1,
+    return @{ @"version": @4,
               @"capacity": @(dvr->capacity_),
               @"buffer": dvr->buffer_.dictionaryValue };
 }
@@ -163,7 +163,8 @@
     if (!dict) {
         return NO;
     }
-    NSArray<NSNumber *> *knownVersions = @[ @1, @2 ];
+    // This is the inner version. It is set in -[DVR dictionaryValueFrom:to:].
+    NSArray<NSNumber *> *knownVersions = @[ @1, @2, @3, @4 ];
     NSNumber *version = [NSNumber castFrom:dict[@"version"]];
     if (!version || ![knownVersions containsObject:version]) {
         return NO;

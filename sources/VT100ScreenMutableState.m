@@ -662,9 +662,9 @@ static _Atomic int gPerformingJoinedBlock;
         // test but I'm reluctant to remove it because it could break something.
         const BOOL augmentedResultBeginsWithDoubleWidthCharacter = (augmented &&
                                                                     len > 1 &&
-                                                                    buffer[1].code == DWC_RIGHT &&
+                                                                    ScreenCharIsDWC_RIGHT(buffer[1]) &&
                                                                     !buffer[1].complexChar);
-        if ((augmentedResultBeginsWithDoubleWidthCharacter || predecessorIsDoubleWidth) && len > 1 && buffer[1].code == DWC_RIGHT) {
+        if ((augmentedResultBeginsWithDoubleWidthCharacter || predecessorIsDoubleWidth) && len > 1 && ScreenCharIsDWC_RIGHT(buffer[1])) {
             // Skip over a preexisting DWC_RIGHT in the predecessor.
             bufferOffset++;
         }
@@ -691,7 +691,7 @@ static _Atomic int gPerformingJoinedBlock;
                externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributes {
     if (len >= 1) {
         screen_char_t lastCharacter = buffer[len - 1];
-        if (lastCharacter.code == DWC_RIGHT && !lastCharacter.complexChar) {
+        if (ScreenCharIsDWC_RIGHT(lastCharacter) && !lastCharacter.complexChar) {
             // Last character is the right half of a double-width character. Use the penultimate character instead.
             if (len >= 2) {
                 self.lastCharacter = buffer[len - 2];
@@ -1893,7 +1893,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (allNulls) {
         screen_char_t filler;
         InitializeScreenChar(&filler, [self.terminal foregroundColorCode], [self.terminal backgroundColorCode]);
-        filler.code = TAB_FILLER;
+        ScreenCharSetTAB_FILLER(&filler);
         const int startX = self.currentGrid.cursorX;
         const int limit = nextTabStop - 1;
         iTermExternalAttribute *ea = [self.terminal externalAttributes];
@@ -1907,9 +1907,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                     *c = filler;
                     *eaOut = ea;
                 } else {
-                    c->image = NO;
-                    c->complexChar = NO;
-                    c->code = TAB_FILLER;
+                    ScreenCharSetTAB_FILLER(c);
                 }
             } else {
                 if (setBackgroundColors) {

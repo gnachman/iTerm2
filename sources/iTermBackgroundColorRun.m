@@ -15,7 +15,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
                                         NSIndexSet *selectedIndexes,
                                         NSData *matches,
                                         int width) {
-    if (theLine[coord.x].code == DWC_SKIP && !theLine[coord.x].complexChar) {
+    if (ScreenCharIsDWC_SKIP(theLine[coord.x])) {
         run->selected = NO;
     } else {
         run->selected = [selectedIndexes containsIndex:coord.x];
@@ -75,7 +75,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     int j;
     for (j = charRange.location; j < charRange.location + charRange.length; j++) {
         int x = j;
-        if (theLine[j].code == DWC_RIGHT) {
+        if (ScreenCharIsDWC_RIGHT(theLine[j])) {
             x = j - 1;
             if (x < 0) {
                 // AFAIK this only happens in tests, but it's a nice safety in case things go sideways.

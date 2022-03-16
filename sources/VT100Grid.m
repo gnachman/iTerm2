@@ -86,11 +86,16 @@ static NSString *const kGridSizeKey = @"Size";
         assert(size_.width > 0 && size_.height > 0);
         
         NSMutableDictionary<NSNumber *, iTermExternalAttributeIndex *> *migrationIndexes = nil;
-        if (dictionary[@"lines v2"]) {
+        if (dictionary[@"lines v3"]) {
+            // 3.5.0beta6+ path
+            lines_ = [[NSArray castFrom:dictionary[@"lines v3"]] mutableCopy];
+        } else if (dictionary[@"lines v2"]) {
             // 3.5.0beta3+ path
-            lines_ = [[NSArray castFrom:dictionary[@"lines v2"]] mutableCopy];
+            lines_ = [[[NSArray castFrom:dictionary[@"lines v2"]] mapWithBlock:^id _Nonnull(NSData *data) {
+                return [data migrateV2ToV3];
+            }] mutableCopy];
         } else if (dictionary[@"lines"]) {
-            // Migration code path - upgrade legacy_screen_char_t.
+            // Migration code path for v1 -> v3 - upgrade legacy_screen_char_t.
             NSArray<NSData *> *legacyLines = [NSArray castFrom:dictionary[@"lines"]];
             if (!legacyLines) {
                 return nil;
@@ -99,7 +104,7 @@ static NSString *const kGridSizeKey = @"Size";
             migrationIndexes = [NSMutableDictionary dictionary];
             [legacyLines enumerateObjectsUsingBlock:^(NSData * _Nonnull legacyData, NSUInteger idx, BOOL * _Nonnull stop) {
                 iTermExternalAttributeIndex *migrationIndex = nil;
-                [lines_ addObject:[[legacyData modernizedScreenCharArray:&migrationIndex] mutableCopy]];
+                [lines_ addObject:[[legacyData migrateV1ToV3:&migrationIndex] mutableCopy]];
                 if (migrationIndex) {
                     migrationIndexes[@(idx)] = migrationIndex;
                 }
@@ -349,7 +354,9 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
         screen_char_t *line = [self screenCharsAtLineNumber:numberOfLinesUsed - 1];
         int i;
         for (i = 0; i < size_.width; i++) {
-            if (line[i].complexChar || ![allowedCharacters characterIsMember:line[i].code]) {
+            if (line[i].complexChar ||
+                line[i].image ||
+                ![allowedCharacters characterIsMember:line[i].code]) {
                 break;
             }
         }
@@ -442,7 +449,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
         lineLength = size_.width - 1;
     } else {
         for (lineLength = size_.width - 1; lineLength >= 0; --lineLength) {
-            if (line[lineLength].code && line[lineLength].code != DWC_SKIP) {
+            if (line[lineLength].code && !ScreenCharIsDWC_SKIP(line[lineLength])) {
                 break;
             }
         }
@@ -893,7 +900,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
 #endif
 
         int widthOffset;
-        if (idx + 1 < len && buffer[idx + 1].code == DWC_RIGHT) {
+        if (idx + 1 < len && ScreenCharIsDWC_RIGHT(buffer[idx + 1])) {
             // If we're about to insert a double width character then reduce the
             // line width for the purposes of testing if the cursor is in the
             // rightmost position.
@@ -933,7 +940,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
                     prevLine[size_.width] = [self defaultChar];
                     prevLine[size_.width].code = (splitDwc ? EOL_DWC : EOL_SOFT);
                     if (splitDwc) {
-                        prevLine[size_.width - 1].code = DWC_SKIP;
+                        ScreenCharSetDWC_SKIP(&prevLine[size_.width - 1]);
                     }
                 }
                 self.cursorX = leftMargin;
@@ -956,7 +963,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
                 int newCursorX = rightMargin - 1;
 
                 idx = len - 1;
-                if (buffer[idx].code == DWC_RIGHT && idx > startIdx) {
+                if (ScreenCharIsDWC_RIGHT(buffer[idx]) && idx > startIdx) {
                     // The last character to insert is double width. Back up one
                     // byte in buffer and move the cursor left one position.
                     idx--;
@@ -973,7 +980,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
                     newCursorX = 0;
                 }
                 self.cursorX = newCursorX;
-                if (line[cursor_.x].code == DWC_RIGHT) {
+                if (ScreenCharIsDWC_RIGHT(line[cursor_.x])) {
                     // This would cause us to overwrite the second part of a
                     // double-width character. Convert it to a space.
                     line[cursor_.x - 1].code = 0;
@@ -1010,7 +1017,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
             // at the end of the line.
             int potentialCharsToInsert = spaceRemainingInLine;
             if (idx + potentialCharsToInsert < len &&
-                buffer[idx + potentialCharsToInsert].code == DWC_RIGHT) {
+                ScreenCharIsDWC_RIGHT(buffer[idx + potentialCharsToInsert])) {
                 // If we filled the line all the way out to WIDTH a DWC would be
                 // split. Wrap the DWC around to the next line.
 #ifdef VERBOSE_STRING
@@ -1056,7 +1063,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
             // there which may be affected.
             mayStompSplitDwc = (!useScrollRegionCols_ &&
                                 aLine[size_.width].code == EOL_DWC &&
-                                aLine[size_.width - 1].code == DWC_SKIP);
+                                ScreenCharIsDWC_SKIP(aLine[size_.width - 1]));
         } else if (!wraparound &&
                    rightMargin < size_.width &&
                    useScrollRegionCols_ &&
@@ -1078,7 +1085,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
 
         // Overwriting the second-half of a double-width character so turn the
         // DWC into a space.
-        if (aLine[cursor_.x].code == DWC_RIGHT) {
+        if (ScreenCharIsDWC_RIGHT(aLine[cursor_.x])) {
             [self eraseDWCRightOnLine:lineNumber x:cursor_.x externalAttributeIndex:eaIndex];
         }
 
@@ -1099,7 +1106,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
         if (wrapDwc) {
             [eaIndex eraseAt:cursor_.x + charsToInsert];
             if (cursor_.x + charsToInsert == size_.width - 1) {
-                aLine[cursor_.x + charsToInsert].code = DWC_SKIP;
+                ScreenCharSetDWC_SKIP(&aLine[cursor_.x + charsToInsert]);
             } else {
                 aLine[cursor_.x + charsToInsert].code = 0;
             }
@@ -1110,14 +1117,14 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
 
         // Overwrote some stuff that was already on the screen leaving behind the
         // second half of a DWC
-        if (cursor_.x < size_.width - 1 && aLine[cursor_.x].code == DWC_RIGHT) {
+        if (cursor_.x < size_.width - 1 && ScreenCharIsDWC_RIGHT(aLine[cursor_.x])) {
             [eaIndex eraseAt:cursor_.x];
             aLine[cursor_.x].code = 0;
             aLine[cursor_.x].complexChar = NO;
         }
 
         if (mayStompSplitDwc &&
-            aLine[size_.width - 1].code != DWC_SKIP &&
+            !ScreenCharIsDWC_SKIP(aLine[size_.width - 1]) &&
             aLine[size_.width].code == EOL_DWC) {
             // The line no longer ends in a DWC_SKIP, but the continuation mark is still EOL_DWC.
             // Change the continuation mark to EOL_SOFT since there's presumably still a DWC at the
@@ -1127,7 +1134,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
 
         // The next char in the buffer shouldn't be DWC_RIGHT because we
         // wouldn't have inserted its first half due to a check at the top.
-        assert(!(idx < len && buffer[idx].code == DWC_RIGHT));
+        assert(!(idx < len && ScreenCharIsDWC_RIGHT(buffer[idx]) ));
 
         // ANSI terminals will go to a new line after displaying a character at
         // the rightmost column.
@@ -1172,18 +1179,18 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     screen_char_t *src = aLine + cursorX;
     screen_char_t *dst = aLine + cursorX + amount;
     const int elements = rightMargin - cursorX - amount;
-    if (cursorX > 0 && src[0].code == DWC_RIGHT) {
+    if (cursorX > 0 && ScreenCharIsDWC_RIGHT(src[0])) {
         // The insert occurred in the middle of a DWC.
         src[-1].code = 0;
         src[-1].complexChar = NO;
         src[0].code = 0;
         src[0].complexChar = NO;
     }
-    if (src[elements].code == DWC_RIGHT) {
+    if (ScreenCharIsDWC_RIGHT(src[elements])) {
         // Moving a DWC on top of its right half. Erase the DWC.
         src[elements - 1].code = 0;
         src[elements - 1].complexChar = NO;
-    } else if (src[elements].code == DWC_SKIP &&
+    } else if (ScreenCharIsDWC_SKIP(src[elements]) &&
                aLine[size_.width].code == EOL_DWC) {
         // Stomping on a DWC_SKIP. Join the lines normally.
         aLine[size_.width] = [self defaultChar];
@@ -1268,7 +1275,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
             // Try to clean up DWC_SKIP+EOL_DWC pair, if needed.
             if (rightMargin == size_.width - 1 &&
-                aLine[rightMargin].code == DWC_SKIP) {
+                ScreenCharIsDWC_SKIP(aLine[rightMargin])) {
                 // Moving DWC_SKIP left will break it.
                 aLine[rightMargin] = aLine[rightMargin + 1];
                 aLine[rightMargin].complexChar = NO;
@@ -1494,11 +1501,11 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             dest[size_.width] = dest[size_.width - 1];
             dest[size_.width].code = EOL_HARD;
         }
-        if (charsToCopyPerLine < info.width && src[charsToCopyPerLine].code == DWC_RIGHT) {
+        if (charsToCopyPerLine < info.width && ScreenCharIsDWC_RIGHT(src[charsToCopyPerLine])) {
             dest[charsToCopyPerLine - 1].code = 0;
             dest[charsToCopyPerLine - 1].complexChar = NO;
         }
-        if (charsToCopyPerLine - 1 < info.width && src[charsToCopyPerLine - 1].code == TAB_FILLER) {
+        if (charsToCopyPerLine - 1 < info.width && ScreenCharIsTAB_FILLER(src[charsToCopyPerLine - 1])) {
             dest[charsToCopyPerLine - 1].code = '\t';
             dest[charsToCopyPerLine - 1].complexChar = NO;
         }
@@ -1541,11 +1548,11 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             } else if (p[x].code && !p[x].complexChar) {
                 if (p[x].code > 0 && p[x].code < 128) {
                     line[ox] = p[x].code;
-                } else if (p[x].code == DWC_RIGHT) {
+                } else if (ScreenCharIsDWC_RIGHT(p[x])) {
                     line[ox] = '-';
-                } else if (p[x].code == TAB_FILLER) {
+                } else if (ScreenCharIsTAB_FILLER(p[x])) {
                     line[ox] = ' ';
-                } else if (p[x].code == DWC_SKIP) {
+                } else if (ScreenCharIsDWC_SKIP(p[x])) {
                     line[ox] = '>';
                 } else {
                     line[ox] = '?';
@@ -1629,10 +1636,10 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC
             // was wrapped.
-            dest[size_.width - 1].code = DWC_SKIP;
+            ScreenCharSetDWC_SKIP(&dest[size_.width - 1]);
             cont = EOL_DWC;
         }
-        if (dest[1].code == DWC_RIGHT) {
+        if (ScreenCharIsDWC_RIGHT(dest[1])) {
             prevLineStartsWithDoubleWidth = YES;
         } else {
             prevLineStartsWithDoubleWidth = NO;
@@ -1640,7 +1647,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         dest[size_.width] = continuation;
         dest[size_.width].code = cont;
         if (cont == EOL_DWC) {
-            dest[size_.width - 1].code = DWC_SKIP;
+            ScreenCharSetDWC_SKIP(&dest[size_.width - 1]);
         }
         --destLineNumber;
     }
@@ -1727,8 +1734,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             char c = line[x].code;
             if (line[x].code == 0) c = '.';
             if (line[x].code > 127) c = '?';
-            if (line[x].code == DWC_RIGHT) c = '-';
-            if (line[x].code == DWC_SKIP) {
+            if (ScreenCharIsDWC_RIGHT(line[x])) c = '-';
+            if (ScreenCharIsDWC_SKIP(line[x])) {
                 assert(x == size_.width - 1);
                 c = '>';
             }
@@ -1753,8 +1760,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             char c = line[x].code;
             if (line[x].code == 0) c = '.';
             if (line[x].code > 127) c = '?';
-            if (line[x].code == DWC_RIGHT) c = '-';
-            if (line[x].code == DWC_SKIP) {
+            if (ScreenCharIsDWC_RIGHT(line[x])) c = '-';
+            if (ScreenCharIsDWC_SKIP(line[x])) {
                 assert(x == size_.width - 1);
                 c = '>';
             }
@@ -1778,8 +1785,8 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             char c = line[x].code;
             if (line[x].code == 0) c = '.';
             if (line[x].code > 127) c = '?';
-            if (line[x].code == DWC_RIGHT) c = '-';
-            if (line[x].code == DWC_SKIP) {
+            if (ScreenCharIsDWC_RIGHT(line[x])) c = '-';
+            if (ScreenCharIsDWC_SKIP(line[x])) {
                 assert(x == size_.width - 1);
                 c = '>';
             }
@@ -2263,7 +2270,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }
 
     screen_char_t *line = [self screenCharsAtLineNumber:cy];
-    if (line[cx].code == DWC_RIGHT) {
+    if (ScreenCharIsDWC_RIGHT(line[cx])) {
         if (cx > 0) {
             if (dwc) {
                 *dwc = YES;
@@ -2311,7 +2318,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
 - (BOOL)haveDoubleWidthExtensionAt:(VT100GridCoord)coord {
     screen_char_t sct = [self characterAt:coord];
-    return !sct.complexChar && (sct.code == DWC_RIGHT || sct.code == DWC_SKIP);
+    return !sct.complexChar && (ScreenCharIsDWC_RIGHT(sct) || ScreenCharIsDWC_SKIP(sct));
 }
 
 - (VT100GridCoord)successorOf:(VT100GridCoord)origin {
@@ -2350,7 +2357,7 @@ static void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *line = [self screenCharsAtLineNumber:lineNumber];
     if (line[size_.width].code == EOL_DWC) {
         line[size_.width].code = EOL_HARD;
-        if (line[size_.width - 1].code == DWC_SKIP) {  // This really should always be the case.
+        if (ScreenCharIsDWC_SKIP(line[size_.width - 1])) {  // This really should always be the case.
             line[size_.width - 1].code = 0;
             [self eraseExternalAttributesAt:VT100GridCoordMake(size_.width - 1, lineNumber)
                                       count:1];
@@ -2394,7 +2401,7 @@ static void DumpBuf(screen_char_t* p, int n) {
                                 startingAtOffset:(int)offset
                                         withChar:(screen_char_t)c {
     screen_char_t *aLine = [self screenCharsAtLineNumber:lineNumber];
-    if (offset >= 0 && offset < size_.width - 1 && aLine[offset + 1].code == DWC_RIGHT) {
+    if (offset >= 0 && offset < size_.width - 1 && ScreenCharIsDWC_RIGHT(aLine[offset + 1])) {
         aLine[offset] = c;
         aLine[offset + 1] = c;
         [self eraseExternalAttributesAt:VT100GridCoordMake(offset, lineNumber)

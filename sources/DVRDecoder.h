@@ -33,7 +33,7 @@
 @interface DVRDecoder : NSObject
 
 @property(nonatomic, readonly) long long timestamp;
-@property(nonatomic, readonly) BOOL needsMigration;
+@property(nonatomic, readonly) int migrateFromVersion;
 
 - (instancetype)initWithBuffer:(DVRBuffer*)buffer;
 

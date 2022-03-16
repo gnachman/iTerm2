@@ -145,6 +145,9 @@ private class ComplexCharRegistryImpl: NSObject {
     private(set) var spacingCombiningMarkCodeNumbers = Set<NSNumber>()
     private(set) var hasWrapped = false
 
+    // Limiting the maxKey to 0xf000 allows users to downgrade to older versions (3.5.0beta5 and
+    // earlier) that placed DWC_SKIP and friends in the private use area and didn't check for
+    // complexChar when testing for those special characters.
     private let maxKey = 0xf000
     private var _nextCode = 1
 
@@ -264,7 +267,9 @@ private class ComplexCharRegistryImpl: NSObject {
         complexCharMap[number] = string
         inverseComplexCharMap[string] = number
         if iTermAdvancedSettingsModel.restoreWindowContents() {
-            NSApp.invalidateRestorableState()
+            DispatchQueue.main.async {
+                NSApp.invalidateRestorableState()
+            }
         }
         return newCode
     }

@@ -586,9 +586,39 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
 
 @end
 
+@interface NSMutableData(ScreenCharMigration)
+- (void)migrateV2ToV3InPlace;
+@end
+
+@implementation NSMutableData(ScreenCharMigration)
+- (void)migrateV2ToV3InPlace {
+    screen_char_t *chars = (screen_char_t *)self.mutableBytes;
+    for (NSUInteger i = 0; i < self.length / sizeof(screen_char_t); i++) {
+        if (!chars[i].complexChar &&
+            !chars[i].image &&
+            chars[i].code >= ITERM2_LEGACY_PRIVATE_BEGIN &&
+            chars[i].code <= ITERM2_LEGACY_PRIVATE_END) {
+            chars[i].code = ITERM2_PRIVATE_BEGIN + (chars[i].code - ITERM2_LEGACY_PRIVATE_BEGIN);
+        }
+    }
+}
+@end
+
 @implementation NSData(iTermExternalAttributes)
 
-- (NSData *)modernizedScreenCharArray:(iTermExternalAttributeIndex **)indexOut {
+- (void)migrateV2ToV1:(NSMutableData *)modern {
+    screen_char_t *chars = (screen_char_t *)modern.mutableBytes;
+    for (NSUInteger i = 0; i < self.length / sizeof(screen_char_t); i++) {
+        if (!chars[i].complexChar &&
+            !chars[i].image &&
+            chars[i].code >= ITERM2_PRIVATE_BEGIN &&
+            chars[i].code <= ITERM2_PRIVATE_END) {
+            chars[i].code = ITERM2_LEGACY_PRIVATE_BEGIN + (chars[i].code - ITERM2_PRIVATE_BEGIN);
+        }
+    }
+}
+
+- (NSData *)migrateV1ToV3:(iTermExternalAttributeIndex **)indexOut {
     const legacy_screen_char_t *source = (legacy_screen_char_t *)self.bytes;
     const NSUInteger length = self.length;
     assert(length < NSUIntegerMax);
@@ -629,10 +659,17 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
             dest[i].urlCode = 0;
         }
     }
+    [modern migrateV2ToV3InPlace];
     if (indexOut) {
         *indexOut = eaIndex;
     }
     return modern;
+}
+
+- (NSMutableData *)migrateV2ToV3 {
+    NSMutableData *temp = [self mutableCopy];
+    [temp migrateV2ToV3InPlace];
+    return temp;
 }
 
 - (NSData *)legacyScreenCharArrayWithExternalAttributes:(iTermExternalAttributeIndex * _Nullable)eaIndex {
@@ -647,6 +684,7 @@ static NSString *const iTermExternalAttributeKeyURLCode = @"url";
     for (NSUInteger i = 0; i < count; i++) {
         dest[i].urlCode = eaIndex[i].urlCode;
     }
+    [self migrateV2ToV1:legacyData];
     return legacyData;
 }
 

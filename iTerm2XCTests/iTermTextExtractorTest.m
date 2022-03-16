@@ -377,8 +377,8 @@ static const NSInteger kUnicodeVersion = 9;
                         kUnicodeVersion);
     screen_char_t *buffer = data.mutableBytes;
     // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
-    buffer[1].code = 0xf001;
-    buffer[2].code = 0xf001;
+    buffer[1].code = TAB_FILLER;
+    buffer[2].code = TAB_FILLER;
     buffer[len].code = EOL_SOFT;
 
     _lines = @[ data ];
@@ -417,8 +417,8 @@ static const NSInteger kUnicodeVersion = 9;
                         kUnicodeVersion);
     screen_char_t *buffer = data.mutableBytes;
     // Turn replacement characters into tab fillers. StringToScreenChars removes private range codes.
-    buffer[2].code = 0xf001;
-    buffer[3].code = 0xf001;
+    buffer[2].code = TAB_FILLER;
+    buffer[3].code = TAB_FILLER;
     buffer[len].code = EOL_SOFT;
 
     _lines = @[ data ];

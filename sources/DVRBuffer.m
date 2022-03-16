@@ -114,7 +114,9 @@
         return NO;
     }
     memmove(store_, store.bytes, store.length);
-    _needsMigration = (version == 1);
+    if (version != 3) {
+        _migrateFromVersion = version;
+    }
     scratch_ = 0;
 
     NSDictionary *indexDict = dict[@"index"];

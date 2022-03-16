@@ -61,7 +61,8 @@
         return;
     }
 
-    NSArray<NSNumber *> *supportedVersions = @[ @1, @2, @3 ];
+    // This is the outer version. It is set in [-iTermRecordingCodec exportRecording:from:to:window:].
+    NSArray<NSNumber *> *supportedVersions = @[ @1, @2, @3, @4 ];
     if (![supportedVersions containsObject:dict[@"version"]]) {
         [iTermWarning showWarningWithTitle:@"This recording is from a newer version of iTerm2 and cannot be replayed in this version."
                                    actions:@[ @"OK" ]
@@ -104,7 +105,17 @@
                              makeSession:^(NSDictionary *profile, PseudoTerminal *windowController, void (^makeSessionCompletion)(PTYSession *)) {
         PTYSession *newSession = [[PTYSession alloc] initSynthetic:YES];
         newSession.profile = profile;
-        [newSession.screen.dvr loadDictionary:dvrDict];
+        if (![newSession.screen.dvr loadDictionary:dvrDict]) {
+            [iTermWarning showWarningWithTitle:@"The recording could not be loaded. It might be corrupted."
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:@"NoSyncCouldNotLoadRecording"
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"Error Loading Recording"
+                                        window:nil];
+            makeSessionCompletion(nil);
+            return;
+        }
         [windowController setupSession:newSession withSize:nil];
         dispatch_async(dispatch_get_main_queue(), ^{
             [windowController replaySession:newSession];
@@ -158,9 +169,10 @@
 
                     // Version 2 added per-line metadata.
                     // Version 3 moved URL codes into external attributes.
+                    // Version 4 changed the private use area for DWC_RIGHT and friends to 0x001.
                     NSDictionary *dict = @{ @"dvr": dvrDict,
                                             @"profile": profile,
-                                            @"version": @3 };
+                                            @"version": @4 };
 
                     NSData *dictData = [[NSData it_dataWithArchivedObject:dict] gzippedData];
                     NSError *error = nil;

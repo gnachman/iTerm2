@@ -37,30 +37,34 @@
 @class iTermImageInfo;
 @protocol iTermImageInfoReading;
 
+#define ITERM2_PRIVATE_BEGIN 0x0001
+#define ITERM2_PRIVATE_END 0x0004
+
 // This is used in the rightmost column when a double-width character would
 // have been split in half and was wrapped to the next line. It is nonprintable
 // and not selectable. It is not copied into the clipboard. A line ending in this
 // character should always have EOL_DWC. These are stripped when adding a line
 // to the scrollback buffer.
-#define DWC_SKIP 0xf000
+#define DWC_SKIP (ITERM2_PRIVATE_BEGIN + 0)
 
 // When a tab is received, we insert some number of TAB_FILLER characters
 // preceded by a \t character. This allows us to reconstruct the tab for
 // copy-pasting.
-#define TAB_FILLER 0xf001
+#define TAB_FILLER (ITERM2_PRIVATE_BEGIN + 1)
 
 // If DWC_SKIP appears in the input, we convert it to this to avoid causing confusion.
 // NOTE: I think this isn't used because DWC_SKIP is caught early and converted to a '?'.
-#define BOGUS_CHAR 0xf002
+#define BOGUS_CHAR (ITERM2_PRIVATE_BEGIN + 2)
 
 // Double-width characters have their "real" code in one cell and this code in
 // the right-hand cell.
-#define DWC_RIGHT 0xf003
+#define DWC_RIGHT (ITERM2_PRIVATE_BEGIN + 3)
 
 // The range of private codes we use, with specific instances defined
 // above here.
-#define ITERM2_PRIVATE_BEGIN 0xf000
-#define ITERM2_PRIVATE_END 0xf003
+#define ITERM2_LEGACY_PRIVATE_BEGIN 0xf000
+#define ITERM2_LEGACY_PRIVATE_END 0xf003
+
 
 // These codes go in the continuation character to the right of the
 // rightmost column.
@@ -529,3 +533,55 @@ void ScreenCharClearProvisionalFlagForImageWithCode(int code);
 
 NSString *ScreenCharDescription(screen_char_t c);
 void ScreenCharInvert(screen_char_t *c);
+
+NS_INLINE BOOL ScreenCharIsDWC_SKIP(screen_char_t c) {
+    if (c.complexChar) {
+        return NO;
+    }
+    if (c.image) {
+        return NO;
+    }
+    return c.code == DWC_SKIP;
+}
+
+NS_INLINE BOOL ScreenCharIsDWC_RIGHT(screen_char_t c) {
+    // These tests are arranged in order of most- to least-likely for performance.
+    if (c.code != DWC_RIGHT) {
+        return NO;
+    }
+    if (c.complexChar) {
+        return NO;
+    }
+    if (c.image) {
+        return NO;
+    }
+    return YES;
+}
+
+NS_INLINE BOOL ScreenCharIsTAB_FILLER(screen_char_t c) {
+    if (c.complexChar) {
+        return NO;
+    }
+    if (c.image) {
+        return NO;
+    }
+    return c.code == TAB_FILLER;
+}
+
+NS_INLINE void ScreenCharSetDWC_SKIP(screen_char_t *c) {
+    c->complexChar = NO;
+    c->image = NO;
+    c->code = DWC_SKIP;
+}
+
+NS_INLINE void ScreenCharSetTAB_FILLER(screen_char_t *c) {
+    c->complexChar = NO;
+    c->image = NO;
+    c->code = TAB_FILLER;
+}
+
+NS_INLINE void ScreenCharSetDWC_RIGHT(screen_char_t *c) {
+    c->complexChar = NO;
+    c->image = NO;
+    c->code = DWC_RIGHT;
+}

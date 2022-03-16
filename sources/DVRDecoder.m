@@ -95,8 +95,8 @@
     return NO;
 }
 
-- (BOOL)needsMigration {
-    return buffer_.needsMigration;
+- (int)migrateFromVersion {
+    return buffer_.migrateFromVersion;
 }
 
 - (char *)decodedFrame {

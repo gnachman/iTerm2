@@ -94,7 +94,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 
 @interface NSData(iTermExternalAttributes)
-- (NSData *)modernizedScreenCharArray:(iTermExternalAttributeIndex * _Nullable * _Nullable)indexOut;
+- (NSData *)migrateV1ToV3:(iTermExternalAttributeIndex * _Nullable * _Nonnull)indexOut;
+- (NSMutableData *)migrateV2ToV3;
 - (NSData *)legacyScreenCharArrayWithExternalAttributes:(iTermExternalAttributeIndex * _Nullable)eaIndex;
 @end
 

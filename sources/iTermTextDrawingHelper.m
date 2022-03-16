@@ -1259,7 +1259,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
     if (indexRange.location > 0) {
         screen_char_t firstCharacter = theLine[indexRange.location];
-        if (firstCharacter.code == DWC_RIGHT && !firstCharacter.complexChar) {
+        if (ScreenCharIsDWC_RIGHT(firstCharacter)) {
             // Don't try to start drawing in the middle of a double-width character.
             indexRange.location -= 1;
             indexRange.length += 1;
@@ -2576,7 +2576,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
             } else {
                 lastCharacterImpartsEmojiPresentation = [emojiWithDefaultEmojiPresentationCharacterSet longCharacterIsMember:base];
             }
-        } else {
+        } else if (!c.image) {
             charAsString = nil;
             if (lastCharacterImpartsEmojiPresentation && [emojiWithDefaultTextPresentation characterIsMember:code]) {
                 unichar chars[2] = { code, 0xfe0e };
@@ -2586,6 +2586,8 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
             } else if (code != DWC_RIGHT && code >= iTermMinimumDefaultEmojiPresentationCodePoint) {  // filter out small values for speed
                 lastCharacterImpartsEmojiPresentation = [emojiWithDefaultEmojiPresentationCharacterSet characterIsMember:code];
             }
+        } else {
+            charAsString = nil;
         }
 
         iTermExternalAttribute *ea = eaIndex[i];
@@ -2598,7 +2600,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                                                         ea.urlCode);
         predecessor = c;
         if (!drawable) {
-            if ((characterAttributes.drawable && c.code == DWC_RIGHT && !c.complexChar) ||
+            if ((characterAttributes.drawable && ScreenCharIsDWC_RIGHT(c)) ||
                 (i > indexRange.location && !memcmp(&c, &line[i - 1], sizeof(c)))) {
                 // This optimization short-circuits long runs of terminal nulls.
                 ++segmentLength;
@@ -3019,7 +3021,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                   remainingCharsInBuffer);
             int skipped = 0;
             if (charsInLine + i < len &&
-                buf[charsInLine + i].code == DWC_RIGHT) {
+                ScreenCharIsDWC_RIGHT(buf[charsInLine + i])) {
                 // If we actually drew 'charsInLine' chars then half of a
                 // double-width char would be drawn. Skip it and draw it on the
                 // next line.
@@ -3369,10 +3371,10 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
         screenChar.complexChar = NO;
     }
     if (screenChar.code) {
-        if (screenChar.code == DWC_RIGHT) {
-          *doubleWidth = NO;
+        if (ScreenCharIsDWC_RIGHT(screenChar)) {
+            *doubleWidth = NO;
         } else {
-          *doubleWidth = (column < width - 1) && (theLine[column+1].code == DWC_RIGHT);
+            *doubleWidth = (column < width - 1) && ScreenCharIsDWC_RIGHT(theLine[column+1]);
         }
     } else {
         *doubleWidth = NO;

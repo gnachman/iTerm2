@@ -454,7 +454,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
                                         continuation:&continuation];
         if (cont == EOL_SOFT &&
             theIndex == numLinesInLineBuffer - 1 &&
-            [self.currentGrid screenCharsAtLineNumber:0][1].code == DWC_RIGHT &&
+            ScreenCharIsDWC_RIGHT([self.currentGrid screenCharsAtLineNumber:0][1]) &&
             buffer[self.currentGrid.size.width - 1].code == 0) {
             // The last line in the scrollback buffer is actually a split DWC
             // if the first char on the screen is double-width and the buffer is soft-wrapped without
@@ -462,8 +462,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
             cont = EOL_DWC;
         }
         if (cont == EOL_DWC) {
-            buffer[self.currentGrid.size.width - 1].code = DWC_SKIP;
-            buffer[self.currentGrid.size.width - 1].complexChar = NO;
+            ScreenCharSetDWC_SKIP(&buffer[self.currentGrid.size.width - 1]);
         }
         buffer[self.currentGrid.size.width] = continuation;
         buffer[self.currentGrid.size.width].code = cont;
@@ -826,7 +825,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     const NSInteger numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
     if (line < numLinesInLineBuffer) {
         const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1 &&
-                                     [self.currentGrid screenCharsAtLineNumber:0][1].code == DWC_RIGHT);
+                                     ScreenCharIsDWC_RIGHT([self.currentGrid screenCharsAtLineNumber:0][1]));
         return [[self.linebuffer wrappedLineAtIndex:line width:self.width continuation:NULL] paddedToLength:self.width
                                                                                              eligibleForDWC:eligibleForDWC];
     }

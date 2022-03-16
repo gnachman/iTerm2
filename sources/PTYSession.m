@@ -10455,27 +10455,43 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                               height:info.height];
             }
         }
-        NSMutableData *data = [NSMutableData dataWithBytes:s length:len];
+        NSData *data = [NSData dataWithBytes:s length:len];
         NSMutableArray<NSArray *> *metadataArrays = [NSMutableArray mapIntegersFrom:0 to:info.height block:^id(NSInteger i) {
             NSData *data = [_dvrDecoder metadataForLine:i];
             return iTermMetadataArrayFromData(data) ?: @[];
         }];
 
-        if (_dvrDecoder.needsMigration) {
+        if (_dvrDecoder.migrateFromVersion > 0) {
             const int lineCount = (info.width + 1);
             NSMutableData *replacement = [NSMutableData data];
             for (int y = 0; y < info.height; y++) {
                 NSData *legacyData = [NSData dataWithBytes:s + lineCount * y
                                                     length:lineCount * sizeof(legacy_screen_char_t)];
-                iTermMetadata temp = { 0 };
-                iTermMetadataInitFromArray(&temp, metadataArrays[y]);
-                iTermMetadataAutorelease(temp);
-                iTermExternalAttributeIndex *originalIndex = iTermMetadataGetExternalAttributesIndex(temp);
-                iTermExternalAttributeIndex *eaIndex = originalIndex;
-                NSData *modernData = [legacyData modernizedScreenCharArray:&eaIndex];
-                if (!originalIndex && eaIndex) {
-                    iTermMetadataSetExternalAttributes(&temp, eaIndex);
-                    metadataArrays[y] = iTermMetadataEncodeToArray(temp);
+                NSData *modernData;
+                switch (_dvrDecoder.migrateFromVersion) {
+                    case 1: {
+                        iTermMetadata temp = { 0 };
+                        iTermMetadataInitFromArray(&temp, metadataArrays[y]);
+                        iTermMetadataAutorelease(temp);
+                        iTermExternalAttributeIndex *originalIndex = iTermMetadataGetExternalAttributesIndex(temp);
+                        iTermExternalAttributeIndex *eaIndex = originalIndex;
+                        modernData = [legacyData migrateV1ToV3:&eaIndex];
+                        if (!originalIndex && eaIndex) {
+                            iTermMetadataSetExternalAttributes(&temp, eaIndex);
+                            metadataArrays[y] = iTermMetadataEncodeToArray(temp);
+                        }
+                        break;
+                    }
+                    case 2:
+                        modernData = [legacyData migrateV2ToV3];
+                        break;
+                    case 3:
+                        modernData = legacyData;
+                        break;
+                    default:
+                        DLog(@"Unexpected source version %@", @(_dvrDecoder.migrateFromVersion));
+                        modernData = legacyData;
+                        break;
                 }
                 [replacement appendData:modernData];
             }

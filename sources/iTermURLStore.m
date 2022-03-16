@@ -55,7 +55,9 @@
 - (void)retainCode:(unsigned int)code {
     @synchronized (self) {
         _generation++;
-        [NSApp invalidateRestorableState];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [NSApp invalidateRestorableState];
+        });
         [_referenceCounts addObject:@(code)];
     }
 }
@@ -63,7 +65,9 @@
 - (void)releaseCode:(unsigned int)code {
     @synchronized (self) {
         _generation++;
-        [NSApp invalidateRestorableState];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [NSApp invalidateRestorableState];
+        });
         [_referenceCounts removeObject:@(code)];
         if (![_referenceCounts containsObject:@(code)]) {
             NSDictionary *dict = _reverseStore[@(code)];
@@ -105,7 +109,9 @@
         _store[key] = number;
         _reverseStore[number] = @{ @"url": url, @"params": params };
 
-        [NSApp invalidateRestorableState];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [NSApp invalidateRestorableState];
+        });
         _generation++;
         return number.unsignedIntValue;
     }

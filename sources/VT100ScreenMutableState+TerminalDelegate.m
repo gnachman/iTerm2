@@ -2090,7 +2090,7 @@
         if (self.lastCharacterIsDoubleWidth) {
             length++;
             chars[1] = self.lastCharacter;
-            chars[1].code = DWC_RIGHT;
+            ScreenCharSetDWC_RIGHT(&chars[1]);
             chars[1].complexChar = NO;
         }
 

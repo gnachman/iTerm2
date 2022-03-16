@@ -366,9 +366,7 @@ NS_INLINE BOOL iTermTextDrawingHelperIsCharacterDrawable(const screen_char_t *co
         return NO;
     }
     if (!c->complexChar) {
-        if (code == DWC_RIGHT ||
-            code == DWC_SKIP ||
-            code == TAB_FILLER ||
+        if ((code >= ITERM2_PRIVATE_BEGIN && code <= ITERM2_PRIVATE_END) ||
             code < ' ') {
             return NO;
         } else if (preferSpeedToFullLigatureSupport &&

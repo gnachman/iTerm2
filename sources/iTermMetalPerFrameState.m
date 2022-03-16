@@ -260,11 +260,11 @@ typedef struct {
             const screen_char_t *const line = (const screen_char_t *const)lineData.bytes;
             const screen_char_t screenChar = line[_cursorInfo.coord.x];
             if (screenChar.code) {
-                if (screenChar.code == DWC_RIGHT) {
+                if (ScreenCharIsDWC_RIGHT(screenChar)) {
                     _cursorInfo.doubleWidth = NO;
                 } else {
                     const int column = _cursorInfo.coord.x;
-                    _cursorInfo.doubleWidth = (column < _configuration->_gridSize.width - 1) && (line[column + 1].code == DWC_RIGHT);
+                    _cursorInfo.doubleWidth = (column < _configuration->_gridSize.width - 1) && ScreenCharIsDWC_RIGHT(line[column + 1]);
                 }
             } else {
                 _cursorInfo.doubleWidth = NO;
@@ -500,7 +500,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             
             if (i + 1 < len &&
                 coord.x == gridWidth -1 &&
-                buf[i+1].code == DWC_RIGHT &&
+                ScreenCharIsDWC_RIGHT(buf[i+1]) &&
                 !buf[i+1].complexChar) {
                 // Bump DWC to start of next line instead of splitting it
                 c.code = ' ';
@@ -702,11 +702,11 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         if (findMatches && !selected) {
             findMatch = CheckFindMatchAtIndex(findMatches, x);
         }
-        if (lastSelected && line[x].code == DWC_RIGHT && !line[x].complexChar) {
+        if (lastSelected && ScreenCharIsDWC_RIGHT(line[x])) {
             // If the left half of a DWC was selected, extend the selection to the right half.
             lastSelected = selected;
             selected = YES;
-        } else if (!lastSelected && selected && line[x].code == DWC_RIGHT && !line[x].complexChar) {
+        } else if (!lastSelected && selected && ScreenCharIsDWC_RIGHT(line[x])) {
             // If the right half of a DWC is selected but the left half is not, un-select the right half.
             lastSelected = YES;
             selected = NO;

@@ -61,7 +61,7 @@ typedef enum {
 @property(nonatomic, readonly, getter=isEmpty) BOOL empty;
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
 
-@property(nonatomic, readonly) BOOL needsMigration;
+@property(nonatomic, readonly) int migrateFromVersion;
 
 - (instancetype)initWithBufferCapacity:(long long)capacity;
 

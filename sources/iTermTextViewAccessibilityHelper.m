@@ -262,7 +262,7 @@
                     chars[o++] = [cs characterAtIndex:l];
                 }
             } else {
-                if (line[j].code >= 0xf000) {
+                if (line[j].code >= ITERM2_PRIVATE_BEGIN && line[j].code <= ITERM2_PRIVATE_END) {
                     // Don't output private range chars to accessibility.
                     chars[o++] = 0;
                 } else {
