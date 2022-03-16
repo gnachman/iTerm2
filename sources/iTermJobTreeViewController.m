@@ -196,20 +196,24 @@ static int gSignalsToList[] = {
 @property (nonatomic, copy) NSString *fullName;
 @property (nonatomic) pid_t pid;
 @property (nonatomic) BOOL known;
+@property (nonatomic, readonly) int depth;
 @end
 
 @implementation iTermJobProxy {
     NSString *_fullName;
 }
 
-- (instancetype)initWithProcessInfo:(iTermProcessInfo *)processInfo {
+- (instancetype)initWithProcessInfo:(iTermProcessInfo *)processInfo depth:(int)depth {
     self = [super init];
     if (self) {
+        _depth = depth;
         _pid = processInfo.processID;
         _name = [(processInfo.argv0 ?: processInfo.name) copy];
-        _children = [[processInfo.sortedChildren mapWithBlock:^id(iTermProcessInfo *anObject) {
-            return [[iTermJobProxy alloc] initWithProcessInfo:anObject];
-        }] mutableCopy];
+        if (depth < 50) {
+            _children = [[processInfo.sortedChildren mapWithBlock:^id(iTermProcessInfo *anObject) {
+                return [[iTermJobProxy alloc] initWithProcessInfo:anObject depth:depth + 1];
+            }] mutableCopy];
+        }
     }
     return self;
 }
@@ -358,7 +362,7 @@ static int gSignalsToList[] = {
         [_outlineView reloadData];
         return;
     }
-    iTermJobProxy *newRoot = [[iTermJobProxy alloc] initWithProcessInfo:info];
+    iTermJobProxy *newRoot = [[iTermJobProxy alloc] initWithProcessInfo:info depth:0];
     if (!_root) {
         _root = newRoot;
         DLog(@"reloadData");

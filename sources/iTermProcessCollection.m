@@ -10,6 +10,7 @@
 #import "iTermProcessCollection.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSStringITerm.h"
 
 @interface iTermProcessInfoLock : NSObject
 @end
@@ -54,6 +55,26 @@
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p pid=%@ name=%@ children.count=%@ haveDeepest=%@ isFg=%@>",
             self.class, self, @(self.processID), _name, @(_childProcessIDs.count), @(_haveDeepestForegroundJob), _isForegroundJob];
+}
+
+- (NSString *)recursiveDescription {
+    return [self recursiveDescription:0];
+}
+
+- (NSString *)recursiveDescription:(int)depth {
+    if (depth == 100) {
+        return @"Truncated at 100 levels";
+    }
+    NSString *me = [NSString stringWithFormat:@"%@%@ %@",
+            [@"  " stringRepeatedTimes:depth],
+            @(_processID), _name];
+    if (!self.children.count) {
+        return me;
+    }
+    NSArray<NSString *> *childStrings = [self.children mapWithBlock:^id _Nonnull(iTermProcessInfo * _Nonnull child) {
+        return [child recursiveDescription:depth + 1];
+    }];
+    return [[@[ me ] arrayByAddingObjectsFromArray:childStrings] componentsJoinedByString:@"\n"];
 }
 
 - (BOOL)isEqual:(id)object {

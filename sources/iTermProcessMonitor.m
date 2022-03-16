@@ -32,10 +32,18 @@
 }
 
 - (BOOL)setProcessInfo:(iTermProcessInfo *)processInfo {
+    return [self setProcessInfo:processInfo depth:0];
+}
+
+- (BOOL)setProcessInfo:(iTermProcessInfo *)processInfo depth:(NSInteger)depth {
     if (![iTermAdvancedSettingsModel fastForegroundJobUpdates]) {
         return NO;
     }
     if (processInfo == _processInfo) {
+        return NO;
+    }
+    if (depth > 50) {
+        // Avoid running out of stack for really tall process trees like fork bombs.
         return NO;
     }
     if (processInfo == nil) {
@@ -77,7 +85,7 @@
         if (child != nil) {
             // It is. Keep it.
             [childrenToRemove removeObject:child];
-            if ([child setProcessInfo:childInfo]) {
+            if ([child setProcessInfo:childInfo depth:depth + 1]) {
                 changed = YES;
             }
             return;
@@ -85,7 +93,7 @@
 
         // Create a new one.
         child = [[iTermProcessMonitor alloc] initWithQueue:_queue callback:_callback];;
-        child.processInfo = childInfo;
+        [child setProcessInfo:childInfo depth:depth + 1];
         [childrenToAdd addObject:child];
     }];
     [childrenToAdd enumerateObjectsUsingBlock:^(iTermProcessMonitor * _Nonnull child, NSUInteger idx, BOOL * _Nonnull stop) {
