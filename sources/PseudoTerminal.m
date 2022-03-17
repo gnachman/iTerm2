@@ -431,6 +431,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     NSSize _previousScreenSize;
     CGFloat _previousScreenScaleFactor;
+
+    NSTimeInterval _creationTime;
 }
 
 @synthesize scope = _scope;
@@ -540,6 +542,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                      screen:(int)screenNumber
                            hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                                     profile:(Profile *)profile {
+    _creationTime = [NSDate it_timeSinceBoot];
     const iTermWindowType windowType = iTermThemedWindowType(unsafeWindowType);
     iTermWindowType savedWindowType = iTermThemedWindowType(unsafeSavedWindowType);
     DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d hotkeyWindowType:%@ ",
@@ -4797,7 +4800,11 @@ ITERM_WEAKLY_REFERENCEABLE
     const NSTimeInterval timeSinceLastResize =
         [NSDate timeIntervalSinceReferenceDate] - self.timeOfLastResize;
     static const NSTimeInterval kTimeToPreserveTemporaryTitle = 0.7;
-    return timeSinceLastResize < kTimeToPreserveTemporaryTitle;
+    return timeSinceLastResize < kTimeToPreserveTemporaryTitle && [self age] > 1;
+}
+
+- (NSTimeInterval)age {
+    return [NSDate it_timeSinceBoot] - _creationTime;
 }
 
 // This takes care of updating the metal state
