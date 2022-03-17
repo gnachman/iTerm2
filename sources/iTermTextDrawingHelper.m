@@ -808,28 +808,37 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                cellSizeWithoutSpacing:(CGSize)cellSizeWithoutSpacing
                                 scale:(CGFloat)scale {
     const CGFloat verticalSpacing = MAX(0, scale * round((cellSize.height / scale - cellSizeWithoutSpacing.height / scale) / 2.0));
+    DLog(@"verticalSpacing=%@", @(verticalSpacing));
     CGRect rect = NSMakeRect(container.origin.x,
                              container.origin.y + verticalSpacing,
                              container.size.width,
                              cellSizeWithoutSpacing.height);
+    DLog(@"container=%@ rect=%@", NSStringFromRect(container), NSStringFromRect(rect));
     const CGFloat kMaxHeight = 15 * scale;
     const CGFloat kMinMargin = 3 * scale;
     const CGFloat kMargin = MAX(kMinMargin, (cellSizeWithoutSpacing.height - kMaxHeight) / 2.0);
     const CGFloat kMaxMargin = 4 * scale;
-    
+    DLog(@"kMargin=%@, kMaxMargin=%@", @(kMargin), @(kMaxMargin));
+
     const CGFloat overage = rect.size.width - rect.size.height + 2 * kMargin;
+    DLog(@"overage=%@", @(overage));
     if (overage > 0) {
         rect.origin.x += MAX(0, overage - kMaxMargin);
         rect.size.width -= overage;
+        DLog(@"Subtract overage, leaving rect of %@", NSStringFromRect(rect));
     }
 
     rect.origin.y += kMargin;
     rect.size.height -= kMargin;
 
+    DLog(@"Adjust origin and height giving %@", NSStringFromRect(rect));
+
     // Bump the bottom up by as much as 3 points.
     rect.size.height -= MAX(3 * scale, (cellSizeWithoutSpacing.height - 15 * scale) / 2.0);
+    DLog(@"Bump bottom leaving %@", NSStringFromRect(rect));
     rect.size.width = MAX(scale, rect.size.width);
     rect.size.height = MAX(scale, rect.size.height);
+    DLog(@"Clamp size leaving %@", NSStringFromRect(rect));
     return rect;
 }
 

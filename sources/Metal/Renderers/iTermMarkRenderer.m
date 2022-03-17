@@ -1,5 +1,6 @@
 #import "iTermMarkRenderer.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
 #import "iTermTextDrawingHelper.h"
@@ -100,28 +101,37 @@
 }
 
 - (void)initializeTransientState:(iTermMarkRendererTransientState *)tState {
+    DLog(@"Initialize transient state");
     const CGFloat scale = tState.configuration.scale;
 
+    DLog(@"Side margin size is %@, scale is %@, cell size is %@, cell size without spacing is %@",
+         @([iTermPreferences intForKey:kPreferenceKeySideMargins]),
+         @(scale),
+         NSStringFromSize(tState.cellConfiguration.cellSize),
+         NSStringFromSize(tState.cellConfiguration.cellSizeWithoutSpacing));
     CGRect leftMarginRect = CGRectMake(1,
                                        0,
                                        ([iTermPreferences intForKey:kPreferenceKeySideMargins] - 1) * scale,
                                        tState.cellConfiguration.cellSize.height);
+    DLog(@"leftMarginRect=%@", NSStringFromRect(leftMarginRect));
     CGRect markRect = [iTermTextDrawingHelper frameForMarkContainedInRect:leftMarginRect
                                                                  cellSize:tState.cellConfiguration.cellSize
                                                    cellSizeWithoutSpacing:tState.cellConfiguration.cellSizeWithoutSpacing
                                                                     scale:scale];
+    DLog(@"markRect=%@, _markSize=%@", NSStringFromRect(markRect), NSStringFromSize(_markSize));
+
     if (!CGSizeEqualToSize(markRect.size, _markSize) || ![NSObject object:tState.configuration.colorSpace isEqualToObject:_colorSpace]) {
-        // Mark size or colorspace has changed
+        DLog(@"Mark size or colorspace has changed");
         _markSize = markRect.size;
         _colorSpace = tState.configuration.colorSpace;
         if (_markSize.width > 0 && _markSize.height > 0) {
+            DLog(@"Size is positive, make images of size %@", NSStringFromSize(_markSize));
             NSColor *successColor = [iTermTextDrawingHelper successMarkColor];
             NSColor *otherColor = [iTermTextDrawingHelper otherMarkColor];
             NSColor *failureColor = [iTermTextDrawingHelper errorMarkColor];
             NSImage *successImage = [self newImageWithMarkOfColor:successColor size:_markSize];
             NSImage *failureImage = [self newImageWithMarkOfColor:failureColor size:_markSize];
             NSImage *otherImage = [self newImageWithMarkOfColor:otherColor size:_markSize];
-
             _marksArrayTexture = [[iTermTextureArray alloc] initWithImages:@[successImage,
                                                                              failureImage,
                                                                              otherImage]
@@ -154,6 +164,7 @@
                                            0,
                                            tState.markSize.width,
                                            tState.markSize.height);
+    DLog(@"Using texture frame of %@", NSStringFromRect(textureFrame));
     const iTermVertex vertices[] = {
         // Pixel Positions                              Texture Coordinates
         { { CGRectGetMaxX(quad), CGRectGetMinY(quad) }, { CGRectGetMaxX(textureFrame), CGRectGetMaxY(textureFrame) } },

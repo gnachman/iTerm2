@@ -24,7 +24,9 @@
 }
 
 - (instancetype)initWithImages:(NSArray<NSImage *> *)images device:(id <MTLDevice>)device {
+    DLog(@"Initialize with images: %@", images);
     if (images.count == 0) {
+        DLog(@"0 images");
         return nil;
     }
     MTKTextureLoader *loader = [[MTKTextureLoader alloc] initWithDevice:device];
@@ -38,6 +40,7 @@
             NSError *error = nil;
             id<MTLTexture> texture = [loader newTextureWithCGImage:image.CGImage options:options error:&error];
             if (texture) {
+                DLog(@"Against all odds, MTKTextureLoader succeeded producing %@ from %@", texture, image.CGImage);
                 return texture;
             }
             DLog(@"%@", error);
@@ -47,13 +50,17 @@
         // -[NSImage lockFocus] (macOS 12, 2021 mbp, pro display xdr as main display). Work around
         // apple's bug.
         {
+            DLog(@"Doing it myself");
             NSBitmapImageRep *bitmap = [[image it_bitmapImageRep] it_bitmapWithAlphaLast];
+            DLog(@"bitmap=%@ width=%@ height=%@", bitmap, @(bitmap.pixelsWide), @(bitmap.pixelsHigh));
             MTLTextureDescriptor *textureDescriptor =
             [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:[bitmap metalPixelFormat]
                                                                width:bitmap.pixelsWide
                                                               height:bitmap.pixelsHigh
                                                            mipmapped:NO];
+            DLog(@"textureDescriptor=%@", textureDescriptor);
             id<MTLTexture> texture = [device newTextureWithDescriptor:textureDescriptor];
+            DLog(@"texture=%@", texture);
             MTLRegion region = MTLRegionMake2D(0, 0, bitmap.pixelsWide, bitmap.pixelsHigh);
             const NSUInteger bytesPerRow = bitmap.bytesPerRow;
             [texture replaceRegion:region mipmapLevel:0 withBytes:bitmap.bitmapData bytesPerRow:bytesPerRow];
@@ -61,14 +68,17 @@
         }
     }];
     if (textures.count != images.count) {
+        DLog(@"Fail, wrong number of textures");
         return nil;
     }
 
+    DLog(@"First texture's size is %@x%@", @(textures[0].width), @(textures[0].height));
     self = [self initWithTextureWidth:textures[0].width
                         textureHeight:textures[0].height
                           arrayLength:images.count
                           pixelFormat:textures[0].pixelFormat
                                device:device];
+    DLog(@"self=%@", self);
     if (self) {
         [textures enumerateObjectsUsingBlock:^(id<MTLTexture> texture, NSUInteger idx, BOOL * _Nonnull stop) {
             [self setSlice:idx texture:texture];
