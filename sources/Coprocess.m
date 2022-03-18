@@ -9,6 +9,7 @@
 #import "Coprocess.h"
 
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 
 const int kMaxInputBufferSize = 1024;
 const int kMaxOutputBufferSize = 1024;
@@ -63,13 +64,15 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
 }
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
-                                     cookie:(NSString *)cookie {
+                                environment:(NSDictionary<NSString *, NSString *> *)environment {
     const char **replacementEnvironment = NULL;
-    if (cookie) {
-        NSMutableDictionary *environment = [[[NSProcessInfo processInfo] environment] mutableCopy];
-        environment[@"ITERM2_COOKIE"] = [cookie copy];
-        NSArray<NSString *> *kvps = [environment.allKeys mapWithBlock:^id _Nonnull(id  _Nonnull key) {
-            return [NSString stringWithFormat:@"%@=%@", key, environment[key]];
+    if (environment) {
+        NSMutableDictionary *combined = [[[NSProcessInfo processInfo] environment] mutableCopy];
+        [environment enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
+            combined[key] = obj;
+        }];
+        NSArray<NSString *> *kvps = [combined.allKeys mapWithBlock:^id _Nonnull(id  _Nonnull key) {
+            return [NSString stringWithFormat:@"%@=%@", key, combined[key]];
         }];
         replacementEnvironment = [kvps nullTerminatedCStringArray];
     }

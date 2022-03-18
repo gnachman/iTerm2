@@ -30,7 +30,7 @@
 @property(nonatomic, readonly) NSString *command;
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
-                                     cookie:(NSString *)cookie;
+                                environment:(NSDictionary<NSString *, NSString *> *)environment;
 
 + (NSArray *)mostRecentlyUsedCommands;
 + (void)setSilentlyIgnoreErrors:(BOOL)shouldIgnore fromCommand:(NSString *)command;

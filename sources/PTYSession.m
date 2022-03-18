@@ -2257,10 +2257,9 @@ ITERM_WEAKLY_REFERENCEABLE
     completion([@[ program ] arrayByAddingObjectsFromArray:arguments ]);
 }
 
-- (void)computeEnvironmentForNewJobFromEnvironment:(NSDictionary *)environment
-                                     substitutions:(NSDictionary *)substitutions
-                                        completion:(void (^)(NSDictionary *env))completion {
-    DLog(@"computeEnvironmentForNewJobFromEnvironment:%@ substitutions:%@",
+- (NSDictionary *)environmentForNewJobFromEnvironment:(NSDictionary *)environment
+                                        substitutions:(NSDictionary *)substitutions {
+    DLog(@"environmentForNewJobFromEnvironment:%@ substitutions:%@",
          environment, substitutions);
     NSMutableDictionary *env = [[environment mutableCopy] autorelease];
     if (env[TERM_ENVNAME] == nil) {
@@ -2328,7 +2327,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_profile[KEY_NAME]) {
         env[@"ITERM_PROFILE"] = [_profile[KEY_NAME] stringByPerformingSubstitutions:substitutions];
     }
-    completion(env);
+    return env;
 }
 
 - (NSString *)customTerminfoDir {
@@ -2363,42 +2362,41 @@ ITERM_WEAKLY_REFERENCEABLE
     self.substitutions = substitutions ?: @{};
     [self computeArgvForCommand:command substitutions:substitutions completion:^(NSArray<NSString *> *argv) {
         DLog(@"argv=%@", argv);
-        [self computeEnvironmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions completion:^(NSDictionary *env) {
-            [self fetchAutoLogFilenameWithCompletion:^(NSString * _Nonnull autoLogFilename) {
-                [_logging stop];
-                [_logging autorelease];
-                _logging = nil;
-                [[self loggingHelper] setPath:autoLogFilename
-                                      enabled:autoLogFilename != nil
-                                        style:iTermLoggingStyleFromUserDefaultsValue([iTermProfilePreferences unsignedIntegerForKey:KEY_LOGGING_STYLE
-                                                                                                                          inProfile:self.profile])
-                            asciicastMetadata:[self asciicastMetadata]
-                                       append:nil];
-                if (env[PWD_ENVNAME] && arrangementName && _arrangementGUID) {
-                    __weak __typeof(self) weakSelf = self;
-                    [[iTermSlowOperationGateway sharedInstance] checkIfDirectoryExists:env[PWD_ENVNAME]
-                                                                            completion:^(BOOL exists) {
-                        if (exists) {
-                            return;
-                        }
-                        [weakSelf arrangementWithName:arrangementName
-                                            hasBadPWD:env[PWD_ENVNAME]];
-                    }];
-                }
-                [_shell launchWithPath:argv[0]
-                             arguments:[argv subarrayFromIndex:1]
-                           environment:env
-                           customShell:customShell
-                              gridSize:_screen.size
-                              viewSize:_screen.viewSize
-                      maybeScaleFactor:_textview.window.backingScaleFactor
-                                isUTF8:isUTF8
-                            completion:^{
-                    [self sendInitialText];
-                    if (completion) {
-                        completion(YES);
+        NSDictionary *env = [self environmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions];
+        [self fetchAutoLogFilenameWithCompletion:^(NSString * _Nonnull autoLogFilename) {
+            [_logging stop];
+            [_logging autorelease];
+            _logging = nil;
+            [[self loggingHelper] setPath:autoLogFilename
+                                  enabled:autoLogFilename != nil
+                                    style:iTermLoggingStyleFromUserDefaultsValue([iTermProfilePreferences unsignedIntegerForKey:KEY_LOGGING_STYLE
+                                                                                                                      inProfile:self.profile])
+                        asciicastMetadata:[self asciicastMetadata]
+                                   append:nil];
+            if (env[PWD_ENVNAME] && arrangementName && _arrangementGUID) {
+                __weak __typeof(self) weakSelf = self;
+                [[iTermSlowOperationGateway sharedInstance] checkIfDirectoryExists:env[PWD_ENVNAME]
+                                                                        completion:^(BOOL exists) {
+                    if (exists) {
+                        return;
                     }
+                    [weakSelf arrangementWithName:arrangementName
+                                        hasBadPWD:env[PWD_ENVNAME]];
                 }];
+            }
+            [_shell launchWithPath:argv[0]
+                         arguments:[argv subarrayFromIndex:1]
+                       environment:env
+                       customShell:customShell
+                          gridSize:_screen.size
+                          viewSize:_screen.viewSize
+                  maybeScaleFactor:_textview.window.backingScaleFactor
+                            isUTF8:isUTF8
+                        completion:^{
+                [self sendInitialText];
+                if (completion) {
+                    completion(YES);
+                }
             }];
         }];
     }];
@@ -6495,7 +6493,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute {
     DLog(@"Launch coprocess with command %@. Mute=%@", command, @(mute));
     Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command
-                                                            cookie:[[iTermWebSocketCookieJar sharedInstance] randomStringForCookie]];
+                                                       environment:[self environmentForNewJobFromEnvironment:self.environment
+                                                                                               substitutions:self.substitutions]];
     coprocess.delegate = self.weakSelf;
     coprocess.mute = mute;
     [_shell setCoprocess:coprocess];
