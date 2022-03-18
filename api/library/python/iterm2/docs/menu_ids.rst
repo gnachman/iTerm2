@@ -41,6 +41,7 @@ Shell > Split Horizontally with Current Profile                                 
 Shell > Split Vertically with Current Profile                                           `Split Vertically with Current Profile`                                       
 Shell > Split Horizontally…                                                             `Split Horizontally…`                                                         
 Shell > Split Vertically…                                                               `Split Vertically…`                                                           
+Shell > Save Contents…                                                                  `Log.SaveContents`                                                            
 Shell > Save Selected Text…                                                             `Save Selected Text…`                                                         
 Shell > Close                                                                           `Close`                                                                       
 Shell > Close Terminal Window                                                           `Close Terminal Window`                                                       
@@ -94,6 +95,7 @@ Edit > Find > Use Selection for Find                                            
 Edit > Find > Find Globally...                                                          `Find.Find Globally...`                                                       
 Edit > Find > Find URLs                                                                 `Find.Find URLs`                                                              
 Edit > Find > Filter                                                                    `Find.Filter`                                                                 
+Edit > Find > Convert Matches to Selections                                             `Find.ConvertMatchesToSelections`                                             
 Edit > Marks and Annotations > Set Mark                                                 `Marks and Annotations.Set Mark`                                              
 Edit > Marks and Annotations > Jump to Mark                                             `Marks and Annotations.Jump to Mark`                                          
 Edit > Marks and Annotations > Next Mark                                                `Marks and Annotations.Next Mark`                                             
@@ -111,14 +113,15 @@ Edit > Clear to Last Mark                                                       
 View > Show Tabs in Fullscreen                                                          `Show Tabs in Fullscreen`                                                     
 View > Toggle Full Screen                                                               `Toggle Full Screen`                                                          
 View > Use Transparency                                                                 `Use Transparency`                                                            
+View > Disable Transparency for Active Window                                           `Disable Transparency for Active Window`                                      
 View > Zoom In on Selection                                                             `Zoom In on Selection`                                                        
 View > Zoom Out                                                                         `Zoom Out`                                                                    
 View > Find Cursor                                                                      `Find Cursor`                                                                 
 View > Show Cursor Guide                                                                `Show Cursor Guide`                                                           
 View > Show Timestamps                                                                  `Show Timestamps`                                                             
 View > Show Annotations                                                                 `Show Annotations`                                                            
+View > Show Composer                                                                    `Composer`                                                                    
 View > Auto Command Completion                                                          `Auto Command Completion`                                                     
-View > Composer                                                                         `Composer`                                                                    
 View > Open Quickly                                                                     `Open Quickly`                                                                
 View > Maximize Active Pane                                                             `Maximize Active Pane`                                                        
 View > Make Text Bigger                                                                 `Make Text Bigger`                                                            
@@ -145,7 +148,6 @@ Session > Reset Character Set                                                   
 Session > Log > Log to File                                                             `Log.Toggle`                                                                  
 Session > Log > Import Recording                                                        `Log.ImportRecording`                                                         
 Session > Log > Export Recording                                                        `Log.ExportRecording`                                                         
-Session > Log > Save Contents…                                                          `Log.SaveContents`                                                            
 Session > Terminal State > Alternate Screen                                             `Alternate Screen`                                                            
 Session > Terminal State > Focus Reporting                                              `Focus Reporting`                                                             
 Session > Terminal State > Mouse Reporting                                              `Mouse Reporting`                                                             
