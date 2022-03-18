@@ -30,6 +30,7 @@ NSString *iTermSmartSelectionActionContextKeyRemoteHost = @"remoteHost";
     IBOutlet NSTableColumn *_actionColumn;
     IBOutlet NSTableColumn *_parameterColumn;
     IBOutlet NSButton *_useInterpolatedStringsButton;
+    IBOutlet NSTextField *_parameterInfoTextField;
     NSMutableArray *_model;
 }
 
@@ -135,12 +136,21 @@ NSString *iTermSmartSelectionActionContextKeyRemoteHost = @"remoteHost";
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/documentation-smart-selection.html"]];
 }
 
-- (IBAction)toggleUseInterpolatedStrings:(id)sender {
-    self.useInterpolatedStrings = !self.useInterpolatedStrings;
+- (IBAction)didToggleUseInterpolatedStrings:(id)sender {
+    [self updateHelpText];
 }
 
 - (void)setUseInterpolatedStrings:(BOOL)useInterpolatedStrings {
     _useInterpolatedStringsButton.state = useInterpolatedStrings ? NSControlStateValueOn : NSControlStateValueOff;
+    [self updateHelpText];
+}
+
+- (void)updateHelpText {
+    if (_useInterpolatedStringsButton.state == NSControlStateValueOn) {
+        _parameterInfoTextField.stringValue = @"In “parameter,” use \\(matches[i]) where i=0 for the entire match and i>0 for capture groups.";
+    } else {
+        _parameterInfoTextField.stringValue = @"In “parameter,” use \\0 for match, \\1…\\9 for match groups, \\d for directory, \\u for user, \\h for host.";
+    }
 }
 
 - (BOOL)useInterpolatedStrings {
