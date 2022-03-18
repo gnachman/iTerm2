@@ -21,6 +21,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSJSONSerialization+iTerm.h"
 #import "PreferencePanel.h"
+#import "Trigger.h"
 
 #define PROFILE_BLOCK(x) [^id(Profile *profile) { return [self x:profile]; } copy]
 
@@ -166,6 +167,12 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     id value = [self objectForKey:key inProfile:profile];
     if (!value) {
         return nil;
+    }
+    if ([key isEqual:KEY_TRIGGERS] && [value isKindOfClass:[NSArray class]]) {
+        NSArray<NSDictionary *> *dicts = value;
+        value = [dicts mapWithBlock:^NSDictionary *_Nonnull(NSDictionary *_Nonnull dict) {
+            return [Trigger sanitizedTriggerDictionary:dict];
+        }];
     }
     return [NSJSONSerialization it_jsonStringForObject:value];
 }

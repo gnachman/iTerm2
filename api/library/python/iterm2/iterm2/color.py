@@ -1,6 +1,10 @@
 """Shared classes for representing color and related concepts."""
 
-import AppKit
+try:
+    import AppKit
+    gAppKitAvailable = True
+except:
+    gAppKitAvailable = False
 import base64
 import enum
 import json
@@ -62,9 +66,9 @@ class Color:
             green = int(s[3:5], 16)
             blue = int(s[5:7], 16)
         elif len(s) == 13:
-            red = int(s[1:5], 16) / 257
-            green = int(s[5:9], 16) / 257
-            blue = int(s[9:13], 16) / 257
+            red = int(s[1:5], 16) // 257
+            green = int(s[5:9], 16) // 257
+            blue = int(s[9:13], 16) // 257
         else:
             return None
         return Color(red, green, blue, 255)
@@ -72,6 +76,8 @@ class Color:
     @staticmethod
     def from_cocoa(b: str) -> typing.Optional['Color']:
         """Decodes a NSKeyedArchiver-encoded color."""
+        if not gAppKitAvailable:
+            raise MissingDependency("Colors cannot be parsed unless the pyobjc package is installed")
         data = base64.b64decode(b)
         nscolor = AppKit.NSColor.alloc().initWithCoder_(AppKit.NSKeyedUnarchiver.alloc().initForReadingWithData_(data))
         return Color(
@@ -83,6 +89,8 @@ class Color:
     @staticmethod
     def from_legacy_trigger(s: str) -> ('Color', 'Color'):
         i = int(str)
+        if not gAppKitAvailable:
+            raise MissingDependency("Colors cannot be parsed unless the pyobjc package is installed")
 
         black = AppKit.NSColor.blackColor
         blue = AppKit.NSColor.blueColor

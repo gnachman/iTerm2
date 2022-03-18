@@ -193,8 +193,22 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
     return [NSString stringWithFormat:@"(%.2f, %.2f, %.2f)",
             self.redComponent, self.greenComponent, self.blueComponent];
 }
+
++ (NSColor *)colorPreservingColorspaceFromString:(NSString *)s {
+    if ([s hasPrefix:@"#"] && (s.length == 7 || s.length == 13)) {
+        return [[self colorFromHexString:s] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    }
+    if ([s hasPrefix:@"p3#"] && (s.length == 9 || s.length == 15)) {
+        return [[self colorFromHexString:s] colorUsingColorSpace:[NSColorSpace displayP3ColorSpace]];
+    }
+    return [self colorWithString:s];
+}
+
 + (NSColor *)colorWithString:(NSString *)s {
     if ([s hasPrefix:@"#"] && (s.length == 7 || s.length == 13)) {
+        return [self colorFromHexString:s];
+    }
+    if ([s hasPrefix:@"p3#"] && (s.length == 9 || s.length == 15)) {
         return [self colorFromHexString:s];
     }
     NSData *data = [[[NSData alloc] initWithBase64EncodedString:s options:0] autorelease];
@@ -440,6 +454,25 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
     return [self srgbDictionaryValue];
 }
 
+- (NSDictionary *)dictionaryValuePreservingColorSpace {
+    NSString *colorSpace;
+    if ([[self colorSpace] isEqual:[NSColorSpace sRGBColorSpace]]) {
+        colorSpace = kEncodedColorDictionarySRGBColorSpace;
+    } else if ([[self colorSpace] isEqual:[NSColorSpace displayP3ColorSpace]]) {
+        colorSpace = kEncodedColorDictionaryP3ColorSpace;
+    } else {
+        DLog(@"Assume %@ is calibrated", self.colorSpace);
+        colorSpace = kEncodedColorDictionaryCalibratedColorSpace;
+    }
+    CGFloat red, green, blue, alpha;
+    [self getRed:&red green:&green blue:&blue alpha:&alpha];
+    return @{ kEncodedColorDictionaryColorSpace: colorSpace,
+              kEncodedColorDictionaryRedComponent: @(red),
+              kEncodedColorDictionaryGreenComponent: @(green),
+              kEncodedColorDictionaryBlueComponent: @(blue),
+              kEncodedColorDictionaryAlphaComponent: @(alpha) };
+}
+
 - (NSDictionary *)srgbDictionaryValue {
     NSColor *color = [self colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
     CGFloat red, green, blue, alpha;
@@ -465,8 +498,13 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
     return [NSColor colorWithColorSpace:self.colorSpace components:x count:4];
 }
 
+// Also update +colorFromHexString: when adding colorspaces here.
 - (NSString *)hexString {
     NSDictionary *dict = [self dictionaryValue];
+    return [NSColor hexStringForDictionary:dict];
+}
+
++ (NSString *)hexStringForDictionary:(NSDictionary *)dict {
     if ([dict[kEncodedColorDictionaryColorSpace] isEqual:kEncodedColorDictionaryP3ColorSpace]) {
         int red = round([dict[kEncodedColorDictionaryRedComponent] doubleValue] * 65535);
         int green = round([dict[kEncodedColorDictionaryGreenComponent] doubleValue] * 65535);
@@ -487,6 +525,12 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
     return [NSString stringWithFormat:@"#%02x%02x%02x", red, green, blue];
 }
 
+- (NSString *)hexStringPreservingColorSpace {
+    NSDictionary *dict = [self dictionaryValuePreservingColorSpace];
+    return [NSColor hexStringForDictionary:dict];
+}
+
+// Also update +colorWithString: when adding colorspaces here.
 + (instancetype)colorFromHexString:(NSString *)fullString {
     NSString *hexString = fullString;
     BOOL p3 = NO;

@@ -42,6 +42,13 @@ NSString * const kTriggerDisabledKey = @"disabled";
     return [NSSet set];
 }
 
+// The purpose of this is to re-encode colors that were previously key-value encoded into hex so that the Python APi can consume them.
++ (NSDictionary *)sanitizedTriggerDictionary:(NSDictionary *)dict {
+    Trigger *trigger = [self triggerFromDict:dict];
+    [trigger sanitize];
+    return trigger.dictionaryValue;
+}
+
 + (Trigger *)triggerFromDict:(NSDictionary *)dict
 {
     NSString *className = [dict objectForKey:kTriggerActionKey];
@@ -73,6 +80,10 @@ NSString * const kTriggerDisabledKey = @"disabled";
 
 - (void)setAction:(NSString *)action {
     assert(false);
+}
+
+- (void)sanitize {
+    // Do nothing by default because most triggers don't neet sanitization.
 }
 
 + (NSString *)title {

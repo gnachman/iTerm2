@@ -30,6 +30,9 @@ def decode_trigger(encoded: dict) -> 'Trigger':
     Use this to convert the dictionary representation of a trigger gotten from
     :class:`~iterm2.Profile` and friends into a :class:`~Trigger` object.
 
+    NOTE: This may raise an assertion on iTerm2 prior to 3.5.0beta6 if pyobjc
+    is not installed.
+
     :param encoded: The encoded trigger.
 
     :returns: A :class:`~Trigger`.

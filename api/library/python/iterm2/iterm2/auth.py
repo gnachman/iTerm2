@@ -1,30 +1,66 @@
-import AppKit
-import Foundation
+try:
+    import AppKit
+    import Foundation
+    gAppKitAvailable = True
+except:
+    gAppKitAvailable = False
 import __main__
 import inspect
 import os
 import pathlib
+import re
+import subprocess
 import sys
 import typing
 
 class AuthenticationException(Exception):
     pass
 
-def run_applescript(script):
-    s = Foundation.NSAppleScript.alloc().initWithSource_(script)
-    return s.executeAndReturnError_(None)
+class AppKitApplescriptRunner:
+    def __init__(self, script):
+        assert(gAppKitAvailable)
+        self._script = script
 
-def get_string(result):
-    return result[0].stringValue()
+    def execute(self):
+        s = Foundation.NSAppleScript.alloc().initWithSource_(self._script)
+        self._value = s.executeAndReturnError_(None)
 
-def get_error(result):
-    return result[1]["NSAppleScriptErrorNumber"]
+    def get_string(self):
+        return self._value[0].stringValue()
 
-def has_error(result):
-    return result[0] is None
+    def has_error(self):
+        return self._value[0] is None
 
-def get_error_reason(result):
-    return result[1]["NSAppleScriptErrorBriefMessage"]
+    def get_error(self):
+        return self._value[1]["NSAppleScriptErrorNumber"]
+
+    def get_error_reason(self):
+        return self._value[1]["NSAppleScriptErrorBriefMessage"]
+
+class CommandLineApplescriptRunner:
+    def __init__(self, script):
+        self._script = script.encode("utf-8")
+
+    def execute(self):
+        p = subprocess.Popen(['/usr/bin/osascript', '-'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = p.communicate(self._script)
+        self._returncode = p.returncode
+        self._output = stdout.decode("utf-8").rstrip()
+        self._error = stderr.decode("utf-8").rstrip()
+
+    def get_string(self):
+        return self._output
+
+    def has_error(self):
+        return self._returncode != 0
+
+    def get_error(self):
+        result = re.search(r" \(((?:-?)[0-9]+)\)$", self._error)
+        return result.group(1)
+
+    def get_error_reason(self):
+        result = re.search(r"^[0-9]+:[0-9]+: (.*) \((?:-)?[0-9]+\)$", self._error)
+        return result.group(1)
 
 def get_script_name():
     name = None
@@ -40,37 +76,40 @@ def get_script_name():
     return name
 
 def request_cookie_and_key(
-        launch_if_needed: bool, myname: typing.Optional[str]):
-    script = """
-    set appName to "iTerm2"
-
-    if application appName is running then
-        return "yes"
-    else
-        return "no"
-    end if
-    """
+        launch_if_needed: bool, myname: typing.Optional[str], runner_class):
     if not launch_if_needed:
-        is_running = get_string(run_applescript(script))
+        runner = runner_class(
+            """
+            set appName to "iTerm2"
+
+            if application appName is running then
+                return "yes"
+            else
+                return "no"
+            end if
+            """)
+        runner.execute()
+        is_running = runner.get_string()
         if is_running == "no":
             raise AuthenticationException("iTerm2 not running")
     justName = myname
     if justName is None:
         justName = get_script_name()
-    s = Foundation.NSAppleScript.alloc().initWithSource_(
+    runner = runner_class(
             'tell application "iTerm2" to request cookie and key ' +
             f'for app named "{justName}"')
-    result = s.executeAndReturnError_(None)
-    if has_error(result):
-        if get_error(result) == -2740:
+    runner.execute()
+    if runner.has_error():
+        if runner.get_error() == -2740 or runner.get_error() == -2741:
             raise AuthenticationException("iTerm2 version too old")
 
-        reason = get_error_reason(result)
+        reason = runner.get_error_reason()
         raise AuthenticationException(reason)
-    return get_string(result)
+    return runner.get_string()
 
 class LSBackgroundContextManager():
     def __init__(self):
+        assert(gAppKitAvailable)
         self.__value = AppKit.NSBundle.mainBundle().infoDictionary().get(
                 "LSBackgroundOnly")
 
@@ -118,9 +157,12 @@ def authenticate(
         return True
     if os.environ.get("ITERM2_COOKIE"):
         return False
-    with LSBackgroundContextManager() as _:
-        cookie_and_key = request_cookie_and_key(launch_if_needed, myname)
-        cookie, key = cookie_and_key.split(" ")
-        os.environ["ITERM2_COOKIE"] = cookie
-        os.environ["ITERM2_KEY"] = key
-        return True
+    if gAppKitAvailable:
+        with LSBackgroundContextManager() as _:
+            cookie_and_key = request_cookie_and_key(launch_if_needed, myname, AppKitApplescriptRunner)
+    else:
+        cookie_and_key = request_cookie_and_key(launch_if_needed, myname, CommandLineApplescriptRunner)
+    cookie, key = cookie_and_key.split(" ")
+    os.environ["ITERM2_COOKIE"] = cookie
+    os.environ["ITERM2_KEY"] = key
+    return True

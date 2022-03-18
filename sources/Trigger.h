@@ -177,6 +177,8 @@ extern NSString * const kTriggerDisabledKey;
 
 - (NSDictionary *)dictionaryValue;
 
++ (NSDictionary *)sanitizedTriggerDictionary:(NSDictionary *)dict;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -32,9 +32,11 @@ setup(name='iterm2',
       packages=['iterm2'],
       install_requires=[
           'protobuf',
-          'websockets',
-          'pyobjc'
+          'websockets'
       ],
+      extras_require={
+          'full': ['pyobjc']
+      },
       include_package_data=True,
       zip_safe=False)
 

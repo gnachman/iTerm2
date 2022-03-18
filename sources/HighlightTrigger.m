@@ -87,6 +87,12 @@ enum {
     return YES;
 }
 
+- (void)sanitize {
+    NSDictionary *colors = [self colorsPreservingColorSpace:YES];
+    self.textColor = colors[kHighlightForegroundColor];
+    self.backgroundColor = colors[kHighlightBackgroundColor];
+}
+
 - (NSDictionary *)menuItemsForPoupupButton {
     return [NSDictionary dictionaryWithObjectsAndKeys:
             @"Yellow on Black", [NSNumber numberWithInt:(int)kYellowOnBlackHighlight],
@@ -237,31 +243,31 @@ enum {
 
 - (NSString *)stringForTextColor:(NSColor *)textColor backgroundColor:(NSColor *)backgroundColor {
     return [NSString stringWithFormat:@"{%@,%@}",
-            textColor.stringValue ?: @"",
-            backgroundColor.stringValue ?: @""];
+            textColor.hexStringPreservingColorSpace ?: @"",
+            backgroundColor.hexStringPreservingColorSpace ?: @""];
 }
 
 - (NSColor *)textColor {
-    NSDictionary *colors = [self colors];
+    NSDictionary *colors = [self colorsPreservingColorSpace:NO];
     return colors[kHighlightForegroundColor];
 }
 
 - (NSColor *)backgroundColor {
-    NSDictionary *colors = [self colors];
+    NSDictionary *colors = [self colorsPreservingColorSpace:NO];
     return colors[kHighlightBackgroundColor];
 }
 
 - (void)setTextColor:(NSColor *)textColor {
     [super setTextColor:textColor];
     NSMutableArray *temp = [[self stringsForColors] mutableCopy];
-    temp[0] = textColor ? textColor.stringValue: @"";
+    temp[0] = textColor ? textColor.hexStringPreservingColorSpace: @"";
     self.param = [NSString stringWithFormat:@"{%@,%@}", temp[0], temp[1]];
 }
 
 - (void)setBackgroundColor:(NSColor *)backgroundColor {
     [super setBackgroundColor:backgroundColor];
     NSMutableArray *temp = [[self stringsForColors] mutableCopy];
-    temp[1] = backgroundColor ? backgroundColor.stringValue: @"";
+    temp[1] = backgroundColor ? backgroundColor.hexStringPreservingColorSpace: @"";
     self.param = [NSString stringWithFormat:@"{%@,%@}", temp[0], temp[1]];
 }
 
@@ -271,9 +277,9 @@ enum {
 }
 
 // Returns a string of the form {text components,background components} from self.param.
-- (NSArray *)stringsForColors {
+- (NSArray<NSString *> *)stringsForColors {
     if (self.param == nil) {
-        return @[ [[NSColor whiteColor] stringValue], [[NSColor redColor] stringValue] ];
+        return @[ [[NSColor whiteColor] hexString], [[NSColor redColor] hexString] ];
     }
     if ([self.param isKindOfClass:[NSString class]] &&
         [self.param hasPrefix:@"{"] && [self.param hasSuffix:@"}"]) {
@@ -291,15 +297,15 @@ enum {
         NSDictionary *dict = [self colorDictionaryForInteger:numberParam.intValue];
         NSColor *text = dict[kHighlightForegroundColor];
         NSColor *background = dict[kHighlightBackgroundColor];
-        return @[ text ? text.stringValue : @"",
-                  background ? background.stringValue : @"" ];
+        return @[ text ? text.hexString : @"",
+                  background ? background.hexString : @"" ];
     }
 
     return @[ @"", @"" ];
 }
 
 // Returns a dictionary with text and background color from the self.param string.
-- (NSDictionary<NSString *, NSColor *> *)colors {
+- (NSDictionary<NSString *, NSColor *> *)colorsPreservingColorSpace:(BOOL)preserveColorSpace {
     if (_cachedColors) {
         return _cachedColors;
     }
@@ -308,8 +314,13 @@ enum {
     NSColor *textColor = nil;
     NSColor *backgroundColor = nil;
     if (parts.count == 2) {
-        textColor = [NSColor colorWithString:parts[0]];
-        backgroundColor = [NSColor colorWithString:parts[1]];
+        if (preserveColorSpace) {
+            textColor = [NSColor colorPreservingColorspaceFromString:parts[0]];
+            backgroundColor = [NSColor colorPreservingColorspaceFromString:parts[1]];
+        } else {
+            textColor = [NSColor colorWithString:parts[0]];
+            backgroundColor = [NSColor colorWithString:parts[1]];
+        }
     }
     if (textColor) {
         dict[kHighlightForegroundColor] = textColor;
@@ -447,7 +458,7 @@ enum {
     [aSession triggerSession:self
         highlightTextInRange:rangeInScreenChars
                 absoluteLine:lineNumber
-                      colors:[self colors]];
+                      colors:[self colorsPreservingColorSpace:NO]];
     return YES;
 }
 

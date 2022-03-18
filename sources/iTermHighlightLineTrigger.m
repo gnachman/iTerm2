@@ -46,40 +46,46 @@
     return [self stringForTextColor:self.textColor backgroundColor:self.backgroundColor];
 }
 
+- (void)sanitize {
+    NSDictionary *colors = [self colorsPreservingColorSpace:YES];
+    self.textColor = colors[kHighlightForegroundColor];
+    self.backgroundColor = colors[kHighlightBackgroundColor];
+}
+
 - (NSString *)stringForTextColor:(NSColor *)textColor backgroundColor:(NSColor *)backgroundColor {
     return [NSString stringWithFormat:@"{%@,%@}",
-            textColor.stringValue ?: @"",
-            backgroundColor.stringValue ?: @""];
+            textColor.hexStringPreservingColorSpace ?: @"",
+            backgroundColor.hexStringPreservingColorSpace ?: @""];
 }
 
 - (NSColor *)textColor {
-    NSDictionary *colors = [self colors];
+    NSDictionary *colors = [self colorsPreservingColorSpace:NO];
     return colors[kHighlightForegroundColor];
 }
 
 - (NSColor *)backgroundColor {
-    NSDictionary *colors = [self colors];
+    NSDictionary *colors = [self colorsPreservingColorSpace:NO];
     return colors[kHighlightBackgroundColor];
 }
 
 - (void)setTextColor:(NSColor *)textColor {
     [super setTextColor:textColor];
     NSMutableArray *temp = [[self stringsForColors] mutableCopy];
-    temp[0] = textColor ? textColor.stringValue: @"";
+    temp[0] = textColor ? textColor.hexStringPreservingColorSpace: @"";
     self.param = [NSString stringWithFormat:@"{%@,%@}", temp[0], temp[1]];
 }
 
 - (void)setBackgroundColor:(NSColor *)backgroundColor {
     [super setBackgroundColor:backgroundColor];
     NSMutableArray *temp = [[self stringsForColors] mutableCopy];
-    temp[1] = backgroundColor ? backgroundColor.stringValue: @"";
+    temp[1] = backgroundColor ? backgroundColor.hexStringPreservingColorSpace: @"";
     self.param = [NSString stringWithFormat:@"{%@,%@}", temp[0], temp[1]];
 }
 
 // Returns a string of the form {text components,background components} from self.param.
 - (NSArray *)stringsForColors {
     if (![self.param isKindOfClass:[NSString class]]) {
-        return @[ [[NSColor whiteColor] stringValue], [[NSColor redColor] stringValue] ];
+        return @[ [[NSColor whiteColor] hexString], [[NSColor redColor] hexString] ];
     }
     if ([self.param isKindOfClass:[NSString class]] &&
         [self.param hasPrefix:@"{"] && [self.param hasSuffix:@"}"]) {
@@ -96,14 +102,19 @@
 }
 
 // Returns a dictionary with text and background color from the self.param string.
-- (NSDictionary *)colors {
+- (NSDictionary<NSString *, NSColor *> *)colorsPreservingColorSpace:(BOOL)preserveColorSpace {
     NSArray *parts = [self stringsForColors];
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     NSColor *textColor = nil;
     NSColor *backgroundColor = nil;
     if (parts.count == 2) {
-        textColor = [NSColor colorWithString:parts[0]];
-        backgroundColor = [NSColor colorWithString:parts[1]];
+        if (preserveColorSpace) {
+            textColor = [NSColor colorPreservingColorspaceFromString:parts[0]];
+            backgroundColor = [NSColor colorPreservingColorspaceFromString:parts[1]];
+        } else {
+            textColor = [NSColor colorWithString:parts[0]];
+            backgroundColor = [NSColor colorWithString:parts[1]];
+        }
     }
     if (textColor) {
         dict[kHighlightForegroundColor] = textColor;
@@ -127,7 +138,7 @@
                                                              lineNumber);
     [aSession triggerSession:self
              highlightLineAt:absCoord
-                      colors:[self colors]];
+                      colors:[self colorsPreservingColorSpace:NO]];
     return YES;
 }
 

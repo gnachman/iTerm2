@@ -1,17 +1,12 @@
 """Manages the details of the websocket connection. """
 
 import asyncio
+import iterm2.auth
 import os
 import sys
 import traceback
 import typing
 import websockets
-try:
-  import AppKit
-  import iterm2.auth
-  gAppKitAvailable = True
-except:
-  gAppKitAvailable = False
 
 gDisconnectCallbacks = []
 
@@ -50,8 +45,7 @@ def _headers():
                "x-iterm2-disable-auth-ui": "true"}
     if cookie is not None:
         headers["x-iterm2-cookie"] = cookie
-    elif gAppKitAvailable:
-        headers["x-iterm2-advisory-name"] = iterm2.auth.get_script_name()
+    headers["x-iterm2-advisory-name"] = iterm2.auth.get_script_name()
     if key is not None:
         headers["x-iterm2-key"] = key
     return headers
@@ -333,12 +327,11 @@ class Connection:
         return (int(parts[0]), int(parts[1]))
 
     def _get_connect_coro(self):
-        if gAppKitAvailable:
-            path = self._unix_domain_socket_path()
-            exists = os.path.exists(path)
+        path = self._unix_domain_socket_path()
+        exists = os.path.exists(path)
 
-            if exists:
-                return self._get_unix_connect_coro()
+        if exists:
+            return self._get_unix_connect_coro()
         return self._get_tcp_connect_coro()
 
     def _remove_auth(self):
@@ -349,12 +342,7 @@ class Connection:
                 del os.environ[var]
 
     def _unix_domain_socket_path(self):
-        applicationSupport = os.path.join(
-            AppKit.NSSearchPathForDirectoriesInDomains(
-                AppKit.NSApplicationSupportDirectory,
-                AppKit.NSUserDomainMask,
-                True)[0],
-            "iTerm2")
+        applicationSupport = os.path.expanduser("~/Library/Application Support/iTerm2")
         return os.path.join(applicationSupport, "private", "socket")
 
     def _get_unix_connect_coro(self):
@@ -388,8 +376,6 @@ class Connection:
             mean either a failure to connect or that there was already a
             (possibly stale) cookie in the environment.
         """
-        if not gAppKitAvailable:
-            return False
         if force:
             self._remove_auth()
         try:
@@ -487,11 +473,10 @@ raising an exception, pass retry=true to run_until_complete()
 or run_forever()
 
 """, file=sys.stderr)
-                    if gAppKitAvailable:
-                        path = self._unix_domain_socket_path()
-                        exists = os.path.exists(path)
-                        if exists:
-                            print(f"If you have downgraded from iTerm2 3.3.12+ to an older version, you must\nmanually delete the file at {path}.\n", file=sys.stderr)
+                    path = self._unix_domain_socket_path()
+                    exists = os.path.exists(path)
+                    if exists:
+                        print(f"If you have downgraded from iTerm2 3.3.12+ to an older version, you must\nmanually delete the file at {path}.\n", file=sys.stderr)
                     done = True
                     raise
             finally:

@@ -71,7 +71,12 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs);
 
 CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 
+// This will return the color in the app's standard colorspace.
 + (NSColor * _Nullable)colorWithString:(NSString *)s;
+
+// This will preserve the colorspace of the encoded color.
++ (NSColor *)colorPreservingColorspaceFromString:(NSString *)s;
+
 + (NSColor *)colorWith8BitRed:(int)red
                         green:(int)green
                          blue:(int)blue;
@@ -108,8 +113,11 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 // Return the color you'd get by rendering self over background.
 - (NSColor *)colorByPremultiplyingAlphaWithColor:(NSColor *)background;
 
-// p3:#rrggbb
+// p3:#rrggbb or #rrggbb (srgb implicitly)
+// converts to the app-standard colorspace
 - (NSString *)hexString;
+
+- (NSString *)hexStringPreservingColorSpace;
 
 // #rrggbb
 - (NSString *)srgbHexString;
