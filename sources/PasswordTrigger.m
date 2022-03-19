@@ -29,9 +29,7 @@
 }
 
 - (void)reloadData {
-    _accountNames = [[iTermPasswordManagerWindowController entriesWithFilter:nil] mapWithBlock:^id(iTermPasswordEntry *entry) {
-        return entry.combinedAccountNameUserName;
-    }];
+    _accountNames = [iTermPasswordManagerWindowController combinedAccountNameUserNamesWithFilter:nil];
     if (!_accountNames.count) {
         _accountNames = @[ @"" ];
     }

@@ -4,6 +4,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermApplication.h"
 #import "iTermColorMap.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermGCD.h"
@@ -53,3 +54,4 @@
 #import "Trigger.h"
 #import "VT100Terminal.h"
 #import "charmaps.h"
+#import <SSKeychain.h>

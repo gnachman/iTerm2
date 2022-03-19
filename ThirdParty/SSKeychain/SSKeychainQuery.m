@@ -46,10 +46,14 @@
         [query setObject:(__bridge id)accessibilityType forKey:(__bridge id)kSecAttrAccessible];
     }
 #endif
-    if (self.pathToKeychain) {
-        query[(__bridge id)kSecUseKeychain] = self.pathToKeychain;
+    SecKeychainRef keychain = NULL;
+    if (![self getKeychain:&keychain query:query error:error]) {
+        return NO;
     }
     status = SecItemAdd((__bridge CFDictionaryRef)query, NULL);
+    if (keychain != NULL) {
+        CFRelease(keychain);
+    }
 
     if (status != errSecSuccess && error != NULL) {
         *error = [[self class] errorWithCode:status];
@@ -85,15 +89,6 @@
     SecKeychainRef keychain = NULL;
     if (![self getKeychain:&keychain query:query error:error]) {
         return NO;
-    }
-    if (self.pathToKeychain) {
-        status = SecKeychainOpen(self.pathToKeychain.UTF8String, &keychain);
-        if (keychain == NULL) {
-            if (error) {
-                *error = [[self class] errorWithCode:status];
-            }
-            return NO;
-        }
     }
 #if TARGET_OS_IPHONE
     status = SecItemDelete((__bridge CFDictionaryRef)query);

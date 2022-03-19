@@ -64,13 +64,13 @@ NSString *const iTermApplicationWillShowModalWindow = @"iTermApplicationWillShow
 NSString *const iTermApplicationDidCloseModalWindow = @"iTermApplicationDidCloseModalWindow";
 
 @interface iTermApplication()
-@property(nonatomic, retain) NSStatusItem *statusBarItem;
+@property(nonatomic, strong) NSStatusItem *statusBarItem;
 @end
 
 static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
 @interface iTermApplication()
-@property(nonatomic, retain, readwrite) NSWindow *it_windowBecomingKey;
+@property(nonatomic, strong, readwrite) NSWindow *it_windowBecomingKey;
 @end
 
 @implementation iTermApplication {
@@ -84,11 +84,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (void)dealloc {
-    [_fakeCurrentEvent release];
-    [_statusBarItem release];
     [self removeObserver:self forKeyPath:@"modalWindow"];
-    [_it_windowBecomingKey release];
-    [super dealloc];
 }
 
 + (iTermApplication *)sharedApplication {
@@ -583,7 +579,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
             _statusBarItem.button.alternateImage = [NSImage it_imageNamed:@"StatusItemAlt" forClass:self.class];
             ((NSButtonCell *)_statusBarItem.button.cell).highlightsBy = NSChangeBackgroundCellMask;
 
-            _statusBarItem.menu = [[self delegate] statusBarMenu];
+            _statusBarItem.menu = [(id<iTermApplicationDelegate>)[self delegate] statusBarMenu];
         }
     } else if (_statusBarItem != nil) {
         [[NSStatusBar systemStatusBar] removeStatusItem:_statusBarItem];
@@ -637,9 +633,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     const NSTimeInterval deadlineToOpen = ([NSDate timeIntervalSinceReferenceDate] +
                                            [iTermAdvancedSettingsModel timeToWaitForEmojiPanel]);
     [iTermWindowHacks pollForCharacterPanelToOpenOrCloseWithCompletion:^BOOL(BOOL open) {
-        if (open && _it_characterPanelShouldOpenSoon) {
-            _it_characterPanelShouldOpenSoon = NO;
-            _it_characterPanelIsOpen = YES;
+        if (open && self->_it_characterPanelShouldOpenSoon) {
+            self->_it_characterPanelShouldOpenSoon = NO;
+            self->_it_characterPanelIsOpen = YES;
         } else if (!open && self.it_characterPanelIsOpen) {
             self->_it_characterPanelShouldOpenSoon = NO;
             self->_it_characterPanelIsOpen = NO;
@@ -651,10 +647,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (void)it_makeWindowKey:(NSWindow *)window {
-    NSWindow *saved = [self.it_windowBecomingKey retain];
+    NSWindow *saved = self.it_windowBecomingKey;
     self.it_windowBecomingKey = window;
     [window makeKeyAndOrderFront:nil];
-    self.it_windowBecomingKey = [saved autorelease];
+    self.it_windowBecomingKey = saved;
 }
 
 - (void)invalidateRestorableState {

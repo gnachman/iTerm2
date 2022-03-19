@@ -2631,6 +2631,12 @@
 		A6A802EA226ED20800BC70DC /* iTermPrintGuard.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802E8226ED20800BC70DC /* iTermPrintGuard.m */; };
 		A6A802ED226EEAE900BC70DC /* PTYTask+MRR.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802EB226EEAE900BC70DC /* PTYTask+MRR.h */; };
 		A6A802EE226EEAE900BC70DC /* PTYTask+MRR.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802EC226EEAE900BC70DC /* PTYTask+MRR.m */; };
+		A6A9838C27E5A83C003319D1 /* PasswordManagerDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9838B27E5A83C003319D1 /* PasswordManagerDataSource.swift */; };
+		A6A9838D27E5B3E5003319D1 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
+		A6A9838F27E5C3DA003319D1 /* KeychainPasswordDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9838E27E5C3DA003319D1 /* KeychainPasswordDataSource.swift */; };
+		A6A9839127E5C427003319D1 /* PasswordManagerDataSourceProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9839027E5C427003319D1 /* PasswordManagerDataSourceProvider.swift */; };
+		A6A9839327E5C450003319D1 /* Array+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9839227E5C450003319D1 /* Array+iTerm.swift */; };
+		A6A9839527E5C45E003319D1 /* String+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9839427E5C45E003319D1 /* String+iTerm.swift */; };
 		A6AAD5EE22F4A1DD002DD12C /* iTermCommandRunnerPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */; };
 		A6AAD5EF22F4A1DD002DD12C /* iTermCommandRunnerPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */; };
 		A6AAD5F322F7EB61002DD12C /* iTermWindowSizeView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AAD5F122F7EB61002DD12C /* iTermWindowSizeView.h */; };
@@ -2791,7 +2797,6 @@
 		A6C762C41B45C52B00E3C992 /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
 		A6C762C61B45C52B00E3C992 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		A6C762C71B45C52B00E3C992 /* iTermHotKeyController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB9D8F1183FE9EF0029F0B5 /* iTermHotKeyController.m */; };
-		A6C762C91B45C52B00E3C992 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		A6C762CA1B45C52B00E3C992 /* iTermApplicationDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */; };
 		A6C762CB1B45C52B00E3C992 /* iTermController.m in Sources */ = {isa = PBXBuildFile; fileRef = E8A66F030272453F03A80106 /* iTermController.m */; };
 		A6C762CC1B45C52B00E3C992 /* iTermCursor.m in Sources */ = {isa = PBXBuildFile; fileRef = A635C4351AB38205008A2DEE /* iTermCursor.m */; };
@@ -5791,7 +5796,7 @@
 		A67D0D1F1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermEditKeyActionWindowController.xib; path = Interfaces/iTermEditKeyActionWindowController.xib; sourceTree = "<group>"; };
 		A67D0D201A2EE12A003A8B35 /* iTermKeyMapping.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermKeyMapping.xib; path = Interfaces/iTermKeyMapping.xib; sourceTree = "<group>"; };
 		A67D0D211A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermOpenQuicklyWindowController.xib; path = Interfaces/iTermOpenQuicklyWindowController.xib; sourceTree = "<group>"; };
-		A67D0D221A2EE12A003A8B35 /* iTermPasswordManager.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermPasswordManager.xib; path = Interfaces/iTermPasswordManager.xib; sourceTree = "<group>"; };
+		A67D0D221A2EE12A003A8B35 /* iTermPasswordManager.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermPasswordManager.xib; path = ../Interfaces/iTermPasswordManager.xib; sourceTree = "<group>"; };
 		A67D0D231A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermPasteSpecialViewController.xib; path = Interfaces/iTermPasteSpecialViewController.xib; sourceTree = "<group>"; };
 		A67D0D241A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermPasteSpecialWindow.xib; path = Interfaces/iTermPasteSpecialWindow.xib; sourceTree = "<group>"; };
 		A67D0D251A2EE12A003A8B35 /* MainMenu.strings */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = MainMenu.strings; path = Interfaces/MainMenu.strings; sourceTree = "<group>"; };
@@ -6240,6 +6245,11 @@
 		A6A802E8226ED20800BC70DC /* iTermPrintGuard.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPrintGuard.m; sourceTree = "<group>"; };
 		A6A802EB226EEAE900BC70DC /* PTYTask+MRR.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTask+MRR.h"; sourceTree = "<group>"; };
 		A6A802EC226EEAE900BC70DC /* PTYTask+MRR.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "PTYTask+MRR.m"; sourceTree = "<group>"; };
+		A6A9838B27E5A83C003319D1 /* PasswordManagerDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordManagerDataSource.swift; sourceTree = "<group>"; };
+		A6A9838E27E5C3DA003319D1 /* KeychainPasswordDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainPasswordDataSource.swift; sourceTree = "<group>"; };
+		A6A9839027E5C427003319D1 /* PasswordManagerDataSourceProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordManagerDataSourceProvider.swift; sourceTree = "<group>"; };
+		A6A9839227E5C450003319D1 /* Array+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+iTerm.swift"; sourceTree = "<group>"; };
+		A6A9839427E5C45E003319D1 /* String+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+iTerm.swift"; sourceTree = "<group>"; };
 		A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCommandRunnerPool.h; sourceTree = "<group>"; };
 		A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCommandRunnerPool.m; sourceTree = "<group>"; };
 		A6AAD5F122F7EB61002DD12C /* iTermWindowSizeView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermWindowSizeView.h; sourceTree = "<group>"; };
@@ -7034,6 +7044,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A6A9838A27E5A7DE003319D1 /* Password Manager */,
 				A6A72C4E27C7F803002E4CCA /* Common */,
 				A667C25A277911ED006B4DEF /* Annotations */,
 				53EBF29A1DCBFF6D00766613 /* API */,
@@ -7183,7 +7194,6 @@
 				A69B4582196F8EA100F5444D /* iTermOpenQuicklyWindowController.h */,
 				A65B726F1B248F1800F947A7 /* iTermOrphanServerAdopter.h */,
 				A6DF7B711A5BA33900D96409 /* iTermParser.h */,
-				1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */,
 				A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */,
 				A6E77FB61A2BEC31009B1CB6 /* iTermPasteSpecialViewController.h */,
 				A6E77F981A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.h */,
@@ -7407,7 +7417,6 @@
 				A67D0D1F1A2EE12A003A8B35 /* iTermEditKeyActionWindowController.xib */,
 				A67D0D201A2EE12A003A8B35 /* iTermKeyMapping.xib */,
 				A67D0D211A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib */,
-				A67D0D221A2EE12A003A8B35 /* iTermPasswordManager.xib */,
 				A67D0D231A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib */,
 				A67D0D241A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib */,
 				1DA76A1E1B308AD000CB272A /* iTermTipCardViewController.xib */,
@@ -8171,6 +8180,8 @@
 				A6BD5A712745D5710098594E /* NSTextView+iTerm.swift */,
 				A6CC7F58274ABCBF0060C3C2 /* NSScrollView+iTerm.swift */,
 				A6CC7F5F274ECFEB0060C3C2 /* NSProcessInfo+iTerm.swift */,
+				A6A9839227E5C450003319D1 /* Array+iTerm.swift */,
+				A6A9839427E5C45E003319D1 /* String+iTerm.swift */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -10035,7 +10046,6 @@
 				A6AE1ED71926F89B00780C19 /* iTermAnnouncementViewController.m */,
 				A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */,
 				A6E77FB01A2BE434009B1CB6 /* iTermNumberOfSpacesAccessoryViewController.m */,
-				1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */,
 				A6E77FB71A2BEC31009B1CB6 /* iTermPasteSpecialViewController.m */,
 				A6E77F991A2A6B9E009B1CB6 /* iTermPasteSpecialWindowController.m */,
 				A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */,
@@ -10207,6 +10217,19 @@
 				A67F61DA214395D50093940A /* graphic_zip@2x.png */,
 			);
 			name = "hyper-tab-icons-plus";
+			sourceTree = "<group>";
+		};
+		A6A9838A27E5A7DE003319D1 /* Password Manager */ = {
+			isa = PBXGroup;
+			children = (
+				1DFA7C991923EDD900DF1410 /* iTermPasswordManagerWindowController.m */,
+				1DFA7C981923EDD900DF1410 /* iTermPasswordManagerWindowController.h */,
+				A67D0D221A2EE12A003A8B35 /* iTermPasswordManager.xib */,
+				A6A9838B27E5A83C003319D1 /* PasswordManagerDataSource.swift */,
+				A6A9838E27E5C3DA003319D1 /* KeychainPasswordDataSource.swift */,
+				A6A9839027E5C427003319D1 /* PasswordManagerDataSourceProvider.swift */,
+			);
+			name = "Password Manager";
 			sourceTree = "<group>";
 		};
 		A6AFE92923FCFF5C00D489C7 /* StateRestoration */ = {
@@ -14249,6 +14272,7 @@
 				A6BC8AD021C7608B00796BF3 /* iTermImageCache.m in Sources */,
 				A671AC6026D95C0400B23C95 /* HTMLEncoding.swift in Sources */,
 				A60E045B26DD556900DD162B /* NSDate+iTerm.m in Sources */,
+				A6A9838D27E5B3E5003319D1 /* iTermApplication.m in Sources */,
 				A63493E923E945BA0047C31B /* iTermGlobalScopeController.m in Sources */,
 				5370ECDB20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.m in Sources */,
 				A6AFE93123FCFF8C00D489C7 /* iTermRestorableStateController.m in Sources */,
@@ -14392,6 +14416,7 @@
 				A639358C21023BDB00A16D1C /* iTermStatusBarGraphicComponent.m in Sources */,
 				538BE55620C9E69A00AD15B0 /* NSDictionary+iTerm.m in Sources */,
 				5365207621433F00003C58FD /* iTermGitPollWorker.m in Sources */,
+				A6A9839327E5C450003319D1 /* Array+iTerm.swift in Sources */,
 				A63493E123E661B60047C31B /* iTermPresentationController.m in Sources */,
 				A66F52AE21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m in Sources */,
 				A648DABF2427E7E000C2FF02 /* iTermPreferenceDidChangeNotification.m in Sources */,
@@ -14447,6 +14472,7 @@
 				A629F5A623AFF5BA00C2F16B /* iTermShellIntegrationSecondPageViewController.m in Sources */,
 				5379C59823DBE9F100314F23 /* iTermFocusFollowsMouseController.m in Sources */,
 				A678C507279A3DE200C59927 /* ImageRegistry.swift in Sources */,
+				A6A9838F27E5C3DA003319D1 /* KeychainPasswordDataSource.swift in Sources */,
 				A6A39EC024B9A96B00A64433 /* iTermUnobtrusiveMessage.m in Sources */,
 				A6A4867D20B67F7E00493302 /* ProfilesWindowPreferencesViewController.m in Sources */,
 				53C2D3A62152CA3900FF6471 /* NSUserDefaults+iTerm.m in Sources */,
@@ -14456,6 +14482,7 @@
 				A6F1B3AB268FCAC000546767 /* iTermStatusBarTriggersComponent.swift in Sources */,
 				A6556EAE1FD37ED6000CC89C /* iTermASCIITexture.m in Sources */,
 				A6971F3420D8D3C30075CFD4 /* iTermAdvancedGPUSettingsViewController.m in Sources */,
+				A6A9838C27E5A83C003319D1 /* PasswordManagerDataSource.swift in Sources */,
 				A66719661DCE3772000CE608 /* iTermWebSocketFrame.m in Sources */,
 				A63819D11FAECD3F00A9EF9E /* iTermCopyBackgroundRenderer.m in Sources */,
 				A65EC0341F3181E700AC0A6B /* NSTimer+iTerm.m in Sources */,
@@ -14474,6 +14501,7 @@
 				A6D4C26821E18CB5009CF11B /* iTermScriptInspector.m in Sources */,
 				535EA50120D0F15400FC81E0 /* iTermQuotedRecognizer.m in Sources */,
 				A6180D7521A36F730073F219 /* iTermMetalPerFrameStateRow.m in Sources */,
+				A6A9839127E5C427003319D1 /* PasswordManagerDataSourceProvider.swift in Sources */,
 				A6EC937024E787BA00EEADEF /* iTermSnippetsModel.m in Sources */,
 				A629F5A223AFF53F00C2F16B /* iTermShellIntegrationFirstPageViewController.m in Sources */,
 				A6F699292730998B00C4A3A6 /* iTermBadgeLabel.m in Sources */,
@@ -14618,6 +14646,7 @@
 				53D68F812283EE7C0018710D /* iTermTmuxLayoutBuilder.m in Sources */,
 				A6FCAF66250D4D6500B89EB0 /* iTermModifyOtherKeysMapper.m in Sources */,
 				A63011A520E7ECC2008114B7 /* iTermStatusBarSetupKnobsViewController.m in Sources */,
+				A6A9839527E5C45E003319D1 /* String+iTerm.swift in Sources */,
 				A6FF3F2D242C6D3B003CCB03 /* ColorsMenuItemView.m in Sources */,
 				A667C23D276C7859006B4DEF /* PSMTabBarCell.m in Sources */,
 				53BCAAFB22668A1E00949829 /* iTermCachingFileManager.m in Sources */,
@@ -14760,7 +14789,6 @@
 				A6C762FF1B45C52B00E3C992 /* TransferrableFile.m in Sources */,
 				A6C7635B1B45C52B00E3C992 /* Autocomplete.m in Sources */,
 				A6C763A71B45C52B00E3C992 /* ToolNotes.m in Sources */,
-				A6C762C91B45C52B00E3C992 /* iTermApplication.m in Sources */,
 				A6C763E41B45C6F100E3C992 /* RegexKitLite.m in Sources */,
 				A6C763511B45C52B00E3C992 /* SplitSelectionView.m in Sources */,
 				A6C762FD1B45C52B00E3C992 /* SCPPath.m in Sources */,

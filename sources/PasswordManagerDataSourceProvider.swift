@@ -1,0 +1,140 @@
+//
+//  PasswordManagerDataSourceProvider.swift
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 3/19/22.
+//
+
+import Foundation
+import LocalAuthentication
+
+@objc(iTermPasswordManagerDataSourceProvider)
+class PasswordManagerDataSourceProvider: NSObject {
+    @objc private(set) static var authenticated = false
+    private static var _dataSource: PasswordManagerDataSource? = KeychainPasswordDataSource()
+    private static let _keychain = KeychainPasswordDataSource()
+
+    @objc static var dataSource: PasswordManagerDataSource? {
+        guard authenticated else {
+            return nil
+        }
+        return _dataSource
+    }
+
+    @objc static var keychain: PasswordManagerDataSource? {
+        if !authenticated {
+            return nil
+        }
+        return _keychain
+    }
+
+    @objc static func revokeAuthentication() {
+        authenticated = false
+    }
+
+    @objc static func requestAuthenticationIfNeeded(_ completion: @escaping (Bool) -> ()) {
+        if authenticated {
+            completion(true)
+            return
+        }
+        if !SecureUserDefaults.instance.requireAuthToOpenPasswordmanager.value {
+            authenticated = true
+            completion(true)
+            return
+        }
+        let context = LAContext()
+        let policy = LAPolicy.deviceOwnerAuthentication
+        var error: NSError? = nil
+        if !context.canEvaluatePolicy(policy, error: &error) {
+            DLog("Can't evaluate \(policy): \(error?.localizedDescription ?? "(nil)")")
+            return
+        }
+        iTermApplication.shared().localAuthenticationDialogOpen = true
+        let reason = "open the password manager"
+        context.evaluatePolicy(policy, localizedReason: reason) { success, error in
+            DLog("Policy evaluation success=\(success) error=\(String(describing: error))")
+            DispatchQueue.main.async {
+                iTermApplication.shared().localAuthenticationDialogOpen = false
+                if success {
+                    Self.authenticated = true
+                    completion(true)
+                } else {
+                    Self.authenticated = false
+                    if let error = error as NSError?, (error.code != LAError.systemCancel.rawValue &&
+                                                       error.code != LAError.appCancel.rawValue) {
+                        showError(error)
+                    }
+                    completion(false)
+                }
+            }
+        }
+    }
+
+    private static func showError(_ error: NSError) {
+        let alert = NSAlert()
+        let reason: String
+        switch LAError.Code(rawValue: error.code) {
+        case .authenticationFailed:
+            reason = "valid credentials weren't supplied.";
+
+        case .userCancel:
+            reason = "password entry was cancelled.";
+
+        case .userFallback:
+            reason = "password authentication was requested.";
+
+        case .systemCancel:
+            reason = "the system cancelled the authentication request.";
+
+        case .passcodeNotSet:
+            reason = "no passcode is set.";
+
+        case .touchIDNotAvailable:
+            reason = "touch ID is not available.";
+
+        case .biometryNotEnrolled:
+            reason = "touch ID doesn't have any fingers enrolled.";
+
+        case .biometryLockout:
+            reason = "there were too many failed Touch ID attempts.";
+
+        case .appCancel:
+            reason = "authentication was cancelled by iTerm2.";
+
+        case .invalidContext:
+            reason = "the context is invalid. This is a bug in iTerm2. Please report it.";
+
+        case .none:
+            reason = error.localizedDescription
+
+        case .touchIDNotEnrolled:
+            reason = "touch ID is not enrolled."
+
+        case .touchIDLockout:
+            reason = "touch ID is locked out."
+
+        case .notInteractive:
+            reason = "the required user interface could not be displayed."
+
+        case .watchNotAvailable:
+            reason = "watch is not available."
+
+        case .biometryNotPaired:
+            reason = "biometry is not paired."
+
+        case .biometryDisconnected:
+            reason = "biometry is disconnected."
+
+        case .invalidDimensions:
+            reason = "invalid dimensions given."
+
+        @unknown default:
+            reason = error.localizedDescription
+        }
+        alert.messageText = "Authentication Failed"
+        alert.informativeText = "Authentication failed because \(reason)"
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+}
+

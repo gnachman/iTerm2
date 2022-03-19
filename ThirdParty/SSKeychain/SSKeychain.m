@@ -35,6 +35,7 @@ static NSString *SSKeychainPathToKeychain = nil;
 }
 
 + (void)setPathToKeychain:(NSString *)pathToKeychain {
+    DLog(@"new path to keychain is %p", pathToKeychain);
     SSKeychainPathToKeychain = [pathToKeychain copy];
 }
 
