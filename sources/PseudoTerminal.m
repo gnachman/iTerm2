@@ -8905,6 +8905,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
             [aTab fitSessionToCurrentViewSize:aSession];
             // Theme change affects scrollbar color.
             [aSession.textview updateScrollerForBackgroundColor];
+            // In case separate separate bg images per pane changed.
+            [aSession updateViewBackgroundImage];
         }
         // Theme change could affect tab icons
         [aTab updateIcon];
