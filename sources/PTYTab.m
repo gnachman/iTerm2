@@ -6139,8 +6139,7 @@ typedef struct {
     static NSSet<NSString *> *keysAffectingMetal;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        keysAffectingMetal = [[NSSet alloc] initWithArray:@[ kPreferenceKeyPerPaneBackgroundImage,
-                                                             kPreferenceKeyUseMetal ]];
+        keysAffectingMetal = [[NSSet alloc] initWithArray:@[ kPreferenceKeyUseMetal ]];
     });
     if ([keysAffectingMetal containsObject:notification.key]) {
         [self updateUseMetal];
