@@ -6132,12 +6132,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NO;
     }
 
-    if (![iTermPreferences boolForKey:kPreferenceKeyPerPaneBackgroundImage]) {
-        if (reason) {
-            *reason = iTermMetalUnavailableReasonSharedBackgroundImage;
-        }
-        return NO;
-    }
     if (_textview.transparencyAlpha < 1) {
         BOOL transparencyAllowed = NO;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
