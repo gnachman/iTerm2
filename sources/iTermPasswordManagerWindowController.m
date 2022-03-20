@@ -202,7 +202,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     if (!name) {
         return;
     }
-    const NSUInteger index = [self indexOfAccountName:name];
+    const NSUInteger index = [self indexOfDisplayName:name];
     if (index != NSNotFound) {
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
                 byExtendingSelection:NO];
@@ -220,6 +220,14 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 }
 
 #pragma mark - Actions
+
+- (IBAction)reloadItems:(id)sender {
+    if (!iTermPasswordManagerDataSourceProvider.authenticated) {
+        return;
+    }
+    [iTermPasswordManagerDataSourceProvider.dataSource reload];
+    [self reloadAccounts];
+}
 
 - (IBAction)useKeychain:(id)sender {
     [iTermPasswordManagerDataSourceProvider enableKeychain];
@@ -304,12 +312,12 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
                                                                 password:_newPassword.stringValue ?: @""
                                                                    error:&error];
     if (newAccount) {
-        [self reloadAccounts];
+        // passwordsDidChange has the side-effect of doing reloadAccounts.
+        [self passwordsDidChange];
         NSUInteger index = [self indexOfAccountName:newAccount.accountName userName:newAccount.userName];
         if (index != NSNotFound) {
             [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
         }
-        [self passwordsDidChange];
     }
     if (error) {
         DLog(@"%@", error);
@@ -642,6 +650,12 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
         return nil;
     }
     return _entries[index].userName;
+}
+
+- (NSUInteger)indexOfDisplayName:(NSString *)name {
+    return [_entries indexOfObjectPassingTest:^BOOL(id<PasswordManagerAccount> _Nonnull entry, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [entry.displayString isEqualToString:name];
+    }];
 }
 
 - (NSUInteger)indexOfAccountName:(NSString *)name {

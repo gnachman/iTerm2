@@ -16,7 +16,7 @@ class OnePasswordUtils {
         if let customPath = _customPathToCLI {
             return customPath
         }
-        let normalPath = "/usr/local/bin/op DO NOT SUBMIT"
+        let normalPath = "/usr/local/bin/op"
         lazy var normalPathExists = {
             return FileManager.default.fileExists(atPath: normalPath)
         }()

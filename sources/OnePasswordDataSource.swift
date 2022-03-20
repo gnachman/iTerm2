@@ -96,8 +96,12 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
         }
     }
 
+    private var listAccountsCache: CachingVoidRecipe<[Account]>? = nil
 
     private var listAccountsRecipe: AnyRecipe<Void, [Account]> {
+        if let listAccountsCache = listAccountsCache {
+            return AnyRecipe<Void, [Account]>(listAccountsCache)
+        }
         // This is equivalent to running this command and then parsing out the relevant fields from
         // the output:
         //     op item list --tags iTerm2 --format json | op item get --format=json -
@@ -144,7 +148,10 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
                 }
             }
 
-        return AnyRecipe<Void, [Account]>(PipelineRecipe(accountsRecipe, itemsRecipe))
+        let pipeline: AnyRecipe<Void, [Account]> = AnyRecipe(PipelineRecipe(accountsRecipe, itemsRecipe))
+        let cache: CachingVoidRecipe<[Account]> = CachingVoidRecipe(pipeline, maxAge: 30 * 60)
+        listAccountsCache = cache
+        return AnyRecipe<Void, [Account]>(cache)
     }
 
     private var getPasswordRecipe: AnyRecipe<AccountIdentifier, String> {
@@ -235,6 +242,10 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
 
     func resetErrors() {
         OnePasswordUtils.resetErrors()
+    }
+
+    func reload() {
+        (configuration.listAccountsRecipe as? InvalidatableRecipe)?.invalidateRecipe()
     }
 }
 

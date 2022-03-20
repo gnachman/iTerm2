@@ -29,6 +29,7 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
 
     func delete() throws {
         try configuration.deleteRecipe.transform(inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier))
+        (configuration.listAccountsRecipe as? InvalidatableRecipe)?.invalidateRecipe()
     }
 
     func matches(filter: String) -> Bool {
@@ -53,6 +54,10 @@ protocol Recipe {
     associatedtype Inputs
     associatedtype Outputs
     func transform(inputs: Inputs) throws -> Outputs
+}
+
+protocol InvalidatableRecipe {
+    func invalidateRecipe()
 }
 
 class CommandLinePasswordDataSource: NSObject {
@@ -365,7 +370,50 @@ class CommandLinePasswordDataSource: NSObject {
 
         func transform(inputs: Inputs) throws -> Outputs {
             let intermediateValue = try firstRecipe.transform(inputs: inputs)
-            return try secondRecipe.transform(inputs: intermediateValue)
+            let value = try secondRecipe.transform(inputs: intermediateValue)
+            return value
+        }
+    }
+
+    // Note that this only works with inputs of type Void. That's because the input type needs to
+    // be equatable for the cache to make any kind of sense, but sadly Void is not and cannot
+    // be made equatable. For a good time, read: https://nshipster.com/void/
+    class CachingVoidRecipe<Outputs>: Recipe, InvalidatableRecipe {
+        typealias Inputs = Void
+
+        private struct Entry {
+            let outputs: Outputs
+            private let timestamp: TimeInterval
+
+            var age: TimeInterval {
+                return NSDate.it_timeSinceBoot() - timestamp
+            }
+
+            init(_ outputs: Outputs) {
+                self.outputs = outputs
+                self.timestamp = NSDate.it_timeSinceBoot()
+            }
+        }
+        private var cacheEntry: Entry?
+        let maxAge: TimeInterval
+        let inner: AnyRecipe<Inputs, Outputs>
+
+        func transform(inputs: Inputs) throws -> Outputs {
+            if let value = cacheEntry, value.age < maxAge {
+                return value.outputs
+            }
+            let result = try inner.transform(inputs: inputs)
+            cacheEntry = Entry(result)
+            return result
+        }
+
+        func invalidateRecipe() {
+            cacheEntry = nil
+        }
+
+        init(_ recipe: AnyRecipe<Inputs, Outputs>, maxAge: TimeInterval) {
+            inner = recipe
+            self.maxAge = maxAge
         }
     }
 
@@ -379,13 +427,18 @@ class CommandLinePasswordDataSource: NSObject {
             throw CommandLineRecipeError.unsupported(reason: reason)
         }
     }
-    struct AnyRecipe<Inputs, Outputs>: Recipe {
+    struct AnyRecipe<Inputs, Outputs>: Recipe, InvalidatableRecipe {
         private let closure: (Inputs) throws -> Outputs
+        private let invalidate: () -> ()
         func transform(inputs: Inputs) throws -> Outputs {
             return try closure(inputs)
         }
         init<T: Recipe>(_ recipe: T) where T.Inputs == Inputs, T.Outputs == Outputs {
             closure = { try recipe.transform(inputs: $0) }
+            invalidate = { (recipe as? InvalidatableRecipe)?.invalidateRecipe() }
+        }
+        func invalidateRecipe() {
+            invalidate()
         }
     }
 
@@ -437,6 +490,7 @@ class CommandLinePasswordDataSource: NSObject {
             inputs: AddRequest(userName: userName,
                                accountName: accountName,
                                password: password))
+        (configuration.listAccountsRecipe as? InvalidatableRecipe)?.invalidateRecipe()
         return CommandLineProvidedAccount(identifier: accountIdentifier.value,
                                           accountName: accountName,
                                           userName: userName,

@@ -14,6 +14,7 @@ class PasswordManagerDataSourceProvider: NSObject {
     private static var _dataSource: PasswordManagerDataSource? = nil
     private static var dataSourceType: DataSource = preferredDataSource
     private static let _keychain = KeychainPasswordDataSource()
+    private static var _onePassword = OnePasswordDataSource()
     private static let dataSourceNameUserDefaultsKey = "NoSyncPasswordManagerDataSourceName"
 
     enum DataSource: String {
@@ -42,9 +43,9 @@ class PasswordManagerDataSourceProvider: NSObject {
             let fresh = { () -> PasswordManagerDataSource in
                 switch preferredDataSource {
                 case .keychain:
-                    return KeychainPasswordDataSource()
+                    return keychain!
                 case .onePassword:
-                    return OnePasswordDataSource()
+                    return onePassword!
                 }
             }()
             _dataSource = fresh
@@ -74,6 +75,13 @@ class PasswordManagerDataSourceProvider: NSObject {
             return nil
         }
         return _keychain
+    }
+
+    private static var onePassword: OnePasswordDataSource? {
+        if !authenticated {
+            return nil
+        }
+        return _onePassword
     }
 
     @objc static func revokeAuthentication() {

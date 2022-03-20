@@ -95,4 +95,7 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
 
     func resetErrors() {
     }
+
+    func reload() {
+    }
 }
