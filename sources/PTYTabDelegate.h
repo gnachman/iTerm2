@@ -72,5 +72,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)tabCanDragByPaneTitleBar;
 - (void)tabEndSyntheticSession:(PTYSession *)syntheticSession;
 - (void)tab:(PTYTab *)tab sessionDidRestart:(PTYSession *)session;
+- (void)tab:(PTYTab *)tab closeSession:(PTYSession *)session;
 
 @end

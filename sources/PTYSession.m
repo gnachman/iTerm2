@@ -2546,6 +2546,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self terminate];
 }
 
+- (void)close {
+    [self.delegate sessionClose:self];
+}
+
 // Request that the session close. It may or may not be undoable. Only undoable terminations support
 // "restart", which is done by first calling revive and then replaceTerminatedShellWithNewInstance.
 - (void)terminate {

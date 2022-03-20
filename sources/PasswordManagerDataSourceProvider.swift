@@ -11,14 +11,75 @@ import LocalAuthentication
 @objc(iTermPasswordManagerDataSourceProvider)
 class PasswordManagerDataSourceProvider: NSObject {
     @objc private(set) static var authenticated = false
-    private static var _dataSource: PasswordManagerDataSource? = KeychainPasswordDataSource()
+    private static var _dataSource: PasswordManagerDataSource? = nil
+    private static var dataSourceType: DataSource = preferredDataSource
     private static let _keychain = KeychainPasswordDataSource()
+    private static var _onePassword = OnePasswordDataSource()
+    private static var _lastPass = LastPassDataSource()
+    private static let dataSourceNameUserDefaultsKey = "NoSyncPasswordManagerDataSourceName"
+
+    enum DataSource: String {
+        case keychain = "Keychain"
+        case onePassword = "OnePassword"
+        case lastPass = "LastPass"
+
+        static let defaultValue = DataSource.keychain
+    }
+
+    static var preferredDataSource: DataSource {
+        get {
+            let rawValue = UserDefaults.standard.string(forKey: dataSourceNameUserDefaultsKey) ?? ""
+            return DataSource(rawValue: rawValue) ?? DataSource.defaultValue
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: dataSourceNameUserDefaultsKey)
+            _dataSource = nil
+        }
+    }
 
     @objc static var dataSource: PasswordManagerDataSource? {
         guard authenticated else {
             return nil
         }
-        return _dataSource
+        guard let existing = _dataSource else {
+            let fresh = { () -> PasswordManagerDataSource in
+                switch preferredDataSource {
+                case .keychain:
+                    return keychain!
+                case .onePassword:
+                    return onePassword!
+                case .lastPass:
+                    return lastPass!
+                }
+            }()
+            _dataSource = fresh
+            return fresh
+        }
+        return existing
+    }
+
+    @objc static func enableKeychain() {
+        preferredDataSource = .keychain
+    }
+
+    @objc static var keychainEnabled: Bool {
+        return preferredDataSource == .keychain
+    }
+
+    @objc static func enable1Password() {
+        preferredDataSource = .onePassword
+    }
+
+    @objc static var onePasswordEnabled: Bool {
+        return preferredDataSource == .onePassword
+    }
+
+    @objc static func enableLastPass() {
+        preferredDataSource = .lastPass
+    }
+
+    @objc static var lastPassEnabled: Bool {
+        return preferredDataSource == .lastPass
     }
 
     @objc static var keychain: PasswordManagerDataSource? {
@@ -26,6 +87,20 @@ class PasswordManagerDataSourceProvider: NSObject {
             return nil
         }
         return _keychain
+    }
+
+    private static var onePassword: OnePasswordDataSource? {
+        if !authenticated {
+            return nil
+        }
+        return _onePassword
+    }
+
+    private static var lastPass: LastPassDataSource? {
+        if !authenticated {
+            return nil
+        }
+        return _lastPass
     }
 
     @objc static func revokeAuthentication() {
