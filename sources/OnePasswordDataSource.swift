@@ -184,7 +184,7 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
                         "--category=login",
                         "--title=\(addRequest.accountName)",
                         "--tags=iTerm2",
-                        "--generate-password=12,letters,digits",
+                        "--generate-password",
                         "--format=json",
                         "username=\(addRequest.userName)"]
             return Command(command: OnePasswordUtils.pathToCLI,
