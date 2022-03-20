@@ -66,17 +66,7 @@ fileprivate class KeychainAccount: NSObject, PasswordManagerAccount {
 
 class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
     private var openPanel: NSOpenPanel?
-    private static let keychainPathUserDefaultsKey = "NoSyncKeychainPath"
     private static let keychain = KeychainPasswordDataSource()
-
-    private static var pathToKeychain: String? {
-        return UserDefaults.standard.string(forKey: keychainPathUserDefaultsKey)
-    }
-
-    override init() {
-        super.init()
-        updateConfiguration()
-    }
 
     var accounts: [PasswordManagerAccount] {
         guard let dicts = SSKeychain.accounts(forService: serviceName) as? [NSDictionary] else {
@@ -101,35 +91,6 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
         let account = KeychainAccount(accountName: accountName, userName: userName)
         try account.set(password: password)
         return account
-    }
-
-    func configure(_ completion: @escaping (Bool) -> ()) {
-        let panel = NSOpenPanel()
-        self.openPanel = panel
-        let home = NSHomeDirectory() as NSString
-        panel.directoryURL = URL(fileURLWithPath: home.appendingPathComponents(["Library", "Keychains"]))
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = false
-        panel.allowedFileTypes = [ "keychain-db" ]
-        panel.begin { [weak self] result in
-            let ok = self?.didChooseKeychain(result) ?? false
-            completion(ok)
-        }
-    }
-
-    private func didChooseKeychain(_ response: NSApplication.ModalResponse) -> Bool {
-        guard response == .OK, let path = openPanel?.url?.path else {
-            return false
-        }
-        openPanel = nil
-        UserDefaults.standard.set(path, forKey: Self.keychainPathUserDefaultsKey)
-        updateConfiguration()
-        return true
-    }
-
-    private func updateConfiguration() {
-        SSKeychain.pathToKeychain = Self.pathToKeychain
     }
 
     func resetErrors() {

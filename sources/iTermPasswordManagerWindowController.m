@@ -237,15 +237,6 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     [self updateConfiguration];
 }
 
-- (IBAction)changeKeychain:(id)sender {
-    __weak __typeof(self) weakSelf = self;
-    [iTermPasswordManagerDataSourceProvider.keychain configure:^(BOOL ok){
-        if (ok) {
-            [weakSelf updateConfiguration];
-        }
-    }];
-}
-
 - (IBAction)closeCurrentSession:(id)sender {
     [self orderOutOrEndSheet];
 }
@@ -497,8 +488,6 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
         menuItem.state = state ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(toggleProbe:)) {
         menuItem.state = self.shouldProbe ? NSControlStateValueOn : NSControlStateValueOff;
-    } else if (menuItem.action == @selector(changeKeychain:)) {
-        return iTermPasswordManagerDataSourceProvider.keychainEnabled;
     } else if (menuItem.action == @selector(useKeychain:)) {
         menuItem.state = iTermPasswordManagerDataSourceProvider.keychainEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(use1Password:)) {

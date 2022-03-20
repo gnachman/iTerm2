@@ -217,11 +217,6 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
         return true
     }
 
-    func configure(_ completion: @escaping (Bool) -> ()) {
-        // Not supported. Clients must know this and won't offer the option in the UI.
-        fatalError()
-    }
-
     func checkAvailability() -> Bool {
         if OnePasswordUtils.checkUsability() == false {
             return false
