@@ -74,3 +74,35 @@ class MutableAtomicObject<T> {
     }
 }
 
+// Provides atomic access to an object.
+class AtomicQueue<T> {
+    private var values = [T]()
+    private let mutex = Mutex()
+    private let sema = DispatchSemaphore(value: 0)
+
+    func enqueue(_ value: T) {
+        mutex.sync {
+            values.append(value)
+        }
+        sema.signal()
+    }
+
+    func dequeue() -> T {
+        while true {
+            sema.wait()
+            if let value = tryDequeue() {
+                return value
+            }
+        }
+    }
+
+    func tryDequeue() -> T? {
+        return mutex.sync { () -> T? in
+            guard let value = values.first else {
+                return nil
+            }
+            values.removeFirst()
+            return value
+        }
+    }
+}

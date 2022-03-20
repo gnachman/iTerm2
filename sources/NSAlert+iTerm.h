@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NSAlert (iTerm)
 
-- (NSInteger)runSheetModalForWindow:(NSWindow *)window;
+- (NSModalResponse)runSheetModalForWindow:(NSWindow *)window;
 
 @end
 
