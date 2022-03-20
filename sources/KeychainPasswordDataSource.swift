@@ -131,4 +131,7 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
     private func updateConfiguration() {
         SSKeychain.pathToKeychain = Self.pathToKeychain
     }
+
+    func resetErrors() {
+    }
 }

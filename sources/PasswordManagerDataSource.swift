@@ -27,6 +27,7 @@ protocol PasswordManagerDataSource: AnyObject {
     @objc(addUserName:accountName:password:error:) func add(userName: String,
                                                             accountName: String,
                                                             password: String) throws -> PasswordManagerAccount
+    func resetErrors()
 }
 
 extension PasswordManagerAccount {
