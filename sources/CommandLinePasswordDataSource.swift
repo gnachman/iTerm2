@@ -29,7 +29,7 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
 
     func delete() throws {
         try configuration.deleteRecipe.transform(inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier))
-        (configuration.listAccountsRecipe as? InvalidatableRecipe)?.invalidateRecipe()
+        configuration.listAccountsRecipe.invalidateRecipe()
     }
 
     func matches(filter: String) -> Bool {
@@ -247,7 +247,7 @@ class CommandLinePasswordDataSource: NSObject {
             return Output(stderr: stderrData, stdout: stdoutData, returnCode: returnCode!)
         }
 
-        func write(_ data: Data) {
+        func write(_ data: Data, completion: (() -> ())? = nil) {
             guard let channel = stdinChannel else {
                 return
             }
@@ -255,6 +255,9 @@ class CommandLinePasswordDataSource: NSObject {
                 channel.write(offset: 0,
                               data: DispatchData(bytes: pointer),
                               queue: serialQueue) { _done, _data, _error in
+                    if _done, let completion = completion {
+                        completion()
+                    }
                     guard self.debugging else {
                         return
                     }
@@ -278,6 +281,9 @@ class CommandLinePasswordDataSource: NSObject {
         }
 
         func closeStdin() {
+            if debugging {
+                NSLog("close stdin")
+            }
             stdin.fileHandleForWriting.closeFile()
             stdinChannel?.close()
             stdinChannel = nil
@@ -372,6 +378,25 @@ class CommandLinePasswordDataSource: NSObject {
             let intermediateValue = try firstRecipe.transform(inputs: inputs)
             let value = try secondRecipe.transform(inputs: intermediateValue)
             return value
+        }
+    }
+
+    // Run firstRecipe, then run secondRecipe. The result of SecondRecipe gets returned.
+    struct SequenceRecipe<FirstRecipe: Recipe, SecondRecipe: Recipe>: Recipe where SecondRecipe.Inputs == (FirstRecipe.Inputs, FirstRecipe.Outputs) {
+        typealias Inputs = FirstRecipe.Inputs
+        typealias Outputs = SecondRecipe.Outputs
+
+        let firstRecipe: FirstRecipe
+        let secondRecipe: SecondRecipe
+
+        init(_ firstRecipe: FirstRecipe, _ secondRecipe: SecondRecipe) {
+            self.firstRecipe = firstRecipe
+            self.secondRecipe = secondRecipe
+        }
+
+        func transform(inputs: Inputs) throws -> Outputs {
+            let intermediate = try firstRecipe.transform(inputs: inputs)
+            return try secondRecipe.transform(inputs: (inputs, intermediate))
         }
     }
 
@@ -490,7 +515,7 @@ class CommandLinePasswordDataSource: NSObject {
             inputs: AddRequest(userName: userName,
                                accountName: accountName,
                                password: password))
-        (configuration.listAccountsRecipe as? InvalidatableRecipe)?.invalidateRecipe()
+        configuration.listAccountsRecipe.invalidateRecipe()
         return CommandLineProvidedAccount(identifier: accountIdentifier.value,
                                           accountName: accountName,
                                           userName: userName,

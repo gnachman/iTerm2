@@ -245,6 +245,16 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     [self updateConfiguration];
 }
 
+- (IBAction)useLastPass:(id)sender {
+    [iTermPasswordManagerDataSourceProvider enableLastPass];
+    [iTermPasswordManagerDataSourceProvider.dataSource resetErrors];
+    if (![iTermPasswordManagerDataSourceProvider.dataSource checkAvailability]) {
+        [self useKeychain:nil];
+    }
+    [self update];
+    [self updateConfiguration];
+}
+
 - (IBAction)closeCurrentSession:(id)sender {
     [self orderOutOrEndSheet];
 }
@@ -500,6 +510,8 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
         menuItem.state = iTermPasswordManagerDataSourceProvider.keychainEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(use1Password:)) {
         menuItem.state = iTermPasswordManagerDataSourceProvider.onePasswordEnabled ? NSControlStateValueOn : NSControlStateValueOff;
+    } else if (menuItem.action == @selector(userLastPass:)) {
+        menuItem.state = iTermPasswordManagerDataSourceProvider.lastPassEnabled ? NSControlStateValueOn : NSControlStateValueOff;
     } else if (menuItem.action == @selector(editAccountName:) ||
                menuItem.action == @selector(editUserName:) ||
                menuItem.action == @selector(copyPassword:) ||

@@ -2641,6 +2641,7 @@
 		A6A9839927E69B50003319D1 /* OnePasswordDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9839827E69B50003319D1 /* OnePasswordDataSource.swift */; };
 		A6A9839B27E6BDE1003319D1 /* ModalPasswordAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9839A27E6BDE1003319D1 /* ModalPasswordAlert.swift */; };
 		A6A9839D27E7BD7C003319D1 /* OnePasswordTokenRequester.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9839C27E7BD7C003319D1 /* OnePasswordTokenRequester.swift */; };
+		A6A983BB27E7F79E003319D1 /* LastPassDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A983BA27E7F79E003319D1 /* LastPassDataSource.swift */; };
 		A6AAD5EE22F4A1DD002DD12C /* iTermCommandRunnerPool.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */; };
 		A6AAD5EF22F4A1DD002DD12C /* iTermCommandRunnerPool.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */; };
 		A6AAD5F322F7EB61002DD12C /* iTermWindowSizeView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AAD5F122F7EB61002DD12C /* iTermWindowSizeView.h */; };
@@ -6258,6 +6259,7 @@
 		A6A9839827E69B50003319D1 /* OnePasswordDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnePasswordDataSource.swift; sourceTree = "<group>"; };
 		A6A9839A27E6BDE1003319D1 /* ModalPasswordAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModalPasswordAlert.swift; sourceTree = "<group>"; };
 		A6A9839C27E7BD7C003319D1 /* OnePasswordTokenRequester.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnePasswordTokenRequester.swift; sourceTree = "<group>"; };
+		A6A983BA27E7F79E003319D1 /* LastPassDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastPassDataSource.swift; sourceTree = "<group>"; };
 		A6AAD5EC22F4A1DD002DD12C /* iTermCommandRunnerPool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCommandRunnerPool.h; sourceTree = "<group>"; };
 		A6AAD5ED22F4A1DD002DD12C /* iTermCommandRunnerPool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermCommandRunnerPool.m; sourceTree = "<group>"; };
 		A6AAD5F122F7EB61002DD12C /* iTermWindowSizeView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermWindowSizeView.h; sourceTree = "<group>"; };
@@ -10240,6 +10242,7 @@
 				A6A9839827E69B50003319D1 /* OnePasswordDataSource.swift */,
 				A6A9839A27E6BDE1003319D1 /* ModalPasswordAlert.swift */,
 				A6A9839C27E7BD7C003319D1 /* OnePasswordTokenRequester.swift */,
+				A6A983BA27E7F79E003319D1 /* LastPassDataSource.swift */,
 			);
 			name = "Password Manager";
 			sourceTree = "<group>";
@@ -14605,6 +14608,7 @@
 				A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */,
 				A6BF8D1921EB188E003CF805 /* iTermDependencyEditorWindowController.m in Sources */,
 				A6DBC04A2005F09100F1466D /* iTermHighlightRowRenderer.mm in Sources */,
+				A6A983BB27E7F79E003319D1 /* LastPassDataSource.swift in Sources */,
 				A639E1A12112CA33001696DE /* iTermEchoProbe.m in Sources */,
 				A6644BE325CDCCD600419355 /* iTermLegacyView.m in Sources */,
 				535B3BBA2228DC5500D6D410 /* iTermAlertBuiltInFunction.m in Sources */,

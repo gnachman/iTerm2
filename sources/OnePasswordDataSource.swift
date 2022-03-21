@@ -245,7 +245,7 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
     }
 
     func reload() {
-        (configuration.listAccountsRecipe as? InvalidatableRecipe)?.invalidateRecipe()
+        configuration.listAccountsRecipe.invalidateRecipe()
     }
 }
 
