@@ -144,7 +144,6 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
     }
     [writeStream open];
 
-    NSInteger numberOfBytesCopied = 0;
     while ([readStream hasBytesAvailable]) {
         uint8_t buffer[4096];
         const NSInteger numberOfBytesRead = [readStream read:buffer maxLength:sizeof(buffer)];
@@ -165,8 +164,6 @@ static NSInteger SIGArchiveVerifiedLowestSupportedVersion = 2;
             }
             return NO;
         }
-
-        numberOfBytesCopied += numberOfBytesWritten;
     }
 
     if (errorOut) {

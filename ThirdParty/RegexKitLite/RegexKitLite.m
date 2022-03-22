@@ -61,6 +61,7 @@
 #import "RegexKitLite.h"
 
 
+
 #pragma mark Compile time tunables
 
 #ifndef RKL_CACHE_SIZE
@@ -1004,8 +1005,11 @@ static id rkl_performDictionaryVarArgsOp(id self, SEL _cmd, RKLRegexOp regexOp, 
 #pragma mark Primary internal function that Objective-C methods call to perform regular expression operations
 
 static id rkl_performRegexOp(id self, SEL _cmd, RKLRegexOp regexOp, NSString *regexString, RKLRegexOptions options, NSInteger capture, id matchString, NSRange *matchRange, NSString *replacementString, NSError **error, void *result, NSUInteger captureKeysCount, id captureKeys[captureKeysCount], const int captureKeyIndexes[captureKeysCount]) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-but-set-variable"
 	volatile NSUInteger RKL_CLEANUP(rkl_cleanup_cacheSpinLockStatus) rkl_cacheSpinLockStatus = 0UL;
-	
+#pragma clang diagnostic pop
+
 	NSUInteger replaceMutable = 0UL;
 	RKLRegexOp maskedRegexOp  = (regexOp & RKLMaskOp);
 	BOOL       dictionaryOp   = ((maskedRegexOp == RKLDictionaryOfCapturesOp) || (maskedRegexOp == RKLArrayOfDictionariesOfCapturesOp)) ? YES : NO;
@@ -1630,8 +1634,11 @@ exitNow:
 #pragma mark Internal function used to check if a regular expression is valid.
 
 static NSUInteger rkl_isRegexValid(id self, SEL _cmd, NSString *regex, RKLRegexOptions options, NSInteger *captureCountPtr, NSError **error) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-but-set-variable"
 	volatile NSUInteger RKL_CLEANUP(rkl_cleanup_cacheSpinLockStatus) rkl_cacheSpinLockStatus = 0UL;
-	
+#pragma clang diagnostic pop
+
 	RKLCachedRegex *cachedRegex    = NULL;
 	NSUInteger      gotCachedRegex = 0UL;
 	NSInteger       captureCount   = -1L;
@@ -2232,7 +2239,10 @@ exitNow2:
 
 + (void)RKL_METHOD_PREPEND(clearStringCache)
 {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-but-set-variable"
 	volatile NSUInteger RKL_CLEANUP(rkl_cleanup_cacheSpinLockStatus) rkl_cacheSpinLockStatus = 0UL;
+#pragma clang diagnostic pop
     os_unfair_lock_lock(&rkl_cacheSpinLock);
 	rkl_cacheSpinLockStatus |= RKLLockedCacheSpinLock;
 	rkl_clearStringCache();
@@ -2313,8 +2323,11 @@ exitNow2:
 
 - (void)RKL_METHOD_PREPEND(flushCachedRegexData)
 {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-but-set-variable"
 	volatile NSUInteger RKL_CLEANUP(rkl_cleanup_cacheSpinLockStatus) rkl_cacheSpinLockStatus = 0UL;
-	
+#pragma clang diagnostic pop
+
 	CFIndex    selfLength = CFStringGetLength((CFStringRef)self);
 	CFHashCode selfHash   = CFHash((CFTypeRef)self);
 	

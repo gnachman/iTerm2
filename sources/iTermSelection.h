@@ -171,7 +171,7 @@ typedef NS_ENUM(NSInteger, iTermSelectionMode) {
 - (NSIndexSet *)selectedIndexesOnAbsoluteLine:(long long)line;
 
 // Calls the block for each selected range.
-- (void)enumerateSelectedAbsoluteRanges:(void (^)(VT100GridAbsWindowedRange range, BOOL *stop, BOOL eol))block;
+- (void)enumerateSelectedAbsoluteRanges:(void (^ NS_NOESCAPE)(VT100GridAbsWindowedRange range, BOOL *stop, BOOL eol))block;
 
 // Changes the first/last range.
 - (void)setFirstAbsRange:(VT100GridAbsWindowedRange)firstRange mode:(iTermSelectionMode)mode;

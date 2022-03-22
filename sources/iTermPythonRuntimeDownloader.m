@@ -948,7 +948,6 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
     [outputStream open];
     NSMutableData *buffer = [NSMutableData dataWithLength:4096];
     BOOL ok = NO;
-    NSInteger total = 0;
     while (YES) {
         NSInteger n = [inputStream read:buffer.mutableBytes maxLength:buffer.length];
         if (n < 0) {
@@ -961,7 +960,6 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
         if ([outputStream write:buffer.mutableBytes maxLength:n] != n) {
             break;
         }
-        total += n;
     }
     [outputStream close];
     [inputStream close];

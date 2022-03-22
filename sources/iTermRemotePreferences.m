@@ -144,7 +144,6 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
         NSURLRequest *req = [NSURLRequest requestWithURL:url
                                              cachePolicy:NSURLRequestUseProtocolCachePolicy
                                          timeoutInterval:kFetchTimeout];
-        __block NSURLResponse *response = nil;
         __block NSError *error = nil;
         __block NSData *data = nil;
 
@@ -153,7 +152,6 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
                                                                                  NSURLResponse * _Nullable taskResponse,
                                                                                  NSError * _Nullable taskError) {
             data = taskData;
-            response = taskResponse;
             error = taskError;
             dispatch_semaphore_signal(sema);
         }];

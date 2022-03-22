@@ -1358,8 +1358,6 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         }
 
         // clear DWC's that are about to get orphaned
-        int si = sourceIndex;
-        int di = destIndex;
         for (int iteration = 0; iteration < rect.size.height; iteration++) {
             const int lineNumber = iteration + rect.origin.y;
             [self erasePossibleDoubleWidthCharInLineNumber:lineNumber
@@ -1368,8 +1366,6 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
             [self erasePossibleDoubleWidthCharInLineNumber:lineNumber
                                           startingAtOffset:rightIndex
                                                   withChar:defaultChar];
-            si -= direction;
-            di -= direction;
         }
 
         // Move lines.

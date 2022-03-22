@@ -1059,7 +1059,7 @@ static NSRange iTermMakeRange(NSInteger location, NSInteger length) {
     return indexes;
 }
 
-- (void)enumerateSelectedAbsoluteRanges:(void (^)(VT100GridAbsWindowedRange, BOOL *, BOOL))block {
+- (void)enumerateSelectedAbsoluteRanges:(void (^ NS_NOESCAPE)(VT100GridAbsWindowedRange, BOOL *, BOOL))block {
     if (_live) {
         // Live ranges can have box subs, which is just a pain to deal with, so make a copy,
         // end live selection in the copy (which converts boxes to individual selections), and

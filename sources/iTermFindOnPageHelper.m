@@ -358,7 +358,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // determines whether wrapping should occur.
     long long wrapAroundResultPosition = -1;
     SearchResult *wrapAroundResult = nil;
-    NSInteger currentIndex = 0;
     for (int j = 0, i = start; !found && j < [_searchResults count]; j++) {
         SearchResult* r = _searchResults[i];
         i += stride;
@@ -370,7 +369,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if (r.absEndY < overflowAdjustment) {
             continue;
         }
-        currentIndex += 1;
         NSInteger pos = r.startX + (long long)r.absStartY * width;
         if (!found) {
             if (NSLocationInRange(pos, range)) {

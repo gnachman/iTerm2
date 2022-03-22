@@ -216,11 +216,9 @@
                      windowController:(PseudoTerminal *)windowController
                            completion:(void (^)(PTYSession *, BOOL willCallCompletionBlock))completion {
     DLog(@"Create a session via callback");
-    __block BOOL finished = NO;
     _makeSession(profile, windowController, ^(PTYSession *session) {
         DLog(@"Created a session: %@", session);
         completion(session, NO);
-        finished = YES;
     });
 }
 

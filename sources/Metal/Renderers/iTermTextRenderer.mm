@@ -421,7 +421,6 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
 
     // The vertex buffer's texture coordinates depend on the texture map's atlas size so it must
     // be initialized after the texture map.
-    __block NSInteger totalInstances = 0;
     __block iTermTextureDimensions previousTextureDimensions;
     __block id<MTLBuffer> previousTextureDimensionsBuffer = nil;
 
@@ -434,7 +433,6 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
                              iTermMetalUnderlineDescriptor strikethroughDescriptor,
                              BOOL underlined,
                              BOOL emoji) {
-        totalInstances += instances;
         __block id<MTLBuffer> vertexBuffer;
         [tState measureTimeForStat:iTermTextRendererStatNewQuad ofBlock:^{
             vertexBuffer = [self quadOfSize:CGSizeMake(glyphSize.x, glyphSize.y)

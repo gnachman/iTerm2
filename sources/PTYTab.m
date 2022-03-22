@@ -6064,12 +6064,6 @@ typedef struct {
     } else if (allSessionsIdle) {
         _metalUnavailableReason = iTermMetalUnavailableReasonIdle;
     } else if (!numberOfSplitPanesIsReasonable) {
-        static NSString *tooManyPanesReason;
-        static dispatch_once_t onceToken;
-        dispatch_once(&onceToken, ^{
-            tooManyPanesReason = [NSString stringWithFormat:@"there are more than %@ split frames in this tab.",
-                                  @(maxNumberOfSplitPanesForMetal - 1)];
-        });
         _metalUnavailableReason = iTermMetalUnavailableReasonTooManyPanesReason;
     } else if (![_delegate tabCanUseMetal:self reason:&reason]) {
         _metalUnavailableReason = reason;

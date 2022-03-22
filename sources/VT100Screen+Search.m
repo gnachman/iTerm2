@@ -107,18 +107,16 @@
 #pragma mark - Tail Find
 
 - (void)saveFindContextAbsPosImpl {
-    int linesPushed;
     LineBuffer *temp = [_state.linebuffer copy];
-    linesPushed = [_state.currentGrid appendLines:[self.currentGrid numberOfLinesUsed]
-                                   toLineBuffer:temp];
+    [_state.currentGrid appendLines:[self.currentGrid numberOfLinesUsed]
+                       toLineBuffer:temp];
     self.savedFindContextAbsPos = [temp absPositionOfFindContext:self.findContext];
 }
 
 - (void)restoreSavedPositionToFindContextImpl:(FindContext *)context {
-    int linesPushed;
     LineBuffer *temp = [_state.linebuffer copy];
-    linesPushed = [_state.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
-                                     toLineBuffer:temp];
+    [_state.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
+                       toLineBuffer:temp];
 
     [temp storeLocationOfAbsPos:self.savedFindContextAbsPos
                       inContext:context];

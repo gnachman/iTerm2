@@ -3491,10 +3491,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         lineBuffer.delegate = self;
         self.linebuffer = lineBuffer;
     }
-    BOOL addedBanner = NO;
     if (includeRestorationBanner && [iTermAdvancedSettingsModel showSessionRestoredBanner]) {
         [self appendSessionRestoredBanner];
-        addedBanner = YES;
     }
 
     if (screenState) {
