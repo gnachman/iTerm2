@@ -371,7 +371,11 @@ class CommandLinePasswordDataSource: NSObject {
                                            handleStderr: { _ in nil },
                                            handleTermination: { _, _ in })
             if let data = stdin {
-                inner.write(data)
+                inner.didLaunch = {
+                    inner.write(data) {
+                        inner.closeStdin()
+                    }
+                }
             }
             defer {
                 output = inner.output
