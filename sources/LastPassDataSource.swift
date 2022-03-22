@@ -13,28 +13,68 @@ class LastPassDataSource: CommandLinePasswordDataSource {
         case runtime
         case badOutput
         case syncFailed
+        case canceledByUser
+        case timedOut
+        case needsLogin
+    }
+
+    private struct ErrorHandler {
+        var requestedAuthentication = false
+
+        mutating func handleError(_ data: Data?) throws -> Data? {
+            guard let data = data else {
+                return nil
+            }
+            if let string = String(data: data, encoding: .utf8), string.contains("lpass login") {
+                throw LPError.needsLogin
+            }
+            if requestedAuthentication {
+                return nil
+            }
+            requestedAuthentication = true
+            guard let password = ModalPasswordAlert("Enter your LastPass master password:").run(window: nil) else {
+                throw LPError.canceledByUser
+            }
+            return (password + "\n").data(using: .utf8)
+        }
     }
 
     private struct LastPassBasicCommandRecipe<Inputs, Outputs>: Recipe {
         private let commandRecipe: CommandRecipe<Inputs, Outputs>
         init(_ args: [String],
+             timeout: TimeInterval? = nil,
              outputTransformer: @escaping (Output) throws -> Outputs) {
+            var errorHandler = ErrorHandler()
             commandRecipe = CommandRecipe { _ in
-                Command(command: LastPassUtils.pathToCLI,
-                        args: args,
-                        env: LastPassUtils.basicEnvironment,
-                        stdin: nil)
+                let command = InteractiveCommand(command: LastPassUtils.pathToCLI,
+                                                 args: args,
+                                                 env: LastPassUtils.basicEnvironment,
+                                                 handleStdout: { _ in nil },
+                                                 handleStderr: { data throws in return try errorHandler.handleError(data) },
+                                                 handleTermination: { _, _ in })
+                if let timeout = timeout {
+                    command.deadline = Date(timeIntervalSinceNow: timeout)
+                }
+                return command
             } recovery: { error throws in
                 throw error
             } outputTransformer: { output throws in
+                if output.timedOut {
+                    throw LPError.timedOut
+                }
                 if output.returnCode != 0 {
                     throw LPError.runtime
                 }
                 return try outputTransformer(output)
             }
         }
+
         func transform(inputs: Inputs) throws -> Outputs {
             return try commandRecipe.transform(inputs: inputs)
+        }
+
+        private func handleError(_ data: Data) {
+
         }
     }
 
@@ -62,7 +102,7 @@ class LastPassDataSource: CommandLinePasswordDataSource {
 
     private var listAccountsRecipe: AnyRecipe<Void, [Account]> {
         let args = ["ls", "--format=%ai\t%an\t%au", "iTerm2"]
-        let recipe = LastPassBasicCommandRecipe<Void, [Account]>(args) { output in
+        let recipe = LastPassBasicCommandRecipe<Void, [Account]>(args, timeout: 5) { output in
             guard let string = String(data: output.stdout, encoding: .utf8) else {
                 throw LPError.badOutput
             }
@@ -81,7 +121,7 @@ class LastPassDataSource: CommandLinePasswordDataSource {
                                accountName: parts[1])
             }
         }
-        return AnyRecipe(recipe)
+        return wrap("The account list could not be fetched.", AnyRecipe(recipe))
     }
 
     private var getPasswordRecipe: AnyRecipe<AccountIdentifier, String> {
@@ -100,7 +140,7 @@ class LastPassDataSource: CommandLinePasswordDataSource {
             }
             return string.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         }
-        return AnyRecipe(recipe)
+        return wrap("The password could not be fetched.", AnyRecipe(recipe))
     }
 
     private var setPasswordRecipe: AnyRecipe<SetPasswordRequest, Void> {
@@ -124,7 +164,7 @@ class LastPassDataSource: CommandLinePasswordDataSource {
                 throw LPError.runtime
             }
         }
-        return AnyRecipe(recipe)
+        return wrap("The password could not be set.", AnyRecipe(recipe))
     }
 
     private var deleteRecipe: AnyRecipe<AccountIdentifier, Void> {
@@ -139,7 +179,7 @@ class LastPassDataSource: CommandLinePasswordDataSource {
                 throw LPError.runtime
             }
         }
-        return AnyRecipe(recipe)
+        return wrap("The account could not be deleted", AnyRecipe(recipe))
     }
 
     private var addAccountRecipe: AnyRecipe<AddRequest, AccountIdentifier> {
@@ -159,14 +199,14 @@ class LastPassDataSource: CommandLinePasswordDataSource {
                 }
             }
             return command
-
         } outputTransformer: { output in
             if output.returnCode != 0 {
                 throw LPError.runtime
             }
         }
 
-        let syncRecipe = LastPassBasicCommandRecipe<(AddRequest, Void), Void>(["sync", "now"]) { _ in }
+        let syncRecipe = LastPassBasicCommandRecipe<(AddRequest, Void), Void>(["sync", "now"],
+                                                                              timeout: 5) { _ in }
 
         let showRecipe = LastPassDynamicCommandRecipe<(AddRequest, Void), AccountIdentifier> { tuple in
             let args = ["show", "--id", "iTerm2/" + tuple.0.accountName]
@@ -197,9 +237,24 @@ class LastPassDataSource: CommandLinePasswordDataSource {
             LastPassDynamicCommandRecipe<AddRequest, Void>,
                 LastPassBasicCommandRecipe<(AddRequest, Void), Void>> = SequenceRecipe(addRecipe, syncRecipe)
         let sequence = SequenceRecipe(addSyncSequence, showRecipe)
-        return AnyRecipe(sequence)
+        return wrap("The account could not be added.", AnyRecipe(sequence))
     }
 
+    func wrap<Inputs, Outputs>(_ message: String, _ recipe: AnyRecipe<Inputs, Outputs>) -> AnyRecipe<Inputs, Outputs> {
+        return AnyRecipe(CatchRecipe(recipe, errorHandler: { error in
+            if error as? LPError == LPError.timedOut {
+                let alert = NSAlert()
+                alert.messageText = "Timeout"
+                alert.informativeText = "The LastPass service took too long to respond. \(message)"
+                alert.addButton(withTitle: "OK")
+                alert.runModal()
+                return
+            } else if error as? LPError == LPError.needsLogin {
+                LastPassUtils.showNotLoggedInMessage()
+            }
+            NSLog("\(error)")
+        }))
+    }
     var configuration: Configuration {
         lazy var value = {
             Configuration(listAccountsRecipe: listAccountsRecipe,
@@ -222,26 +277,18 @@ extension LastPassDataSource: PasswordManagerDataSource {
     }
 
     func checkAvailability() -> Bool {
-        let ready = try? LastPassBasicCommandRecipe<Void, Bool>(["ls"]) { output in
-            // You only get here if the command succeeded. Otherwise it throws.
+        let command = Command(command: LastPassUtils.pathToCLI,
+                              args: ["status", "--color=never"],
+                              env: LastPassUtils.basicEnvironment,
+                              stdin: nil)
+        _ = try? command.exec()
+        if command.output!.returnCode == 0 {
             return true
-        }.transform(inputs: ())
-        switch ready {
-        case .some(true):
-            return true
-        case .none, .some(false):
-            break
         }
-        requestLogin()
+        if String(data: command.output!.stdout, encoding: .utf8)?.hasPrefix("Not logged in") ?? false {
+            LastPassUtils.showNotLoggedInMessage()
+        }
         return false
-    }
-
-    private func requestLogin() {
-        let alert = NSAlert()
-        alert.messageText = "Login Required"
-        alert.informativeText = "Please run this command and try again:\nlpass login your-account-email-address"
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
     }
 
     func add(userName: String, accountName: String, password: String) throws -> PasswordManagerAccount {
@@ -259,7 +306,12 @@ extension LastPassDataSource: PasswordManagerDataSource {
 }
 
 class LastPassUtils {
-    static let basicEnvironment = ["HOME": NSHomeDirectory()]
+    static let basicEnvironment = ["HOME": NSHomeDirectory(),
+                                   "LPASS_ASKPASS": pathToAskpass]
+    static var pathToAskpass: String {
+        return Bundle.main.path(forResource: "askpass", ofType: "sh")!
+    }
+
     private static var _customPathToCLI: String? = nil
     private(set) static var usable: Bool? = nil
 
@@ -269,24 +321,20 @@ class LastPassUtils {
         }
         let normalPaths = ["/opt/local/bin/lpass", "/opt/homebrew/bin/lpass"]
         lazy var existingNormalPath = {
-            normalPaths.first { FileManager.default.fileExists(atPath: $0) }
+            normalPaths.first { checkUsability($0) }
         }()
         if let normalPath = existingNormalPath {
-            if usable == nil && !checkUsability(normalPath) {
-                usable = false
-                showUnavailableMessage(normalPath)
-            } else {
-                usable = true
-                return normalPath
-            }
+            usable = true
+            return normalPath
         }
-        if showCannotFindCLIMessage() {
+        while showCannotFindCLIMessage() {
             _customPathToCLI = askUserToFindCLI()
-            if let path = _customPathToCLI {
-                usable = checkUsability(path)
-                if usable == false {
-                    showUnavailableMessage()
-                }
+            guard let path = _customPathToCLI else {
+                break
+            }
+            usable = checkUsability(path)
+            if usable == true {
+                break
             }
         }
         return _customPathToCLI ?? normalPaths[0]
@@ -313,14 +361,15 @@ class LastPassUtils {
         return FileManager.default.fileExists(atPath: path)
     }
 
-    static func showUnavailableMessage(_ path: String? = nil) {
+    static func showNotLoggedInMessage() {
         let alert = NSAlert()
-        alert.messageText = "LastPass Unavailable"
-        alert.informativeText = "Please install the LastPass CLI."
+        alert.messageText = "Login Needed"
+        alert.informativeText = "Open a terminal window and run `lpass login your@email.address`."
         alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Help")
+        alert.addButton(withTitle: "Copy Command")
         if alert.runModal() == .alertSecondButtonReturn {
-            NSWorkspace.shared.open(URL(string: "https://github.com/LastPass/lastpass-cli")!)
+            NSPasteboard.general.declareTypes([.string], owner: self)
+            NSPasteboard.general.setString("lpass login me@example.com", forType: .string)
         }
     }
 
@@ -331,7 +380,18 @@ class LastPassUtils {
         alert.informativeText = "In order to use the LastPass integration, iTerm2 needs to know where to find the CLI app named “lpass”. Select Locate to provide its location."
         alert.addButton(withTitle: "Locate")
         alert.addButton(withTitle: "Cancel")
-        return alert.runModal() == .alertFirstButtonReturn
+        alert.addButton(withTitle: "Help")
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            return true
+        case .alertSecondButtonReturn:
+            return false
+        case .alertThirdButtonReturn:
+            NSWorkspace.shared.open(URL(string: "https://iterm2.com/lastpass-cli")!)
+            return false
+        default:
+            return false
+        }
     }
 
     private static func askUserToFindCLI() -> String? {

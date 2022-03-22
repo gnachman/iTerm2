@@ -22,6 +22,7 @@
 #import "iTermSelectionExtraction.h"
 #import "iTermStatusBarTextComponent.h"
 #import "iTermStoplightHotbox.h"
+#import "iTermSwiftHelpers.h"
 #import "iTermSwiftyString.h"
 #import "iTermTemporaryDoubleBufferedGridController.h"
 #import "iTermTextDataSource.h"
