@@ -274,6 +274,7 @@ backgroundColor:(NSColor *)backgroundColor;
 
 - (void)session:(PTYSession *)session setFilter:(NSString *)filter;
 - (PTYSession *)sessionSyntheticSessionFor:(PTYSession *)live;
+- (void)sessionClose:(PTYSession *)session;
 
 @end
 
@@ -657,6 +658,9 @@ backgroundColor:(NSColor *)backgroundColor;
 // is YES.
 - (void)attachToServer:(iTermGeneralServerConnection)serverConnection
             completion:(void (^)(void))completion;
+
+// Acts like the user pressing cmd-W but without confirmation.
+- (void)close;
 
 - (void)softTerminate;
 - (void)terminate;

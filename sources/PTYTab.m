@@ -6525,6 +6525,10 @@ backgroundColor:(NSColor *)backgroundColor {
     return nil;
 }
 
+- (void)sessionClose:(PTYSession *)session {
+    [self.delegate tab:self closeSession:session];
+}
+
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {

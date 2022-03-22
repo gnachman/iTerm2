@@ -361,6 +361,7 @@ class CommandLinePasswordDataSource: NSObject {
         let args: [String]
         let env: [String: String]
         let stdin: Data?
+        let timeout: TimeInterval?
         private(set) var output: Output?
 
         func exec() throws -> Output {
@@ -370,6 +371,9 @@ class CommandLinePasswordDataSource: NSObject {
                                            handleStdout: { _ in nil },
                                            handleStderr: { _ in nil },
                                            handleTermination: { _, _ in })
+            if let timeout = timeout {
+                inner.deadline = Date(timeIntervalSinceNow: timeout)
+            }
             if let data = stdin {
                 inner.didLaunch = {
                     inner.write(data) {
@@ -386,11 +390,13 @@ class CommandLinePasswordDataSource: NSObject {
         init(command: String,
              args: [String],
              env: [String: String],
-             stdin: Data?) {
+             stdin: Data?,
+             timeout: TimeInterval? = nil) {
             self.command = command
             self.args = args
             self.env = env
             self.stdin = stdin
+            self.timeout = timeout
         }
     }
 
@@ -462,8 +468,8 @@ class CommandLinePasswordDataSource: NSObject {
         typealias Inputs = Inner.Inputs
         typealias Outputs = Inner.Outputs
         let inner: Inner
-        let errorHandler: (Error) -> ()
-        init(_ recipe: Inner, errorHandler: @escaping (Error) -> ()) {
+        let errorHandler: (Inputs, Error) -> ()
+        init(_ recipe: Inner, errorHandler: @escaping (Inputs, Error) -> ()) {
             inner = recipe
             self.errorHandler = errorHandler
         }
@@ -471,7 +477,7 @@ class CommandLinePasswordDataSource: NSObject {
             do {
                 return try inner.transform(inputs: inputs)
             } catch {
-                errorHandler(error)
+                errorHandler(inputs, error)
                 throw error
             }
         }

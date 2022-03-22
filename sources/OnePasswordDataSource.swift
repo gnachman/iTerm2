@@ -15,6 +15,7 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
         case canceledByUser
         case unexpectedError
         case unusableCLI
+        case timeout
     }
 
     struct ListItemsEntry: Codable {
@@ -54,7 +55,8 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
                     return Command(command: OnePasswordUtils.pathToCLI,
                                    args: args,
                                    env: OnePasswordUtils.standardEnvironment(token: token),
-                                   stdin: nil)
+                                   stdin: nil,
+                                   timeout: 10)
                 },
                 outputTransformer: outputTransformer)
         }
@@ -79,8 +81,18 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
                 if error as? OPError == OPError.needsAuthentication {
                     dataSource.auth = nil
                     _ = try dataSource.getToken()
+                } else {
+                    throw error
                 }
             } outputTransformer: { output throws -> Outputs in
+                if output.timedOut {
+                    let alert = NSAlert()
+                    alert.messageText = "Timeout"
+                    alert.informativeText = "1Password took too long to respond."
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                    throw OPError.timeout;
+                }
                 if output.returnCode != 0 {
                     if output.stderr.smellsLike1PasswordAuthenticationError {
                         throw OPError.needsAuthentication

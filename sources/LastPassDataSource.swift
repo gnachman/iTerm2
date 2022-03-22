@@ -241,7 +241,7 @@ class LastPassDataSource: CommandLinePasswordDataSource {
     }
 
     func wrap<Inputs, Outputs>(_ message: String, _ recipe: AnyRecipe<Inputs, Outputs>) -> AnyRecipe<Inputs, Outputs> {
-        return AnyRecipe(CatchRecipe(recipe, errorHandler: { error in
+        return AnyRecipe(CatchRecipe(recipe, errorHandler: { (inputs, error) in
             if error as? LPError == LPError.timedOut {
                 let alert = NSAlert()
                 alert.messageText = "Timeout"
@@ -364,12 +364,30 @@ class LastPassUtils {
     static func showNotLoggedInMessage() {
         let alert = NSAlert()
         alert.messageText = "Login Needed"
-        alert.informativeText = "Open a terminal window and run `lpass login your@email.address`."
-        alert.addButton(withTitle: "OK")
+        alert.informativeText = "You need to log into LastPass by running `lpass login your@email.address`."
+        alert.addButton(withTitle: "Open Terminal Window")
         alert.addButton(withTitle: "Copy Command")
-        if alert.runModal() == .alertSecondButtonReturn {
+        alert.addButton(withTitle: "Cancel")
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            iTermController.sharedInstance().openSingleUseLoginWindowAndWrite("lpass login your@email.addess".data(using: .utf8)!) { session in
+                session?.addExpectation("^Success: Logged in as",
+                                        after: nil,
+                                        deadline: nil,
+                                        willExpect: nil) { _ in
+                    let alert = NSAlert()
+                    alert.messageText = "Login Successful"
+                    alert.informativeText = "Please retry your action in the password manager."
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                    session?.close()
+                }
+            }
+        case .alertSecondButtonReturn:
             NSPasteboard.general.declareTypes([.string], owner: self)
-            NSPasteboard.general.setString("lpass login me@example.com", forType: .string)
+            NSPasteboard.general.setString("lpass login your@email.address", forType: .string)
+        default:
+            break
         }
     }
 

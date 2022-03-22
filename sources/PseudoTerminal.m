@@ -1889,6 +1889,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self removeTab:aTab];
 }
 
+- (void)tab:(PTYTab *)tab closeSession:(PTYSession *)session {
+    [self closeSessionWithoutConfirmation:session];
+}
+
 - (NSUInteger)numberOfTabsWithTmuxController:(TmuxController *)tmuxController {
     return [[self.tabs filteredArrayUsingBlock:^BOOL(PTYTab *tab) {
         return tab.tmuxController == tmuxController;

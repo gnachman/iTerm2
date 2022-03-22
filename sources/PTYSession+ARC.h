@@ -16,7 +16,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)fetchAutoLogFilenameWithCompletion:(void (^)(NSString *filename))completion;
 - (void)setTermIDIfPossible;
+
+#pragma mark - Expect
+
 - (void)watchForPasteBracketingOopsieWithPrefix:(NSString *)prefix;
+- (void)addExpectation:(NSString *)regex
+                 after:(nullable iTermExpectation *)predecessor
+              deadline:(nullable NSDate *)deadline
+            willExpect:(void (^ _Nullable)(void))willExpect
+            completion:(void (^ _Nullable)(NSArray<NSString *> * _Nonnull))completion;
 
 #pragma mark - Private
 

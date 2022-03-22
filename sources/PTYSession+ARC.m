@@ -183,6 +183,18 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     }];
 }
 
+- (void)addExpectation:(NSString *)regex
+                 after:(nullable iTermExpectation *)predecessor
+              deadline:(nullable NSDate *)deadline
+            willExpect:(void (^ _Nullable)(void))willExpect
+            completion:(void (^ _Nullable)(NSArray<NSString *> * _Nonnull))completion {
+    [_expect expectRegularExpression:regex
+                               after:predecessor
+                            deadline:deadline
+                          willExpect:willExpect
+                          completion:completion];
+}
+
 - (void)didFindPasteBracketingOopsie {
     [_expect cancelExpectation:self.pasteBracketingOopsieExpectation];
     [self maybeTurnOffPasteBracketing];
