@@ -24,6 +24,7 @@
 static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersShouldReloadData";
 // Looks nice and is unlikely to be used already
 static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u2002—\u2002";
+NSString *const iTermPasswordManagerDidLoadAccounts = @"iTermPasswordManagerDidLoadAccounts";
 
 @implementation iTermPasswordManagerPanel
 
@@ -63,27 +64,66 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     IBOutlet NSTextField *_newAccount;
     IBOutlet NSButton *_newAccountOkButton;
     IBOutlet NSSecureTextField *_newAccountPassword;
+    IBOutlet NSView *_scrim;
+    IBOutlet NSProgressIndicator *_progressIndicator;
 
     NSArray<id<PasswordManagerAccount>> *_entries;
+    NSArray<id<PasswordManagerAccount>> *_unfilteredEntries;
     NSString *_accountNameToSelectAfterAuthentication;
     id _eventMonitor;
     NSOpenPanel *_panel;
     id<PasswordManagerDataSource> _dataSource;
+    NSInteger _busyCount;
+    NSInteger _cancelCount;
 }
 
-+ (NSArray<NSString *> *)combinedAccountNameUserNamesWithFilter:(NSString *)maybeEmptyFilter {
-    return [[self accountsWithFilter:maybeEmptyFilter] mapWithBlock:^id _Nonnull(id<PasswordManagerAccount>  _Nonnull account) {
-        return account.displayString;
+static NSArray<NSString *> *gCachedCombinedAccountNames;
+
++ (NSArray<NSString *> *)cachedCombinedAccountNames {
+    return gCachedCombinedAccountNames;
+}
+
++ (void)updateCombinedAccountNamesCache {
+    const BOOL wait = (gCachedCombinedAccountNames == nil);
+    dispatch_group_t group = dispatch_group_create();
+    dispatch_group_enter(group);
+    [self fetchAccountsWithCompletion:^(NSArray<NSString *> *names) {}];
+    if (wait) {
+        dispatch_group_wait(group, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)));
+    }
+}
+
++ (void)setCachedCombinedAccountNames:(NSArray<NSString *> *)names {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gCachedCombinedAccountNames = @[];
+    });
+    gCachedCombinedAccountNames = names;
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermPasswordManagerDidLoadAccounts object:nil];
+}
+
++ (void)fetchAccountsWithCompletion:(void (^)(NSArray<id<PasswordManagerAccount>> *))completion {
+    [[iTermPasswordManagerDataSourceProvider dataSource] fetchAccounts:^(NSArray<id<PasswordManagerAccount>> * _Nonnull accounts) {
+        // Sort accounts
+        NSArray<id<PasswordManagerAccount>> *result =
+        [accounts sortedArrayUsingComparator:^NSComparisonResult(id<PasswordManagerAccount> _Nonnull obj1,
+                                                                 id<PasswordManagerAccount> _Nonnull obj2) {
+            return [obj1.displayString localizedCaseInsensitiveCompare:obj2.displayString];
+        }];
+
+        // As a side-effect, save account names so the password trigger can access them.
+        [self setCachedCombinedAccountNames:[result mapWithBlock:^id _Nonnull(id<PasswordManagerAccount>  _Nonnull account) {
+            return [account displayString];
+        }]];
+
+        completion(result);
     }];
 }
 
-+ (NSArray<id<PasswordManagerAccount>> *)accountsWithFilter:(NSString *)maybeEmptyFilter {
-    return [[[[iTermPasswordManagerDataSourceProvider dataSource] accounts] filteredArrayUsingBlock:^BOOL(id<PasswordManagerAccount> account) {
-        return [account matchesFilter:maybeEmptyFilter ?: @""];
-    }] sortedArrayUsingComparator:^NSComparisonResult(id<PasswordManagerAccount> _Nonnull obj1,
-                                                      id<PasswordManagerAccount> _Nonnull obj2) {
-        return [obj1.displayString localizedCaseInsensitiveCompare:obj2.displayString];
-    }] ?: @[];
+- (NSArray<id<PasswordManagerAccount>> *)accounts:(NSArray<id<PasswordManagerAccount>> *)accounts filteredBy:(NSString *)filter {
+    return [accounts filteredArrayUsingBlock:^BOOL(id<PasswordManagerAccount> account) {
+        return [account matchesFilter:filter];
+    }];
 }
 
 - (instancetype)init {
@@ -92,7 +132,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
         [self authenticate];
         [[iTermPasswordManagerDataSourceProvider dataSource] resetErrors];
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(reloadAccounts)
+                                                 selector:@selector(reloadAccountsNotification:)
                                                      name:kPasswordManagersShouldReloadData
                                                    object:nil];
     }
@@ -108,13 +148,18 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
                                                         selector:@selector(instanceScreenDidLock:)
                                                             name:@"com.apple.screenIsLocked"
                                                           object:nil];
+    _scrim.wantsLayer = YES;
+    _scrim.layer = [[CALayer alloc] init];
+    _scrim.layer.backgroundColor = [[[NSColor windowBackgroundColor] colorWithAlphaComponent:0.75] CGColor];
+    _scrim.alphaValue = 0;
+
     _broadcastButton.state = NSControlStateValueOff;
     [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
     if (iTermPasswordManagerDataSourceProvider.authenticated &&
         ![self.currentDataSource checkAvailability]) {
         [self dataSourceDidBecomeUnavailable];
     } else {
-        [self reloadAccounts];
+        [self reloadAccounts:^{}];
         [self update];
     }
     self.window.backgroundColor = [NSColor clearColor];
@@ -140,6 +185,7 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 
 - (void)dataSourceDidBecomeUnavailable {
     _entries = @[];
+    _unfilteredEntries = @[];
     [_tableView reloadData];
     [self updateWithAvailability:NO];
 }
@@ -216,6 +262,17 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     if (!name) {
         return;
     }
+    if (_entries) {
+        [self reallySelectAccountName:name];
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    [self reloadAccounts:^{
+        [weakSelf reallySelectAccountName:name];
+    }];
+}
+
+- (void)reallySelectAccountName:(NSString *)name {
     const NSUInteger index = [self indexOfDisplayName:name];
     if (index != NSNotFound) {
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
@@ -229,18 +286,30 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 
 - (void)updateConfiguration {
     if (iTermPasswordManagerDataSourceProvider.authenticated) {
-        [self reloadAccounts];
+        [self reloadAccounts:^{}];
     }
 }
 
 #pragma mark - Actions
 
+- (IBAction)cancelAsyncOperation:(id)sender {
+    _cancelCount += 1;
+    _busyCount = 1;
+    [self decrBusy];
+}
+
 - (IBAction)reloadItems:(id)sender {
     if (!iTermPasswordManagerDataSourceProvider.authenticated) {
         return;
     }
-    [self.currentDataSource reload];
-    [self reloadAccounts];
+    __weak __typeof(self) weakSelf = self;
+    const NSInteger cancelCount = [self incrBusy];
+    [self.currentDataSource reload:^{
+        [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+            [weakSelf reloadAccounts:^{}];
+            [weakSelf decrBusy];
+        }];
+    }];
 }
 
 - (IBAction)useKeychain:(id)sender {
@@ -330,11 +399,25 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
         [_newAccountPanel it_shakeNo];
         return;
     }
-    NSError *error = nil;
-    id<PasswordManagerAccount> newAccount = [[self currentDataSource] addUserName:_newUserName.stringValue ?: @""
-                                                                      accountName:_newAccount.stringValue ?: @""
-                                                                         password:_newPassword.stringValue ?: @""
-                                                                            error:&error];
+    __weak __typeof(self) weakSelf = self;
+    const NSInteger cancelCount = [self incrBusy];
+    [[self currentDataSource] addUserName:_newUserName.stringValue ?: @""
+                              accountName:_newAccount.stringValue ?: @""
+                                 password:_newPassword.stringValue ?: @""
+                               completion:^(id<PasswordManagerAccount> _Nullable newAccount, NSError * _Nullable error) {
+        [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+            [weakSelf didAddAccount:newAccount withError:error];
+            [weakSelf decrBusy];
+        }];
+    }];
+    _newPassword.stringValue = @"";
+    _newUserName.stringValue = @"";
+    _newAccount.stringValue = @"";
+    [self.window endSheet:_newAccountPanel];
+    [_newAccountPanel orderOut:nil];
+}
+
+- (void)didAddAccount:(id<PasswordManagerAccount>)newAccount withError:(NSError *)error {
     if (newAccount) {
         // passwordsDidChange has the side-effect of doing reloadAccounts.
         [self passwordsDidChange];
@@ -346,11 +429,6 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     if (error) {
         DLog(@"%@", error);
     }
-    _newPassword.stringValue = @"";
-    _newUserName.stringValue = @"";
-    _newAccount.stringValue = @"";
-    [self.window endSheet:_newAccountPanel];
-    [_newAccountPanel orderOut:nil];
 }
 
 - (IBAction)remove:(id)sender {
@@ -363,15 +441,19 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
             return;
         }
         [_tableView reloadData];
-        NSError *error = nil;
-        [_entries[selectedRow] delete:&error];
-        if (error) {
-            DLog(@"%@", error);
-            return;
-        }
-        [self reloadAccounts];
-        [self passwordsDidChange];
+        __weak __typeof(self) weakSelf = self;
+        [_entries[selectedRow] delete:^(NSError * _Nullable error) {
+            if (error) {
+                DLog(@"%@", error);
+                return;
+            }
+            [weakSelf didRemoveEntry];
+        }];
     }
+}
+
+- (void)didRemoveEntry {
+    [self passwordsDidChange];
 }
 
 - (BOOL)shouldRemoveSelection {
@@ -404,13 +486,18 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
             [[alert window] makeFirstResponder:newPassword];
 
             if ([self runModal:alert] == NSAlertFirstButtonReturn) {
-                NSError *error = nil;
-                [_entries[row] setPassword:newPassword.stringValue ?: @"" error:&error];
-                if (!error) {
-                    [self passwordsDidChange];
-                } else {
-                    DLog(@"%@", error);
-                }
+                __weak __typeof(self) weakSelf = self;
+                const NSInteger cancelCount = [self incrBusy];
+                [_entries[row] setPassword:newPassword.stringValue completion:^(NSError * _Nullable error) {
+                    [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                        [weakSelf decrBusy];
+                        if (error) {
+                            DLog(@"%@", error);
+                            return;
+                        }
+                        [weakSelf passwordsDidChange];
+                    }];
+                }];
             }
         }
     }
@@ -418,15 +505,22 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
 
 - (IBAction)enterPassword:(id)sender {
     DLog(@"enterPassword");
-    NSString *password = [self selectedPassword];
-    if (password) {
-        DLog(@"enterPassword: giving password to delegate");
-        NSString *twoFactorCode = [_twoFactorCode.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-        [_delegate iTermPasswordManagerEnterPassword:[password stringByAppendingString:twoFactorCode]
-                                           broadcast:_broadcastButton.state == NSControlStateValueOn];
-        DLog(@"enterPassword: closing sheet");
-        [self closeOrEndSheet];
-    }
+    __weak __typeof(self) weakSelf = self;
+    [self fetchSelectedPassword:^(NSString *password) {
+        if (!password) {
+            return;
+        }
+        [weakSelf didFetchPasswordToEnter:password];
+    }];
+}
+
+- (void)didFetchPasswordToEnter:(NSString *)password {
+    DLog(@"enterPassword: giving password to delegate");
+    NSString *twoFactorCode = [_twoFactorCode.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    [_delegate iTermPasswordManagerEnterPassword:[password stringByAppendingString:twoFactorCode]
+                                       broadcast:_broadcastButton.state == NSControlStateValueOn];
+    DLog(@"enterPassword: closing sheet");
+    [self closeOrEndSheet];
 }
 
 - (IBAction)enterUserName:(id)sender {
@@ -474,31 +568,46 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
             if (!accountName) {
                 return;
             }
-            NSAlert *alert = [[NSAlert alloc] init];
-            alert.messageText = [NSString stringWithFormat:@"Password for %@", accountName];
-            NSString *password = [self clickedPassword];
-            if (!password) {
-                // Already showed an error.
-                return;
-            } else {
-                alert.informativeText = password;
-            }
-            [alert addButtonWithTitle:@"OK"];
-            [alert addButtonWithTitle:@"Copy"];
-
-            if ([self runModal:alert] == NSAlertSecondButtonReturn) {
-                NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-                [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
-                [pasteboard setString:password forType:NSPasteboardTypeString];
-            }
+            __weak __typeof(self) weakSelf = self;
+            [self fetchClickedPassword:^(NSString *password) {
+                [weakSelf revealPassword:password forAccountName:accountName];
+            }];
         }
     }
 }
 
+- (void)revealPassword:(NSString *)password forAccountName:(NSString *)accountName {
+    if (!password) {
+        // Already showed an error.
+        return;
+    }
+    NSAlert *alert = [[NSAlert alloc] init];
+    alert.messageText = [NSString stringWithFormat:@"Password for %@", accountName];
+    alert.informativeText = password;
+    [alert addButtonWithTitle:@"OK"];
+    [alert addButtonWithTitle:@"Copy"];
+
+    if ([self runModal:alert] == NSAlertSecondButtonReturn) {
+        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+        [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+        [pasteboard setString:password forType:NSPasteboardTypeString];
+    }
+}
+
 - (IBAction)copyPassword:(id)sender {
+    __weak __typeof(self) weakSelf = self;
+    [self fetchClickedPassword:^(NSString *password) {
+        if (!password) {
+            return;
+        }
+        [weakSelf didFetchPasswordToCopy:password];
+    }];
+}
+
+- (void)didFetchPasswordToCopy:(NSString *)password {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
-    [pasteboard setString:[self clickedPassword] forType:NSPasteboardTypeString];
+    [pasteboard setString:password forType:NSPasteboardTypeString];
 }
 
 - (BOOL)shouldProbe {
@@ -598,13 +707,10 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
         if (![self.currentDataSource checkAvailability]) {
             [self dataSourceDidBecomeUnavailable];
         } else {
-            [self reloadAccounts];
-            if (_accountNameToSelectAfterAuthentication) {
-                [self selectAccountName:_accountNameToSelectAfterAuthentication];
-                _accountNameToSelectAfterAuthentication = nil;
-            } else {
-                [[self window] makeFirstResponder:_searchField];
-            }
+            __weak __typeof(self) weakSelf = self;
+            [self reloadAccounts:^{
+                [weakSelf didBecomeReady];
+            }];
         }
     } else {
         DLog(@"Auth failed. Close window.");
@@ -612,48 +718,64 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     }
 }
 
-- (NSString *)clickedPassword {
-    DLog(@"clickedPassword");
-    NSInteger index = [_tableView clickedRow];
-    return [self passwordForRow:index];
+- (void)didBecomeReady {
+    if (_accountNameToSelectAfterAuthentication) {
+        [self selectAccountName:_accountNameToSelectAfterAuthentication];
+        _accountNameToSelectAfterAuthentication = nil;
+    } else {
+        [[self window] makeFirstResponder:_searchField];
+    }
 }
 
-- (NSString *)selectedPassword {
+- (void)fetchClickedPassword:(void (^)(NSString *password))completion {
+    DLog(@"clickedPassword");
+    [self fetchPasswordForRow:[_tableView clickedRow] completion:completion];
+}
+
+- (void)fetchSelectedPassword:(void (^)(NSString *password))completion {
     DLog(@"selectedPassword");
     NSInteger index = [_tableView selectedRow];
-    return [self passwordForRow:index];
+    [self fetchPasswordForRow:index completion:completion];
 }
 
-- (NSString *)passwordForRow:(NSInteger)index {
+- (void)fetchPasswordForRow:(NSInteger)index completion:(void (^)(NSString *password))completion {
     DLog(@"row=%@", @(index));
     if (!iTermPasswordManagerDataSourceProvider.authenticated) {
         DLog(@"passwordForRow: return nil, not authenticated");
-        return nil;
+        completion(nil);
+        return;
     }
     if (index < 0) {
         DLog(@"passwordForRow: return nil, negative index");
-        return nil;
+        completion(nil);
+        return;
     }
     if (index >= _entries.count) {
         DLog(@"index too big");
-        return nil;
+        completion(nil);
+        return;
     }
-    NSError *error = nil;
-    NSString *password = [_entries[index] password:&error];
-    if (error) {
-        DLog(@"passwordForRow: return nil, keychain gave error %@", error);
 
-        NSAlert *alert = [[NSAlert alloc] init];
-        alert.messageText = [NSString stringWithFormat:@"Could not get password. Keychain query failed: %@",
-                             error.localizedDescription];
-        [alert addButtonWithTitle:@"OK"];
-        [self runModal:alert];
+    const NSInteger cancelCount = [self incrBusy];
+    __weak __typeof(self) weakSelf = self;
+    [_entries[index] fetchPassword:^(NSString * _Nullable password, NSError * _Nullable error) {
+        [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+            [weakSelf decrBusy];
+            if (error) {
+                DLog(@"passwordForRow: return nil, keychain gave error %@", error);
 
-        return nil;
-    } else {
-        DLog(@"passwordForRow: return nonnil password");
-        return password ?: @"";
-    }
+                NSAlert *alert = [[NSAlert alloc] init];
+                alert.messageText = [NSString stringWithFormat:@"Could not get password. Keychain query failed: %@",
+                                     error.localizedDescription];
+                [alert addButtonWithTitle:@"OK"];
+                [self runModal:alert];
+                completion(nil);
+            } else {
+                DLog(@"passwordForRow: return nonnil password");
+                completion(password ?: @"");
+            }
+        }];
+    }];
 }
 
 - (NSModalResponse)runModal:(NSAlert *)alert {
@@ -733,13 +855,32 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     return _entries[rowIndex].userName;
 }
 
-- (void)reloadAccounts {
+- (void)reloadAccountsNotification:(NSNotification *)notification {
+    [self reloadAccounts:^{}];
+}
+
+- (void)reloadAccounts:(void (^)(void))completion {
     NSString *filter = [_searchField stringValue];
     if (iTermPasswordManagerDataSourceProvider.authenticated) {
-        _entries = [[self class] accountsWithFilter:filter];
+        __weak __typeof(self) weakSelf = self;
+        const NSInteger cancelCount = [self incrBusy];
+        [self.class fetchAccountsWithCompletion:^(NSArray<id<PasswordManagerAccount>> *accounts) {
+            [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                [weakSelf decrBusy];
+                [weakSelf setAccounts:accounts
+                             filtered:[weakSelf accounts:accounts filteredBy:filter]];
+                completion();
+            }];
+        }];
     } else {
-        _entries = @[];
+        [self setAccounts:@[] filtered:@[]];
     }
+}
+
+- (void)setAccounts:(NSArray<id<PasswordManagerAccount>> *)accounts
+           filtered:(NSArray<id<PasswordManagerAccount>> *)filteredAccounts {
+    _unfilteredEntries = accounts;
+    _entries = filteredAccounts;
     [_tableView reloadData];
     [self update];
 }
@@ -748,6 +889,30 @@ static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u20
     [[NSNotificationCenter defaultCenter] postNotificationName:kPasswordManagersShouldReloadData object:nil];
 }
 
+- (NSInteger)incrBusy {
+    _busyCount += 1;
+    if (_busyCount == 1) {
+        _scrim.alphaValue = 1;
+        [_progressIndicator startAnimation:nil];
+    }
+    return _cancelCount;
+}
+
+- (void)decrBusy {
+    _busyCount -= 1;
+    assert(_busyCount >= 0);
+    if (_busyCount == 0) {
+        _scrim.animator.alphaValue = 0;
+        [_progressIndicator stopAnimation:nil];
+    }
+}
+
+- (void)ifCancelCountUnchanged:(NSInteger)count perform:(void (^)(void))block {
+    if (_cancelCount != count) {
+        return;
+    }
+    block();
+}
 
 #pragma mark - NSTableViewDataSource
 
@@ -792,28 +957,59 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
             userName = anObject;
         }
 
-        NSError *error = nil;
-        NSString *password = [entry password:&error];
-        if (!error) {
-            if (!password) {
-                password = @"";
-            }
-            if ([entry delete:&error]) {
-                id<PasswordManagerAccount> replacement = [[self currentDataSource] addUserName:userName
-                                                                                   accountName:accountName
-                                                                                      password:password
-                                                                                         error:&error];
-                DLog(@"%@", error);
-                [self reloadAccounts];
-
-                const NSUInteger index = [self indexOfAccountName:replacement.accountName userName:userName];
-                if (index != NSNotFound) {
-                    [aTableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
+        __weak __typeof(self) weakSelf = self;
+        const NSInteger cancelCount = [self incrBusy]; // 1
+        [entry fetchPassword:^(NSString * _Nullable maybePassword, NSError * _Nullable error) {
+            [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                if (error) {
+                    [weakSelf decrBusy]; // (1)
+                    return;
                 }
-            }
-        }
+                NSString *password = maybePassword ?: @"";
+                const NSInteger cancelCount = [weakSelf incrBusy]; // 2
+                [weakSelf decrBusy];  // (1)
+                [entry delete:^(NSError * _Nullable error) {
+                    [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                        const NSInteger cancelCount = [weakSelf incrBusy]; // 3
+                        [weakSelf decrBusy];  // (2)
+                        [[weakSelf currentDataSource] addUserName:userName
+                                                      accountName:accountName
+                                                         password:password
+                                                       completion:^(id<PasswordManagerAccount> _Nullable replacement, NSError * _Nullable error) {
+                            [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                                DLog(@"%@", error);
+                                const NSInteger cancelCount = [weakSelf incrBusy]; // 4
+                                [weakSelf decrBusy];  // (3)
+                                [weakSelf reloadAccounts:^{
+                                    [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
+                                        if (replacement) {
+                                            [weakSelf didUpdateAccount:replacement userName:userName];
+                                        }
+                                        [weakSelf decrBusy]; // (4)
+                                    }];
+                                }];
+                            }];
+                        }];
+                    }];
+                }];
+            }];
+        }];
     }
     [self passwordsDidChange];
+}
+
+- (void)didUpdateAccount:(id<PasswordManagerAccount>)replacement userName:(NSString *)userName {
+    __weak __typeof(self) weakSelf = self;
+    [self reloadAccounts:^{
+        [weakSelf selectAccount:replacement userName:userName];
+    }];
+}
+
+- (void)selectAccount:(id<PasswordManagerAccount>)replacement userName:(NSString *)userName {
+    const NSUInteger index = [self indexOfAccountName:replacement.accountName userName:userName];
+    if (index != NSNotFound) {
+        [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index] byExtendingSelection:NO];
+    }
 }
 
 #pragma mark - NSTableViewDelegate
@@ -890,7 +1086,7 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
         return;
     }
     if ((id)[fieldEditor delegate] == _searchField) {
-        [self reloadAccounts];
+        [self setAccounts:_entries filtered:[self accounts:_entries filteredBy:[_searchField stringValue]]];
     }
     if ([self numberOfRowsInTableView:_tableView] == 1) {
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];

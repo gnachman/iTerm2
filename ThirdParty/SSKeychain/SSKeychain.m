@@ -42,11 +42,6 @@ static NSString *SSKeychainPathToKeychain = nil;
     return SSKeychainPathToKeychain;
 }
 
-+ (NSString *)passwordForService:(NSString *)serviceName account:(NSString *)account {
-    return [self passwordForService:serviceName account:account error:nil];
-}
-
-
 + (NSString *)passwordForService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing *)error {
     SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
     query.service = serviceName;

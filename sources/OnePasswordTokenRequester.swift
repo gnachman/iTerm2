@@ -127,10 +127,10 @@ class OnePasswordUtils {
     }
 
     private static func majorVersionNumber(_ pathToCLI: String) -> Int? {
-        let maybeData = try? CommandLinePasswordDataSource.Command(command: pathToCLI,
-                                     args: ["-v"],
-                                     env: [:],
-                                     stdin: nil).exec().stdout
+        let maybeData = try? CommandLinePasswordDataSource.InteractiveCommandRequest(
+            command: pathToCLI,
+            args: ["-v"],
+            env: [:]).exec().stdout
         if let data = maybeData, let string = String(data: data, encoding: .utf8) {
             var value = 0
             if Scanner(string: string).scanInt(&value) {
@@ -166,10 +166,11 @@ class OnePasswordTokenRequester {
         guard let password = self.requestPassword(prompt: "Enter your 1Password master password:") else {
             throw OnePasswordDataSource.OPError.canceledByUser
         }
-        let command = CommandLinePasswordDataSource.Command(command: OnePasswordUtils.pathToCLI,
-                                                            args: ["signin", "--raw"],
-                                                            env: OnePasswordUtils.basicEnvironment,
-                                                            stdin: (password + "\n").data(using: .utf8))
+        let command = CommandLinePasswordDataSource.CommandRequestWithInput(
+            command: OnePasswordUtils.pathToCLI,
+            args: ["signin", "--raw"],
+            env: OnePasswordUtils.basicEnvironment,
+            input: (password + "\n").data(using: .utf8)!)
         let output = try command.exec()
         if output.returnCode != 0 {
             let reason = String(data: output.stderr, encoding: .utf8) ?? "An unknown error occurred."
@@ -205,10 +206,10 @@ class OnePasswordTokenRequester {
             // Don't ask for the master password if we don't have a good CLI to use.
             return nil
         }
-        let command = CommandLinePasswordDataSource.Command(command: cli,
-                                                            args: ["item", "get", bogusID],
-                                                            env: OnePasswordUtils.basicEnvironment,
-                                                            stdin: nil)
+        let command = CommandLinePasswordDataSource.InteractiveCommandRequest(
+            command: cli,
+            args: ["item", "get", bogusID],
+            env: OnePasswordUtils.basicEnvironment)
         let output = try! command.exec()
         if output.returnCode == 0 {
             NSLog("item get \(bogusID) unexpectedly succeeded")

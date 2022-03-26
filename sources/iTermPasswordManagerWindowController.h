@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+extern NSString *const iTermPasswordManagerDidLoadAccounts;
+
 @protocol iTermPasswordManagerDelegate <NSObject>
 
 - (BOOL)iTermPasswordManagerCanEnterPassword;
@@ -26,7 +28,7 @@
 
 @property(nonatomic, assign) id<iTermPasswordManagerDelegate> delegate;
 
-+ (NSArray<NSString *> *)combinedAccountNameUserNamesWithFilter:(NSString *)maybeEmptyFilter;
++ (NSArray<NSString *> *)cachedCombinedAccountNames;
 
 // Re-check if the password can be entered.
 - (void)update;

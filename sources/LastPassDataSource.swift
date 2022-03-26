@@ -46,16 +46,19 @@ class LastPassDataSource: CommandLinePasswordDataSource {
              outputTransformer: @escaping (Output) throws -> Outputs) {
             var errorHandler = ErrorHandler()
             commandRecipe = CommandRecipe { _ in
-                let command = InteractiveCommand(command: LastPassUtils.pathToCLI,
-                                                 args: args,
-                                                 env: LastPassUtils.basicEnvironment,
-                                                 handleStdout: { _ in nil },
-                                                 handleStderr: { data throws in return try errorHandler.handleError(data) },
-                                                 handleTermination: { _, _ in })
+                var request = InteractiveCommandRequest(command: LastPassUtils.pathToCLI,
+                                                        args: args,
+                                                        env: LastPassUtils.basicEnvironment)
+                request.callbacks = InteractiveCommandRequest.Callbacks(
+                    callbackQueue: DispatchQueue.main,
+                    handleStdout: nil,
+                    handleStderr: { try errorHandler.handleError($0) },
+                    handleTermination: nil,
+                    didLaunch: nil)
                 if let timeout = timeout {
-                    command.deadline = Date(timeIntervalSinceNow: timeout)
+                    request.deadline = Date(timeIntervalSinceNow: timeout)
                 }
-                return command
+                return request
             } recovery: { error throws in
                 throw error
             } outputTransformer: { output throws in
@@ -69,10 +72,10 @@ class LastPassDataSource: CommandLinePasswordDataSource {
             }
         }
 
-        func transform(inputs: Inputs) throws -> Outputs {
-            return try commandRecipe.transform(inputs: inputs)
+        func transformAsync(inputs: Inputs,
+                            completion: @escaping (Outputs?, Error?) -> ()) {
+            commandRecipe.transformAsync(inputs: inputs, completion: completion)
         }
-
         private func handleError(_ data: Data) {
 
         }
@@ -95,8 +98,9 @@ class LastPassDataSource: CommandLinePasswordDataSource {
             }
         }
 
-        func transform(inputs: Inputs) throws -> Outputs {
-            return try commandRecipe.transform(inputs: inputs)
+        func transformAsync(inputs: Inputs,
+                            completion: @escaping (Outputs?, Error?) -> ()) {
+            commandRecipe.transformAsync(inputs: inputs, completion: completion)
         }
     }
 
@@ -127,10 +131,9 @@ class LastPassDataSource: CommandLinePasswordDataSource {
     private var getPasswordRecipe: AnyRecipe<AccountIdentifier, String> {
         let recipe = LastPassDynamicCommandRecipe<AccountIdentifier, String> {
             let args = ["show", "--password", $0.value]
-            return Command(command: LastPassUtils.pathToCLI,
-                           args: args,
-                           env: LastPassUtils.basicEnvironment,
-                    stdin: nil)
+            return InteractiveCommandRequest(command: LastPassUtils.pathToCLI,
+                                             args: args,
+                                             env: LastPassUtils.basicEnvironment)
         } outputTransformer: { output in
             if output.returnCode != 0 {
                 throw LPError.runtime
@@ -146,19 +149,22 @@ class LastPassDataSource: CommandLinePasswordDataSource {
     private var setPasswordRecipe: AnyRecipe<SetPasswordRequest, Void> {
         let recipe = LastPassDynamicCommandRecipe<SetPasswordRequest, Void> {
             let args = ["edit", "--non-interactive", "--password", $0.accountIdentifier.value]
-            let command = InteractiveCommand(command: LastPassUtils.pathToCLI,
-                                             args: args,
-                                             env: LastPassUtils.basicEnvironment,
-                                             handleStdout: { _ in nil },
-                                             handleStderr: { _ in nil },
-                                             handleTermination: { _, _ in })
+            var commandRequest = InteractiveCommandRequest(
+                command: LastPassUtils.pathToCLI,
+                args: args,
+                env: LastPassUtils.basicEnvironment)
             let dataToWrite = ($0.newPassword + "\n").data(using: .utf8)!
-            command.didLaunch = { () -> () in
-                command.write(dataToWrite) {
-                    command.closeStdin()
-                }
-            }
-            return command
+            commandRequest.callbacks = InteractiveCommandRequest.Callbacks(
+                callbackQueue: InteractiveCommandRequest.ioQueue,
+                handleStdout: nil,
+                handleStderr: nil,
+                handleTermination: nil,
+                didLaunch: { writing in
+                    writing.write(dataToWrite) {
+                        writing.closeForWriting()
+                    }
+                })
+            return commandRequest
         } outputTransformer: { output in
             if output.returnCode != 0 {
                 throw LPError.runtime
@@ -170,10 +176,10 @@ class LastPassDataSource: CommandLinePasswordDataSource {
     private var deleteRecipe: AnyRecipe<AccountIdentifier, Void> {
         let recipe = LastPassDynamicCommandRecipe<AccountIdentifier, Void> {
             let args = ["rm", $0.value]
-            return Command(command: LastPassUtils.pathToCLI,
-                           args: args,
-                           env: LastPassUtils.basicEnvironment,
-                           stdin: nil)
+            return InteractiveCommandRequest(
+                command: LastPassUtils.pathToCLI,
+                args: args,
+                env: LastPassUtils.basicEnvironment)
         } outputTransformer: { output in
             if output.returnCode != 0 {
                 throw LPError.runtime
@@ -186,19 +192,22 @@ class LastPassDataSource: CommandLinePasswordDataSource {
         let addRecipe = LastPassDynamicCommandRecipe<AddRequest, Void> {
             let args = ["add", "iTerm2/" + $0.accountName, "--non-interactive"]
             let input = "Username: \($0.userName)\nPassword: \($0.password)"
-            let command = InteractiveCommand(command: LastPassUtils.pathToCLI,
-                                      args: args,
-                                      env: LastPassUtils.basicEnvironment,
-                                      handleStdout: { _ in nil },
-                                      handleStderr: { _ in nil },
-                                      handleTermination: { _, _ in })
+            var commandRequest = InteractiveCommandRequest(
+                command: LastPassUtils.pathToCLI,
+                args: args,
+                env: LastPassUtils.basicEnvironment)
             let dataToWrite = input.data(using: .utf8)!
-            command.didLaunch = { () -> () in
-                command.write(dataToWrite) {
-                    command.closeStdin()
-                }
-            }
-            return command
+            commandRequest.callbacks = InteractiveCommandRequest.Callbacks(
+                callbackQueue: InteractiveCommandRequest.ioQueue,
+                handleStdout: nil,
+                handleStderr: nil,
+                handleTermination: nil,
+                didLaunch: { writing in
+                    writing.write(dataToWrite) {
+                        writing.closeForWriting()
+                    }
+                })
+            return commandRequest
         } outputTransformer: { output in
             if output.returnCode != 0 {
                 throw LPError.runtime
@@ -210,10 +219,9 @@ class LastPassDataSource: CommandLinePasswordDataSource {
 
         let showRecipe = LastPassDynamicCommandRecipe<(AddRequest, Void), AccountIdentifier> { tuple in
             let args = ["show", "--id", "iTerm2/" + tuple.0.accountName]
-            return Command(command: LastPassUtils.pathToCLI,
-                           args: args,
-                           env: LastPassUtils.basicEnvironment,
-                           stdin: nil)
+            return InteractiveCommandRequest(command: LastPassUtils.pathToCLI,
+                                             args: args,
+                                             env: LastPassUtils.basicEnvironment)
         } outputTransformer: { output in
             if output.returnCode != 0 {
                 throw LPError.runtime
@@ -268,8 +276,22 @@ class LastPassDataSource: CommandLinePasswordDataSource {
 }
 
 extension LastPassDataSource: PasswordManagerDataSource {
-    var accounts: [PasswordManagerAccount] {
-        return standardAccounts(configuration)
+    func fetchAccounts(_ completion: @escaping ([PasswordManagerAccount]) -> ()) {
+        standardAccounts(configuration) { result, _ in
+            completion(result ?? [])
+        }
+    }
+
+    @objc(addUserName:accountName:password:completion:)
+    func add(userName: String,
+             accountName: String,
+             password: String,
+             completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+        standardAdd(configuration,
+                    userName: userName,
+                    accountName: accountName,
+                    password: password,
+                    completion: completion)
     }
 
     var autogeneratedPasswordsOnly: Bool {
@@ -277,31 +299,28 @@ extension LastPassDataSource: PasswordManagerDataSource {
     }
 
     func checkAvailability() -> Bool {
-        let command = Command(command: LastPassUtils.pathToCLI,
-                              args: ["status", "--color=never"],
-                              env: LastPassUtils.basicEnvironment,
-                              stdin: nil)
-        _ = try? command.exec()
-        if command.output!.returnCode == 0 {
-            return true
+        do {
+            let request = InteractiveCommandRequest(command: LastPassUtils.pathToCLI,
+                                                    args: ["status", "--color=never"],
+                                                    env: LastPassUtils.basicEnvironment)
+            let output = try request.exec()
+            if output.returnCode == 0 {
+                return true
+            }
+            if String(data: output.stdout, encoding: .utf8)?.hasPrefix("Not logged in") ?? false {
+                LastPassUtils.showNotLoggedInMessage()
+            }
+            return false
+        } catch {
+            return false
         }
-        if String(data: command.output!.stdout, encoding: .utf8)?.hasPrefix("Not logged in") ?? false {
-            LastPassUtils.showNotLoggedInMessage()
-        }
-        return false
-    }
-
-    func add(userName: String, accountName: String, password: String) throws -> PasswordManagerAccount {
-        return try standardAdd(configuration,
-                               userName: userName,
-                               accountName: accountName,
-                               password: password)
     }
 
     func resetErrors() {
     }
 
-    func reload() {
+    func reload(_ completion: () -> ()) {
+        completion()
     }
 }
 

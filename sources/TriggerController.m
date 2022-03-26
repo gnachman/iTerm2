@@ -125,7 +125,7 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 
 @end
 
-@interface TriggerController() <iTermTriggerParameterController>
+@interface TriggerController() <iTermTriggerParameterController, iTermTriggerDelegate>
 // Keeps the color well whose popover is currently open from getting
 // deallocated. It may get removed from the view hierarchy but we need it to
 // continue existing so we can get the color out of it.
@@ -156,6 +156,9 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
         NSMutableArray *triggers = [NSMutableArray array];
         for (Class class in [self.class triggerClasses]) {
             [triggers addObject:[[class alloc] init]];
+        }
+        for (Trigger *trigger in triggers) {
+            trigger.delegate = self;
         }
         _triggers = triggers;
         _textEditingRow = -1;
@@ -909,6 +912,21 @@ NSString *const kTwoPraramValueColumnIdentifier = @"kTwoPraramValueColumnIdentif
 - (void)profileDidChange {
     _textEditingRow = -1;
     [_tableView reloadData];
+}
+
+#pragma mark - iTermTriggerDelegate
+
+- (void)triggerDidChangeParameterOptions:(Trigger *)sender {
+    const NSInteger columnIndex = [[_tableView tableColumns] indexOfObject:_parametersColumn];
+    if (columnIndex == NSNotFound) {
+        DLog(@"No param column!");
+        return;
+    }
+    NSIndexSet *rowIndexes = [self.triggerDictionariesForCurrentProfile indexesOfObjectsPassingTest:^BOOL(NSDictionary *_Nonnull dict, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [NSStringFromClass([sender class]) isEqual:dict[kTriggerActionKey]];
+    }];
+    [_tableView reloadDataForRowIndexes:rowIndexes
+                          columnIndexes:[NSIndexSet indexSetWithIndex:columnIndex]];
 }
 
 @end

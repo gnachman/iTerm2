@@ -16,20 +16,28 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
         return "\(accountName)\u{2002}—\u{2002}\(userName)"
     }
 
-    func password() throws -> String {
-        return try configuration.getPasswordRecipe.transform(inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier))
+    func fetchPassword(_ completion: @escaping (String?, Error?) -> ()) {
+        configuration.getPasswordRecipe.transformAsync(inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier)) { result, error in
+            completion(result, error)
+        }
     }
 
-    func set(password: String) throws {
+    func set(password: String, completion: @escaping (Error?) -> ()) {
         let accountIdentifier = CommandLinePasswordDataSource.AccountIdentifier(value: identifier)
         let request = CommandLinePasswordDataSource.SetPasswordRequest(accountIdentifier: accountIdentifier,
                                                                        newPassword: password)
-        try configuration.setPasswordRecipe.transform(inputs: request)
+        configuration.setPasswordRecipe.transformAsync(inputs: request) { _, error in
+            completion(error)
+        }
     }
 
-    func delete() throws {
-        try configuration.deleteRecipe.transform(inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier))
-        configuration.listAccountsRecipe.invalidateRecipe()
+    func delete(_ completion: @escaping (Error?) -> ()) {
+        configuration.deleteRecipe.transformAsync(inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier)) { _, error in
+            if error == nil {
+                self.configuration.listAccountsRecipe.invalidateRecipe()
+            }
+            completion(error)
+        }
     }
 
     func matches(filter: String) -> Bool {
@@ -46,99 +54,225 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
     }
 }
 
+struct Output {
+    let stderr: Data
+    let stdout: Data
+    let returnCode: Int32
+    let terminationReason: Process.TerminationReason
+    fileprivate(set) var timedOut = false
+    let userData: [String: String]?
+
+    var lines: [String] {
+        return String(data: stdout, encoding: .utf8)?.components(separatedBy: "\n") ?? []
+    }
+}
+
 protocol CommandLinePasswordDataSourceExecutableCommand {
-    func exec() throws -> CommandLinePasswordDataSource.Output
+    func exec() throws -> Output
+    func execAsync(_ completion: @escaping (Output?, Error?) -> ())
 }
 
 protocol Recipe {
     associatedtype Inputs
     associatedtype Outputs
-    func transform(inputs: Inputs) throws -> Outputs
+    func transformAsync(inputs: Inputs, completion: @escaping (Outputs?, Error?) -> ())
 }
 
 protocol InvalidatableRecipe {
     func invalidateRecipe()
 }
 
-class CommandLinePasswordDataSource: NSObject {
-    struct Output {
-        let stderr: Data
-        let stdout: Data
-        let returnCode: Int32
-        fileprivate(set) var timedOut = false
-        let userData: [String: String]
+protocol CommandWriting {
+    func write(_ data: Data, completion: (() -> ())?)
+    func closeForWriting()
+}
 
-        var lines: [String] {
-            return String(data: stdout, encoding: .utf8)?.components(separatedBy: "\n") ?? []
+class CommandLinePasswordDataSource: NSObject {
+    struct OutputBuilder {
+        var stderr = Data()
+        var stdout = Data()
+        var timedOut = MutableAtomicObject<Bool>(false)
+        var returnCode: Int32? = nil
+        var terminationReason: Process.TerminationReason? = nil
+        var userData: [String: String]?
+
+        fileprivate var canBuild: Bool {
+            return returnCode != nil && terminationReason != nil
+        }
+
+        func tryBuild() -> Output? {
+            guard let returnCode = returnCode,
+                  let terminationReason = terminationReason else {
+                return nil
+            }
+            return Output(stderr: stderr,
+                          stdout: stdout,
+                          returnCode: returnCode,
+                          terminationReason: terminationReason,
+                          timedOut: (terminationReason == .uncaughtSignal) && timedOut.value,
+                          userData: userData)
         }
     }
 
-    class InteractiveCommand: CommandLinePasswordDataSourceExecutableCommand {
-        let command: String
-        let args: [String]
-        let env: [String: String]
-        let handleStdout: (Data) throws -> Data?
-        let handleStderr: (Data) throws -> Data?
-        let handleTermination: (Int32, Process.TerminationReason) throws -> ()
-        var didLaunch: (() -> ())? = nil
-        var deadline: Date?
-        private let serialQueue = DispatchQueue(label: "com.iterm2.pwmgr-cmd")
-        private let process = Process()
-        private let stdout = Pipe()
-        private let stderr = Pipe()
-        private let stdin = Pipe()
-        private var stdoutChannel: DispatchIO? = nil
-        private var stderrChannel: DispatchIO? = nil
-        private var stdinChannel: DispatchIO? = nil
-        private let queue: AtomicQueue<Event>
-        var debugging: Bool = gDebugLogging.boolValue
-        var userData = [String: String]()
-        private(set) var output: Output? = nil
+    struct CommandRequestWithInput: CommandLinePasswordDataSourceExecutableCommand {
+        var command: String
+        var args: [String]
+        var env: [String: String]
+        var input: Data
+        private var request: InteractiveCommandRequest {
+            var request = InteractiveCommandRequest(command: command,
+                                                    args: args,
+                                                    env: env)
+            request.callbacks = InteractiveCommandRequest.Callbacks(
+                callbackQueue: InteractiveCommandRequest.ioQueue,
+                handleStdout: nil,
+                handleStderr: nil,
+                handleTermination: nil,
+                didLaunch: { writing in
+                    writing.write(input) {
+                        writing.closeForWriting()
+                    }
+                })
+            return request
+        }
 
+        func execAsync(_ completion: @escaping (Output?, Error?) -> ()) {
+            request.execAsync { output, error in
+                DispatchQueue.main.async {
+                    completion(output, error)
+                }
+            }
+        }
+
+        func exec() throws -> Output {
+            return try request.exec()
+        }
+    }
+
+    struct InteractiveCommandRequest: CommandLinePasswordDataSourceExecutableCommand {
+        var command: String
+        var args: [String]
+        var env: [String: String]
+        var userData: [String: String]?
+        var deadline: Date?
+        var callbacks: Callbacks? = nil
+        var executionQueue = DispatchQueue.global()
+        static let ioQueue = DispatchQueue(label: "com.iterm2.pwcmd-io")
+
+        struct Callbacks {
+            var callbackQueue: DispatchQueue
+            var handleStdout: ((Data) throws -> Data?)? = nil
+            var handleStderr: ((Data) throws -> Data?)? = nil
+            var handleTermination: ((Int32, Process.TerminationReason) throws -> ())? = nil
+            var didLaunch: ((CommandWriting) -> ())? = nil
+        }
+
+        init(command: String,
+             args: [String],
+             env: [String: String]) {
+            self.command = command
+            self.args = args
+            self.env = env
+        }
+
+        func exec() throws -> Output {
+            var _output: Output? = nil
+            var _error: Error? = nil
+            let group = DispatchGroup()
+            group.enter()
+            execAsync { output, error in
+                _output = output
+                _error = error
+                group.leave()
+            }
+            group.wait()
+            if let error = _error {
+                throw error
+            }
+            return _output!
+        }
+
+        func execAsync(_ completion: @escaping (Output?, Error?) -> ()) {
+            executionQueue.async {
+                do {
+                    let command = RunningInteractiveCommand(
+                        request: self,
+                        process: Process(),
+                        stdout: Pipe(),
+                        stderr: Pipe(),
+                        stdin: Pipe(),
+                        ioQueue: Self.ioQueue)
+                    let output = try command.run()
+                    completion(output, nil)
+                } catch {
+                    completion(nil, error)
+                }
+            }
+        }
+    }
+
+    private class RunningInteractiveCommand: CommandWriting {
         private enum Event {
             case readOutput(Data?)
             case readError(Data?)
             case terminated(Int32, Process.TerminationReason)
         }
 
-        private func readingChannel(_ pipe: Pipe,
-                                    serialQueue: DispatchQueue,
+        private let request: InteractiveCommandRequest
+        private let process: Process
+        private var stdoutChannel: DispatchIO?
+        private var stderrChannel: DispatchIO?
+        private var stdinChannel: DispatchIO?
+        private var stdin: Pipe
+        private let queue: AtomicQueue<Event>
+        private let timedOut = MutableAtomicObject(false)
+        private let ioQueue: DispatchQueue
+        private let group = DispatchGroup()
+        private let debugging = gDebugLogging.boolValue
+        private let lastError = MutableAtomicObject<Error?>(nil)
+        private var returnCode: Int32? = nil
+        private var terminationReason: Process.TerminationReason? = nil
+        private var stdoutData = Data()
+        private var stderrData = Data()
+        private var ran = false
+
+        private static func readingChannel(_ pipe: Pipe,
+                                    ioQueue: DispatchQueue,
                                     handler: @escaping (Data?) -> ()) -> DispatchIO {
             let channel = DispatchIO(type: .stream,
                                      fileDescriptor: pipe.fileHandleForReading.fileDescriptor,
-                                     queue: serialQueue,
+                                     queue: ioQueue,
                                      cleanupHandler: { _ in })
             channel.setLimit(lowWater: 1)
-            read(channel, handler)
+            read(channel, ioQueue: ioQueue, handler: handler)
             return channel
         }
 
-        private func read(_ channel: DispatchIO, _ handler: @escaping (Data?) -> ()) {
-            if debugging {
-                NSLog("Schedule read")
-            }
-            channel.read(offset: 0, length: 1024, queue: serialQueue) { [weak self, channel] done, data, error in
-                self?.didRead(channel, done: done, data: data, error: error, handler: handler)
+        private static func read(_ channel: DispatchIO,
+                                 ioQueue: DispatchQueue,
+                                 handler: @escaping (Data?) -> ()) {
+            channel.read(offset: 0, length: 1024, queue: ioQueue) { [channel] done, data, error in
+                Self.didRead(channel,
+                             done: done,
+                             data: data,
+                             error: error,
+                             ioQueue: ioQueue,
+                             handler: handler)
             }
         }
 
-        private func didRead(_ channel: DispatchIO?,
-                             done: Bool,
-                             data: DispatchData?,
-                             error: Int32,
-                             handler: @escaping (Data?) -> ()) {
+        private static func didRead(_ channel: DispatchIO?,
+                                    done: Bool,
+                                    data: DispatchData?,
+                                    error: Int32,
+                                    ioQueue: DispatchQueue,
+                                    handler: @escaping (Data?) -> ()) {
             if done && (data?.isEmpty ?? true) {
-                if debugging {
-                    NSLog("done and data is empty, finish up")
-                }
                 handler(nil)
                 return
             }
             guard let regions = data?.regions else {
                 if done {
-                    if debugging {
-                        NSLog("No regions, finish up")
-                    }
                     handler(nil)
                 }
                 return
@@ -151,59 +285,51 @@ class CommandLinePasswordDataSource: NSObject {
                 handler(data)
             }
             if let channel = channel {
-                read(channel, handler)
-            } else {
-                if debugging {
-                    NSLog("NOT scheduling read. channel is nil")
+                read(channel, ioQueue: ioQueue, handler: handler)
+            }
+        }
+
+        init(request: InteractiveCommandRequest,
+             process: Process,
+             stdout: Pipe,
+             stderr: Pipe,
+             stdin: Pipe,
+             ioQueue: DispatchQueue) {
+            self.request = request
+            self.process = process
+            self.stdin = stdin
+            let queue = AtomicQueue<Event>()
+            self.queue = queue
+            self.ioQueue = ioQueue
+            stdoutChannel = Self.readingChannel(stdout, ioQueue: ioQueue) { data in
+                queue.enqueue(.readOutput(data))
+            }
+            stderrChannel = Self.readingChannel(stderr, ioQueue: ioQueue) { data in
+                queue.enqueue(.readError(data))
+            }
+            stdinChannel = DispatchIO(type: .stream,
+                                      fileDescriptor: stdin.fileHandleForWriting.fileDescriptor,
+                                      queue: ioQueue) { _ in }
+            stdinChannel!.setLimit(lowWater: 1)
+            process.launchPath = request.command
+            process.arguments = request.args
+            process.environment = request.env
+            process.standardOutput = stdout
+            process.standardError = stderr
+            process.standardInput = stdin
+        }
+
+        private func beginTimeoutTimer(_ date: Date) {
+            let dt = date.timeIntervalSinceNow
+            self.ioQueue.asyncAfter(deadline: .now() + max(0, dt)) { [weak self] in
+                _ = try? ObjC.catching {
+                    self?.timedOut.set(true)
+                    self?.process.terminate()
                 }
             }
         }
 
-        func exec() throws -> Output {
-            if debugging {
-                NSLog("run \(command) \(args.joined(separator: " "))")
-            }
-            stdoutChannel = readingChannel(stdout, serialQueue: serialQueue) { [weak self] data in
-                if self?.debugging ?? false {
-                    if let data = data {
-                        NSLog("stdout< \(String(describing: String(data: data, encoding: .utf8)))")
-                    } else {
-                        NSLog("stdout eof")
-                    }
-                }
-                self?.queue.enqueue(.readOutput(data))
-            }
-            stderrChannel = readingChannel(stderr, serialQueue: serialQueue) { [weak self] data in
-                if self?.debugging ?? false {
-                    if let data = data {
-                        NSLog("stderr< \(String(describing: String(data: data, encoding: .utf8)))")
-                    } else {
-                        NSLog("stderr eof")
-                    }
-                }
-                self?.queue.enqueue(.readError(data))
-            }
-
-            stdinChannel = DispatchIO(type: .stream,
-                                      fileDescriptor: stdin.fileHandleForWriting.fileDescriptor,
-                                      queue: serialQueue) { _ in }
-            stdinChannel?.setLimit(lowWater: 1)
-
-            try ObjC.catching {
-                self.process.launch()
-            }
-
-            let timedOut = MutableAtomicObject(false)
-            if let date = deadline {
-                let dt = date.timeIntervalSinceNow
-                self.serialQueue.asyncAfter(deadline: .now() + max(0, dt)) { [weak self] in
-                    _ = try? ObjC.catching {
-                        self?.process.terminate()
-                        timedOut.set(true)
-                    }
-                }
-            }
-            
+        private func waitInBackground() {
             DispatchQueue.global().async {
                 self.process.waitUntilExit()
                 if self.debugging {
@@ -212,93 +338,108 @@ class CommandLinePasswordDataSource: NSObject {
                 self.queue.enqueue(.terminated(self.process.terminationStatus,
                                                self.process.terminationReason))
             }
-
-            var returnCode: Int32? = nil
-            var terminationReason: Process.TerminationReason? = nil
-            var stdoutData = Data()
-            var stderrData = Data()
-
-            didLaunch?()
-
-            do {
-                while stdoutChannel != nil || stderrChannel != nil || returnCode == nil {
-                    if debugging {
-                        NSLog("dequeue…")
-                    }
-                    let event = queue.dequeue()
-                    if debugging {
-                        NSLog("handle event \(event)")
-                    }
-                    switch event {
-                    case .readOutput(let data):
-                        if let data = data {
-                            stdoutData.append(data)
-                            if let dataToWrite = try handleStdout(data) {
-                                write(dataToWrite)
-                            }
-                        } else {
-                            stdoutChannel?.close()
-                            stdoutChannel = nil
-                        }
-                    case .readError(let data):
-                        if let data = data {
-                            stderrData.append(data)
-                            if let dataToWrite = try handleStderr(data) {
-                                write(dataToWrite)
-                            }
-                        } else {
-                            stderrChannel?.close()
-                            stderrChannel = nil
-                        }
-                    case let .terminated(code, reason):
-                        returnCode = code
-                        terminationReason = reason
-                        // Defer calling handleTermination until all the command's output has been
-                        // handled since that happening out of order is mind bending.
-                        stdinChannel?.close()
-                        stdinChannel = nil
-                    }
-                }
-            } catch {
-                if debugging {
-                    NSLog("command threw \(error)")
-                }
-                stdoutChannel?.close()
-                stderrChannel?.close()
-                stdinChannel?.close()
-                if returnCode == nil {
-                    process.terminate()
-                }
-                self.output = Output(stderr: stderrData,
-                                     stdout: stdoutData,
-                                     returnCode: returnCode ?? -1,
-                                     timedOut: (terminationReason == .uncaughtSignal) && timedOut.value,
-                                     userData: userData)
-
-                throw error
-            }
-            if let code = returnCode, let reason = terminationReason {
-                try handleTermination(code, reason)
-            }
-            if debugging {
-                NSLog("[\(command) \(args.joined(separator: " "))] Completed with return code \(returnCode!)")
-            }
-            self.output = Output(stderr: stderrData,
-                                 stdout: stdoutData,
-                                 returnCode: returnCode!,
-                                 timedOut: (terminationReason == .uncaughtSignal) && timedOut.value,
-                                 userData: userData)
-            return self.output!
         }
 
-        func write(_ data: Data, completion: (() -> ())? = nil) {
+        private func terminate() throws {
+            try ObjC.catching {
+                process.terminate()
+            }
+        }
+
+        private func runCallback(_ closure: @escaping () throws -> ()) {
+            request.callbacks?.callbackQueue.async {
+                guard self.lastError.value == nil else {
+                    return
+                }
+                do {
+                    try closure()
+                } catch {
+                    self.lastError.set(error)
+                    try? self.terminate()
+                }
+            }
+        }
+
+        private func mainloop() -> Output {
+            var builder = OutputBuilder(userData: request.userData)
+            while !allChannelsClosed || !builder.canBuild {
+                if debugging {
+                    NSLog("dequeue…")
+                }
+                let event = queue.dequeue()
+                if debugging {
+                    NSLog("handle event \(event)")
+                }
+                switch event {
+                case .readOutput(let data):
+                    handleRead(channel: &stdoutChannel,
+                               destination: &builder.stdout,
+                               handler: request.callbacks?.handleStdout,
+                               data: data)
+                case .readError(let data):
+                    handleRead(channel: &stderrChannel,
+                               destination: &builder.stderr,
+                               handler: request.callbacks?.handleStderr,
+                               data: data)
+                case .terminated(let code, let reason):
+                    stdinChannel?.close()
+                    stdinChannel = nil
+                    builder.returnCode = code
+                    builder.terminationReason = reason
+                }
+            }
+            group.wait()
+            let output = builder.tryBuild()!
+            runTerminationHandler(output: output)
+            group.wait()
+            return output
+        }
+
+        private func runTerminationHandler(output: Output) {
+            guard let handler = request.callbacks?.handleTermination else {
+                return
+            }
+            group.enter()
+            runCallback { [weak self] in
+                try handler(output.returnCode, output.terminationReason)
+                self?.group.leave()
+            }
+        }
+
+        private func handleRead(channel: inout DispatchIO?,
+                                destination: inout Data,
+                                handler: ((Data) throws -> Data?)?,
+                                data: Data?) {
+            if let data = data {
+                destination.append(data)
+                if let handler = handler {
+                    group.enter()
+                    runCallback { [weak self] in
+                        if let dataToWrite = try handler(data)  {
+                            self?.write(dataToWrite, completion: nil)
+                        }
+                        self?.group.leave()
+                    }
+                }
+            } else {
+                channel?.close()
+                channel = nil
+            }
+        }
+
+        private var allChannelsClosed: Bool {
+            return stdoutChannel == nil && stderrChannel == nil && stdinChannel == nil
+        }
+
+        func write(_ data: Data, completion: (() -> ())?) {
+            dispatchPrecondition(condition: .onQueue(ioQueue))
             guard let channel = stdinChannel else {
                 return
             }
             data.withUnsafeBytes { pointer in
                 channel.write(offset: 0,
                               data: DispatchData(bytes: pointer),
-                              queue: serialQueue) { _done, _data, _error in
+                              queue: ioQueue) { _done, _data, _error in
                     if _done, let completion = completion {
                         completion()
                     }
@@ -324,7 +465,8 @@ class CommandLinePasswordDataSource: NSObject {
             }
         }
 
-        func closeStdin() {
+        func closeForWriting() {
+            dispatchPrecondition(condition: .onQueue(ioQueue))
             if debugging {
                 NSLog("close stdin")
             }
@@ -333,70 +475,33 @@ class CommandLinePasswordDataSource: NSObject {
             stdinChannel = nil
         }
 
-        init(command: String,
-             args: [String],
-             env: [String: String],
-             handleStdout: @escaping (Data) throws -> Data?,
-             handleStderr: @escaping (Data) throws -> Data?,
-             handleTermination: @escaping (Int32, Process.TerminationReason) throws -> ()) {
-            self.command = command
-            self.args = args
-            self.env = env
-            self.handleStdout = handleStdout
-            self.handleStderr = handleStderr
-            self.handleTermination = handleTermination
-            let queue = AtomicQueue<Event>()
-            self.queue = queue
-            process.launchPath = command
-            process.arguments = args
-            process.standardOutput = stdout
-            process.standardError = stderr
-            process.standardInput = stdin
-            process.environment = env
-        }
-    }
-
-    class Command: CommandLinePasswordDataSourceExecutableCommand {
-        let command: String
-        let args: [String]
-        let env: [String: String]
-        let stdin: Data?
-        let timeout: TimeInterval?
-        private(set) var output: Output?
-
-        func exec() throws -> Output {
-            let inner = InteractiveCommand(command: command,
-                                           args: args,
-                                           env: env,
-                                           handleStdout: { _ in nil },
-                                           handleStderr: { _ in nil },
-                                           handleTermination: { _, _ in })
-            if let timeout = timeout {
-                inner.deadline = Date(timeIntervalSinceNow: timeout)
+        func run() throws -> Output {
+            precondition(!ran)
+            ran = true
+            try ObjC.catching {
+                self.process.launch()
             }
-            if let data = stdin {
-                inner.didLaunch = {
-                    inner.write(data) {
-                        inner.closeStdin()
-                    }
+            if let date = request.deadline {
+                beginTimeoutTimer(date)
+            }
+            waitInBackground()
+            if let handler = request.callbacks?.didLaunch {
+                runCallback {
+                    handler(self)
                 }
             }
-            defer {
-                output = inner.output
-            }
-            return try inner.exec()
-        }
+            let output = mainloop()
+            if let error = lastError.value {
+                if debugging {
+                    NSLog("command threw \(error)")
+                }
 
-        init(command: String,
-             args: [String],
-             env: [String: String],
-             stdin: Data?,
-             timeout: TimeInterval? = nil) {
-            self.command = command
-            self.args = args
-            self.env = env
-            self.stdin = stdin
-            self.timeout = timeout
+                throw error
+            }
+            if debugging {
+                NSLog("[\(request.command) \(request.args.joined(separator: " "))] Completed with return code \(output.returnCode)")
+            }
+            return output
         }
     }
 
@@ -405,14 +510,32 @@ class CommandLinePasswordDataSource: NSObject {
         private let recovery: (Error) throws -> Void
         private let outputTransformer: (Output) throws -> Outputs
 
-        func transform(inputs: Inputs) throws -> Outputs {
-            let command = try inputTransformer(inputs)
-            while true {
-                let output = try command.exec()
-                do {
-                    return try outputTransformer(output)
-                } catch {
-                    try recovery(error)
+        func transformAsync(inputs: Inputs, completion: @escaping (Outputs?, Error?) -> ()) {
+            do {
+                let command = try inputTransformer(inputs)
+                execAsync(command, completion)
+            } catch {
+                completion(nil, error)
+                return
+            }
+        }
+
+        private func execAsync(_ command: CommandLinePasswordDataSourceExecutableCommand,
+                               _ completion: @escaping (Outputs?, Error?) -> ()) {
+            command.execAsync { output, error in
+                DispatchQueue.main.async {
+                    if let output = output {
+                        do {
+                            completion(try outputTransformer(output), nil)
+                        } catch {
+                            do {
+                                try recovery(error)
+                                self.execAsync(command, completion)
+                            } catch {
+                                completion(nil, error)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -438,10 +561,16 @@ class CommandLinePasswordDataSource: NSObject {
             self.secondRecipe = secondRecipe
         }
 
-        func transform(inputs: Inputs) throws -> Outputs {
-            let intermediateValue = try firstRecipe.transform(inputs: inputs)
-            let value = try secondRecipe.transform(inputs: intermediateValue)
-            return value
+        func transformAsync(inputs: FirstRecipe.Inputs, completion: @escaping (SecondRecipe.Outputs?, Error?) -> ()) {
+            firstRecipe.transformAsync(inputs: inputs) { outputs, error in
+                if let outputs = outputs {
+                    secondRecipe.transformAsync(inputs: outputs) { value, error in
+                        completion(value, error)
+                    }
+                    return
+                }
+                completion(nil, error)
+            }
         }
     }
 
@@ -458,9 +587,14 @@ class CommandLinePasswordDataSource: NSObject {
             self.secondRecipe = secondRecipe
         }
 
-        func transform(inputs: Inputs) throws -> Outputs {
-            let intermediate = try firstRecipe.transform(inputs: inputs)
-            return try secondRecipe.transform(inputs: (inputs, intermediate))
+        func transformAsync(inputs: FirstRecipe.Inputs, completion: @escaping (SecondRecipe.Outputs?, Error?) -> ()) {
+            firstRecipe.transformAsync(inputs: inputs) { intermediate, error in
+                if let intermediate = intermediate {
+                    secondRecipe.transformAsync(inputs: (inputs, intermediate), completion: completion)
+                    return
+                }
+                completion(nil, error)
+            }
         }
     }
 
@@ -473,12 +607,15 @@ class CommandLinePasswordDataSource: NSObject {
             inner = recipe
             self.errorHandler = errorHandler
         }
-        func transform(inputs: Inputs) throws -> Outputs {
-            do {
-                return try inner.transform(inputs: inputs)
-            } catch {
-                errorHandler(inputs, error)
-                throw error
+
+        func transformAsync(inputs: Inner.Inputs, completion: @escaping (Inner.Outputs?, Error?) -> ()) {
+            inner.transformAsync(inputs: inputs) { outputs, error in
+                if let outputs = outputs {
+                    completion(outputs, nil)
+                    return
+                }
+                errorHandler(inputs, error!)
+                completion(nil, error)
             }
         }
     }
@@ -506,15 +643,20 @@ class CommandLinePasswordDataSource: NSObject {
         let maxAge: TimeInterval
         let inner: AnyRecipe<Inputs, Outputs>
 
-        func transform(inputs: Inputs) throws -> Outputs {
+        func transformAsync(inputs: Void, completion: @escaping (Outputs?, Error?) -> ()) {
             if let value = cacheEntry, value.age < maxAge {
-                return value.outputs
+                completion(value.outputs, nil)
+                return
             }
-            let result = try inner.transform(inputs: inputs)
-            cacheEntry = Entry(result)
-            return result
+            inner.transformAsync(inputs: inputs) { [weak self] result, error in
+                if let result = result {
+                    self?.cacheEntry = Entry(result)
+                    completion(result, nil)
+                } else {
+                    completion(nil, error)
+                }
+            }
         }
-
         func invalidateRecipe() {
             cacheEntry = nil
         }
@@ -534,15 +676,22 @@ class CommandLinePasswordDataSource: NSObject {
         func transform(inputs: Inputs) throws -> Outputs {
             throw CommandLineRecipeError.unsupported(reason: reason)
         }
+        func transformAsync(inputs: Inputs, completion: @escaping (Outputs?, Error?) -> ()) {
+            completion(nil, CommandLineRecipeError.unsupported(reason: reason))
+        }
     }
     struct AnyRecipe<Inputs, Outputs>: Recipe, InvalidatableRecipe {
-        private let closure: (Inputs) throws -> Outputs
+        private let closure: (Inputs, @escaping (Outputs?, Error?) -> ()) -> ()
         private let invalidate: () -> ()
-        func transform(inputs: Inputs) throws -> Outputs {
-            return try closure(inputs)
+
+        func transformAsync(inputs: Inputs, completion: @escaping (Outputs?, Error?) -> ()) {
+            DispatchQueue.main.async {
+                closure(inputs, completion)
+            }
         }
+
         init<T: Recipe>(_ recipe: T) where T.Inputs == Inputs, T.Outputs == Outputs {
-            closure = { try recipe.transform(inputs: $0) }
+            closure = { recipe.transformAsync(inputs: $0, completion: $1) }
             invalidate = { (recipe as? InvalidatableRecipe)?.invalidateRecipe() }
         }
         func invalidateRecipe() {
@@ -579,29 +728,41 @@ class CommandLinePasswordDataSource: NSObject {
         let addAccountRecipe: AnyRecipe<AddRequest, AccountIdentifier>
     }
 
-    func standardAccounts(_ configuration: Configuration) -> [PasswordManagerAccount] {
-        do {
-            return try configuration.listAccountsRecipe.transform(inputs: ()).compactMap { account in
+    func standardAccounts(_ configuration: Configuration,
+                          completion: @escaping ([PasswordManagerAccount]?, Error?) -> ()) {
+        return configuration.listAccountsRecipe.transformAsync(inputs: ()) { maybeAccounts, maybeError in
+            if let error = maybeError {
+                completion(nil, error)
+                return
+            }
+            let accounts = maybeAccounts!.compactMap { account in
                 CommandLineProvidedAccount(identifier: account.identifier.value,
                                            accountName: account.accountName,
                                            userName: account.userName,
                                            configuration: configuration)
             }
-        } catch {
-            DLog("\(error)")
-            return []
+            completion(accounts, nil)
         }
     }
 
-    func standardAdd(_ configuration: Configuration, userName: String, accountName: String, password: String) throws -> PasswordManagerAccount {
-        let accountIdentifier = try configuration.addAccountRecipe.transform(
-            inputs: AddRequest(userName: userName,
-                               accountName: accountName,
-                               password: password))
-        configuration.listAccountsRecipe.invalidateRecipe()
-        return CommandLineProvidedAccount(identifier: accountIdentifier.value,
-                                          accountName: accountName,
-                                          userName: userName,
-                                          configuration: configuration)
+    func standardAdd(_ configuration: Configuration,
+                     userName: String,
+                     accountName: String,
+                     password: String,
+                     completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+        let inputs = AddRequest(userName: userName,
+                                accountName: accountName,
+                                password: password)
+        configuration.addAccountRecipe.transformAsync(inputs: inputs) { accountIdentifier, maybeError in
+            configuration.listAccountsRecipe.invalidateRecipe()
+            if let error = maybeError {
+                completion(nil, error)
+            }
+            let account = CommandLineProvidedAccount(identifier: accountIdentifier!.value,
+                                                     accountName: accountName,
+                                                     userName: userName,
+                                                     configuration: configuration)
+            completion(account, nil)
+        }
     }
 }

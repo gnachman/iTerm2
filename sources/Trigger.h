@@ -24,12 +24,17 @@ NS_ASSUME_NONNULL_BEGIN
 @class iTermStringLine;
 @class iTermVariableScope;
 @protocol PTYAnnotationReading;
+@class Trigger;
 
 extern NSString * const kTriggerRegexKey;
 extern NSString * const kTriggerActionKey;
 extern NSString * const kTriggerParameterKey;
 extern NSString * const kTriggerPartialLineKey;
 extern NSString * const kTriggerDisabledKey;
+
+@protocol iTermTriggerDelegate<NSObject>
+- (void)triggerDidChangeParameterOptions:(Trigger *)trigger;
+@end
 
 @protocol iTermTriggerCallbackScheduler<NSObject>
 - (void)scheduleTriggerCallback:(void (^)(void))block;
@@ -108,6 +113,7 @@ extern NSString * const kTriggerDisabledKey;
 @property (nonatomic, readonly) BOOL instantTriggerCanFireMultipleTimesPerLine;
 @property (nonatomic, readonly) BOOL isIdempotent;
 @property (class, nonatomic, readonly) NSString *title;
+@property (nonatomic, weak) id<iTermTriggerDelegate> delegate;
 
 + (nullable NSSet<NSString *> *)synonyms;
 + (nullable Trigger *)triggerFromDict:(NSDictionary *)dict;

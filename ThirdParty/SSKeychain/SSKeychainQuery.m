@@ -165,6 +165,9 @@
     }
 
     self.passwordData = (__bridge_transfer NSData *)result;
+    if (error != nil) {
+        *error = nil;
+    }
     return YES;
 }
 

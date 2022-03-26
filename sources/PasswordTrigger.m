@@ -10,6 +10,8 @@
 #import "iTermPasswordManagerWindowController.h"
 #import "NSArray+iTerm.h"
 
+static NSString *PasswordTriggerPlaceholderString = @"Open Password Manager to Unlock";
+
 @interface PasswordTrigger ()
 @property(nonatomic, copy) NSArray *accountNames;
 @end
@@ -24,14 +26,42 @@
     self = [super init];
     if (self) {
         [self reloadData];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(passwordManagerDidLoadAccounts:)
+                                                     name:iTermPasswordManagerDidLoadAccounts
+                                                   object:nil];
     }
     return self;
 }
 
+- (void)passwordManagerDidLoadAccounts:(NSNotification *)notification {
+    [self reloadData];
+    [self.delegate triggerDidChangeParameterOptions:self];
+}
+
+- (id)param {
+    NSString *value = [super param];
+    if ([value isEqual:PasswordTriggerPlaceholderString]) {
+        return @"";
+    }
+    return value;
+}
+
 - (void)reloadData {
-    _accountNames = [iTermPasswordManagerWindowController combinedAccountNameUserNamesWithFilter:nil];
-    if (!_accountNames.count) {
-        _accountNames = @[ @"" ];
+    _accountNames = [iTermPasswordManagerWindowController cachedCombinedAccountNames];
+    [self addUnlockToAccountNamesIfNeeded];
+}
+
+- (void)addUnlockToAccountNamesIfNeeded {
+    if (![_accountNames filteredArrayUsingBlock:^BOOL(id anObject) {
+        return ![anObject isEqual:PasswordTriggerPlaceholderString];
+    }].count) {
+        NSString *param = [NSString castFrom:[self param]];
+        if (param.length > 0) {
+            _accountNames = @[ param, PasswordTriggerPlaceholderString ];
+        } else {
+            _accountNames = @[ PasswordTriggerPlaceholderString ];
+        }
     }
 }
 
@@ -52,7 +82,6 @@
 }
 
 - (NSInteger)indexForObject:(id)object {
-
     NSUInteger index = [[self sortedAccountNames] indexOfObject:object];
     if (index == NSNotFound) {
         return -1;
@@ -69,6 +98,7 @@
 }
 
 - (NSDictionary *)menuItemsForPoupupButton {
+    [self addUnlockToAccountNamesIfNeeded];
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
     for (NSString *name in _accountNames) {
         result[name] = name;

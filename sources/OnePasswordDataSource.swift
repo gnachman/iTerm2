@@ -52,17 +52,19 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
             OnePasswordDynamicCommandRecipe<Inputs, Outputs>(
                 dataSource: dataSource,
                 inputTransformer: { _, token in
-                    return Command(command: OnePasswordUtils.pathToCLI,
-                                   args: args,
-                                   env: OnePasswordUtils.standardEnvironment(token: token),
-                                   stdin: nil,
-                                   timeout: 10)
+                    var request = InteractiveCommandRequest(
+                        command: OnePasswordUtils.pathToCLI,
+                        args: args,
+                        env: OnePasswordUtils.standardEnvironment(token: token))
+                    request.deadline = Date(timeIntervalSinceNow: 10)
+                    return request
                 },
                 outputTransformer: outputTransformer)
         }
 
-        func transform(inputs: Inputs) throws -> Outputs {
-            return try dynamicRecipe.transform(inputs: inputs)
+        func transformAsync(inputs: Inputs,
+                            completion: @escaping (Outputs?, Error?) -> ()) {
+            dynamicRecipe.transformAsync(inputs: inputs, completion: completion)
         }
     }
 
@@ -103,8 +105,9 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
             }
         }
 
-        func transform(inputs: Inputs) throws -> Outputs {
-            return try commandRecipe.transform(inputs: inputs)
+        func transformAsync(inputs: Inputs,
+                            completion: @escaping (Outputs?, Error?) -> ()) {
+            commandRecipe.transformAsync(inputs: inputs, completion: completion)
         }
     }
 
@@ -122,11 +125,12 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
         let accountsRecipe = OnePasswordBasicCommandRecipe<Void, Data>(args, dataSource: self) { $0.stdout }
 
         let itemsRecipe = OnePasswordDynamicCommandRecipe<Data, [Account]>(
-            dataSource: self) { data, token throws -> Command in
-                return Command(command: OnePasswordUtils.pathToCLI,
-                               args: ["item", "get", "--format=json", "--no-color", "-"],
-                               env: OnePasswordUtils.standardEnvironment(token: token),
-                               stdin: data)
+            dataSource: self) { data, token throws -> CommandLinePasswordDataSourceExecutableCommand in
+                return CommandRequestWithInput(
+                    command: OnePasswordUtils.pathToCLI,
+                    args: ["item", "get", "--format=json", "--no-color", "-"],
+                    env: OnePasswordUtils.standardEnvironment(token: token),
+                    input: data)
             } outputTransformer: { output throws -> [Account] in
                 if output.returnCode != 0 {
                     throw OPError.runtime
@@ -168,10 +172,10 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
 
     private var getPasswordRecipe: AnyRecipe<AccountIdentifier, String> {
         return AnyRecipe(OnePasswordDynamicCommandRecipe<AccountIdentifier, String>(dataSource: self) { accountIdentifier, token in
-            return Command(command: OnePasswordUtils.pathToCLI,
-                           args: ["item", "get", "--field=password", accountIdentifier.value],
-                           env: OnePasswordUtils.standardEnvironment(token: token),
-                           stdin: nil)
+            return InteractiveCommandRequest(
+                command: OnePasswordUtils.pathToCLI,
+                args: ["item", "get", "--field=password", accountIdentifier.value],
+                env: OnePasswordUtils.standardEnvironment(token: token))
         } outputTransformer: { output in
             guard let string = String(data: output.stdout, encoding: .utf8) else {
                 throw OPError.badOutput
@@ -189,10 +193,10 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
 
     private var deleteRecipe: AnyRecipe<AccountIdentifier, Void> {
         return AnyRecipe(OnePasswordDynamicCommandRecipe(dataSource: self) { accountID, token in
-            return Command(command: OnePasswordUtils.pathToCLI,
-                           args: ["item", "delete", accountID.value],
-                           env: OnePasswordUtils.standardEnvironment(token: token),
-                           stdin: nil)
+            return InteractiveCommandRequest(
+                command: OnePasswordUtils.pathToCLI,
+                args: ["item", "delete", accountID.value],
+                env: OnePasswordUtils.standardEnvironment(token: token))
         } outputTransformer: { output in })
     }
 
@@ -206,10 +210,10 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
                         "--generate-password",
                         "--format=json",
                         "username=\(addRequest.userName)"]
-            return Command(command: OnePasswordUtils.pathToCLI,
-                           args: args,
-                           env: OnePasswordUtils.standardEnvironment(token: token),
-                           stdin: nil)
+            return InteractiveCommandRequest(
+                command: OnePasswordUtils.pathToCLI,
+                args: args,
+                env: OnePasswordUtils.standardEnvironment(token: token))
         } outputTransformer: { output in
             struct Response: Codable {
                 var id: String
@@ -243,21 +247,35 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
         return true
     }
 
-    var accounts: [PasswordManagerAccount] {
-        return standardAccounts(configuration)
+    func fetchAccounts(_ completion: @escaping ([PasswordManagerAccount]) -> ()) {
+        return standardAccounts(configuration) { maybeAccount, maybeError in
+            completion(maybeAccount ?? [])
+        }
     }
 
-    func add(userName: String, accountName: String, password: String) throws -> PasswordManagerAccount {
-        try OnePasswordUtils.throwIfUnusable()
-        return try standardAdd(configuration, userName: userName, accountName: accountName, password: password)
+    func add(userName: String,
+             accountName: String,
+             password: String,
+             completion: @escaping (PasswordManagerAccount?, Error?) -> ()) {
+        do {
+            try OnePasswordUtils.throwIfUnusable()
+            standardAdd(configuration,
+                        userName: userName,
+                        accountName: accountName,
+                        password: password,
+                        completion: completion)
+        } catch {
+            completion(nil, error)
+        }
     }
 
     func resetErrors() {
         OnePasswordUtils.resetErrors()
     }
 
-    func reload() {
+    func reload(_ completion: () -> ()) {
         configuration.listAccountsRecipe.invalidateRecipe()
+        completion()
     }
 }
 

@@ -40,20 +40,45 @@ fileprivate class KeychainAccount: NSObject, PasswordManagerAccount {
         return keychainAccountName
     }
 
-    func password() throws -> String {
-        return try SSKeychain.password(forService: serviceName,
-                                       account: keychainAccountName,
-                                       error: ())
+    func fetchPassword(_ completion: (String?, Error?) -> ()) {
+        do {
+            completion(try password(), nil)
+        } catch {
+            completion(nil, error)
+        }
     }
 
-    func set(password: String) throws {
+    func set(password: String, completion: (Error?) -> ()) {
+        do {
+            try set(password: password)
+            completion(nil)
+        } catch {
+            completion(error)
+        }
+    }
+
+    func delete(_ completion: (Error?) -> ()) {
+        do {
+            try delete()
+            completion(nil)
+        } catch {
+            completion(error)
+        }
+    }
+
+    private func password() throws -> String {
+        return try SSKeychain.password(forService: serviceName,
+                                       account: keychainAccountName)
+    }
+
+    private func set(password: String) throws {
         try SSKeychain.setPassword(password,
                                    forService: serviceName,
                                    account: keychainAccountName,
                                    error: ())
     }
 
-    func delete() throws {
+    private func delete() throws {
         try SSKeychain.deletePassword(forService: serviceName,
                                       account: keychainAccountName,
                                       error: ())
@@ -68,7 +93,26 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
     private var openPanel: NSOpenPanel?
     private static let keychain = KeychainPasswordDataSource()
 
-    var accounts: [PasswordManagerAccount] {
+    func fetchAccounts(_ completion: @escaping ([PasswordManagerAccount]) -> ()) {
+        completion(self.accounts)
+    }
+
+    func add(userName: String, accountName: String, password: String, completion: (PasswordManagerAccount?, Error?) -> ()) {
+        let account = KeychainAccount(accountName: accountName, userName: userName)
+        account.set(password: password) { error in
+            if let error = error {
+                completion(nil, error)
+            } else {
+                completion(account, nil)
+            }
+        }
+    }
+
+    func reload(_ completion: () -> ()) {
+        completion()
+    }
+
+    private var accounts: [PasswordManagerAccount] {
         guard let dicts = SSKeychain.accounts(forService: serviceName) as? [NSDictionary] else {
             return []
         }
@@ -85,17 +129,6 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
         return true
     }
 
-    func add(userName: String,
-             accountName: String,
-             password: String) throws -> PasswordManagerAccount {
-        let account = KeychainAccount(accountName: accountName, userName: userName)
-        try account.set(password: password)
-        return account
-    }
-
     func resetErrors() {
-    }
-
-    func reload() {
     }
 }
