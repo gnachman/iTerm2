@@ -60,7 +60,7 @@ class LastPassDataSource: CommandLinePasswordDataSource {
                 }
                 return request
             } recovery: { error throws in
-                throw error
+                try LastPassUtils.recover(error)
             } outputTransformer: { output throws in
                 if output.timedOut {
                     throw LPError.timedOut
@@ -89,7 +89,7 @@ class LastPassDataSource: CommandLinePasswordDataSource {
             commandRecipe = CommandRecipe<Inputs, Outputs> { inputs throws -> CommandLinePasswordDataSourceExecutableCommand in
                 return try inputTransformer(inputs)
             } recovery: { error throws in
-                throw error
+                try LastPassUtils.recover(error)
             } outputTransformer: { output throws -> Outputs in
                 if output.returnCode != 0 {
                     throw LPError.runtime
@@ -308,7 +308,12 @@ extension LastPassDataSource: PasswordManagerDataSource {
                 return true
             }
             if String(data: output.stdout, encoding: .utf8)?.hasPrefix("Not logged in") ?? false {
-                LastPassUtils.showNotLoggedInMessage()
+                do {
+                    try LastPassUtils.showLoginUI()
+                    return true
+                } catch {
+                    return false
+                }
             }
             return false
         } catch {
@@ -380,16 +385,54 @@ class LastPassUtils {
         return FileManager.default.fileExists(atPath: path)
     }
 
+    static func recover(_ error: Error) throws {
+        if error as? LastPassDataSource.LPError == LastPassDataSource.LPError.needsLogin {
+            try showLoginUI()
+        }
+        throw error
+    }
+
+    private static let usernameUserDefaultsKey = "LastPassUserName"
+
+    static func showLoginUI() throws {
+        let alert = ModalPasswordAlert("Please log in to LastPass")
+        alert.username = UserDefaults.standard.string(forKey: usernameUserDefaultsKey) ?? ""
+        if let password = alert.run(window: nil), let username = alert.username {
+            UserDefaults.standard.set(alert.username, forKey: usernameUserDefaultsKey)
+            var request = CommandLinePasswordDataSource.InteractiveCommandRequest(command: pathToCLI,
+                                                                                  args: ["login", "--color=never", username],
+                                                                                  env: basicEnvironment)
+            request.callbacks = .init(callbackQueue: CommandLinePasswordDataSource.InteractiveCommandRequest.ioQueue,
+                                      handleStdout: nil,
+                                      handleStderr: nil,
+                                      handleTermination: nil,
+                                      didLaunch: { writing in
+                writing.write(password.data(using: .utf8)!) {
+                    writing.closeForWriting()
+                }
+            })
+            let output = try request.exec()
+            if output.returnCode != 0 {
+                NSLog("\(String(data: output.stderr, encoding: .utf8) ?? "(bad output)")")
+                showNotLoggedInMessage()
+                throw LastPassDataSource.LPError.needsLogin
+            }
+        } else {
+            throw LastPassDataSource.LPError.runtime
+        }
+    }
+
     static func showNotLoggedInMessage() {
         let alert = NSAlert()
-        alert.messageText = "Login Needed"
-        alert.informativeText = "You need to log into LastPass by running `lpass login your@email.address`."
+        let email = UserDefaults.standard.string(forKey: usernameUserDefaultsKey) ?? "your@email.address"
+        alert.messageText = "Authentication Failed"
+        alert.informativeText = "You can also try opening a terminal window and running `lpass login \(email)`."
         alert.addButton(withTitle: "Open Terminal Window")
         alert.addButton(withTitle: "Copy Command")
         alert.addButton(withTitle: "Cancel")
         switch alert.runModal() {
         case .alertFirstButtonReturn:
-            iTermController.sharedInstance().openSingleUseLoginWindowAndWrite("lpass login your@email.addess".data(using: .utf8)!) { session in
+            let window = iTermController.sharedInstance().openSingleUseLoginWindowAndWrite("lpass login \(email)".data(using: .utf8)!) { session in
                 session?.addExpectation("^Success: Logged in as",
                                         after: nil,
                                         deadline: nil,
@@ -402,9 +445,12 @@ class LastPassUtils {
                     session?.close()
                 }
             }
+            Timer.scheduledTimer(withTimeInterval: 0, repeats: false) { _ in
+                window?.makeKeyAndOrderFront(nil)
+            }
         case .alertSecondButtonReturn:
             NSPasteboard.general.declareTypes([.string], owner: self)
-            NSPasteboard.general.setString("lpass login your@email.address", forType: .string)
+            NSPasteboard.general.setString("lpass login \(email)", forType: .string)
         default:
             break
         }

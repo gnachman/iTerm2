@@ -206,7 +206,7 @@ typedef NS_OPTIONS(NSUInteger, iTermSingleUseWindowOptions) {
                                options:(iTermSingleUseWindowOptions)options
                         didMakeSession:(void (^)(PTYSession *session))didMakeSession
                             completion:(void (^)(void))completion;
-- (void)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion;
+- (NSWindow *)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion;
 
 @end
 

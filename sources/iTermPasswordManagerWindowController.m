@@ -75,6 +75,7 @@ NSString *const iTermPasswordManagerDidLoadAccounts = @"iTermPasswordManagerDidL
     id<PasswordManagerDataSource> _dataSource;
     NSInteger _busyCount;
     NSInteger _cancelCount;
+    BOOL _awakeFromNibAvailabilityCheckFailed;
 }
 
 static NSArray<NSString *> *gCachedCombinedAccountNames;
@@ -157,8 +158,10 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
     [_tableView setDoubleAction:@selector(doubleClickOnTableView:)];
     if (iTermPasswordManagerDataSourceProvider.authenticated &&
         ![self.currentDataSource checkAvailability]) {
+        _awakeFromNibAvailabilityCheckFailed = YES;
         [self dataSourceDidBecomeUnavailable];
     } else {
+        _awakeFromNibAvailabilityCheckFailed = NO;
         [self reloadAccounts:^{}];
         [self update];
     }
@@ -700,10 +703,11 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 - (void)authenticationDidComplete:(BOOL)success {
     // When a sheet is attached to a hotkey window another app becomes active after the auth dialog
     // is dismissed, leaving the hotkey behind another app.
+    _awakeFromNibAvailabilityCheckFailed = NO;
     [NSApp activateIgnoringOtherApps:YES];
     [self.window.sheetParent makeKeyAndOrderFront:nil];
 
-    if (success) {
+    if (success && !_awakeFromNibAvailabilityCheckFailed) {
         if (![self.currentDataSource checkAvailability]) {
             [self dataSourceDidBecomeUnavailable];
         } else {

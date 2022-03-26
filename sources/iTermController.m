@@ -1435,7 +1435,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     return [NSString stringWithFormat:@"sh -c \"%@\"", commandLine];
 }
 
-- (void)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion {
+- (PseudoTerminal *)openSingleUseLoginWindowAndWrite:(NSData *)data completion:(void (^)(PTYSession *session))completion {
     MutableProfile *profile = [[[[ProfileModel sharedInstance] defaultProfile] mutableCopy] autorelease];
     profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryHomeValue;
     profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeCustomShellValue;
@@ -1493,6 +1493,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
         }
     }];
     [term.window makeKeyAndOrderFront:nil];
+    return term.window;
 }
 
 // This is meant for standalone command lines when used with DoNotEscape, like: man date || sleep 3
