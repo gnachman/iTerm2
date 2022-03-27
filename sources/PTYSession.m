@@ -2261,7 +2261,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                         substitutions:(NSDictionary *)substitutions {
     DLog(@"environmentForNewJobFromEnvironment:%@ substitutions:%@",
          environment, substitutions);
-    NSMutableDictionary *env = [[environment mutableCopy] autorelease];
+    NSMutableDictionary *env = environment ? [[environment mutableCopy] autorelease] : [NSMutableDictionary dictionary];
     if (env[TERM_ENVNAME] == nil) {
         env[TERM_ENVNAME] = _termVariable;
     }
