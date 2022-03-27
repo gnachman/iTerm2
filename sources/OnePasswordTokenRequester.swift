@@ -199,7 +199,6 @@ class OnePasswordTokenRequester {
     // Returns nil if it was canceled by the user.
     func checkBiometricAvailability() -> Bool? {
         // Issue a command that is doomed to fail so we can see what the error message looks like.
-        let bogusID = UUID().uuidString
         let cli = OnePasswordUtils.pathToCLI
         if OnePasswordUtils.usable != true {
             NSLog("No usable version of 1password's op utility was found")
@@ -208,12 +207,12 @@ class OnePasswordTokenRequester {
         }
         let command = CommandLinePasswordDataSource.InteractiveCommandRequest(
             command: cli,
-            args: ["item", "get", bogusID],
+            args: ["user", "get", "--me"],
             env: OnePasswordUtils.basicEnvironment)
         let output = try! command.exec()
         if output.returnCode == 0 {
-            NSLog("item get \(bogusID) unexpectedly succeeded")
-            return false
+            NSLog("op user get --me succeeded so biometrics must be available")
+            return true
         }
         guard let string = String(data: output.stderr, encoding: .utf8) else {
             return false
@@ -221,9 +220,7 @@ class OnePasswordTokenRequester {
         if string.contains("error initializing client: authorization prompt dismissed, please try again") {
             return nil
         }
-        // If it's unlocked by biometrics then you'll get an error like:
-        //   "UUID" isn't an item. Specify the item with its UUID, name, or domain.
-        return string.contains(bogusID)
+        return false
     }
 }
 
