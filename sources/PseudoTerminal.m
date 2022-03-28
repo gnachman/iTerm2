@@ -23,7 +23,6 @@
 #import "iTermController.h"
 #import "iTermFindCursorView.h"
 #import "iTermFontPanel.h"
-#import "iTermGrowlDelegate.h"
 #import "iTermHotKeyController.h"
 #import "iTermHotKeyMigrationHelper.h"
 #import "iTermKeyBindingMgr.h"

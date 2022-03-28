@@ -1,7 +1,6 @@
 #import "PTYTextView.h"
 
 #import "charmaps.h"
-// #import "FileTransferManager.h"
 #import "FontSizeEstimator.h"
 #import "FutureMethods.h"
 #import "FutureMethods.h"

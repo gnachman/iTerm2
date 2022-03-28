@@ -45,7 +45,7 @@ extern NSString *const PTYSessionRevivedNotification;
 @class iTermColorMap;
 @class iTermCommandHistoryCommandUseMO;
 @class iTermController;
-@class iTermGrowlDelegate;
+// @class iTermGrowlDelegate;
 @class iTermPromptOnCloseReason;
 @class iTermQuickLookController;
 @class SessionView;
@@ -381,7 +381,7 @@ typedef enum {
 @property(nonatomic, readonly) NSString *currentCommand;
 
 // Session is not in foreground and notifications are enabled on the screen.
-@property(nonatomic, readonly) BOOL shouldPostGrowlNotification;
+// @property(nonatomic, readonly) BOOL shouldPostGrowlNotification;
 
 @property(nonatomic, readonly) BOOL hasSelection;
 

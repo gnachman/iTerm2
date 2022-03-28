@@ -7,7 +7,6 @@
 #import "VT100Token.h"
 
 @class DVR;
-@class iTermGrowlDelegate;
 @class iTermMark;
 @class iTermStringLine;
 @class LineBuffer;
@@ -49,7 +48,6 @@ extern int kVT100ScreenMinRows;
 @property(nonatomic, assign) BOOL showBellIndicator;
 @property(nonatomic, assign) BOOL flashBell;
 @property(nonatomic, assign) id<VT100ScreenDelegate> delegate;
-@property(nonatomic, assign) BOOL postGrowlNotifications;
 @property(nonatomic, assign) BOOL cursorBlinks;
 @property(nonatomic, assign) BOOL allowTitleReporting;
 @property(nonatomic, assign) unsigned int maxScrollbackLines;

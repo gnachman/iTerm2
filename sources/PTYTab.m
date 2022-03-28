@@ -5,7 +5,6 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
-#import "iTermGrowlDelegate.h"
 #import "iTermPreferences.h"
 #import "iTermPromptOnCloseReason.h"
 #import "iTermProfilePreferences.h"
@@ -864,9 +863,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     BOOL result = NO;
     for (PTYSession* session in [self sessions]) {
         if ([session newOutput]) {
-            if ([session shouldPostGrowlNotification]) {
-                *okToNotify = YES;
-            }
+            //if ([session shouldPostGrowlNotification]) {
+             //   *okToNotify = YES;
+            //}
             result = YES;
         }
     }
@@ -4572,6 +4571,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 // Idle after new output
                 
                 // See if a notification should be posted.
+#if 0
                 if (!session.havePostedIdleNotification && [session shouldPostGrowlNotification]) {
                     NSString *theDescription =
                         [NSString stringWithFormat:@"Session %@ in tab #%d became idle.",
@@ -4588,6 +4588,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                     session.havePostedIdleNotification = YES;
                     session.havePostedNewOutputNotification = NO;
                 }
+#endif
             } else {
                 allSessionsWithNewOutputAreIdle = NO;
             }
@@ -4616,6 +4617,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         notify &&
         [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC) {
         if ([iTermProfilePreferences boolForKey:KEY_SEND_NEW_OUTPUT_ALERT inProfile:self.activeSession.profile]) {
+#if 0
             [[iTermGrowlDelegate sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"New Output",
                                                                                                 @"iTerm",
                                                                                                 [NSBundle bundleForClass:[self class]],
@@ -4627,6 +4629,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                  windowIndex:[[self activeSession] screenWindowIndex]
                                                     tabIndex:[[self activeSession] screenTabIndex]
                                                    viewIndex:[[self activeSession] screenViewIndex]];
+#endif
         }
         [[self activeSession] setHavePostedNewOutputNotification:YES];
         [[self activeSession] setHavePostedIdleNotification:NO];
@@ -4654,10 +4657,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             // nothing to do here, which is normal.
             continue;
         }
+#if 0
         if (![aSession shouldPostGrowlNotification]) {
             [aSession setHavePostedNewOutputNotification:NO];
             shouldResetLabel = YES;
         }
+#endif
     }
     if (shouldResetLabel && [self isForegroundTab]) {
         [self setIsProcessing:NO];

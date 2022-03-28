@@ -53,7 +53,6 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermExpose.h"
 #import "iTermFullScreenWindowManager.h"
-#import "iTermGrowlDelegate.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
@@ -124,8 +123,10 @@ static iTermController *gSharedInstance;
         _terminalWindows = [[NSMutableArray alloc] init];
         _restorableSessions = [[NSMutableArray alloc] init];
         _currentRestorableSessionsStack = [[NSMutableArray alloc] init];
+#if 0
         // Activate Growl. This loads the Growl framework and initializes it.
         [iTermGrowlDelegate sharedInstance];
+#endif
         
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(workspaceWillPowerOff:)

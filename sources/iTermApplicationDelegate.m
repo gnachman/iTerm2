@@ -29,7 +29,6 @@
 
 #import "AppearancePreferencesViewController.h"
 #import "ColorsMenuItemView.h"
-// #import "FileTransferManager.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAboutWindowController.h"
 #import "iTermAppHotKeyProvider.h"

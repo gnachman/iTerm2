@@ -3,7 +3,6 @@
 #import "Coprocess.h"
 #import "CVector.h"
 #import "FakeWindow.h"
-// #import "FileTransferManager.h"
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -18,7 +17,7 @@
 #import "iTermCommandHistoryCommandUseMO+Addtions.h"
 #import "iTermController.h"
 #import "iTermCopyModeState.h"
-#import "iTermGrowlDelegate.h"
+// #import "iTermGrowlDelegate.h"
 #import "iTermHotKeyController.h"
 #import "iTermInitialDirectory.h"
 #import "iTermKeyBindingMgr.h"
@@ -68,11 +67,9 @@
 #import "ProfilesGeneralPreferencesViewController.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
-#import "SCPFile.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
 #import "SessionView.h"
-#import "TerminalFile.h"
 #import "TmuxController.h"
 #import "TmuxControllerRegistry.h"
 #import "TmuxGateway.h"
@@ -218,8 +215,6 @@ static const NSUInteger kMaxHosts = 100;
     iTermSessionViewDelegate,
     iTermUpdateCadenceControllerDelegate>
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
-@property(nonatomic, retain) TerminalFile *download;
-@property(nonatomic, retain) TerminalFileUpload *upload;
 
 // Time since reference date when last output was received. New output in a brief period after the
 // session is resized is ignored to avoid making the spinner spin due to resizing.
@@ -559,12 +554,6 @@ static const NSUInteger kMaxHosts = 100;
                                                  selector:@selector(synchronizeTmuxFonts:)
                                                      name:kTmuxFontChanged
                                                    object:nil];
-#if 0
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(terminalFileShouldStop:)
-                                                     name:kTerminalFileShouldStopNotification
-                                                   object:nil];
-#endif
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(profileSessionNameDidEndEditing:)
                                                      name:kProfileSessionNameDidEndEditing
@@ -640,12 +629,14 @@ ITERM_WEAKLY_REFERENCEABLE
     [_liveSession release];
     [_tmuxGateway release];
     [_tmuxController release];
+    /*
     [_download stop];
     [_download endOfData];
     [_download release];
     [_upload stop];
     [_upload endOfData];
     [_upload release];
+     */
     [_shell release];
     [_screen release];
     [_terminal release];
@@ -2615,6 +2606,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     [_shell killServerIfRunning];
+#if 0
     if ([self shouldPostGrowlNotification] &&
         [iTermProfilePreferences boolForKey:KEY_SEND_SESSION_ENDED_ALERT inProfile:self.profile]) {
 #if 0
@@ -2625,6 +2617,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                          andNotification:@"Broken Pipes"];
 #endif
     }
+#endif
     
     _exited = YES;
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
@@ -3013,6 +3006,7 @@ ITERM_WEAKLY_REFERENCEABLE
     return [_shell hasCoprocess];
 }
 
+#if 0
 - (BOOL)shouldPostGrowlNotification {
     if (!_screen.postGrowlNotifications) {
         return NO;
@@ -3024,6 +3018,7 @@ ITERM_WEAKLY_REFERENCEABLE
     ([[iTermController sharedInstance] terminalIsObscured:_delegate.realParentWindow]);
     return (windowIsObscured);
 }
+#endif
 
 - (BOOL)hasSelection {
     return [_textview.selection hasSelection];
@@ -3390,7 +3385,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_screen setAudibleBell:![iTermProfilePreferences boolForKey:KEY_SILENCE_BELL inProfile:aDict]];
     [_screen setShowBellIndicator:[iTermProfilePreferences boolForKey:KEY_VISUAL_BELL inProfile:aDict]];
     [_screen setFlashBell:[iTermProfilePreferences boolForKey:KEY_FLASHING_BELL inProfile:aDict]];
-    [_screen setPostGrowlNotifications:[iTermProfilePreferences boolForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS inProfile:aDict]];
+    // [_screen setPostGrowlNotifications:[iTermProfilePreferences boolForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS inProfile:aDict]];
     [_textview setBlinkAllowed:[iTermProfilePreferences boolForKey:KEY_BLINK_ALLOWED inProfile:aDict]];
     [_screen setCursorBlinks:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
     [_textview setBlinkingCursor:[iTermProfilePreferences boolForKey:KEY_BLINKING_CURSOR inProfile:aDict]];
@@ -6956,48 +6951,6 @@ verticalSpacing:(float)verticalSpacing {
     return YES;
     
 }
-#if 0
-
-- (PTYTask *)shell {
-    return nil;
-    
-}
-
-- (BOOL)xtermMouseReportingAllowMouseWheel {
-    return YES;
-    
-}
-
-
-- (void)uploadFiles:(NSArray *)localFilenames toPath:(SCPPath *)destinationPath
-{
-    SCPFile *previous = nil;
-    for (NSString *file in localFilenames) {
-        SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
-        scpFile.path = [[[SCPPath alloc] init] autorelease];
-        scpFile.path.hostname = destinationPath.hostname;
-        scpFile.path.username = destinationPath.username;
-        NSString *filename = [file lastPathComponent];
-        scpFile.path.path = [destinationPath.path stringByAppendingPathComponent:filename];
-        scpFile.localPath = file;
-        
-        if (previous) {
-            previous.successor = scpFile;
-        }
-        previous = scpFile;
-        [scpFile upload];
-    }
-}
-#endif
-
-#if 0
-- (void)startDownloadOverSCP:(SCPPath *)path
-{
-    SCPFile *file = [[[SCPFile alloc] init] autorelease];
-    file.path = path;
-    [file download];
-}
-#endif
 
 - (NSString*)_getLocale
 {
@@ -7512,6 +7465,7 @@ verticalSpacing:(float)verticalSpacing {
     if (self.alertOnNextMark) {
         NSString *action = [iTermApplication.sharedApplication delegate].markAlertAction;
         if ([action isEqualToString:kMarkAlertActionPostNotification]) {
+#if 0
             [[iTermGrowlDelegate sharedInstance] growlNotify:@"Mark Set"
                                              withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
                                                               [self name],
@@ -7521,6 +7475,7 @@ verticalSpacing:(float)verticalSpacing {
                                                     tabIndex:[self screenTabIndex]
                                                    viewIndex:[self screenViewIndex]
                                                       sticky:YES];
+#endif
         } else {
             NSAlert *alert = [[[NSAlert alloc] init] autorelease];
             alert.messageText = @"Alert";
@@ -7702,17 +7657,13 @@ verticalSpacing:(float)verticalSpacing {
 }
 
 - (void)screenWillReceiveFileNamed:(NSString *)filename ofSize:(int)size {
-#if 0
-    [self.download stop];
-    [self.download endOfData];
-    self.download = [[[TerminalFile alloc] initWithName:filename size:size] autorelease];
-    [self.download download];
-#endif
 }
 
 - (void)screenDidFinishReceivingFile {
+    /*
     [self.download endOfData];
     self.download = nil;
+     */
 }
 
 - (void)screenDidFinishReceivingInlineFile {
@@ -7720,13 +7671,15 @@ verticalSpacing:(float)verticalSpacing {
 }
 
 - (void)screenDidReceiveBase64FileData:(NSString *)data {
-    [self.download appendData:data];
+    //[self.download appendData:data];
 }
 
 - (void)screenFileReceiptEndedUnexpectedly {
+    /*
     [self.download stop];
     [self.download endOfData];
     self.download = nil;
+     */
 }
 
 - (void)screenRequestUpload:(NSString *)args {
@@ -7791,8 +7744,10 @@ verticalSpacing:(float)verticalSpacing {
             } else {
                 label = [NSString stringWithFormat:@"%@ plus %ld more", relativePaths.firstObject.lastPathComponent, relativePaths.count - 1];
             }
+            /*
             self.upload = [[[TerminalFileUpload alloc] initWithName:label size:base64String.length] autorelease];
             [self.upload upload];
+             */
             [_pasteHelper pasteString:base64String
                                slowly:NO
                      escapeShellChars:NO

@@ -2,7 +2,6 @@
 
 #import "Coprocess.h"
 #import "DebugLogging.h"
-#import "iTermGrowlDelegate.h"
 #import "NSWorkspace+iTerm.h"
 #import "PreferencePanel.h"
 #import "ProcessCache.h"
@@ -606,8 +605,9 @@ static int MyForkPty(int *amaster,
     } else if (pid < (pid_t)0) {
         // Error
         DLog(@"Unable to fork %@: %s", progpath, strerror(errno));
+#if 0
         [[iTermGrowlDelegate sharedInstance] growlNotify:@"Unable to fork!" withDescription:@"You may have too many processes already running."];
-        
+#endif
         for (int j = 0; newEnviron[j]; j++) {
             free(newEnviron[j]);
         }

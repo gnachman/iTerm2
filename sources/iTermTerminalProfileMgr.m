@@ -342,6 +342,7 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 
 - (BOOL) growlForProfile: (NSString *) profileName
 {
+#if 0
 	NSDictionary *aProfile;
 	NSNumber *growl;
 	
@@ -357,10 +358,13 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 		return (YES);
 	
 	return ([growl boolValue]);	
+#endif
+	return FALSE;
 }
 
 - (void) setGrowl: (BOOL) growl forProfile: (NSString *) profileName
 {
+#if 0
 	NSMutableDictionary *aProfile;
 	
 	if([profileName length] <= 0)
@@ -372,6 +376,7 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 		return;
 	
 	[aProfile setObject: [NSNumber numberWithBool: growl] forKey: @"Growl"];	
+#endif
 }
 
 

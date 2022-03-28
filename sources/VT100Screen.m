@@ -9,7 +9,6 @@
 #import "iTermCapturedOutputMark.h"
 #import "iTermColorMap.h"
 #import "iTermExpose.h"
-#import "iTermGrowlDelegate.h"
 #import "iTermImage.h"
 #import "iTermImageInfo.h"
 #import "iTermImageMark.h"
@@ -86,7 +85,6 @@ static const double kInterBellQuietPeriod = 0.1;
     BOOL audibleBell_;
     BOOL showBellIndicator_;
     BOOL flashBell_;
-    BOOL postGrowlNotifications_;
     BOOL cursorBlinks_;
     VT100Grid *primaryGrid_;
     VT100Grid *altGrid_;  // may be nil
@@ -174,7 +172,6 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
 @synthesize audibleBell = audibleBell_;
 @synthesize showBellIndicator = showBellIndicator_;
 @synthesize flashBell = flashBell_;
-@synthesize postGrowlNotifications = postGrowlNotifications_;
 @synthesize cursorBlinks = cursorBlinks_;
 @synthesize allowTitleReporting = allowTitleReporting_;
 @synthesize maxScrollbackLines = maxScrollbackLines_;
@@ -200,7 +197,6 @@ static NSString *const kInilineFileInset = @"inset";  // NSValue of NSEdgeInsets
         [self setInitialTabStops];
         linebuffer_ = [[LineBuffer alloc] init];
 
-        [iTermGrowlDelegate sharedInstance];
 
         dvr_ = [DVR alloc];
         [dvr_ initWithBufferCapacity:[iTermPreferences intForKey:kPreferenceKeyInstantReplayMemoryMegabytes] * 1024 * 1024];
@@ -3019,6 +3015,7 @@ return;
 }
 
 - (BOOL)terminalPostGrowlNotification:(NSString *)message {
+#if 0
     if (postGrowlNotifications_ && [delegate_ screenShouldPostTerminalGeneratedAlert]) {
         [delegate_ screenIncrementBadge];
         NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
@@ -3034,8 +3031,11 @@ return;
                               viewIndex:[delegate_ screenViewIndex]];
         return sent;
     } else {
+
         return NO;
     }
+#endif
+        return NO;
 }
 
 - (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID {
