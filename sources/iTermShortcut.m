@@ -33,6 +33,7 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
                                                   NSEventModifierFlagOption |
                                                   NSEventModifierFlagShift |
                                                   NSEventModifierFlagControl |
+                                                  iTermLeaderModifierFlag |
                                                   NSEventModifierFlagNumericPad);
 
 @implementation iTermShortcut {
@@ -115,11 +116,20 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
     return shortcut;
 }
 
-+ (instancetype)shortcutWithEvent:(NSEvent *)event {
++ (instancetype)shortcutWithEvent:(NSEvent *)event
+                    leaderAllowed:(BOOL)leaderAllowed {
+    NSEventModifierFlags flags = event.it_modifierFlags;
+    if (!leaderAllowed) {
+        flags &= ~iTermLeaderModifierFlag;
+    }
     return [[self alloc] initWithKeyCode:event.keyCode
-                               modifiers:event.it_modifierFlags
+                               modifiers:flags
                               characters:event.characters
              charactersIgnoringModifiers:event.charactersIgnoringModifiers];
+}
+
++ (instancetype)shortcutWithEvent:(NSEvent *)event {
+    return [self shortcutWithEvent:event leaderAllowed:YES];
 }
 
 - (instancetype)init {

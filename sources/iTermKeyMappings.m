@@ -18,6 +18,7 @@
 
 NSString *const kKeyBindingsChangedNotification = @"kKeyBindingsChangedNotification";
 static NSInteger iTermKeyMappingsNotificationSupressionCount = 0;
+NSString *const iTermKeyMappingsLeaderDidChange = @"iTermKeyMappingsLeaderDidChange";
 
 @implementation iTermKeyMappings
 
@@ -86,6 +87,23 @@ static NSInteger iTermKeyMappingsNotificationSupressionCount = 0;
     return [NSSet setWithArray:[[[self globalKeyMap] allKeys] mapWithBlock:^id(id anObject) {
         return [[iTermKeystroke alloc] initWithSerialized:anObject];
     }]];
+}
+
++ (iTermKeystroke *)leader {
+    NSString *string = [[NSUserDefaults standardUserDefaults] objectForKey:@"Leader"];
+    if (!string) {
+        return nil;
+    }
+    return [[iTermKeystroke alloc] initWithSerialized:string];
+}
+
++ (void)setLeader:(iTermKeystroke *)keystroke {
+    if (!keystroke) {
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"Leader"];
+    } else {
+        [[NSUserDefaults standardUserDefaults] setObject:[keystroke serialized] forKey:@"Leader"];
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermKeyMappingsLeaderDidChange object:nil];
 }
 
 #pragma mark Mapping-Related

@@ -11,6 +11,7 @@
 #import "NSEvent+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSImage+iTerm.h"
+#import "iTermKeyMappings.h"
 
 @interface iTermShortcutInputView()
 @property(nonatomic, copy) NSString *hotkeyBeingRecorded;
@@ -25,7 +26,12 @@
 - (instancetype)initWithFrame:(NSRect)frameRect {
     self = [super initWithFrame:frameRect];
     if (self) {
+        _leaderAllowed = YES;
         [self addClearButton];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(leaderDidChange:)
+                                                     name:iTermKeyMappingsLeaderDidChange
+                                                   object:nil];
     }
     return self;
 }
@@ -33,6 +39,7 @@
 - (instancetype)initWithCoder:(NSCoder *)coder {
     self = [super initWithCoder:coder];
     if (self) {
+        _leaderAllowed = YES;
         [self addClearButton];
     }
     return self;
@@ -226,7 +233,8 @@
 - (void)handleShortcutEvent:(NSEvent *)event {
     if (event.type == NSEventTypeKeyDown) {
         self.hotkeyBeingRecorded = nil;
-        self.shortcut = [iTermShortcut shortcutWithEvent:event];
+        self.shortcut = [iTermShortcut shortcutWithEvent:event
+                                           leaderAllowed:_leaderAllowed];
         [_shortcutDelegate shortcutInputView:self didReceiveKeyPressEvent:event];
         [[self window] makeFirstResponder:[self window]];
     } else if (event.type == NSEventTypeFlagsChanged) {
@@ -265,6 +273,10 @@
     } else {
         return nil;
     }
+}
+
+- (void)leaderDidChange:(NSNotification *)notification {
+    self.stringValue = self.shortcut.stringValue;
 }
 
 @end

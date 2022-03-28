@@ -55,6 +55,7 @@ CGFloat iTermPreferencePanelGetWindowMinimumWidth(BOOL session);
 
 @class iTermController;
 @class iTermSemanticHistoryPrefsController;
+@class iTermShortcutInputView;
 @protocol iTermSessionScope;
 @class SmartSelectionController;
 @class TriggerController;
@@ -103,7 +104,7 @@ void LoadPrefsFromCustomFolder(void);
 
 - (WindowArrangements *)arrangements;
 - (void)run;
-- (NSTextField*)hotkeyField;
+- (iTermShortcutInputView *)hotkeyField;
 
 - (void)changeFont:(id)fontManager;
 - (void)selectProfilesTab;

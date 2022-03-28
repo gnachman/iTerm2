@@ -4,6 +4,7 @@
 #import "iTermController.h"
 #import "iTermPreferences.h"
 #import "iTermPreviousState.h"
+#import "iTermShortcutInputView.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 

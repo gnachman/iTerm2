@@ -13,6 +13,6 @@
 @interface KeysPreferencesViewController : iTermPreferencesBaseViewController <
     iTermShortcutInputViewDelegate>
 
-@property(nonatomic, readonly) NSTextField *hotkeyField;
+@property(nonatomic, readonly) iTermShortcutInputView *hotkeyField;
 
 @end

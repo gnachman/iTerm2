@@ -28,6 +28,9 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMalloc.h"
+#import "iTermKeyMappings.h"
+#import "iTermKeystroke.h"
+#import "iTermKeystrokeFormatter.h"
 #import "iTermOrderedDictionary.h"
 #import "iTermPreferences.h"
 #import "iTermSwiftyStringParser.h"
@@ -1362,6 +1365,9 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
 + (NSString *)stringForModifiersWithMask:(NSUInteger)keyMods {
     NSMutableString *theKeyString = [NSMutableString string];
+    if (keyMods & iTermLeaderModifierFlag) {
+        [theKeyString appendString:[self stringForLeader]];
+    }
     if (keyMods & NSEventModifierFlagControl) {
         [theKeyString appendString:@"^"];
     }
@@ -1375,6 +1381,15 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
         [theKeyString appendString:@"⌘"];
     }
     return theKeyString;
+}
+
++ (NSString *)stringForLeader {
+    iTermKeystroke *leader = [[iTermKeyMappings leader] copy];
+    if (!leader) {
+        return @"L⃢";
+    }
+    leader.modifierFlags &= ~iTermLeaderModifierFlag;
+    return [[iTermKeystrokeFormatter stringForKeystroke:leader] stringByAppendingString:@" "];
 }
 
 + (NSString *)uuid {

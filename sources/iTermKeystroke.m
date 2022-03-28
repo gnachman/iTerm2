@@ -82,6 +82,7 @@
                                            NSEventModifierFlagControl |
                                            NSEventModifierFlagShift |
                                            NSEventModifierFlagCommand |
+                                           iTermLeaderModifierFlag |
                                            NSEventModifierFlagNumericPad);
         const NSEventModifierFlags sanitizedModifiers = modifierFlags & mask;
 

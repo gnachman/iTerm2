@@ -812,7 +812,7 @@ andEditComponentWithIdentifier:(NSString *)identifier
 
 // This is used by iTermHotKeyController to not activate the hotkey while the field for typing
 // the hotkey into is the first responder.
-- (NSTextField*)hotkeyField {
+- (iTermShortcutInputView *)hotkeyField {
     return _keysViewController.hotkeyField;
 }
 

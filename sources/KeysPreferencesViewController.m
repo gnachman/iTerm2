@@ -19,6 +19,7 @@
 #import "iTermModifierRemapper.h"
 #import "iTermNotificationController.h"
 #import "iTermPresetKeyMappings.h"
+#import "iTermTextPopoverViewController.h"
 #import "iTermTouchbarMappings.h"
 #import "iTermUserDefaults.h"
 #import "iTermWarning.h"
@@ -61,7 +62,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     // Hotkey
     IBOutlet NSButton *_hotkeyEnabled;
     IBOutlet NSTextField *_shortcutOverloaded;
-    IBOutlet NSTextField *_hotkeyField;
+    IBOutlet iTermShortcutInputView *_hotkeyField;
     IBOutlet NSTextField *_hotkeyLabel;
     IBOutlet NSButton *_configureHotKeyWindow;
     IBOutlet NSButton *_emulateUSKeyboard;
@@ -69,6 +70,9 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     iTermHotkeyPreferencesWindowController *_hotkeyPanel;
 
     IBOutlet NSTabView *_tabView;
+    IBOutlet iTermShortcutInputView *_leader;
+    IBOutlet NSButton *_leaderHelpButton;
+    iTermTextPopoverViewController *_popoverVC;
 }
 
 - (void)dealloc {
@@ -78,6 +82,11 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 - (void)awakeFromNib {
     PreferenceInfo *info;
     __weak __typeof(self) weakSelf = self;
+
+    _leader.leaderAllowed = NO;
+    _leader.stringValue = [iTermKeystrokeFormatter stringForKeystroke:[iTermKeyMappings leader]] ?: @"";
+
+    _hotkeyField.leaderAllowed = NO;
 
     [_keyMappingViewController addViewsToSearchIndex:self];
 
@@ -395,25 +404,51 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     [alert runModal];
 }
 
+- (IBAction)showLeaderHelp:(id)sender {
+    [_popoverVC.popover close];
+    _popoverVC = [[iTermTextPopoverViewController alloc] initWithNibName:@"iTermTextPopoverViewController"
+                                                                  bundle:[NSBundle bundleForClass:self.class]];
+    _popoverVC.popover.behavior = NSPopoverBehaviorTransient;
+    [_popoverVC view];
+    _popoverVC.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    _popoverVC.textView.drawsBackground = NO;
+    [_popoverVC appendString:@"The leader behaves like a modifier key, such as Command or Option, but is a separate keystroke. It can be used in key bindings. For example, if you set the leader to ⌘s then you could bind an action to the two-keystroke sequence “⌘s x”."];
+    NSRect frame = _popoverVC.view.frame;
+    frame.size.width = 300;
+    frame.size.height = 108;
+    _popoverVC.view.frame = frame;
+    [_popoverVC.popover showRelativeToRect:_leaderHelpButton.bounds
+                                    ofView:_leaderHelpButton
+                             preferredEdge:NSRectEdgeMaxY];
+}
+
 #pragma mark - iTermShortcutInputViewDelegate
 
 - (void)shortcutInputView:(iTermShortcutInputView *)view didReceiveKeyPressEvent:(NSEvent *)event {
-    unsigned int keyMods;
-    NSString *unmodkeystr;
+    if (view == _hotkeyField) {
+        unsigned int keyMods;
+        NSString *unmodkeystr;
 
-    keyMods = [event it_modifierFlags];
-    unmodkeystr = [event charactersIgnoringModifiers];
-    unsigned short keyChar = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
-    unsigned int keyCode = [event keyCode];
+        keyMods = [event it_modifierFlags];
+        unmodkeystr = [event charactersIgnoringModifiers];
+        unsigned short keyChar = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+        unsigned int keyCode = [event keyCode];
 
-    [self setHotKeyChar:keyChar code:keyCode mods:keyMods];
+        [self setHotKeyChar:keyChar code:keyCode mods:keyMods];
 
-    if (!event) {
-        BOOL wasEnabled = [self boolForKey:kPreferenceKeyHotkeyEnabled];
-        [self setBool:NO forKey:kPreferenceKeyHotkeyEnabled];
-        if (wasEnabled) {
-            [self hotkeyEnabledDidChange];
-            _hotkeyEnabled.state = NSControlStateValueOff;
+        if (!event) {
+            BOOL wasEnabled = [self boolForKey:kPreferenceKeyHotkeyEnabled];
+            [self setBool:NO forKey:kPreferenceKeyHotkeyEnabled];
+            if (wasEnabled) {
+                [self hotkeyEnabledDidChange];
+                _hotkeyEnabled.state = NSControlStateValueOff;
+            }
+        }
+    } else if (view == _leader) {
+        if (event) {
+            [iTermKeyMappings setLeader:[iTermKeystroke withEvent:event]];
+        } else {
+            [iTermKeyMappings setLeader:nil];
         }
     }
 }

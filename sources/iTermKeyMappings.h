@@ -11,6 +11,7 @@
 #import "ProfileModel.h"
 
 extern NSString *const kKeyBindingsChangedNotification;
+extern NSString *const iTermKeyMappingsLeaderDidChange;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -43,6 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark Keystroke-Returning
 
+@property (nullable, class, nonatomic, strong) iTermKeystroke *leader;
 + (NSSet<iTermKeystroke *> *)keystrokesInKeyMappingsInProfile:(Profile *)sourceProfile;
 + (NSSet<iTermKeystroke *> *)keystrokesInGlobalMapping;
 

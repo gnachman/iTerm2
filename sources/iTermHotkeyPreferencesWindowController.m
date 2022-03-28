@@ -44,6 +44,7 @@
 }
 
 - (void)awakeFromNib {
+    _hotKey.leaderAllowed = NO;
     if (_pendingExplanation) {
         _explanation.stringValue = _pendingExplanation;
         self.pendingExplanation = nil;

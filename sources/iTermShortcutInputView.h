@@ -29,6 +29,7 @@
 @property(nonatomic, copy) NSString *stringValue;
 @property(nonatomic, assign) NSBackgroundStyle backgroundStyle;
 @property(nonatomic, retain) iTermShortcut *shortcut;
+@property(nonatomic) BOOL leaderAllowed;
 
 - (void)handleShortcutEvent:(NSEvent *)event;
 

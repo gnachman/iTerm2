@@ -8,6 +8,11 @@
 #import <Cocoa/Cocoa.h>
 #import "iTermPromise.h"
 
+typedef NS_ENUM(NSUInteger, iTermEventModifierFlags) {
+    // Pray that Apple never uses this. If they do I will have a gnarly migration to deal with.
+    iTermLeaderModifierFlag = 1 << 24
+};
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermKeystroke: NSObject<NSCopying>

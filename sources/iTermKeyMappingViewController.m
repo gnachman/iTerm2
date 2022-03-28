@@ -49,6 +49,10 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
                                                  selector:@selector(keyBindingsChanged)
                                                      name:kKeyBindingsChangedNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(leaderDidChange:)
+                                                     name:iTermKeyMappingsLeaderDidChange
+                                                   object:nil];
     }
     return self;
 }
@@ -96,6 +100,10 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 }
 
 - (void)keyBindingsChanged {
+    [_tableView reloadData];
+}
+
+- (void)leaderDidChange:(NSNotification *)notification {
     [_tableView reloadData];
 }
 

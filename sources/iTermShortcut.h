@@ -46,6 +46,8 @@ extern CGFloat kShortcutPreferredHeight;
 // Returns the shortcut for a keydown event.
 + (instancetype)shortcutWithEvent:(NSEvent *)event;
 
++ (instancetype)shortcutWithEvent:(NSEvent *)event leaderAllowed:(BOOL)leaderAllowed;
+
 + (NSString *)shortStringForDictionary:(NSDictionary *)dict;
 + (NSDictionary *)dictionaryForShortString:(NSString *)string;
 
