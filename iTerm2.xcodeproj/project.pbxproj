@@ -2012,6 +2012,7 @@
 		A678C50E279B3C3900C59927 /* charmaps.m in Sources */ = {isa = PBXBuildFile; fileRef = A678C50D279B3C3900C59927 /* charmaps.m */; };
 		A678C511279BECAC00C59927 /* iTermGCD.h in Headers */ = {isa = PBXBuildFile; fileRef = A678C50F279BECAC00C59927 /* iTermGCD.h */; };
 		A678C512279BECAC00C59927 /* iTermGCD.m in Sources */ = {isa = PBXBuildFile; fileRef = A678C510279BECAC00C59927 /* iTermGCD.m */; };
+		A678FE7927F10B1700BEF8FA /* DismissableLinkViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A678FE7727F109BD00BEF8FA /* DismissableLinkViewController.swift */; };
 		A67960921F81FC96008A42BC /* iTermMetalRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = A679608A1F81FC94008A42BC /* iTermMetalRenderer.h */; };
 		A67960941F81FC96008A42BC /* iTermTextureArray.h in Headers */ = {isa = PBXBuildFile; fileRef = A679608C1F81FC95008A42BC /* iTermTextureArray.h */; };
 		A67960951F81FC96008A42BC /* iTermMetalCellRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = A679608D1F81FC95008A42BC /* iTermMetalCellRenderer.h */; };
@@ -5754,6 +5755,7 @@
 		A678C50D279B3C3900C59927 /* charmaps.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = charmaps.m; sourceTree = "<group>"; };
 		A678C50F279BECAC00C59927 /* iTermGCD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGCD.h; sourceTree = "<group>"; };
 		A678C510279BECAC00C59927 /* iTermGCD.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGCD.m; sourceTree = "<group>"; };
+		A678FE7727F109BD00BEF8FA /* DismissableLinkViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DismissableLinkViewController.swift; sourceTree = "<group>"; };
 		A679608A1F81FC94008A42BC /* iTermMetalRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermMetalRenderer.h; path = Metal/Infrastructure/iTermMetalRenderer.h; sourceTree = "<group>"; };
 		A679608C1F81FC95008A42BC /* iTermTextureArray.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermTextureArray.h; path = Metal/Infrastructure/iTermTextureArray.h; sourceTree = "<group>"; };
 		A679608D1F81FC95008A42BC /* iTermMetalCellRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTermMetalCellRenderer.h; path = Metal/Infrastructure/iTermMetalCellRenderer.h; sourceTree = "<group>"; };
@@ -10108,6 +10110,7 @@
 				535D0911224DD13F00A79581 /* iTermPreferencesSearchEngineResultsWindowController.h */,
 				535D0912224DD13F00A79581 /* iTermPreferencesSearchEngineResultsWindowController.m */,
 				535D0913224DD13F00A79581 /* iTermPreferencesSearchEngineResultsWindowController.xib */,
+				A678FE7727F109BD00BEF8FA /* DismissableLinkViewController.swift */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -14236,6 +14239,7 @@
 				A6E7352B20EBF3270034FCFD /* iTermSetCurrentTerminalHelper.m in Sources */,
 				A629F59823AFF49E00C2F16B /* iTermShellIntegrationRootView.m in Sources */,
 				A6A4867A20B67DFF00493302 /* ProfilesSessionPreferencesViewController.m in Sources */,
+				A678FE7927F10B1700BEF8FA /* DismissableLinkViewController.swift in Sources */,
 				A6F3DA98245647E4001D50C9 /* iTermSwipeTracker.m in Sources */,
 				A6435117233B195D00828AF6 /* iTermApplescriptPythonCommands.m in Sources */,
 				A66719671DCE3772000CE608 /* iTermWebSocketFrameBuilder.m in Sources */,
