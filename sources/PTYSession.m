@@ -283,6 +283,7 @@ static NSString *const SESSION_ARRANGEMENT_KEYLABELS_STACK = @"Key Labels Stack"
 static NSString *const SESSION_ARRANGEMENT_IS_UTF_8 = @"Is UTF-8";  // TTY is in utf-8 mode
 static NSString *const SESSION_ARRANGEMENT_HOTKEY = @"Session Hotkey";  // NSDictionary iTermShortcut dictionaryValue
 static NSString *const SESSION_ARRANGEMENT_FONT_OVERRIDES = @"Font Overrides";  // Not saved; just used internally when creating a new tmux session.
+static NSString *const SESSION_ARRANGEMENT_KEYBOARD_MAP_OVERRIDES = @"Keyboard Map Overrides";  // Not saved; just used internally when creating a new tmux session.
 static NSString *const SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE = @"Short Lived Single Use";  // BOOL
 static NSString *const SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL = @"Hostname to Shell";  // NSString -> NSString (example: example.com -> fish)
 static NSString *const SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE = @"Cursor Type Override";  // NSNumber wrapping ITermCursorType
@@ -1365,13 +1366,24 @@ ITERM_WEAKLY_REFERENCEABLE
     [sessionView setFindDriverDelegate:aSession];
     NSMutableSet<NSString *> *keysToPreserveInCaseOfDivorce = [NSMutableSet setWithArray:@[ KEY_GUID, KEY_ORIGINAL_GUID ]];
 
-    NSDictionary<NSString *, NSString *> *overrides = arrangement[SESSION_ARRANGEMENT_FONT_OVERRIDES];
-    if (overrides) {
-        NSMutableDictionary *temp = [[theBookmark mutableCopy] autorelease];
-        [overrides enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
-            temp[key] = obj;
-        }];
-        theBookmark = temp;
+    {
+        NSDictionary<NSString *, NSString *> *overrides = arrangement[SESSION_ARRANGEMENT_FONT_OVERRIDES];
+        if (overrides) {
+            NSMutableDictionary *temp = [[theBookmark mutableCopy] autorelease];
+            [overrides enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
+                temp[key] = obj;
+            }];
+            theBookmark = temp;
+        }
+    }
+
+    {
+        NSDictionary *overrides = arrangement[SESSION_ARRANGEMENT_KEYBOARD_MAP_OVERRIDES];
+        if (overrides) {
+            NSMutableDictionary *modifiedProfile = [[theBookmark mutableCopy] autorelease];
+            modifiedProfile[KEY_KEYBOARD_MAP] = overrides;
+            theBookmark = modifiedProfile;
+        }
     }
     if ([arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE]) {
         // This is a tmux arrangement.
@@ -2838,6 +2850,12 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     [self writeTaskImpl:string encoding:encoding forceEncoding:forceEncoding canBroadcast:NO];
+}
+
+- (void)performTmuxCommand:(NSString *)command {
+    [self.tmuxController.gateway sendCommand:command
+                              responseTarget:nil
+                            responseSelector:NULL];
 }
 
 - (void)setTmuxController:(TmuxController *)tmuxController {
@@ -4979,7 +4997,10 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     if (fontOverrides) {
         result[SESSION_ARRANGEMENT_FONT_OVERRIDES] = fontOverrides;
     }
-
+    NSDictionary *keyboardMapOverrides = tmuxController.sharedKeyMappingOverrides;
+    if (keyboardMapOverrides) {
+        result[SESSION_ARRANGEMENT_KEYBOARD_MAP_OVERRIDES] = [[keyboardMapOverrides copy] autorelease];
+    }
     return result;
 }
 
@@ -7240,6 +7261,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_tmuxController validateOptions];
     [_tmuxController checkForUTF8];
     [_tmuxController loadDefaultTerminal];
+    [_tmuxController loadKeyBindings];
     [_tmuxController guessVersion];  // NOTE: This kicks off more stuff that depends on knowing the version number.
 }
 
@@ -8089,6 +8111,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_MOVE_TO_SPLIT_PANE:
         case KEY_ACTION_SEND_SNIPPET:
         case KEY_ACTION_COMPOSE:
+        case KEY_ACTION_SEND_TMUX_COMMAND:
             return NO;
 
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
@@ -8231,6 +8254,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 DLog(@"Open composer with%@", action.parameter);
                 [self.composerManager showWithCommand:action.parameter];
             }
+            break;
+        case KEY_ACTION_SEND_TMUX_COMMAND:
+            if (_exited || isTmuxGateway || !self.isTmuxClient) {
+                return;
+            }
+            [self performTmuxCommand:action.parameter];
             break;
         case KEY_ACTION_RUN_COPROCESS:
             if (_exited || isTmuxGateway) {

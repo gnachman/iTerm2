@@ -220,6 +220,9 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_COMPOSE:
             actionString = [NSString stringWithFormat:@"Compose “%@”", _parameter];
             break;
+        case KEY_ACTION_SEND_TMUX_COMMAND:
+            actionString = [NSString stringWithFormat:@"tmux: %@", _parameter];
+            break;
         case KEY_ACTION_RUN_COPROCESS:
             actionString = [NSString stringWithFormat:@"Run Coprocess \"%@\"",
 						    _parameter];
@@ -388,6 +391,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_TEXT:
         case KEY_ACTION_SEND_SNIPPET:
         case KEY_ACTION_COMPOSE:
+        case KEY_ACTION_SEND_TMUX_COMMAND:
         case KEY_ACTION_VIM_TEXT:
         case KEY_ACTION_RUN_COPROCESS:
         case KEY_ACTION_SEND_C_H_BACKSPACE:
@@ -469,6 +473,7 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_VIM_TEXT:
         case KEY_ACTION_SEND_SNIPPET:
         case KEY_ACTION_COMPOSE:
+        case KEY_ACTION_SEND_TMUX_COMMAND:
         case KEY_ACTION_RUN_COPROCESS:
         case KEY_ACTION_SEND_C_H_BACKSPACE:
         case KEY_ACTION_SEND_C_QM_BACKSPACE:

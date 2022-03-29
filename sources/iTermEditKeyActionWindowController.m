@@ -96,6 +96,7 @@ const CGFloat sideMarginWidth = 20;
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Run Coprocess" tag:KEY_ACTION_RUN_COPROCESS],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Start Instant Replay" tag:KEY_ACTION_IR_BACKWARD],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Undo" tag:KEY_ACTION_UNDO],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send tmux command" tag:KEY_ACTION_SEND_TMUX_COMMAND],
         ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"New Tab or Window" items:@[
@@ -386,6 +387,11 @@ const CGFloat sideMarginWidth = 20;
         case KEY_ACTION_RUN_COPROCESS:
             parameterHidden = NO;
             [[_parameter cell] setPlaceholderString:@"Enter command to run"];
+            break;
+
+        case KEY_ACTION_SEND_TMUX_COMMAND:
+            parameterHidden = NO;
+            [[_parameter cell] setPlaceholderString:@"Enter tmux command"];
             break;
 
         case KEY_ACTION_SELECT_MENU_ITEM:

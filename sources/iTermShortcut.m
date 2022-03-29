@@ -156,6 +156,7 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
             [NSString stringForModifiersWithMask:self.modifiers], self.characters, [self.characters hexEncodedString],
             self.charactersIgnoringModifiers, [self.charactersIgnoringModifiers hexEncodedString]];
 }
+
 - (BOOL)isEqual:(id)object {
     if ([object isKindOfClass:[iTermShortcut class]]) {
         return [self isEqualToShortcut:object];
@@ -191,7 +192,8 @@ const NSEventModifierFlags kHotKeyModifierMask = (NSEventModifierFlagCommand |
 - (iTermKeystroke *)keystroke {
     return [[iTermKeystroke alloc] initWithVirtualKeyCode:self.keyCode
                                             modifierFlags:self.modifiers
-                                                character:[self.charactersIgnoringModifiers firstCharacter]];
+                                                character:[self.charactersIgnoringModifiers firstCharacter]
+                                        modifiedCharacter:[self.characters firstCharacter]];
 }
 
 - (NSString *)stringValue {

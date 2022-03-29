@@ -13,6 +13,8 @@
 #import "iTermController.h"
 #import "iTermInitialDirectory.h"
 #import "iTermInitialDirectory+Tmux.h"
+#import "iTermKeyMappings.h"
+#import "iTermKeystroke.h"
 #import "iTermLSOF.h"
 #import "iTermNotificationController.h"
 #import "iTermPreferenceDidChangeNotification.h"
@@ -237,6 +239,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _sharedProfile = [profile copy];
         _profileModel = [profileModel retain];
         _sharedFontOverrides = [iTermTmuxControllerDefaultFontOverridesFromProfile(profile) retain];
+        _sharedKeyMappingOverrides = [[iTermKeyMappings keyMappingsForProfile:profile] retain];
 
         gateway_ = [gateway retain];
         _paneIDs = [[NSMutableSet alloc] init];
@@ -291,6 +294,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_sharedProfile release];
     [_profileModel release];
     [_sharedFontOverrides release];
+    [_sharedKeyMappingOverrides release];
     [_pendingWindows release];
     [sessionName_ release];
     [sessionObjects_ release];
@@ -335,6 +339,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_sharedFontOverrides enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
         temp[key] = obj;
     }];
+    NSMutableDictionary *updatedKeyMappings = [[temp[KEY_KEYBOARD_MAP] mutableCopy] autorelease];
+    [_sharedKeyMappingOverrides enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+        updatedKeyMappings[key] = obj;
+    }];
+    temp[KEY_KEYBOARD_MAP] = updatedKeyMappings;
     return [temp autorelease];
 }
 
@@ -1258,6 +1267,93 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                                responseSelector:@selector(handleShowSetTitles:)
                                                  responseObject:nil
                                                           flags:0] ]];
+}
+
+- (void)loadKeyBindings {
+    [gateway_ sendCommand:@"list-keys" responseTarget:self responseSelector:@selector(handleListKeys:)];
+}
+
+// This is a little brittle because it depends on parsing bind-keys commands
+// which could change in the future. It'd be nice for list-keys to have
+// structured output.
+- (void)handleListKeys:(NSString *)response {
+    NSArray<NSString *> *lines = [response componentsSeparatedByString:@"\n"];
+    NSArray<NSDictionary *> *dicts = [lines mapWithBlock:^id (NSString * _Nonnull line) {
+        NSArray<NSString *> *args = [line componentsSeparatedByRegex:@"  *"];
+        NSInteger skip = 0;
+        NSString *key = nil;
+        NSString *command = nil;
+        NSString *flag = nil;
+        NSMutableDictionary<NSString *, id> *flags = [NSMutableDictionary dictionary];
+        for (NSInteger i = 1; i < args.count; i++) {
+            if (skip > 0) {
+                NSArray<NSString *> *flagArgs = flags[flag];
+                flags[flag] = [flagArgs arrayByAddingObject:args[i]];
+                skip -= 1;
+                continue;
+            }
+            flag = nil;
+            if ([args[i] hasPrefix:@"-"]) {
+                flag = [args[i] substringFromIndex:1];
+                if ([args[i] isEqualToString:@"-N"]) {
+                    skip = 1;
+                } else if ([args[i] isEqualToString:@"-T"]) {
+                    skip = 1;
+                } else {
+                    skip = 0;
+                }
+                if (skip == 0) {
+                    flags[flag] = [NSNull null];
+                } else {
+                    flags[flag] = @[];
+                }
+                // Skip flag and any arguments.
+                continue;
+            }
+            if (key == nil) {
+                key = args[i];
+                continue;
+            }
+            command = [[args subarrayFromIndex:i] componentsJoinedByString:@" "];
+            break;
+        }
+        if (!key || !command || !flags) {
+            DLog(@"Bad line: %@", line);
+            return nil;
+        }
+        return @{ @"key": key,
+                  @"command": command,
+                  @"flags": flags };
+    }];
+    dicts = [dicts filteredArrayUsingBlock:^BOOL(NSDictionary *dict) {
+        return [dict[@"flags"][@"T"] isEqual:@[@"prefix"]];
+    }];
+    NSMutableDictionary *fakeProfile = [[@{ KEY_KEYBOARD_MAP: _sharedKeyMappingOverrides } mutableCopy] autorelease];
+
+    for (NSDictionary *dict in dicts) {
+        iTermKeystroke *keystroke = [iTermKeystroke withTmuxKey:dict[@"key"]];
+        if (!keystroke) {
+            DLog(@"Couldn't make keystroke for %@", dict);
+            continue;
+        }
+
+        iTermKeyBindingAction *action = [iTermKeyBindingAction withAction:KEY_ACTION_SEND_TMUX_COMMAND
+                                                                parameter:dict[@"command"]
+                                                                 escaping:iTermSendTextEscapingNone];
+        NSString *dictKey = [keystroke keyInBindingDictionary:fakeProfile[KEY_KEYBOARD_MAP]];
+        NSInteger index = NSNotFound;
+        if (dictKey) {
+            index = [[iTermKeyMappings sortedKeystrokesForProfile:fakeProfile] indexOfObject:keystroke];
+        }
+        [iTermKeyMappings setMappingAtIndex:index
+                               forKeystroke:keystroke
+                                     action:action
+                                  createNew:index == NSNotFound
+                                  inProfile:fakeProfile];
+    }
+
+    [_sharedKeyMappingOverrides autorelease];
+    _sharedKeyMappingOverrides = [fakeProfile[KEY_KEYBOARD_MAP] retain];
 }
 
 - (void)handleShowSetTitles:(NSString *)result {

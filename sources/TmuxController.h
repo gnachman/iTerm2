@@ -63,6 +63,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 @property(nonatomic, readonly) BOOL detaching;
 @property(nonatomic, copy) Profile *sharedProfile;
 @property(nonatomic, readonly) NSDictionary *sharedFontOverrides;
+@property(nonatomic, readonly) NSDictionary *sharedKeyMappingOverrides;
 @property(nonatomic, readonly) NSString *sessionGuid;
 @property(nonatomic, readonly) BOOL variableWindowSize;
 @property(nonatomic, readonly) BOOL shouldSetTitles;
@@ -230,6 +231,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)setCurrentWindow:(int)windowId;
 - (void)checkForUTF8;
 - (void)loadDefaultTerminal;
+- (void)loadKeyBindings;
 
 - (void)clearHistoryForWindowPane:(int)windowPane;
 

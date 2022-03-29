@@ -34,7 +34,7 @@
     TISInputSourceRef inputSource = NULL;
     NSString *result = nil;
 
-    if (virtualKeyCode != 0) {
+    if (virtualKeyCode != iTermKeystrokeKeyCodeUnavailable) {
         inputSource = TISCopyCurrentKeyboardInputSource();
         if (inputSource == NULL) {
             goto exit;

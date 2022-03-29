@@ -13,6 +13,8 @@ typedef NS_ENUM(NSUInteger, iTermEventModifierFlags) {
     iTermLeaderModifierFlag = 1 << 24
 };
 
+extern const int iTermKeystrokeKeyCodeUnavailable;
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermKeystroke: NSObject<NSCopying>
@@ -23,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) int virtualKeyCode;
 @property (nonatomic) NSEventModifierFlags modifierFlags;
 @property (nonatomic) unsigned int character;
+@property (nonatomic, readonly) UTF32Char modifiedCharacter;
 @property (nonatomic, readonly) NSString *serialized;
 @property (nonatomic, readonly) BOOL touchbar;
 @property (nonatomic, readonly) BOOL isValid;
@@ -31,11 +34,13 @@ NS_ASSUME_NONNULL_BEGIN
 + (instancetype)withEvent:(NSEvent *)event;
 + (instancetype)withCharacter:(unichar)character
                 modifierFlags:(NSEventModifierFlags)modifierFlags;
++ (instancetype)withTmuxKey:(NSString *)key;
 
 - (instancetype)initWithSerialized:(NSString *)serialized;
 - (instancetype)initWithVirtualKeyCode:(int)virtualKeyCode
                          modifierFlags:(NSEventModifierFlags)modifierFlags
-                             character:(unsigned int)character NS_DESIGNATED_INITIALIZER;
+                             character:(unsigned int)character
+                     modifiedCharacter:(UTF32Char)modifiedCharacter NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (NSString * _Nullable)keyInBindingDictionary:(NSDictionary<NSString *, NSDictionary *> *)dict;

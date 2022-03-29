@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<ObjectType> *)subarrayFromIndex:(NSUInteger)index;
 
 // Returns an array where each object in self is replaced with block(object).
-- (NSArray *)mapWithBlock:(id (^NS_NOESCAPE)(ObjectType anObject))block;
+- (NSArray *)mapWithBlock:(id _Nullable (^NS_NOESCAPE)(ObjectType anObject))block;
 
 @end
 

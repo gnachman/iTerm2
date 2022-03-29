@@ -84,7 +84,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     __weak __typeof(self) weakSelf = self;
 
     _leader.leaderAllowed = NO;
-    _leader.stringValue = [iTermKeystrokeFormatter stringForKeystroke:[iTermKeyMappings leader]] ?: @"";
+    iTermKeystroke *leaderKeystroke = [iTermKeyMappings leader];
+    _leader.stringValue = leaderKeystroke ? [iTermKeystrokeFormatter stringForKeystroke:leaderKeystroke] : @"";
 
     _hotkeyField.leaderAllowed = NO;
 
@@ -349,7 +350,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     if (code || theChar) {
         iTermKeystroke *keystroke = [[iTermKeystroke alloc] initWithVirtualKeyCode:code
                                                                      modifierFlags:modifiers
-                                                                         character:theChar];
+                                                                         character:theChar
+                                                                 modifiedCharacter:theChar];
         _hotkeyField.stringValue = [iTermKeystrokeFormatter stringForKeystroke:keystroke];
     } else {
         _hotkeyField.stringValue = @"";
