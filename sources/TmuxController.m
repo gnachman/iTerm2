@@ -1325,8 +1325,36 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                   @"command": command,
                   @"flags": flags };
     }];
+    NSArray<NSString *> *forbiddenCommands = @[
+        @"bind-key",
+        @"choose-buffer",
+        @"choose-client",
+        @"choose-tree",
+        @"clear-history",
+        @"clock-mode",
+        @"command-prompt",
+        @"confirm-before",
+        @"copy-mode",
+        @"customize-mode",
+        @"display-menu",
+        @"display-message",
+        @"display-panes",
+        @"display-popup",
+        @"find-window",
+        @"list-buffers",
+        @"list-clients",
+        @"list-commands",
+        @"list-keys",
+        @"list-panes",
+        @"list-sessions",
+        @"list-windows",
+        @"show-buffer",
+        @"show-messages",
+        @"unbind-key",
+    ];
     dicts = [dicts filteredArrayUsingBlock:^BOOL(NSDictionary *dict) {
-        return [dict[@"flags"][@"T"] isEqual:@[@"prefix"]];
+        NSString *command = [[dict[@"command"] componentsSeparatedByString:@" "] firstObject];
+        return [dict[@"flags"][@"T"] isEqual:@[@"prefix"]] && ![forbiddenCommands containsObject:command];
     }];
     NSMutableDictionary *fakeProfile = [[@{ KEY_KEYBOARD_MAP: _sharedKeyMappingOverrides } mutableCopy] autorelease];
 
