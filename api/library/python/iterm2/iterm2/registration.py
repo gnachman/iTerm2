@@ -53,6 +53,9 @@ class Reference:  # pylint: disable=too-few-public-methods
     def __init__(self, name):
         self.name = name
 
+    def __repr__(self):
+        # Note: iterm2_encode uses this. Don't break it.
+        return self.name
 
 def RPC(func):  # pylint: disable=invalid-name
     """

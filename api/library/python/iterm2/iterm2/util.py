@@ -438,10 +438,29 @@ async def async_wait_forever():
     await asyncio.wait([asyncio.Future()])
 
 
+def iterm2_encode_str(s: str) -> str:
+    return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+
+def iterm2_encode_list(obj: list) -> str:
+    return "[" + ", ".join(map(iterm2_encode, obj)) + "]"
+
+def iterm2_encode(obj: typing.Any) -> str:
+    """Encode an object into an iTerm2 expression.
+
+    string -> "string"
+    number -> number
+    array -> [elt, elt, ...]
+    """
+    if isinstance(obj, str):
+        return iterm2_encode_str(obj)
+    if isinstance(obj, list):
+        return iterm2_encode_list(obj)
+    return str(obj)
+
 def invocation_string(
         method_name: str, argdict: typing.Dict[str, typing.Any]) -> str:
     """Gives the invocation string for a method call with given arguments."""
     parts = []
     for name, value in argdict.items():
-        parts.append(f"{name}: {json.dumps(value)}")
+        parts.append(f"{name}: {iterm2_encode(value)}")
     return method_name + "(" + ", ".join(parts) + ")"

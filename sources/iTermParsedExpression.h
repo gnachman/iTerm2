@@ -24,6 +24,8 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
     // These two are only produced if you request an AST from the expression parser
     iTermParsedExpressionTypeVariableReference,
     iTermParsedExpressionTypeArrayLookup
+
+    // Note: When adding new types, also update the Python function iterm2_encode().
 };
 
 @protocol iTermExpressionParserPlaceholder<NSObject>
