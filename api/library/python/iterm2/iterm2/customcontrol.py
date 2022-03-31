@@ -44,8 +44,7 @@ class CustomControlSequenceMonitor:
         self.__identity = identity
         self.__session_id = session_id
         self.__token = None
-        self.__queue: asyncio.Queue = asyncio.Queue(
-            loop=asyncio.get_event_loop())
+        self.__queue: asyncio.Queue = asyncio.Queue()
 
     async def __aenter__(self):
         async def internal_callback(_connection, notification):
