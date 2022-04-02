@@ -25,3 +25,6 @@
 [submodule "submodules/iTerm2-shell-integration"]
 	path = submodules/iTerm2-shell-integration
 	url = https://github.com/gnachman/iTerm2-shell-integration
+[submodule "submodules/MultiCursor"]
+	path = submodules/MultiCursor
+	url = https://github.com/gnachman/MultiCursor

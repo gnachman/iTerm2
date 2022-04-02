@@ -7,22 +7,12 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "iTerm2SharedARC-Swift.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @class TmuxController;
 @protocol VT100RemoteHostReading;
-
-@protocol iTermComposerTextViewDelegate<NSObject>
-- (void)composerTextViewDidFinishWithCancel:(BOOL)cancel;
-- (void)composerTextViewSendToAdvancedPaste:(NSString *)content;
-
-@optional
-- (void)composerTextViewDidResignFirstResponder;
-@end
-
-@interface iTermComposerTextView : NSTextView
-@property (nonatomic, weak) IBOutlet id<iTermComposerTextViewDelegate> composerDelegate;
-@end
 
 @interface iTermStatusBarLargeComposerViewController : NSViewController
 @property (nonatomic, strong) IBOutlet iTermComposerTextView *textView;
