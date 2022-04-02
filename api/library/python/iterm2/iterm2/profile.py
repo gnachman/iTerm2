@@ -1916,8 +1916,8 @@ class LocalWriteOnlyProfile:
         Sets the normal font.
 
         The normal font is used for either ASCII or all characters depending on
-        whether a separate font is used for non-ascii. The value is a font's
-        name and size as a string.
+        whether a separate font is used for non-ascii. The value is a string with
+        the font name and size separated by a space.
 
         .. seealso::
           * Example ":ref:`increase_font_size_example`"
@@ -1931,7 +1931,7 @@ class LocalWriteOnlyProfile:
         Sets the non-ASCII font.
 
         This is used for non-ASCII characters if use_non_ascii_font is enabled.
-        The value is the font name and size as a string.
+        The value is a string with the font name and size separated by a space.
 
         :param value: A str
         """
@@ -3949,8 +3949,8 @@ class WriteOnlyProfile:
         Sets the normal font.
 
         The normal font is used for either ASCII or all characters depending on
-        whether a separate font is used for non-ascii. The value is a font's
-        name and size as a string.
+        whether a separate font is used for non-ascii. The value is a string with
+        the font name and size separated by a space.
 
         .. seealso::
           * Example ":ref:`increase_font_size_example`"
@@ -3962,7 +3962,7 @@ class WriteOnlyProfile:
         Sets the non-ASCII font.
 
         This is used for non-ASCII characters if use_non_ascii_font is enabled.
-        The value is the font name and size as a string.
+        The value is a string with the font name and size separated by a space.
         """
         return await self._async_simple_set("Non Ascii Font", value)
 
@@ -6235,8 +6235,8 @@ class Profile(WriteOnlyProfile):
         Returns the normal font.
 
         The normal font is used for either ASCII or all characters depending on
-        whether a separate font is used for non-ascii. The value is a font's
-        name and size as a string.
+        whether a separate font is used for non-ascii. The value is a string with
+        the font name and size separated by a space.
 
         .. seealso::
           * Example ":ref:`increase_font_size_example`"
@@ -6251,7 +6251,7 @@ class Profile(WriteOnlyProfile):
         Returns the non-ASCII font.
 
         This is used for non-ASCII characters if use_non_ascii_font is enabled.
-        The value is the font name and size as a string.
+        The value is a string with the font name and size separated by a space.
 
         :returns: A str
         """
