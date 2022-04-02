@@ -7,23 +7,29 @@
 
 #import "iTermMinimalComposerViewController.h"
 
+#import "iTermDragHandleView.h"
 #import "iTermStatusBarLargeComposerViewController.h"
 #import "iTerm2SharedARC-Swift.h"
 
 static float kAnimationDuration = 0.25;
-static CGFloat desiredHeight = 135;
+static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"ComposerHeight";
 
-@interface iTermMinimalComposerViewController ()<iTermComposerTextViewDelegate>
+@interface iTermMinimalComposerViewController ()<iTermComposerTextViewDelegate, iTermDragHandleViewDelegate>
 @end
 
 @implementation iTermMinimalComposerViewController {
     IBOutlet iTermStatusBarLargeComposerViewController *_largeComposerViewController;
     IBOutlet NSView *_containerView;
     IBOutlet NSVisualEffectView *_vev;
+    CGFloat _desiredHeight;
 }
 
 - (instancetype)init {
     self = [super initWithNibName:NSStringFromClass(self.class) bundle:[NSBundle bundleForClass:self.class]];
+    if (self) {
+        [[NSUserDefaults standardUserDefaults] registerDefaults:@{ iTermMinimalComposerViewHeightUserDefaultsKey: @135 }];
+        _desiredHeight = [[NSUserDefaults standardUserDefaults] doubleForKey:iTermMinimalComposerViewHeightUserDefaultsKey];
+    }
     return self;
 }
 
@@ -51,19 +57,30 @@ static CGFloat desiredHeight = 135;
     _largeComposerViewController.tmuxController = tmuxController;
 }
 
-- (void)updateFrame {
+- (NSRect)frameForHeight:(CGFloat)desiredHeight {
     NSRect newFrame = self.view.frame;
     newFrame.origin.y = self.view.superview.frame.size.height;
-    self.view.frame = newFrame;
 
-    newFrame.origin.y += self.view.frame.size.height;
-    const CGFloat maxWidth = self.view.superview.bounds.size.width - self.view.frame.origin.x - 19;
-    newFrame = NSMakeRect(self.view.frame.origin.x,
+    newFrame.origin.y += newFrame.size.height;
+    const CGFloat maxWidth = self.view.superview.bounds.size.width - newFrame.origin.x - 19;
+    newFrame = NSMakeRect(newFrame.origin.x,
                           self.view.superview.frame.size.height - desiredHeight,
                           MAX(217, maxWidth),
                           desiredHeight);
+    return newFrame;
+}
+
+- (CGFloat)minHeight {
+    return 62;
+}
+
+- (CGFloat)maxHeight {
+    return MAX(self.minHeight, NSHeight(self.view.superview.bounds) - 8);
+}
+
+- (void)updateFrame {
+    self.view.frame = [self frameForHeight:MAX(MIN(self.maxHeight, _desiredHeight), self.minHeight)];
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
-    self.view.frame = newFrame;
     self.view.animator.alphaValue = 1;
 }
 
@@ -96,6 +113,28 @@ static CGFloat desiredHeight = 135;
 
 - (void)composerTextViewSendToAdvancedPaste:(NSString *)content {
     [self.delegate minimalComposer:self sendToAdvancedPaste:content];
+}
+
+#pragma mark - iTermDragHandleViewDelegate
+
+- (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
+    const CGFloat originalHeight = NSHeight(self.view.frame);
+    _desiredHeight -= delta;
+    const CGFloat proposedHeight = NSHeight([self frameForHeight:_desiredHeight]);
+
+    if (proposedHeight < self.minHeight) {
+        const CGFloat error = self.minHeight - proposedHeight;
+        delta -= error;
+        _desiredHeight += error;
+    } else if (proposedHeight > self.maxHeight) {
+        const CGFloat error = proposedHeight - self.maxHeight;
+        delta += error;
+        _desiredHeight -= error;
+    }
+    [[NSUserDefaults standardUserDefaults] setDouble:_desiredHeight
+                                              forKey:iTermMinimalComposerViewHeightUserDefaultsKey];
+    [self updateFrame];
+    return originalHeight - NSHeight(self.view.frame);
 }
 
 @end

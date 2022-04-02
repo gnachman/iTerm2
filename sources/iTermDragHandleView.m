@@ -15,7 +15,7 @@
 - (void)resetCursorRects {
     NSRect bounds = self.bounds;
     [self addCursorRect:NSMakeRect(0, 0, bounds.size.width, bounds.size.height)
-                 cursor:[NSCursor resizeLeftRightCursor]];
+                 cursor:self.isVertical ? [NSCursor resizeUpDownCursor] : [NSCursor resizeLeftRightCursor]];
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {
@@ -24,7 +24,7 @@
                              NSEventMaskLeftMouseDragged |
                              NSEventMaskMouseMoved);
     BOOL done = NO;
-    _origin = [theEvent locationInWindow].x;
+    _origin = self.isVertical ? theEvent.locationInWindow.y : theEvent.locationInWindow.x;
     while (!done) {
         NSEvent *event = [NSApp nextEventMatchingMask:mask
                                             untilDate:[NSDate distantFuture]
@@ -52,7 +52,7 @@
 
 - (void)mouseDragged:(NSEvent *)theEvent {
     NSPoint locationInWindow = [theEvent locationInWindow];
-    CGFloat diff = locationInWindow.x - _origin;
+    CGFloat diff = (self.isVertical ? locationInWindow.y : locationInWindow.x) - _origin;
     CGFloat actualDiff = [_delegate dragHandleView:self didMoveBy:diff];
     _origin += actualDiff;
 }

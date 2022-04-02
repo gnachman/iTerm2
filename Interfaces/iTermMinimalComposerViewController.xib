@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15705" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="20037" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15705"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="20037"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -28,6 +28,16 @@
                     <rect key="frame" x="9" y="9" width="555" height="294"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 </customView>
+                <customView id="qgr-df-T1R" customClass="iTermDragHandleView">
+                    <rect key="frame" x="8" y="6" width="553" height="10"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <userDefinedRuntimeAttributes>
+                        <userDefinedRuntimeAttribute type="boolean" keyPath="isVertical" value="YES"/>
+                    </userDefinedRuntimeAttributes>
+                    <connections>
+                        <outlet property="delegate" destination="-2" id="qaC-iv-ZmH"/>
+                    </connections>
+                </customView>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HtE-d6-osy">
                     <rect key="frame" x="541" y="280" width="24" height="23"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
@@ -43,12 +53,12 @@ Gw
                     </connections>
                 </button>
             </subviews>
-            <point key="canvasLocation" x="247" y="284"/>
+            <point key="canvasLocation" x="246.5" y="284"/>
         </customView>
         <viewController id="PWM-zh-xQE" userLabel=" Large Composer View Controller" customClass="iTermStatusBarLargeComposerViewController"/>
     </objects>
     <resources>
-        <image name="TabClose_Front" width="15" height="15"/>
-        <image name="TabClose_Front_Pressed" width="15" height="15"/>
+        <image name="TabClose_Front" width="16" height="16"/>
+        <image name="TabClose_Front_Pressed" width="16" height="16"/>
     </resources>
 </document>

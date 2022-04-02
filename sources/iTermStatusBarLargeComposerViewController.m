@@ -22,6 +22,7 @@
 #import "iTermPopupWindowController.h"
 #import "iTermShellHistoryController.h"
 #import "iTermSlowOperationGateway.h"
+#import "iTermTextPopoverViewController.h"
 #import "iTermWarning.h"
 
 @interface iTermComposerView : NSView
@@ -34,6 +35,12 @@
     NSVisualEffectView *myView = [[NSVisualEffectView alloc] initWithFrame:frame];
     myView.appearance = self.appearance;
     return myView;
+}
+
+- (NSView *)hitTest:(NSPoint)point {
+    NSView *result = [super hitTest:point];
+    NSLog(@"%@ -> %@", NSStringFromPoint(point), result);
+    return result;
 }
 
 - (void )viewDidMoveToWindow {
@@ -77,6 +84,7 @@
     IBOutlet NSButton *_help;
     CommandHistoryPopupWindowController *_historyWindowController;
     NSInteger _completionGeneration;
+    iTermTextPopoverViewController *_popoverVC;
 }
 
 - (void)awakeFromNib {
@@ -124,11 +132,6 @@
             entry.ready = YES;
         }
     }];
-}
-
-- (void)viewWillLayout {
-    _help.enabled = [self helpShouldBeAvailable];
-    [super viewWillLayout];
 }
 
 - (NSString *)lineBeforeCursor {
@@ -217,7 +220,29 @@
     return [bundle objectForInfoDictionaryKey:@"CFBundleDisplayName"] ?: [bundle objectForInfoDictionaryKey:@"CFBundleName"] ?: [[appUrl URLByDeletingPathExtension] lastPathComponent];
 }
 
+- (void)explainHelpButton {
+    [_popoverVC.popover close];
+    _popoverVC = [[iTermTextPopoverViewController alloc] initWithNibName:@"iTermTextPopoverViewController"
+                                                                  bundle:[NSBundle bundleForClass:self.class]];
+    _popoverVC.popover.behavior = NSPopoverBehaviorTransient;
+    [_popoverVC view];
+    _popoverVC.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    _popoverVC.textView.drawsBackground = NO;
+    [_popoverVC appendString:@"Enter a command in the composer and select the help button to open it in explainshell.com."];
+    NSRect frame = _popoverVC.view.frame;
+    frame.size.width = 300;
+    frame.size.height = 42;
+    _popoverVC.view.frame = frame;
+    [_popoverVC.popover showRelativeToRect:_help.bounds
+                                    ofView:_help
+                             preferredEdge:NSRectEdgeMaxY];
+}
+
+
 - (IBAction)help:(id)sender {
+    if (!self.helpShouldBeAvailable) {
+        [self explainHelpButton];
+    }
     NSString *command = [self lineAtCursor];
     if (!command.length) {
         return;
@@ -327,7 +352,6 @@
         return;
     }
     [self.textView setSuggestion:nil];
-    _help.enabled = [self helpShouldBeAvailable];
 
     NSString *command = [self lineBeforeCursor];
     if (command.length == 0) {
