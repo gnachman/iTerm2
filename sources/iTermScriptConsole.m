@@ -96,13 +96,13 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
     }
 }
 
-- (void)showFindPanel:(id)sender {
-    NSControl *fakeSender = [[NSControl alloc] init];
-    fakeSender.tag = NSTextFinderActionShowFindInterface;
-    if (_tabView.selectedTabViewItem.view == _logsView.enclosingScrollView) {
-        [_logsView performFindPanelAction:fakeSender];
-    } else {
-        [_callsView performFindPanelAction:fakeSender];
+- (IBAction)performFindPanelAction:(id)sender {
+    if ([[NSMenuItem castFrom:sender] tag] == NSFindPanelActionShowFindPanel) {
+        if (_tabView.selectedTabViewItem.view == _logsView.enclosingScrollView) {
+            [_logsView performFindPanelAction:sender];
+        } else {
+            [_callsView performFindPanelAction:sender];
+        }
     }
 }
 

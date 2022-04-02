@@ -459,10 +459,13 @@
         // We always validate the above commands
         return YES;
     }
+    if ([item action]==@selector(performFindPanelAction:) && item.tag == NSFindPanelActionShowFindPanel) {
+        return YES;
+    }
     if ([item action]==@selector(copy:) ||
         [item action]==@selector(copyWithStyles:) ||
         [item action]==@selector(copyWithControlSequences:) ||
-        [item action]==@selector(performFindPanelAction:) ||
+        ([item action]==@selector(performFindPanelAction:) && item.tag == NSFindPanelActionSetFindString) ||
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
         // These commands are allowed only if there is a selection.
         return [_selection hasSelection];
@@ -3882,12 +3885,15 @@
         return;
     }
     switch ((NSFindPanelAction)menuItem.tag) {
+        case NSFindPanelActionShowFindPanel:
+            [self.delegate textViewShowFindPanel];
+            return;
+
         case NSFindPanelActionNext:
         case NSFindPanelActionReplace:
         case NSFindPanelActionPrevious:
         case NSFindPanelActionSelectAll:
         case NSFindPanelActionReplaceAll:
-        case NSFindPanelActionShowFindPanel:
         case NSFindPanelActionReplaceAndFind:
         case NSFindPanelActionSelectAllInSelection:
         case NSFindPanelActionReplaceAllInSelection:

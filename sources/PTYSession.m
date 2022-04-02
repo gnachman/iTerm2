@@ -13566,6 +13566,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             _textview.window.isKeyWindow);
 }
 
+- (void)textViewShowFindPanel {
+    const BOOL findPanelWasOpen = self.view.findDriver.viewController.searchIsVisible;
+    [self showFindPanel];
+    if (!findPanelWasOpen) {
+        [self.view.findDriver setFilterHidden:YES];
+    }
+    [[iTermFindPasteboard sharedInstance] updateObservers:nil];
+}
+
 - (BOOL)sessionViewTerminalIsFirstResponder {
     return [self textViewIsFirstResponder];
 }

@@ -10134,7 +10134,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         return YES;
     } else if ([item action] == @selector(zoomOnSelection:)) {
         return ![self inInstantReplay] && [[self currentSession] hasSelection];
-    } else if ([item action] == @selector(showFindPanel:) ||
+    } else if ([item action] == @selector(performFindPanelAction:) ||
                [item action] == @selector(findPrevious:) ||
                [item action] == @selector(findNext:) ||
                [item action] == @selector(jumpToSelection:) ||
@@ -11008,13 +11008,11 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 #pragma mark - Find
 
-- (IBAction)showFindPanel:(id)sender {
-    const BOOL findPanelWasOpen = self.currentSession.view.findDriver.viewController.searchIsVisible;
-    [[self currentSession] showFindPanel];
-    if (!findPanelWasOpen) {
-        [self.currentSession.view.findDriver setFilterHidden:YES];
+- (IBAction)performFindPanelAction:(id)sender {
+    if ([[NSMenuItem castFrom:sender] tag] == NSFindPanelActionShowFindPanel) {
+        [self.currentSession textViewShowFindPanel];
     }
-    [[iTermFindPasteboard sharedInstance] updateObservers:nil];
+    // Others not yet implemented. See performFindPanelAction in PTYTextView for details.
 }
 
 // findNext and findPrevious are reversed here because in the search UI next

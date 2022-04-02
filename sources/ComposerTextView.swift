@@ -44,6 +44,7 @@ class ComposerTextView: MultiCursorTextView {
         isAutomaticDataDetectionEnabled = false
         isAutomaticTextReplacementEnabled = false
         smartInsertDeleteEnabled = false
+        usesFindBar = true
     }
 
     @objc var hasSuggestion: Bool {

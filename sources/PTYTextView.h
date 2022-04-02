@@ -254,6 +254,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (BOOL)textViewCanWriteToTTY;
 - (BOOL)textViewAnyMouseReportingModeIsEnabled;
 - (BOOL)textViewSmartSelectionActionsShouldUseInterpolatedStrings;
+- (void)textViewShowFindPanel;
 
 @end
 

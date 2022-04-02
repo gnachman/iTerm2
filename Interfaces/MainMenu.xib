@@ -527,9 +527,9 @@ DQ
                             <menuItem title="Find" id="759">
                                 <menu key="submenu" title="Find" id="760">
                                     <items>
-                                        <menuItem title="Find..." keyEquivalent="f" identifier="Find.Find..." id="762">
+                                        <menuItem title="Find…" tag="1" keyEquivalent="f" identifier="Find.Find..." id="Bx1-Fd-J2S">
                                             <connections>
-                                                <action selector="showFindPanel:" target="-1" id="766"/>
+                                                <action selector="performFindPanelAction:" target="-1" id="qca-qp-GRa"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Find Next" keyEquivalent="g" identifier="Find.Find Next" id="761">
