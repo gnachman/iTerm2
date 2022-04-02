@@ -29,18 +29,25 @@
 @end
 @implementation iTermComposerView {
     NSView *_backgroundView;
+    IBOutlet NSTextView *_textView;
+}
+
+// I have no idea at all why I have to do this, but I tried everything and it's the only way for
+// Select Matches to be enabled. See also -performFindPanelAction: below. It has to be in this
+// class and only this class. Can't go in the text view or even in a custom field editor for
+// the search field.
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    return [_textView validateMenuItem:menuItem];
+}
+
+- (IBAction)performFindPanelAction:(id)sender {
+    [_textView performFindPanelAction:sender];
 }
 
 - (NSView *)newBackgroundViewWithFrame:(NSRect)frame {
     NSVisualEffectView *myView = [[NSVisualEffectView alloc] initWithFrame:frame];
     myView.appearance = self.appearance;
     return myView;
-}
-
-- (NSView *)hitTest:(NSPoint)point {
-    NSView *result = [super hitTest:point];
-    NSLog(@"%@ -> %@", NSStringFromPoint(point), result);
-    return result;
 }
 
 - (void )viewDidMoveToWindow {
@@ -207,20 +214,7 @@
     }
 }
 
-- (BOOL)helpShouldBeAvailable {
-    return [[self lineAtCursor] length] > 0 && [[self browserName] length] > 0;
-}
-
-- (NSString *)browserName {
-    NSURL *appUrl = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:[NSURL URLWithString:@"https://explainshell.com/explain?cmd=example"]];
-    if (!appUrl) {
-        return nil;
-    }
-    NSBundle *bundle = [NSBundle bundleWithURL:appUrl];
-    return [bundle objectForInfoDictionaryKey:@"CFBundleDisplayName"] ?: [bundle objectForInfoDictionaryKey:@"CFBundleName"] ?: [[appUrl URLByDeletingPathExtension] lastPathComponent];
-}
-
-- (void)explainHelpButton {
+- (IBAction)help:(id)sender {
     [_popoverVC.popover close];
     _popoverVC = [[iTermTextPopoverViewController alloc] initWithNibName:@"iTermTextPopoverViewController"
                                                                   bundle:[NSBundle bundleForClass:self.class]];
@@ -228,47 +222,28 @@
     [_popoverVC view];
     _popoverVC.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
     _popoverVC.textView.drawsBackground = NO;
-    [_popoverVC appendString:@"Enter a command in the composer and select the help button to open it in explainshell.com."];
-    NSRect frame = _popoverVC.view.frame;
-    frame.size.width = 300;
-    frame.size.height = 42;
-    _popoverVC.view.frame = frame;
+    NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
+    const CGFloat tabStop = 75;
+    style.tabStops = @[ [[NSTextTab alloc] initWithType:NSLeftTabStopType location:tabStop],
+                        [[NSTextTab alloc] initWithType:NSLeftTabStopType location:tabStop * 2] ];
+    style.defaultTabInterval = tabStop;
+    _popoverVC.textView.defaultParagraphStyle = style;
+
+    [_popoverVC appendString:
+         @"^⇧↑\tAdd cursor above\n"
+         @"^⇧↓\tAdd cursor below\n"
+         @"^⇧-click\tAdd cursor\n"
+         @"⌥-drag\tAdd cursors\n"
+         @"⌘F\tOpen Find bar\n"
+         @"⌥⌘V\tOpen in Advanced Paste\n"
+         @"⌘-click\tOpen in explainshell.com\n"
+         @"⇧⌘;\tView command history"
+    ];
+    [_popoverVC.textView.textStorage addAttribute:NSParagraphStyleAttributeName value:style range:NSMakeRange(0, _popoverVC.textView.textStorage.string.length)];
+    [_popoverVC sizeToFit];
     [_popoverVC.popover showRelativeToRect:_help.bounds
                                     ofView:_help
                              preferredEdge:NSRectEdgeMaxY];
-}
-
-
-- (IBAction)help:(id)sender {
-    if (!self.helpShouldBeAvailable) {
-        [self explainHelpButton];
-    }
-    NSString *command = [self lineAtCursor];
-    if (!command.length) {
-        return;
-    }
-    NSString *browserName = [self browserName];
-    if (!browserName.length) {
-        return;
-    }
-    NSURLComponents *components = [[NSURLComponents alloc] init];
-    components.host = @"explainshell.com";
-    components.scheme = @"https";
-    components.path = @"/explain";
-    components.queryItems = @[ [NSURLQueryItem queryItemWithName:@"cmd" value:command] ];
-    NSURL *url = components.URL;
-
-    const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"This will open %@ in %@.", url.absoluteString, browserName]
-                                                                       actions:@[ @"OK", @"Cancel" ]
-                                                                 actionMapping:nil
-                                                                     accessory:nil
-                                                                    identifier:@"NoSyncExplainShell"
-                                                                   silenceable:kiTermWarningTypePermanentlySilenceable
-                                                                       heading:@"Open ExplainShell?"
-                                                                        window:self.view.window];
-    if (selection == kiTermWarningSelection0) {
-        [[NSWorkspace sharedWorkspace] openURL:url];
-    }
 }
 
 

@@ -20,7 +20,7 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q4z-gz-Utj">
-                    <rect key="frame" x="26" y="5" width="447" height="14"/>
+                    <rect key="frame" x="26" y="5" width="446" height="14"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="truncatingTail" alignment="right" title="Press ⇧↩ to send command." drawsBackground="YES" id="mjF-rO-FZ2">
                         <font key="font" metaFont="controlContent" size="11"/>
@@ -59,7 +59,7 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                 </scrollView>
-                <button toolTip="Opens explainshell.com for this command. Shortcut is ⌥⇧⌘/." horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Due-Dn-30r">
+                <button toolTip="Describes how to use the composer." horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Due-Dn-30r">
                     <rect key="frame" x="4" y="4" width="16" height="17"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="mini" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="HE3-n1-eE6">
@@ -73,6 +73,9 @@
                     </connections>
                 </button>
             </subviews>
+            <connections>
+                <outlet property="_textView" destination="Gmj-Uu-ZiB" id="IOP-e2-9dG"/>
+            </connections>
             <point key="canvasLocation" x="143" y="132"/>
         </customView>
     </objects>

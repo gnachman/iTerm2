@@ -109,6 +109,10 @@ iTermURLActionHelperDelegate>
                                    cappedAtSize:(int)maxBytes
                               minimumLineNumber:(int)minimumLineNumber;
 
+#pragma mark - Find on Page
+
+- (void)convertMatchesToSelections;
+
 @end
 
 NS_ASSUME_NONNULL_END

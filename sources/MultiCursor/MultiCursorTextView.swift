@@ -209,7 +209,6 @@ extension MultiCursorTextView {
     }
 
     open override func mouseDown(with event: NSEvent) {
-        NSLog("mouseDown \(event)")
         if event.clickCount == 1 {
             optionDrag = nil
         }
@@ -286,7 +285,6 @@ extension MultiCursorTextView {
     }
 
     open override func mouseUp(with event: NSEvent) {
-        NSLog("mouse up \(event)")
         if optionDrag != nil {
             DLog("Finish drag at \(String(describing: optionDrag!))")
             return

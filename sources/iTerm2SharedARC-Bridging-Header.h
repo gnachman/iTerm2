@@ -33,6 +33,7 @@
 #import "iTermURLStore.h"
 #import "iTermVariableScope.h"
 #import "iTermVariables.h"
+#import "iTermWarning.h"
 #import "FindContext.h"
 #import "IntervalTree.h"
 #import "LineBlock.h"

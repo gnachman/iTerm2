@@ -82,7 +82,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
         item.state = [self.delegate textViewTriggersAreEnabledInInteractiveApps] ? NSControlStateValueOn : NSControlStateValueOff;
         return YES;
     }
-    if (item.action == @selector(convertMatchesToSelections:)) {
+    if (item.action == @selector(performFindPanelAction:) && item.tag == NSFindPanelActionSelectAll) {
         return self.findOnPageHelper.searchResults.count > 0;
     }
     return NO;
@@ -1326,7 +1326,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
 
 #pragma mark - Find on Page
 
-- (IBAction)convertMatchesToSelections:(id)sender {
+- (void)convertMatchesToSelections {
     [self.selection endLiveSelection];
     [self.selection clearSelection];
     const int width = [self.dataSource width];

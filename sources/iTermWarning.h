@@ -1,8 +1,10 @@
 #import <Cocoa/Cocoa.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @protocol iTermWarningHandler <NSObject>
 
-- (NSModalResponse)warningWouldShowAlert:(NSAlert *)alert identifier:(NSString *)identifier;
+- (NSModalResponse)warningWouldShowAlert:(NSAlert *)alert identifier:(NSString * _Nullable)identifier;
 
 @end
 // The type of warning.
@@ -27,13 +29,13 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // selected.
 @interface iTermWarningAction : NSObject
 
-@property (nonatomic, strong) NSString *keyEquivalent;
+@property (nonatomic, strong) NSString * _Nullable keyEquivalent;
 
 + (instancetype)warningActionWithLabel:(NSString *)label
-                                 block:(iTermWarningActionBlock)block;
+                                 block:(iTermWarningActionBlock _Nullable)block;
 
 @property(nonatomic, copy) NSString *label;
-@property(nonatomic, copy) iTermWarningActionBlock block;
+@property(nonatomic, copy) iTermWarningActionBlock _Nullable block;
 
 @end
 
@@ -56,10 +58,10 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 @interface iTermWarning : NSObject
 
 // Used to unsilence a particular selection (e.g., when you have a bug and silence the Cancel selection).
-+ (void)unsilenceIdentifier:(NSString *)identifier ifSelectionEquals:(iTermWarningSelection)problemSelection;
-+ (void)unsilenceIdentifier:(NSString *)identifier;
-+ (void)setIdentifier:(NSString *)identifier permanentSelection:(iTermWarningSelection)selection;
-+ (BOOL)identifierIsSilenced:(NSString *)identifier;
++ (void)unsilenceIdentifier:(NSString * _Nullable)identifier ifSelectionEquals:(iTermWarningSelection)problemSelection;
++ (void)unsilenceIdentifier:(NSString * _Nullable)identifier;
++ (void)setIdentifier:(NSString * _Nullable)identifier permanentSelection:(iTermWarningSelection)selection;
++ (BOOL)identifierIsSilenced:(NSString * _Nullable)identifier;
 ;
 
 // Tests can use this to prevent warning popups.
@@ -71,24 +73,24 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // if it was previously suppressed.
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
-                                   identifier:(NSString *)identifier
+                                   identifier:(NSString * _Nullable)identifier
                                   silenceable:(iTermWarningType)warningType
-                                       window:(NSWindow *)window;
+                                       window:(NSWindow * _Nullable)window;
 
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
-                                    accessory:(NSView *)accessory
-                                   identifier:(NSString *)identifier
+                                    accessory:(NSView * _Nullable)accessory
+                                   identifier:(NSString * _Nullable)identifier
                                   silenceable:(iTermWarningType)warningType
-                                       window:(NSWindow *)window;
+                                       window:(NSWindow * _Nullable)window;
 
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
-                                    accessory:(NSView *)accessory
-                                   identifier:(NSString *)identifier
+                                    accessory:(NSView * _Nullable)accessory
+                                   identifier:(NSString * _Nullable)identifier
                                   silenceable:(iTermWarningType)warningType
-                                      heading:(NSString *)heading
-                                       window:(NSWindow *)window;
+                                      heading:(NSString * _Nullable)heading
+                                       window:(NSWindow * _Nullable)window;
 
 // actionToSelectionMap gives the iTermWarningSelection that should be returned for each entry in
 // actions. It must be in 1:1 correspondence with actions. It is useful because it allows you to add
@@ -102,23 +104,23 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 // effect of making Cancel return Selection2 even though it's in the second position.
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
-                                actionMapping:(NSArray<NSNumber *> *)actionToSelectionMap
-                                    accessory:(NSView *)accessory
-                                   identifier:(NSString *)identifier
+                                actionMapping:(NSArray<NSNumber *> * _Nullable)actionToSelectionMap
+                                    accessory:(NSView * _Nullable)accessory
+                                   identifier:(NSString * _Nullable)identifier
                                   silenceable:(iTermWarningType)warningType
-                                      heading:(NSString *)heading
-                                       window:(NSWindow *)window;
+                                      heading:(NSString * _Nullable)heading
+                                       window:(NSWindow * _Nullable)window;
 
 // cancelLabel is the action name to treat like "Cancel". It won't be remembered.
 + (iTermWarningSelection)showWarningWithTitle:(NSString *)title
                                       actions:(NSArray *)actions
-                                actionMapping:(NSArray<NSNumber *> *)actionToSelectionMap
-                                    accessory:(NSView *)accessory
-                                   identifier:(NSString *)identifier
+                                actionMapping:(NSArray<NSNumber *> * _Nullable)actionToSelectionMap
+                                    accessory:(NSView * _Nullable)accessory
+                                   identifier:(NSString * _Nullable)identifier
                                   silenceable:(iTermWarningType)warningType
-                                      heading:(NSString *)heading
-                                  cancelLabel:(NSString *)cancelLabel
-                                       window:(NSWindow *)window;
+                                      heading:(NSString * _Nullable)heading
+                                  cancelLabel:(NSString * _Nullable)cancelLabel
+                                       window:(NSWindow * _Nullable)window;
 
 
 // If you prefer you can set the properties you care about and then invoke runModal.
@@ -130,34 +132,36 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 @property(nonatomic, retain) NSArray<NSString *> *actionLabels;
 
 // 1:1 with buttons to show. First button is default.
-@property(nonatomic, retain) NSArray<iTermWarningAction *> *warningActions;
+@property(nonatomic, retain) NSArray<iTermWarningAction *> * _Nullable warningActions;
 
 // Optional. Should be 1:1 with actions. Provides a mapping from the index of the button actually
 // pressed to the index runModal reports.
-@property(nonatomic, retain) NSArray<NSNumber *> *actionToSelectionMap;
+@property(nonatomic, retain) NSArray<NSNumber *> * _Nullable actionToSelectionMap;
 
 // Optional view to show below main text.
-@property(nonatomic, retain) NSView *accessory;
+@property(nonatomic, retain) NSView * _Nullable accessory;
 
 // String used as a user defaults key to remember the user's preference.
-@property(nonatomic, copy) NSString *identifier;
+@property(nonatomic, copy) NSString * _Nullable identifier;
 
 // What kind of suppression options are available.
 @property(nonatomic, assign) iTermWarningType warningType;
 
 // Optional. Changes the bold heading on the warning.
-@property(nonatomic, copy) NSString *heading;
+@property(nonatomic, copy) NSString * _Nullable heading;
 
 // Optional. An action whose string is equal to `cancelLabel`
-@property(nonatomic, copy) NSString *cancelLabel;
+@property(nonatomic, copy) NSString * _Nullable cancelLabel;
 
 // If set then a "help" button is added to the alert box and this block is invoked when it is clicked.
-@property(nonatomic, copy) void (^showHelpBlock)(void);
+@property(nullable, nonatomic, copy) void (^showHelpBlock)(void);
 
-@property(nonatomic, retain) NSWindow *window;
-@property(nonatomic, retain) NSView *initialFirstResponder;
+@property(nonatomic, retain) NSWindow * _Nullable window;
+@property(nonatomic, retain) NSView * _Nullable initialFirstResponder;
 
 // Modally show the alert. Returns the selection.
 - (iTermWarningSelection)runModal;
 
 @end
+
+NS_ASSUME_NONNULL_END

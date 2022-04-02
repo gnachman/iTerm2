@@ -30,6 +30,7 @@
 #import "AppearancePreferencesViewController.h"
 #import "ColorsMenuItemView.h"
 #import "FileTransferManager.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIHelper.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAPIConnectionIdentifierController.h"
@@ -1341,8 +1342,13 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)handleiTerm2URL:(NSURL *)url {
-    if ([url.path isEqualToString:@"/reveal"]) {
+    NSURLComponents *components = [[[NSURLComponents alloc] initWithURL:url resolvingAgainstBaseURL:NO] autorelease];
+    if ([components.path isEqualToString:@"reveal"]) {
         [self revealWithURL:url];
+        return;
+    }
+    if ([components.path isEqualToString:@"explain"]) {
+        [[iTermCommandExplainer instance] explainWithURL:url];
         return;
     }
 }

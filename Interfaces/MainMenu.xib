@@ -552,6 +552,12 @@ DQ
                                                 <action selector="findGlobally:" target="201" id="Oyc-5J-YYw"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Select Matches" tag="9" identifier="Find.ConvertMatchesToSelections" id="ULH-1B-QtL">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="performFindPanelAction:" target="-1" id="qvV-Sf-nnK"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem isSeparatorItem="YES" id="PJB-Pw-4PO">
                                             <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                         </menuItem>
@@ -568,12 +574,6 @@ DQ
                                             <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="filter:" target="-1" id="aWL-0M-Ywe"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Convert Matches to Selections" identifier="Find.ConvertMatchesToSelections" id="ULH-1B-QtL">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="convertMatchesToSelections:" target="-1" id="bkH-aH-gAE"/>
                                             </connections>
                                         </menuItem>
                                     </items>

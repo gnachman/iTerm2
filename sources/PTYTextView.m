@@ -3889,10 +3889,13 @@
             [self.delegate textViewShowFindPanel];
             return;
 
+        case NSFindPanelActionSelectAll:
+            [self convertMatchesToSelections];
+            return;
+
         case NSFindPanelActionNext:
         case NSFindPanelActionReplace:
         case NSFindPanelActionPrevious:
-        case NSFindPanelActionSelectAll:
         case NSFindPanelActionReplaceAll:
         case NSFindPanelActionReplaceAndFind:
         case NSFindPanelActionSelectAllInSelection:

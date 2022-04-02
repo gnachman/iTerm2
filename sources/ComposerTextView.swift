@@ -12,6 +12,7 @@ protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerTextViewDidFinishWithCancel:) func composerTextViewDidFinish(cancel: Bool)
     @objc(composerTextViewSendToAdvancedPaste:) func composerTextViewSendToAdvancedPaste(content: String)
 
+    // Optional
     @objc(composerTextViewDidResignFirstResponder) optional func composerTextViewDidResignFirstResponder()
 }
 
@@ -20,6 +21,7 @@ class ComposerTextView: MultiCursorTextView {
     @IBOutlet weak var composerDelegate: ComposerTextViewDelegate?
     @objc private(set) var isSettingSuggestion = false
     private var _suggestion: String?
+    private var linkRange: NSRange? = nil
     @objc var suggestion: String? {
         get {
             return _suggestion
@@ -84,9 +86,161 @@ class ComposerTextView: MultiCursorTextView {
         return super.resignFirstResponder()
     }
 
+    override func mouseExited(with event: NSEvent) {
+        updateLink(with: event)
+        super.mouseExited(with: event)
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        updateLink(with: event)
+        super.mouseEntered(with: event)
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        updateLink(with: event)
+        super.mouseMoved(with: event)
+    }
+
+    private func url(for command: String) -> URL {
+        return CommandExplainer.instance.newURL(for: command, window: self.window)
+    }
+
+    private func updateLink(with event: NSEvent) {
+        if event.modifierFlags.intersection([.command, .shift, .control, .option]) != [.command] {
+            removeLink()
+            return
+        }
+
+        // Set link if over a command.
+        let point = convert(event.locationInWindow, from: nil)
+        if let (range, command) = characterRangeOfCommand(at: point) {
+            if range != linkRange {
+                removeLink()
+                makeLink(range, url: url(for: command))
+            }
+        } else {
+            removeLink()
+        }
+    }
+
+    override func flagsChanged(with event: NSEvent) {
+        updateLink(with: event)
+        super.flagsChanged(with: event)
+    }
+
+    private func makeLink(_ range: NSRange, url: URL) {
+        textStorage?.addAttribute(.link, value: url, range: range)
+        linkRange = range
+        NSCursor.pointingHand.push()
+    }
+
+    private func removeLink() {
+        if let range = linkRange {
+            NSCursor.pop()
+            textStorage?.removeAttribute(.link, range: range)
+            linkRange = nil
+        }
+    }
+
+    private let suggestionAttribute =  NSAttributedString.Key("iTerm2 Suggestion")
+
+    private func characterRangeOfCommand(at point: NSPoint) -> (NSRange, String)? {
+        var characterIndex = layoutManager!.characterIndex(
+            for: point,
+            in: textContainer!,
+            fractionOfDistanceBetweenInsertionPoints: nil)
+        let glyphIndex = layoutManager!.glyphIndexForCharacter(at: characterIndex)
+        let boundingRect = layoutManager!.lineFragmentUsedRect(forGlyphAt: glyphIndex, effectiveRange: nil)
+        if !boundingRect.contains(point) {
+            return nil
+        }
+
+        // This dense chunk of code finds the range of the command under the cursor, chasing down
+        // backslash-newline continuations and noting the index of characters (like backslashes)
+        // that shouldn't be included in a query to explainshell.
+        var spanningRange: NSRange? = nil
+        var characterIndexesToDrop = Set<Int>()
+        // Search forwards
+        while true {
+            let string = (textStorage!.string as NSString)
+            let paragraphRange = string.paragraphRange(for: NSRange(location: characterIndex, length: 0))
+            if paragraphRange.location == NSNotFound || paragraphRange.length == 0 {
+                return nil
+            }
+            if spanningRange == nil {
+                spanningRange = paragraphRange
+            } else {
+                spanningRange = NSRange(from: spanningRange!.location,
+                                        to: paragraphRange.upperBound)
+            }
+            if spanningRange?.upperBound == string.length {
+                break
+            }
+            let paragraph = string.substring(with: paragraphRange)
+            let command = paragraph.trimmingTrailingNewline
+            if !command.hasSuffix("\\") {
+                break
+            }
+            characterIndexesToDrop.insert(paragraphRange.location + (command as NSString).length - 1)
+            let newlineRange = (paragraph as NSString).rangeOfCharacter(from: .newlines)
+            if newlineRange.location != NSNotFound {
+                characterIndexesToDrop.insert(paragraphRange.location + newlineRange.location)
+            }
+            // Found a trailing backslash so add the next paragraph.
+            characterIndex = paragraphRange.upperBound
+        }
+        // Search backwards
+        if let suffixRange = spanningRange, suffixRange.location > 0 {
+            characterIndex = max(0, suffixRange.location - 1)
+            while spanningRange!.location > 0 {
+                let string = (textStorage!.string as NSString)
+                let paragraphRange = string.paragraphRange(for: NSRange(location: characterIndex, length: 0))
+                if paragraphRange.location == NSNotFound || paragraphRange.length == 0 {
+                    return nil
+                }
+                let paragraph = string.substring(with: paragraphRange)
+                let command = paragraph.trimmingTrailingNewline
+                if !command.hasSuffix("\\") {
+                    // This paragraph above the cursor does not end in a continuation so don't
+                    // include it.
+                    break
+                }
+                characterIndexesToDrop.insert(paragraphRange.location + (command as NSString).length - 1)
+                let newlineRange = (paragraph as NSString).rangeOfCharacter(from: .newlines)
+                if newlineRange.location != NSNotFound {
+                    characterIndexesToDrop.insert(paragraphRange.location + newlineRange.location)
+                }
+                spanningRange = NSRange(from: paragraphRange.location,
+                                        to: spanningRange!.upperBound)
+                characterIndex = max(0, paragraphRange.location - 1)
+            }
+        }
+        guard let spanningRange = spanningRange else {
+             return nil
+        }
+
+        var rangeExcludingSuggestion = NSRange(location: spanningRange.location, length: 0)
+        textStorage!.enumerateAttributes(in: spanningRange) { attributes, range, stop in
+            if attributes[suggestionAttribute] != nil {
+                // Reached the start of the suggestion.
+                stop.pointee = ObjCBool(true)
+                return
+            }
+            rangeExcludingSuggestion = NSRange(from: spanningRange.location,
+                                               to: range.upperBound)
+        }
+        // Remove line continuation backslashes.
+        let temp = ((textStorage!.string as NSString).substring(with: rangeExcludingSuggestion) as NSString).mutableCopy() as! NSMutableString
+        for index in characterIndexesToDrop.sorted().reversed() {
+            temp.replaceCharacters(in: NSRange(location: index, length: 1), with: " ")
+        }
+        return (rangeExcludingSuggestion, temp as String)
+    }
+
     private func attributedString(for suggestion: String) -> NSAttributedString {
         var attributes = self.typingAttributes
         attributes[.foregroundColor] = NSColor(white: 0.5, alpha: 1.0)
+        attributes[suggestionAttribute] = true
         return NSAttributedString(string: suggestion, attributes: attributes)
     }
 
@@ -181,5 +335,14 @@ extension NSRange {
         }
         // Remove starting in middle of lhs.
         return NSRange(location: location, length: length - inter.length);
+    }
+}
+
+extension String {
+    var trimmingTrailingNewline: String {
+        if hasSuffix("\n") {
+            return String(dropLast())
+        }
+        return self
     }
 }

@@ -10134,8 +10134,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         return YES;
     } else if ([item action] == @selector(zoomOnSelection:)) {
         return ![self inInstantReplay] && [[self currentSession] hasSelection];
-    } else if ([item action] == @selector(performFindPanelAction:) ||
-               [item action] == @selector(findPrevious:) ||
+    } else if ([item action] == @selector(findPrevious:) ||
                [item action] == @selector(findNext:) ||
                [item action] == @selector(jumpToSelection:) ||
                [item action] == @selector(findUrls:)) {
@@ -11007,13 +11006,6 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 #pragma mark - Find
-
-- (IBAction)performFindPanelAction:(id)sender {
-    if ([[NSMenuItem castFrom:sender] tag] == NSFindPanelActionShowFindPanel) {
-        [self.currentSession textViewShowFindPanel];
-    }
-    // Others not yet implemented. See performFindPanelAction in PTYTextView for details.
-}
 
 // findNext and findPrevious are reversed here because in the search UI next
 // goes backwards and previous goes forwards.
