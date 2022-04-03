@@ -21,8 +21,7 @@ class EachSessionOnceMonitor:
         self.__connection = app.connection
         self.__app = app
         self.__token = None
-        self.__queue: asyncio.Queue = asyncio.Queue(
-            loop=asyncio.get_event_loop())
+        self.__queue: asyncio.Queue = asyncio.Queue()
 
     @staticmethod
     async def async_foreach_session_create_task(app, task):
@@ -124,8 +123,7 @@ class SessionTerminationMonitor:
     def __init__(self, connection: iterm2.connection.Connection):
         self.__connection = connection
         self.__token = None
-        self.__queue: asyncio.Queue = asyncio.Queue(
-            loop=asyncio.get_event_loop())
+        self.__queue: asyncio.Queue = asyncio.Queue()
 
     async def __aenter__(self):
         async def callback(_connection, message):
@@ -164,8 +162,7 @@ class LayoutChangeMonitor:
     def __init__(self, connection: iterm2.Connection):
         self.__connection = connection
         self.__token = None
-        self.__queue: asyncio.Queue = asyncio.Queue(
-            loop=asyncio.get_event_loop())
+        self.__queue: asyncio.Queue = asyncio.Queue()
 
     async def __aenter__(self):
         async def callback(_connection, message):
@@ -237,8 +234,7 @@ class NewSessionMonitor:
     def __init__(self, connection: iterm2.Connection):
         self.__connection = connection
         self.__token = None
-        self.__queue: asyncio.Queue = asyncio.Queue(
-            loop=asyncio.get_event_loop())
+        self.__queue: asyncio.Queue = asyncio.Queue()
 
     async def __aenter__(self):
         async def callback(_connection, message):

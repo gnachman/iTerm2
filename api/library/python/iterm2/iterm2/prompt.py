@@ -201,8 +201,7 @@ class PromptMonitor:
         self.session_id = session_id
         self.__modes = modes
         self.__token = None
-        self.__queue: asyncio.Queue = asyncio.Queue(
-            loop=asyncio.get_event_loop())
+        self.__queue: asyncio.Queue = asyncio.Queue()
         if (modes != [PromptMonitor.Mode.PROMPT] and
                 not iterm2.capabilities.supports_prompt_monitor_modes(
                     connection)):

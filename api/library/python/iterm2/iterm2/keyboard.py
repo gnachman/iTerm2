@@ -398,8 +398,7 @@ class KeystrokeMonitor:
             iterm2.capabilities.check_supports_advanced_key_notifications(connection)
         self.__advanced = advanced
         self.__token = None
-        self.__queue: asyncio.Queue = asyncio.Queue(
-            loop=asyncio.get_event_loop())
+        self.__queue: asyncio.Queue = asyncio.Queue()
 
     async def __aenter__(self):
         # pylint: disable=unused-argument
