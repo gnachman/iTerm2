@@ -285,6 +285,10 @@
             @"0080": @{ kTipTitleKey: @"Shell Integration: Uploads",
                         kTipBodyKey: @"If you install Shell Integration on a machine you ssh to, you can drag-drop from Finder into the remote host by holding ⌥ while dragging. The destination directory is determined by where you drop the file in the terminal window: run cd foo, then drop the file below the cd command, and the file will go into the foo directory.",
                         kTipUrlKey: @"https://iterm2.com/shell_integration.html" },
+
+            @"0081": @{ kTipTitleKey: @"Composer Power Features",
+                        kTipBodyKey: @"The composer supports multiple cursors. It also has the ability to send just one command out of a list, making it easy to walk through a list of commands one-by-one. Click the help button in the composer for details." }
+
 // IMPORTANT: When updating this, also update it2tip
             };
 }
