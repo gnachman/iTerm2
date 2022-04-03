@@ -42,7 +42,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
         // have different title formats.
         self.ignoreTrailingParentheticalsForSmartTruncation = YES;
         self.height = [iTermAdvancedSettingsModel defaultTabBarHeight];
-        self.showAddTabButton = YES;
+        self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton];
         self.selectsTabsOnMouseDown = [iTermAdvancedSettingsModel selectsTabsOnMouseDown];
     }
     return self;
@@ -235,7 +235,7 @@ typedef NS_ENUM(NSInteger, iTermTabBarFlashState) {
 
 - (void)setOrientation:(PSMTabBarOrientation)orientation {
     [super setOrientation:orientation];
-    self.showAddTabButton = (orientation == PSMTabBarHorizontalOrientation);
+    self.showAddTabButton = ![iTermAdvancedSettingsModel removeAddTabButton] && (orientation == PSMTabBarHorizontalOrientation);
 }
 
 #pragma mark - Private

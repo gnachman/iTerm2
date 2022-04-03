@@ -270,6 +270,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 // Remember window positions? If off, lets the OS pick the window position. Smart window placement takes precedence over this.
 + (BOOL)rememberWindowPositions;
 
++ (BOOL)removeAddTabButton;
 + (BOOL)restrictSemanticHistoryPrefixAndSuffixToLogicalWindow;
 + (BOOL)requireCmdForDraggingText;
 + (BOOL)resetSGROnPrompt;
