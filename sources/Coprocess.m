@@ -19,6 +19,7 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
 
 @interface Coprocess()
 @property (nonatomic, copy) NSString *command;
+@property (atomic, copy) NSString *savedErrors;
 @end
 
 @implementation Coprocess {
@@ -28,6 +29,7 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
     BOOL writePipeClosed_;
 
     NSMutableString *_errors;
+    dispatch_group_t _stderrGroup;
 }
 
 @synthesize pid = pid_;
@@ -155,7 +157,7 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
     fcntl(outputFd, F_SETFL, flags | O_NONBLOCK);
     flags = fcntl(inputFd, F_GETFL);
     fcntl(inputFd, F_SETFL, flags | O_NONBLOCK);
-
+    result->_stderrGroup = dispatch_group_create();
     [result monitorErrorsOnFileDescriptor:errorFd];
     result.command = command;
     return result;
@@ -191,7 +193,8 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
 - (void)monitorErrorsOnFileDescriptor:(int)errorFd {
     dispatch_queue_t queue = dispatch_queue_create("com.iterm2.coprocess-errors", 0);
     _errors = [[NSMutableString alloc] init];
-
+    dispatch_group_t group = _stderrGroup;
+    dispatch_group_enter(group);
     dispatch_async(queue, ^{
         FILE *f = fdopen(errorFd, "r");
         while (1) {
@@ -203,7 +206,6 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
             if (size > 0) {
                 NSData *data = [NSData dataWithBytes:line length:size];
                 NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-                NSLog(@"Error from coprocess: %@", string);
                 @synchronized (self) {
                     if (self->_errors.length < 100000) {
                         [self->_errors appendFormat:@"%@\n", string];
@@ -214,6 +216,8 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
                 }
             }
         }
+        self.savedErrors = self->_errors;
+        dispatch_group_leave(group);
     });
 }
 
@@ -292,11 +296,11 @@ static NSString *const iTermCoprocessCommandsToIgnoreErrorOutputPrefsKey = @"NoS
         self.inputFd = -1;
         self.pid = -1;
         @synchronized (self) {
-            if (_errors.length > 0) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self.delegate coprocess:self didTerminateWithErrorOutput:self->_errors];
-                });
-            }
+            dispatch_group_notify(_stderrGroup, dispatch_get_main_queue(), ^{
+                if (self.savedErrors.length > 0) {
+                    [self.delegate coprocess:self didTerminateWithErrorOutput:self.savedErrors];
+                }
+            });
         }
     }
 }
