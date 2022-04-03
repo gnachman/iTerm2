@@ -1939,9 +1939,10 @@ class LocalWriteOnlyProfile:
 
     def set_background_image_location(self, value: str):
         """
-        Sets the path to the background image.
+        Sets or clears the path to a background image.
 
-        The value is a Path.
+        The value is a string with the path to the image file,
+        or an empty string to clear the setting.
 
         :param value: A str
         """
@@ -3968,9 +3969,12 @@ class WriteOnlyProfile:
 
     async def async_set_background_image_location(self, value: str):
         """
-        Sets the path to the background image.
+        Sets or clears the path to a background image.
 
-        The value is a Path.
+        The value is a string with the path to the image file,
+        or an empty string to clear the setting.
+        
+        :param value: A str
         """
         return await self._async_simple_set("Background Image Location", value)
 
@@ -6261,8 +6265,6 @@ class Profile(WriteOnlyProfile):
     def background_image_location(self) -> str:
         """
         Returns the path to the background image.
-
-        The value is a Path.
 
         :returns: A str
         """
