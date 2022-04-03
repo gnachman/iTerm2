@@ -181,9 +181,12 @@
 #pragma mark - iTermMinimalComposerViewControllerDelegate
 
 - (void)minimalComposer:(nonnull iTermMinimalComposerViewController *)composer
-            sendCommand:(nonnull NSString *)command {
+            sendCommand:(nonnull NSString *)command
+                dismiss:(BOOL)dismiss {
     NSString *string = composer.stringValue;
-    [self dismissMinimalView];
+    if (dismiss) {
+        [self dismissMinimalView];
+    }
     if (command.length == 0) {
         _saved = string;
         return;

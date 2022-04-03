@@ -237,6 +237,8 @@
          @"⌘F\tOpen Find bar\n"
          @"⌥⌘V\tOpen in Advanced Paste\n"
          @"⌘-click\tOpen in explainshell.com\n"
+         @"⇧↩\tSend command\n"
+         @"⌥⇧↩\tSend command at cursor\n"
          @"⇧⌘;\tView command history"
     ];
     [_popoverVC.textView.textStorage addAttribute:NSParagraphStyleAttributeName value:style range:NSMakeRange(0, _popoverVC.textView.textStorage.string.length)];

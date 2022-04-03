@@ -10,6 +10,7 @@ import Foundation
 @objc(iTermComposerTextViewDelegate)
 protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerTextViewDidFinishWithCancel:) func composerTextViewDidFinish(cancel: Bool)
+    @objc(composerTextViewSend:) func composerTextViewSend(string: String)
     @objc(composerTextViewSendToAdvancedPaste:) func composerTextViewSendToAdvancedPaste(content: String)
 
     // Optional
@@ -72,13 +73,62 @@ class ComposerTextView: MultiCursorTextView {
 
     override func keyDown(with event: NSEvent) {
         let pressedEsc = event.characters == "\u{1b}"
-        let pressedShiftEnter = event.characters == "\r" && event.it_modifierFlags.contains(.shift)
-        if pressedShiftEnter || pressedEsc {
+        if pressedEsc {
             suggestion = nil
-            composerDelegate?.composerTextViewDidFinish(cancel: pressedEsc)
+            composerDelegate?.composerTextViewDidFinish(cancel: true)
             return
         }
+
+        let enter = event.characters == "\r"
+        if enter {
+            let flags = event.it_modifierFlags
+            let mask: NSEvent.ModifierFlags = [.command, .option, .shift, .control]
+            let justShift = flags.intersection(mask) == [.shift]
+            if justShift {
+                suggestion = nil
+                composerDelegate?.composerTextViewDidFinish(cancel: false)
+                return
+            }
+            let justShiftOption = flags.intersection(mask) == [.shift, .option]
+            if justShiftOption {
+                suggestion = nil
+                for command in take() {
+                    composerDelegate?.composerTextViewSend(string: command)
+                }
+                return
+            }
+        }
         super.keyDown(with: event)
+    }
+
+    private func take() -> [String] {
+        return Array(multiCursorSelectedRanges.reversed().compactMap {
+            take(range: $0)
+        }.reversed())
+    }
+
+    // Extracts the command intersecting `range`, removes it from the textview, and returns it.
+    // Returns nil if the range is invalid.
+    // range: A glyph range.
+    private func take(range: NSRange) -> String? {
+        let string = textStorage!.string as NSString
+        let stringToTake: String
+        var rangeToTake: NSRange
+        if range.length > 0 {
+            stringToTake = string.substring(with: range)
+            rangeToTake = range
+        } else {
+            let characterIndex = layoutManager!.characterRange(forGlyphRange: range,
+                                                               actualGlyphRange: nil)
+            guard let tuple = characterRangeOfCommand(
+                atCharacterIndex: characterIndex.location) else {
+                return nil
+            }
+            (rangeToTake, _) = tuple
+            stringToTake = string.substring(with: rangeToTake)
+        }
+        safelyReplaceCharacters(in: rangeToTake, with: "")
+        return stringToTake
     }
 
     override func resignFirstResponder() -> Bool {
@@ -145,7 +195,7 @@ class ComposerTextView: MultiCursorTextView {
     private let suggestionAttribute =  NSAttributedString.Key("iTerm2 Suggestion")
 
     private func characterRangeOfCommand(at point: NSPoint) -> (NSRange, String)? {
-        var characterIndex = layoutManager!.characterIndex(
+        let characterIndex = layoutManager!.characterIndex(
             for: point,
             in: textContainer!,
             fractionOfDistanceBetweenInsertionPoints: nil)
@@ -154,6 +204,11 @@ class ComposerTextView: MultiCursorTextView {
         if !boundingRect.contains(point) {
             return nil
         }
+        return characterRangeOfCommand(atCharacterIndex: characterIndex)
+    }
+
+    private func characterRangeOfCommand(atCharacterIndex unsafeIndex: Int) -> (NSRange, String)? {
+        var characterIndex = unsafeIndex
 
         // This dense chunk of code finds the range of the command under the cursor, chasing down
         // backslash-newline continuations and noting the index of characters (like backslashes)

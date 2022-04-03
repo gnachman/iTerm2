@@ -15,7 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol iTermMinimalComposerViewControllerDelegate<NSObject>
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
-            sendCommand:(NSString *)command;
+            sendCommand:(NSString *)command
+                dismiss:(BOOL)dismiss;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
     sendToAdvancedPaste:(NSString *)content;
 @end

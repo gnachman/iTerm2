@@ -89,7 +89,7 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
 }
 
 - (IBAction)performClose:(id)sender {
-    [self.delegate minimalComposer:self sendCommand:@""];
+    [self.delegate minimalComposer:self sendCommand:@"" dismiss:YES];
 }
 
 - (NSString *)stringValue {
@@ -105,7 +105,7 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
 
 - (void)composerTextViewDidFinishWithCancel:(BOOL)cancel {
     NSString *string = cancel ? @"" : _largeComposerViewController.textView.string;
-    [self.delegate minimalComposer:self sendCommand:string ?: @""];
+    [self.delegate minimalComposer:self sendCommand:string ?: @"" dismiss:YES];
 }
 
 - (void)composerTextViewDidResignFirstResponder {
@@ -113,6 +113,10 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
 
 - (void)composerTextViewSendToAdvancedPaste:(NSString *)content {
     [self.delegate minimalComposer:self sendToAdvancedPaste:content];
+}
+
+- (void)composerTextViewSend:(NSString *)string {
+    [self.delegate minimalComposer:self sendCommand:string dismiss:NO];
 }
 
 #pragma mark - iTermDragHandleViewDelegate
