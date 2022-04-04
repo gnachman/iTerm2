@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AppKit
 
 @objc(iTermComposerTextViewDelegate)
 protocol ComposerTextViewDelegate: AnyObject {
@@ -69,6 +70,13 @@ class ComposerTextView: MultiCursorTextView {
 
     override func it_preferredFirstResponder() -> Bool {
         return true
+    }
+
+    override func performFindPanelAction(_ sender: Any?) {
+        if let tag = (sender as? NSMenuItem)?.tag, tag == NSFindPanelAction.selectAll.rawValue {
+            window?.makeFirstResponder(self)
+        }
+        super.performFindPanelAction(sender)
     }
 
     override func keyDown(with event: NSEvent) {
@@ -187,7 +195,11 @@ class ComposerTextView: MultiCursorTextView {
     private func removeLink() {
         if let range = linkRange {
             NSCursor.pop()
-            textStorage?.removeAttribute(.link, range: range)
+            let safeRange = range.intersection(NSRange(location: 0,
+                                                       length: (textStorage!.string as NSString).length))
+            if let safeRange = safeRange, safeRange.length > 0 {
+                textStorage?.removeAttribute(.link, range: safeRange)
+            }
             linkRange = nil
         }
     }

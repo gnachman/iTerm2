@@ -553,7 +553,10 @@ DQ
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Select Matches" tag="9" identifier="Find.ConvertMatchesToSelections" id="ULH-1B-QtL">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="performFindPanelAction:" target="-1" id="qvV-Sf-nnK"/>
                                             </connections>
