@@ -15,6 +15,7 @@
 #import "VT100ScreenMark.h"
 #import "iTermAPIHelper.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermApplication.h"
 #import "iTermImageInfo.h"
 #import "iTermPreferences.h"
 #import "iTermScriptFunctionCall.h"
@@ -620,7 +621,27 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
     [self.delegate contextMenu:self addContextMenuItems:theMenu];
 
+    [self addMainMenuIfNeededTo:theMenu];
+
     return theMenu;
+}
+
+- (void)addMainMenuIfNeededTo:(NSMenu *)menu {
+    if (![[iTermApplication sharedApplication] isUIElement]) {
+        return;
+    }
+    NSMenuItem *mainMenuItem = [[NSMenuItem alloc] initWithTitle:@"Main Menu" action:nil keyEquivalent:@""];
+    NSMenu *copyOfMainMenu = [[NSMenu alloc] init];
+    for (NSMenuItem *mainMenuItem in NSApp.mainMenu.itemArray) {
+        [self addCopyOfItem:mainMenuItem to:copyOfMainMenu];
+    }
+    mainMenuItem.submenu = copyOfMainMenu;
+    [menu insertItem:mainMenuItem atIndex:0];
+    [menu insertItem:[NSMenuItem separatorItem] atIndex:1];
+}
+
+- (void)addCopyOfItem:(NSMenuItem *)item to:(NSMenu *)menu {
+    [menu addItem:[item copy]];
 }
 
 - (SEL)selectorForSmartSelectionAction:(NSDictionary *)action {
