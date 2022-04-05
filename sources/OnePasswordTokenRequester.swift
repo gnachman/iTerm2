@@ -184,6 +184,9 @@ class OnePasswordTokenRequester {
         if output.returnCode != 0 {
             DLog("signin failed")
             let reason = String(data: output.stderr, encoding: .utf8) ?? "An unknown error occurred."
+            if reason.contains("connecting to desktop app timed out") {
+                throw OnePasswordDataSource.OPError.unusableCLI
+            }
             showErrorMessage(reason)
             throw OnePasswordDataSource.OPError.needsAuthentication
         }
