@@ -155,7 +155,7 @@ class App(
             session += window.pretty_str(indent="")
         return session
 
-    def _search_for_session_id(self, session_id):
+    def _search_for_session_id(self, session_id, include_buried):
         if session_id == "active":
             return iterm2.session.Session.active_proxy(self.connection)
         if session_id == "all":
@@ -167,6 +167,10 @@ class App(
                 for session in sessions:
                     if session.session_id == session_id:
                         return session
+        if include_buried:
+            for session in self.__buried_sessions:
+                if session.session_id == session_id:
+                    return session
         return None
 
     def _search_for_tab_id(self, tab_id):
@@ -199,15 +203,20 @@ class App(
 
     def get_session_by_id(
             self,
-            session_id: str) -> typing.Union[None, iterm2.session.Session]:
+            session_id: str,
+            include_buried: bool = True) -> typing.Union[None, iterm2.session.Session]:
         """Finds a session exactly matching the passed-in id.
 
+        Note: the behavior of this method changed in version 2.3. Earlier
+        versions never returned buried sesions.
+
         :param session_id: The session ID to search for.
+        :param include_buried: OK to return buried sessions?
 
         :returns: A :class:`Session` or `None`.
         """
         assert session_id
-        return self._search_for_session_id(session_id)
+        return self._search_for_session_id(session_id, include_buried)
 
     def get_tab_by_id(self, tab_id: str) -> typing.Union[iterm2.tab.Tab, None]:
         """Finds a tab exactly matching the passed-in id.
