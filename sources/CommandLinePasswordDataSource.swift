@@ -180,6 +180,7 @@ class CommandLinePasswordDataSource: NSObject {
             var _error: Error? = nil
             let group = DispatchGroup()
             group.enter()
+            DLog("Execute: \(command) \(args) with environment keys \(Array(env.keys.map { String($0) }))")
             execAsync { output, error in
                 _output = output
                 _error = error
@@ -305,6 +306,7 @@ class CommandLinePasswordDataSource: NSObject {
                 queue.enqueue(.readOutput(data))
             }
             stderrChannel = Self.readingChannel(stderr, ioQueue: ioQueue) { data in
+                DLog("\(request.command) \(request.args) produced error output: \(String(data: data ?? Data(), encoding: .utf8) ?? String(describing: data))")
                 queue.enqueue(.readError(data))
             }
             stdinChannel = DispatchIO(type: .stream,
@@ -332,6 +334,7 @@ class CommandLinePasswordDataSource: NSObject {
         private func waitInBackground() {
             DispatchQueue.global().async {
                 self.process.waitUntilExit()
+                DLog("\(self.request.command) \(self.request.args) terminated status=\(self.process.terminationStatus) reason=\(self.process.terminationReason)")
                 if self.debugging {
                     NSLog("TERMINATED status=\(self.process.terminationStatus) reason=\(self.process.terminationReason)")
                 }
@@ -342,6 +345,7 @@ class CommandLinePasswordDataSource: NSObject {
 
         private func terminate() throws {
             try ObjC.catching {
+                DLog("Terminate \(Thread.callStackSymbols)")
                 process.terminate()
             }
         }
@@ -372,16 +376,19 @@ class CommandLinePasswordDataSource: NSObject {
                 }
                 switch event {
                 case .readOutput(let data):
+                    DLog("\(request.command) \(request.args) read from stdout")
                     handleRead(channel: &stdoutChannel,
                                destination: &builder.stdout,
                                handler: request.callbacks?.handleStdout,
                                data: data)
                 case .readError(let data):
+                    DLog("\(request.command) \(request.args) read from stderr")
                     handleRead(channel: &stderrChannel,
                                destination: &builder.stderr,
                                handler: request.callbacks?.handleStderr,
                                data: data)
                 case .terminated(let code, let reason):
+                    DLog("\(request.command) \(request.args) terminated")
                     stdinChannel?.close()
                     stdinChannel = nil
                     builder.returnCode = code
@@ -436,10 +443,12 @@ class CommandLinePasswordDataSource: NSObject {
             guard let channel = stdinChannel else {
                 return
             }
+            DLog("\(request.command) \(request.args) wants to write \(data.count) bytes")
             data.withUnsafeBytes { pointer in
                 channel.write(offset: 0,
                               data: DispatchData(bytes: pointer),
                               queue: ioQueue) { _done, _data, _error in
+                    DLog("\(self.request.command) \(self.request.args) wrote \(_data?.count ?? 0) of \(data.count) bytes. done=\(_done) error=\(_error)")
                     if _done, let completion = completion {
                         completion()
                     }
@@ -513,6 +522,7 @@ class CommandLinePasswordDataSource: NSObject {
         func transformAsync(inputs: Inputs, completion: @escaping (Outputs?, Error?) -> ()) {
             do {
                 let command = try inputTransformer(inputs)
+                DLog("\(inputs) -> \(command)")
                 execAsync(command, completion)
             } catch {
                 completion(nil, error)

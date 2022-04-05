@@ -21,10 +21,13 @@ class OnePasswordUtils {
             return FileManager.default.fileExists(atPath: normalPath)
         }()
         if normalPathExists {
+            DLog("normal path exists")
             if usable == nil && !checkUsability(normalPath) {
+                DLog("usability fail")
                 usable = false
                 showUnavailableMessage(normalPath)
             } else {
+                DLog("normal path ok")
                 usable = true
                 return normalPath
             }
@@ -133,11 +136,15 @@ class OnePasswordUtils {
             env: [:]).exec().stdout
         if let data = maybeData, let string = String(data: data, encoding: .utf8) {
             var value = 0
+            DLog("version string is \(string)")
             if Scanner(string: string).scanInt(&value) {
+                DLog("scan returned \(value)")
                 return value
             }
+            DLog("scan failed")
             return nil
         }
+        DLog("Didn't get a version number")
         return nil
     }
 }
@@ -156,8 +163,10 @@ class OnePasswordTokenRequester {
         if Self.biometricsAvailable == nil {
             switch checkBiometricAvailability() {
             case .some(true):
+                DLog("biometrics are available")
                 return .biometric
             case .some(false):
+                DLog("biometrics unavailable")
                 break
             case .none:
                 throw OnePasswordDataSource.OPError.canceledByUser
@@ -173,11 +182,13 @@ class OnePasswordTokenRequester {
             input: (password + "\n").data(using: .utf8)!)
         let output = try command.exec()
         if output.returnCode != 0 {
+            DLog("signin failed")
             let reason = String(data: output.stderr, encoding: .utf8) ?? "An unknown error occurred."
             showErrorMessage(reason)
             throw OnePasswordDataSource.OPError.needsAuthentication
         }
         guard let token = String(data: output.stdout, encoding: .utf8) else {
+            DLog("got garbage output")
             showErrorMessage("The 1Password CLI app produced garbled output instead of an auth token.")
             throw OnePasswordDataSource.OPError.badOutput
         }
@@ -193,6 +204,7 @@ class OnePasswordTokenRequester {
     }
 
     private func requestPassword(prompt: String) -> String? {
+        DLog("requesting master password")
         return ModalPasswordAlert(prompt).run(window: nil)
     }
 
@@ -201,7 +213,7 @@ class OnePasswordTokenRequester {
         // Issue a command that is doomed to fail so we can see what the error message looks like.
         let cli = OnePasswordUtils.pathToCLI
         if OnePasswordUtils.usable != true {
-            NSLog("No usable version of 1password's op utility was found")
+           DLog("No usable version of 1password's op utility was found")
             // Don't ask for the master password if we don't have a good CLI to use.
             return nil
         }
@@ -211,12 +223,14 @@ class OnePasswordTokenRequester {
             env: OnePasswordUtils.basicEnvironment)
         let output = try! command.exec()
         if output.returnCode == 0 {
-            NSLog("op user get --me succeeded so biometrics must be available")
+            DLog("op user get --me succeeded so biometrics must be available")
             return true
         }
         guard let string = String(data: output.stderr, encoding: .utf8) else {
+            DLog("garbage output")
             return false
         }
+        DLog("op signin returned \(string)")
         if string.contains("error initializing client: authorization prompt dismissed, please try again") {
             return nil
         }
