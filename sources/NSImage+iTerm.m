@@ -22,6 +22,28 @@
 
 @implementation NSImage (iTerm)
 
++ (NSSize)pointSizeOfGeneratedImageWithPixelSize:(NSSize)pixelSize {
+    // This might make a 1x or a 2x bitmap depending on ✨something secret✨
+    NSImage *test = [NSImage imageOfSize:NSMakeSize(1, 1) drawBlock:^{
+        [[NSColor blackColor] set];
+        NSRectFill(NSMakeRect(0, 0, 1, 1));
+    }];
+
+    CGFloat scale = 1;
+    for (NSImageRep *rep in test.representations) {
+        scale = MAX(scale, rep.pixelsWide);
+    }
+
+    NSSize pointSize = {
+        .width = pixelSize.width / scale,
+        .height = pixelSize.height / scale
+    };
+    DLog(@"Pixel size %@ -> point size %@ because %@", NSStringFromSize(pixelSize),
+         NSStringFromSize(pointSize),
+         test);
+    return pointSize;
+}
+
 - (NSImage *)it_imageFillingSize:(NSSize)size {
     const CGFloat imageAspectRatio = self.size.width / self.size.height;
     const CGFloat containerAspectRatio = size.width / size.height;

@@ -198,12 +198,7 @@
 #pragma mark - Private
 
 - (NSImage *)newImageWithMarkOfColor:(NSColor *)color size:(CGSize)pixelSize {
-    NSSize pointSize = pixelSize;
-    const CGFloat scale = 2;
-    pointSize.width /= scale;
-    pointSize.height /= scale;
-
-    return [iTermTextDrawingHelper newImageWithMarkOfColor:color size:pointSize];
+    return [iTermTextDrawingHelper newImageWithMarkOfColor:color pixelSize:pixelSize];
 }
 
 @end

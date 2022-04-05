@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @interface NSImage (iTerm)
++ (NSSize)pointSizeOfGeneratedImageWithPixelSize:(NSSize)pixelSize;
 - (CGImageRef)CGImage;
 + (NSImage *)imageOfSize:(NSSize)size color:(NSColor *)color;
 + (NSColorSpace *)colorSpaceForProgramaticallyGeneratedImages;

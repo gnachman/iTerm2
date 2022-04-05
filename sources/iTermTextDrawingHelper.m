@@ -864,6 +864,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 }
 
 + (NSImage *)newImageWithMarkOfColor:(NSColor *)color
+                           pixelSize:(CGSize)pixelSize {
+    NSSize pointSize = [NSImage pointSizeOfGeneratedImageWithPixelSize:pixelSize];
+    return [self newImageWithMarkOfColor:color size:pointSize];
+}
+
++ (NSImage *)newImageWithMarkOfColor:(NSColor *)color
                                 size:(CGSize)size {
     if (size.width < 1 || size.height < 1) {
         return [self newImageWithMarkOfColor:color
