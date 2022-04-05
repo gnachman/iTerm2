@@ -20,7 +20,7 @@
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q4z-gz-Utj">
-                    <rect key="frame" x="26" y="5" width="446" height="14"/>
+                    <rect key="frame" x="26" y="5" width="445" height="14"/>
                     <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="truncatingTail" alignment="right" title="Press ⇧↩ to send command." drawsBackground="YES" id="mjF-rO-FZ2">
                         <font key="font" metaFont="controlContent" size="11"/>

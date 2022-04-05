@@ -1293,7 +1293,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                 continue;
             }
             flag = nil;
-            if ([args[i] hasPrefix:@"-"]) {
+            if ([args[i] hasPrefix:@"-"] && args[i].length > 1) {
                 flag = [args[i] substringFromIndex:1];
                 if ([args[i] isEqualToString:@"-N"]) {
                     skip = 1;
