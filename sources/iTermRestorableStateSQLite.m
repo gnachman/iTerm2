@@ -164,6 +164,7 @@
     [_db whenReady:^{
         DLog(@"db is ready now");
         completion([[iTermRestorableStateSQLiteIndex alloc] initWithGraphRecord:self->_db.record]);
+        [self->_db doHousekeeping];
     }];
 }
 

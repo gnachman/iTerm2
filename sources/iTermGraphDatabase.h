@@ -35,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
                  completion:(nullable iTermCallback *)completion;
 - (void)invalidateSynchronously:(BOOL)sync;
 - (void)whenReady:(void (^)(void))readyBlock;
+- (void)doHousekeeping;
 
 @end
 

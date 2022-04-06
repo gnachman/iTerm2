@@ -94,12 +94,15 @@
             [self finishInitialization:state];
             state.loadComplete = YES;
         }];
-        [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
-            [state.db executeUpdate:@"pragma wal_checkpoint"];
-            [state.db executeUpdate:@"vacuum"];
-        }];
     }
     return self;
+}
+
+- (void)doHousekeeping {
+    [_thread dispatchAsync:^(iTermGraphDatabaseState *state) {
+        [state.db executeUpdate:@"pragma wal_checkpoint"];
+        [state.db executeUpdate:@"vacuum"];
+    }];
 }
 
 - (void)finishInitialization:(iTermGraphDatabaseState *)state {
