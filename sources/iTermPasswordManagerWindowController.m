@@ -1107,7 +1107,7 @@ dataCellForTableColumn:(NSTableColumn *)tableColumn
         return;
     }
     if ((id)[fieldEditor delegate] == _searchField) {
-        [self setAccounts:_entries filtered:[self accounts:_entries filteredBy:[_searchField stringValue]]];
+        [self setAccounts:_unfilteredEntries filtered:[self accounts:_unfilteredEntries filteredBy:[_searchField stringValue]]];
     }
     if ([self numberOfRowsInTableView:_tableView] == 1) {
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:0] byExtendingSelection:NO];
