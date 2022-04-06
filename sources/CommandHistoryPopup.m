@@ -129,8 +129,6 @@
     if (_autocomplete && NSApp.currentEvent.type == NSEventTypeKeyDown) {
         [self.delegate popupKeyDown:NSApp.currentEvent];
         [self closePopupWindow];
-    } else {
-        [super moveLeft:sender];
     }
 }
 
@@ -138,8 +136,6 @@
     if (_autocomplete && NSApp.currentEvent.type == NSEventTypeKeyDown) {
         [self.delegate popupKeyDown:NSApp.currentEvent];
         [self closePopupWindow];
-    } else {
-        [super moveLeft:sender];
     }
 }
 
