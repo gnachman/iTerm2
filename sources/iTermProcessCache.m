@@ -47,28 +47,54 @@
     if (self) {
         _lockQueue = dispatch_queue_create("com.iterm2.process-cache-lock", DISPATCH_QUEUE_SERIAL);
         _workQueue = dispatch_queue_create("com.iterm2.process-cache-work", DISPATCH_QUEUE_SERIAL);
-        _rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Process cache"
-                                                  minimumInterval:0.5];
         _trackedPidsLQ = [NSMutableDictionary dictionary];
         _dirtyPIDsLQ = [NSMutableIndexSet indexSet];
-        [self setNeedsUpdate:YES];
         _blocksLQ = [NSMutableArray array];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(applicationDidBecomeActive:)
-                                                     name:NSApplicationDidBecomeActiveNotification
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(applicationDidResignActive:)
-                                                     name:NSApplicationDidResignActiveNotification
-                                                   object:nil];
+
+        // I'm not fond of this pattern (code that sometimes is synchronous and sometimes not) but
+        // I don't want to break -setNeedsUpdate when called on the main queue and that requires
+        // synchronous initialization. Job managers use the process cache on their own queues and
+        // sometimes they win a race and call init before anyone else, so it has to work in this
+        // case.
+        if (dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) != dispatch_queue_get_label(dispatch_get_main_queue())) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self finishInitialization];
+            });
+        } else {
+            [self finishInitialization];
+        }
     }
     return self;
+}
+
+- (void)finishInitialization {
+    // Perform main-thread-only initialization.
+    _rateLimit = [[iTermRateLimitedUpdate alloc] initWithName:@"Process cache"
+                                              minimumInterval:0.5];
+    [self setNeedsUpdate:YES];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidBecomeActive:)
+                                                 name:NSApplicationDidBecomeActiveNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(applicationDidResignActive:)
+                                                 name:NSApplicationDidResignActiveNotification
+                                               object:nil];
 }
 
 #pragma mark - APIs
 
 // Main queue
 - (void)setNeedsUpdate:(BOOL)needsUpdate {
+    if (dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) != dispatch_queue_get_label(dispatch_get_main_queue())) {
+        DLog(@"Try again on main queue");
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"Trying again on main queue");
+            [self setNeedsUpdate:needsUpdate];
+        });
+        return;
+    }
+
     DLog(@"setNeedsUpdate:%@", @(needsUpdate));
     dispatch_sync(_lockQueue, ^{
         self->_needsUpdateFlagLQ = needsUpdate;
