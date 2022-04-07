@@ -6205,10 +6205,14 @@ typedef struct {
     } else {
         // Drag a tab into a split
         PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
-        return [[MovePaneController sharedInstance] dropTab:theTab
-                                                  inSession:session
-                                                       half:[session.view removeSplitSelectionView]
-                                                    atPoint:[sender draggingLocation]];
+        const BOOL moved = [[MovePaneController sharedInstance] dropTab:theTab
+                                                              inSession:session
+                                                                   half:[session.view removeSplitSelectionView]
+                                                                atPoint:[sender draggingLocation]];
+        if (moved) {
+            [[MovePaneController sharedInstance] clearSession];
+        }
+        return moved;
     }
 }
 
