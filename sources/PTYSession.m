@@ -9395,16 +9395,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case NSEventTypeLeftMouseDown:
         case NSEventTypeLeftMouseUp:
         case NSEventTypeLeftMouseDragged:
+            DLog(@"_reportingLeftMouseDown=%@", @(_reportingLeftMouseDown));
             return _reportingLeftMouseDown;
 
         case NSEventTypeRightMouseDown:
         case NSEventTypeRightMouseUp:
         case NSEventTypeRightMouseDragged:
+            DLog(@"_reportingRightMouseDown=%@", @(_reportingRightMouseDown));
             return _reportingRightMouseDown;
 
         case NSEventTypeOtherMouseDown:
         case NSEventTypeOtherMouseUp:
         case NSEventTypeOtherMouseDragged:
+            DLog(@"_reportingMiddleMouseDown=%@", @(_reportingMiddleMouseDown));
             return _reportingMiddleMouseDown;
 
         default:
@@ -9429,9 +9432,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                           deltaY:(CGFloat)deltaY
         allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
                         testOnly:(BOOL)testOnly {
-    DLog(@"Report event type %lu, modifiers=%lu, button=%d, coord=%@",
+    DLog(@"Report event type %lu, modifiers=%lu, button=%d, coord=%@ testOnly=%@ terminalMouseMode=%@ allowDragBeforeMouseDown%@",
          (unsigned long)eventType, (unsigned long)modifiers, button,
-         VT100GridCoordDescription(coord));
+         VT100GridCoordDescription(coord), @(testOnly), @(_screen.terminalMouseMode),
+         @(allowDragBeforeMouseDown));
 
     switch (eventType) {
         case NSEventTypeLeftMouseDown:
@@ -9441,10 +9445,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
+                    DLog(@"normal/button/all - can report");
                     if (!testOnly) {
                         [self setReportingMouseDownForEventType:eventType];
                         _lastReportedCoord = coord;
                         _lastReportedPoint = point;
+                        DLog(@"_lastReportedCoord <- %@, _lastReportedPoint <- %@",
+                             VT100GridCoordDescription(_lastReportedCoord),
+                             NSStringFromPoint(point));
                         [self writeLatin1EncodedData:[_screen.terminalOutput mousePress:button
                                                                           withModifiers:modifiers
                                                                                      at:coord
@@ -9455,6 +9463,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
                 case MOUSE_REPORTING_NONE:
                 case MOUSE_REPORTING_HIGHLIGHT:
+                    DLog(@"non/highlight - can't report");
                     break;
             }
             break;
@@ -9467,10 +9476,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                     case MOUSE_REPORTING_NORMAL:
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
+                        DLog(@"normal/button/all - can report");
                         return YES;
 
                     case MOUSE_REPORTING_NONE:
                     case MOUSE_REPORTING_HIGHLIGHT:
+                        DLog(@"none/highlight - can't report");
                         break;
                 }
                 return NO;
@@ -9479,13 +9490,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 [self setReportingMouseDownForEventType:eventType];
                 _lastReportedCoord = VT100GridCoordMake(-1, -1);
                 _lastReportedPoint = NSMakePoint(-1, -1);
+                DLog(@"_lastReportedCoord <- %@, _lastReportedPoint <- %@",
+                     VT100GridCoordDescription(_lastReportedCoord),
+                     NSStringFromPoint(point));
 
                 switch (_screen.terminalMouseMode) {
                     case MOUSE_REPORTING_NORMAL:
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
+                        DLog(@"normal/button/all - can report");
                         _lastReportedCoord = coord;
                         _lastReportedPoint = point;
+                        DLog(@"_lastReportedCoord <- %@, _lastReportedPoint <- %@",
+                             VT100GridCoordDescription(_lastReportedCoord),
+                             NSStringFromPoint(point));
                         [self writeLatin1EncodedData:[_screen.terminalOutput mouseRelease:button
                                                                             withModifiers:modifiers
                                                                                        at:coord
@@ -9495,6 +9513,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
                     case MOUSE_REPORTING_NONE:
                     case MOUSE_REPORTING_HIGHLIGHT:
+                        DLog(@"none/highlight - can't report");
                         break;
                 }
             }
@@ -9503,8 +9522,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
         case NSEventTypeMouseMoved:
             if (_screen.terminalMouseMode != MOUSE_REPORTING_ALL_MOTION) {
+                DLog(@"not reporting all motion");
                 return NO;
             }
+            DLog(@"can report");
             if (testOnly) {
                 return YES;
             }
@@ -9514,6 +9535,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                              lastPoint:_lastReportedPoint]) {
                 _lastReportedCoord = coord;
                 _lastReportedPoint = point;
+                DLog(@"_lastReportedCoord <- %@, _lastReportedPoint <- %@",
+                     VT100GridCoordDescription(_lastReportedCoord),
+                     NSStringFromPoint(point));
                 [self writeLatin1EncodedData:[_screen.terminalOutput mouseMotion:MOUSE_BUTTON_NONE
                                                                    withModifiers:modifiers
                                                                               at:coord
@@ -9531,10 +9555,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
                     case MOUSE_REPORTING_NORMAL:
+                        DLog(@"button/all/normal - can report");
                         return YES;
 
                     case MOUSE_REPORTING_NONE:
                     case MOUSE_REPORTING_HIGHLIGHT:
+                        DLog(@"none/highlight - can't report");
                         break;
                 }
                 return NO;
@@ -9546,10 +9572,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                              lastPoint:_lastReportedPoint]) {
                 _lastReportedCoord = coord;
                 _lastReportedPoint = point;
-
+                DLog(@"_lastReportedCoord <- %@, _lastReportedPoint <- %@",
+                     VT100GridCoordDescription(_lastReportedCoord),
+                     NSStringFromPoint(point));
                 switch (_screen.terminalMouseMode) {
                     case MOUSE_REPORTING_BUTTON_MOTION:
                     case MOUSE_REPORTING_ALL_MOTION:
+                        DLog(@"motion/all-motion - will report drag");
                         [self writeLatin1EncodedData:[_screen.terminalOutput mouseMotion:button
                                                                            withModifiers:modifiers
                                                                                       at:coord
@@ -9557,12 +9586,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                     broadcastAllowed:NO];
                         // Fall through
                     case MOUSE_REPORTING_NORMAL:
+                        DLog(@"normal - do not report drag");
                         // Don't do selection when mouse reporting during a drag, even if the drag
                         // is not reported (the clicks are).
                         return YES;
 
                     case MOUSE_REPORTING_NONE:
                     case MOUSE_REPORTING_HIGHLIGHT:
+                        DLog(@"none/highlight - do not report drag");
                         break;
                 }
             }
@@ -9573,6 +9604,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
+                    DLog(@"normal/button/all - can report. deltaY=%@", @(deltaY));
                     if (testOnly) {
                         return deltaY != 0;
                     }
@@ -9582,6 +9614,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                             // Cap number of reported scroll events at 32 to prevent runaway redraws.
                             // This is a mostly theoretical concern and the number can grow if it
                             // doesn't seem to be a problem.
+                            DLog(@"Cap at 32");
                             steps = MIN(32, fabs(deltaY));
                         } else {
                             steps = 1;
@@ -9590,8 +9623,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                             // This works around what I believe is a bug in tmux or a bug in
                             // how users use tmux. See the thread on tmux-users with subject
                             // "Mouse wheel events and server_client_assume_paste--the perfect storm of bugs?".
+                            DLog(@"Double reporting");
                             steps = 2;
                         }
+                        DLog(@"steps=%d", steps);
                         for (int i = 0; i < steps; i++) {
                             [self writeLatin1EncodedData:[_screen.terminalOutput mousePress:button
                                                                               withModifiers:modifiers
@@ -9605,6 +9640,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
                 case MOUSE_REPORTING_NONE:
                 case MOUSE_REPORTING_HIGHLIGHT:
+                    DLog(@"none/highlight - can't report");
                     break;
             }
             break;

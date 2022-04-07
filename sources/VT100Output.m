@@ -709,12 +709,15 @@ typedef enum {
                              lastPoint:(NSPoint)lastReportedPoint {
     switch (self.mouseFormat) {
         case MOUSE_FORMAT_SGR_PIXEL:
+            DLog(@"pixel report. point=%@ last=%@", NSStringFromPoint(point), NSStringFromPoint(lastReportedPoint));
             return !NSEqualPoints(point, lastReportedPoint);
         case MOUSE_FORMAT_XTERM_EXT:
         case MOUSE_FORMAT_URXVT:
         case MOUSE_FORMAT_SGR:
         case MOUSE_FORMAT_XTERM:
         default:
+            DLog(@"coord report. coord=%@ last=%@", VT100GridCoordDescription(coord),
+                 VT100GridCoordDescription(lastReportedCoord));
             return !VT100GridCoordEquals(coord, lastReportedCoord);
     }
 }

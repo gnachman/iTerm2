@@ -385,6 +385,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (iTermClickSideEffects)mouseUpImpl:(NSEvent *)event {
     DLog(@"Mouse Up on %@ with event %@, numTouches=%d, mouseDown=%@", self, event, _numTouches, @(_mouseDown));
     _makingThreeFingerSelection = NO;
+    DLog(@"_makingThreeFingerSelection <- NO");
     [_altScreenMouseScrollInferrer nonScrollWheelEvent:event];
     if ([_threeFingerTapGestureRecognizer mouseUp:event]) {
         return iTermClickSideEffectsNone;
@@ -631,6 +632,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [_threeFingerTapGestureRecognizer mouseDragged];
     const BOOL wasMakingThreeFingerSelection = _makingThreeFingerSelection;
     _makingThreeFingerSelection = (_numTouches == 3);
+    DLog(@"_makingThreeFingerSelection <- %@", @(_makingThreeFingerSelection));
     if (_mouseDownIsThreeFingerClick) {
         DLog(@"is three finger click");
         return iTermClickSideEffectsIgnore;
@@ -1131,6 +1133,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     const NSPoint point =
     [self.mouseDelegate mouseHandler:self viewCoordForEvent:event clipped:NO];
+    DLog(@"point=%@", NSStringFromPoint(point));
 
     if (![self shouldReportMouseEvent:event at:point]) {
         DLog(@"Not reportable");
