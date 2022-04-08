@@ -218,8 +218,14 @@ struct iTermNumFullLinesCacheKeyHasher {
 @implementation LineBlock {
 @public
     // The raw lines, end-to-end. There is no delimiter between each line.
-    const screen_char_t * const raw_buffer;
-    const screen_char_t *buffer_start;  // Points into raw_buffer's buffer. Gives the usable start of buffer (stuff before this is dropped).
+
+    // NOTE: The fields with commented-out const annotations *are* const but I removed them to see
+    // if I was hitting UB. See crash in 3.5.0beta5 1648809545.408710187.txt.
+
+//    const screen_char_t * const raw_buffer;
+    screen_char_t *raw_buffer;
+//    const screen_char_t *buffer_start;  // Points into raw_buffer's buffer. Gives the usable start of buffer (stuff before this is dropped).
+    screen_char_t *buffer_start;
 
     int start_offset;  // distance from raw_buffer to buffer_start
     int first_entry;  // first valid cumulative_line_length
@@ -230,7 +236,8 @@ struct iTermNumFullLinesCacheKeyHasher {
     // There will be as many entries in this array as there are lines in raw_buffer.
     // The ith value is the length of the ith line plus the value of
     // cumulative_line_lengths[i-1] for i>0 or 0 for i==0.
-    const int * const cumulative_line_lengths;
+//    const int * const cumulative_line_lengths;
+    int *cumulative_line_lengths;
     LineBlockMetadata *metadata_;
 
     // The number of elements allocated for cumulative_line_lengths.
@@ -273,9 +280,10 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     return self;
 }
 
-static void iTermAssignToConstPointer(void **dest, void *address) {
-    *dest = address;
-}
+//static void iTermAssignToConstPointer(void **dest, void *address) {
+//    *dest = address;
+//}
+#define iTermAssignToConstPointer(dest, address) (*(dest) = (address))
 
 - (LineBlock *)initWithRawBufferSize:(int)size {
     self = [super init];

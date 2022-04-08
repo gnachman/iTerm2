@@ -7,6 +7,7 @@
 
 #import "iTermMetalPerFrameStateRow.h"
 
+#import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermColorMap.h"
 #import "iTermData.h"
@@ -37,6 +38,10 @@ NS_ASSUME_NONNULL_BEGIN
         }
         iTermData *data = [iTermScreenCharData dataOfLength:rowSize];
         screen_char_t *myBuffer = data.mutableBytes;
+        ITAssertWithMessage(rowSize == (screen.width + 1) * sizeof(screen_char_t),
+                            @"I was given row size of %@ but the right value is %@",
+                            @(rowSize),
+                            @((screen.width + 1) * sizeof(screen_char_t)));
         const screen_char_t *line = [screen getLineAtIndex:i withBuffer:myBuffer];
 
         if (line != myBuffer) {

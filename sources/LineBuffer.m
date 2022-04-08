@@ -468,6 +468,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         *continuationPtr = continuation;
     }
     ITAssertWithMessage(length <= width, @"Length too long");
+    if (length > 0 && p[0].code ^ p[length - 1].code) {
+        // This is here to figure out if a segfault I see a lot of is due to reading or writing.
+        // If it crashes in the if statement's condition, it's on the read side.
+        // If it crashes in memcpy/memmove below it's on the write side.
+        DLog(@"*p");
+    }
     memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
     [self extendContinuation:continuation inBuffer:buffer ofLength:length toWidth:width];
 
