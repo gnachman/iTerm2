@@ -596,19 +596,25 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 #pragma mark - Selected Text
 
-- (iTermPromise<NSString *> *)recordSelection {
+- (iTermPromise<NSString *> *)recordSelection:(iTermSelection *)selection {
     const NSInteger maxSize = 10 * 1000 * 1000;
     DLog(@"Renege on last selection promise");
     // No need to keep working on the last one; if it hasn't been waited on then it'll never be used.
     [[[iTermController sharedInstance] lastSelectionPromise] renege];
 
-    iTermRenegablePromise<NSString *> *promise = [self promisedStringForSelectedTextCappedAtSize:maxSize minimumLineNumber:0];
+    iTermRenegablePromise<NSString *> *promise = [self promisedStringForSelectedTextCappedAtSize:maxSize
+                                                                               minimumLineNumber:0
+                                                                                       selection:selection];
     [[iTermController sharedInstance] setLastSelectionPromise:promise];
     return promise;
 }
 
 - (BOOL)selectionIsBig {
-    return self.selection.approximateNumberOfLines > 1000;
+    return [self selectionIsBig:self.selection];
+}
+
+- (BOOL)selectionIsBig:(iTermSelection *)selection {
+    return selection.approximateNumberOfLines > 1000;
 }
 
 
@@ -632,9 +638,10 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 }
 
 - (iTermRenegablePromise<NSString *> *)promisedStringForSelectedTextCappedAtSize:(int)maxBytes
-                                                               minimumLineNumber:(int)minimumLineNumber {
+                                                               minimumLineNumber:(int)minimumLineNumber
+                                                                       selection:(iTermSelection *)selection {
     iTermStringSelectionExtractor *extractor =
-    [[iTermStringSelectionExtractor alloc] initWithSelection:self.selection
+    [[iTermStringSelectionExtractor alloc] initWithSelection:selection
                                                     snapshot:[self.dataSource snapshotDataSource]
                                                      options:[self commonSelectionOptions]
                                                     maxBytes:maxBytes
@@ -644,9 +651,10 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 }
 
 - (iTermRenegablePromise<NSString *> *)promisedSGRStringForSelectedTextCappedAtSize:(int)maxBytes
-                                                                  minimumLineNumber:(int)minimumLineNumber {
+                                                                  minimumLineNumber:(int)minimumLineNumber
+                                                                          selection:(iTermSelection *)selection {
     iTermSGRSelectionExtractor *extractor =
-    [[iTermSGRSelectionExtractor alloc] initWithSelection:self.selection
+    [[iTermSGRSelectionExtractor alloc] initWithSelection:selection
                                                  snapshot:[self.dataSource snapshotDataSource]
                                                   options:[self commonSelectionOptions]
                                                  maxBytes:maxBytes
@@ -656,7 +664,8 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 }
 
 - (iTermRenegablePromise<NSAttributedString *> *)promisedAttributedStringForSelectedTextCappedAtSize:(int)maxBytes
-                                                                                   minimumLineNumber:(int)minimumLineNumber {
+                                                                                   minimumLineNumber:(int)minimumLineNumber
+                                                                                           selection:(iTermSelection *)selection {
     iTermCharacterAttributesProvider *provider =
     [[iTermCharacterAttributesProvider alloc] initWithColorMap:self.colorMap
                                             useCustomBoldColor:self.useCustomBoldColor
@@ -670,7 +679,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                                   nonAsciiFont:self.secondaryFont];
 
     iTermAttributedStringSelectionExtractor *extractor =
-    [[iTermAttributedStringSelectionExtractor alloc] initWithSelection:self.selection
+    [[iTermAttributedStringSelectionExtractor alloc] initWithSelection:selection
                                                               snapshot:[self.dataSource snapshotDataSource]
                                                                options:[self commonSelectionOptions]
                                                               maxBytes:maxBytes
@@ -683,25 +692,29 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 - (void)asynchronouslyVendSelectedTextWithStyle:(iTermCopyTextStyle)style
                                    cappedAtSize:(int)maxBytes
-                              minimumLineNumber:(int)minimumLineNumber {
+                              minimumLineNumber:(int)minimumLineNumber
+                                      selection:(iTermSelection *)selection {
     iTermRenegablePromise *promise = nil;
     NSPasteboardType type = NSPasteboardTypeString;
     switch (style) {
         case iTermCopyTextStyleAttributed:
             promise = [self promisedAttributedStringForSelectedTextCappedAtSize:maxBytes
-                                                              minimumLineNumber:minimumLineNumber];
+                                                              minimumLineNumber:minimumLineNumber
+                                                                      selection:selection];
             type = NSPasteboardTypeRTF;
             break;
 
         case iTermCopyTextStylePlainText:
             promise = [self promisedStringForSelectedTextCappedAtSize:maxBytes
-                                                    minimumLineNumber:minimumLineNumber];
+                                                    minimumLineNumber:minimumLineNumber
+                                                            selection:selection];
             type = NSPasteboardTypeString;
             break;
 
         case iTermCopyTextStyleWithControlSequences:
             promise = [self promisedSGRStringForSelectedTextCappedAtSize:maxBytes
-                                                       minimumLineNumber:minimumLineNumber];
+                                                       minimumLineNumber:minimumLineNumber
+                                                               selection:selection];
             type = NSPasteboardTypeString;
             break;
     }
@@ -710,22 +723,26 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 - (id)selectedTextWithStyle:(iTermCopyTextStyle)style
                cappedAtSize:(int)maxBytes
-          minimumLineNumber:(int)minimumLineNumber {
+          minimumLineNumber:(int)minimumLineNumber
+                  selection:(iTermSelection *)selection {
     if (@available(macOS 11.0, *)) {
         [[iTermAsyncSelectionProvider currentProvider] cancel];
     }
     switch (style) {
         case iTermCopyTextStyleAttributed:
             return [[self promisedAttributedStringForSelectedTextCappedAtSize:maxBytes
-                                                            minimumLineNumber:minimumLineNumber] wait].maybeFirst;
+                                                            minimumLineNumber:minimumLineNumber
+                                                                    selection:selection] wait].maybeFirst;
 
         case iTermCopyTextStylePlainText:
             return [[self promisedStringForSelectedTextCappedAtSize:maxBytes
-                                                  minimumLineNumber:minimumLineNumber] wait].maybeFirst;
+                                                  minimumLineNumber:minimumLineNumber
+                                                          selection:selection] wait].maybeFirst;
 
         case iTermCopyTextStyleWithControlSequences:
             return [[self promisedSGRStringForSelectedTextCappedAtSize:maxBytes
-                                                     minimumLineNumber:minimumLineNumber] wait].maybeFirst;
+                                                     minimumLineNumber:minimumLineNumber
+                                                             selection:selection] wait].maybeFirst;
     }
 }
 
@@ -733,11 +750,19 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                      minimumLineNumber:(int)minimumLineNumber {
     return [self selectedTextWithStyle:iTermCopyTextStylePlainText
                           cappedAtSize:maxBytes
-                     minimumLineNumber:minimumLineNumber];
+                     minimumLineNumber:minimumLineNumber
+                             selection:self.selection];
 }
 
 - (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad {
-    return [self selectedTextWithStyle:iTermCopyTextStyleAttributed cappedAtSize:0 minimumLineNumber:0];
+    return [self selectedAttributedTextWithPad:pad selection:self.selection];
+}
+
+- (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad selection:(iTermSelection *)selection {
+    return [self selectedTextWithStyle:iTermCopyTextStyleAttributed
+                          cappedAtSize:0
+                     minimumLineNumber:0
+                             selection:selection];
 }
 
 
@@ -1140,6 +1165,23 @@ hasOpenAnnotationInRange:(VT100GridCoordRange)coordRange {
 
 - (void)contextMenuCopySelectionAccordingToUserPreferences:(iTermTextViewContextMenuHelper *)contextMenu {
     [self copySelectionAccordingToUserPreferences];
+}
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
+    iTermSelection *selection = [[iTermSelection alloc] init];
+    VT100GridAbsWindowedRange absRange = VT100GridAbsWindowedRangeFromRelative(range,
+                                                                               self.dataSource.totalScrollbackOverflow);
+    iTermSubSelection *sub = [iTermSubSelection subSelectionWithAbsRange:absRange
+                                                                    mode:kiTermSelectionModeCharacter
+                                                                   width:self.dataSource.width];
+    selection.delegate = self;
+    [selection addSubSelection:sub];
+    if ([iTermAdvancedSettingsModel copyWithStylesByDefault]) {
+        [self copySelectionWithStyles:selection];
+    } else {
+        [self copySelection:selection];
+    }
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

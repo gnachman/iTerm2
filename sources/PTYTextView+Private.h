@@ -67,6 +67,8 @@ NSPopoverDelegate> {
 
 // exposed for tests
 - (void)setDrawingHelperIsRetina:(BOOL)isRetina;
+- (void)copySelectionWithStyles:(iTermSelection *)selection;
+- (void)copySelection:(iTermSelection *)selection;
 
 @end
 

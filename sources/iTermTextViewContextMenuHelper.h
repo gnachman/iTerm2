@@ -108,6 +108,9 @@ toggleTerminalStateForMenuItem:(NSMenuItem *)item;
        rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark;
 - (void)contextMenuCopySelectionAccordingToUserPreferences:(iTermTextViewContextMenuHelper *)contextMenu;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range;
+
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                copy:(NSString *)string;
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

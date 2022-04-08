@@ -92,22 +92,27 @@ iTermURLActionHelperDelegate>
 
 // A rough heuristic for whether it will be noticeably slow to extract the selection to a string.
 - (BOOL)selectionIsBig;
+- (BOOL)selectionIsBig:(iTermSelection *)selection;
 
 // Saves the selection as the "last" selection app-wide and returns a promise in case you need the value.
-- (iTermPromise<NSString *> *)recordSelection;
+- (iTermPromise<NSString *> *)recordSelection:(iTermSelection *)selection;
 
 - (id)selectedTextWithStyle:(iTermCopyTextStyle)style
                cappedAtSize:(int)maxBytes
-          minimumLineNumber:(int)minimumLineNumber;
+          minimumLineNumber:(int)minimumLineNumber
+                  selection:(iTermSelection *)selection;
 
 - (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad;
+- (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad
+                                            selection:(iTermSelection *)selection;
 
 - (NSString *)selectedTextCappedAtSize:(int)maxBytes
                      minimumLineNumber:(int)minimumLineNumber;
 
 - (void)asynchronouslyVendSelectedTextWithStyle:(iTermCopyTextStyle)style
                                    cappedAtSize:(int)maxBytes
-                              minimumLineNumber:(int)minimumLineNumber;
+                              minimumLineNumber:(int)minimumLineNumber
+                                      selection:(iTermSelection *)selection;
 
 #pragma mark - Find on Page
 

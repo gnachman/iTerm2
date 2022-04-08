@@ -749,7 +749,7 @@ Gw
                             </subviews>
                         </clipView>
                         <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5846">
-                            <rect key="frame" x="1" y="249" width="763" height="15"/>
+                            <rect key="frame" x="1" y="248" width="763" height="16"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5847">
@@ -946,6 +946,7 @@ DQ
                                                         <menuItem title="Run Command…" state="on" tag="2" id="6293"/>
                                                         <menuItem title="Run Command in Window…" state="on" tag="4" id="lC4-Y7-mN1"/>
                                                         <menuItem title="Run Coprocess…" state="on" tag="3" id="6294"/>
+                                                        <menuItem title="Copy" state="on" tag="6" id="jda-gv-aUW"/>
                                                     </items>
                                                 </menu>
                                             </popUpButtonCell>

@@ -77,6 +77,8 @@ NSString *iTermSmartSelectionActionContextKeyRemoteHost = @"remoteHost";
             return [parameter stringWithBackslashEscapedShellCharactersIncludingNewlines:NO];
         case kOpenFileContextMenuAction:
             return parameter;
+        case kCopyContextMenuAction:
+            return parameter;
         case kOpenUrlContextMenuAction: {
             return [NSURL URLWithUserSuppliedString:parameter].absoluteString;
         }
@@ -237,13 +239,15 @@ NSString *iTermSmartSelectionActionContextKeyRemoteHost = @"remoteHost";
                               @"Run Command…",
                               @"Run Coprocess…",
                               @"Send text…",
-                              @"Run Command in Window…" ];
+                              @"Run Command in Window…",
+                              @"Copy"];
     NSArray *paramPlaceholders = @[ @"Enter file name",
                                     @"Enter URL",
                                     @"Enter command",
                                     @"Enter coprocess command",
                                     @"Enter text",
-                                    @"Enter command" ];
+                                    @"Enter command",
+                                    @""];
 
 
     if (tableColumn == _titleColumn) {

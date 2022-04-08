@@ -2456,15 +2456,26 @@
 }
 
 - (NSString *)selectedText {
-    if (_contextMenuHelper.savedSelectedText) {
+    return [self selectedTextInSelection:self.selection];
+}
+
+- (NSString *)selectedTextInSelection:(iTermSelection *)selection {
+    if (selection == self.selection && _contextMenuHelper.savedSelectedText) {
         DLog(@"Returning saved selected text");
         return _contextMenuHelper.savedSelectedText;
     }
-    return [self selectedTextCappedAtSize:0];
+    return [self selectedTextCappedAtSize:0 inSelection:selection];
 }
 
 - (NSString *)selectedTextCappedAtSize:(int)maxBytes {
-    return [self selectedTextWithStyle:iTermCopyTextStylePlainText cappedAtSize:maxBytes minimumLineNumber:0];
+    return [self selectedTextCappedAtSize:0 inSelection:self.selection];
+}
+
+- (NSString *)selectedTextCappedAtSize:(int)maxBytes inSelection:(iTermSelection *)selection {
+    return [self selectedTextWithStyle:iTermCopyTextStylePlainText
+                          cappedAtSize:maxBytes
+                     minimumLineNumber:0
+                             selection:selection];
 }
 
 - (BOOL)_haveShortSelection {
@@ -2624,6 +2635,10 @@
 }
 
 - (void)copy:(id)sender {
+    [self copySelection:self.selection];
+}
+
+- (void)copySelection:(iTermSelection *)selection {
     // TODO: iTermSelection should use absolute coordinates everywhere. Until that is done, we must
     // call refresh here to take care of any scrollback overflow that would cause the selected range
     // to not match reality.
@@ -2634,14 +2649,15 @@
     DLog(@"-[PTYTextView copy:] called");
     DLog(@"%@", [NSThread callStackSymbols]);
 
-    if ([self selectionIsBig]) {
+    if ([self selectionIsBig:selection]) {
         [self asynchronouslyVendSelectedTextWithStyle:iTermCopyTextStylePlainText
                                          cappedAtSize:INT_MAX
-                                    minimumLineNumber:0];
+                                    minimumLineNumber:0
+                                            selection:selection];
         return;
     }
 
-    NSString *copyString = [self selectedText];
+    NSString *copyString = [self selectedTextInSelection:selection];
     [self copyString:copyString];
 }
 
@@ -2661,24 +2677,30 @@
 }
 
 - (IBAction)copyWithStyles:(id)sender {
-    if ([self selectionIsBig]) {
+    [self copySelectionWithStyles:self.selection];
+}
+
+- (void)copySelectionWithStyles:(iTermSelection *)selection {
+    if ([self selectionIsBig:selection]) {
         [self asynchronouslyVendSelectedTextWithStyle:iTermCopyTextStyleAttributed
                                          cappedAtSize:INT_MAX
-                                    minimumLineNumber:0];
+                                    minimumLineNumber:0
+                                            selection:selection];
         return;
     }
 
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
 
     DLog(@"-[PTYTextView copyWithStyles:] called");
-    NSAttributedString *copyAttributedString = [self selectedAttributedTextWithPad:NO];
+    NSAttributedString *copyAttributedString = [self selectedAttributedTextWithPad:NO
+                                                                         selection:selection];
     if ([iTermAdvancedSettingsModel disallowCopyEmptyString] &&
         copyAttributedString.length == 0) {
         DLog(@"Disallow copying empty string");
         return;
     }
 
-    DLog(@"Have selected text of length %d. selection=%@", (int)[copyAttributedString length], _selection);
+    DLog(@"Have selected text of length %d. selection=%@", (int)[copyAttributedString length], selection);
     NSMutableArray *types = [NSMutableArray array];
     if (copyAttributedString) {
         [types addObject:NSPasteboardTypeRTF];
@@ -2703,7 +2725,8 @@
 
     NSString *copyString = [self selectedTextWithStyle:iTermCopyTextStyleWithControlSequences
                                           cappedAtSize:-1
-                                     minimumLineNumber:0];
+                                     minimumLineNumber:0
+                                             selection:self.selection];
 
     if ([iTermAdvancedSettingsModel disallowCopyEmptyString] && copyString.length == 0) {
         DLog(@"Disallow copying empty string");
@@ -4293,9 +4316,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)selectionDidChange:(iTermSelection *)selection {
     DLog(@"selectionDidChange to %@", selection);
+    if (selection != _selection && selection != _oldSelection) {
+        DLog(@"Not my selection. Ignore it.");
+        return;
+    }
     [_delegate refresh];
     if (!_selection.live && selection.hasSelection) {
-        iTermPromise<NSString *> *promise = [self recordSelection];
+        iTermPromise<NSString *> *promise = [self recordSelection:selection];
         [promise onQueue:dispatch_get_main_queue() then:^(NSString * _Nonnull value) {
             DLog(@"Update scope variables for selection");
             [_delegate textViewSelectionDidChangeToTruncatedString:value];
@@ -4895,7 +4922,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (NSString *)accessibilityHelperSelectedText {
     return [self selectedTextWithStyle:iTermCopyTextStylePlainText
                           cappedAtSize:0
-                     minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]];
+                     minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]
+                             selection:self.selection];
 }
 
 - (NSURL *)accessibilityHelperCurrentDocumentURL {

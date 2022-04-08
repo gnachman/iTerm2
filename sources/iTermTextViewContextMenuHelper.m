@@ -25,6 +25,7 @@
 #import "iTermVariableScope.h"
 #import "NSColor+iTerm.h"
 #import "RegexKitLite.h"
+#import "URLAction.h"
 #import "WindowControllerInterface.h"
 
 static const int kMaxSelectedTextLengthForCustomActions = 400;
@@ -51,7 +52,9 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
               @(kRunCommandContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCommand:)),
               @(kRunCoprocessContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCoprocess:)),
               @(kSendTextContextMenuAction): NSStringFromSelector(@selector(contextMenuActionSendText:)),
-              @(kRunCommandInWindowContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCommandInWindow:)) };
+              @(kRunCommandInWindowContextMenuAction): NSStringFromSelector(@selector(contextMenuActionRunCommandInWindow:)),
+              @(kCopyContextMenuAction): NSStringFromSelector(@selector(contextMenuActionCopy:))
+    };
 }
 
 // This method is called by control-click or by clicking the hamburger icon in the session title bar.
@@ -824,6 +827,17 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     NSString *command = [sender representedObject];
     DLog(@"Run command in window: %@", command);
     [self.delegate contextMenu:self runCommandInWindow:command];
+}
+
+- (void)contextMenuActionCopy:(id)sender {
+    DLog(@"Copy");
+    URLAction *action = [URLAction castFrom:sender];
+    if (!action) {
+        DLog(@"Sender not an action or nil: %@", sender);
+        return;
+    }
+    const VT100GridWindowedRange range = action.range;
+    [self.delegate contextMenu:self copyRangeAccordingToUserPreferences:range];
 }
 
 - (void)runCommand:(NSString *)command {
