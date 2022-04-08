@@ -31,6 +31,7 @@ void PIDInfoGetGitState(const char *cpath, int timeout) {
     archiver.requiresSecureCoding = YES;
     [archiver encodeObject:state forKey:@"state"];
     [archiver finishEncoding];
-    NSFileHandle *fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:0 closeOnDealloc:YES];
+    NSFileHandle *fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:1
+                                                             closeOnDealloc:YES];
     [fileHandle writeData:archiver.encodedData];
 }

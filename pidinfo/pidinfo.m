@@ -500,78 +500,53 @@ static const char *GetPathToSelf(void) {
             return;
         }
 
-        const char *exe = GetPathToSelf();
-        const char *pathCString = strdup(path.UTF8String);
-        char *timeoutStr = NULL;
-        asprintf(&timeoutStr, "%d", timeout);
-        const int childPID = fork();
-        switch (childPID) {
-            case 0: {
-                // Child
-                // Make the write end of the pipe be file descriptor 0.
-                if (pipeFDs[1] != 0) {
-                  close(0);
-                  dup2(pipeFDs[1], 0);
-                }
-                // Close all file descriptors except 0.
-                const int dtableSize = getdtablesize();
-                for (int j = 1; j < dtableSize; j++) {
-                    close(j);
-                }
-                // exec because this is a multi-threaded program, and multi-threaded programs have
-                // to exec() after fork() if they want to do anything useful.
-                execl(exe, exe, "--git-state", pathCString, timeoutStr, 0);
-                _exit(0);
-            }
-            case -1:
-                // Failed to fork
-                free((void *)timeoutStr);
-                free((void *)exe);
-                free((void *)pathCString);
-                close(pipeFDs[0]);
-                close(pipeFDs[1]);
-                reply(nil);
-                completion();
-                break;
-            default: {
-                // Parent
-                free((void *)timeoutStr);
-                free((void *)exe);
-                free((void *)pathCString);
-                close(pipeFDs[1]);
-                iTermCPUGovernor *governor = [[iTermCPUGovernor alloc] initWithPID:childPID dutyCycle:0.5];
-                // Allow 100% CPU utilization for the first x seconds.
-                [governor setGracePeriodDuration:1.0];
-                const NSInteger token = [governor incr];
-                NSFileHandle *fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:pipeFDs[0] closeOnDealloc:YES];
-                int stat_loc = 0;
-                int waitRC;
-                do {
-                    waitRC = waitpid(childPID, &stat_loc, 0);
-                } while (waitRC == -1 && errno == EINTR);
-                [governor decr:token];
-                if (WIFSIGNALED(stat_loc)) {
-                    // If it timed out don't even try to read because it could be incomplete.
-                    reply(nil);
-                    completion();
-                    break;
-                }
-                NSData *data = [fileHandle readDataToEndOfFile];
-                NSError *error = nil;
-                NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
-                if (!decoder) {
-                    reply(nil);
-                    completion();
-                    break;
-                }
-                
-                iTermGitState *state = [decoder decodeTopLevelObjectOfClass:[iTermGitState class]
-                                                                     forKey:@"state"
-                                                                      error:nil];
-                reply(state);
-                completion();
-            }
+        NSPipe *pipe = [NSPipe pipe];
+
+        NSTask *task = [[NSTask alloc] init];
+        task.launchPath = [NSString stringWithCString:GetPathToSelf()
+                                             encoding:NSUTF8StringEncoding];
+        task.arguments = @[ @"--git-state", path, [@(timeout) stringValue] ];
+        task.standardOutput = pipe;
+        @try {
+            [task launch];
+        } @catch (NSException *exception) {
+            syslog(LOG_ERR, "Exception when launch git state fetcher: %s", exception.description.UTF8String);
+            reply(nil);
+            completion();
+            return;
         }
+
+        const pid_t childPID = task.processIdentifier;
+        iTermCPUGovernor *governor = [[iTermCPUGovernor alloc] initWithPID:childPID
+                                                                 dutyCycle:0.5];
+        // Allow 100% CPU utilization for the first x seconds.
+        [governor setGracePeriodDuration:1.0];
+        const NSInteger token = [governor incr];
+        NSFileHandle *fileHandle = [[NSFileHandle alloc] initWithFileDescriptor:pipe.fileHandleForReading.fileDescriptor
+                                                                 closeOnDealloc:YES];
+        [task waitUntilExit];
+        [governor decr:token];
+        if (task.terminationReason == NSTaskTerminationReasonUncaughtSignal) {
+            // If it timed out don't even try to read because it could be incomplete.
+            reply(nil);
+            completion();
+            return;
+        }
+
+        NSData *data = [fileHandle readDataToEndOfFile];
+        NSError *error = nil;
+        NSKeyedUnarchiver *decoder = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
+        if (!decoder) {
+            reply(nil);
+            completion();
+            return;
+        }
+                
+        iTermGitState *state = [decoder decodeTopLevelObjectOfClass:[iTermGitState class]
+                                                             forKey:@"state"
+                                                              error:nil];
+        reply(state);
+        completion();
     }];
 }
 
