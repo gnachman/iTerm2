@@ -40,6 +40,7 @@ typedef enum {
 @interface iTermURLActionFactory()
 @property (nonatomic) VT100GridCoord coord;
 @property (nonatomic) BOOL respectHardNewlines;
+@property (nonatomic) BOOL alternate;
 @property (nonatomic, copy) NSString *workingDirectory;
 @property (nonatomic, strong) id<VT100RemoteHostReading> remoteHost;
 @property (nonatomic, strong) iTermVariableScope *scope;
@@ -66,6 +67,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
 
 + (instancetype)urlActionAtCoord:(VT100GridCoord)coord
              respectHardNewlines:(BOOL)respectHardNewlines
+                       alternate:(BOOL)alternate
                 workingDirectory:(NSString *)workingDirectory
                            scope:(iTermVariableScope *)scope
                            owner:(id<iTermObject>)owner
@@ -81,6 +83,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     iTermURLActionFactory *factory = [[iTermURLActionFactory alloc] init];
     factory.coord = coord;
     factory.respectHardNewlines = respectHardNewlines;
+    factory.alternate = alternate;
     factory.workingDirectory = workingDirectory;
     factory.remoteHost = remoteHost;
     factory.scope = scope;
@@ -410,10 +413,15 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         URLAction *action = [URLAction urlActionToPerformSmartSelectionRule:smartMatch.rule
                                                                    onString:content];
         action.range = smartRange;
-        ContextMenuActions value = [ContextMenuActionPrefsController actionForActionDict:actions[0]];
+        NSInteger index = 0;
+        if (self.alternate && actions.count > 1) {
+            DLog(@"Selecting alternate action from %@", actions);
+            index = 1;
+        }
+        ContextMenuActions value = [ContextMenuActionPrefsController actionForActionDict:actions[index]];
         action.selector = NSSelectorFromString(self.selectors[@(value)]);
 
-        action.representedObject = @{ iTermSmartSelectionActionContextKeyAction: actions[0],
+        action.representedObject = @{ iTermSmartSelectionActionContextKeyAction: actions[index],
                                       iTermSmartSelectionActionContextKeyComponents: smartMatch.components,
                                       iTermSmartSelectionActionContextKeyWorkingDirectory: self.workingDirectory ?: [NSNull null],
                                       iTermSmartSelectionActionContextKeyRemoteHost: (id)self.remoteHost ?: [NSNull null]};

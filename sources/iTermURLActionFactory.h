@@ -23,6 +23,7 @@
 
 + (instancetype)urlActionAtCoord:(VT100GridCoord)coord
              respectHardNewlines:(BOOL)respectHardNewlines
+                       alternate:(BOOL)alternate
                 workingDirectory:(NSString *)workingDirectory
                            scope:(iTermVariableScope *)scope
                            owner:(id<iTermObject>)owner

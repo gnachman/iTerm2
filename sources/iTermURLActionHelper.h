@@ -76,6 +76,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (id<iTermCancelable>)urlActionForClickAtCoord:(VT100GridCoord)coord
                          respectingHardNewlines:(BOOL)respectHardNewlines
+                                      alternate:(BOOL)alternate
                                      completion:(void (^)(URLAction * _Nullable))completion;
 
 - (void)openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground;

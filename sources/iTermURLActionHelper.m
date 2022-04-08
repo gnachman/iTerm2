@@ -17,6 +17,7 @@
 #import "iTermTextExtractor.h"
 #import "iTermURLActionFactory.h"
 #import "iTermUserDefaults.h"
+#import "NSEvent+iTerm.h"
 #import "NSHost+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSURL+iTerm.h"
@@ -49,11 +50,13 @@
                                      completion:(void (^)(URLAction *))completion {
     return [self urlActionForClickAtCoord:coord
                    respectingHardNewlines:![self ignoreHardNewlinesInURLs]
+                                alternate:NO
                                completion:completion];
 }
 
 - (id<iTermCancelable>)urlActionForClickAtCoord:(VT100GridCoord)coord
                          respectingHardNewlines:(BOOL)respectHardNewlines
+                                      alternate:(BOOL)alternate
                                      completion:(void (^)(URLAction *))completion {
     DLog(@"urlActionForClickAt:%@ respectingHardNewlines:%@",
          VT100GridCoordDescription(coord), @(respectHardNewlines));
@@ -83,6 +86,7 @@
         urlActionFactoryCanceler =
         [iTermURLActionFactory urlActionAtCoord:coord
                             respectHardNewlines:respectHardNewlines
+                                      alternate:alternate
                                workingDirectory:workingDirectory ?: @""
                                           scope:[self.delegate urlActionHelperScope:self]
                                           owner:[self.delegate urlActionHelperOwner:self]
@@ -109,6 +113,7 @@
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
     [self urlActionForClickAtCoord:coord
             respectingHardNewlines:![self ignoreHardNewlinesInURLs]
+                         alternate:!!(event.it_modifierFlags & NSEventModifierFlagOption)
                         completion:^(URLAction *action) {
                             [weakSelf finishOpeningTargetWithEvent:event
                                                              coord:coord
