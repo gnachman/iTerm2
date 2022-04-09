@@ -5,6 +5,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
+#import "iTermBuiltInFunctions.h"
 #import "iTermColorMap.h"
 #import "iTermController.h"
 #import "iTermExpressionEvaluator.h"

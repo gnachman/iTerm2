@@ -22,6 +22,8 @@ from iterm2.connection import Connection, run_until_complete, run_forever, add_d
 
 from iterm2.customcontrol import CustomControlSequenceMonitor
 
+from iterm2.filepanel import OpenPanel, SavePanel
+
 from iterm2.focus import (
     FocusMonitor, FocusUpdateApplicationActive, FocusUpdateWindowChanged,
     FocusUpdateSelectedTabChanged, FocusUpdateActiveSessionChanged,

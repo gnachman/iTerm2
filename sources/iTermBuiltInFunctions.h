@@ -16,6 +16,7 @@ NSString *iTermFunctionSignatureFromNamespaceAndNameAndArguments(NSString * _Nul
 typedef void (^iTermBuiltInFunctionCompletionBlock)(id _Nullable result, NSError * _Nullable error);
 typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull parameters, _Nonnull  iTermBuiltInFunctionCompletionBlock completion);
 
+NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
 @protocol iTermBuiltInFunction<NSObject>
 + (void)registerBuiltInFunction;
 @end
@@ -27,6 +28,9 @@ typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull para
 @property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *defaultValues;
 @property (nonatomic, readonly) iTermBuiltInFunctionsExecutionBlock block;
 
+// All arguments must always be passed, even if they are optional.
+// Optional arguments may take a value of NSNull but must be specified regardless.
+// Default values are paths to variable names, as in iterm2.Reference("id"). These must be omitted at call time and these keys are NOT included in arguments.
 - (instancetype)initWithName:(NSString *)name
                    arguments:(NSDictionary<NSString *, Class> *)argumentsAndTypes
            optionalArguments:(NSSet<NSString *> *)optionalArguments

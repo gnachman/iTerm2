@@ -7,6 +7,7 @@
 
 #import "iTermBuiltInFunctions.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAlertBuiltInFunction.h"
 #import "iTermReflection.h"
 #import "iTermSetStatusBarComponentUnreadCountBuiltInFunction.h"
@@ -92,7 +93,8 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
 - (nullable NSError *)typeCheckParameters:(NSDictionary<NSString *, id> *)parameters {
     for (NSString *name in parameters) {
         Class actual = [parameters[name] class];
-        if ([actual isKindOfClass:[NSNull class]] && [_optionalArguments containsObject:name]) {
+        if ([parameters[name] isKindOfClass:[NSNull class]] &&
+            [_optionalArguments containsObject:name]) {
             continue;
         }
         Class expected = _argumentsAndTypes[name];
@@ -150,6 +152,8 @@ NSString *iTermNamespaceFromSignature(NSString *signature) {
     [iTermAlertBuiltInFunction registerBuiltInFunction];
     [iTermGetStringBuiltInFunction registerBuiltInFunction];
     [iTermSetStatusBarComponentUnreadCountBuiltInFunction registerBuiltInFunction];
+    [iTermOpenPanelBuiltInFunction registerBuiltInFunction];
+    [iTermSavePanelBuiltInFunction registerBuiltInFunction];
 }
 
 + (instancetype)sharedInstance {
