@@ -8,6 +8,7 @@
 #import "iTermTextViewContextMenuHelper.h"
 
 #import "DebugLogging.h"
+#import "NSDictionary+iTerm.h"
 #import "NSURL+iTerm.h"
 #import "SCPPath.h"
 #import "SmartSelectionController.h"
@@ -692,10 +693,11 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                     NSMenuItem *theItem = [[NSMenuItem alloc] initWithTitle:theTitle
                                                                      action:mySelector
                                                               keyEquivalent:@""];
-                    [theItem setRepresentedObject:@{ iTermSmartSelectionActionContextKeyAction: action,
-                                                     iTermSmartSelectionActionContextKeyComponents: components,
-                                                     iTermSmartSelectionActionContextKeyWorkingDirectory: workingDirectory,
-                                                     iTermSmartSelectionActionContextKeyRemoteHost: remoteHost} ];
+                    NSDictionary *dict = [@{ iTermSmartSelectionActionContextKeyAction: action,
+                                             iTermSmartSelectionActionContextKeyComponents: components,
+                                             iTermSmartSelectionActionContextKeyWorkingDirectory: workingDirectory ?: [NSNull null],
+                                             iTermSmartSelectionActionContextKeyRemoteHost: (id)remoteHost ?: (id)[NSNull null]} dictionaryByRemovingNullValues];
+                    [theItem setRepresentedObject:dict];
                     [theItem setTarget:self];
                     [theMenu addItem:theItem];
                     didAdd = YES;
