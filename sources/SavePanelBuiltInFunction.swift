@@ -64,7 +64,9 @@ class SavePanelBuiltInFunction: NSObject, iTermBuiltInFunctionProtocol {
             context: .app) { parameters, completion in
                 let panel = NSSavePanel()
 
-                panel.directoryURL = URL(fileURLWithPath: parameters[pathArgName] as? String ?? NSHomeDirectory())
+                if let path = parameters[pathArgName] as? String {
+                    panel.directoryURL = URL(fileURLWithPath: path)
+                }
                 if let types = parameters[extensionsArgName] as? [String] {
                     if #available(macOS 11, *) {
                         panel.allowedContentTypes = types.compactMap { UTType.init(filenameExtension: $0) }
@@ -100,7 +102,7 @@ class SavePanelBuiltInFunction: NSObject, iTermBuiltInFunctionProtocol {
                 if response == .OK, let url = panel.url {
                     completion(url.path, nil)
                 } else {
-                    completion(nil, NSError(domain: "com.iterm2", code: 0))
+                    completion(nil, nil)
                 }
             }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction,
