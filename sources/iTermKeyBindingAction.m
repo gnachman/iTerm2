@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermPasteSpecialViewController.h"
 #import "iTermSnippetsModel.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "PTYTextView.h"  // just for PTYTextViewSelectionExtensionUnit
 #import "ProfileModel.h"
@@ -28,6 +29,34 @@ static NSString *GetProfileName(NSString *guid) {
 
 @implementation iTermKeyBindingAction {
     NSDictionary *_dictionary;
+}
+
++ (instancetype)fromString:(NSString *)string {
+    NSData *decoded = [[NSData alloc] initWithBase64EncodedString:string options:0];
+    if (!decoded) {
+        return nil;
+    }
+    NSDictionary *dict = [NSJSONSerialization JSONObjectWithData:decoded options:0 error:nil];
+    if (!dict) {
+        return nil;
+    }
+    return [self withDictionary:dict];
+}
+
+- (NSString *)stringValue {
+    NSDictionary *dict = [self dictionaryValue];
+    if (!dict) {
+        return nil;
+    }
+    NSData *json = [NSJSONSerialization dataWithJSONObject:dict options:0 error:nil];
+    if (!json) {
+        return nil;
+    }
+    NSData *data = [json base64EncodedDataWithOptions:0];
+    if (!data) {
+        return nil;
+    }
+    return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
 }
 
 + (instancetype)withDictionary:(NSDictionary *)dictionary {
@@ -373,6 +402,12 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_DUPLICATE_TAB:
             actionString = @"Duplicate Tab";
             break;
+        case KEY_ACTION_SEQUENCE: {
+            NSArray<NSString *> *names = [[_parameter keyBindingActionsFromSequenceParameter] mapWithBlock:^id _Nullable(iTermKeyBindingAction * _Nonnull action) {
+                return [action displayName];
+            }];
+            return [names componentsJoinedByString:@", then "];
+        }
         default:
             actionString = [NSString stringWithFormat: @"%@ %d", @"Unknown Action ID", _keyAction];
             break;
@@ -456,6 +491,11 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_DUPLICATE_TAB:
         case KEY_ACTION_MOVE_TO_SPLIT_PANE:
             break;
+
+        case KEY_ACTION_SEQUENCE:
+            return [[self.parameter keyBindingActionsFromSequenceParameter] anyWithBlock:^BOOL(iTermKeyBindingAction *action) {
+                return action.sendsText;
+            }];
     }
     return NO;
 }
@@ -532,8 +572,38 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_DUPLICATE_TAB:
         case KEY_ACTION_MOVE_TO_SPLIT_PANE:
             break;
+
+        case KEY_ACTION_SEQUENCE:
+            return [[self.parameter keyBindingActionsFromSequenceParameter] anyWithBlock:^BOOL(iTermKeyBindingAction *action) {
+                return action.isActionable;
+            }];
     }
     return YES;
+}
+
+@end
+
+@implementation NSString(iTermKeyBindingAction)
+
++ (instancetype)parameterForKeyBindingActionSequence:(NSArray<iTermKeyBindingAction *> *)actions {
+    NSArray<NSDictionary *> *dicts = [actions mapWithBlock:^id _Nullable(iTermKeyBindingAction * _Nonnull action) {
+        return action.dictionaryValue;
+    }];
+    NSData *data = [NSJSONSerialization dataWithJSONObject:dicts options:0 error:nil];
+    return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] ?: @"";
+}
+
+- (NSArray<iTermKeyBindingAction *> *)keyBindingActionsFromSequenceParameter {
+    NSArray<NSDictionary *> *dicts = [NSJSONSerialization JSONObjectWithData:[self dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil];
+    if (![dicts isKindOfClass:[NSArray class]]) {
+        return @[];
+    }
+    return [dicts mapWithBlock:^id _Nullable(NSDictionary * _Nonnull dict) {
+        if (![dict isKindOfClass:[NSDictionary class]]) {
+            return nil;
+        }
+        return [iTermKeyBindingAction withDictionary:dict];
+    }];
 }
 
 @end

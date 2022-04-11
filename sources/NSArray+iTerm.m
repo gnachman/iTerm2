@@ -687,6 +687,12 @@ void iTermFreeeNullTerminatedCStringArray(const char **array) {
     }];
 }
 
+- (NSArray *)arrayByRemovingNulls {
+    return [self filteredArrayUsingBlock:^BOOL(id anObject) {
+        return ![anObject isKindOfClass:[NSNull class]];
+    }];
+}
+
 @end
 
 @implementation NSMutableArray (iTerm)

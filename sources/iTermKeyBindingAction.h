@@ -92,7 +92,8 @@ typedef NS_ENUM(int, KEY_ACTION) {
     KEY_ACTION_MOVE_TO_SPLIT_PANE = 62,
     KEY_ACTION_SEND_SNIPPET = 63,
     KEY_ACTION_COMPOSE = 64,
-    KEY_ACTION_SEND_TMUX_COMMAND = 65
+    KEY_ACTION_SEND_TMUX_COMMAND = 65,
+    KEY_ACTION_SEQUENCE = 66
 };
 
 @interface iTermKeyBindingAction : NSObject
@@ -101,6 +102,7 @@ typedef NS_ENUM(int, KEY_ACTION) {
 @property (nonatomic, readonly) NSString *label;
 @property (nonatomic, readonly) NSString *displayName;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
+@property (nonatomic, readonly) NSString *stringValue;
 @property (nonatomic, readonly) BOOL sendsText;
 @property (nonatomic, readonly) BOOL isActionable;
 @property (nonatomic, readonly) iTermSendTextEscaping escaping;
@@ -117,8 +119,15 @@ typedef NS_ENUM(int, KEY_ACTION) {
                      label:(NSString *)label
                   escaping:(iTermSendTextEscaping)escaping;
 
++ (instancetype)fromString:(NSString *)string;
+
 - (instancetype)init NS_UNAVAILABLE;
 
+@end
+
+@interface NSString(iTermKeyBindingAction)
++ (instancetype)parameterForKeyBindingActionSequence:(NSArray<iTermKeyBindingAction *> *)actions;
+- (NSArray<iTermKeyBindingAction *> *)keyBindingActionsFromSequenceParameter;
 @end
 
 NS_ASSUME_NONNULL_END

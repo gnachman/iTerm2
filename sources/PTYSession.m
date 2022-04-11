@@ -8144,6 +8144,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_UNDO:
             [PTYSession selectMenuItemWithSelector:@selector(undo:)];
             return YES;
+
+        case KEY_ACTION_SEQUENCE: {
+            NSArray<iTermKeyBindingAction *> *subactions = [action.parameter keyBindingActionsFromSequenceParameter];
+            for (iTermKeyBindingAction *subaction in subactions) {
+                [self performKeyBindingAction:subaction event:event];
+            }
+            return YES;
+        }
     }
     assert(false);
     return NO;
@@ -8370,6 +8378,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
 
         case KEY_ACTION_FIND_REGEX:
+            [_view createFindDriverIfNeeded];
             [_view.findDriver closeViewAndDoTemporarySearchForString:action.parameter
                                                                 mode:iTermFindModeCaseSensitiveRegex];
             break;
@@ -8478,6 +8487,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_MOVE_TO_SPLIT_PANE:
             [self textViewMovePane];
             break;
+
+        case KEY_ACTION_SEQUENCE: {
+            PTYSession *session = self;
+            for (iTermKeyBindingAction *subaction in [action.parameter keyBindingActionsFromSequenceParameter]) {
+                [session performKeyBindingAction:subaction event:event];
+                session = [[[iTermController sharedInstance] currentTerminal] currentSession] ?: self;
+            }
+        }
         default:
             XLog(@"Unknown key action %@", action);
             break;

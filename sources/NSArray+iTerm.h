@@ -129,6 +129,7 @@
 + (instancetype)mapIntegersFrom:(NSInteger)min to:(NSInteger)noninclusiveUpperBound block:(ObjectType (^NS_NOESCAPE)(NSInteger i))block;
 
 - (NSArray *)arrayByStrongifyingWeakBoxes;
+- (NSArray<ObjectType> *)arrayByRemovingNulls;
 
 @end
 

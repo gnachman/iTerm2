@@ -170,7 +170,7 @@ private extension SearchableComboViewItem {
 
 @objc(iTermMenuItemPopupView)
 class MenuItemPopupView: NSView {
-    private var comboView: SearchableComboView? = nil
+    @objc private(set) var comboView: SearchableComboView? = nil
     @IBOutlet var delegate: SearchableComboViewDelegate? {
         set {
             comboView?.delegate = newValue
@@ -205,6 +205,7 @@ class MenuItemPopupView: NSView {
         let newComboView = SearchableComboView(SearchableComboViewGroup.fromMainMenu(),
                                                defaultTitle: "Select Menu Item…")
         newComboView.frame = self.bounds
+        newComboView.delegate = comboView?.delegate
         addSubview(newComboView)
         comboView = newComboView
         if let identifier = identifier {

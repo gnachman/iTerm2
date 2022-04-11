@@ -2346,6 +2346,7 @@
 		A680AA1318CEA1040034D4F8 /* VT100TmuxParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1118CEA1040034D4F8 /* VT100TmuxParser.h */; };
 		A680AA1818CEBF5C0034D4F8 /* NSMutableData+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */; };
 		A682273C2801F355005DF0B4 /* SavePanelBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A682273B2801F355005DF0B4 /* SavePanelBuiltInFunction.swift */; };
+		A682273E280355A8005DF0B4 /* KeyActionSequenceTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A682273D280355A8005DF0B4 /* KeyActionSequenceTableViewController.swift */; };
 		A682DE96190C5E7000BE8758 /* iTermProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */; };
 		A682DE9B1915DB1F00BE8758 /* iTermFlippedView.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE991915DB1F00BE8758 /* iTermFlippedView.h */; };
 		A68400A61FF82424008D3EE2 /* iTermIndicatorRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = A68400A41FF82424008D3EE2 /* iTermIndicatorRenderer.h */; };
@@ -5917,6 +5918,7 @@
 		A680AA1618CEBF5C0034D4F8 /* NSMutableData+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSMutableData+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = "NSMutableData+iTerm.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A682273B2801F355005DF0B4 /* SavePanelBuiltInFunction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavePanelBuiltInFunction.swift; sourceTree = "<group>"; };
+		A682273D280355A8005DF0B4 /* KeyActionSequenceTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyActionSequenceTableViewController.swift; sourceTree = "<group>"; };
 		A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermProgressIndicator.h; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermProgressIndicator.m; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE991915DB1F00BE8758 /* iTermFlippedView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFlippedView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -7916,6 +7918,7 @@
 				A6024B7F254CE2000036D6CF /* iTermAddTriggerViewController.m */,
 				A6024B80254CE2000036D6CF /* iTermAddTriggerViewController.xib */,
 				A6A73D6427CCA408002E4CCA /* DonateViewController.swift */,
+				A682273D280355A8005DF0B4 /* KeyActionSequenceTableViewController.swift */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -14482,6 +14485,7 @@
 				A6AFD68924496EF1007D0660 /* iTermMultiServerMessageBuilder.m in Sources */,
 				A69D559C232A0CF3002E0F99 /* iTermSessionLauncher.m in Sources */,
 				A6E7352C20EC04B40034FCFD /* PTYTab.m in Sources */,
+				A682273E280355A8005DF0B4 /* KeyActionSequenceTableViewController.swift in Sources */,
 				A6D10E4027F8CD230026DB56 /* iTermWarning.m in Sources */,
 				A6E16C7524A880A100C6DB06 /* AMIndeterminateProgressIndicator.m in Sources */,
 				A6556EAA1FCB42E0000CC89C /* iTermCharacterSource.m in Sources */,
