@@ -499,7 +499,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
         theCopy->is_partial = is_partial;
         theCopy->cached_numlines = cached_numlines;
         theCopy->cached_numlines_width = cached_numlines_width;
-        theCopy->_numberOfFullLinesCache = _numberOfFullLinesCache;
+        // Don't copy the cache because doing so is expensive. I blame C++.
         theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
 
         // Preserve these so delta encoding will continue to work when you encode a copy.
