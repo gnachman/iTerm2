@@ -232,6 +232,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     [self copyFastStuffFrom:source];
 
     if (!_linebuffer || source.linebuffer.dirty) {
+        [source.linebuffer seal];
         [_linebuffer mergeFrom:source.linebuffer];
     }
     [_primaryGrid copyDirtyFromGrid:source.primaryGrid];
