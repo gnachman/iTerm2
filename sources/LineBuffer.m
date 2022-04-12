@@ -1311,9 +1311,11 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     while (_lineBlocks.blocks.count > numberOfBlocks) {
         [_lineBlocks removeLastBlock];
     }
-    [_lineBlocks removeLastBlock];
-    [_lineBlocks addBlock:lastBlock];
-
+    if (lastBlock) {
+        [_lineBlocks removeLastBlock];
+        [_lineBlocks addBlock:lastBlock];
+    }
+    
     if (gDebugLogging) {
         [_lineBlocks sanityCheck];
     }
