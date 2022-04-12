@@ -438,7 +438,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
             // I don't own my memory so I should not free it. Remove myself from the owner's client
             // list to ensure its list of clients doesn't get too big.f
             [self.owner.clients removeObjectsPassingTest:^BOOL(iTermWeakBox<LineBlock *> *box) {
-                return box.object == self;
+                return box.object == self || box.object == nil;
             }];
         }
     }
