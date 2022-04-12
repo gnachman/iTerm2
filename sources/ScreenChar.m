@@ -144,7 +144,12 @@ NSString *CharToStr(unichar code, BOOL isComplex) {
 }
 
 int ExpandScreenChar(const screen_char_t *sct, unichar* dest) {
-    return [GetComplexCharRegistry() expandScreenChar:sct[0] to:dest];;
+    if (!sct[0].complexChar) {
+        // Fast path
+        *dest = sct[0].code;
+        return 1;
+    }
+    return [GetComplexCharRegistry() expandScreenChar:sct[0] to:dest];
 }
 
 UTF32Char CharToLongChar(unichar code, BOOL isComplex)
