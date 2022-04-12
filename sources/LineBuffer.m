@@ -1294,11 +1294,19 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
     LineBlock *lastBlock = [_lineBlocks.blocks.lastObject cowCopy];
     const int savedMaxLines = max_lines;
+    const int savedNumLines = num_wrapped_lines_cache;
+    const int savedNumLinesWidth = num_wrapped_lines_width;
+    // Don't try to restore _mayHaveDoubleWidthCharacter because setting it also modifies the line
+    // blocks. It has to be a monotonic transition and is OK to leave because it's merely a
+    // heuristic.
+
     const NSInteger numberOfBlocks = _lineBlocks.blocks.count;
 
     max_lines = -1;
     block();
     max_lines = savedMaxLines;
+    num_wrapped_lines_cache = savedNumLines;
+    num_wrapped_lines_width = savedNumLinesWidth;
 
     while (_lineBlocks.blocks.count > numberOfBlocks) {
         [_lineBlocks removeLastBlock];
