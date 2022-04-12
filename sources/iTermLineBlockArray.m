@@ -175,8 +175,15 @@
     for (LineBlock *block in _blocks) {
         [block removeObserver:self];
     }
+
+    // Do this serially to avoid lock contention.
+    static dispatch_queue_t queue;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        queue = dispatch_queue_create("com.iterm2.free-line-blocks", DISPATCH_QUEUE_SERIAL);
+    });
     NSMutableArray<LineBlock *> *blocks = _blocks;
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+    dispatch_async(queue, ^{
         [blocks removeAllObjects];
     });
 }
