@@ -63,8 +63,8 @@ typedef struct {
     int length;
 } LineBlockLocation;
 
-const unichar kPrefixChar = 1;
-const unichar kSuffixChar = 2;
+const unichar kPrefixChar = REGEX_START;
+const unichar kSuffixChar = REGEX_END;
 
 void EnableDoubleWidthCharacterLineCache() {
     gEnableDoubleWidthCharacterLineCache = YES;
@@ -1631,9 +1631,9 @@ static int CoreSearch(NSString *needle,
         NSRange temp;
         NSString* rewrittenRegex = RewrittenRegex(needle);
         NSString* sanitizedHaystack = [haystack stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%c", kPrefixChar]
-                                                                          withString:[NSString stringWithFormat:@"%c", 3]];
+                                                                          withString:[NSString stringWithFormat:@"%c", IMPOSSIBLE_CHAR]];
         sanitizedHaystack = [sanitizedHaystack stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%c", kSuffixChar]
-                                                                         withString:[NSString stringWithFormat:@"%c", 3]];
+                                                                         withString:[NSString stringWithFormat:@"%c", IMPOSSIBLE_CHAR]];
 
         NSString* sandwich;
         BOOL hasPrefix = YES;

@@ -38,7 +38,7 @@
 @protocol iTermImageInfoReading;
 
 #define ITERM2_PRIVATE_BEGIN 0x0001
-#define ITERM2_PRIVATE_END 0x0004
+#define ITERM2_PRIVATE_END 0x0007
 
 // This is used in the rightmost column when a double-width character would
 // have been split in half and was wrapped to the next line. It is nonprintable
@@ -59,6 +59,13 @@
 // Double-width characters have their "real" code in one cell and this code in
 // the right-hand cell.
 #define DWC_RIGHT (ITERM2_PRIVATE_BEGIN + 3)
+
+// Placed in searchings while searching to match ^ or $
+#define REGEX_START (ITERM2_PRIVATE_BEGIN + 4)
+#define REGEX_END (ITERM2_PRIVATE_BEGIN + 5)
+
+// This never occurs in a string.
+#define IMPOSSIBLE_CHAR (ITERM2_PRIVATE_BEGIN + 6)
 
 // The range of private codes we use, with specific instances defined
 // above here.
