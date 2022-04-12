@@ -1751,11 +1751,15 @@
     return _secondaryFont.font;
 }
 
-- (void)setFont:(NSFont*)aFont
-    nonAsciiFont:(NSFont *)nonAsciiFont
+- (void)setFont:(NSFont*)proposedASCIIFont
+    nonAsciiFont:(NSFont *)proposedNonASCIIFont
     horizontalSpacing:(CGFloat)horizontalSpacing
     verticalSpacing:(CGFloat)verticalSpacing {
-    NSSize sz = [PTYTextView charSizeForFont:aFont
+    NSFont *asciiFont = proposedASCIIFont;
+    if (!asciiFont) {
+        asciiFont = [NSFont userFixedPitchFontOfSize:0.0];
+    }
+    NSSize sz = [PTYTextView charSizeForFont:asciiFont
                            horizontalSpacing:1.0
                              verticalSpacing:1.0];
 
@@ -1766,11 +1770,12 @@
     self.charWidth = ceil(_charWidthWithoutSpacing * horizontalSpacing);
     self.lineHeight = ceil(_charHeightWithoutSpacing * verticalSpacing);
 
-    _primaryFont.font = aFont;
+    _primaryFont.font = asciiFont;
     _primaryFont.boldVersion = [_primaryFont computedBoldVersion];
     _primaryFont.italicVersion = [_primaryFont computedItalicVersion];
     _primaryFont.boldItalicVersion = [_primaryFont computedBoldItalicVersion];
 
+    NSFont *nonAsciiFont = proposedNonASCIIFont ?: asciiFont;
     _secondaryFont.font = nonAsciiFont;
     _secondaryFont.boldVersion = [_secondaryFont computedBoldVersion];
     _secondaryFont.italicVersion = [_secondaryFont computedItalicVersion];
