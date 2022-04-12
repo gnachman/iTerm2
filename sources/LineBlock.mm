@@ -1602,6 +1602,9 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
     return rewritten;
 }
 
+// Returns the index into rawline that a result was found.
+// Fills in *resultLength with the number of screen_char_t's the result spans.
+// Fills in *rangeOut with the range of haystack/charHaystack where the result was found.
 static int CoreSearch(NSString *needle,
                       const screen_char_t *rawline,
                       int raw_line_length,
@@ -1610,10 +1613,12 @@ static int CoreSearch(NSString *needle,
                       FindOptions options,
                       iTermFindMode mode,
                       int *resultLength,
-                      NSString *haystack,
+                      NSString *entireHaystack,
+                      NSRange haystackRange,
                       unichar *charHaystack,
-                      int *deltas,
-                      int deltaOffset) {
+                      const int *deltas,
+                      int deltaOffset,
+                      NSRange *rangeOut) {
     RKLRegexOptions apiOptions = RKLNoOptions;
     NSRange range;
     const BOOL regex = (mode == iTermFindModeCaseInsensitiveRegex ||
@@ -1630,6 +1635,8 @@ static int CoreSearch(NSString *needle,
         NSError* regexError = nil;
         NSRange temp;
         NSString* rewrittenRegex = RewrittenRegex(needle);
+        // TODO: This is grossly inefficient. If you have a short needle and a long haystack this is done many times per raw line.
+        NSString *haystack = [entireHaystack substringWithRange:haystackRange];
         NSString* sanitizedHaystack = [haystack stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%c", kPrefixChar]
                                                                           withString:[NSString stringWithFormat:@"%c", IMPOSSIBLE_CHAR]];
         sanitizedHaystack = [sanitizedHaystack stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%c", kSuffixChar]
@@ -1650,6 +1657,8 @@ static int CoreSearch(NSString *needle,
             sandwich = [NSString stringWithFormat:@"%C%@", kPrefixChar, sanitizedHaystack];
         }
 
+        // TODO: RegexKitLite is grossly inefficient. It compiles the regex each and every time. Use NSRegularExpression instead.
+        // Also in the backwards code below.
         temp = [sandwich rangeOfRegex:rewrittenRegex
                               options:apiOptions
                               inRange:NSMakeRange(0, [sandwich length])
@@ -1722,7 +1731,14 @@ static int CoreSearch(NSString *needle,
         if ((options & FindOptEmptyQueryMatches) == FindOptEmptyQueryMatches && needle.length == 0) {
             range = NSMakeRange(0, 0);
         } else {
-            range = [haystack rangeOfString:needle options:apiOptions];
+            const NSRange foundRange = [entireHaystack rangeOfString:needle options:apiOptions range:haystackRange];
+            if (foundRange.location == NSNotFound) {
+                range = foundRange;
+            } else {
+                // `range` needs to be relative to `haystackRange`.
+                range = NSMakeRange(foundRange.location - haystackRange.location,
+                                    foundRange.length);
+            }
         }
     }
     int result = -1;
@@ -1735,39 +1751,39 @@ static int CoreSearch(NSString *needle,
         *resultLength = adjustedLength;
         result = adjustedLocation + start;
     }
+    if (rangeOut) {
+        *rangeOut = range;
+    }
     return result;
 }
 
-static int Search(NSString *needle,
-                  const screen_char_t *rawline,
-                  int raw_line_length,
-                  int start,
-                  int end,
-                  FindOptions options,
-                  iTermFindMode mode,
-                  int* resultLength)
-{
-    NSString* haystack;
-    unichar* charHaystack;
-    int* deltas;
-    // TODO:
-    // This is quadratic! When we have a long line of x's and the search is for x we do this for the
-    // whole line starting at 0, then again starting at 1, then 2, etc.
-    // It would be better to call ScreenCharArrayToString() once in
-    // _findInRawLine:needle:options:mode:skip:length:multipleResults:results:
-    // and then pass suffixes of it to CoreSearch.
-    haystack = ScreenCharArrayToString(rawline,
-                                       start,
-                                       end,
-                                       &charHaystack,
-                                       &deltas);
-    // screen_char_t[i + deltas[i]] begins its run at charHaystack[i]
-    int result = CoreSearch(needle, rawline, raw_line_length, start, end, options, mode, resultLength,
-                            haystack, charHaystack, deltas, deltas[0]);
-
-    free(deltas);
-    free(charHaystack);
-    return result;
+// This may return a value for the next cell if `cellOffset` points at something without a corresponding
+// code point, such as a DWC_RIGHT.
+static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offset with this cell offset
+                                     const int *deltas,  // indexed by code point
+                                     int numCodePoints) {
+    // `deltas[i] + i` gives the cell offset for UTF-16 offset `i`.
+    // Example:
+    //
+    //         0  1  2  3  4  5  6  7  8  9  A
+    // cells   a  b  -  c  -  d  e  -  f  g
+    // utf-16  a  b  c  d  +  +  e  f  +  +  g         // + means combining mark
+    // deltas  0  0  1  2  1  0  0  1  0 -1 -1
+    //
+    // An index `i` into utf-16 can be converted to an index into cells by adding `deltas[i]`.
+    // To go in reverse is more difficult. Starting with an index in cells doesn't give you a
+    // clue where to look in deltas. There can easily be more cells than deltas (e.g., lots of
+    // DWCs and no combining marks).
+    //
+    // You could do a binary search but I haven't implemented it yet because it
+    // adds risk and this is fast enough.
+    for (int utf16Index = 0; utf16Index < numCodePoints; utf16Index++) {
+        const int cellIndex = utf16Index + deltas[utf16Index];
+        if (cellIndex >= cellOffset) {
+            return utf16Index;
+        }
+    }
+    return numCodePoints;
 }
 
 - (void)_findInRawLine:(int)entry
@@ -1785,6 +1801,16 @@ static int Search(NSString *needle,
     if (skip < 0) {
         skip = 0;
     }
+
+    NSString *haystack;
+    unichar *charHaystack;
+    int *deltas;
+    haystack = ScreenCharArrayToString(rawline,
+                                       0,
+                                       raw_line_length,
+                                       &charHaystack,
+                                       &deltas);
+
     if (options & FindOptBackwards) {
         // This algorithm is wacky and slow but stay with me here:
         // When you search backward, the most common case is that you are
@@ -1830,14 +1856,6 @@ static int Search(NSString *needle,
         int tempResultLength = 0;
         int tempPosition;
 
-        NSString* haystack;
-        unichar* charHaystack;
-        int* deltas;
-        haystack = ScreenCharArrayToString(rawline,
-                                           0,
-                                           limit,
-                                           &charHaystack,
-                                           &deltas);
         int numUnichars = [haystack length];
         const unsigned long long kMaxSaneStringLength = 1000000000LL;
         NSRange previousRange = NSMakeRange(NSNotFound, 0);
@@ -1849,8 +1867,19 @@ static int Search(NSString *needle,
                 // terminate.
                 break;
             }
-            tempPosition = CoreSearch(needle, rawline, raw_line_length, 0, limit, options,
-                                      mode, &tempResultLength, haystack, charHaystack, deltas, 0);
+            tempPosition = CoreSearch(needle,
+                                      rawline,
+                                      raw_line_length, 0,
+                                      limit,
+                                      options,
+                                      mode,
+                                      &tempResultLength,
+                                      haystack,
+                                      NSMakeRange(0, haystack.length),
+                                      charHaystack,
+                                      deltas,
+                                      0,
+                                      NULL);
 
             limit = tempPosition + tempResultLength - 1;
             // find i so that i-deltas[i] == limit
@@ -1868,15 +1897,29 @@ static int Search(NSString *needle,
                 [results addObject:r];
             }
         } while (tempPosition != -1 && (multipleResults || tempPosition > skip));
-        free(deltas);
-        free(charHaystack);
     } else {
         // Search forward
-        int tempResultLength;
-        int tempPosition;
+        NSRange resultRange = NSMakeRange(UTF16OffsetFromCellOffset(skip, deltas, raw_line_length), 0);
         while (skip < raw_line_length) {
-            tempPosition = Search(needle, rawline, raw_line_length, skip, raw_line_length,
-                                  options, mode, &tempResultLength);
+            const NSInteger codePointsToSkip = NSMaxRange(resultRange);
+            int tempResultLength = 0;
+            NSRange relativeResultRange = NSMakeRange(0, 0);
+            int tempPosition = CoreSearch(needle,
+                                          rawline,
+                                          raw_line_length,
+                                          skip,
+                                          raw_line_length,
+                                          options,
+                                          mode,
+                                          &tempResultLength,
+                                          haystack,
+                                          NSMakeRange(codePointsToSkip, haystack.length - codePointsToSkip),
+                                          charHaystack + codePointsToSkip,
+                                          deltas + skip,
+                                          deltas[skip],
+                                          &relativeResultRange);
+            resultRange = NSMakeRange(relativeResultRange.location + codePointsToSkip,
+                                      relativeResultRange.length);
             if (tempPosition != -1) {
                 ResultRange *r = [[ResultRange alloc] init];
                 r->position = tempPosition;
@@ -1894,6 +1937,8 @@ static int Search(NSString *needle,
             }
         }
     }
+    free(deltas);
+    free(charHaystack);
 }
 
 - (int) _lineLength: (int) anIndex
