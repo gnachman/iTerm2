@@ -1750,6 +1750,12 @@ static int Search(NSString *needle,
     NSString* haystack;
     unichar* charHaystack;
     int* deltas;
+    // TODO:
+    // This is quadratic! When we have a long line of x's and the search is for x we do this for the
+    // whole line starting at 0, then again starting at 1, then 2, etc.
+    // It would be better to call ScreenCharArrayToString() once in
+    // _findInRawLine:needle:options:mode:skip:length:multipleResults:results:
+    // and then pass suffixes of it to CoreSearch.
     haystack = ScreenCharArrayToString(rawline,
                                        start,
                                        end,
