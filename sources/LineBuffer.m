@@ -36,6 +36,7 @@
 #import "iTermMalloc.h"
 #import "iTermOrderedDictionary.h"
 #import "LineBlock.h"
+#import "LineBufferSorting.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSSet+iTerm.h"
@@ -905,26 +906,19 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     if (width <= 0) {
         return nil;
     }
-    // Create sorted array of all positions to convert.
-    NSMutableArray* unsortedPositions = [NSMutableArray arrayWithCapacity:[resultRanges count] * 2];
-    for (ResultRange* rr in resultRanges) {
-        [unsortedPositions addObject:[NSNumber numberWithInt:rr->position]];
-        [unsortedPositions addObject:[NSNumber numberWithInt:rr->position + rr->length - 1]];
-    }
-
-    // Walk blocks and positions in parallel, converting each position in order. Store in
-    // intermediate dict, mapping position->NSPoint(x,y)
-    NSArray *positionsArray = [unsortedPositions sortedArrayUsingSelector:@selector(compare:)];
+    int *sortedPositions = SortedPositionsFromResultRanges(resultRanges);
     int i = 0;
     int yoffset = 0;
     int numBlocks = _lineBlocks.count;
     int passed = 0;
     LineBlock *block = _lineBlocks[0];
     int used = [block rawSpaceUsed];
-    NSMutableDictionary* intermediate = [NSMutableDictionary dictionaryWithCapacity:[resultRanges count] * 2];
+
+    LineBufferSearchIntermediateMap *intermediate = [[LineBufferSearchIntermediateMap alloc] initWithCapacity:resultRanges.count * 2];
     int prev = -1;
-    for (NSNumber* positionNum in positionsArray) {
-        int position = [positionNum intValue];
+    const int numPositions = resultRanges.count * 2;
+    for (int j = 0; j < numPositions; j++) {
+        const int position = sortedPositions[j];
         if (position == prev) {
             continue;
         }
@@ -953,8 +947,8 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
             assert(x < 2000);
             if (isOk) {
                 y += yoffset;
-                [intermediate setObject:[NSValue valueWithPoint:NSMakePoint(x, y)]
-                                 forKey:positionNum];
+                [intermediate addCoordinate:VT100GridCoordMake(x, y)
+                                forPosition:position];
             } else {
                 assert(false);
             }
@@ -962,22 +956,16 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     }
 
     // Walk the positions array and populate results by looking up points in intermediate dict.
-    NSMutableArray* result = [NSMutableArray arrayWithCapacity:[resultRanges count]];
-    for (ResultRange* rr in resultRanges) {
-        NSValue *start = [intermediate objectForKey:[NSNumber numberWithInt:rr->position]];
-        NSValue *end = [intermediate objectForKey:[NSNumber numberWithInt:rr->position + rr->length - 1]];
-        if (start && end) {
-            XYRange *xyrange = [[XYRange alloc] init];
-            NSPoint startPoint = [start pointValue];
-            NSPoint endPoint = [end pointValue];
-            xyrange->xStart = startPoint.x;
-            xyrange->yStart = startPoint.y;
-            xyrange->xEnd = endPoint.x;
-            xyrange->yEnd = endPoint.y;
-            [result addObject:xyrange];
-        }
-    }
-
+    NSMutableArray* result = [NSMutableArray arrayWithCapacity:[resultRanges count] * 2];
+    [intermediate enumerateCoordPairsForRanges:resultRanges block:^(VT100GridCoord start, VT100GridCoord end) {
+        XYRange *xyrange = [[XYRange alloc] init];
+        xyrange->xStart = start.x;
+        xyrange->yStart = start.y;
+        xyrange->xEnd = end.x;
+        xyrange->yEnd = end.y;
+        [result addObject:xyrange];
+    }];
+    free(sortedPositions);
     return result;
 }
 
