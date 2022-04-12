@@ -39,6 +39,16 @@ VT100ScreenSideEffectPerforming> {
     VT100ScreenMutableState *_mutableState;
 
     __weak id<VT100ScreenDelegate> delegate_;  // PTYSession implements this
+
+    // Copy of line buffer that's valid until the next sync. Used for find-on-page to avoid making
+    // many copies of the line buffer, which is slow.
+    LineBuffer *_searchBuffer;
+
+    // Gets reset to NO on each sync and gets set to YES when accessing _searchBuffer.
+    // This way if you're not doing a search we can release _searchBuffer at sync time.
+    // If you used it last time, we can merge it, which is faster than making a copy of
+    // the whole buffer.
+    BOOL _wantsSearchBuffer;
 }
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers;

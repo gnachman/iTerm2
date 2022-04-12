@@ -92,6 +92,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_mutableState release];
     [_findContext release];
     [_animatedLines release];
+    [_searchBuffer release];
 
     [super dealloc];
 }
@@ -1158,11 +1159,27 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (_state) {
         DLog(@"merge state");
         [_state mergeFrom:mutableState];
+
+        if (!_wantsSearchBuffer) {
+            [_searchBuffer release];
+            _searchBuffer = nil;
+        } else if (!_searchBuffer) {
+            _searchBuffer = [_state.linebuffer copy];
+        } else {
+            [_searchBuffer mergeFrom:_state.linebuffer];
+        }
     } else {
         DLog(@"copy state");
         [_state autorelease];
         _state = [mutableState copy];
+
+        [_searchBuffer release];
+        _searchBuffer = nil;
+        if (_wantsSearchBuffer) {
+            _searchBuffer = [_state.linebuffer copy];
+        }
     }
+    _wantsSearchBuffer = NO;
     [mutableState didSynchronize:resetOverflow];
     DLog(@"End overflow=%@ haveScrolled=%@", @(overflow), @(_state.currentGrid.haveScrolled));
     return (VT100SyncResult) {

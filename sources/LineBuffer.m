@@ -1297,6 +1297,33 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         continuation:defaultBg];
 }
 
+// Note that the current implementation restores appends but not other kinds of
+// changes like deleting from the start or end.
+- (void)performBlockWithTemporaryChanges:(void (^ NS_NOESCAPE)(void))block {
+    if (gDebugLogging) {
+        [_lineBlocks sanityCheck];
+    }
+
+    LineBlock *lastBlock = [_lineBlocks.blocks.lastObject cowCopy];
+    const int savedMaxLines = max_lines;
+    const NSInteger numberOfBlocks = _lineBlocks.blocks.count;
+
+    max_lines = -1;
+    block();
+    max_lines = savedMaxLines;
+
+    while (_lineBlocks.blocks.count > numberOfBlocks) {
+        [_lineBlocks removeLastBlock];
+    }
+    [_lineBlocks removeLastBlock];
+    [_lineBlocks addBlock:lastBlock];
+
+    if (gDebugLogging) {
+        [_lineBlocks sanityCheck];
+    }
+}
+
+
 #pragma mark - NSCopying
 
 - (LineBlock *)copy {
