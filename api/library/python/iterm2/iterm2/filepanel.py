@@ -105,7 +105,9 @@ class OpenPanel:
              f'extensions: {json.dumps(self.extensions)},' +
              f'prompt: {json.dumps(self.prompt)},' +
              f'message: {json.dumps(self.message)})'))
-        return OpenPanel.Result(response) if response else None
+        if response:
+            return OpenPanel.Result(response)
+        return None
 
 
 class SavePanel:
@@ -242,4 +244,6 @@ class SavePanel:
                 f'message: {json.dumps(self.message)},' +
                 f'name_field_label: {json.dumps(self.name_field_label)},'
                 f'default_filename: {json.dumps(self.default_filename)})'))
-        return SavePanel.Result(response) if response else None
+        if response:
+            return SavePanel.Result(response)
+        return None
