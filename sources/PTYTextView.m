@@ -2645,13 +2645,6 @@
 }
 
 - (void)copySelection:(iTermSelection *)selection {
-    // TODO: iTermSelection should use absolute coordinates everywhere. Until that is done, we must
-    // call refresh here to take care of any scrollback overflow that would cause the selected range
-    // to not match reality.
-    // Update: I think this isn't true post-mutable-thread because there should never be
-    // scrollback overflow on the main thread. I can probably remove this.
-    [self refresh];
-
     DLog(@"-[PTYTextView copy:] called");
     DLog(@"%@", [NSThread callStackSymbols]);
 
@@ -4326,7 +4319,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         DLog(@"Not my selection. Ignore it.");
         return;
     }
-    [_delegate refresh];
     if (!_selection.live && selection.hasSelection) {
         iTermPromise<NSString *> *promise = [self recordSelection:selection];
         [promise onQueue:dispatch_get_main_queue() then:^(NSString * _Nonnull value) {
@@ -5226,7 +5218,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)mouseHandlerDidMutateState:(PTYMouseHandler *)handler {
-    [_delegate refresh];
+    // Make changes to selection appear right away.
+    [self setNeedsDisplay:YES];
 }
 
 - (void)mouseHandlerDidInferScrollingIntent:(PTYMouseHandler *)handler trying:(BOOL)trying {
@@ -5414,7 +5407,6 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 
 - (BOOL)mouseHandler:(PTYMouseHandler *)mouseHandler moveSelectionToGridCoord:(VT100GridCoord)coord
            viewCoord:(NSPoint)locationInTextView {
-    [self refresh];
     return [self moveSelectionEndpointToX:coord.x
                                         Y:coord.y
                        locationInTextView:locationInTextView];
