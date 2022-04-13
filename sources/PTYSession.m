@@ -136,6 +136,7 @@
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
 #import "NSDate+iTerm.h"
+#import "NSDictionary+Profile.h"
 #import "NSDictionary+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSFont+iTerm.h"
@@ -2517,7 +2518,40 @@ ITERM_WEAKLY_REFERENCEABLE
             // if a warning is appropriate.
             guid = _originalProfile[KEY_GUID];
         }
-        NSString* theKey = [NSString stringWithFormat:@"NeverWarnAboutShortLivedSessions_%@", guid];
+        if ([self.profile[KEY_CUSTOM_COMMAND] isEqual:kProfilePreferenceCommandTypeLoginShellValue]) {
+            // Not a custom command. Does the user's shell not exist maybe?
+            NSString *shell = [iTermOpenDirectory userShell];
+            Profile *profile = [[ProfileModel sharedInstance] bookmarkWithGuid:self.profile[KEY_GUID]];
+            if (!self.isDivorced &&
+                shell &&
+                profile != nil &&
+                !profile.profileIsDynamic &&
+                ![[NSFileManager defaultManager] fileExistsAtPath:shell]) {
+                NSString *theKey = [NSString stringWithFormat:@"ShellDoesNotExist_%@", guid];
+                NSString *theTitle = [NSString stringWithFormat:
+                                      @"The shell for this account, “%@”, does not exist. Change the profile to use /bin/zsh instead?",
+                                      shell];
+                const iTermWarningSelection selection =
+                [iTermWarning showWarningWithTitle:theTitle
+                                           actions:@[ @"OK", @"Cancel" ]
+                                        identifier:theKey
+                                       silenceable:kiTermWarningTypePermanentlySilenceable
+                                            window:self.view.window];
+                if (selection == kiTermWarningSelection0) {
+                    NSDictionary *change = @{
+                        KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeCustomShellValue,
+                        KEY_COMMAND_LINE: @"/bin/zsh"
+                    };
+                    [[ProfileModel sharedInstance] setObjectsFromDictionary:change
+                                                                  inProfile:profile];
+                    [[ProfileModel sharedInstance] flush];
+                    [[NSNotificationCenter defaultCenter] postNotificationName:kReloadAllProfiles
+                                                                        object:nil];
+                }
+                return;
+            }
+        }
+        NSString *theKey = [NSString stringWithFormat:@"NeverWarnAboutShortLivedSessions_%@", guid];
         NSString *theTitle = [NSString stringWithFormat:
                               @"A session ended very soon after starting. Check that the command "
                               @"in profile \"%@\" is correct.",
