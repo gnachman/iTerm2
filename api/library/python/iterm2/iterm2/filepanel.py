@@ -90,7 +90,7 @@ class OpenPanel:
     def message(self, value: str):
         self.__message = value
 
-    async def async_run(self, connection) -> 'iterm2.OpenPanel.Result':
+    async def async_run(self, connection) -> typing.Optional['iterm2.OpenPanel.Result']:
         """Show the panel.
 
         :returns: A :class:`~iterm2.OpenPanel.Result` if successful,
@@ -226,7 +226,7 @@ class SavePanel:
     def default_filename(self, value: typing.Optional[str]):
         self.__default_filename = value
 
-    async def async_run(self, connection) -> 'iterm2.SavePanel.Result':
+    async def async_run(self, connection) -> typing.Optional['iterm2.SavePanel.Result']:
         """Show the panel.
 
         :returns: A :class:`~iterm2.SavePanel.Result` if successful,
