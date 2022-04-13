@@ -321,6 +321,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
 - (void)setCursorX:(int)cursorX {
     int newX = MIN(size_.width, MAX(0, cursorX));
     if (newX != cursor_.x) {
+        DLog(@"Move cursor x to %d (requested %d)", newX, cursorX);
         cursor_.x = newX;
         [delegate_ gridCursorDidMove];
     }
@@ -330,6 +331,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
     int prev = cursor_.y;
     cursor_.y = MIN(size_.height - 1, MAX(0, cursorY));
     if (cursorY != prev) {
+        DLog(@"Move cursor y to %d (requested %d)", cursor_.y, cursorY);
         [delegate_ gridCursorDidChangeLine];
         [delegate_ gridCursorDidMove];
     }

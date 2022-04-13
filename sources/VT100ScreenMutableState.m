@@ -870,13 +870,15 @@ static _Atomic int gPerformingJoinedBlock;
 }
 
 - (void)cursorToX:(int)x {
-    DLog(@"cursorToX");
+    DLog(@"cursorToX:%d", x);
     const int leftMargin = [self.currentGrid leftMargin];
     const int rightMargin = [self.currentGrid rightMargin];
 
     int xPos = x - 1;
 
     if ([self.terminal originMode]) {
+        DLog(@"In origin mode. Interpret relative to left margin %d, don't go past right margin %d",
+             leftMargin, rightMargin);
         xPos += leftMargin;
         xPos = MAX(leftMargin, MIN(rightMargin, xPos));
     }
@@ -885,7 +887,7 @@ static _Atomic int gPerformingJoinedBlock;
 }
 
 - (void)cursorToY:(int)y {
-    DLog(@"cursorToY");
+    DLog(@"cursorToY:%d", y);
     int yPos;
     int topMargin = self.currentGrid.topMargin;
     int bottomMargin = self.currentGrid.bottomMargin;
@@ -893,6 +895,8 @@ static _Atomic int gPerformingJoinedBlock;
     yPos = y - 1;
 
     if ([self.terminal originMode]) {
+        DLog(@"In origin mode. Interpret relative to top margin %d, don't go past bottom margin %d",
+             topMargin, bottomMargin);
         yPos += topMargin;
         yPos = MAX(topMargin, MIN(bottomMargin, yPos));
     }

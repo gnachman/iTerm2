@@ -367,6 +367,7 @@ static const int kMaxScreenRows = 4096;
 }
 
 - (void)setOriginMode:(BOOL)originMode {
+    DLog(@"setOriginMode:%@\n%@", @(originMode), [NSThread callStackSymbols]);
     self.dirty = YES;
     _originMode = originMode;
 }
