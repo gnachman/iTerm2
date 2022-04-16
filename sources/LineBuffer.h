@@ -131,6 +131,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (LineBufferPosition * _Nonnull)firstPosition;
 - (LineBufferPosition * _Nonnull)lastPosition;
+- (LineBufferPosition * _Nonnull)penultimatePosition;
 - (LineBufferPosition * _Nonnull)positionForStartOfLastLine;
 
 // Convert the block,offset in a findcontext into an absolute position.
@@ -196,6 +197,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Call this immediately after init. Otherwise the buffer will hold unlimited lines (until you
 // run out of memory).
 - (void)setMaxLines:(int)maxLines;
+- (int)maxLines;
 
 // Add a line to the buffer. Set partial to true if there's more coming for this line:
 // that is to say, this buffer contains only a prefix or infix of the entire line.
@@ -211,7 +213,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)appendScreenCharArray:(ScreenCharArray *)sca
                         width:(int)width;
 
-- (void)appendContentsOfLineBuffer:(LineBuffer * _Nonnull)other width:(int)width;
+- (int)appendContentsOfLineBuffer:(LineBuffer * _Nonnull)other width:(int)width includingCursor:(BOOL)cursor;
 
 // If more lines are in the buffer than max_lines, call this function. It will adjust the count
 // of excess lines and try to free the first block(s) if they are unused. Because this could happen

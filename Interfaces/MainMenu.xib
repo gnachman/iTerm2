@@ -478,6 +478,13 @@ DQ
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="EC1-3K-Gyr"/>
+                            <menuItem title="Render Selection" keyEquivalent="e" identifier="Render Selection Natively" id="SEy-mc-25m">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="renderSelection:" target="-1" id="CYd-u9-J4s"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="jHq-aL-J2z"/>
                             <menuItem title="Snippets" id="s0f-jP-7Pk" userLabel="Snippets">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Snippets" id="sOq-3j-vtq" userLabel="Snippets"/>

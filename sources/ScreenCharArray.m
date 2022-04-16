@@ -7,6 +7,11 @@
 
 #import "ScreenCharArray.h"
 
+static NSString *const ScreenCharArrayKeyData = @"data";
+static NSString *const ScreenCharArrayKeyEOL = @"eol";
+static NSString *const ScreenCharArrayKeyMetadata = @"metadata";
+static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
+
 @implementation ScreenCharArray {
     // If initialized with data, hold a reference to it to preserve ownership.
     NSData *_data;
@@ -17,6 +22,27 @@
 @synthesize line = _line;
 @synthesize length = _length;
 @synthesize eol = _eol;
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
+    self = [super init];
+    if (self) {
+        NSArray *metadataArray = dictionary[ScreenCharArrayKeyMetadata];
+        NSData *screenCharData = dictionary[ScreenCharArrayKeyContinuation];
+        if (screenCharData.length == sizeof(_continuation)) {
+            memmove(&_continuation, screenCharData.bytes, sizeof(_continuation));
+        } else {
+            memset(&_continuation, 0, sizeof(_continuation));
+        }
+        iTermMetadata metadata;
+        iTermMetadataInitFromArray(&metadata, metadataArray);
+        self = [self initWithData:dictionary[ScreenCharArrayKeyData]
+                         metadata:iTermMetadataMakeImmutable(metadata)
+                     continuation:_continuation];
+        iTermMetadataRelease(metadata);
+        _eol = [dictionary[ScreenCharArrayKeyEOL] intValue];
+    }
+    return self;
+}
 
 - (instancetype)init {
     self = [super init];
@@ -153,7 +179,20 @@
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-    return [[ScreenCharArray alloc] initWithCopyOfLine:_line length:_length continuation:_continuation];
+    ScreenCharArray *theCopy = [[ScreenCharArray alloc] initWithCopyOfLine:_line
+                                                                    length:_length
+                                                              continuation:_continuation];
+    theCopy->_metadata = iTermImmutableMetadataCopy(_metadata);
+    return theCopy;
+}
+
+- (NSDictionary *)dictionaryValue {
+    return @{
+        ScreenCharArrayKeyData: [NSData dataWithBytes:self.line length:self.length * sizeof(screen_char_t)],
+        ScreenCharArrayKeyEOL: @(_eol),
+        ScreenCharArrayKeyMetadata: iTermImmutableMetadataEncodeToArray(_metadata),
+        ScreenCharArrayKeyContinuation: [NSData dataWithBytes:&_continuation length:sizeof(_continuation)]
+    };
 }
 
 - (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other {

@@ -191,6 +191,26 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                                   cumulativeOverflow:_state.cumulativeScrollbackOverflow] autorelease];
 }
 
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+        withPorthole:(id<Porthole>)porthole
+            ofHeight:(int)numLines {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState replaceRange:range withPorthole:porthole ofHeight:numLines];
+    }];
+}
+
+- (void)replaceMark:(id<iTermMark>)mark withLines:(NSArray<ScreenCharArray *> *)lines {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState replaceMark:mark.progenitor withLines:lines];
+    }];
+}
+
+- (void)changeHeightOfMark:(id<iTermMark>)mark to:(int)newHeight {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState changeHeightOfMark:mark.progenitor to:newHeight];
+    }];
+}
+
 - (void)resetDirty {
     if (_sharedStateCount && !_forceMergeGrids && _state.currentGrid.isAnyCharDirty) {
         // We're resetting dirty in a grid shared by mutable & immutable state. That means when sync
@@ -537,6 +557,17 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state coordRangeForInterval:note.entry.interval];
 }
 
+- (VT100GridCoordRange)coordRangeOfPorthole:(id<Porthole>)porthole {
+    id<PortholeMarkReading> mark = [[PortholeRegistry instance] markForKey:porthole.uniqueIdentifier];
+    if (!mark) {
+        return VT100GridCoordRangeInvalid;
+    }
+    if (!mark.entry.interval) {
+        return VT100GridCoordRangeInvalid;
+    }
+    return [_state coordRangeForInterval:mark.entry.interval];
+}
+
 - (NSArray *)charactersWithNotesOnLine:(int)line {
     NSMutableArray *result = [NSMutableArray array];
     Interval *interval = [_state intervalForGridCoordRange:VT100GridCoordRangeMake(0,
@@ -642,6 +673,18 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             }
         }
         objects = [enumerator nextObject];
+    }
+}
+
+- (void)enumeratePortholes:(void (^ NS_NOESCAPE)(id<PortholeMarkReading> mark))block {
+    for (NSArray<id<IntervalTreeImmutableObject>> *objects in _state.intervalTree.forwardLimitEnumerator) {
+        for (id<IntervalTreeImmutableObject> object in objects) {
+            PortholeMark *mark = [PortholeMark castFrom:object];
+            if (!mark) {
+                continue;
+            }
+            block(mark);
+        }
     }
 }
 
@@ -1124,6 +1167,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                            checkTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                            resetOverflow:(BOOL)resetOverflow
                             mutableState:(VT100ScreenMutableState *)mutableState {
+    if (_sharedStateCount > 0) {
+        DLog(@"Short-circuiting sync because there is shared state between threads.\n%@", [NSThread callStackSymbols]);
+        return (VT100SyncResult) {
+            .overflow = [mutableState scrollbackOverflow] > 0,
+            .haveScrolled = _state.currentGrid.haveScrolled
+        };
+    }
     DLog(@"Begin %@", self);
     [mutableState willSynchronize];
     switch (checkTriggers) {

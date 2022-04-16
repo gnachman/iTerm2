@@ -51,6 +51,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 // If you don't need a yoffset pass -1 for width and NULL for blockOffset to avoid building a cache.
 - (LineBlock *)blockContainingPosition:(long long)p
+                               yOffset:(int)yOffset
                                  width:(int)width
                              remainder:(nullable int *)remainder
                            blockOffset:(nullable int *)yoffset

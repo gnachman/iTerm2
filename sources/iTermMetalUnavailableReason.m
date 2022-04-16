@@ -31,6 +31,8 @@ NSString *iTermMetalUnavailableReasonDescription(iTermMetalUnavailableReason rea
             return @"terminal window margins are too small. You can edit them in Preferences > Advanced.";
         case iTermMetalUnavailableReasonAnnotations:
             return @"annotations are open. Find the session with visible annotations and close them with View > Show Annotations.";
+        case iTermMetalUnavailableReasonPortholes:
+            return @"this session has natively rendered items.";
         case iTermMetalUnavailableReasonFindPanel:
             return @"the find panel is open.";
         case iTermMetalUnavailableReasonPasteIndicator:

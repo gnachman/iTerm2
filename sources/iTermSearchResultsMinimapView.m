@@ -282,6 +282,7 @@ static inline void iTermSearchResultsMinimapViewDrawItem(CGFloat offset, CGFloat
 
 - (void)setFirstVisibleLine:(NSInteger)firstVisibleLine
        numberOfVisibleLines:(NSInteger)numberOfVisibleLines {
+    assert(firstVisibleLine >= 0);
     _visibleLines = NSMakeRange(firstVisibleLine, numberOfVisibleLines);
     [self updateHidden];
 }

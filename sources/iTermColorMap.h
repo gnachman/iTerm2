@@ -77,6 +77,7 @@ extern const int kColorMap24bitBase;
 @property(nonatomic, readonly) double minimumContrast;
 @property(nonatomic, readonly) BOOL useSeparateColorsForLightAndDarkMode;
 @property(nonatomic, readonly) BOOL darkMode;
+@property(nonatomic, readonly) NSInteger generation;
 
 - (NSColor *)colorForKey:(iTermColorMapKey)theKey;
 - (vector_float4)fastColorForKey:(iTermColorMapKey)theKey;

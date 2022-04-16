@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) int eol;  // EOL_SOFT, EOL_HARD, or EOL_DWC
 @property (nonatomic, readonly) screen_char_t continuation;
 @property (nonatomic, readonly) iTermImmutableMetadata metadata;
+@property (nonatomic, readonly) NSDictionary *dictionaryValue;
 
 - (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
@@ -42,6 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
                     metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation
                freeOnRelease:(BOOL)freeOnRelease;
+
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary;
 
 // It only makes sense to use this when freeOnRelease=YES.
 // start of malloced memory      start of line to expose

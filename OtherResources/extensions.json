@@ -1,0 +1,608 @@
+[
+    {
+        "name": "ActionScript",
+        "shortname": "actionscript",
+        "extensions": ["as"]
+    },
+    {
+        "name": "Ada",
+        "shortname": "ada",
+        "extensions": ["adb", "ada", "ads" ]
+    },
+    {
+        "name": "AppleScript",
+        "shortname": "applescript.js",
+        "extensions": [ "applescript", "scpt" ]
+    },
+    {
+        "name": "ARM Assembly",
+        "shortname": "armasm",
+        "extensions": [ "asm", "a51", "inc", "s" ]
+    },
+    {
+        "name": "AsciiDoc",
+        "shortname": "asciidoc",
+        "extensions": [ "asciidoc", "adoc", "asc" ]
+    },
+    {
+        "name": "AspectJ",
+        "shortname": "aspectj",
+        "extensions": [ "aj" ]
+    },
+    {
+        "name": "AutoHotkey",
+        "shortname": "autohotkey",
+        "extensions": [ "ahk", "ahkl" ]
+    },
+    {
+        "name": "AutoIt",
+        "shortname": "autoit",
+        "extensions": [ "au3" ]
+    },
+    {
+        "name": "AVR Assembly",
+        "shortname": "avrasm",
+        "extensions": [ "asm", "a51", "inc", "s" ]
+    },
+    {
+        "name": "Bash",
+        "shortname": "bash",
+        "extensions": [ "sh", "bash", "bats", "command", "shin" ]
+    },
+    {
+        "name": "BASIC",
+        "shortname": "basic",
+        "extensions": [ "vb", "bas", "cls", "frm", "frx", "vba", "vbhtml" ]
+    },
+    {
+        "name": "C",
+        "shortname": "c",
+        "extensions": [ "c", "h" ]
+    },
+    {
+        "name": "Cap’n Proto",
+        "shortname": "capnproto",
+        "extensions": [ "capnp" ]
+    },
+    {
+        "name": "Ceylon",
+        "shortname": "ceylon",
+        "extensions": [ "ceylon" ]
+    },
+    {
+        "name": "Clean",
+        "shortname": "clean",
+        "extensions": [ "icl", "dcl" ]
+    },
+    {
+        "name": "Clojure",
+        "shortname": "clojure",
+        "extensions": [ "clj", "boot", "cl2", "cljc", "cljs", "cljs.hl", "cljscm", "cljx", "hic" ]
+    },
+    {
+        "name": "CMake",
+        "shortname": "cmake",
+        "extensions": [ "cmake", "cmake.in" ]
+    },
+    {
+        "name": "CoffeeScript",
+        "shortname": "coffeescript",
+        "extensions": [ "coffee", "_coffee", "cake", "cjsx", "cson", "iced" ],
+        "mimeType": "application/vnd.coffeescript"
+    },
+    {
+        "name": "Coq",
+        "shortname": "coq",
+        "extensions": [ "coq", "v" ]
+    },
+    {
+        "name": "C++",
+        "shortname": "cpp",
+        "extensions": [ "cpp", "c++", "cc", "cp", "cxx", "h", "h++", "hh", "hpp", "hxx", "inc", "inl", "ipp", "tcc", "tpp" ]
+    },
+    {
+        "name": "Crystal",
+        "shortname": "crystal",
+        "extensions": [ "cr" ]
+    },
+    {
+        "name": "C#",
+        "shortname": "csharp",
+        "extensions": [ "cs" ]
+    },
+    {
+        "name": "CSS",
+        "shortname": "css",
+        "extensions": [ "css" ],
+        "mimeType": "text/css"
+    },
+    {
+        "name": "D",
+        "shortname": "d",
+        "extensions": [ "d", "di" ]
+    },
+    {
+        "name": "Dart",
+        "shortname": "dart",
+        "extensions": [ "dart" ],
+        "mimeType": "application/vnd.dart"
+    },
+    {
+        "name": "Delphi",
+        "shortname": "delphi",
+        "extensions": [ "dpr", "pas", "dfm" ]
+    },
+    {
+        "name": "Diff",
+        "shortname": "diff",
+        "extensions": [ "diff", "patch" ]
+    },
+    {
+        "name": "Batch file (DOS)",
+        "shortname": "dos",
+        "extensions": [ "bat", "cmd" ]
+    },
+    {
+        "name": "Elixir",
+        "shortname": "elixir",
+        "extensions": [ "ex", "exs" ]
+    },
+    {
+        "name": "Elm",
+        "shortname": "elm",
+        "extensions": [ "elm" ]
+    },
+    {
+        "name": "Erlang",
+        "shortname": "erlang",
+        "extensions": [ "erl", "es", "escript", "hrl", "xrl", "yrl" ]
+    },
+    {
+        "name": "Fortran",
+        "shortname": "fortran",
+        "extensions": [ "f90", "f", "f03", "f08", "f77", "f95", "for", "fpp" ]
+    },
+    {
+        "name": "F#",
+        "shortname": "fsharp",
+        "extensions": [ "fs", "fsi", "fsx" ]
+    },
+    {
+        "name": "GAMS",
+        "shortname": "gams",
+        "extensions": [ "gms" ]
+    },
+    {
+        "name": "G-code (ISO 6983)",
+        "shortname": "gcode",
+        "extensions": [ "g", "gco", "gcode" ]
+    },
+    {
+        "name": "GLSL",
+        "shortname": "glsl",
+        "extensions": [ "glsl", "fp", "frag", "frg", "fs", "fsh", "fshader", "geo", "geom", "glslv", "gshader", "shader", "vert",   "vrx", "vsh", "vshader" ]
+    },
+    {
+        "name": "GML",
+        "shortname": "gml",
+        "extensions": [ "gml" ],
+        "mimeType": "text/vnd.gml"
+    },
+    {
+        "name": "Go",
+        "shortname": "go",
+        "extensions": [ "go" ]
+    },
+    {
+        "name": "Golo",
+        "shortname": "golo",
+        "extensions": [ "golo" ]
+    },
+    {
+        "name": "Gradle",
+        "shortname": "gradle",
+        "extensions": [ "gradle" ]
+    },
+    {
+        "name": "GraphQL",
+        "shortname": "graphql",
+        "extensions": [ "graphql" ]
+    },
+    {
+        "name": "Groovy",
+        "shortname": "groovy",
+        "extensions": [ "groovy", "grt", "gtpl", "gvy" ]
+    },
+    {
+        "name": "HAML",
+        "shortname": "haml",
+        "extensions": [ "haml", "haml.deface" ]
+    },
+    {
+        "name": "Handlebars",
+        "shortname": "handlebars",
+        "extensions": [ "handlebars", "hbs" ]
+    },
+    {
+        "name": "Haskell",
+        "shortname": "haskell",
+        "extensions": [ "hs", "hsc" ]
+    },
+    {
+        "name": "Haxe",
+        "shortname": "haxe",
+        "extensions": [ "hx", "hxsl" ]
+    },
+    {
+        "name": "Hy",
+        "shortname": "hy",
+        "extensions": [ "hy" ]
+    },
+    {
+        "name": "Inform 7",
+        "shortname": "inform7",
+        "extensions": [ "ni", "i7x" ]
+    },
+    {
+        "name": "TOML, also INI",
+        "shortname": "ini",
+        "extensions": [ "toml", "ini", "cfg", "prefs", "pro", "properties" ]
+    },
+    {
+        "name": "Java",
+        "shortname": "java",
+        "extensions": [ "java" ]
+    },
+    {
+        "name": "Javascript",
+        "shortname": "javascript",
+        "extensions": [ "js", "_js", "bones", "es", "es6", "frag", "gs", "jake", "jsb", "jscad", "jsfl", "jsm", "jss", "njs", "pac", "sjs", "ssjs", "sublime-build", "sublime-commands", "sublime-completions", "sublime-keymap", "sublime-macro", "sublime-menu", "sublime-mousemap", "sublime-project", "sublime-settings", "sublime-theme", "sublime-workspace",   "sublime_metrics", "sublime_session", "xsjs", "xsjslib" ],
+        "mimeType": "text/javascript"
+    },
+    {
+        "name": "JSON",
+        "shortname": "json",
+        "extensions": [ "json", "geojson", "lock", "topojson", "json5" ],
+        "mimeType": "application/json"
+    },
+    {
+        "name": "Julia",
+        "shortname": "julia",
+        "extensions": [ "jl" ]
+    },
+    {
+        "name": "Kotlin",
+        "shortname": "kotlin",
+        "extensions": [ "kt", "ktm", "kts" ]
+    },
+    {
+        "name": "Lasso",
+        "shortname": "lasso",
+        "extensions": [ "lasso", "las", "lasso8", "lasso9", "ldml" ]
+    },
+    {
+        "name": "LaTeX",
+        "shortname": "latex",
+        "extensions": [ "tex", "aux", "bbx", "bib", "cbx", "cls", "dtx", "ins", "lbx", "ltx", "mkii", "mkiv", "mkvi", "sty",   "toc" ]
+    },
+    {
+        "name": "Less",
+        "shortname": "less",
+        "extensions": [ "less" ]
+    },
+    {
+        "name": "Lisp",
+        "shortname": "lisp",
+        "extensions": [ "asd", "cl", "el", "emacs", "emacs.desktop", "l", "lisp", "lisp", "lsp", "lsp", "nl", "ny", "podsl",   "sexp"]
+    },
+    {
+        "name": "LiveScript",
+        "shortname": "livescript",
+        "extensions": [ "ls", "_ls" ]
+    },
+    {
+        "name": "Lua",
+        "shortname": "lua",
+        "extensions": [ "lua", "fcgi", "nse", "pd_lua", "rbxs", "wlua" ]
+    },
+    {
+        "name": "Markdown",
+        "shortname": "markdown",
+        "extensions": [ "md", "markdown", "mkd", "mkdn", "mkdown", "ron" ],
+        "mimeType": "text/markdown"
+    },
+    {
+        "name": "Mathematica",
+        "shortname": "mathematica",
+        "extensions": [ "mathematica", "cdf", "m", "ma", "mt", "nb", "nbp", "wl", "wlt" ],
+        "mimeType": "application/mathematica"
+    },
+    {
+        "name": "Matlab",
+        "shortname": "matlab",
+        "extensions": [ "matlab", "m" ]
+    },
+    {
+        "name": "Maxima",
+        "shortname": "maxima",
+        "extensions": [ "mac", "mc" ]
+    },
+    {
+        "name": "Mercury",
+        "shortname": "mercury",
+        "extensions": [ "m", "moo" ]
+    },
+    {
+        "name": "MIPS Assembly",
+        "shortname": "mipsasm",
+        "extensions": [ "asm", "a51", "inc", "s" ]
+    },
+    {
+        "name": "Monkey",
+        "shortname": "monkey",
+        "extensions": [ "monkey" ]
+    },
+    {
+        "name": "MoonScript",
+        "shortname": "moonscript",
+        "extensions": [ "moon" ]
+    },
+    {
+        "name": "Nginx config",
+        "shortname": "nginx",
+        "extensions": [ "nginxconf", "vhost" ]
+    },
+    {
+        "name": "Nim",
+        "shortname": "nim",
+        "extensions": [ "nim" ]
+    },
+    {
+        "name": "Nix",
+        "shortname": "nix",
+        "extensions": [ "nix" ]
+    },
+    {
+        "name": "NSIS",
+        "shortname": "nsis",
+        "extensions": [ "nsi", "nsh" ]
+    },
+    {
+        "name": "Objective-C",
+        "shortname": "objectivec",
+        "extensions": [ "mm", "m", "h" ]
+    },
+    {
+        "name": "OCaml",
+        "shortname": "ocaml",
+        "extensions": [ "ml", "eliom", "eliomi", "ml4", "mli", "mll", "mly" ]
+    },
+    {
+        "name": "OpenSCAD",
+        "shortname": "openscad",
+        "extensions": [ "scad" ]
+    },
+    {
+        "name": "Oxygene",
+        "shortname": "oxygene",
+        "extensions": [ "oxygene" ]
+    },
+    {
+        "name": "Perl",
+        "shortname": "perl",
+        "extensions": [ "6pl", "6pm", "al", "cgi", "fcgi", "nqp", "p6", "p6l", "p6m", "perl", "ph", "pl", "pl6", "plx", "pm",   "pm6", "pod", "psgi", "t" ]
+    },
+    {
+        "name": "PHP template",
+        "shortname": "php-template",
+        "extensions": [ "html", "xhtml", "htm" ]
+    },
+    {
+        "name": "PHP",
+        "shortname": "php",
+        "extensions": [ "php", "aw", "ctp", "fcgi", "inc", "php3", "php4", "php5", "phps", "phpt" ]
+    },
+    {
+        "name": "Plain text",
+        "shortname": "plaintext",
+        "extensions": [ "txt" ],
+        "mimeType": "text/plain"
+    },
+    {
+        "name": "PowerShell",
+        "shortname": "powershell",
+        "extensions": [ "ps1", "psd1", "psm1" ]
+    },
+    {
+        "name": "Processing",
+        "shortname": "processing",
+        "extensions": [ "pde" ]
+    },
+    {
+        "name": "Prolog",
+        "shortname": "prolog",
+        "extensions": [ "pl", "pro", "prolog", "yap" ]
+    },
+    {
+        "name": "Protocol Buffers",
+        "shortname": "protobuf",
+        "extensions": [ "proto" ]
+    },
+    {
+        "name": "Puppet",
+        "shortname": "puppet",
+        "extensions": [ "pp" ]
+    },
+    {
+        "name": "PureBASIC",
+        "shortname": "purebasic",
+        "extensions": [ "pb", "pbi" ]
+    },
+    {
+        "name": "Python",
+        "shortname": "python",
+        "extensions": [ "py", "bzl", "cgi", "fcgi", "gyp", "lmi", "pyde", "pyp", "pyt", "pyw", "rpy", "tac", "wsgi", "xpy" ]
+    },
+    {
+        "name": "QML",
+        "shortname": "qml",
+        "extensions": [ "qml", "qbs" ]
+    },
+    {
+        "name": "R",
+        "shortname": "r",
+        "extensions": [ "r", "rd", "rsx" ]
+    },
+    {
+        "name": "Ruby",
+        "shortname": "ruby",
+        "extensions": [ "rb", "builder", "fcgi", "gemspec", "god", "irbrc", "jbuilder", "mspec", "pluginspec", "podspec", "rabl",   "rake", "rbuild", "rbw", "rbx", "ru", "ruby", "thor", "watchr" ]
+    },
+    {
+        "name": "Rust",
+        "shortname": "rust",
+        "extensions": [ "rs", "rs.in" ]
+    },
+    {
+        "name": "SAS",
+        "shortname": "sas",
+        "extensions": [ "sas" ]
+    },
+    {
+        "name": "Scala",
+        "shortname": "scala",
+        "extensions": [ "scala", "sbt", "sc" ]
+    },
+    {
+        "name": "Scheme",
+        "shortname": "scheme",
+        "extensions": [ "scm", "sld", "sls", "sps", "ss" ]
+    },
+    {
+        "name": "Scilab",
+        "shortname": "scilab",
+        "extensions": [ "sci", "sce", "tst" ]
+    },
+    {
+        "name": "Smali",
+        "shortname": "smali",
+        "extensions": [ "smali" ]
+    },
+    {
+        "name": "Smalltalk",
+        "shortname": "smalltalk",
+        "extensions": [ "st", "cs" ]
+    },
+    {
+        "name": "SML (Standard ML)",
+        "shortname": "sml",
+        "extensions": [ "ML", "fun", "sig", "sml" ]
+    },
+    {
+        "name": "SQL",
+        "shortname": "sql",
+        "extensions": [ "sql", "cql", "ddl", "inc", "prc", "tab", "udf", "viw" ],
+        "mimeType": "application/sql"
+    },
+    {
+        "name": "Stan",
+        "shortname": "stan",
+        "extensions": [ "stan" ]
+    },
+    {
+        "name": "Stata",
+        "shortname": "stata",
+        "extensions": [ "do", "ado", "doh", "ihlp", "mata", "matah", "sthlp" ]
+    },
+    {
+        "name": "Stylus",
+        "shortname": "stylus",
+        "extensions": [ "styl" ]
+    },
+    {
+        "name": "Swift",
+        "shortname": "swift",
+        "extensions": [ "swift" ]
+    },
+    {
+        "name": "Tcl",
+        "shortname": "tcl",
+        "extensions": [ "tcl", "adp", "tm" ]
+    },
+    {
+        "name": "Thrift",
+        "shortname": "thrift",
+        "extensions": [ "thrift" ]
+    },
+    {
+        "name": "Twig",
+        "shortname": "twig",
+        "extensions": [ "twig" ]
+    },
+    {
+        "name": "TypeScript",
+        "shortname": "typescript",
+        "extensions": [ "ts", "tsx" ]
+    },
+    {
+        "name": "Vala",
+        "shortname": "vala",
+        "extensions": [ "vala", "vapi" ]
+    },
+    {
+        "name": "Visual Basic .NET",
+        "shortname": "vbnet",
+        "extensions": [ "vb" ]
+    },
+    {
+        "name": "VBScript",
+        "shortname": "vbscript",
+        "extensions": [ "vbs" ]
+    },
+    {
+        "name": "Verilog",
+        "shortname": "verilog",
+        "extensions": [ "v", "veo" ]
+    },
+    {
+        "name": "VHDL",
+        "shortname": "vhdl",
+        "extensions": [ "vhdl", "vhd", "vhf", "vhi", "vho", "vhs", "vht", "vhw" ]
+    },
+    {
+        "name": "Vim Script",
+        "shortname": "vim",
+        "extensions": [ "vimrc", "vim" ]
+    },
+    {
+        "name": "WebAssembly",
+        "shortname": "wasm",
+        "extensions": [ "wasm" ]
+    },
+    {
+        "name": "Intel x86 Assembly",
+        "shortname": "x86asm",
+        "extensions": [ "asm", "a51", "inc", "s", "nasm" ]
+    },
+    {
+        "name": "HTML, XML",
+        "shortname": "xml",
+      "extensions": [ "html", "htm", "html.hl", "inc", "st", "xht", "xhtml", "xml", "ant", "axml", "ccxml", "clixml", "cproject", "csl", "csproj", "ct", "dita", "ditamap", "ditaval", "dll.config", "dotsettings", "filters", "fsproj", "fxml", "glade", "gml", "grxml", "iml", "ivy", "jelly", "jsproj", "kml", "launch", "mdpolicy", "mm", "mod", "mxml", "nproj", "nuspec", "odd", "osm", "plist", "pluginspec", "props", "ps1xml", "psc1", "pt", "rdf", "rss", "scxml", "srdf", "storyboard", "stTheme", "sublime-snippet", "targets", "tmCommand", "tml", "tmLanguage", "tmPreferences", "tmSnippet", "tmTheme", "ts", "tsx", "ui", "urdf", "ux", "vbproj", "vcxproj", "vssettings", "vxml", "wsdl", "wsf", "wxi", "wxl",   "wxs", "x3d", "xacro", "xaml", "xib", "xlf", "xliff", "xmi", "xml.dist", "xproj", "xsd", "xul", "zcml" ],
+      "mimeType": "text/html"
+    },
+    {
+        "name": "XQuery",
+        "shortname": "xquery",
+        "extensions": [ "xquery", "xq", "xql", "xqm", "xqy" ]
+    },
+    {
+        "name": "YAML",
+        "shortname": "yaml",
+        "extensions": [ "yml", "reek", "rviz", "sublime-syntax", "syntax", "yaml", "yaml-tmlanguage" ]
+    },
+    {
+        "name": "Zephir",
+        "shortname": "zephir",
+        "extensions": [ "zep" ]
+    }
+]

@@ -46,6 +46,7 @@ typedef struct {
 
 // Block this was copied from.
 @property(nonatomic, weak, readonly) LineBlock *progenitor;
+@property(nonatomic, readonly) BOOL invalidated;
 
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary;
 
@@ -109,6 +110,9 @@ typedef struct {
 
 // Returns true if there are no lines in the block
 - (BOOL)isEmpty;
+
+// Are all lines of length 0? True if there are no lines, as well.
+- (BOOL)allLinesAreEmpty;
 
 // Grow the buffer.
 - (void)changeBufferSize:(int)capacity;
@@ -221,6 +225,8 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
 // Number of empty lines at the end of the block.
 - (int)numberOfTrailingEmptyLines;
+- (int)numberOfLeadingEmptyLines;
+- (BOOL)containsAnyNonEmptyLine;
 
 // Call this only before a line block has been created.
 void EnableDoubleWidthCharacterLineCache(void);
@@ -238,5 +244,6 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (BOOL)hasOwner;
 - (void)dropMirroringProgenitor:(LineBlock *)other;
 - (BOOL)isSynchronizedWithProgenitor;
+- (void)invalidate;
 
 @end

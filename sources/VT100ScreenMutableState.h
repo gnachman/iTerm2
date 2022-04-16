@@ -262,6 +262,17 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)setStringValueOfAnnotation:(id<PTYAnnotationReading>)annotation to:(NSString *)stringValue;
 
+#pragma mark - Portholes
+
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+        withPorthole:(id<Porthole>)porthole
+            ofHeight:(int)numLines;
+
+- (void)replaceMark:(iTermMark *)mark withLines:(NSArray<ScreenCharArray *> *)lines;
+
+// This assumes that the range the mark spans is empty lines.
+- (void)changeHeightOfMark:(iTermMark *)mark to:(int)newHeight;
+
 #pragma mark - URLs
 
 - (void)linkTextInRange:(NSRange)range

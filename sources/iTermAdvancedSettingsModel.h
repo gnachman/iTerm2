@@ -197,6 +197,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)minRunningTime;
 + (int)minTabWidth;
 + (BOOL)multiserver;
++ (NSString *)nativeRenderingCSSLight;
++ (NSString *)nativeRenderingCSSDark;
 + (BOOL)navigatePanesInReadingOrder;
 + (BOOL)neverWarnAboutMeta;
 + (BOOL)neverWarnAboutOverrides;

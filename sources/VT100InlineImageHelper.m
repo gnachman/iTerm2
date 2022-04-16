@@ -8,6 +8,7 @@
 #import "VT100InlineImageHelper.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermImage.h"
 #import "iTermImageInfo.h"
@@ -94,6 +95,7 @@
                  scaleFactor:(CGFloat)scaleFactor
          preserveAspectRatio:(BOOL)preserveAspectRatio
                        inset:(NSEdgeInsets)inset
+                        type:(NSString *)type
                 preconfirmed:(BOOL)preconfirmed {
     self = [super init];
     if (self) {
@@ -104,6 +106,7 @@
         _heightUnits = heightUnits;
         _preserveAspectRatio = preserveAspectRatio;
         _inset = inset;
+        _type = [type copy];
         if ([iTermAdvancedSettingsModel retinaInlineImages]) {
             _scaleFactor = scaleFactor;
         } else {
@@ -124,6 +127,7 @@
                   scaleFactor:scaleFactor
           preserveAspectRatio:YES
                         inset:NSEdgeInsetsZero
+                         type:nil
                  preconfirmed:YES];
     if (self) {
         _sixelData = [data copy];
@@ -142,6 +146,7 @@
                   scaleFactor:scaleFactor
           preserveAspectRatio:NO
                         inset:NSEdgeInsetsZero
+                         type:nil
                  preconfirmed:YES];
     if (self) {
         _nativeImage = [NSImage it_imageNamed:name forClass:self.class];
@@ -163,11 +168,103 @@
     }
 }
 
+- (BOOL)filenameSmellsLikeText {
+    return [[[iTermFileExtensionDB instance] languagesForPath:self.name] count] > 0;
+}
+
+- (BOOL)smellsLikeImage {
+    if (self.type == nil) {
+        if ([self filenameSmellsLikeText]) {
+            return NO;
+        }
+        return YES;
+    }
+    if ([self.type hasPrefix:@"."]) {
+        if ([[[iTermFileExtensionDB instance] languagesForExtension:[self.type substringFromIndex:1]] count]) {
+            return NO;
+        }
+
+    }
+    if ([[[iTermFileExtensionDB instance] languages] containsObject:self.type]) {
+        // This assumes all languages it knows about are textual, not graphical.
+        return NO;
+    }
+    if ([self.type hasPrefix:@"image/"] ||
+        [self.type hasPrefix:@"video/"]) {
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)contentIsVeryLikelyText {
+    NSData *data = [NSData dataWithBase64EncodedString:_base64String];
+    NSString *text = [data stringWithEncoding:NSUTF8StringEncoding];
+    return text != nil;
+}
+
 - (void)writeToGrid:(VT100Grid *)grid {
+    if ([self smellsLikeImage]) {
+        VT100DecodedImage *image = [self decodedImage];
+        if (image.isBroken) {
+            if ([self contentIsVeryLikelyText] && [self writeTextDocumentToGrid:grid]) {
+                return;
+            }
+        }
+        [self writeImage:image toGrid:grid];
+        return;
+    }
+    const BOOL wroteAsText = [self writeTextDocumentToGrid:grid];
+    if (wroteAsText) {
+        return;
+    }
+    [self writeImageToGrid:grid];
+}
+
+- (BOOL)writeTextDocumentToGrid:(VT100Grid *)grid {
+    DLog(@"Write text document %@ at %@", _name, VT100GridCoordDescription(grid.cursor));
+
+    NSData *data = [NSData dataWithBase64EncodedString:_base64String];
+    if (!data) {
+        NSLog(@"Invalid base64 %@", _base64String);
+        return NO;
+    }
+    NSString *contentString = [data stringWithEncoding:NSUTF8StringEncoding];
+    if (!contentString) {
+        NSLog(@"Not UTF-8 %@", data);
+        return NO;
+    }
+
+    VT100GridAbsCoordRange range;
+    range.start.y = [self.delegate inlineImageCursorAbsoluteCoord].y;
+    range.start.x = 0;
+    NSArray<NSString *> *lines = [contentString componentsSeparatedByString:@"\n"];
+    for (NSString *line in lines) {
+        [self.delegate inlineImageAppendStringAtCursor:line];
+        [self.delegate inlineImageAppendLinefeed];
+        grid.cursorX = 0;
+    }
+
+
+    range.end.y = [self.delegate inlineImageCursorAbsoluteCoord].y - 1;
+    range.end.x = grid.size.width - 1;
+
+    [self.delegate inlineImageDidCreateTextDocumentInRange:range
+                                                      type:self.type
+                                                  filename:_name];
+    return YES;
+}
+
+- (void)writeImageToGrid:(VT100Grid *)grid {
     DLog(@"Write image %@ at %@", _name, VT100GridCoordDescription(grid.cursor));
-
     VT100DecodedImage *decodedImage = [self decodedImage];
+    if (decodedImage.isBroken) {
 
+    }
+    [self writeImage:decodedImage toGrid:grid];
+}
+
+- (void)writeImage:(VT100DecodedImage *)decodedImage toGrid:(VT100Grid *)grid {
+    DLog(@"Write decoded image %@ named %@ at %@", decodedImage, _name, VT100GridCoordDescription(grid.cursor));
     screen_char_t c;
     int width;
     int height;

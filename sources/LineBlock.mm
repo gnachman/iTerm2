@@ -811,10 +811,15 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                withWidth:(int)width
                  yOffset:(int *)yOffsetPtr
                  extends:(BOOL *)extendsPtr {
+    VLog(@"getPositionOfLine:%@ atX:%@ withWidth:%@ yOffset:%@ extends:%@",
+          @(*lineNum), @(x), @(width), @(*yOffsetPtr), @(*extendsPtr));
+
     int length;
     int eol;
     BOOL isStartOfWrappedLine = NO;
 
+    VLog(@"getPositionOfLine: calling getWrappedLineWithWidth:%@ lineNum:%@ length:eol:yOffset:%@ continuation:NULL isStartOfWrappedLine: metadata:NULL",
+          @(width), @(*lineNum), @(*yOffsetPtr));
     const screen_char_t *p = [self getWrappedLineWithWrapWidth:width
                                                        lineNum:lineNum
                                                     lineLength:&length
@@ -824,19 +829,34 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                                           isStartOfWrappedLine:&isStartOfWrappedLine
                                                       metadata:NULL];
     if (!p) {
+        VLog(@"getPositionOfLine: getWrappedLineWithWidth returned nil");
         return -1;
     }
+    VLog(@"getPositionOfLine: getWrappedLineWithWidth returned length=%@, eol=%@, yOffset=%@, isStartOfWrappedLine=%@",
+          @(length), @(eol), yOffsetPtr ? [@(*yOffsetPtr) stringValue] : @"nil", @(isStartOfWrappedLine));
+
     int pos;
-    if (x >= length) {
+    // Note that this code is in a very delicate balance with -[LineBuffer coordinateForPosition:width:extendsRight:ok:], which interprets
+    // *extendsPtr to pick an x coordate at the right margin.
+    //
+    // I chose to add the (x == length && *yOffsetPtr == 0) clause
+    // because  otherwise there's no way to refer to the start of a blank line.
+    // If you want it to extend you can always provide an x>0.
+    VLog(@"getPositionOfLine: x=%@ length=%@ *yOffsetPtr=%@", @(x), @(length), @(*yOffsetPtr));
+    if (x > length || (x == length && *yOffsetPtr == 0)) {
+        VLog(@"getPositionOfLine: Set extends and advance pos to end of line");
         *extendsPtr = YES;
         pos = p - raw_buffer + length;
     } else {
+        VLog(@"getPositionOfLine: Clear extends and advance pos by x");
         *extendsPtr = NO;
         pos = p - raw_buffer + x;
     }
     if (length > 0 && (!isStartOfWrappedLine || x > 0)) {
+        VLog(@"getPositionOfLine: Set *yOffsetPtr <- 0");
         *yOffsetPtr = 0;
     } else if (length > 0 && isStartOfWrappedLine && x == 0) {
+        VLog(@"getPositionOfLine: First char of a line");
         // First character of a line. For example, in this grid:
         //   abc.
         //   d...
@@ -846,11 +866,15 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
         // If you wanted the cell after c then x > 0.
         if (pos == 0 && *yOffsetPtr == 0) {
             // First cell of first line in block.
+            VLog(@"getPositionOfLine: First cell of first line in block");
         } else {
             // First sell of second-or-later line in block.
             *yOffsetPtr += 1;
+            VLog(@"getPositionOfLine: First cell of 2nd or later line, advance yOffset to %@", @(*yOffsetPtr));
         }
     }
+    VLog(@"getPositionOfLine: getPositionOfLine returning %@, lineNum=%@ yOffset=%@ extends=%@",
+          @(pos), @(*lineNum), @(*yOffsetPtr), @(*extendsPtr));
     return pos;
 }
 
@@ -1059,6 +1083,25 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             } else {
                 numEmptyLines = 0;
             }
+        } else if (length == 0 && cumulative_line_lengths[i] > start_offset) {
+            // Callers use `prev`, the start of the *previous* wrapped line, plus the output *lineNum to find
+            // where the wrapped line begins. When that line is of length 0 they will pick the end
+            // of the last line rather than the start of the subsequent line. Increment numEmptyLines
+            // to make it clear what we're indicating. This means that numEmptyLines modifies `.prev`
+            // but *not* `.index`, which is super confusing :(
+            // However, if this line was not preceded by a non-empty line, we don't want to make
+            // this adjustment because that ambiguity is not possible.
+            //
+            // To illustrate:
+            // 1. Given:
+            //     abc
+            //     (empty)
+            //   Then the location for the start of line 1 is (prev=0,numEmptyLines=1,index=1,length=0)
+            // 2. Given:
+            //    (empty)
+            //    (empty)
+            //   Then the location for the start of line 1 is (prev=0,numEmptyLines=1,index=1,length=0)
+            ++numEmptyLines;
         }
         int spans;
         const BOOL useCache = gUseCachingNumberOfLines;
@@ -1340,6 +1383,13 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return cll_entries == first_entry;
 }
 
+- (BOOL)allLinesAreEmpty {
+    if (self.isEmpty) {
+        return YES;
+    }
+    return (cumulative_line_lengths[cll_entries - 1] == start_offset);
+}
+
 - (int)numRawLines
 {
     return cll_entries - first_entry;
@@ -1495,9 +1545,11 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
 - (void)dropMirroringProgenitor:(LineBlock *)other {
     assert(_progenitor == other);
-    assert(self.owner == other);
-    assert(cll_capacity == other->cll_capacity);
-    if (start_offset == other->start_offset) {
+    assert(self.owner == nil || self.owner == other);
+    assert(cll_capacity <= other->cll_capacity);
+
+    if (start_offset == other->start_offset &&
+        first_entry == other->first_entry) {
         DLog(@"No change");
         return;
     }
@@ -1507,7 +1559,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     buffer_start = raw_buffer + start_offset;
     cached_numlines_width = -1;
 
-    while (first_entry < other->first_entry) {
+    while (first_entry < other->first_entry && first_entry < cll_capacity) {
         if (gEnableDoubleWidthCharacterLineCache) {
             metadata_[first_entry].double_width_characters = nil;
         }
@@ -1523,6 +1575,9 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
 - (BOOL)isSynchronizedWithProgenitor {
     if (!_progenitor) {
+        return NO;
+    }
+    if (_progenitor.invalidated) {
         return NO;
     }
     // Mutating an object nils its owner and points its clients at a different or nil owner.
@@ -1711,7 +1766,7 @@ static int CoreSearch(NSString *needle,
             range.location = NSNotFound;
         }
         if (regexError) {
-            NSLog(@"regex error: %@", regexError);
+            VLog(@"regex error: %@", regexError);
             range.length = 0;
             range.location = NSNotFound;
         }
@@ -2090,7 +2145,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
         }
         prev = eol;
     }
-    NSLog(@"Didn't find position %d", position);
+    VLog(@"Didn't find position %d", position);
     return NO;
 }
 
@@ -2152,6 +2207,25 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
         }
     }
     return count;
+}
+
+- (int)numberOfLeadingEmptyLines {
+    int count = 0;
+    for (int i = first_entry; i < cll_entries; i++) {
+        if ([self lengthOfLine:i] == 0) {
+            count++;
+        } else {
+            break;
+        }
+    }
+    return count;
+}
+
+- (BOOL)containsAnyNonEmptyLine {
+    if (cll_entries == 0) {
+        return NO;
+    }
+    return cumulative_line_lengths[cll_entries - 1] > start_offset;
 }
 
 - (void)addObserver:(id<iTermLineBlockObserver>)observer {
@@ -2280,6 +2354,12 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
     @synchronized([LineBlock class]) {
         return self.owner != nil;
     }
+}
+
+- (void)invalidate {
+    // The purpose of invalidation is to make syncing do the right thing when the progenitor block
+    // is removed from the line buffer.
+    _invalidated = YES;
 }
 
 #pragma mark - iTermUniquelyIdentifiable

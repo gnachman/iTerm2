@@ -85,7 +85,19 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     if (item.action == @selector(performFindPanelAction:) && item.tag == NSFindPanelActionSelectAll) {
         return self.findOnPageHelper.searchResults.count > 0;
     }
+    if (item.action == @selector(renderSelection:)) {
+        return [self.selection hasSelection] && self.selection.allSubSelections.count == 1 && !self.selection.live && ![self absRangeIntersectsPortholes:self.selection.spanningAbsRange];
+    }
     return NO;
+}
+
+#pragma mark - Actions
+
+- (IBAction)renderSelection:(id)sender {
+    VT100GridAbsCoordRange absRange = self.selection.spanningAbsRange;
+    [self.selection.allSubSelections[0] setAbsRange:VT100GridAbsWindowedRangeMake(absRange, 0, self.dataSource.width)];
+    [self renderRange:absRange type:nil filename:nil];
+    [self.selection clearSelection];
 }
 
 #pragma mark - Coordinate Space Conversions
@@ -605,7 +617,9 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     iTermRenegablePromise<NSString *> *promise = [self promisedStringForSelectedTextCappedAtSize:maxSize
                                                                                minimumLineNumber:0
                                                                                        selection:selection];
-    [[iTermController sharedInstance] setLastSelectionPromise:promise];
+    if (promise) {
+        [[iTermController sharedInstance] setLastSelectionPromise:promise];
+    }
     return promise;
 }
 
@@ -718,7 +732,9 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
             type = NSPasteboardTypeString;
             break;
     }
-    [iTermAsyncSelectionProvider copyPromise:promise type:type];
+    if (promise) {
+        [iTermAsyncSelectionProvider copyPromise:promise type:type];
+    }
 }
 
 - (id)selectedTextWithStyle:(iTermCopyTextStyle)style

@@ -11,12 +11,14 @@
 
 @class iTermColorMap;
 @class iTermExternalAttributeIndex;
+@protocol iTermMark;
 @protocol IntervalTreeImmutableObject;
 @class PTYAnnotation;
 @protocol PTYAnnotationReading;
 @class PTYNoteViewController;
 @class PTYSession;
 @class PTYTask;
+@protocol Porthole;
 @class SCPPath;
 @class VT100Grid;
 @protocol VT100RemoteHostReading;
@@ -135,5 +137,13 @@
 - (void)resetDirty;
 
 - (id<iTermTextDataSource>)snapshotDataSource;
+
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+        withPorthole:(id<Porthole>)porthole
+            ofHeight:(int)numLines;
+- (void)replaceMark:(id<iTermMark>)mark withLines:(NSArray<ScreenCharArray *> *)lines;
+- (void)changeHeightOfMark:(id<iTermMark>)mark to:(int)newHeight;
+
+- (VT100GridCoordRange)coordRangeOfPorthole:(id<Porthole>)porthole;
 
 @end

@@ -6,7 +6,6 @@
 *.pbxuser
 *.perspective
 *.perspectivev3
-iTerm2.xcodeproj/project.xcworkspace
 build/
 .DS_Store
 canary.xml

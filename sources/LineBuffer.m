@@ -90,7 +90,7 @@ static const NSInteger kUnicodeVersion = 9;
 
 // Append a block
 - (LineBlock *)_addBlockOfSize:(int)size {
-    _dirty = YES;
+    self.dirty = YES;
     LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];
     block.mayHaveDoubleWidthCharacter = self.mayHaveDoubleWidthCharacter;
     [_lineBlocks addBlock:block];
@@ -179,17 +179,22 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 
+- (int)maxLines {
+    return max_lines;
+}
+
 - (void)setMaxLines:(int)maxLines {
-    _dirty = YES;
+    self.dirty = YES;
     max_lines = maxLines;
     num_wrapped_lines_width = -1;
 }
 
 
 - (int)dropExcessLinesWithWidth:(int)width {
-    _dirty = YES;
+    self.dirty = YES;
     int nl = RawNumLines(self, width);
     int totalDropped = 0;
+    int totalRawLinesDropped = 0;
     if (max_lines != -1 && nl > max_lines) {
         LineBlock *block = _lineBlocks[0];
         int total_lines = nl;
@@ -205,8 +210,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                 toDrop = extra_lines;
             }
             int charsDropped;
+            const int numRawLinesBefore = block.numRawLines;
             int dropped = [block dropLines:toDrop withWidth:width chars:&charsDropped];
             totalDropped += dropped;
+            const int numRawLinesAfter = block.numRawLines;
+            assert(numRawLinesAfter <= numRawLinesBefore);
+            totalRawLinesDropped += (numRawLinesBefore - numRawLinesAfter);
             droppedChars += charsDropped;
             if ([block isEmpty]) {
                 [_lineBlocks removeFirstBlock];
@@ -219,10 +228,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         }
         num_wrapped_lines_cache = total_lines;
     }
-#if ITERM_DEBUG
-    assert(totalDropped == (nl - RawNumLines(self, width)));
-#endif
+    cursor_rawline -= totalRawLinesDropped;
     [_delegate lineBufferDidDropLines:self];
+    assert(totalRawLinesDropped >= 0);
     return totalDropped;
 }
 
@@ -239,7 +247,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int i;
     int rawOffset = 0;
     for (i = 0; i < _lineBlocks.count; ++i) {
-        NSLog(@"Block %d:\n", i);
+        VLog(@"Block %d:\n", i);
         [_lineBlocks[i] dump:rawOffset toDebugLog:NO];
         rawOffset += [_lineBlocks[i] rawSpaceUsed];
     }
@@ -325,7 +333,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
              width:(int)width
           metadata:(iTermImmutableMetadata)metadataObj
       continuation:(screen_char_t)continuation {
-    _dirty = YES;
+    self.dirty = YES;
 #ifdef LOG_MUTATIONS
     NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
 #endif
@@ -505,16 +513,25 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
-- (void)appendContentsOfLineBuffer:(LineBuffer *)other width:(int)width {
-    _dirty = YES;
+- (int)appendContentsOfLineBuffer:(LineBuffer *)other width:(int)width includingCursor:(BOOL)cursor {
+    self.dirty = YES;
+    int offset = 0;
+    if (cursor) {
+        offset = TotalNumberOfRawLines(self);
+    }
     while (_lineBlocks.lastBlock.isEmpty) {
         [_lineBlocks removeLastBlock];
     }
     for (LineBlock *block in other->_lineBlocks.blocks) {
         [_lineBlocks addBlock:[block copy]];
     }
+    if (cursor) {
+        cursor_rawline = other->cursor_rawline + offset;
+        cursor_x = other->cursor_x;
+    }
+
     num_wrapped_lines_width = -1;
-    [self dropExcessLinesWithWidth:width];
+    return [self dropExcessLinesWithWidth:width];
 }
 
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
@@ -611,7 +628,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (void)removeLastRawLine {
-    _dirty = YES;
+    self.dirty = YES;
     [_lineBlocks.lastBlock removeLastRawLine];
     if (_lineBlocks.lastBlock.numRawLines == 0 && _lineBlocks.count > 1) {
         [_lineBlocks removeLastBlock];
@@ -622,7 +639,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
                          width:(int)width {
-    _dirty = YES;
+    self.dirty = YES;
     // Invalidate the cache
     num_wrapped_lines_width = -1;
 
@@ -670,7 +687,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if ([self numLinesWithWidth:width] == 0) {
         return NO;
     }
-    _dirty = YES;
+    self.dirty = YES;
     num_wrapped_lines_width = -1;
 
     LineBlock* block = _lineBlocks.lastBlock;
@@ -717,7 +734,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (void)setCursor:(int)x {
-    _dirty = YES;
+    self.dirty = YES;
     LineBlock *block = _lineBlocks.lastBlock;
     if ([block hasPartial]) {
         int last_line_length = [block getRawLineLength: [block numEntries]-1];
@@ -765,6 +782,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
 - (BOOL)_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset {
     LineBlock *block = [_lineBlocks blockContainingPosition:start.absolutePosition - droppedChars
+                                                    yOffset:start.yOffset
                                                       width:-1
                                                   remainder:offset
                                                 blockOffset:NULL
@@ -986,20 +1004,22 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 - (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord
                                         width:(int)width
                                        offset:(int)offset {
+    VLog(@"positionForCoord:%@ width:%@ offset:%@", VT100GridCoordDescription(coord), @(width), @(offset));
+    
     int x = coord.x;
     int y = coord.y;
-
     int line = y;
     NSInteger index = [_lineBlocks indexOfBlockContainingLineNumber:y width:width remainder:&line];
     if (index == NSNotFound) {
+        VLog(@"positionForCoord returning nil because indexOfBlockCOntainingLineNumber returned NSNotFound");
         return nil;
     }
 
     LineBlock *block = _lineBlocks[index];
     long long absolutePosition = droppedChars + [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, index)];
-
+    VLog(@"positionForCoord: Absolute position of block %@ is %@", @(index), @(absolutePosition));
     int pos;
-    int yOffset = 0;
+    int yOffset = 0;  // Number of lines from start of block to coord
     BOOL extends = NO;
     pos = [block getPositionOfLine:&line
                                atX:x
@@ -1007,6 +1027,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                            yOffset:&yOffset
                            extends:&extends];
     if (pos < 0) {
+        VLog(@"positionForCoordinate: returning nil because getPositionOfLine returned a negative value");
         DLog(@"failed to get position of line %@", @(line));
         return nil;
     }
@@ -1016,25 +1037,58 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     result.absolutePosition = absolutePosition;
     result.yOffset = yOffset;
     result.extendsToEndOfLine = extends;
+    VLog(@"positionForCoord: Initialize result %@", result);
 
     // Make sure position is valid (might not be because of offset).
     BOOL ok;
+    const VT100GridCoord resultingCoord =
     [self coordinateForPosition:result
                           width:width
                    extendsRight:YES  // doesn't matter for deciding if the result is valid
                              ok:&ok];
-    if (ok) {
-        return result;
-    } else {
+    if (!ok) {
+        VLog(@"positionForCoord: failed to calculate the resulting coord");
         return nil;
     }
+    VLog(@"positionForCoord: The resulting coord is %@ (want %@)", VT100GridCoordDescription(resultingCoord),
+          VT100GridCoordDescription(coord));
+
+    const int residual = coord.y - resultingCoord.y;
+    VLog(@"positionForCoord: residual is %@", @(residual));
+
+    if (residual > 0) {
+        // This can happen if you want the position for a coord that is preceded by empty lines.
+        //
+        // Block 0
+        //     abc
+        //
+        // Block 1
+        //     (empty)
+        //     (empty)      [want a position at the start of this line]
+        //     xyz
+
+        // Given coord x=0,y=2 `result` (prior to the next line) will be pos=3,yOffset=1. That has the block-relative
+        // yOffset, but that's insufficient to find the right position since you'll need to traverse
+        // empty lines between pos=3 and the start of this block (in this case 1, but empty blocks or
+        // trailing empty lines in block 0 could cause it to be more).
+        // The resultingCoord, therefore, will be x=0,y=1. The correct yOffset is found by adding the
+        // missing lines back (in this case, 1 to go from y=1 to the y=2 that we want).
+        result.yOffset += residual;
+        VLog(@"positionForCoord: Advance result by %d", residual);
+    }
+    VLog(@"positionForCoordinate: returning %@", result);
+    return result;
 }
 
+// Note this function returns a closed interval on end.x
 - (VT100GridCoord)coordinateForPosition:(LineBufferPosition *)position
                                   width:(int)width
                            extendsRight:(BOOL)extendsRight
                                      ok:(BOOL *)ok {
+    VLog(@"coordinateForPosition:%@ width:%@ extendsRight:%@", position, @(width), @(extendsRight));
+
     if (position.absolutePosition == self.lastPosition.absolutePosition) {
+        VLog(@"coordinateForPosition: is last position");
         VT100GridCoord result;
         // If the absolute position is equal to the last position, then
         // numLinesWithWidth: will give the wrapped line number after all
@@ -1048,59 +1102,75 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         result.x = lastLine.length;
         if (position.yOffset > 0) {
             result.x = 0;
-            result.y += position.yOffset + 1;
+            result.y += position.yOffset;
         } else {
             result.x = lastLine.length;
         }
         if (position.extendsToEndOfLine) {
             if (extendsRight) {
-                result.x = width - 1;
+                result.x = width - 1;  // closed interval
             }
         }
         if (ok) {
             *ok = YES;
         }
+        VLog(@"coordinateForPosition: return %@", VT100GridCoordDescription(result));
         return result;
     }
 
     int p;
     int yoffset;
+    VLog(@"coordinateForPosition: find block with position %@, yoffset=%@",
+          @(position.absolutePosition - droppedChars), @(position.yOffset));
     LineBlock *block = [_lineBlocks blockContainingPosition:position.absolutePosition - droppedChars
+                                                    yOffset:position.yOffset
                                                       width:width
                                                   remainder:&p
                                                 blockOffset:&yoffset
                                                       index:NULL];
     if (!block) {
+        VLog(@"coordinateForPosition: failed, returning error");
         if (ok) {
             *ok = NO;
         }
         return VT100GridCoordMake(0, 0);
     }
+    VLog(@"coordinateForPosition: p=%@ yoffset=%@", @(p), @(yoffset));
 
     int y;
     int x;
+    VLog(@"coordinateForPosition: calling convertPosition:%@ withWidth:%@", @(p), @(width));
     BOOL positionIsValid = [block convertPosition:p
                                         withWidth:width
                                         wrapOnEOL:NO  //  using extendsRight here is wrong because extension happens below
                                               toX:&x
                                               toY:&y];
     if (ok) {
+        VLog(@"coordinateForPosition: got a valid reslut. x=%d, y=%d", x, y);
         *ok = positionIsValid;
+    } else {
+        VLog(@"coordinateForPosition: failed to convert position");
     }
     if (position.yOffset > 0) {
         if (!position.extendsToEndOfLine) {
+            VLog(@"coordinateForPosition: wrap x to next line");
             x = 0;
         }
         y += position.yOffset;
+        VLog(@"coordinateForPosition: advance y by %d to %d", position.yOffset, y);
     }
     if (position.extendsToEndOfLine) {
         if (extendsRight) {
+            VLog(@"coordinateForPosition: extends right is true, set x to last column");
             x = width - 1;
         } else {
+            VLog(@"coordinateForPosition: extends right is false, set x to 0");
             x = 0;
         }
     }
-    return VT100GridCoordMake(x, y + yoffset);
+    VT100GridCoord coord = VT100GridCoordMake(x, y + yoffset);
+    VLog(@"coordinateForPosition: return %@", VT100GridCoordDescription(coord));
+    return coord;
 }
 
 - (LineBufferPosition *)firstPosition {
@@ -1115,6 +1185,13 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     position.absolutePosition = droppedChars + [_lineBlocks rawSpaceUsed];
 
     return position;
+}
+
+- (LineBufferPosition *)penultimatePosition {
+    if (_lineBlocks.rawSpaceUsed == 0) {
+        return [self lastPosition];
+    }
+    return [[self lastPosition] predecessor];
 }
 
 - (LineBufferPosition *)positionForStartOfLastLine {
@@ -1159,6 +1236,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 - (int)absBlockNumberOfAbsPos:(long long)absPos {
     int index;
     LineBlock *block = [_lineBlocks blockContainingPosition:absPos - droppedChars
+                                                    yOffset:0
                                                       width:0
                                                   remainder:NULL
                                                 blockOffset:NULL
@@ -1392,17 +1470,17 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 - (void)beginResizing {
     assert(!_lineBlocks.resizing);
     _lineBlocks.resizing = YES;
-    _dirty = YES;
+    self.dirty = YES;
 }
 
 - (void)endResizing {
     assert(_lineBlocks.resizing);
     _lineBlocks.resizing = NO;
-    _dirty = YES;
+    self.dirty = YES;
 }
 
 - (void)setPartial:(BOOL)partial {
-    _dirty = YES;
+    self.dirty = YES;
     [_lineBlocks.lastBlock setPartial:partial];
 }
 
@@ -1445,7 +1523,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (void)seal {
-    _dirty = YES;
+    self.dirty = YES;
     if (_lineBlocks.lastBlock.isEmpty) {
         return;
     }

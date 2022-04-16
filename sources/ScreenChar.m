@@ -197,7 +197,9 @@ void SetPositionInImageChar(screen_char_t *charPtr, int x, int y)
 void SetDecodedImage(unichar code, iTermImage *image, NSData *data) {
     [[iTermImageRegistry sharedInstance] setData:data forImage:image code:code];
     if ([iTermAdvancedSettingsModel restoreWindowContents]) {
-        [NSApp invalidateRestorableState];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [NSApp invalidateRestorableState];
+        });
     }
 }
 

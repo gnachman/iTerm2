@@ -30,6 +30,7 @@
 #import "TextViewWrapper.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermMetalDisabling.h"
 #import "iTermPreferences.h"
@@ -55,6 +56,10 @@
                                                  selector:@selector(annotationVisibilityDidChange:)
                                                      name:iTermAnnotationVisibilityDidChange
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(portholesDidChange:)
+                                                     name:iTermPortholesDidChange
+                                                   object:nil];
     }
     return self;
 }
@@ -70,12 +75,16 @@
 }
 
 - (BOOL)haveMetalDisablingChildren {
-    for (NSView *view in self.subviews) {
+    for (NSView *view in [self.subviews arrayByAddingObjectsFromArray:child_.subviews ?: @[]]) {
         if ([view conformsToProtocol:@protocol(iTermMetalDisabling)]) {
             return YES;
         }
     }
     return NO;
+}
+
+- (void)portholesDidChange:(NSNotification *)notification {
+    [super setAlphaValue:[self desiredAlphaValue]];
 }
 
 - (void)annotationVisibilityDidChange:(NSNotification *)notification {

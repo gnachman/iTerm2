@@ -220,3 +220,6 @@ void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...);
 @end
 
 #endif  // __OBJC__
+
+#define VLog(args...)
+//#define VLog(args...) NSLog(args)

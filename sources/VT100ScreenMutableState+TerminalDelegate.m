@@ -1756,9 +1756,10 @@
                                      units:(VT100TerminalUnits)heightUnits
                        preserveAspectRatio:(BOOL)preserveAspectRatio
                                      inset:(NSEdgeInsets)inset
+                                      type:(NSString *)type
                                 completion:(void (^)(BOOL ok))completion {
-    DLog(@"begin name=%@ size=%@ width=%@ widthUnits=%@ height=%@ heightUnits=%@ preserveAR=%@ inset=%f,%f,%f,%f",
-         name, @(size), @(width), @(widthUnits), @(height), @(heightUnits), @(preserveAspectRatio), inset.top, inset.bottom, inset.left, inset.right);
+    DLog(@"begin name=%@ size=%@ width=%@ widthUnits=%@ height=%@ heightUnits=%@ preserveAR=%@ inset=%f,%f,%f,%f type=%@",
+         name, @(size), @(width), @(widthUnits), @(height), @(heightUnits), @(preserveAspectRatio), inset.top, inset.bottom, inset.left, inset.right, type);
     __weak __typeof(self) weakSelf = self;
     dispatch_queue_t queue = _queue;
     [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
@@ -1778,6 +1779,7 @@
                                              units:heightUnits
                                preserveAspectRatio:preserveAspectRatio
                                              inset:inset
+                                              type:type
                                           delegate:delegate
                                              queue:queue
                                         completion:^(BOOL ok) {
@@ -1790,18 +1792,19 @@
 
 // Main queue, unmanaged
 - (void)reallyWillReceiveInlineFileNamed:(NSString *)name
-                                    ofSize:(NSInteger)size
-                                     width:(int)width
-                                     units:(VT100TerminalUnits)widthUnits
-                                    height:(int)height
-                                     units:(VT100TerminalUnits)heightUnits
-                       preserveAspectRatio:(BOOL)preserveAspectRatio
-                                     inset:(NSEdgeInsets)inset
+                                  ofSize:(NSInteger)size
+                                   width:(int)width
+                                   units:(VT100TerminalUnits)widthUnits
+                                  height:(int)height
+                                   units:(VT100TerminalUnits)heightUnits
+                     preserveAspectRatio:(BOOL)preserveAspectRatio
+                                   inset:(NSEdgeInsets)inset
+                                    type:(NSString *)type
                                 delegate:(id<VT100ScreenDelegate>)delegate
                                    queue:(dispatch_queue_t)queue
-                                completion:(void (^)(BOOL ok))completion {
-    DLog(@"begin name=%@ size=%@ width=%@ widthUnits=%@ height=%@ heightUnits=%@ preserveAR=%@ inset=%f,%f,%f,%f",
-         name, @(size), @(width), @(widthUnits), @(height), @(heightUnits), @(preserveAspectRatio), inset.top, inset.bottom, inset.left, inset.right);
+                              completion:(void (^)(BOOL ok))completion {
+    DLog(@"begin name=%@ size=%@ width=%@ widthUnits=%@ height=%@ heightUnits=%@ preserveAR=%@ inset=%f,%f,%f,%f type=%@",
+         name, @(size), @(width), @(widthUnits), @(height), @(heightUnits), @(preserveAspectRatio), inset.top, inset.bottom, inset.left, inset.right, type);
     BOOL promptIfBig = YES;
     const BOOL allowed = [delegate screenConfirmDownloadAllowed:name
                                                            size:size
@@ -1826,6 +1829,7 @@
                                                                         scaleFactor:scale
                                                                 preserveAspectRatio:preserveAspectRatio
                                                                               inset:inset
+                                                                               type:type
                                                                        preconfirmed:!promptIfBig];
         strongSelf.inlineImageHelper.delegate = self;
         completion(YES);

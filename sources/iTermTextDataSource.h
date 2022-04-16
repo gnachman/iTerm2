@@ -5,7 +5,8 @@
 //  Created by George Nachman on 2/15/22.
 //
 
-@class ScreenCharArray;
+#import "ScreenCharArray.h"
+
 @protocol iTermExternalAttributeIndexReading;
 
 NS_ASSUME_NONNULL_BEGIN

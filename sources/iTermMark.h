@@ -9,7 +9,10 @@
 #import <Foundation/Foundation.h>
 #import "IntervalTree.h"
 
+@class iTermMark;
+
 @protocol iTermMark <NSObject, IntervalTreeImmutableObject>
+- (iTermMark *)progenitor;
 @end
 
 // This is a base class for marks but should never be used directly.
@@ -18,7 +21,6 @@
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict;
 - (NSDictionary *)dictionaryValue;
-- (id<iTermMark>)progenitor;
 - (id<iTermMark>)doppelganger;
 
 @end

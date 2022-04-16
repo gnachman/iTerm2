@@ -58,6 +58,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
 };
 
+extern NSNotificationName iTermPortholesDidChange;
+
 @protocol PTYTextViewDelegate <NSObject, iTermBadgeLabelDelegate, iTermObject>
 
 @property (nonatomic, readonly) NSEdgeInsets textViewEdgeInsets;
@@ -255,6 +257,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 - (BOOL)textViewAnyMouseReportingModeIsEnabled;
 - (BOOL)textViewSmartSelectionActionsShouldUseInterpolatedStrings;
 - (void)textViewShowFindPanel;
+- (void)textViewDidAddOrRemovePorthole;
 
 @end
 

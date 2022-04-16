@@ -1,0 +1,58 @@
+.hljs {
+    background: ${bg};
+    color: ${fg};
+}
+
+.hljs-comment,
+.hljs-quote {
+    color: ${brightBlack};
+}
+
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-link,
+.hljs-meta {
+    color: ${brightRed};
+}
+
+.hljs-number,
+.hljs-built_in,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-deletion {
+    color: ${brightBlue};
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-attribute {
+    color: ${brightYellow};
+}
+
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+    color: ${brightGreen};
+}
+
+.hljs-keyword,
+.hljs-selector-tag {
+    color: ${brightMagenta};
+}
+
+.hljs-emphasis {
+    font-style: italic;
+    font-family: ${fontFamily}
+}
+
+.hljs-strong {
+    font-weight: bold;
+    font-family: ${fontFamily}
+}

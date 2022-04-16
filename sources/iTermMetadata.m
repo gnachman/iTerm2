@@ -42,6 +42,10 @@ iTermMetadata iTermImmutableMetadataMutableCopy(iTermImmutableMetadata obj) {
     };
 }
 
+iTermImmutableMetadata iTermImmutableMetadataCopy(iTermImmutableMetadata obj) {
+    return iTermMetadataMakeImmutable(iTermImmutableMetadataMutableCopy(obj));
+}
+
 void iTermMetadataRetain(iTermMetadata obj) {
     [(id)obj.externalAttributes retain];
 }
@@ -86,9 +90,13 @@ void iTermMetadataReplaceWithCopy(iTermMetadata *obj) {
     iTermMetadataSetExternalAttributes(obj, [[eaIndex copy] autorelease]);
 }
 
-NSArray *iTermMetadataEncodeToArray(iTermMetadata obj) {
-    iTermExternalAttributeIndex *eaIndex = iTermMetadataGetExternalAttributesIndex(obj);
+NSArray *iTermImmutableMetadataEncodeToArray(iTermImmutableMetadata obj) {
+    iTermExternalAttributeIndex *eaIndex = iTermImmutableMetadataGetExternalAttributesIndex(obj);
     return @[ @(obj.timestamp), [eaIndex dictionaryValue] ?: @{} ];
+}
+
+NSArray *iTermMetadataEncodeToArray(iTermMetadata obj) {
+    return iTermImmutableMetadataEncodeToArray(iTermMetadataMakeImmutable(obj));
 }
 
 void iTermMetadataSetExternalAttributes(iTermMetadata *obj,

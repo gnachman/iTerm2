@@ -64,6 +64,8 @@ const int kColorMapAnsiBrightModifier = 8;
     id<iTermColorMapReading> _sanitizingAdapter;
 }
 
+@synthesize generation = _generation;
+
 + (iTermColorMapKey)keyFor8bitRed:(int)red
                             green:(int)green
                              blue:(int)blue {
@@ -80,6 +82,7 @@ const int kColorMapAnsiBrightModifier = 8;
 }
 
 - (void)setDimmingAmount:(double)dimmingAmount {
+    _generation += 1;
     _dimmingAmount = dimmingAmount;
     [self.delegate colorMap:self dimmingAmountDidChangeTo:dimmingAmount];
 }
@@ -88,13 +91,16 @@ const int kColorMapAnsiBrightModifier = 8;
     if (_mutingAmount == mutingAmount) {
         return;
     }
+    _generation += 1;
     _mutingAmount = mutingAmount;
     [self.delegate colorMap:self mutingAmountDidChangeTo:mutingAmount];
 }
 
 - (void)setColor:(NSColor *)colorInArbitrarySpace forKey:(iTermColorMapKey)theKey {
-    if (theKey >= kColorMap24bitBase)
+    if (theKey >= kColorMap24bitBase) {
         return;
+    }
+    _generation += 1;
 
     if (!colorInArbitrarySpace) {
         [_map removeObjectForKey:@(theKey)];
@@ -168,8 +174,24 @@ const int kColorMapAnsiBrightModifier = 8;
     if (dimOnlyText == _dimOnlyText) {
         return;
     }
+    _generation += 1;
     _dimOnlyText = dimOnlyText;
     [self.delegate colorMap:self dimmingAmountDidChangeTo:_dimmingAmount];
+}
+
+- (void)setDarkMode:(BOOL)darkMode {
+    _darkMode = darkMode;
+    _generation += 1;
+}
+
+- (void)setUseSeparateColorsForLightAndDarkMode:(BOOL)useSeparateColorsForLightAndDarkMode {
+    _useSeparateColorsForLightAndDarkMode = useSeparateColorsForLightAndDarkMode;
+    _generation += 1;
+}
+
+- (void)setMinimumContrast:(double)minimumContrast {
+    _minimumContrast = minimumContrast;
+    _generation += 1;
 }
 
 // There is an issue where where the passed-in color can be in a different color space than the
@@ -668,6 +690,7 @@ const int kColorMapAnsiBrightModifier = 8;
 @dynamic minimumContrast;
 @dynamic useSeparateColorsForLightAndDarkMode;
 @dynamic darkMode;
+@dynamic generation;
 
 - (instancetype)initWithSource:(iTermColorMap *)source {
     _impl = [[iTermColorMapSanitizingAdapterImpl alloc] initWithSource:source];

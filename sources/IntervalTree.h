@@ -107,6 +107,7 @@ NS_ASSUME_NONNULL_BEGIN
 // |object| should implement -hash.
 - (void)addObject:(id<IntervalTreeObject>)object withInterval:(Interval *)interval;
 - (BOOL)removeObject:(id<IntervalTreeObject>)object;
+- (NSArray<id<IntervalTreeObject>> *)mutableObjectsInInterval:(Interval *)interval;
 
 // NOTE: This leaves the entry set on objects so you can recover the interval. You must nil it out
 // before adding an object to another tree.

@@ -521,6 +521,8 @@ static _Atomic int gPerformingJoinedBlock;
     }
     DLog(@"Increment overflow by %d", overflowCount);
     self.scrollbackOverflow += overflowCount;
+    assert(self.cumulativeScrollbackOverflow >= 0);
+    assert(overflowCount >= 0);
     self.cumulativeScrollbackOverflow += overflowCount;
 }
 
@@ -1639,7 +1641,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                           block:^(id<IntervalTreeObject> note) {
         if (note.entry.interval.location < screenInterval.location) {
             // Truncate note so that it ends just before screen.
-            note.entry.interval.length = screenInterval.location - note.entry.interval.location;
+            // Subtract 1 because end coord is inclusive of y even when x is 0.
+            note.entry.interval.length = screenInterval.location - note.entry.interval.location - 1;
         }
         PTYAnnotation *annotation = [PTYAnnotation castFrom:note];
         [annotation hide];
@@ -2696,10 +2699,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 // offset is added to intervals before inserting into interval tree.
-- (void)moveNotesOnScreenFrom:(IntervalTree *)source
-                           to:(IntervalTree *)dest
-                       offset:(long long)offset
-                 screenOrigin:(int)screenOrigin {
+- (NSArray<id<IntervalTreeObject>> *)moveNotesOnScreenFrom:(IntervalTree *)source
+                                                        to:(IntervalTree *)dest
+                                                    offset:(long long)offset
+                                              screenOrigin:(int)screenOrigin {
     VT100GridCoordRange screenRange =
     VT100GridCoordRangeMake(0,
                             screenOrigin,
@@ -2708,7 +2711,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
     Interval *sourceInterval = [self intervalForGridCoordRange:screenRange];
     self.lastCommandMark = nil;
-    for (id<IntervalTreeObject> obj in [source objectsInInterval:sourceInterval]) {
+    NSArray<id<IntervalTreeObject>> *objectsMoved = [source mutableObjectsInInterval:sourceInterval];
+    for (id<IntervalTreeObject> obj in objectsMoved) {
         Interval *interval = obj.entry.interval;
         DLog(@"  found note with interval %@. Remove %@", interval, obj);
         const BOOL removed = [source removeObject:obj];
@@ -2718,6 +2722,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         DLog(@"  new interval is %@", interval);
         [dest addObject:obj withInterval:newInterval];
     }
+    return objectsMoved;
 }
 
 - (NSArray<iTermTuple<id<IntervalTreeObject>, Interval *> *> *)removeNotesOnScreenFrom:(IntervalTree *)source
@@ -2769,6 +2774,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // Notes in the saved tree have 0 as the top of the mutable screen area. -movesNotes… adds
     // the current cumulative overflow to the screenOrigin, so give it a negative origin to offset
     // that.
+    NSArray<id<IntervalTreeObject>> *revealedObjects =
     [self moveNotesOnScreenFrom:self.mutableSavedIntervalTree
                              to:self.mutableIntervalTree
                          offset:origin.location
@@ -2785,7 +2791,29 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self.mutableSavedIntervalTree addObject:tuple.firstObject
                                     withInterval:tuple.secondObject];
     }
-    DLog(@"after moving temp to saved, saved:\n%@", self.mutableSavedIntervalTree);;
+    DLog(@"after moving temp to saved, saved:\n%@", self.mutableSavedIntervalTree);
+
+    // Let delegate know about changes.
+    for (id<IntervalTreeObject> ito in revealedObjects) {
+        const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(ito.doppelganger);
+        const long long line = [self absCoordRangeForInterval:ito.entry.interval].start.y;
+        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+            [observer intervalTreeDidUnhideObject:ito.doppelganger
+                                           ofType:type
+                                           onLine:line];
+        }];
+    }
+    for (iTermTuple<id<IntervalTreeObject>, Interval *> *tuple in formerlyInPrimary) {
+        id<IntervalTreeObject> ito = tuple.firstObject;
+        const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(ito.doppelganger);
+        const long long line = [self absCoordRangeForInterval:ito.entry.interval].start.y;
+        id<IntervalTreeImmutableObject> doppelganger = ito.doppelganger;
+        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+            [observer intervalTreeDidHideObject:doppelganger
+                                         ofType:type
+                                         onLine:line];
+        }];
+    }
     DLog(@"- done -");
 }
 
@@ -3016,6 +3044,239 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         DLog(@"%@.stringValue=%@", mutableAnnotation, stringValue);
         [mutableAnnotation setStringValueWithoutSideEffects:stringValue];
     }];
+}
+
+#pragma mark - Portholes
+
+- (void)replaceMark:(iTermMark *)mark withLines:(NSArray<ScreenCharArray *> *)lines {
+    const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:mark.entry.interval];
+    if (range.end.y < self.totalScrollbackOverflow) {
+        // Nothing to do - it has already scrolled off to the great beyond.
+        return;
+    }
+    NSArray<ScreenCharArray *> *trimmed = lines;
+    if (range.start.y <= self.totalScrollbackOverflow) {
+        VT100GridCoordRange relativeRange = VT100GridCoordRangeFromAbsCoordRange(range, self.totalScrollbackOverflow);
+        trimmed = [self linesByTruncatingLines:lines toWrappedHeight:relativeRange.end.y - relativeRange.start.y + 1];
+    }
+    [self replaceRange:range withLines:trimmed];
+    [self.mutableIntervalTree removeObject:mark];
+}
+
+- (NSArray<ScreenCharArray *> *)linesByTruncatingLines:(NSArray<ScreenCharArray *> *)originalLines
+                                       toWrappedHeight:(int)desiredHeight {
+    LineBuffer *temp = [[LineBuffer alloc] init];
+    const int width = self.width;
+    for (ScreenCharArray *sca in originalLines) {
+        [temp appendScreenCharArray:sca width:width];
+    }
+    [temp setMaxLines:desiredHeight];
+    [temp dropExcessLinesWithWidth:width];
+
+    NSMutableArray<ScreenCharArray *> *result = [NSMutableArray array];
+    [temp enumerateLinesInRange:NSMakeRange(0, [temp numLinesWithWidth:width])
+                          width:width block:^(int i,
+                                              ScreenCharArray * _Nonnull sca,
+                                              iTermImmutableMetadata metadata,
+                                              BOOL * _Nonnull stop) {
+        [result addObject:[sca copy]];
+    }];
+    return result;
+}
+
+- (void)replaceRange:(VT100GridAbsCoordRange)absRange
+        withPorthole:(id<Porthole>)porthole
+            ofHeight:(int)numLines {
+    NSMutableArray<ScreenCharArray *> *lines = [NSMutableArray array];
+    for (int i = 0; i < numLines; i++) {
+        [lines addObject:[[ScreenCharArray alloc] init]];
+    }
+    const VT100GridAbsCoordRange markRange = [self replaceRange:absRange withLines:lines];
+    if (!VT100GridAbsCoordRangeIsValid(markRange)) {
+        return;
+    }
+    Interval *interval = [self intervalForGridAbsCoordRange:markRange];
+    PortholeMark *mark = [[PortholeMark alloc] init:porthole.uniqueIdentifier];
+    [self.mutableIntervalTree addObject:mark withInterval:interval];
+    [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
+        [delegate screenDidAddPorthole:porthole];
+    }];
+}
+
+- (void)changeHeightOfMark:(iTermMark *)mark to:(int)newHeight {
+    VT100GridAbsCoordRange range = [self absCoordRangeForInterval:mark.entry.interval];
+    if (range.end.y < self.totalScrollbackOverflow) {
+        return;
+    }
+    VT100GridAbsCoordRange replacementAbsRange = range;
+    range.start.y = MAX(self.totalScrollbackOverflow, range.start.y);
+    NSMutableArray<ScreenCharArray *> *lines = [NSMutableArray array];
+
+    for (int i = 0; i < newHeight; i++) {
+        [lines addObject:[[ScreenCharArray alloc] init]];
+    }
+    [self replaceRange:range withLines:lines];
+
+    replacementAbsRange.end.y = replacementAbsRange.start.y + newHeight - 1;
+    replacementAbsRange.start.y = MAX(self.totalScrollbackOverflow, replacementAbsRange.start.y);
+    Interval *interval = [self intervalForGridAbsCoordRange:replacementAbsRange];
+
+    [self.mutableIntervalTree removeObject:mark];
+    [self.mutableIntervalTree addObject:mark
+                           withInterval:interval];
+}
+
+- (VT100GridAbsCoordRange)replaceRange:(VT100GridAbsCoordRange)absRange
+                             withLines:(NSArray<ScreenCharArray *> *)replacementLines {
+    VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, self.cumulativeScrollbackOverflow);
+    if (range.start.y < 0) {
+        // Already scrolled into the dustbin.
+        return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+    }
+    [self clearTriggerLine];
+
+    const VT100GridSize gridSize = self.currentGrid.size;
+
+    // If cursor is inside the range, move it below.
+    VT100GridCoord cursorCoord = self.currentGrid.cursor;
+    const BOOL cursorOnLastLine = (cursorCoord.y == gridSize.height + 1);
+    const int numberOfScrollbackLines = self.numberOfScrollbackLines;
+    cursorCoord.y += numberOfScrollbackLines;
+    const BOOL rangeIncludesCursor = VT100GridCoordRangeContainsCoord(range, cursorCoord);
+    if (rangeIncludesCursor && !cursorOnLastLine) {
+        cursorCoord.y = range.end.y + 1;
+        self.currentGrid.cursorY = cursorCoord.y - numberOfScrollbackLines;
+    }
+
+    const int savedMaxLines = self.linebuffer.maxLines;
+    [self.linebuffer setMaxLines:-1];
+
+    // 0 |
+    // 1 | linebuffer
+    // 2 |               X replacement range
+    // 3 )               X
+    // 4 ) grid
+    // 5 )
+
+    LineBuffer *scratch = [[LineBuffer alloc] init];
+    for (ScreenCharArray *sca in replacementLines) {
+        [scratch appendScreenCharArray:sca width:gridSize.width];
+    }
+    const int numLines = [scratch numLinesWithWidth:gridSize.width];
+
+    int deltaLines = numLines - (range.end.y - range.start.y + 1);
+    const int numberOfLinesUsed = [self.currentGrid numberOfLinesUsed];
+    const int numberOfEmptyLines = gridSize.height - numberOfLinesUsed;
+    // Elide empty lines to avoid shifting the grid up into the line buffer unnecessarily.
+    [self.currentGrid appendLines:gridSize.height - MIN(numberOfEmptyLines, MAX(0, deltaLines))
+                     toLineBuffer:self.linebuffer];
+    self.linebuffer.partial = NO;
+
+    // 0 |
+    // 1 |
+    // 2 |               X replacement range
+    // 3 | linebuffer    X
+    // 4 |
+    // 5 |
+
+    LineBuffer *temp = [self.linebuffer copy];
+    const int numLinesAfterReplacementRange = [temp numLinesWithWidth:gridSize.width] - range.end.y - (range.end.x == 0 ? 0 : 1);
+    [temp setMaxLines:MAX(0, numLinesAfterReplacementRange)];
+    [temp dropExcessLinesWithWidth:gridSize.width];
+
+    // 4 | temp
+    // 5 |
+
+    [self clearScrollbackBufferFromLine:range.start.y];
+
+    // 0 |
+    // 1 | linebuffer
+
+    // Make sure it ends in a hard newline.
+    [self.linebuffer setPartial:NO];
+
+    // Add replacement lines.
+    VT100GridCoordRange replacementRange = VT100GridCoordRangeMake(0,
+                                                            range.start.y,
+                                                            gridSize.width - 1,
+                                                            range.start.y + numLines - 1);
+    const VT100GridAbsCoordRange resultingRange =
+    VT100GridAbsCoordRangeFromCoordRange(replacementRange, self.totalScrollbackOverflow);
+
+    [self.linebuffer appendContentsOfLineBuffer:scratch width:gridSize.width includingCursor:NO];
+
+    // 0 |
+    // 1 | linebuffer
+    // 2 |             (empty)
+    // 3 |             (empty)
+
+    [self.linebuffer appendContentsOfLineBuffer:temp width:gridSize.width includingCursor:YES];
+
+    // 0 |
+    // 1 | linebuffer
+    // 2 |             (empty)
+    // 3 |             (empty)
+    // 4 |
+    // 5 |
+
+    [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
+                                to:VT100GridCoordMake(self.currentGrid.size.width - 1,
+                                                      self.currentGrid.size.height - 1)
+                            toChar:self.currentGrid.defaultChar
+                externalAttributes:nil];
+    [self.currentGrid restoreScreenFromLineBuffer:self.linebuffer
+                                  withDefaultChar:self.currentGrid.defaultChar
+                                maxLinesToRestore:gridSize.height];
+    [self.currentGrid setAllDirty:YES];
+    // 0 |
+    // 1 | linebuffer
+    // 2 |             (empty)
+    // 3 )             (empty)
+    // 4 ) grid
+    // 5 )
+
+    if (rangeIncludesCursor && cursorOnLastLine) {
+        self.currentGrid.cursorY = gridSize.height - 1;
+        [self appendLineFeed];
+    }
+
+    // Shift interval tree objects under range.start.y down this much.
+
+    const VT100GridCoordRange rangeFromPortholeToEnd =
+    VT100GridCoordRangeMake(replacementRange.start.x,
+                            replacementRange.start.y,
+                            gridSize.width,
+                            self.numberOfScrollbackLines + gridSize.height);
+
+    Interval *intervalToMove =
+    [self intervalForGridCoordRange:rangeFromPortholeToEnd];
+
+    NSArray<id<IntervalTreeImmutableObject>> *objects =
+    [self.intervalTree objectsInInterval:intervalToMove];
+
+    [self.mutableIntervalTree bulkMoveObjects:objects
+                                        block:^Interval*(id<IntervalTreeObject> object) {
+        VT100GridCoordRange itoRange = [self coordRangeForInterval:object.entry.interval];
+        if (itoRange.start.y > range.end.y) {
+            itoRange.start.y += deltaLines;
+        }
+        itoRange.end.y += deltaLines;
+        return [self intervalForGridCoordRange:itoRange];
+    }];
+    NSArray<id<IntervalTreeImmutableObject>> *doppelgangers = [objects mapWithBlock:^id _Nullable(id<IntervalTreeImmutableObject>  _Nonnull anObject) {
+        return anObject.doppelganger;
+    }];
+    [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+        [observer intervalTreeDidMoveObjects:doppelgangers];
+    }];
+    [self reloadMarkCache];
+
+    [self.linebuffer setMaxLines:savedMaxLines];
+    if (!self.config.unlimitedScrollback) {
+        [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:gridSize.width]];
+    }
+
+    return resultingRange;
 }
 
 #pragma mark - URLs
@@ -3597,6 +3858,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // Link references to marks in CapturedOutput (for the lines where output was captured) to the deserialized mark.
 // Link marks for commands to CommandUse objects in command history.
 // Notify delegate of annotations so they get added as subviews, and set the delegate of not view controllers to self.
+// Materialize portholes.
 - (void)fixUpDeserializedIntervalTree:(iTermEventuallyConsistentIntervalTree *)intervalTree
                               visible:(BOOL)visible
                 guidOfLastCommandMark:(NSString *)guidOfLastCommandMark {
@@ -4443,6 +4705,26 @@ launchCoprocessWithCommand:(NSString *)command
     }];
 }
 
+- (void)inlineImageDidCreateTextDocumentInRange:(VT100GridAbsCoordRange)range
+                                           type:(NSString *)type
+                                       filename:(NSString *)filename {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenConvertAbsoluteRange:range
+                        toTextDocumentOfType:type
+                                    filename:filename];
+        [unpauser unpause];
+    }];
+}
+
+- (void)inlineImageAppendStringAtCursor:(nonnull NSString *)string {
+    [self appendStringAtCursor:string];
+}
+
+
+- (VT100GridAbsCoord)inlineImageCursorAbsoluteCoord {
+    return VT100GridAbsCoordMake(self.currentGrid.cursor.x, self.cumulativeScrollbackOverflow + self.numberOfScrollbackLines + self.currentGrid.cursor.y);
+}
+
 #pragma mark - iTermEchoProbeDelegate
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeData:(NSData *)data {
@@ -4645,7 +4927,7 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)lineBufferDidDropLines:(LineBuffer *)lineBuffer {
     if (lineBuffer == self.linebuffer) {
         [_tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines];
-     }
+    }
 }
 
 @end

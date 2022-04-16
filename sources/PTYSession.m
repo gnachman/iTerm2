@@ -1795,7 +1795,18 @@ ITERM_WEAKLY_REFERENCEABLE
     [_screen restoreFromDictionary:dict
           includeRestorationBanner:includeRestorationBanner
                         reattached:reattached];
-
+    [_screen enumeratePortholes:^(id<PortholeMarkReading> immutableMark) {
+        [[PortholeRegistry instance] registerKey:immutableMark.uniqueIdentifier
+                                         forMark:immutableMark];
+        id<Porthole> porthole = [_textview hydratePorthole:immutableMark];
+        if (!porthole) {
+            [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+                [mutableState.mutableIntervalTree removeObject:immutableMark.progenitor];
+            }];
+        } else {
+            [self.textview addPorthole:porthole];
+        }
+    }];
     id<VT100RemoteHostReading> lastRemoteHost = _screen.lastRemoteHost;
     if (lastRemoteHost) {
         NSString *pwd = [_screen workingDirectoryOnLine:_screen.numberOfLines];
@@ -1993,6 +2004,7 @@ ITERM_WEAKLY_REFERENCEABLE
             scaleFactor:self.backingScaleFactor];
     }
     [_textview clearHighlights:NO];
+    [_textview updatePortholeFrames];
     [[_delegate realParentWindow] invalidateRestorableState];
     if (!_tailFindTimer &&
         [_delegate sessionBelongsToVisibleTab]) {
@@ -6190,7 +6202,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
-
+    if (_textview.hasPortholes) {
+        // When metal is enabled the note's superview (PTYTextView) has alphaValue=0 so it will not be visible.
+        if (reason) {
+            *reason = iTermMetalUnavailableReasonPortholes;
+        }
+        return NO;
+    }
     if (_textview.transparencyAlpha < 1) {
         BOOL transparencyAllowed = NO;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
@@ -7074,6 +7092,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate sessionUpdateMetalAllowed];
 }
 
+- (void)textViewDidAddOrRemovePorthole {
+    [self.delegate sessionUpdateMetalAllowed];
+}
+
 - (void)highlightMarkOrNote:(id<IntervalTreeImmutableObject>)obj {
     if ([obj isKindOfClass:[iTermMark class]]) {
         BOOL hasErrorCode = NO;
@@ -7897,7 +7919,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if (_textview.selection.hasSelection &&
             !_textview.selection.live &&
             [_copyModeHandler shouldAutoEnterWithEvent:event]) {
-            _copyModeHandler.enabled = YES;
+            // Avoid handling the event twice (which is the cleverness)
+            [_copyModeHandler setEnabledWithoutCleverness:YES];
             [_copyModeHandler handleAutoEnteringEvent:event];
             return NO;
         }
@@ -10774,6 +10797,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenNeedsRedraw {
     [self refresh];
     [_textview updateNoteViewFrames];
+    [_textview updatePortholeFrames];
     [_textview setNeedsDisplay:YES];
 }
 
@@ -10798,6 +10822,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     [_textview updateNoteViewFrames];
+    [_textview updatePortholeFrames];
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
                                                     iTermVariableKeySessionRows: @(_screen.height) }];
     [_textview setBadgeLabel:[self badgeLabel]];
@@ -11502,6 +11527,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                  visible:(BOOL)visible {
     [_textview addViewForNote:note focus:focus visible:visible];
     [self.delegate sessionUpdateMetalAllowed];
+}
+
+- (void)screenDidAddPorthole:(id<Porthole>)porthole {
+    [_textview addPorthole:porthole];
 }
 
 // Stop pasting (despite the name)
@@ -13391,6 +13420,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     [_cadenceController didHandleInputWithThroughput:_estimatedThroughput];
+}
+
+- (void)screenConvertAbsoluteRange:(VT100GridAbsCoordRange)range
+              toTextDocumentOfType:(NSString *)type
+                          filename:(NSString *)filename {
+    [_textview renderRange:range type:type filename:filename];
 }
 
 - (VT100Screen *)popupVT100Screen {
@@ -15413,7 +15448,25 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (BOOL)minimapsTrackObjectsOfType:(iTermIntervalTreeObjectType)type {
+    switch (type) {
+        case iTermIntervalTreeObjectTypeSuccessMark:
+        case iTermIntervalTreeObjectTypeOtherMark:
+        case iTermIntervalTreeObjectTypeErrorMark:
+        case iTermIntervalTreeObjectTypeManualMark:
+        case iTermIntervalTreeObjectTypeAnnotation:
+        case iTermIntervalTreeObjectTypeUnknown:
+            return YES;
+        case iTermIntervalTreeObjectTypePorthole:
+            return NO;
+    }
+}
 - (void)intervalTreeDidAddObjectOfType:(iTermIntervalTreeObjectType)type
+                                onLine:(NSInteger)line {
+    [self addMarkToMinimapOfType:type onLine:line];
+}
+
+- (void)addMarkToMinimapOfType:(iTermIntervalTreeObjectType)type
                                 onLine:(NSInteger)line {
     DLog(@"Add at %@", @(line));
     [iTermGCD assertMainQueueSafe];
@@ -15423,24 +15476,68 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (![iTermAdvancedSettingsModel showMarksInScrollbar]) {
         return;
     }
-    [_view.marksMinimap addObjectOfType:type onLine:line];
+    if ([self minimapsTrackObjectsOfType:type]) {
+        [_view.marksMinimap addObjectOfType:type onLine:line];
+    }
+}
+
+- (void)intervalTreeDidHideObject:(id<IntervalTreeImmutableObject>)object
+                           ofType:(iTermIntervalTreeObjectType)type
+                           onLine:(NSInteger)line {
+    DLog(@"Hide %@", object);
+    PortholeMark *portholeMark = [PortholeMark castFrom:object];
+    if (portholeMark) {
+        id<Porthole> porthole = [[PortholeRegistry instance] objectForKeyedSubscript:portholeMark.uniqueIdentifier];
+        if (porthole) {
+            [_textview hidePorthole:porthole];
+        }
+    }
+    [self removeMarkFromMinimapOfType:type onLine:line];
+}
+
+- (void)intervalTreeDidUnhideObject:(id<IntervalTreeImmutableObject>)object
+                             ofType:(iTermIntervalTreeObjectType)type
+                             onLine:(NSInteger)line {
+    DLog(@"Unhide %@", object);
+    PortholeMark *portholeMark = [PortholeMark castFrom:object];
+    if (portholeMark) {
+        id<Porthole> porthole = [[PortholeRegistry instance] objectForKeyedSubscript:portholeMark.uniqueIdentifier];
+        if (porthole) {
+            [_textview unhidePorthole:porthole];
+        }
+    }
+    [self addMarkToMinimapOfType:type onLine:line];
 }
 
 - (void)intervalTreeDidRemoveObjectOfType:(iTermIntervalTreeObjectType)type
                                    onLine:(NSInteger)line {
     DLog(@"Remove at %@", @(line));
+    if (type == iTermIntervalTreeObjectTypePorthole) {
+        [_textview setNeedsPrunePortholes:YES];
+    }
+    [self removeMarkFromMinimapOfType:type onLine:line];
+}
+
+- (void)removeMarkFromMinimapOfType:(iTermIntervalTreeObjectType)type
+                             onLine:(NSInteger)line {
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
     if (![iTermAdvancedSettingsModel showMarksInScrollbar]) {
         return;
     }
-    [_view.marksMinimap removeObjectOfType:type fromLine:line];
+    if ([self minimapsTrackObjectsOfType:type]) {
+        [_view.marksMinimap removeObjectOfType:type fromLine:line];
+    }
 }
 
 - (void)intervalTreeVisibleRangeDidChange {
-    [iTermGCD assertMainQueueSafe];
+     [iTermGCD assertMainQueueSafe];
     [self updateMarksMinimapRangeOfVisibleLines];
+}
+
+- (void)intervalTreeDidMoveObjects:(NSArray<id<IntervalTreeImmutableObject>> *)objects {
+    [self.textview updatePortholeFrames];
 }
 
 - (void)updateMarksMinimapRangeOfVisibleLines {

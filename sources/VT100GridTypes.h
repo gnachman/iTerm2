@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "NSObject+iTerm.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 typedef struct {
     int x;
     int y;
@@ -60,6 +62,7 @@ typedef struct {
 } VT100GridAbsWindowedRange;
 
 extern const VT100GridCoord VT100GridCoordInvalid;
+extern const VT100GridCoordRange VT100GridCoordRangeInvalid;
 
 @interface NSValue (VT100Grid)
 
@@ -434,7 +437,7 @@ NS_INLINE VT100GridAbsCoord VT100GridAbsCoordFromCoord(VT100GridCoord coord, lon
 
 NS_INLINE VT100GridCoord VT100GridCoordFromAbsCoord(VT100GridAbsCoord absCoord,
                                                     long long totalOverflow,
-                                                    BOOL *ok) {
+                                                    BOOL * _Nullable ok) {
     const long long y = absCoord.y - totalOverflow;
     if (y < 0 || y > INT_MAX) {
         if (ok) {
@@ -646,7 +649,7 @@ NS_INLINE NSDictionary *VT100GridCoordToDictionary(VT100GridCoord coord) {
     return @{ @"x": @(coord.x), @"y": @(coord.y) };
 }
 
-NS_INLINE BOOL VT100GridCoordFromDictionary(NSDictionary *dict, VT100GridCoord *coord) {
+NS_INLINE BOOL VT100GridCoordFromDictionary(NSDictionary * _Nullable dict, VT100GridCoord *coord) {
     if (!dict) {
         return NO;
     }
@@ -669,3 +672,4 @@ NS_INLINE BOOL VT100GridCoordFromDictionary(NSDictionary *dict, VT100GridCoord *
     return YES;
 }
 
+NS_ASSUME_NONNULL_END
