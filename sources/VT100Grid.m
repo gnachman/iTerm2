@@ -306,6 +306,9 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
 }
 
 - (VT100GridRange)dirtyRangeForLine:(int)y {
+    if (allDirty_) {
+        return VT100GridRangeMake(0, self.size.width);
+    }
     VT100LineInfo *lineInfo = [self lineInfoAtLineNumber:y];
     return [lineInfo dirtyRange];
 }

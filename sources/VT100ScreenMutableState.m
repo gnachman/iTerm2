@@ -3018,6 +3018,151 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+#pragma mark - Portholes
+
+- (void)replaceRange:(VT100GridAbsCoordRange)absRange
+        withPorthole:(id<Porthole>)porthole
+            ofHeight:(int)numLines {
+    VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, self.cumulativeScrollbackOverflow);
+    if (range.start.y < 0) {
+        // Already scrolled into the dustbin.
+        return;
+    }
+    [self clearTriggerLine];
+
+    const VT100GridSize gridSize = self.currentGrid.size;
+
+    // If cursor is inside the range, move it below.
+    VT100GridCoord cursorCoord = self.currentGrid.cursor;
+    cursorCoord.y += self.numberOfScrollbackLines;
+    if (VT100GridCoordRangeContainsCoord(range, cursorCoord)) {
+        cursorCoord.y = range.end.y + 1;
+        if (cursorCoord.y < gridSize.height) {
+            self.currentGrid.cursorY = cursorCoord.y;
+        }
+    }
+
+    // 0 |
+    // 1 | linebuffer
+    // 2 |               X replacement range
+    // 3 )               X
+    // 4 ) grid
+    // 5 )
+
+    int deltaLines = numLines - (range.end.y - range.start.y + 1);
+    const int numberOfLinesUsed = [self.currentGrid numberOfLinesUsed];
+    const int numberOfEmptyLines = gridSize.height - numberOfLinesUsed;
+    // Elide empty lines to avoid shifting the grid up into the line buffer unnecessarily.
+    [self.currentGrid appendLines:gridSize.height - MIN(numberOfEmptyLines, MAX(0, deltaLines))
+                     toLineBuffer:self.linebuffer];
+
+    // 0 |
+    // 1 |
+    // 2 |               X replacement range
+    // 3 | linebuffer    X
+    // 4 |
+    // 5 |
+
+    LineBuffer *temp = [self.linebuffer copy];
+    [temp setMaxLines:[temp numLinesWithWidth:gridSize.width] - range.end.y - 1];
+    [temp dropExcessLinesWithWidth:gridSize.width];
+
+    // 4 | temp
+    // 5 |
+
+    [self clearScrollbackBufferFromLine:absRange.start.y];
+
+    // 0 |
+    // 1 | linebuffer
+
+    // Make sure it ends in a hard newline.
+    [self.linebuffer setPartial:NO];
+
+    // Add blank lines to make room for the porthole.
+    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    const screen_char_t continuation = { 0 };
+    VT100GridCoordRange markRange = VT100GridCoordRangeMake(0,
+                                                            range.start.y,
+                                                            gridSize.width,
+                                                            range.start.y + numLines - 1);
+    for (int y = markRange.start.y; y <= markRange.end.y; y++) {
+        screen_char_t empty[0];
+        iTermMetadata meta;
+        iTermMetadataInit(&meta, now, nil);
+        [self.linebuffer appendLine:empty
+                             length:0
+                            partial:NO
+                              width:gridSize.width
+                           metadata:iTermMetadataMakeImmutable(meta)
+                       continuation:continuation];
+        iTermMetadataRelease(meta);
+    }
+
+    // 0 |
+    // 1 | linebuffer
+    // 2 |             (empty)
+    // 3 |             (empty)
+
+    [self.linebuffer appendContentsOfLineBuffer:temp width:gridSize.width includingCursor:YES];
+
+    // 0 |
+    // 1 | linebuffer
+    // 2 |             (empty)
+    // 3 |             (empty)
+    // 4 |
+    // 5 |
+
+    [self.currentGrid restoreScreenFromLineBuffer:self.linebuffer
+                                  withDefaultChar:self.currentGrid.defaultChar
+                                maxLinesToRestore:gridSize.height];
+    [self.currentGrid setAllDirty:YES];
+    // 0 |
+    // 1 | linebuffer
+    // 2 |             (empty)
+    // 3 )             (empty)
+    // 4 ) grid
+    // 5 )
+
+    if (cursorCoord.y >= gridSize.height) {
+        // Cursor was within selected range that went all the way to the bottom. Add a new line and
+        // place the cursor within it.
+        self.currentGrid.cursorY = gridSize.height - 1;
+        [self appendLineFeed];
+    }
+
+    // Shift interval tree objects under range.start.y down this much.
+    Interval *interval = [self intervalForGridCoordRange:markRange];
+
+    const VT100GridCoordRange rangeFromPortholeToEnd =
+    VT100GridCoordRangeMake(markRange.start.x,
+                            markRange.start.y,
+                            gridSize.width,
+                            self.numberOfScrollbackLines + gridSize.height);
+
+    Interval *intervalToMove =
+    [self intervalForGridCoordRange:rangeFromPortholeToEnd];
+
+    NSArray<id<IntervalTreeImmutableObject>> *objects =
+    [self.intervalTree objectsInInterval:intervalToMove];
+
+    [self.mutableIntervalTree bulkMoveObjects:objects
+                                        block:^Interval*(id<IntervalTreeObject> object) {
+        VT100GridCoordRange itoRange = [self coordRangeForInterval:object.entry.interval];
+        if (itoRange.start.y > range.end.y) {
+            itoRange.start.y += deltaLines;
+        }
+        itoRange.end.y += deltaLines;
+        return [self intervalForGridCoordRange:itoRange];
+    }];
+    [self reloadMarkCache];
+    PortholeMark *mark = [[PortholeMark alloc] init:porthole];
+    [self.mutableIntervalTree addObject:mark withInterval:interval];
+
+    [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
+        [delegate screenDidAddPorthole:porthole];
+    }];
+}
+
 #pragma mark - URLs
 
 - (void)linkTextInRange:(NSRange)range

@@ -19,6 +19,7 @@ typedef NS_ENUM(NSUInteger, iTermMetalUnavailableReason) {
     iTermMetalUnavailableReasonVerticalSpacing,
     iTermMetalUnavailableReasonMarginSize,
     iTermMetalUnavailableReasonAnnotations,
+    iTermMetalUnavailableReasonPortholes,
     iTermMetalUnavailableReasonFindPanel,
     iTermMetalUnavailableReasonPasteIndicator,
     iTermMetalUnavailableReasonAnnouncement,

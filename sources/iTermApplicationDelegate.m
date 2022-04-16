@@ -150,6 +150,7 @@ static NSString *const kURLStoreRestorableStateKey = @"kURLStoreRestorableStateK
 static NSString *const kHotkeyWindowRestorableState = @"kHotkeyWindowRestorableState";  // deprecated
 static NSString *const kHotkeyWindowsRestorableStates = @"kHotkeyWindowsRestorableState";  // deprecated
 static NSString *const iTermBuriedSessionState = @"iTermBuriedSessionState";
+static NSString *const kPortholeRestorableStateKey = @"kPortholeRestorableStateKey";
 
 static NSString *const kRestoreDefaultWindowArrangementShortcut = @"R";
 NSString *const iTermApplicationWillTerminate = @"iTermApplicationWillTerminate";
@@ -925,8 +926,13 @@ static BOOL hasBecomeActive = NO;
     }
     DLog(@"app encoding restorable state");
     NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
-    [coder encodeObject:ScreenCharEncodedRestorableState() forKey:kScreenCharRestorableStateKey];
-    [coder encodeObject:[[iTermURLStore sharedInstance] dictionaryValue] forKey:kURLStoreRestorableStateKey];
+    [coder encodeObject:ScreenCharEncodedRestorableState()
+                 forKey:kScreenCharRestorableStateKey];
+    [coder encodeObject:[[iTermURLStore sharedInstance] dictionaryValue]
+                 forKey:kURLStoreRestorableStateKey];
+    [coder encodeObject:PortholeRegistry.instance.dictionaryValue
+                 forKey:kPortholeRestorableStateKey];
+
     [[iTermHotKeyController sharedInstance] saveHotkeyWindowStates];
 
     NSArray *hotkeyWindowsStates = [[iTermHotKeyController sharedInstance] restorableStates];
@@ -957,6 +963,11 @@ static BOOL hasBecomeActive = NO;
         ScreenCharDecodeRestorableState(screenCharState);
     }
 
+    NSDictionary *portholeState = [coder decodeObjectForKey:kPortholeRestorableStateKey];
+    if ([NSDictionary castFrom:portholeState]) {
+        [PortholeRegistry.instance load:portholeState];
+    }
+
     NSDictionary *urlStoreState = [coder decodeObjectForKey:kURLStoreRestorableStateKey];
     if (urlStoreState) {
         [[iTermURLStore sharedInstance] loadFromDictionary:urlStoreState];
@@ -980,6 +991,7 @@ static BOOL hasBecomeActive = NO;
     }
     if ([iTermAdvancedSettingsModel logRestorableStateSize]) {
         NSDictionary *dict = @{ kScreenCharRestorableStateKey: screenCharState ?: @{},
+                                kPortholeRestorableStateKey: portholeState ?: @{},
                                 kURLStoreRestorableStateKey: urlStoreState ?: @{},
                                 kHotkeyWindowsRestorableStates: hotkeyWindowsStates ?: @[],
                                 kHotkeyWindowRestorableState: legacyState ?: @{},
@@ -2706,6 +2718,8 @@ void TurnOnDebugLoggingAutomatically(void) {
             return [[iTermHotKeyController sharedInstance] encodeGraphWithEncoder:subencoder];
         }];
 
+        [PortholeRegistry.instance encodeAsChildWith:encoder key:kPortholeRestorableStateKey];
+
         if ([[[iTermBuriedSessions sharedInstance] buriedSessions] count]) {
             // TODO: Why doesn't this encode window content?
             [encoder encodeObject:[[iTermBuriedSessions sharedInstance] restorableState] key:iTermBuriedSessionState];
@@ -2733,6 +2747,11 @@ void TurnOnDebugLoggingAutomatically(void) {
         ScreenCharDecodeRestorableState(screenCharState);
     }
 
+    NSDictionary *portholeState = [app objectWithKey:kPortholeRestorableStateKey class:[NSDictionary class]];
+    if (portholeState) {
+        [PortholeRegistry.instance load:portholeState];
+    }
+    
     NSDictionary *urlStoreState = [NSDictionary castFrom:[[app childRecordWithKey:kURLStoreRestorableStateKey identifier:@""] propertyListValue]];
     if (urlStoreState) {
         [[iTermURLStore sharedInstance] loadFromDictionary:urlStoreState];
@@ -2755,6 +2774,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     }
     if ([iTermAdvancedSettingsModel logRestorableStateSize]) {
         NSDictionary *dict = @{ kScreenCharRestorableStateKey: screenCharState ?: @{},
+                                kPortholeRestorableStateKey: portholeState ?: @{},
                                 kURLStoreRestorableStateKey: urlStoreState ?: @{},
                                 iTermBuriedSessionState: _buriedSessionsState ?: @[] };
         NSString *log = [dict sizeInfo];

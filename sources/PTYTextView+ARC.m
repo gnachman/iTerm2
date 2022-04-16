@@ -85,7 +85,25 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     if (item.action == @selector(performFindPanelAction:) && item.tag == NSFindPanelActionSelectAll) {
         return self.findOnPageHelper.searchResults.count > 0;
     }
+    if (item.action == @selector(renderSelection:)) {
+        return [self.selection hasSelection] && self.selection.allSubSelections.count == 1 && !self.selection.live;
+    }
     return NO;
+}
+
+#pragma mark - Actions
+
+- (IBAction)renderSelection:(id)sender {
+    NSString *markdown = [self selectedText];
+    const VT100GridAbsCoordRange coordsRange = self.selection.spanningAbsRange;
+    id<Porthole> porthole =
+    [iTermPortholeFactory markdownPortholeWithMarkdown:markdown
+                                             textColor:[self.colorMap colorForKey:kColorMapForeground]];
+    [porthole sizeToFitWithWidth:self.bounds.size.width];
+    [self.dataSource replaceRange:coordsRange
+                     withPorthole:porthole
+                         ofHeight:ceil(porthole.view.bounds.size.height / self.lineHeight)];
+    [self.selection clearSelection];
 }
 
 #pragma mark - Coordinate Space Conversions

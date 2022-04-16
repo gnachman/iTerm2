@@ -60,6 +60,7 @@ typedef struct {
 } VT100GridAbsWindowedRange;
 
 extern const VT100GridCoord VT100GridCoordInvalid;
+extern const VT100GridCoordRange VT100GridCoordRangeInvalid;
 
 @interface NSValue (VT100Grid)
 

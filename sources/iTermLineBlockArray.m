@@ -300,7 +300,8 @@
     [self buildCacheForWidth:width];
     [self updateCacheIfNeeded];
     iTermCumulativeSumCache *numLinesCache = [_numLinesCaches numLinesCacheForWidth:width];
-    const NSInteger index = [numLinesCache indexContainingValue:lineNumber];
+    BOOL roundUp = YES;
+    const NSInteger index = [numLinesCache indexContainingValue:lineNumber roundUp:&roundUp];
 
     if (index == NSNotFound) {
         return NSNotFound;
@@ -446,9 +447,10 @@
 }
 
 - (LineBlock *)blockContainingPosition:(long long)position
+                               yOffset:(int)yOffset
                                  width:(int)width
                              remainder:(int *)remainderPtr
-                           blockOffset:(int *)yoffsetPtr
+                           blockOffset:(int *)blockOffsetPtr
                                  index:(int *)indexPtr {
     if (position < 0) {
         DLog(@"Block with negative position %@ requested, returning nil", @(position));
@@ -460,67 +462,121 @@
     [self updateCacheIfNeeded];
     if (width > 0 && _rawSpaceCache) {
         int r=0, y=0, i=0;
-        LineBlock *result = [self fast_blockContainingPosition:position width:width remainder:&r blockOffset:yoffsetPtr ? &y : NULL index:&i];
+        LineBlock *result = [self fast_blockContainingPosition:position
+                                                       yOffset:yOffset
+                                                         width:width
+                                                     remainder:&r
+                                                   blockOffset:blockOffsetPtr ? &y : NULL
+                                                         index:&i];
         if (remainderPtr) {
             *remainderPtr = r;
         }
-        if (yoffsetPtr) {
-            *yoffsetPtr = y;
+        if (blockOffsetPtr) {
+            *blockOffsetPtr = y;
         }
         if (indexPtr) {
             *indexPtr = i;
         }
         return result;
     } else {
-        return [self slow_blockContainingPosition:position width:width remainder:remainderPtr blockOffset:yoffsetPtr index:indexPtr];
+        return [self slow_blockContainingPosition:position
+                                          yOffset:yOffset
+                                            width:width
+                                        remainder:remainderPtr
+                                      blockOffset:blockOffsetPtr
+                                            index:indexPtr];
     }
 }
 
 - (LineBlock *)fast_blockContainingPosition:(long long)position
+                                    yOffset:(int)desiredYOffset
                                       width:(int)width
                                   remainder:(int *)remainderPtr
-                                blockOffset:(int *)yoffsetPtr
+                                blockOffset:(int *)blockOffsetPtr
                                       index:(int *)indexPtr {
     [self buildCacheForWidth:width];
     [self updateCacheIfNeeded];
-    NSInteger index = [_rawSpaceCache indexContainingValue:position];
+    BOOL roundUp = NO;
+    NSInteger index = [_rawSpaceCache indexContainingValue:position roundUp:&roundUp];
     if (index == NSNotFound) {
         return nil;
+    }
+    LineBlock *block = _blocks[index];
+
+    if (roundUp) {
+        // Seek forward until we find a block that contains this position.
+        if (block.numberOfTrailingEmptyLines <= desiredYOffset) {
+            // Skip over trailing lines.
+            desiredYOffset -= block.numberOfTrailingEmptyLines;
+            index += 1;
+            block = _blocks[index];
+
+            // Skip over entirely empty blocks.
+            while (!block.containsAnyNonEmptyLine && block.numberOfLeadingEmptyLines <= desiredYOffset) {
+                desiredYOffset -= block.numberOfTrailingEmptyLines;
+                index += 1;
+                block = _blocks[index];
+            }
+        }
     }
 
     if (remainderPtr) {
         *remainderPtr = position - [_rawSpaceCache sumOfValuesInRange:NSMakeRange(0, index)];
     }
-    if (yoffsetPtr) {
-        *yoffsetPtr = [[_numLinesCaches numLinesCacheForWidth:width] sumOfValuesInRange:NSMakeRange(0, index)];
+    if (blockOffsetPtr) {
+        *blockOffsetPtr = [[_numLinesCaches numLinesCacheForWidth:width] sumOfValuesInRange:NSMakeRange(0, index)];
     }
     if (indexPtr) {
         *indexPtr = index;
     }
-    return _blocks[index];
+    return block;
 }
 
 - (LineBlock *)slow_blockContainingPosition:(long long)position
+                                    yOffset:(int)desiredYOffset
                                       width:(int)width
                                   remainder:(int *)remainderPtr
-                                blockOffset:(int *)yoffsetPtr
+                                blockOffset:(int *)blockOffsetPtr
                                       index:(int *)indexPtr {
     long long p = position;
+    int emptyLinesLeftToSkip = desiredYOffset;
     int yoffset = 0;
     int index = 0;
     for (LineBlock *block in _blocks) {
         const int used = [block rawSpaceUsed];
-        if (p >= used) {
+        BOOL found = NO;
+        if (p > used) {
+            // It's definitely not in this block.
             p -= used;
-            if (yoffsetPtr) {
+            if (blockOffsetPtr) {
                 yoffset += [block getNumLinesWithWrapWidth:width];
             }
+        } else if (p == used) {
+            // It might be in this block!
+            p = 0;
+            if (blockOffsetPtr) {
+                yoffset += [block getNumLinesWithWrapWidth:width];
+            }
+            const int numTrailingEmptyLines = [block numberOfTrailingEmptyLines];
+            if (numTrailingEmptyLines < emptyLinesLeftToSkip) {
+                // Need to keep consuming empty lines.
+                emptyLinesLeftToSkip -= numTrailingEmptyLines;
+            } else {
+                // This block has enough trailing blank lines.
+                found = YES;
+            }
         } else {
+            // It was not in the previous block and this one has enough raw spaced used that it must
+            // contain it.
+            found = YES;
+        }
+        if (found) {
+            // It is in this block.
             if (remainderPtr) {
                 *remainderPtr = p;
             }
-            if (yoffsetPtr) {
-                *yoffsetPtr = yoffset;
+            if (blockOffsetPtr) {
+                *blockOffsetPtr = yoffset;
             }
             if (indexPtr) {
                 *indexPtr = index;

@@ -85,7 +85,7 @@ extern "C" {
     }
 }
 
-- (NSInteger)indexContainingValue:(NSInteger)value {
+- (NSInteger)indexContainingValue:(NSInteger)value roundUp:(BOOL *)roundUp {
     // Subtract the offset because the offset is negative and our values are higher than what is exposed by the owner's interface.
     const NSInteger adjustedValue = value - _offset;
     auto it = std::lower_bound(_sums.begin(), _sums.end(), adjustedValue);
@@ -93,12 +93,16 @@ extern "C" {
         return NSNotFound;
     }
     // it refers to the first element in _sums greater or equal to value.
-    if (*it == adjustedValue) {
-        it++;
-        if (it == _sums.end()) {
-            return NSNotFound;
+    const BOOL isLastValueOfBucket = (*it == adjustedValue);
+    if (*roundUp) {
+        if (isLastValueOfBucket) {
+            it++;
+            if (it == _sums.end()) {
+                return NSNotFound;
+            }
         }
     }
+    *roundUp = isLastValueOfBucket;
     return it - _sums.begin();  // get index of iterator
 }
 

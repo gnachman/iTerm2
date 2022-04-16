@@ -17,6 +17,7 @@
 @class PTYNoteViewController;
 @class PTYSession;
 @class PTYTask;
+@protocol Porthole;
 @class SCPPath;
 @class VT100Grid;
 @protocol VT100RemoteHostReading;
@@ -135,5 +136,10 @@
 - (void)resetDirty;
 
 - (id<iTermTextDataSource>)snapshotDataSource;
+
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+        withPorthole:(id<Porthole>)porthole
+            ofHeight:(int)numLines;
+- (VT100GridCoordRange)coordRangeOfPorthole:(id<Porthole>)porthole;
 
 @end

@@ -6,6 +6,7 @@
 #import "FutureMethods.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTerm.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
@@ -90,6 +91,8 @@
 #include <sys/time.h>
 
 #import <WebKit/WebKit.h>
+
+NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 
 @interface iTermHighlightRowView: NSView<iTermMetalDisabling>
 @end
@@ -322,6 +325,7 @@
                      mouseReportingFrustrationDetectorDelegate:self];
         _mouseHandler.mouseDelegate = self;
         _notes = [[NSMutableArray alloc] init];
+        _portholes = [[NSMutableArray alloc] init];
         [self initARC];
     }
     return self;
@@ -377,6 +381,7 @@
     [_indicatorMessagePopoverViewController release];
     [_notes release];
     [_lastUrlActionCanceler release];
+    [_portholes release];
 
     [super dealloc];
 }
@@ -1787,6 +1792,7 @@
     [scrollview setLineScroll:[self lineHeight]];
     [scrollview setPageScroll:2 * [self lineHeight]];
     [self updateNoteViewFrames];
+    [self updatePortholeFrames];
     [_delegate textViewFontDidChange];
 
     // Refresh to avoid drawing before and after resize.
@@ -2160,6 +2166,7 @@
 
     // Move subviews up
     [self updateNoteViewFrames];
+    [self updatePortholeFrames];
 
     // Update find on page
     [_findOnPageHelper overflowAdjustmentDidChange];
@@ -5125,7 +5132,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)updateAlphaValue {
-    if ([self allAnnotationsAreHidden]) {
+    if ([self allAnnotationsAreHidden] && !self.hasPortholes) {
         [self setAlphaValue:0.0];
     } else {
         [self setAlphaValue:1.0];

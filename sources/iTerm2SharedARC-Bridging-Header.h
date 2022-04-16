@@ -56,6 +56,8 @@
 #import "PSMTabBarControl.h"
 #import "PTYSession.h"
 #import "PTYSession+ARC.h"
+#import "PTYTextView.h"
+#import "PTYTextView+Private.h"
 #import "ScreenChar.h"
 #import "ScreenCharArray.h"
 #import "Trigger.h"

@@ -827,7 +827,13 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
         return -1;
     }
     int pos;
-    if (x >= length) {
+    // Note that this code is in a very delicate balance with -[LineBuffer coordinateForPosition:width:extendsRight:ok:], which interprets
+    // *extendsPtr to pick an x coordate at the right margin.
+    //
+    // I chose to add the (x == length && *yOffsetPtr == 0) clause
+    // because  otherwise there's no way to refer to the start of a blank line.
+    // If you want it to extend you can always provide an x>0.
+    if (x > length || (x == length && *yOffsetPtr == 0)) {
         *extendsPtr = YES;
         pos = p - raw_buffer + length;
     } else {
@@ -1059,6 +1065,13 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             } else {
                 numEmptyLines = 0;
             }
+        } else if (length == 0) {
+            // Callers use `prev`, the start of the wrapped line, plus the output *lineNum to find
+            // where the wrapped line begins. When that line is of length 0 they will pick the end
+            // of the last line rather than the start of the subsequent line. Increment numEmptyLines
+            // to make it clear what we're indicating. This means that numEmptyLines modifies `.prev`
+            // but *not* `.index`, which is super confusing :(
+            ++numEmptyLines;
         }
         int spans;
         const BOOL useCache = gUseCachingNumberOfLines;
@@ -2152,6 +2165,25 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
         }
     }
     return count;
+}
+
+- (int)numberOfLeadingEmptyLines {
+    int count = 0;
+    for (int i = first_entry; i < cll_entries; i++) {
+        if ([self lengthOfLine:i] == 0) {
+            count++;
+        } else {
+            break;
+        }
+    }
+    return count;
+}
+
+- (BOOL)containsAnyNonEmptyLine {
+    if (cll_entries == 0) {
+        return NO;
+    }
+    return cumulative_line_lengths[first_entry] < cumulative_line_lengths[cll_entries - 1];
 }
 
 - (void)addObserver:(id<iTermLineBlockObserver>)observer {

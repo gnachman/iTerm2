@@ -4,6 +4,7 @@
 #import "VT100TerminalDelegate.h"
 #import "VT100Token.h"
 
+@protocol Porthole;
 @class Trigger;
 @protocol VT100RemoteHostReading;
 @protocol VT100ScreenMarkReading;
@@ -254,6 +255,8 @@
 - (void)screenSetProfileToProfileNamed:(NSString * _Nonnull)value;
 - (void)screenSetPasteboard:(NSString * _Nonnull)value;
 - (void)screenDidAddNote:(id<PTYAnnotationReading> _Nonnull)note focus:(BOOL)focus visible:(BOOL)visible;
+- (void)screenDidAddPorthole:(id<Porthole> _Nonnull)porthole;
+
 - (void)screenCopyBufferToPasteboard;
 - (void)screenAppendDataToPasteboard:(NSData * _Nonnull)data;
 

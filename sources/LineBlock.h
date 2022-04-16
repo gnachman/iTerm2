@@ -221,6 +221,8 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
 // Number of empty lines at the end of the block.
 - (int)numberOfTrailingEmptyLines;
+- (int)numberOfLeadingEmptyLines;
+- (BOOL)containsAnyNonEmptyLine;
 
 // Call this only before a line block has been created.
 void EnableDoubleWidthCharacterLineCache(void);

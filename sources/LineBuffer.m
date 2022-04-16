@@ -222,6 +222,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 #if ITERM_DEBUG
     assert(totalDropped == (nl - RawNumLines(self, width)));
 #endif
+    cursor_rawline -= totalDropped;
     [_delegate lineBufferDidDropLines:self];
     return totalDropped;
 }
@@ -505,14 +506,23 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
-- (void)appendContentsOfLineBuffer:(LineBuffer *)other width:(int)width {
+- (void)appendContentsOfLineBuffer:(LineBuffer *)other width:(int)width includingCursor:(BOOL)cursor {
     _dirty = YES;
+    int offset = 0;
+    if (cursor) {
+        offset = TotalNumberOfRawLines(self);
+    }
     while (_lineBlocks.lastBlock.isEmpty) {
         [_lineBlocks removeLastBlock];
     }
     for (LineBlock *block in other->_lineBlocks.blocks) {
         [_lineBlocks addBlock:[block copy]];
     }
+    if (cursor) {
+        cursor_rawline = other->cursor_rawline + offset;
+        cursor_x = other->cursor_x;
+    }
+
     num_wrapped_lines_width = -1;
     [self dropExcessLinesWithWidth:width];
 }
@@ -765,6 +775,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
 - (BOOL)_findPosition:(LineBufferPosition *)start inBlock:(int*)block_num inOffset:(int*)offset {
     LineBlock *block = [_lineBlocks blockContainingPosition:start.absolutePosition - droppedChars
+                                                    yOffset:start.yOffset
                                                       width:-1
                                                   remainder:offset
                                                 blockOffset:NULL
@@ -988,7 +999,6 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                                        offset:(int)offset {
     int x = coord.x;
     int y = coord.y;
-
     int line = y;
     NSInteger index = [_lineBlocks indexOfBlockContainingLineNumber:y width:width remainder:&line];
     if (index == NSNotFound) {
@@ -1066,6 +1076,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     int p;
     int yoffset;
     LineBlock *block = [_lineBlocks blockContainingPosition:position.absolutePosition - droppedChars
+                                                    yOffset:position.yOffset
                                                       width:width
                                                   remainder:&p
                                                 blockOffset:&yoffset
@@ -1159,6 +1170,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 - (int)absBlockNumberOfAbsPos:(long long)absPos {
     int index;
     LineBlock *block = [_lineBlocks blockContainingPosition:absPos - droppedChars
+                                                    yOffset:0
                                                       width:0
                                                   remainder:NULL
                                                 blockOffset:NULL

@@ -211,7 +211,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)appendScreenCharArray:(ScreenCharArray *)sca
                         width:(int)width;
 
-- (void)appendContentsOfLineBuffer:(LineBuffer * _Nonnull)other width:(int)width;
+- (void)appendContentsOfLineBuffer:(LineBuffer * _Nonnull)other width:(int)width includingCursor:(BOOL)cursor;
 
 // If more lines are in the buffer than max_lines, call this function. It will adjust the count
 // of excess lines and try to free the first block(s) if they are unused. Because this could happen

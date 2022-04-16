@@ -25,6 +25,7 @@
 @protocol iTermCancelable;
 @class iTermShellIntegrationWindowController;
 @class iTermURLActionHelper;
+@protocol Porthole;
 @class PTYMouseHandler;
 
 @interface PTYTextView () <
@@ -54,8 +55,10 @@ NSPopoverDelegate> {
 @property(strong, readwrite) NSTouchBar *touchBar NS_AVAILABLE_MAC(10_12_2);
 @property(nonatomic, readonly) BOOL hasUnderline;
 @property(nonatomic, strong) id<iTermCancelable> lastUrlActionCanceler;
+@property(nonatomic, readonly, strong) NSMutableArray<id<Porthole>> *portholes;
 
 - (void)addNote;
+- (void)updateAlphaValue;
 - (NSString *)selectedTextCappedAtSize:(int)maxBytes;
 - (BOOL)_haveShortSelection;
 - (BOOL)haveReasonableSelection;

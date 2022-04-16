@@ -6190,7 +6190,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
-
+    if (_textview.hasPortholes) {
+        // When metal is enabled the note's superview (PTYTextView) has alphaValue=0 so it will not be visible.
+        if (reason) {
+            *reason = iTermMetalUnavailableReasonPortholes;
+        }
+        return NO;
+    }
     if (_textview.transparencyAlpha < 1) {
         BOOL transparencyAllowed = NO;
 #if ENABLE_TRANSPARENT_METAL_WINDOWS
@@ -10774,6 +10780,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenNeedsRedraw {
     [self refresh];
     [_textview updateNoteViewFrames];
+    [_textview updatePortholeFrames];
     [_textview setNeedsDisplay:YES];
 }
 
@@ -10798,6 +10805,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     [_textview updateNoteViewFrames];
+    [_textview updatePortholeFrames];
     [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
                                                     iTermVariableKeySessionRows: @(_screen.height) }];
     [_textview setBadgeLabel:[self badgeLabel]];
@@ -11502,6 +11510,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                  visible:(BOOL)visible {
     [_textview addViewForNote:note focus:focus visible:visible];
     [self.delegate sessionUpdateMetalAllowed];
+}
+
+- (void)screenDidAddPorthole:(id<Porthole>)porthole {
+    [_textview addPorthole:porthole];
 }
 
 // Stop pasting (despite the name)

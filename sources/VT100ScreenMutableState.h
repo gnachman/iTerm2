@@ -262,6 +262,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (void)setStringValueOfAnnotation:(id<PTYAnnotationReading>)annotation to:(NSString *)stringValue;
 
+#pragma mark - Portholes
+
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+        withPorthole:(id<Porthole>)porthole
+            ofHeight:(int)numLines;
+
 #pragma mark - URLs
 
 - (void)linkTextInRange:(NSRange)range

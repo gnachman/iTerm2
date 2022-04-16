@@ -111,8 +111,23 @@ class EventuallyConsistentIntervalTree: IntervalTree {
         for object in objects {
             closure(object as! IntervalTreeObject)
         }
-        addBulkSideEffect(objects as! [IntervalTreeObject]) { doppelganger, _ in
+        addBulkSideEffect(objects as! [IntervalTreeObject]) { _, doppelganger, _ in
             closure(doppelganger)
+        }
+    }
+
+    @objc(bulkMoveObjects:block:)
+    func bulkMoveObjects(_ objects: [IntervalTreeImmutableObject],
+                         closure: (IntervalTreeObject) -> Interval) {
+        let newIntervals = objects.map { closure($0 as! IntervalTreeObject) }
+        for (object, interval) in zip(objects, newIntervals) {
+            let ito = object as! IntervalTreeObject
+            super.remove(ito)
+            super.add(ito, with: interval)
+        }
+        addBulkSideEffect(objects as! [IntervalTreeObject]) { i, ito, tree in
+            tree.remove(ito)
+            tree.add(ito, with: newIntervals[i])
         }
     }
 
@@ -127,12 +142,12 @@ class EventuallyConsistentIntervalTree: IntervalTree {
     }
 
     private func addBulkSideEffect(_ objects: [IntervalTreeObject],
-                                   closure: @escaping (IntervalTreeObject, IntervalTree) -> ()) {
+                                   closure: @escaping (Int, IntervalTreeObject, IntervalTree) -> ()) {
         let doppelgangers = objects.map { $0.doppelganger() }
         sideEffectPerformer?.addSideEffect { [weak self] in
             if let self = self {
-                for doppelganger in doppelgangers {
-                    closure(doppelganger, self._derivative)
+                for (i, doppelganger) in doppelgangers.enumerated() {
+                    closure(i, doppelganger, self._derivative)
                 }
             }
         }

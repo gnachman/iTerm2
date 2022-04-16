@@ -191,6 +191,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                                   cumulativeOverflow:_state.cumulativeScrollbackOverflow] autorelease];
 }
 
+- (void)replaceRange:(VT100GridAbsCoordRange)range
+        withPorthole:(id<Porthole>)porthole
+            ofHeight:(int)numLines {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState replaceRange:range withPorthole:porthole ofHeight:numLines];
+    }];
+}
+
 - (void)resetDirty {
     if (_sharedStateCount && !_forceMergeGrids && _state.currentGrid.isAnyCharDirty) {
         // We're resetting dirty in a grid shared by mutable & immutable state. That means when sync
@@ -535,6 +543,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (VT100GridCoordRange)coordRangeOfAnnotation:(id<IntervalTreeImmutableObject>)note {
     return [_state coordRangeForInterval:note.entry.interval];
+}
+
+- (VT100GridCoordRange)coordRangeOfPorthole:(id<Porthole>)porthole {
+    if (!porthole.mark.entry.interval) {
+        return VT100GridCoordRangeInvalid;
+    }
+    return [_state coordRangeForInterval:porthole.mark.entry.interval];
 }
 
 - (NSArray *)charactersWithNotesOnLine:(int)line {

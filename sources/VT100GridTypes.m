@@ -5,6 +5,17 @@ const VT100GridCoord VT100GridCoordInvalid = {
     .y = INT_MIN
 };
 
+const VT100GridCoordRange VT100GridCoordRangeInvalid = {
+    .start = {
+        .x = INT_MIN,
+        .y = INT_MIN
+    },
+    .end = {
+        .x = INT_MIN,
+        .y = INT_MIN
+    }
+};
+
 VT100GridRun VT100GridRunFromCoords(VT100GridCoord start,
                                     VT100GridCoord end,
                                     int width) {
