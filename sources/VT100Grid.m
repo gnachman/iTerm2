@@ -1167,6 +1167,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
         }
     }
 
+    assert(numDropped >= 0);
     return numDropped;
 }
 

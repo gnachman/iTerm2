@@ -231,7 +231,8 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 - (void)mergeFrom:(VT100ScreenMutableState *)source {
     [self copyFastStuffFrom:source];
 
-    if (!_linebuffer || source.linebuffer.dirty) {
+    const BOOL lineBufferDirty = (!_linebuffer || source.linebuffer.dirty);
+    if (lineBufferDirty) {
         [source.linebuffer seal];
         [_linebuffer mergeFrom:source.linebuffer];
     }

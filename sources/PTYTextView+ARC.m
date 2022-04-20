@@ -86,7 +86,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
         return self.findOnPageHelper.searchResults.count > 0;
     }
     if (item.action == @selector(renderSelection:)) {
-        return [self.selection hasSelection] && self.selection.allSubSelections.count == 1 && !self.selection.live;
+        return [self.selection hasSelection] && self.selection.allSubSelections.count == 1 && !self.selection.live && ![self absRangeIntersectsPortholes:self.selection.spanningAbsRange];
     }
     return NO;
 }
@@ -94,11 +94,23 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 #pragma mark - Actions
 
 - (IBAction)renderSelection:(id)sender {
+    VT100GridAbsCoordRange coordsRange = self.selection.spanningAbsRange;
+    coordsRange.start.x = 0;
+    if (coordsRange.end.x > 0) {
+        coordsRange.end.x = self.dataSource.width;
+    }
+    [self.selection.allSubSelections[0] setAbsRange:VT100GridAbsWindowedRangeMake(coordsRange, 0, self.dataSource.width)];
     NSString *markdown = [self selectedText];
-    const VT100GridAbsCoordRange coordsRange = self.selection.spanningAbsRange;
+    NSString *pwd =
+    [self.dataSource workingDirectoryOnLine:coordsRange.start.y - self.dataSource.totalScrollbackOverflow];
+    NSURL *baseDirectory = nil;
+    if (pwd) {
+        baseDirectory = [NSURL fileURLWithPath:pwd];
+    }
     id<Porthole> porthole =
     [iTermPortholeFactory markdownPortholeWithMarkdown:markdown
-                                             textColor:[self.colorMap colorForKey:kColorMapForeground]];
+                                             colorMap:self.colorMap
+                                         baseDirectory:baseDirectory];
     [porthole sizeToFitWithWidth:self.bounds.size.width];
     [self.dataSource replaceRange:coordsRange
                      withPorthole:porthole
@@ -623,7 +635,9 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     iTermRenegablePromise<NSString *> *promise = [self promisedStringForSelectedTextCappedAtSize:maxSize
                                                                                minimumLineNumber:0
                                                                                        selection:selection];
-    [[iTermController sharedInstance] setLastSelectionPromise:promise];
+    if (promise) {
+        [[iTermController sharedInstance] setLastSelectionPromise:promise];
+    }
     return promise;
 }
 
@@ -736,7 +750,9 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
             type = NSPasteboardTypeString;
             break;
     }
-    [iTermAsyncSelectionProvider copyPromise:promise type:type];
+    if (promise) {
+        [iTermAsyncSelectionProvider copyPromise:promise type:type];
+    }
 }
 
 - (id)selectedTextWithStyle:(iTermCopyTextStyle)style

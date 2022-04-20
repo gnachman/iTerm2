@@ -7903,7 +7903,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         if (_textview.selection.hasSelection &&
             !_textview.selection.live &&
             [_copyModeHandler shouldAutoEnterWithEvent:event]) {
-            _copyModeHandler.enabled = YES;
+            // Avoid handling it twice (which is the cleverness)
+            [_copyModeHandler setEnabledWithoutCleverness:YES];
             [_copyModeHandler handleAutoEnteringEvent:event];
             return NO;
         }
@@ -15425,6 +15426,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (BOOL)minimapsTrackObjectsOfType:(iTermIntervalTreeObjectType)type {
+    switch (type) {
+        case iTermIntervalTreeObjectTypeSuccessMark:
+        case iTermIntervalTreeObjectTypeOtherMark:
+        case iTermIntervalTreeObjectTypeErrorMark:
+        case iTermIntervalTreeObjectTypeManualMark:
+        case iTermIntervalTreeObjectTypeAnnotation:
+        case iTermIntervalTreeObjectTypeUnknown:
+            return YES;
+        case iTermIntervalTreeObjectTypePorthole:
+            return NO;
+    }
+}
 - (void)intervalTreeDidAddObjectOfType:(iTermIntervalTreeObjectType)type
                                 onLine:(NSInteger)line {
     DLog(@"Add at %@", @(line));
@@ -15435,24 +15449,35 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (![iTermAdvancedSettingsModel showMarksInScrollbar]) {
         return;
     }
-    [_view.marksMinimap addObjectOfType:type onLine:line];
+    if ([self minimapsTrackObjectsOfType:type]) {
+        [_view.marksMinimap addObjectOfType:type onLine:line];
+    }
 }
 
 - (void)intervalTreeDidRemoveObjectOfType:(iTermIntervalTreeObjectType)type
                                    onLine:(NSInteger)line {
     DLog(@"Remove at %@", @(line));
+    if (type == iTermIntervalTreeObjectTypePorthole) {
+        [_textview setNeedsPrunePortholes:YES];
+    }
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }
     if (![iTermAdvancedSettingsModel showMarksInScrollbar]) {
         return;
     }
-    [_view.marksMinimap removeObjectOfType:type fromLine:line];
+    if ([self minimapsTrackObjectsOfType:type]) {
+        [_view.marksMinimap removeObjectOfType:type fromLine:line];
+    }
 }
 
 - (void)intervalTreeVisibleRangeDidChange {
-    [iTermGCD assertMainQueueSafe];
+     [iTermGCD assertMainQueueSafe];
     [self updateMarksMinimapRangeOfVisibleLines];
+}
+
+- (void)intervalTreeDidMoveObjects:(NSArray<id<IntervalTreeImmutableObject>> *)objects {
+    [self.textview updatePortholeFrames];
 }
 
 - (void)updateMarksMinimapRangeOfVisibleLines {

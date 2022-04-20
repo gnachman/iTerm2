@@ -28,3 +28,6 @@
 [submodule "submodules/MultiCursor"]
 	path = submodules/MultiCursor
 	url = https://github.com/gnachman/MultiCursor
+[submodule "submodules/SwiftyMarkdown"]
+	path = submodules/SwiftyMarkdown
+	url = https://github.com/gnachman/SwiftyMarkdown

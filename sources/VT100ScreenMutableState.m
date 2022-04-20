@@ -521,6 +521,8 @@ static _Atomic int gPerformingJoinedBlock;
     }
     DLog(@"Increment overflow by %d", overflowCount);
     self.scrollbackOverflow += overflowCount;
+    assert(self.cumulativeScrollbackOverflow >= 0);
+    assert(overflowCount >= 0);
     self.cumulativeScrollbackOverflow += overflowCount;
 }
 
@@ -3034,13 +3036,17 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     // If cursor is inside the range, move it below.
     VT100GridCoord cursorCoord = self.currentGrid.cursor;
-    cursorCoord.y += self.numberOfScrollbackLines;
-    if (VT100GridCoordRangeContainsCoord(range, cursorCoord)) {
+    const BOOL cursorOnLastLine = (cursorCoord.y == gridSize.height + 1);
+    const int numberOfScrollbackLines = self.numberOfScrollbackLines;
+    cursorCoord.y += numberOfScrollbackLines;
+    const BOOL rangeIncludesCursor = VT100GridCoordRangeContainsCoord(range, cursorCoord);
+    if (rangeIncludesCursor && !cursorOnLastLine) {
         cursorCoord.y = range.end.y + 1;
-        if (cursorCoord.y < gridSize.height) {
-            self.currentGrid.cursorY = cursorCoord.y;
-        }
+        self.currentGrid.cursorY = cursorCoord.y - numberOfScrollbackLines;
     }
+
+    const int savedMaxLines = self.linebuffer.maxLines;
+    [self.linebuffer setMaxLines:-1];
 
     // 0 |
     // 1 | linebuffer
@@ -3055,6 +3061,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // Elide empty lines to avoid shifting the grid up into the line buffer unnecessarily.
     [self.currentGrid appendLines:gridSize.height - MIN(numberOfEmptyLines, MAX(0, deltaLines))
                      toLineBuffer:self.linebuffer];
+    self.linebuffer.partial = NO;
 
     // 0 |
     // 1 |
@@ -3064,13 +3071,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // 5 |
 
     LineBuffer *temp = [self.linebuffer copy];
-    [temp setMaxLines:[temp numLinesWithWidth:gridSize.width] - range.end.y - 1];
+    const int numLinesAfterReplacementRange = [temp numLinesWithWidth:gridSize.width] - range.end.y - (range.end.x == 0 ? 0 : 1);
+    [temp setMaxLines:MAX(0, numLinesAfterReplacementRange)];
     [temp dropExcessLinesWithWidth:gridSize.width];
 
     // 4 | temp
     // 5 |
 
-    [self clearScrollbackBufferFromLine:absRange.start.y];
+    [self clearScrollbackBufferFromLine:range.start.y];
 
     // 0 |
     // 1 | linebuffer
@@ -3112,6 +3120,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // 4 |
     // 5 |
 
+    for (int i = 0; i < gridSize.height; i++) {
+        [self.currentGrid setContinuationMarkOnLine:i to:EOL_HARD];
+    }
     [self.currentGrid restoreScreenFromLineBuffer:self.linebuffer
                                   withDefaultChar:self.currentGrid.defaultChar
                                 maxLinesToRestore:gridSize.height];
@@ -3123,9 +3134,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // 4 ) grid
     // 5 )
 
-    if (cursorCoord.y >= gridSize.height) {
-        // Cursor was within selected range that went all the way to the bottom. Add a new line and
-        // place the cursor within it.
+    if (rangeIncludesCursor && cursorOnLastLine) {
         self.currentGrid.cursorY = gridSize.height - 1;
         [self appendLineFeed];
     }
@@ -3154,9 +3163,18 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         itoRange.end.y += deltaLines;
         return [self intervalForGridCoordRange:itoRange];
     }];
+    NSArray<id<IntervalTreeImmutableObject>> *doppelgangers = [objects mapWithBlock:^id _Nullable(id<IntervalTreeImmutableObject>  _Nonnull anObject) {
+        return anObject.doppelganger;
+    }];
+    [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+        [observer intervalTreeDidMoveObjects:doppelgangers];
+    }];
     [self reloadMarkCache];
     PortholeMark *mark = [[PortholeMark alloc] init:porthole];
     [self.mutableIntervalTree addObject:mark withInterval:interval];
+
+    [self.linebuffer setMaxLines:savedMaxLines];
+    [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:gridSize.width]];
 
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidAddPorthole:porthole];

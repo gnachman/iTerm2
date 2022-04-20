@@ -12,6 +12,7 @@ protocol PortholeMarkReading: AnyObject {
     var porthole: ObjCPorthole { get }
 }
 
+@objc
 class PortholeMark: iTermMark, PortholeMarkReading {
     private static let mutex = Mutex()
 
@@ -66,6 +67,10 @@ enum PortholeType: String {
         return (type: type, info: info)
     }
 }
+@objc(PortholeDelegate)
+protocol PortholeDelegate: AnyObject {
+    @objc func portholeDidAcquireSelection(_ porthole: ObjCPorthole)
+}
 
 @objc(Porthole)
 protocol ObjCPorthole: AnyObject {
@@ -75,6 +80,9 @@ protocol ObjCPorthole: AnyObject {
     @objc var dictionaryValue: [String: AnyObject] { get }
     @objc func sizeToFit(width: CGFloat)
     @objc func set(size: NSSize)
+    @objc var delegate: PortholeDelegate? { get set }
+    @objc func removeSelection()
+    @objc func updateColors()
 }
 
 protocol Porthole: ObjCPorthole {

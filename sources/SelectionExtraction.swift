@@ -104,11 +104,14 @@ class SelectionExtractor: NSObject {
     // Does not include selected text on lines before |minimumLineNumber|.
     // Returns an NSAttributedString* if style is iTermCopyTextStyleAttributed, or an NSString* if not.
     @objc
-    init(selection: iTermSelection,
-         snapshot: TerminalContentSnapshot,
-         options: iTermSelectionExtractorOptions,
-         maxBytes: Int32,
+    init?(selection: iTermSelection,
+          snapshot: TerminalContentSnapshot?,
+          options: iTermSelectionExtractorOptions,
+          maxBytes: Int32,
          minimumLineNumber: Int32) {
+        guard let snapshot = snapshot else {
+            return nil
+        }
         let selectionDelegate = SelectionExtractorDelegate(selection.delegate!)
         self.selectionDelegate = selectionDelegate
 
@@ -257,8 +260,12 @@ class SelectionPromise: NSObject {
     private static let queue = DispatchQueue(label: "com.iterm2.selection")
 
     @objc
-    class func string(_ extractor: StringSelectionExtractor,
-                      allowEmpty: Bool) -> iTermRenegablePromise<NSString> {
+    class func string(_ extractor: StringSelectionExtractor?,
+                      allowEmpty: Bool) -> iTermRenegablePromise<NSString>? {
+        guard let extractor = extractor else {
+            return nil
+        }
+
         return iTermRenegablePromise<NSString>.init { seal in
             Self.queue.async {
                 let value = extractor.extract()
@@ -278,9 +285,13 @@ class SelectionPromise: NSObject {
     }
 
     @objc
-    class func attributedString(_ extractor: AttributedStringSelectionExtractor,
+    class func attributedString(_ extractor: AttributedStringSelectionExtractor?,
                                 characterAttributesProvider: CharacterAttributesProvider,
-                                allowEmpty: Bool) -> iTermRenegablePromise<NSAttributedString> {
+                                allowEmpty: Bool) -> iTermRenegablePromise<NSAttributedString>? {
+        guard let extractor = extractor else {
+            return nil
+        }
+
         return iTermRenegablePromise<NSAttributedString>.init { seal in
             Self.queue.async {
                 let value = extractor.extract(characterAttributesProvider)

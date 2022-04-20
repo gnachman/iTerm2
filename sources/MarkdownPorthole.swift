@@ -5,6 +5,7 @@
 //  Created by George Nachman on 4/13/22.
 //
 
+import AppKit
 import Foundation
 import SwiftyMarkdown
 
@@ -12,24 +13,61 @@ import SwiftyMarkdown
 class PortholeFactory: NSObject {
     @objc
     static func markdownPorthole(markdown: String,
-                                 textColor: NSColor) -> ObjCPorthole {
-        return MarkdownPorthole(markdown, textColor: textColor)
+                                 colorMap: iTermColorMap,
+                                 baseDirectory: URL?) -> ObjCPorthole? {
+        if #available(macOS 12, *) {
+            return MarkdownPorthole(markdown, colorMap: colorMap, baseDirectory: baseDirectory)
+        } else {
+            return nil
+        }
     }
 
     @objc
     static func porthole(_ dictionary: [String: AnyObject],
-                         textColor: NSColor) -> ObjCPorthole? {
+                         colorMap: iTermColorMap) -> ObjCPorthole? {
         guard let (type, info) = PortholeType.unwrap(dictionary: dictionary) else {
             return nil
         }
         switch type {
         case .markdown:
-            return MarkdownPorthole.from(info, textColor: textColor)
+            if #available(macOS 12, *) {
+                return MarkdownPorthole.from(info, colorMap: colorMap)
+            } else {
+                return nil
+            }
         }
     }
 }
 
-class MarkdownPorthole {
+class MarkdownContainerView: NSView {
+    init() {
+        super.init(frame: NSRect.zero)
+        wantsLayer = true
+        layer = CALayer()
+        layer?.borderColor = NSColor.init(white: 0.5, alpha: 0.5).cgColor
+        layer?.backgroundColor = NSColor.init(white: 0.5, alpha: 0.1).cgColor
+        layer?.borderWidth = 1.0
+        layer?.cornerRadius = 4
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("Not implemented")
+    }
+
+    func setContentSize(_ size: NSSize) {
+        guard subviews.count > 0 else {
+            return
+        }
+        var frame = NSRect.zero
+        frame.size = size
+        frame.origin.x = (bounds.width - size.width) / 2
+        frame.origin.y = (bounds.height - size.height) / 2
+        subviews[0].frame = frame
+    }
+}
+
+@available(macOS 12, *)
+class MarkdownPorthole: NSObject {
     private let textView: MetalDisablingTextView
     private let textStorage = NSTextStorage()
     private let layoutManager = NSLayoutManager()
@@ -38,13 +76,26 @@ class MarkdownPorthole {
     private weak var _mark: PortholeMark? = nil
     private let uuid: String
     private let markdown: String
-    private let embedInScrollView = true
+    // I have no idea why this is necessary but the NSView is invisible unless it's in a container
+    // view. ILY, AppKit.
+    private let containerView = MarkdownContainerView()
+    private let baseDirectory: URL?
+    private let colorMap: iTermColorMap
+    weak var delegate: PortholeDelegate?
+    private struct SavedColors: Equatable {
+        let textColor: NSColor
 
-    init(_ markdown: String, textColor: NSColor, uuid: String? = nil) {
-        self.uuid = uuid ?? UUID().uuidString
-        self.markdown = markdown
-
+        init(colorMap: iTermColorMap) {
+            textColor = colorMap.color(forKey: kColorMapForeground) ?? NSColor.textColor
+        }
+    }
+    private var savedColors: SavedColors
+    private static func attributedString(markdown: String, colors: SavedColors) -> NSAttributedString {
         let md = SwiftyMarkdown(string: markdown)
+        if let fixedPitchFontName = NSFont.userFixedPitchFont(ofSize: 12)?.fontName {
+            md.code.fontName = fixedPitchFontName
+        }
+        let textColor = colors.textColor
         md.h1.color = textColor
         md.h2.color = textColor
         md.h3.color = textColor
@@ -57,14 +108,24 @@ class MarkdownPorthole {
         md.bold.color = textColor
         md.italic.color = textColor
         md.code.color = textColor
+        return md.attributedString()
+    }
 
-        let attributedString = md.attributedString()
+    init?(_ markdown: String,
+          colorMap: iTermColorMap,
+          baseDirectory: URL?,
+          uuid: String? = nil) {
+        self.uuid = uuid ?? UUID().uuidString
+        self.markdown = markdown.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.baseDirectory = baseDirectory
+        self.colorMap = colorMap
+        savedColors = SavedColors(colorMap: colorMap)
+        let attributedString = Self.attributedString(markdown: self.markdown, colors: savedColors)
 
-        if embedInScrollView {
-            scrollview.hasVerticalScroller = true
-            scrollview.hasHorizontalScroller = false
-            scrollview.borderType = .lineBorder
-        }
+        var options = AttributedString.MarkdownParsingOptions()
+        options.allowsExtendedAttributes = true
+        options.interpretedSyntax = .full
+        options.failurePolicy = .returnPartiallyParsedIfPossible
 
         let textViewFrame = CGRect(x: 0, y: 0, width: 800, height: 200)
         textStorage.addLayoutManager(layoutManager)
@@ -75,15 +136,27 @@ class MarkdownPorthole {
         textView.isEditable = false
         textView.isSelectable = true
         textView.drawsBackground = false
+        if let selectionTextColor = colorMap.color(forKey: kColorMapSelectedText),
+           let selectionBackgroundColor = colorMap.color(forKey: kColorMapSelection) {
+            textView.selectedTextAttributes = [.foregroundColor: selectionTextColor,
+                                               .backgroundColor: selectionBackgroundColor]
+        }
         textStorage.setAttributedString(attributedString)
         textContainer.widthTracksTextView = true
         textContainer.heightTracksTextView = true
 
-        if embedInScrollView {
-            scrollview.frame = NSRect(x: 0, y: 0, width: 800, height: 200)
-            scrollview.documentView = textView
-            scrollview.drawsBackground = false
-            scrollview.verticalScrollElasticity = .none
+        containerView.wantsLayer = true
+        textView.removeFromSuperview()
+        containerView.addSubview(textView)
+
+        super.init()
+
+        textView.delegate = self
+        textView.didAcquireSelection = { [weak self] in
+            guard let self = self else {
+                return
+            }
+            self.delegate?.portholeDidAcquireSelection(self)
         }
     }
 
@@ -92,42 +165,34 @@ class MarkdownPorthole {
                                         options: [.usesLineFragmentOrigin]).height
     }
 
+    func fittingSize(for width: CGFloat) -> NSSize {
+        return NSSize(width: width, height: self.height(for: width))
+    }
+
     func sizeToFit(width: CGFloat) {
-        if embedInScrollView {
-            let contentWidth = NSScrollView.contentSize(forFrameSize: NSSize(width: width, height: 100),
-                                                        horizontalScrollerClass: nil,
-                                                        verticalScrollerClass: NSScroller.self,
-                                                        borderType: scrollview.borderType,
-                                                        controlSize: .regular,
-                                                        scrollerStyle: .legacy).width
-            let contentSize = NSSize(width: contentWidth, height: self.height(for: contentWidth))
-            let scrollViewSize = NSScrollView.frameSize(forContentSize: contentSize,
-                                                        horizontalScrollerClass: nil,
-                                                        verticalScrollerClass: NSScroller.self,
-                                                        borderType: scrollview.borderType,
-                                                        controlSize: .regular,
-                                                        scrollerStyle: .legacy)
-            scrollview.frame = NSRect(x: 0, y: 0, width: scrollViewSize.width, height: scrollViewSize.height)
-            textView.frame = CGRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height)
-        } else {
-            let contentSize = NSSize(width: width, height: self.height(for: width))
-            textView.frame = CGRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height)
-        }
+        let contentSize = fittingSize(for: width)
+        containerView.frame = CGRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height)
+        textView.frame = containerView.bounds
     }
 
     private static let uuidDictionaryKey = "uuid"
     private static let markdownDictionaryKey = "markdown"
+    private static let baseDirectoryKey = "baseDirectory"
 
     static func from(_ dictionary: [String: AnyObject],
-                     textColor: NSColor) -> MarkdownPorthole? {
+                     colorMap: iTermColorMap) -> MarkdownPorthole? {
         guard let uuid = dictionary[uuidDictionaryKey] as? String,
                 let markdown = dictionary[markdownDictionaryKey] as? String else {
             return nil
         }
-        return MarkdownPorthole(markdown, textColor: textColor, uuid: uuid)
+        return MarkdownPorthole(markdown,
+                                colorMap: colorMap,
+                                baseDirectory: dictionary[baseDirectoryKey] as? URL,
+                                uuid: uuid)
     }
 }
 
+@available(macOS 12, *)
 extension MarkdownPorthole: Porthole {
     static var type: PortholeType {
         .markdown
@@ -136,7 +201,7 @@ extension MarkdownPorthole: Porthole {
         return uuid
     }
     var view: NSView {
-        return embedInScrollView ? scrollview : textView
+        return containerView
     }
     var mark: PortholeMark? {
         get {
@@ -147,17 +212,118 @@ extension MarkdownPorthole: Porthole {
         }
     }
     var dictionaryValue: [String: AnyObject] {
+        let dir: NSString?
+        if let baseDirectory = baseDirectory {
+            dir = baseDirectory.path as NSString
+        } else {
+            dir = nil
+        }
         return wrap(dictionary: [Self.uuidDictionaryKey: uuid as NSString,
-                                 Self.markdownDictionaryKey: markdown as NSString])
+                                 Self.markdownDictionaryKey: markdown as NSString,
+                                 Self.baseDirectoryKey: dir].compactMapValues { $0 })
     }
 
     func set(size: NSSize) {
         var frame = view.frame
         frame.size = size
         view.frame = frame
+        containerView.setContentSize(fittingSize(for: size.width))
+    }
+
+    func removeSelection() {
+        textView.removeSelection()
     }
 }
 
 @objc class MetalDisablingTextView: NSTextView {
+    var didAcquireSelection: (() -> ())?
+    private var removingSelection = false
 
+    func removeSelection() {
+        removingSelection = true
+        setSelectedRange(NSRange(location: 0, length: 0))
+        removingSelection = false
+    }
+    override func setSelectedRanges(_ ranges: [NSValue],
+                                    affinity: NSSelectionAffinity,
+                                    stillSelecting stillSelectingFlag: Bool) {
+        if !removingSelection {
+            didAcquireSelection?()
+        }
+        super.setSelectedRanges(ranges, affinity: affinity, stillSelecting: stillSelectingFlag)
+    }
+}
+
+@available(macOS 12, *)
+extension MarkdownPorthole: NSTextViewDelegate {
+    func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
+        guard let url = NSAttributedString.linkToURL(link) else {
+            return false
+        }
+        if url.scheme == "file" {
+            if iTermWarning.show(withTitle: "Open file at \(url.path)?",
+                                 actions: ["OK", "Cancel"],
+                                 accessory: nil,
+                                 identifier: "NoSyncOpenFileFromMarkdownLink",
+                                 silenceable: .kiTermWarningTypePermanentlySilenceable,
+                                 heading: "Confirm",
+                                 window: textView.window) == .kiTermWarningSelection0 {
+                NSWorkspace.shared.open(url)
+            }
+        } else {
+            if iTermWarning.show(withTitle: "Open URL \(url.absoluteString)?",
+                                 actions: ["OK", "Cancel"],
+                                 accessory: nil,
+                                 identifier: "NoSyncOpenURLFromMarkdownLink",
+                                 silenceable: .kiTermWarningTypePermanentlySilenceable,
+                                 heading: "Confirm",
+                                 window: textView.window) == .kiTermWarningSelection0 {
+                NSWorkspace.shared.open(url)
+            }
+        }
+        return true
+    }
+
+    func updateColors() {
+        let colors = SavedColors(colorMap: colorMap)
+        guard colors != savedColors else {
+            return
+        }
+        savedColors = colors
+        textView.textStorage?.setAttributedString(Self.attributedString(markdown: markdown,
+                                                                        colors: savedColors))
+    }
+}
+
+extension NSAttributedString {
+    static func linkToURL(_ link: Any?) -> URL? {
+        guard let value = link else {
+            return nil
+        }
+        if let url = value as? URL {
+            return url
+        }
+        if let string = value as? String {
+            return URL(string: string)
+        }
+        return nil
+    }
+    func rewritingRelativeFileLinks(baseDirectory: URL) -> NSAttributedString {
+        let result = mutableCopy() as! NSMutableAttributedString
+        enumerateAttributes(in: NSRange(location: 0, length: length)) { attributes, range, stopPtr in
+            guard let link = Self.linkToURL(attributes[.link]) else {
+                return
+            }
+            guard link.scheme == nil || link.scheme == "file" else {
+                return
+            }
+            if link.path.hasPrefix("/") {
+                return
+            }
+            var replacement = attributes
+            replacement[.link] = URL(fileURLWithPath: link.path, relativeTo: baseDirectory)
+            result.replaceAttributes(in: range, withAttributes: replacement)
+        }
+        return result
+    }
 }

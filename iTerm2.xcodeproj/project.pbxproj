@@ -976,6 +976,7 @@
 		A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */; };
 		A6042CD925D0CBCD0001C8FE /* NSScroller+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6042CD725D0CBCD0001C8FE /* NSScroller+iTerm.h */; };
 		A6042CDA25D0CBCD0001C8FE /* NSScroller+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6042CD825D0CBCD0001C8FE /* NSScroller+iTerm.m */; };
+		A6046F63280E2DD1002DC9F7 /* SwiftyMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = A6046F62280E2DD1002DC9F7 /* SwiftyMarkdown */; };
 		A6047134213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h in Headers */ = {isa = PBXBuildFile; fileRef = A6047132213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h */; };
 		A6047135213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m in Sources */ = {isa = PBXBuildFile; fileRef = A6047133213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m */; };
 		A6057C041878CD30004A60AF /* ProfileTagsView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C021878CD30004A60AF /* ProfileTagsView.h */; };
@@ -2348,7 +2349,6 @@
 		A682273C2801F355005DF0B4 /* SavePanelBuiltInFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A682273B2801F355005DF0B4 /* SavePanelBuiltInFunction.swift */; };
 		A682273E280355A8005DF0B4 /* KeyActionSequenceTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A682273D280355A8005DF0B4 /* KeyActionSequenceTableViewController.swift */; };
 		A68227412805E5C8005DF0B4 /* LineBufferSorting.mm in Sources */ = {isa = PBXBuildFile; fileRef = A68227402805E5C8005DF0B4 /* LineBufferSorting.mm */; };
-		A682274428078328005DF0B4 /* SwiftyMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = A682274328078328005DF0B4 /* SwiftyMarkdown */; };
 		A682274628078434005DF0B4 /* PTYTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A682274528078434005DF0B4 /* PTYTextView.swift */; };
 		A6822748280786A5005DF0B4 /* Porthole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6822747280786A5005DF0B4 /* Porthole.swift */; };
 		A682274B280786DE005DF0B4 /* MarkdownPorthole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A682274A280786DE005DF0B4 /* MarkdownPorthole.swift */; };
@@ -5929,6 +5929,27 @@
 		A682274528078434005DF0B4 /* PTYTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PTYTextView.swift; sourceTree = "<group>"; };
 		A6822747280786A5005DF0B4 /* Porthole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Porthole.swift; sourceTree = "<group>"; };
 		A682274A280786DE005DF0B4 /* MarkdownPorthole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownPorthole.swift; sourceTree = "<group>"; };
+		A682275E280E2688005DF0B4 /* SwiftyLineProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SwiftyLineProcessor.swift; path = SwiftyMarkdown/SwiftyLineProcessor.swift; sourceTree = "<group>"; };
+		A682275F280E2689005DF0B4 /* SwiftyMarkdown+iOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SwiftyMarkdown+iOS.swift"; path = "SwiftyMarkdown/SwiftyMarkdown+iOS.swift"; sourceTree = "<group>"; };
+		A6822760280E2689005DF0B4 /* SwiftyScanner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SwiftyScanner.swift; path = SwiftyMarkdown/SwiftyScanner.swift; sourceTree = "<group>"; };
+		A6822761280E2689005DF0B4 /* SwiftyTokeniser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SwiftyTokeniser.swift; path = SwiftyMarkdown/SwiftyTokeniser.swift; sourceTree = "<group>"; };
+		A6822762280E2689005DF0B4 /* SwiftyMarkdown+macOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SwiftyMarkdown+macOS.swift"; path = "SwiftyMarkdown/SwiftyMarkdown+macOS.swift"; sourceTree = "<group>"; };
+		A6822763280E2689005DF0B4 /* SwiftyMarkdown.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SwiftyMarkdown.swift; path = SwiftyMarkdown/SwiftyMarkdown.swift; sourceTree = "<group>"; };
+		A6822764280E268A005DF0B4 /* PerfomanceLog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = PerfomanceLog.swift; path = SwiftyMarkdown/PerfomanceLog.swift; sourceTree = "<group>"; };
+		A6822765280E268A005DF0B4 /* CharacterRule.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CharacterRule.swift; path = SwiftyMarkdown/CharacterRule.swift; sourceTree = "<group>"; };
+		A6822766280E268A005DF0B4 /* Token.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Token.swift; path = SwiftyMarkdown/Token.swift; sourceTree = "<group>"; };
+		A6822767280E268A005DF0B4 /* String+SwiftyMarkdown.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "String+SwiftyMarkdown.swift"; path = "SwiftyMarkdown/String+SwiftyMarkdown.swift"; sourceTree = "<group>"; };
+		A6822779280E26CD005DF0B4 /* SwiftyMarkdown.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftyMarkdown.h; sourceTree = "<group>"; };
+		A6822785280E26F3005DF0B4 /* PerfomanceLog.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PerfomanceLog.swift; sourceTree = "<group>"; };
+		A6822786280E26F3005DF0B4 /* SwiftyLineProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyLineProcessor.swift; sourceTree = "<group>"; };
+		A6822787280E26F3005DF0B4 /* SwiftyScanner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyScanner.swift; sourceTree = "<group>"; };
+		A6822788280E26F3005DF0B4 /* SwiftyMarkdown.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyMarkdown.swift; sourceTree = "<group>"; };
+		A6822789280E26F3005DF0B4 /* SwiftyMarkdown+macOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SwiftyMarkdown+macOS.swift"; sourceTree = "<group>"; };
+		A682278A280E26F3005DF0B4 /* SwiftyTokeniser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftyTokeniser.swift; sourceTree = "<group>"; };
+		A682278B280E26F3005DF0B4 /* CharacterRule.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CharacterRule.swift; sourceTree = "<group>"; };
+		A682278C280E26F3005DF0B4 /* Token.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Token.swift; sourceTree = "<group>"; };
+		A682278D280E26F3005DF0B4 /* SwiftyMarkdown+iOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SwiftyMarkdown+iOS.swift"; sourceTree = "<group>"; };
+		A682278E280E26F3005DF0B4 /* String+SwiftyMarkdown.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+SwiftyMarkdown.swift"; sourceTree = "<group>"; };
 		A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermProgressIndicator.h; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermProgressIndicator.m; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE991915DB1F00BE8758 /* iTermFlippedView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFlippedView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -7010,7 +7031,7 @@
 				1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */,
 				1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
-				A682274428078328005DF0B4 /* SwiftyMarkdown in Frameworks */,
+				A6046F63280E2DD1002DC9F7 /* SwiftyMarkdown in Frameworks */,
 				A6184F891BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
 				530AB89920AFF21300D2AA08 /* CoreParse.framework in Frameworks */,
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
@@ -7093,6 +7114,7 @@
 				A6866B6823CAA10A00ACD94C /* pidinfo */,
 				A60593B3257DF9A500CACEE6 /* ShellLauncher */,
 				7596379B2593AE0700E278CC /* iTerm2SandboxedWorker */,
+				A6822778280E26CD005DF0B4 /* SwiftyMarkdown */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 			);
@@ -7560,6 +7582,7 @@
 		1D03D42519144B8E0049EB8F /* ThirdParty */ = {
 			isa = PBXGroup;
 			children = (
+				A682275D280E267B005DF0B4 /* SwiftyMarkdown */,
 				A6EA071B24EA440600DD6E17 /* NSURL-IDN */,
 				A653F67224CF4EBA0062377E /* fmdb */,
 				A6EB203F223EC53F00E928C3 /* ini */,
@@ -9406,6 +9429,50 @@
 			);
 			name = Portholes;
 			sourceTree = "<group>";
+		};
+		A682275D280E267B005DF0B4 /* SwiftyMarkdown */ = {
+			isa = PBXGroup;
+			children = (
+				A6822765280E268A005DF0B4 /* CharacterRule.swift */,
+				A6822764280E268A005DF0B4 /* PerfomanceLog.swift */,
+				A6822767280E268A005DF0B4 /* String+SwiftyMarkdown.swift */,
+				A682275E280E2688005DF0B4 /* SwiftyLineProcessor.swift */,
+				A6822763280E2689005DF0B4 /* SwiftyMarkdown.swift */,
+				A682275F280E2689005DF0B4 /* SwiftyMarkdown+iOS.swift */,
+				A6822762280E2689005DF0B4 /* SwiftyMarkdown+macOS.swift */,
+				A6822760280E2689005DF0B4 /* SwiftyScanner.swift */,
+				A6822761280E2689005DF0B4 /* SwiftyTokeniser.swift */,
+				A6822766280E268A005DF0B4 /* Token.swift */,
+			);
+			name = SwiftyMarkdown;
+			sourceTree = "<group>";
+		};
+		A6822778280E26CD005DF0B4 /* SwiftyMarkdown */ = {
+			isa = PBXGroup;
+			children = (
+				A6822784280E26F3005DF0B4 /* SwiftyMarkdown */,
+				A6822779280E26CD005DF0B4 /* SwiftyMarkdown.h */,
+			);
+			path = SwiftyMarkdown;
+			sourceTree = "<group>";
+		};
+		A6822784280E26F3005DF0B4 /* SwiftyMarkdown */ = {
+			isa = PBXGroup;
+			children = (
+				A6822785280E26F3005DF0B4 /* PerfomanceLog.swift */,
+				A6822786280E26F3005DF0B4 /* SwiftyLineProcessor.swift */,
+				A6822787280E26F3005DF0B4 /* SwiftyScanner.swift */,
+				A6822788280E26F3005DF0B4 /* SwiftyMarkdown.swift */,
+				A6822789280E26F3005DF0B4 /* SwiftyMarkdown+macOS.swift */,
+				A682278A280E26F3005DF0B4 /* SwiftyTokeniser.swift */,
+				A682278B280E26F3005DF0B4 /* CharacterRule.swift */,
+				A682278C280E26F3005DF0B4 /* Token.swift */,
+				A682278D280E26F3005DF0B4 /* SwiftyMarkdown+iOS.swift */,
+				A682278E280E26F3005DF0B4 /* String+SwiftyMarkdown.swift */,
+			);
+			name = SwiftyMarkdown;
+			path = ThirdParty/SwiftyMarkdown;
+			sourceTree = SOURCE_ROOT;
 		};
 		A6866B6823CAA10A00ACD94C /* pidinfo */ = {
 			isa = PBXGroup;
@@ -12256,7 +12323,7 @@
 			);
 			name = iTerm2;
 			packageProductDependencies = (
-				A682274328078328005DF0B4 /* SwiftyMarkdown */,
+				A6046F62280E2DD1002DC9F7 /* SwiftyMarkdown */,
 			);
 			productName = "JTerminal (Application)";
 			productReference = 8742065A0564169600CFC3F1 /* iTerm2.app */;
@@ -12437,7 +12504,7 @@
 			);
 			mainGroup = 0464AB0D006CD2EC7F000001 /* JTerminal */;
 			packageReferences = (
-				A682274228078328005DF0B4 /* XCRemoteSwiftPackageReference "SwiftyMarkdown" */,
+				A6046F61280E2DD1002DC9F7 /* XCRemoteSwiftPackageReference "SwiftyMarkdown" */,
 			);
 			productRefGroup = 0464AB32006CD2EC7F000001 /* Products */;
 			projectDirPath = "";
@@ -16989,6 +17056,7 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/SearchableComboListView",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
+					"$(",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -17327,6 +17395,7 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/SearchableComboListView",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
+					"$(",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -17397,6 +17466,7 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/SearchableComboListView",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
+					"$(",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -17467,6 +17537,7 @@
 				USER_HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/SearchableComboListView",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
+					"$(",
 				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
@@ -18609,20 +18680,20 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		A682274228078328005DF0B4 /* XCRemoteSwiftPackageReference "SwiftyMarkdown" */ = {
+		A6046F61280E2DD1002DC9F7 /* XCRemoteSwiftPackageReference "SwiftyMarkdown" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/SimonFairbairn/SwiftyMarkdown";
+			repositoryURL = "https://github.com/gnachman/SwiftyMarkdown";
 			requirement = {
-				kind = exactVersion;
-				version = 1.2.3;
+				branch = master;
+				kind = branch;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A682274328078328005DF0B4 /* SwiftyMarkdown */ = {
+		A6046F62280E2DD1002DC9F7 /* SwiftyMarkdown */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = A682274228078328005DF0B4 /* XCRemoteSwiftPackageReference "SwiftyMarkdown" */;
+			package = A6046F61280E2DD1002DC9F7 /* XCRemoteSwiftPackageReference "SwiftyMarkdown" */;
 			productName = SwiftyMarkdown;
 		};
 /* End XCSwiftPackageProductDependency section */

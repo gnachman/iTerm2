@@ -23,6 +23,7 @@
 #import "iTermTextPopoverViewController.h"
 
 @protocol iTermCancelable;
+@class iTermIdempotentOperationJoiner;
 @class iTermShellIntegrationWindowController;
 @class iTermURLActionHelper;
 @protocol Porthole;
@@ -56,6 +57,8 @@ NSPopoverDelegate> {
 @property(nonatomic, readonly) BOOL hasUnderline;
 @property(nonatomic, strong) id<iTermCancelable> lastUrlActionCanceler;
 @property(nonatomic, readonly, strong) NSMutableArray<id<Porthole>> *portholes;
+@property(nonatomic, strong) iTermIdempotentOperationJoiner *portholesNeedUpdatesJoiner;
+@property(nonatomic) int lastPortholeWidth;
 
 - (void)addNote;
 - (void)updateAlphaValue;

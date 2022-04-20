@@ -60,7 +60,8 @@
                                                                                width:_state.currentGrid.size.width
                                                                         extendsRight:YES
                                                                                   ok:&ok];
-                LineBufferPosition *lastValidPosition = [[tempLineBuffer lastPosition] predecessor];
+                LineBufferPosition *lastValidPosition = [tempLineBuffer penultimatePosition];
+
                 if (!ok) {
                     startPos = lastValidPosition;
                 } else {

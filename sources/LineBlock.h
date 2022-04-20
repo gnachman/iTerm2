@@ -46,6 +46,7 @@ typedef struct {
 
 // Block this was copied from.
 @property(nonatomic, weak, readonly) LineBlock *progenitor;
+@property(nonatomic, readonly) BOOL invalidated;
 
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary;
 
@@ -240,5 +241,6 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (BOOL)hasOwner;
 - (void)dropMirroringProgenitor:(LineBlock *)other;
 - (BOOL)isSynchronizedWithProgenitor;
+- (void)invalidate;
 
 @end

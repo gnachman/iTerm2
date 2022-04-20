@@ -41,6 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)handleAutoEnteringEvent:(NSEvent *)event;
 - (BOOL)wouldHandleEvent:(NSEvent *)event;
 - (BOOL)shouldAutoEnterWithEvent:(NSEvent *)event;
+- (void)setEnabledWithoutCleverness:(BOOL)copyMode;
 
 @end
 

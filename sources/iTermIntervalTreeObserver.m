@@ -6,6 +6,8 @@
 //
 
 #import "iTermIntervalTreeObserver.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "PTYAnnotation.h"
 #import "VT100ScreenMark.h"
 
@@ -26,6 +28,9 @@ iTermIntervalTreeObjectType iTermIntervalTreeObjectTypeForObject(id<IntervalTree
 
     if ([object isKindOfClass:[PTYAnnotation class]]) {
         return iTermIntervalTreeObjectTypeAnnotation;
+    }
+    if ([object isKindOfClass:[PortholeMark class]]) {
+        return iTermIntervalTreeObjectTypePorthole;
     }
     return iTermIntervalTreeObjectTypeUnknown;
 }

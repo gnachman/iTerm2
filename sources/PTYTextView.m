@@ -382,7 +382,8 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     [_notes release];
     [_lastUrlActionCanceler release];
     [_portholes release];
-
+    [_portholesNeedUpdatesJoiner release];
+    
     [super dealloc];
 }
 
@@ -4335,6 +4336,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         [_delegate textViewSelectionDidChangeToTruncatedString:@""];
     }
+    [self removePortholeSelections];
     DLog(@"Selection did change: selection=%@. stack=%@",
          selection, [NSThread callStackSymbols]);
 }
@@ -4501,6 +4503,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _drawingHelper.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
                                                                               towardsGrayLevel:0.5];
     }
+    [self updatePortholeColors];
     [self setNeedsDisplay:YES];
 }
 

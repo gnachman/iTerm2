@@ -489,7 +489,7 @@
 }
 
 - (LineBlock *)fast_blockContainingPosition:(long long)position
-                                    yOffset:(int)desiredYOffset
+                                    yOffset:(int)originalDesiredYOffset
                                       width:(int)width
                                   remainder:(int *)remainderPtr
                                 blockOffset:(int *)blockOffsetPtr
@@ -503,17 +503,47 @@
     }
     LineBlock *block = _blocks[index];
 
+    // To avoid double-counting Y offsetes, reduce the offset in lines within the block by the number
+    // of empty lines that were skipped.
+    int dy = 0;
+
+    int desiredYOffset = originalDesiredYOffset;
     if (roundUp) {
         // Seek forward until we find a block that contains this position.
         if (block.numberOfTrailingEmptyLines <= desiredYOffset) {
             // Skip over trailing lines.
-            desiredYOffset -= block.numberOfTrailingEmptyLines;
+            const int emptyCount = block.numberOfTrailingEmptyLines;
+            desiredYOffset -= emptyCount;
+            // This has a +1 because there are two cases. In the diagrams below the | indicates the
+            // location given by position.
+            // 1. The block has trailing empty lines
+            //        abc
+            //        xyz|
+            //        (empty)
+            //    In this case, advancing to the next block moves the cursor down two lines:
+            //    first to the start of the empty line and then to the start of the line after it.
+            //
+            // 2. The block does not have trailing empty lines
+            //        abc
+            //        xyz|
+            //    In this case, advancing to the next block moves the cursor down one line: just to
+            //    the beginning of the line that starts the next block.
+            dy += emptyCount + 1;
             index += 1;
             block = _blocks[index];
 
             // Skip over entirely empty blocks.
-            while (!block.containsAnyNonEmptyLine && block.numberOfLeadingEmptyLines <= desiredYOffset) {
-                desiredYOffset -= block.numberOfTrailingEmptyLines;
+            while (!block.containsAnyNonEmptyLine &&
+                   block.numberOfLeadingEmptyLines <= desiredYOffset &&
+                   index + 1 < _blocks.count) {
+                const int emptyCount = block.numberOfTrailingEmptyLines;
+                desiredYOffset -= emptyCount;
+                // Here this is no +1. We begin with something like:
+                //     |(empty)
+                //     (empty)
+                // Moving the cursor to the next block advances by exactly as many lines as the
+                // number of lines in the block.
+                dy += emptyCount;
                 index += 1;
                 block = _blocks[index];
             }
@@ -524,13 +554,22 @@
         *remainderPtr = position - [_rawSpaceCache sumOfValuesInRange:NSMakeRange(0, index)];
     }
     if (blockOffsetPtr) {
-        *blockOffsetPtr = [[_numLinesCaches numLinesCacheForWidth:width] sumOfValuesInRange:NSMakeRange(0, index)];
+        *blockOffsetPtr = [[_numLinesCaches numLinesCacheForWidth:width] sumOfValuesInRange:NSMakeRange(0, index)] - dy;
     }
     if (indexPtr) {
         *indexPtr = index;
     }
     return block;
 }
+
+// TODO: Test the case where the position is at the start of block 1 (pos=1, desiredYOffset=1) in this example:
+// block 0
+// x
+//
+// block 1
+// (empty)
+// (empty)
+// y
 
 - (LineBlock *)slow_blockContainingPosition:(long long)position
                                     yOffset:(int)desiredYOffset
@@ -613,6 +652,7 @@
 
 - (void)removeFirstBlock {
     [self updateCacheIfNeeded];
+    [_blocks.firstObject invalidate];
     [_blocks.firstObject removeObserver:self];
     [_numLinesCaches removeFirstValue];
     [_rawSpaceCache removeFirstValue];
@@ -630,6 +670,7 @@
 
 - (void)removeLastBlock {
     [self updateCacheIfNeeded];
+    [_blocks.lastObject invalidate];
     [_blocks.lastObject removeObserver:self];
     [_blocks removeLastObject];
     [_numLinesCaches removeLastValue];

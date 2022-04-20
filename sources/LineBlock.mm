@@ -1065,12 +1065,24 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             } else {
                 numEmptyLines = 0;
             }
-        } else if (length == 0) {
-            // Callers use `prev`, the start of the wrapped line, plus the output *lineNum to find
+        } else if (length == 0 && cumulative_line_lengths[i] > start_offset) {
+            // Callers use `prev`, the start of the *previous* wrapped line, plus the output *lineNum to find
             // where the wrapped line begins. When that line is of length 0 they will pick the end
             // of the last line rather than the start of the subsequent line. Increment numEmptyLines
             // to make it clear what we're indicating. This means that numEmptyLines modifies `.prev`
             // but *not* `.index`, which is super confusing :(
+            // However, if this line was not preceded by a non-empty line, we don't want to make
+            // this adjustment because that ambiguity is not possible.
+            //
+            // To illustrate:
+            // 1. Given:
+            //     abc
+            //     (empty)
+            //   Then the location for the start of line 1 is (prev=0,numEmptyLines=1,index=1,length=0)
+            // 2. Given:
+            //    (empty)
+            //    (empty)
+            //   Then the location for the start of line 1 is (prev=0,numEmptyLines=1,index=1,length=0)
             ++numEmptyLines;
         }
         int spans;
@@ -1508,9 +1520,11 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
 - (void)dropMirroringProgenitor:(LineBlock *)other {
     assert(_progenitor == other);
-    assert(self.owner == other);
-    assert(cll_capacity == other->cll_capacity);
-    if (start_offset == other->start_offset) {
+    assert(self.owner == nil || self.owner == other);
+    assert(cll_capacity <= other->cll_capacity);
+
+    if (start_offset == other->start_offset &&
+        first_entry == other->first_entry) {
         DLog(@"No change");
         return;
     }
@@ -1520,7 +1534,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     buffer_start = raw_buffer + start_offset;
     cached_numlines_width = -1;
 
-    while (first_entry < other->first_entry) {
+    while (first_entry < other->first_entry && first_entry < cll_capacity) {
         if (gEnableDoubleWidthCharacterLineCache) {
             metadata_[first_entry].double_width_characters = nil;
         }
@@ -1536,6 +1550,9 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
 - (BOOL)isSynchronizedWithProgenitor {
     if (!_progenitor) {
+        return NO;
+    }
+    if (_progenitor.invalidated) {
         return NO;
     }
     // Mutating an object nils its owner and points its clients at a different or nil owner.
@@ -2312,6 +2329,12 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
     @synchronized([LineBlock class]) {
         return self.owner != nil;
     }
+}
+
+- (void)invalidate {
+    // The purpose of invalidation is to make syncing do the right thing when the progenitor block
+    // is removed from the line buffer.
+    _invalidated = YES;
 }
 
 #pragma mark - iTermUniquelyIdentifiable
