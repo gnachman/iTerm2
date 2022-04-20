@@ -40,14 +40,44 @@ class PortholeFactory: NSObject {
 }
 
 class MarkdownContainerView: NSView {
+    let closeButton = NSButton()
+    var color = NSColor.textColor {
+        didSet {
+            layer?.borderColor = color.withAlphaComponent(0.5).cgColor
+            closeButton.image = Self.closeButtonImage(color)
+        }
+    }
+
+    static func closeButtonImage(_ color: NSColor) -> NSImage {
+        if #available(macOS 11.0, *) {
+            if let image = NSImage(systemSymbolName: "xmark.circle",
+                                   accessibilityDescription: "Close markdown view") {
+                return image.it_image(withTintColor: color)
+            }
+        }
+        return NSImage.it_imageNamed("closebutton", for: Self.self)!.it_image(withTintColor: color)
+    }
+
     init() {
-        super.init(frame: NSRect.zero)
+        super.init(frame: NSRect(x: 0, y: 0, width: 100, height: 100))
         wantsLayer = true
         layer = CALayer()
         layer?.borderColor = NSColor.init(white: 0.5, alpha: 0.5).cgColor
         layer?.backgroundColor = NSColor.init(white: 0.5, alpha: 0.1).cgColor
         layer?.borderWidth = 1.0
         layer?.cornerRadius = 4
+        autoresizesSubviews = false
+
+        closeButton.image = Self.closeButtonImage(NSColor.textColor)
+        closeButton.sizeToFit()
+        closeButton.target = self
+        closeButton.action = #selector(close(_:))
+        closeButton.isBordered = false
+        closeButton.title = ""
+        closeButton.autoresizingMask = []
+        addSubview(closeButton)
+
+        layoutSubviews()
     }
 
     required init?(coder: NSCoder) {
@@ -63,6 +93,20 @@ class MarkdownContainerView: NSView {
         frame.origin.x = (bounds.width - size.width) / 2
         frame.origin.y = (bounds.height - size.height) / 2
         subviews[0].frame = frame
+        layoutSubviews()
+    }
+
+    @objc func close(_ sender: AnyObject?) {
+
+    }
+
+    func layoutSubviews() {
+        closeButton.sizeToFit()
+        var frame = closeButton.frame
+        let margin = 2.0
+        frame.origin.x = bounds.width - closeButton.frame.width - margin
+        frame.origin.y = bounds.height - closeButton.frame.height - margin
+        closeButton.frame = frame
     }
 }
 
@@ -147,7 +191,8 @@ class MarkdownPorthole: NSObject {
 
         containerView.wantsLayer = true
         textView.removeFromSuperview()
-        containerView.addSubview(textView)
+        containerView.addSubview(textView, positioned: .below, relativeTo: containerView.closeButton)
+        containerView.color = savedColors.textColor
 
         super.init()
 
@@ -173,6 +218,11 @@ class MarkdownPorthole: NSObject {
         let contentSize = fittingSize(for: width)
         containerView.frame = CGRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height)
         textView.frame = containerView.bounds
+        // I can't figure out why the button's frame gets changed later if I set it synchronously
+        // and I am completely tired of fighting AppKit.
+        DispatchQueue.main.async { [weak self] in
+            self?.containerView.layoutSubviews()
+        }
     }
 
     private static let uuidDictionaryKey = "uuid"
@@ -292,6 +342,7 @@ extension MarkdownPorthole: NSTextViewDelegate {
         savedColors = colors
         textView.textStorage?.setAttributedString(Self.attributedString(markdown: markdown,
                                                                         colors: savedColors))
+        containerView.color = colors.textColor
     }
 }
 

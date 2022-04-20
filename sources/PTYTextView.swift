@@ -44,14 +44,18 @@ extension PTYTextView {
         guard porthole.mark != nil else {
             return
         }
-        guard let gridCoordRange = dataSource?.coordRange(of: porthole),
-              gridCoordRange != VT100GridCoordRangeInvalid else {
+        guard let dataSource = dataSource else {
+            return
+        }
+        let gridCoordRange = dataSource.coordRange(of: porthole)
+        guard gridCoordRange != VT100GridCoordRangeInvalid else {
             return
         }
         let lineRange = gridCoordRange.start.y...gridCoordRange.end.y
         DLog("Update porthole with line range \(lineRange)")
         let hmargin = CGFloat(iTermPreferences.integer(forKey: kPreferenceKeySideMargins))
-        if lastPortholeWidth == dataSource.width() && !force {
+        let cellWidth = dataSource.width()
+        if lastPortholeWidth == cellWidth && !force {
             let size = porthole.view.frame.size
             // Calculating porthole size is very slow because NSView is a catastrophe so avoid doing
             // it if the width is unchanged.
@@ -60,8 +64,8 @@ extension PTYTextView {
                                          width: size.width,
                                          height: size.height)
         } else {
-            lastPortholeWidth = dataSource.width()
-            let size = NSSize(width: bounds.width - hmargin * 2,
+            lastPortholeWidth = cellWidth
+            let size = NSSize(width: CGFloat(cellWidth) * charWidth,
                               height: CGFloat(lineRange.integerLength) * lineHeight)
             porthole.set(size: size)
             porthole.view.frame = NSRect(x: hmargin,

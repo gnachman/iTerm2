@@ -58,7 +58,7 @@ NSPopoverDelegate> {
 @property(nonatomic, strong) id<iTermCancelable> lastUrlActionCanceler;
 @property(nonatomic, readonly, strong) NSMutableArray<id<Porthole>> *portholes;
 @property(nonatomic, strong) iTermIdempotentOperationJoiner *portholesNeedUpdatesJoiner;
-@property(nonatomic) int lastPortholeWidth;
+@property(nonatomic) int lastPortholeWidth;  // in cells
 
 - (void)addNote;
 - (void)updateAlphaValue;

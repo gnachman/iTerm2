@@ -86,24 +86,35 @@ extern "C" {
 }
 
 - (NSInteger)indexContainingValue:(NSInteger)value roundUp:(BOOL *)roundUp {
+    NSLog(@"indexContainingValue:%@ roundUp:%@", @(value), @(*roundUp));
+
     // Subtract the offset because the offset is negative and our values are higher than what is exposed by the owner's interface.
     const NSInteger adjustedValue = value - _offset;
     auto it = std::lower_bound(_sums.begin(), _sums.end(), adjustedValue);
     if (it == _sums.end()) {
+        NSLog(@"indexContainingValue: No such block");
         return NSNotFound;
     }
     // it refers to the first element in _sums greater or equal to value.
     const BOOL isLastValueOfBucket = (*it == adjustedValue);
     if (*roundUp) {
+        NSLog(@"indexContainingValue: Rounding up");
         if (isLastValueOfBucket) {
+            NSLog(@"indexContainingValue: is last value of bucket");
             it++;
             if (it == _sums.end()) {
+                NSLog(@"indexContainingValue: no successor found, return NSNotFound");
                 return NSNotFound;
             }
+        } else {
+            NSLog(@"indexContainingValue: Not last value of bucket");
         }
     }
     *roundUp = isLastValueOfBucket;
-    return it - _sums.begin();  // get index of iterator
+    const NSInteger result = it - _sums.begin();  // get index of iterator
+
+    NSLog(@"indexContainingValue: returning %@, *roundUp=%@", @(result), @(*roundUp));
+    return result;
 }
 
 - (NSInteger)verboseIndexContainingValue:(NSInteger)value {
