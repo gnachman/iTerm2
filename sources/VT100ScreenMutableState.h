@@ -267,6 +267,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)replaceRange:(VT100GridAbsCoordRange)range
         withPorthole:(id<Porthole>)porthole
             ofHeight:(int)numLines;
+- (void)replaceMark:(id<iTermMark>)mark withLines:(NSArray<ScreenCharArray *> *)lines;
 
 #pragma mark - URLs
 

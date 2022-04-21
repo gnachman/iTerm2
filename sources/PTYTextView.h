@@ -676,7 +676,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 - (void)drawRect:(NSRect)rect inView:(NSView *)view;
 
-- (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
+//- (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
 - (NSRect)rectForCoord:(VT100GridCoord)coord;
 
 #pragma mark - Testing only

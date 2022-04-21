@@ -275,7 +275,7 @@ static void SwapInt(int *a, int *b) {
 - (LineBufferPositionRange *)positionRangeForCoordRange:(VT100GridCoordRange)range
                                            inLineBuffer:(LineBuffer *)lineBuffer
                                           tolerateEmpty:(BOOL)tolerateEmpty {
-    NSLog(@"positionRangeForCoordRange:%@ tolerateEmpty:%@", VT100GridCoordRangeDescription(range), @(tolerateEmpty));
+    VLog(@"positionRangeForCoordRange:%@ tolerateEmpty:%@", VT100GridCoordRangeDescription(range), @(tolerateEmpty));
     assert(range.end.y >= 0);
     assert(range.start.y >= 0);
 
@@ -284,10 +284,10 @@ static void SwapInt(int *a, int *b) {
     BOOL endExtends = NO;
     // Use the predecessor of endx,endy so it will have a legal position in the line buffer.
     if (range.end.x == self.width) {
-        NSLog(@"positionRangeForCoordRange: x=width");
+        VLog(@"positionRangeForCoordRange: x=width");
         const screen_char_t *line = [self getLineAtIndex:range.end.y];
         if (line[range.end.x - 1].code == 0 && line[range.end.x].code == EOL_HARD) {
-            NSLog(@"positionRangeForCoordRange: has hard newline, set endExtends=YES");
+            VLog(@"positionRangeForCoordRange: has hard newline, set endExtends=YES");
             // The selection goes all the way to the end of the line and there is a null at the
             // end of the line, so it extends to the end of the line. The linebuffer can't recover
             // this from its position because the trailing null in the line wouldn't be in the
@@ -298,18 +298,18 @@ static void SwapInt(int *a, int *b) {
 
     range.end.x--;
     if (range.end.x < 0) {
-        NSLog(@"positionRangeForCoordRange: x < 0");
+        VLog(@"positionRangeForCoordRange: x < 0");
         range.end.y--;
         range.end.x = self.width - 1;
         if (range.end.y < 0) {
-            NSLog(@"positionRangeForCoordRange: Can't move back");
+            VLog(@"positionRangeForCoordRange: Can't move back");
             return nil;
         }
     }
 
     if (range.start.x < 0 || range.start.y < 0 ||
         range.end.x < 0 || range.end.y < 0) {
-        NSLog(@"positionRangeForCoordRange: off screen");
+        VLog(@"positionRangeForCoordRange: off screen");
         return nil;
     }
 
@@ -319,46 +319,46 @@ static void SwapInt(int *a, int *b) {
                                        end:VT100GridCoordMake(range.end.x, range.end.y)
                                   toStartX:&trimmedStart
                                     toEndX:&trimmedEnd];
-    NSLog(@"positionRangeForCoordRange: Trimming %@ gives %@ - %@", VT100GridCoordRangeDescription(range), VT100GridCoordDescription(trimmedStart), VT100GridCoordDescription(trimmedEnd));
+    VLog(@"positionRangeForCoordRange: Trimming %@ gives %@ - %@", VT100GridCoordRangeDescription(range), VT100GridCoordDescription(trimmedStart), VT100GridCoordDescription(trimmedEnd));
 
     if (!ok) {
         if (tolerateEmpty) {
-            NSLog(@"positionRangeForCoordRange: failed to trim, return empty");
+            VLog(@"positionRangeForCoordRange: failed to trim, return empty");
             trimmedStart = trimmedEnd = range.start;
         } else {
-            NSLog(@"positionRangeForCoordRange: failed to trim, return nil");
+            VLog(@"positionRangeForCoordRange: failed to trim, return nil");
             return nil;
         }
     }
     if (VT100GridCoordOrder(trimmedStart, trimmedEnd) == NSOrderedDescending) {
-        NSLog(@"positionRangeForCoordRange: Start after end");
+        VLog(@"positionRangeForCoordRange: Start after end");
         if (tolerateEmpty) {
-            NSLog(@"positionRangeForCoordRange: Return empty");
+            VLog(@"positionRangeForCoordRange: Return empty");
             trimmedStart = trimmedEnd = range.start;
         } else {
-            NSLog(@"positionRangeForCoordRange: Return nil");
+            VLog(@"positionRangeForCoordRange: Return nil");
             return nil;
         }
     }
 
-    NSLog(@"positionRangeForCoordRange: Get position for start of range %@", VT100GridCoordDescription(trimmedStart));
+    VLog(@"positionRangeForCoordRange: Get position for start of range %@", VT100GridCoordDescription(trimmedStart));
     positionRange.start = [lineBuffer positionForCoordinate:trimmedStart
                                                       width:self.currentGrid.size.width
                                                      offset:0];
-    NSLog(@"positionRangeForCoordRange: Start of range %@ is at %@", VT100GridCoordDescription(trimmedStart), positionRange.start);
+    VLog(@"positionRangeForCoordRange: Start of range %@ is at %@", VT100GridCoordDescription(trimmedStart), positionRange.start);
 
-    NSLog(@"positionRangeForCoordRange: Get position for end of range %@", VT100GridCoordDescription(trimmedEnd));
+    VLog(@"positionRangeForCoordRange: Get position for end of range %@", VT100GridCoordDescription(trimmedEnd));
     positionRange.end = [lineBuffer positionForCoordinate:trimmedEnd
                                                     width:self.currentGrid.size.width
                                                    offset:0];
     positionRange.end.extendsToEndOfLine = endExtends;
-    NSLog(@"positionRangeForCoordRange: End of range %@ is at %@", VT100GridCoordDescription(trimmedEnd), positionRange.end);
+    VLog(@"positionRangeForCoordRange: End of range %@ is at %@", VT100GridCoordDescription(trimmedEnd), positionRange.end);
 
     if (positionRange.start && positionRange.end) {
-        NSLog(@"positionRangeForCoordRange: Return position range %@", positionRange);
+        VLog(@"positionRangeForCoordRange: Return position range %@", positionRange);
         return positionRange;
     } else {
-        NSLog(@"positionRangeForCoordRange: Return nil");
+        VLog(@"positionRangeForCoordRange: Return nil");
         return nil;
     }
 }
@@ -490,7 +490,7 @@ static void SwapInt(int *a, int *b) {
                   to:(VT100GridCoordRange *)resultPtr
         inLineBuffer:(LineBuffer *)lineBuffer
        tolerateEmpty:(BOOL)tolerateEmpty {
-    NSLog(@"convertRange:%@ toWidth:%@", VT100GridCoordRangeDescription(range), @(newWidth));
+    VLog(@"convertRange:%@ toWidth:%@", VT100GridCoordRangeDescription(range), @(newWidth));
     if (range.start.y < 0 || range.end.y < 0) {
         return NO;
     }
@@ -507,36 +507,36 @@ static void SwapInt(int *a, int *b) {
         // One case where this happens is when the start and end of the range are past the last
         // character in the line buffer (e.g., all nulls). It could occur when a note exists on a
         // null line.
-        NSLog(@"convertRange: return NO because selection range was nil");
+        VLog(@"convertRange: return NO because selection range was nil");
         return NO;
     }
 
-    NSLog(@"convertRange: compute coordinate for start %@", selectionRange.start);
+    VLog(@"convertRange: compute coordinate for start %@", selectionRange.start);
     resultPtr->start = [lineBuffer coordinateForPosition:selectionRange.start
                                                    width:newWidth
                                             extendsRight:NO
                                                       ok:NULL];
-    NSLog(@"convertRange: start %@ gives %@", selectionRange.start, VT100GridCoordDescription(resultPtr->start));
+    VLog(@"convertRange: start %@ gives %@", selectionRange.start, VT100GridCoordDescription(resultPtr->start));
 
-    NSLog(@"convertRange: compute coordinate for end %@", selectionRange.end);
+    VLog(@"convertRange: compute coordinate for end %@", selectionRange.end);
     BOOL ok = NO;
     VT100GridCoord newEnd = [lineBuffer coordinateForPosition:selectionRange.end
                                                         width:newWidth
                                                  extendsRight:YES
                                                            ok:&ok];
     if (ok) {
-        NSLog(@"convertRange: end %@ gives %@", selectionRange.end, VT100GridCoordDescription(newEnd));
-        NSLog(@"convertRange: advance x");
+        VLog(@"convertRange: end %@ gives %@", selectionRange.end, VT100GridCoordDescription(newEnd));
+        VLog(@"convertRange: advance x");
         newEnd.x++;
         if (newEnd.x > newWidth) {
-            NSLog(@"convertRange: wrap to next line");
+            VLog(@"convertRange: wrap to next line");
             newEnd.y++;
             newEnd.x -= newWidth;
         }
-        NSLog(@"convertRange: end is %@", VT100GridCoordDescription(newEnd));
+        VLog(@"convertRange: end is %@", VT100GridCoordDescription(newEnd));
         resultPtr->end = newEnd;
     } else {
-        NSLog(@"convertRange: got an error from coordinateForPosition. This can't happen?");
+        VLog(@"convertRange: got an error from coordinateForPosition. This can't happen?");
         // I'm not sure how to get here. It would happen if the endpoint of the selection could
         // be converted into a LineBufferPosition with the original width but that LineBufferPosition
         // could not be converted back into a VT100GridCoord with the new width.
@@ -544,10 +544,10 @@ static void SwapInt(int *a, int *b) {
         resultPtr->end.y = [lineBuffer numLinesWithWidth:newWidth] + self.currentGrid.size.height - 1;
     }
     if (selectionRange.end.extendsToEndOfLine) {
-        NSLog(@"convertRange: extend end to end of line");
+        VLog(@"convertRange: extend end to end of line");
         resultPtr->end.x = newWidth;
     }
-    NSLog(@"convertRange return success with range %@", VT100GridCoordRangeDescription(*resultPtr));
+    VLog(@"convertRange return success with range %@", VT100GridCoordRangeDescription(*resultPtr));
     return YES;
 }
 
@@ -601,7 +601,7 @@ static void SwapInt(int *a, int *b) {
         if (noteRange.end.x < 0 && noteRange.start.y == 0 && noteRange.end.y < 0) {
             return;
         }
-        NSLog(@"Begin converting %@ for %@", VT100GridCoordRangeDescription(noteRange), note);
+        VLog(@"Begin converting %@ for %@", VT100GridCoordRangeDescription(noteRange), note);
         if (![self convertRange:noteRange
                        toWidth:newWidth
                             to:&newRange
@@ -609,7 +609,7 @@ static void SwapInt(int *a, int *b) {
                  tolerateEmpty:[self intervalTreeObjectMayBeEmpty:note]]) {
             return;
         }
-        NSLog(@"Done converting newRange=%@ for %@", VT100GridCoordRangeDescription(newRange), note);
+        VLog(@"Done converting newRange=%@ for %@", VT100GridCoordRangeDescription(newRange), note);
         assert(noteRange.start.y >= 0);
         assert(noteRange.end.y >= 0);
         Interval *newInterval = [self intervalForGridAbsCoordRange:VT100GridAbsCoordRangeFromCoordRange(newRange, self.cumulativeScrollbackOverflow)

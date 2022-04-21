@@ -48,6 +48,7 @@ void iTermImmutableMetadataInit(iTermImmutableMetadata *obj,
 iTermMetadata iTermMetadataTemporaryWithTimestamp(NSTimeInterval timestamp);
 iTermMetadata iTermMetadataCopy(iTermMetadata obj);
 iTermMetadata iTermImmutableMetadataMutableCopy(iTermImmutableMetadata obj);
+iTermImmutableMetadata iTermImmutableMetadataCopy(iTermImmutableMetadata obj);
 
 void iTermMetadataRetain(iTermMetadata obj);
 void iTermMetadataRelease(iTermMetadata obj);

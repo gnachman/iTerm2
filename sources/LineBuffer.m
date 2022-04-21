@@ -247,7 +247,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     int i;
     int rawOffset = 0;
     for (i = 0; i < _lineBlocks.count; ++i) {
-        NSLog(@"Block %d:\n", i);
+        VLog(@"Block %d:\n", i);
         [_lineBlocks[i] dump:rawOffset toDebugLog:NO];
         rawOffset += [_lineBlocks[i] rawSpaceUsed];
     }
@@ -1004,20 +1004,20 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 - (LineBufferPosition *)positionForCoordinate:(VT100GridCoord)coord
                                         width:(int)width
                                        offset:(int)offset {
-    NSLog(@"positionForCoord:%@ width:%@ offset:%@", VT100GridCoordDescription(coord), @(width), @(offset));
+    VLog(@"positionForCoord:%@ width:%@ offset:%@", VT100GridCoordDescription(coord), @(width), @(offset));
     
     int x = coord.x;
     int y = coord.y;
     int line = y;
     NSInteger index = [_lineBlocks indexOfBlockContainingLineNumber:y width:width remainder:&line];
     if (index == NSNotFound) {
-        NSLog(@"positionForCoord returning nil because indexOfBlockCOntainingLineNumber returned NSNotFound");
+        VLog(@"positionForCoord returning nil because indexOfBlockCOntainingLineNumber returned NSNotFound");
         return nil;
     }
 
     LineBlock *block = _lineBlocks[index];
     long long absolutePosition = droppedChars + [_lineBlocks rawSpaceUsedInRangeOfBlocks:NSMakeRange(0, index)];
-    NSLog(@"positionForCoord: Absolute position of block %@ is %@", @(index), @(absolutePosition));
+    VLog(@"positionForCoord: Absolute position of block %@ is %@", @(index), @(absolutePosition));
     int pos;
     int yOffset = 0;  // Number of lines from start of block to coord
     BOOL extends = NO;
@@ -1027,7 +1027,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                            yOffset:&yOffset
                            extends:&extends];
     if (pos < 0) {
-        NSLog(@"positionForCoordinate: returning nil because getPositionOfLine returned a negative value");
+        VLog(@"positionForCoordinate: returning nil because getPositionOfLine returned a negative value");
         DLog(@"failed to get position of line %@", @(line));
         return nil;
     }
@@ -1037,7 +1037,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     result.absolutePosition = absolutePosition;
     result.yOffset = yOffset;
     result.extendsToEndOfLine = extends;
-    NSLog(@"positionForCoord: Initialize result %@", result);
+    VLog(@"positionForCoord: Initialize result %@", result);
 
     // Make sure position is valid (might not be because of offset).
     BOOL ok;
@@ -1047,14 +1047,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                    extendsRight:YES  // doesn't matter for deciding if the result is valid
                              ok:&ok];
     if (!ok) {
-        NSLog(@"positionForCoord: failed to calculate the resulting coord");
+        VLog(@"positionForCoord: failed to calculate the resulting coord");
         return nil;
     }
-    NSLog(@"positionForCoord: The resulting coord is %@ (want %@)", VT100GridCoordDescription(resultingCoord),
+    VLog(@"positionForCoord: The resulting coord is %@ (want %@)", VT100GridCoordDescription(resultingCoord),
           VT100GridCoordDescription(coord));
 
     const int residual = coord.y - resultingCoord.y;
-    NSLog(@"positionForCoord: residual is %@", @(residual));
+    VLog(@"positionForCoord: residual is %@", @(residual));
 
     if (residual > 0) {
         // This can happen if you want the position for a coord that is preceded by empty lines.
@@ -1074,9 +1074,9 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         // The resultingCoord, therefore, will be x=0,y=1. The correct yOffset is found by adding the
         // missing lines back (in this case, 1 to go from y=1 to the y=2 that we want).
         result.yOffset += residual;
-        NSLog(@"positionForCoord: Advance result by %d", residual);
+        VLog(@"positionForCoord: Advance result by %d", residual);
     }
-    NSLog(@"positionForCoordinate: returning %@", result);
+    VLog(@"positionForCoordinate: returning %@", result);
     return result;
 }
 // Note this function returns a closed interval on end.x
@@ -1084,10 +1084,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                                   width:(int)width
                            extendsRight:(BOOL)extendsRight
                                      ok:(BOOL *)ok {
-    NSLog(@"coordinateForPosition:%@ width:%@ extendsRight:%@", position, @(width), @(extendsRight));
+    VLog(@"coordinateForPosition:%@ width:%@ extendsRight:%@", position, @(width), @(extendsRight));
 
     if (position.absolutePosition == self.lastPosition.absolutePosition) {
-        NSLog(@"coordinateForPosition: is last position");
+        VLog(@"coordinateForPosition: is last position");
         VT100GridCoord result;
         // If the absolute position is equal to the last position, then
         // numLinesWithWidth: will give the wrapped line number after all
@@ -1113,13 +1113,13 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         if (ok) {
             *ok = YES;
         }
-        NSLog(@"coordinateForPosition: return %@", VT100GridCoordDescription(result));
+        VLog(@"coordinateForPosition: return %@", VT100GridCoordDescription(result));
         return result;
     }
 
     int p;
     int yoffset;
-    NSLog(@"coordinateForPosition: find block with position %@, yoffset=%@",
+    VLog(@"coordinateForPosition: find block with position %@, yoffset=%@",
           @(position.absolutePosition - droppedChars), @(position.yOffset));
     LineBlock *block = [_lineBlocks blockContainingPosition:position.absolutePosition - droppedChars
                                                     yOffset:position.yOffset
@@ -1128,47 +1128,47 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                                                 blockOffset:&yoffset
                                                       index:NULL];
     if (!block) {
-        NSLog(@"coordinateForPosition: failed, returning error");
+        VLog(@"coordinateForPosition: failed, returning error");
         if (ok) {
             *ok = NO;
         }
         return VT100GridCoordMake(0, 0);
     }
-    NSLog(@"coordinateForPosition: p=%@ yoffset=%@", @(p), @(yoffset));
+    VLog(@"coordinateForPosition: p=%@ yoffset=%@", @(p), @(yoffset));
 
     int y;
     int x;
-    NSLog(@"coordinateForPosition: calling convertPosition:%@ withWidth:%@", @(p), @(width));
+    VLog(@"coordinateForPosition: calling convertPosition:%@ withWidth:%@", @(p), @(width));
     BOOL positionIsValid = [block convertPosition:p
                                         withWidth:width
                                         wrapOnEOL:NO  //  using extendsRight here is wrong because extension happens below
                                               toX:&x
                                               toY:&y];
     if (ok) {
-        NSLog(@"coordinateForPosition: got a valid reslut. x=%d, y=%d", x, y);
+        VLog(@"coordinateForPosition: got a valid reslut. x=%d, y=%d", x, y);
         *ok = positionIsValid;
     } else {
-        NSLog(@"coordinateForPosition: failed to convert position");
+        VLog(@"coordinateForPosition: failed to convert position");
     }
     if (position.yOffset > 0) {
         if (!position.extendsToEndOfLine) {
-            NSLog(@"coordinateForPosition: wrap x to next line");
+            VLog(@"coordinateForPosition: wrap x to next line");
             x = 0;
         }
         y += position.yOffset;
-        NSLog(@"coordinateForPosition: advance y by %d to %d", position.yOffset, y);
+        VLog(@"coordinateForPosition: advance y by %d to %d", position.yOffset, y);
     }
     if (position.extendsToEndOfLine) {
         if (extendsRight) {
-            NSLog(@"coordinateForPosition: extends right is true, set x to last column");
+            VLog(@"coordinateForPosition: extends right is true, set x to last column");
             x = width - 1;
         } else {
-            NSLog(@"coordinateForPosition: extends right is false, set x to 0");
+            VLog(@"coordinateForPosition: extends right is false, set x to 0");
             x = 0;
         }
     }
     VT100GridCoord coord = VT100GridCoordMake(x, y + yoffset);
-    NSLog(@"coordinateForPosition: return %@", VT100GridCoordDescription(coord));
+    VLog(@"coordinateForPosition: return %@", VT100GridCoordDescription(coord));
     return coord;
 }
 

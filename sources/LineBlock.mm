@@ -811,14 +811,14 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                withWidth:(int)width
                  yOffset:(int *)yOffsetPtr
                  extends:(BOOL *)extendsPtr {
-    NSLog(@"getPositionOfLine:%@ atX:%@ withWidth:%@ yOffset:%@ extends:%@",
+    VLog(@"getPositionOfLine:%@ atX:%@ withWidth:%@ yOffset:%@ extends:%@",
           @(*lineNum), @(x), @(width), @(*yOffsetPtr), @(*extendsPtr));
 
     int length;
     int eol;
     BOOL isStartOfWrappedLine = NO;
 
-    NSLog(@"getPositionOfLine: calling getWrappedLineWithWidth:%@ lineNum:%@ length:eol:yOffset:%@ continuation:NULL isStartOfWrappedLine: metadata:NULL",
+    VLog(@"getPositionOfLine: calling getWrappedLineWithWidth:%@ lineNum:%@ length:eol:yOffset:%@ continuation:NULL isStartOfWrappedLine: metadata:NULL",
           @(width), @(*lineNum), @(*yOffsetPtr));
     const screen_char_t *p = [self getWrappedLineWithWrapWidth:width
                                                        lineNum:lineNum
@@ -829,10 +829,10 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                                           isStartOfWrappedLine:&isStartOfWrappedLine
                                                       metadata:NULL];
     if (!p) {
-        NSLog(@"getPositionOfLine: getWrappedLineWithWidth returned nil");
+        VLog(@"getPositionOfLine: getWrappedLineWithWidth returned nil");
         return -1;
     }
-    NSLog(@"getPositionOfLine: getWrappedLineWithWidth returned length=%@, eol=%@, yOffset=%@, isStartOfWrappedLine=%@",
+    VLog(@"getPositionOfLine: getWrappedLineWithWidth returned length=%@, eol=%@, yOffset=%@, isStartOfWrappedLine=%@",
           @(length), @(eol), yOffsetPtr ? [@(*yOffsetPtr) stringValue] : @"nil", @(isStartOfWrappedLine));
 
     int pos;
@@ -842,21 +842,21 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     // I chose to add the (x == length && *yOffsetPtr == 0) clause
     // because  otherwise there's no way to refer to the start of a blank line.
     // If you want it to extend you can always provide an x>0.
-    NSLog(@"getPositionOfLine: x=%@ length=%@ *yOffsetPtr=%@", @(x), @(length), @(*yOffsetPtr));
+    VLog(@"getPositionOfLine: x=%@ length=%@ *yOffsetPtr=%@", @(x), @(length), @(*yOffsetPtr));
     if (x > length || (x == length && *yOffsetPtr == 0)) {
-        NSLog(@"getPositionOfLine: Set extends and advance pos to end of line");
+        VLog(@"getPositionOfLine: Set extends and advance pos to end of line");
         *extendsPtr = YES;
         pos = p - raw_buffer + length;
     } else {
-        NSLog(@"getPositionOfLine: Clear extends and advance pos by x");
+        VLog(@"getPositionOfLine: Clear extends and advance pos by x");
         *extendsPtr = NO;
         pos = p - raw_buffer + x;
     }
     if (length > 0 && (!isStartOfWrappedLine || x > 0)) {
-        NSLog(@"getPositionOfLine: Set *yOffsetPtr <- 0");
+        VLog(@"getPositionOfLine: Set *yOffsetPtr <- 0");
         *yOffsetPtr = 0;
     } else if (length > 0 && isStartOfWrappedLine && x == 0) {
-        NSLog(@"getPositionOfLine: First char of a line");
+        VLog(@"getPositionOfLine: First char of a line");
         // First character of a line. For example, in this grid:
         //   abc.
         //   d...
@@ -866,14 +866,14 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
         // If you wanted the cell after c then x > 0.
         if (pos == 0 && *yOffsetPtr == 0) {
             // First cell of first line in block.
-            NSLog(@"getPositionOfLine: First cell of first line in block");
+            VLog(@"getPositionOfLine: First cell of first line in block");
         } else {
             // First sell of second-or-later line in block.
             *yOffsetPtr += 1;
-            NSLog(@"getPositionOfLine: First cell of 2nd or later line, advance yOffset to %@", @(*yOffsetPtr));
+            VLog(@"getPositionOfLine: First cell of 2nd or later line, advance yOffset to %@", @(*yOffsetPtr));
         }
     }
-    NSLog(@"getPositionOfLine: getPositionOfLine returning %@, lineNum=%@ yOffset=%@ extends=%@",
+    VLog(@"getPositionOfLine: getPositionOfLine returning %@, lineNum=%@ yOffset=%@ extends=%@",
           @(pos), @(*lineNum), @(*yOffsetPtr), @(*extendsPtr));
     return pos;
 }
@@ -1759,7 +1759,7 @@ static int CoreSearch(NSString *needle,
             range.location = NSNotFound;
         }
         if (regexError) {
-            NSLog(@"regex error: %@", regexError);
+            VLog(@"regex error: %@", regexError);
             range.length = 0;
             range.location = NSNotFound;
         }
@@ -2138,7 +2138,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
         }
         prev = eol;
     }
-    NSLog(@"Didn't find position %d", position);
+    VLog(@"Didn't find position %d", position);
     return NO;
 }
 

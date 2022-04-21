@@ -153,7 +153,11 @@
 }
 
 - (id)copyWithZone:(NSZone *)zone {
-    return [[ScreenCharArray alloc] initWithCopyOfLine:_line length:_length continuation:_continuation];
+    ScreenCharArray *theCopy = [[ScreenCharArray alloc] initWithCopyOfLine:_line
+                                                                    length:_length
+                                                              continuation:_continuation];
+    theCopy->_metadata = iTermImmutableMetadataCopy(_metadata);
+    return theCopy;
 }
 
 - (ScreenCharArray *)screenCharArrayByAppendingScreenCharArray:(ScreenCharArray *)other {

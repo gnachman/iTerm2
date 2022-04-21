@@ -11,6 +11,7 @@
 
 @class iTermColorMap;
 @class iTermExternalAttributeIndex;
+@protocol iTermMark;
 @protocol IntervalTreeImmutableObject;
 @class PTYAnnotation;
 @protocol PTYAnnotationReading;
@@ -140,6 +141,8 @@
 - (void)replaceRange:(VT100GridAbsCoordRange)range
         withPorthole:(id<Porthole>)porthole
             ofHeight:(int)numLines;
+- (void)replaceMark:(id<iTermMark>)mark withLines:(NSArray<ScreenCharArray *> *)lines;
+
 - (VT100GridCoordRange)coordRangeOfPorthole:(id<Porthole>)porthole;
 
 @end

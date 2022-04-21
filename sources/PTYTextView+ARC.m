@@ -112,6 +112,10 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                              colorMap:self.colorMap
                                          baseDirectory:baseDirectory];
     [porthole sizeToFitWithWidth:self.bounds.size.width];
+    porthole.savedLines = [[NSArray sequenceWithRange:NSMakeRange(coordsRange.start.y, coordsRange.end.y - coordsRange.start.y + 1)] mapWithBlock:^id _Nullable(NSNumber * _Nonnull number) {
+        const int line =  number.intValue;
+        return [[self.dataSource screenCharArrayForLine:line] copy];
+    }];
     [self.dataSource replaceRange:coordsRange
                      withPorthole:porthole
                          ofHeight:ceil(porthole.view.bounds.size.height / self.lineHeight)];

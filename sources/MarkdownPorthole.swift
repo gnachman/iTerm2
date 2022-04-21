@@ -40,11 +40,19 @@ class PortholeFactory: NSObject {
 }
 
 class MarkdownContainerView: NSView {
+    var closeCallback: (() -> ())? = nil
     let closeButton = NSButton()
     var color = NSColor.textColor {
         didSet {
             layer?.borderColor = color.withAlphaComponent(0.5).cgColor
             closeButton.image = Self.closeButtonImage(color)
+        }
+    }
+    var backgroundColor = NSColor.textBackgroundColor {
+        didSet {
+            let dimmed = backgroundColor.usingColorSpace(.sRGB)!.colorDimmed(by: 0.2,
+                                                                             towardsGrayLevel: 0.5)
+            layer?.backgroundColor = dimmed.cgColor
         }
     }
 
@@ -75,6 +83,7 @@ class MarkdownContainerView: NSView {
         closeButton.isBordered = false
         closeButton.title = ""
         closeButton.autoresizingMask = []
+        closeButton.alphaValue = 0.5
         addSubview(closeButton)
 
         layoutSubviews()
@@ -97,7 +106,7 @@ class MarkdownContainerView: NSView {
     }
 
     @objc func close(_ sender: AnyObject?) {
-
+        closeCallback?()
     }
 
     func layoutSubviews() {
@@ -117,7 +126,7 @@ class MarkdownPorthole: NSObject {
     private let layoutManager = NSLayoutManager()
     private let textContainer: NSTextContainer
     private let scrollview = NSScrollView()
-    private weak var _mark: PortholeMark? = nil
+    private weak var _mark: PortholeMarkReading? = nil
     private let uuid: String
     private let markdown: String
     // I have no idea why this is necessary but the NSView is invisible unless it's in a container
@@ -126,11 +135,15 @@ class MarkdownPorthole: NSObject {
     private let baseDirectory: URL?
     private let colorMap: iTermColorMap
     weak var delegate: PortholeDelegate?
+    var savedLines: [ScreenCharArray] = []
+
     private struct SavedColors: Equatable {
         let textColor: NSColor
+        let backgroundColor: NSColor
 
         init(colorMap: iTermColorMap) {
             textColor = colorMap.color(forKey: kColorMapForeground) ?? NSColor.textColor
+            backgroundColor = colorMap.color(forKey: kColorMapBackground) ?? NSColor.textBackgroundColor
         }
     }
     private var savedColors: SavedColors
@@ -173,7 +186,8 @@ class MarkdownPorthole: NSObject {
 
         let textViewFrame = CGRect(x: 0, y: 0, width: 800, height: 200)
         textStorage.addLayoutManager(layoutManager)
-        textContainer = NSTextContainer(containerSize: textViewFrame.size)
+        textContainer = TopRightAvoidingTextContainer(containerSize: textViewFrame.size,
+                                                      cutOutSize: NSSize(width: 18, height: 18))
         layoutManager.addTextContainer(textContainer)
         textView = MetalDisablingTextView(frame: textViewFrame, textContainer: textContainer)
         textView.textContainerInset = NSSize(width: 0, height: 0)
@@ -193,6 +207,7 @@ class MarkdownPorthole: NSObject {
         textView.removeFromSuperview()
         containerView.addSubview(textView, positioned: .below, relativeTo: containerView.closeButton)
         containerView.color = savedColors.textColor
+        containerView.backgroundColor = savedColors.backgroundColor
 
         super.init()
 
@@ -202,6 +217,11 @@ class MarkdownPorthole: NSObject {
                 return
             }
             self.delegate?.portholeDidAcquireSelection(self)
+        }
+        containerView.closeCallback = { [weak self] in
+            if let self = self {
+                self.delegate?.portholeRemove(self)
+            }
         }
     }
 
@@ -253,7 +273,7 @@ extension MarkdownPorthole: Porthole {
     var view: NSView {
         return containerView
     }
-    var mark: PortholeMark? {
+    var mark: PortholeMarkReading? {
         get {
             return _mark
         }
@@ -343,6 +363,7 @@ extension MarkdownPorthole: NSTextViewDelegate {
         textView.textStorage?.setAttributedString(Self.attributedString(markdown: markdown,
                                                                         colors: savedColors))
         containerView.color = colors.textColor
+        containerView.backgroundColor = colors.backgroundColor
     }
 }
 
@@ -378,3 +399,42 @@ extension NSAttributedString {
         return result
     }
 }
+
+class TopRightAvoidingTextContainer: NSTextContainer {
+    private let cutOutSize: NSSize
+    private var cutOutRect: CGRect {
+        return CGRect(x: size.width - cutOutSize.width,
+                      y: 0,
+                      width: cutOutSize.width,
+                      height: cutOutSize.height)
+    }
+    init(containerSize: NSSize,
+         cutOutSize: NSSize) {
+        self.cutOutSize = cutOutSize
+        super.init(size: containerSize)
+    }
+
+    required init(coder: NSCoder) {
+        fatalError("Not supported")
+    }
+
+    override func lineFragmentRect(forProposedRect proposedRect: CGRect,
+                                   at characterIndex: Int,
+                                   writingDirection baseWritingDirection: NSWritingDirection,
+                                   remaining remainingRect: UnsafeMutablePointer<CGRect>?) -> CGRect {
+        let rect = super.lineFragmentRect(forProposedRect: proposedRect,
+                                          at: characterIndex,
+                                          writingDirection: baseWritingDirection,
+                                          remaining: remainingRect) as CGRect
+        let intersection = rect.intersection(cutOutRect)
+        if !intersection.isNull {
+            return CGRect(x: rect.minX,
+                          y: rect.minY,
+                          width: intersection.minX - rect.minX,
+                          height: rect.height)
+        }
+        return rect
+    }
+
+}
+

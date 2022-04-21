@@ -12,7 +12,7 @@ extension PTYTextView {
     func addPorthole(_ porthole: ObjCPorthole) {
         portholes.add(porthole)
         porthole.delegate = self
-        addSubview(porthole.view)
+        superview?.addSubview(porthole.view)
         updatePortholeFrame(porthole, force: true)
         NotificationCenter.default.post(name: NSNotification.Name.iTermPortholesDidChange, object: nil)
         setNeedsDisplay(true)
@@ -155,6 +155,15 @@ extension Array {
 extension PTYTextView: PortholeDelegate {
     func portholeDidAcquireSelection(_ porthole: ObjCPorthole) {
         selection.clear()
+    }
+    func portholeRemove(_ porthole: ObjCPorthole) {
+        willRemoveSubview(porthole.view)
+        porthole.delegate = nil
+        portholes.remove(porthole)
+        porthole.view.removeFromSuperview()
+        if let mark = porthole.mark {
+            dataSource.replace(mark, withLines: porthole.savedLines)
+        }
     }
 }
 

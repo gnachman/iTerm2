@@ -199,6 +199,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }];
 }
 
+- (void)replaceMark:(id<iTermMark>)mark withLines:(NSArray<ScreenCharArray *> *)lines {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState replaceMark:mark.progenitor withLines:lines];
+    }];
+}
 - (void)resetDirty {
     if (_sharedStateCount && !_forceMergeGrids && _state.currentGrid.isAnyCharDirty) {
         // We're resetting dirty in a grid shared by mutable & immutable state. That means when sync

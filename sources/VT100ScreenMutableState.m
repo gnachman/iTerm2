@@ -3022,13 +3022,42 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 #pragma mark - Portholes
 
+- (void)replaceMark:(id<iTermMark>)mark withLines:(NSArray<ScreenCharArray *> *)lines {
+    const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:mark.entry.interval];
+    if (range.end.y < self.totalScrollbackOverflow) {
+        // Nothing to do - it has already scrolled off to the great beyond.
+        return;
+    }
+    [self replaceRange:range withLines:lines];
+}
+
 - (void)replaceRange:(VT100GridAbsCoordRange)absRange
         withPorthole:(id<Porthole>)porthole
             ofHeight:(int)numLines {
+    NSMutableArray<ScreenCharArray *> *lines = [NSMutableArray array];
+    for (int i = 0; i < numLines; i++) {
+        [lines addObject:[[ScreenCharArray alloc] init]];
+    }
+    const VT100GridAbsCoordRange markRange = [self replaceRange:absRange withLines:lines];
+    if (!VT100GridAbsCoordRangeIsValid(markRange)) {
+        return;
+    }
+    Interval *interval = [self intervalForGridAbsCoordRange:markRange];
+#warning DNS
+    // TODO: I don't like that this modifies Porthole which should only be accessed on the main thread.
+    PortholeMark *mark = [[PortholeMark alloc] init:porthole];
+    [self.mutableIntervalTree addObject:mark withInterval:interval];
+    [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
+        [delegate screenDidAddPorthole:porthole];
+    }];
+}
+
+- (VT100GridAbsCoordRange)replaceRange:(VT100GridAbsCoordRange)absRange
+                             withLines:(NSArray<ScreenCharArray *> *)replacementLines {
     VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, self.cumulativeScrollbackOverflow);
     if (range.start.y < 0) {
         // Already scrolled into the dustbin.
-        return;
+        return VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
     }
     [self clearTriggerLine];
 
@@ -3054,6 +3083,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // 3 )               X
     // 4 ) grid
     // 5 )
+
+    LineBuffer *scratch = [[LineBuffer alloc] init];
+    for (ScreenCharArray *sca in replacementLines) {
+        [scratch appendScreenCharArray:sca width:gridSize.width];
+    }
+    const int numLines = [scratch numLinesWithWidth:gridSize.width];
 
     int deltaLines = numLines - (range.end.y - range.start.y + 1);
     const int numberOfLinesUsed = [self.currentGrid numberOfLinesUsed];
@@ -3086,25 +3121,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // Make sure it ends in a hard newline.
     [self.linebuffer setPartial:NO];
 
-    // Add blank lines to make room for the porthole.
-    const NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
-    const screen_char_t continuation = { 0 };
-    VT100GridCoordRange markRange = VT100GridCoordRangeMake(0,
+    // Add replacement lines.
+    VT100GridCoordRange replacementRange = VT100GridCoordRangeMake(0,
                                                             range.start.y,
                                                             gridSize.width,
                                                             range.start.y + numLines - 1);
-    for (int y = markRange.start.y; y <= markRange.end.y; y++) {
-        screen_char_t empty[0];
-        iTermMetadata meta;
-        iTermMetadataInit(&meta, now, nil);
-        [self.linebuffer appendLine:empty
-                             length:0
-                            partial:NO
-                              width:gridSize.width
-                           metadata:iTermMetadataMakeImmutable(meta)
-                       continuation:continuation];
-        iTermMetadataRelease(meta);
-    }
+    const VT100GridAbsCoordRange resultingRange =
+    VT100GridAbsCoordRangeFromCoordRange(replacementRange, self.totalScrollbackOverflow);
+
+    [self.linebuffer appendContentsOfLineBuffer:scratch width:gridSize.width includingCursor:NO];
 
     // 0 |
     // 1 | linebuffer
@@ -3120,9 +3145,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // 4 |
     // 5 |
 
-    for (int i = 0; i < gridSize.height; i++) {
-        [self.currentGrid setContinuationMarkOnLine:i to:EOL_HARD];
-    }
     [self.currentGrid restoreScreenFromLineBuffer:self.linebuffer
                                   withDefaultChar:self.currentGrid.defaultChar
                                 maxLinesToRestore:gridSize.height];
@@ -3140,11 +3162,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
 
     // Shift interval tree objects under range.start.y down this much.
-    Interval *interval = [self intervalForGridCoordRange:markRange];
 
     const VT100GridCoordRange rangeFromPortholeToEnd =
-    VT100GridCoordRangeMake(markRange.start.x,
-                            markRange.start.y,
+    VT100GridCoordRangeMake(replacementRange.start.x,
+                            replacementRange.start.y,
                             gridSize.width,
                             self.numberOfScrollbackLines + gridSize.height);
 
@@ -3170,15 +3191,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [observer intervalTreeDidMoveObjects:doppelgangers];
     }];
     [self reloadMarkCache];
-    PortholeMark *mark = [[PortholeMark alloc] init:porthole];
-    [self.mutableIntervalTree addObject:mark withInterval:interval];
 
     [self.linebuffer setMaxLines:savedMaxLines];
     [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:gridSize.width]];
 
-    [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
-        [delegate screenDidAddPorthole:porthole];
-    }];
+    return resultingRange;
 }
 
 #pragma mark - URLs

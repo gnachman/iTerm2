@@ -283,24 +283,24 @@
 }
 
 - (NSInteger)indexOfBlockContainingLineNumber:(int)lineNumber width:(int)width remainder:(out nonnull int *)remainderPtr {
-    NSLog(@"indexOfBlockContainingLineNumber:%@ width:%@", @(lineNumber), @(width));
+    VLog(@"indexOfBlockContainingLineNumber:%@ width:%@", @(lineNumber), @(width));
     [self buildCacheForWidth:width];
     [self updateCacheIfNeeded];
 
     __block int r = 0;
     const NSInteger result = [self internalIndexOfBlockContainingLineNumber:lineNumber width:width remainder:&r];
     if (remainderPtr) {
-        NSLog(@"indexOfBlockContainingLineNumber: remainderPtr <- %@", @(r));
+        VLog(@"indexOfBlockContainingLineNumber: remainderPtr <- %@", @(r));
         *remainderPtr = r;
     }
-    NSLog(@"indexOfBlockContainingLineNumber:%@ width:%@ returning %@", @(lineNumber), @(width), @(result));
+    VLog(@"indexOfBlockContainingLineNumber:%@ width:%@ returning %@", @(lineNumber), @(width), @(result));
     return result;
 }
 
 - (NSInteger)internalIndexOfBlockContainingLineNumber:(int)lineNumber
                                                 width:(int)width
                                             remainder:(out nonnull int *)remainderPtr {
-    NSLog(@"internalIndexOfBlockContainingLineNumber:%@ width:%@", @(lineNumber), @(width));
+    VLog(@"internalIndexOfBlockContainingLineNumber:%@ width:%@", @(lineNumber), @(width));
     
     [self buildCacheForWidth:width];
     [self updateCacheIfNeeded];
@@ -309,19 +309,19 @@
     const NSInteger index = [numLinesCache indexContainingValue:lineNumber roundUp:&roundUp];
 
     if (index == NSNotFound) {
-        NSLog(@"internalIndexOfBlockContainingLineNumber returning NSNotFound because indexContainingvalue:roundUp returned NSNotFound");
+        VLog(@"internalIndexOfBlockContainingLineNumber returning NSNotFound because indexContainingvalue:roundUp returned NSNotFound");
         return NSNotFound;
     }
 
     if (remainderPtr) {
-        NSLog(@"internalIndexOfBlockContainingLineNumber: Have a remainder pointer");
+        VLog(@"internalIndexOfBlockContainingLineNumber: Have a remainder pointer");
         if (index == 0) {
-            NSLog(@"internalIndexOfBlockContainingLineNumber: index==0: *remainderPtr <- %@", @(lineNumber));
+            VLog(@"internalIndexOfBlockContainingLineNumber: index==0: *remainderPtr <- %@", @(lineNumber));
             *remainderPtr = lineNumber;
         } else {
             const NSInteger absoluteLineNumber = lineNumber - numLinesCache.offset;
             *remainderPtr = absoluteLineNumber - [numLinesCache sumAtIndex:index - 1];
-            NSLog(@"internalIndexOfBlockContainingLineNumber: index!=0: absoluteLineNumber=%@, *remainderPtr <- %@",
+            VLog(@"internalIndexOfBlockContainingLineNumber: index!=0: absoluteLineNumber=%@, *remainderPtr <- %@",
                   @(absoluteLineNumber), @(*remainderPtr));
         }
     }

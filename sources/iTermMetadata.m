@@ -42,6 +42,10 @@ iTermMetadata iTermImmutableMetadataMutableCopy(iTermImmutableMetadata obj) {
     };
 }
 
+iTermImmutableMetadata iTermImmutableMetadataCopy(iTermImmutableMetadata obj) {
+    return iTermMetadataMakeImmutable(iTermImmutableMetadataMutableCopy(obj));
+}
+
 void iTermMetadataRetain(iTermMetadata obj) {
     [(id)obj.externalAttributes retain];
 }

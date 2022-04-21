@@ -8,7 +8,7 @@
 import Foundation
 
 @objc
-protocol PortholeMarkReading: AnyObject {
+protocol PortholeMarkReading: iTermMarkProtocol {
     var porthole: ObjCPorthole { get }
 }
 
@@ -32,7 +32,7 @@ class PortholeMark: iTermMark, PortholeMarkReading {
 
         super.init()
 
-        porthole.mark = self
+        porthole.mark = (doppelganger()! as! PortholeMarkReading)
     }
 
     required init?(dictionary dict: [AnyHashable : Any]) {
@@ -70,12 +70,13 @@ enum PortholeType: String {
 @objc(PortholeDelegate)
 protocol PortholeDelegate: AnyObject {
     @objc func portholeDidAcquireSelection(_ porthole: ObjCPorthole)
+    @objc func portholeRemove(_ porthole: ObjCPorthole)
 }
 
 @objc(Porthole)
 protocol ObjCPorthole: AnyObject {
     @objc var view: NSView { get }
-    @objc var mark: PortholeMark? { get set }
+    @objc var mark: PortholeMarkReading? { get set }
     @objc var uniqueIdentifier: String { get }
     @objc var dictionaryValue: [String: AnyObject] { get }
     @objc func sizeToFit(width: CGFloat)
@@ -83,6 +84,7 @@ protocol ObjCPorthole: AnyObject {
     @objc var delegate: PortholeDelegate? { get set }
     @objc func removeSelection()
     @objc func updateColors()
+    @objc var savedLines: [ScreenCharArray] { get set }
 }
 
 protocol Porthole: ObjCPorthole {
