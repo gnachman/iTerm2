@@ -94,15 +94,16 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 #pragma mark - Actions
 
 - (IBAction)renderSelection:(id)sender {
-    VT100GridAbsCoordRange coordsRange = self.selection.spanningAbsRange;
-    coordsRange.start.x = 0;
-    if (coordsRange.end.x > 0) {
-        coordsRange.end.x = self.dataSource.width;
+    VT100GridAbsCoordRange absRange = self.selection.spanningAbsRange;
+    VT100GridCoordRange relativeRange = VT100GridCoordRangeFromAbsCoordRange(absRange, self.dataSource.totalScrollbackOverflow);
+    absRange.start.x = 0;
+    if (absRange.end.x > 0) {
+        absRange.end.x = self.dataSource.width;
     }
-    [self.selection.allSubSelections[0] setAbsRange:VT100GridAbsWindowedRangeMake(coordsRange, 0, self.dataSource.width)];
+    [self.selection.allSubSelections[0] setAbsRange:VT100GridAbsWindowedRangeMake(absRange, 0, self.dataSource.width)];
     NSString *markdown = [self selectedText];
     NSString *pwd =
-    [self.dataSource workingDirectoryOnLine:coordsRange.start.y - self.dataSource.totalScrollbackOverflow];
+    [self.dataSource workingDirectoryOnLine:relativeRange.start.y];
     NSURL *baseDirectory = nil;
     if (pwd) {
         baseDirectory = [NSURL fileURLWithPath:pwd];
@@ -112,11 +113,11 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                              colorMap:self.colorMap
                                          baseDirectory:baseDirectory];
     [porthole sizeToFitWithWidth:self.bounds.size.width];
-    porthole.savedLines = [[NSArray sequenceWithRange:NSMakeRange(coordsRange.start.y, coordsRange.end.y - coordsRange.start.y + 1)] mapWithBlock:^id _Nullable(NSNumber * _Nonnull number) {
+    porthole.savedLines = [[NSArray sequenceWithRange:NSMakeRange(relativeRange.start.y, relativeRange.end.y - relativeRange.start.y + 1)] mapWithBlock:^id _Nullable(NSNumber * _Nonnull number) {
         const int line =  number.intValue;
         return [[self.dataSource screenCharArrayForLine:line] copy];
     }];
-    [self.dataSource replaceRange:coordsRange
+    [self.dataSource replaceRange:absRange
                      withPorthole:porthole
                          ofHeight:ceil(porthole.view.bounds.size.height / self.lineHeight)];
     [self.selection clearSelection];

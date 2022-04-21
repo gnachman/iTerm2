@@ -7080,6 +7080,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.delegate sessionUpdateMetalAllowed];
 }
 
+- (void)textViewDidAddOrRemovePorthole {
+    [self.delegate sessionUpdateMetalAllowed];
+}
+
 - (void)highlightMarkOrNote:(id<IntervalTreeImmutableObject>)obj {
     if ([obj isKindOfClass:[iTermMark class]]) {
         BOOL hasErrorCode = NO;

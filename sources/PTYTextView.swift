@@ -17,18 +17,22 @@ extension PTYTextView {
         NotificationCenter.default.post(name: NSNotification.Name.iTermPortholesDidChange, object: nil)
         setNeedsDisplay(true)
         porthole.view.needsDisplay = true
+        self.delegate?.textViewDidAddOrRemovePorthole()
     }
 
     @objc
     func removePorthole(_ porthole: ObjCPorthole) {
+        willRemoveSubview(porthole.view)
         if porthole.delegate === self {
             porthole.delegate = nil
         }
-        if porthole.view.superview == self {
-            porthole.view.removeFromSuperview()
-        }
         portholes.remove(porthole)
+        porthole.view.removeFromSuperview()
+        if let mark = porthole.mark {
+            dataSource.replace(mark, withLines: porthole.savedLines)
+        }
         NotificationCenter.default.post(name: NSNotification.Name.iTermPortholesDidChange, object: nil)
+        self.delegate?.textViewDidAddOrRemovePorthole()
     }
 
     @objc
@@ -54,13 +58,14 @@ extension PTYTextView {
         let lineRange = gridCoordRange.start.y...gridCoordRange.end.y
         DLog("Update porthole with line range \(lineRange)")
         let hmargin = CGFloat(iTermPreferences.integer(forKey: kPreferenceKeySideMargins))
+        let vmargin = CGFloat(iTermPreferences.integer(forKey: kPreferenceKeyTopBottomMargins))
         let cellWidth = dataSource.width()
         if lastPortholeWidth == cellWidth && !force {
             let size = porthole.view.frame.size
             // Calculating porthole size is very slow because NSView is a catastrophe so avoid doing
             // it if the width is unchanged.
             porthole.view.frame = NSRect(x: hmargin,
-                                         y: CGFloat(lineRange.lowerBound) * lineHeight,
+                                         y: CGFloat(lineRange.lowerBound) * lineHeight + vmargin,
                                          width: size.width,
                                          height: size.height)
         } else {
@@ -69,7 +74,7 @@ extension PTYTextView {
                               height: CGFloat(lineRange.integerLength) * lineHeight)
             porthole.set(size: size)
             porthole.view.frame = NSRect(x: hmargin,
-                                         y: CGFloat(lineRange.lowerBound) * lineHeight,
+                                         y: CGFloat(lineRange.lowerBound) * lineHeight + vmargin,
                                          width: size.width,
                                          height: size.height)
         }
@@ -157,13 +162,7 @@ extension PTYTextView: PortholeDelegate {
         selection.clear()
     }
     func portholeRemove(_ porthole: ObjCPorthole) {
-        willRemoveSubview(porthole.view)
-        porthole.delegate = nil
-        portholes.remove(porthole)
-        porthole.view.removeFromSuperview()
-        if let mark = porthole.mark {
-            dataSource.replace(mark, withLines: porthole.savedLines)
-        }
+        removePorthole(porthole)
     }
 }
 

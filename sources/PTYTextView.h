@@ -257,6 +257,7 @@ extern NSNotificationName iTermPortholesDidChange;
 - (BOOL)textViewAnyMouseReportingModeIsEnabled;
 - (BOOL)textViewSmartSelectionActionsShouldUseInterpolatedStrings;
 - (void)textViewShowFindPanel;
+- (void)textViewDidAddOrRemovePorthole;
 
 @end
 
