@@ -2445,6 +2445,10 @@
 		A690F7031B424C55009F76D8 /* Media.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A690F7001B424C55009F76D8 /* Media.xcassets */; };
 		A690F7041B424EF8009F76D8 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
 		A690F7051B424F15009F76D8 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
+		A691693B2813458F00083F99 /* PortholeFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69169392813457900083F99 /* PortholeFactory.swift */; };
+		A691693D281345AF00083F99 /* SaneButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691693C281345AF00083F99 /* SaneButton.swift */; };
+		A691693F281345D000083F99 /* MarkdownContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691693E281345D000083F99 /* MarkdownContainerView.swift */; };
+		A6916941281346A400083F99 /* ExclusiveSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6916940281346A400083F99 /* ExclusiveSelectionView.swift */; };
 		A691AACE2618DDCA0049B619 /* iTermSlownessDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = A691AACC2618DDCA0049B619 /* iTermSlownessDetector.h */; };
 		A691AACF2618DDCA0049B619 /* iTermSlownessDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = A691AACD2618DDCA0049B619 /* iTermSlownessDetector.m */; };
 		A692666A210A2FEA00A980C7 /* iTermTemporaryDoubleBufferedGridController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2C65481AE9A2C900142CF5 /* iTermTemporaryDoubleBufferedGridController.m */; };
@@ -6149,6 +6153,10 @@
 		A690555E241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorMultiClientChild.h; sourceTree = "<group>"; };
 		A690555F241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFileDescriptorMultiClientChild.m; sourceTree = "<group>"; };
 		A690F7001B424C55009F76D8 /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
+		A69169392813457900083F99 /* PortholeFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortholeFactory.swift; sourceTree = "<group>"; };
+		A691693C281345AF00083F99 /* SaneButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaneButton.swift; sourceTree = "<group>"; };
+		A691693E281345D000083F99 /* MarkdownContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownContainerView.swift; sourceTree = "<group>"; };
+		A6916940281346A400083F99 /* ExclusiveSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveSelectionView.swift; sourceTree = "<group>"; };
 		A691AACC2618DDCA0049B619 /* iTermSlownessDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlownessDetector.h; sourceTree = "<group>"; };
 		A691AACD2618DDCA0049B619 /* iTermSlownessDetector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSlownessDetector.m; sourceTree = "<group>"; };
 		A692666B210A341000A980C7 /* PTYTextViewDataSource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PTYTextViewDataSource.m; sourceTree = "<group>"; };
@@ -8014,6 +8022,8 @@
 				A6C20CB725F6CA8C0086B09C /* iTermSlider.m */,
 				A60E045526DC978000DD162B /* FilterTextField.swift */,
 				A61D2A4827555CD000E539F3 /* MenuItemPopupView.swift */,
+				A691693C281345AF00083F99 /* SaneButton.swift */,
+				A6916940281346A400083F99 /* ExclusiveSelectionView.swift */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -9426,6 +9436,8 @@
 			children = (
 				A6822747280786A5005DF0B4 /* Porthole.swift */,
 				A682274A280786DE005DF0B4 /* MarkdownPorthole.swift */,
+				A69169392813457900083F99 /* PortholeFactory.swift */,
+				A691693E281345D000083F99 /* MarkdownContainerView.swift */,
 			);
 			name = Portholes;
 			sourceTree = "<group>";
@@ -14194,6 +14206,7 @@
 				537BFDDF2102B4060098C91F /* iTermPublisher.m in Sources */,
 				A61A85A224F1A70500B03880 /* iTermGlobalSearchWindowController.m in Sources */,
 				A691AACF2618DDCA0049B619 /* iTermSlownessDetector.m in Sources */,
+				A6916941281346A400083F99 /* ExclusiveSelectionView.swift in Sources */,
 				A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */,
 				A60E045826DD4A6000DD162B /* TypingAggregator.swift in Sources */,
 				A6ED047C27A5B5FA00E41D13 /* VT100ScreenStateSanitizingAdapter.m in Sources */,
@@ -14373,6 +14386,7 @@
 				A6A73D4327C7FBFD002E4CCA /* iTermAutoMasterParser.m in Sources */,
 				A6725AD723D63B7A001CA48A /* iTermProfileModelJournal.m in Sources */,
 				A6B41406211A579300D28207 /* iTermStoplightHotbox.m in Sources */,
+				A691693B2813458F00083F99 /* PortholeFactory.swift in Sources */,
 				A62C8FC3248033C000E22E95 /* iTermTmuxJobManager.m in Sources */,
 				A63011B220E7EE62008114B7 /* iTermStatusBarKnobNumericViewController.m in Sources */,
 				A606CBF42145AF4800B3A97E /* iTermRootTerminalView.m in Sources */,
@@ -14539,6 +14553,7 @@
 				A614F2671FE4B16400EEE919 /* iTermCharacterParts.m in Sources */,
 				A6D5724127BCDAA1002E6E9F /* CharacterAttributes.swift in Sources */,
 				A6A2D6D624331F0600A4DF5B /* iTermHamburgerButton.m in Sources */,
+				A691693F281345D000083F99 /* MarkdownContainerView.swift in Sources */,
 				A6BF035521E179380097DA86 /* iTermVariableHistory.m in Sources */,
 				A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */,
 				A6B4140A211A5AEA00D28207 /* iTermStandardWindowButtonsView.m in Sources */,
@@ -14805,6 +14820,7 @@
 				A61A85AE24F23CBD00B03880 /* iTermGlobalSearchResult.m in Sources */,
 				A68AC8F41F05C0860023A216 /* NSBundle+iTerm.m in Sources */,
 				A67960CD1F81FCB6008A42BC /* iTermMetalRenderer.m in Sources */,
+				A691693D281345AF00083F99 /* SaneButton.swift in Sources */,
 				5370678621C9D2780088D0F3 /* SIGError.m in Sources */,
 				A618FFC62245F6A300B8FD88 /* iTermStatusBarActionComponent.m in Sources */,
 				A64511C823806FBA00EB6ADF /* iTermLegacyJobManager.m in Sources */,

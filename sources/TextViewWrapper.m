@@ -68,9 +68,6 @@
     if ([PTYNoteViewController anyNoteVisible]) {
         return 1;
     }
-    if (child_.hasPortholes) {
-        return 1;
-    }
     if ([self haveMetalDisablingChildren]) {
         return 1;
     }

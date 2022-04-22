@@ -15,6 +15,7 @@
 #import "iTermStatusBarComponentKnob.h"
 #import "iTermStatusBarComponent.h"
 #import "iTermMetadata.h"
+#import "iTermMetalDisabling.h"
 #import "iTermMiniSearchFieldViewController.h"
 #import "iTermObject.h"
 #import "iTermOrderEnforcer.h"

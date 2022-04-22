@@ -9,149 +9,9 @@ import AppKit
 import Foundation
 import SwiftyMarkdown
 
-@objc(iTermPortholeFactory)
-class PortholeFactory: NSObject {
-    @objc
-    static func markdownPorthole(markdown: String,
-                                 colorMap: iTermColorMap,
-                                 baseDirectory: URL?) -> ObjCPorthole? {
-        if #available(macOS 12, *) {
-            return MarkdownPorthole(markdown, colorMap: colorMap, baseDirectory: baseDirectory)
-        } else {
-            return nil
-        }
-    }
-
-    @objc
-    static func porthole(_ dictionary: [String: AnyObject],
-                         colorMap: iTermColorMap) -> ObjCPorthole? {
-        guard let (type, info) = PortholeType.unwrap(dictionary: dictionary) else {
-            return nil
-        }
-        switch type {
-        case .markdown:
-            if #available(macOS 12, *) {
-                return MarkdownPorthole.from(info, colorMap: colorMap)
-            } else {
-                return nil
-            }
-        }
-    }
-}
-
-class MarkdownContainerView: NSView {
-    var closeCallback: (() -> ())? = nil
-    let closeButton = NSButton()
-    var color = NSColor.textColor {
-        didSet {
-            layer?.borderColor = color.withAlphaComponent(0.5).cgColor
-            closeButton.image = Self.closeButtonImage(color)
-        }
-    }
-    var backgroundColor = NSColor.textBackgroundColor {
-        didSet {
-            let dimmed = backgroundColor.usingColorSpace(.sRGB)!.colorDimmed(by: 0.2,
-                                                                             towardsGrayLevel: 0.5)
-            layer?.backgroundColor = dimmed.cgColor
-        }
-    }
-
-    static func closeButtonImage(_ color: NSColor) -> NSImage {
-        if #available(macOS 11.0, *) {
-            if let image = NSImage(systemSymbolName: "xmark.circle",
-                                   accessibilityDescription: "Close markdown view") {
-                return image.it_image(withTintColor: color)
-            }
-        }
-        return NSImage.it_imageNamed("closebutton", for: Self.self)!.it_image(withTintColor: color)
-    }
-
-    init() {
-        super.init(frame: NSRect(x: 0, y: 0, width: 100, height: 100))
-        wantsLayer = true
-        layer = CALayer()
-        layer?.borderColor = NSColor.init(white: 0.5, alpha: 0.5).cgColor
-        layer?.backgroundColor = NSColor.init(white: 0.5, alpha: 0.1).cgColor
-        layer?.borderWidth = 1.0
-        layer?.cornerRadius = 4
-        autoresizesSubviews = false
-
-        closeButton.image = Self.closeButtonImage(NSColor.textColor)
-        closeButton.sizeToFit()
-        closeButton.target = self
-        closeButton.action = #selector(close(_:))
-        closeButton.isBordered = false
-        closeButton.title = ""
-        closeButton.autoresizingMask = []
-        closeButton.alphaValue = 0.5
-        addSubview(closeButton)
-
-        _ = layoutSubviews()
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("Not implemented")
-    }
-
-    func setContentSize(_ size: NSSize) {
-        guard subviews.count > 0 else {
-            return
-        }
-        var frame = NSRect.zero
-        frame.size = size
-        frame.origin.x = (bounds.width - size.width) / 2
-        frame.origin.y = (bounds.height - size.height) / 2
-        subviews[0].frame = frame
-        _ = layoutSubviews()
-    }
-
-    @objc func close(_ sender: AnyObject?) {
-        closeCallback?()
-    }
-
-    override func setFrameSize(_ newSize: NSSize) {
-        DLog("\(it_addressString): set frame size to \(newSize)")
-        super.setFrameSize(newSize)
-        let ok = layoutSubviews()
-        if !ok {
-            closeCallback?()
-            closeCallback = nil
-        }
-    }
-
-    func layoutSubviews() -> Bool {
-        closeButton.sizeToFit()
-        let ok = layoutCloseButton()
-        layoutChild()
-        return ok
-    }
-
-    private func layoutCloseButton() -> Bool {
-        var frame = closeButton.frame
-        let margin = 2.0
-        frame.origin.x = bounds.width - closeButton.frame.width - margin
-        frame.origin.y = bounds.height - closeButton.frame.height - margin
-        closeButton.frame = frame
-        DLog("\(it_addressString) Set close button frame to \(frame). My bounds is \(bounds)")
-
-        return bounds.height >= frame.maxY + margin && frame.minY >= margin
-    }
-
-    private func layoutChild() {
-        guard let child = subviews.first else {
-            return
-        }
-        var frame = child.frame
-        frame.size.width = bounds.width;
-        let size = frame.size
-        frame.origin.y = max(0, (bounds.height - size.height) / 2)
-        subviews[0].frame = frame
-    }
-}
-
 @available(macOS 12, *)
 class MarkdownPorthole: NSObject {
-    private let textView: MetalDisablingTextView
+    private let textView: ExclusiveSelectionView
     private let textStorage = NSTextStorage()
     private let layoutManager = NSLayoutManager()
     private let textContainer: NSTextContainer
@@ -166,7 +26,8 @@ class MarkdownPorthole: NSObject {
     private let colorMap: iTermColorMap
     weak var delegate: PortholeDelegate?
     var savedLines: [ScreenCharArray] = []
-    let margin = CGFloat(4)
+    let outerMargin = MarkdownContainerView.margin
+    let innerMargin = CGFloat(4)
 
     private struct SavedColors: Equatable {
         let textColor: NSColor
@@ -220,7 +81,7 @@ class MarkdownPorthole: NSObject {
         textContainer = TopRightAvoidingTextContainer(containerSize: textViewFrame.size,
                                                       cutOutSize: NSSize(width: 18, height: 18))
         layoutManager.addTextContainer(textContainer)
-        textView = MetalDisablingTextView(frame: textViewFrame, textContainer: textContainer)
+        textView = ExclusiveSelectionView(frame: textViewFrame, textContainer: textContainer)
         textView.textContainerInset = NSSize(width: 0, height: 0)
         textView.isEditable = false
         textView.isSelectable = true
@@ -285,7 +146,7 @@ extension MarkdownPorthole: Porthole {
             options: [.usesLineFragmentOrigin]).height
         // The height is now frozen.
         textView.frame = NSRect(x: 0, y: 0, width: width, height: textViewHeight)
-        return textViewHeight + margin * 2
+        return textViewHeight + (outerMargin + innerMargin) * 2
     }
 
     static var type: PortholeType {
@@ -319,25 +180,6 @@ extension MarkdownPorthole: Porthole {
 
     func removeSelection() {
         textView.removeSelection()
-    }
-}
-
-@objc class MetalDisablingTextView: NSTextView {
-    var didAcquireSelection: (() -> ())?
-    private var removingSelection = false
-
-    func removeSelection() {
-        removingSelection = true
-        setSelectedRange(NSRange(location: 0, length: 0))
-        removingSelection = false
-    }
-    override func setSelectedRanges(_ ranges: [NSValue],
-                                    affinity: NSSelectionAffinity,
-                                    stillSelecting stillSelectingFlag: Bool) {
-        if !removingSelection {
-            didAcquireSelection?()
-        }
-        super.setSelectedRanges(ranges, affinity: affinity, stillSelecting: stillSelectingFlag)
     }
 }
 

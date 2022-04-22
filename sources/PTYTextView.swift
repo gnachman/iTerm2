@@ -63,7 +63,7 @@ extension PTYTextView {
         let hmargin = CGFloat(iTermPreferences.integer(forKey: kPreferenceKeySideMargins))
         let vmargin = CGFloat(iTermPreferences.integer(forKey: kPreferenceKeyTopBottomMargins))
         let cellWidth = dataSource.width()
-        let innerMargin = porthole.margin
+        let innerMargin = porthole.outerMargin
         if lastPortholeWidth == cellWidth && !force {
             // Calculating porthole size is very slow because NSView is a catastrophe so avoid doing
             // it if the width is unchanged.

@@ -84,8 +84,8 @@ protocol ObjCPorthole: AnyObject {
     @objc func removeSelection()
     @objc func updateColors()
     @objc var savedLines: [ScreenCharArray] { get set }
-    // Top/bottom margin
-    @objc var margin: CGFloat { get }
+    // Inset the view by this amount top and bottom.
+    @objc var outerMargin: CGFloat { get }
 }
 
 protocol Porthole: ObjCPorthole {
