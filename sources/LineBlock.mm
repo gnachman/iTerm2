@@ -1383,6 +1383,13 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return cll_entries == first_entry;
 }
 
+- (BOOL)allLinesAreEmpty {
+    if (self.isEmpty) {
+        return YES;
+    }
+    return (cumulative_line_lengths[cll_entries - 1] == start_offset);
+}
+
 - (int)numRawLines
 {
     return cll_entries - first_entry;

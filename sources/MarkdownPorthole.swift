@@ -86,7 +86,7 @@ class MarkdownContainerView: NSView {
         closeButton.alphaValue = 0.5
         addSubview(closeButton)
 
-        layoutSubviews()
+        _ = layoutSubviews()
     }
 
     required init?(coder: NSCoder) {
@@ -102,20 +102,50 @@ class MarkdownContainerView: NSView {
         frame.origin.x = (bounds.width - size.width) / 2
         frame.origin.y = (bounds.height - size.height) / 2
         subviews[0].frame = frame
-        layoutSubviews()
+        _ = layoutSubviews()
     }
 
     @objc func close(_ sender: AnyObject?) {
         closeCallback?()
     }
 
-    func layoutSubviews() {
+    override func setFrameSize(_ newSize: NSSize) {
+        DLog("\(it_addressString): set frame size to \(newSize)")
+        super.setFrameSize(newSize)
+        let ok = layoutSubviews()
+        if !ok {
+            closeCallback?()
+            closeCallback = nil
+        }
+    }
+
+    func layoutSubviews() -> Bool {
         closeButton.sizeToFit()
+        let ok = layoutCloseButton()
+        layoutChild()
+        return ok
+    }
+
+    private func layoutCloseButton() -> Bool {
         var frame = closeButton.frame
         let margin = 2.0
         frame.origin.x = bounds.width - closeButton.frame.width - margin
         frame.origin.y = bounds.height - closeButton.frame.height - margin
         closeButton.frame = frame
+        DLog("\(it_addressString) Set close button frame to \(frame). My bounds is \(bounds)")
+
+        return bounds.height >= frame.maxY + margin && frame.minY >= margin
+    }
+
+    private func layoutChild() {
+        guard let child = subviews.first else {
+            return
+        }
+        var frame = child.frame
+        frame.size.width = bounds.width;
+        let size = frame.size
+        frame.origin.y = max(0, (bounds.height - size.height) / 2)
+        subviews[0].frame = frame
     }
 }
 
@@ -136,6 +166,7 @@ class MarkdownPorthole: NSObject {
     private let colorMap: iTermColorMap
     weak var delegate: PortholeDelegate?
     var savedLines: [ScreenCharArray] = []
+    let margin = CGFloat(4)
 
     private struct SavedColors: Equatable {
         let textColor: NSColor
@@ -225,24 +256,8 @@ class MarkdownPorthole: NSObject {
         }
     }
 
-    private func height(for width: CGFloat) -> CGFloat {
-        return textStorage.boundingRect(with: NSSize(width: width, height: 0),
-                                        options: [.usesLineFragmentOrigin]).height
-    }
-
     func fittingSize(for width: CGFloat) -> NSSize {
-        return NSSize(width: width, height: self.height(for: width))
-    }
-
-    func sizeToFit(width: CGFloat) {
-        let contentSize = fittingSize(for: width)
-        containerView.frame = CGRect(x: 0, y: 0, width: contentSize.width, height: contentSize.height)
-        textView.frame = containerView.bounds
-        // I can't figure out why the button's frame gets changed later if I set it synchronously
-        // and I am completely tired of fighting AppKit.
-        DispatchQueue.main.async { [weak self] in
-            self?.containerView.layoutSubviews()
-        }
+        return NSSize(width: width, height: self.desiredHeight(forWidth: width))
     }
 
     private static let uuidDictionaryKey = "uuid"
@@ -264,6 +279,15 @@ class MarkdownPorthole: NSObject {
 
 @available(macOS 12, *)
 extension MarkdownPorthole: Porthole {
+    func desiredHeight(forWidth width: CGFloat) -> CGFloat {
+        let textViewHeight = textStorage.boundingRect(
+            with: NSSize(width: width, height: 0),
+            options: [.usesLineFragmentOrigin]).height
+        // The height is now frozen.
+        textView.frame = NSRect(x: 0, y: 0, width: width, height: textViewHeight)
+        return textViewHeight + margin * 2
+    }
+
     static var type: PortholeType {
         .markdown
     }
@@ -291,13 +315,6 @@ extension MarkdownPorthole: Porthole {
         return wrap(dictionary: [Self.uuidDictionaryKey: uuid as NSString,
                                  Self.markdownDictionaryKey: markdown as NSString,
                                  Self.baseDirectoryKey: dir].compactMapValues { $0 })
-    }
-
-    func set(size: NSSize) {
-        var frame = view.frame
-        frame.size = size
-        view.frame = frame
-        containerView.setContentSize(fittingSize(for: size.width))
     }
 
     func removeSelection() {

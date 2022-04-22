@@ -55,28 +55,28 @@ extension PTYTextView {
         guard gridCoordRange != VT100GridCoordRangeInvalid else {
             return
         }
+        guard gridCoordRange.start.y <= gridCoordRange.end.y else {
+            return
+        }
         let lineRange = gridCoordRange.start.y...gridCoordRange.end.y
         DLog("Update porthole with line range \(lineRange)")
         let hmargin = CGFloat(iTermPreferences.integer(forKey: kPreferenceKeySideMargins))
         let vmargin = CGFloat(iTermPreferences.integer(forKey: kPreferenceKeyTopBottomMargins))
         let cellWidth = dataSource.width()
+        let innerMargin = porthole.margin
         if lastPortholeWidth == cellWidth && !force {
-            let size = porthole.view.frame.size
             // Calculating porthole size is very slow because NSView is a catastrophe so avoid doing
             // it if the width is unchanged.
             porthole.view.frame = NSRect(x: hmargin,
-                                         y: CGFloat(lineRange.lowerBound) * lineHeight + vmargin,
-                                         width: size.width,
-                                         height: size.height)
+                                         y: CGFloat(lineRange.lowerBound) * lineHeight + vmargin + innerMargin,
+                                         width: bounds.width - hmargin * 2,
+                                         height: CGFloat(lineRange.count) * lineHeight - innerMargin * 2)
         } else {
             lastPortholeWidth = cellWidth
-            let size = NSSize(width: CGFloat(cellWidth) * charWidth,
-                              height: CGFloat(lineRange.integerLength) * lineHeight)
-            porthole.set(size: size)
             porthole.view.frame = NSRect(x: hmargin,
-                                         y: CGFloat(lineRange.lowerBound) * lineHeight + vmargin,
-                                         width: size.width,
-                                         height: size.height)
+                                         y: CGFloat(lineRange.lowerBound) * lineHeight + vmargin + innerMargin,
+                                         width: bounds.width - hmargin * 2,
+                                         height: CGFloat(lineRange.count) * lineHeight - innerMargin * 2)
         }
         updateAlphaValue()
     }
@@ -163,12 +163,6 @@ extension PTYTextView: PortholeDelegate {
     }
     func portholeRemove(_ porthole: ObjCPorthole) {
         removePorthole(porthole)
-    }
-}
-
-extension ClosedRange where Bound: BinaryInteger {
-    var integerLength: Bound {
-        return upperBound - lowerBound + 1
     }
 }
 

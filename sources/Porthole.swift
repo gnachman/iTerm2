@@ -79,12 +79,13 @@ protocol ObjCPorthole: AnyObject {
     @objc var mark: PortholeMarkReading? { get set }
     @objc var uniqueIdentifier: String { get }
     @objc var dictionaryValue: [String: AnyObject] { get }
-    @objc func sizeToFit(width: CGFloat)
-    @objc func set(size: NSSize)
+    @objc func desiredHeight(forWidth width: CGFloat) -> CGFloat  // includes top and bottom margin
     @objc var delegate: PortholeDelegate? { get set }
     @objc func removeSelection()
     @objc func updateColors()
     @objc var savedLines: [ScreenCharArray] { get set }
+    // Top/bottom margin
+    @objc var margin: CGFloat { get }
 }
 
 protocol Porthole: ObjCPorthole {

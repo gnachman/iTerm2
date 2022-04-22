@@ -1993,6 +1993,7 @@ ITERM_WEAKLY_REFERENCEABLE
             scaleFactor:self.backingScaleFactor];
     }
     [_textview clearHighlights:NO];
+    [_textview updatePortholeFrames];
     [[_delegate realParentWindow] invalidateRestorableState];
     if (!_tailFindTimer &&
         [_delegate sessionBelongsToVisibleTab]) {

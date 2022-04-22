@@ -111,6 +111,9 @@ typedef struct {
 // Returns true if there are no lines in the block
 - (BOOL)isEmpty;
 
+// Are all lines of length 0? True if there are no lines, as well.
+- (BOOL)allLinesAreEmpty;
+
 // Grow the buffer.
 - (void)changeBufferSize:(int)capacity;
 

@@ -3022,13 +3022,40 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 #pragma mark - Portholes
 
-- (void)replaceMark:(id<iTermMark>)mark withLines:(NSArray<ScreenCharArray *> *)lines {
+- (void)replaceMark:(iTermMark *)mark withLines:(NSArray<ScreenCharArray *> *)lines {
     const VT100GridAbsCoordRange range = [self absCoordRangeForInterval:mark.entry.interval];
     if (range.end.y < self.totalScrollbackOverflow) {
         // Nothing to do - it has already scrolled off to the great beyond.
         return;
     }
-    [self replaceRange:range withLines:lines];
+    NSArray<ScreenCharArray *> *trimmed = lines;
+    if (range.start.y <= self.totalScrollbackOverflow) {
+        VT100GridCoordRange relativeRange = VT100GridCoordRangeFromAbsCoordRange(range, self.totalScrollbackOverflow);
+        trimmed = [self linesByTruncatingLines:lines toWrappedHeight:relativeRange.end.y - relativeRange.start.y + 1];
+    }
+    [self replaceRange:range withLines:trimmed];
+    [self.mutableIntervalTree removeObject:mark];
+}
+
+- (NSArray<ScreenCharArray *> *)linesByTruncatingLines:(NSArray<ScreenCharArray *> *)originalLines
+                                       toWrappedHeight:(int)desiredHeight {
+    LineBuffer *temp = [[LineBuffer alloc] init];
+    const int width = self.width;
+    for (ScreenCharArray *sca in originalLines) {
+        [temp appendScreenCharArray:sca width:width];
+    }
+    [temp setMaxLines:desiredHeight];
+    [temp dropExcessLinesWithWidth:width];
+
+    NSMutableArray<ScreenCharArray *> *result = [NSMutableArray array];
+    [temp enumerateLinesInRange:NSMakeRange(0, [temp numLinesWithWidth:width])
+                          width:width block:^(int i,
+                                              ScreenCharArray * _Nonnull sca,
+                                              iTermImmutableMetadata metadata,
+                                              BOOL * _Nonnull stop) {
+        [result addObject:[sca copy]];
+    }];
+    return result;
 }
 
 - (void)replaceRange:(VT100GridAbsCoordRange)absRange

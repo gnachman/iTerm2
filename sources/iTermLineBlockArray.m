@@ -524,8 +524,12 @@
             // Skip over trailing lines.
             const int emptyCount = block.numberOfTrailingEmptyLines;
             desiredYOffset -= emptyCount;
-            // This has a +1 because there are two cases. In the diagrams below the | indicates the
-            // location given by position.
+            // In the diagrams below the | indicates the location given by position.
+            //
+            // Cases 1 and 2 involve the unfortunate behavior that occurds for the position after a
+            // non-empty line not belonging to the next wrapped line but to the location just after
+            // the last character on the non-empty line.
+            //
             // 1. The block has trailing empty lines
             //        abc
             //        xyz|
@@ -538,7 +542,17 @@
             //        xyz|
             //    In this case, advancing to the next block moves the cursor down one line: just to
             //    the beginning of the line that starts the next block.
-            dy += emptyCount + 1;
+            //
+            // 3. The block has only empty lines.
+            //        |(empty)
+            //        (empty)
+            //    In this case, advancing the the next block moves the cursor down by the number of
+            //    empty lines in this block.
+            dy += emptyCount;
+            if (!block.allLinesAreEmpty) {
+                // case 1 or 2
+                dy += 1;
+            }
             index += 1;
             block = _blocks[index];
 

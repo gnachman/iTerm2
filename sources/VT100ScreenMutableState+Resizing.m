@@ -1010,10 +1010,7 @@ static void SwapInt(int *a, int *b) {
     ITAssertWithMessage(lines >= 0, @"Negative lines");
 
     [selection clearSelection];
-    // An immediate refresh is needed so that the size of textview can be
-    // adjusted to fit the new size
-    DebugLog(@"setSize setDirty");
-    [delegate screenNeedsRedraw];
+    [self reloadMarkCache];
     if (couldHaveSelection) {
         NSMutableArray *subSelectionsToAdd = [NSMutableArray array];
         for (iTermSubSelection *sub in newSubSelections) {
@@ -1025,9 +1022,11 @@ static void SwapInt(int *a, int *b) {
         }
         [selection addSubSelections:subSelectionsToAdd];
     }
-
-    [self reloadMarkCache];
-    [delegate screenSizeDidChangeWithNewTopLineAt:newTop];
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        DLog(@"Running post-resize side effects");
+        [delegate screenNeedsRedraw];
+        [delegate screenSizeDidChangeWithNewTopLineAt:newTop];
+    }];
 }
 
 - (void)reallySetSize:(VT100GridSize)newSize

@@ -112,14 +112,15 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     [iTermPortholeFactory markdownPortholeWithMarkdown:markdown
                                              colorMap:self.colorMap
                                          baseDirectory:baseDirectory];
-    [porthole sizeToFitWithWidth:self.bounds.size.width];
+    const CGFloat hmargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    const CGFloat desiredHeight = [porthole desiredHeightForWidth:self.bounds.size.width - hmargin * 2];
     porthole.savedLines = [[NSArray sequenceWithRange:NSMakeRange(relativeRange.start.y, relativeRange.end.y - relativeRange.start.y + 1)] mapWithBlock:^id _Nullable(NSNumber * _Nonnull number) {
         const int line =  number.intValue;
         return [[self.dataSource screenCharArrayForLine:line] copy];
     }];
     [self.dataSource replaceRange:absRange
                      withPorthole:porthole
-                         ofHeight:ceil(porthole.view.bounds.size.height / self.lineHeight)];
+                         ofHeight:ceil(desiredHeight / self.lineHeight)];
     [self.selection clearSelection];
 }
 
