@@ -1,5 +1,5 @@
 //
-//  BaseTextViewPorthole.swift
+//  TextViewPorthole.swift
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 4/22/22.
@@ -9,7 +9,7 @@ import AppKit
 import Foundation
 
 @objc
-class BaseTextViewPorthole: NSObject {
+class TextViewPorthole: NSObject {
     let config: PortholeConfig
     let textView: ExclusiveSelectionView
     let textStorage = NSTextStorage()
@@ -24,6 +24,7 @@ class BaseTextViewPorthole: NSObject {
     var savedLines: [ScreenCharArray] = []
     let outerMargin = BasePortholeContainerView.margin
     let innerMargin = CGFloat(4)
+    private var renderer: TextViewPortholeRenderer
 
     struct SavedColors: Equatable {
         let textColor: NSColor
@@ -37,6 +38,7 @@ class BaseTextViewPorthole: NSObject {
     private(set) var savedColors: SavedColors
 
     init(_ config: PortholeConfig,
+         renderer: TextViewPortholeRenderer,
          uuid: String? = nil) {
         containerView = BasePortholeContainerView()
         self.uuid = uuid ?? UUID().uuidString
@@ -67,6 +69,9 @@ class BaseTextViewPorthole: NSObject {
         containerView.color = savedColors.textColor
         containerView.backgroundColor = savedColors.backgroundColor
 
+        self.renderer = renderer
+        textStorage.setAttributedString(renderer.render(colors: savedColors))
+
         super.init()
 
         textView.delegate = self
@@ -88,7 +93,7 @@ class BaseTextViewPorthole: NSObject {
     }
 }
 
-extension BaseTextViewPorthole: Porthole {
+extension TextViewPorthole: Porthole {
     func desiredHeight(forWidth width: CGFloat) -> CGFloat {
         let textViewHeight = textStorage.boundingRect(
             with: NSSize(width: width, height: 0),
@@ -99,7 +104,7 @@ extension BaseTextViewPorthole: Porthole {
     }
 
     static var type: PortholeType {
-        .markdown
+        .text
     }
     var uniqueIdentifier: String {
         return uuid
@@ -118,6 +123,8 @@ extension BaseTextViewPorthole: Porthole {
 
     static let uuidDictionaryKey = "uuid"
     static let baseDirectoryKey = "baseDirectory"
+    static let textDictionaryKey = "text"
+    static let rendererDictionaryKey = "renderer"
 
     var dictionaryValue: [String: AnyObject] {
         let dir: NSString?
@@ -127,15 +134,41 @@ extension BaseTextViewPorthole: Porthole {
             dir = nil
         }
         return wrap(dictionary: [Self.uuidDictionaryKey: uuid as NSString,
+                                 Self.textDictionaryKey: config.text as NSString,
+                                 Self.rendererDictionaryKey: renderer.identifier as NSString,
                                  Self.baseDirectoryKey: dir].compactMapValues { $0 })
     }
 
+    static func config(fromDictionary dict: [String: AnyObject],
+                       colorMap: iTermColorMapReading) -> (config: PortholeConfig,
+                                                           rendererName: String,
+                                                           uuid: String)?  {
+        guard let uuid = dict[Self.uuidDictionaryKey],
+              let text = dict[Self.textDictionaryKey],
+              let renderer = dict[Self.rendererDictionaryKey] else {
+            return nil
+        }
+        let baseDirectory: URL?
+        if let url = dict[Self.baseDirectoryKey], let urlString = url as? String {
+            baseDirectory = URL(string: urlString)
+        } else {
+            baseDirectory = nil
+        }
+        guard let uuid = uuid as? String,
+              let text = text as? String,
+              let renderer = renderer as? String else {
+            return nil
+        }
+        return (config: PortholeConfig(text: text, colorMap: colorMap, baseDirectory: baseDirectory),
+                rendererName: renderer,
+                uuid: uuid)
+    }
     func removeSelection() {
         textView.removeSelection()
     }
 }
 
-extension BaseTextViewPorthole: NSTextViewDelegate {
+extension TextViewPorthole: NSTextViewDelegate {
     func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
         guard let url = NSAttributedString.linkToURL(link) else {
             return false
@@ -172,6 +205,7 @@ extension BaseTextViewPorthole: NSTextViewDelegate {
         savedColors = colors
         containerView.color = colors.textColor
         containerView.backgroundColor = colors.backgroundColor
+        textView.textStorage?.setAttributedString(renderer.render(colors: colors))
     }
 }
 
@@ -246,5 +280,7 @@ class TopRightAvoidingTextContainer: NSTextContainer {
 
 }
 
-
-
+protocol TextViewPortholeRenderer {
+    var identifier: String { get }
+    func render(colors: TextViewPorthole.SavedColors) -> NSAttributedString
+}

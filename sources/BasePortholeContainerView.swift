@@ -11,7 +11,7 @@ class BasePortholeContainerView: NSView {
     static let margin = CGFloat(4.0)
     var closeCallback: (() -> ())? = nil
     let closeButton = SaneButton()
-
+    
     var color = NSColor.textColor {
         didSet {
             layer?.borderColor = color.withAlphaComponent(0.5).cgColor

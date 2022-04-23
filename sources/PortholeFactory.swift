@@ -6,15 +6,19 @@
 //
 
 import Foundation
+import CoreText
 
 @objc(iTermPortholeFactory)
 class PortholeFactory: NSObject {
     static func markdownPorthole(config: PortholeConfig) -> Porthole {
-        return MarkdownPorthole(config)
+        return TextViewPorthole(config, renderer: MarkdownPortholeRenderer(config.text))
     }
 
     static func jsonPorthole(config: PortholeConfig) -> Porthole? {
-        return JSONPorthole.createIfValid(config: config)
+        guard let renderer = JSONPortholeRenderer(config.text) else {
+            return nil
+        }
+        return TextViewPorthole(config, renderer: renderer)
     }
     
     @objc
@@ -24,11 +28,26 @@ class PortholeFactory: NSObject {
             return nil
         }
         switch type {
-        case .markdown:
-            return MarkdownPorthole.from(info, colorMap: colorMap)
-        case .json:
-            return JSONPorthole.from(info, colorMap: colorMap)
+        case .text:
+            guard let (config, rendererName, _) = TextViewPorthole.config(fromDictionary: info,
+                                                                          colorMap: colorMap) else {
+                return nil
+            }
+            guard let renderer = textRenderer(rendererName, text: config.text) else {
+                return nil
+            }
+            return TextViewPorthole(config, renderer: renderer)
         }
+    }
+
+    private static func textRenderer(_ rendererName: String, text: String) -> TextViewPortholeRenderer? {
+        if rendererName == MarkdownPortholeRenderer.identifier {
+            return MarkdownPortholeRenderer(text)
+        }
+        if rendererName == JSONPortholeRenderer.identifier {
+            return JSONPortholeRenderer(text)
+        }
+        return nil
     }
 }
 

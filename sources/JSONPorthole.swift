@@ -7,10 +7,16 @@
 
 import Foundation
 
-class JSONPorthole: BaseTextViewPorthole {
+class JSONPortholeRenderer: TextViewPortholeRenderer {
+    static let identifier = "JSON"
+    var identifier: String { return Self.identifier }
     private let jsonObject: Any
 
-    private static func attributedString(jsonObject: Any, colors: SavedColors) -> NSAttributedString {
+    func render(colors: TextViewPorthole.SavedColors) -> NSAttributedString {
+        return Self.attributedString(jsonObject: jsonObject, colors: colors)
+    }
+
+    private static func attributedString(jsonObject: Any, colors: TextViewPorthole.SavedColors) -> NSAttributedString {
         return NSAttributedString.fromJSONObject(jsonObject,
                                                  colors: JSONColors(textColor: colors.textColor,
                                                                     backgroundColor: colors.backgroundColor),
@@ -22,63 +28,24 @@ class JSONPorthole: BaseTextViewPorthole {
                                                 options: [.fragmentsAllowed])
     }
 
-    static func createIfValid(config: PortholeConfig, uuid: String? = nil) -> JSONPorthole? {
-        guard let obj = try? Self.parse(config.text) else {
+    static func createIfValid(text: String) -> JSONPortholeRenderer? {
+        guard let obj = try? Self.parse(text) else {
             return nil
         }
-        return JSONPorthole(object: obj, config: config, uuid: uuid)
+        return JSONPortholeRenderer(object: obj)
     }
 
-    init(object: Any, config: PortholeConfig, uuid: String? = nil) {
+    init(object: Any) {
         jsonObject = object
-        super.init(config, uuid: uuid)
-        finishInitialization()
     }
 
-    override init(_ config: PortholeConfig,
-                  uuid: String? = nil) {
-        let obj: Any
+    init?(_ text: String) {
         do {
-            obj = try Self.parse(config.text)
+            jsonObject = try Self.parse(text)
         } catch {
-            obj = "Error parsing JSON: \(error.localizedDescription)"
-        }
-        jsonObject = obj
-        super.init(config,
-                   uuid: uuid)
-        finishInitialization()
-    }
-
-    private func finishInitialization() {
-        let attributedString = Self.attributedString(jsonObject: jsonObject,
-                                                     colors: savedColors)
-        textStorage.setAttributedString(attributedString)
-    }
-
-    private static let jsonDictionaryKey = "json"
-
-    static func from(_ dictionary: [String: AnyObject],
-                     colorMap: iTermColorMap) -> JSONPorthole? {
-        guard let uuid = dictionary[Self.uuidDictionaryKey] as? String,
-              let json = dictionary[Self.jsonDictionaryKey] as? String else {
             return nil
         }
-        return JSONPorthole(PortholeConfig(text: json, colorMap: colorMap),
-                            uuid: uuid)
     }
-
-    override var dictionaryValue: [String: AnyObject] {
-        var result = super.dictionaryValue
-        result[Self.jsonDictionaryKey] = config.text as NSString
-        return result
-    }
-
-    override func updateColors() {
-        super.updateColors()
-        textView.textStorage?.setAttributedString(Self.attributedString(jsonObject: jsonObject,
-                                                                        colors: savedColors))
-    }
-
 }
 
 fileprivate struct JSONColors {

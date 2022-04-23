@@ -56,8 +56,7 @@ class PortholeMark: iTermMark, PortholeMarkReading {
 }
 
 enum PortholeType: String {
-    case markdown = "Markdown"
-    case json = "JSON"
+    case text = "Text"
 
     static func unwrap(dictionary: [String: AnyObject]) -> (type: PortholeType, info: [String: AnyObject])? {
         guard let typeString = dictionary[portholeType] as? String,

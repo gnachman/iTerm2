@@ -2450,7 +2450,7 @@
 		A691693F281345D000083F99 /* BasePortholeContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691693E281345D000083F99 /* BasePortholeContainerView.swift */; };
 		A6916941281346A400083F99 /* ExclusiveSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6916940281346A400083F99 /* ExclusiveSelectionView.swift */; };
 		A691694628136A5D00083F99 /* JSONPorthole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691694528136A5D00083F99 /* JSONPorthole.swift */; };
-		A691694828136A7100083F99 /* BaseTextViewPorthole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691694728136A7100083F99 /* BaseTextViewPorthole.swift */; };
+		A691694828136A7100083F99 /* TextViewPorthole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691694728136A7100083F99 /* TextViewPorthole.swift */; };
 		A691AACE2618DDCA0049B619 /* iTermSlownessDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = A691AACC2618DDCA0049B619 /* iTermSlownessDetector.h */; };
 		A691AACF2618DDCA0049B619 /* iTermSlownessDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = A691AACD2618DDCA0049B619 /* iTermSlownessDetector.m */; };
 		A692666A210A2FEA00A980C7 /* iTermTemporaryDoubleBufferedGridController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2C65481AE9A2C900142CF5 /* iTermTemporaryDoubleBufferedGridController.m */; };
@@ -6160,7 +6160,7 @@
 		A691693E281345D000083F99 /* BasePortholeContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasePortholeContainerView.swift; sourceTree = "<group>"; };
 		A6916940281346A400083F99 /* ExclusiveSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveSelectionView.swift; sourceTree = "<group>"; };
 		A691694528136A5D00083F99 /* JSONPorthole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONPorthole.swift; sourceTree = "<group>"; };
-		A691694728136A7100083F99 /* BaseTextViewPorthole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseTextViewPorthole.swift; sourceTree = "<group>"; };
+		A691694728136A7100083F99 /* TextViewPorthole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextViewPorthole.swift; sourceTree = "<group>"; };
 		A691AACC2618DDCA0049B619 /* iTermSlownessDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlownessDetector.h; sourceTree = "<group>"; };
 		A691AACD2618DDCA0049B619 /* iTermSlownessDetector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSlownessDetector.m; sourceTree = "<group>"; };
 		A692666B210A341000A980C7 /* PTYTextViewDataSource.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PTYTextViewDataSource.m; sourceTree = "<group>"; };
@@ -9443,7 +9443,7 @@
 				A69169392813457900083F99 /* PortholeFactory.swift */,
 				A691693E281345D000083F99 /* BasePortholeContainerView.swift */,
 				A691694528136A5D00083F99 /* JSONPorthole.swift */,
-				A691694728136A7100083F99 /* BaseTextViewPorthole.swift */,
+				A691694728136A7100083F99 /* TextViewPorthole.swift */,
 			);
 			name = Portholes;
 			sourceTree = "<group>";
@@ -14847,7 +14847,7 @@
 				53E9DFEA220D55E40070C9C0 /* iTermUserNotificationTrigger.m in Sources */,
 				A64816602290773A008E7E0C /* iTermReflection.m in Sources */,
 				A63493E523E7AC160047C31B /* iTermStatusBarAutoRainbowController.m in Sources */,
-				A691694828136A7100083F99 /* BaseTextViewPorthole.swift in Sources */,
+				A691694828136A7100083F99 /* TextViewPorthole.swift in Sources */,
 				A635029F229B64000042B779 /* PSMRolloverButton.m in Sources */,
 				5365207221433ED2003C58FD /* iTermGitState.m in Sources */,
 				A6644BEF25CDD20800419355 /* iTermVirtualOffset.m in Sources */,

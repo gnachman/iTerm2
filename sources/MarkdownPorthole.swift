@@ -9,8 +9,16 @@ import AppKit
 import Foundation
 import SwiftyMarkdown
 
-class MarkdownPorthole: BaseTextViewPorthole {
-    private static func attributedString(markdown: String, colors: SavedColors) -> NSAttributedString {
+class MarkdownPortholeRenderer: TextViewPortholeRenderer {
+    static let identifier = "Markdown"
+    var identifier: String { return Self.identifier }
+    private let markdown: String
+
+    func render(colors: TextViewPorthole.SavedColors) -> NSAttributedString {
+        return Self.attributedString(markdown: markdown, colors: colors)
+    }
+
+    private static func attributedString(markdown: String, colors: TextViewPorthole.SavedColors) -> NSAttributedString {
         let md = SwiftyMarkdown(string: markdown)
         if let fixedPitchFontName = NSFont.userFixedPitchFont(ofSize: 12)?.fontName {
             md.code.fontName = fixedPitchFontName
@@ -31,39 +39,8 @@ class MarkdownPorthole: BaseTextViewPorthole {
         return md.attributedString()
     }
 
-    override init(_ config: PortholeConfig,
-                  uuid: String? = nil) {
-        super.init(config,
-                   uuid: uuid)
-        let attributedString = Self.attributedString(markdown: config.text.trimmingCharacters(in: .whitespacesAndNewlines),
-                                                     colors: savedColors)
-        textStorage.setAttributedString(attributedString)
-    }
-
-    private static let markdownDictionaryKey = "markdown"
-
-    static func from(_ dictionary: [String: AnyObject],
-                     colorMap: iTermColorMap) -> MarkdownPorthole? {
-        guard let uuid = dictionary[Self.uuidDictionaryKey] as? String,
-              let markdown = dictionary[Self.markdownDictionaryKey] as? String else {
-            return nil
-        }
-        return MarkdownPorthole(PortholeConfig(text: markdown,
-                                               colorMap: colorMap,
-                                               baseDirectory: dictionary[Self.baseDirectoryKey] as? URL),
-                                uuid: uuid)
-    }
-
-    override var dictionaryValue: [String: AnyObject] {
-        var result = super.dictionaryValue
-        result[Self.markdownDictionaryKey] = config.text as NSString
-        return result
-    }
-
-    override func updateColors() {
-        super.updateColors()
-        textView.textStorage?.setAttributedString(Self.attributedString(markdown: config.text,
-                                                                        colors: savedColors))
+    init(_ text: String) {
+        markdown = text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 
