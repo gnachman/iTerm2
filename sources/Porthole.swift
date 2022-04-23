@@ -57,6 +57,7 @@ class PortholeMark: iTermMark, PortholeMarkReading {
 
 enum PortholeType: String {
     case markdown = "Markdown"
+    case json = "JSON"
 
     static func unwrap(dictionary: [String: AnyObject]) -> (type: PortholeType, info: [String: AnyObject])? {
         guard let typeString = dictionary[portholeType] as? String,
@@ -67,10 +68,16 @@ enum PortholeType: String {
         return (type: type, info: info)
     }
 }
-@objc(PortholeDelegate)
+
+struct PortholeConfig {
+    var text: String
+    var colorMap: iTermColorMapReading
+    var baseDirectory: URL?
+}
+
 protocol PortholeDelegate: AnyObject {
-    @objc func portholeDidAcquireSelection(_ porthole: ObjCPorthole)
-    @objc func portholeRemove(_ porthole: ObjCPorthole)
+    func portholeDidAcquireSelection(_ porthole: Porthole)
+    func portholeRemove(_ porthole: Porthole)
 }
 
 @objc(Porthole)
@@ -80,7 +87,6 @@ protocol ObjCPorthole: AnyObject {
     @objc var uniqueIdentifier: String { get }
     @objc var dictionaryValue: [String: AnyObject] { get }
     @objc func desiredHeight(forWidth width: CGFloat) -> CGFloat  // includes top and bottom margin
-    @objc var delegate: PortholeDelegate? { get set }
     @objc func removeSelection()
     @objc func updateColors()
     @objc var savedLines: [ScreenCharArray] { get set }
@@ -90,6 +96,8 @@ protocol ObjCPorthole: AnyObject {
 
 protocol Porthole: ObjCPorthole {
     static var type: PortholeType { get }
+    var delegate: PortholeDelegate? { get set }
+    var config: PortholeConfig { get }
 }
 
 fileprivate let portholeType = "Type"

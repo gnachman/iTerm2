@@ -8,8 +8,37 @@
 import Foundation
 
 extension PTYTextView {
+    @objc(replaceWithPortholeInRange:havingText:baseDirectory:)
+    func replaceWithPorthole(inRange absRange: VT100GridAbsCoordRange, text: String, baseDirectory: URL?) {
+        guard dataSource != nil else {
+            return
+        }
+        let config = PortholeConfig(text: text, colorMap: colorMap, baseDirectory: baseDirectory)
+        let porthole = makePorthole(for: config)
+        replace(range: absRange, withPorthole: porthole)
+    }
+
+    private func replace(range absRange: VT100GridAbsCoordRange,
+                         withPorthole porthole: Porthole) {
+        let hmargin = CGFloat(iTermPreferences.int(forKey: kPreferenceKeySideMargins))
+        let desiredHeight = porthole.desiredHeight(forWidth: bounds.width - hmargin * 2)
+        let relativeRange = VT100GridCoordRangeFromAbsCoordRange(absRange, dataSource.totalScrollbackOverflow())
+        porthole.savedLines = (relativeRange.start.y ... relativeRange.end.y).map { i in
+            dataSource.screenCharArray(forLine: i).copy() as! ScreenCharArray
+        }
+        dataSource.replace(absRange, with: porthole, ofHeight: Int32(ceil(desiredHeight / lineHeight)))
+    }
+
+    private func makePorthole(for config: PortholeConfig) -> Porthole {
+        if let jsonPorthole = PortholeFactory.jsonPorthole(config: config) {
+            return jsonPorthole
+        }
+        return PortholeFactory.markdownPorthole(config: config)
+    }
+
     @objc
-    func addPorthole(_ porthole: ObjCPorthole) {
+    func addPorthole(_ objcPorthole: ObjCPorthole) {
+        let porthole = objcPorthole as! Porthole
         portholes.add(porthole)
         porthole.delegate = self
         superview?.addSubview(porthole.view)
@@ -21,7 +50,8 @@ extension PTYTextView {
     }
 
     @objc
-    func removePorthole(_ porthole: ObjCPorthole) {
+    func removePorthole(_ objcPorthole: ObjCPorthole) {
+        let porthole = objcPorthole as! Porthole
         willRemoveSubview(porthole.view)
         if porthole.delegate === self {
             porthole.delegate = nil
@@ -42,20 +72,31 @@ extension PTYTextView {
         }
     }
 
-    // If force is true, recalculate the height even if the textview's width hasn't changed since
-    // the last time this method was called.
-    private func updatePortholeFrame(_ porthole: ObjCPorthole, force: Bool) {
+    private func range(porthole: Porthole) -> VT100GridCoordRange? {
         guard porthole.mark != nil else {
-            return
+            return nil
         }
         guard let dataSource = dataSource else {
-            return
+            return nil
         }
         let gridCoordRange = dataSource.coordRange(of: porthole)
         guard gridCoordRange != VT100GridCoordRangeInvalid else {
-            return
+            return nil
         }
         guard gridCoordRange.start.y <= gridCoordRange.end.y else {
+            return nil
+        }
+        return gridCoordRange
+    }
+
+    // If force is true, recalculate the height even if the textview's width hasn't changed since
+    // the last time this method was called.
+    private func updatePortholeFrame(_ objcPorthole: ObjCPorthole, force: Bool) {
+        let porthole = objcPorthole as! Porthole
+        guard let dataSource = dataSource else {
+            return
+        }
+        guard let gridCoordRange = range(porthole: porthole) else {
             return
         }
         let lineRange = gridCoordRange.start.y...gridCoordRange.end.y
@@ -158,10 +199,11 @@ extension Array {
     }
 }
 extension PTYTextView: PortholeDelegate {
-    func portholeDidAcquireSelection(_ porthole: ObjCPorthole) {
+    func portholeDidAcquireSelection(_ porthole: Porthole) {
         selection.clear()
     }
-    func portholeRemove(_ porthole: ObjCPorthole) {
+
+    func portholeRemove(_ porthole: Porthole) {
         removePorthole(porthole)
     }
 }

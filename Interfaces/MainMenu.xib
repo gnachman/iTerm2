@@ -478,7 +478,7 @@ DQ
                                 </menu>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="EC1-3K-Gyr"/>
-                            <menuItem title="Render Selection Natively" keyEquivalent="e" identifier="Render Selection Natively" id="SEy-mc-25m">
+                            <menuItem title="Render Selection…" keyEquivalent="e" identifier="Render Selection Natively" id="SEy-mc-25m">
                                 <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                 <connections>
                                     <action selector="renderSelection:" target="-1" id="CYd-u9-J4s"/>

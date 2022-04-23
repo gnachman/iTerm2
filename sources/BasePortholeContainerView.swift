@@ -1,5 +1,5 @@
 //
-//  MarkdownContainerView.swift
+//  BasePortholeContainerView.swift
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 4/22/22.
@@ -7,10 +7,10 @@
 
 import Foundation
 
-class MarkdownContainerView: NSView {
+class BasePortholeContainerView: NSView {
+    static let margin = CGFloat(4.0)
     var closeCallback: (() -> ())? = nil
     let closeButton = SaneButton()
-    static let margin = CGFloat(4.0)
 
     var color = NSColor.textColor {
         didSet {
@@ -38,6 +38,7 @@ class MarkdownContainerView: NSView {
 
     init() {
         super.init(frame: NSRect(x: 0, y: 0, width: 100, height: 100))
+
         wantsLayer = true
         layer = CALayer()
         layer?.borderColor = NSColor.init(white: 0.5, alpha: 0.5).cgColor
@@ -55,6 +56,7 @@ class MarkdownContainerView: NSView {
         closeButton.autoresizingMask = []
         closeButton.alphaValue = 0.5
         addSubview(closeButton)
+
 
         _ = layoutSubviews()
     }
@@ -122,8 +124,10 @@ class MarkdownContainerView: NSView {
     }
 }
 
-extension MarkdownContainerView: iTermMetalDisabling {
+extension BasePortholeContainerView: iTermMetalDisabling {
     func viewDisablesMetal() -> Bool {
         return true
     }
 }
+
+

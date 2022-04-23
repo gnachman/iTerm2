@@ -9,17 +9,14 @@ import Foundation
 
 @objc(iTermPortholeFactory)
 class PortholeFactory: NSObject {
-    @objc
-    static func markdownPorthole(markdown: String,
-                                 colorMap: iTermColorMap,
-                                 baseDirectory: URL?) -> ObjCPorthole? {
-        if #available(macOS 12, *) {
-            return MarkdownPorthole(markdown, colorMap: colorMap, baseDirectory: baseDirectory)
-        } else {
-            return nil
-        }
+    static func markdownPorthole(config: PortholeConfig) -> Porthole {
+        return MarkdownPorthole(config)
     }
 
+    static func jsonPorthole(config: PortholeConfig) -> Porthole? {
+        return JSONPorthole.createIfValid(config: config)
+    }
+    
     @objc
     static func porthole(_ dictionary: [String: AnyObject],
                          colorMap: iTermColorMap) -> ObjCPorthole? {
@@ -28,11 +25,9 @@ class PortholeFactory: NSObject {
         }
         switch type {
         case .markdown:
-            if #available(macOS 12, *) {
-                return MarkdownPorthole.from(info, colorMap: colorMap)
-            } else {
-                return nil
-            }
+            return MarkdownPorthole.from(info, colorMap: colorMap)
+        case .json:
+            return JSONPorthole.from(info, colorMap: colorMap)
         }
     }
 }

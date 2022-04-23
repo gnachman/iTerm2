@@ -101,26 +101,16 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
         absRange.end.x = self.dataSource.width;
     }
     [self.selection.allSubSelections[0] setAbsRange:VT100GridAbsWindowedRangeMake(absRange, 0, self.dataSource.width)];
-    NSString *markdown = [self selectedText];
+    NSString *text = [self selectedText];
     NSString *pwd =
     [self.dataSource workingDirectoryOnLine:relativeRange.start.y];
     NSURL *baseDirectory = nil;
     if (pwd) {
         baseDirectory = [NSURL fileURLWithPath:pwd];
     }
-    id<Porthole> porthole =
-    [iTermPortholeFactory markdownPortholeWithMarkdown:markdown
-                                             colorMap:self.colorMap
-                                         baseDirectory:baseDirectory];
-    const CGFloat hmargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
-    const CGFloat desiredHeight = [porthole desiredHeightForWidth:self.bounds.size.width - hmargin * 2];
-    porthole.savedLines = [[NSArray sequenceWithRange:NSMakeRange(relativeRange.start.y, relativeRange.end.y - relativeRange.start.y + 1)] mapWithBlock:^id _Nullable(NSNumber * _Nonnull number) {
-        const int line =  number.intValue;
-        return [[self.dataSource screenCharArrayForLine:line] copy];
-    }];
-    [self.dataSource replaceRange:absRange
-                     withPorthole:porthole
-                         ofHeight:ceil(desiredHeight / self.lineHeight)];
+    [self replaceWithPortholeInRange:absRange
+                          havingText:text
+                       baseDirectory:baseDirectory];
     [self.selection clearSelection];
 }
 
