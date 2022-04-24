@@ -1,5 +1,5 @@
 //
-//  JSONPorthole.swift
+//  JSONPortholeRenderer.swift
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 4/22/22.
