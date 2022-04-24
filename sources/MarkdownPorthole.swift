@@ -14,28 +14,22 @@ class MarkdownPortholeRenderer: TextViewPortholeRenderer {
     var identifier: String { return Self.identifier }
     private let markdown: String
 
-    func render(colors: TextViewPorthole.SavedColors) -> NSAttributedString {
-        return Self.attributedString(markdown: markdown, colors: colors)
+    func render(visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString {
+        return Self.attributedString(markdown: markdown,
+                                     visualAttributes: visualAttributes)
     }
 
-    private static func attributedString(markdown: String, colors: TextViewPorthole.SavedColors) -> NSAttributedString {
+    private static func attributedString(markdown: String,
+                                         visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString {
         let md = SwiftyMarkdown(string: markdown)
         if let fixedPitchFontName = NSFont.userFixedPitchFont(ofSize: 12)?.fontName {
             md.code.fontName = fixedPitchFontName
         }
-        let textColor = colors.textColor
-        md.h1.color = textColor
-        md.h2.color = textColor
-        md.h3.color = textColor
-        md.h4.color = textColor
-        md.h5.color = textColor
-        md.h6.color = textColor
-        md.body.color = textColor
-        md.blockquotes.color = textColor
-        md.link.color = textColor
-        md.bold.color = textColor
-        md.italic.color = textColor
-        md.code.color = textColor
+        let textColor = visualAttributes.textColor
+        md.setFontNameForAllStyles(with: visualAttributes.font.fontName)
+        md.setFontSizeForAllStyles(with: visualAttributes.font.pointSize)
+        md.setFontColorForAllStyles(with: textColor)
+
         return md.attributedString()
     }
 

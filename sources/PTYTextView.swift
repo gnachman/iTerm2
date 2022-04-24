@@ -13,7 +13,10 @@ extension PTYTextView {
         guard dataSource != nil else {
             return
         }
-        let config = PortholeConfig(text: text, colorMap: colorMap, baseDirectory: baseDirectory)
+        let config = PortholeConfig(text: text,
+                                    colorMap: colorMap,
+                                    baseDirectory: baseDirectory,
+                                    font: font)
         let porthole = makePorthole(for: config)
         replace(range: absRange, withPorthole: porthole)
     }

@@ -14,7 +14,7 @@ class TextViewPorthole: NSObject {
     let textView: ExclusiveSelectionView
     let textStorage = NSTextStorage()
     private let layoutManager = NSLayoutManager()
-    private let textContainer: NSTextContainer
+    private let textContainer: TopRightAvoidingTextContainer
     private weak var _mark: PortholeMarkReading? = nil
     private let uuid: String
     // I have no idea why this is necessary but the NSView is invisible unless it's in a container
@@ -26,37 +26,40 @@ class TextViewPorthole: NSObject {
     let innerMargin = CGFloat(4)
     var renderer: TextViewPortholeRenderer {
         didSet {
-            textStorage.setAttributedString(renderer.render(colors: savedColors))
+            textStorage.setAttributedString(renderer.render(visualAttributes: savedVisualAttributes))
         }
     }
     var changeRendererCallback: ((String, TextViewPorthole) -> ())? = nil
 
-    struct SavedColors: Equatable {
+    struct VisualAttributes: Equatable {
         let textColor: NSColor
         let backgroundColor: NSColor
+        let font: NSFont
 
-        init(colorMap: iTermColorMapReading) {
+        init(colorMap: iTermColorMapReading, font: NSFont) {
             textColor = colorMap.color(forKey: kColorMapForeground) ?? NSColor.textColor
             backgroundColor = colorMap.color(forKey: kColorMapBackground) ?? NSColor.textBackgroundColor
+            self.font = font
         }
     }
-    private(set) var savedColors: SavedColors
+    private(set) var savedVisualAttributes: VisualAttributes
 
     init(_ config: PortholeConfig,
          renderer: TextViewPortholeRenderer,
          uuid: String? = nil) {
         let popup = SanePopUpButton()
         popup.controlSize = .mini
+        popup.font = NSFont.systemFont(ofSize: NSFont.systemFontSize(for: .mini))
         popup.autoenablesItems = true
         popup.menu?.addItem(withTitle: JSONPortholeRenderer.identifier, action: #selector(changeRenderer(_:)), keyEquivalent: "")
         popup.menu?.addItem(withTitle: MarkdownPortholeRenderer.identifier, action: #selector(changeRenderer(_:)), keyEquivalent: "")
         popup.sizeToFit()
         popup.selectItem(withTitle: renderer.identifier)
-        
+
         containerView = PortholeContainerView()
         self.uuid = uuid ?? UUID().uuidString
         self.config = config
-        savedColors = SavedColors(colorMap: config.colorMap)
+        savedVisualAttributes = VisualAttributes(colorMap: config.colorMap, font: config.font)
 
         let textViewFrame = CGRect(x: 0, y: 0, width: 800, height: 200)
         textStorage.addLayoutManager(layoutManager)
@@ -80,11 +83,11 @@ class TextViewPorthole: NSObject {
         containerView.wantsLayer = true
         textView.removeFromSuperview()
         containerView.addSubview(textView, positioned: .below, relativeTo: containerView.closeButton)
-        containerView.color = savedColors.textColor
-        containerView.backgroundColor = savedColors.backgroundColor
+        containerView.color = savedVisualAttributes.textColor
+        containerView.backgroundColor = savedVisualAttributes.backgroundColor
 
         self.renderer = renderer
-        textStorage.setAttributedString(renderer.render(colors: savedColors))
+        textStorage.setAttributedString(renderer.render(visualAttributes: savedVisualAttributes))
 
         super.init()
 
@@ -119,9 +122,14 @@ class TextViewPorthole: NSObject {
 
 extension TextViewPorthole: Porthole {
     func desiredHeight(forWidth width: CGFloat) -> CGFloat {
-        let textViewHeight = textStorage.boundingRect(
-            with: NSSize(width: width, height: 0),
-            options: [.usesLineFragmentOrigin]).height
+        // Set the width so the height calculation will be based on it. The height here is = arbitrary.
+        let textViewHeight = textContainer.withFakeSize(NSSize(width: width, height: .infinity)) { () -> CGFloat in 
+            // forces layout
+            _ = layoutManager.glyphRange(for: textContainer)
+            let rect = layoutManager.usedRect(for: textContainer)
+            return rect.height
+        }
+
         // The height is now frozen.
         textView.frame = NSRect(x: 0, y: 0, width: width, height: textViewHeight)
         return textViewHeight + (outerMargin + innerMargin) * 2
@@ -164,9 +172,10 @@ extension TextViewPorthole: Porthole {
     }
 
     static func config(fromDictionary dict: [String: AnyObject],
-                       colorMap: iTermColorMapReading) -> (config: PortholeConfig,
-                                                           rendererName: String,
-                                                           uuid: String)?  {
+                       colorMap: iTermColorMapReading,
+                       font: NSFont) -> (config: PortholeConfig,
+                                         rendererName: String,
+                                         uuid: String)?  {
         guard let uuid = dict[Self.uuidDictionaryKey],
               let text = dict[Self.textDictionaryKey],
               let renderer = dict[Self.rendererDictionaryKey] else {
@@ -183,7 +192,10 @@ extension TextViewPorthole: Porthole {
               let renderer = renderer as? String else {
             return nil
         }
-        return (config: PortholeConfig(text: text, colorMap: colorMap, baseDirectory: baseDirectory),
+        return (config: PortholeConfig(text: text,
+                                       colorMap: colorMap,
+                                       baseDirectory: baseDirectory,
+                                       font: font),
                 rendererName: renderer,
                 uuid: uuid)
     }
@@ -222,14 +234,15 @@ extension TextViewPorthole: NSTextViewDelegate {
     }
 
     func updateColors() {
-        let colors = SavedColors(colorMap: config.colorMap)
-        guard colors != savedColors else {
+        let visualAttributes = VisualAttributes(colorMap: config.colorMap,
+                                                font: config.font)
+        guard visualAttributes != savedVisualAttributes else {
             return
         }
-        savedColors = colors
-        containerView.color = colors.textColor
-        containerView.backgroundColor = colors.backgroundColor
-        textView.textStorage?.setAttributedString(renderer.render(colors: colors))
+        savedVisualAttributes = visualAttributes
+        containerView.color = visualAttributes.textColor
+        containerView.backgroundColor = visualAttributes.backgroundColor
+        textView.textStorage?.setAttributedString(renderer.render(visualAttributes: visualAttributes))
     }
 }
 
@@ -302,9 +315,17 @@ class TopRightAvoidingTextContainer: NSTextContainer {
         return rect
     }
 
+    func withFakeSize<T>(_ fakeSize: NSSize, closure: () throws -> T) rethrows -> T {
+        let saved = size
+        size = fakeSize
+        defer {
+            size = saved
+        }
+        return try closure()
+    }
 }
 
 protocol TextViewPortholeRenderer {
     var identifier: String { get }
-    func render(colors: TextViewPorthole.SavedColors) -> NSAttributedString
+    func render(visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString
 }

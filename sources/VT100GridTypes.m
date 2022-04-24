@@ -1,5 +1,7 @@
 #import "VT100GridTypes.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 const VT100GridCoord VT100GridCoordInvalid = {
     .x = INT_MIN,
     .y = INT_MIN
@@ -150,3 +152,4 @@ NSString *VT100GridAbsWindowedRangeDescription(VT100GridAbsWindowedRange range) 
 
 @end
 
+NS_ASSUME_NONNULL_END

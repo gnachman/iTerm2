@@ -12,14 +12,15 @@ class JSONPortholeRenderer: TextViewPortholeRenderer {
     var identifier: String { return Self.identifier }
     private let jsonObject: Any
 
-    func render(colors: TextViewPorthole.SavedColors) -> NSAttributedString {
-        return Self.attributedString(jsonObject: jsonObject, colors: colors)
+    func render(visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString {
+        return Self.attributedString(jsonObject: jsonObject, visualAttributes: visualAttributes)
     }
 
-    private static func attributedString(jsonObject: Any, colors: TextViewPorthole.SavedColors) -> NSAttributedString {
+    private static func attributedString(
+        jsonObject: Any,
+        visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString {
         return NSAttributedString.fromJSONObject(jsonObject,
-                                                 colors: JSONColors(textColor: colors.textColor,
-                                                                    backgroundColor: colors.backgroundColor),
+                                                 visualAttributes: visualAttributes,
                                                  indent: 0)
     }
 
@@ -57,135 +58,168 @@ class JSONPortholeRenderer: TextViewPortholeRenderer {
     }
 }
 
-fileprivate struct JSONColors {
-    let textColor: NSColor
-    let backgroundColor: NSColor
-}
-
 fileprivate extension NSAttributedString {
     static func fromJSONObject(_ object: Any,
-                               colors: JSONColors,
+                               visualAttributes: TextViewPorthole.VisualAttributes,
                                indent: Int) -> NSAttributedString {
         if let dict = object as? NSDictionary {
-            return fromJSONDictionary(dict, colors: colors, indent: indent)
+            return fromJSONDictionary(dict, visualAttributes: visualAttributes, indent: indent)
         } else if let array = object as? NSArray {
-            return fromJSONArray(array, colors: colors, indent: indent)
+            return fromJSONArray(array, visualAttributes: visualAttributes, indent: indent)
         } else if let string = object as? NSString {
-            return fromJSONString(string, colors: colors, indent: indent)
+            return fromJSONString(string, visualAttributes: visualAttributes, indent: indent)
         } else if let number = object as? NSNumber {
-            return fromJSONNumber(number, colors: colors, indent: indent)
+            return fromJSONNumber(number, visualAttributes: visualAttributes, indent: indent)
         } else if object as? NSNull != nil {
-            return fromJSONNull(colors, indent: indent)
+            return fromJSONNull(visualAttributes, indent: indent)
         } else if let error = object as? Error {
-            return fromJSONError(error, colors: colors, indent: indent)
+            return fromJSONError(error, visualAttributes: visualAttributes, indent: indent)
         } else {
             return NSAttributedString()
         }
     }
 
     private static func fromJSONDictionary(_ dict: NSDictionary,
-                                           colors: JSONColors,
+                                           visualAttributes: TextViewPorthole.VisualAttributes,
                                            indent: Int) -> NSAttributedString {
         let result = NSMutableAttributedString()
-        result.append(fromJSONSyntaxString("{", colors: colors))
+        result.append(fromJSONSyntaxString("{", visualAttributes: visualAttributes))
         var first = true
         for (key, value) in dict {
             if !first {
-                result.append(fromJSONSyntaxString(",", colors: colors))
+                result.append(fromJSONSyntaxString(",", visualAttributes: visualAttributes))
             }
             first = false
-            result.append(jsonNewline())
-            result.append(fromJSONindent(indent + 1))
-            result.append(fromJSONObject(key, colors: colors, indent: indent + 1))
-            result.append(fromJSONSyntaxString(": ", colors: colors))
-            result.append(fromJSONObject(value, colors: colors, indent: indent + 1))
+            result.append(jsonNewline(visualAttributes: visualAttributes))
+            result.append(fromJSONindent(indent + 1, visualAttributes: visualAttributes))
+            result.append(fromJSONObject(key,
+                                         visualAttributes: visualAttributes,
+                                         indent: indent + 1))
+            result.append(fromJSONSyntaxString(": ", visualAttributes: visualAttributes))
+            result.append(fromJSONObject(value,
+                                         visualAttributes: visualAttributes,
+                                         indent: indent + 1))
         }
-        result.append(jsonNewline())
-        result.append(fromJSONindent(indent))
-        result.append(fromJSONSyntaxString("}", colors: colors))
+        result.append(jsonNewline(visualAttributes: visualAttributes))
+        result.append(fromJSONindent(indent, visualAttributes: visualAttributes))
+        result.append(fromJSONSyntaxString("}", visualAttributes: visualAttributes))
         return result
     }
 
-    private static func fromJSONArray(_ array: NSArray, colors: JSONColors, indent: Int) -> NSAttributedString {
+    private static func fromJSONArray(_ array: NSArray,
+                                      visualAttributes: TextViewPorthole.VisualAttributes,
+                                      indent: Int) -> NSAttributedString {
         let result = NSMutableAttributedString()
-        result.append(fromJSONSyntaxString("[", colors: colors))
+        result.append(fromJSONSyntaxString("[", visualAttributes: visualAttributes))
         var first = true
         for element in array {
             if !first {
-                result.append(fromJSONSyntaxString(",", colors: colors))
+                result.append(fromJSONSyntaxString(",", visualAttributes: visualAttributes))
             }
             first = false
-            result.append(jsonNewline())
-            result.append(fromJSONindent(indent + 1))
-            result.append(fromJSONObject(element, colors: colors, indent: indent + 1))
+            result.append(jsonNewline(visualAttributes: visualAttributes))
+            result.append(fromJSONindent(indent + 1, visualAttributes: visualAttributes))
+            result.append(fromJSONObject(element,
+                                         visualAttributes: visualAttributes,
+                                         indent: indent + 1))
         }
-        result.append(jsonNewline())
-        result.append(fromJSONindent(indent))
-        result.append(fromJSONSyntaxString("]", colors: colors))
+        result.append(jsonNewline(visualAttributes: visualAttributes))
+        result.append(fromJSONindent(indent, visualAttributes: visualAttributes))
+        result.append(fromJSONSyntaxString("]", visualAttributes: visualAttributes))
         return result
     }
 
-    private static func fromJSONString(_ string: NSString, colors: JSONColors, indent: Int) -> NSAttributedString {
+    private static func fromJSONString(_ string: NSString,
+                                       visualAttributes: TextViewPorthole.VisualAttributes,
+                                       indent: Int) -> NSAttributedString {
         let color: NSColor
-        if colors.backgroundColor.isDark {
+        if visualAttributes.backgroundColor.isDark {
             color = NSColor(srgbRed: 0.4, green: 1.0, blue: 0.4, alpha: 1.0)
         } else {
             color = NSColor(srgbRed: 0.2, green: 0.7, blue: 0.2, alpha: 1.0)
         }
         let result = NSMutableAttributedString()
-        result.append(fromJSONSyntaxString("\"", colors: colors))
-        result.append(NSAttributedString(string: string as String,
-                                         attributes: jsonAttributes(color: color)))
-        result.append(fromJSONSyntaxString("\"", colors: colors))
+        result.append(fromJSONSyntaxString("\"", visualAttributes: visualAttributes))
+        result.append(NSAttributedString(
+            string: string as String,
+            attributes: jsonAttributes(visualAttributes: visualAttributes,
+                                       color: color)))
+        result.append(fromJSONSyntaxString("\"", visualAttributes: visualAttributes))
         return result
     }
 
-    private static func fromJSONNumber(_ number: NSNumber, colors: JSONColors, indent: Int) -> NSAttributedString {
+    private static func fromJSONNumber(_ number: NSNumber,
+                                       visualAttributes: TextViewPorthole.VisualAttributes,
+                                       indent: Int) -> NSAttributedString {
         let color: NSColor
-        if colors.backgroundColor.isDark {
+        if visualAttributes.backgroundColor.isDark {
             color = NSColor(srgbRed: 1.0, green: 0.4, blue: 0.4, alpha: 1.0)
         } else {
             color = NSColor(srgbRed: 0.7, green: 0.2, blue: 0.2, alpha: 1.0)
         }
-        return NSAttributedString(string: number.stringValue, attributes: jsonAttributes(color: color))
+        return NSAttributedString(string: number.stringValue,
+                                  attributes: jsonAttributes(visualAttributes: visualAttributes,
+                                                             color: color))
     }
 
-    private static func fromJSONError(_ error: Error, colors: JSONColors, indent: Int) -> NSAttributedString {
+    private static func fromJSONError(_ error: Error,
+                                      visualAttributes: TextViewPorthole.VisualAttributes,
+                                      indent: Int) -> NSAttributedString {
         let color: NSColor
-        if colors.backgroundColor.isDark {
+        if visualAttributes.backgroundColor.isDark {
             color = NSColor(srgbRed: 1.0, green: 0, blue: 0, alpha: 1.0)
         } else {
             color = NSColor(srgbRed: 0.7, green: 0, blue: 0, alpha: 1.0)
         }
-        return NSAttributedString(string: error.localizedDescription,
-                                  attributes: jsonAttributes(color: color))
+        var message = error.localizedDescription
+        if let debugDescription = (error as NSError).userInfo["NSDebugDescription"] as? String {
+            message += "\n"
+            message += debugDescription
+        }
+        return NSAttributedString(string: message,
+                                  attributes: jsonAttributes(visualAttributes: visualAttributes,
+                                                             color: color))
     }
 
-    private static func fromJSONNull(_ colors: JSONColors, indent: Int) -> NSAttributedString {
+    private static func fromJSONNull(_ visualAttributes: TextViewPorthole.VisualAttributes,
+                                     indent: Int) -> NSAttributedString {
         let color = NSColor.init(white: 0.5, alpha: 1)
-        return NSAttributedString(string: "null", attributes: jsonAttributes(color: color))
+        return NSAttributedString(string: "null",
+                                  attributes: jsonAttributes(visualAttributes: visualAttributes,
+                                                             color: color))
 
     }
 
-    private static func jsonNewline() -> NSAttributedString {
-        return NSAttributedString(string: "\n", attributes: basicJSONAttributes)
+    private static func jsonNewline(
+        visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString {
+        return NSAttributedString(string: "\n",
+                                  attributes: basicJSONAttributes(visualAttributes))
     }
 
-    private static var basicJSONAttributes: [NSAttributedString.Key: Any] {
-        return [.font: NSFont.userFixedPitchFont(ofSize: NSFont.systemFontSize)!]
+    private static func basicJSONAttributes(
+        _ visualAttributes: TextViewPorthole.VisualAttributes) -> [NSAttributedString.Key: Any] {
+        return [.font: visualAttributes.font]
     }
 
-    private static func jsonAttributes(color: NSColor) -> [NSAttributedString.Key: Any] {
-        return basicJSONAttributes.merging([.foregroundColor: color]) { _, _ in fatalError() }
+    private static func jsonAttributes(visualAttributes: TextViewPorthole.VisualAttributes,
+                                       color: NSColor) -> [NSAttributedString.Key: Any] {
+        return basicJSONAttributes(
+            visualAttributes).merging([.foregroundColor: color]) { _, _ in fatalError() }
     }
     
-    private static func fromJSONindent(_ indent: Int) -> NSAttributedString {
-        return NSAttributedString(string: String(repeating: " ", count: indent * 4),
-                                  attributes: basicJSONAttributes)
+    private static func fromJSONindent(
+        _ indent: Int,
+        visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString {
+            return NSAttributedString(string: String(repeating: " ", count: indent * 4),
+                                      attributes: basicJSONAttributes(visualAttributes))
     }
 
-    private static func fromJSONSyntaxString(_ string: String, colors: JSONColors) -> NSAttributedString {
-        return NSAttributedString(string: string,
-                                  attributes: jsonAttributes(color: colors.textColor.withAlphaComponent(0.75)))
+    private static func fromJSONSyntaxString(
+        _ string: String,
+        visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString {
+            return NSAttributedString(string: string,
+                                      attributes: jsonAttributes(
+                                        visualAttributes: visualAttributes,
+                                        color: visualAttributes.textColor.withAlphaComponent(0.75)))
     }
 }

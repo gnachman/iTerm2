@@ -23,14 +23,16 @@ class PortholeFactory: NSObject {
     
     @objc
     static func porthole(_ dictionary: [String: AnyObject],
-                         colorMap: iTermColorMap) -> ObjCPorthole? {
+                         colorMap: iTermColorMap,
+                         font: NSFont) -> ObjCPorthole? {
         guard let (type, info) = PortholeType.unwrap(dictionary: dictionary) else {
             return nil
         }
         switch type {
         case .text:
             guard let (config, rendererName, _) = TextViewPorthole.config(fromDictionary: info,
-                                                                          colorMap: colorMap) else {
+                                                                          colorMap: colorMap,
+                                                                          font: font) else {
                 return nil
             }
             guard let renderer = textRenderer(rendererName, text: config.text) else {
