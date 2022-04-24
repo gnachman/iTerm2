@@ -95,22 +95,8 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 - (IBAction)renderSelection:(id)sender {
     VT100GridAbsCoordRange absRange = self.selection.spanningAbsRange;
-    VT100GridCoordRange relativeRange = VT100GridCoordRangeFromAbsCoordRange(absRange, self.dataSource.totalScrollbackOverflow);
-    absRange.start.x = 0;
-    if (absRange.end.x > 0) {
-        absRange.end.x = self.dataSource.width;
-    }
     [self.selection.allSubSelections[0] setAbsRange:VT100GridAbsWindowedRangeMake(absRange, 0, self.dataSource.width)];
-    NSString *text = [self selectedText];
-    NSString *pwd =
-    [self.dataSource workingDirectoryOnLine:relativeRange.start.y];
-    NSURL *baseDirectory = nil;
-    if (pwd) {
-        baseDirectory = [NSURL fileURLWithPath:pwd];
-    }
-    [self replaceWithPortholeInRange:absRange
-                          havingText:text
-                       baseDirectory:baseDirectory];
+    [self renderRange:absRange mimeType:nil];
     [self.selection clearSelection];
 }
 

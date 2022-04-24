@@ -7,16 +7,71 @@
 
 import Foundation
 
+extension VT100GridAbsCoordRange {
+    func relativeRange(overflow: Int64) -> VT100GridCoordRange {
+        return VT100GridCoordRangeFromAbsCoordRange(self, overflow)
+    }
+}
+
+extension VT100GridCoordRange {
+    var windowedWithDefaultWindow: VT100GridWindowedRange {
+        return VT100GridWindowedRangeMake(self, 0, 0)
+    }
+}
+
 extension PTYTextView {
-    @objc(replaceWithPortholeInRange:havingText:baseDirectory:)
-    func replaceWithPorthole(inRange absRange: VT100GridAbsCoordRange, text: String, baseDirectory: URL?) {
+    @objc(renderRange:mimeType:)
+    func render(range originalRange: VT100GridAbsCoordRange,
+                mimeType: String?) {
+        guard let dataSource = dataSource else {
+            return
+        }
+        var absRange = originalRange
+        let overflow = dataSource.totalScrollbackOverflow()
+        let width = dataSource.width()
+        let relativeRange = absRange.relativeRange(overflow: overflow)
+        absRange.start.x = 0
+        if absRange.end.x > 0 {
+            absRange.end.x = width
+        }
+        let text = self.text(inRange: absRange.relativeRange(overflow: overflow))
+        let pwd = dataSource.workingDirectory(onLine: relativeRange.start.y)
+        let baseDirectory = pwd.map { URL(fileURLWithPath: $0) }
+        replaceWithPorthole(inRange: absRange,
+                            text: text,
+                            baseDirectory: baseDirectory,
+                            mimeType: mimeType)
+    }
+
+    func text(inRange range: VT100GridCoordRange) -> String {
+        let extractor = iTermTextExtractor(dataSource: dataSource)
+        let windowedRange = range.windowedWithDefaultWindow
+        let text = extractor.content(in: windowedRange,
+                                     attributeProvider: nil,
+                                     nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,
+                                     pad: false,
+                                     includeLastNewline: false,
+                                     trimTrailingWhitespace: false,
+                                     cappedAtSize: -1,
+                                     truncateTail: false,
+                                     continuationChars: nil,
+                                     coords: nil) as! String
+        return text
+    }
+
+    @objc(replaceWithPortholeInRange:havingText:baseDirectory:mimeType:)
+    func replaceWithPorthole(inRange absRange: VT100GridAbsCoordRange,
+                             text: String,
+                             baseDirectory: URL?,
+                             mimeType: String?) {
         guard dataSource != nil else {
             return
         }
         let config = PortholeConfig(text: text,
                                     colorMap: colorMap,
                                     baseDirectory: baseDirectory,
-                                    font: font)
+                                    font: font,
+                                    mimeType: mimeType)
         let porthole = makePorthole(for: config)
         replace(range: absRange, withPorthole: porthole)
     }

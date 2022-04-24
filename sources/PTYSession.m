@@ -13411,6 +13411,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_cadenceController didHandleInputWithThroughput:_estimatedThroughput];
 }
 
+- (void)screenConvertAbsoluteRange:(VT100GridAbsCoordRange)range
+              toTextDocumentOfType:(NSString *)mimeType {
+    [_textview renderRange:range mimeType:mimeType];
+}
+
 - (VT100Screen *)popupVT100Screen {
     return _screen;
 }
