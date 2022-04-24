@@ -16,6 +16,7 @@ import Foundation
         setSelectedRange(NSRange(location: 0, length: 0))
         removingSelection = false
     }
+
     override func setSelectedRanges(_ ranges: [NSValue],
                                     affinity: NSSelectionAffinity,
                                     stillSelecting stillSelectingFlag: Bool) {
