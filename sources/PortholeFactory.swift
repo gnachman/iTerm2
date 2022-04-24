@@ -20,7 +20,13 @@ class PortholeFactory: NSObject {
         }
         return TextViewPorthole(config, renderer: renderer)
     }
-    
+
+    // Will create a porthole with an error rather than fail to create a porthole.
+    static func forcedJSONPorthole(config: PortholeConfig) -> Porthole {
+        let renderer = JSONPortholeRenderer.forced(config.text)
+        return TextViewPorthole(config, renderer: renderer)
+    }
+
     @objc
     static func porthole(_ dictionary: [String: AnyObject],
                          colorMap: iTermColorMap,

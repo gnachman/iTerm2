@@ -88,13 +88,26 @@ extension PTYTextView {
     }
 
     private func makePorthole(for config: PortholeConfig) -> Porthole {
-        if let jsonPorthole = PortholeFactory.jsonPorthole(config: config) {
-            return configurePorthole(jsonPorthole)
+        switch config.mimeType {
+        case "text/markdown":
+            return configuredPorthole(PortholeFactory.markdownPorthole(config: config))
+
+        case "application/json":
+            return configuredPorthole(PortholeFactory.forcedJSONPorthole(config: config))
+
+        default:
+            return makePortholeInferringType(for: config)
         }
-        return configurePorthole(PortholeFactory.markdownPorthole(config: config))
     }
 
-    private func configurePorthole(_ porthole: Porthole) -> Porthole {
+    private func makePortholeInferringType(for config: PortholeConfig) -> Porthole {
+        if let jsonPorthole = PortholeFactory.jsonPorthole(config: config) {
+            return configuredPorthole(jsonPorthole)
+        }
+        return configuredPorthole(PortholeFactory.markdownPorthole(config: config))
+    }
+
+    private func configuredPorthole(_ porthole: Porthole) -> Porthole {
         if let textPorthole = porthole as? TextViewPorthole {
             textPorthole.changeRendererCallback = { [weak self] identifier, porthole in
                 guard let self = self else {

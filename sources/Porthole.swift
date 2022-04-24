@@ -73,6 +73,7 @@ struct PortholeConfig {
     var colorMap: iTermColorMapReading
     var baseDirectory: URL?
     var font: NSFont
+    var mimeType: String?
 }
 
 protocol PortholeDelegate: AnyObject {

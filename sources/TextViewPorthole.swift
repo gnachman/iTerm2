@@ -157,6 +157,7 @@ extension TextViewPorthole: Porthole {
     static let baseDirectoryKey = "baseDirectory"
     static let textDictionaryKey = "text"
     static let rendererDictionaryKey = "renderer"
+    static let mimeTypeKey = "mimeType"
 
     var dictionaryValue: [String: AnyObject] {
         let dir: NSString?
@@ -168,7 +169,8 @@ extension TextViewPorthole: Porthole {
         return wrap(dictionary: [Self.uuidDictionaryKey: uuid as NSString,
                                  Self.textDictionaryKey: config.text as NSString,
                                  Self.rendererDictionaryKey: renderer.identifier as NSString,
-                                 Self.baseDirectoryKey: dir].compactMapValues { $0 })
+                                 Self.baseDirectoryKey: dir,
+                                 Self.mimeTypeKey: config.mimeType as NSString?].compactMapValues { $0 })
     }
 
     static func config(fromDictionary dict: [String: AnyObject],
@@ -192,10 +194,17 @@ extension TextViewPorthole: Porthole {
               let renderer = renderer as? String else {
             return nil
         }
+        let mimeType: String?
+        if let unsafeMimeType = dict[Self.mimeTypeKey], let justMimeType = unsafeMimeType as? String {
+            mimeType = justMimeType
+        } else {
+            mimeType = nil
+        }
         return (config: PortholeConfig(text: text,
                                        colorMap: colorMap,
                                        baseDirectory: baseDirectory,
-                                       font: font),
+                                       font: font,
+                                       mimeType: mimeType),
                 rendererName: renderer,
                 uuid: uuid)
     }
