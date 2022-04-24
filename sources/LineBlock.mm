@@ -2225,7 +2225,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
     if (cll_entries == 0) {
         return NO;
     }
-    return cumulative_line_lengths[first_entry] < cumulative_line_lengths[cll_entries - 1];
+    return cumulative_line_lengths[cll_entries - 1] > start_offset;
 }
 
 - (void)addObserver:(id<iTermLineBlockObserver>)observer {

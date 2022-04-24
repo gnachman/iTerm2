@@ -204,6 +204,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         [mutableState replaceMark:mark.progenitor withLines:lines];
     }];
 }
+
+- (void)changeHeightOfMark:(id<iTermMark>)mark to:(int)newHeight {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState changeHeightOfMark:mark.progenitor to:newHeight];
+    }];
+}
+
 - (void)resetDirty {
     if (_sharedStateCount && !_forceMergeGrids && _state.currentGrid.isAnyCharDirty) {
         // We're resetting dirty in a grid shared by mutable & immutable state. That means when sync
@@ -1144,6 +1151,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                            checkTriggers:(VT100ScreenTriggerCheckType)checkTriggers
                            resetOverflow:(BOOL)resetOverflow
                             mutableState:(VT100ScreenMutableState *)mutableState {
+    if (_sharedStateCount > 0) {
+        DLog(@"Short-circuiting sync because there is shared state between threads.\n%@", [NSThread callStackSymbols]);
+        return (VT100SyncResult) {
+            .overflow = [mutableState scrollbackOverflow] > 0,
+            .haveScrolled = _state.currentGrid.haveScrolled
+        };
+    }
     DLog(@"Begin %@", self);
     [mutableState willSynchronize];
     switch (checkTriggers) {

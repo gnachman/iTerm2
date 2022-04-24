@@ -31,9 +31,40 @@ extension PTYTextView {
 
     private func makePorthole(for config: PortholeConfig) -> Porthole {
         if let jsonPorthole = PortholeFactory.jsonPorthole(config: config) {
-            return jsonPorthole
+            return configurePorthole(jsonPorthole)
         }
-        return PortholeFactory.markdownPorthole(config: config)
+        return configurePorthole(PortholeFactory.markdownPorthole(config: config))
+    }
+
+    private func configurePorthole(_ porthole: Porthole) -> Porthole {
+        if let textPorthole = porthole as? TextViewPorthole {
+            textPorthole.changeRendererCallback = { [weak self] identifier, porthole in
+                guard let self = self else {
+                    return
+                }
+                let renderer: TextViewPortholeRenderer
+                if identifier == JSONPortholeRenderer.identifier {
+                    renderer = JSONPortholeRenderer.forced(porthole.config.text)
+                } else if identifier == MarkdownPortholeRenderer.identifier {
+                    renderer = MarkdownPortholeRenderer(porthole.config.text)
+                } else {
+                    return
+                }
+                self.changeTextPortholeRenderer(porthole, renderer)
+            }
+        }
+        return porthole
+    }
+
+    private func changeTextPortholeRenderer(_ porthole: TextViewPorthole,
+                                            _ renderer: TextViewPortholeRenderer) {
+        guard let dataSource = dataSource else {
+            return
+        }
+        porthole.renderer = renderer
+        let hmargin = CGFloat(iTermPreferences.int(forKey: kPreferenceKeySideMargins))
+        let desiredHeight = porthole.desiredHeight(forWidth: bounds.width - hmargin * 2)
+        dataSource.changeHeight(of: porthole.mark, to: Int32(ceil(desiredHeight / lineHeight)))
     }
 
     @objc
@@ -41,7 +72,9 @@ extension PTYTextView {
         let porthole = objcPorthole as! Porthole
         portholes.add(porthole)
         porthole.delegate = self
-        superview?.addSubview(porthole.view)
+        // I'd rather add it to TextViewWrapper but doing so somehow causes TVW to be overreleased
+        // and I can't figure out why.
+        addSubview(porthole.view)
         updatePortholeFrame(porthole, force: true)
         NotificationCenter.default.post(name: NSNotification.Name.iTermPortholesDidChange, object: nil)
         setNeedsDisplay(true)
@@ -67,9 +100,11 @@ extension PTYTextView {
 
     @objc
     func updatePortholeFrames() {
+        DLog("Begin updatePortholeFrames")
         for porthole in portholes {
             updatePortholeFrame(porthole as! Porthole, force: false)
         }
+        DLog("End updatePortholeFrames")
     }
 
     private func range(porthole: Porthole) -> VT100GridCoordRange? {
@@ -108,8 +143,10 @@ extension PTYTextView {
         if lastPortholeWidth == cellWidth && !force {
             // Calculating porthole size is very slow because NSView is a catastrophe so avoid doing
             // it if the width is unchanged.
+            let y = CGFloat(lineRange.lowerBound) * lineHeight + vmargin + innerMargin
+            DLog("y=\(y) range=\(VT100GridCoordRangeDescription(gridCoordRange )) overflow=\(dataSource.scrollbackOverflow())")
             porthole.view.frame = NSRect(x: hmargin,
-                                         y: CGFloat(lineRange.lowerBound) * lineHeight + vmargin + innerMargin,
+                                         y: y,
                                          width: bounds.width - hmargin * 2,
                                          height: CGFloat(lineRange.count) * lineHeight - innerMargin * 2)
         } else {

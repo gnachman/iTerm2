@@ -2447,7 +2447,7 @@
 		A690F7051B424F15009F76D8 /* OpenDirectory.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */; };
 		A691693B2813458F00083F99 /* PortholeFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69169392813457900083F99 /* PortholeFactory.swift */; };
 		A691693D281345AF00083F99 /* SaneButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691693C281345AF00083F99 /* SaneButton.swift */; };
-		A691693F281345D000083F99 /* BasePortholeContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691693E281345D000083F99 /* BasePortholeContainerView.swift */; };
+		A691693F281345D000083F99 /* PortholeContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691693E281345D000083F99 /* PortholeContainerView.swift */; };
 		A6916941281346A400083F99 /* ExclusiveSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6916940281346A400083F99 /* ExclusiveSelectionView.swift */; };
 		A691694628136A5D00083F99 /* JSONPorthole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691694528136A5D00083F99 /* JSONPorthole.swift */; };
 		A691694828136A7100083F99 /* TextViewPorthole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691694728136A7100083F99 /* TextViewPorthole.swift */; };
@@ -6157,7 +6157,7 @@
 		A690F7001B424C55009F76D8 /* Media.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Media.xcassets; sourceTree = "<group>"; };
 		A69169392813457900083F99 /* PortholeFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortholeFactory.swift; sourceTree = "<group>"; };
 		A691693C281345AF00083F99 /* SaneButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaneButton.swift; sourceTree = "<group>"; };
-		A691693E281345D000083F99 /* BasePortholeContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasePortholeContainerView.swift; sourceTree = "<group>"; };
+		A691693E281345D000083F99 /* PortholeContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortholeContainerView.swift; sourceTree = "<group>"; };
 		A6916940281346A400083F99 /* ExclusiveSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveSelectionView.swift; sourceTree = "<group>"; };
 		A691694528136A5D00083F99 /* JSONPorthole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONPorthole.swift; sourceTree = "<group>"; };
 		A691694728136A7100083F99 /* TextViewPorthole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextViewPorthole.swift; sourceTree = "<group>"; };
@@ -9441,7 +9441,7 @@
 				A6822747280786A5005DF0B4 /* Porthole.swift */,
 				A682274A280786DE005DF0B4 /* MarkdownPorthole.swift */,
 				A69169392813457900083F99 /* PortholeFactory.swift */,
-				A691693E281345D000083F99 /* BasePortholeContainerView.swift */,
+				A691693E281345D000083F99 /* PortholeContainerView.swift */,
 				A691694528136A5D00083F99 /* JSONPorthole.swift */,
 				A691694728136A7100083F99 /* TextViewPorthole.swift */,
 			);
@@ -14559,7 +14559,7 @@
 				A614F2671FE4B16400EEE919 /* iTermCharacterParts.m in Sources */,
 				A6D5724127BCDAA1002E6E9F /* CharacterAttributes.swift in Sources */,
 				A6A2D6D624331F0600A4DF5B /* iTermHamburgerButton.m in Sources */,
-				A691693F281345D000083F99 /* BasePortholeContainerView.swift in Sources */,
+				A691693F281345D000083F99 /* PortholeContainerView.swift in Sources */,
 				A6BF035521E179380097DA86 /* iTermVariableHistory.m in Sources */,
 				A6CD8A442234DB83007C5B39 /* iTermStatusBarPlaceholderComponent.m in Sources */,
 				A6B4140A211A5AEA00D28207 /* iTermStandardWindowButtonsView.m in Sources */,

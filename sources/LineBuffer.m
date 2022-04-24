@@ -90,12 +90,20 @@ static const NSInteger kUnicodeVersion = 9;
 
 // Append a block
 - (LineBlock *)_addBlockOfSize:(int)size {
-    _dirty = YES;
+    self.dirty = YES;
     LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];
     block.mayHaveDoubleWidthCharacter = self.mayHaveDoubleWidthCharacter;
     [_lineBlocks addBlock:block];
     return block;
 }
+
+// - (void)setDirty:(BOOL)dirty {
+//     DLog(@"setDirty:%@ -> %@\n%@", @(_dirty), @(dirty), [NSThread callStackSymbols]);
+//     _dirty = dirty;
+//     if (dirty) {
+//         DLog(@"%@", [self debugString]);
+//     }
+// }
 
 - (instancetype)init {
     // I picked 8k because it's a multiple of the page size and should hold about 100-200 lines
@@ -184,14 +192,14 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (void)setMaxLines:(int)maxLines {
-    _dirty = YES;
+    self.dirty = YES;
     max_lines = maxLines;
     num_wrapped_lines_width = -1;
 }
 
 
 - (int)dropExcessLinesWithWidth:(int)width {
-    _dirty = YES;
+    self.dirty = YES;
     int nl = RawNumLines(self, width);
     int totalDropped = 0;
     int totalRawLinesDropped = 0;
@@ -333,7 +341,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
              width:(int)width
           metadata:(iTermImmutableMetadata)metadataObj
       continuation:(screen_char_t)continuation {
-    _dirty = YES;
+    self.dirty = YES;
 #ifdef LOG_MUTATIONS
     NSLog(@"Append: %@\n", ScreenCharArrayToStringDebug(buffer, length));
 #endif
@@ -514,7 +522,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (int)appendContentsOfLineBuffer:(LineBuffer *)other width:(int)width includingCursor:(BOOL)cursor {
-    _dirty = YES;
+    self.dirty = YES;
     int offset = 0;
     if (cursor) {
         offset = TotalNumberOfRawLines(self);
@@ -628,7 +636,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (void)removeLastRawLine {
-    _dirty = YES;
+    self.dirty = YES;
     [_lineBlocks.lastBlock removeLastRawLine];
     if (_lineBlocks.lastBlock.numRawLines == 0 && _lineBlocks.count > 1) {
         [_lineBlocks removeLastBlock];
@@ -639,7 +647,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
 - (void)removeLastWrappedLines:(int)numberOfLinesToRemove
                          width:(int)width {
-    _dirty = YES;
+    self.dirty = YES;
     // Invalidate the cache
     num_wrapped_lines_width = -1;
 
@@ -687,7 +695,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if ([self numLinesWithWidth:width] == 0) {
         return NO;
     }
-    _dirty = YES;
+    self.dirty = YES;
     num_wrapped_lines_width = -1;
 
     LineBlock* block = _lineBlocks.lastBlock;
@@ -734,7 +742,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (void)setCursor:(int)x {
-    _dirty = YES;
+    self.dirty = YES;
     LineBlock *block = _lineBlocks.lastBlock;
     if ([block hasPartial]) {
         int last_line_length = [block getRawLineLength: [block numEntries]-1];
@@ -1469,17 +1477,17 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 - (void)beginResizing {
     assert(!_lineBlocks.resizing);
     _lineBlocks.resizing = YES;
-    _dirty = YES;
+    self.dirty = YES;
 }
 
 - (void)endResizing {
     assert(_lineBlocks.resizing);
     _lineBlocks.resizing = NO;
-    _dirty = YES;
+    self.dirty = YES;
 }
 
 - (void)setPartial:(BOOL)partial {
-    _dirty = YES;
+    self.dirty = YES;
     [_lineBlocks.lastBlock setPartial:partial];
 }
 
@@ -1522,7 +1530,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (void)seal {
-    _dirty = YES;
+    self.dirty = YES;
     if (_lineBlocks.lastBlock.isEmpty) {
         return;
     }
@@ -1530,6 +1538,11 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (void)mergeFrom:(LineBuffer *)source {
+//  DLog(@"Begin merge");
+//  DLog(@"self:");
+//  DLog(@"%@", [self debugString]);
+//  DLog(@"source:");
+//  DLog(@"%@", [source debugString]);
     // State used when debugging
     NSSet<NSNumber *> *commonWidths = nil;
     NSString *before = nil;
@@ -1602,6 +1615,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     }
 
     if (gDebugLogging) {
+ //       DLog(@"Result:\n%@", [self debugString]);
         stage4 = [_lineBlocks dumpWidths:commonWidths];
 
         if (![[_lineBlocks dumpWidths:commonWidths] isEqual:[source->_lineBlocks dumpWidths:commonWidths]]) {

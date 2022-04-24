@@ -1,5 +1,5 @@
 //
-//  BasePortholeContainerView.swift
+//  PortholeContainerView.swift
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 4/22/22.
@@ -7,11 +7,21 @@
 
 import Foundation
 
-class BasePortholeContainerView: NSView {
+class PortholeContainerView: NSView {
     static let margin = CGFloat(4.0)
     var closeCallback: (() -> ())? = nil
     let closeButton = SaneButton()
-    
+    var accessory: NSView? = nil {
+        willSet {
+            accessory?.removeFromSuperview()
+        }
+        didSet {
+            if let accessory = accessory {
+                addSubview(accessory)
+            }
+        }
+    }
+
     var color = NSColor.textColor {
         didSet {
             layer?.borderColor = color.withAlphaComponent(0.5).cgColor
@@ -97,6 +107,9 @@ class BasePortholeContainerView: NSView {
     func layoutSubviews() -> Bool {
         closeButton.sizeToFit()
         let ok = layoutCloseButton()
+        if let accessory = accessory {
+            layoutAccessory(accessory)
+        }
         layoutChild()
         return ok
     }
@@ -122,9 +135,19 @@ class BasePortholeContainerView: NSView {
         frame.origin.y = Self.margin
         subviews[0].frame = frame
     }
+
+    private func layoutAccessory(_ accessory: NSView) {
+        let margin = CGFloat(4)
+        var frame = accessory.frame
+        frame.origin.x = closeButton.frame.minX - frame.width - margin
+        let topMargin = CGFloat(2)
+        let dh = max(0, closeButton.frame.height - accessory.frame.height)
+        frame.origin.y = bounds.height - accessory.frame.height - topMargin + dh / 2
+        accessory.frame = frame
+    }
 }
 
-extension BasePortholeContainerView: iTermMetalDisabling {
+extension PortholeContainerView: iTermMetalDisabling {
     func viewDisablesMetal() -> Bool {
         return true
     }

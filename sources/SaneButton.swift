@@ -36,3 +36,29 @@ class SaneButton: NSButton {
     }
 }
 
+
+class SanePopUpButton: NSPopUpButton {
+    private var trackingArea: NSTrackingArea? = nil
+
+    override func mouseMoved(with event: NSEvent) {
+        NSCursor.arrow.set()
+    }
+
+    override func updateTrackingAreas() {
+        if let trackingArea = trackingArea {
+            removeTrackingArea(trackingArea)
+        }
+        let area = NSTrackingArea(rect: bounds,
+                                  options: [.mouseMoved, .activeAlways],
+                                  owner: self,
+                                  userInfo: nil)
+        addTrackingArea(area)
+        trackingArea = area
+    }
+
+    deinit {
+        if let trackingArea = trackingArea {
+            removeTrackingArea(trackingArea)
+        }
+    }
+}

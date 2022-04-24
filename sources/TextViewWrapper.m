@@ -75,7 +75,7 @@
 }
 
 - (BOOL)haveMetalDisablingChildren {
-    for (NSView *view in self.subviews) {
+    for (NSView *view in [self.subviews arrayByAddingObjectsFromArray:child_.subviews ?: @[]]) {
         if ([view conformsToProtocol:@protocol(iTermMetalDisabling)]) {
             return YES;
         }

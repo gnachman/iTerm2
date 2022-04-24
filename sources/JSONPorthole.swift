@@ -35,6 +35,15 @@ class JSONPortholeRenderer: TextViewPortholeRenderer {
         return JSONPortholeRenderer(object: obj)
     }
 
+    static func forced(_ text: String) -> JSONPortholeRenderer {
+        do {
+            let obj = try parse(text)
+            return JSONPortholeRenderer(object: obj)
+        } catch {
+            return JSONPortholeRenderer(object: error)
+        }
+    }
+
     init(object: Any) {
         jsonObject = object
     }
@@ -67,6 +76,8 @@ fileprivate extension NSAttributedString {
             return fromJSONNumber(number, colors: colors, indent: indent)
         } else if object as? NSNull != nil {
             return fromJSONNull(colors, indent: indent)
+        } else if let error = object as? Error {
+            return fromJSONError(error, colors: colors, indent: indent)
         } else {
             return NSAttributedString()
         }
@@ -137,6 +148,17 @@ fileprivate extension NSAttributedString {
             color = NSColor(srgbRed: 0.7, green: 0.2, blue: 0.2, alpha: 1.0)
         }
         return NSAttributedString(string: number.stringValue, attributes: jsonAttributes(color: color))
+    }
+
+    private static func fromJSONError(_ error: Error, colors: JSONColors, indent: Int) -> NSAttributedString {
+        let color: NSColor
+        if colors.backgroundColor.isDark {
+            color = NSColor(srgbRed: 1.0, green: 0, blue: 0, alpha: 1.0)
+        } else {
+            color = NSColor(srgbRed: 0.7, green: 0, blue: 0, alpha: 1.0)
+        }
+        return NSAttributedString(string: error.localizedDescription,
+                                  attributes: jsonAttributes(color: color))
     }
 
     private static func fromJSONNull(_ colors: JSONColors, indent: Int) -> NSAttributedString {

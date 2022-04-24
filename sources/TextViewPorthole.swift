@@ -19,12 +19,17 @@ class TextViewPorthole: NSObject {
     private let uuid: String
     // I have no idea why this is necessary but the NSView is invisible unless it's in a container
     // view. ILY, AppKit.
-    private let containerView: BasePortholeContainerView
+    private let containerView: PortholeContainerView
     weak var delegate: PortholeDelegate?
     var savedLines: [ScreenCharArray] = []
-    let outerMargin = BasePortholeContainerView.margin
+    let outerMargin = PortholeContainerView.margin
     let innerMargin = CGFloat(4)
-    private var renderer: TextViewPortholeRenderer
+    var renderer: TextViewPortholeRenderer {
+        didSet {
+            textStorage.setAttributedString(renderer.render(colors: savedColors))
+        }
+    }
+    var changeRendererCallback: ((String, TextViewPorthole) -> ())? = nil
 
     struct SavedColors: Equatable {
         let textColor: NSColor
@@ -40,7 +45,15 @@ class TextViewPorthole: NSObject {
     init(_ config: PortholeConfig,
          renderer: TextViewPortholeRenderer,
          uuid: String? = nil) {
-        containerView = BasePortholeContainerView()
+        let popup = SanePopUpButton()
+        popup.controlSize = .mini
+        popup.autoenablesItems = true
+        popup.menu?.addItem(withTitle: JSONPortholeRenderer.identifier, action: #selector(changeRenderer(_:)), keyEquivalent: "")
+        popup.menu?.addItem(withTitle: MarkdownPortholeRenderer.identifier, action: #selector(changeRenderer(_:)), keyEquivalent: "")
+        popup.sizeToFit()
+        popup.selectItem(withTitle: renderer.identifier)
+        
+        containerView = PortholeContainerView()
         self.uuid = uuid ?? UUID().uuidString
         self.config = config
         savedColors = SavedColors(colorMap: config.colorMap)
@@ -48,7 +61,8 @@ class TextViewPorthole: NSObject {
         let textViewFrame = CGRect(x: 0, y: 0, width: 800, height: 200)
         textStorage.addLayoutManager(layoutManager)
         textContainer = TopRightAvoidingTextContainer(containerSize: textViewFrame.size,
-                                                      cutOutSize: NSSize(width: 18, height: 18))
+                                                      cutOutSize: NSSize(width: 18 + popup.frame.width + 4,
+                                                                         height: max(popup.frame.height + 2, 18)))
         layoutManager.addTextContainer(textContainer)
         textView = ExclusiveSelectionView(frame: textViewFrame, textContainer: textContainer)
         textView.textContainerInset = NSSize(width: 0, height: 0)
@@ -86,10 +100,20 @@ class TextViewPorthole: NSObject {
                 self.delegate?.portholeRemove(self)
             }
         }
+        containerView.accessory = popup
+        _ = containerView.layoutSubviews()
+
+        for item in popup.menu?.items ?? [] {
+            item.target = self
+        }
     }
 
     func fittingSize(for width: CGFloat) -> NSSize {
         return NSSize(width: width, height: self.desiredHeight(forWidth: width))
+    }
+
+    @objc func changeRenderer(_ sender: Any?) {
+        changeRendererCallback?((sender as! NSMenuItem).title, self)
     }
 }
 

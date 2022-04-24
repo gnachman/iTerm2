@@ -903,8 +903,12 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 }
 
 - (void)setFrameSize:(NSSize)newSize {
+    DLog(@"Set frame size to %@ from\n%@",
+          NSStringFromSize(newSize),
+          [NSThread callStackSymbols]);
     [super setFrameSize:newSize];
     [self recomputeBadgeLabel];
+    [self updatePortholeFrames];
 }
 
 #pragma mark Set Needs Display Helpers

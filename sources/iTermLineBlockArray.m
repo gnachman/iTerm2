@@ -576,6 +576,7 @@
 
     if (remainderPtr) {
         *remainderPtr = position - [_rawSpaceCache sumOfValuesInRange:NSMakeRange(0, index)];
+        assert(*remainderPtr >= 0);
     }
     if (blockOffsetPtr) {
         *blockOffsetPtr = [[_numLinesCaches numLinesCacheForWidth:width] sumOfValuesInRange:NSMakeRange(0, index)] - dy;
@@ -635,6 +636,7 @@
         }
         if (found) {
             // It is in this block.
+            assert(p >= 0);
             if (remainderPtr) {
                 *remainderPtr = p;
             }

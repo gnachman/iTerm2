@@ -142,6 +142,7 @@
         withPorthole:(id<Porthole>)porthole
             ofHeight:(int)numLines;
 - (void)replaceMark:(id<iTermMark>)mark withLines:(NSArray<ScreenCharArray *> *)lines;
+- (void)changeHeightOfMark:(id<iTermMark>)mark to:(int)newHeight;
 
 - (VT100GridCoordRange)coordRangeOfPorthole:(id<Porthole>)porthole;
 

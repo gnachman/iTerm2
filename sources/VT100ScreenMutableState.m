@@ -3079,6 +3079,29 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)changeHeightOfMark:(iTermMark *)mark to:(int)newHeight {
+    VT100GridAbsCoordRange range = [self absCoordRangeForInterval:mark.entry.interval];
+    if (range.end.y < self.totalScrollbackOverflow) {
+        return;
+    }
+    VT100GridAbsCoordRange replacementAbsRange = range;
+    range.start.y = MAX(self.totalScrollbackOverflow, range.start.y);
+    NSMutableArray<ScreenCharArray *> *lines = [NSMutableArray array];
+
+    for (int i = 0; i < newHeight; i++) {
+        [lines addObject:[[ScreenCharArray alloc] init]];
+    }
+    [self replaceRange:range withLines:lines];
+
+    replacementAbsRange.end.y = replacementAbsRange.start.y + newHeight - 1;
+    replacementAbsRange.start.y = MAX(self.totalScrollbackOverflow, replacementAbsRange.start.y);
+    Interval *interval = [self intervalForGridAbsCoordRange:replacementAbsRange];
+
+    [self.mutableIntervalTree removeObject:mark];
+    [self.mutableIntervalTree addObject:mark
+                           withInterval:interval];
+}
+
 - (VT100GridAbsCoordRange)replaceRange:(VT100GridAbsCoordRange)absRange
                              withLines:(NSArray<ScreenCharArray *> *)replacementLines {
     VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, self.cumulativeScrollbackOverflow);
@@ -3220,7 +3243,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self reloadMarkCache];
 
     [self.linebuffer setMaxLines:savedMaxLines];
-    [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:gridSize.width]];
+    if (!self.config.unlimitedScrollback) {
+        [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:gridSize.width]];
+    }
 
     return resultingRange;
 }

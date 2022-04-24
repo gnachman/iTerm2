@@ -233,9 +233,16 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 
     const BOOL lineBufferDirty = (!_linebuffer || source.linebuffer.dirty);
     if (lineBufferDirty) {
+        DLog(@"line buffer is dirty");
         [source.linebuffer seal];
         [_linebuffer mergeFrom:source.linebuffer];
+    } else {
+        DLog(@"line buffer not dirty");
     }
+//  NSString *mine = [_linebuffer debugString];
+//  NSString *theirs = [source.linebuffer debugString];
+//  assert([mine isEqual:theirs]);
+    
     [_primaryGrid copyDirtyFromGrid:source.primaryGrid];
     [source.primaryGrid markAllCharsDirty:NO updateTimestamps:NO];
 
