@@ -25,5 +25,13 @@ import Foundation
         }
         super.setSelectedRanges(ranges, affinity: affinity, stillSelecting: stillSelectingFlag)
     }
+
+    override var acceptsFirstResponder: Bool {
+        return false
+    }
+
+    override func becomeFirstResponder() -> Bool {
+        return false
+    }
 }
 
