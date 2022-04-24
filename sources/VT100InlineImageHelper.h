@@ -7,6 +7,8 @@
 
 #import <Foundation/Foundation.h>
 
+#import "VT100GridTypes.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @class VT100Grid;
@@ -26,7 +28,11 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (void)inlineImageAppendLinefeed;
 - (void)inlineImageSetMarkOnScreenLine:(NSInteger)line
                                   code:(unichar)code;
+- (void)inlineImageDidCreateTextDocumentInRange:(VT100GridAbsCoordRange)range
+                                       mimeType:(NSString *)mimeType;
 - (void)inlineImageDidFinishWithImageData:(NSData *)imageData;
+- (VT100GridAbsCoord)inlineImageCursorAbsoluteCoord;
+- (void)inlineImageAppendStringAtCursor:(NSString *)string;
 
 @end
 
@@ -35,6 +41,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 @interface VT100InlineImageHelper : NSObject
 
 @property (nonatomic, weak) id<VT100InlineImageHelperDelegate> delegate;
+@property (nullable, nonatomic, readonly, copy) NSString *mimeType;
 
 - (instancetype)initWithName:(NSString *)name
                        width:(int)width
@@ -44,6 +51,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
                  scaleFactor:(CGFloat)scaleFactor
          preserveAspectRatio:(BOOL)preserveAspectRatio
                        inset:(NSEdgeInsets)inset
+                    mimeType:(NSString * _Nullable)mimeType
                 preconfirmed:(BOOL)preconfirmed;
 
 - (instancetype)initWithSixelData:(NSData *)data

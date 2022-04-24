@@ -3595,6 +3595,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     //   height=auto|<integer>px|<integer> Default: auto
     //   preserveAspectRatio=<bool>        Default: yes
     //   inline=<bool>                     Default: no
+    //   type=<string>                     Default: auto-detect; otherwise gives a mime type. Some file types don't support custom sizing.
     NSArray *parts = [value componentsSeparatedByString:@";"];
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     dict[@"size"] = @(0);
@@ -3612,6 +3613,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             dict[part] = @"";
         }
     }
+
+    NSString *type = dict[@"type"];
 
     NSString *widthString = dict[@"width"];
     VT100TerminalUnits widthUnits = kVT100TerminalUnitsCells;
@@ -3659,6 +3662,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                                                 units:heightUnits
                                   preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]
                                                 inset:inset
+                                             mimeType:type
                                            completion:^(BOOL ok) {
                   if (ok) {
                       [weakSelf startReceivingFile];

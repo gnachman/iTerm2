@@ -1756,9 +1756,10 @@
                                      units:(VT100TerminalUnits)heightUnits
                        preserveAspectRatio:(BOOL)preserveAspectRatio
                                      inset:(NSEdgeInsets)inset
+                                  mimeType:(NSString *)mimeType
                                 completion:(void (^)(BOOL ok))completion {
-    DLog(@"begin name=%@ size=%@ width=%@ widthUnits=%@ height=%@ heightUnits=%@ preserveAR=%@ inset=%f,%f,%f,%f",
-         name, @(size), @(width), @(widthUnits), @(height), @(heightUnits), @(preserveAspectRatio), inset.top, inset.bottom, inset.left, inset.right);
+    DLog(@"begin name=%@ size=%@ width=%@ widthUnits=%@ height=%@ heightUnits=%@ preserveAR=%@ inset=%f,%f,%f,%f mimeType=%@",
+         name, @(size), @(width), @(widthUnits), @(height), @(heightUnits), @(preserveAspectRatio), inset.top, inset.bottom, inset.left, inset.right, mimeType);
     __weak __typeof(self) weakSelf = self;
     dispatch_queue_t queue = _queue;
     [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
@@ -1778,6 +1779,7 @@
                                              units:heightUnits
                                preserveAspectRatio:preserveAspectRatio
                                              inset:inset
+                                          mimeType:mimeType
                                           delegate:delegate
                                              queue:queue
                                         completion:^(BOOL ok) {
@@ -1797,6 +1799,7 @@
                                      units:(VT100TerminalUnits)heightUnits
                        preserveAspectRatio:(BOOL)preserveAspectRatio
                                      inset:(NSEdgeInsets)inset
+                                mimeType:(NSString *)mimeType
                                 delegate:(id<VT100ScreenDelegate>)delegate
                                    queue:(dispatch_queue_t)queue
                                 completion:(void (^)(BOOL ok))completion {
@@ -1826,6 +1829,7 @@
                                                                         scaleFactor:scale
                                                                 preserveAspectRatio:preserveAspectRatio
                                                                               inset:inset
+                                                                           mimeType:mimeType
                                                                        preconfirmed:!promptIfBig];
         strongSelf.inlineImageHelper.delegate = self;
         completion(YES);

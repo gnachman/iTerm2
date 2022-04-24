@@ -94,6 +94,7 @@
                  scaleFactor:(CGFloat)scaleFactor
          preserveAspectRatio:(BOOL)preserveAspectRatio
                        inset:(NSEdgeInsets)inset
+                    mimeType:(NSString *)mimeType
                 preconfirmed:(BOOL)preconfirmed {
     self = [super init];
     if (self) {
@@ -104,6 +105,7 @@
         _heightUnits = heightUnits;
         _preserveAspectRatio = preserveAspectRatio;
         _inset = inset;
+        _mimeType = [mimeType copy];
         if ([iTermAdvancedSettingsModel retinaInlineImages]) {
             _scaleFactor = scaleFactor;
         } else {
@@ -124,6 +126,7 @@
                   scaleFactor:scaleFactor
           preserveAspectRatio:YES
                         inset:NSEdgeInsetsZero
+                     mimeType:nil
                  preconfirmed:YES];
     if (self) {
         _sixelData = [data copy];
@@ -142,6 +145,7 @@
                   scaleFactor:scaleFactor
           preserveAspectRatio:NO
                         inset:NSEdgeInsetsZero
+                     mimeType:nil
                  preconfirmed:YES];
     if (self) {
         _nativeImage = [NSImage it_imageNamed:name forClass:self.class];
@@ -163,11 +167,125 @@
     }
 }
 
+- (BOOL)filenameSmellsLikeText {
+    if ([self.name.pathExtension isEqualToString:@"json"] ||
+        [self.name.pathExtension isEqualToString:@"md"]) {
+        return YES;
+    }
+    return NO;
+}
+
+- (BOOL)smellsLikeImage {
+    if (self.mimeType == nil) {
+        if ([self filenameSmellsLikeText]) {
+            return NO;
+        }
+        return YES;
+    }
+    if ([self.mimeType hasPrefix:@"image/"] ||
+        [self.mimeType hasPrefix:@"video/"]) {
+        return YES;
+    }
+    if ([self.mimeType hasPrefix:@"text/"] ||
+        [self.mimeType hasPrefix:@"application/"]) {
+        return NO;
+    }
+    NSArray *nonSizeHintSupportingTypes = @[@"text/markdown", @"application/json"];
+    return ![nonSizeHintSupportingTypes containsObject:self.mimeType];
+}
+
+- (BOOL)contentIsVeryLikelyText {
+    NSData *data = [NSData dataWithBase64EncodedString:_base64String];
+    NSString *text = [data stringWithEncoding:NSUTF8StringEncoding];
+    if (!text) {
+        return NO;
+    }
+    if ([NSJSONSerialization JSONObjectWithData:[text dataUsingEncoding:NSUTF8StringEncoding]
+                                        options:NSJSONReadingFragmentsAllowed
+                                          error:nil] != nil) {
+        return YES;
+    }
+    static NSRegularExpression *regex;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        // Look for hints of markdown.
+        regex = [[NSRegularExpression alloc] initWithPattern:@"^##* [^ ]|^```[a-z]*$|"
+                                                     options:NSRegularExpressionAnchorsMatchLines
+                                                       error:nil];
+        assert(regex != nil);
+    });
+    NSTextCheckingResult *result = [regex firstMatchInString:text options:0 range:NSMakeRange(0, text.length)];
+    if (result == nil) {
+        return NO;
+    }
+    if (result.range.length == 0) {
+        return NO;
+    }
+    return YES;
+}
+
 - (void)writeToGrid:(VT100Grid *)grid {
+    if ([self smellsLikeImage]) {
+        VT100DecodedImage *image = [self decodedImage];
+        if (image.isBroken) {
+            if ([self contentIsVeryLikelyText] && [self writeTextDocumentToGrid:grid]) {
+                return;
+            }
+        }
+        [self writeImage:image toGrid:grid];
+        return;
+    }
+    const BOOL wroteAsText = [self writeTextDocumentToGrid:grid];
+    if (wroteAsText) {
+        return;
+    }
+    [self writeImageToGrid:grid];
+}
+
+- (BOOL)writeTextDocumentToGrid:(VT100Grid *)grid {
+    DLog(@"Write text document %@ at %@", _name, VT100GridCoordDescription(grid.cursor));
+
+    NSData *data = [NSData dataWithBase64EncodedString:_base64String];
+    if (!data) {
+        NSLog(@"Invalid base64 %@", _base64String);
+        return NO;
+    }
+    NSString *contentString = [data stringWithEncoding:NSUTF8StringEncoding];
+    if (!contentString) {
+        NSLog(@"Not UTF-8 %@", data);
+        return NO;
+    }
+
+    VT100GridAbsCoordRange range;
+    range.start.y = [self.delegate inlineImageCursorAbsoluteCoord].y;
+    range.start.x = 0;
+    NSArray<NSString *> *lines = [contentString componentsSeparatedByString:@"\n"];
+    for (NSString *line in lines) {
+        [self.delegate inlineImageAppendStringAtCursor:line];
+        [self.delegate inlineImageAppendLinefeed];
+        grid.cursorX = 0;
+    }
+
+
+    range.end.y = [self.delegate inlineImageCursorAbsoluteCoord].y - 1;
+    range.end.x = grid.size.width - 1;
+
+    [self.delegate inlineImageDidCreateTextDocumentInRange:range
+                                                  mimeType:self.mimeType];
+    return YES;
+}
+
+- (void)writeImageToGrid:(VT100Grid *)grid {
     DLog(@"Write image %@ at %@", _name, VT100GridCoordDescription(grid.cursor));
-
     VT100DecodedImage *decodedImage = [self decodedImage];
+    if (decodedImage.isBroken) {
 
+    }
+    [self writeImage:decodedImage toGrid:grid];
+}
+
+- (void)writeImage:(VT100DecodedImage *)decodedImage toGrid:(VT100Grid *)grid {
+    DLog(@"Write decoded image %@ named %@ at %@", decodedImage, _name, VT100GridCoordDescription(grid.cursor));
     screen_char_t c;
     int width;
     int height;

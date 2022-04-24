@@ -4675,6 +4675,23 @@ launchCoprocessWithCommand:(NSString *)command
     }];
 }
 
+- (void)inlineImageDidCreateTextDocumentInRange:(VT100GridAbsCoordRange)range
+                                       mimeType:(NSString *)mimeType {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenConvertAbsoluteRange:range toTextDocumentOfType:mimeType];
+        [unpauser unpause];
+    }];
+}
+
+- (void)inlineImageAppendStringAtCursor:(nonnull NSString *)string {
+    [self appendStringAtCursor:string];
+}
+
+
+- (VT100GridAbsCoord)inlineImageCursorAbsoluteCoord {
+    return VT100GridAbsCoordMake(self.currentGrid.cursor.x, self.cumulativeScrollbackOverflow + self.numberOfScrollbackLines + self.currentGrid.cursor.y);
+}
+
 #pragma mark - iTermEchoProbeDelegate
 
 - (void)echoProbe:(iTermEchoProbe *)echoProbe writeData:(NSData *)data {
@@ -4877,7 +4894,7 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)lineBufferDidDropLines:(LineBuffer *)lineBuffer {
     if (lineBuffer == self.linebuffer) {
         [_tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines];
-     }
+    }
 }
 
 @end
