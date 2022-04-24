@@ -13,7 +13,7 @@ class TextViewPorthole: NSObject {
     let config: PortholeConfig
     let textView: ExclusiveSelectionView
     let textStorage = NSTextStorage()
-    private let layoutManager = NSLayoutManager()
+    private let layoutManager = TextPortholeLayoutManager()
     private let textContainer: TopRightAvoidingTextContainer
     private weak var _mark: PortholeMarkReading? = nil
     private let uuid: String
@@ -328,4 +328,10 @@ class TopRightAvoidingTextContainer: NSTextContainer {
 protocol TextViewPortholeRenderer {
     var identifier: String { get }
     func render(visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString
+}
+
+class TextPortholeLayoutManager: NSLayoutManager {
+    override func layoutManagerOwnsFirstResponder(in window: NSWindow) -> Bool {
+        true
+    }
 }
