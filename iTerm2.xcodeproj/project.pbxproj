@@ -9442,7 +9442,7 @@
 				A682274A280786DE005DF0B4 /* MarkdownPorthole.swift */,
 				A69169392813457900083F99 /* PortholeFactory.swift */,
 				A691693E281345D000083F99 /* PortholeContainerView.swift */,
-				A691694528136A5D00083F99 /* JSONPorthole.swift */,
+				A691694528136A5D00083F99 /* JSONPortholeRenderer.swift */,
 				A691694728136A7100083F99 /* TextViewPorthole.swift */,
 			);
 			name = Portholes;
@@ -14685,7 +14685,7 @@
 				A62CD06B27E93F5B00215E92 /* iTermSwiftHelpers.m in Sources */,
 				A6A4868020B6817900493302 /* WindowArrangements.m in Sources */,
 				A6D10E3F27F8CB4E0026DB56 /* CommandExplainer.swift in Sources */,
-				A691694628136A5D00083F99 /* JSONPorthole.swift in Sources */,
+				A691694628136A5D00083F99 /* JSONPortholeRenderer.swift in Sources */,
 				A6F718D8226704920053488E /* PTYSession+ARC.m in Sources */,
 				A65C242727DD244A00EBF6A2 /* Coprocess.m in Sources */,
 				A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */,
