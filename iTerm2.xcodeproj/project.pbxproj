@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 52;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -976,7 +976,6 @@
 		A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */; };
 		A6042CD925D0CBCD0001C8FE /* NSScroller+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6042CD725D0CBCD0001C8FE /* NSScroller+iTerm.h */; };
 		A6042CDA25D0CBCD0001C8FE /* NSScroller+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6042CD825D0CBCD0001C8FE /* NSScroller+iTerm.m */; };
-		A6046F63280E2DD1002DC9F7 /* SwiftyMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = A6046F62280E2DD1002DC9F7 /* SwiftyMarkdown */; };
 		A6047134213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h in Headers */ = {isa = PBXBuildFile; fileRef = A6047132213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h */; };
 		A6047135213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m in Sources */ = {isa = PBXBuildFile; fileRef = A6047133213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.m */; };
 		A6057C041878CD30004A60AF /* ProfileTagsView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6057C021878CD30004A60AF /* ProfileTagsView.h */; };
@@ -2351,7 +2350,6 @@
 		A68227412805E5C8005DF0B4 /* LineBufferSorting.mm in Sources */ = {isa = PBXBuildFile; fileRef = A68227402805E5C8005DF0B4 /* LineBufferSorting.mm */; };
 		A682274628078434005DF0B4 /* PTYTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A682274528078434005DF0B4 /* PTYTextView.swift */; };
 		A6822748280786A5005DF0B4 /* Porthole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6822747280786A5005DF0B4 /* Porthole.swift */; };
-		A682274B280786DE005DF0B4 /* MarkdownPorthole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A682274A280786DE005DF0B4 /* MarkdownPorthole.swift */; };
 		A682DE96190C5E7000BE8758 /* iTermProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */; };
 		A682DE9B1915DB1F00BE8758 /* iTermFlippedView.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE991915DB1F00BE8758 /* iTermFlippedView.h */; };
 		A68400A61FF82424008D3EE2 /* iTermIndicatorRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = A68400A41FF82424008D3EE2 /* iTermIndicatorRenderer.h */; };
@@ -2449,7 +2447,6 @@
 		A691693D281345AF00083F99 /* SaneButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691693C281345AF00083F99 /* SaneButton.swift */; };
 		A691693F281345D000083F99 /* PortholeContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691693E281345D000083F99 /* PortholeContainerView.swift */; };
 		A6916941281346A400083F99 /* ExclusiveSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6916940281346A400083F99 /* ExclusiveSelectionView.swift */; };
-		A691694628136A5D00083F99 /* JSONPortholeRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691694528136A5D00083F99 /* JSONPortholeRenderer.swift */; };
 		A691694828136A7100083F99 /* TextViewPorthole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A691694728136A7100083F99 /* TextViewPorthole.swift */; };
 		A691AACE2618DDCA0049B619 /* iTermSlownessDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = A691AACC2618DDCA0049B619 /* iTermSlownessDetector.h */; };
 		A691AACF2618DDCA0049B619 /* iTermSlownessDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = A691AACD2618DDCA0049B619 /* iTermSlownessDetector.m */; };
@@ -2552,6 +2549,13 @@
 		A6A39EBC24B99AC000A64433 /* iTermGraphicsUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A39EBA24B99AC000A64433 /* iTermGraphicsUtilities.m */; };
 		A6A39EBF24B9A96B00A64433 /* iTermUnobtrusiveMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A39EBD24B9A96B00A64433 /* iTermUnobtrusiveMessage.h */; };
 		A6A39EC024B9A96B00A64433 /* iTermUnobtrusiveMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A39EBE24B9A96B00A64433 /* iTermUnobtrusiveMessage.m */; };
+		A6A3D18B2815EF4D00C0C9E0 /* Highlightr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */; };
+		A6A3D18D2815EF6F00C0C9E0 /* HighlightrRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A3D18C2815EF6F00C0C9E0 /* HighlightrRenderer.swift */; };
+		A6A3D18E2815F74A00C0C9E0 /* Highlightr.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6A3D190281663EE00C0C9E0 /* extensions.json in Resources */ = {isa = PBXBuildFile; fileRef = A6A3D18F281663EE00C0C9E0 /* extensions.json */; };
+		A6A3D191281663EE00C0C9E0 /* extensions.json in Resources */ = {isa = PBXBuildFile; fileRef = A6A3D18F281663EE00C0C9E0 /* extensions.json */; };
+		A6A3D192281663EE00C0C9E0 /* extensions.json in Resources */ = {isa = PBXBuildFile; fileRef = A6A3D18F281663EE00C0C9E0 /* extensions.json */; };
+		A6A3D1972816676700C0C9E0 /* FileExtensionDB.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A3D1932816643600C0C9E0 /* FileExtensionDB.swift */; };
 		A6A453931FF318D8009FD3B7 /* iTermTexturePageCollection.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */; };
 		A6A4865D20B6706700493302 /* ProfilesKeysPreferencesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A269961902FA6800437DA9 /* ProfilesKeysPreferencesViewController.m */; };
 		A6A4865E20B6758D00493302 /* iTermPreferencesBaseViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E7138818F26445008D94DD /* iTermPreferencesBaseViewController.m */; };
@@ -4057,6 +4061,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A6A3D18E2815F74A00C0C9E0 /* Highlightr.framework in CopyFiles */,
 				530AB89C20AFF23400D2AA08 /* CoreParse.framework in CopyFiles */,
 				A6184F8C1BAB3EF30088EF3C /* ColorPicker.framework in CopyFiles */,
 				A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */,
@@ -5934,7 +5939,6 @@
 		A68227402805E5C8005DF0B4 /* LineBufferSorting.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = LineBufferSorting.mm; sourceTree = "<group>"; };
 		A682274528078434005DF0B4 /* PTYTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PTYTextView.swift; sourceTree = "<group>"; };
 		A6822747280786A5005DF0B4 /* Porthole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Porthole.swift; sourceTree = "<group>"; };
-		A682274A280786DE005DF0B4 /* MarkdownPorthole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownPorthole.swift; sourceTree = "<group>"; };
 		A682275E280E2688005DF0B4 /* SwiftyLineProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SwiftyLineProcessor.swift; path = SwiftyMarkdown/SwiftyLineProcessor.swift; sourceTree = "<group>"; };
 		A682275F280E2689005DF0B4 /* SwiftyMarkdown+iOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "SwiftyMarkdown+iOS.swift"; path = "SwiftyMarkdown/SwiftyMarkdown+iOS.swift"; sourceTree = "<group>"; };
 		A6822760280E2689005DF0B4 /* SwiftyScanner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SwiftyScanner.swift; path = SwiftyMarkdown/SwiftyScanner.swift; sourceTree = "<group>"; };
@@ -6159,7 +6163,6 @@
 		A691693C281345AF00083F99 /* SaneButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaneButton.swift; sourceTree = "<group>"; };
 		A691693E281345D000083F99 /* PortholeContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortholeContainerView.swift; sourceTree = "<group>"; };
 		A6916940281346A400083F99 /* ExclusiveSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExclusiveSelectionView.swift; sourceTree = "<group>"; };
-		A691694528136A5D00083F99 /* JSONPortholeRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONPortholeRenderer.swift; sourceTree = "<group>"; };
 		A691694728136A7100083F99 /* TextViewPorthole.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextViewPorthole.swift; sourceTree = "<group>"; };
 		A691AACC2618DDCA0049B619 /* iTermSlownessDetector.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlownessDetector.h; sourceTree = "<group>"; };
 		A691AACD2618DDCA0049B619 /* iTermSlownessDetector.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSlownessDetector.m; sourceTree = "<group>"; };
@@ -6275,6 +6278,10 @@
 		A6A39EBA24B99AC000A64433 /* iTermGraphicsUtilities.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGraphicsUtilities.m; sourceTree = "<group>"; };
 		A6A39EBD24B9A96B00A64433 /* iTermUnobtrusiveMessage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermUnobtrusiveMessage.h; sourceTree = "<group>"; };
 		A6A39EBE24B9A96B00A64433 /* iTermUnobtrusiveMessage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermUnobtrusiveMessage.m; sourceTree = "<group>"; };
+		A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Highlightr.framework; path = ThirdParty/Highlightr.framework; sourceTree = "<group>"; };
+		A6A3D18C2815EF6F00C0C9E0 /* HighlightrRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HighlightrRenderer.swift; sourceTree = "<group>"; };
+		A6A3D18F281663EE00C0C9E0 /* extensions.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = extensions.json; path = OtherResources/extensions.json; sourceTree = "<group>"; };
+		A6A3D1932816643600C0C9E0 /* FileExtensionDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExtensionDB.swift; sourceTree = "<group>"; };
 		A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermTexturePageCollection.mm; path = Metal/Renderers/iTermTexturePageCollection.mm; sourceTree = "<group>"; };
 		A6A4B29F240B67A400184EAC /* PTYMouseHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PTYMouseHandler.h; sourceTree = "<group>"; };
 		A6A4B2A0240B67A400184EAC /* PTYMouseHandler.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PTYMouseHandler.m; sourceTree = "<group>"; };
@@ -7036,6 +7043,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A6A3D18B2815EF4D00C0C9E0 /* Highlightr.framework in Frameworks */,
 				A666130D225CFF6900840E89 /* BetterFontPicker.framework in Frameworks */,
 				A6FB633123DE7DEC00026D52 /* SearchableComboListView.framework in Frameworks */,
 				A60BD9191B3F5D76007D7F11 /* OpenDirectory.framework in Frameworks */,
@@ -7043,7 +7051,6 @@
 				1DFA7C9E1923F77100DF1410 /* Security.framework in Frameworks */,
 				1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
-				A6046F63280E2DD1002DC9F7 /* SwiftyMarkdown in Frameworks */,
 				A6184F891BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
 				530AB89920AFF21300D2AA08 /* CoreParse.framework in Frameworks */,
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
@@ -7638,6 +7645,7 @@
 		1D03D42719144C3B0049EB8F /* Other Assets */ = {
 			isa = PBXGroup;
 			children = (
+				A6A3D18F281663EE00C0C9E0 /* extensions.json */,
 				536EF5B723F6684D00B81875 /* it2run */,
 				530098522259AAEF00A69348 /* keyclick.m4a */,
 				A61BB46321CA2D5A0027F47D /* iTerm2Script.icns */,
@@ -8312,6 +8320,7 @@
 		1DD39AD5180B8118004E56D5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */,
 				A6A73D4727C8049E002E4CCA /* libicucore.tbd */,
 				A6FD5F7325AC296400006234 /* libgit2.a */,
 				A60D20E52597FAFB004AC979 /* libsandbox.tbd */,
@@ -9439,11 +9448,11 @@
 			isa = PBXGroup;
 			children = (
 				A6822747280786A5005DF0B4 /* Porthole.swift */,
-				A682274A280786DE005DF0B4 /* MarkdownPorthole.swift */,
 				A69169392813457900083F99 /* PortholeFactory.swift */,
 				A691693E281345D000083F99 /* PortholeContainerView.swift */,
-				A691694528136A5D00083F99 /* JSONPortholeRenderer.swift */,
 				A691694728136A7100083F99 /* TextViewPorthole.swift */,
+				A6A3D18C2815EF6F00C0C9E0 /* HighlightrRenderer.swift */,
+				A6A3D1932816643600C0C9E0 /* FileExtensionDB.swift */,
 			);
 			name = Portholes;
 			sourceTree = "<group>";
@@ -12341,7 +12350,6 @@
 			);
 			name = iTerm2;
 			packageProductDependencies = (
-				A6046F62280E2DD1002DC9F7 /* SwiftyMarkdown */,
 			);
 			productName = "JTerminal (Application)";
 			productReference = 8742065A0564169600CFC3F1 /* iTerm2.app */;
@@ -12522,7 +12530,6 @@
 			);
 			mainGroup = 0464AB0D006CD2EC7F000001 /* JTerminal */;
 			packageReferences = (
-				A6046F61280E2DD1002DC9F7 /* XCRemoteSwiftPackageReference "SwiftyMarkdown" */,
 			);
 			productRefGroup = 0464AB32006CD2EC7F000001 /* Products */;
 			projectDirPath = "";
@@ -12766,6 +12773,7 @@
 				A67F618C214395A70093940A /* graphic_nginx@2x.png in Resources */,
 				A6E7AEB4214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
 				A67D0D521A2EE12A003A8B35 /* FindView.xib in Resources */,
+				A6A3D192281663EE00C0C9E0 /* extensions.json in Resources */,
 				A6FEA28A1CF4DD2700376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */,
 				1D6ED9BF19AEA20D005A7799 /* closebutton@2x.png in Resources */,
 				A65D7CB521E1EBCE00E3D81C /* StopStatusIcon@2x.png in Resources */,
@@ -13020,6 +13028,7 @@
 				53AA7647237E35A50094D75A /* OpenQuicklyActionIcon@2x.png in Resources */,
 				A6E7AE6E214394CA00DE9F3B /* graphic_bower@2x.png in Resources */,
 				5308BF9922828A28004BECAC /* StatusBarIconCharging@2x.png in Resources */,
+				A6A3D191281663EE00C0C9E0 /* extensions.json in Resources */,
 				A635F1F12507621A008C3038 /* iTermSnippetsEditingViewController.xib in Resources */,
 				1DC2A1CD1949165D005769D5 /* Maximized.png in Resources */,
 				A6EFF23A1D20F6BF00806EEF /* EraseDarkBackground@2x.png in Resources */,
@@ -13594,6 +13603,7 @@
 				1D48B28C165F3669000046EE /* TabClose_Front_Pressed.png in Resources */,
 				A67F619B214395B70093940A /* graphic_php@2x.png in Resources */,
 				A66F52CA2106F6F100571168 /* gitup.png in Resources */,
+				A6A3D190281663EE00C0C9E0 /* extensions.json in Resources */,
 				5308BF90228283CE004BECAC /* StatusBarIconBattery@2x.png in Resources */,
 				1DB8FBD019468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A63011AB20E7EE05008114B7 /* iTermStatusBarKnobCheckboxViewController.xib in Resources */,
@@ -14234,7 +14244,6 @@
 				5370678C21C9D2780088D0F3 /* SIGVerificationAlgorithm.m in Sources */,
 				A6FF3F2F2435BA3C003CCB03 /* FindView.m in Sources */,
 				53E9DFE6220D53110070C9C0 /* SetHostnameTrigger.m in Sources */,
-				A682274B280786DE005DF0B4 /* MarkdownPorthole.swift in Sources */,
 				A6481658228FE6B1008E7E0C /* iTermObject.m in Sources */,
 				A62EED9B20E0104000943DE3 /* iTermScriptArchive.m in Sources */,
 				A635F1DD25075E8D008C3038 /* iTermShortcutsViewController.m in Sources */,
@@ -14685,7 +14694,6 @@
 				A62CD06B27E93F5B00215E92 /* iTermSwiftHelpers.m in Sources */,
 				A6A4868020B6817900493302 /* WindowArrangements.m in Sources */,
 				A6D10E3F27F8CB4E0026DB56 /* CommandExplainer.swift in Sources */,
-				A691694628136A5D00083F99 /* JSONPortholeRenderer.swift in Sources */,
 				A6F718D8226704920053488E /* PTYSession+ARC.m in Sources */,
 				A65C242727DD244A00EBF6A2 /* Coprocess.m in Sources */,
 				A666D5E52219323D00D6184A /* iTermEventTap.m in Sources */,
@@ -14807,6 +14815,7 @@
 				A61A85B624F23D0700B03880 /* iTermGlobalSearchEngine.m in Sources */,
 				A638D2A2222230A3001CD688 /* iTermDirectedGraph.m in Sources */,
 				A6E20AF921FF9E1600D7CB3E /* iTermInstantReplayWindowController.m in Sources */,
+				A6A3D1972816676700C0C9E0 /* FileExtensionDB.swift in Sources */,
 				A653F69D24D00C960062377E /* iTermEncoderGraphRecord.m in Sources */,
 				A6A4866C20B679DB00493302 /* iTermProfilePreferences.m in Sources */,
 				A60BB38F1EB6A08A00D76C09 /* iTermProcessCollection.m in Sources */,
@@ -14863,6 +14872,7 @@
 				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
 				A621F11026F8E9E6001DD3A6 /* iTermTLVCodec.m in Sources */,
 				A67BCFE8270E702C00636983 /* VT100SavedColors.swift in Sources */,
+				A6A3D18D2815EF6F00C0C9E0 /* HighlightrRenderer.swift in Sources */,
 				A608F22120F07658008E8009 /* iTermImageMark.m in Sources */,
 				A61A859524EFA01800B03880 /* iTermBackgroundCommandRunner.m in Sources */,
 				A6153D5921F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m in Sources */,
@@ -15423,10 +15433,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@loader_path/../Frameworks",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_COMPILER_FLAGS = "";
@@ -15505,10 +15512,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@loader_path/../Frameworks",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15580,10 +15584,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@loader_path/../Frameworks",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15653,10 +15654,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@loader_path/../Frameworks",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15738,10 +15736,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@loader_path/../Frameworks",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15816,10 +15811,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@loader_path/../Frameworks",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15893,10 +15885,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@loader_path/../Frameworks",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -16663,10 +16652,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@loader_path/../Frameworks",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_COMPILER_FLAGS = "";
@@ -16748,10 +16734,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@loader_path/../Frameworks",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -16857,10 +16840,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@loader_path/../Frameworks",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -16996,11 +16976,7 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
@@ -17063,11 +17039,7 @@
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
 				);
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				OTHER_CFLAGS = "-DBETA=1";
 				OTHER_LDFLAGS = "";
@@ -17077,11 +17049,7 @@
 				SWIFT_INCLUDE_PATHS = $PROJECT_DIR/SearchableComboListView;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/SearchableComboListView",
-					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
-					"$(",
-				);
+				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include $(";
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -17396,11 +17364,7 @@
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
 				);
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
@@ -17416,11 +17380,7 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/SearchableComboListView",
-					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
-					"$(",
-				);
+				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include $(";
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -17474,11 +17434,7 @@
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
 				);
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -17487,11 +17443,7 @@
 				SWIFT_INCLUDE_PATHS = $PROJECT_DIR/SearchableComboListView;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/SearchableComboListView",
-					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
-					"$(",
-				);
+				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include $(";
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -17544,11 +17496,7 @@
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
 				);
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				OTHER_CFLAGS = "-DBETA=1";
 				OTHER_LDFLAGS = "";
@@ -17558,11 +17506,7 @@
 				SWIFT_INCLUDE_PATHS = $PROJECT_DIR/SearchableComboListView;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/SearchableComboListView",
-					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
-					"$(",
-				);
+				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include $(";
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -18137,11 +18081,7 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -18206,11 +18146,7 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
@@ -18274,11 +18210,7 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@loader_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
@@ -18343,10 +18275,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@loader_path/../Frameworks",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
@@ -18434,10 +18363,7 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"@loader_path/../Frameworks",
-					"@executable_path/../Frameworks",
-				);
+				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_COMPILER_FLAGS = "";
@@ -18702,25 +18628,6 @@
 			defaultConfigurationName = Development;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		A6046F61280E2DD1002DC9F7 /* XCRemoteSwiftPackageReference "SwiftyMarkdown" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/gnachman/SwiftyMarkdown";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		A6046F62280E2DD1002DC9F7 /* SwiftyMarkdown */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A6046F61280E2DD1002DC9F7 /* XCRemoteSwiftPackageReference "SwiftyMarkdown" */;
-			productName = SwiftyMarkdown;
-		};
-/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCVersionGroup section */
 		A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */ = {

@@ -1757,6 +1757,7 @@
                        preserveAspectRatio:(BOOL)preserveAspectRatio
                                      inset:(NSEdgeInsets)inset
                                   mimeType:(NSString *)mimeType
+                                  language:(NSString *)language
                                 completion:(void (^)(BOOL ok))completion {
     DLog(@"begin name=%@ size=%@ width=%@ widthUnits=%@ height=%@ heightUnits=%@ preserveAR=%@ inset=%f,%f,%f,%f mimeType=%@",
          name, @(size), @(width), @(widthUnits), @(height), @(heightUnits), @(preserveAspectRatio), inset.top, inset.bottom, inset.left, inset.right, mimeType);
@@ -1780,6 +1781,7 @@
                                preserveAspectRatio:preserveAspectRatio
                                              inset:inset
                                           mimeType:mimeType
+                                          language:language
                                           delegate:delegate
                                              queue:queue
                                         completion:^(BOOL ok) {
@@ -1800,6 +1802,7 @@
                        preserveAspectRatio:(BOOL)preserveAspectRatio
                                      inset:(NSEdgeInsets)inset
                                 mimeType:(NSString *)mimeType
+                                language:(NSString *)language
                                 delegate:(id<VT100ScreenDelegate>)delegate
                                    queue:(dispatch_queue_t)queue
                                 completion:(void (^)(BOOL ok))completion {
@@ -1830,6 +1833,7 @@
                                                                 preserveAspectRatio:preserveAspectRatio
                                                                               inset:inset
                                                                            mimeType:mimeType
+                                                                           language:language
                                                                        preconfirmed:!promptIfBig];
         strongSelf.inlineImageHelper.delegate = self;
         completion(YES);

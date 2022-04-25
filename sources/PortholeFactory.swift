@@ -10,21 +10,16 @@ import CoreText
 
 @objc(iTermPortholeFactory)
 class PortholeFactory: NSObject {
-    static func markdownPorthole(config: PortholeConfig) -> Porthole {
-        return TextViewPorthole(config, renderer: MarkdownPortholeRenderer(config.text))
+    static func highlightrPorthole(config: PortholeConfig) -> Porthole {
+        return TextViewPorthole(config,
+                                renderer: highlightrRenderer(config: config))
     }
 
-    static func jsonPorthole(config: PortholeConfig) -> Porthole? {
-        guard let renderer = JSONPortholeRenderer(config.text) else {
-            return nil
-        }
-        return TextViewPorthole(config, renderer: renderer)
-    }
-
-    // Will create a porthole with an error rather than fail to create a porthole.
-    static func forcedJSONPorthole(config: PortholeConfig) -> Porthole {
-        let renderer = JSONPortholeRenderer.forced(config.text)
-        return TextViewPorthole(config, renderer: renderer)
+    private static func highlightrRenderer(config: PortholeConfig) -> HighlightrRenderer {
+        return HighlightrRenderer(config.text,
+                                  mimeType: config.mimeType,
+                                  filename: config.filename,
+                                  language: config.language)
     }
 
     @objc
@@ -41,21 +36,12 @@ class PortholeFactory: NSObject {
                                                                           font: font) else {
                 return nil
             }
-            guard let renderer = textRenderer(rendererName, text: config.text) else {
-                return nil
+            if rendererName == HighlightrRenderer.identifier {
+                return TextViewPorthole(config,
+                                        renderer: highlightrRenderer(config: config))
             }
-            return TextViewPorthole(config, renderer: renderer)
+            return nil
         }
-    }
-
-    private static func textRenderer(_ rendererName: String, text: String) -> TextViewPortholeRenderer? {
-        if rendererName == MarkdownPortholeRenderer.identifier {
-            return MarkdownPortholeRenderer(text)
-        }
-        if rendererName == JSONPortholeRenderer.identifier {
-            return JSONPortholeRenderer(text)
-        }
-        return nil
     }
 }
 

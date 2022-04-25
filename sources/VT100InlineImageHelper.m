@@ -8,6 +8,7 @@
 #import "VT100InlineImageHelper.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermImage.h"
 #import "iTermImageInfo.h"
@@ -95,6 +96,7 @@
          preserveAspectRatio:(BOOL)preserveAspectRatio
                        inset:(NSEdgeInsets)inset
                     mimeType:(NSString *)mimeType
+                    language:(NSString *)language
                 preconfirmed:(BOOL)preconfirmed {
     self = [super init];
     if (self) {
@@ -106,6 +108,7 @@
         _preserveAspectRatio = preserveAspectRatio;
         _inset = inset;
         _mimeType = [mimeType copy];
+        _language = [language copy];
         if ([iTermAdvancedSettingsModel retinaInlineImages]) {
             _scaleFactor = scaleFactor;
         } else {
@@ -127,6 +130,7 @@
           preserveAspectRatio:YES
                         inset:NSEdgeInsetsZero
                      mimeType:nil
+                     language:nil
                  preconfirmed:YES];
     if (self) {
         _sixelData = [data copy];
@@ -146,6 +150,7 @@
           preserveAspectRatio:NO
                         inset:NSEdgeInsetsZero
                      mimeType:nil
+                     language:nil
                  preconfirmed:YES];
     if (self) {
         _nativeImage = [NSImage it_imageNamed:name forClass:self.class];
@@ -168,14 +173,13 @@
 }
 
 - (BOOL)filenameSmellsLikeText {
-    if ([self.name.pathExtension isEqualToString:@"json"] ||
-        [self.name.pathExtension isEqualToString:@"md"]) {
-        return YES;
-    }
-    return NO;
+    return [[[iTermFileExtensionDB instance] languagesForPath:self.name] count] > 0;
 }
 
 - (BOOL)smellsLikeImage {
+    if (self.language != nil) {
+        return NO;
+    }
     if (self.mimeType == nil) {
         if ([self filenameSmellsLikeText]) {
             return NO;
@@ -186,12 +190,7 @@
         [self.mimeType hasPrefix:@"video/"]) {
         return YES;
     }
-    if ([self.mimeType hasPrefix:@"text/"] ||
-        [self.mimeType hasPrefix:@"application/"]) {
-        return NO;
-    }
-    NSArray *nonSizeHintSupportingTypes = @[@"text/markdown", @"application/json"];
-    return ![nonSizeHintSupportingTypes containsObject:self.mimeType];
+    return NO;
 }
 
 - (BOOL)contentIsVeryLikelyText {
@@ -271,7 +270,9 @@
     range.end.x = grid.size.width - 1;
 
     [self.delegate inlineImageDidCreateTextDocumentInRange:range
-                                                  mimeType:self.mimeType];
+                                                  mimeType:self.mimeType
+                                                  language:self.language
+                                                  filename:_name];
     return YES;
 }
 

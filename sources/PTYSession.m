@@ -13412,8 +13412,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenConvertAbsoluteRange:(VT100GridAbsCoordRange)range
-              toTextDocumentOfType:(NSString *)mimeType {
-    [_textview renderRange:range mimeType:mimeType];
+              toTextDocumentOfType:(NSString *)mimeType
+                          language:(NSString *)language
+                          filename:(NSString *)filename {
+    [_textview renderRange:range mimeType:mimeType language:language filename:filename];
 }
 
 - (VT100Screen *)popupVT100Screen {

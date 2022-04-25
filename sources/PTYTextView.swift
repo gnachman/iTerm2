@@ -20,9 +20,11 @@ extension VT100GridCoordRange {
 }
 
 extension PTYTextView {
-    @objc(renderRange:mimeType:)
+    @objc(renderRange:mimeType:language:filename:)
     func render(range originalRange: VT100GridAbsCoordRange,
-                mimeType: String?) {
+                mimeType: String?,
+                language: String?,
+                filename: String?) {
         guard let dataSource = dataSource else {
             return
         }
@@ -40,7 +42,9 @@ extension PTYTextView {
         replaceWithPorthole(inRange: absRange,
                             text: text,
                             baseDirectory: baseDirectory,
-                            mimeType: mimeType)
+                            mimeType: mimeType,
+                            language: language,
+                            filename: filename)
     }
 
     func text(inRange range: VT100GridCoordRange) -> String {
@@ -59,11 +63,13 @@ extension PTYTextView {
         return text
     }
 
-    @objc(replaceWithPortholeInRange:havingText:baseDirectory:mimeType:)
+    @objc(replaceWithPortholeInRange:havingText:baseDirectory:mimeType:language:filename:)
     func replaceWithPorthole(inRange absRange: VT100GridAbsCoordRange,
                              text: String,
                              baseDirectory: URL?,
-                             mimeType: String?) {
+                             mimeType: String?,
+                             language: String?,
+                             filename: String?) {
         guard dataSource != nil else {
             return
         }
@@ -71,7 +77,9 @@ extension PTYTextView {
                                     colorMap: colorMap,
                                     baseDirectory: baseDirectory,
                                     font: font,
-                                    mimeType: mimeType)
+                                    mimeType: mimeType,
+                                    language: language,
+                                    filename: filename)
         let porthole = makePorthole(for: config)
         replace(range: absRange, withPorthole: porthole)
     }
@@ -88,51 +96,25 @@ extension PTYTextView {
     }
 
     private func makePorthole(for config: PortholeConfig) -> Porthole {
-        switch config.mimeType {
-        case "text/markdown":
-            return configuredPorthole(PortholeFactory.markdownPorthole(config: config))
-
-        case "application/json":
-            return configuredPorthole(PortholeFactory.forcedJSONPorthole(config: config))
-
-        default:
-            return makePortholeInferringType(for: config)
-        }
-    }
-
-    private func makePortholeInferringType(for config: PortholeConfig) -> Porthole {
-        if let jsonPorthole = PortholeFactory.jsonPorthole(config: config) {
-            return configuredPorthole(jsonPorthole)
-        }
-        return configuredPorthole(PortholeFactory.markdownPorthole(config: config))
+        return configuredPorthole(PortholeFactory.highlightrPorthole(config: config))
     }
 
     private func configuredPorthole(_ porthole: Porthole) -> Porthole {
         if let textPorthole = porthole as? TextViewPorthole {
-            textPorthole.changeRendererCallback = { [weak self] identifier, porthole in
+            textPorthole.changeLanguageCallback = { [weak self] language, porthole in
                 guard let self = self else {
                     return
                 }
-                let renderer: TextViewPortholeRenderer
-                if identifier == JSONPortholeRenderer.identifier {
-                    renderer = JSONPortholeRenderer.forced(porthole.config.text)
-                } else if identifier == MarkdownPortholeRenderer.identifier {
-                    renderer = MarkdownPortholeRenderer(porthole.config.text)
-                } else {
-                    return
-                }
-                self.changeTextPortholeRenderer(porthole, renderer)
+                self.layoutPorthole(porthole)
             }
         }
         return porthole
     }
 
-    private func changeTextPortholeRenderer(_ porthole: TextViewPorthole,
-                                            _ renderer: TextViewPortholeRenderer) {
+    private func layoutPorthole(_ porthole: TextViewPorthole) {
         guard let dataSource = dataSource else {
             return
         }
-        porthole.renderer = renderer
         let hmargin = CGFloat(iTermPreferences.int(forKey: kPreferenceKeySideMargins))
         let desiredHeight = porthole.desiredHeight(forWidth: bounds.width - hmargin * 2)
         dataSource.changeHeight(of: porthole.mark, to: Int32(ceil(desiredHeight / lineHeight)))
@@ -215,7 +197,7 @@ extension PTYTextView {
             // Calculating porthole size is very slow because NSView is a catastrophe so avoid doing
             // it if the width is unchanged.
             let y = CGFloat(lineRange.lowerBound) * lineHeight + vmargin + innerMargin
-            DLog("y=\(y) range=\(VT100GridCoordRangeDescription(gridCoordRange )) overflow=\(dataSource.scrollbackOverflow())")
+            DLog("y=\(y) range=\(String(describing: VT100GridCoordRangeDescription(gridCoordRange ))) overflow=\(dataSource.scrollbackOverflow())")
             porthole.view.frame = NSRect(x: hmargin,
                                          y: y,
                                          width: bounds.width - hmargin * 2,

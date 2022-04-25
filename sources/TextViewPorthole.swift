@@ -15,6 +15,7 @@ class TextViewPorthole: NSObject {
     let textStorage = NSTextStorage()
     private let layoutManager = TextPortholeLayoutManager()
     private let textContainer: TopRightAvoidingTextContainer
+    private let popup = SanePopUpButton()
     private weak var _mark: PortholeMarkReading? = nil
     private let uuid: String
     // I have no idea why this is necessary but the NSView is invisible unless it's in a container
@@ -27,9 +28,10 @@ class TextViewPorthole: NSObject {
     var renderer: TextViewPortholeRenderer {
         didSet {
             textStorage.setAttributedString(renderer.render(visualAttributes: savedVisualAttributes))
+            updateLanguage()
         }
     }
-    var changeRendererCallback: ((String, TextViewPorthole) -> ())? = nil
+    var changeLanguageCallback: ((String, TextViewPorthole) -> ())? = nil
 
     struct VisualAttributes: Equatable {
         let textColor: NSColor
@@ -47,12 +49,15 @@ class TextViewPorthole: NSObject {
     init(_ config: PortholeConfig,
          renderer: TextViewPortholeRenderer,
          uuid: String? = nil) {
-        let popup = SanePopUpButton()
         popup.controlSize = .mini
         popup.font = NSFont.systemFont(ofSize: NSFont.systemFontSize(for: .mini))
         popup.autoenablesItems = true
-        popup.menu?.addItem(withTitle: JSONPortholeRenderer.identifier, action: #selector(changeRenderer(_:)), keyEquivalent: "")
-        popup.menu?.addItem(withTitle: MarkdownPortholeRenderer.identifier, action: #selector(changeRenderer(_:)), keyEquivalent: "")
+
+        let languages = renderer.languages.isEmpty ? HighlightrRenderer.allLanguages : renderer.languages
+        let sortedLanguages = languages.sorted{$0.localizedCompare($1) == .orderedAscending}
+        for language in sortedLanguages {
+            popup.menu?.addItem(withTitle: language, action: #selector(changeLanguage(_:)), keyEquivalent: "")
+        }
         popup.sizeToFit()
         popup.selectItem(withTitle: renderer.identifier)
 
@@ -91,6 +96,7 @@ class TextViewPorthole: NSObject {
 
         super.init()
 
+        updateLanguage()
         textView.delegate = self
         textView.didAcquireSelection = { [weak self] in
             guard let self = self else {
@@ -115,8 +121,16 @@ class TextViewPorthole: NSObject {
         return NSSize(width: width, height: self.desiredHeight(forWidth: width))
     }
 
-    @objc func changeRenderer(_ sender: Any?) {
-        changeRendererCallback?((sender as! NSMenuItem).title, self)
+    @objc func changeLanguage(_ sender: Any?) {
+        let language = (sender as! NSMenuItem).title
+        renderer.language = language
+        changeLanguageCallback?(language, self)
+    }
+
+    private func updateLanguage() {
+        if let language = renderer.language {
+            popup.selectItem(withTitle: language)
+        }
     }
 }
 
@@ -158,6 +172,8 @@ extension TextViewPorthole: Porthole {
     static let textDictionaryKey = "text"
     static let rendererDictionaryKey = "renderer"
     static let mimeTypeKey = "mimeType"
+    static let filenameKey = "filename"
+    static let languageKey = "language"
 
     var dictionaryValue: [String: AnyObject] {
         let dir: NSString?
@@ -170,7 +186,9 @@ extension TextViewPorthole: Porthole {
                                  Self.textDictionaryKey: config.text as NSString,
                                  Self.rendererDictionaryKey: renderer.identifier as NSString,
                                  Self.baseDirectoryKey: dir,
-                                 Self.mimeTypeKey: config.mimeType as NSString?].compactMapValues { $0 })
+                                 Self.mimeTypeKey: config.mimeType as NSString?,
+                                 Self.filenameKey: config.filename as NSString?,
+                                 Self.languageKey: config.language as NSString?].compactMapValues { $0 })
     }
 
     static func config(fromDictionary dict: [String: AnyObject],
@@ -194,22 +212,30 @@ extension TextViewPorthole: Porthole {
               let renderer = renderer as? String else {
             return nil
         }
-        let mimeType: String?
-        if let unsafeMimeType = dict[Self.mimeTypeKey], let justMimeType = unsafeMimeType as? String {
-            mimeType = justMimeType
-        } else {
-            mimeType = nil
-        }
+        let mimeType: String? = dict.value(withKey: Self.mimeTypeKey)
+        let language: String? = dict.value(withKey: Self.languageKey)
+        let filename: String? = dict.value(withKey: Self.filenameKey)
         return (config: PortholeConfig(text: text,
                                        colorMap: colorMap,
                                        baseDirectory: baseDirectory,
                                        font: font,
-                                       mimeType: mimeType),
+                                       mimeType: mimeType,
+                                       language: language,
+                                       filename: filename),
                 rendererName: renderer,
                 uuid: uuid)
     }
     func removeSelection() {
         textView.removeSelection()
+    }
+}
+
+extension Dictionary {
+    func value<T>(withKey key: Key) -> T? {
+        guard let unsafe = self[key] else {
+            return nil
+        }
+        return unsafe as? T
     }
 }
 
@@ -252,6 +278,7 @@ extension TextViewPorthole: NSTextViewDelegate {
         containerView.color = visualAttributes.textColor
         containerView.backgroundColor = visualAttributes.backgroundColor
         textView.textStorage?.setAttributedString(renderer.render(visualAttributes: visualAttributes))
+        updateLanguage()
     }
 }
 
@@ -336,6 +363,8 @@ class TopRightAvoidingTextContainer: NSTextContainer {
 
 protocol TextViewPortholeRenderer {
     var identifier: String { get }
+    var language: String? { get set }
+    var languages: Set<String> { get }
     func render(visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString
 }
 

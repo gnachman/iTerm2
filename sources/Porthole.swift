@@ -74,6 +74,8 @@ struct PortholeConfig {
     var baseDirectory: URL?
     var font: NSFont
     var mimeType: String?
+    var language: String?
+    var filename: String?
 }
 
 protocol PortholeDelegate: AnyObject {
