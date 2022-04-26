@@ -15452,6 +15452,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 - (void)intervalTreeDidAddObjectOfType:(iTermIntervalTreeObjectType)type
                                 onLine:(NSInteger)line {
+    [self addMarkToMinimapOfType:type onLine:line];
+}
+
+- (void)addMarkToMinimapOfType:(iTermIntervalTreeObjectType)type
+                                onLine:(NSInteger)line {
     DLog(@"Add at %@", @(line));
     [iTermGCD assertMainQueueSafe];
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
@@ -15465,12 +15470,39 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)intervalTreeDidHideObject:(id<IntervalTreeImmutableObject>)object
+                           ofType:(iTermIntervalTreeObjectType)type
+                           onLine:(NSInteger)line {
+    DLog(@"Hide %@", object);
+    PortholeMark *portholeMark = [PortholeMark castFrom:object];
+    if (portholeMark) {
+        [_textview hidePorthole:portholeMark.porthole];
+    }
+    [self removeMarkFromMinimapOfType:type onLine:line];
+}
+
+- (void)intervalTreeDidUnhideObject:(id<IntervalTreeImmutableObject>)object
+                             ofType:(iTermIntervalTreeObjectType)type
+                             onLine:(NSInteger)line {
+    DLog(@"Unhide %@", object);
+    PortholeMark *portholeMark = [PortholeMark castFrom:object];
+    if (portholeMark) {
+        [_textview unhidePorthole:portholeMark.porthole];
+    }
+    [self addMarkToMinimapOfType:type onLine:line];
+}
+
 - (void)intervalTreeDidRemoveObjectOfType:(iTermIntervalTreeObjectType)type
                                    onLine:(NSInteger)line {
     DLog(@"Remove at %@", @(line));
     if (type == iTermIntervalTreeObjectTypePorthole) {
         [_textview setNeedsPrunePortholes:YES];
     }
+    [self removeMarkFromMinimapOfType:type onLine:line];
+}
+
+- (void)removeMarkFromMinimapOfType:(iTermIntervalTreeObjectType)type
+                             onLine:(NSInteger)line {
     if (![iTermAdvancedSettingsModel showLocationsInScrollbar]) {
         return;
     }

@@ -120,6 +120,10 @@ extension PTYTextView {
     func addPorthole(_ objcPorthole: ObjCPorthole) {
         let porthole = objcPorthole as! Porthole
         portholes.add(porthole)
+        addPortholeView(porthole)
+    }
+
+    private func addPortholeView(_ porthole: Porthole) {
         porthole.delegate = self
         // I'd rather add it to TextViewWrapper but doing so somehow causes TVW to be overreleased
         // and I can't figure out why.
@@ -129,6 +133,27 @@ extension PTYTextView {
         setNeedsDisplay(true)
         porthole.view.needsDisplay = true
         self.delegate?.textViewDidAddOrRemovePorthole()
+    }
+
+    // Continue owning the porthole but remove it from view.
+    @objc
+    func hidePorthole(_ objcPorthole: ObjCPorthole) {
+        let porthole = objcPorthole as! Porthole
+        willRemoveSubview(porthole.view)
+        if porthole.delegate === self {
+            porthole.delegate = nil
+        }
+        porthole.view.removeFromSuperview()
+        NotificationCenter.default.post(name: NSNotification.Name.iTermPortholesDidChange, object: nil)
+        self.delegate?.textViewDidAddOrRemovePorthole()
+    }
+
+    @objc
+    func unhidePorthole(_ objcPorthole: ObjCPorthole) {
+        let porthole = objcPorthole as! Porthole
+        precondition(portholes.contains(porthole))
+        precondition(porthole.view.superview != self)
+        addPortholeView(porthole)
     }
 
     @objc

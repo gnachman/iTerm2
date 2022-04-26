@@ -26,6 +26,12 @@ typedef NS_ENUM(NSUInteger, iTermIntervalTreeObjectType) {
                                 onLine:(NSInteger)line;
 - (void)intervalTreeDidRemoveObjectOfType:(iTermIntervalTreeObjectType)type
                                    onLine:(NSInteger)line;
+- (void)intervalTreeDidUnhideObject:(id<IntervalTreeImmutableObject>)object
+                             ofType:(iTermIntervalTreeObjectType)type
+                             onLine:(NSInteger)line;
+- (void)intervalTreeDidHideObject:(id<IntervalTreeImmutableObject>)object
+                           ofType:(iTermIntervalTreeObjectType)type
+                           onLine:(NSInteger)line;
 - (void)intervalTreeVisibleRangeDidChange;
 - (void)intervalTreeDidMoveObjects:(NSArray<id<IntervalTreeImmutableObject>> *)objects;
 @end

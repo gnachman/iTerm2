@@ -129,7 +129,7 @@ class HighlightrRenderer: TextViewPortholeRenderer {
         if let result = highlightr.highlightAuto(text, languageSubset: subset) {
             if let db = FileExtensionDB.instance {
                 if db.languages.contains(result.language) {
-                    language = FileExtensionDB.instance?.shortNameToLanguage[result.language]
+                    language = FileExtensionDB.instance?.languageToShortName[result.language]
                 } else {
                     language = result.language
                 }

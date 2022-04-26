@@ -2699,10 +2699,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 // offset is added to intervals before inserting into interval tree.
-- (void)moveNotesOnScreenFrom:(IntervalTree *)source
-                           to:(IntervalTree *)dest
-                       offset:(long long)offset
-                 screenOrigin:(int)screenOrigin {
+- (NSArray<id<IntervalTreeObject>> *)moveNotesOnScreenFrom:(IntervalTree *)source
+                                                        to:(IntervalTree *)dest
+                                                    offset:(long long)offset
+                                              screenOrigin:(int)screenOrigin {
     VT100GridCoordRange screenRange =
     VT100GridCoordRangeMake(0,
                             screenOrigin,
@@ -2711,7 +2711,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"  moveNotes: looking in range %@", VT100GridCoordRangeDescription(screenRange));
     Interval *sourceInterval = [self intervalForGridCoordRange:screenRange];
     self.lastCommandMark = nil;
-    for (id<IntervalTreeObject> obj in [source objectsInInterval:sourceInterval]) {
+    NSArray<id<IntervalTreeObject>> *objectsMoved = [source mutableObjectsInInterval:sourceInterval];
+    for (id<IntervalTreeObject> obj in objectsMoved) {
         Interval *interval = obj.entry.interval;
         DLog(@"  found note with interval %@. Remove %@", interval, obj);
         const BOOL removed = [source removeObject:obj];
@@ -2721,6 +2722,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         DLog(@"  new interval is %@", interval);
         [dest addObject:obj withInterval:newInterval];
     }
+    return objectsMoved;
 }
 
 - (NSArray<iTermTuple<id<IntervalTreeObject>, Interval *> *> *)removeNotesOnScreenFrom:(IntervalTree *)source
@@ -2772,6 +2774,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // Notes in the saved tree have 0 as the top of the mutable screen area. -movesNotes… adds
     // the current cumulative overflow to the screenOrigin, so give it a negative origin to offset
     // that.
+    NSArray<id<IntervalTreeObject>> *revealedObjects =
     [self moveNotesOnScreenFrom:self.mutableSavedIntervalTree
                              to:self.mutableIntervalTree
                          offset:origin.location
@@ -2788,7 +2791,29 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self.mutableSavedIntervalTree addObject:tuple.firstObject
                                     withInterval:tuple.secondObject];
     }
-    DLog(@"after moving temp to saved, saved:\n%@", self.mutableSavedIntervalTree);;
+    DLog(@"after moving temp to saved, saved:\n%@", self.mutableSavedIntervalTree);
+
+    // Let delegate know about changes.
+    for (id<IntervalTreeObject> ito in revealedObjects) {
+        const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(ito.doppelganger);
+        const long long line = [self absCoordRangeForInterval:ito.entry.interval].start.y;
+        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+            [observer intervalTreeDidUnhideObject:ito.doppelganger
+                                           ofType:type
+                                           onLine:line];
+        }];
+    }
+    for (iTermTuple<id<IntervalTreeObject>, Interval *> *tuple in formerlyInPrimary) {
+        id<IntervalTreeObject> ito = tuple.firstObject;
+        const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(ito.doppelganger);
+        const long long line = [self absCoordRangeForInterval:ito.entry.interval].start.y;
+        id<IntervalTreeImmutableObject> doppelganger = ito.doppelganger;
+        [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
+            [observer intervalTreeDidHideObject:doppelganger
+                                         ofType:type
+                                         onLine:line];
+        }];
+    }
     DLog(@"- done -");
 }
 

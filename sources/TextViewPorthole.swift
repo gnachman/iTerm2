@@ -392,3 +392,4 @@ class TextPortholeLayoutManager: NSLayoutManager {
         true
     }
 }
+
