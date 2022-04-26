@@ -95,8 +95,7 @@
                  scaleFactor:(CGFloat)scaleFactor
          preserveAspectRatio:(BOOL)preserveAspectRatio
                        inset:(NSEdgeInsets)inset
-                    mimeType:(NSString *)mimeType
-                    language:(NSString *)language
+                        type:(NSString *)type
                 preconfirmed:(BOOL)preconfirmed {
     self = [super init];
     if (self) {
@@ -107,8 +106,7 @@
         _heightUnits = heightUnits;
         _preserveAspectRatio = preserveAspectRatio;
         _inset = inset;
-        _mimeType = [mimeType copy];
-        _language = [language copy];
+        _type = [type copy];
         if ([iTermAdvancedSettingsModel retinaInlineImages]) {
             _scaleFactor = scaleFactor;
         } else {
@@ -129,8 +127,7 @@
                   scaleFactor:scaleFactor
           preserveAspectRatio:YES
                         inset:NSEdgeInsetsZero
-                     mimeType:nil
-                     language:nil
+                         type:nil
                  preconfirmed:YES];
     if (self) {
         _sixelData = [data copy];
@@ -149,8 +146,7 @@
                   scaleFactor:scaleFactor
           preserveAspectRatio:NO
                         inset:NSEdgeInsetsZero
-                     mimeType:nil
-                     language:nil
+                         type:nil
                  preconfirmed:YES];
     if (self) {
         _nativeImage = [NSImage it_imageNamed:name forClass:self.class];
@@ -177,17 +173,24 @@
 }
 
 - (BOOL)smellsLikeImage {
-    if (self.language != nil) {
-        return NO;
-    }
-    if (self.mimeType == nil) {
+    if (self.type == nil) {
         if ([self filenameSmellsLikeText]) {
             return NO;
         }
         return YES;
     }
-    if ([self.mimeType hasPrefix:@"image/"] ||
-        [self.mimeType hasPrefix:@"video/"]) {
+    if ([self.type hasPrefix:@"."]) {
+        if ([[[iTermFileExtensionDB instance] languagesForExtension:[self.type substringFromIndex:1]] count]) {
+            return NO;
+        }
+
+    }
+    if ([[[iTermFileExtensionDB instance] languages] containsObject:self.type]) {
+        // This assumes all languages it knows about are textual, not graphical.
+        return NO;
+    }
+    if ([self.type hasPrefix:@"image/"] ||
+        [self.type hasPrefix:@"video/"]) {
         return YES;
     }
     return NO;
@@ -270,8 +273,7 @@
     range.end.x = grid.size.width - 1;
 
     [self.delegate inlineImageDidCreateTextDocumentInRange:range
-                                                  mimeType:self.mimeType
-                                                  language:self.language
+                                                      type:self.type
                                                   filename:_name];
     return YES;
 }

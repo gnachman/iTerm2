@@ -17,9 +17,8 @@ class PortholeFactory: NSObject {
 
     private static func highlightrRenderer(config: PortholeConfig) -> HighlightrRenderer {
         return HighlightrRenderer(config.text,
-                                  mimeType: config.mimeType,
-                                  filename: config.filename,
-                                  language: config.language)
+                                  type: config.type,
+                                  filename: config.filename)
     }
 
     @objc

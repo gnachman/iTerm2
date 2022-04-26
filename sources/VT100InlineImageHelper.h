@@ -29,8 +29,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 - (void)inlineImageSetMarkOnScreenLine:(NSInteger)line
                                   code:(unichar)code;
 - (void)inlineImageDidCreateTextDocumentInRange:(VT100GridAbsCoordRange)range
-                                       mimeType:(NSString *)mimeType
-                                       language:(NSString * _Nullable)language
+                                           type:(NSString *)type
                                        filename:(NSString * _Nullable)filename;
 - (void)inlineImageDidFinishWithImageData:(NSData *)imageData;
 - (VT100GridAbsCoord)inlineImageCursorAbsoluteCoord;
@@ -45,8 +44,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
 @property (nonatomic, weak) id<VT100InlineImageHelperDelegate> delegate;
 
 // Type hints for non-image files.
-@property (nullable, nonatomic, readonly, copy) NSString *mimeType;
-@property (nullable, nonatomic, readonly, copy) NSString *language;
+@property (nullable, nonatomic, readonly, copy) NSString *type;
 
 - (instancetype)initWithName:(NSString *)name
                        width:(int)width
@@ -56,8 +54,7 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
                  scaleFactor:(CGFloat)scaleFactor
          preserveAspectRatio:(BOOL)preserveAspectRatio
                        inset:(NSEdgeInsets)inset
-                    mimeType:(NSString * _Nullable)mimeType
-                    language:(NSString * _Nullable)language
+                        type:(NSString * _Nullable)type
                 preconfirmed:(BOOL)preconfirmed;
 
 - (instancetype)initWithSixelData:(NSData *)data

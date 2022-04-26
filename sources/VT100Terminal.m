@@ -3616,7 +3616,6 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     }
 
     NSString *type = dict[@"type"];
-    NSString *language = dict[@"language"];
 
     NSString *widthString = dict[@"width"];
     VT100TerminalUnits widthUnits = kVT100TerminalUnitsCells;
@@ -3664,8 +3663,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                                                 units:heightUnits
                                   preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]
                                                 inset:inset
-                                             mimeType:type
-                                             language:language
+                                                 type:type
                                            completion:^(BOOL ok) {
                   if (ok) {
                       [weakSelf startReceivingFile];

@@ -16,6 +16,14 @@ class iTermFileExtensionDB: NSObject {
     func languagesForPath(_ path: String?) -> Set<String> {
         return impl?.languagesForPath(path) ?? Set()
     }
+
+    @objc func languagesForExtension(_ ext: String) -> Set<String> {
+        return impl?.languagesForExtension(ext) ?? Set()
+    }
+
+    @objc var languages: Set<String> {
+        return impl?.languages ?? Set()
+    }
 }
 
 class FileExtensionDB {
@@ -23,8 +31,9 @@ class FileExtensionDB {
     // Map a file extension to a set of languages.
     private let extensionToLanguages: [String: Set<String>]
     private let mimeTypeToLanguage: [String: String]
-    private let shortNameToLanguage: [String: String]
-    let languages: Set<String>
+    let shortNameToLanguage: [String: String]
+    let languageToShortName: [String: String]
+    @objc let languages: Set<String>
 
     init?() {
         guard let filename = Bundle(for: Self.self).path(forResource: "extensions", ofType: "json") else {
@@ -45,6 +54,7 @@ class FileExtensionDB {
         var e2l = [String: Set<String>]()
         var m2l = [String: String]()
         var s2l = [String: String]()
+        var l2s = [String: String]()
         for entry in entries {
             for ext in entry.extensions {
                 e2l[ext] = (e2l[ext] ?? Set()).union(Set([entry.name]))
@@ -53,15 +63,35 @@ class FileExtensionDB {
                 m2l[mimeType] = entry.name
             }
             s2l[entry.shortname] = entry.name
+            l2s[entry.name] = entry.shortname
         }
         extensionToLanguages = e2l
         mimeTypeToLanguage = m2l
         shortNameToLanguage = s2l
+        languageToShortName = l2s
         languages = Set(entries.map { $0.name })
     }
 
-    private func languagesForExtension(_ ext: String) -> Set<String> {
-        return extensionToLanguages[ext] ?? Set()
+    func languagesForTypeHint(_ type: String) -> Set<String>? {
+        if type.hasPrefix(".") {
+            return languagesForExtension(String(type.dropFirst()))
+        }
+        if let language = mimeTypeToLanguage[type], let short = languageToShortName[language] {
+            return Set([short])
+        }
+        if let short = languageToShortName[type] {
+            return Set([short])
+        }
+        if shortNameToLanguage[type] != nil {
+            return Set([type])
+        }
+        return nil
+    }
+
+    @objc func languagesForExtension(_ ext: String) -> Set<String> {
+        return Set((extensionToLanguages[ext] ?? Set()).compactMap { language in
+            self.languageToShortName[language]
+        })
     }
 
     func languagesForPath(_ path: String?) -> Set<String> {
@@ -82,13 +112,5 @@ class FileExtensionDB {
         return sets.reduce(into: Set()) { partialResult, set in
             partialResult.formUnion(set)
         }
-    }
-
-    func languageForMimeType(_ mimeType: String) -> String? {
-        return mimeTypeToLanguage[mimeType]
-    }
-
-    func languageForShortName(_ shortName: String) -> String? {
-        return shortNameToLanguage[shortName]
     }
 }

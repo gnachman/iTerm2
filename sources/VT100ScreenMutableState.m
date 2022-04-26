@@ -1641,7 +1641,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                           block:^(id<IntervalTreeObject> note) {
         if (note.entry.interval.location < screenInterval.location) {
             // Truncate note so that it ends just before screen.
-            note.entry.interval.length = screenInterval.location - note.entry.interval.location;
+            // Subtract 1 because end coord is inclusive of y even when x is 0.
+            note.entry.interval.length = screenInterval.location - note.entry.interval.location - 1;
         }
         PTYAnnotation *annotation = [PTYAnnotation castFrom:note];
         [annotation hide];
@@ -3174,7 +3175,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // Add replacement lines.
     VT100GridCoordRange replacementRange = VT100GridCoordRangeMake(0,
                                                             range.start.y,
-                                                            gridSize.width,
+                                                            gridSize.width - 1,
                                                             range.start.y + numLines - 1);
     const VT100GridAbsCoordRange resultingRange =
     VT100GridAbsCoordRangeFromCoordRange(replacementRange, self.totalScrollbackOverflow);
@@ -3195,6 +3196,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // 4 |
     // 5 |
 
+    [self.currentGrid setCharsFrom:VT100GridCoordMake(0, 0)
+                                to:VT100GridCoordMake(self.currentGrid.size.width - 1,
+                                                      self.currentGrid.size.height - 1)
+                            toChar:self.currentGrid.defaultChar
+                externalAttributes:nil];
     [self.currentGrid restoreScreenFromLineBuffer:self.linebuffer
                                   withDefaultChar:self.currentGrid.defaultChar
                                 maxLinesToRestore:gridSize.height];
@@ -4676,13 +4682,11 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 - (void)inlineImageDidCreateTextDocumentInRange:(VT100GridAbsCoordRange)range
-                                       mimeType:(NSString *)mimeType
-                                       language:(NSString *)language
+                                           type:(NSString *)type
                                        filename:(NSString *)filename {
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenConvertAbsoluteRange:range
-                        toTextDocumentOfType:mimeType
-                                    language:language
+                        toTextDocumentOfType:type
                                     filename:filename];
         [unpauser unpause];
     }];

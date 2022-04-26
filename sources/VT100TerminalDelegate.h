@@ -353,8 +353,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
                                      units:(VT100TerminalUnits)heightUnits
                        preserveAspectRatio:(BOOL)preserveAspectRatio
                                      inset:(NSEdgeInsets)inset
-                                  mimeType:(NSString *)mimeType
-                                  language:(NSString *)language
+                                      type:(NSString *)type
                                 completion:(void (^)(BOOL ok))completion;
 
 // Download completed normally

@@ -34,17 +34,34 @@ class TextViewPorthole: NSObject {
     var changeLanguageCallback: ((String, TextViewPorthole) -> ())? = nil
 
     struct VisualAttributes: Equatable {
+        static func == (lhs: TextViewPorthole.VisualAttributes, rhs: TextViewPorthole.VisualAttributes) -> Bool {
+            return lhs.colorMap === rhs.colorMap && lhs.font == rhs.font
+        }
+
         let textColor: NSColor
         let backgroundColor: NSColor
         let font: NSFont
+        let colorMap: iTermColorMapReading
 
         init(colorMap: iTermColorMapReading, font: NSFont) {
             textColor = colorMap.color(forKey: kColorMapForeground) ?? NSColor.textColor
             backgroundColor = colorMap.color(forKey: kColorMapBackground) ?? NSColor.textBackgroundColor
             self.font = font
+            self.colorMap = colorMap
         }
     }
     private(set) var savedVisualAttributes: VisualAttributes
+
+    static private func add(languages: Set<String>, to menu: NSMenu?) {
+        guard let menu = menu else {
+            return
+        }
+
+        let sortedLanguages = languages.sorted{$0.localizedCompare($1) == .orderedAscending}
+        for language in sortedLanguages {
+            menu.addItem(withTitle: language, action: #selector(changeLanguage(_:)), keyEquivalent: "")
+        }
+    }
 
     init(_ config: PortholeConfig,
          renderer: TextViewPortholeRenderer,
@@ -53,13 +70,18 @@ class TextViewPorthole: NSObject {
         popup.font = NSFont.systemFont(ofSize: NSFont.systemFontSize(for: .mini))
         popup.autoenablesItems = true
 
-        let languages = renderer.languages.isEmpty ? HighlightrRenderer.allLanguages : renderer.languages
-        let sortedLanguages = languages.sorted{$0.localizedCompare($1) == .orderedAscending}
-        for language in sortedLanguages {
-            popup.menu?.addItem(withTitle: language, action: #selector(changeLanguage(_:)), keyEquivalent: "")
+        if !renderer.languages.isEmpty {
+            Self.add(languages: renderer.languages, to: popup.menu)
+            var secondaryLanguages = HighlightrRenderer.allLanguages
+            secondaryLanguages.subtract(renderer.languages)
+            if !secondaryLanguages.isEmpty {
+                popup.menu?.addItem(NSMenuItem.separator())
+                Self.add(languages: secondaryLanguages, to: popup.menu)
+            }
+        } else {
+            Self.add(languages: HighlightrRenderer.allLanguages, to: popup.menu)
         }
         popup.sizeToFit()
-        popup.selectItem(withTitle: renderer.identifier)
 
         containerView = PortholeContainerView()
         self.uuid = uuid ?? UUID().uuidString
@@ -123,13 +145,14 @@ class TextViewPorthole: NSObject {
 
     @objc func changeLanguage(_ sender: Any?) {
         let language = (sender as! NSMenuItem).title
-        renderer.language = language
+        renderer.language = FileExtensionDB.instance?.languageToShortName[language] ?? language
         changeLanguageCallback?(language, self)
     }
 
     private func updateLanguage() {
-        if let language = renderer.language {
-            popup.selectItem(withTitle: language)
+        if let language = renderer.language,
+            let title = FileExtensionDB.instance?.shortNameToLanguage[language] {
+            popup.selectItem(withTitle: title)
         }
     }
 }
@@ -171,9 +194,8 @@ extension TextViewPorthole: Porthole {
     static let baseDirectoryKey = "baseDirectory"
     static let textDictionaryKey = "text"
     static let rendererDictionaryKey = "renderer"
-    static let mimeTypeKey = "mimeType"
+    static let typeKey = "type"
     static let filenameKey = "filename"
-    static let languageKey = "language"
 
     var dictionaryValue: [String: AnyObject] {
         let dir: NSString?
@@ -186,9 +208,8 @@ extension TextViewPorthole: Porthole {
                                  Self.textDictionaryKey: config.text as NSString,
                                  Self.rendererDictionaryKey: renderer.identifier as NSString,
                                  Self.baseDirectoryKey: dir,
-                                 Self.mimeTypeKey: config.mimeType as NSString?,
-                                 Self.filenameKey: config.filename as NSString?,
-                                 Self.languageKey: config.language as NSString?].compactMapValues { $0 })
+                                 Self.typeKey: config.type as NSString?,
+                                 Self.filenameKey: config.filename as NSString?].compactMapValues { $0 })
     }
 
     static func config(fromDictionary dict: [String: AnyObject],
@@ -212,15 +233,13 @@ extension TextViewPorthole: Porthole {
               let renderer = renderer as? String else {
             return nil
         }
-        let mimeType: String? = dict.value(withKey: Self.mimeTypeKey)
-        let language: String? = dict.value(withKey: Self.languageKey)
+        let type: String? = dict.value(withKey: Self.typeKey)
         let filename: String? = dict.value(withKey: Self.filenameKey)
         return (config: PortholeConfig(text: text,
                                        colorMap: colorMap,
                                        baseDirectory: baseDirectory,
                                        font: font,
-                                       mimeType: mimeType,
-                                       language: language,
+                                       type: type,
                                        filename: filename),
                 rendererName: renderer,
                 uuid: uuid)

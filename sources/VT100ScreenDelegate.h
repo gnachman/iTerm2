@@ -384,8 +384,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (VT100MutableScreenConfiguration * _Nonnull)screenConfiguration;
 - (void)screenSyncExpect:(VT100ScreenMutableState * _Nonnull)mutableState;
 - (void)screenConvertAbsoluteRange:(VT100GridAbsCoordRange)range
-              toTextDocumentOfType:(NSString * _Nullable)mimeType
-                          language:(NSString * _Nullable)language
+              toTextDocumentOfType:(NSString * _Nullable)type
                           filename:(NSString * _Nullable)filename;
 
 @end

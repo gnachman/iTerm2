@@ -20,10 +20,9 @@ extension VT100GridCoordRange {
 }
 
 extension PTYTextView {
-    @objc(renderRange:mimeType:language:filename:)
+    @objc(renderRange:type:filename:)
     func render(range originalRange: VT100GridAbsCoordRange,
-                mimeType: String?,
-                language: String?,
+                type: String?,
                 filename: String?) {
         guard let dataSource = dataSource else {
             return
@@ -42,8 +41,7 @@ extension PTYTextView {
         replaceWithPorthole(inRange: absRange,
                             text: text,
                             baseDirectory: baseDirectory,
-                            mimeType: mimeType,
-                            language: language,
+                            type: type,
                             filename: filename)
     }
 
@@ -63,12 +61,11 @@ extension PTYTextView {
         return text
     }
 
-    @objc(replaceWithPortholeInRange:havingText:baseDirectory:mimeType:language:filename:)
+    @objc(replaceWithPortholeInRange:havingText:baseDirectory:type:filename:)
     func replaceWithPorthole(inRange absRange: VT100GridAbsCoordRange,
                              text: String,
                              baseDirectory: URL?,
-                             mimeType: String?,
-                             language: String?,
+                             type: String?,
                              filename: String?) {
         guard dataSource != nil else {
             return
@@ -77,8 +74,7 @@ extension PTYTextView {
                                     colorMap: colorMap,
                                     baseDirectory: baseDirectory,
                                     font: font,
-                                    mimeType: mimeType,
-                                    language: language,
+                                    type: type,
                                     filename: filename)
         let porthole = makePorthole(for: config)
         replace(range: absRange, withPorthole: porthole)
