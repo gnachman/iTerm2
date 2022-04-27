@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 52;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -2401,6 +2401,9 @@
 		A686F3891D36A49100F08ED7 /* iTermPreciseTimer.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F3871D36A49100F08ED7 /* iTermPreciseTimer.h */; };
 		A686F38D1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h in Headers */ = {isa = PBXBuildFile; fileRef = A686F38B1D3951A800F08ED7 /* iTermBoxDrawingBezierCurveFactory.h */; };
 		A687B66A25AD6FF600E0A658 /* iTermGitClient.m in Sources */ = {isa = PBXBuildFile; fileRef = A687B66925AD6FF600E0A658 /* iTermGitClient.m */; };
+		A6891DCA2818605500751F40 /* MarkdownPortholeRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6891DC82818605500751F40 /* MarkdownPortholeRenderer.swift */; };
+		A6891DCB2818605500751F40 /* JSONPortholeRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6891DC92818605500751F40 /* JSONPortholeRenderer.swift */; };
+		A6891DCE2818621900751F40 /* SwiftyMarkdown in Frameworks */ = {isa = PBXBuildFile; productRef = A6891DCD2818621900751F40 /* SwiftyMarkdown */; };
 		A68A30C1186D0DC1007F550F /* iTermFindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */; };
 		A68A30C6186D0F37007F550F /* SmartMatch.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30C4186D0F36007F550F /* SmartMatch.h */; };
 		A68A30F4186D150A007F550F /* FileTransferManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30EA186D150A007F550F /* FileTransferManager.h */; };
@@ -6098,6 +6101,8 @@
 		A687B66825AD6FF600E0A658 /* iTermGitClient.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermGitClient.h; sourceTree = "<group>"; };
 		A687B66925AD6FF600E0A658 /* iTermGitClient.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGitClient.m; sourceTree = "<group>"; };
 		A6889E84213274E600ABB237 /* iTerm2.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iTerm2.entitlements; sourceTree = "<group>"; };
+		A6891DC82818605500751F40 /* MarkdownPortholeRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MarkdownPortholeRenderer.swift; sourceTree = "<group>"; };
+		A6891DC92818605500751F40 /* JSONPortholeRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONPortholeRenderer.swift; sourceTree = "<group>"; };
 		A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFindCursorView.h; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFindCursorView.m; sourceTree = "<group>"; tabWidth = 4; };
 		A68A30C4186D0F36007F550F /* SmartMatch.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = SmartMatch.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -7052,6 +7057,7 @@
 				1D81F0BD183C3B0100910838 /* ScriptingBridge.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
 				A6184F891BAB3ED70088EF3C /* ColorPicker.framework in Frameworks */,
+				A6891DCE2818621900751F40 /* SwiftyMarkdown in Frameworks */,
 				530AB89920AFF21300D2AA08 /* CoreParse.framework in Frameworks */,
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
 				1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */,
@@ -9447,6 +9453,8 @@
 		A6822749280786B3005DF0B4 /* Portholes */ = {
 			isa = PBXGroup;
 			children = (
+				A6891DC92818605500751F40 /* JSONPortholeRenderer.swift */,
+				A6891DC82818605500751F40 /* MarkdownPortholeRenderer.swift */,
 				A6822747280786A5005DF0B4 /* Porthole.swift */,
 				A69169392813457900083F99 /* PortholeFactory.swift */,
 				A691693E281345D000083F99 /* PortholeContainerView.swift */,
@@ -12350,6 +12358,7 @@
 			);
 			name = iTerm2;
 			packageProductDependencies = (
+				A6891DCD2818621900751F40 /* SwiftyMarkdown */,
 			);
 			productName = "JTerminal (Application)";
 			productReference = 8742065A0564169600CFC3F1 /* iTerm2.app */;
@@ -12530,6 +12539,7 @@
 			);
 			mainGroup = 0464AB0D006CD2EC7F000001 /* JTerminal */;
 			packageReferences = (
+				A6891DCC2818621900751F40 /* XCRemoteSwiftPackageReference "SwiftyMarkdown" */,
 			);
 			productRefGroup = 0464AB32006CD2EC7F000001 /* Products */;
 			projectDirPath = "";
@@ -14292,6 +14302,7 @@
 				A6AAD5EF22F4A1DD002DD12C /* iTermCommandRunnerPool.m in Sources */,
 				A68400BD1FF98101008D3EE2 /* iTermTimestampsRenderer.m in Sources */,
 				A6A4B2A2240B67A400184EAC /* PTYMouseHandler.m in Sources */,
+				A6891DCA2818605500751F40 /* MarkdownPortholeRenderer.swift in Sources */,
 				A6F6990A2728C45800C4A3A6 /* Mux.swift in Sources */,
 				537067A021C9D2780088D0F3 /* SIGArchiveReader.m in Sources */,
 				A6EC937E24E859D100EEADEF /* ToolDirectoriesView.m in Sources */,
@@ -14796,6 +14807,7 @@
 				537BFDCA20FFB2590098C91F /* iTermProcessCache.m in Sources */,
 				A6F9EF3820850C41005530F7 /* iTermCompetentTableRowView.m in Sources */,
 				A6D10E3427F7C2BC0026DB56 /* NSRange+MultiCursor.swift in Sources */,
+				A6891DCB2818605500751F40 /* JSONPortholeRenderer.swift in Sources */,
 				A630117720E6971D008114B7 /* iTermStatusBarTextComponent.m in Sources */,
 				A66319892312312600C502BD /* iTermRule.m in Sources */,
 				A6F718B12263CC3C0053488E /* ITAddressBookMgr.m in Sources */,
@@ -15433,7 +15445,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_COMPILER_FLAGS = "";
@@ -15512,7 +15527,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15584,7 +15602,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15654,7 +15675,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15736,7 +15760,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15811,7 +15838,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -15885,7 +15915,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -16652,7 +16685,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_COMPILER_FLAGS = "";
@@ -16734,7 +16770,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTermTests-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -16840,7 +16879,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = "plists/iTerm2ForApplescriptTesting-Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -16976,7 +17018,11 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
@@ -17039,7 +17085,11 @@
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
 				);
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				OTHER_CFLAGS = "-DBETA=1";
 				OTHER_LDFLAGS = "";
@@ -17049,7 +17099,11 @@
 				SWIFT_INCLUDE_PATHS = $PROJECT_DIR/SearchableComboListView;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include $(";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
+					"$(",
+				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -17364,7 +17418,11 @@
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
 				);
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = (
@@ -17380,7 +17438,11 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include $(";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
+					"$(",
+				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -17434,7 +17496,11 @@
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
 				);
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -17443,7 +17509,11 @@
 				SWIFT_INCLUDE_PATHS = $PROJECT_DIR/SearchableComboListView;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include $(";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
+					"$(",
+				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -17496,7 +17566,11 @@
 					ThirdParty,
 					"$(PROJECT_DIR)/SearchableComboListView",
 				);
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				OTHER_CFLAGS = "-DBETA=1";
 				OTHER_LDFLAGS = "";
@@ -17506,7 +17580,11 @@
 				SWIFT_INCLUDE_PATHS = $PROJECT_DIR/SearchableComboListView;
 				SWIFT_OBJC_BRIDGING_HEADER = "sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
-				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/SearchableComboListView $(PROJECT_DIR)/ThirdParty/libsixel/include $(";
+				USER_HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/ThirdParty/libsixel/include",
+					"$(",
+				);
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 				WARNING_CFLAGS = (
 					"-Wall",
@@ -18081,7 +18159,11 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -18146,7 +18228,11 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
@@ -18210,7 +18296,11 @@
 					.,
 				);
 				INFOPLIST_FILE = iTerm2XCTests/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
@@ -18275,7 +18365,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
@@ -18363,7 +18456,10 @@
 					ThirdParty,
 				);
 				INFOPLIST_FILE = plists/iTerm2.plist;
-				LD_RUNPATH_SEARCH_PATHS = "@loader_path/../Frameworks @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@loader_path/../Frameworks",
+					"@executable_path/../Frameworks",
+				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 10.14;
 				MTL_COMPILER_FLAGS = "";
@@ -18628,6 +18724,25 @@
 			defaultConfigurationName = Development;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A6891DCC2818621900751F40 /* XCRemoteSwiftPackageReference "SwiftyMarkdown" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gnachman/SwiftyMarkdown";
+			requirement = {
+                                branch = master;
+                                kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A6891DCD2818621900751F40 /* SwiftyMarkdown */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A6891DCC2818621900751F40 /* XCRemoteSwiftPackageReference "SwiftyMarkdown" */;
+			productName = SwiftyMarkdown;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCVersionGroup section */
 		A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */ = {

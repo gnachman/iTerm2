@@ -96,10 +96,16 @@ fileprivate extension TextViewPorthole.VisualAttributes {
     }
 }
 class HighlightrRenderer: TextViewPortholeRenderer {
+    enum Specializations: String {
+        case markdown = "markdown"
+        case json = "json"
+    }
     let identifier = "Highlightr"
     static let identifier = "Highlightr"
     let text: String
     let _languages: Set<String>
+    private var markdownRenderer: MarkdownPortholeRenderer?
+    private var jsonRenderer: JSONPortholeRenderer?
     var languages: Set<String> {
         guard let db = FileExtensionDB.instance else {
             return _languages
@@ -113,7 +119,32 @@ class HighlightrRenderer: TextViewPortholeRenderer {
         return FileExtensionDB.instance?.languages ?? Set()
     }
 
+    func renderIfSpecialized(visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString? {
+        guard let language = language else {
+            return nil
+        }
+
+        switch Specializations(rawValue: language) {
+        case .markdown:
+            if markdownRenderer == nil {
+                markdownRenderer = MarkdownPortholeRenderer(text)
+            }
+            return markdownRenderer!.render(visualAttributes: visualAttributes)
+        case .json:
+            if jsonRenderer == nil {
+                jsonRenderer = JSONPortholeRenderer(text)
+            }
+            return jsonRenderer!.render(visualAttributes: visualAttributes)
+        case .none:
+            return nil
+        }
+    }
+
     func render(visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString {
+        if let result = renderIfSpecialized(visualAttributes: visualAttributes) {
+            return result
+        }
+
         let highlightr = Highlightr()!
         highlightr.theme = Theme(themeString: visualAttributes.themeString)
         highlightr.theme.setCodeFont(visualAttributes.font)
@@ -132,6 +163,9 @@ class HighlightrRenderer: TextViewPortholeRenderer {
                     language = FileExtensionDB.instance?.languageToShortName[result.language]
                 } else {
                     language = result.language
+                }
+                if let spec = renderIfSpecialized(visualAttributes: visualAttributes) {
+                    return spec
                 }
             }
             return result.attributedString
@@ -162,7 +196,13 @@ class HighlightrRenderer: TextViewPortholeRenderer {
         } else {
             self._languages = Set()
         }
-        self.language = nil
+        if MarkdownPortholeRenderer.wants(text) {
+            language = "markdown"
+        } else if JSONPortholeRenderer.wants(text) {
+            language = "json"
+        } else {
+            self.language = nil
+        }
     }
 }
 

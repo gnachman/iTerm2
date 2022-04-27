@@ -199,31 +199,7 @@
 - (BOOL)contentIsVeryLikelyText {
     NSData *data = [NSData dataWithBase64EncodedString:_base64String];
     NSString *text = [data stringWithEncoding:NSUTF8StringEncoding];
-    if (!text) {
-        return NO;
-    }
-    if ([NSJSONSerialization JSONObjectWithData:[text dataUsingEncoding:NSUTF8StringEncoding]
-                                        options:NSJSONReadingFragmentsAllowed
-                                          error:nil] != nil) {
-        return YES;
-    }
-    static NSRegularExpression *regex;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        // Look for hints of markdown.
-        regex = [[NSRegularExpression alloc] initWithPattern:@"^##* [^ ]|^```[a-z]*$|"
-                                                     options:NSRegularExpressionAnchorsMatchLines
-                                                       error:nil];
-        assert(regex != nil);
-    });
-    NSTextCheckingResult *result = [regex firstMatchInString:text options:0 range:NSMakeRange(0, text.length)];
-    if (result == nil) {
-        return NO;
-    }
-    if (result.range.length == 0) {
-        return NO;
-    }
-    return YES;
+    return text != nil;
 }
 
 - (void)writeToGrid:(VT100Grid *)grid {
