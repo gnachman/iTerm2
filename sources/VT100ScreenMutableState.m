@@ -3096,8 +3096,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         return;
     }
     Interval *interval = [self intervalForGridAbsCoordRange:markRange];
-#warning DNS
-    // TODO: I don't like that this modifies Porthole which should only be accessed on the main thread.
     PortholeMark *mark = [[PortholeMark alloc] init:porthole];
     [self.mutableIntervalTree addObject:mark withInterval:interval];
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
