@@ -12,13 +12,13 @@ import CoreText
 class PortholeFactory: NSObject {
     static func highlightrPorthole(config: PortholeConfig) -> Porthole {
         return TextViewPorthole(config,
-                                renderer: highlightrRenderer(config: config))
+                                renderer: textViewPortholeRenderer(config: config))
     }
 
-    private static func highlightrRenderer(config: PortholeConfig) -> HighlightrRenderer {
-        return HighlightrRenderer(config.text,
-                                  type: config.type,
-                                  filename: config.filename)
+    private static func textViewPortholeRenderer(config: PortholeConfig) -> TextViewPortholeRenderer {
+        return TextViewPortholeRenderer(config.text,
+                                        type: config.type,
+                                        filename: config.filename)
     }
 
     @objc
@@ -30,16 +30,13 @@ class PortholeFactory: NSObject {
         }
         switch type {
         case .text:
-            guard let (config, rendererName, _) = TextViewPorthole.config(fromDictionary: info,
-                                                                          colorMap: colorMap,
-                                                                          font: font) else {
+            guard let (config, _) = TextViewPorthole.config(fromDictionary: info,
+                                                            colorMap: colorMap,
+                                                            font: font) else {
                 return nil
             }
-            if rendererName == HighlightrRenderer.identifier {
-                return TextViewPorthole(config,
-                                        renderer: highlightrRenderer(config: config))
-            }
-            return nil
+            return TextViewPorthole(config,
+                                    renderer: textViewPortholeRenderer(config: config))
         }
     }
 }

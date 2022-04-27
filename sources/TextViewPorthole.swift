@@ -72,14 +72,14 @@ class TextViewPorthole: NSObject {
 
         if !renderer.languages.isEmpty {
             Self.add(languages: renderer.languages, to: popup.menu)
-            var secondaryLanguages = HighlightrRenderer.allLanguages
+            var secondaryLanguages = TextViewPortholeRenderer.allLanguages
             secondaryLanguages.subtract(renderer.languages)
             if !secondaryLanguages.isEmpty {
                 popup.menu?.addItem(NSMenuItem.separator())
                 Self.add(languages: secondaryLanguages, to: popup.menu)
             }
         } else {
-            Self.add(languages: HighlightrRenderer.allLanguages, to: popup.menu)
+            Self.add(languages: TextViewPortholeRenderer.allLanguages, to: popup.menu)
         }
         popup.sizeToFit()
 
@@ -193,7 +193,6 @@ extension TextViewPorthole: Porthole {
     static let uuidDictionaryKey = "uuid"
     static let baseDirectoryKey = "baseDirectory"
     static let textDictionaryKey = "text"
-    static let rendererDictionaryKey = "renderer"
     static let typeKey = "type"
     static let filenameKey = "filename"
 
@@ -206,7 +205,6 @@ extension TextViewPorthole: Porthole {
         }
         return wrap(dictionary: [Self.uuidDictionaryKey: uuid as NSString,
                                  Self.textDictionaryKey: config.text as NSString,
-                                 Self.rendererDictionaryKey: renderer.identifier as NSString,
                                  Self.baseDirectoryKey: dir,
                                  Self.typeKey: config.type as NSString?,
                                  Self.filenameKey: config.filename as NSString?].compactMapValues { $0 })
@@ -215,11 +213,9 @@ extension TextViewPorthole: Porthole {
     static func config(fromDictionary dict: [String: AnyObject],
                        colorMap: iTermColorMapReading,
                        font: NSFont) -> (config: PortholeConfig,
-                                         rendererName: String,
                                          uuid: String)?  {
         guard let uuid = dict[Self.uuidDictionaryKey],
-              let text = dict[Self.textDictionaryKey],
-              let renderer = dict[Self.rendererDictionaryKey] else {
+              let text = dict[Self.textDictionaryKey] else {
             return nil
         }
         let baseDirectory: URL?
@@ -229,8 +225,7 @@ extension TextViewPorthole: Porthole {
             baseDirectory = nil
         }
         guard let uuid = uuid as? String,
-              let text = text as? String,
-              let renderer = renderer as? String else {
+              let text = text as? String else {
             return nil
         }
         let type: String? = dict.value(withKey: Self.typeKey)
@@ -241,7 +236,6 @@ extension TextViewPorthole: Porthole {
                                        font: font,
                                        type: type,
                                        filename: filename),
-                rendererName: renderer,
                 uuid: uuid)
     }
     func removeSelection() {
@@ -378,13 +372,6 @@ class TopRightAvoidingTextContainer: NSTextContainer {
         }
         return try closure()
     }
-}
-
-protocol TextViewPortholeRenderer {
-    var identifier: String { get }
-    var language: String? { get set }
-    var languages: Set<String> { get }
-    func render(visualAttributes: TextViewPorthole.VisualAttributes) -> NSAttributedString
 }
 
 class TextPortholeLayoutManager: NSLayoutManager {

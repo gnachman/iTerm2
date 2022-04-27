@@ -1,5 +1,5 @@
 //
-//  HighlightrRenderer.swift
+//  TextViewPortholeRenderer.swift
 //  iTerm2SharedARC
 //
 //  Created by George Nachman on 4/24/22.
@@ -95,13 +95,12 @@ fileprivate extension TextViewPorthole.VisualAttributes {
 """.minified
     }
 }
-class HighlightrRenderer: TextViewPortholeRenderer {
+class TextViewPortholeRenderer {
     enum Specializations: String {
         case markdown = "markdown"
         case json = "json"
     }
-    let identifier = "Highlightr"
-    static let identifier = "Highlightr"
+    static let identifier = "TextViewPortholeRenderer"
     let text: String
     let _languages: Set<String>
     private var markdownRenderer: MarkdownPortholeRenderer?

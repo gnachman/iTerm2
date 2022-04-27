@@ -2553,7 +2553,7 @@
 		A6A39EBF24B9A96B00A64433 /* iTermUnobtrusiveMessage.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A39EBD24B9A96B00A64433 /* iTermUnobtrusiveMessage.h */; };
 		A6A39EC024B9A96B00A64433 /* iTermUnobtrusiveMessage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A39EBE24B9A96B00A64433 /* iTermUnobtrusiveMessage.m */; };
 		A6A3D18B2815EF4D00C0C9E0 /* Highlightr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */; };
-		A6A3D18D2815EF6F00C0C9E0 /* HighlightrRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A3D18C2815EF6F00C0C9E0 /* HighlightrRenderer.swift */; };
+		A6A3D18D2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A3D18C2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift */; };
 		A6A3D18E2815F74A00C0C9E0 /* Highlightr.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6A3D190281663EE00C0C9E0 /* extensions.json in Resources */ = {isa = PBXBuildFile; fileRef = A6A3D18F281663EE00C0C9E0 /* extensions.json */; };
 		A6A3D191281663EE00C0C9E0 /* extensions.json in Resources */ = {isa = PBXBuildFile; fileRef = A6A3D18F281663EE00C0C9E0 /* extensions.json */; };
@@ -6284,7 +6284,7 @@
 		A6A39EBD24B9A96B00A64433 /* iTermUnobtrusiveMessage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermUnobtrusiveMessage.h; sourceTree = "<group>"; };
 		A6A39EBE24B9A96B00A64433 /* iTermUnobtrusiveMessage.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermUnobtrusiveMessage.m; sourceTree = "<group>"; };
 		A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Highlightr.framework; path = ThirdParty/Highlightr.framework; sourceTree = "<group>"; };
-		A6A3D18C2815EF6F00C0C9E0 /* HighlightrRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HighlightrRenderer.swift; sourceTree = "<group>"; };
+		A6A3D18C2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextViewPortholeRenderer.swift; sourceTree = "<group>"; };
 		A6A3D18F281663EE00C0C9E0 /* extensions.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = extensions.json; path = OtherResources/extensions.json; sourceTree = "<group>"; };
 		A6A3D1932816643600C0C9E0 /* FileExtensionDB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileExtensionDB.swift; sourceTree = "<group>"; };
 		A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = iTermTexturePageCollection.mm; path = Metal/Renderers/iTermTexturePageCollection.mm; sourceTree = "<group>"; };
@@ -9459,7 +9459,7 @@
 				A69169392813457900083F99 /* PortholeFactory.swift */,
 				A691693E281345D000083F99 /* PortholeContainerView.swift */,
 				A691694728136A7100083F99 /* TextViewPorthole.swift */,
-				A6A3D18C2815EF6F00C0C9E0 /* HighlightrRenderer.swift */,
+				A6A3D18C2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift */,
 				A6A3D1932816643600C0C9E0 /* FileExtensionDB.swift */,
 			);
 			name = Portholes;
@@ -14884,7 +14884,7 @@
 				A6C1FD521FC2AC9B006B9A69 /* iTermMarginRenderer.m in Sources */,
 				A621F11026F8E9E6001DD3A6 /* iTermTLVCodec.m in Sources */,
 				A67BCFE8270E702C00636983 /* VT100SavedColors.swift in Sources */,
-				A6A3D18D2815EF6F00C0C9E0 /* HighlightrRenderer.swift in Sources */,
+				A6A3D18D2815EF6F00C0C9E0 /* TextViewPortholeRenderer.swift in Sources */,
 				A608F22120F07658008E8009 /* iTermImageMark.m in Sources */,
 				A61A859524EFA01800B03880 /* iTermBackgroundCommandRunner.m in Sources */,
 				A6153D5921F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m in Sources */,
@@ -18730,8 +18730,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/gnachman/SwiftyMarkdown";
 			requirement = {
-                                branch = master;
-                                kind = branch;
+				branch = master;
+				kind = branch;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
