@@ -558,10 +558,14 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (VT100GridCoordRange)coordRangeOfPorthole:(id<Porthole>)porthole {
-    if (!porthole.mark.entry.interval) {
+    id<PortholeMarkReading> mark = [[PortholeRegistry instance] markForKey:porthole.uniqueIdentifier];
+    if (!mark) {
         return VT100GridCoordRangeInvalid;
     }
-    return [_state coordRangeForInterval:porthole.mark.entry.interval];
+    if (!mark.entry.interval) {
+        return VT100GridCoordRangeInvalid;
+    }
+    return [_state coordRangeForInterval:mark.entry.interval];
 }
 
 - (NSArray *)charactersWithNotesOnLine:(int)line {
@@ -669,6 +673,18 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
             }
         }
         objects = [enumerator nextObject];
+    }
+}
+
+- (void)enumeratePortholes:(void (^ NS_NOESCAPE)(id<PortholeMarkReading> mark))block {
+    for (NSArray<id<IntervalTreeImmutableObject>> *objects in _state.intervalTree.forwardLimitEnumerator) {
+        for (id<IntervalTreeImmutableObject> object in objects) {
+            PortholeMark *mark = [PortholeMark castFrom:object];
+            if (!mark) {
+                continue;
+            }
+            block(mark);
+        }
     }
 }
 

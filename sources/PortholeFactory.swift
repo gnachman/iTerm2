@@ -11,8 +11,10 @@ import CoreText
 @objc(iTermPortholeFactory)
 class PortholeFactory: NSObject {
     static func highlightrPorthole(config: PortholeConfig) -> Porthole {
-        return TextViewPorthole(config,
-                                renderer: textViewPortholeRenderer(config: config))
+        let porthole = TextViewPorthole(config,
+                                        renderer: textViewPortholeRenderer(config: config))
+        PortholeRegistry.instance.add(porthole)
+        return porthole
     }
 
     private static func textViewPortholeRenderer(config: PortholeConfig) -> TextViewPortholeRenderer {
@@ -23,20 +25,21 @@ class PortholeFactory: NSObject {
 
     @objc
     static func porthole(_ dictionary: [String: AnyObject],
-                         colorMap: iTermColorMap,
+                         colorMap: iTermColorMapReading,
                          font: NSFont) -> ObjCPorthole? {
         guard let (type, info) = PortholeType.unwrap(dictionary: dictionary) else {
             return nil
         }
         switch type {
         case .text:
-            guard let (config, _) = TextViewPorthole.config(fromDictionary: info,
-                                                            colorMap: colorMap,
-                                                            font: font) else {
+            guard let (config, uuid) = TextViewPorthole.config(fromDictionary: info,
+                                                               colorMap: colorMap,
+                                                               font: font) else {
                 return nil
             }
             return TextViewPorthole(config,
-                                    renderer: textViewPortholeRenderer(config: config))
+                                    renderer: textViewPortholeRenderer(config: config),
+                                    uuid: uuid)
         }
     }
 }

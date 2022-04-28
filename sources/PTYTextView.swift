@@ -123,6 +123,15 @@ extension PTYTextView {
         addPortholeView(porthole)
     }
 
+    @objc func hydratePorthole(_ mark: PortholeMarkReading) -> ObjCPorthole? {
+        guard let porthole = PortholeRegistry.instance.get(mark.uniqueIdentifier,
+                                                           colorMap: colorMap,
+                                                           font: font) as? Porthole else {
+            return nil
+        }
+        return configuredPorthole(porthole)
+    }
+
     private func addPortholeView(_ porthole: Porthole) {
         porthole.delegate = self
         // I'd rather add it to TextViewWrapper but doing so somehow causes TVW to be overreleased
@@ -165,7 +174,7 @@ extension PTYTextView {
         }
         portholes.remove(porthole)
         porthole.view.removeFromSuperview()
-        if let mark = porthole.mark {
+        if let mark = PortholeRegistry.instance.mark(for: porthole.uniqueIdentifier) {
             dataSource.replace(mark, withLines: porthole.savedLines)
         }
         NotificationCenter.default.post(name: NSNotification.Name.iTermPortholesDidChange, object: nil)
@@ -182,7 +191,7 @@ extension PTYTextView {
     }
 
     private func range(porthole: Porthole) -> VT100GridCoordRange? {
-        guard porthole.mark != nil else {
+        guard PortholeRegistry.instance.mark(for: porthole.uniqueIdentifier) != nil else {
             return nil
         }
         guard let dataSource = dataSource else {
@@ -288,8 +297,9 @@ extension PTYTextView {
     }
     @objc
     func prunePortholes() {
+        let registry = PortholeRegistry.instance
         let indexes = typedPortholes.indexes { porthole in
-            porthole.mark == nil
+            registry.mark(for: porthole.uniqueIdentifier) == nil
         }
         for i in indexes {
             typedPortholes[i].view.removeFromSuperview()

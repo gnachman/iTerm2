@@ -16,7 +16,6 @@ class TextViewPorthole: NSObject {
     private let layoutManager = TextPortholeLayoutManager()
     private let textContainer: TopRightAvoidingTextContainer
     private let popup = SanePopUpButton()
-    private weak var _mark: PortholeMarkReading? = nil
     private let uuid: String
     // I have no idea why this is necessary but the NSView is invisible unless it's in a container
     // view. ILY, AppKit.
@@ -146,6 +145,7 @@ class TextViewPorthole: NSObject {
     @objc func changeLanguage(_ sender: Any?) {
         let language = (sender as! NSMenuItem).title
         renderer.language = FileExtensionDB.instance?.languageToShortName[language] ?? language
+        textStorage.setAttributedString(renderer.render(visualAttributes: savedVisualAttributes))
         changeLanguageCallback?(language, self)
     }
 
@@ -182,12 +182,7 @@ extension TextViewPorthole: Porthole {
         return containerView
     }
     var mark: PortholeMarkReading? {
-        get {
-            return _mark
-        }
-        set {
-            _mark = newValue
-        }
+        return PortholeRegistry.instance.mark(for: uniqueIdentifier)
     }
 
     static let uuidDictionaryKey = "uuid"

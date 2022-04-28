@@ -9,49 +9,46 @@ import Foundation
 
 @objc
 protocol PortholeMarkReading: iTermMarkProtocol {
-    var porthole: ObjCPorthole { get }
+    var uniqueIdentifier: String { get }
 }
 
 @objc
 class PortholeMark: iTermMark, PortholeMarkReading {
     private static let mutex = Mutex()
+    let uniqueIdentifier: String
 
     private let uniqueIdentifierKey = "PortholeUniqueIdentifier"
-    private let portholeDictKey = "State"
 
     override var description: String {
-        return "<PortholeMark: \(it_addressString) porthole=\(porthole) \(isDoppelganger ? "IsDop" : "NotDop")>"
+        return "<PortholeMark: \(it_addressString) id=\(uniqueIdentifier) \(isDoppelganger ? "IsDop" : "NotDop")>"
     }
 
-    let porthole: ObjCPorthole
-
     @objc
-    init(_ porthole: ObjCPorthole) {
-        self.porthole = porthole
-        PortholeRegistry.instance.add(porthole)
+    init(_ uniqueIdentifier: String) {
+        self.uniqueIdentifier = uniqueIdentifier
 
         super.init()
 
-        porthole.mark = (doppelganger()! as! PortholeMarkReading)
+        PortholeRegistry.instance.set(uniqueIdentifier, mark: doppelganger() as! PortholeMarkReading)
     }
 
     required init?(dictionary dict: [AnyHashable : Any]) {
-        guard let uniqueIdentifier = dict[uniqueIdentifierKey] as? String,
-              let porthole = PortholeRegistry.instance[uniqueIdentifier] else {
+        guard let uniqueIdentifier = dict[uniqueIdentifierKey] as? String else {
             return nil
         }
-        self.porthole = porthole
+        self.uniqueIdentifier = uniqueIdentifier
 
         super.init()
     }
 
     deinit {
-        PortholeRegistry.instance.remove(porthole)
+        if !isDoppelganger {
+            PortholeRegistry.instance.remove(uniqueIdentifier)
+        }
     }
 
     override func dictionaryValue() -> [AnyHashable : Any]! {
-        return [uniqueIdentifierKey: porthole.uniqueIdentifier,
-                    portholeDictKey: porthole.dictionaryValue]
+        return [uniqueIdentifierKey: uniqueIdentifier].compactMapValues { $0 }
     }
 }
 
@@ -85,7 +82,6 @@ protocol PortholeDelegate: AnyObject {
 @objc(Porthole)
 protocol ObjCPorthole: AnyObject {
     @objc var view: NSView { get }
-    @objc var mark: PortholeMarkReading? { get set }
     @objc var uniqueIdentifier: String { get }
     @objc var dictionaryValue: [String: AnyObject] { get }
     @objc func desiredHeight(forWidth width: CGFloat) -> CGFloat  // includes top and bottom margin
@@ -117,6 +113,7 @@ class PortholeRegistry: NSObject {
     @objc static var instance = PortholeRegistry()
     private var portholes = [String: ObjCPorthole]()
     private var pending = [String: NSDictionary]()
+    private var marks = [String: PortholeMarkReading]()
     private var _generation: Int = 0
     @objc var generation: Int {
         get {
@@ -131,20 +128,63 @@ class PortholeRegistry: NSObject {
     func add(_ porthole: ObjCPorthole) {
         mutex.sync {
             portholes[porthole.uniqueIdentifier] = porthole
-            _generation += 1
+            incrementGeneration()
         }
     }
 
-    func remove(_ porthole: ObjCPorthole) {
+    func remove(_ key: String) {
         mutex.sync {
-            _ = portholes.removeValue(forKey: porthole.uniqueIdentifier)
-            _generation += 1
+            _ = portholes.removeValue(forKey: key)
+            _ = marks.removeValue(forKey: key)
+            incrementGeneration()
         }
     }
 
-    subscript(_ key: String) -> ObjCPorthole? {
+    @objc(registerKey:forMark:)
+    func set(_ key: String, mark: PortholeMarkReading) {
+        mutex.sync {
+            marks[key] = mark
+            incrementGeneration()
+        }
+    }
+
+    @objc(markForKey:)
+    func mark(for key: String) -> PortholeMarkReading? {
+        return mutex.sync {
+            marks[key]
+        }
+    }
+
+    func get(_ key: String, colorMap: iTermColorMapReading, font: NSFont) -> ObjCPorthole? {
+        mutex.sync {
+            if let porthole = portholes[key] {
+                return porthole
+            }
+            guard let dict = pending[key] as? [String : AnyObject] else {
+                return nil
+            }
+            pending.removeValue(forKey: key)
+            guard let porthole = PortholeFactory.porthole(dict,
+                                                          colorMap: colorMap,
+                                                          font: font) else {
+                return nil
+            }
+            portholes[key] = porthole
+            incrementGeneration()
+            return porthole
+        }
+    }
+
+    @objc subscript(_ key: String) -> ObjCPorthole? {
         return mutex.sync {
             return portholes[key]
+        }
+    }
+
+    private func incrementGeneration() {
+        _generation += 1
+        DispatchQueue.main.async {
+            NSApp.invalidateRestorableState()
         }
     }
 
@@ -171,28 +211,35 @@ class PortholeRegistry: NSObject {
         }
     }
 
+    // Note that marks are not restored. They go through the normal mark restoration process which
+    // as a side-effect adds them to the porthole registry.
     @objc func encodeAsChild(with encoder: iTermGraphEncoder, key: String) {
         mutex.sync {
             _ = encoder.encodeChild(withKey: key,
                                     identifier: "",
                                     generation: _generation) { subencoder in
-                self.encodeGraph(with: subencoder)
+                let keys = portholes.keys.sorted()
+                subencoder.encodeArray(withKey: "portholes",
+                                       generation: iTermGenerationAlwaysEncode,
+                                       identifiers: keys) { identifier, index, subencoder, stop in
+                    let adapter = iTermGraphEncoderAdapter(graphEncoder: subencoder)
+                    let key = keys[index]
+                    adapter.merge(portholes[key]!.dictionaryValue)
+                    return true
+                }
+                return true
             }
         }
     }
-}
 
-extension PortholeRegistry: iTermGraphCodable {
-    @objc func encodeGraph(with encoder: iTermGraphEncoder) -> Bool {
-        let portholeDicts: [String: [String: AnyObject]] = portholes.mapValues { porthole in
-            porthole.dictionaryValue
+    @objc(decodeRecord:) func decode(record: iTermEncoderGraphRecord) {
+        mutex.sync {
+            record.enumerateArray(withKey: "portholes") { identifier, index, plist, stop in
+                guard let dict = plist as? NSDictionary else {
+                    return
+                }
+                pending[identifier] = dict
+            }
         }
-        encoder.encodePropertyList(portholeDicts,
-                                   withKey: portholesKey)
-        encoder.encodePropertyList(pending,
-                                   withKey: pendingKey)
-        encoder.encode(NSNumber(value: _generation),
-                       forKey: generationKey)
-        return true
     }
 }

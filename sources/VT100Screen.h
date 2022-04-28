@@ -22,6 +22,7 @@
 @class LineBuffer;
 @class IntervalTree;
 @class PTYTask;
+@protocol PortholeMarkReading;
 @class VT100Grid;
 @class VT100MutableScreenConfiguration;
 @protocol VT100RemoteHostReading;
@@ -155,6 +156,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 - (void)enumeratePromptsFrom:(NSString *)maybeFirst
                           to:(NSString *)maybeLast
                        block:(void (^ NS_NOESCAPE)(id<VT100ScreenMarkReading> mark))block;
+- (void)enumeratePortholes:(void (^ NS_NOESCAPE)(id<PortholeMarkReading> mark))block;
+
 // These methods normally only return one object, but if there is a tie, all of the equally-positioned marks/notes are returned.
 
 - (NSArray<id<VT100ScreenMarkReading>> *)lastMarks;

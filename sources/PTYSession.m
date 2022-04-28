@@ -1795,7 +1795,18 @@ ITERM_WEAKLY_REFERENCEABLE
     [_screen restoreFromDictionary:dict
           includeRestorationBanner:includeRestorationBanner
                         reattached:reattached];
-
+    [_screen enumeratePortholes:^(id<PortholeMarkReading> immutableMark) {
+        [[PortholeRegistry instance] registerKey:immutableMark.uniqueIdentifier
+                                         forMark:immutableMark];
+        id<Porthole> porthole = [_textview hydratePorthole:immutableMark];
+        if (!porthole) {
+            [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+                [mutableState.mutableIntervalTree removeObject:immutableMark.progenitor];
+            }];
+        } else {
+            [self.textview addPorthole:porthole];
+        }
+    }];
     id<VT100RemoteHostReading> lastRemoteHost = _screen.lastRemoteHost;
     if (lastRemoteHost) {
         NSString *pwd = [_screen workingDirectoryOnLine:_screen.numberOfLines];
@@ -15476,7 +15487,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"Hide %@", object);
     PortholeMark *portholeMark = [PortholeMark castFrom:object];
     if (portholeMark) {
-        [_textview hidePorthole:portholeMark.porthole];
+        id<Porthole> porthole = [[PortholeRegistry instance] objectForKeyedSubscript:portholeMark.uniqueIdentifier];
+        if (porthole) {
+            [_textview hidePorthole:porthole];
+        }
     }
     [self removeMarkFromMinimapOfType:type onLine:line];
 }
@@ -15487,7 +15501,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"Unhide %@", object);
     PortholeMark *portholeMark = [PortholeMark castFrom:object];
     if (portholeMark) {
-        [_textview unhidePorthole:portholeMark.porthole];
+        id<Porthole> porthole = [[PortholeRegistry instance] objectForKeyedSubscript:portholeMark.uniqueIdentifier];
+        if (porthole) {
+            [_textview unhidePorthole:porthole];
+        }
     }
     [self addMarkToMinimapOfType:type onLine:line];
 }

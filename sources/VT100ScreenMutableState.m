@@ -3096,7 +3096,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         return;
     }
     Interval *interval = [self intervalForGridAbsCoordRange:markRange];
-    PortholeMark *mark = [[PortholeMark alloc] init:porthole];
+    PortholeMark *mark = [[PortholeMark alloc] init:porthole.uniqueIdentifier];
     [self.mutableIntervalTree addObject:mark withInterval:interval];
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidAddPorthole:porthole];
@@ -3858,6 +3858,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // Link references to marks in CapturedOutput (for the lines where output was captured) to the deserialized mark.
 // Link marks for commands to CommandUse objects in command history.
 // Notify delegate of annotations so they get added as subviews, and set the delegate of not view controllers to self.
+// Materialize portholes.
 - (void)fixUpDeserializedIntervalTree:(iTermEventuallyConsistentIntervalTree *)intervalTree
                               visible:(BOOL)visible
                 guidOfLastCommandMark:(NSString *)guidOfLastCommandMark {

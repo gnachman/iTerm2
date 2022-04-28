@@ -2747,11 +2747,12 @@ void TurnOnDebugLoggingAutomatically(void) {
         ScreenCharDecodeRestorableState(screenCharState);
     }
 
-    NSDictionary *portholeState = [app objectWithKey:kPortholeRestorableStateKey class:[NSDictionary class]];
-    if (portholeState) {
-        [PortholeRegistry.instance load:portholeState];
+    iTermEncoderGraphRecord *portholeRecord = [app childRecordWithKey:kPortholeRestorableStateKey
+                                                           identifier:@""];
+    if (portholeRecord) {
+        [PortholeRegistry.instance decodeRecord:portholeRecord];
     }
-    
+
     NSDictionary *urlStoreState = [NSDictionary castFrom:[[app childRecordWithKey:kURLStoreRestorableStateKey identifier:@""] propertyListValue]];
     if (urlStoreState) {
         [[iTermURLStore sharedInstance] loadFromDictionary:urlStoreState];
@@ -2774,7 +2775,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     }
     if ([iTermAdvancedSettingsModel logRestorableStateSize]) {
         NSDictionary *dict = @{ kScreenCharRestorableStateKey: screenCharState ?: @{},
-                                kPortholeRestorableStateKey: portholeState ?: @{},
+                                kPortholeRestorableStateKey: [PortholeRegistry.instance dictionaryValue] ?: @{},
                                 kURLStoreRestorableStateKey: urlStoreState ?: @{},
                                 iTermBuriedSessionState: _buriedSessionsState ?: @[] };
         NSString *log = [dict sizeInfo];
