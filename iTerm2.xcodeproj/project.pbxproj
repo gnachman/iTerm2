@@ -3645,6 +3645,7 @@
 		A6EC8050281BC67900493544 /* SwiftyMarkdown.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6EC804F281BC67900493544 /* SwiftyMarkdown.framework */; };
 		A6EC8051281BC67900493544 /* SwiftyMarkdown.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6EC804F281BC67900493544 /* SwiftyMarkdown.framework */; };
 		A6EC8052281BC67900493544 /* SwiftyMarkdown.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6EC804F281BC67900493544 /* SwiftyMarkdown.framework */; };
+		A6EC8053281C4A6A00493544 /* SwiftyMarkdown.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6EC804F281BC67900493544 /* SwiftyMarkdown.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6EC936624E513DB00EEADEF /* iTermSlowOperationGateway.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */; };
 		A6EC936724E513DB00EEADEF /* iTermSlowOperationGateway.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */; };
 		A6EC936824E64FAA00EEADEF /* iTermFileDescriptorServerShared.c in Sources */ = {isa = PBXBuildFile; fileRef = A64FCD57238DE785001D8199 /* iTermFileDescriptorServerShared.c */; };
@@ -4072,6 +4073,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A6EC8053281C4A6A00493544 /* SwiftyMarkdown.framework in CopyFiles */,
 				A6A3D18E2815F74A00C0C9E0 /* Highlightr.framework in CopyFiles */,
 				530AB89C20AFF23400D2AA08 /* CoreParse.framework in CopyFiles */,
 				A6184F8C1BAB3EF30088EF3C /* ColorPicker.framework in CopyFiles */,
