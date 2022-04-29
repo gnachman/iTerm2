@@ -96,10 +96,18 @@ protocol ObjCPorthole: AnyObject {
     @objc var outerMargin: CGFloat { get }
 }
 
+enum PortholeCopyMode {
+    case plainText
+    case attributedString
+    case controlSequences
+}
+
 protocol Porthole: ObjCPorthole {
     static var type: PortholeType { get }
     var delegate: PortholeDelegate? { get set }
     var config: PortholeConfig { get }
+    var hasSelection: Bool { get }
+    func copy(as: PortholeCopyMode)
 }
 
 fileprivate let portholeType = "Type"

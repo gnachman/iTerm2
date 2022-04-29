@@ -126,6 +126,9 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
 }
 
 - (BOOL)shouldAutoEnterWithEventIgnoringPrefs:(NSEvent *)event {
+    if (event.type != NSEventTypeKeyDown) {
+        return NO;
+    }
     if ([self autoEnterEventDirection:event] == 0) {
         return NO;
     }

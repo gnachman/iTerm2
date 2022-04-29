@@ -3646,6 +3646,7 @@
 		A6EC8051281BC67900493544 /* SwiftyMarkdown.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6EC804F281BC67900493544 /* SwiftyMarkdown.framework */; };
 		A6EC8052281BC67900493544 /* SwiftyMarkdown.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6EC804F281BC67900493544 /* SwiftyMarkdown.framework */; };
 		A6EC8053281C4A6A00493544 /* SwiftyMarkdown.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6EC804F281BC67900493544 /* SwiftyMarkdown.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A6EC8055281C852200493544 /* NSAttributedString+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8054281C852200493544 /* NSAttributedString+iTerm.swift */; };
 		A6EC936624E513DB00EEADEF /* iTermSlowOperationGateway.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */; };
 		A6EC936724E513DB00EEADEF /* iTermSlowOperationGateway.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */; };
 		A6EC936824E64FAA00EEADEF /* iTermFileDescriptorServerShared.c in Sources */ = {isa = PBXBuildFile; fileRef = A64FCD57238DE785001D8199 /* iTermFileDescriptorServerShared.c */; };
@@ -6755,6 +6756,7 @@
 		A6EC8045281B391900493544 /* TextViewPortholeRenderer-dark.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = "TextViewPortholeRenderer-dark.css"; path = "OtherResources/TextViewPortholeRenderer-dark.css"; sourceTree = SOURCE_ROOT; };
 		A6EC8049281B3AF200493544 /* TextViewPortholeRenderer-light.css */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.css; name = "TextViewPortholeRenderer-light.css"; path = "OtherResources/TextViewPortholeRenderer-light.css"; sourceTree = SOURCE_ROOT; };
 		A6EC804F281BC67900493544 /* SwiftyMarkdown.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftyMarkdown.framework; path = ThirdParty/SwiftyMarkdown.framework; sourceTree = "<group>"; };
+		A6EC8054281C852200493544 /* NSAttributedString+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSAttributedString+iTerm.swift"; sourceTree = "<group>"; };
 		A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlowOperationGateway.h; sourceTree = "<group>"; };
 		A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSlowOperationGateway.m; sourceTree = "<group>"; };
 		A6EC936924E7868D00EEADEF /* iTermToolSnippets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermToolSnippets.h; sourceTree = "<group>"; };
@@ -10147,6 +10149,7 @@
 				A62CD06827E93F5B00215E92 /* iTermSwiftHelpers.h */,
 				A62CD06927E93F5B00215E92 /* iTermSwiftHelpers.m */,
 				A6D10E3E27F8CB4E0026DB56 /* CommandExplainer.swift */,
+				A6EC8054281C852200493544 /* NSAttributedString+iTerm.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -14394,6 +14397,7 @@
 				A6E5110F24C576B300D6552D /* iTermAnimatedImageInfo.m in Sources */,
 				A68227412805E5C8005DF0B4 /* LineBufferSorting.mm in Sources */,
 				A6BEE48026E8187C009C0C2C /* iTermOpenQuicklyWindowController.m in Sources */,
+				A6EC8055281C852200493544 /* NSAttributedString+iTerm.swift in Sources */,
 				530AB89720AFDF5000D2AA08 /* iTermScriptFunctionCall.m in Sources */,
 				A6A4867520B67B8500493302 /* PreferencePanel.m in Sources */,
 				A69CCB19211BC296008ADA71 /* NSData+GZIP.m in Sources */,

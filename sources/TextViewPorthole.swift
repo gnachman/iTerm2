@@ -22,6 +22,9 @@ class TextViewPorthole: NSObject {
     var savedLines: [ScreenCharArray] = []
     let outerMargin = PortholeContainerView.margin
     let innerMargin = CGFloat(4)
+    var hasSelection: Bool {
+        return textView.selectedRange().length > 0
+    }
     var renderer: TextViewPortholeRenderer {
         didSet {
             textStorage.setAttributedString(renderer.render(visualAttributes: savedVisualAttributes))
@@ -261,7 +264,39 @@ extension TextViewPorthole: Porthole {
     func removeSelection() {
         textView.removeSelection()
     }
+
+    func copy(as mode: PortholeCopyMode) {
+        let ranges = textView.selectedRanges.map { $0.rangeValue }
+        let attributedStrings = ranges.map { textView.attributedString().attributedSubstring(from: $0) }
+        let pboard = NSPasteboard.general
+        pboard.clearContents()
+        pboard.declareTypes([.multipleTextSelection, .rtf], owner: nil)
+        let strings = attributedStrings.map { $0.string }
+        let linesPerGroup = strings.map { string in
+            return string.components(separatedBy: "\n").count
+        }
+        pboard.setPropertyList(linesPerGroup,
+                               forType: .multipleTextSelection)
+
+        switch mode {
+        case .plainText:
+            let string = strings.joined(separator: "\n") as NSPasteboardWriting
+            pboard.writeObjects([string])
+
+        case .attributedString:
+            let combined = attributedStrings.joined(separator: NSAttributedString(string: "\n",
+                                                                                  attributes: [:]))
+            pboard.writeObjects([combined])
+
+        case .controlSequences:
+            let combined = attributedStrings.joined(separator: NSAttributedString(string: "\n",
+                                                                                  attributes: [:]))
+            let string: String = combined.asStringWithControlSequences
+            pboard.writeObjects([string as NSPasteboardWriting])
+        }
+    }
 }
+
 
 extension Dictionary {
     func value<T>(withKey key: Key) -> T? {

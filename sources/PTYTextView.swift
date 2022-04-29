@@ -20,6 +20,26 @@ extension VT100GridCoordRange {
 }
 
 extension PTYTextView {
+    private var portholeWithSelection: Porthole? {
+        return typedPortholes.first { $0.hasSelection }
+    }
+
+    @objc var anyPortholeHasSelection: Bool {
+        return portholeWithSelection != nil
+    }
+
+    @objc func copyFromPortholeAsPlainText() {
+        portholeWithSelection?.copy(as: .plainText)
+    }
+
+    @objc func copyFromPortholeAsAttributedString() {
+        portholeWithSelection?.copy(as: .attributedString)
+    }
+
+    @objc func copyFromPortholeWithControlSequences() {
+        portholeWithSelection?.copy(as: .controlSequences)
+    }
+
     @objc(renderRange:type:filename:)
     func render(range originalRange: VT100GridAbsCoordRange,
                 type: String?,
@@ -351,6 +371,12 @@ extension PTYTextView: PortholeDelegate {
     func portholeDidAcquireSelection(_ porthole: Porthole) {
         DLog("portholeDidAcquireSelection")
         selection.clear()
+        for other in typedPortholes {
+            if porthole === other {
+                continue
+            }
+            other.removeSelection()
+        }
     }
 
     func portholeRemove(_ porthole: Porthole) {

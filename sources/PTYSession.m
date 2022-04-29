@@ -1109,6 +1109,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setCopyMode:(BOOL)copyMode {
+    [_textview removePortholeSelections];
     _copyModeHandler.enabled = copyMode;
 }
 

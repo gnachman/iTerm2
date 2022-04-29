@@ -470,8 +470,11 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     }
     if ([item action]==@selector(copy:) ||
         [item action]==@selector(copyWithStyles:) ||
-        [item action]==@selector(copyWithControlSequences:) ||
-        ([item action]==@selector(performFindPanelAction:) && item.tag == NSFindPanelActionSetFindString) ||
+        [item action]==@selector(copyWithControlSequences:)) {
+        // These commands are allowed only if there is a selection.
+        return [_selection hasSelection] || [self anyPortholeHasSelection];
+    }
+    if (([item action]==@selector(performFindPanelAction:) && item.tag == NSFindPanelActionSetFindString) ||
         ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
         // These commands are allowed only if there is a selection.
         return [_selection hasSelection];
@@ -2653,6 +2656,10 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 }
 
 - (void)copy:(id)sender {
+    if ([self anyPortholeHasSelection]) {
+        [self copyFromPortholeAsPlainText];
+        return;
+    }
     [self copySelection:self.selection];
 }
 
@@ -2688,6 +2695,10 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 }
 
 - (IBAction)copyWithStyles:(id)sender {
+    if ([self anyPortholeHasSelection]) {
+        [self copyFromPortholeAsAttributedString];
+        return;
+    }
     [self copySelectionWithStyles:self.selection];
 }
 
@@ -2731,6 +2742,10 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 }
 
 - (IBAction)copyWithControlSequences:(id)sender {
+    if ([self anyPortholeHasSelection]) {
+        [self copyFromPortholeWithControlSequences];
+        return;
+    }
     DLog(@"-[PTYTextView copyWithControlSequences:] called");
     DLog(@"%@", [NSThread callStackSymbols]);
 
