@@ -41,6 +41,26 @@ NSString *const kLineBlockMetadataKey = @"Metadata";
 NSString *const kLineBlockMayHaveDWCKey = @"May Have Double Width Character";
 NSString *const kLineBlockGuid = @"GUID";
 
+#ifdef DEBUG_SEARCH
+@interface NSString(LineBlockDebugging)
+@end
+
+@implementation NSString(LineBlockDebugging)
+- (NSString *)asciified {
+    NSMutableString *c = [self mutableCopy];
+    NSRange range = [c rangeOfCharacterFromSet:[NSCharacterSet characterSetWithRange:NSMakeRange(0, 32)]];
+    while (range.location != NSNotFound) {
+        [c replaceCharactersInRange:range withString:@"."];
+        range = [c rangeOfCharacterFromSet:[NSCharacterSet characterSetWithRange:NSMakeRange(0, 32)]];
+    }
+    return c;
+}
+@end
+#define SearchLog(args...) NSLog(args)
+#else
+#define SearchLog(args...)
+#endif
+
 @protocol iTermLineBlockMutationCertificate
 - (int *)mutableCumulativeLineLengths;
 - (void)setCumulativeLineLengthsCapacity:(int)capacity;
@@ -1786,25 +1806,31 @@ static int CoreSearch(NSString *needle,
         if ((options & FindOptEmptyQueryMatches) == FindOptEmptyQueryMatches && needle.length == 0) {
             range = NSMakeRange(0, 0);
         } else {
+            SearchLog(@"Search subrange %@ of haystack %@", NSStringFromRange(haystackRange), [entireHaystack asciified]);
             const NSRange foundRange = [entireHaystack rangeOfString:needle options:apiOptions range:haystackRange];
             if (foundRange.location == NSNotFound) {
                 range = foundRange;
             } else {
+                SearchLog(@"Searched %@ and found %@ at %@. Suffix from start of range is: %@", entireHaystack, needle, NSStringFromRange(foundRange), [entireHaystack substringFromIndex:foundRange.location]);
                 // `range` needs to be relative to `haystackRange`.
                 range = NSMakeRange(foundRange.location - haystackRange.location,
                                     foundRange.length);
+                SearchLog(@"haystack-relative range is %@", NSStringFromRange(range));
             }
         }
     }
     int result = -1;
     if (range.location != NSNotFound) {
-        int adjustedLocation;
-        int adjustedLength;
-        adjustedLocation = range.location + deltas[range.location] + deltaOffset;
-        adjustedLength = range.length + deltas[range.location + range.length] -
-        (deltas[range.location] + deltaOffset);
+        // Convert range to locations in the full raw buffer.
+        const int adjustedLocation = range.location + haystackRange.location + deltas[range.location];
+        SearchLog(@"adjustedLocation(%@) = range.location(%@) + haystackRange.location(%@) + deltas[range.location](%@)",
+              @(adjustedLocation), @(range.location), @(haystackRange.location), @(deltas[range.location]));
+
+        const int adjustedLength = range.length + deltas[MAX(range.location, NSMaxRange(range) - 1)] - deltas[range.location];
+        SearchLog(@"adjustedLength(%@) = range.length(%@) + deltas[range.upperBound](%@) - deltas[range.location](%@)",
+              @(adjustedLength), @(range.length), @(deltas[NSMaxRange(range)]), @(deltas[range.location]));
         *resultLength = adjustedLength;
-        result = adjustedLocation + start;
+        result = adjustedLocation;
     }
     if (rangeOut) {
         *rangeOut = range;
@@ -1841,6 +1867,34 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
     return numCodePoints;
 }
 
+#if DEBUG_SEARCH
+- (NSString *)prettyRawLine:(const screen_char_t *)line length:(int)length {
+    NSMutableString *s = [NSMutableString string];
+    for (int i = 0; i < length; i++) {
+        unichar c = line[i].code;
+        if (line[i].complexChar) {
+            c = 'C';
+        } else if (c < 32) {
+            c = '^';
+        } else if (c == ' ') {
+            c = '_';
+        } else if (c > 127) {
+            c = 'H';
+        }
+        [s appendCharacter:c];
+    }
+    return s;
+}
+
+- (NSString *)prettyDeltas:(const int *)deltas length:(int)length {
+    NSMutableArray *a = [NSMutableArray array];
+    for (int i = 0; i < length; i++) {
+        [a addObject:[@(deltas[i]) stringValue]];
+    }
+    return [a componentsJoinedByString:@" "];
+}
+#endif
+
 - (void)_findInRawLine:(int)entry
                 needle:(NSString*)needle
                options:(FindOptions)options
@@ -1865,6 +1919,11 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
                                        raw_line_length,
                                        &charHaystack,
                                        &deltas);
+
+#ifdef DEBUG_SEARCH
+    SearchLog(@"Searching rawline %@", [self prettyRawLine:rawline length:raw_line_length]);
+    SearchLog(@"Deltas: %@", [self prettyDeltas:deltas length:haystack.length]);
+#endif
 
     if (options & FindOptBackwards) {
         // This algorithm is wacky and slow but stay with me here:
@@ -1959,10 +2018,15 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
             const NSInteger codePointsToSkip = NSMaxRange(resultRange);
             int tempResultLength = 0;
             NSRange relativeResultRange = NSMakeRange(0, 0);
+#ifdef DEBUG_SEARCH
+            const int savedSkip = skip;
+#endif
+            // tempPosition and tempResultLength are indexes into rawline
+            // deltas is indexed by indexes into NSString.
             int tempPosition = CoreSearch(needle,
                                           rawline,
                                           raw_line_length,
-                                          skip,
+                                          skip,  // treated as index into rawline
                                           raw_line_length,
                                           options,
                                           mode,
@@ -1970,8 +2034,8 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
                                           haystack,
                                           NSMakeRange(codePointsToSkip, haystack.length - codePointsToSkip),
                                           charHaystack + codePointsToSkip,
-                                          deltas + skip,
-                                          deltas[skip],
+                                          deltas + codePointsToSkip,
+                                          deltas[codePointsToSkip],
                                           &relativeResultRange);
             resultRange = NSMakeRange(relativeResultRange.location + codePointsToSkip,
                                       relativeResultRange.length);
@@ -1979,11 +2043,36 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
                 ResultRange *r = [[ResultRange alloc] init];
                 r->position = tempPosition;
                 r->length = tempResultLength;
+                SearchLog(@"Got result %@ in %@", r, [haystack asciified]);
                 [results addObject:r];
                 if (!multipleResults) {
                     break;
                 }
+                assert(tempResultLength >= 0);
+                assert(tempPosition <= raw_line_length);
                 skip = tempPosition + tempResultLength;
+                assert(skip >= 0);
+#ifdef DEBUG_SEARCH
+                if (skip < 0) {
+                    skip = savedSkip;
+                    int tempPosition = CoreSearch(needle,
+                                                  rawline,
+                                                  raw_line_length,
+                                                  skip,
+                                                  raw_line_length,
+                                                  options,
+                                                  mode,
+                                                  &tempResultLength,
+                                                  haystack,
+                                                  NSMakeRange(codePointsToSkip, haystack.length - codePointsToSkip),
+                                                  charHaystack + codePointsToSkip,
+                                                  deltas + skip,
+                                                  deltas[skip],
+                                                  &relativeResultRange);
+                    skip = tempPosition + tempResultLength;
+                    assert(skip >= 0);
+                }
+#endif
                 if (options & FindOneResultPerRawLine) {
                     break;
                 }
