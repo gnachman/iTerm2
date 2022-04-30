@@ -216,7 +216,7 @@ extension TextViewPorthole: Porthole {
             // This is obviously indefensible but I just can't get it to work with a single call to glyphRange.
             // 😘 AppKit
             _ = layoutManager.glyphRange(for: textContainer)
-            DLog("After first call to glyphRange rect would be \(layoutManager.usedRect(for: textContainer)))
+            DLog("After first call to glyphRange rect would be \(layoutManager.usedRect(for: textContainer))")
             _ = layoutManager.glyphRange(for: textContainer)
             let rect = layoutManager.usedRect(for: textContainer)
             DLog("After second call to glyphRange rect is \(rect)")
