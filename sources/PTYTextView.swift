@@ -137,7 +137,7 @@ extension PTYTextView {
         return porthole
     }
 
-    private func layoutPorthole(_ porthole: TextViewPorthole) {
+    private func layoutPorthole(_ porthole: Porthole) {
         DLog("layoutPorthole(\(porthole))")
         guard let dataSource = dataSource else {
             return
@@ -270,16 +270,16 @@ extension PTYTextView {
             // it if the width is unchanged.
             let y = CGFloat(lineRange.lowerBound) * lineHeight + vmargin + innerMargin
             DLog("y=\(y) range=\(String(describing: VT100GridCoordRangeDescription(gridCoordRange ))) overflow=\(dataSource.scrollbackOverflow())")
-            porthole.view.frame = NSRect(x: hmargin,
-                                         y: y,
-                                         width: bounds.width - hmargin * 2,
-                                         height: CGFloat(lineRange.count) * lineHeight - innerMargin * 2)
+            porthole.set(frame: NSRect(x: hmargin,
+                                       y: y,
+                                       width: bounds.width - hmargin * 2,
+                                       height: CGFloat(lineRange.count) * lineHeight - innerMargin * 2))
         } else {
             lastPortholeWidth = cellWidth
-            porthole.view.frame = NSRect(x: hmargin,
-                                         y: CGFloat(lineRange.lowerBound) * lineHeight + vmargin + innerMargin,
-                                         width: bounds.width - hmargin * 2,
-                                         height: CGFloat(lineRange.count) * lineHeight - innerMargin * 2)
+            porthole.set(frame: NSRect(x: hmargin,
+                                       y: CGFloat(lineRange.lowerBound) * lineHeight + vmargin + innerMargin,
+                                       width: bounds.width - hmargin * 2,
+                                       height: CGFloat(lineRange.count) * lineHeight - innerMargin * 2))
         }
         updateAlphaValue()
     }
@@ -382,6 +382,10 @@ extension PTYTextView: PortholeDelegate {
     func portholeRemove(_ porthole: Porthole) {
         DLog("portholeRemove")
         removePorthole(porthole)
+    }
+
+    func portholeResize(_ porthole: Porthole) {
+        layoutPorthole(porthole)
     }
 }
 

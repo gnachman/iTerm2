@@ -94,15 +94,20 @@ class TextViewPorthole: NSObject {
         popup.sizeToFit()
 
         containerView = PortholeContainerView()
+        containerView.frame = NSRect(x: 0, y: 0, width: 800, height: 200)
+        containerView.accessory = popup
+        _ = containerView.layoutSubviews()
+
         self.uuid = uuid ?? UUID().uuidString
         self.config = config
         savedVisualAttributes = VisualAttributes(colorMap: config.colorMap, font: config.font)
 
         let textViewFrame = CGRect(x: 0, y: 0, width: 800, height: 200)
         textStorage.addLayoutManager(layoutManager)
-        textContainer = TopRightAvoidingTextContainer(containerSize: textViewFrame.size,
-                                                      cutOutSize: NSSize(width: 18 + popup.frame.width + 4,
-                                                                         height: max(popup.frame.height + 2, 18)))
+        textContainer = TopRightAvoidingTextContainer(
+            containerSize: textViewFrame.size,
+            cutOutSize: NSSize(width: containerView.frame.width - containerView.wideButton.frame.minX,
+                               height: max(popup.frame.height + 2, 18)))
         layoutManager.addTextContainer(textContainer)
         textView = ExclusiveSelectionTextView(frame: textViewFrame, textContainer: textContainer)
         textView.textContainerInset = NSSize(width: 0, height: 0)
@@ -142,7 +147,9 @@ class TextViewPorthole: NSObject {
                 self.delegate?.portholeRemove(self)
             }
         }
-        containerView.accessory = popup
+        containerView.wideCallback = { [weak self] in
+            self?.didToggleWide()
+        }
         _ = containerView.layoutSubviews()
 
         for item in popup.menu?.items ?? [] {
@@ -167,21 +174,58 @@ class TextViewPorthole: NSObject {
             popup.selectItem(withTitle: title)
         }
     }
+
+    private func didToggleWide() {
+        delegate?.portholeResize(self)
+    }
 }
 
 extension TextViewPorthole: Porthole {
+    func set(frame: NSRect) {
+        containerView.frame = frame
+
+        if let scrollView = containerView.scrollView {
+            textView.isHorizontallyResizable = true
+            textView.maxSize = CGSize(width: CGFloat.greatestFiniteMagnitude,
+                                      height: scrollView.contentSize.height)
+            textContainer.widthTracksTextView = false
+            textContainer.containerSize = CGSize(width: CGFloat.greatestFiniteMagnitude,
+                                                 height: CGFloat.greatestFiniteMagnitude)
+            textView.frame = NSRect(x: 0, y: 0, width: scrollView.contentSize.width, height: scrollView.contentSize.height)
+        } else {
+            textView.isHorizontallyResizable = false
+            textContainer.containerSize = frame.size
+            textContainer.widthTracksTextView = true
+        }
+        containerView.frame = frame
+    }
+
     func desiredHeight(forWidth width: CGFloat) -> CGFloat {
+        if let scrollView = containerView.scrollView {
+            textContainer.widthTracksTextView = false
+            textContainer.containerSize = CGSize(width: CGFloat.greatestFiniteMagnitude,
+                                                 height: scrollView.contentSize.height)
+            _ = layoutManager.glyphRange(for: textContainer)
+            let textViewHeight = layoutManager.usedRect(for: textContainer).height
+            return containerView.scrollViewOverhead + textViewHeight + (outerMargin + innerMargin) * 2
+        }
+
         // Set the width so the height calculation will be based on it. The height here is = arbitrary.
         let textViewHeight = textContainer.withFakeSize(NSSize(width: width, height: .infinity)) { () -> CGFloat in 
             // forces layout
+            // This is obviously indefensible but I just can't get it to work with a single call to glyphRange.
+            // 😘 AppKit
+            _ = layoutManager.glyphRange(for: textContainer)
+            DLog("After first call to glyphRange rect would be \(layoutManager.usedRect(for: textContainer)))
             _ = layoutManager.glyphRange(for: textContainer)
             let rect = layoutManager.usedRect(for: textContainer)
+            DLog("After second call to glyphRange rect is \(rect)")
             return rect.height
         }
 
         // The height is now frozen.
         textView.frame = NSRect(x: 0, y: 0, width: width, height: textViewHeight)
-        return textViewHeight + (outerMargin + innerMargin) * 2
+        return containerView.scrollViewOverhead + textViewHeight + (outerMargin + innerMargin) * 2
     }
 
     static var type: PortholeType {
@@ -425,10 +469,13 @@ class TopRightAvoidingTextContainer: NSTextContainer {
     }
 
     func withFakeSize<T>(_ fakeSize: NSSize, closure: () throws -> T) rethrows -> T {
+        let savedContainerSize = containerSize
         let saved = size
         size = fakeSize
+        containerSize = fakeSize
         defer {
             size = saved
+            containerSize = savedContainerSize
         }
         return try closure()
     }

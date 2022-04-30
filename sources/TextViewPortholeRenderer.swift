@@ -130,11 +130,17 @@ class TextViewPortholeRenderer {
             subset = Array(_languages)
         }
         if let result = highlightr.highlightAuto(text, languageSubset: subset) {
+            let resultLanguage: String
+            if result.language == "undefined" {
+                resultLanguage = "plaintext"
+            } else {
+                resultLanguage = result.language
+            }
             if let db = FileExtensionDB.instance {
-                if db.languages.contains(result.language) {
-                    language = FileExtensionDB.instance?.languageToShortName[result.language]
+                if db.languages.contains(resultLanguage) {
+                    language = FileExtensionDB.instance?.languageToShortName[resultLanguage]
                 } else {
-                    language = result.language
+                    language = resultLanguage
                 }
                 if let spec = renderIfSpecialized(visualAttributes: visualAttributes) {
                     return spec

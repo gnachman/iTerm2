@@ -81,6 +81,7 @@ struct PortholeConfig: CustomDebugStringConvertible {
 protocol PortholeDelegate: AnyObject {
     func portholeDidAcquireSelection(_ porthole: Porthole)
     func portholeRemove(_ porthole: Porthole)
+    func portholeResize(_ porthole: Porthole)
 }
 
 @objc(Porthole)
@@ -108,6 +109,8 @@ protocol Porthole: ObjCPorthole {
     var config: PortholeConfig { get }
     var hasSelection: Bool { get }
     func copy(as: PortholeCopyMode)
+    var mark: PortholeMarkReading? { get }
+    func set(frame: NSRect)
 }
 
 fileprivate let portholeType = "Type"
