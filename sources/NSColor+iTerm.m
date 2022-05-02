@@ -460,9 +460,11 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
         colorSpace = kEncodedColorDictionarySRGBColorSpace;
     } else if ([[self colorSpace] isEqual:[NSColorSpace displayP3ColorSpace]]) {
         colorSpace = kEncodedColorDictionaryP3ColorSpace;
-    } else {
-        DLog(@"Assume %@ is calibrated", self.colorSpace);
+    } else if ([self.colorSpace isEqual:[NSColorSpace deviceRGBColorSpace]]) {
         colorSpace = kEncodedColorDictionaryCalibratedColorSpace;
+    } else {
+        DLog(@"Convert color in space %@ to calibrated", self.colorSpace);
+        return [[self colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]] dictionaryValuePreservingColorSpace];
     }
     CGFloat red, green, blue, alpha;
     [self getRed:&red green:&green blue:&blue alpha:&alpha];
