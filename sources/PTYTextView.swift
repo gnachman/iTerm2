@@ -19,7 +19,7 @@ extension VT100GridCoordRange {
     }
 }
 
-extension PTYTextView {
+extension PTYTextView: ExternalSearchResultsController {
     private var portholeWithSelection: Porthole? {
         return typedPortholes.first { $0.hasSelection }
     }
@@ -303,6 +303,13 @@ extension PTYTextView {
     }
 
     @objc
+    func removePortholeHighlights() {
+        for porthole in typedPortholes {
+            porthole.removeHighlights()
+        }
+    }
+
+    @objc
     func updatePortholeColors() {
         DLog("updatePortholeColors")
         for porthole in typedPortholes {
@@ -354,6 +361,69 @@ extension PTYTextView {
         portholes.removeObjects(at: indexes)
         DLog("done")
     }
+
+    @objc
+    func searchPortholes(for string: String, mode: iTermFindMode) -> [ExternalSearchResult] {
+        var result = [ExternalSearchResult]()
+        for porthole in typedPortholes {
+            result.append(contentsOf: porthole.find(string, mode: mode))
+        }
+        return result
+    }
+
+    @objc(selectExternalSearchResult:multiple:scroll:)
+    @discardableResult
+    func select(externalSearchResult result: ExternalSearchResult,
+                multiple: Bool,
+                scroll: Bool) -> VT100GridCoordRange {
+        let overflow = dataSource?.totalScrollbackOverflow() ?? 0
+        let y = Int32(result.absLine - overflow)
+        if let porthole = self.porthole(for: result),
+           let rect = porthole.select(searchResult: result,
+                                      multiple: multiple,
+                                      returningRectRelativeTo: self,
+                                      scroll: scroll) {
+            if scroll {
+                // This is necessary when there's a horizontally scrolling scrollview in the porthole
+                // in order to make PTYScrollView move vertically.
+                let line = Int32(rect.midY / lineHeight)
+                self.scroll(toCenterLine: line)
+                (enclosingScrollView?.verticalScroller as? PTYScroller)?.userScroll = true
+            }
+            return VT100GridCoordRange(
+                start: VT100GridCoord(x: 0,
+                                      y: y),
+                end: VT100GridCoord(x: 0,
+                                    y: y + Int32(floor(rect.height / lineHeight))))
+        } else {
+            return VT100GridCoordRange(start: VT100GridCoord(x: 0, y: y),
+                                       end: VT100GridCoord(x: 0, y: y + result.numLines))
+        }
+    }
+
+    @objc func externalSearchResults(for query: String, mode: iTermFindMode) -> [ExternalSearchResult] {
+        return typedPortholes.flatMap { porthole in
+            porthole.find(query, mode: mode)
+        }
+    }
+    func snippet(from result: ExternalSearchResult,
+                 matchAttributes: [NSAttributedString.Key : Any],
+                 regularAttributes: [NSAttributedString.Key : Any]) -> NSAttributedString? {
+        return porthole(for: result)?.snippet(for: result,
+                                              matchAttributes: matchAttributes,
+                                              regularAttributes: regularAttributes)
+    }
+
+
+    private func porthole(for result: ExternalSearchResult) -> Porthole? {
+        guard let owner = result.owner else {
+            return nil
+        }
+        guard let i = typedPortholes.firstIndex(where: { $0 === owner }) else {
+            return nil
+        }
+        return typedPortholes[i]
+    }
 }
 
 extension Array {
@@ -386,6 +456,31 @@ extension PTYTextView: PortholeDelegate {
 
     func portholeResize(_ porthole: Porthole) {
         layoutPorthole(porthole)
+    }
+
+    func portholeAbsLine(_ porthole: Porthole) -> Int64 {
+        guard let dataSource = dataSource else {
+            return -1
+        }
+        let range = dataSource.coordRange(of: porthole)
+        if range == VT100GridCoordRangeInvalid {
+            return -1
+        }
+        let absRange = VT100GridAbsCoordRangeFromCoordRange(
+            range,
+            dataSource.totalScrollbackOverflow())
+        return absRange.start.y
+    }
+
+    func portholeHeight(_ porthole: Porthole) -> Int32 {
+        guard let dataSource = dataSource else {
+            return -1
+        }
+        let range = dataSource.coordRange(of: porthole)
+        if range == VT100GridCoordRangeInvalid {
+            return -1
+        }
+        return range.end.y - range.start.y + 1
     }
 }
 

@@ -40,6 +40,7 @@ extern NSString *const PTYSessionRevivedNotification;
 extern NSString *const iTermSessionWillTerminateNotification;
 
 @class CapturedOutput;
+@protocol ExternalSearchResultsController;
 @class FakeWindow;
 @class iTermAction;
 @class iTermAnnouncementViewController;
@@ -569,6 +570,7 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Excludes SESSION_ARRANGEMENT_CONTENTS. Nil if session not created from arrangement.
 @property(nonatomic, copy) NSDictionary *foundingArrangement;
+@property(nonatomic, readonly) id<ExternalSearchResultsController> externalSearchResultsController;
 
 #pragma mark - methods
 

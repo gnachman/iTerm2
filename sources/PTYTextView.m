@@ -804,7 +804,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     [self scrollRectToVisible:aFrame];
 }
 
-- (void)_scrollToCenterLine:(int)line {
+- (void)scrollToCenterLine:(int)line {
     NSRect visible = [self visibleRect];
     int visibleLines = (visible.size.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / _lineHeight;
     int lineMargin = (visibleLines - 1) / 2;
@@ -835,7 +835,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
       return;
     }
     if (range.length < [_dataSource height]) {
-        [self _scrollToCenterLine:range.location + range.length / 2];
+        [self scrollToCenterLine:range.location + range.length / 2];
     } else {
         const VT100GridRange rangeOfVisibleLines = [self rangeOfVisibleLines];
         const int currentBottomLine = rangeOfVisibleLines.location + rangeOfVisibleLines.length;
@@ -4014,6 +4014,15 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
                multipleResults:multipleResults];
 }
 
+- (void)findOnPageHelperSearchExternallyFor:(NSString *)query mode:(iTermFindMode)mode {
+    [_findOnPageHelper addExternalResults:[self searchPortholesFor:query mode:mode]
+                                    width:self.dataSource.width ?: 1];
+}
+
+- (void)findOnPageHelperRemoveExternalHighlights {
+    [self removePortholeHighlights];
+}
+
 - (void)selectCoordRange:(VT100GridCoordRange)range {
     [_selection clearSelection];
     VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(range, _dataSource.totalScrollbackOverflow);
@@ -4039,6 +4048,10 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     }
 }
 
+- (VT100GridCoordRange)findOnPageSelectExternalResult:(iTermExternalSearchResult *)result {
+    return [self selectExternalSearchResult:result multiple:NO scroll:YES];
+}
+
 - (void)findOnPageSaveFindContextAbsPos {
     [_dataSource saveFindContextAbsPos];
 }
@@ -4055,7 +4068,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     // Lock scrolling after finding text
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 
-    [self _scrollToCenterLine:range.end.y];
+    [self scrollToCenterLine:range.end.y];
     [self setNeedsDisplay:YES];
 }
 
@@ -5330,10 +5343,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler
  getFindOnPageCursor:(VT100GridCoord *)coord {
-    if (!_findOnPageHelper.haveFindCursor) {
+    if (_findOnPageHelper.findCursor.type != FindCursorTypeCoord) {
         return NO;
     }
-    const VT100GridAbsCoord findOnPageCursor = [_findOnPageHelper findCursorAbsCoord];
+    const VT100GridAbsCoord findOnPageCursor = _findOnPageHelper.findCursor.coord;
     *coord = VT100GridCoordMake(findOnPageCursor.x,
                                 findOnPageCursor.y -
                                 [_dataSource totalScrollbackOverflow]);

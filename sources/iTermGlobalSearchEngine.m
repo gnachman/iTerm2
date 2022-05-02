@@ -11,6 +11,7 @@
 #import "NSTimer+iTerm.h"
 #import "PTYSession.h"
 #import "SearchResult.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermGlobalSearchEngineCursor.h"
 #import "iTermGlobalSearchResult.h"
 #import "iTermTextExtractor.h"
@@ -81,37 +82,72 @@
     }
 }
 
-- (NSAttributedString *)snippetFromExtractor:(iTermTextExtractor *)extractor result:(SearchResult *)result {
-    const VT100GridAbsCoordRange range = VT100GridAbsCoordRangeMake(result.startX,
-                                                                    result.absStartY,
-                                                                    result.endX + 1,
-                                                                    result.absEndY);
-    NSDictionary *matchAttributes = @{
+- (NSDictionary *)matchAttributes {
+    return @{
         NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
         NSBackgroundColorAttributeName: [NSColor colorWithRed:1 green:1 blue:0 alpha:0.35],
         NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]]
     };
-    NSDictionary *regularAttributes = @{
+}
+
+- (NSDictionary *)regularAttributes {
+    return @{
         NSFontAttributeName: [NSFont systemFontOfSize:[NSFont systemFontSize]]
     };
+}
+
+- (NSAttributedString *)snippetFromExtractor:(iTermTextExtractor *)extractor result:(SearchResult *)result {
+    assert(!result.isExternal);
+
+    const VT100GridAbsCoordRange range = VT100GridAbsCoordRangeMake(result.internalStartX,
+                                                                    result.internalAbsStartY,
+                                                                    result.internalEndX + 1,
+                                                                    result.internalAbsEndY);
     return [extractor attributedStringForSnippetForRange:range
-                                       regularAttributes:regularAttributes
-                                         matchAttributes:matchAttributes
+                                       regularAttributes:self.regularAttributes
+                                         matchAttributes:self.matchAttributes
                                      maximumPrefixLength:20
                                      maximumSuffixLength:256];
 }
 
 - (BOOL)searchWithCursor:(iTermGlobalSearchEngineCursor *)cursor {
     NSMutableArray<SearchResult *> *results = [NSMutableArray array];
+    NSString *query = [cursor.findContext.substring copy];
+    const iTermFindMode mode = cursor.findContext.mode;
     const BOOL more = [cursor.session.screen continueFindAllResults:results
                                                           inContext:cursor.findContext
                                                       rangeSearched:NULL];
     iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:cursor.session.screen];
+    id<ExternalSearchResultsController> esrc = cursor.session.externalSearchResultsController;
+    NSArray<iTermExternalSearchResult *> *externals =
+        [esrc externalSearchResultsForQuery:query
+                                       mode:mode];
+    NSArray<SearchResult *> *wrapped =
+    [externals mapEnumeratedWithBlock:^id(NSUInteger i,
+                                          iTermExternalSearchResult *external,
+                                          BOOL *stop) {
+        return [SearchResult searchResultFromExternal:external index:i];
+    }];
+    if (wrapped.count) {
+        [results addObjectsFromArray:wrapped];
+        [results sortUsingComparator:^NSComparisonResult(SearchResult *lhs, SearchResult *rhs) {
+            return [lhs compare:rhs];
+        }];
+    }
+    NSDictionary *matchAttributes = [self matchAttributes];
+    NSDictionary *regularAttributes = [self regularAttributes];
     NSArray<iTermGlobalSearchResult *> *mapped = [results mapWithBlock:^id(SearchResult *anObject) {
         iTermGlobalSearchResult *result = [[iTermGlobalSearchResult alloc] init];
         result.session = cursor.session;
         result.result = anObject;
-        result.snippet = [self snippetFromExtractor:extractor result:anObject];
+        if (anObject.isExternal) {
+            result.snippet =
+            [esrc snippetFromExternalSearchResult:anObject.externalResult
+                                  matchAttributes:matchAttributes
+                                regularAttributes:regularAttributes];
+        } else {
+            result.snippet = [self snippetFromExtractor:extractor result:anObject];
+        }
         return result;
     }];
     self.handler(cursor.session, mapped, [self progressIncludingCursor:cursor]);

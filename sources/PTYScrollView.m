@@ -42,7 +42,7 @@
 @end
 
 @interface PTYScroller()
-@property (nonatomic, retain) iTermScrollAccumulator *accumulator;
+@property (nonatomic, strong) iTermScrollAccumulator *accumulator;
 @end
 
 @implementation PTYScroller
@@ -81,11 +81,6 @@
 
 + (BOOL)isCompatibleWithOverlayScrollers {
     return YES;
-}
-
-- (void)dealloc {
-    [_accumulator release];
-    [super dealloc];
 }
 
 // rdar://45295749/
@@ -212,19 +207,11 @@
         DLog(@"Set new scroller's style  %@ -> %@", @(aScroller.scrollerStyle), @([NSScroller preferredScrollerStyle]));
         aScroller.scrollerStyle = [NSScroller preferredScrollerStyle];
         [self setVerticalScroller:aScroller];
-        [aScroller release];
         self.verticalScrollElasticity = NSScrollElasticityNone;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(it_scrollViewDidScroll:) name:NSScrollViewDidLiveScrollNotification object:self];
     }
 
     return self;
-}
-
-- (void)dealloc {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    [_scroller release];
-
-    [super dealloc];
 }
 
 - (NSString *)description {
@@ -307,8 +294,7 @@
 }
 
 - (void)setVerticalScroller:(NSScroller *)verticalScroller {
-    [_scroller autorelease];
-    _scroller = [verticalScroller retain];
+    _scroller = verticalScroller;
     [super setVerticalScroller:verticalScroller];
 }
 

@@ -33,5 +33,67 @@ import Foundation
     override func becomeFirstResponder() -> Bool {
         return false
     }
+
+    func temporarilyHighlight(_ ranges: [NSRange]) {
+        for range in ranges {
+            temporarilyHighlight(range)
+        }
+    }
+
+    func removeTemporaryHighlights() {
+        guard let textStorage = textStorage else {
+            return
+        }
+        textStorage.editAttributes { update in
+            textStorage.enumerateAttribute(.it2_temporarilyHighlighted,
+                                           in: NSRange(location: 0, length: textStorage.string.utf16.count),
+                                           using: { value, attributeRange, stop in
+                var fixed = textStorage.attributes(at: attributeRange.location, effectiveRange: nil)
+                fixed.removeValue(forKey: .it2_temporarilyHighlighted)
+                if let backgroundColor = fixed[.it2_savedBackgroundColor] {
+                    fixed[.backgroundColor] = backgroundColor
+                    fixed.removeValue(forKey: .it2_savedBackgroundColor)
+                } else {
+                    fixed.removeValue(forKey: .backgroundColor)
+                }
+                if let foregroundColor = fixed[.it2_savedForegroundColor] {
+                    fixed[.foregroundColor] = foregroundColor
+                    fixed.removeValue(forKey: .it2_savedForegroundColor)
+                } else {
+                    fixed.removeValue(forKey: .backgroundColor)
+                }
+                update(attributeRange, fixed)
+            })
+        }
+    }
+
+    private func temporarilyHighlight(_ range: NSRange) {
+        var counter = 1
+        textStorage?.editAttributes { update in
+            textStorage?.enumerateAttributes(in: range, using: { preexistingAttributes, subrange, stop in
+                if preexistingAttributes[.it2_temporarilyHighlighted] != nil {
+                    return
+                }
+                var fixed = preexistingAttributes
+                fixed[.it2_temporarilyHighlighted] = counter
+                counter += 1
+                if let bgColor = preexistingAttributes[.backgroundColor] {
+                    fixed[.it2_savedBackgroundColor] = bgColor
+                }
+                if let fgColor = preexistingAttributes[.foregroundColor] {
+                    fixed[.it2_savedForegroundColor] = fgColor
+                }
+                fixed[.backgroundColor] = NSColor.yellow
+                fixed[.foregroundColor] = NSColor.black
+
+                update(subrange, fixed)
+            })
+        }
+    }
 }
 
+extension NSAttributedString.Key {
+    static let it2_temporarilyHighlighted: NSAttributedString.Key = .init("it2_temporarilyHighlighted")  // Int value
+    static let it2_savedBackgroundColor: NSAttributedString.Key = .init("it2_savedBackgroundColor")  // NSColor
+    static let it2_savedForegroundColor: NSAttributedString.Key = .init("it2_savedForegroundColor")  // NSColor
+}

@@ -12,6 +12,7 @@
 #import "VT100GridTypes.h"
 
 @class FindContext;
+@class iTermExternalSearchResult;
 @class iTermSubSelection;
 @class SearchResult;
 
@@ -37,6 +38,7 @@
 
 // Select a range.
 - (void)findOnPageSelectRange:(VT100GridCoordRange)range wrapped:(BOOL)wrapped;
+- (VT100GridCoordRange)findOnPageSelectExternalResult:(iTermExternalSearchResult *)result;
 
 // Show that the search wrapped.
 - (void)findOnPageDidWrapForwards:(BOOL)directionIsForwards;
@@ -52,6 +54,23 @@
 - (void)findOnPageLocationsDidChange;
 - (void)findOnPageSelectedResultDidChange;
 
+// Call -addExternalResults:width:
+- (void)findOnPageHelperSearchExternallyFor:(NSString *)query
+                                       mode:(iTermFindMode)mode;
+- (void)findOnPageHelperRemoveExternalHighlights;
+
+@end
+
+typedef NS_ENUM(NSUInteger, FindCursorType) {
+    FindCursorTypeInvalid,
+    FindCursorTypeCoord,
+    FindCursorTypeExternal
+};
+
+@interface FindCursor: NSObject
+@property (nonatomic, readonly) FindCursorType type;
+@property (nonatomic, readonly) VT100GridAbsCoord coord;
+@property (nonatomic, strong, readonly) iTermExternalSearchResult *external;
 @end
 
 @interface iTermFindOnPageHelper : NSObject<iTermSearchResultsMinimapViewDelegate>
@@ -59,12 +78,13 @@
 @property(nonatomic, readonly) BOOL findInProgress;
 @property(nonatomic, assign) NSView<iTermFindOnPageHelperDelegate> *delegate;
 @property(nonatomic, readonly) NSDictionary *highlightMap;
-@property(nonatomic, readonly) BOOL haveFindCursor;
-@property(nonatomic, readonly) VT100GridAbsCoord findCursorAbsCoord;
 @property(nonatomic, readonly) FindContext *copiedContext;
 @property(nonatomic, readonly) NSOrderedSet<SearchResult *> *searchResults;
 @property(nonatomic, readonly) NSInteger numberOfSearchResults;
 @property(nonatomic, readonly) NSInteger currentIndex;
+// This is used to select which search result should be highlighted. If searching forward, it'll
+// be after the find cursor; if searching backward it will be before the find cursor.
+@property(nonatomic, readonly) FindCursor *findCursor;
 
 // Begin a new search.
 //
@@ -117,5 +137,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 - (NSRange)rangeOfSearchResultsInRangeOfLines:(NSRange)range;
 - (void)overflowAdjustmentDidChange;
+- (void)addExternalResults:(NSArray<iTermExternalSearchResult *> *)externalResults
+                     width:(int)width;
 
 @end

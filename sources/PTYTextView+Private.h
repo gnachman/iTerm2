@@ -75,6 +75,7 @@ NSPopoverDelegate> {
 - (void)setDrawingHelperIsRetina:(BOOL)isRetina;
 - (void)copySelectionWithStyles:(iTermSelection *)selection;
 - (void)copySelection:(iTermSelection *)selection;
+- (void)scrollToCenterLine:(int)line;
 
 @end
 

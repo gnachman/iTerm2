@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "VT100GridTypes.h"
 
 // When receiving search results, you'll get an array of this class. Positions
 // can be converted to x,y coordinates with -convertPosition:withWidth:toX:toY.
@@ -32,6 +33,8 @@
 @property (nonatomic, readonly) int yStart;
 @property (nonatomic, readonly) int xEnd;
 @property (nonatomic, readonly) int yEnd;
+
+@property (nonatomic, readonly) VT100GridCoordRange coordRange;
 
 @end
 

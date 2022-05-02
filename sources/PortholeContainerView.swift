@@ -164,6 +164,16 @@ class PortholeContainerView: NSView {
         return ok
     }
 
+    func makeWide() {
+        if wideMode {
+            return
+        }
+        wideButton.state = .on
+        toggleWide(nil)
+        precondition(wideMode)
+        _ = layoutSubviews()
+    }
+
     private func layoutWideButton() {
         let margin = 2.0
         var frame = accessory?.frame ?? closeButton.frame

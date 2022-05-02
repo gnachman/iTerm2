@@ -19,7 +19,7 @@ NS_INLINE NSUInteger iTermMikeAshHash(NSUInteger hash1, NSUInteger hash2) {
 }
 
 // http://www.cse.yorku.ca/~oz/hash.html
-NS_INLINE NSUInteger iTermDJB2Hash(unsigned char *bytes, size_t length) {
+NS_INLINE NSUInteger iTermDJB2Hash(const unsigned char *bytes, size_t length) {
     NSUInteger hash = 5381;
 
     for (NSUInteger i = 0; i < length; i++) {

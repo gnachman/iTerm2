@@ -1390,11 +1390,17 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     const int width = [self.dataSource width];
 
     NSArray<iTermSubSelection *> *subs = [self.findOnPageHelper.searchResults.array mapWithBlock:^id(SearchResult *result) {
-        const VT100GridAbsWindowedRange range  = VT100GridAbsWindowedRangeMake(result.absCoordRange, 0, 0);
-        iTermSubSelection *sub = [iTermSubSelection subSelectionWithAbsRange:range
-                                                                        mode:kiTermSelectionModeCharacter
-                                                                       width:width];
-        return sub;
+        if (result.isExternal) {
+            [self selectExternalSearchResult:result.externalResult multiple:YES scroll:NO];
+            return nil;
+        } else {
+            const VT100GridAbsWindowedRange range  =
+            VT100GridAbsWindowedRangeMake(result.internalAbsCoordRange, 0, 0);
+            iTermSubSelection *sub = [iTermSubSelection subSelectionWithAbsRange:range
+                                                                            mode:kiTermSelectionModeCharacter
+                                                                           width:width];
+            return sub;
+        }
     }];
     if (!subs.count) {
         return;

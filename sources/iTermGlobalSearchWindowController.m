@@ -8,6 +8,7 @@
 #import "iTermGlobalSearchWindowController.h"
 
 #import "FindContext.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermController.h"
 #import "iTermFocusReportingTextField.h"
 #import "iTermGlobalSearchEngine.h"
@@ -155,11 +156,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     [result.session reveal];
-    const VT100GridCoordRange coordRange = [result coordRange];
-    [result.session.textview selectCoordRange:coordRange];
-    [result.session.textview scrollToSelection];
-    [result highlightLines];
-    [self movePanelAwayFromResultInRange:coordRange session:result.session];
+    if (result.isExternal) {
+        [result.session.externalSearchResultsController selectExternalSearchResult:result.result.externalResult
+                                                                          multiple:NO
+                                                                            scroll:YES];
+    } else {
+        const VT100GridCoordRange coordRange = [result internalCoordRange];
+        [result.session.textview selectCoordRange:coordRange];
+        [result.session.textview scrollToSelection];
+        [result highlightLines];
+        [self movePanelAwayFromResultInRange:coordRange session:result.session];
+    }
 }
 
 - (NSRect)rectForCoordRange:(VT100GridCoordRange)coordRange session:(PTYSession *)session {

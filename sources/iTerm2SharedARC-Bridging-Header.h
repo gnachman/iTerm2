@@ -56,6 +56,7 @@
 #import "NSTableView+iTerm.h"
 #import "NSView+iTerm.h"
 #import "PSMTabBarControl.h"
+#import "PTYScrollView.h"
 #import "PTYSession.h"
 #import "PTYSession+ARC.h"
 #import "PTYTextView.h"

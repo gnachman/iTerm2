@@ -32,7 +32,7 @@ class PortholeFactory: NSObject {
         }
         switch type {
         case .text:
-            guard let (config, uuid, savedLines, language, languages) = TextViewPorthole.config(
+            guard let (config, uuid, savedLines, language, languages, wideMode) = TextViewPorthole.config(
                 fromDictionary: info,
                 colorMap: colorMap,
                 font: font) else {
@@ -44,7 +44,8 @@ class PortholeFactory: NSObject {
             return TextViewPorthole(config,
                                     renderer: renderer,
                                     uuid: uuid,
-                                    savedLines: savedLines)
+                                    savedLines: savedLines,
+                                    wideMode: wideMode)
         }
     }
 }

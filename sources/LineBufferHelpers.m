@@ -32,7 +32,10 @@
 }
 - (int)yEnd {
     return yEnd;
+}
 
+- (VT100GridCoordRange)coordRange {
+    return VT100GridCoordRangeMake(xStart, yStart, xEnd, yEnd);
 }
 
 @end

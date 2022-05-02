@@ -72,7 +72,8 @@ class TextViewPorthole: NSObject {
     init(_ config: PortholeConfig,
          renderer: TextViewPortholeRenderer,
          uuid: String? = nil,
-         savedLines: [ScreenCharArray]? = nil) {
+         savedLines: [ScreenCharArray]? = nil,
+         wideMode: Bool = false) {
         if let savedLines = savedLines {
             self.savedLines = savedLines
         }
@@ -131,6 +132,9 @@ class TextViewPorthole: NSObject {
         self.renderer = renderer
         textStorage.setAttributedString(renderer.render(visualAttributes: savedVisualAttributes))
 
+        if wideMode {
+            containerView.makeWide()
+        }
         super.init()
 
         updateLanguage()
@@ -166,6 +170,7 @@ class TextViewPorthole: NSObject {
         renderer.language = FileExtensionDB.instance?.languageToShortName[language] ?? language
         textStorage.setAttributedString(renderer.render(visualAttributes: savedVisualAttributes))
         changeLanguageCallback?(language, self)
+        PortholeRegistry.instance.incrementGeneration()
     }
 
     private func updateLanguage() {
@@ -177,6 +182,7 @@ class TextViewPorthole: NSObject {
 
     private func didToggleWide() {
         delegate?.portholeResize(self)
+        PortholeRegistry.instance.incrementGeneration()
     }
 }
 
@@ -228,6 +234,95 @@ extension TextViewPorthole: Porthole {
         return containerView.scrollViewOverhead + textViewHeight + (outerMargin + innerMargin) * 2
     }
 
+    func find(_ query: String, mode: iTermFindMode) -> [ExternalSearchResult] {
+        removeHighlights()
+        let ranges = (textView.string as NSString).ranges(substring: query, mode: mode)
+        textView.temporarilyHighlight(ranges)
+        return ranges.map {
+            SearchResult($0, owner: self)
+        }
+    }
+
+    func removeHighlights() {
+        textView.removeTemporaryHighlights()
+    }
+
+    func select(searchResult: ExternalSearchResult,
+                multiple: Bool,
+                returningRectRelativeTo view: NSView,
+                scroll: Bool) -> NSRect? {
+        guard let result = searchResult as? SearchResult else {
+            return nil
+        }
+        let glyphRange = layoutManager.glyphRange(forCharacterRange: result.range, actualCharacterRange: nil)
+        if glyphRange.location == NSNotFound && glyphRange.length == 0 {
+            return nil
+        }
+        if multiple {
+            let ranges = textView.selectedRanges.map {
+                $0.rangeValue
+            }.filter {
+                $0.intersection(result.range) == nil
+            } + [result.range]
+            textView.selectedRanges = ranges.map { NSValue(range: $0) }
+        } else {
+            textView.setSelectedRange(result.range)
+        }
+        let glyphRect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
+        if scroll {
+            var paddedGlyphRect = glyphRect
+            let hpad = CGFloat(40)
+            let minX = max(0, glyphRect.origin.x - hpad)
+            let maxX = min(textView.bounds.width, glyphRect.maxX + hpad)
+            paddedGlyphRect.origin.x = minX
+            paddedGlyphRect.size.width = maxX - minX
+            textView.scrollToVisible(paddedGlyphRect)
+        }
+        return textView.convert(glyphRect, to: view)
+    }
+
+    func snippet(for result: ExternalSearchResult,
+                 matchAttributes: [NSAttributedString.Key: Any],
+                 regularAttributes: [NSAttributedString.Key: Any]) -> NSAttributedString? {
+        guard let result = result as? SearchResult else {
+            return nil
+        }
+
+        var lowerBound = result.range.location
+        var upperBound = result.range.location + result.range.length
+        lowerBound = max(0, lowerBound - 20)
+        let prefixLength = result.range.location - lowerBound
+        upperBound = min(textStorage.length, upperBound + 256)
+        let expandedRange = NSRange(lowerBound..<upperBound)
+
+        // Grab the raw text of the snippet.
+        let multiLineSubstring = textStorage.attributedSubstring(from: expandedRange).mutableCopy() as! NSMutableAttributedString
+
+        // Change style to regular and then highlight the matched range.
+        multiLineSubstring.editAttributes { update in
+            multiLineSubstring.enumerateAttributes(
+                in: NSRange(location: 0, length: multiLineSubstring.length)) { _, range, _ in
+                    update(range, regularAttributes)
+                }
+        }
+        multiLineSubstring.editAttributes { update in
+            let substringRelativeRange = NSRange(location: prefixLength, length: result.range.length)
+            multiLineSubstring.enumerateAttributes(in: substringRelativeRange) { attributes, subrange, stop in
+                update(subrange, matchAttributes)
+            }
+        }
+
+        // Remove newlines.
+        let substring = NSMutableAttributedString()
+        multiLineSubstring.mutableString.enumerateSubstrings(
+            in: NSRange(location: 0, length: (multiLineSubstring.string as NSString).length),
+            options: [.byLines]) { _maybeLine, lineRange, _enclosingRange, _stop in
+                substring.append(multiLineSubstring.attributedSubstring(from: lineRange))
+            }
+
+        return substring
+    }
+
     static var type: PortholeType {
         .text
     }
@@ -249,6 +344,7 @@ extension TextViewPorthole: Porthole {
     static let savedLinesKey = "savedLines"
     static let languageKey = "language"
     static let languagesKey = "languages"
+    static let wideKey = "wide"
 
     var dictionaryValue: [String: AnyObject] {
         let dir: NSString?
@@ -265,7 +361,8 @@ extension TextViewPorthole: Porthole {
                                     Self.filenameKey: config.filename as NSString?,
                                     Self.savedLinesKey: encodedSavedLines,
                                     Self.languageKey: renderer.language,
-                                    Self.languagesKey: renderer.languageCandidateShortNames]
+                                    Self.languagesKey: renderer.languageCandidateShortNames,
+                                    Self.wideKey: containerView.wideMode]
         return wrap(dictionary: dict.compactMapValues { $0 })
     }
 
@@ -275,7 +372,8 @@ extension TextViewPorthole: Porthole {
                                          uuid: String,
                                          savedLines: [ScreenCharArray],
                                          language: String?,
-                                         languages: [String]?)?  {
+                                         languages: [String]?,
+                                         wideMode: Bool)?  {
         guard let uuid = dict[Self.uuidDictionaryKey],
               let text = dict[Self.textDictionaryKey],
               let savedLines = dict[self.savedLinesKey] as? [[AnyHashable: Any]] else {
@@ -302,7 +400,8 @@ extension TextViewPorthole: Porthole {
                 uuid: uuid,
                 savedLines: savedLines.compactMap { ScreenCharArray(dictionary: $0) },
                 language: dict[Self.languageKey] as? String,
-                languages: dict[Self.languagesKey] as? [String])
+                languages: dict[Self.languagesKey] as? [String],
+                wideMode: dict[Self.wideKey] as? Bool ?? false)
 
     }
     func removeSelection() {
@@ -487,3 +586,109 @@ class TextPortholeLayoutManager: NSLayoutManager {
     }
 }
 
+extension NSString {
+    func ranges(substring: String, mode: iTermFindMode) -> [NSRange] {
+        let regex: Bool
+        let caseSensitive: Bool
+        switch mode {
+        case .caseInsensitiveRegex:
+            regex = true
+            caseSensitive = false
+
+        case .caseInsensitiveSubstring:
+            regex = false
+            caseSensitive = false
+
+        case .caseSensitiveRegex:
+            regex = true
+            caseSensitive = true
+
+        case .caseSensitiveSubstring:
+            regex = false
+            caseSensitive = true
+
+        case .smartCaseSensitivity:
+            regex = false
+            caseSensitive = substring.rangeOfCharacter(from: CharacterSet.uppercaseLetters) != nil
+
+        @unknown default:
+            fatalError()
+        }
+
+        let compiledRegex: NSRegularExpression?
+        if regex {
+            var options: NSRegularExpression.Options = [.anchorsMatchLines]
+            if !caseSensitive {
+                options.insert(.caseInsensitive)
+            }
+            compiledRegex = try? NSRegularExpression(pattern: substring, options: options)
+        } else {
+            compiledRegex = nil
+        }
+
+        var start = 0
+        let length = self.length
+        var result = [NSRange]()
+        while true {
+            let currentRange = { () -> NSRange in
+                if regex {
+                    guard let compiledRegex = compiledRegex else {
+                        return NSRange(location: NSNotFound, length: 0)
+                    }
+                    return compiledRegex.rangeOfFirstMatch(in: self as String,
+                                                           options: [],
+                                                           range: NSRange(start..<length))
+                } else {
+                    return range(of: substring,
+                                 options: caseSensitive ? [] : [.caseInsensitive],
+                                 range: NSRange(start..<length))
+                }
+            }()
+            if currentRange.location == NSNotFound {
+                return result
+            }
+            result.append(currentRange)
+            start = currentRange.upperBound
+        }
+    }
+}
+
+extension TextViewPorthole: ExternalSearchResultOwner {
+    class SearchResult: ExternalSearchResult {
+        let range: NSRange
+        init(_ range: NSRange, owner: TextViewPorthole) {
+            self.range = range
+
+            super.init(owner)
+        }
+
+        override func isEqual(_ object: Any?) -> Bool {
+            guard let other = object as? SearchResult else {
+                return false
+            }
+            return owner === other.owner && range == other.range
+        }
+    }
+
+    func select(_ result: ExternalSearchResult) {
+        let searchResult = result as! SearchResult
+        textView.setSelectedRange(searchResult.range)
+    }
+
+    var absLine: Int64 {
+        delegate?.portholeAbsLine(self) ?? -1
+    }
+
+    var numLines: Int32 {
+        delegate?.portholeHeight(self) ?? 1
+    }
+    func searchResultIsVisible(_ result: ExternalSearchResult) -> Bool {
+        let searchResult = result as! SearchResult
+        let glyphRange = textContainer.layoutManager!.glyphRange(
+            forCharacterRange: searchResult.range, actualCharacterRange: nil)
+        let rect = textContainer.layoutManager!.boundingRect(
+            forGlyphRange: glyphRange, in: textContainer)
+        // If it's offscreen because the porthole is truncated then you get back a zero rect.
+        return rect != NSRect.zero
+    }
+}

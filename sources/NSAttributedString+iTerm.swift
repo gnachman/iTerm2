@@ -147,3 +147,16 @@ extension Array where Element: NSAttributedString {
         return combined
     }
 }
+
+extension NSMutableAttributedString {
+    typealias Change = (NSRange, [NSAttributedString.Key : Any]) -> ()
+    func editAttributes(_ closure: (Change) -> ()) {
+        var replacements = [NSRange: [NSAttributedString.Key : Any]]()
+        closure { range, newAttributes in
+            replacements[range] = newAttributes
+        }
+        for (range, attrs) in replacements {
+            setAttributes(attrs, range: range)
+        }
+    }
+}

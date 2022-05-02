@@ -1040,6 +1040,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [_wrapper setNeedsDisplay:needsDisplay];
 }
 
+- (id<ExternalSearchResultsController>)externalSearchResultsController {
+    return _textview;
+}
+
 - (void)irAdvance:(int)dir
 {
     if (!_dvr) {

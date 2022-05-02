@@ -497,11 +497,13 @@ const int kMaxResultContextWords = 4;
         while ([findResults_ count] > 0 && [[NSDate date] timeIntervalSinceDate:cs] < 0.15) {
             ++n;
             SearchResult* result = [findResults_ objectAtIndex:0];
-
-            startX = result.startX;
-            startY = result.absStartY - [screen totalScrollbackOverflow];
-            endX = result.endX;
-            endY = result.absEndY - [screen totalScrollbackOverflow];
+            if (result.isExternal) {
+                continue;
+            }
+            startX = result.internalStartX;
+            startY = result.internalAbsStartY - [screen totalScrollbackOverflow];
+            endX = result.internalEndX;
+            endY = result.internalAbsEndY - [screen totalScrollbackOverflow];
 
             [findResults_ removeObjectAtIndex:0];
 

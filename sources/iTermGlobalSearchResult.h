@@ -15,7 +15,8 @@ NS_ASSUME_NONNULL_BEGIN
 @class SearchResult;
 
 @interface iTermGlobalSearchResult: NSObject
-@property (nonatomic, readonly) VT100GridCoordRange coordRange;
+@property (nonatomic, readonly) BOOL isExternal;
+@property (nonatomic, readonly) VT100GridCoordRange internalCoordRange;
 
 @property (nonatomic, weak) PTYSession *session;
 @property (nonatomic, strong) SearchResult *result;

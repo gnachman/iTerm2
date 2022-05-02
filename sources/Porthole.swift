@@ -82,6 +82,8 @@ protocol PortholeDelegate: AnyObject {
     func portholeDidAcquireSelection(_ porthole: Porthole)
     func portholeRemove(_ porthole: Porthole)
     func portholeResize(_ porthole: Porthole)
+    func portholeAbsLine(_ porthole: Porthole) -> Int64
+    func portholeHeight(_ porthole: Porthole) -> Int32
 }
 
 @objc(Porthole)
@@ -111,6 +113,15 @@ protocol Porthole: ObjCPorthole {
     func copy(as: PortholeCopyMode)
     var mark: PortholeMarkReading? { get }
     func set(frame: NSRect)
+    func find(_ query: String, mode: iTermFindMode) -> [ExternalSearchResult]
+    func select(searchResult: ExternalSearchResult,
+                multiple: Bool,
+                returningRectRelativeTo view: NSView,
+                scroll: Bool) -> NSRect?
+    func snippet(for result: ExternalSearchResult,
+                 matchAttributes: [NSAttributedString.Key: Any],
+                 regularAttributes: [NSAttributedString.Key: Any]) -> NSAttributedString?
+    func removeHighlights()
 }
 
 fileprivate let portholeType = "Type"
@@ -200,7 +211,7 @@ class PortholeRegistry: NSObject {
         }
     }
 
-    private func incrementGeneration() {
+    func incrementGeneration() {
         _generation += 1
         DispatchQueue.main.async {
             NSApp.invalidateRestorableState()

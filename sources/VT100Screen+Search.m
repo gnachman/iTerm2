@@ -196,12 +196,8 @@
                         NSArray *allPositions = [temporaryLineBuffer convertPositions:context.results
                                                                             withWidth:_state.currentGrid.size.width];
                         for (XYRange *xyrange in allPositions) {
-                            SearchResult *result = [[SearchResult alloc] init];
-
-                            result.startX = xyrange->xStart;
-                            result.endX = xyrange->xEnd;
-                            result.absStartY = xyrange->yStart + _state.cumulativeScrollbackOverflow;
-                            result.absEndY = xyrange->yEnd + _state.cumulativeScrollbackOverflow;
+                            SearchResult *result = [SearchResult withCoordRange:xyrange.coordRange
+                                                                       overflow:_state.cumulativeScrollbackOverflow];
 
                             [results addObject:result];
 

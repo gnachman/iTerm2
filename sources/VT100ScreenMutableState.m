@@ -3136,6 +3136,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self clearTriggerLine];
 
     const VT100GridSize gridSize = self.currentGrid.size;
+    const int originalNumLines = self.numberOfScrollbackLines + gridSize.height;
 
     // If cursor is inside the range, move it below.
     VT100GridCoord cursorCoord = self.currentGrid.cursor;
@@ -3246,8 +3247,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     VT100GridCoordRangeMake(replacementRange.start.x,
                             replacementRange.start.y,
                             gridSize.width,
-                            self.numberOfScrollbackLines + gridSize.height);
-
+                            originalNumLines);
     Interval *intervalToMove =
     [self intervalForGridCoordRange:rangeFromPortholeToEnd];
 
