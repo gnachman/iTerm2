@@ -3666,10 +3666,8 @@ typedef struct {
     if (parseTree[kLayoutDictTabIndex]) {
         // Add tab at a specified index.
         [term insertTab:theTab atIndex:[parseTree[kLayoutDictTabIndex] intValue]];
-    } else if ([parseTree[kLayoutDictTabOpenedManually] boolValue]) {
-        [term addTabAtAutomaticallyDeterminedLocation:theTab];
     } else {
-        [term appendTab:theTab];
+        [term addTabAtAutomaticallyDeterminedLocation:theTab];
     }
     [theTab didAddToTerminal:term withArrangement:arrangement];
     [theTab updateTmuxTitleMonitor];
