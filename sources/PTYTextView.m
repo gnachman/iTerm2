@@ -4369,6 +4369,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_delegate textViewSelectionDidChangeToTruncatedString:@""];
     }
     [self removePortholeSelections];
+    [self setNeedsDisplay:YES];
     DLog(@"Selection did change: selection=%@. stack=%@",
          selection, [NSThread callStackSymbols]);
 }
