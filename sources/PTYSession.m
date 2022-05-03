@@ -10537,6 +10537,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }];
 }
 
+// "en-US" -> "en_US"
+- (NSString *)languageToLocale:(NSString *)code {
+    return [code stringByReplacingOccurrencesOfString:@"-" withString:@"_"];
+}
+
 - (NSArray<NSString *> *)languageCodesUpToAndIncludingFirstTwoLetterCode:(NSArray<NSString *> *)allCodes {
     NSInteger lastIndexToInclude = [allCodes indexOfObjectPassingTest:^BOOL(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         return obj.length <= 2;
@@ -10572,7 +10577,39 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"Encoding is %@. Combos are %@", encoding, languageCountryEncoding);
 
     NSArray<NSString *> *candidates = [@[ languageCountryEncoding, languagePlusCountryCodes, languageCodes ] flattenedArray];
+    DLog(@"Initial candidates are: %@", candidates);
+
+    // Sort non-hyphenated codes last so en_US always precedes en.
+    NSArray<NSString *> *preferredLanguages = [[NSLocale preferredLanguages] sortedArrayUsingComparator:^NSComparisonResult(NSString *lhs, NSString *rhs) {
+        const BOOL lhsHasHyphen = [lhs containsString:@"-"];
+        const BOOL rhsHasHyphen = [rhs containsString:@"-"];
+        if (lhsHasHyphen == rhsHasHyphen) {
+            return NSOrderedSame;
+        }
+        if (lhsHasHyphen) {
+            return NSOrderedAscending;
+        }
+        return NSOrderedDescending;
+    }];
+    // Add locale-based candidates with encoding suffix
+    NSArray<NSString *> *additionalCandidates =
+    [preferredLanguages mapWithBlock:^NSString *(NSString *code) {
+        return [NSString stringWithFormat:@"%@.%@", [self languageToLocale:code], encoding];
+    }];
+
+    NSLog(@"Add extra candidates (plus encoding) based on preferred languages: %@", additionalCandidates);
+    candidates = [candidates arrayByAddingObjectsFromArray:additionalCandidates];
+
+    additionalCandidates =
+    [preferredLanguages mapWithBlock:^NSString *(NSString *code) {
+        return [self languageToLocale:code];
+    }];
+
+    NSLog(@"Add extra candidates based on preferred languages: %@", additionalCandidates);
+    candidates = [candidates arrayByAddingObjectsFromArray:additionalCandidates];
+
     DLog(@"Candidates are: %@", candidates);
+
     for (NSString *candidate in candidates) {
         DLog(@"Check if %@ is supported", candidate);
         if ([self _localeIsSupported:candidate]) {
