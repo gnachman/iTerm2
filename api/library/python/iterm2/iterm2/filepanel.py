@@ -50,7 +50,7 @@ class OpenPanel:
     @path.setter
     def path(self, value: str):
         self.__path = value
-        
+
     @property
     def options(self) -> typing.List['iterm2.OpenPanel.Options']:
         """Flags controlling the panel.
@@ -62,7 +62,7 @@ class OpenPanel:
     @options.setter
     def options(self, value: typing.List['iterm2.OpenPanel.Options']):
         self.__options = value
-        
+
     @property
     def extensions(self) -> typing.Optional[typing.List[str]]:
         """List of file extensions that are allowed."""
@@ -71,7 +71,7 @@ class OpenPanel:
     @extensions.setter
     def extensions(self, value: typing.Optional[typing.List[str]]):
         self.__extensions = value
-        
+
     @property
     def prompt(self) -> typing.Optional[str]:
         """Text for OK button."""
@@ -80,7 +80,7 @@ class OpenPanel:
     @prompt.setter
     def prompt(self, value: str):
         self.__prompt = value
-        
+
     @property
     def message(self) -> typing.Optional[str]:
         """Text for panel title."""
@@ -89,13 +89,12 @@ class OpenPanel:
     @message.setter
     def message(self, value: str):
         self.__message = value
-        
-    async def async_run(self, connection) -> 'iterm2.OpenPanel.Result':
+
+    async def async_run(self, connection) -> typing.Optional['iterm2.OpenPanel.Result']:
         """Show the panel.
 
-        :returns: A :class:`~iterm2.OpenPanel.Result`.
-
-        :throws: :class:`~iterm2.rpc.RPCException` if the user cancels.
+        :returns: A :class:`~iterm2.OpenPanel.Result` if successful,
+            or `None` if the user cancels.
         """
         iterm2.capabilities.check_supports_file_panels(connection)
         bitmap = sum(map(lambda option: option.value, self.options))
@@ -106,7 +105,9 @@ class OpenPanel:
              f'extensions: {json.dumps(self.extensions)},' +
              f'prompt: {json.dumps(self.prompt)},' +
              f'message: {json.dumps(self.message)})'))
-        return OpenPanel.Result(response)
+        if response:
+            return OpenPanel.Result(response)
+        return None
 
 
 class SavePanel:
@@ -225,12 +226,11 @@ class SavePanel:
     def default_filename(self, value: typing.Optional[str]):
         self.__default_filename = value
 
-    async def async_run(self, connection) -> 'iterm2.SavePanel.Result':
+    async def async_run(self, connection) -> typing.Optional['iterm2.SavePanel.Result']:
         """Show the panel.
 
-        :returns: A :class:`~iterm2.SavePanel.Result`.
-
-        :throws: :class:`~iterm2.rpc.RPCException` if the user cancels.
+        :returns: A :class:`~iterm2.SavePanel.Result` if successful,
+            or `None` if the user cancels.
         """
         iterm2.capabilities.check_supports_file_panels(connection)
         bitmap = sum(map(lambda option: option.value, self.options))
@@ -244,5 +244,6 @@ class SavePanel:
                 f'message: {json.dumps(self.message)},' +
                 f'name_field_label: {json.dumps(self.name_field_label)},'
                 f'default_filename: {json.dumps(self.default_filename)})'))
-        return SavePanel.Result(response)
-
+        if response:
+            return SavePanel.Result(response)
+        return None

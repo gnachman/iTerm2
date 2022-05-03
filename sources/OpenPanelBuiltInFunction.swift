@@ -51,7 +51,9 @@ class OpenPanelBuiltInFunction: NSObject, iTermBuiltInFunctionProtocol {
             context: .app) { parameters, completion in
                 let panel = NSOpenPanel()
 
-                panel.directoryURL = URL(fileURLWithPath: parameters[pathArgName] as? String ?? NSHomeDirectory())
+                if let path = parameters[pathArgName] as? String {
+                    panel.directoryURL = URL(fileURLWithPath: path)
+                }
                 if let types = parameters[extensionsArgName] as? [String] {
                     if #available(macOS 11, *) {
                         panel.allowedContentTypes = types.compactMap { UTType.init(filenameExtension: $0) }
@@ -79,7 +81,7 @@ class OpenPanelBuiltInFunction: NSObject, iTermBuiltInFunctionProtocol {
                 if response == .OK {
                     completion(panel.urls.map { $0.path }, nil)
                 } else {
-                    completion(nil, NSError(domain: "com.iterm2", code: 0))
+                    completion(nil, nil)
                 }
             }
         iTermBuiltInFunctions.sharedInstance().register(builtInFunction,
