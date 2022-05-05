@@ -104,7 +104,7 @@ class TextViewPortholeRenderer {
             return markdownRenderer!.render(visualAttributes: visualAttributes)
         case .json:
             if jsonRenderer == nil {
-                jsonRenderer = JSONPortholeRenderer(text)
+                jsonRenderer = JSONPortholeRenderer.forced(text)
             }
             return jsonRenderer!.render(visualAttributes: visualAttributes)
         case .none:
