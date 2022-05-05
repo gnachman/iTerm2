@@ -2002,7 +2002,6 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 - (BOOL)updateDirtyRects:(BOOL *)foundDirtyPtr haveScrolled:(BOOL)haveScrolled {
     BOOL anythingIsBlinking = NO;
     BOOL foundDirty = NO;
-    assert([_dataSource scrollbackOverflow] == 0);
 
     // Flip blink bit if enough time has passed. Mark blinking cursor dirty
     // when it blinks.
@@ -2218,7 +2217,6 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     const BOOL frameDidChange = [_delegate textViewResizeFrameIfNeeded];
 
     assert(_delegate != nil);
-    assert([_dataSource scrollbackOverflow] == 0);
 
     // Perform adjustments if lines were lost from the head of the buffer.
     BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
