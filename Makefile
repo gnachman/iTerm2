@@ -141,6 +141,9 @@ libgit2: force
 	mkdir -p submodules/libgit2/build
 	MAKE=/usr/local/bin/cmake PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET="10.14" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 .. && ${CMAKE} -j22 --build . && ${CMAKE} --build . -j22 --target install
 
+MultiCursor: force
+	cp submodules/MultiCursor/MultiCursor/*swift sources/MultiCursor
+
 deps: force
 	make fatlibsixel
 	make fatopenssl

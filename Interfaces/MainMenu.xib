@@ -1509,6 +1509,11 @@ DQ
                                     <action selector="openPasswordManager:" target="201" id="wbL-5o-kEN"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="SSH" keyEquivalent="y" identifier="Password Manager" id="VGP-VF-QQe">
+                                <connections>
+                                    <action selector="openSSHWindow:" target="201" id="Q7F-3s-rbY"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="zl8-Q7-4RO">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>

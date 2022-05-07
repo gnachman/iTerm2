@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface NSTextField (iTerm)
 
 // NOTE: this one uses a small font
@@ -34,3 +36,5 @@
 - (NSTextField *)replaceWithHyperlinkTo:(NSURL *)url;
 
 @end
+
+NS_ASSUME_NONNULL_END

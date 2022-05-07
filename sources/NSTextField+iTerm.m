@@ -14,7 +14,7 @@
 @implementation NSTextField (iTerm)
 
 + (instancetype)it_textFieldForTableViewWithIdentifier:(NSString *)identifier {
-    NSTextField *result = [[[self alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)] autorelease];
+    NSTextField *result = [[self alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
     result.font = [NSFont systemFontOfSize:[NSFont smallSystemFontSize]];
     result.bezeled = NO;
     result.editable = NO;
@@ -26,7 +26,7 @@
 }
 
 + (instancetype)it_textFieldForTableView {
-    NSTextField *result = [[[self alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)] autorelease];
+    NSTextField *result = [[self alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
     result.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
     result.bezeled = NO;
     result.editable = NO;
@@ -82,7 +82,7 @@
 }
 
 - (NSTextField *)replaceWithHyperlinkTo:(NSURL *)url {
-    NSTextField *link = [[[NSTextField alloc] initWithFrame:self.frame] autorelease];
+    NSTextField *link = [[NSTextField alloc] initWithFrame:self.frame];
     link.editable = self.editable;
     link.drawsBackground = self.drawsBackground;
     link.bordered = self.bordered;
@@ -94,7 +94,7 @@
                                   NSForegroundColorAttributeName: [NSColor colorWithCalibratedRed:0 green:0 blue:0.93 alpha:1],
                                   NSCursorAttributeName: [NSCursor pointingHandCursor],
                                   NSLinkAttributeName: url };
-    NSMutableAttributedString *attributedString = [[self.attributedStringValue mutableCopy] autorelease];
+    NSMutableAttributedString *attributedString = [self.attributedStringValue mutableCopy];
     for (NSString *key in attributes) {
         [attributedString addAttribute:key value:attributes[key] range:NSMakeRange(0, [attributedString length])];
     }

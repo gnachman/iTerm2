@@ -2823,7 +2823,6 @@
 		A6C762BA1B45C52B00E3C992 /* NSMutableData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */; };
 		A6C762BB1B45C52B00E3C992 /* NSMutableDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */; };
 		A6C762BD1B45C52B00E3C992 /* NSPasteboard+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */; };
-		A6C762C11B45C52B00E3C992 /* NSTextField+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */; };
 		A6C762C31B45C52B00E3C992 /* NSView+RecursiveDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D81F0BF183C3C2D00910838 /* NSView+RecursiveDescription.m */; };
 		A6C762C41B45C52B00E3C992 /* NSWorkspace+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A67F57AF1B012BD100B4F135 /* NSWorkspace+iTerm.m */; };
 		A6C762C61B45C52B00E3C992 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
@@ -3648,6 +3647,11 @@
 		A6EC8074281F368700493544 /* SearchResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC393C417B59B08000EE0F2 /* SearchResult.m */; };
 		A6EC8075281F7D5A00493544 /* iTermFindOnPageHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */; };
 		A6EC8076281F7F7A00493544 /* PTYScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF755F026DDA6303A80106 /* PTYScrollView.m */; };
+		A6EC807A28261E3600493544 /* SSHWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC807928261E3600493544 /* SSHWindowController.swift */; };
+		A6EC807B2826232D00493544 /* SSHWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EC80782825EDB200493544 /* SSHWindowController.xib */; };
+		A6EC807C2826232D00493544 /* SSHWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EC80782825EDB200493544 /* SSHWindowController.xib */; };
+		A6EC807D2826232E00493544 /* SSHWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EC80782825EDB200493544 /* SSHWindowController.xib */; };
+		A6EC807E282631B000493544 /* NSTextField+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DF401B1897607E00F05947 /* NSTextField+iTerm.m */; };
 		A6EC936624E513DB00EEADEF /* iTermSlowOperationGateway.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */; };
 		A6EC936724E513DB00EEADEF /* iTermSlowOperationGateway.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */; };
 		A6EC936824E64FAA00EEADEF /* iTermFileDescriptorServerShared.c in Sources */ = {isa = PBXBuildFile; fileRef = A64FCD57238DE785001D8199 /* iTermFileDescriptorServerShared.c */; };
@@ -6759,6 +6763,8 @@
 		A6EC804F281BC67900493544 /* SwiftyMarkdown.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftyMarkdown.framework; path = ThirdParty/SwiftyMarkdown.framework; sourceTree = "<group>"; };
 		A6EC8054281C852200493544 /* NSAttributedString+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSAttributedString+iTerm.swift"; sourceTree = "<group>"; };
 		A6EC8072281F2C2900493544 /* ExternalSearchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalSearchResult.swift; sourceTree = "<group>"; };
+		A6EC80782825EDB200493544 /* SSHWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SSHWindowController.xib; sourceTree = "<group>"; };
+		A6EC807928261E3600493544 /* SSHWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHWindowController.swift; sourceTree = "<group>"; };
 		A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlowOperationGateway.h; sourceTree = "<group>"; };
 		A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSlowOperationGateway.m; sourceTree = "<group>"; };
 		A6EC936924E7868D00EEADEF /* iTermToolSnippets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermToolSnippets.h; sourceTree = "<group>"; };
@@ -7160,6 +7166,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A6EC80772825ED9F00493544 /* ssh */,
 				A6EC8071281F2ACF00493544 /* Find on page */,
 				A6822749280786B3005DF0B4 /* Portholes */,
 				A6D10E1F27F7C2AC0026DB56 /* MultiCursor */,
@@ -10739,6 +10746,15 @@
 			name = "Find on page";
 			sourceTree = "<group>";
 		};
+		A6EC80772825ED9F00493544 /* ssh */ = {
+			isa = PBXGroup;
+			children = (
+				A6EC80782825EDB200493544 /* SSHWindowController.xib */,
+				A6EC807928261E3600493544 /* SSHWindowController.swift */,
+			);
+			name = ssh;
+			sourceTree = "<group>";
+		};
 		A6FCAF62250D4CF000B89EB0 /* KeyMappers */ = {
 			isa = PBXGroup;
 			children = (
@@ -12662,6 +12678,7 @@
 				A6F7A74B213CB143004DE961 /* StatusBarIconRAM.png in Resources */,
 				A6F7A71B213CB143004DE961 /* StatusBarIconUser@2x.png in Resources */,
 				530AB7BE20A641E000D2AA08 /* repl_banner.txt in Resources */,
+				A6EC807D2826232E00493544 /* SSHWindowController.xib in Resources */,
 				A67D0D7C1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				A6F2B6D52558B51B008D6BF1 /* ScrollerHighlights.png in Resources */,
 				A6F1B3B0268FD0F300546767 /* StatusBarIconTriggers@2x.png in Resources */,
@@ -13096,6 +13113,7 @@
 				A67F6188214395A70093940A /* graphic_perl@2x.png in Resources */,
 				A66A882624DFCCC30043728B /* graphic_erlang.png in Resources */,
 				A63011B420E7EE69008114B7 /* iTermStatusBarKnobNumericViewController.xib in Resources */,
+				A6EC807C2826232D00493544 /* SSHWindowController.xib in Resources */,
 				1D8BBA741B30F7FB0005A852 /* Dismiss.png in Resources */,
 				A67D0D811A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
 				A629F5B723B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */,
@@ -13493,6 +13511,7 @@
 				A61A85A324F1CCB900B03880 /* iTermGlobalSearch.xib in Resources */,
 				A6FD85311B767D6300EB9DCE /* Hamburger@2x.png in Resources */,
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
+				A6EC807B2826232D00493544 /* SSHWindowController.xib in Resources */,
 				53AA7646237E35A50094D75A /* OpenQuicklyActionIcon@2x.png in Resources */,
 				A6153D4F21F30A9C002976FC /* iTermJobTreeViewController.xib in Resources */,
 				A66E804B27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */,
@@ -14423,6 +14442,7 @@
 				53FF984C20967806008688D7 /* iTermMetalDeviceProvider.m in Sources */,
 				A653F68624CF4EC70062377E /* FMDatabase.m in Sources */,
 				A6A73D4327C7FBFD002E4CCA /* iTermAutoMasterParser.m in Sources */,
+				A6EC807A28261E3600493544 /* SSHWindowController.swift in Sources */,
 				A6725AD723D63B7A001CA48A /* iTermProfileModelJournal.m in Sources */,
 				A6B41406211A579300D28207 /* iTermStoplightHotbox.m in Sources */,
 				A691693B2813458F00083F99 /* PortholeFactory.swift in Sources */,
@@ -14874,6 +14894,7 @@
 				A66F52AA210458CA00571168 /* iTermNetworkUtilization.m in Sources */,
 				A63011CE20E85B16008114B7 /* SessionTitleView.m in Sources */,
 				53E9DFE8220D53980070C9C0 /* iTermHyperlinkTrigger.m in Sources */,
+				A6EC807E282631B000493544 /* NSTextField+iTerm.m in Sources */,
 				53FF982B2093C823008688D7 /* iTermSignatureVerifier.m in Sources */,
 				535EA4FD20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.m in Sources */,
 				534B6C6823DC165D0031FED2 /* PasteContext.m in Sources */,
@@ -15201,7 +15222,6 @@
 				A685D9FB1E5B6E100091C3A7 /* PseudoTerminal+TouchBar.m in Sources */,
 				A6EF5BC625BCCC0900807157 /* PseudoTerminalRestorer.m in Sources */,
 				A6C762CA1B45C52B00E3C992 /* iTermApplicationDelegate.m in Sources */,
-				A6C762C11B45C52B00E3C992 /* NSTextField+iTerm.m in Sources */,
 				A6FEA2711CF2C8EE00376F28 /* iTermProfileHotKey.m in Sources */,
 				A6C763E61B45C70100E3C992 /* SCEvents.m in Sources */,
 			);

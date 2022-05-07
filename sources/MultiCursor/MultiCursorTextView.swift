@@ -738,7 +738,7 @@ extension MultiCursorTextView {
     }
 
     private func deleteRanges(closure: (Range<Int>) -> (Range<Int>)) {
-        guard let ranges = _multiCursorSelectedRanges else {
+        guard let ranges = sortedDisjointRanges else {
             return
         }
         settingMultiCursorSelectedRanges = true
@@ -880,6 +880,31 @@ extension MultiCursorTextView {
         safelySetSelectedRanges(temp)
     }
 
+    private var sortedDisjointRanges: [NSRange]? {
+        guard let ranges = _multiCursorSelectedRanges else {
+            return nil
+        }
+        var result = [NSRange]()
+        let sortedRanges = ranges.sorted { $0.lowerBound < $1.lowerBound }
+        for range in sortedRanges {
+            var indexes = [Int]()
+            for (i, existing) in result.enumerated() {
+                if Range(existing)!.overlaps(Range(range)!) {
+                    indexes.append(i)
+                }
+            }
+            var newRange = Range(range)!
+            for i in indexes.reversed() {
+                let toRemove = result[i]
+                newRange = min(toRemove.lowerBound, newRange.lowerBound) ..< max(toRemove.upperBound, newRange.upperBound)
+                result.remove(at: i)
+            }
+
+            result.append(NSRange(newRange))
+        }
+        return result
+    }
+
     // It is safe to modify existing ranges in the closure, but don't add or delete them.
     // Since ranges can get coalesced due to adjacency or non-uniqueness, it's hard to use this
     // correctly. Improve it.
@@ -900,17 +925,21 @@ extension MultiCursorTextView {
 
     private func glyphIndexOnLineBelow(glyphIndex: Int) -> Int? {
         let rect = self.rect(for: NSRange(location: glyphIndex, length: 0))!
-        let i = layoutManager!.glyphIndex(for: rect.neighborBelow.origin, in: textContainer!, fractionOfDistanceThroughGlyph: nil)
+        let i = layoutManager!.glyphIndex(for: NSPoint(x: rect.minX, y: rect.maxY), in: textContainer!, fractionOfDistanceThroughGlyph: nil)
         let sanityCheckRect = layoutManager!.boundingRect(forGlyphRange: NSRange(location: i, length: 1), in: textContainer!)
         if sanityCheckRect.minY == rect.minY {
             return nil
+        }
+        if i + 1 == layoutManager!.numberOfGlyphs && sanityCheckRect.maxX <= rect.minX {
+            // Wanted the last position in the file.
+            return i + 1
         }
         return i
     }
 
     private func glyphIndexOnLineAbove(glyphIndex: Int) -> Int? {
         let rect = self.rect(for: NSRange(location: glyphIndex, length: 0))!
-        let i = layoutManager!.glyphIndex(for: rect.neighborAbove.maxPointWithinRect, in: textContainer!, fractionOfDistanceThroughGlyph: nil)
+        let i = layoutManager!.glyphIndex(for: NSPoint(x: rect.minX, y: rect.minY - 1), in: textContainer!, fractionOfDistanceThroughGlyph: nil)
         let sanityCheckRect = layoutManager!.boundingRect(forGlyphRange: NSRange(location: i, length: 1), in: textContainer!)
         if sanityCheckRect.minY == rect.minY {
             return nil
@@ -1912,7 +1941,7 @@ extension MultiCursorTextView {
 extension MultiCursorTextView {
     open override func cancelOperation(_ sender: Any?) {
         if _multiCursorSelectedRanges == nil {
-            super.cancelOperation(sender)
+            // NSTextView does not respond to -cancelOperation:
             return
         }
         safelySetSelectedRanges([_multiCursorSelectedRanges!.last!])

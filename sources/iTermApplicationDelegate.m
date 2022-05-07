@@ -1763,6 +1763,10 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 #pragma mark - Actions
 
+- (IBAction)openSSHWindow:(id)sender {
+    [[[SSHWindowController instance] window] makeKeyAndOrderFront:nil];
+}
+
 - (IBAction)findGlobally:(id)sender {
     if (!_globalSearchWindowController) {
         _globalSearchWindowController = [[iTermGlobalSearchWindowController alloc] init];
