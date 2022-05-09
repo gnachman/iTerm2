@@ -50,6 +50,7 @@
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
+#import "NSMutableData+iTerm.h"
 #import "NSResponder+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
@@ -64,6 +65,7 @@
 #import "ScreenChar.h"
 #import "ScreenCharArray.h"
 #import "Trigger.h"
+#import "VT100DCSParser.h"
 #import "VT100Terminal.h"
 #import "charmaps.h"
 #import <SSKeychain.h>

@@ -2425,4 +2425,30 @@
     }];
 }
 
+- (void)terminalDidHookSSHConductorWithParams:(NSString *)params {
+    [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
+        [delegate screenDidHookSSHConductorWithParams:params];
+    }];
+}
+
+- (void)terminalDidReadSSHConductorLine:(NSString *)string {
+    [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
+        [delegate screenDidReadSSHConductorLine:string];
+    }];
+
+}
+- (void)terminalDidUnhookSSHConductor {
+    [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
+        [delegate screenDidUnhookSSHConductor];
+    }];
+
+}
+
+- (void)terminalDidEndSSHConductorCommandWithStatus:(uint8_t)status {
+    [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
+        [delegate screenDidEndSSHConductorCommandWithStatus:status];
+    }];
+
+}
+
 @end

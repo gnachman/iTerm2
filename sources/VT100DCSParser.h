@@ -11,6 +11,8 @@
 #import "iTermParser.h"
 #import "CVector.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @protocol VT100DCSParserHook<NSObject>
 
 @property(nonatomic, readonly) NSString *hookDescription;
@@ -292,3 +294,6 @@ typedef NS_ENUM(NSInteger, VT100DCSState) {
 @property(nonatomic, readonly) NSString *data;
 
 @end
+
+NS_ASSUME_NONNULL_END
+

@@ -580,6 +580,7 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     BOOL _profileDidChange;
     NSInteger _estimatedThroughput;
     iTermPasteboardReporter *_pasteboardReporter;
+    iTermConductor *_conductor;
 }
 
 @synthesize isDivorced = _divorced;
@@ -957,6 +958,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_config release];
     [_expect release];
     [_pasteboardReporter release];
+    [_conductor release];
 
     [super dealloc];
 }
@@ -1091,10 +1093,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [source.screen enumerateLinesInRange:rangeOfLines
-                                      block:^(int i,
-                                              ScreenCharArray *sca,
-                                              iTermImmutableMetadata metadata,
-                                              BOOL *stopPtr) {
+                                       block:^(int i,
+                                               ScreenCharArray *sca,
+                                               iTermImmutableMetadata metadata,
+                                               BOOL *stopPtr) {
             if (i + 1 == NSMaxRange(rangeOfLines)) {
                 screen_char_t continuation = { 0 };
                 continuation.code = EOL_SOFT;
@@ -4182,7 +4184,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
         _subtitleSwiftyString = [[iTermSwiftyString alloc] initWithString:@""
                                                                     scope:self.variablesScope
                                                                  observer:^NSString *(NSString * _Nonnull newValue,
-                                                        NSError *error) {
+                                                                                      NSError *error) {
             if (error) {
                 return [NSString stringWithFormat:@"🐞 %@", error.localizedDescription];
             }
@@ -5227,9 +5229,9 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         [weakSelf tryAutoProfileSwitchWithHostname:weakSelf.variablesScope.hostname
-                                      username:weakSelf.variablesScope.username
-                                          path:weakSelf.variablesScope.path
-                                           job:processInfo.name];
+                                          username:weakSelf.variablesScope.username
+                                              path:weakSelf.variablesScope.path
+                                               job:processInfo.name];
     });
 }
 
@@ -11471,8 +11473,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [_textview refresh];  // Handle scrollback overflow so we have the most recent scroll position
         id<iTermMark> mark = [mutableState addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
-                                                             oneLine:NO
-                                                             ofClass:[VT100ScreenMark class]];
+                                                                 oneLine:NO
+                                                                 ofClass:[VT100ScreenMark class]];
         self.currentMarkOrNotePosition = mark.doppelganger.entry.interval;
     }];
 }
@@ -12181,28 +12183,28 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     const BOOL clipboardAccessAllowed = [iTermPreferences boolForKey:kPreferenceKeyAllowClipboardAccessFromTerminal];
     VT100Capabilities capabilities =
-        VT100OutputMakeCapabilities(YES,                                // compatibility24Bit
-                                    YES,                                // full24Bit
-                                    clipboardAccessAllowed,             // clipboardWritable
-                                    YES,                                // decslrm
-                                    YES,                                // mouse
-                                    YES,                                // DECSCUSR14
-                                    YES,                                // DECSCUSR56
-                                    YES,                                // DECSCUSR0
-                                    YES,                                // unicode
-                                    _treatAmbiguousWidthAsDoubleWidth,  // ambiguousWide
-                                    _unicodeVersion,                    // unicodeVersion
-                                    YES,                                // titleStacks
-                                    YES,                                // titleSetting
-                                    YES,                                // bracketedPaste
-                                    YES,                                // focusReporting
-                                    YES,                                // strikethrough
-                                    NO,                                 // overline
-                                    YES,                                // sync
-                                    YES,                                // hyperlinks
-                                    YES,                                // notifications
-                                    YES,                                // sixel
-                                    YES);                               // file
+    VT100OutputMakeCapabilities(YES,                                // compatibility24Bit
+                                YES,                                // full24Bit
+                                clipboardAccessAllowed,             // clipboardWritable
+                                YES,                                // decslrm
+                                YES,                                // mouse
+                                YES,                                // DECSCUSR14
+                                YES,                                // DECSCUSR56
+                                YES,                                // DECSCUSR0
+                                YES,                                // unicode
+                                _treatAmbiguousWidthAsDoubleWidth,  // ambiguousWide
+                                _unicodeVersion,                    // unicodeVersion
+                                YES,                                // titleStacks
+                                YES,                                // titleSetting
+                                YES,                                // bracketedPaste
+                                YES,                                // focusReporting
+                                YES,                                // strikethrough
+                                NO,                                 // overline
+                                YES,                                // sync
+                                YES,                                // hyperlinks
+                                YES,                                // notifications
+                                YES,                                // sixel
+                                YES);                               // file
     NSData *data = [_screen.terminalOutput reportCapabilities:capabilities];
     [self screenWriteDataToTask:data];
 }
@@ -12455,7 +12457,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         DLog(@"Set min contrast in config to %f using key %@",
              [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, self.profile, darkMode)
                                         inProfile:self.profile],
-                                        iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, self.profile, darkMode));
+             iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, self.profile, darkMode));
         _config.minimumContrast = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, self.profile, darkMode)
                                                              inProfile:self.profile];
         _config.mutingAmount = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_CURSOR_BOOST, self.profile, darkMode)
@@ -12490,9 +12492,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (NSDictionary *)stringForKeypress {
     id (^stringForKeypress)(unsigned short, NSEventModifierFlags, NSString *, NSString *) =
     ^id(unsigned short keyCode,
-                NSEventModifierFlags flags,
-                NSString *characters,
-                NSString *charactersIgnoringModifiers) {
+        NSEventModifierFlags flags,
+        NSString *characters,
+        NSString *charactersIgnoringModifiers) {
         return [self stringForKeyCode:keyCode
                                 flags:flags
                            characters:characters
@@ -13437,8 +13439,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                 onHost:(id<VT100RemoteHostReading>)lastRemoteHost
                          toReferToMark:(id<VT100ScreenMarkReading>)screenMark {
     iTermCommandHistoryCommandUseMO *commandUse =
-        [[iTermShellHistoryController sharedInstance] commandUseWithMarkGuid:screenMark.guid
-                                                                      onHost:lastRemoteHost];
+    [[iTermShellHistoryController sharedInstance] commandUseWithMarkGuid:screenMark.guid
+                                                                  onHost:lastRemoteHost];
     commandUse.mark = screenMark;
 }
 
@@ -13468,6 +13470,42 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
               toTextDocumentOfType:(NSString *)type
                           filename:(NSString *)filename {
     [_textview renderRange:range type:type filename:filename];
+}
+
+- (void)screenDidHookSSHConductorWithParams:(NSString * _Nonnull)param {
+    const NSUInteger index = [param rangeOfString:@" "].location;
+    if (index == NSNotFound) {
+        return;
+    }
+    NSString *token = [param substringToIndex:index];
+    if (![token isEqualToString:[self guid]]) {
+        DLog(@"Bad token. Got %@, expected %@", token, self.guid);
+        return;
+    }
+    NSString *sshargs = [param substringFromIndex:index + 1];
+    _conductor.delegate = nil;
+    [_conductor autorelease];
+    _conductor = [[iTermConductor alloc] init:sshargs
+                                         vars:self.environment
+                                      payload:nil
+                           payloadDestination:nil
+                             initialDirectory:nil];
+    _conductor.delegate = self;
+    [_conductor start];
+}
+
+- (void)screenDidReadSSHConductorLine:(NSString *)string {
+    [_conductor handleLine:string];
+}
+
+- (void)screenDidUnhookSSHConductor {
+    _conductor.delegate = nil;
+    [_conductor autorelease];
+    _conductor = nil;
+}
+
+- (void)screenDidEndSSHConductorCommandWithStatus:(uint8_t)status {
+    [_conductor handleCommandEndWithStatus:status];
 }
 
 - (VT100Screen *)popupVT100Screen {
@@ -16082,6 +16120,17 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
         }
     }];
     [self queueAnnouncement:announcement identifier:[[NSUUID UUID] UUIDString]];
+}
+
+#pragma mark - iTermConductorDelegate
+
+- (void)conductorWriteWithString:(NSString *)string {
+    [self writeTaskNoBroadcast:string];
+}
+
+- (void)conductorAbortWithReason:(NSString *)reason {
+    [_conductor autorelease];
+    _conductor = nil;
 }
 
 @end

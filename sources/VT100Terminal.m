@@ -2882,6 +2882,25 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             // This is a no-op and it shouldn't happen.
             break;
 
+        case DCS_SSH_HOOK:
+            break;
+
+        case SSH_INIT:
+            [self.delegate terminalDidHookSSHConductorWithParams:token.string];
+            break;
+
+        case SSH_LINE:
+            [self.delegate terminalDidReadSSHConductorLine:token.string];
+            break;
+
+        case SSH_UNHOOK:
+            [self.delegate terminalDidUnhookSSHConductor];
+            break;
+
+        case SSH_END:
+            [self.delegate terminalDidEndSSHConductorCommandWithStatus:token.string.iterm_unsignedIntegerValue];
+            break;
+
         case DCS_BEGIN_SYNCHRONIZED_UPDATE:
             self.synchronizedUpdates = YES;
             break;

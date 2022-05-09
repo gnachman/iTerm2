@@ -3648,6 +3648,8 @@
 		A6EC8074281F368700493544 /* SearchResult.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC393C417B59B08000EE0F2 /* SearchResult.m */; };
 		A6EC8075281F7D5A00493544 /* iTermFindOnPageHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F801A23F484009B1CB6 /* iTermFindOnPageHelper.m */; };
 		A6EC8076281F7F7A00493544 /* PTYScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF755F026DDA6303A80106 /* PTYScrollView.m */; };
+		A6EC80812828E9F600493544 /* Conductor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC80802828E9F600493544 /* Conductor.swift */; };
+		A6EC8083282987FC00493544 /* VT100ConductorParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8082282987FC00493544 /* VT100ConductorParser.swift */; };
 		A6EC936624E513DB00EEADEF /* iTermSlowOperationGateway.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */; };
 		A6EC936724E513DB00EEADEF /* iTermSlowOperationGateway.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */; };
 		A6EC936824E64FAA00EEADEF /* iTermFileDescriptorServerShared.c in Sources */ = {isa = PBXBuildFile; fileRef = A64FCD57238DE785001D8199 /* iTermFileDescriptorServerShared.c */; };
@@ -6759,6 +6761,8 @@
 		A6EC804F281BC67900493544 /* SwiftyMarkdown.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftyMarkdown.framework; path = ThirdParty/SwiftyMarkdown.framework; sourceTree = "<group>"; };
 		A6EC8054281C852200493544 /* NSAttributedString+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSAttributedString+iTerm.swift"; sourceTree = "<group>"; };
 		A6EC8072281F2C2900493544 /* ExternalSearchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalSearchResult.swift; sourceTree = "<group>"; };
+		A6EC80802828E9F600493544 /* Conductor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conductor.swift; sourceTree = "<group>"; };
+		A6EC8082282987FC00493544 /* VT100ConductorParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VT100ConductorParser.swift; sourceTree = "<group>"; };
 		A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlowOperationGateway.h; sourceTree = "<group>"; };
 		A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSlowOperationGateway.m; sourceTree = "<group>"; };
 		A6EC936924E7868D00EEADEF /* iTermToolSnippets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermToolSnippets.h; sourceTree = "<group>"; };
@@ -7160,6 +7164,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A6EC807F2828E9E100493544 /* ssh */,
 				A6EC8071281F2ACF00493544 /* Find on page */,
 				A6822749280786B3005DF0B4 /* Portholes */,
 				A6D10E1F27F7C2AC0026DB56 /* MultiCursor */,
@@ -9164,6 +9169,7 @@
 				A647E3B218C36D0300450FA1 /* VT100Token.m */,
 				A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */,
 				A67BCFE7270E702C00636983 /* VT100SavedColors.swift */,
+				A6EC8082282987FC00493544 /* VT100ConductorParser.swift */,
 			);
 			name = VT100;
 			sourceTree = "<group>";
@@ -10737,6 +10743,14 @@
 				1DC393C417B59B08000EE0F2 /* SearchResult.m */,
 			);
 			name = "Find on page";
+			sourceTree = "<group>";
+		};
+		A6EC807F2828E9E100493544 /* ssh */ = {
+			isa = PBXGroup;
+			children = (
+				A6EC80802828E9F600493544 /* Conductor.swift */,
+			);
+			name = ssh;
 			sourceTree = "<group>";
 		};
 		A6FCAF62250D4CF000B89EB0 /* KeyMappers */ = {
@@ -14297,9 +14311,11 @@
 				A6EC937D24E856F100EEADEF /* iTermAnnouncementView.m in Sources */,
 				A6667E97277CDDD000152678 /* Mutex.swift in Sources */,
 				A608F22220F08369008E8009 /* VT100DCSParser.m in Sources */,
+				A6EC8083282987FC00493544 /* VT100ConductorParser.swift in Sources */,
 				A6C30060247117A9002BC672 /* iTermLocatedString.m in Sources */,
 				A699507821E33827009916BC /* iTermRawKeyMapper.m in Sources */,
 				A621F10326F2B0FE001DD3A6 /* VT100LineInfo.m in Sources */,
+				A6EC80812828E9F600493544 /* Conductor.swift in Sources */,
 				A6CC7F5C274B6C570060C3C2 /* ToolJobs.m in Sources */,
 				535D0915224DD13F00A79581 /* iTermPreferencesSearchEngineResultsWindowController.m in Sources */,
 				A6EC8073281F2C2900493544 /* ExternalSearchResult.swift in Sources */,

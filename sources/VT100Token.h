@@ -260,7 +260,13 @@ typedef enum {
     // there are escape codes for but they're really old-fashioned, so only these two are supported
     // so far.
     ISO2022_SELECT_LATIN_1,
-    ISO2022_SELECT_UTF_8
+    ISO2022_SELECT_UTF_8,
+
+    DCS_SSH_HOOK,
+    SSH_INIT,
+    SSH_LINE,
+    SSH_UNHOOK,  // Leave conductor mode and behave like a regular session
+    SSH_END,   // At the end of a command
 } VT100TerminalTokenType;
 
 // A preinitialized array of screen_char_t. When ASCII data is present, it will have the codes
@@ -314,7 +320,7 @@ typedef struct {
 
 // For ascii strings (type==VT100_ASCIISTRING).
 @property(nonatomic, readonly) AsciiData *asciiData;
-@property(nonatomic, readonly) VT100TerminalTokenType type;
+@property(nonatomic) VT100TerminalTokenType type;
 
 + (instancetype)token;
 + (instancetype)newTokenForControlCharacter:(unsigned char)controlCharacter;

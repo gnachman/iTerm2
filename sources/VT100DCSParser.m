@@ -18,6 +18,8 @@
 // sequences) may occur prior to its termination and should be interpreted literally.
 
 #import "VT100DCSParser.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "DebugLogging.h"
 #import "NSStringITerm.h"
 #import "VT100SixelParser.h"
@@ -563,6 +565,16 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
 
             _hook = [[VT100TmuxParser alloc] init];
             _hookFinished = NO;
+        } else if ([[self parameters] isEqual:@[ @"2000" ]]) {
+            VT100Token *token = self.stateMachine.userInfo[kVT100DCSUserInfoToken];
+            if (token) {
+                token->type = DCS_SSH_HOOK;
+                _uniqueID = [[[NSUUID UUID] UUIDString] copy];
+                token.string = _uniqueID;
+            }
+
+            _hook = [[VT100ConductorParser alloc] init];
+            _hookFinished = NO;
         }
         break;
 
@@ -629,12 +641,12 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     _executed = YES;
     token->type = VT100_NOTSUPPORT;
     switch ([self compactSequence]) {
-        case MAKE_COMPACT_SEQUENCE(0, '+', 'q'): {
+        case MAKE_COMPACT_SEQUENCE(0, '+', 'q'): {  // ESC P + q Param ST
             [self parseTermcapTerminfoToken:token];
             return;
         }
 
-        case MAKE_COMPACT_SEQUENCE(0, 0, 'p'):
+        case MAKE_COMPACT_SEQUENCE(0, 0, 'p'):  // ESC P 1000 p
             if ([[self parameters] isEqual:@[ @"1000" ]]) {
                 // This shouldn't happen.
                 [self unhook];
@@ -654,7 +666,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
             }
             break;
 
-        case MAKE_COMPACT_SEQUENCE('=', 0, 's'):
+        case MAKE_COMPACT_SEQUENCE('=', 0, 's'):  // ESC P = Param s
             if ([_parameterString isEqualToString:@"1"]) {
                 token->type = DCS_BEGIN_SYNCHRONIZED_UPDATE;
             } else if ([_parameterString isEqualToString:@"2"]) {
@@ -666,7 +678,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
             token.string = [_data substringFromIndex:1];
             break;
 
-        case MAKE_COMPACT_SEQUENCE(0, '$', 't'):
+        case MAKE_COMPACT_SEQUENCE(0, '$', 't'):  // ESC P Param $ t
             if ([_parameterString isEqualToString:@"1"]) {
                 token->type = DCS_DECRSPS_DECCIR;
             } else if ([_parameterString isEqualToString:@"2"]) {
@@ -721,6 +733,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     }
 }
 
+// TODO: recovery mode for conductor/ssh
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID {
     // Put the state machine in the passthrough mode.
     char *fakeControlSequence = "\eP1000p";

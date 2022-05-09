@@ -252,6 +252,11 @@
                           @(DCS_DECRSPS_DECCIR):              @"DCS_DECRSPS_DECCIR",
                           @(DCS_DECRSPS_DECTABSR):            @"DCS_DECRSPS_DECTABSR",
                           @(DCS_XTSETTCAP):                   @"DCS_XTSETTCAP",
+                          @(DCS_SSH_HOOK):                    @"DCS_SSH_HOOK",
+                          @(SSH_INIT):                        @"SSH_INIT",
+                          @(SSH_LINE):                        @"SSH_LINE",
+                          @(SSH_UNHOOK):                      @"SSH_UNHOOK",
+                          @(SSH_END):                         @"SSH_END",
     };
     NSString *name = map[@(type)];
     if (name) {
@@ -389,6 +394,10 @@
 
 - (VT100TerminalTokenType)type {
     return self->type;
+}
+
+- (void)setType:(VT100TerminalTokenType)newType {
+    self->type = newType;
 }
 
 @end

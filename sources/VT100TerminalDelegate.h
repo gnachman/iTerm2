@@ -505,5 +505,9 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (dispatch_queue_t)terminalQueue;
 - (iTermTokenExecutorUnpauser *)terminalPause;
 - (void)terminalSendCapabilitiesReport;
+- (void)terminalDidHookSSHConductorWithParams:(NSString *)token;
+- (void)terminalDidReadSSHConductorLine:(NSString *)string;
+- (void)terminalDidUnhookSSHConductor;
+- (void)terminalDidEndSSHConductorCommandWithStatus:(uint8_t)status;
 
 @end
