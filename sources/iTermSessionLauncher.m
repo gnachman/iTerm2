@@ -281,10 +281,12 @@
 - (NSDictionary *)profile:(NSDictionary *)aDict
         modifiedToOpenURL:(NSString *)url
             forObjectType:(iTermObjectType)objectType {
+    const BOOL custom = [aDict[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue];
+    const BOOL ssh = [aDict[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue];
     if (aDict == nil ||
         [[ITAddressBookMgr bookmarkCommandSwiftyString:aDict
                                          forObjectType:objectType] isEqualToString:@"$$"] ||
-        ![[aDict objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
+        (!custom && !ssh)) {
         Profile *prototype = aDict;
         if (!prototype) {
             prototype = [[iTermController sharedInstance] defaultBookmark];
@@ -337,13 +339,7 @@
 
 - (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toSshTo:(NSURL *)url {
     DLog(@"modify profile to ssh to %@", url);
-    NSMutableString *tempString = [NSMutableString stringWithString:[iTermAdvancedSettingsModel sshSchemePath]];
-    NSCharacterSet *alphanumericSet = [NSMutableCharacterSet alphanumericCharacterSet];
-    if ([tempString rangeOfCharacterFromSet:alphanumericSet].location == NSNotFound) {
-        // if the setting is set to an empty string, we will default to "ssh" for safety reasons
-        tempString = [NSMutableString stringWithString:@"ssh"];
-    }
-    [tempString appendString:@" "];
+    NSMutableString *tempString = [NSMutableString string];
     NSString *username = url.user;
     BOOL cd = ([iTermAdvancedSettingsModel sshURLsSupportPath] && url.path.length > 1);
     if (username) {
@@ -382,7 +378,7 @@
     }
     DLog(@"Use command line: %@", tempString);
     return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: tempString,
-                                                       KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeCustomValue }];
+                                                       KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeSSHValue }];
 }
 
 - (Profile *)profileByModifyingProfile:(Profile *)prototype toFtpTo:(NSString *)url {

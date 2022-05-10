@@ -198,7 +198,8 @@ static id gAltOpenAllRepresentedObject;
     NSString *guid = [NSString castFrom:[b objectForKey:KEY_GUID]] ?: [[NSUUID UUID] UUIDString];
     [item setRepresentedObject:[guid copy]];
     [item setTag:tag];
-    if ([[NSString castFrom:b[KEY_CUSTOM_COMMAND]] isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
+    if ([[NSString castFrom:b[KEY_CUSTOM_COMMAND]] isEqualToString:kProfilePreferenceCommandTypeCustomValue] ||
+        [[NSString castFrom:b[KEY_CUSTOM_COMMAND]] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
         item.toolTip = [NSString castFrom:b[KEY_COMMAND_LINE]] ?: @"";
     }
     [menu insertItem:item atIndex:pos];

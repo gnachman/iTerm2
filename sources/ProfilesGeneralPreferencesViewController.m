@@ -39,7 +39,8 @@
 typedef NS_ENUM(NSInteger, iTermGeneralProfilePreferenceCustomCommandTag) {
     iTermGeneralProfilePreferenceCustomCommandTagCustom = 0,
     iTermGeneralProfilePreferenceCustomCommandTagLoginShell = 1,
-    iTermGeneralProfilePreferenceCustomCommandTagCustomShell = 2
+    iTermGeneralProfilePreferenceCustomCommandTagCustomShell = 2,
+    iTermGeneralProfilePreferenceCustomCommandTagSSH = 3
 };
 
 // Tags for _initialDirectoryType
@@ -634,7 +635,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (void)updateEnabledState {
     [super updateEnabledState];
     if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue] ||
-        [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomShellValue]) {
+        [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomShellValue] ||
+        [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
         _customCommand.hidden = NO;
         _customCommand.enabled = YES;
     } else {
@@ -834,6 +836,10 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             value = kProfilePreferenceCommandTypeCustomShellValue;
             _customCommand.delegate = _commandDelegate.passthrough;
             break;
+        case iTermGeneralProfilePreferenceCustomCommandTagSSH:
+            value = kProfilePreferenceCommandTypeSSHValue;
+            _customCommand.delegate = _commandDelegate;
+            break;
     }
     [self setString:value forKey:KEY_CUSTOM_COMMAND];
     [self updateEnabledState];
@@ -850,6 +856,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [self removeWhitespaceFromCustomCommand];
         [[NSUserDefaults standardUserDefaults] setObject:_customCommand.stringValue
                                                   forKey:KEY_COMMAND_LINE];
+    } else if ([value isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
+        [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagSSH];
+        _customCommand.placeholderString = @"Arguments to ssh";
     } else {
         [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagLoginShell];
     }

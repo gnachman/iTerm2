@@ -289,6 +289,7 @@ extern const NSTimeInterval kMinimumAntiIdlePeriod;
 extern NSString *const kProfilePreferenceCommandTypeCustomValue;
 extern NSString *const kProfilePreferenceCommandTypeLoginShellValue;
 extern NSString *const kProfilePreferenceCommandTypeCustomShellValue;
+extern NSString *const kProfilePreferenceCommandTypeSSHValue;
 
 // I chose 1250 because on a 6k display each cell would be less than 5 points wide,
 // which won't be legible. It needs an upper bound because of issue 8592.

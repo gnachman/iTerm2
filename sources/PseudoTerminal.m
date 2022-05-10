@@ -11261,7 +11261,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         return;
     }
     self.window.documentEdited = [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
-        if ([[iTermProfilePreferences stringForKey:KEY_CUSTOM_COMMAND inProfile:session.profile] isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
+        if ([[iTermProfilePreferences stringForKey:KEY_CUSTOM_COMMAND inProfile:session.profile] isEqualToString:kProfilePreferenceCommandTypeCustomValue] ||
+            [[iTermProfilePreferences stringForKey:KEY_CUSTOM_COMMAND inProfile:session.profile] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
             return NO;
         }
         return session.hasNontrivialJob;

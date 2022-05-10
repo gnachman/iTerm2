@@ -737,6 +737,8 @@ const CGFloat kDefaultTagsWidth = 80;
         if ([customCommand isEqualToString:kProfilePreferenceCommandTypeCustomValue] ||
             [customCommand isEqualToString:kProfilePreferenceCommandTypeCustomShellValue]) {
             theString = [bookmark objectForKey:KEY_COMMAND_LINE];
+        } else if ([customCommand isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
+            theString = [NSString stringWithFormat:@"ssh %@", bookmark[KEY_COMMAND_LINE]];
         } else if ([customCommand isEqualToString:kProfilePreferenceCommandTypeLoginShellValue]) {
             theString = @"Login shell";
         }

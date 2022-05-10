@@ -318,7 +318,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)solidUnderlines;
 + (NSString *)splitPaneColor;
 + (BOOL)squareWindowCorners;
-+ (NSString *)sshSchemePath;
 + (BOOL)sshURLsSupportPath;
 + (BOOL)startDebugLoggingAutomatically;
 + (double)statusBarHeight;

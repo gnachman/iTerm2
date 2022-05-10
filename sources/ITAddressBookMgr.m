@@ -50,11 +50,16 @@ NSString *const iTermUnicodeVersionDidChangeNotification = @"iTermUnicodeVersion
 NSString *const kProfilePreferenceCommandTypeCustomValue = @"Yes";
 NSString *const kProfilePreferenceCommandTypeLoginShellValue = @"No";
 NSString *const kProfilePreferenceCommandTypeCustomShellValue = @"Custom Shell";
+NSString *const kProfilePreferenceCommandTypeSSHValue = @"SSH";
 
 const NSTimeInterval kMinimumAntiIdlePeriod = 1.0;
 const NSInteger iTermMaxInitialSessionSize = 1250;
 
 static NSMutableArray<NSNotification *> *sDelayedNotifications;
+
+static NSString *iTermPathToSSH(void) {
+    return [[NSBundle bundleForClass:[ITAddressBookMgr class]] pathForResource:@"it2ssh" ofType:nil];
+}
 
 iTermWindowType iTermWindowDefaultType(void) {
     return iTermThemedWindowType(WINDOW_TYPE_NORMAL);
@@ -651,9 +656,10 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
                       objectType:(iTermObjectType)objectType
                            scope:(iTermVariableScope *)scope
                       completion:(void (^)(NSString *command))completion {
-    BOOL custom = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue];
+    const BOOL ssh = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue];
+    const BOOL custom = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue];
     NSString *swifty = [self bookmarkCommandSwiftyString:profile forObjectType:objectType];
-    if (!custom) {
+    if (!custom && !ssh) {
         DLog(@"Don't have a custom command. COmputed command is %@", swifty);
         completion(swifty);
         return;
@@ -678,10 +684,14 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 
 + (NSString *)bookmarkCommandSwiftyString:(Profile *)bookmark
                             forObjectType:(iTermObjectType)objectType {
-    BOOL custom = [bookmark[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue];
-    if (custom) {
+    const BOOL custom = [bookmark[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue];
+    const BOOL ssh = [bookmark[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue];
+    if (custom || ssh) {
         NSString *command = bookmark[KEY_COMMAND_LINE];
         if ([[command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] ] length] > 0) {
+            if (ssh) {
+                command = [NSString stringWithFormat:@"%@ %@", iTermPathToSSH(), command];
+            }
             return command;
         }
     }

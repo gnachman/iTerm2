@@ -3650,6 +3650,9 @@
 		A6EC8076281F7F7A00493544 /* PTYScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF755F026DDA6303A80106 /* PTYScrollView.m */; };
 		A6EC80812828E9F600493544 /* Conductor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC80802828E9F600493544 /* Conductor.swift */; };
 		A6EC8083282987FC00493544 /* VT100ConductorParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8082282987FC00493544 /* VT100ConductorParser.swift */; };
+		A6EC80852829E28900493544 /* it2ssh in Resources */ = {isa = PBXBuildFile; fileRef = A6EC80842829E28800493544 /* it2ssh */; };
+		A6EC80862829E28900493544 /* it2ssh in Resources */ = {isa = PBXBuildFile; fileRef = A6EC80842829E28800493544 /* it2ssh */; };
+		A6EC80872829E28900493544 /* it2ssh in Resources */ = {isa = PBXBuildFile; fileRef = A6EC80842829E28800493544 /* it2ssh */; };
 		A6EC936624E513DB00EEADEF /* iTermSlowOperationGateway.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */; };
 		A6EC936724E513DB00EEADEF /* iTermSlowOperationGateway.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */; };
 		A6EC936824E64FAA00EEADEF /* iTermFileDescriptorServerShared.c in Sources */ = {isa = PBXBuildFile; fileRef = A64FCD57238DE785001D8199 /* iTermFileDescriptorServerShared.c */; };
@@ -6763,6 +6766,7 @@
 		A6EC8072281F2C2900493544 /* ExternalSearchResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExternalSearchResult.swift; sourceTree = "<group>"; };
 		A6EC80802828E9F600493544 /* Conductor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conductor.swift; sourceTree = "<group>"; };
 		A6EC8082282987FC00493544 /* VT100ConductorParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VT100ConductorParser.swift; sourceTree = "<group>"; };
+		A6EC80842829E28800493544 /* it2ssh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = it2ssh; path = OtherResources/it2ssh; sourceTree = "<group>"; };
 		A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlowOperationGateway.h; sourceTree = "<group>"; };
 		A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSlowOperationGateway.m; sourceTree = "<group>"; };
 		A6EC936924E7868D00EEADEF /* iTermToolSnippets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermToolSnippets.h; sourceTree = "<group>"; };
@@ -7657,6 +7661,7 @@
 		1D03D42719144C3B0049EB8F /* Other Assets */ = {
 			isa = PBXGroup;
 			children = (
+				A6EC80842829E28800493544 /* it2ssh */,
 				A6A3D18F281663EE00C0C9E0 /* extensions.json */,
 				536EF5B723F6684D00B81875 /* it2run */,
 				530098522259AAEF00A69348 /* keyclick.m4a */,
@@ -12695,6 +12700,7 @@
 				A6E7AE72214394CA00DE9F3B /* graphic_atom.png in Resources */,
 				A65429B420C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */,
 				1D6ED99819AEA20D005A7799 /* dead@2x.png in Resources */,
+				A6EC80872829E28900493544 /* it2ssh in Resources */,
 				A65B725C1B1A630100F947A7 /* CheckMark.png in Resources */,
 				A6F1B3B3268FD0F300546767 /* StatusBarIconTriggers.png in Resources */,
 				A65429A820BE7ECE00CE71B1 /* ScriptIcon@2x.png in Resources */,
@@ -13004,6 +13010,7 @@
 				A6FE8D0E2093893700B5C648 /* iTermOptionalComponentDownloadWindowController.xib in Resources */,
 				A6F7A71A213CB143004DE961 /* StatusBarIconUser@2x.png in Resources */,
 				A6F1B3C32693B82C00546767 /* DebugLogging.png in Resources */,
+				A6EC80862829E28900493544 /* it2ssh in Resources */,
 				A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */,
 				A67D0D8D1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
 				A67A50B226CCD3E300281693 /* xterm in Resources */,
@@ -13670,6 +13677,7 @@
 				A6C978F424A0194500971AA7 /* WindowCornerFull@2x.png in Resources */,
 				A6E7AEA3214394F600DE9F3B /* graphic_git.png in Resources */,
 				A67F118018D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
+				A6EC80852829E28900493544 /* it2ssh in Resources */,
 				A67F61DB214395D50093940A /* graphic_yo.png in Resources */,
 				A65429B220C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */,
 				A6F2B6DB2558BECC008D6BF1 /* TmuxFlowControl.png in Resources */,
