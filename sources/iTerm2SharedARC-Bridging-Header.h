@@ -55,6 +55,7 @@
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTableView+iTerm.h"
+#import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
 #import "PSMTabBarControl.h"
 #import "PTYScrollView.h"

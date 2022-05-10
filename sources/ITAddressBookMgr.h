@@ -72,6 +72,7 @@
 #define KEY_BADGE_FONT                  @"Badge Font"
 #define KEY_PREVENT_APS                 @"Prevent Automatic Profile Switching"  // Not in regular prefs, only for divorced prefs.
 #define KEY_SUBTITLE                    @"Subtitle"
+#define KEY_SSH_CONFIG                  @"SSH"
 
 // Advanced working directory settings
 #define KEY_AWDS_WIN_OPTION             @"AWDS Window Option"

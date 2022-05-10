@@ -3653,6 +3653,10 @@
 		A6EC80852829E28900493544 /* it2ssh in Resources */ = {isa = PBXBuildFile; fileRef = A6EC80842829E28800493544 /* it2ssh */; };
 		A6EC80862829E28900493544 /* it2ssh in Resources */ = {isa = PBXBuildFile; fileRef = A6EC80842829E28800493544 /* it2ssh */; };
 		A6EC80872829E28900493544 /* it2ssh in Resources */ = {isa = PBXBuildFile; fileRef = A6EC80842829E28800493544 /* it2ssh */; };
+		A6EC8089282A28CD00493544 /* SSHConfigurationWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EC8088282A28C600493544 /* SSHConfigurationWindow.xib */; };
+		A6EC808A282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EC8088282A28C600493544 /* SSHConfigurationWindow.xib */; };
+		A6EC808B282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EC8088282A28C600493544 /* SSHConfigurationWindow.xib */; };
+		A6EC808D282A28F500493544 /* SSHConfigurationWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC808C282A28F500493544 /* SSHConfigurationWindowController.swift */; };
 		A6EC936624E513DB00EEADEF /* iTermSlowOperationGateway.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */; };
 		A6EC936724E513DB00EEADEF /* iTermSlowOperationGateway.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */; };
 		A6EC936824E64FAA00EEADEF /* iTermFileDescriptorServerShared.c in Sources */ = {isa = PBXBuildFile; fileRef = A64FCD57238DE785001D8199 /* iTermFileDescriptorServerShared.c */; };
@@ -6767,6 +6771,8 @@
 		A6EC80802828E9F600493544 /* Conductor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conductor.swift; sourceTree = "<group>"; };
 		A6EC8082282987FC00493544 /* VT100ConductorParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VT100ConductorParser.swift; sourceTree = "<group>"; };
 		A6EC80842829E28800493544 /* it2ssh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = it2ssh; path = OtherResources/it2ssh; sourceTree = "<group>"; };
+		A6EC8088282A28C600493544 /* SSHConfigurationWindow.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SSHConfigurationWindow.xib; sourceTree = "<group>"; };
+		A6EC808C282A28F500493544 /* SSHConfigurationWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHConfigurationWindowController.swift; sourceTree = "<group>"; };
 		A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlowOperationGateway.h; sourceTree = "<group>"; };
 		A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSlowOperationGateway.m; sourceTree = "<group>"; };
 		A6EC936924E7868D00EEADEF /* iTermToolSnippets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermToolSnippets.h; sourceTree = "<group>"; };
@@ -7991,6 +7997,8 @@
 				A6024B80254CE2000036D6CF /* iTermAddTriggerViewController.xib */,
 				A6A73D6427CCA408002E4CCA /* DonateViewController.swift */,
 				A682273D280355A8005DF0B4 /* KeyActionSequenceTableViewController.swift */,
+				A6EC8088282A28C600493544 /* SSHConfigurationWindow.xib */,
+				A6EC808C282A28F500493544 /* SSHConfigurationWindowController.swift */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -12653,6 +12661,7 @@
 				A629F58723AF2DF200C2F16B /* utilities.tgz in Resources */,
 				A67D0D4C1A2EE12A003A8B35 /* configPanel.strings in Resources */,
 				A63011B520E7EE6B008114B7 /* iTermStatusBarKnobNumericViewController.xib in Resources */,
+				A6EC808B282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */,
 				537A1FBE22169B2200FBEE5A /* MinimalPasteView.xib in Resources */,
 				1DA76A261B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
 				A60E046326DEEE5E00DD162B /* MiniFilterViewController.xib in Resources */,
@@ -13255,6 +13264,7 @@
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
 				A67D0D8A1A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */,
+				A6EC808A282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */,
 				A67D0D6F1A2EE12A003A8B35 /* MainMenu.strings in Resources */,
 				A67F6145214395870093940A /* graphic_java.png in Resources */,
 				A686A1181C86A6DD0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
@@ -13337,6 +13347,7 @@
 				A6E7AE70214394CA00DE9F3B /* graphic_atom.png in Resources */,
 				A66F52C72106F6F100571168 /* gitdirty.png in Resources */,
 				A67F61BB214395C60093940A /* graphic_shell@2x.png in Resources */,
+				A6EC8089282A28CD00493544 /* SSHConfigurationWindow.xib in Resources */,
 				A67D0D711A2EE12A003A8B35 /* MainMenu.xib in Resources */,
 				A6E7AE64214394CA00DE9F3B /* graphic_clojure@2x.png in Resources */,
 				A63011B320E7EE69008114B7 /* iTermStatusBarKnobNumericViewController.xib in Resources */,
@@ -14886,6 +14897,7 @@
 				A61A85AE24F23CBD00B03880 /* iTermGlobalSearchResult.m in Sources */,
 				A68AC8F41F05C0860023A216 /* NSBundle+iTerm.m in Sources */,
 				A67960CD1F81FCB6008A42BC /* iTermMetalRenderer.m in Sources */,
+				A6EC808D282A28F500493544 /* SSHConfigurationWindowController.swift in Sources */,
 				A691693D281345AF00083F99 /* SaneButton.swift in Sources */,
 				5370678621C9D2780088D0F3 /* SIGError.m in Sources */,
 				A618FFC62245F6A300B8FD88 /* iTermStatusBarActionComponent.m in Sources */,

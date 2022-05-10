@@ -10,6 +10,7 @@
 
 #import "AdvancedWorkingDirectoryWindowController.h"
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
 #import "iTermAPIHelper.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -86,6 +87,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSButton *_editBadgeButton;
     IBOutlet NSTextField *_subtitleLabel;
     IBOutlet NSTextField *_subtitleText;
+    IBOutlet NSButton *_configureSSHButton;
 
     iTermFunctionCallTextFieldDelegate *_commandDelegate;
     iTermFunctionCallTextFieldDelegate *_sendTextAtStartDelegate;
@@ -127,6 +129,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     iTermRateLimitedUpdate *_rateLimit;
     IBOutlet NSTabView *_tabView;
     NSRect _desiredFrame;
+    iTermSSHConfigurationWindowController *_sshConfigurationWindowController;
 }
 
 - (void)dealloc {
@@ -643,7 +646,36 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         _customCommand.hidden = YES;
         _customCommand.enabled = NO;
     }
+    if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
+        NSRect frame = _customCommand.frame;
+        frame.size.width = NSMinX(_configureSSHButton.frame) - NSMinX(frame);
+        _customCommand.frame = frame;
+        _configureSSHButton.hidden = NO;
+    } else {
+        NSRect frame = _customCommand.frame;
+        frame.size.width = NSMaxX(_configureSSHButton.frame) - NSMinX(frame) - 7;
+        _customCommand.frame = frame;
+        _configureSSHButton.hidden = YES;
+    }
     _customDirectory.enabled = ([[self stringForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]);
+}
+
+#pragma mark - SSH
+
+- (IBAction)configureSSH:(id)sender {
+    _sshConfigurationWindowController = [[iTermSSHConfigurationWindowController alloc] initWithWindowNibName:@"SSHConfigurationWindow"];
+    __weak typeof(self) weakSelf = self;
+    [_sshConfigurationWindowController load:[self objectForKey:KEY_SSH_CONFIG]];
+    [self.view.window beginSheet:_sshConfigurationWindowController.window completionHandler:^(NSModalResponse returnCode) {
+        __strong __typeof(weakSelf) strongSelf = self;
+        if (!strongSelf) {
+            return;
+        }
+        if (returnCode == NSModalResponseOK) {
+            [strongSelf setObject:strongSelf->_sshConfigurationWindowController.dictionaryValue
+                           forKey:KEY_SSH_CONFIG];
+        }
+    }];
 }
 
 #pragma mark - Tall Tab Bar

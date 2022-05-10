@@ -289,7 +289,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
                                  ];
         NSArray *dict = @[ KEY_STATUS_BAR_LAYOUT, KEY_SESSION_HOTKEY, KEY_SEMANTIC_HISTORY,
-                           KEY_KEYBOARD_MAP, KEY_TOUCHBAR_MAP];
+                           KEY_KEYBOARD_MAP, KEY_TOUCHBAR_MAP, KEY_SSH_CONFIG];
 
         for (NSString *key in string) {
             result[key] = ^BOOL(id value) { return [value isKindOfClass:[NSString class]]; };
@@ -362,6 +362,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_WORKING_DIRECTORY: @"",
                   KEY_BADGE_FORMAT: @"",
                   KEY_SUBTITLE: @"",
+                  KEY_SSH_CONFIG: @{},
 
                   // Note: these defaults aren't used, except for link color and cursor guide color, because they are always specified.
                   KEY_FOREGROUND_COLOR:    [[NSColor colorWithCalibratedRed:0.733 green:0.733 blue:0.733 alpha:1] dictionaryValue],

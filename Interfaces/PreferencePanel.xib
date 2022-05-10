@@ -1260,6 +1260,7 @@ DQ
                 <outlet property="_basicsLabel" destination="3247" id="Uel-UZ-Vvt"/>
                 <outlet property="_commandLabel" destination="2132" id="mbo-85-faJ"/>
                 <outlet property="_commandType" destination="nxn-F2-gY6" id="cdo-IE-ePs"/>
+                <outlet property="_configureSSHButton" destination="VCV-s2-py0" id="nau-hI-VQP"/>
                 <outlet property="_copyProfileToSession" destination="15768" id="V0Z-tz-gmM"/>
                 <outlet property="_copySettingsToProfile" destination="15140" id="MAh-yd-Y1Z"/>
                 <outlet property="_customCommand" destination="2131" id="uHM-Rp-s80"/>
@@ -1812,7 +1813,7 @@ DQ
                     </connections>
                 </button>
                 <textField toolTip="The badge is text that appears in the top right of a session." verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="sa9-oD-SMc" userLabel="Name text field">
-                    <rect key="frame" x="146" y="397" width="339" height="21"/>
+                    <rect key="frame" x="146" y="397" width="330" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Enter badge text (interpolated string)" drawsBackground="YES" id="M2Y-uM-p2q">
                         <font key="font" metaFont="system"/>
@@ -1901,11 +1902,11 @@ DQ
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kmy-bS-CYF" userLabel="Edit advanced configuration push button">
-                    <rect key="frame" x="487" y="392" width="58" height="28"/>
+                    <rect key="frame" x="477" y="392" width="68" height="28"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <buttonCell key="cell" type="push" title="Edit…" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="9iq-xC-84R">
+                    <buttonCell key="cell" type="push" title="Edit…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="9iq-xC-84R">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="menu" size="11"/>
+                        <font key="font" metaFont="system"/>
                     </buttonCell>
                     <connections>
                         <action selector="configureBadge:" target="dVg-Ac-SiZ" id="7dS-4S-7fF"/>
@@ -2031,6 +2032,17 @@ DQ
                         </button>
                     </subviews>
                 </customView>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VCV-s2-py0">
+                    <rect key="frame" x="440" y="224" width="104" height="32"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <buttonCell key="cell" type="push" title="Configure…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="tEq-8C-H4O">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="configureSSH:" target="dVg-Ac-SiZ" id="lD6-nl-UCA"/>
+                    </connections>
+                </button>
             </subviews>
             <accessibility identifier="prefsProfilesGeneral"/>
             <point key="canvasLocation" x="977.5" y="-802.5"/>
