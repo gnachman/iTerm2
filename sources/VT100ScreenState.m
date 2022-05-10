@@ -42,6 +42,7 @@ NSString *const kScreenStatePrimaryGridStateKey = @"Primary Grid State";
 NSString *const kScreenStateAlternateGridStateKey = @"Alternate Grid State";
 NSString *const kScreenStateCursorCoord = @"Cursor Coord";
 NSString *const kScreenStateProtectedMode = @"Protected Mode";
+NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
 
 @implementation VT100ScreenState
 
@@ -119,6 +120,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
 @synthesize terminalBackgroundColorCode = _terminalBackgroundColorCode;
 @synthesize terminalState = _terminalState;
 @synthesize config = _config;
+@synthesize exfiltratedEnvironment = _exfiltratedEnvironment;
 
 - (instancetype)initForMutationOnQueue:(dispatch_queue_t)queue {
     self = [super init];
@@ -206,6 +208,7 @@ NSString *const kScreenStateProtectedMode = @"Protected Mode";
     _tabStops = [source.tabStops copy];
     _charsetUsesLineDrawingMode = [source.charsetUsesLineDrawingMode copy];
     _config = source.config;
+    _exfiltratedEnvironment = [source.exfiltratedEnvironment copy];
 }
 
 - (void)copySlowStuffFrom:(VT100ScreenMutableState *)source {

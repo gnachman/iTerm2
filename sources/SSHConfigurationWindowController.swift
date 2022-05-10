@@ -7,6 +7,62 @@
 
 import Foundation
 
+fileprivate struct Config {
+    var sshIntegration: Bool = true
+    var environmentVariablesToCopy: [String] = []
+    var filesToCopy: [(String, String)] = []
+
+    private enum Keys: String {
+        case sshIntegration
+        case environmentVariablesToCopy
+        case filesToCopy
+    }
+
+    var dictionaryValue: [String: AnyObject] {
+        let result: [String: AnyObject] =
+        [Keys.sshIntegration.rawValue: NSNumber(value: sshIntegration),
+         Keys.environmentVariablesToCopy.rawValue: environmentVariablesToCopy,
+         Keys.filesToCopy.rawValue: filesToCopy.map { [$0.0, $0.1] }].mapValues { $0 as AnyObject }
+        return result
+    }
+
+    init(dictionary: [String: AnyObject]) {
+        sshIntegration = dictionary[Keys.sshIntegration.rawValue] as? Bool ?? true
+        environmentVariablesToCopy = dictionary[Keys.environmentVariablesToCopy.rawValue] as? [String] ?? []
+        filesToCopy = (dictionary[Keys.filesToCopy.rawValue] as? [[String]] ?? []).map { ($0[0], $0[1]) }
+    }
+
+    init(sshIntegration: Bool,
+         environmentVariablesToCopy: [String],
+         filesToCopy: [(String, String)]) {
+        self.sshIntegration = sshIntegration
+        self.environmentVariablesToCopy = environmentVariablesToCopy
+        self.filesToCopy = filesToCopy
+    }
+
+    init() {
+        self.init(dictionary: [:])
+    }
+}
+
+
+@objc(iTermSSHConfiguration)
+class SSHConfiguration: NSObject {
+    private let config: Config
+    @objc var sshIntegration: Bool { config.sshIntegration }
+    @objc var environmentVariablesToCopy: [String] { config.environmentVariablesToCopy }
+    @objc var filesToCopy: [iTermTuple<NSString, NSString>] {
+        config.filesToCopy.map { tuple -> iTermTuple<NSString, NSString> in
+            return iTermTuple(object: tuple.0 as NSString,
+                              andObject: tuple.1 as NSString)
+        }
+    }
+
+    @objc init(dictionary: NSDictionary?) {
+        config = Config(dictionary: (dictionary as? [String: AnyObject]) ?? [:])
+    }
+}
+
 @objc(iTermSSHConfigurationWindowController)
 class SSHConfigurationWindowController: NSWindowController {
     @IBOutlet var sshIntegrationButton: NSButton!
@@ -16,44 +72,6 @@ class SSHConfigurationWindowController: NSWindowController {
     @IBOutlet var destinationColumn: NSTableColumn!
     @IBOutlet var segmentedControl: NSSegmentedControl!
     var ok = false
-
-    struct Config {
-        var sshIntegration: Bool = true
-        var environmentVariablesToCopy: [String] = []
-        var filesToCopy: [(String, String)] = []
-
-        private enum Keys: String {
-            case sshIntegration
-            case environmentVariablesToCopy
-            case filesToCopy
-        }
-
-        var dictionaryValue: [String: AnyObject] {
-            let result: [String: AnyObject] =
-            [Keys.sshIntegration.rawValue: NSNumber(value: sshIntegration),
-             Keys.environmentVariablesToCopy.rawValue: environmentVariablesToCopy,
-             Keys.filesToCopy.rawValue: filesToCopy.map { [$0.0, $0.1] }].mapValues { $0 as AnyObject }
-            return result
-        }
-
-        init(dictionary: [String: AnyObject]) {
-            sshIntegration = dictionary[Keys.sshIntegration.rawValue] as? Bool ?? true
-            environmentVariablesToCopy = dictionary[Keys.environmentVariablesToCopy.rawValue] as? [String] ?? []
-            filesToCopy = (dictionary[Keys.filesToCopy.rawValue] as? [[String]] ?? []).map { ($0[0], $0[1]) }
-        }
-
-        init(sshIntegration: Bool,
-             environmentVariablesToCopy: [String],
-             filesToCopy: [(String, String)]) {
-            self.sshIntegration = sshIntegration
-            self.environmentVariablesToCopy = environmentVariablesToCopy
-            self.filesToCopy = filesToCopy
-        }
-
-        init() {
-            self.init(dictionary: [:])
-        }
-    }
 
     private var config = Config()
     @objc var dictionaryValue: [String: AnyObject] {

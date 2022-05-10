@@ -13485,8 +13485,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSString *sshargs = [param substringFromIndex:index + 1];
     _conductor.delegate = nil;
     [_conductor autorelease];
+    NSDictionary *dict = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_SSH_CONFIG inProfile:self.profile]];
+    iTermSSHConfiguration *config = [[[iTermSSHConfiguration alloc] initWithDictionary:dict] autorelease];
     _conductor = [[iTermConductor alloc] init:sshargs
-                                         vars:self.environment
+                                         vars:[self.screen exfiltratedEnvironmentVariables:config.environmentVariablesToCopy]
                                       payload:nil
                            payloadDestination:nil
                              initialDirectory:nil];

@@ -665,7 +665,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (IBAction)configureSSH:(id)sender {
     _sshConfigurationWindowController = [[iTermSSHConfigurationWindowController alloc] initWithWindowNibName:@"SSHConfigurationWindow"];
     __weak typeof(self) weakSelf = self;
-    [_sshConfigurationWindowController load:[self objectForKey:KEY_SSH_CONFIG]];
+    [_sshConfigurationWindowController load:[NSDictionary castFrom:[self objectForKey:KEY_SSH_CONFIG]]];
     [self.view.window beginSheet:_sshConfigurationWindowController.window completionHandler:^(NSModalResponse returnCode) {
         __strong __typeof(weakSelf) strongSelf = self;
         if (!strongSelf) {

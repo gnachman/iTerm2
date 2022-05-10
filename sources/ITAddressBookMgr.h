@@ -29,6 +29,7 @@
 
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
+#import "iTermOpenDirectory.h"
 #import "ProfileModel.h"
 #import "FutureMethods.h"
 

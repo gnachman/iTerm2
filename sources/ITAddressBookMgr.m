@@ -690,7 +690,13 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         NSString *command = bookmark[KEY_COMMAND_LINE];
         if ([[command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] ] length] > 0) {
             if (ssh) {
-                command = [NSString stringWithFormat:@"%@ %@", iTermPathToSSH(), command];
+                NSString *wrappedCommand = [NSString stringWithFormat:@"%@ %@",
+                                            iTermPathToSSH(),
+                                            [command stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
+                command = [NSString stringWithFormat:@"/usr/bin/login -fpq %@ %@ -c %@",
+                           [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
+                           [iTermOpenDirectory userShell],
+                           [wrappedCommand stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
             }
             return command;
         }

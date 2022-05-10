@@ -23,6 +23,7 @@ if [ $(branch) != main ]; then
 fi
 popd
 
+(cd submodules/iTerm2-shell-integration/ && make)
 cp $SUBMODULE/source/shell_integration/bash Resources/shell_integration/iterm2_shell_integration.bash
 cp $SUBMODULE/source/shell_integration/fish Resources/shell_integration/iterm2_shell_integration.fish
 cp $SUBMODULE/source/shell_integration/tcsh Resources/shell_integration/iterm2_shell_integration.tcsh

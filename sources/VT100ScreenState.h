@@ -45,6 +45,7 @@ extern NSString *const kScreenStatePrimaryGridStateKey;
 extern NSString *const kScreenStateAlternateGridStateKey;
 extern NSString *const kScreenStateCursorCoord;
 extern NSString *const kScreenStateProtectedMode;
+extern NSString *const kScreenStateExfiltratedEnvironmentKey;
 
 @class IntervalTree;
 @class iTermOrderEnforcer;
@@ -184,6 +185,7 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, readonly) screen_char_t terminalBackgroundColorCode;
 @property (nonatomic, readonly) NSDictionary *terminalState;
 @property (nonatomic, copy, readonly) id<VT100ScreenConfiguration> config;
+@property (nullable, nonatomic, strong, readonly) NSArray<iTermTuple<NSString *, NSString *> *> *exfiltratedEnvironment;
 
 @end
 
@@ -239,6 +241,8 @@ extern NSString *const kScreenStateProtectedMode;
 @property (nonatomic, readwrite) long long lastPromptLine;
 @property (nonatomic, readwrite) BOOL shouldExpectPromptMarks;
 @property (nonatomic, copy, readwrite) id<VT100ScreenConfiguration> config;
+@property (nullable, nonatomic, strong, readwrite) NSArray<iTermTuple<NSString *, NSString *> *> *exfiltratedEnvironment;
+
 @end
 
 @interface VT100ScreenState: NSObject<

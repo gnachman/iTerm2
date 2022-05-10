@@ -4005,6 +4005,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         if ([_delegate terminalIsTrusted] && [_delegate terminalShouldSendReport]) {
             [_delegate terminalSendCapabilitiesReport];
         }
+    } else if ([key isEqualToString:@"Env"]) {
+        if ([_delegate terminalIsTrusted]) {
+            [_delegate terminalUpdateEnv:value];
+        }
     }
 }
 

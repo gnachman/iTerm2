@@ -31,3 +31,6 @@
 [submodule "submodules/SwiftyMarkdown"]
 	path = submodules/SwiftyMarkdown
 	url = https://github.com/gnachman/SwiftyMarkdown
+[submodule "submodules/SWCompression"]
+	path = submodules/SWCompression
+	url = https://github.com/tsolomko/SWCompression

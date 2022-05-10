@@ -1353,6 +1353,16 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }];
 }
 
+- (NSDictionary<NSString *, NSString *> *)exfiltratedEnvironmentVariables:(NSArray<NSString *> *)names {
+    NSMutableDictionary<NSString *, NSString *> *result = [NSMutableDictionary dictionary];
+    [_state.exfiltratedEnvironment enumerateObjectsUsingBlock:^(iTermTuple<NSString *,NSString *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([names containsObject:tuple.firstObject]) {
+            result[tuple.firstObject] = tuple.secondObject;
+        }
+    }];
+    return result;
+}
+
 #pragma mark - Accessors
 
 - (BOOL)terminalSoftAlternateScreenMode {

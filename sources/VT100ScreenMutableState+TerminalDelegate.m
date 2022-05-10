@@ -2451,4 +2451,31 @@
 
 }
 
+- (void)terminalUpdateEnv:(NSString *)value {
+    DLog(@"begin %@", value);
+    const NSInteger colon = [value rangeOfString:@":"].location;
+    if (colon == NSNotFound) {
+        DLog(@"no colon");
+        return;
+    }
+    NSString *paramString = [value substringToIndex:colon];
+    NSString *payload = [value substringFromIndex:colon + 1];
+    NSArray<NSString *> *parts = [paramString componentsSeparatedByString:@";"];
+    NSArray<iTermTuple<NSString *, NSString *> *> *kvps = [parts mapWithBlock:^id _Nullable(NSString * _Nonnull string) {
+        return [string keyValuePair] ?: [iTermTuple tupleWithObject:string andObject:@""];
+    }];
+    if (![kvps containsObject:[iTermTuple tupleWithObject:@"report" andObject:@"all"]]) {
+        DLog(@"missing report=all");
+        return;
+    }
+    NSString *decodedPayload = [payload stringByBase64DecodingStringWithEncoding:self.terminal.encoding];
+    if (!decodedPayload) {
+        DLog(@"failed to decode payload");
+    }
+    self.exfiltratedEnvironment = [[decodedPayload componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]] mapWithBlock:^id _Nullable(NSString * _Nonnull string) {
+        return [string keyValuePair] ?: [iTermTuple tupleWithObject:string andObject:@""];
+    }];
+}
+
+
 @end
