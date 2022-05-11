@@ -13489,9 +13489,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     iTermSSHConfiguration *config = [[[iTermSSHConfiguration alloc] initWithDictionary:dict] autorelease];
     _conductor = [[iTermConductor alloc] init:sshargs
                                          vars:[self.screen exfiltratedEnvironmentVariables:config.environmentVariablesToCopy]
-                                      payload:nil
-                           payloadDestination:nil
                              initialDirectory:nil];
+    for (iTermTuple<NSString *, NSString *> *tuple in config.filesToCopy) {
+        [_conductor addPath:tuple.firstObject destination:tuple.secondObject];
+    }
     _conductor.delegate = self;
     [_conductor start];
 }
@@ -16131,6 +16132,13 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)conductorAbortWithReason:(NSString *)reason {
+    XLog(@"conductor aborted: %@", reason);
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState appendStringAtCursor:@"An error occurred while setting up the SSH environment:"];
+        [mutableState appendCarriageReturnLineFeed];
+        [mutableState appendStringAtCursor:reason];
+        [mutableState appendCarriageReturnLineFeed];
+    }];
     [_conductor autorelease];
     _conductor = nil;
 }
