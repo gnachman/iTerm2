@@ -2425,9 +2425,45 @@
     }];
 }
 
+- (NSArray<NSString *> *)parseHookSSHConductorParameter:(NSString *)param {
+    DLog(@"%@", param);
+    NSArray<NSString *> *parts = [param componentsSeparatedByString:@" "];
+    if (parts.count < 4) {
+        DLog(@"Bad param %@", param);
+        return nil;
+    }
+    NSString *token = parts[0];
+    NSString *uniqueID = parts[1];
+    NSInteger i = 2;
+    while (i < parts.count && ![parts[i] isEqualToString:@"-"]) {
+        i += 1;
+    }
+    if (i == parts.count) {
+        DLog(@"Didn't find separator");
+        return nil;
+    }
+    i += 1;
+    if (i >= parts.count) {
+        DLog(@"No sshargs");
+        return nil;
+    }
+    NSString *sshargs = [[parts subarrayFromIndex:i] componentsJoinedByString:@" "];
+
+    return @[token, uniqueID, sshargs];
+}
+
 - (void)terminalDidHookSSHConductorWithParams:(NSString *)params {
+    NSArray<NSString *> *values = [self parseHookSSHConductorParameter:params];
+    DLog(@"%@", values);
+    if (!values) {
+        return;
+    }
+    NSString *token = values[0];
+    NSString *uniqueID = values[1];
+    NSString *sshargs = values[2];
+    [self appendBannerMessage:[NSString stringWithFormat:@"ssh %@", sshargs]];
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
-        [delegate screenDidHookSSHConductorWithParams:params];
+        [delegate screenDidHookSSHConductorWithToken:token uniqueID:uniqueID sshargs:sshargs];
     }];
 }
 

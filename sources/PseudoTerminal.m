@@ -10664,6 +10664,9 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         if (!strongSelf) {
             return;
         }
+        if (profile.sshIdentity != nil && ![currentSession.sshIdentity isEqual:profile.sshIdentity]) {
+            pwd = nil;
+        }
         PTYSession *newSession = [strongSelf createTabWithProfile:profile
                                                       withCommand:command
                                                       environment:environment

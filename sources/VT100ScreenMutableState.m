@@ -3818,6 +3818,26 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)appendSessionRestoredBanner {
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    dateFormatter.dateStyle = NSDateFormatterMediumStyle;
+    dateFormatter.timeStyle = NSDateFormatterShortStyle;
+    NSString *message = [NSString stringWithFormat:@"Session Contents Restored on %@", [dateFormatter stringFromDate:[NSDate date]]];
+
+    // Record the cursor position and append the message.
+    const int yBefore = self.currentGrid.cursor.y;
+
+    [self appendBannerMessage:message];
+
+    const int delta = self.currentGrid.cursor.y - yBefore;
+    // Update the preferred cursor position if needed.
+    if (self.currentGrid.preferredCursorPosition.y >= 0 && self.currentGrid.preferredCursorPosition.y + 1 < self.currentGrid.size.height) {
+        VT100GridCoord coord = self.currentGrid.preferredCursorPosition;
+        coord.y = MAX(0, MIN(self.currentGrid.size.height - 1, coord.y + delta));
+        self.currentGrid.preferredCursorPosition = coord;
+    }
+}
+
+- (void)appendBannerMessage:(NSString *)message {
     // Save graphic rendition. Set to system message color.
     const VT100GraphicRendition saved = self.terminal.graphicRendition;
 
@@ -3828,16 +3848,11 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     temp.bgColorCode = ALTSEM_SYSTEM_MESSAGE;
     self.terminal.graphicRendition = temp;
 
-    // Record the cursor position and append the message.
-    const int yBefore = self.currentGrid.cursor.y;
     if (self.currentGrid.cursor.x > 0) {
         [self appendCarriageReturnLineFeed];
     }
+
     [self eraseLineBeforeCursor:YES afterCursor:YES decProtect:NO];
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateStyle = NSDateFormatterMediumStyle;
-    dateFormatter.timeStyle = NSDateFormatterShortStyle;
-    NSString *message = [NSString stringWithFormat:@"Session Contents Restored on %@", [dateFormatter stringFromDate:[NSDate date]]];
     [self appendStringAtCursor:message];
     self.currentGrid.cursorX = 0;
     self.currentGrid.preferredCursorPosition = self.currentGrid.cursor;
@@ -3845,14 +3860,6 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // Restore the graphic rendition, add a newline, and calculate how far down the cursor moved.
     self.terminal.graphicRendition = saved;
     [self appendCarriageReturnLineFeed];
-    const int delta = self.currentGrid.cursor.y - yBefore;
-
-    // Update the preferred cursor position if needed.
-    if (self.currentGrid.preferredCursorPosition.y >= 0 && self.currentGrid.preferredCursorPosition.y + 1 < self.currentGrid.size.height) {
-        VT100GridCoord coord = self.currentGrid.preferredCursorPosition;
-        coord.y = MAX(0, MIN(self.currentGrid.size.height - 1, coord.y + delta));
-        self.currentGrid.preferredCursorPosition = coord;
-    }
 }
 
 // Link references to marks in CapturedOutput (for the lines where output was captured) to the deserialized mark.

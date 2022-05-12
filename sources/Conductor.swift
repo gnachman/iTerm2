@@ -14,17 +14,34 @@ protocol ConductorDelegate: Any {
     func conductorAbort(reason: String)
 }
 
+struct ParsedSSHArguments {
+    let hostname: String
+    let username: String?
+    let port: Int?
+
+    var identity: SSHIdentity {
+        return SSHIdentity(hostname, username: username, port: port ?? 22)
+    }
+    init(_ string: String) {
+        let parts = string.components(separatedBy: " ")
+        // TODO: Parse ssh args and use correct username and port
+        hostname = parts.first ?? ""
+        username = nil
+        port = nil
+    }
+}
+
 @objc(iTermConductor)
 class Conductor: NSObject {
     private let sshargs: String
     private let vars: [String: String]
     private var payloads: [(path: String, destination: String)] = []
     private let initialDirectory: String?
+    private let parsedSSHArguments: ParsedSSHArguments
     @objc private(set) var queueWrites = true
 
-    @objc var hostname: String {
-        // TODO: Parse ssh args
-        return sshargs.components(separatedBy: " ").first ?? ""
+    @objc var sshIdentity: SSHIdentity {
+        return parsedSSHArguments.identity
     }
 
     enum Command {
@@ -118,6 +135,7 @@ class Conductor: NSObject {
                initialDirectory: String?) {
         DLog("Conductor starting")
         self.sshargs = sshargs
+        parsedSSHArguments = ParsedSSHArguments(sshargs)
         self.vars = vars
         self.initialDirectory = initialDirectory
     }
@@ -588,5 +606,68 @@ class ConductorPayloadBuilder: NSObject {
                 closure(data, job.destinationBase.path)
             }
         }
+    }
+}
+
+@objc
+class SSHIdentity: NSObject {
+    private struct State: Equatable, Codable {
+        let hostname: String
+        let username: String?
+        let port: Int
+
+        var commandLine: String {
+            let parts = [username.map { "-l \($0)" },
+                         port == 22 ? nil : "-p \(port)",
+                         "\(hostname)"].compactMap { $0 }
+            return parts.joined(separator: " ")
+        }
+    }
+    private let state: State
+
+    @objc var commandLine: String {
+        return state.commandLine
+    }
+
+    @objc var json: Data {
+        return try! JSONEncoder().encode(state)
+    }
+
+    @objc
+    init?(_ json: Data?) {
+        guard let data = json else {
+            return nil
+        }
+        if let state = try? JSONDecoder().decode(State.self, from: data) {
+            self.state = state
+        } else {
+            return nil
+        }
+    }
+
+    @objc
+    init(_ hostname: String, username: String?, port: Int) {
+        state = State(hostname: hostname, username: username, port: port)
+    }
+
+    override func isEqual(to object: Any?) -> Bool {
+        guard let other = object as? SSHIdentity else {
+            return false
+        }
+        return other.state == state
+    }
+}
+
+extension NSDictionary {
+    // For Profile dictionaries.
+    @objc var sshIdentity: SSHIdentity? {
+        if (self[KEY_CUSTOM_COMMAND] as? String) != kProfilePreferenceCommandTypeSSHValue {
+            return nil
+        }
+        guard let args = self[KEY_COMMAND_LINE] as? String else {
+            return nil
+        }
+        let parsed = ParsedSSHArguments(args)
+        return parsed.identity
     }
 }

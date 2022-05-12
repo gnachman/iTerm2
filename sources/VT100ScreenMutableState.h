@@ -112,6 +112,7 @@ NS_ASSUME_NONNULL_BEGIN
                       length:(int)length
       externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
              continuation:(screen_char_t)continuation;
+- (void)appendBannerMessage:(NSString *)message;
 
 #pragma mark Erase
 

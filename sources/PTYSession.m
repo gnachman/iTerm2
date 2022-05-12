@@ -592,7 +592,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     iTermConductor *_conductor;
     iTermSSHState _sshState;
     // (unique ID, hostname)
-    NSMutableArray<iTermTuple<NSString *, NSString *> *> *_sshHostNames;
+    NSMutableArray<iTermTuple<NSString *, SSHIdentity *> *> *_sshHostNames;
     NSMutableData *_sshWriteQueue;
 }
 
@@ -1528,8 +1528,9 @@ ITERM_WEAKLY_REFERENCEABLE
         if (!pair || pair.count < 2) {
             continue;
         }
+        SSHIdentity *ident = [[SSHIdentity alloc] init:[NSData castFrom:pair[1]]];
         [aSession->_sshHostNames addObject:[iTermTuple tupleWithObject:[NSString castFrom:pair[0]] ?: @""
-                                                             andObject:[NSString castFrom:pair[1]] ?: @""]];
+                                                             andObject:ident]];
     }
     aSession.shortLivedSingleUse = [arrangement[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] boolValue];
     aSession.hostnameToShell = [[arrangement[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] mutableCopy] autorelease];
@@ -2087,9 +2088,13 @@ ITERM_WEAKLY_REFERENCEABLE
         result = [result dictionaryByMergingDictionary:@{
             KEY_SSH_CONFIG: @{},
             KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeSSHValue,
-            KEY_COMMAND_LINE: _sshHostNames.lastObject.secondObject }];
+            KEY_COMMAND_LINE: _sshHostNames.lastObject.secondObject.commandLine }];
     }
     return result;
+}
+
+- (SSHIdentity *)sshIdentity {
+    return _sshHostNames.lastObject;
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move {
@@ -2879,7 +2884,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [verticalScroller setUserScroll:NO];
         }
         NSData *data = [self dataForInputString:string usingEncoding:encoding];
-        if (_conductor.queueWrites || _sshState == iTermSSHStateProfile) {
+        if (_conductor.queueWrites) {
             if (!_sshWriteQueue) {
                 _sshWriteQueue = [[NSMutableData alloc] init];
             }
@@ -4966,8 +4971,8 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: @{};
     result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);
     result[SESSION_ARRANGEMENT_SSH_STATE] = @(_sshState);
-    result[SESSION_ARRANGEMENT_SSH_STACK] = [_sshHostNames mapWithBlock:^id _Nullable(iTermTuple<NSString *,NSString *> * _Nonnull tuple) {
-        return @[tuple.firstObject ?: @"", tuple.secondObject ?: @""];
+    result[SESSION_ARRANGEMENT_SSH_STACK] = [_sshHostNames mapWithBlock:^id _Nullable(iTermTuple<NSString *, SSHIdentity *> * _Nonnull tuple) {
+        return @[tuple.firstObject ?: @"", tuple.secondObject.json ?: @""];
     }];
     result[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] = @(self.shortLivedSingleUse);
     if (self.hostnameToShell) {
@@ -13528,32 +13533,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_textview renderRange:range type:type filename:filename];
 }
 
-- (void)screenDidHookSSHConductorWithParams:(NSString * _Nonnull)param {
-    NSArray<NSString *> *parts = [param componentsSeparatedByString:@" "];
-    if (parts.count < 4) {
-        DLog(@"Bad param %@", param);
-        return;
-    }
-    NSString *token = parts[0];
+- (void)screenDidHookSSHConductorWithToken:(NSString *)token
+                                  uniqueID:(NSString *)uniqueID
+                                   sshargs:(NSString *)sshargs {
     if (![token isEqualToString:[self guid]]) {
+        [self.screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            [mutableState appendStringAtCursor:@"Invalid authentication token"];
+        }];
         DLog(@"Bad token. Got %@, expected %@", token, self.guid);
         return;
     }
-    NSString *uniqueID = parts[1];
-    NSInteger i = 2;
-    while (i < parts.count && ![parts[i] isEqualToString:@"-"]) {
-        i += 1;
-    }
-    if (i == parts.count) {
-        DLog(@"Didn't find separator");
-        return;
-    }
-    i += 1;
-    if (i >= parts.count) {
-        DLog(@"No sshargs");
-        return;
-    }
-    NSString *sshargs = [[parts subarrayFromIndex:i] componentsJoinedByString:@" "];
 
     NSString *directory = nil;
     if (_sshState == iTermSSHStateProfile && _sshHostNames.count == 0) {
@@ -13575,7 +13564,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _conductor.delegate = self;
     [_conductor start];
     [_sshHostNames addObject:[iTermTuple tupleWithObject:uniqueID
-                                               andObject:_conductor.hostname]];
+                                               andObject:_conductor.sshIdentity]];
 }
 
 - (void)screenDidReadSSHConductorLine:(NSString *)string {
@@ -13583,6 +13572,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidUnhookSSHConductor {
+    [self unhookSSHConductor];
     [self writeData:_sshWriteQueue];
     [_sshWriteQueue release];
     _sshWriteQueue = nil;

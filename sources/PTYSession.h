@@ -60,6 +60,7 @@ extern NSString *const iTermSessionWillTerminateNotification;
 @class PasteContext;
 @class PreferencePanel;
 @class PTYSession;
+@class SSHIdentity;
 @protocol VT100RemoteHostReading;
 @class VT100Screen;
 @class VT100Terminal;
@@ -568,6 +569,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // Excludes SESSION_ARRANGEMENT_CONTENTS. Nil if session not created from arrangement.
 @property(nonatomic, copy) NSDictionary *foundingArrangement;
 @property(nonatomic, readonly) id<ExternalSearchResultsController> externalSearchResultsController;
+@property(nonatomic, readonly) SSHIdentity *sshIdentity;
 
 #pragma mark - methods
 

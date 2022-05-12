@@ -34,6 +34,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
             iTermParserAdvanceMultiple(context, length)
             result.type = VT100_WAIT
         } else {
+            DLog("Found a newline at offset \(bytesTilNewline)")
             // Append bytes up to the newline, stripping out linefeeds. Consume the newline.
             line.appendBytes(iTermParserPeekRawBytes(context, bytesTilNewline),
                              length: Int(bytesTilNewline),
@@ -51,11 +52,14 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
 
     private func processLine(into token: VT100Token) -> ProcessingResult {
         guard let string = String(data: line, encoding: .utf8) else {
+            DLog("Input \(line as NSData) invalid UTF-8")
             return .unhook
         }
+        DLog("Process line \(string)")
         line = Data()
         switch state {
         case .initial:
+            DLog("In initial state. Accept line as SSH_INIT.")
             token.type = SSH_INIT
             token.string = string
             state = .ground
@@ -64,26 +68,32 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
             if string.hasPrefix("begin ") {
                 let parts = string.components(separatedBy: " ")
                 guard parts.count >= 2 else {
+                    DLog("Malformed begin token, unhook")
                     return .unhook
                 }
+                DLog("In ground state: Found valid begin token")
                 state = .body(parts[1])
                 // No need to expose this to clients.
                 token.type = VT100_WAIT
                 return .keepGoing
             } else if string == "unhook" {
+                DLog("In ground state: Found valid unhook token")
                 token.type = SSH_UNHOOK
                 return .unhook
             } else {
+                DLog("In ground state: Found unrecognized token")
                 return .unhook
             }
 
         case .body(let id):
             let expectedPrefix = "end \(id) "
             if string.hasPrefix(expectedPrefix) {
+                DLog("In body state: found valid end token")
                 state = .ground
                 token.type = SSH_END
                 token.string = String(string.dropFirst(expectedPrefix.count))
             } else {
+                DLog("In body state: found valid line")
                 token.type = SSH_LINE
                 token.string = string
                 line = Data()
