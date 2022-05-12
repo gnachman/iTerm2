@@ -655,13 +655,13 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 + (void)computeCommandForProfile:(Profile *)profile
                       objectType:(iTermObjectType)objectType
                            scope:(iTermVariableScope *)scope
-                      completion:(void (^)(NSString *command))completion {
+                      completion:(void (^)(NSString *, BOOL))completion {
     const BOOL ssh = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue];
     const BOOL custom = [profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue];
     NSString *swifty = [self bookmarkCommandSwiftyString:profile forObjectType:objectType];
     if (!custom && !ssh) {
-        DLog(@"Don't have a custom command. COmputed command is %@", swifty);
-        completion(swifty);
+        DLog(@"Don't have a custom command. Computed command is %@", swifty);
+        completion(swifty, ssh);
         return;
     }
 
@@ -678,7 +678,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
                                                       forObjectType:objectType];
         }
         DLog(@"Finish with %@", string);
-        completion(string);
+        completion(string, ssh);
     }];
 }
 

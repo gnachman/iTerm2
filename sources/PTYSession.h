@@ -505,14 +505,11 @@ backgroundColor:(NSColor *)backgroundColor;
 // shell integration is on). If that can't be done then the current local working directory with
 // symlinks resolved is returned.
 @property(nonatomic, readonly) NSString *currentLocalWorkingDirectory;
-// A more resilient version of the above. If the current directory cannot be determined it uses the initial directory. This allows the creation of session in succession with proper pwd recycling behavior.
-@property(nonatomic, readonly) NSString *currentLocalWorkingDirectoryOrInitialDirectory;
 
 // Async version of currentLocalWorkingDirectory.
 - (void)asyncCurrentLocalWorkingDirectory:(void (^)(NSString *pwd))completion;
 
-// Async version of currentLocalWorkingDirectoryOrInitialDirectory
-- (void)asyncCurrentLocalWorkingDirectoryOrInitialDirectory:(void (^)(NSString *pwd))completion;
+- (void)asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:(void (^)(NSString *pwd))completion;
 
 // Gets the local directory as URL. Weirdly, combines the remote hostname and the local path because this is really only used for the proxy icon.
 - (void)asyncGetCurrentLocationWithCompletion:(void (^)(NSURL *url))completion;
@@ -648,6 +645,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)resizeFromArrangement:(NSDictionary *)arrangement;
 
 - (void)startProgram:(NSString *)program
+                 ssh:(BOOL)ssh
          environment:(NSDictionary *)prog_env
          customShell:(NSString *)customShell
               isUTF8:(BOOL)isUTF8

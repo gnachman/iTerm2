@@ -455,7 +455,7 @@ static inline iTermLoggingStyle iTermLoggingStyleFromUserDefaultsValue(NSUIntege
 + (void)computeCommandForProfile:(Profile *)profile
                       objectType:(iTermObjectType)objectType
                            scope:(iTermVariableScope *)scope
-                      completion:(void (^)(NSString *command))completion;
+                      completion:(void (^)(NSString *command, BOOL isSSH))completion;
 
 // Like computeCommandForProfile:objectType:scope:completion: but does not evaluate it.
 + (NSString *)bookmarkCommandSwiftyString:(Profile *)bookmark

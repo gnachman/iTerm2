@@ -4009,6 +4009,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         if ([_delegate terminalIsTrusted]) {
             [_delegate terminalUpdateEnv:value];
         }
+    } else if ([key isEqualToString:@"EndSSH"]) {
+        if ([_delegate terminalIsTrusted] && value.length > 0) {
+            [_delegate terminalEndSSH:value];
+        }
     }
 }
 

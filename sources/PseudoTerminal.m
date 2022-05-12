@@ -8094,7 +8094,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     PTYSession *currentSession = [self currentSession];
     if (currentSession) {
-        [currentSession asyncCurrentLocalWorkingDirectoryOrInitialDirectory:^(NSString *oldCWD) {
+        [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:^(NSString *oldCWD) {
             DLog(@"Get local pwd so I can split: %@", oldCWD);
             PTYSession *session = [self splitVertically:isVertical
                                                  before:before
@@ -10658,7 +10658,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     }
 
     __weak __typeof(self) weakSelf = self;
-    [currentSession asyncCurrentLocalWorkingDirectoryOrInitialDirectory:^(NSString *pwd) {
+    [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:^(NSString *pwd) {
         DLog(@"Got local pwd so I can create a tab: %@", pwd);
         PseudoTerminal *strongSelf = [[weakSelf retain] autorelease];
         if (!strongSelf) {

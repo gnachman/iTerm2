@@ -40,6 +40,7 @@
 
     [aCommand suspendExecution];
     [self startProgram:args[@"command"]
+                   ssh:NO
            environment:@{}
            customShell:nil
                 isUTF8:[args[@"isUTF8"] boolValue]

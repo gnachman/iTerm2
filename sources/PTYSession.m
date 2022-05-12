@@ -292,6 +292,8 @@ static NSString *const SESSION_ARRANGEMENT_AUTOLOG_FILENAME = @"AutoLog File Nam
 static NSString *const SESSION_ARRANGEMENT_REUSABLE_COOKIE = @"Reusable Cookie";  // NSString.
 static NSString *const SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS = @"Overridden Fields";  // NSArray<NSString *>
 static NSString *const SESSION_ARRANGEMENT_FILTER = @"Filter";  // NSString
+static NSString *const SESSION_ARRANGEMENT_SSH_STATE = @"SSH State";  // NSNumber
+static NSString *const SESSION_ARRANGEMENT_SSH_STACK = @"SSH Stack";  // NSArray<NSArray<NSString>>
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -339,6 +341,13 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
 - (void)_moveToScreen:(NSScreen *)sender;
 @end
 
+typedef NS_ENUM(NSUInteger, iTermSSHState) {
+    // Normal state.
+    iTermSSHStateNone,
+
+    // Waiting for conductor just after creating the session with ssh as the command.
+    iTermSSHStateProfile,
+};
 
 @implementation PTYSession {
     NSString *_termVariable;
@@ -581,6 +590,10 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     NSInteger _estimatedThroughput;
     iTermPasteboardReporter *_pasteboardReporter;
     iTermConductor *_conductor;
+    iTermSSHState _sshState;
+    // (unique ID, hostname)
+    NSMutableArray<iTermTuple<NSString *, NSString *> *> *_sshHostNames;
+    NSMutableData *_sshWriteQueue;
 }
 
 @synthesize isDivorced = _divorced;
@@ -737,6 +750,8 @@ static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
             });
         }];
         _expect = [[iTermExpect alloc] initDry:YES];
+        _sshState = iTermSSHStateNone;
+        _sshHostNames = [[NSMutableArray alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:kCoprocessStatusChangeNotification
@@ -959,6 +974,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_expect release];
     [_pasteboardReporter release];
     [_conductor release];
+    [_sshHostNames release];
+    [_sshWriteQueue release];
 
     [super dealloc];
 }
@@ -1503,6 +1520,17 @@ ITERM_WEAKLY_REFERENCEABLE
         haveSavedProgramData = NO;
     }
 
+    aSession->_sshState = [arrangement[SESSION_ARRANGEMENT_SSH_STATE] unsignedIntegerValue];
+    [aSession->_sshHostNames removeAllObjects];
+    NSArray *sshStack = [NSArray castFrom:arrangement[SESSION_ARRANGEMENT_SSH_STACK]];
+    for (id obj in sshStack) {
+        NSArray *pair = [NSArray castFrom:obj];
+        if (!pair || pair.count < 2) {
+            continue;
+        }
+        [aSession->_sshHostNames addObject:[iTermTuple tupleWithObject:[NSString castFrom:pair[0]] ?: @""
+                                                             andObject:[NSString castFrom:pair[1]] ?: @""]];
+    }
     aSession.shortLivedSingleUse = [arrangement[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] boolValue];
     aSession.hostnameToShell = [[arrangement[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] mutableCopy] autorelease];
 
@@ -2055,6 +2083,12 @@ ITERM_WEAKLY_REFERENCEABLE
         result = [[ProfileModel sharedInstance] defaultBookmark];
     }
 
+    if (_sshHostNames.count) {
+        result = [result dictionaryByMergingDictionary:@{
+            KEY_SSH_CONFIG: @{},
+            KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeSSHValue,
+            KEY_COMMAND_LINE: _sshHostNames.lastObject.secondObject }];
+    }
     return result;
 }
 
@@ -2332,7 +2366,7 @@ ITERM_WEAKLY_REFERENCEABLE
         env[@"LC_TERMINAL"] = @"iTerm2";
         env[@"LC_TERMINAL_VERSION"] = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
     }
-    if (env[PWD_ENVNAME] == nil) {
+    if (env[PWD_ENVNAME] == nil && _sshState == iTermSSHStateNone) {
         // Set "PWD"
         env[PWD_ENVNAME] = [PWD_ENVVALUE stringByExpandingTildeInPath];
         DLog(@"env[%@] was nil. Set it to home directory: %@", PWD_ENVNAME, env[PWD_ENVNAME]);
@@ -2341,7 +2375,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // Remove trailing slashes, unless the path is just "/"
     NSString *trimmed = [env[PWD_ENVNAME] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@"/"]];
     DLog(@"Trimmed pwd %@ is %@", env[PWD_ENVNAME], trimmed);
-    if (trimmed.length == 0) {
+    if (trimmed.length == 0 && _sshState == iTermSSHStateNone) {
         trimmed = @"/";
     }
     DLog(@"Set env[PWD] to trimmed value %@", trimmed);
@@ -2379,6 +2413,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)startProgram:(NSString *)command
+                 ssh:(BOOL)ssh
          environment:(NSDictionary *)environment
          customShell:(NSString *)customShell
               isUTF8:(BOOL)isUTF8
@@ -2392,6 +2427,7 @@ ITERM_WEAKLY_REFERENCEABLE
     self.environment = environment ?: @{};
     self.isUTF8 = isUTF8;
     self.substitutions = substitutions ?: @{};
+    _sshState = ssh ? iTermSSHStateProfile : iTermSSHStateNone;
     [self computeArgvForCommand:command substitutions:substitutions completion:^(NSArray<NSString *> *argv) {
         DLog(@"argv=%@", argv);
         NSDictionary *env = [self environmentForNewJobFromEnvironment:environment ?: @{} substitutions:substitutions];
@@ -2843,19 +2879,30 @@ ITERM_WEAKLY_REFERENCEABLE
             [verticalScroller setUserScroll:NO];
         }
         NSData *data = [self dataForInputString:string usingEncoding:encoding];
-        const char *bytes = data.bytes;
-        BOOL newline = NO;
-        for (NSUInteger i = 0; i < data.length; i++) {
-            DLog(@"Write byte 0x%02x (%c)", (((int)bytes[i]) & 0xff), bytes[i]);
-            if (bytes[i] == '\r' || bytes[i] == '\n') {
-                newline = YES;
+        if (_conductor.queueWrites || _sshState == iTermSSHStateProfile) {
+            if (!_sshWriteQueue) {
+                _sshWriteQueue = [[NSMutableData alloc] init];
             }
+            [_sshWriteQueue appendData:data];
+            return;
         }
-        if (newline) {
-            _activityInfo.lastNewline = [NSDate it_timeSinceBoot];
-        }
-        [_shell writeTask:data];
+        [self writeData:data];
     }
+}
+
+- (void)writeData:(NSData *)data {
+    const char *bytes = data.bytes;
+    BOOL newline = NO;
+    for (NSUInteger i = 0; i < data.length; i++) {
+        DLog(@"Write byte 0x%02x (%c)", (((int)bytes[i]) & 0xff), bytes[i]);
+        if (bytes[i] == '\r' || bytes[i] == '\n') {
+            newline = YES;
+        }
+    }
+    if (newline) {
+        _activityInfo.lastNewline = [NSDate it_timeSinceBoot];
+    }
+    [_shell writeTask:data];
 }
 
 // Convert the string to the requested encoding. If the string is a lone surrogate, deal with it by
@@ -3310,6 +3357,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self resetForRelaunch];
     __weak __typeof(self) weakSelf = self;
     [self startProgram:_program
+                   ssh:_sshState == iTermSSHStateProfile
            environment:_environment
            customShell:_customShell
                 isUTF8:_isUTF8
@@ -4917,6 +4965,10 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     }];
     result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: @{};
     result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);
+    result[SESSION_ARRANGEMENT_SSH_STATE] = @(_sshState);
+    result[SESSION_ARRANGEMENT_SSH_STACK] = [_sshHostNames mapWithBlock:^id _Nullable(iTermTuple<NSString *,NSString *> * _Nonnull tuple) {
+        return @[tuple.firstObject ?: @"", tuple.secondObject ?: @""];
+    }];
     result[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] = @(self.shortLivedSingleUse);
     if (self.hostnameToShell) {
         result[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] = [[self.hostnameToShell copy] autorelease];
@@ -12797,9 +12849,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _lastLocalDirectoryWasPushed = lastLocalDirectoryWasPushed;
 }
 
-- (void)asyncCurrentLocalWorkingDirectoryOrInitialDirectory:(void (^)(NSString *pwd))completion {
+- (void)asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:(void (^)(NSString *pwd))completion {
+    if (_sshHostNames.count > 0 && self.lastDirectory.length > 0) {
+        completion(self.lastDirectory);
+        return;
+    }
     NSString *envPwd = self.environment[@"PWD"];
-    DLog(@"asyncCurrentLocalWorkingDirectoryOrInitialDirectory environment[pwd]=%@", envPwd);
+    DLog(@"asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory environment[pwd]=%@", envPwd);
     [self asyncCurrentLocalWorkingDirectory:^(NSString *pwd) {
         DLog(@"asyncCurrentLocalWorkingDirectory finished with %@", pwd);
         if (!pwd) {
@@ -13473,28 +13529,53 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidHookSSHConductorWithParams:(NSString * _Nonnull)param {
-    const NSUInteger index = [param rangeOfString:@" "].location;
-    if (index == NSNotFound) {
+    NSArray<NSString *> *parts = [param componentsSeparatedByString:@" "];
+    if (parts.count < 4) {
+        DLog(@"Bad param %@", param);
         return;
     }
-    NSString *token = [param substringToIndex:index];
+    NSString *token = parts[0];
     if (![token isEqualToString:[self guid]]) {
         DLog(@"Bad token. Got %@, expected %@", token, self.guid);
         return;
     }
-    NSString *sshargs = [param substringFromIndex:index + 1];
+    NSString *uniqueID = parts[1];
+    NSInteger i = 2;
+    while (i < parts.count && ![parts[i] isEqualToString:@"-"]) {
+        i += 1;
+    }
+    if (i == parts.count) {
+        DLog(@"Didn't find separator");
+        return;
+    }
+    i += 1;
+    if (i >= parts.count) {
+        DLog(@"No sshargs");
+        return;
+    }
+    NSString *sshargs = [[parts subarrayFromIndex:i] componentsJoinedByString:@" "];
+
+    NSString *directory = nil;
+    if (_sshState == iTermSSHStateProfile && _sshHostNames.count == 0) {
+        // Currently launching the session that has ssh instead of login shell.
+        directory = self.environment[@"PWD"];
+    }
     _conductor.delegate = nil;
     [_conductor autorelease];
     NSDictionary *dict = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_SSH_CONFIG inProfile:self.profile]];
+
     iTermSSHConfiguration *config = [[[iTermSSHConfiguration alloc] initWithDictionary:dict] autorelease];
     _conductor = [[iTermConductor alloc] init:sshargs
                                          vars:[self.screen exfiltratedEnvironmentVariables:config.environmentVariablesToCopy]
-                             initialDirectory:nil];
+                             initialDirectory:directory];
     for (iTermTuple<NSString *, NSString *> *tuple in config.filesToCopy) {
         [_conductor addPath:tuple.firstObject destination:tuple.secondObject];
     }
+    _sshState = iTermSSHStateNone;
     _conductor.delegate = self;
     [_conductor start];
+    [_sshHostNames addObject:[iTermTuple tupleWithObject:uniqueID
+                                               andObject:_conductor.hostname]];
 }
 
 - (void)screenDidReadSSHConductorLine:(NSString *)string {
@@ -13502,6 +13583,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidUnhookSSHConductor {
+    [self writeData:_sshWriteQueue];
+    [_sshWriteQueue release];
+    _sshWriteQueue = nil;
+}
+
+- (void)unhookSSHConductor {
     _conductor.delegate = nil;
     [_conductor autorelease];
     _conductor = nil;
@@ -13509,6 +13596,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenDidEndSSHConductorCommandWithStatus:(uint8_t)status {
     [_conductor handleCommandEndWithStatus:status];
+}
+
+- (void)screenEndSSH:(NSString *)uniqueID {
+    DLog(@"%@", uniqueID);
+    [self unhookSSHConductor];
+    const NSInteger index = [_sshHostNames indexOfObjectPassingTest:^BOOL(iTermTuple<NSString *,NSString *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
+        return [tuple.firstObject isEqualToString:uniqueID];
+    }];
+    if (index == NSNotFound) {
+        return;
+    }
+    [_sshHostNames removeObjectsInRange:NSMakeRange(index, _sshHostNames.count - index)];
 }
 
 - (VT100Screen *)popupVT100Screen {

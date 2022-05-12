@@ -857,7 +857,7 @@ static void HandleSigChld(int n) {
     [self.jobManager forkAndExecWithTtyState:ttyState
                                      argpath:commandToExec
                                         argv:argv
-                                  initialPwd:initialPwd
+                                  initialPwd:initialPwd ?: NSHomeDirectory()
                                   newEnviron:newEnviron
                                         task:self
                                   completion:

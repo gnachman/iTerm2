@@ -10,6 +10,7 @@ import Foundation
 @objc(iTermConductorDelegate)
 protocol ConductorDelegate: Any {
     func conductorWrite(string: String)
+    func conductorWrite(data: Data)
     func conductorAbort(reason: String)
 }
 
@@ -19,6 +20,12 @@ class Conductor: NSObject {
     private let vars: [String: String]
     private var payloads: [(path: String, destination: String)] = []
     private let initialDirectory: String?
+    @objc private(set) var queueWrites = true
+
+    @objc var hostname: String {
+        // TODO: Parse ssh args
+        return sshargs.components(separatedBy: " ").first ?? ""
+    }
 
     enum Command {
         case execLoginShell
@@ -64,8 +71,8 @@ class Conductor: NSObject {
                 return "setting \(key)=\(value)"
             case .run(let cmd):
                 return "running \(cmd)"
-            case .write(let data, let dest):
-                return "writing payload to \(dest)"
+            case .write(_, let dest):
+                return "copying files to \(dest)"
             case .cd(let dir):
                 return "changing directory to \(dir)"
             case .quit:
@@ -109,6 +116,7 @@ class Conductor: NSObject {
     @objc init(_ sshargs: String,
                vars: [String: String],
                initialDirectory: String?) {
+        DLog("Conductor starting")
         self.sshargs = sshargs
         self.vars = vars
         self.initialDirectory = initialDirectory
@@ -297,7 +305,10 @@ class Conductor: NSObject {
         queue.removeFirst()
         state = .willExecute(pending)
         DLog("> \(pending.command.stringValue)")
+        let savedQueueWrites = queueWrites
+        queueWrites = false
         delegate.conductorWrite(string: pending.command.stringValue + "\n")
+        queueWrites = savedQueueWrites
     }
 
     private var currentOperationDescription: String {

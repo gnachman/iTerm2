@@ -2477,5 +2477,10 @@
     }];
 }
 
+- (void)terminalEndSSH:(NSString *)uniqueID {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenEndSSH:uniqueID];
+    }];
+}
 
 @end
