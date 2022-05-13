@@ -3657,6 +3657,8 @@
 		A6EC808A282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EC8088282A28C600493544 /* SSHConfigurationWindow.xib */; };
 		A6EC808B282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EC8088282A28C600493544 /* SSHConfigurationWindow.xib */; };
 		A6EC808D282A28F500493544 /* SSHConfigurationWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC808C282A28F500493544 /* SSHConfigurationWindowController.swift */; };
+		A6EC8093282DE42800493544 /* ParsedSSHArguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8092282DE42800493544 /* ParsedSSHArguments.swift */; };
+		A6EC8095282DE46700493544 /* SSHIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8094282DE46700493544 /* SSHIdentity.swift */; };
 		A6EC936624E513DB00EEADEF /* iTermSlowOperationGateway.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */; };
 		A6EC936724E513DB00EEADEF /* iTermSlowOperationGateway.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */; };
 		A6EC936824E64FAA00EEADEF /* iTermFileDescriptorServerShared.c in Sources */ = {isa = PBXBuildFile; fileRef = A64FCD57238DE785001D8199 /* iTermFileDescriptorServerShared.c */; };
@@ -6773,6 +6775,8 @@
 		A6EC80842829E28800493544 /* it2ssh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = it2ssh; path = OtherResources/it2ssh; sourceTree = "<group>"; };
 		A6EC8088282A28C600493544 /* SSHConfigurationWindow.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SSHConfigurationWindow.xib; sourceTree = "<group>"; };
 		A6EC808C282A28F500493544 /* SSHConfigurationWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHConfigurationWindowController.swift; sourceTree = "<group>"; };
+		A6EC8092282DE42800493544 /* ParsedSSHArguments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsedSSHArguments.swift; sourceTree = "<group>"; };
+		A6EC8094282DE46700493544 /* SSHIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHIdentity.swift; sourceTree = "<group>"; };
 		A6EC936424E513DB00EEADEF /* iTermSlowOperationGateway.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlowOperationGateway.h; sourceTree = "<group>"; };
 		A6EC936524E513DB00EEADEF /* iTermSlowOperationGateway.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSlowOperationGateway.m; sourceTree = "<group>"; };
 		A6EC936924E7868D00EEADEF /* iTermToolSnippets.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermToolSnippets.h; sourceTree = "<group>"; };
@@ -10762,6 +10766,8 @@
 			isa = PBXGroup;
 			children = (
 				A6EC80802828E9F600493544 /* Conductor.swift */,
+				A6EC8092282DE42800493544 /* ParsedSSHArguments.swift */,
+				A6EC8094282DE46700493544 /* SSHIdentity.swift */,
 			);
 			name = ssh;
 			sourceTree = "<group>";
@@ -14370,6 +14376,7 @@
 				A6DBC03D2003479400F1466D /* iTermImageRenderer.m in Sources */,
 				A60D20EF2597FCFA004AC979 /* iTermImage+ImageWithData.m in Sources */,
 				A65429A020BE71E400CE71B1 /* iTermOpenQuicklyModel.m in Sources */,
+				A6EC8095282DE46700493544 /* SSHIdentity.swift in Sources */,
 				A6AAD5F422F7EB61002DD12C /* iTermWindowSizeView.m in Sources */,
 				5370678D21C9D2780088D0F3 /* SIGArchiveVerifier.m in Sources */,
 				A61D2A4927555CD000E539F3 /* MenuItemPopupView.swift in Sources */,
@@ -14898,6 +14905,7 @@
 				A68AC8F41F05C0860023A216 /* NSBundle+iTerm.m in Sources */,
 				A67960CD1F81FCB6008A42BC /* iTermMetalRenderer.m in Sources */,
 				A6EC808D282A28F500493544 /* SSHConfigurationWindowController.swift in Sources */,
+				A6EC8093282DE42800493544 /* ParsedSSHArguments.swift in Sources */,
 				A691693D281345AF00083F99 /* SaneButton.swift in Sources */,
 				5370678621C9D2780088D0F3 /* SIGError.m in Sources */,
 				A618FFC62245F6A300B8FD88 /* iTermStatusBarActionComponent.m in Sources */,

@@ -231,7 +231,7 @@
     return result;
 }
 
-- (NSArray *)componentsInShellCommand {
+- (NSArray<NSString *> *)componentsInShellCommand {
     NSNumber *nkey = @'n';
     NSNumber *akey = @'a';
     NSNumber *tkey = @'t';
@@ -284,8 +284,8 @@
     return result;
 }
 
-- (NSArray *)componentsBySplittingStringWithQuotesAndBackslashEscaping:(NSDictionary *)escapes {
-    NSMutableArray *result = [NSMutableArray array];
+- (NSArray<NSString *> *)componentsBySplittingStringWithQuotesAndBackslashEscaping:(NSDictionary *)escapes {
+    NSMutableArray<NSString *> *result = [NSMutableArray array];
 
     BOOL inSingleQuotes = NO;
     BOOL inDoubleQuotes = NO; // Are we inside double quotes?

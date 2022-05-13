@@ -98,7 +98,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 //   foo ~root "~"    bar\ baz   ""
 // and returns an array like:
 //   @[ @"foo", @"/Users/root", @"~", @"bar baz", @"" ]
-- (NSArray *)componentsInShellCommand;
+- (NSArray<NSString *> *)componentsInShellCommand;
 
 // Same as componentsInShellCommand but \r, \n, \t, and \a map to the letters r, n, t, and a,
 // not to controls.

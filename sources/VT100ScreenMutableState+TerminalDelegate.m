@@ -2428,13 +2428,16 @@
 - (NSArray<NSString *> *)parseHookSSHConductorParameter:(NSString *)param {
     DLog(@"%@", param);
     NSArray<NSString *> *parts = [param componentsSeparatedByString:@" "];
-    if (parts.count < 4) {
+    if (parts.count < 5) {
         DLog(@"Bad param %@", param);
         return nil;
     }
-    NSString *token = parts[0];
-    NSString *uniqueID = parts[1];
-    NSInteger i = 2;
+    NSInteger i = 0;
+    NSString *token = parts[i++];
+    NSString *uniqueID = parts[i++];
+    NSString *boolArgs = parts[i++];
+
+    // Skip unrecognized arguments until you get to the separator
     while (i < parts.count && ![parts[i] isEqualToString:@"-"]) {
         i += 1;
     }
@@ -2449,7 +2452,7 @@
     }
     NSString *sshargs = [[parts subarrayFromIndex:i] componentsJoinedByString:@" "];
 
-    return @[token, uniqueID, sshargs];
+    return @[token, uniqueID, boolArgs, sshargs];
 }
 
 - (void)terminalDidHookSSHConductorWithParams:(NSString *)params {
@@ -2460,10 +2463,22 @@
     }
     NSString *token = values[0];
     NSString *uniqueID = values[1];
-    NSString *sshargs = values[2];
+    NSString *boolArgs = [values[2] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+    if (!boolArgs) {
+        DLog(@"Failed to base64 decode %@", values[2]);
+        return;
+    }
+    NSString *sshargs = [values[3] stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+    if (!sshargs) {
+        DLog(@"Failed to base64 decode %@", values[3]);
+        return;
+    }
     [self appendBannerMessage:[NSString stringWithFormat:@"ssh %@", sshargs]];
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
-        [delegate screenDidHookSSHConductorWithToken:token uniqueID:uniqueID sshargs:sshargs];
+        [delegate screenDidHookSSHConductorWithToken:token
+                                            uniqueID:uniqueID
+                                            boolArgs:boolArgs
+                                             sshargs:sshargs];
     }];
 }
 

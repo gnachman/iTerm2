@@ -4508,6 +4508,8 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
         [terminal resetByUserRequest:YES];
     }];
     [self updateDisplayBecause:@"reset terminal"];
+    [_conductor release];
+    _conductor = nil;
 }
 
 - (void)resetForRelaunch {
@@ -13535,6 +13537,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenDidHookSSHConductorWithToken:(NSString *)token
                                   uniqueID:(NSString *)uniqueID
+                                  boolArgs:(NSString *)boolArgs
                                    sshargs:(NSString *)sshargs {
     if (![token isEqualToString:[self guid]]) {
         [self.screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -13555,6 +13558,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
     iTermSSHConfiguration *config = [[[iTermSSHConfiguration alloc] initWithDictionary:dict] autorelease];
     _conductor = [[iTermConductor alloc] init:sshargs
+                                     boolArgs:boolArgs
                                          vars:[self.screen exfiltratedEnvironmentVariables:config.environmentVariablesToCopy]
                              initialDirectory:directory];
     for (iTermTuple<NSString *, NSString *> *tuple in config.filesToCopy) {

@@ -14,22 +14,6 @@ protocol ConductorDelegate: Any {
     func conductorAbort(reason: String)
 }
 
-struct ParsedSSHArguments {
-    let hostname: String
-    let username: String?
-    let port: Int?
-
-    var identity: SSHIdentity {
-        return SSHIdentity(hostname, username: username, port: port ?? 22)
-    }
-    init(_ string: String) {
-        let parts = string.components(separatedBy: " ")
-        // TODO: Parse ssh args and use correct username and port
-        hostname = parts.first ?? ""
-        username = nil
-        port = nil
-    }
-}
 
 @objc(iTermConductor)
 class Conductor: NSObject {
@@ -129,13 +113,16 @@ class Conductor: NSObject {
     private var queue = [ExecutionContext]()
 
     @objc weak var delegate: ConductorDelegate?
+    @objc let boolArgs: String
 
     @objc init(_ sshargs: String,
+               boolArgs: String,
                vars: [String: String],
                initialDirectory: String?) {
         DLog("Conductor starting")
         self.sshargs = sshargs
-        parsedSSHArguments = ParsedSSHArguments(sshargs)
+        self.boolArgs = boolArgs
+        parsedSSHArguments = ParsedSSHArguments(sshargs, booleanArgs: boolArgs)
         self.vars = vars
         self.initialDirectory = initialDirectory
     }
@@ -164,6 +151,10 @@ class Conductor: NSObject {
         uploadPayloads()
         if let dir = initialDirectory {
             cd(dir)
+        }
+        if !parsedSSHArguments.commandArgs.isEmpty {
+            run(parsedSSHArguments.commandArgs.joined(separator: " "))
+            return
         }
         execLoginShell()
     }
@@ -267,6 +258,22 @@ class Conductor: NSObject {
             case .end(let status):
                 guard status == 0 else {
                     self?.fail("exec_login_shell failed with status \(status)")
+                    return
+                }
+            }
+        }
+    }
+
+    private func run(_ command: String) {
+        send(.run(command)) { [weak self] result in
+            switch result {
+            case .line(_):
+                fatalError()
+            case .abort:
+                break
+            case .end(let status):
+                guard status == 0 else {
+                    self?.fail("run \(command) failed with status \(status)")
                     return
                 }
             }
@@ -609,55 +616,6 @@ class ConductorPayloadBuilder: NSObject {
     }
 }
 
-@objc
-class SSHIdentity: NSObject {
-    private struct State: Equatable, Codable {
-        let hostname: String
-        let username: String?
-        let port: Int
-
-        var commandLine: String {
-            let parts = [username.map { "-l \($0)" },
-                         port == 22 ? nil : "-p \(port)",
-                         "\(hostname)"].compactMap { $0 }
-            return parts.joined(separator: " ")
-        }
-    }
-    private let state: State
-
-    @objc var commandLine: String {
-        return state.commandLine
-    }
-
-    @objc var json: Data {
-        return try! JSONEncoder().encode(state)
-    }
-
-    @objc
-    init?(_ json: Data?) {
-        guard let data = json else {
-            return nil
-        }
-        if let state = try? JSONDecoder().decode(State.self, from: data) {
-            self.state = state
-        } else {
-            return nil
-        }
-    }
-
-    @objc
-    init(_ hostname: String, username: String?, port: Int) {
-        state = State(hostname: hostname, username: username, port: port)
-    }
-
-    override func isEqual(to object: Any?) -> Bool {
-        guard let other = object as? SSHIdentity else {
-            return false
-        }
-        return other.state == state
-    }
-}
-
 extension NSDictionary {
     // For Profile dictionaries.
     @objc var sshIdentity: SSHIdentity? {
@@ -667,7 +625,10 @@ extension NSDictionary {
         guard let args = self[KEY_COMMAND_LINE] as? String else {
             return nil
         }
-        let parsed = ParsedSSHArguments(args)
+        // booleanArgs comes from parsing the output of ssh's usage string. We know this only
+        // applies to the macOS ssh since it must be run locally. I guess it would be better to
+        // generate this at build time and load it from a resource but I'm not up to that today.
+        let parsed = ParsedSSHArguments(args, booleanArgs: "46AaCfGgKkMNnqsTtVvXxYy")
         return parsed.identity
     }
 }
