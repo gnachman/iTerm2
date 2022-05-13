@@ -103,23 +103,31 @@ class SSHConfigurationWindowController: NSWindowController {
     }
 
     private func addFile() {
-        let sources = chooseSourceFiles()
+        let (sources, destination) = chooseSourceFiles()
         for source in sources {
-            add(source)
+            add(source, destination: destination)
         }
     }
 
-    private func add(_ source: String) {
+    private func add(_ source: String, destination: String) {
         let home = NSHomeDirectory()
-        let dest: String
+        let nonEmptyDestination: String
         if source.hasPrefix(home) {
             let url = URL(fileURLWithPath: "~" + source.dropFirst(home.count))
-            dest = url.deletingLastPathComponent().path
+            if destination.isEmpty {
+                nonEmptyDestination = url.deletingLastPathComponent().path
+            } else {
+                nonEmptyDestination = destination
+            }
         } else {
-            dest = "~"
+            if destination.isEmpty {
+                nonEmptyDestination = "~"
+            } else {
+                nonEmptyDestination = destination
+            }
         }
         let row = config.filesToCopy.count
-        config.filesToCopy.append((source, dest))
+        config.filesToCopy.append((source, nonEmptyDestination))
         filesToCopyTable.insertRows(at: IndexSet(integer: row))
     }
 
@@ -128,22 +136,26 @@ class SSHConfigurationWindowController: NSWindowController {
         filesToCopyTable.removeRows(at: filesToCopyTable.selectedRowIndexes, withAnimation: [])
     }
 
-    private func chooseSourceFiles() -> [String] {
+    private func chooseSourceFiles() -> ([String], String) {
+        let destinationView = SSHCopyDestinationView()
         let panel = NSOpenPanel()
         panel.directoryURL = URL(fileURLWithPath: NSHomeDirectory())
         panel.canChooseFiles = true
         panel.canChooseDirectories = true
         panel.allowsMultipleSelection = true
+        panel.accessoryView = destinationView
+        panel.isAccessoryViewDisclosed = true
         guard panel.runModal() == .OK else {
-            return []
+            return ([], "")
         }
-        return panel.urls.map { url in
+        let paths = panel.urls.map { url -> String in
             let home = NSHomeDirectory()
             if url.path.hasPrefix(home) {
                 return "~" + url.path.dropFirst(home.count)
             }
             return url.path
         }
+        return (paths, destinationView.stringValue)
     }
 
     // MARK: - Actions
@@ -234,5 +246,70 @@ extension SSHConfigurationWindowController: NSTextDelegate, NSTextFieldDelegate 
                 config.filesToCopy[filesToCopyTable.selectedRow].1 = textField.stringValue
             }
         }
+    }
+}
+
+fileprivate class SSHCopyDestinationView: NSView {
+    private let textField: NSTextField
+    private let label: NSTextField
+    var stringValue: String {
+        return textField.stringValue
+    }
+
+    init() {
+        let fieldWidth = 350.0
+        let margin = 10.0
+        let vmargin = 8.0
+
+        textField = NSTextField()
+        textField.stringValue = "~"
+        label = NSTextField(labelWithString: "Destination folder on remote host:")
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.sizeToFit()
+
+        super.init(frame: NSRect(x: 0,
+                                 y: 0,
+                                 width: label.frame.width + margin * 3 + fieldWidth,
+                                 height: textField.frame.height + vmargin * 2))
+
+        addSubview(label)
+
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        textField.isEditable = true
+        textField.isSelectable = true
+        textField.isBezeled = true
+        textField.drawsBackground = true
+        textField.usesSingleLineMode = true
+        var frame = textField.frame
+        frame.size.width = fieldWidth
+        textField.frame = frame
+        addSubview(textField)
+
+        let views = ["label": label,
+                     "field": textField]
+        addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-10-[label]-10-[field]-10-|",
+                                                      metrics: [:],
+                                                      views: views))
+        addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|-8-[field]-8-|",
+                                                      metrics: [:],
+                                                      views: views))
+        addConstraint(NSLayoutConstraint(item: textField,
+                                         attribute: .width,
+                                         relatedBy: .greaterThanOrEqual,
+                                         toItem: nil,
+                                         attribute: .notAnAttribute,
+                                         multiplier: 1,
+                                         constant: fieldWidth))
+        addConstraint(NSLayoutConstraint(item: label,
+                                         attribute: .firstBaseline,
+                                         relatedBy: .equal,
+                                         toItem: textField,
+                                         attribute: .firstBaseline,
+                                         multiplier: 1,
+                                         constant: 0))
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
 }
