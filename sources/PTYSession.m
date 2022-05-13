@@ -2094,7 +2094,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (SSHIdentity *)sshIdentity {
-    return _sshHostNames.lastObject;
+    return _sshHostNames.lastObject.secondObject;
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move {
@@ -13592,16 +13592,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_conductor handleCommandEndWithStatus:status];
 }
 
-- (void)screenEndSSH:(NSString *)uniqueID {
+- (NSInteger)screenEndSSH:(NSString *)uniqueID {
     DLog(@"%@", uniqueID);
     [self unhookSSHConductor];
     const NSInteger index = [_sshHostNames indexOfObjectPassingTest:^BOOL(iTermTuple<NSString *,NSString *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
         return [tuple.firstObject isEqualToString:uniqueID];
     }];
     if (index == NSNotFound) {
-        return;
+        return 0;
     }
-    [_sshHostNames removeObjectsInRange:NSMakeRange(index, _sshHostNames.count - index)];
+    const NSInteger count = _sshHostNames.count - index;
+    [_sshHostNames removeObjectsInRange:NSMakeRange(index, count)];
+    return count;
+}
+
+- (NSString *)screenSSHLocation {
+    return _sshHostNames.lastObject.secondObject.compactDescription;
 }
 
 - (VT100Screen *)popupVT100Screen {

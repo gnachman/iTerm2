@@ -2492,7 +2492,6 @@
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidUnhookSSHConductor];
     }];
-
 }
 
 - (void)terminalDidEndSSHConductorCommandWithStatus:(uint8_t)status {
@@ -2529,8 +2528,22 @@
 }
 
 - (void)terminalEndSSH:(NSString *)uniqueID {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenEndSSH:uniqueID];
+    __weak __typeof(self) weakSelf = self;
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        const NSInteger count = [delegate screenEndSSH:uniqueID];
+        NSString *preamble;
+        if (count == 1) {
+            preamble = @"ssh exited";
+        } else if (count > 1) {
+            preamble = [NSString stringWithFormat:@"%@ ssh sessions ended", @(count)];
+        }
+        NSString *sshLocation = [delegate screenSSHLocation];
+        if (sshLocation) {
+            [weakSelf appendBannerMessage:[NSString stringWithFormat:@"%@ — now at %@", preamble, sshLocation]];
+        } else {
+            [weakSelf appendBannerMessage:[NSString stringWithFormat:@"%@ — you’re now back at the local shell", preamble]];
+        }
+        [unpauser unpause];
     }];
 }
 

@@ -8096,6 +8096,9 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     if (currentSession) {
         [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:^(NSString *oldCWD) {
             DLog(@"Get local pwd so I can split: %@", oldCWD);
+            if (theBookmark.sshIdentity != nil && ![currentSession.sshIdentity isEqual:theBookmark.sshIdentity]) {
+                oldCWD = nil;
+            }
             PTYSession *session = [self splitVertically:isVertical
                                                  before:before
                                                 profile:theBookmark

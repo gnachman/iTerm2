@@ -343,7 +343,7 @@ class Conductor: NSObject {
         case .executing(let context):
             return context.command.operationDescription
         case .willExecute(let context):
-            return "preparing to " + context.command.operationDescription
+            return context.command.operationDescription + " (preparation stage)"
         }
     }
 

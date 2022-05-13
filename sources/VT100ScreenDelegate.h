@@ -386,13 +386,14 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenConvertAbsoluteRange:(VT100GridAbsCoordRange)range
               toTextDocumentOfType:(NSString * _Nullable)type
                           filename:(NSString * _Nullable)filename;
-- (void)screenDidHookSSHConductorWithToken:(NSString *)token
-                                  uniqueID:(NSString *)uniqueID
-                                  boolArgs:(NSString *)boolArgs
-                                   sshargs:(NSString *)sshargs;
+- (void)screenDidHookSSHConductorWithToken:(NSString * _Nonnull)token
+                                  uniqueID:(NSString * _Nonnull)uniqueID
+                                  boolArgs:(NSString * _Nonnull)boolArgs
+                                   sshargs:(NSString * _Nonnull)sshargs;
 - (void)screenDidReadSSHConductorLine:(NSString * _Nonnull)string;
 - (void)screenDidUnhookSSHConductor;
 - (void)screenDidEndSSHConductorCommandWithStatus:(uint8_t)status;
-- (void)screenEndSSH:(NSString * _Nonnull)uniqueID;
+- (NSInteger)screenEndSSH:(NSString * _Nonnull)uniqueID;
+- (NSString * _Nonnull)screenSSHLocation;
 
 @end

@@ -17,6 +17,19 @@ class SSHIdentity: NSObject {
             return hostport
         }
 
+        var compactDescription: String {
+            let hostport: String
+            if port == 22 {
+                hostport = hostname
+            } else {
+                hostport = hostname + ":\(port)"
+            }
+            if let username = username {
+                return username + "@" + hostport
+            }
+            return hostport
+        }
+        
         let hostname: String
         let username: String?
         let port: Int
@@ -36,6 +49,10 @@ class SSHIdentity: NSObject {
 
     @objc var json: Data {
         return try! JSONEncoder().encode(state)
+    }
+
+    @objc var compactDescription: String {
+        return state.compactDescription
     }
 
     override var debugDescription: String {
