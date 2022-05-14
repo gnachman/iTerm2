@@ -2531,6 +2531,9 @@
     __weak __typeof(self) weakSelf = self;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         const NSInteger count = [delegate screenEndSSH:uniqueID];
+        if (count <= 0) {
+            return;
+        }
         NSString *preamble;
         if (count == 1) {
             preamble = @"ssh exited";
