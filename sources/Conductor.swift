@@ -368,8 +368,8 @@ fileprivate class ConductorPayloadBuilder {
     private var tarJobs = [TarJob]()
 
     func add(localPath: URL, destination: URL) {
-        for var job in tarJobs {
-            if job.add(local: localPath, destination: destination) {
+        for (i, _) in tarJobs.enumerated() {
+            if tarJobs[i].add(local: localPath, destination: destination) {
                 return
             }
         }

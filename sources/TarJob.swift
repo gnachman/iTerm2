@@ -96,7 +96,7 @@ struct TarJob: CustomDebugStringConvertible {
                     DLog("FAIL - destination \(dest) does not end with source suffix \(sourceSuffix)")
                     return nil
                 }
-                if dest.count - sourceSuffix.count >= destinationPrefixCount {
+                if dest.count - sourceSuffix.count > destinationPrefixCount {
                     DLog("FAIL - destination (\(dest)) after stripping source suffix (\(sourceSuffix)), yielding \(dest[0..<(dest.count - sourceSuffix.count)]) is longer than the common destination prefix \(destinations[0].pathComponents[0..<destinationPrefixCount])")
                     return nil
                 }
