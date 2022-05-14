@@ -16227,6 +16227,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 #pragma mark - iTermConductorDelegate
 
 - (void)conductorWriteWithString:(NSString *)string {
+    DLog(@"Conductor write: %@", string);
     [self writeTaskNoBroadcast:string];
 }
 

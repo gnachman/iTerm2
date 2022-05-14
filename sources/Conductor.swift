@@ -332,7 +332,11 @@ class Conductor: NSObject {
         DLog("> \(pending.command.stringValue)")
         let savedQueueWrites = queueWrites
         queueWrites = false
-        delegate.conductorWrite(string: pending.command.stringValue + "\n")
+        let parts = pending.command.stringValue.chunk(128)
+        for part in parts {
+            delegate.conductorWrite(string: part + "\n")
+        }
+        delegate.conductorWrite(string: "\n")
         queueWrites = savedQueueWrites
     }
 
@@ -381,3 +385,19 @@ fileprivate class ConductorPayloadBuilder {
     }
 }
 
+extension String {
+    func chunk(_ maxSize: Int) -> [String] {
+        var parts = [String]()
+        var index = self.startIndex
+        while index < self.endIndex {
+            let end = self.index(index,
+                                 offsetBy: min(maxSize,
+                                               self.distance(from: index,
+                                                             to: self.endIndex)))
+            let part = String(self[index..<end])
+            parts.append(part)
+            index = end
+        }
+        return parts
+    }
+}
