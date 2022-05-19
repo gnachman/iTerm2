@@ -256,7 +256,10 @@
                           @(SSH_INIT):                        @"SSH_INIT",
                           @(SSH_LINE):                        @"SSH_LINE",
                           @(SSH_UNHOOK):                      @"SSH_UNHOOK",
+                          @(SSH_BEGIN):                       @"SSH_BEGIN",
                           @(SSH_END):                         @"SSH_END",
+                          @(SSH_OUTPUT):                      @"SSH_OUTPUT",
+                          @(SSH_TERMINATE):                   @"SSH_TERMINATE",
     };
     NSString *name = map[@(type)];
     if (name) {

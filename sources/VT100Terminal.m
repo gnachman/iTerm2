@@ -1884,11 +1884,44 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     if (_lastToken != nil &&
         VT100TokenIsTmux(_lastToken) &&
         !VT100TokenIsTmux(token)) {
-        // Have the delegate roll back this token and pause execution.fdslfj
+        // Have the delegate roll back this token and pause execution.
         [_delegate terminalDidTransitionOutOfTmuxMode];
         // Nil out last token so we don't take this code path a second time.
         _lastToken = nil;
         return;
+    }
+    // TODO: This is wrong. I should keep a stack of (pid, depth) because it
+    // should be possible to detect side-channel output from any level. This
+    // will incorrectly treat side channels from the middle of the stack as
+    // regular output.
+    if (token.sshInfo.valid &&
+        self.sshPID != 0 &&
+        token.sshInfo.depth == self.sshDepth &&
+        token.sshInfo.pid != self.sshPID) {
+        // A side-channel produced output. Ignore anything that isn't plaintext to make parsing easy.
+        VT100Token *wrapped = [[VT100Token alloc] init];
+        wrapped.type = SSH_OUTPUT;
+        wrapped.sshInfo = token.sshInfo;
+        switch (token.type) {
+            case VT100_ASCIISTRING:
+                wrapped.string = [[NSString alloc] initWithBytes:token.asciiData->buffer
+                                                          length:token.asciiData->length
+                                                        encoding:NSASCIIStringEncoding];
+                break;
+            case VT100_STRING:
+                wrapped.string = token.string;
+                break;
+            case VT100CC_CR:
+                wrapped.string = @"\r";
+                break;
+            case VT100CC_LF:
+                wrapped.string = @"\n";
+                break;
+
+            default:
+                return;
+        }
+        token = wrapped;
     }
     [self reallyExecuteToken:token];
     _lastToken = token;
@@ -2897,8 +2930,33 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [self.delegate terminalDidUnhookSSHConductor];
             break;
 
-        case SSH_END:
-            [self.delegate terminalDidEndSSHConductorCommandWithStatus:token.string.iterm_unsignedIntegerValue];
+        case SSH_BEGIN:
+            [self.delegate terminalDidBeginSSHConductorCommandWithIdentifier:token.string];
+            break;
+            
+        case SSH_END: {
+            NSString *s = token.string;
+            NSArray<NSString *> *parts = [s componentsSeparatedByString:@" "];
+            if (parts.count != 2) {
+                break;
+            }
+            NSUInteger status = [parts[1] iterm_unsignedIntegerValue];
+            if (status > 255) {
+                break;
+            }
+            [self.delegate terminalDidEndSSHConductorCommandWithIdentifier:parts[0] status:status];
+            break;
+        }
+
+        case SSH_OUTPUT:
+            [self.delegate terminalHandleSSHSideChannelOutput:token.string
+                                                          pid:token.sshInfo.pid
+                                                      channel:token.sshInfo.channel];
+            break;
+
+        case SSH_TERMINATE:
+            [self.delegate terminalHandleSSHTerminatePID:token.csi->p[0]
+                                                withCode:token.csi->p[1]];
             break;
 
         case DCS_BEGIN_SYNCHRONIZED_UPDATE:

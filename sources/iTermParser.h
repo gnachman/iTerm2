@@ -225,3 +225,13 @@ NS_INLINE void iTermParserSetCSIParameterIfDefault(CSIParam *csiParam, int n, in
     csiParam->p[n] = csiParam->p[n] < 0 ? value : csiParam->p[n];
     csiParam->count = MAX(csiParam->count, n + 1);
 }
+
+NS_INLINE BOOL iTermAddCSIParameter(CSIParam *csiParam, int value) {
+    int index = csiParam->count;
+    if (csiParam->count + 1 >= VT100CSIPARAM_MAX) {
+        return NO;
+    }
+    csiParam->p[index] = value;
+    csiParam->count += 1;
+    return YES;
+}

@@ -2947,7 +2947,10 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)writeTaskNoBroadcast:(NSString *)string
                     encoding:(NSStringEncoding)encoding
                forceEncoding:(BOOL)forceEncoding {
-    if (self.tmuxMode == TMUX_CLIENT) {
+    if (_conductor.handlesKeystrokes) {
+        [_conductor sendKeys:[string dataUsingEncoding:encoding]];
+        return;
+    } else if (self.tmuxMode == TMUX_CLIENT) {
         // tmux doesn't allow us to abuse the encoding, so this can cause the wrong thing to be
         // sent (e.g., in mouse reporting).
         [[_tmuxController gateway] sendKeys:string
@@ -3052,15 +3055,18 @@ ITERM_WEAKLY_REFERENCEABLE
          encoding:(NSStringEncoding)optionalEncoding
     forceEncoding:(BOOL)forceEncoding {
     NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
-    if (self.tmuxMode == TMUX_CLIENT) {
+    if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes) {
         [self setBell:NO];
         if ([[_delegate realParentWindow] broadcastInputToSession:self]) {
             [[_delegate realParentWindow] sendInputToAllSessions:string
                                                         encoding:optionalEncoding
                                                    forceEncoding:forceEncoding];
-        } else {
+        } else if (self.tmuxMode == TMUX_CLIENT) {
             [[_tmuxController gateway] sendKeys:string
                                    toWindowPane:self.tmuxPane];
+        } else {
+            assert(_conductor.handlesKeystrokes);
+            [_conductor sendKeys:[string dataUsingEncoding:encoding]];
         }
         PTYScroller* ptys = (PTYScroller*)[_view.scrollview verticalScroller];
         [ptys setUserScroll:NO];
@@ -13552,15 +13558,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // Currently launching the session that has ssh instead of login shell.
         directory = self.environment[@"PWD"];
     }
+    iTermConductor *previousConductor = [_conductor autorelease];
     _conductor.delegate = nil;
-    [_conductor autorelease];
     NSDictionary *dict = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_SSH_CONFIG inProfile:self.profile]];
 
     iTermSSHConfiguration *config = [[[iTermSSHConfiguration alloc] initWithDictionary:dict] autorelease];
     _conductor = [[iTermConductor alloc] init:sshargs
                                      boolArgs:boolArgs
                                          vars:[self.screen exfiltratedEnvironmentVariables:config.environmentVariablesToCopy]
-                             initialDirectory:directory];
+                             initialDirectory:directory
+                                       parent:previousConductor];
     for (iTermTuple<NSString *, NSString *> *tuple in config.filesToCopy) {
         [_conductor addPath:tuple.firstObject destination:tuple.secondObject];
     }
@@ -13583,13 +13590,30 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)unhookSSHConductor {
+    DLog(@"Unhook %@", _conductor);
     _conductor.delegate = nil;
     [_conductor autorelease];
-    _conductor = nil;
+    _conductor = [_conductor.parent retain];
+    _conductor.delegate = self;
 }
 
-- (void)screenDidEndSSHConductorCommandWithStatus:(uint8_t)status {
-    [_conductor handleCommandEndWithStatus:status];
+- (void)screenDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier {
+    [_conductor handleCommandBeginWithIdentifier:identifier];
+}
+
+- (VT100ScreenSSHAction)screenDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier
+                                                               status:(uint8_t)status {
+    return [_conductor handleCommandEndWithIdentifier:identifier status:status];
+}
+
+- (void)screenHandleSSHSideChannelOutput:(NSString *)string
+                                     pid:(int32_t)pid
+                                 channel:(uint8_t)channel {
+    [_conductor handleSideChannelOutput:string pid:pid channel:channel];
+}
+
+- (VT100ScreenSSHAction)screenDidTerminateSSHProcess:(int)pid code:(int)code {
+    return [_conductor handleTerminatePID:pid withCode:code];
 }
 
 - (NSInteger)screenEndSSH:(NSString *)uniqueID {
@@ -16226,7 +16250,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 #pragma mark - iTermConductorDelegate
 
-- (void)conductorWriteWithString:(NSString *)string {
+- (void)conductorWriteString:(NSString *)string {
     DLog(@"Conductor write: %@", string);
     [self writeTaskNoBroadcast:string];
 }
@@ -16240,7 +16264,18 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
         [mutableState appendCarriageReturnLineFeed];
     }];
     [_conductor autorelease];
-    _conductor = nil;
+    [self unhookSSHConductor];
+}
+
+- (void)conductorTerminate:(iTermConductor *)conductor {
+    XLog(@"conductor terminated %@", conductor);
+    while (_conductor != nil) {
+        const BOOL found = (_conductor == conductor);
+        [self unhookSSHConductor];
+        if (found) {
+            return;
+        }
+    }
 }
 
 @end

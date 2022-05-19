@@ -15,6 +15,11 @@
 
 #define kDefaultStreamSize 100000
 
+@interface VT100Parser()
+// Nested parsers count their depth. This happens with ssh integration.
+@property (nonatomic) int depth;
+@end
+
 @implementation VT100Parser {
     unsigned char *_stream;
     int _currentStreamLength;
@@ -24,6 +29,7 @@
     NSMutableDictionary *_savedStateForPartialParse;
     VT100ControlParser *_controlParser;
     BOOL _dcsHooked;  // @synchronized(self)
+    VT100Parser *_sshParser;
 }
 
 - (instancetype)init {
@@ -41,6 +47,7 @@
     free(_stream);
     [_savedStateForPartialParse release];
     [_controlParser release];
+    [_sshParser release];
     [super dealloc];
 }
 
@@ -49,6 +56,8 @@
         if (uniqueID == nil || [_controlParser shouldUnhook:uniqueID]) {
             _dcsHooked = NO;
             [_controlParser unhookDCS];
+        } else {
+            [_sshParser forceUnhookDCS:uniqueID];
         }
     }
 }
@@ -107,6 +116,33 @@
                         _saveData = NO;
                     }
                     break;
+
+                case SSH_OUTPUT: {
+                    if (!_sshParser) {
+                        _sshParser = [[VT100Parser alloc] init];
+                        _sshParser.encoding = self.encoding;
+                        _sshParser.depth = self.depth + 1;
+                    }
+                    NSData *data = token.savedData;
+                    [_sshParser putStreamData:data.bytes length:data.length];
+                    const int start = CVectorCount(vector);
+                    [_sshParser addParsedTokensToVector:vector];
+                    const int end = CVectorCount(vector);
+                    const SSHInfo myInfo = {
+                        .pid = token.csi->p[0],
+                        .channel = token.csi->p[1],
+                        .valid = 1,
+                        .depth = self.depth
+                    };
+                    for (int i = start; i < end; i++) {
+                        VT100Token *token = CVectorGet(vector, i);
+                        SSHInfo sshInfo = token.sshInfo;
+                        if (!sshInfo.valid) {
+                            token.sshInfo = myInfo;
+                        }
+                    }
+                    break;
+                }
 
                 case DCS_TMUX_CODE_WRAP: {
                     VT100Parser *tempParser = [[[VT100Parser alloc] init] autorelease];
@@ -190,7 +226,7 @@
         }
         // Don't append the outer wrapper to the output. Earlier, it was unwrapped and the inner
         // tokens were already added.
-        if (token->type != DCS_TMUX_CODE_WRAP) {
+        if (token->type != DCS_TMUX_CODE_WRAP && token->type != SSH_OUTPUT) {
             [token retain];
             CVectorAppend(vector, token);
         }
@@ -236,6 +272,7 @@
     @synchronized(self) {
         _streamOffset = _currentStreamLength;
         assert(_streamOffset >= 0);
+        [_sshParser clearStream];
     }
 }
 
@@ -249,15 +286,25 @@
 
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID {
     @synchronized(self) {
-        [_controlParser startTmuxRecoveryModeWithID:dcsID];
-        _dcsHooked = YES;
+        if (_sshParser) {
+#warning TODO: This definitely doesn't work
+            [_sshParser startTmuxRecoveryModeWithID:dcsID];
+        } else {
+            [_controlParser startTmuxRecoveryModeWithID:dcsID];
+            _dcsHooked = YES;
+        }
     }
 }
 
 - (void)cancelTmuxRecoveryMode {
     @synchronized(self) {
-        [_controlParser cancelTmuxRecoveryMode];
-        _dcsHooked = NO;
+        if (_sshParser) {
+#warning TODO: This definitely doesn't work
+            [_sshParser cancelTmuxRecoveryMode];
+        } else {
+            [_controlParser cancelTmuxRecoveryMode];
+            _dcsHooked = NO;
+        }
     }
 }
 
@@ -266,6 +313,7 @@
         [_savedStateForPartialParse removeAllObjects];
         [self forceUnhookDCS:nil];
         [self clearStream];
+        [_sshParser reset];
     }
 }
 

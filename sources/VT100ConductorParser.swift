@@ -14,6 +14,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         case initial
         case ground
         case body(String)
+        case output(builder: SSHOutputTokenBuilder)
     }
     private var state = State.initial
     var hookDescription: String {
@@ -64,6 +65,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
             token.string = string
             state = .ground
             return .keepGoing
+
         case .ground:
             if string.hasPrefix("begin ") {
                 let parts = string.components(separatedBy: " ")
@@ -74,16 +76,47 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 DLog("In ground state: Found valid begin token")
                 state = .body(parts[1])
                 // No need to expose this to clients.
-                token.type = VT100_WAIT
+                token.type = SSH_BEGIN
+                token.string = parts[1]
                 return .keepGoing
             } else if string == "unhook" {
                 DLog("In ground state: Found valid unhook token")
                 token.type = SSH_UNHOOK
                 return .unhook
+            } else if string.hasPrefix("%output ") {
+                if let builder = SSHOutputTokenBuilder(string) {
+                    state = .output(builder: builder)
+                    return .keepGoing
+                } else {
+                    DLog("Malformed %output, unhook")
+                    return .unhook
+                }
+            } else if string.hasPrefix("%terminate ") {
+                let parts = string.components(separatedBy: " ")
+                guard parts.count >= 3, let pid = Int32(parts[1]), let rc = Int32(parts[2]) else {
+                    DLog("Malformed %terminate, unhook")
+                    return .unhook
+                }
+                token.type = SSH_TERMINATE
+                iTermAddCSIParameter(token.csi, pid)
+                iTermAddCSIParameter(token.csi, rc)
+                return .keepGoing
             } else {
                 DLog("In ground state: Found unrecognized token")
                 return .unhook
             }
+
+        case .output(builder: let builder):
+            if string.hasPrefix("%end \(builder.identifier)") {
+                if builder.populate(token) {
+                    state = .ground
+                    return .keepGoing
+                }
+                DLog("Failed to build \(builder)")
+                return .unhook
+            }
+            builder.append(string)
+            return .keepGoing
 
         case .body(let id):
             let expectedPrefix = "end \(id) "
@@ -91,7 +124,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 DLog("In body state: found valid end token")
                 state = .ground
                 token.type = SSH_END
-                token.string = String(string.dropFirst(expectedPrefix.count))
+                token.string = id + " " + String(string.dropFirst(expectedPrefix.count))
             } else {
                 DLog("In body state: found valid line")
                 token.type = SSH_LINE
@@ -129,5 +162,56 @@ extension Data {
 
     mutating func append(from pointer: UnsafePointer<UInt8>, range: Range<Int>) {
         append(pointer.advanced(by: range.lowerBound), count: range.count)
+    }
+}
+
+private class SSHOutputTokenBuilder {
+    let pid: Int32
+    let channel: UInt8
+    let identifier: String
+    @objc private(set) var base64 = ""
+
+    init?(_ string: String) {
+        let parts = string.components(separatedBy: " ")
+        guard parts.count >= 4, let pid = Int32(parts[2]), let channel = UInt8(parts[3]) else {
+            return nil
+        }
+        self.pid = pid
+        self.identifier = parts[1]
+        self.channel = channel
+    }
+
+    func append(_ string: String) {
+        base64.append(string)
+    }
+
+    func populate(_ token: VT100Token) -> Bool {
+        guard let data = Data(base64Encoded: base64) else {
+            return false
+        }
+        token.csi.pointee.p.0 = pid
+        token.csi.pointee.p.1 = Int32(channel)
+        token.csi.pointee.count = 2
+        token.savedData = data
+        token.type = SSH_OUTPUT
+        return true
+    }
+}
+
+@objc class ParsedSSHOutput: NSObject {
+    @objc let pid: Int32
+    @objc let channel: Int32
+    @objc let data: Data
+
+    @objc init?(_ token: VT100Token) {
+        guard token.type == SSH_OUTPUT else {
+            return nil
+        }
+        guard token.csi.pointee.count >= 2 else {
+            return nil
+        }
+        pid = token.csi.pointee.p.0
+        channel = token.csi.pointee.p.1
+        data = token.savedData
     }
 }

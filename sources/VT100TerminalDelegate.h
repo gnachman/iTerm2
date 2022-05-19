@@ -11,6 +11,7 @@
 #import "VT100Token.h"
 #import "iTermPromise.h"
 
+@class ParsedSSHOutput;
 @class VT100SavedColorsSlot;
 @class iTermTokenExecutorUnpauser;
 
@@ -508,7 +509,12 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalDidHookSSHConductorWithParams:(NSString *)token;
 - (void)terminalDidReadSSHConductorLine:(NSString *)string;
 - (void)terminalDidUnhookSSHConductor;
-- (void)terminalDidEndSSHConductorCommandWithStatus:(uint8_t)status;
+- (void)terminalDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier;
+- (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier status:(uint8_t)status;
+- (void)terminalHandleSSHSideChannelOutput:(NSString *)string
+                                       pid:(int32_t)pid
+                                   channel:(uint8_t)channel;
+- (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code;
 - (void)terminalUpdateEnv:(NSString *)value;
 - (void)terminalEndSSH:(NSString *)uniqueID;
 

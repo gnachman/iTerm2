@@ -2494,11 +2494,53 @@
     }];
 }
 
-- (void)terminalDidEndSSHConductorCommandWithStatus:(uint8_t)status {
+- (void)terminalDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier {
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
-        [delegate screenDidEndSSHConductorCommandWithStatus:status];
+        [delegate screenDidBeginSSHConductorCommandWithIdentifier:identifier];
     }];
+}
 
+- (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier status:(uint8_t)status {
+    __weak __typeof(self) weakSelf = self;
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        const VT100ScreenSSHAction action = [delegate screenDidEndSSHConductorCommandWithIdentifier:identifier
+                                                                                             status:status];
+
+        [weakSelf handleSSHAction:action];
+        [unpauser unpause];
+    }];
+}
+
+- (void)terminalHandleSSHSideChannelOutput:(NSString *)string
+                                       pid:(int32_t)pid
+                                   channel:(uint8_t)channel {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenHandleSSHSideChannelOutput:string pid:pid channel:channel];
+    }];
+}
+
+- (void)handleSSHAction:(VT100ScreenSSHAction)action {
+    switch (action.type) {
+        case VT100ScreenSSHActionTypeNone:
+            break;
+        case VT100ScreenSSHActionTypeSetForegroundProcessID:
+            self.terminal.sshPID = action.pid;
+            self.terminal.sshDepth = action.depth;
+            break;
+        case VT100ScreenSSHActionTypeResetForegroundProcessID:
+            self.terminal.sshPID = 0;
+            self.terminal.sshDepth = 0;
+            break;
+    }
+}
+
+- (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code {
+    __weak __typeof(self) weakSelf = self;
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        const VT100ScreenSSHAction action = [delegate screenDidTerminateSSHProcess:pid code:code];
+        [weakSelf handleSSHAction:action];
+        [unpauser unpause];
+    }];
 }
 
 - (void)terminalUpdateEnv:(NSString *)value {

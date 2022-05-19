@@ -266,7 +266,10 @@ typedef enum {
     SSH_INIT,
     SSH_LINE,
     SSH_UNHOOK,  // Leave conductor mode and behave like a regular session
+    SSH_BEGIN,
     SSH_END,   // At the end of a command
+    SSH_OUTPUT,  // %output
+    SSH_TERMINATE,  // %terminate
 } VT100TerminalTokenType;
 
 // A preinitialized array of screen_char_t. When ASCII data is present, it will have the codes
@@ -287,6 +290,13 @@ typedef struct {
     char staticBuffer[128];
     ScreenChars *screenChars;
 } AsciiData;
+
+typedef struct {
+    uint8_t channel;
+    int32_t pid;
+    int valid: 1;
+    int depth: 23;
+} SSHInfo;
 
 @interface VT100Token : NSObject {
 @public
@@ -321,6 +331,7 @@ typedef struct {
 // For ascii strings (type==VT100_ASCIISTRING).
 @property(nonatomic, readonly) AsciiData *asciiData;
 @property(nonatomic) VT100TerminalTokenType type;
+@property(nonatomic) SSHInfo sshInfo;
 
 + (instancetype)token;
 + (instancetype)newTokenForControlCharacter:(unsigned char)controlCharacter;

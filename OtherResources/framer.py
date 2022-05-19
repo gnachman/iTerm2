@@ -16,7 +16,7 @@ import traceback
 PROCESSES = {}
 # List of pids that are completed. Their tasks can be awaited and removed.
 COMPLETED = []
-VERBOSE=0
+VERBOSE=1
 LOGFILE=None
 
 def log(message):
@@ -26,6 +26,10 @@ def log(message):
             LOGFILE = open("/tmp/framer.txt", "w")
         print(f'DEBUG: {message}', file=LOGFILE)
         LOGFILE.flush()
+
+def send(text):
+    log("> " + str(text))
+    print(text)
 
 class Process:
     @staticmethod
@@ -202,8 +206,10 @@ def guess_login_shell():
 ## Commands
 
 async def handle_login(identifier, args):
+    log("begin handle_login")
     cwd = args[0]
     args = args[1:]
+    cwd = os.path.expandvars(os.path.expanduser(cwd))
     login_shell = guess_login_shell()
     log(f'Login shell is {login_shell}')
     try:
@@ -211,14 +217,15 @@ async def handle_login(identifier, args):
         proc = await Process.run_tty(
             login_shell,
             ["-" + shell_name] + args,
-            cwd if len(cwd) else None,
+            cwd,
             os.environ)
     except Exception as e:
         log(e)
+    log("login shell started")
     global PROCESSES
     PROCESSES[proc.pid] = proc
     begin(identifier)
-    print(proc.pid)
+    send(proc.pid)
     end(identifier, 0)
     await proc.handle_read(make_monitor_process(identifier, proc))
     return False
@@ -295,7 +302,7 @@ def make_monitor_process(identifier, proc):
             global COMPLETED
             COMPLETED.append(proc.pid)
             return cleanup()
-        print_output(identifier, channel, value)
+        print_output(identifier, proc.pid, channel, value)
         return None
     return monitor_process
 
@@ -307,15 +314,15 @@ async def communicate(identifier, proc, input_bytes):
         print_output(identifier, "1", errdata)
     return outdata, errdata
 
-def print_output(identifier, channel, data):
-    print(f'%output {identifier} {channel}')
+def print_output(identifier, pid, channel, data):
+    send(f'%output {identifier} {pid} {channel}')
     data = data
     encoded = base64.b64encode(data).decode("utf-8")
     n = 128
     for i in range(0, len(encoded), n):
         part = encoded[i:i+n]
-        print(part)
-    print(f'%end {identifier}')
+        send(part)
+    send(f'%end {identifier}')
 
 ## Infra
 
@@ -326,14 +333,14 @@ def fail(reason):
     except ValueError:
         tb = traceback.format_exc()
         log(tb)
-    print("abort")
+    send(f'abort {reason}')
     sys.exit(-1)
 
 def begin(identifier):
-    print(f'begin {identifier}')
+    send(f'begin {identifier}')
 
 def end(identifier, status):
-    print(f'end {status} {identifier}')
+    send(f'end {identifier} {status}')
 
 async def cleanup():
     """Await tasks that have completed, clear the COMPLETED list, and remove them from TASKS."""
@@ -347,7 +354,7 @@ async def cleanup():
         proc = PROCESSES[pid]
         del PROCESSES[pid]
         await proc.cleanup()
-        print(f'%terminate {proc.pid} {proc.return_code}')
+        send(f'%terminate {proc.pid} {proc.return_code}')
 
 async def handle(args):
     log(f'handle {args}')
@@ -388,7 +395,7 @@ async def mainloop():
         except:
             fail("exception during read_line")
             return
-        log(f'read {line} with length {len(line)}')
+        log(f'read from stdin "{line}" with length {len(line)}')
         if len(line):
             if len(args) and args[-1].endswith("\\"):
                 args[-1] = args[-1][:-1] + line
