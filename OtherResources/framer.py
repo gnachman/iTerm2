@@ -24,7 +24,7 @@ def log(message):
         global LOGFILE
         if not LOGFILE:
             LOGFILE = open("/tmp/framer.txt", "w")
-        print(f'DEBUG: {message}', file=LOGFILE)
+        print(f'DEBUG {os.getpid()}: {message}', file=LOGFILE)
         LOGFILE.flush()
 
 def send(text):
@@ -74,7 +74,7 @@ class Process:
         pipe = open(master, 'wb', 0)
         writer = await Process._writer(pipe)
         reader, _ = await Process._reader(pipe)
-        process = Process(proc, writer, reader, None)
+        process = Process(proc, writer, reader, None, master=master)
         # No need to close reader's transport because it's the same file descriptor as master.
         return process
 
@@ -124,7 +124,7 @@ class Process:
         transport, _ = await loop.connect_read_pipe(lambda: protocol, pipe)
         return reader, transport
 
-    def __init__(self, process, writer, stdout_reader, stderr_reader):
+    def __init__(self, process, writer, stdout_reader, stderr_reader, master=None):
         self.__process = process
         self.__writer = writer
         self.__stdout_reader = stdout_reader
@@ -133,6 +133,11 @@ class Process:
         self.__stderr_read_handler = None
         self.__cleanup = []
         self.__return_code = None
+        self.__master = master
+
+    @property
+    def master(self):
+        return self.__master
 
     async def cleanup(self):
         log(f'cleanup process {self.pid}')
@@ -409,6 +414,23 @@ async def mainloop():
                 return 0
             args = []
 
+async def update_pty_size():
+    log(f'update_pty_size')
+    window_size = fcntl.ioctl(sys.stdin.fileno(), termios.TIOCGWINSZ, '00000000')
+    for pid in PROCESSES:
+        proc = PROCESSES[pid]
+        master = proc.master
+        if master is not None:
+            log(f'TIOCSWINSZ {proc}')
+            fcntl.ioctl(master, termios.TIOCSWINSZ, window_size)
+        else:
+            log(f'no master fd for {proc}')
+
+def on_sigwinch(_sig, _stack):
+    log(f'Received SIGWINCH')
+    loop = asyncio.get_event_loop()
+    asyncio.run_coroutine_threadsafe(update_pty_size(), loop)
+
 HANDLERS = {
     "run": handle_run,
     "login": handle_login,
@@ -417,6 +439,8 @@ HANDLERS = {
     "quit": handle_quit}
 
 def main():
+    if sys.stdin.isatty():
+        signal.signal(signal.SIGWINCH, on_sigwinch)
     asyncio.run(mainloop())
 
 if __name__ == "__main__":
