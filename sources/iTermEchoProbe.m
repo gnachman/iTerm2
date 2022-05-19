@@ -101,6 +101,17 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
 }
 
 iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100Token *token) {
+    switch (token.type) {
+        case SSH_INIT:
+        case SSH_BEGIN:
+        case SSH_LINE:
+        case SSH_UNHOOK:
+        case SSH_END:
+        case SSH_TERMINATE:
+            return state;
+        default:
+            break;
+    }
     switch (state) {
         case iTermEchoProbeOff:
         case iTermEchoProbeFailed:
