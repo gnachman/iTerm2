@@ -38,7 +38,8 @@ static const CGFloat kMargin = 0;
 - (instancetype)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        _jobTreeViewController = [[iTermJobTreeViewController alloc] initWithProcessID:1];
+        _jobTreeViewController = [[iTermJobTreeViewController alloc] initWithProcessID:1
+                                                                   processInfoProvider:[iTermProcessCache sharedInstance]];
         _jobTreeViewController.font = [NSFont it_toolbeltFont];
         _jobTreeViewController.animateChanges = NO;
         [self addSubview:_jobTreeViewController.view];
@@ -87,6 +88,7 @@ static const CGFloat kMargin = 0;
 
 - (void)updateJobs {
     _jobTreeViewController.pid = [self.toolWrapper.delegate.delegate toolbeltCurrentShellProcessId];
+    _jobTreeViewController.processInfoProvider = [self.toolWrapper.delegate.delegate toolbeltCurrentShellProcessInfoProvider];
 }
 
 @end

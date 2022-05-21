@@ -59,6 +59,7 @@ extern NSString *const iTermSessionWillTerminateNotification;
 @class PTYTextView;
 @class PasteContext;
 @class PreferencePanel;
+@protocol ProcessInfoProvider;
 @class PTYSession;
 @class SSHIdentity;
 @protocol VT100RemoteHostReading;
@@ -277,6 +278,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)session:(PTYSession *)session setFilter:(NSString *)filter;
 - (PTYSession *)sessionSyntheticSessionFor:(PTYSession *)live;
 - (void)sessionClose:(PTYSession *)session;
+- (void)sessionProcessInfoProviderDidChange:(PTYSession *)session;
 
 @end
 
@@ -570,6 +572,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, copy) NSDictionary *foundingArrangement;
 @property(nonatomic, readonly) id<ExternalSearchResultsController> externalSearchResultsController;
 @property(nonatomic, readonly) SSHIdentity *sshIdentity;
+@property(nonatomic, readonly) id<ProcessInfoProvider> processInfoProvider;
 
 #pragma mark - methods
 

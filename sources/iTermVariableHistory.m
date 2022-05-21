@@ -71,6 +71,7 @@
                                     iTermVariableKeySessionTmuxWindowPaneIndex,
                                     iTermVariableKeySessionJobPid,
                                     iTermVariableKeySessionChildPid,
+                                    iTermVariableKeySessionEffectiveSessionRootPid,
                                     iTermVariableKeySessionMouseReportingMode,
                                     iTermVariableKeySessionBadge,
                                     iTermVariableKeySessionTmuxStatusLeft,

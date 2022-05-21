@@ -3693,6 +3693,11 @@
 		A6EEAED5283072CA0039E850 /* framer.py in Headers */ = {isa = PBXBuildFile; fileRef = A6EEAED2283072CA0039E850 /* framer.py */; };
 		A6EEAED628336C2A0039E850 /* framer.py in Resources */ = {isa = PBXBuildFile; fileRef = A6EEAED2283072CA0039E850 /* framer.py */; };
 		A6EEAED72834165C0039E850 /* framer.py in Resources */ = {isa = PBXBuildFile; fileRef = A6EEAED2283072CA0039E850 /* framer.py */; };
+		A6EEAED92836F0590039E850 /* ProcessInfoProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EEAED82836F0580039E850 /* ProcessInfoProvider.swift */; };
+		A6EEAEDB2836F1180039E850 /* SSHProcessInfoProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EEAEDA2836F1180039E850 /* SSHProcessInfoProvider.swift */; };
+		A6EEAEDE283712070039E850 /* ProcessDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EEAEDD283712070039E850 /* ProcessDataSource.swift */; };
+		A6EEAEE128385A090039E850 /* PTYTask+ProcessInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EEAEDF28385A090039E850 /* PTYTask+ProcessInfo.h */; };
+		A6EEAEE228385A090039E850 /* PTYTask+ProcessInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EEAEE028385A090039E850 /* PTYTask+ProcessInfo.m */; };
 		A6EF57D121994DDC00C76698 /* iTermUserDefaultsObserver.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EF57CF21994DDC00C76698 /* iTermUserDefaultsObserver.h */; };
 		A6EF57D221994DDC00C76698 /* iTermUserDefaultsObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EF57D021994DDC00C76698 /* iTermUserDefaultsObserver.m */; };
 		A6EF5BC625BCCC0900807157 /* PseudoTerminalRestorer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */; };
@@ -6807,6 +6812,12 @@
 		A6EEA66A1C83C57B00FA1594 /* iTermAutomaticProfileSwitcherTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAutomaticProfileSwitcherTest.m; sourceTree = "<group>"; };
 		A6EEAED028306F350039E850 /* NSRegularExpression+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSRegularExpression+iTerm.swift"; sourceTree = "<group>"; };
 		A6EEAED2283072CA0039E850 /* framer.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = framer.py; path = OtherResources/framer.py; sourceTree = "<group>"; };
+		A6EEAED82836F0580039E850 /* ProcessInfoProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessInfoProvider.swift; sourceTree = "<group>"; };
+		A6EEAEDA2836F1180039E850 /* SSHProcessInfoProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHProcessInfoProvider.swift; sourceTree = "<group>"; };
+		A6EEAEDD283712070039E850 /* ProcessDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessDataSource.swift; sourceTree = "<group>"; };
+		A6EEAEDF28385A090039E850 /* PTYTask+ProcessInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTask+ProcessInfo.h"; sourceTree = "<group>"; };
+		A6EEAEE028385A090039E850 /* PTYTask+ProcessInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "PTYTask+ProcessInfo.m"; sourceTree = "<group>"; };
+		A6EEAEE328385A3F0039E850 /* PTYTask+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTask+Private.h"; sourceTree = "<group>"; };
 		A6EF57CF21994DDC00C76698 /* iTermUserDefaultsObserver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermUserDefaultsObserver.h; sourceTree = "<group>"; };
 		A6EF57D021994DDC00C76698 /* iTermUserDefaultsObserver.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermUserDefaultsObserver.m; sourceTree = "<group>"; };
 		A6EFF21A1D1CA9F800806EEF /* NSLocale+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSLocale+iTerm.h"; sourceTree = "<group>"; };
@@ -7191,6 +7202,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				A6EEAEDC283711D50039E850 /* Process Info */,
 				A6EC807F2828E9E100493544 /* ssh */,
 				A6EC8071281F2ACF00493544 /* Find on page */,
 				A6822749280786B3005DF0B4 /* Portholes */,
@@ -8626,8 +8638,6 @@
 		53EBF29A1DCBFF6D00766613 /* API */ = {
 			isa = PBXGroup;
 			children = (
-				53AFFC8A1DD2A03800E6CEC6 /* iTermLSOF.h */,
-				53AFFC8B1DD2A03800E6CEC6 /* iTermLSOF.m */,
 				53EBF29B1DCBFF7C00766613 /* iTermAPIServer.h */,
 				53EBF29C1DCBFF7C00766613 /* iTermAPIServer.m */,
 				53EBF2A31DCCF4E500766613 /* iTermSocketAddress.h */,
@@ -9177,6 +9187,9 @@
 				A682273F2805E573005DF0B4 /* LineBufferSorting.h */,
 				A68227402805E5C8005DF0B4 /* LineBufferSorting.mm */,
 				A682274528078434005DF0B4 /* PTYTextView.swift */,
+				A6EEAEDF28385A090039E850 /* PTYTask+ProcessInfo.h */,
+				A6EEAEE028385A090039E850 /* PTYTask+ProcessInfo.m */,
+				A6EEAEE328385A3F0039E850 /* PTYTask+Private.h */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -9983,10 +9996,6 @@
 				539325EF1DD66EF100CABCEF /* iTermPreciseTimer.m */,
 				A6A802E7226ED20800BC70DC /* iTermPrintGuard.h */,
 				A6A802E8226ED20800BC70DC /* iTermPrintGuard.m */,
-				537BFDC720FFB2590098C91F /* iTermProcessCache.h */,
-				537BFDC820FFB2590098C91F /* iTermProcessCache.m */,
-				A60BB38C1EB6A08A00D76C09 /* iTermProcessCollection.h */,
-				A60BB38D1EB6A08A00D76C09 /* iTermProcessCollection.m */,
 				1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */,
 				A6374A261DEE941F000A136F /* iTermPromptOnCloseReason.h */,
 				A6374A271DEE941F000A136F /* iTermPromptOnCloseReason.m */,
@@ -10174,6 +10183,8 @@
 				A62CD06927E93F5B00215E92 /* iTermSwiftHelpers.m */,
 				A6D10E3E27F8CB4E0026DB56 /* CommandExplainer.swift */,
 				A6EC8054281C852200493544 /* NSAttributedString+iTerm.swift */,
+				A6EEAED82836F0580039E850 /* ProcessInfoProvider.swift */,
+				A6EEAEDA2836F1180039E850 /* SSHProcessInfoProvider.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -10788,6 +10799,20 @@
 				A6EC8098282EBFC900493544 /* NSDictionary+Conductor.swift */,
 			);
 			name = ssh;
+			sourceTree = "<group>";
+		};
+		A6EEAEDC283711D50039E850 /* Process Info */ = {
+			isa = PBXGroup;
+			children = (
+				537BFDC720FFB2590098C91F /* iTermProcessCache.h */,
+				537BFDC820FFB2590098C91F /* iTermProcessCache.m */,
+				A60BB38C1EB6A08A00D76C09 /* iTermProcessCollection.h */,
+				A60BB38D1EB6A08A00D76C09 /* iTermProcessCollection.m */,
+				53AFFC8A1DD2A03800E6CEC6 /* iTermLSOF.h */,
+				53AFFC8B1DD2A03800E6CEC6 /* iTermLSOF.m */,
+				A6EEAEDD283712070039E850 /* ProcessDataSource.swift */,
+			);
+			name = "Process Info";
 			sourceTree = "<group>";
 		};
 		A6FCAF62250D4CF000B89EB0 /* KeyMappers */ = {
@@ -12067,6 +12092,7 @@
 				532755852387821C00C50732 /* iTermProcessMonitor.h in Headers */,
 				A67F5DE623947A2700D18028 /* iTermMultiServerConnection.h in Headers */,
 				5370679221C9D2780088D0F3 /* SIGIdentity.h in Headers */,
+				A6EEAEE128385A090039E850 /* PTYTask+ProcessInfo.h in Headers */,
 				7577E2A12593B88700905402 /* iTermSandboxedWorkerClient.h in Headers */,
 				5370ECDA20F580F7000CC321 /* iTermStatusBarRPCProvidedTextComponent.h in Headers */,
 				A60C03642089897400FE2F1F /* iTermScriptConsole.h in Headers */,
@@ -14457,6 +14483,7 @@
 				A6F3DA9424564598001D50C9 /* iTermScrollWheelStateMachine.m in Sources */,
 				A621F0FD26F27D16001DD3A6 /* ScreenChar.m in Sources */,
 				A6EC8076281F7F7A00493544 /* PTYScrollView.m in Sources */,
+				A6EEAEDE283712070039E850 /* ProcessDataSource.swift in Sources */,
 				A6A4868120B681A300493302 /* iTermColorPresets.m in Sources */,
 				A67BCFEA270F893300636983 /* CodableColor.swift in Sources */,
 				A678C512279BECAC00C59927 /* iTermGCD.m in Sources */,
@@ -14470,6 +14497,7 @@
 				53E98E7C233C6B760094D8A9 /* iTermTmuxSessionObject.m in Sources */,
 				A66719621DCE3772000CE608 /* iTermSocketAddress.m in Sources */,
 				A6A4867E20B67FD100493302 /* SmartSelectionController.m in Sources */,
+				A6EEAED92836F0590039E850 /* ProcessInfoProvider.swift in Sources */,
 				53AFFC8E1DD2A04100E6CEC6 /* iTermLSOF.m in Sources */,
 				A6BA7D25247637B700407C4D /* VT100InlineImageHelper.m in Sources */,
 				A6E5110F24C576B300D6552D /* iTermAnimatedImageInfo.m in Sources */,
@@ -14524,6 +14552,7 @@
 				A667C26227799447006B4DEF /* PTYNoteViewController.m in Sources */,
 				A63011AA20E7EDFC008114B7 /* iTermStatusBarKnobCheckboxViewController.m in Sources */,
 				53E9DFE9220D558E0070C9C0 /* iTermSetTitleTrigger.m in Sources */,
+				A6EEAEDB2836F1180039E850 /* SSHProcessInfoProvider.swift in Sources */,
 				A6667E95277CDD1800152678 /* IdempotentOperationJoiner.swift in Sources */,
 				A6A4866320B6768A00493302 /* ContextMenuActionPrefsController.m in Sources */,
 				A6A4866920B6792900493302 /* iTermEditKeyActionWindowController.m in Sources */,
@@ -14869,6 +14898,7 @@
 				A6758569245AA32400827C25 /* iTermGCDTimer.m in Sources */,
 				A6D4C26D21E19155009CF11B /* iTermSessionTabWindowOutlineDelegate.m in Sources */,
 				A62EED9F20E010C000943DE3 /* iTermScriptImporter.m in Sources */,
+				A6EEAEE228385A090039E850 /* PTYTask+ProcessInfo.m in Sources */,
 				530AB8C120B4E1DE00D2AA08 /* iTermRPCTrigger.m in Sources */,
 				A6F22AC02396326200C5D1A9 /* iTermSyntheticConfParser.m in Sources */,
 				A667C239276BD8CF006B4DEF /* VT100StateMachine.m in Sources */,

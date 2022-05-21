@@ -6,11 +6,13 @@
 //
 //
 
-#import "iTermLSOF.h"
 #import "iTermProcessCollection.h"
+
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+
+#import "iTerm2SharedARC-Swift.h"
 
 @interface iTermProcessInfoLock : NSObject
 @end
@@ -31,30 +33,32 @@
     NSMutableIndexSet *_childProcessIDs;
     __weak iTermProcessInfo *_deepestForegroundJob;
     BOOL _haveDeepestForegroundJob;
-    NSString *_name;
     NSNumber *_isForegroundJob;
     BOOL _initialized;
     NSNumber *_testValueForForegroundJob;
     BOOL _computingTreeString;
     NSDate *_startTime;
+    id<iTermProcessDataSource> _dataSource;
 }
 
 - (instancetype)initWithPid:(pid_t)processID
                        ppid:(pid_t)parentProcessID
-                 collection:(iTermProcessCollection *)collection {
+                 collection:(iTermProcessCollection *)collection
+                 dataSource:(id<iTermProcessDataSource>)dataSource {
     self = [super init];
     if (self) {
         _processID = processID;
         _parentProcessID = parentProcessID;
         _childProcessIDs = [[NSMutableIndexSet alloc] init];
         _collection = collection;
+        _dataSource = dataSource;
     }
     return self;
 }
 
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p pid=%@ name=%@ children.count=%@ haveDeepest=%@ isFg=%@>",
-            self.class, self, @(self.processID), _name, @(_childProcessIDs.count), @(_haveDeepestForegroundJob), _isForegroundJob];
+            self.class, self, @(self.processID), self.name, @(_childProcessIDs.count), @(_haveDeepestForegroundJob), _isForegroundJob];
 }
 
 - (NSString *)recursiveDescription {
@@ -67,7 +71,7 @@
     }
     NSString *me = [NSString stringWithFormat:@"%@%@ %@",
             [@"  " stringRepeatedTimes:depth],
-            @(_processID), _name];
+            @(_processID), self.name];
     if (!self.children.count) {
         return me;
     }
@@ -124,7 +128,7 @@
 
 - (NSDate *)startTime {
     if (!_startTime) {
-        _startTime = [iTermLSOF startTimeForProcess:self.processID];
+        _startTime = [_dataSource startTimeForProcess:self.processID];
     }
     return _startTime;
 }
@@ -230,10 +234,10 @@
 - (void)doSlowLookup {
     if ([self shouldInitialize]) {
         BOOL fg = NO;
-        self.nameValue = [iTermLSOF nameOfProcessWithPid:self->_processID isForeground:&fg];
+        self.nameValue = [_dataSource nameOfProcessWithPid:self->_processID isForeground:&fg];
         if (fg || [self.parent.name isEqualToString:@"login"] || !self.parent) {
             // Full command line with hacked command name.
-            NSArray<NSString *> *argv = [iTermLSOF commandLineArgumentsForProcess:self->_processID execName:NULL];
+            NSArray<NSString *> *argv = [_dataSource commandLineArgumentsForProcess:self->_processID execName:NULL];
             self.commandLineValue = [argv componentsJoinedByString:@" "];
             if (argv.firstObject.length) {
                 self.argv0Value = argv[0];
@@ -288,11 +292,13 @@
 
 @implementation iTermProcessCollection {
     NSMutableDictionary<NSNumber *, iTermProcessInfo *> *_processes;
+    id<iTermProcessDataSource> _dataSource;
 }
 
-- (instancetype)init {
+- (instancetype)initWithDataSource:(id<iTermProcessDataSource>)dataSource {
     self = [super init];
     if (self) {
+        _dataSource = dataSource;
         _processes = [[NSMutableDictionary alloc] init];
     }
     return self;
@@ -308,7 +314,8 @@
                               parentProcessID:(pid_t)parentProcessID {
     iTermProcessInfo *info = [[iTermProcessInfo alloc] initWithPid:processID
                                                               ppid:parentProcessID
-                                                        collection:self];
+                                                        collection:self
+                                                        dataSource:_dataSource];
     _processes[@(processID)] = info;
     return info;
 }

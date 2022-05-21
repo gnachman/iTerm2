@@ -188,9 +188,6 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
                 isUTF8:(BOOL)isUTF8
             completion:(void (^)(void))completion;
 
-- (void)fetchProcessInfoForCurrentJobWithCompletion:(void (^)(iTermProcessInfo *))completion;
-- (iTermProcessInfo *)cachedProcessInfoIfAvailable;
-
 - (void)writeTask:(NSData*)data;
 
 // Cause the slave to receive a SIGWINCH and change the tty's window size. If `size` equals the

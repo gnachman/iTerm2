@@ -6,22 +6,15 @@
 //
 
 #import <Foundation/Foundation.h>
+
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermProcessCollection.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermProcessCache : NSObject
+@interface iTermProcessCache : NSObject<ProcessInfoProvider>
 
 + (instancetype)sharedInstance;
-
-- (iTermProcessInfo *)processInfoForPid:(pid_t)pid;
-- (void)setNeedsUpdate:(BOOL)needsUpdate;
-- (void)requestImmediateUpdateWithCompletionBlock:(void (^)(void))completion;
-- (void)updateSynchronously;
-- (iTermProcessInfo *)deepestForegroundJobForPid:(pid_t)pid;
-- (void)registerTrackedPID:(pid_t)pid;
-- (void)unregisterTrackedPID:(pid_t)pid;
-- (BOOL)processIsDirty:(pid_t)pid;
 
 @end
 

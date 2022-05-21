@@ -73,5 +73,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)tabEndSyntheticSession:(PTYSession *)syntheticSession;
 - (void)tab:(PTYTab *)tab sessionDidRestart:(PTYSession *)session;
 - (void)tab:(PTYTab *)tab closeSession:(PTYSession *)session;
+- (void)tabProcessInfoProviderDidChange:(PTYTab *)tab;
 
 @end

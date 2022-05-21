@@ -23,8 +23,40 @@
 #include <string.h>
 #include <sys/sysctl.h>
 
+@interface iTermLSOFProxy: NSObject<iTermProcessDataSource>
+@end
+
+@implementation iTermLSOFProxy
+
++ (instancetype)sharedInstance {
+    static iTermLSOFProxy *instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[iTermLSOFProxy alloc] init];
+    });
+    return instance;
+}
+
+- (NSArray<NSString *> *)commandLineArgumentsForProcess:(pid_t)pid execName:(NSString *__autoreleasing *)execName {
+    return [iTermLSOF commandLineArgumentsForProcess:pid execName:execName];
+}
+
+- (NSString *)nameOfProcessWithPid:(pid_t)thePid isForeground:(BOOL *)isForeground {
+    return [iTermLSOF nameOfProcessWithPid:thePid isForeground:isForeground];
+}
+
+- (NSDate *)startTimeForProcess:(pid_t)pid {
+    return [iTermLSOF startTimeForProcess:pid];
+}
+
+@end
+
 @implementation iTermLSOF {
     iTermSocketAddress *_socketAddress;
+}
+
++ (id<iTermProcessDataSource>)processDataSource {
+    return [iTermLSOFProxy sharedInstance];
 }
 
 + (int)maximumLengthOfProcargs {

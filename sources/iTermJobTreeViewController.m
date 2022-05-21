@@ -8,6 +8,7 @@
 #import "iTermJobTreeViewController.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermGraphicSource.h"
 #import "iTermLSOF.h"
 #import "iTermProcessCache.h"
@@ -251,13 +252,15 @@ static int gSignalsToList[] = {
     iTermGraphicSource *_graphicSource;
 }
 
-- (instancetype)initWithProcessID:(pid_t)pid {
+- (instancetype)initWithProcessID:(pid_t)pid
+              processInfoProvider:(id<ProcessInfoProvider>)processInfoProvider {
     self = [super initWithNibName:@"iTermJobTreeViewController" bundle:[NSBundle bundleForClass:[iTermJobTreeViewController class]]];
     if (self) {
         _pid = pid;
         _animateChanges = YES;
         _graphicSource = [[iTermGraphicSource alloc] init];
         _graphicSource.disableTinting = YES;
+        _processInfoProvider = processInfoProvider;
     }
     return self;
 }
@@ -340,9 +343,16 @@ static int gSignalsToList[] = {
         pid_t pid = job.pid;
         if (pid) {
             DLog(@"Send %d to %@", [signal_ intValue], @(pid));
+            [self.processInfoProvider sendSignal:signal_.intValue
+                                           toPID:pid];
             kill(pid, [signal_ intValue]);
         }
     }];
+    [self update];
+}
+
+- (void)setProcessInfoProvider:(id<ProcessInfoProvider>)processInfoProvider {
+    _processInfoProvider = processInfoProvider;
     [self update];
 }
 
@@ -356,7 +366,7 @@ static int gSignalsToList[] = {
 }
 
 - (void)update {
-    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] processInfoForPid:_pid];
+    iTermProcessInfo *info = [self.processInfoProvider processInfoForPid:_pid];
     if (!info) {
         _root = nil;
         [_outlineView reloadData];

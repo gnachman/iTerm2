@@ -7,6 +7,11 @@
 
 import Foundation
 
+protocol SSHCommandRunning {
+    func runRemoteCommand(_ commandLine: String,
+                          completion: @escaping  (Data, Int32) -> ())
+}
+
 @objc(iTermConductorDelegate)
 protocol ConductorDelegate: Any {
     @objc(conductorWriteString:) func conductorWrite(string: String)
@@ -24,13 +29,34 @@ class Conductor: NSObject {
     private let depth: Int32
     @objc let parent: Conductor?
     @objc private(set) var queueWrites = true
-    private var framedPID: Int32? = nil
+    @objc var framing: Bool {
+        return framedPID != nil
+    }
+    @objc(framedPID) var objcFramedPID: NSNumber? {
+        if let pid = framedPID {
+            return NSNumber(value: pid)
+        }
+        return nil
+    }
+    private(set) var framedPID: Int32? = nil
     @objc var handlesKeystrokes: Bool {
         return framedPID != nil && queueWrites
     }
     @objc var sshIdentity: SSHIdentity {
         return parsedSSHArguments.identity
     }
+    private lazy var _processInfoProvider: SSHProcessInfoProvider = {
+        let provider = SSHProcessInfoProvider(rootPID: framedPID!, runner: self)
+        provider.register(trackedPID: framedPID!)
+        return provider
+    }()
+    @objc var processInfoProvider: ProcessInfoProvider & SessionProcessInfoProvider {
+        if framedPID == nil {
+            return NullProcessInfoProvider()
+        }
+        return _processInfoProvider
+    }
+    private var backgroundJobs = [Int32: State]()
 
     enum Command {
         case execLoginShell
@@ -143,6 +169,7 @@ class Conductor: NSObject {
     }
 
     enum PartialResult {
+        case sideChannelLine(line: String, channel: UInt8, pid: Int32)
         case line(String)
         case end(UInt8)  // arg is exit status
         case abort  // couldn't even send the command
@@ -250,15 +277,6 @@ class Conductor: NSObject {
         }
     }
 
-    private func framerRun(command: String) {
-        send(.framerRun(command)) { result in
-            switch result {
-            case .line(_), .abort, .end(_):
-                return nil
-            }
-        }
-    }
-
     private func framerLogin(cwd: String, args: [String]) {
         send(.framerLogin(cwd: cwd, args: args)) { [weak self] result in
             switch result {
@@ -276,7 +294,7 @@ class Conductor: NSObject {
                 return VT100ScreenSSHAction(type: .setForegroundProcessID,
                                             pid: pid,
                                             depth: self.depth)
-            case .abort:
+            case .abort, .sideChannelLine(_, _, _):
                 return nil
             }
         }
@@ -285,7 +303,7 @@ class Conductor: NSObject {
     private func framerSend(data: Data, pid: Int32) {
         send(.framerSend(data, pid: pid)) { result in
             switch result {
-            case .line(_), .abort, .end(_):
+            case .line(_), .abort, .end(_), .sideChannelLine(_, _, _):
                 return nil
             }
         }
@@ -294,7 +312,7 @@ class Conductor: NSObject {
     private func framerKill(pid: Int) {
         send(.framerKill(pid: pid)) { result in
             switch result {
-            case .line(_), .abort, .end(_):
+            case .line(_), .abort, .end(_), .sideChannelLine(_, _, _):
                 return nil
             }
         }
@@ -303,7 +321,7 @@ class Conductor: NSObject {
     private func framerQuit() {
         send(.framerQuit) { result in
             switch result {
-            case .line(_), .abort, .end(_):
+            case .line(_), .abort, .end(_), .sideChannelLine(_, _, _):
                 return nil
             }
         }
@@ -323,7 +341,7 @@ class Conductor: NSObject {
                 }
                 self.remoteInfo.pid = pid
                 return nil
-            case .abort:
+            case .abort, .sideChannelLine(_, _, _):
                 return nil
             case .end(let status):
                 guard status == 0 else {
@@ -346,7 +364,7 @@ class Conductor: NSObject {
                 case .line(let value):
                     self?.fail("Unexpected output from setenv: \(value)")
                     return nil
-                case .abort:
+                case .abort, .sideChannelLine(_, _, _):
                     return nil
                 case .end(let status):
                     guard status == 0 else {
@@ -365,7 +383,7 @@ class Conductor: NSObject {
             case .line(let value):
                 self?.fail("Unexpected output from write: \(value)")
                 return nil
-            case .abort:
+            case .abort, .sideChannelLine(_, _, _):
                 return nil
             case .end(let status):
                 guard status == 0 else {
@@ -383,7 +401,7 @@ class Conductor: NSObject {
             case .line(let value):
                 self?.fail("Unexpected output from cd: \(value)")
                 return nil
-            case .abort:
+            case .abort, .sideChannelLine(_, _, _):
                 return nil
             case .end(let status):
                 guard status == 0 else {
@@ -400,7 +418,7 @@ class Conductor: NSObject {
             switch result {
             case .line(_):
                 fatalError()
-            case .abort:
+            case .abort, .sideChannelLine(_, _, _):
                 return nil
             case .end(let status):
                 guard status == 0 else {
@@ -421,7 +439,7 @@ class Conductor: NSObject {
     private func runPython(_ code: String) {
         send(.runPython(code)) { [weak self] result in
             switch result {
-            case .line(_), .abort:
+            case .line(_), .abort, .sideChannelLine(_, _, _):
                 return nil
             case .end(let status):
                 if status == 0 {
@@ -439,7 +457,7 @@ class Conductor: NSObject {
     private func run(_ command: String) {
         send(.run(command)) { [weak self] result in
             switch result {
-            case .line(_):
+            case .line(_), .sideChannelLine(_, _, _):
                 fatalError()
             case .abort:
                 return nil
@@ -458,7 +476,7 @@ class Conductor: NSObject {
             switch result {
             case .line(_):
                 fatalError()
-            case .abort:
+            case .abort, .sideChannelLine(_, _, _):
                 return nil
             case .end(let status):
                 guard status == 0 else {
@@ -474,10 +492,10 @@ class Conductor: NSObject {
         var lines = [String]()
         send(.shell("python3 -V")) { result in
             switch result {
-            case .line(let output):
+            case .line(let output), .sideChannelLine(line: let output, channel: 1, pid: _):
                 lines.append(output)
                 return nil
-            case .abort:
+            case .abort, .sideChannelLine(_, _, _):
                 otherwise()
                 return nil
             case .end(let status):
@@ -549,7 +567,7 @@ class Conductor: NSObject {
                 switch result {
                 case .end(_), .abort:
                     self.delegate?.conductorTerminate(self)
-                case .line(_):
+                case .line(_), .sideChannelLine(_, _, _):
                     break
                 }
                 return nil
@@ -561,14 +579,32 @@ class Conductor: NSObject {
             } else {
                 return VT100ScreenSSHAction(type: .resetForegroundProcessID, pid: 0, depth: 0)
             }
+        } else if let jobState = backgroundJobs[pid] {
+            switch jobState {
+            case .ground:
+                fail("Unexpected termination of \(pid)")
+            case .willExecute(let context), .executing(let context):
+                _ = context.handler(.end(UInt8(code)))
+                backgroundJobs.removeValue(forKey: pid)
+            }
         }
         return VT100ScreenSSHAction(type: .none, pid: 0, depth: 0)
     }
 
     @objc(handleSideChannelOutput:pid:channel:)
     func handleSideChannelOutput(_ string: String, pid: Int32, channel: UInt8) {
-        DLog("pid \(pid) channel \(channel) produced: \(string)")
-        // TODO something
+        guard let jobState = backgroundJobs[pid] else {
+            return
+        }
+//        DLog("pid \(pid) channel \(channel) produced: \(string)")
+        switch jobState {
+        case .ground:
+            fail("Unexpected input: \(string)")
+        case .willExecute(let context):
+            state = .executing(context)
+        case .executing(let context):
+            _ = context.handler(.sideChannelLine(line: string, channel: channel, pid: pid))
+        }
     }
 
     private func send(_ command: Command, handler: @escaping (PartialResult) -> (VT100ScreenSSHAction?)) {
@@ -632,6 +668,54 @@ class Conductor: NSObject {
         delegate?.conductorWrite(string: Command.execLoginShell.stringValue + "\n")
         delegate?.conductorAbort(reason: reason + " while " + cod)
     }
+}
+
+extension Conductor: SSHCommandRunning {
+    private func addBackgroundJob(_ pid: Int32, command: Command, completion: @escaping (Data, Int32) -> ()) {
+        var output = ""
+        let context = ExecutionContext(command: command, handler: { result in
+            switch result {
+            case .line(_):
+                fatalError()
+            case .sideChannelLine(line: let line, channel: 1, pid: _):
+                output += line
+            case .abort, .sideChannelLine(_, _, _):
+                completion(Data(), -2)
+            case .end(let status):
+                completion(output.data(using: .utf8) ?? Data(),
+                           Int32(status))
+            }
+            return nil
+        })
+        backgroundJobs[pid] = .executing(context)
+    }
+
+    func runRemoteCommand(_ commandLine: String,
+                          completion: @escaping (Data, Int32) -> ()) {
+        if framedPID == 0 {
+            completion(Data(), -1)
+            return
+        }
+
+        // This command ends almost immediately, providing only the child process's pid as output,
+        // but in actuality continues running in the background producing %output messages and
+        // eventually %terminate.
+        self.send(.framerRun(commandLine)) { [weak self] result in
+            switch result {
+            case .line(let line):
+                guard let pid = Int32(line) else {
+                    return nil
+                }
+                self?.addBackgroundJob(pid,
+                                       command: .framerRun(commandLine),
+                                       completion: completion)
+            case .sideChannelLine(_, _, _), .abort, .end(_):
+                break
+            }
+            return nil
+        }
+    }
+                                                                  
 }
 
 fileprivate class ConductorPayloadBuilder {

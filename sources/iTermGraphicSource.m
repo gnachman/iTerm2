@@ -7,6 +7,7 @@
 
 #import "iTermGraphicSource.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermProcessCache.h"
 #import "iTermTextExtractor.h"
 #import "NSColor+iTerm.h"
@@ -76,8 +77,10 @@ static NSDictionary *sGraphicIconMap;
     return self;
 }
 
-- (BOOL)updateImageForProcessID:(pid_t)pid enabled:(BOOL)enabled {
-    NSImage *image = [self imageForProcessID:pid enabled:enabled];
+- (BOOL)updateImageForProcessID:(pid_t)pid
+                        enabled:(BOOL)enabled
+            processInfoProvider:(id<ProcessInfoProvider>)processInfoProvider {
+    NSImage *image = [self imageForProcessID:pid enabled:enabled processInfoProvider:processInfoProvider];
     if (image == self.image) {
         return NO;
     }
@@ -94,11 +97,13 @@ static NSDictionary *sGraphicIconMap;
     return YES;
 }
 
-- (NSImage *)imageForProcessID:(pid_t)pid enabled:(BOOL)enabled {
+- (NSImage *)imageForProcessID:(pid_t)pid
+                       enabled:(BOOL)enabled
+           processInfoProvider:(id<ProcessInfoProvider>)processInfoProvider {
     if (!enabled) {
         return nil;
     }
-    NSString *job = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:pid].name;
+    NSString *job = [processInfoProvider deepestForegroundJobForPid:pid].name;
     if (!job) {
         return nil;
     }

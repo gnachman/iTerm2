@@ -75,6 +75,7 @@
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Global.h"
+#import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
 #import "iTermVariableScope+Window.h"
 #import "iTermWarning.h"
@@ -1891,6 +1892,10 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)tab:(PTYTab *)tab closeSession:(PTYSession *)session {
     [self closeSessionWithoutConfirmation:session];
+}
+
+- (void)tabProcessInfoProviderDidChange:(PTYTab *)tab {
+    [self refreshTools];
 }
 
 - (NSUInteger)numberOfTabsWithTmuxController:(TmuxController *)tmuxController {
@@ -11321,7 +11326,11 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (pid_t)toolbeltCurrentShellProcessId {
-    return [[[self currentSession] shell] pid];
+    return self.currentSession.variablesScope.effectiveRootPid.intValue;
+}
+
+- (id<ProcessInfoProvider>)toolbeltCurrentShellProcessInfoProvider {
+    return self.currentSession.processInfoProvider;
 }
 
 - (id<VT100ScreenMarkReading>)toolbeltLastCommandMark {

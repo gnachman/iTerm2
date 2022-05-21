@@ -29,7 +29,9 @@
     NSMutableDictionary *_savedStateForPartialParse;
     VT100ControlParser *_controlParser;
     BOOL _dcsHooked;  // @synchronized(self)
-    VT100Parser *_sshParser;
+    // Key is pid
+    NSMutableDictionary<NSNumber *, VT100Parser *> *_sshParsers;
+    int _mainSSHParserPID;
 }
 
 - (instancetype)init {
@@ -39,6 +41,8 @@
         _stream = iTermMalloc(_totalStreamLength);
         _savedStateForPartialParse = [[NSMutableDictionary alloc] init];
         _controlParser = [[VT100ControlParser alloc] init];
+        _sshParsers = [[NSMutableDictionary alloc] init];
+        _mainSSHParserPID = -1;
     }
     return self;
 }
@@ -47,7 +51,7 @@
     free(_stream);
     [_savedStateForPartialParse release];
     [_controlParser release];
-    [_sshParser release];
+    [_sshParsers release];
     [super dealloc];
 }
 
@@ -57,7 +61,7 @@
             _dcsHooked = NO;
             [_controlParser unhookDCS];
         } else {
-            [_sshParser forceUnhookDCS:uniqueID];
+            // TOOD: Maybe do something with ssh parsers?
         }
     }
 }
@@ -76,6 +80,7 @@
     unsigned char *position = NULL;
     int length = 0;
     if (datalen == 0) {
+        DLog(@"datalen is 0");
         token->type = VT100CC_NULL;
         _streamOffset = 0;
         _currentStreamLength = 0;
@@ -117,19 +122,42 @@
                     }
                     break;
 
-                case SSH_OUTPUT: {
-                    if (!_sshParser) {
-                        _sshParser = [[VT100Parser alloc] init];
-                        _sshParser.encoding = self.encoding;
-                        _sshParser.depth = self.depth + 1;
+                case SSH_TERMINATE: {
+                    // TODO: Make sure we don't leak sshparsers when connections end
+                    const int pid = token.csi->p[0];
+                    DLog(@"Remove ssh parser for pid %@", @(pid));
+                    [_sshParsers removeObjectForKey:@(pid)];
+                    if (pid == _mainSSHParserPID) {
+                        DLog(@"Lost main SSH process %d", pid);
+                        _mainSSHParserPID = -1;
                     }
+                    break;
+                }
+
+                case SSH_OUTPUT: {
+                    const int pid = token.csi->p[0];
+                    VT100Parser *sshParser = _sshParsers[@(pid)];
+                    if (!sshParser) {
+                        if (_sshParsers.count == 0) {
+                            DLog(@"Inferring %d is the main SSH process", pid);
+                            _mainSSHParserPID = pid;
+                        }
+                        sshParser = [[VT100Parser alloc] init];
+                        sshParser.encoding = self.encoding;
+                        sshParser.depth = self.depth + 1;
+                        DLog(@"Allocate ssh parser with depth %@", @(sshParser.depth));
+                        _sshParsers[@(pid)] = sshParser;
+                    }
+                    DLog(@"begin reparsing SSH output in token %@ at depth %@: %@", token, @(self.depth), token.savedData);
                     NSData *data = token.savedData;
-                    [_sshParser putStreamData:data.bytes length:data.length];
+                    [sshParser putStreamData:data.bytes length:data.length];
                     const int start = CVectorCount(vector);
-                    [_sshParser addParsedTokensToVector:vector];
+                    DLog(@"count before adding parsed tokens is %@", @(start));
+                    [sshParser addParsedTokensToVector:vector];
                     const int end = CVectorCount(vector);
+                    DLog(@"count after adding parsed tokens is %@", @(end));
                     const SSHInfo myInfo = {
-                        .pid = token.csi->p[0],
+                        .pid = pid,
                         .channel = token.csi->p[1],
                         .valid = 1,
                         .depth = self.depth
@@ -138,9 +166,13 @@
                         VT100Token *token = CVectorGet(vector, i);
                         SSHInfo sshInfo = token.sshInfo;
                         if (!sshInfo.valid) {
+                            DLog(@"Update ssh info in rewritten token %@ to %@", token, SSHInfoDescription(myInfo));
                             token.sshInfo = myInfo;
+                        } else {
+                            DLog(@"Rewritten token %@ has valid SSH info %@ so not rewriting it", token, SSHInfoDescription(token.sshInfo));
                         }
                     }
+                    DLog(@"done reparsing SSH output at depth %@", @(self.depth));
                     break;
                 }
 
@@ -231,6 +263,8 @@
             CVectorAppend(vector, token);
         }
         return YES;
+    } else {
+        DLog(@"unable to parse. Resulting token was %@", token);
     }
 
     return NO;
@@ -272,7 +306,7 @@
     @synchronized(self) {
         _streamOffset = _currentStreamLength;
         assert(_streamOffset >= 0);
-        [_sshParser clearStream];
+        [_sshParsers[@(_mainSSHParserPID)] clearStream];
     }
 }
 
@@ -286,9 +320,9 @@
 
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID {
     @synchronized(self) {
-        if (_sshParser) {
+        if (_sshParsers[@(_mainSSHParserPID)]) {
 #warning TODO: This definitely doesn't work
-            [_sshParser startTmuxRecoveryModeWithID:dcsID];
+            [_sshParsers[@(_mainSSHParserPID)] startTmuxRecoveryModeWithID:dcsID];
         } else {
             [_controlParser startTmuxRecoveryModeWithID:dcsID];
             _dcsHooked = YES;
@@ -298,9 +332,9 @@
 
 - (void)cancelTmuxRecoveryMode {
     @synchronized(self) {
-        if (_sshParser) {
+        if (_sshParsers[@(_mainSSHParserPID)]) {
 #warning TODO: This definitely doesn't work
-            [_sshParser cancelTmuxRecoveryMode];
+            [_sshParsers[@(_mainSSHParserPID)] cancelTmuxRecoveryMode];
         } else {
             [_controlParser cancelTmuxRecoveryMode];
             _dcsHooked = NO;
@@ -313,7 +347,7 @@
         [_savedStateForPartialParse removeAllObjects];
         [self forceUnhookDCS:nil];
         [self clearStream];
-        [_sshParser reset];
+        [_sshParsers[@(_mainSSHParserPID)] reset];
     }
 }
 

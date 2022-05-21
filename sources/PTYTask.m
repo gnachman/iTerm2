@@ -1,5 +1,8 @@
 #define MAXRW 1024
 
+#import "PTYTask.h"
+#import "PTYTask+Private.h"
+
 #import "Coprocess.h"
 #import "DebugLogging.h"
 #import "iTermMalloc.h"
@@ -48,13 +51,6 @@ static void HandleSigChld(int n) {
     UnblockTaskNotifier();
 }
 
-@interface PTYTask ()<iTermTask>
-@property(atomic, assign) BOOL hasMuteCoprocess;
-@property(atomic, readwrite) int fd;
-@property(atomic, weak) iTermLoggingHelper *loggingHelper;
-@property(atomic, strong) id<iTermJobManager> jobManager;
-@end
-
 @implementation PTYTask {
     int status;
     NSString* path;
@@ -75,7 +71,6 @@ static void HandleSigChld(int n) {
     PTYTaskSize _lastSize;
     NSTimeInterval _timeOfLastSizeChange;
     BOOL _rateLimitedSetSizeToDesiredSizePending;
-    BOOL _haveBumpedProcessCache;
     dispatch_queue_t _jobManagerQueue;
     BOOL _isTmuxTask;
 
@@ -335,49 +330,6 @@ static void HandleSigChld(int n) {
         return -1;
     }
     return _jobManager.fd;
-}
-
-- (void)fetchProcessInfoForCurrentJobWithCompletion:(void (^)(iTermProcessInfo *))completion {
-    const pid_t pid = self.tmuxClientProcessID ? self.tmuxClientProcessID.intValue : self.pid;
-    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:pid];
-    DLog(@"%@ fetch process info for %@", self, @(pid));
-    if (info.name) {
-        DLog(@"Return name synchronously");
-        completion(info);
-    } else if (info) {
-        DLog(@"Have info for pid %@ but no name", @(pid));
-    }
-
-    if (pid <= 0) {
-        DLog(@"Lack a good pid");
-        completion(nil);
-        return;
-    }
-    if (_haveBumpedProcessCache) {
-        DLog(@"Already bumped process cache");
-        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-        return;
-    }
-    _haveBumpedProcessCache = YES;
-    DLog(@"Requesting immediate update");
-    [[iTermProcessCache sharedInstance] requestImmediateUpdateWithCompletionBlock:^{
-        completion([[iTermProcessCache sharedInstance] deepestForegroundJobForPid:pid]);
-    }];
-}
-
-- (iTermProcessInfo *)cachedProcessInfoIfAvailable {
-    const pid_t pid = self.pid;
-    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] deepestForegroundJobForPid:pid];
-    if (info.name) {
-        return info;
-    }
-
-    if (pid > 0 && _haveBumpedProcessCache) {
-        _haveBumpedProcessCache = YES;
-        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
-    }
-
-    return nil;
 }
 
 - (void)writeTask:(NSData *)data {

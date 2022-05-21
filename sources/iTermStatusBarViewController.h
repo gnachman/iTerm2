@@ -15,6 +15,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol ProcessInfoProvider;
 @class iTermAction;
 @class iTermStatusBarLayout;
 @class iTermStatusBarViewController;
@@ -46,6 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)statusBarRevealComposer;
 - (iTermActivityInfo)statusBarActivityInfo;
 - (void)statusBarSetFilter:(NSString * _Nullable)query;
+- (id<ProcessInfoProvider>)statusBarProcessInfoProvider;
 
 @end
 

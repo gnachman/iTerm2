@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface iTermRateLimitedUpdate : NSObject
 
 @property (nonatomic) NSTimeInterval minimumInterval;
@@ -32,7 +34,7 @@
 // A target/action version of the above.
 - (void)performRateLimitedSelector:(SEL)selector
                           onTarget:(id)target
-                        withObject:(id)object;
+                        withObject:(id _Nullable)object;
 
 // If there is a pending block, do it now (synchronously) and cancel the delayed perform.
 - (void)force;
@@ -51,3 +53,4 @@
 @interface iTermRateLimitedIdleUpdate : iTermRateLimitedUpdate
 @end
 
+NS_ASSUME_NONNULL_END

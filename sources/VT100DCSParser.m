@@ -523,6 +523,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
             _hookFinished = [_hook handleInput:context
                   support8BitControlCharacters:_support8BitControlCharacters
                                          token:result];
+            DLog(@"Hook %@ produced %@", [_hook hookDescription], result);
             if (_hookFinished) {
                 [self unhook];
             }

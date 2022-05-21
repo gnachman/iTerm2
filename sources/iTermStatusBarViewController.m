@@ -333,6 +333,10 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     // Shouldn't happen since this is not the setup UI
 }
 
+- (id<ProcessInfoProvider>)statusBarComponentProcessInfoProvider {
+    return [self.delegate statusBarProcessInfoProvider];
+}
+
 - (void)statusBarComponentPreferredSizeDidChange:(id<iTermStatusBarComponent>)component {
     DLog(@"Preferred size did change for %@", component);
     if (_updating) {

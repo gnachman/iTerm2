@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 
 @class iTermSocketAddress;
+@protocol iTermProcessDataSource;
 
 int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, int buffersize);
 
@@ -25,5 +26,6 @@ int iTermProcPidInfoWrapper(int pid, int flavor, uint64_t arg,  void *buffer, in
                                  block:(void (^)(NSString *pwd))block;
 + (pid_t)pidOfFirstChildOf:(pid_t)parentPid;
 + (NSDate *)startTimeForProcess:(pid_t)pid;
++ (id<iTermProcessDataSource>)processDataSource;
 
 @end

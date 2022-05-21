@@ -6527,6 +6527,13 @@ backgroundColor:(NSColor *)backgroundColor {
     [self.delegate tab:self closeSession:session];
 }
 
+- (void)sessionProcessInfoProviderDidChange:(PTYSession *)session {
+    if (session != self.activeSession) {
+        return;
+    }
+    [self.delegate tabProcessInfoProviderDidChange:self];
+}
+
 #pragma mark - iTermObject
 
 - (iTermBuiltInFunctions *)objectMethodRegistry {

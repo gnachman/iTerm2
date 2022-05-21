@@ -160,6 +160,7 @@
 #import "PSMMinimalTabStyle.h"
 #import "PTYNoteViewController.h"
 #import "PTYTask.h"
+#import "PTYTask+ProcessInfo.h"
 #import "PTYTextView.h"
 #import "PTYTextView+ARC.h"
 #import "PTYWindow.h"
@@ -2137,12 +2138,26 @@ ITERM_WEAKLY_REFERENCEABLE
     return result;
 }
 
+- (id<ProcessInfoProvider>)processInfoProvider {
+    if (!_conductor.framing) {
+        return [iTermProcessCache sharedInstance];
+    }
+    return _conductor.processInfoProvider;
+}
+
+- (id<SessionProcessInfoProvider>)sessionProcessInfoProvider {
+    if (!_conductor.framing) {
+        return _shell;
+    }
+    return _conductor.processInfoProvider;
+}
+
 - (NSArray<iTermTuple<NSString *, NSString *> *> *)childJobNameTuples {
     pid_t thePid = [_shell pid];
 
-    [[iTermProcessCache sharedInstance] updateSynchronously];
+    [self.processInfoProvider updateSynchronously];
 
-    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] processInfoForPid:thePid];
+    iTermProcessInfo *info = [self.processInfoProvider processInfoForPid:thePid];
     if (!info) {
         return @[];
     }
@@ -2240,7 +2255,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (BOOL)hasNontrivialJob {
     DLog(@"Checking for a nontrivial job...");
     pid_t thePid = [_shell pid];
-    iTermProcessInfo *rootInfo = [[iTermProcessCache sharedInstance] processInfoForPid:thePid];
+    iTermProcessInfo *rootInfo = [self.processInfoProvider processInfoForPid:thePid];
     if (!rootInfo) {
         return NO;
     }
@@ -4458,8 +4473,9 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
                 [_graphicSource updateImageForJobName:self.tmuxForegroundJobMonitor.lastValue
                                               enabled:[self shouldShowTabGraphicForProfile:profile]];
             } else {
-                [_graphicSource updateImageForProcessID:self.shell.pid
-                                                enabled:[self shouldShowTabGraphicForProfile:profile]];
+                [_graphicSource updateImageForProcessID:[self.variablesScope.effectiveRootPid intValue]
+                                                enabled:[self shouldShowTabGraphicForProfile:profile]
+                                    processInfoProvider:self.processInfoProvider];
             }
             return _graphicSource.image;
 
@@ -5140,7 +5156,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     if (!self.jobName) {
         return YES;
     }
-    if ([[iTermProcessCache sharedInstance] processIsDirty:_shell.pid]) {
+    if ([self.processInfoProvider processIsDirty:_shell.pid]) {
         DLog(@"Update title immediately because process %@ is dirty", @(_shell.pid));
         return YES;
     }
@@ -5186,7 +5202,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     if ([_delegate sessionIsActiveInTab:self]) {
         [self maybeUpdateTitles];
     } else {
-        [self setCurrentForegroundJobProcessInfo:[_shell cachedProcessInfoIfAvailable]];
+        [self setCurrentForegroundJobProcessInfo:[self.sessionProcessInfoProvider cachedProcessInfoIfAvailable]];
         [self.view setTitle:_nameController.presentationSessionTitle];
     }
 
@@ -5230,7 +5246,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 // Update the tab, session view, and window title.
 - (void)updateTitles {
     DLog(@"updateTitles");
-    iTermProcessInfo *processInfo = [_shell cachedProcessInfoIfAvailable];
+    iTermProcessInfo *processInfo = [self.sessionProcessInfoProvider cachedProcessInfoIfAvailable];
     iTermProcessInfo *effectiveProcessInfo = processInfo;
     if (!processInfo && _titleDirty) {
         // It's an emergency. Use whatever is lying around.
@@ -5247,7 +5263,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
         }
     }
     __weak __typeof(self) weakSelf = self;
-    [_shell fetchProcessInfoForCurrentJobWithCompletion:^(iTermProcessInfo *processInfo) {
+    [self.sessionProcessInfoProvider fetchProcessInfoForCurrentJobWithCompletion:^(iTermProcessInfo *processInfo) {
         [weakSelf updateTitleWithProcessInfo:processInfo];
     }];
 }
@@ -5285,11 +5301,25 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     [self.variablesScope setValue:@(processInfo.processID) forVariableNamed:iTermVariableKeySessionJobPid];
 
     NSNumber *effectiveShellPID = _shell.tmuxClientProcessID ?: @(_shell.pid);
-    if (!_exited && effectiveShellPID.intValue > 0) {
-        [self.variablesScope setValue:effectiveShellPID
-                     forVariableNamed:iTermVariableKeySessionChildPid];
+    if (!_exited) {
+        if (effectiveShellPID.intValue > 0) {
+            [self.variablesScope setValue:effectiveShellPID
+                         forVariableNamed:iTermVariableKeySessionChildPid];
+        }
+        id oldValue = [self.variablesScope valueForVariableName:iTermVariableKeySessionEffectiveSessionRootPid];
+        if (_conductor.framing) {
+            [self.variablesScope setValue:_conductor.framedPID
+                         forVariableNamed:iTermVariableKeySessionEffectiveSessionRootPid];
+        } else if (effectiveShellPID.intValue > 0) {
+            [self.variablesScope setValue:effectiveShellPID
+                         forVariableNamed:iTermVariableKeySessionEffectiveSessionRootPid];
+        }
+        id newValue = [self.variablesScope valueForVariableName:iTermVariableKeySessionEffectiveSessionRootPid];
+        const BOOL changed = ![NSObject object:oldValue isEqualToObject:newValue];
+        if (changed) {
+            [self.delegate sessionProcessInfoProviderDidChange:self];
+        }
     }
-
     // Avoid join from side-effect.
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -13239,7 +13269,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenSoftAlternateScreenModeDidChangeTo:(BOOL)enabled
                                 showingAltScreen:(BOOL)showing {
-    [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+    [self.processInfoProvider setNeedsUpdate:YES];
     [self.tmuxForegroundJobMonitor updateOnce];
     [self.variablesScope setValue:@(showing)
                  forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
@@ -13528,7 +13558,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         self.active = YES;
 
         if (self.shell.pid > 0 || [[[self variablesScope] valueForVariableName:@"jobName"] length] > 0) {
-            [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+            [self.processInfoProvider setNeedsUpdate:YES];
         }
     }
 
@@ -14564,9 +14594,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // Avoid requesting an update before we know the name because doing so delays updating it when
     // we finally get the name since it's rate-limited.
     if (self.shell.pid > 0 || [[[self variablesScope] valueForVariableName:@"jobName"] length] > 0) {
-        [[iTermProcessCache sharedInstance] setNeedsUpdate:YES];
+        [self.processInfoProvider setNeedsUpdate:YES];
     }
-    if ([_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphic]]) {
+    if ([_graphicSource updateImageForProcessID:self.shell.pid enabled:[self shouldShowTabGraphic] processInfoProvider:self.processInfoProvider]) {
         [self.delegate sessionDidChangeGraphic:self shouldShow:self.shouldShowTabGraphic image:self.tabGraphic];
     }
     [self.delegate sessionJobDidChange:self];
@@ -14723,6 +14753,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (NSColor *)statusBarTerminalBackgroundColor {
     return [self processedBackgroundColor];
+}
+
+- (id<ProcessInfoProvider>)statusBarProcessInfoProvider {
+    return self.processInfoProvider;
 }
 
 - (void)statusBarWriteString:(NSString *)string {

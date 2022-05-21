@@ -14,6 +14,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol ProcessInfoProvider;
 @protocol iTermTriggersDataSource;
 
 typedef NSString *iTermStatusBarComponentConfigurationKey NS_EXTENSIBLE_STRING_ENUM;
@@ -53,6 +54,7 @@ forInvocation:(NSString *)invocation
 - (id<iTermTriggersDataSource>)statusBarComponentTriggersDataSource:(id<iTermStatusBarComponent>)component;
 - (void)statusBarRemoveTemporaryComponent:(id<iTermStatusBarComponent>)component;
 - (void)statusBarSetFilter:(NSString * _Nullable)query;
+- (id<ProcessInfoProvider>)statusBarComponentProcessInfoProvider;
 @end
 
 @protocol iTermStatusBarComponentFactory<NSSecureCoding, NSCopying, NSObject>

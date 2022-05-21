@@ -19,6 +19,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@interface iTermStatusBarJobComponent()
+@end
+
 @implementation iTermStatusBarJobComponent {
     NSArray<NSString *> *_cached;
     NSArray<NSString *> *_chain;
@@ -37,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
             [weakSelf updateTextFieldIfNeeded];
         };
 
-        _childPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionChildPid vendor:scope];
+        _childPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionEffectiveSessionRootPid vendor:scope];
         _childPidRef.onChangeBlock = ^{
             [weakSelf updateTextFieldIfNeeded];
         };
@@ -86,8 +89,8 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (NSArray<NSString *> *)newAncestryChainForPid:(int)pid {
-    iTermProcessInfo *deepestForegroundJob = [[iTermProcessCache sharedInstance] processInfoForPid:pid];
-    int sessionTaskPid = [NSNumber castFrom:[self.scope valueForVariableName:iTermVariableKeySessionChildPid]].intValue;
+    iTermProcessInfo *deepestForegroundJob = [[self.delegate statusBarComponentProcessInfoProvider] processInfoForPid:pid];
+    int sessionTaskPid = [NSNumber castFrom:[self.scope valueForVariableName:iTermVariableKeySessionEffectiveSessionRootPid]].intValue;
 
     iTermProcessInfo *current = deepestForegroundJob;
     NSMutableArray<NSString *> *chain = [NSMutableArray array];
@@ -132,8 +135,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)statusBarComponentDidClickWithView:(NSView *)view {
     NSPopover *popover = [[NSPopover alloc] init];
-    pid_t pid = [[self.scope valueForVariableName:iTermVariableKeySessionChildPid] integerValue];
-    iTermJobTreeViewController *viewController = [[iTermJobTreeViewController alloc] initWithProcessID:pid];
+    pid_t pid = [[self.scope valueForVariableName:iTermVariableKeySessionEffectiveSessionRootPid] integerValue];
+    iTermJobTreeViewController *viewController = [[iTermJobTreeViewController alloc] initWithProcessID:pid
+                                                                                   processInfoProvider:[self.delegate statusBarComponentProcessInfoProvider]];
     viewController.font = [self font];
     popover.contentViewController = viewController;
     popover.contentSize = viewController.view.frame.size;
@@ -154,6 +158,40 @@ NS_ASSUME_NONNULL_BEGIN
                          ofView:relativeView
                   preferredEdge:preferredEdge];
     [viewController sizeOutlineViewToFit];
+}
+
+#pragma mark - ProcessInfoProvider
+
+- (iTermProcessInfo * _Nullable)processInfoForPid:(pid_t)pid {
+    return [[self.delegate statusBarComponentProcessInfoProvider] processInfoForPid:pid];
+}
+
+- (void)setNeedsUpdate:(BOOL)needsUpdate {
+    return [[self.delegate statusBarComponentProcessInfoProvider] setNeedsUpdate:needsUpdate];
+}
+
+- (void)requestImmediateUpdateWithCompletionBlock:(void (^)(void))completion {
+    [[self.delegate statusBarComponentProcessInfoProvider] requestImmediateUpdateWithCompletionBlock:completion];
+}
+
+- (void)updateSynchronously {
+    [[self.delegate statusBarComponentProcessInfoProvider] updateSynchronously];
+}
+
+- (iTermProcessInfo * _Nullable)deepestForegroundJobForPid:(pid_t)pid {
+    return [[self.delegate statusBarComponentProcessInfoProvider] deepestForegroundJobForPid:pid];
+}
+
+- (void)registerTrackedPID:(pid_t)pid {
+    [[self.delegate statusBarComponentProcessInfoProvider] registerTrackedPID:pid];
+}
+
+- (void)unregisterTrackedPID:(pid_t)pid {
+    [[self.delegate statusBarComponentProcessInfoProvider] unregisterTrackedPID:pid];
+}
+
+- (BOOL)processIsDirty:(pid_t)pid {
+    return [[self.delegate statusBarComponentProcessInfoProvider] processIsDirty:pid];
 }
 
 @end

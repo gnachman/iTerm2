@@ -250,6 +250,14 @@
     [self setValue:newValue forVariableNamed:iTermVariableKeySessionChildPid];
 }
 
+- (NSNumber *)effectiveRootPid {
+    return [self valueForVariableName:iTermVariableKeySessionEffectiveSessionRootPid];
+}
+
+- (void)setEffectiveRootPid:(NSNumber *)newValue {
+    [self setValue:newValue forVariableNamed:iTermVariableKeySessionEffectiveSessionRootPid];
+}
+
 - (NSString *)tmuxStatusLeft {
     return [self valueForVariableName:iTermVariableKeySessionTmuxStatusLeft];
 }

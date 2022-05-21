@@ -59,6 +59,7 @@ extern NSString *const iTermVariableKeySessionTmuxWindowPane;  // NSNumber. Wind
 extern NSString *const iTermVariableKeySessionTmuxWindowPaneIndex;  // NSString. #{pane_index} for a particular session. Only available on tmux 3.2+.
 extern NSString *const iTermVariableKeySessionJobPid;  // NSNumber. Process id of foreground job.
 extern NSString *const iTermVariableKeySessionChildPid;  // NSNumber. Process id of child of session task.
+extern NSString *const iTermVariableKeySessionEffectiveSessionRootPid;  // NSNumber. Process id of child of session task or of ssh.
 extern NSString *const iTermVariableKeySessionTmuxStatusLeft;  // String. Only set when in tmux integration mode.
 extern NSString *const iTermVariableKeySessionTmuxStatusRight;  // String. Only set when in tmux integration mode.
 extern NSString *const iTermVariableKeySessionMouseReportingMode;  // NSNumber (MouseMode)

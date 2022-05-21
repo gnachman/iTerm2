@@ -60,11 +60,14 @@ class Process:
     async def run_shell_tty(command):
         master, slave = pty.openpty()
         try:
+            env = dict(os.environ)
+            env["LANG"] = "C"
             proc = await asyncio.create_subprocess_shell(
                 command,
                 stdin=slave,
                 stdout=slave,
-                stderr=slave)
+                stderr=slave,
+                env=env)
         finally:
             os.close(slave)
         return await Process.run_tty_proc(proc, master)
@@ -77,22 +80,6 @@ class Process:
         process = Process(proc, writer, reader, None, master=master)
         # No need to close reader's transport because it's the same file descriptor as master.
         return process
-
-    @staticmethod
-    async def run_shell(command):
-        read1, write1 = os.pipe()
-        read2, write2 = os.pipe()
-        read3, write3 = os.pipe()
-        proc = await asyncio.create_subprocess_shell(command, stdin=read1, stderr=write2, stdout=write3)
-        writer = await Process.writer(write1)
-        stderr_reader, stderr_tx = await Process.reader(read2)
-        stdout_reader, stdout_tx = await Process.reader(read3)
-        proc = Process(proc, writer, stdout_reader, stderr_reader)
-        def cleanup():
-            stderr_tx.close()
-            stdout_tx.close()
-        proc.add_cleanup(cleanup)
-        return proc
 
     @staticmethod
     async def writer(fd):
@@ -244,7 +231,7 @@ async def handle_run(identifier, args):
     global PROCESSES
     PROCESSES[proc.pid] = proc
     begin(identifier)
-    print(proc.pid)
+    send(proc.pid)
     end(identifier, 0)
     await proc.handle_read(make_monitor_process(identifier, proc))
     return False

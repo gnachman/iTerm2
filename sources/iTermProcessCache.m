@@ -273,6 +273,10 @@
     });
 }
 
+- (void)sendSignal:(int32_t)signal toPID:(int32_t)pid {
+    kill(pid, signal);
+}
+
 #pragma mark - Private
 
 // Any queue
@@ -297,7 +301,7 @@
     NSArray<NSNumber *> *allPids = [iTermLSOF allPids];
     // pid -> ppid
     NSMutableDictionary<NSNumber *, NSNumber *> *parentmap = [NSMutableDictionary dictionary];
-    iTermProcessCollection *collection = [[iTermProcessCollection alloc] init];
+    iTermProcessCollection *collection = [[iTermProcessCollection alloc] initWithDataSource:[iTermLSOF processDataSource]];
     for (NSNumber *pidNumber in allPids) {
         pid_t pid = pidNumber.intValue;
 

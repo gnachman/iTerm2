@@ -1922,6 +1922,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 return;
         }
         token = wrapped;
+        DLog(@"Unwrapped token into %@", token);
+    } else if (token.sshInfo.valid) {
+        DLog(@"Not unwrapping. token info=%@, I expect pid=%@ depth=%@", SSHInfoDescription(token.sshInfo), @(self.sshPID), @(self.sshDepth));
     }
     [self reallyExecuteToken:token];
     _lastToken = token;
@@ -3282,8 +3285,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     DLog(@"Gather parts...");
     iTermTokenExecutorUnpauser *unpauser = [self.delegate terminalPause];
     [iTermPromise gather:parts queue:[self.delegate terminalQueue] completion:^(NSArray<iTermOr<id, NSError *> *> * _Nonnull values) {
-        NSArray<NSString *> *strings = [values mapWithBlock:^id(iTermOr<id,NSError *> *or) {
-            return or.maybeFirst;
+        NSArray<NSString *> *strings = [values mapWithBlock:^id(iTermOr<id,NSError *> *option) {
+            return option.maybeFirst;
         }];
         DLog(@"Got them all. It is %@", strings);
         DLog(@"result is %@ for %@", [strings componentsJoinedByString:@", "], token);

@@ -298,6 +298,14 @@ typedef struct {
     int depth: 23;
 } SSHInfo;
 
+NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {
+    if (!info.valid) {
+        return @"<SSHInfo: invalid>";
+    }
+    return [NSString stringWithFormat:@"<SSHInfo: channel=%@ pid=%@ depth=%@>",
+            @(info.channel), @(info.pid), @(info.depth)];
+}
+
 @interface VT100Token : NSObject {
 @public
     VT100TerminalTokenType type;

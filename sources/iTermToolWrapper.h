@@ -13,6 +13,7 @@
 @class CapturedOutput;
 @class iTermAction;
 @protocol iTermMark;
+@protocol ProcessInfoProvider;
 @class ToolCommandHistoryView;
 @protocol VT100ScreenMarkReading;
 @protocol VT100RemoteHostReading;
@@ -28,6 +29,7 @@
 - (void)toolbeltInsertText:(NSString *)text;
 - (id<VT100RemoteHostReading>)toolbeltCurrentHost;
 - (pid_t)toolbeltCurrentShellProcessId;
+- (id<ProcessInfoProvider>)toolbeltCurrentShellProcessInfoProvider;
 - (id<VT100ScreenMarkReading>)toolbeltLastCommandMark;
 - (void)toolbeltDidSelectMark:(id<iTermMark>)mark;
 - (void)toolbeltActivateTriggerForCapturedOutputInCurrentSession:(CapturedOutput *)capturedOutput;
