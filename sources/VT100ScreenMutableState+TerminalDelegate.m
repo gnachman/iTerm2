@@ -2571,6 +2571,7 @@
 
 - (void)terminalEndSSH:(NSString *)uniqueID {
     __weak __typeof(self) weakSelf = self;
+    dispatch_queue_t queue = _queue;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         const NSInteger count = [delegate screenEndSSH:uniqueID];
         if (count <= 0) {
@@ -2583,13 +2584,21 @@
             preamble = [NSString stringWithFormat:@"%@ ssh sessions ended", @(count)];
         }
         NSString *sshLocation = [delegate screenSSHLocation];
+        NSString *banner;
         if (sshLocation) {
-            [weakSelf appendBannerMessage:[NSString stringWithFormat:@"%@ — now at %@", preamble, sshLocation]];
+            banner = [NSString stringWithFormat:@"%@ — now at %@", preamble, sshLocation];
         } else {
-            [weakSelf appendBannerMessage:[NSString stringWithFormat:@"%@ — you’re now back at the local shell", preamble]];
+            banner = [NSString stringWithFormat:@"%@ — you’re now back at the local shell", preamble];
         }
-        [unpauser unpause];
+        dispatch_async(queue, ^{
+            [weakSelf appendBanner:banner andUnpause:unpauser];
+        });
     }];
+}
+
+- (void)appendBanner:(NSString *)banner andUnpause:(iTermTokenExecutorUnpauser *)unpauser {
+    [self appendBannerMessage:banner];
+    [unpauser unpause];
 }
 
 @end
