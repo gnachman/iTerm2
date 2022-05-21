@@ -81,6 +81,17 @@ class Conductor: NSObject {
         case framerKill(pid: Int)
         case framerQuit
 
+        var isFramer: Bool {
+            switch self {
+            case .execLoginShell, .getShell, .setenv(_, _), .run(_), .runPython(_), .shell(_),
+                    .write(_, _), .cd(_), .quit, .ps, .getpid:
+                return false
+
+            case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit:
+                return true
+            }
+        }
+
         var stringValue: String {
             switch self {
             case .execLoginShell:
@@ -111,7 +122,7 @@ class Conductor: NSObject {
             case .framerLogin(cwd: let cwd, args: let args):
                 return (["login", cwd] + args).joined(separator: "\n")
             case .framerSend(let data, pid: let pid):
-                return (["send", String(pid)] + data.base64EncodedString().chunk(80, continuation: "\\")).joined(separator: "\n")
+                return (["send", String(pid), data.base64EncodedString()]).joined(separator: "\n")
             case .framerKill(pid: let pid):
                 return ["kill", String(pid)].joined(separator: "\n")
             case .framerQuit:
@@ -630,7 +641,7 @@ class Conductor: NSObject {
         }
         queue.removeFirst()
         state = .willExecute(pending)
-        let parts = pending.command.stringValue.chunk(128)
+        let parts = pending.command.stringValue.chunk(128, continuation: pending.command.isFramer ? "\\" : "")
         for part in parts {
             write(part)
         }
