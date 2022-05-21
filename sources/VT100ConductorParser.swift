@@ -167,13 +167,13 @@ extension Data {
 
 private class SSHOutputTokenBuilder {
     let pid: Int32
-    let channel: UInt8
+    let channel: Int8
     let identifier: String
     @objc private(set) var base64 = ""
 
     init?(_ string: String) {
         let parts = string.components(separatedBy: " ")
-        guard parts.count >= 4, let pid = Int32(parts[2]), let channel = UInt8(parts[3]) else {
+        guard parts.count >= 4, let pid = Int32(parts[2]), let channel = Int8(parts[3]) else {
             return nil
         }
         self.pid = pid

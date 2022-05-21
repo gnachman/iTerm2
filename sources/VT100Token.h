@@ -292,10 +292,10 @@ typedef struct {
 } AsciiData;
 
 typedef struct {
-    uint8_t channel;
+    int8_t channel;
     int32_t pid;
-    int valid: 1;
     int depth: 23;
+    unsigned int valid: 1;
 } SSHInfo;
 
 NS_INLINE NSString *SSHInfoDescription(SSHInfo info) {

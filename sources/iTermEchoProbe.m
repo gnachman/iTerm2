@@ -84,6 +84,10 @@ typedef NS_ENUM(NSUInteger, iTermEchoProbeState) {
         const int count = CVectorCount(vector);
         for (int i = 0; i < count; i++) {
             VT100Token *token = CVectorGetObject(vector, i);
+            if (token.sshInfo.valid && token.sshInfo.channel >= 0) {
+                // This is not from the login shell so ignore it.
+                continue;
+            }
             const iTermEchoProbeState previousState = _state;
             _state = iTermEchoProbeGetNextState(_state, token);
             if (_state != previousState) {

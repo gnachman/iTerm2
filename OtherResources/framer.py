@@ -219,7 +219,7 @@ async def handle_login(identifier, args):
     begin(identifier)
     send(proc.pid)
     end(identifier, 0)
-    await proc.handle_read(make_monitor_process(identifier, proc))
+    await proc.handle_read(make_monitor_process(identifier, proc, True))
     return False
 
 async def handle_run(identifier, args):
@@ -233,7 +233,7 @@ async def handle_run(identifier, args):
     begin(identifier)
     send(proc.pid)
     end(identifier, 0)
-    await proc.handle_read(make_monitor_process(identifier, proc))
+    await proc.handle_read(make_monitor_process(identifier, proc, False))
     return False
 
 async def handle_send(identifier, args):
@@ -287,27 +287,22 @@ async def start_process(args):
     PROCESSES[runid] = proc
     return runid
 
-def make_monitor_process(identifier, proc):
+def make_monitor_process(identifier, proc, islogin):
     def monitor_process(channel, value):
-        log(f'monitor_process called with channel={channel} value={value}')
+        log(f'monitor_process called with channel={channel} islogin={islogin} value={value}')
         if len(value) == 0:
             global COMPLETED
             COMPLETED.append(proc.pid)
             return cleanup()
-        print_output(identifier, proc.pid, channel, value)
+        print_output(identifier, proc.pid, channel, islogin, value)
         return None
     return monitor_process
 
-async def communicate(identifier, proc, input_bytes):
-    outdata, errdata = await proc.communicate(input_bytes)
-    if outdata:
-        print_output(identifier, "0", outdata)
-    if errdata:
-        print_output(identifier, "1", errdata)
-    return outdata, errdata
-
-def print_output(identifier, pid, channel, data):
-    send(f'%output {identifier} {pid} {channel}')
+def print_output(identifier, pid, channel, islogin, data):
+    if islogin:
+        send(f'%output {identifier} {pid} -1')
+    else:
+        send(f'%output {identifier} {pid} {channel}')
     data = data
     encoded = base64.b64encode(data).decode("utf-8")
     n = 128
