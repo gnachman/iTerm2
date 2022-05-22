@@ -40,6 +40,8 @@ class Process:
                 os.setsid()
                 os.close(master_fd)
                 fcntl.ioctl(ctty_fd, termios.TIOCSCTTY, 0)
+                window_size = fcntl.ioctl(sys.stdin.fileno(), termios.TIOCGWINSZ, '00000000')
+                fcntl.ioctl(ctty_fd, termios.TIOCSWINSZ, window_size)
             log(env)
             proc = await asyncio.create_subprocess_exec(
                 *args,
