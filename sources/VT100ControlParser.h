@@ -41,5 +41,8 @@ NS_INLINE BOOL isc1(int c) {
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
 - (void)cancelTmuxRecoveryMode;
 
+- (void)startConductorRecoveryModeWithID:(NSString *)dcsID;
+- (void)cancelConductorRecoveryMode;
+
 @end
 

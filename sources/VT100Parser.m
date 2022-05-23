@@ -138,7 +138,7 @@
                     const int pid = token.csi->p[0];
                     VT100Parser *sshParser = _sshParsers[@(pid)];
                     if (!sshParser) {
-                        if (_sshParsers.count == 0) {
+                        if (_sshParsers.count == 0 && token.csi->p[1] == -1) {
                             DLog(@"Inferring %d is the main SSH process", pid);
                             _mainSSHParserPID = pid;
                         }
@@ -320,25 +320,31 @@
 
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID {
     @synchronized(self) {
-        if (_sshParsers[@(_mainSSHParserPID)]) {
-#warning TODO: This definitely doesn't work
-            [_sshParsers[@(_mainSSHParserPID)] startTmuxRecoveryModeWithID:dcsID];
-        } else {
-            [_controlParser startTmuxRecoveryModeWithID:dcsID];
-            _dcsHooked = YES;
-        }
+        [_controlParser startTmuxRecoveryModeWithID:dcsID];
+        _dcsHooked = YES;
     }
 }
 
 - (void)cancelTmuxRecoveryMode {
     @synchronized(self) {
-        if (_sshParsers[@(_mainSSHParserPID)]) {
-#warning TODO: This definitely doesn't work
-            [_sshParsers[@(_mainSSHParserPID)] cancelTmuxRecoveryMode];
-        } else {
-            [_controlParser cancelTmuxRecoveryMode];
-            _dcsHooked = NO;
-        }
+        [_controlParser cancelTmuxRecoveryMode];
+        _dcsHooked = NO;
+    }
+}
+
+- (void)startConductorRecoveryModeWithID:(NSString *)dcsID {
+    @synchronized (self) {
+        // TODO: This doesn't attempt to handle nested conductors.
+        [_controlParser startConductorRecoveryModeWithID:dcsID];
+        _dcsHooked = YES;
+    }
+}
+
+- (void)cancelConductorRecoveryMode {
+    @synchronized(self) {
+        // TODO: This doesn't attempt to handle nested conductors.
+        [_controlParser cancelConductorRecoveryMode];
+        _dcsHooked = NO;
     }
 }
 

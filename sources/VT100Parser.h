@@ -24,6 +24,9 @@
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
 - (void)cancelTmuxRecoveryMode;
 
+- (void)startConductorRecoveryModeWithID:(NSString *)dcsID;
+- (void)cancelConductorRecoveryMode;
+
 // CVector was created for this method. Because so many VT100Token*s are created and destroyed,
 // too much time is spent adjusting their retain counts. Since an iTermObjectPool is used to avoid
 // alloc/dealloc calls, the retain counts aren't useful. Finally, NSMutableArray in OS 10.9 doesn't

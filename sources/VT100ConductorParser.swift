@@ -9,7 +9,9 @@ import Foundation
 
 @objc
 class VT100ConductorParser: NSObject, VT100DCSParserHook {
+    private var recoveryMode = false
     private var line = Data()
+    private let uniqueID: String
     private enum State {
         case initial
         case ground
@@ -19,6 +21,18 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
     private var state = State.initial
     var hookDescription: String {
         return "[SSH CONDUCTOR]"
+    }
+
+    @objc(initWithUniqueID:)
+    init(uniqueID: String) {
+        self.uniqueID = uniqueID
+    }
+
+    @objc static func newRecoveryModeInstance(uniqueID: String) -> VT100ConductorParser {
+        let instance = VT100ConductorParser(uniqueID: uniqueID)
+        instance.recoveryMode = true
+        instance.state = .ground
+        return instance
     }
 
     func handleInput(_ context: UnsafeMutablePointer<iTermParserContext>,
@@ -58,11 +72,13 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         }
         DLog("Process line \(string)")
         line = Data()
+        let wasInRecoveryMode = recoveryMode
+        recoveryMode = false
         switch state {
         case .initial:
             DLog("In initial state. Accept line as SSH_INIT.")
             token.type = SSH_INIT
-            token.string = string
+            token.string = string + " " + uniqueID
             state = .ground
             return .keepGoing
 
@@ -100,6 +116,10 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 token.type = SSH_TERMINATE
                 iTermAddCSIParameter(token.csi, pid)
                 iTermAddCSIParameter(token.csi, rc)
+                return .keepGoing
+            } else if wasInRecoveryMode {
+                DLog("Ignore unrecognized line in recovery mode")
+                recoveryMode = true
                 return .keepGoing
             } else {
                 DLog("In ground state: Found unrecognized token")

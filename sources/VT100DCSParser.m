@@ -574,7 +574,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
                 token.string = _uniqueID;
             }
 
-            _hook = [[VT100ConductorParser alloc] init];
+            _hook = [[VT100ConductorParser alloc] initWithUniqueID:_uniqueID];
             _hookFinished = NO;
         }
         break;
@@ -750,6 +750,26 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
 
 - (void)cancelTmuxRecoveryMode {
     if ([_hook isKindOfClass:[VT100TmuxParser class]]) {
+        DLog(@"unhook");
+        [self unhook];
+    }
+}
+
+- (void)startConductorRecoveryModeWithID:(NSString *)dcsID {
+    // Put the state machine in the passthrough mode.
+    char *fakeControlSequence = "\eP2000p";
+    for (int i = 0; fakeControlSequence[i]; i++) {
+        [self.stateMachine handleCharacter:fakeControlSequence[i]];
+    }
+
+    // Replace the hook with one in recovery mode.
+    _hook = [VT100ConductorParser newRecoveryModeInstanceWithUniqueID:dcsID];
+    _uniqueID = [dcsID copy];
+    DLog(@"dcs parser code injected and parser hooked.");
+}
+
+- (void)cancelConductorRecoveryMode {
+    if ([_hook isKindOfClass:[VT100ConductorParser class]]) {
         DLog(@"unhook");
         [self unhook];
     }

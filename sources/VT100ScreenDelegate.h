@@ -390,31 +390,19 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenDidHookSSHConductorWithToken:(NSString * _Nonnull)token
                                   uniqueID:(NSString * _Nonnull)uniqueID
                                   boolArgs:(NSString * _Nonnull)boolArgs
-                                   sshargs:(NSString * _Nonnull)sshargs;
+                                   sshargs:(NSString * _Nonnull)sshargs
+                                     dcsID:(NSString * _Nonnull)dcsID;
 - (void)screenDidReadSSHConductorLine:(NSString * _Nonnull)string;
 - (void)screenDidUnhookSSHConductor;
 - (void)screenDidBeginSSHConductorCommandWithIdentifier:(NSString * _Nonnull)identifier;
 
-typedef NS_ENUM(NSUInteger, VT100ScreenSSHActionType) {
-    VT100ScreenSSHActionTypeNone,  // don't change anything
-    VT100ScreenSSHActionTypeSetForegroundProcessID,  // yes there is a framer login shell
-    VT100ScreenSSHActionTypeResetForegroundProcessID  // there is no framer login shell
-};
-
-// Used to update VT100Terminal's notion of what the current framer login shell is, if any.
-typedef struct {
-    VT100ScreenSSHActionType type;
-    int pid;
-    int depth;
-} VT100ScreenSSHAction;
-
-- (VT100ScreenSSHAction)screenDidEndSSHConductorCommandWithIdentifier:(NSString * _Nonnull)identifier
-                                                               status:(uint8_t)status;
+- (void)screenDidEndSSHConductorCommandWithIdentifier:(NSString * _Nonnull)identifier
+                                               status:(uint8_t)status;
 - (void)screenHandleSSHSideChannelOutput:(NSString * _Nonnull)string
                                      pid:(int32_t)pid
                                  channel:(uint8_t)channel;
 
-- (VT100ScreenSSHAction)screenDidTerminateSSHProcess:(int)pid code:(int)code;
+- (void)screenDidTerminateSSHProcess:(int)pid code:(int)code;
 
 - (NSInteger)screenEndSSH:(NSString * _Nonnull)uniqueID;
 - (NSString * _Nonnull)screenSSHLocation;

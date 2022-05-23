@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ParsedSSHArguments: CustomDebugStringConvertible {
+struct ParsedSSHArguments: Codable, CustomDebugStringConvertible {
     let hostname: String
     let username: String?
     let port: Int?
@@ -18,15 +18,15 @@ struct ParsedSSHArguments: CustomDebugStringConvertible {
         return "recognized params: \(paramArgs.debugDescription); username=\(String(describing: username)); hostname=\(hostname); port=\(String(describing: port)); command=\(commandArgs.joined(separator: ", "))"
     }
 
-    struct ParamArgs: OptionSet, CustomDebugStringConvertible {
+    struct ParamArgs: Codable, OptionSet, CustomDebugStringConvertible {
         var rawValue: Set<OptionValue>
 
-        enum Option: String {
+        enum Option: String, Codable {
             case loginName = "l"
             case port = "p"
         }
 
-        struct OptionValue: Equatable, Hashable {
+        struct OptionValue: Codable, Equatable, Hashable {
             let option: Option
             let value: String
         }

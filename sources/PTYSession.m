@@ -242,6 +242,7 @@ static NSString *const SESSION_ARRANGEMENT_TMUX_TAB_COLOR = @"Tmux Tab Color";
 static NSString *const SESSION_ARRANGEMENT_IS_TMUX_GATEWAY = @"Is Tmux Gateway";
 static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME = @"Tmux Gateway Session Name";
 static NSString *const SESSION_ARRANGEMENT_TMUX_DCS_ID = @"Tmux DCS ID";
+static NSString *const SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID = @"Conductor DCS ID";
 static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID = @"Tmux Gateway Session ID";
 static NSString *const SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE = @"Name Controller State";
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_DEFAULT_NAME_DEPRECATED = @"Session Default Name";  // manually set name
@@ -295,6 +296,7 @@ static NSString *const SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS = @"Overridden Fiel
 static NSString *const SESSION_ARRANGEMENT_FILTER = @"Filter";  // NSString
 static NSString *const SESSION_ARRANGEMENT_SSH_STATE = @"SSH State";  // NSNumber
 static NSString *const SESSION_ARRANGEMENT_SSH_STACK = @"SSH Stack";  // NSArray<NSArray<NSString>>
+static NSString *const SESSION_ARRANGEMENT_CONDUCTOR = @"Conductor";  // NSString (json)
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -1202,6 +1204,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                    shouldEnterTmuxMode:(BOOL)shouldEnterTmuxMode
                                                  state:(NSDictionary *)state
                                      tmuxDCSIdentifier:(NSString *)tmuxDCSIdentifier
+                                      sshDCSIdentifier:(NSString *)sshDCSIdentifier
                                         missingProfile:(BOOL)missingProfile {
     if (needDivorce) {
         [aSession divorceAddressBookEntryFromPreferences];
@@ -1285,6 +1288,20 @@ ITERM_WEAKLY_REFERENCEABLE
         aSession.automaticProfileSwitcher =
         [[iTermAutomaticProfileSwitcher alloc] initWithDelegate:aSession
                                                      savedState:arrangement[SESSION_ARRANGEMENT_APS]];
+    }
+    if (didRestoreContents) {
+        aSession->_sshState = [arrangement[SESSION_ARRANGEMENT_SSH_STATE] unsignedIntegerValue];
+        [aSession->_sshHostNames removeAllObjects];
+        NSArray *sshStack = [NSArray castFrom:arrangement[SESSION_ARRANGEMENT_SSH_STACK]];
+        for (id obj in sshStack) {
+            NSArray *pair = [NSArray castFrom:obj];
+            if (!pair || pair.count < 2) {
+                continue;
+            }
+            SSHIdentity *ident = [[SSHIdentity alloc] init:[NSData castFrom:pair[1]]];
+            [aSession->_sshHostNames addObject:[iTermTuple tupleWithObject:[NSString castFrom:pair[0]] ?: @""
+                                                                 andObject:ident]];
+        }
     }
     aSession.cursorTypeOverride = arrangement[SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE];
     if (didRestoreContents && attachedToServer) {
@@ -1521,18 +1538,6 @@ ITERM_WEAKLY_REFERENCEABLE
         haveSavedProgramData = NO;
     }
 
-    aSession->_sshState = [arrangement[SESSION_ARRANGEMENT_SSH_STATE] unsignedIntegerValue];
-    [aSession->_sshHostNames removeAllObjects];
-    NSArray *sshStack = [NSArray castFrom:arrangement[SESSION_ARRANGEMENT_SSH_STACK]];
-    for (id obj in sshStack) {
-        NSArray *pair = [NSArray castFrom:obj];
-        if (!pair || pair.count < 2) {
-            continue;
-        }
-        SSHIdentity *ident = [[SSHIdentity alloc] init:[NSData castFrom:pair[1]]];
-        [aSession->_sshHostNames addObject:[iTermTuple tupleWithObject:[NSString castFrom:pair[0]] ?: @""
-                                                             andObject:ident]];
-    }
     aSession.shortLivedSingleUse = [arrangement[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] boolValue];
     aSession.hostnameToShell = [[arrangement[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] mutableCopy] autorelease];
 
@@ -1547,6 +1552,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     NSNumber *tmuxPaneNumber = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     NSString *tmuxDCSIdentifier = nil;
+    NSString *conductorDCSIdentifier = nil;
     BOOL shouldEnterTmuxMode = NO;
     NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
     BOOL restoreContents = !tmuxPaneNumber && contents && [iTermAdvancedSettingsModel restoreWindowContents];
@@ -1577,7 +1583,15 @@ ITERM_WEAKLY_REFERENCEABLE
                     [terminal.parser startTmuxRecoveryModeWithID:arrangement[SESSION_ARRANGEMENT_TMUX_DCS_ID]];
                 }];
             }
-
+            NSString *conductor = [NSString castFrom:arrangement[SESSION_ARRANGEMENT_CONDUCTOR]];
+            if (conductor) {
+                aSession->_conductor = [iTermConductor newConductorWithJSON:conductor delegate:aSession];
+            }
+            if (aSession->_conductor) {
+                [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+                    [terminal.parser startConductorRecoveryModeWithID:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID]];
+                }];
+            }
             // iTerm2 is currently configured to run jobs in servers, but we
             // have to check if the arrangement was saved with that setting on.
             BOOL didAttach = NO;
@@ -1615,10 +1629,21 @@ ITERM_WEAKLY_REFERENCEABLE
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
                 tmuxDCSIdentifier = arrangement[SESSION_ARRANGEMENT_TMUX_DCS_ID];
-            } else if (isTmuxGateway) {
-                [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-                    [terminal.parser cancelTmuxRecoveryMode];
-                }];
+                conductorDCSIdentifier = arrangement[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID];
+            } else {
+                if (isTmuxGateway) {
+                    [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+                        [terminal.parser cancelTmuxRecoveryMode];
+                    }];
+                }
+                if (aSession->_conductor) {
+                    [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+                        [terminal.parser cancelConductorRecoveryMode];
+                    }];
+                    aSession->_conductor.delegate = nil;
+                    [aSession->_conductor release];
+                    aSession->_conductor = nil;
+                }
             }
 
         }
@@ -1757,6 +1782,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                          shouldEnterTmuxMode:shouldEnterTmuxMode
                                                        state:state
                                            tmuxDCSIdentifier:tmuxDCSIdentifier
+                                            sshDCSIdentifier:conductorDCSIdentifier
                                               missingProfile:missingProfile];
         [aSession didFinishInitialization];
     };
@@ -4994,10 +5020,6 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     }];
     result[SESSION_ARRANGEMENT_ENVIRONMENT] = self.environment ?: @{};
     result[SESSION_ARRANGEMENT_IS_UTF_8] = @(self.isUTF8);
-    result[SESSION_ARRANGEMENT_SSH_STATE] = @(_sshState);
-    result[SESSION_ARRANGEMENT_SSH_STACK] = [_sshHostNames mapWithBlock:^id _Nullable(iTermTuple<NSString *, SSHIdentity *> * _Nonnull tuple) {
-        return @[tuple.firstObject ?: @"", tuple.secondObject.json ?: @""];
-    }];
     result[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] = @(self.shortLivedSingleUse);
     if (self.hostnameToShell) {
         result[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] = [[self.hostnameToShell copy] autorelease];
@@ -5032,6 +5054,16 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
         [self.textview.selection dictionaryValueWithYOffset:-numberOfLinesDropped
                                     totalScrollbackOverflow:_screen.totalScrollbackOverflow];
         result[SESSION_ARRANGEMENT_APS] = [_automaticProfileSwitcher savedState];
+        result[SESSION_ARRANGEMENT_SSH_STATE] = @(_sshState);
+        result[SESSION_ARRANGEMENT_SSH_STACK] = [_sshHostNames mapWithBlock:^id _Nullable(iTermTuple<NSString *, SSHIdentity *> * _Nonnull tuple) {
+            return @[tuple.firstObject ?: @"", tuple.secondObject.json ?: @""];
+        }];
+        if (_conductor) {
+            NSString *json = _conductor.jsonValue;
+            if (json) {
+                result[SESSION_ARRANGEMENT_CONDUCTOR] = json;
+            }
+        }
     }
     result[SESSION_ARRANGEMENT_GUID] = _guid;
     if (_liveSession && includeContents && !_dvr) {
@@ -5079,6 +5111,9 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
         if (dcsID) {
             result[SESSION_ARRANGEMENT_TMUX_DCS_ID] = dcsID;
         }
+    }
+    if ( _conductor) {
+        result[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID] = _conductor.dcsID;
     }
 
     result[SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS] = @(_screen.shouldExpectPromptMarks);
@@ -13574,7 +13609,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenDidHookSSHConductorWithToken:(NSString *)token
                                   uniqueID:(NSString *)uniqueID
                                   boolArgs:(NSString *)boolArgs
-                                   sshargs:(NSString *)sshargs {
+                                   sshargs:(NSString *)sshargs
+                                     dcsID:(NSString * _Nonnull)dcsID {
     if (![token isEqualToString:[self guid]]) {
         [self.screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
             [mutableState appendStringAtCursor:@"Invalid authentication token"];
@@ -13595,6 +13631,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     iTermSSHConfiguration *config = [[[iTermSSHConfiguration alloc] initWithDictionary:dict] autorelease];
     _conductor = [[iTermConductor alloc] init:sshargs
                                      boolArgs:boolArgs
+                                        dcsID:dcsID
                                          vars:[self.screen exfiltratedEnvironmentVariables:config.environmentVariablesToCopy]
                              initialDirectory:directory
                                        parent:previousConductor];
@@ -13631,9 +13668,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_conductor handleCommandBeginWithIdentifier:identifier];
 }
 
-- (VT100ScreenSSHAction)screenDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier
-                                                               status:(uint8_t)status {
-    return [_conductor handleCommandEndWithIdentifier:identifier status:status];
+- (void)screenDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier
+                                               status:(uint8_t)status {
+    [_conductor handleCommandEndWithIdentifier:identifier status:status];
 }
 
 - (void)screenHandleSSHSideChannelOutput:(NSString *)string
@@ -13642,8 +13679,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_conductor handleSideChannelOutput:string pid:pid channel:channel];
 }
 
-- (VT100ScreenSSHAction)screenDidTerminateSSHProcess:(int)pid code:(int)code {
-    return [_conductor handleTerminatePID:pid withCode:code];
+- (void)screenDidTerminateSSHProcess:(int)pid code:(int)code {
+    [_conductor handleTerminatePID:pid withCode:code];
 }
 
 - (NSInteger)screenEndSSH:(NSString *)uniqueID {

@@ -188,4 +188,13 @@
     [_dcsParser cancelTmuxRecoveryMode];
 }
 
+- (void)startConductorRecoveryModeWithID:(NSString *)dcsID {
+    [_dcsParser startConductorRecoveryModeWithID:dcsID];
+}
+
+- (void)cancelConductorRecoveryMode {
+    [_dcsParser cancelConductorRecoveryMode];
+}
+
+
 @end

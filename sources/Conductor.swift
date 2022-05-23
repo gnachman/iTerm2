@@ -20,10 +20,14 @@ protocol ConductorDelegate: Any {
 }
 
 @objc(iTermConductor)
-class Conductor: NSObject {
+class Conductor: NSObject, Codable {
     private let sshargs: String
     private let vars: [String: String]
-    private var payloads: [(path: String, destination: String)] = []
+    private struct Payload: Codable {
+        let path: String
+        let destination: String
+    }
+    private var payloads: [Payload] = []
     private let initialDirectory: String?
     private let parsedSSHArguments: ParsedSSHArguments
     private let depth: Int32
@@ -58,7 +62,11 @@ class Conductor: NSObject {
     }
     private var backgroundJobs = [Int32: State]()
 
-    enum Command {
+    enum Command: Codable, CustomDebugStringConvertible {
+        var debugDescription: String {
+            return "<Command: \(operationDescription)>"
+        }
+
         case execLoginShell
         case getShell
         case setenv(key: String, value: String)
@@ -139,9 +147,9 @@ class Conductor: NSObject {
             case .setenv(let key, let value):
                 return "setting \(key)=\(value)"
             case .run(let cmd):
-                return "running \(cmd)"
+                return "running “\(cmd)”"
             case .shell(let cmd):
-                return "running in shell \(cmd)"
+                return "running in shell “\(cmd)”"
             case .runPython(_):
                 return "running Python code"
             case .write(_, let dest):
@@ -155,7 +163,7 @@ class Conductor: NSObject {
             case .getpid:
                 return "Getting the shell's process ID"
             case .framerRun(let command):
-                return "run \(command)"
+                return "run “\(command)”"
             case .framerLogin(cwd: let cwd, args: let args):
                 return "login cwd=\(cwd) args=\(args)"
             case .framerSend(let data, pid: let pid):
@@ -168,12 +176,147 @@ class Conductor: NSObject {
         }
     }
 
-    struct ExecutionContext {
-        let command: Command
-        let handler: (PartialResult) -> (VT100ScreenSSHAction?)
+    class StringArray: Codable {
+        var strings = [String]()
     }
 
-    enum State {
+    struct ExecutionContext: Codable, CustomDebugStringConvertible {
+        var debugDescription: String {
+            return "<ExecutionContext: command=\(command) handler=\(handler)>"
+        }
+
+        let command: Command
+        enum Handler: Codable, CustomDebugStringConvertible {
+            var debugDescription: String {
+                switch self {
+                case .failIfNonzeroStatus:
+                    return "failIfNonzeroStatus"
+                case .handleCheckForPython:
+                    return "handleCheckForPython"
+                case .fireAndForget:
+                    return "fireAndForget"
+                case .handleFramerLogin:
+                    return "handleFramerLogin"
+                case .handleRequestPID:
+                    return "handleRequestPID"
+                case .handleQuit:
+                    return "handleQuit"
+                case .writeOnSuccess(let code):
+                    return "writeOnSuccess(\(code.count) chars)"
+                case .handleRunRemoteCommand(let command, _):
+                    return "handleRunRemoteCommand(\(command))"
+                case .handleBackgroundJob(let output, _):
+                    return"handleBackgroundJob(\(output.strings.count) lines)"
+                }
+            }
+
+            case failIfNonzeroStatus  // if .end(status) has status == 0 call fail("unexpected status")
+            case handleCheckForPython(StringArray)
+            case fireAndForget  // don't care what the result is
+            case handleFramerLogin
+            case handleRequestPID
+            case writeOnSuccess(String)  // see runPython
+            case handleRunRemoteCommand(String, (Data, Int32) -> ())
+            case handleBackgroundJob(StringArray, (Data, Int32) -> ())
+            case handleQuit
+
+            private enum Key: CodingKey {
+                case rawValue
+                case stringArray
+                case string
+            }
+
+            private enum RawValues: Int, Codable {
+                case failIfNonzeroStatus
+                case handleCheckForPython
+                case fireAndForget
+                case handleFramerLogin
+                case handleRequestPID
+                case writeOnSuccess
+                case handleRunRemoteCommand
+                case handleBackgroundJob
+                case handleQuit
+            }
+
+            private var rawValue: Int {
+                switch self {
+                case .failIfNonzeroStatus:
+                    return RawValues.failIfNonzeroStatus.rawValue
+                case .handleCheckForPython:
+                    return RawValues.handleCheckForPython.rawValue
+                case .fireAndForget:
+                    return RawValues.fireAndForget.rawValue
+                case .handleFramerLogin:
+                    return RawValues.handleFramerLogin.rawValue
+                case .handleRequestPID:
+                    return RawValues.handleRequestPID.rawValue
+                case .writeOnSuccess(_):
+                    return RawValues.writeOnSuccess.rawValue
+                case .handleRunRemoteCommand(_, _):
+                    return RawValues.handleRunRemoteCommand.rawValue
+                case .handleBackgroundJob(_, _):
+                    return RawValues.handleBackgroundJob.rawValue
+                case .handleQuit:
+                    return RawValues.handleQuit.rawValue
+                }
+            }
+
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: Key.self)
+                try container.encode(rawValue, forKey: .rawValue)
+                switch self {
+                case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin, .handleRequestPID, .handleQuit:
+                    break
+                case .handleCheckForPython(let value):
+                    try container.encode(value, forKey: .stringArray)
+                case .writeOnSuccess(let value):
+                    try container.encode(value, forKey: .string)
+                case .handleRunRemoteCommand(let value, _):
+                    try container.encode(value, forKey: .string)
+                case .handleBackgroundJob(let value, _):
+                    try container.encode(value, forKey: .stringArray)
+                }
+            }
+
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: Key.self)
+                switch try container.decode(RawValues.self, forKey: .rawValue) {
+                case .failIfNonzeroStatus:
+                    self = .failIfNonzeroStatus
+                case .handleCheckForPython:
+                    self = .handleCheckForPython(try container.decode(StringArray.self, forKey: .stringArray))
+                case .fireAndForget:
+                    self = .fireAndForget
+                case .handleFramerLogin:
+                    self = .handleFramerLogin
+                case .handleRequestPID:
+                    self = .handleRequestPID
+                case .writeOnSuccess:
+                    self = .writeOnSuccess(try container.decode(String.self, forKey: .string))
+                case .handleRunRemoteCommand:
+                    self = .handleRunRemoteCommand(try container.decode(String.self, forKey: .string), {_, _ in})
+                case .handleBackgroundJob:
+                    self = .handleBackgroundJob(try container.decode(StringArray.self, forKey: .stringArray), {_, _ in})
+                case .handleQuit:
+                    self = .handleQuit
+                }
+            }
+        }
+        let handler: Handler
+    }
+
+    enum State: Codable, CustomDebugStringConvertible {
+        var debugDescription: String {
+            switch self {
+            case .ground:
+                return "<State: ground>"
+            case .willExecute(let context):
+                return "<State: willExecute(\(context))>"
+            case .executing(let context):
+                return "<State: executing(\(context))>"
+            }
+        }
+
         case ground  // Have not written, not expecting anything.
         case willExecute(ExecutionContext)  // After writing, before parsing begin.
         case executing(ExecutionContext)  // After parsing begin, before parsing end.
@@ -186,7 +329,7 @@ class Conductor: NSObject {
         case abort  // couldn't even send the command
     }
 
-    struct RemoteInfo {
+    struct RemoteInfo: Codable {
         var pid: Int?
     }
     private var remoteInfo = RemoteInfo()
@@ -201,15 +344,25 @@ class Conductor: NSObject {
 
     @objc weak var delegate: ConductorDelegate?
     @objc let boolArgs: String
+    @objc let dcsID: String
     private var verbose = true
+
+    enum CodingKeys: CodingKey {
+        // Note backgroundJobs is not included because it isn't restorable.
+      case sshargs, vars, payloads, initialDirectory, parsedSSHArguments, depth, parent,
+           queueWrites, framedPID, remoteInfo, state, queue, boolArgs, dcsID
+    }
+
 
     @objc init(_ sshargs: String,
                boolArgs: String,
+               dcsID: String,
                vars: [String: String],
                initialDirectory: String?,
                parent: Conductor?) {
         self.sshargs = sshargs
         self.boolArgs = boolArgs
+        self.dcsID = dcsID;
         parsedSSHArguments = ParsedSSHArguments(sshargs, booleanArgs: boolArgs)
         self.vars = vars
         self.initialDirectory = initialDirectory
@@ -217,6 +370,65 @@ class Conductor: NSObject {
         self.parent = parent
         super.init()
         DLog("Conductor starting")
+    }
+
+    @objc(newConductorWithJSON:delegate:)
+    static func create(_ json: String, delegate: ConductorDelegate) -> Conductor? {
+        let decoder = JSONDecoder()
+        guard let data = json.data(using: .utf8),
+              let leaf = try? decoder.decode(Conductor.self, from: data) else {
+            return nil
+        }
+        var current: Conductor? = leaf
+        while current != nil {
+            current?.delegate = delegate
+            current = current?.parent
+        }
+        return leaf
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        sshargs = try container.decode(String.self, forKey: .sshargs)
+        vars = try container.decode([String: String].self, forKey: .vars)
+        payloads = try container.decode([(Payload)].self, forKey: .payloads)
+        initialDirectory = try container.decode(String?.self, forKey: .initialDirectory)
+        parsedSSHArguments = try container.decode(ParsedSSHArguments.self, forKey: .parsedSSHArguments)
+        depth = try container.decode(Int32.self, forKey: .depth)
+        parent = try container.decode(Conductor?.self, forKey: .parent)
+        queueWrites = try container.decode(Bool.self, forKey: .queueWrites)
+        framedPID = try container.decode(Int32?.self, forKey: .framedPID)
+        remoteInfo = try container.decode(RemoteInfo.self, forKey: .remoteInfo)
+        state = try  container.decode(State.self, forKey: .state)
+        queue = try container.decode([ExecutionContext].self, forKey: .queue)
+        boolArgs = try container.decode(String.self, forKey: .boolArgs)
+        dcsID = try container.decode(String.self, forKey: .dcsID)
+    }
+
+    @objc var jsonValue: String? {
+        let encoder = JSONEncoder()
+        guard let data = try? encoder.encode(self) else {
+            return nil
+        }
+        return String(data: data, encoding: .utf8)
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(sshargs, forKey: .sshargs)
+        try container.encode(vars, forKey: .vars)
+        try container.encode(payloads, forKey: .payloads)
+        try container.encode(initialDirectory, forKey: .initialDirectory)
+        try container.encode(parsedSSHArguments, forKey: .parsedSSHArguments)
+        try container.encode(depth, forKey: .depth)
+        try container.encode(parent, forKey: .parent)
+        try container.encode(queueWrites, forKey: .queueWrites)
+        try container.encode(framedPID, forKey: .framedPID)
+        try container.encode(remoteInfo, forKey: .remoteInfo)
+        try container.encode(State.ground, forKey: .state)
+        try container.encode([ExecutionContext](), forKey: .queue)
+        try container.encode(boolArgs, forKey: .boolArgs)
+        try container.encode(dcsID, forKey: .dcsID)
     }
 
     private func DLog(_ messageBlock: @autoclosure () -> String,
@@ -242,8 +454,8 @@ class Conductor: NSObject {
         while tweakedDestination != "/" && tweakedDestination.hasSuffix("/") {
             tweakedDestination = String(tweakedDestination.dropLast())
         }
-        payloads.append((path: (path as NSString).expandingTildeInPath,
-                         destination: tweakedDestination))
+        payloads.append(Payload(path: (path as NSString).expandingTildeInPath,
+                                destination: tweakedDestination))
     }
 
     @objc func start() {
@@ -279,9 +491,9 @@ class Conductor: NSObject {
 
     private func uploadPayloads() {
         let builder = ConductorPayloadBuilder()
-        for (path, destination) in payloads {
-            builder.add(localPath: URL(fileURLWithPath: path),
-                        destination: URL(fileURLWithPath: destination))
+        for payload in payloads {
+            builder.add(localPath: URL(fileURLWithPath: payload.path),
+                        destination: URL(fileURLWithPath: payload.destination))
         }
         builder.enumeratePayloads { data, destination in
             upload(data: data, destination: destination)
@@ -289,156 +501,41 @@ class Conductor: NSObject {
     }
 
     private func framerLogin(cwd: String, args: [String]) {
-        send(.framerLogin(cwd: cwd, args: args)) { [weak self] result in
-            switch result {
-            case .line(let pidString):
-                guard let pid = Int32(pidString) else {
-                    self?.fail("login responded with non-int pid \(pidString)")
-                    return nil
-                }
-                self?.framedPID = pid
-                return nil
-            case .end(_):
-                guard let pid = self?.framedPID, let self = self else {
-                    return nil
-                }
-                return VT100ScreenSSHAction(type: .setForegroundProcessID,
-                                            pid: pid,
-                                            depth: self.depth)
-            case .abort, .sideChannelLine(_, _, _):
-                return nil
-            }
-        }
+        send(.framerLogin(cwd: cwd, args: args), .handleFramerLogin)
     }
 
     private func framerSend(data: Data, pid: Int32) {
-        send(.framerSend(data, pid: pid)) { result in
-            switch result {
-            case .line(_), .abort, .end(_), .sideChannelLine(_, _, _):
-                return nil
-            }
-        }
+        send(.framerSend(data, pid: pid), .fireAndForget)
     }
 
     private func framerKill(pid: Int) {
-        send(.framerKill(pid: pid)) { result in
-            switch result {
-            case .line(_), .abort, .end(_), .sideChannelLine(_, _, _):
-                return nil
-            }
-        }
+        send(.framerKill(pid: pid), .fireAndForget)
     }
 
     private func framerQuit() {
-        send(.framerQuit) { result in
-            switch result {
-            case .line(_), .abort, .end(_), .sideChannelLine(_, _, _):
-                return nil
-            }
-        }
+        send(.framerQuit, .fireAndForget)
     }
 
     private func requestPID() {
-        send(.getpid) { [weak self] result in
-            switch result {
-            case .line(let value):
-                guard let pid = Int(value) else {
-                    self?.fail("Invalid process id \(value)")
-                    return nil
-                }
-                guard let self = self, self.remoteInfo.pid == nil else {
-                    self?.fail("Too many lines of output from getpid. Second is \(value)")
-                    return nil
-                }
-                self.remoteInfo.pid = pid
-                return nil
-            case .abort, .sideChannelLine(_, _, _):
-                return nil
-            case .end(let status):
-                guard status == 0 else {
-                    self?.fail("getPID failed with status \(status)")
-                    return nil
-                }
-                guard self?.remoteInfo.pid != nil else {
-                    self?.fail("No pid")
-                    return nil
-                }
-                return nil
-            }
-        }
+        send(.getpid, .handleRequestPID)
     }
 
     private func setEnvironmentVariables() {
         for (key, value) in vars {
-            send(.setenv(key: key, value: value)) { [weak self] result in
-                switch result {
-                case .line(let value):
-                    self?.fail("Unexpected output from setenv: \(value)")
-                    return nil
-                case .abort, .sideChannelLine(_, _, _):
-                    return nil
-                case .end(let status):
-                    guard status == 0 else {
-                        self?.fail("setenv failed with status \(status)")
-                        return nil
-                    }
-                    return nil
-                }
-            }
+            send(.setenv(key: key, value: value), .failIfNonzeroStatus)
         }
     }
 
     private func upload(data: Data, destination: String) {
-        send(.write(data: data, dest: destination)) { [weak self] result in
-            switch result {
-            case .line(let value):
-                self?.fail("Unexpected output from write: \(value)")
-                return nil
-            case .abort, .sideChannelLine(_, _, _):
-                return nil
-            case .end(let status):
-                guard status == 0 else {
-                    self?.fail("write failed with status \(status)")
-                    return nil
-                }
-                return nil
-            }
-        }
+        send(.write(data: data, dest: destination), .failIfNonzeroStatus)
     }
 
     private func cd(_ dir: String) {
-        send(.cd(dir)) { [weak self] result in
-            switch result {
-            case .line(let value):
-                self?.fail("Unexpected output from cd: \(value)")
-                return nil
-            case .abort, .sideChannelLine(_, _, _):
-                return nil
-            case .end(let status):
-                guard status == 0 else {
-                    self?.fail("cd failed with status \(status)")
-                    return nil
-                }
-                return nil
-            }
-        }
+        send(.cd(dir), .failIfNonzeroStatus)
     }
 
     private func execLoginShell() {
-        send(.execLoginShell) { [weak self] result in
-            switch result {
-            case .line(_):
-                fatalError()
-            case .abort, .sideChannelLine(_, _, _):
-                return nil
-            case .end(let status):
-                guard status == 0 else {
-                    self?.fail("exec_login_shell failed with status \(status)")
-                    return nil
-                }
-                return nil
-            }
-        }
+        send(.execLoginShell, .failIfNonzeroStatus)
     }
 
     private func execFramer() {
@@ -448,88 +545,151 @@ class Conductor: NSObject {
     }
 
     private func runPython(_ code: String) {
-        send(.runPython(code)) { [weak self] result in
-            switch result {
-            case .line(_), .abort, .sideChannelLine(_, _, _):
-                return nil
-            case .end(let status):
-                if status == 0 {
-                    self?.write(code)
-                    self?.write("")
-                    self?.write("EOF")
-                } else {
-                    self?.fail("Status \(status) when running python code")
-                }
-                return nil
-            }
-        }
+        send(.runPython(code), .writeOnSuccess(code))
     }
 
     private func run(_ command: String) {
-        send(.run(command)) { [weak self] result in
-            switch result {
-            case .line(_), .sideChannelLine(_, _, _):
-                fatalError()
-            case .abort:
-                return nil
-            case .end(let status):
-                guard status == 0 else {
-                    self?.fail("run \(command) failed with status \(status)")
-                    return nil
-                }
-                return nil
-            }
-        }
+        send(.run(command), .failIfNonzeroStatus)
     }
 
     private func shell(_ command: String) {
-        send(.shell(command)) { [weak self] result in
-            switch result {
-            case .line(_):
-                fatalError()
-            case .abort, .sideChannelLine(_, _, _):
-                return nil
-            case .end(let status):
-                guard status == 0 else {
-                    self?.fail("shell \(command) failed with status \(status)")
-                    return nil
-                }
-                return nil
-            }
-        }
+        send(.shell(command), .failIfNonzeroStatus)
     }
 
     private func checkForPython(_ then: @escaping () -> (), otherwise: @escaping () -> ()) {
-        var lines = [String]()
-        send(.shell("python3 -V")) { result in
+        send(.shell("python3 -V"), .handleCheckForPython(StringArray()))
+    }
+
+    private func update(executionContext: ExecutionContext, result: PartialResult) -> () {
+        switch executionContext.handler {
+        case .failIfNonzeroStatus:
             switch result {
-            case .line(let output), .sideChannelLine(line: let output, channel: 1, pid: _):
-                lines.append(output)
-                return nil
-            case .abort, .sideChannelLine(_, _, _):
-                otherwise()
-                return nil
             case .end(let status):
                 if status != 0 {
-                    otherwise()
-                    return nil
+                    fail("\(executionContext.command.stringValue): Unepected status \(status)")
                 }
-                let output = lines.joined(separator: "\n")
+            case .abort, .line(_), .sideChannelLine(line: _, channel: _, pid: _):
+                break
+            }
+            return
+        case .handleCheckForPython(let lines):
+            switch result {
+            case .line(let output), .sideChannelLine(line: let output, channel: 1, pid: _):
+                lines.strings.append(output)
+                return
+            case .abort, .sideChannelLine(_, _, _):
+                execLoginShell()
+                return
+            case .end(let status):
+                if status != 0 {
+                    execLoginShell()
+                    return
+                }
+                let output = lines.strings.joined(separator: "\n")
                 let groups = output.captureGroups(regex: "^Python (3\\.[0-9][0-9]*)")
                 if groups.count != 2 {
-                    otherwise()
-                    return nil
+                    execLoginShell()
+                    return
                 }
                 let version = (output as NSString).substring(with: groups[1])
                 let number = NSDecimalNumber(string: version)
                 let minimum = NSDecimalNumber(string: "3.7")
                 if number.isGreaterThanOrEqual(to: minimum) {
-                    then()
+                    doFraming()
                 } else {
-                    otherwise()
+                    execLoginShell()
                 }
-                return nil
+                return
             }
+        case .fireAndForget:
+            return
+        case .handleFramerLogin:
+            switch result {
+            case .line(let pidString):
+                guard let pid = Int32(pidString) else {
+                    fail("login responded with non-int pid \(pidString)")
+                    return
+                }
+                framedPID = pid
+                return
+            case .abort, .sideChannelLine(_, _, _), .end(_):
+                return
+            }
+        case .handleRequestPID:
+            switch result {
+            case .line(let value):
+                guard let pid = Int(value) else {
+                    fail("Invalid process id \(value)")
+                    return
+                }
+                guard remoteInfo.pid == nil else {
+                    fail("Too many lines of output from getpid. Second is \(value)")
+                    return
+                }
+                remoteInfo.pid = pid
+                return
+            case .abort, .sideChannelLine(_, _, _):
+                return
+            case .end(let status):
+                guard status == 0 else {
+                    fail("getPID failed with status \(status)")
+                    return
+                }
+                guard remoteInfo.pid != nil else {
+                    fail("No pid")
+                    return
+                }
+                return
+            }
+        case .writeOnSuccess(let code):
+            switch result {
+            case .line(_), .abort, .sideChannelLine(_, _, _):
+                return
+            case .end(let status):
+                if status == 0 {
+                    write(code)
+                    write("")
+                    write("EOF")
+                } else {
+                    fail("Status \(status) when running python code")
+                }
+                return
+            }
+        case .handleRunRemoteCommand(let commandLine, let completion):
+            switch result {
+            case .line(let line):
+                guard let pid = Int32(line) else {
+                    return
+                }
+                addBackgroundJob(pid,
+                                 command: .framerRun(commandLine),
+                                 completion: completion)
+            case .sideChannelLine(_, _, _), .abort, .end(_):
+                break
+            }
+            return
+        case .handleBackgroundJob(let output, let completion):
+            switch result {
+            case .line(_):
+                fail("Unexpected output from \(executionContext.command.stringValue)")
+            case .sideChannelLine(line: let line, channel: 1, pid: _):
+                output.strings.append(line)
+            case .abort, .sideChannelLine(_, _, _):
+                completion(Data(), -2)
+            case .end(let status):
+                let combined = output.strings.joined(separator: "")
+                completion(combined.data(using: .utf8) ?? Data(),
+                           Int32(status))
+            }
+            return
+        case .handleQuit:
+            switch result {
+            case .end(_), .abort:
+                self.delegate?.conductorTerminate(self)
+            case .line(_), .sideChannelLine(_, _, _):
+                break
+            }
+            return
         }
     }
 
@@ -537,12 +697,12 @@ class Conductor: NSObject {
         DLog("< \(line)")
         switch state {
         case .ground:
-            fail("Unexpected input: \(line)")
-        case .willExecute(let context):
+            // Tolerate unexpected inputs - this is essential for getting back on your feet when
+            // restoring.
+            DLog("Unexpected input: \(line)")
+        case .willExecute(let context), .executing(let context):
             state = .executing(context)
-            _ = context.handler(.line(line))
-        case .executing(let context):
-            _ = context.handler(.line(line))
+            update(executionContext: context, result: .line(line))
         }
     }
 
@@ -550,56 +710,37 @@ class Conductor: NSObject {
         DLog("< command \(identifier) response will begin")
     }
 
-    @objc func handleCommandEnd(identifier: String, status: UInt8) -> VT100ScreenSSHAction {
+    @objc func handleCommandEnd(identifier: String, status: UInt8) {
         DLog("< command \(identifier) ended with status \(status)")
         switch state {
         case .ground:
-            fail("Unexpected command end in \(state)")
+            // Tolerate unexpected inputs - this is essential for getting back on your feet when
+            // restoring.
+            DLog("Unexpected command end in \(state)")
         case .willExecute(let context), .executing(let context):
-            let action = context.handler(.end(status))
+            update(executionContext: context, result: .end(status))
             DLog("Command ended. Return to ground state.")
             state = .ground
             dequeue()
-            if let action = action {
-                return action
-            }
         }
-        return VT100ScreenSSHAction(type: .none, pid: 0, depth: 0)
     }
 
     @objc(handleTerminatePID:withCode:)
-    func handleTerminate(_ pid: Int32, code: Int32) -> VT100ScreenSSHAction {
+    func handleTerminate(_ pid: Int32, code: Int32) {
         DLog("Process \(pid) terminated")
         if pid == framedPID {
-            send(.quit) { [weak self] result in
-                guard let self = self else {
-                    return nil
-                }
-                switch result {
-                case .end(_), .abort:
-                    self.delegate?.conductorTerminate(self)
-                case .line(_), .sideChannelLine(_, _, _):
-                    break
-                }
-                return nil
-            }
-            if let parent = parent, let parentPID = parent.framedPID {
-                return VT100ScreenSSHAction(type: .setForegroundProcessID,
-                                            pid: parentPID,
-                                            depth: parent.depth)
-            } else {
-                return VT100ScreenSSHAction(type: .resetForegroundProcessID, pid: 0, depth: 0)
-            }
+            send(.quit, .handleQuit)
         } else if let jobState = backgroundJobs[pid] {
             switch jobState {
             case .ground:
-                fail("Unexpected termination of \(pid)")
+                // Tolerate unexpected inputs - this is essential for getting back on your feet when
+                // restoring.
+                DLog("Unexpected termination of \(pid)")
             case .willExecute(let context), .executing(let context):
-                _ = context.handler(.end(UInt8(code)))
+                update(executionContext: context, result: .end(UInt8(code)))
                 backgroundJobs.removeValue(forKey: pid)
             }
         }
-        return VT100ScreenSSHAction(type: .none, pid: 0, depth: 0)
     }
 
     @objc(handleSideChannelOutput:pid:channel:)
@@ -610,15 +751,18 @@ class Conductor: NSObject {
 //        DLog("pid \(pid) channel \(channel) produced: \(string)")
         switch jobState {
         case .ground:
-            fail("Unexpected input: \(string)")
+            // Tolerate unexpected inputs - this is essential for getting back on your feet when
+            // restoring.
+            DLog("Unexpected input: \(string)")
         case .willExecute(let context):
             state = .executing(context)
         case .executing(let context):
-            _ = context.handler(.sideChannelLine(line: string, channel: channel, pid: pid))
+            update(executionContext: context,
+                   result: .sideChannelLine(line: string, channel: channel, pid: pid))
         }
     }
 
-    private func send(_ command: Command, handler: @escaping (PartialResult) -> (VT100ScreenSSHAction?)) {
+    private func send(_ command: Command, _ handler: ExecutionContext.Handler) {
         queue.append(ExecutionContext(command: command, handler: handler))
         switch state {
         case .ground:
@@ -632,7 +776,7 @@ class Conductor: NSObject {
         guard delegate != nil else {
             while let pending = queue.first {
                 queue.removeFirst()
-                _ = pending.handler(.abort)
+                update(executionContext: pending, result: .abort)
             }
             return
         }
@@ -672,7 +816,7 @@ class Conductor: NSObject {
         let cod = currentOperationDescription
         state = .ground
         for context in queue {
-            _ = context.handler(.abort)
+            update(executionContext: context, result: .abort)
         }
         queue = []
         // Try to launch the login shell so you're not completely stuck.
@@ -683,21 +827,7 @@ class Conductor: NSObject {
 
 extension Conductor: SSHCommandRunning {
     private func addBackgroundJob(_ pid: Int32, command: Command, completion: @escaping (Data, Int32) -> ()) {
-        var output = ""
-        let context = ExecutionContext(command: command, handler: { result in
-            switch result {
-            case .line(_):
-                fatalError()
-            case .sideChannelLine(line: let line, channel: 1, pid: _):
-                output += line
-            case .abort, .sideChannelLine(_, _, _):
-                completion(Data(), -2)
-            case .end(let status):
-                completion(output.data(using: .utf8) ?? Data(),
-                           Int32(status))
-            }
-            return nil
-        })
+        let context = ExecutionContext(command: command, handler: .handleBackgroundJob(StringArray(), completion))
         backgroundJobs[pid] = .executing(context)
     }
 
@@ -711,20 +841,7 @@ extension Conductor: SSHCommandRunning {
         // This command ends almost immediately, providing only the child process's pid as output,
         // but in actuality continues running in the background producing %output messages and
         // eventually %terminate.
-        self.send(.framerRun(commandLine)) { [weak self] result in
-            switch result {
-            case .line(let line):
-                guard let pid = Int32(line) else {
-                    return nil
-                }
-                self?.addBackgroundJob(pid,
-                                       command: .framerRun(commandLine),
-                                       completion: completion)
-            case .sideChannelLine(_, _, _), .abort, .end(_):
-                break
-            }
-            return nil
-        }
+        send(.framerRun(commandLine), .handleRunRemoteCommand(commandLine, completion))
     }
                                                                   
 }

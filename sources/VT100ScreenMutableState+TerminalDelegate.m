@@ -2450,9 +2450,11 @@
         DLog(@"No sshargs");
         return nil;
     }
+    NSString *dcsid = [parts lastObject];
+    parts = [parts it_arrayByDroppingLastN:1];
     NSString *sshargs = [[parts subarrayFromIndex:i] componentsJoinedByString:@" "];
 
-    return @[token, uniqueID, boolArgs, sshargs];
+    return @[token, uniqueID, boolArgs, sshargs, dcsid];
 }
 
 - (void)terminalDidHookSSHConductorWithParams:(NSString *)params {
@@ -2473,12 +2475,14 @@
         DLog(@"Failed to base64 decode %@", values[3]);
         return;
     }
+    NSString *dcsID = values[4];
     [self appendBannerMessage:[NSString stringWithFormat:@"ssh %@", sshargs]];
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
         [delegate screenDidHookSSHConductorWithToken:token
                                             uniqueID:uniqueID
                                             boolArgs:boolArgs
-                                             sshargs:sshargs];
+                                             sshargs:sshargs
+                                               dcsID:dcsID];
     }];
 }
 
@@ -2501,12 +2505,10 @@
 }
 
 - (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier status:(uint8_t)status {
-    __weak __typeof(self) weakSelf = self;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
-        const VT100ScreenSSHAction action = [delegate screenDidEndSSHConductorCommandWithIdentifier:identifier
-                                                                                             status:status];
+        [delegate screenDidEndSSHConductorCommandWithIdentifier:identifier
+                                                         status:status];
 
-        [weakSelf handleSSHAction:action];
         [unpauser unpause];
     }];
 }
@@ -2519,26 +2521,9 @@
     }];
 }
 
-- (void)handleSSHAction:(VT100ScreenSSHAction)action {
-    switch (action.type) {
-        case VT100ScreenSSHActionTypeNone:
-            break;
-        case VT100ScreenSSHActionTypeSetForegroundProcessID:
-            self.terminal.sshPID = action.pid;
-            self.terminal.sshDepth = action.depth;
-            break;
-        case VT100ScreenSSHActionTypeResetForegroundProcessID:
-            self.terminal.sshPID = 0;
-            self.terminal.sshDepth = 0;
-            break;
-    }
-}
-
 - (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code {
-    __weak __typeof(self) weakSelf = self;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
-        const VT100ScreenSSHAction action = [delegate screenDidTerminateSSHProcess:pid code:code];
-        [weakSelf handleSSHAction:action];
+        [delegate screenDidTerminateSSHProcess:pid code:code];
         [unpauser unpause];
     }];
 }

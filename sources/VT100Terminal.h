@@ -130,11 +130,6 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic, strong, readonly) VT100Token *lastToken;
 @property(nonatomic, copy) NSDictionary<NSNumber *, id> *stringForKeypress;
 @property(atomic) BOOL dirty;
-// 0 (normal) means no tokens are involved in ssh integration. Nonzero means to wrap tokens for
-// any other PID in SSH_OUTPUT.
-@property(nonatomic) int sshPID;
-// SSH PIDs are only meaningful at a given depth level.
-@property(nonatomic) int sshDepth;
 
 + (NSOrderedSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
                                 externalAttributes:(iTermExternalAttribute *)ea;

@@ -348,8 +348,8 @@ async def cleanup():
 async def handle(args):
     log(f'handle {args}')
     if len(args) == 0:
-        fail("no args")
-        return True
+        log("no args")
+        return False
     cmd = args[0]
     del args[0]
     identifier = random.randint(0, 10000000000000000000)

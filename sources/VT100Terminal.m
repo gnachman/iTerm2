@@ -1890,14 +1890,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         _lastToken = nil;
         return;
     }
-    // TODO: This is wrong. I should keep a stack of (pid, depth) because it
-    // should be possible to detect side-channel output from any level. This
-    // will incorrectly treat side channels from the middle of the stack as
-    // regular output.
     if (token.sshInfo.valid &&
-        self.sshPID != 0 &&
-        token.sshInfo.depth == self.sshDepth &&
-        token.sshInfo.pid != self.sshPID) {
+        token.sshInfo.channel >= 0) {
         // A side-channel produced output. Ignore anything that isn't plaintext to make parsing easy.
         VT100Token *wrapped = [[VT100Token alloc] init];
         wrapped.type = SSH_OUTPUT;
@@ -1924,7 +1918,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         token = wrapped;
         DLog(@"Unwrapped token into %@", token);
     } else if (token.sshInfo.valid) {
-        DLog(@"Not unwrapping. token info=%@, I expect pid=%@ depth=%@", SSHInfoDescription(token.sshInfo), @(self.sshPID), @(self.sshDepth));
+        DLog(@"Not unwrapping. token info=%@", SSHInfoDescription(token.sshInfo));
     }
     [self reallyExecuteToken:token];
     _lastToken = token;
