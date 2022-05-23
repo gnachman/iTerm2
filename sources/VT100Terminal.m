@@ -2920,7 +2920,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case SSH_LINE:
-            [self.delegate terminalDidReadSSHConductorLine:token.string];
+            [self.delegate terminalDidReadSSHConductorLine:token.string
+                                                     depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
         case SSH_UNHOOK:
@@ -2928,7 +2929,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case SSH_BEGIN:
-            [self.delegate terminalDidBeginSSHConductorCommandWithIdentifier:token.string];
+            [self.delegate terminalDidBeginSSHConductorCommandWithIdentifier:token.string
+                                                                       depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
             
         case SSH_END: {
@@ -2941,19 +2943,23 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (status > 255) {
                 break;
             }
-            [self.delegate terminalDidEndSSHConductorCommandWithIdentifier:parts[0] status:status];
+            [self.delegate terminalDidEndSSHConductorCommandWithIdentifier:parts[0]
+                                                                    status:status
+                                                                     depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
         }
 
         case SSH_OUTPUT:
             [self.delegate terminalHandleSSHSideChannelOutput:token.string
                                                           pid:token.sshInfo.pid
-                                                      channel:token.sshInfo.channel];
+                                                      channel:token.sshInfo.channel
+                                                        depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
         case SSH_TERMINATE:
             [self.delegate terminalHandleSSHTerminatePID:token.csi->p[0]
-                                                withCode:token.csi->p[1]];
+                                                withCode:token.csi->p[1]
+                                                   depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
         case DCS_BEGIN_SYNCHRONIZED_UPDATE:

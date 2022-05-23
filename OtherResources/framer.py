@@ -23,7 +23,7 @@ def log(message):
     if VERBOSE:
         global LOGFILE
         if not LOGFILE:
-            LOGFILE = open("/tmp/framer.txt", "w")
+            LOGFILE = open("/tmp/framer.txt", "a")
         print(f'DEBUG {os.getpid()}: {message}', file=LOGFILE)
         LOGFILE.flush()
 

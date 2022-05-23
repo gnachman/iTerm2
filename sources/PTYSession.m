@@ -13625,7 +13625,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         directory = self.environment[@"PWD"];
     }
     iTermConductor *previousConductor = [_conductor autorelease];
-    _conductor.delegate = nil;
     NSDictionary *dict = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_SSH_CONFIG inProfile:self.profile]];
 
     iTermSSHConfiguration *config = [[[iTermSSHConfiguration alloc] initWithDictionary:dict] autorelease];
@@ -13645,8 +13644,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                andObject:_conductor.sshIdentity]];
 }
 
-- (void)screenDidReadSSHConductorLine:(NSString *)string {
-    [_conductor handleLine:string];
+- (void)screenDidReadSSHConductorLine:(NSString *)string depth:(int)depth {
+    [_conductor handleLine:string depth:depth];
 }
 
 - (void)screenDidUnhookSSHConductor {
@@ -13664,23 +13663,26 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _conductor.delegate = self;
 }
 
-- (void)screenDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier {
-    [_conductor handleCommandBeginWithIdentifier:identifier];
+- (void)screenDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier
+                                                  depth:(int)depth {
+    [_conductor handleCommandBeginWithIdentifier:identifier depth:depth];
 }
 
 - (void)screenDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier
-                                               status:(uint8_t)status {
-    [_conductor handleCommandEndWithIdentifier:identifier status:status];
+                                               status:(uint8_t)status
+                                                depth:(int)depth {
+    [_conductor handleCommandEndWithIdentifier:identifier status:status depth:depth];
 }
 
 - (void)screenHandleSSHSideChannelOutput:(NSString *)string
                                      pid:(int32_t)pid
-                                 channel:(uint8_t)channel {
-    [_conductor handleSideChannelOutput:string pid:pid channel:channel];
+                                 channel:(uint8_t)channel
+                                   depth:(int)depth {
+    [_conductor handleSideChannelOutput:string pid:pid channel:channel depth:depth];
 }
 
-- (void)screenDidTerminateSSHProcess:(int)pid code:(int)code {
-    [_conductor handleTerminatePID:pid withCode:code];
+- (void)screenDidTerminateSSHProcess:(int)pid code:(int)code depth:(int)depth {
+    [_conductor handleTerminatePID:pid withCode:code depth:depth];
 }
 
 - (NSInteger)screenEndSSH:(NSString *)uniqueID {
@@ -16334,7 +16336,6 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
         [mutableState appendStringAtCursor:reason];
         [mutableState appendCarriageReturnLineFeed];
     }];
-    [_conductor autorelease];
     [self unhookSSHConductor];
 }
 

@@ -162,12 +162,38 @@
                         .valid = 1,
                         .depth = self.depth
                     };
+                    const SSHInfo childInfo = {
+                        .pid = pid,
+                        .channel = token.csi->p[1],
+                        .valid = 1,
+                        .depth = self.depth + 1
+                    };
                     for (int i = start; i < end; i++) {
                         VT100Token *token = CVectorGet(vector, i);
                         SSHInfo sshInfo = token.sshInfo;
                         if (!sshInfo.valid) {
                             DLog(@"Update ssh info in rewritten token %@ to %@", token, SSHInfoDescription(myInfo));
-                            token.sshInfo = myInfo;
+                            switch (token.type) {
+                                case SSH_OUTPUT:
+                                    // VT100Parser cannot emit SSH_OUTPUT.
+                                    assert(NO);
+                                case SSH_INIT:
+                                case SSH_LINE:
+                                case SSH_UNHOOK:
+                                case SSH_BEGIN:
+                                case SSH_END:
+                                case SSH_TERMINATE:
+                                    // Meta-tokens, when emitted as the product of %output, belong
+                                    // to the child but will not be properly marked up with ssh info.
+                                    token.sshInfo = childInfo;
+                                    break;
+                                default:
+                                    // Regular tokens (e.g., VT100_STRING) belong to this parser's
+                                    // depth. The extra parser just decoded the output that belongs
+                                    // to us.
+                                    token.sshInfo = myInfo;
+                                    break;
+                            }
                         } else {
                             DLog(@"Rewritten token %@ has valid SSH info %@ so not rewriting it", token, SSHInfoDescription(token.sshInfo));
                         }

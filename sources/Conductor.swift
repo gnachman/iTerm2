@@ -32,7 +32,13 @@ class Conductor: NSObject, Codable {
     private let parsedSSHArguments: ParsedSSHArguments
     private let depth: Int32
     @objc let parent: Conductor?
-    @objc private(set) var queueWrites = true
+    private var _queueWrites = true
+    @objc var queueWrites: Bool {
+        if let parent = parent {
+            return _queueWrites && parent.queueWrites
+        }
+        return _queueWrites
+    }
     @objc var framing: Bool {
         return framedPID != nil
     }
@@ -43,6 +49,7 @@ class Conductor: NSObject, Codable {
         return nil
     }
     private(set) var framedPID: Int32? = nil
+    // If this returns true, route writes through sendKeys(_:).
     @objc var handlesKeystrokes: Bool {
         return framedPID != nil && queueWrites
     }
@@ -350,7 +357,7 @@ class Conductor: NSObject, Codable {
     enum CodingKeys: CodingKey {
         // Note backgroundJobs is not included because it isn't restorable.
       case sshargs, vars, payloads, initialDirectory, parsedSSHArguments, depth, parent,
-           queueWrites, framedPID, remoteInfo, state, queue, boolArgs, dcsID
+           framedPID, remoteInfo, state, queue, boolArgs, dcsID
     }
 
 
@@ -396,7 +403,6 @@ class Conductor: NSObject, Codable {
         parsedSSHArguments = try container.decode(ParsedSSHArguments.self, forKey: .parsedSSHArguments)
         depth = try container.decode(Int32.self, forKey: .depth)
         parent = try container.decode(Conductor?.self, forKey: .parent)
-        queueWrites = try container.decode(Bool.self, forKey: .queueWrites)
         framedPID = try container.decode(Int32?.self, forKey: .framedPID)
         remoteInfo = try container.decode(RemoteInfo.self, forKey: .remoteInfo)
         state = try  container.decode(State.self, forKey: .state)
@@ -422,7 +428,6 @@ class Conductor: NSObject, Codable {
         try container.encode(parsedSSHArguments, forKey: .parsedSSHArguments)
         try container.encode(depth, forKey: .depth)
         try container.encode(parent, forKey: .parent)
-        try container.encode(queueWrites, forKey: .queueWrites)
         try container.encode(framedPID, forKey: .framedPID)
         try container.encode(remoteInfo, forKey: .remoteInfo)
         try container.encode(State.ground, forKey: .state)
@@ -693,7 +698,12 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    @objc(handleLine:) func handle(line: String) {
+    @objc(handleLine:depth:) func handle(line: String, depth: Int32) {
+        if depth != self.depth {
+            DLog("Pass line with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
+            parent?.handle(line: line, depth: depth)
+            return
+        }
         DLog("< \(line)")
         switch state {
         case .ground:
@@ -706,12 +716,17 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    @objc func handleCommandBegin(identifier: String) {
-        DLog("< command \(identifier) response will begin")
+    @objc func handleCommandBegin(identifier: String, depth: Int32) {
+        DLog("< command \(identifier) response will begin for depth \(depth) vs my depth of \(self.depth)")
     }
 
-    @objc func handleCommandEnd(identifier: String, status: UInt8) {
-        DLog("< command \(identifier) ended with status \(status)")
+    @objc func handleCommandEnd(identifier: String, status: UInt8, depth: Int32) {
+        if depth != self.depth {
+            DLog("Pass command-end with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
+            parent?.handleCommandEnd(identifier: identifier, status: status, depth: depth)
+            return
+        }
+        DLog("< command \(identifier) ended with status \(status) while in state \(state)")
         switch state {
         case .ground:
             // Tolerate unexpected inputs - this is essential for getting back on your feet when
@@ -725,8 +740,13 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    @objc(handleTerminatePID:withCode:)
-    func handleTerminate(_ pid: Int32, code: Int32) {
+    @objc(handleTerminatePID:withCode:depth:)
+    func handleTerminate(_ pid: Int32, code: Int32, depth: Int32) {
+        if depth != self.depth {
+            DLog("Pass command-terminated with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
+            parent?.handleTerminate(pid, code: code, depth: depth)
+            return
+        }
         DLog("Process \(pid) terminated")
         if pid == framedPID {
             send(.quit, .handleQuit)
@@ -743,8 +763,13 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    @objc(handleSideChannelOutput:pid:channel:)
-    func handleSideChannelOutput(_ string: String, pid: Int32, channel: UInt8) {
+    @objc(handleSideChannelOutput:pid:channel:depth:)
+    func handleSideChannelOutput(_ string: String, pid: Int32, channel: UInt8, depth: Int32) {
+        if depth != self.depth {
+            DLog("Pass side-channel output with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
+            parent?.handleSideChannelOutput(string, pid: pid, channel: channel, depth: depth)
+            return
+        }
         guard let jobState = backgroundJobs[pid] else {
             return
         }
@@ -793,11 +818,22 @@ class Conductor: NSObject, Codable {
     }
 
     private func write(_ string: String, end: String = "\n") {
-        let savedQueueWrites = queueWrites
-        queueWrites = false
+        let savedQueueWrites = _queueWrites
+        _queueWrites = false
         DLog("> \(string)")
-        delegate?.conductorWrite(string: string + end)
-        queueWrites = savedQueueWrites
+        if let parent = parent {
+            if let data = (string + end).data(using: .utf8) {
+                parent.sendKeys(data)
+            } else {
+                DLog("bogus string \(string)")
+            }
+        } else {
+            if delegate == nil {
+                DLog("[can't send - nil delegate]")
+            }
+            delegate?.conductorWrite(string: string + end)
+        }
+        _queueWrites = savedQueueWrites
     }
 
     private var currentOperationDescription: String {

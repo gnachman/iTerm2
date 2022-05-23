@@ -2486,9 +2486,9 @@
     }];
 }
 
-- (void)terminalDidReadSSHConductorLine:(NSString *)string {
+- (void)terminalDidReadSSHConductorLine:(NSString *)string depth:(int)depth {
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
-        [delegate screenDidReadSSHConductorLine:string];
+        [delegate screenDidReadSSHConductorLine:string depth:(int)depth];
     }];
 
 }
@@ -2498,16 +2498,19 @@
     }];
 }
 
-- (void)terminalDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier {
+- (void)terminalDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier
+                                                    depth:(int)depth {
     [self addSideEffect:^(id<VT100ScreenDelegate> _Nonnull delegate) {
-        [delegate screenDidBeginSSHConductorCommandWithIdentifier:identifier];
+        [delegate screenDidBeginSSHConductorCommandWithIdentifier:identifier
+                                                            depth:depth];
     }];
 }
 
-- (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier status:(uint8_t)status {
+- (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier status:(uint8_t)status depth:(int)depth {
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenDidEndSSHConductorCommandWithIdentifier:identifier
-                                                         status:status];
+                                                         status:status
+                                                          depth:depth];
 
         [unpauser unpause];
     }];
@@ -2515,15 +2518,16 @@
 
 - (void)terminalHandleSSHSideChannelOutput:(NSString *)string
                                        pid:(int32_t)pid
-                                   channel:(uint8_t)channel {
+                                   channel:(uint8_t)channel
+                                     depth:(int)depth {
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate screenHandleSSHSideChannelOutput:string pid:pid channel:channel];
+        [delegate screenHandleSSHSideChannelOutput:string pid:pid channel:channel depth:depth];
     }];
 }
 
-- (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code {
+- (void)terminalHandleSSHTerminatePID:(int)pid withCode:(int)code depth:(int)depth {
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
-        [delegate screenDidTerminateSSHProcess:pid code:code];
+        [delegate screenDidTerminateSSHProcess:pid code:code depth:depth];
         [unpauser unpause];
     }];
 }
