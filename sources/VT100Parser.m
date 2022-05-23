@@ -358,11 +358,30 @@
     }
 }
 
-- (void)startConductorRecoveryModeWithID:(NSString *)dcsID {
+// tree: [child pid: (dcs ID, tree)]
+- (void)startConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree {
+    if (tree.count == 0) {
+        return;
+    }
     @synchronized (self) {
         // TODO: This doesn't attempt to handle nested conductors.
         [_controlParser startConductorRecoveryModeWithID:dcsID];
         _dcsHooked = YES;
+        [self recoverWithConductorTree:tree];
+    }
+}
+
+- (void)recoverWithConductorTree:(NSDictionary *)tree {
+    for (NSNumber *childPID in tree) {
+        NSArray *tuple = tree[childPID];
+        NSString *childDcsId = tuple[0];
+        NSDictionary *childTree = tuple[1];
+
+        VT100Parser *childParser = [[VT100Parser alloc] init];
+        childParser.encoding = self.encoding;
+        childParser.depth = self.depth + 1;
+        _sshParsers[childPID] = childParser;
+        [childParser startConductorRecoveryModeWithID:childDcsId tree:childTree];
     }
 }
 

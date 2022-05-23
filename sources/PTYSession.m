@@ -243,6 +243,7 @@ static NSString *const SESSION_ARRANGEMENT_IS_TMUX_GATEWAY = @"Is Tmux Gateway";
 static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME = @"Tmux Gateway Session Name";
 static NSString *const SESSION_ARRANGEMENT_TMUX_DCS_ID = @"Tmux DCS ID";
 static NSString *const SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID = @"Conductor DCS ID";
+static NSString *const SESSION_ARRANGEMENT_CONDUCTOR_TREE = @"Conductor Parser Tree";
 static NSString *const SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID = @"Tmux Gateway Session ID";
 static NSString *const SESSION_ARRANGEMENT_NAME_CONTROLLER_STATE = @"Name Controller State";
 static NSString *const __attribute__((unused)) DEPRECATED_SESSION_ARRANGEMENT_DEFAULT_NAME_DEPRECATED = @"Session Default Name";  // manually set name
@@ -1204,7 +1205,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                    shouldEnterTmuxMode:(BOOL)shouldEnterTmuxMode
                                                  state:(NSDictionary *)state
                                      tmuxDCSIdentifier:(NSString *)tmuxDCSIdentifier
-                                      sshDCSIdentifier:(NSString *)sshDCSIdentifier
                                         missingProfile:(BOOL)missingProfile {
     if (needDivorce) {
         [aSession divorceAddressBookEntryFromPreferences];
@@ -1552,7 +1552,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     NSNumber *tmuxPaneNumber = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     NSString *tmuxDCSIdentifier = nil;
-    NSString *conductorDCSIdentifier = nil;
     BOOL shouldEnterTmuxMode = NO;
     NSDictionary *contents = arrangement[SESSION_ARRANGEMENT_CONTENTS];
     BOOL restoreContents = !tmuxPaneNumber && contents && [iTermAdvancedSettingsModel restoreWindowContents];
@@ -1589,7 +1588,8 @@ ITERM_WEAKLY_REFERENCEABLE
             }
             if (aSession->_conductor) {
                 [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-                    [terminal.parser startConductorRecoveryModeWithID:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID]];
+                    [terminal.parser startConductorRecoveryModeWithID:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID]
+                                                                 tree:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_TREE]];
                 }];
             }
             // iTerm2 is currently configured to run jobs in servers, but we
@@ -1629,7 +1629,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_NAME] != nil &&
                                        arrangement[SESSION_ARRANGEMENT_TMUX_GATEWAY_SESSION_ID] != nil);
                 tmuxDCSIdentifier = arrangement[SESSION_ARRANGEMENT_TMUX_DCS_ID];
-                conductorDCSIdentifier = arrangement[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID];
             } else {
                 if (isTmuxGateway) {
                     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -1782,7 +1781,6 @@ ITERM_WEAKLY_REFERENCEABLE
                                          shouldEnterTmuxMode:shouldEnterTmuxMode
                                                        state:state
                                            tmuxDCSIdentifier:tmuxDCSIdentifier
-                                            sshDCSIdentifier:conductorDCSIdentifier
                                               missingProfile:missingProfile];
         [aSession didFinishInitialization];
     };
@@ -5114,6 +5112,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     }
     if ( _conductor) {
         result[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID] = _conductor.dcsID;
+        result[SESSION_ARRANGEMENT_CONDUCTOR_TREE] = _conductor.tree;
     }
 
     result[SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS] = @(_screen.shouldExpectPromptMarks);

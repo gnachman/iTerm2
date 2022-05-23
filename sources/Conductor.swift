@@ -419,6 +419,26 @@ class Conductor: NSObject, Codable {
         return String(data: data, encoding: .utf8)
     }
 
+    @objc var tree: NSDictionary {
+        if let parent = parent {
+            return parent.treeWithChildTree(mysubtree)
+        }
+        return mysubtree
+    }
+
+    private var mysubtree: NSDictionary {
+        guard let framedPID = framedPID else {
+            return [:]
+        }
+        return [framedPID: [dcsID, [:]]]
+    }
+    private func treeWithChildTree(_ childTree: NSDictionary) -> NSDictionary {
+        guard let framedPID = framedPID else {
+            fatalError()
+        }
+        return [framedPID: [dcsID, childTree]]
+    }
+
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(sshargs, forKey: .sshargs)

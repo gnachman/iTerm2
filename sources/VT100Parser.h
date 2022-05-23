@@ -24,7 +24,7 @@
 - (void)startTmuxRecoveryModeWithID:(NSString *)dcsID;
 - (void)cancelTmuxRecoveryMode;
 
-- (void)startConductorRecoveryModeWithID:(NSString *)dcsID;
+- (void)startConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree;
 - (void)cancelConductorRecoveryMode;
 
 // CVector was created for this method. Because so many VT100Token*s are created and destroyed,
