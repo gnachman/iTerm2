@@ -18,6 +18,9 @@ PROCESSES = {}
 COMPLETED = []
 VERBOSE=1
 LOGFILE=None
+RUNLOOP=None
+TASKS=[]
+QUITTING=False
 
 def log(message):
     if VERBOSE:
@@ -28,6 +31,9 @@ def log(message):
         LOGFILE.flush()
 
 def send(text):
+    if QUITTING:
+        log("[squelched] " + str(text))
+        return
     log("> " + str(text))
     print(text)
 
@@ -53,10 +59,10 @@ class Process:
                 executable=executable,
                 preexec_fn=lambda: set_ctty(slave, master))
         except Exception as e:
-            log(e)
+            log(f'run_tty: {e}')
         finally:
             os.close(slave)
-        return await Process.run_tty_proc(proc, master)
+        return await Process.run_tty_proc(proc, master, f'run_tty({args})')
 
     @staticmethod
     async def run_shell_tty(command):
@@ -72,14 +78,14 @@ class Process:
                 env=env)
         finally:
             os.close(slave)
-        return await Process.run_tty_proc(proc, master)
+        return await Process.run_tty_proc(proc, master, f'run_shell_tty({command})')
 
     @staticmethod
-    async def run_tty_proc(proc, master):
+    async def run_tty_proc(proc, master, descr):
         pipe = open(master, 'wb', 0)
         writer = await Process._writer(pipe)
         reader, _ = await Process._reader(pipe)
-        process = Process(proc, writer, reader, None, master=master)
+        process = Process(proc, writer, reader, None, master=master, descr=descr)
         # No need to close reader's transport because it's the same file descriptor as master.
         return process
 
@@ -113,7 +119,7 @@ class Process:
         transport, _ = await loop.connect_read_pipe(lambda: protocol, pipe)
         return reader, transport
 
-    def __init__(self, process, writer, stdout_reader, stderr_reader, master=None):
+    def __init__(self, process, writer, stdout_reader, stderr_reader, master=None, descr=""):
         self.__process = process
         self.__writer = writer
         self.__stdout_reader = stdout_reader
@@ -123,23 +129,35 @@ class Process:
         self.__cleanup = []
         self.__return_code = None
         self.__master = master
+        self.__descr = descr
 
     @property
     def master(self):
         return self.__master
 
     async def cleanup(self):
-        log(f'cleanup process {self.pid}')
+        log(f'cleanup {self.__descr}: cleanup process {self.pid}')
         if self.__return_code is None:
-            log("kill")
-            await self.kill(signal.SIGKILL)
-            log("wait")
+            log(f'kill {self.__descr}')
+            try:
+                await self.kill(signal.SIGKILL)
+            except Exception as e:
+                log(f'cleanup {self.__descr}: exception {e} during kill')
+            log(f'cleanup {self.__descr}: wait')
             await self.wait()
-        log('close writer tx')
+        log(f'cleanup {self.__descr}: close writer tx')
         self.__writer.transport.close()
+        log(f'cleanup {self.__descr}: adding handlers to TASKS')
+        global TASKS
+        if self.__stderr_read_handler:
+            TASKS.append(self.__stderr_read_handler)
+        TASKS.append(self.__stdout_read_handler)
+        log(f'cleanup {self.__descr}: running cleanup callbacks')
+
         # StreamReader doesn't have a transport so it must be closed by a __cleanup function.
         for f in self.__cleanup:
             f()
+        log(f'cleanup {self.__descr}: done')
 
     def add_cleanup(self, coro):
         self.__cleanup.append(coro)
@@ -166,17 +184,22 @@ class Process:
     async def read_forever(self, reader, channel, callback):
         try:
             while True:
-                log(f'reading for channel {channel}')
+                log(f'read_forever {self.__descr}: reading for channel {channel}')
                 value = await reader.read(256)
-                log(f'read {value} for channel {channel}')
+                log(f'read_forever {self.__descr}: read {value} for channel {channel}')
                 coro = callback(channel, value)
                 if coro:
-                    log(f'await callback-returned coro {coro}')
+                    log(f'read_forever {self.__descr}: await callback-returned coro {coro}')
                     await coro
                 if len(value) == 0:
                     return
+        except IOError:
+            log(f'read_forever {self.__descr}: stopping because of IOError')
+            coro = callback(channel, b'')
+            await coro
+            return
         except Exception as e:
-            log(e)
+            log(f'read_forever {self.__descr}: {e}')
 
     async def handle_read(self, callback):
         self.__stdout_read_handler = asyncio.create_task(self.read_forever(self.__stdout_reader, 1, callback))
@@ -214,7 +237,7 @@ async def handle_login(identifier, args):
             cwd,
             os.environ)
     except Exception as e:
-        log(e)
+        log(f'handle_login: {e}')
     log("login shell started")
     global PROCESSES
     PROCESSES[proc.pid] = proc
@@ -229,7 +252,7 @@ async def handle_run(identifier, args):
     try:
         proc = await Process.run_shell_tty(args[0])
     except Exception as e:
-        log(e)
+        log(f'handle_run: {e}')
     global PROCESSES
     PROCESSES[proc.pid] = proc
     begin(identifier)
@@ -245,7 +268,7 @@ async def handle_send(identifier, args):
         pid = int(args[0])
         decoded = base64.b64decode(args[1])
     except Exception as e:
-        log(f'Exception {e}')
+        log(f'handle_send: {e}')
         fail("exception decoding argument")
     if pid not in PROCESSES:
         log("No such process")
@@ -294,6 +317,7 @@ def make_monitor_process(identifier, proc, islogin):
         log(f'monitor_process called with channel={channel} islogin={islogin} value={value}')
         if len(value) == 0:
             global COMPLETED
+            log(f'add {proc.pid} to list of completed PIDs')
             COMPLETED.append(proc.pid)
             return cleanup()
         print_output(identifier, proc.pid, channel, islogin, value)
@@ -321,7 +345,7 @@ def fail(reason):
         raise ValueError
     except ValueError:
         tb = traceback.format_exc()
-        log(tb)
+        log(f'fail: {tb}')
     send(f'abort {reason}')
     sys.exit(-1)
 
@@ -339,7 +363,9 @@ async def cleanup():
     COMPLETED = []
     for pid in completed:
         if pid not in PROCESSES:
+            log(f'pid {pid} no longer in PROCESSES, not cleaning up')
             continue
+        log(f'clean up pid {pid}')
         proc = PROCESSES[pid]
         del PROCESSES[pid]
         await proc.cleanup()
@@ -361,10 +387,23 @@ async def handle(args):
     should_quit = False
     try:
         should_quit = await f(identifier, args)
+        if should_quit:
+            global QUITTING
+            QUITTING=True
     except Exception as e:
         log(f'Handler for {cmd} threw {e}')
     log("call cleanup()")
     await cleanup()
+
+    global TASKS
+    log(f'awaiting {TASKS}')
+    while TASKS:
+        task = TASKS[0]
+        del TASKS[0]
+        log(f'await {task}')
+        await task
+    TASKS=[]
+
     return should_quit
 
 def read_line():
@@ -376,6 +415,8 @@ def read_line():
         sys.exit(1)
 
 async def mainloop():
+    global RUNLOOP
+    RUNLOOP = asyncio.get_event_loop()
     args = []
     while True:
         log("reading")
@@ -412,8 +453,11 @@ async def update_pty_size():
 
 def on_sigwinch(_sig, _stack):
     log(f'Received SIGWINCH')
-    loop = asyncio.get_event_loop()
-    asyncio.run_coroutine_threadsafe(update_pty_size(), loop)
+    if RUNLOOP is None:
+        # There may not be an event loop yet.
+        log('Ignore because no runloop')
+        return
+    asyncio.run_coroutine_threadsafe(update_pty_size(), RUNLOOP)
 
 HANDLERS = {
     "run": handle_run,

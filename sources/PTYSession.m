@@ -13630,6 +13630,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _conductor = [[iTermConductor alloc] init:sshargs
                                      boolArgs:boolArgs
                                         dcsID:dcsID
+                               clientUniqueID:uniqueID
                                          vars:[self.screen exfiltratedEnvironmentVariables:config.environmentVariablesToCopy]
                              initialDirectory:directory
                                        parent:previousConductor];
@@ -13686,7 +13687,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (NSInteger)screenEndSSH:(NSString *)uniqueID {
     DLog(@"%@", uniqueID);
-    [self unhookSSHConductor];
+    BOOL found = NO;
+    while (_conductor != nil && !found) {
+        found = [_conductor.clientUniqueID isEqual:uniqueID];
+        [self unhookSSHConductor];
+    }
     const NSInteger index = [_sshHostNames indexOfObjectPassingTest:^BOOL(iTermTuple<NSString *,NSString *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
         return [tuple.firstObject isEqualToString:uniqueID];
     }];
@@ -16336,17 +16341,6 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
         [mutableState appendCarriageReturnLineFeed];
     }];
     [self unhookSSHConductor];
-}
-
-- (void)conductorTerminate:(iTermConductor *)conductor {
-    XLog(@"conductor terminated %@", conductor);
-    while (_conductor != nil) {
-        const BOOL found = (_conductor == conductor);
-        [self unhookSSHConductor];
-        if (found) {
-            return;
-        }
-    }
 }
 
 @end

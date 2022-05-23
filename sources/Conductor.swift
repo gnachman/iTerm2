@@ -16,11 +16,14 @@ protocol SSHCommandRunning {
 protocol ConductorDelegate: Any {
     @objc(conductorWriteString:) func conductorWrite(string: String)
     func conductorAbort(reason: String)
-    func conductorTerminate(_ conductor: Conductor)
 }
 
 @objc(iTermConductor)
 class Conductor: NSObject, Codable {
+    override var debugDescription: String {
+        return "<Conductor: \(self.it_addressString) \(sshargs) dcs=\(dcsID) clientUniqueID=\(clientUniqueID) state=\(state) parent=\(String(describing: parent?.debugDescription))>"
+    }
+
     private let sshargs: String
     private let vars: [String: String]
     private struct Payload: Codable {
@@ -206,8 +209,6 @@ class Conductor: NSObject, Codable {
                     return "handleFramerLogin"
                 case .handleRequestPID:
                     return "handleRequestPID"
-                case .handleQuit:
-                    return "handleQuit"
                 case .writeOnSuccess(let code):
                     return "writeOnSuccess(\(code.count) chars)"
                 case .handleRunRemoteCommand(let command, _):
@@ -225,7 +226,6 @@ class Conductor: NSObject, Codable {
             case writeOnSuccess(String)  // see runPython
             case handleRunRemoteCommand(String, (Data, Int32) -> ())
             case handleBackgroundJob(StringArray, (Data, Int32) -> ())
-            case handleQuit
 
             private enum Key: CodingKey {
                 case rawValue
@@ -242,7 +242,6 @@ class Conductor: NSObject, Codable {
                 case writeOnSuccess
                 case handleRunRemoteCommand
                 case handleBackgroundJob
-                case handleQuit
             }
 
             private var rawValue: Int {
@@ -263,8 +262,6 @@ class Conductor: NSObject, Codable {
                     return RawValues.handleRunRemoteCommand.rawValue
                 case .handleBackgroundJob(_, _):
                     return RawValues.handleBackgroundJob.rawValue
-                case .handleQuit:
-                    return RawValues.handleQuit.rawValue
                 }
             }
 
@@ -272,7 +269,7 @@ class Conductor: NSObject, Codable {
                 var container = encoder.container(keyedBy: Key.self)
                 try container.encode(rawValue, forKey: .rawValue)
                 switch self {
-                case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin, .handleRequestPID, .handleQuit:
+                case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin, .handleRequestPID:
                     break
                 case .handleCheckForPython(let value):
                     try container.encode(value, forKey: .stringArray)
@@ -304,8 +301,6 @@ class Conductor: NSObject, Codable {
                     self = .handleRunRemoteCommand(try container.decode(String.self, forKey: .string), {_, _ in})
                 case .handleBackgroundJob:
                     self = .handleBackgroundJob(try container.decode(StringArray.self, forKey: .stringArray), {_, _ in})
-                case .handleQuit:
-                    self = .handleQuit
                 }
             }
         }
@@ -352,24 +347,27 @@ class Conductor: NSObject, Codable {
     @objc weak var delegate: ConductorDelegate?
     @objc let boolArgs: String
     @objc let dcsID: String
+    @objc let clientUniqueID: String  // provided by client when hooking dcs
     private var verbose = true
 
     enum CodingKeys: CodingKey {
         // Note backgroundJobs is not included because it isn't restorable.
       case sshargs, vars, payloads, initialDirectory, parsedSSHArguments, depth, parent,
-           framedPID, remoteInfo, state, queue, boolArgs, dcsID
+           framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID
     }
 
 
     @objc init(_ sshargs: String,
                boolArgs: String,
                dcsID: String,
+               clientUniqueID: String,
                vars: [String: String],
                initialDirectory: String?,
                parent: Conductor?) {
         self.sshargs = sshargs
         self.boolArgs = boolArgs
-        self.dcsID = dcsID;
+        self.dcsID = dcsID
+        self.clientUniqueID = clientUniqueID
         parsedSSHArguments = ParsedSSHArguments(sshargs, booleanArgs: boolArgs)
         self.vars = vars
         self.initialDirectory = initialDirectory
@@ -409,6 +407,7 @@ class Conductor: NSObject, Codable {
         queue = try container.decode([ExecutionContext].self, forKey: .queue)
         boolArgs = try container.decode(String.self, forKey: .boolArgs)
         dcsID = try container.decode(String.self, forKey: .dcsID)
+        clientUniqueID = try container.decode(String.self, forKey: .clientUniqueID)
     }
 
     @objc var jsonValue: String? {
@@ -454,6 +453,7 @@ class Conductor: NSObject, Codable {
         try container.encode([ExecutionContext](), forKey: .queue)
         try container.encode(boolArgs, forKey: .boolArgs)
         try container.encode(dcsID, forKey: .dcsID)
+        try container.encode(clientUniqueID, forKey: .clientUniqueID)
     }
 
     private func DLog(_ messageBlock: @autoclosure () -> String,
@@ -617,9 +617,11 @@ class Conductor: NSObject, Codable {
                     return
                 }
                 let version = (output as NSString).substring(with: groups[1])
-                let number = NSDecimalNumber(string: version)
-                let minimum = NSDecimalNumber(string: "3.7")
-                if number.isGreaterThanOrEqual(to: minimum) {
+                let parts = version.components(separatedBy: ".")
+                let major = Int(parts.get(0, default: "0")) ?? 0
+                let minor = Int(parts.get(1, default: "0")) ?? 0
+                DLog("Treating version \(version) as \(major).\(minor)")
+                if major == 3 && minor >= 7 {
                     doFraming()
                 } else {
                     execLoginShell()
@@ -707,14 +709,6 @@ class Conductor: NSObject, Codable {
                            Int32(status))
             }
             return
-        case .handleQuit:
-            switch result {
-            case .end(_), .abort:
-                self.delegate?.conductorTerminate(self)
-            case .line(_), .sideChannelLine(_, _, _):
-                break
-            }
-            return
         }
     }
 
@@ -769,7 +763,7 @@ class Conductor: NSObject, Codable {
         }
         DLog("Process \(pid) terminated")
         if pid == framedPID {
-            send(.quit, .handleQuit)
+            send(.quit, .fireAndForget)
         } else if let jobState = backgroundJobs[pid] {
             switch jobState {
             case .ground:
@@ -937,5 +931,14 @@ extension String {
             index = end
         }
         return parts
+    }
+}
+
+extension Array {
+    func get(_ index: Index, default defaultValue: Element) -> Element {
+        if index < endIndex {
+            return self[index]
+        }
+        return defaultValue
     }
 }
