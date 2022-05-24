@@ -39,6 +39,7 @@ class Conductor: NSObject, Codable {
     private let depth: Int32
     @objc let parent: Conductor?
     private var _queueWrites = true
+    private var restored = false
     @objc var queueWrites: Bool {
         if let parent = parent {
             return _queueWrites && parent.queueWrites
@@ -104,6 +105,7 @@ class Conductor: NSObject, Codable {
         case framerRegister(pid: pid_t)
         case framerDeregister(pid: pid_t)
         case framerPoll
+        case framerReset
 
         var isFramer: Bool {
             switch self {
@@ -112,7 +114,7 @@ class Conductor: NSObject, Codable {
                 return false
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
-                    .framerDeregister(_), .framerPoll:
+                    .framerDeregister(_), .framerPoll, .framerReset:
                 return true
             }
         }
@@ -158,6 +160,8 @@ class Conductor: NSObject, Codable {
                 return ["dereigster", String(pid)].joined(separator: "\n")
             case .framerPoll:
                 return "poll"
+            case .framerReset:
+                return "reset"
             }
         }
 
@@ -201,6 +205,8 @@ class Conductor: NSObject, Codable {
                 return ["dereigster", String(pid)].joined(separator: " ")
             case .framerPoll:
                 return "poll"
+            case .framerReset:
+                return "reset"
             }
         }
     }
@@ -371,7 +377,15 @@ class Conductor: NSObject, Codable {
 
     private var queue = [ExecutionContext]()
 
-    @objc weak var delegate: ConductorDelegate?
+    @objc weak var delegate: ConductorDelegate? {
+        didSet {
+            if !restored || framedPID == nil {
+                return
+            }
+            restored = false
+            reset()
+        }
+    }
     @objc let boolArgs: String
     @objc let dcsID: String
     @objc let clientUniqueID: String  // provided by client when hooking dcs
@@ -435,6 +449,7 @@ class Conductor: NSObject, Codable {
         boolArgs = try container.decode(String.self, forKey: .boolArgs)
         dcsID = try container.decode(String.self, forKey: .dcsID)
         clientUniqueID = try container.decode(String.self, forKey: .clientUniqueID)
+        restored = true
     }
 
     @objc var jsonValue: String? {
@@ -929,6 +944,10 @@ extension Conductor: SSHCommandRunning {
             return
         }
         send(.framerPoll, .handlePoll(StringArray(), completion))
+    }
+
+    func reset() {
+        send(.framerReset, .fireAndForget)
     }
 
     private func addBackgroundJob(_ pid: Int32, command: Command, completion: @escaping (Data, Int32) -> ()) {

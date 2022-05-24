@@ -154,7 +154,6 @@ class SSHProcessInfoProvider {
     private func finishUpdate(_ psout: String) {
         if psout.isEmpty {
             // No change since last update
-#warning("TODO: state restoration to handle this case")
             return
         }
         // Parse output of ps

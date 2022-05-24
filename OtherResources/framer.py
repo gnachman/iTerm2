@@ -225,6 +225,18 @@ def guess_login_shell():
 
 ## Process monitoring
 
+async def register(pid):
+    global REGISTERED
+    if pid in REGISTERED:
+        return
+    REGISTERED.append(pid)
+    log(f'After registering {pid} REGISTEREd={REGISTERED}')
+
+async def deregister(pid):
+    global REGISTERED
+    if pid in REGISTERED:
+        REGISTERED.remove(pid)
+
 def procmon_parse(output):
     output = output.decode("utf-8")
     lines = output.split("\n")
@@ -346,6 +358,12 @@ async def handle_run(identifier, args):
     await proc.handle_read(make_monitor_process(identifier, proc, False))
     return False
 
+async def handle_reset(identifier, args):
+    global REGISTERED
+    REGISTERED = []
+    begin(identifier)
+    end(identifier, 0)
+
 async def handle_register(identifier, args):
     if len(args) < 1:
         fail("not enough arguments")
@@ -391,18 +409,6 @@ async def handle_poll(identifier, args):
     else:
         log(f'ps failed with {proc.returncode}')
     end(identifier, proc.returncode)
-
-async def register(pid):
-    global REGISTERED
-    if pid in REGISTERED:
-        return
-    REGISTERED.append(pid)
-    log(f'After registering {pid} REGISTEREd={REGISTERED}')
-
-async def deregister(pid):
-    global REGISTERED
-    if pid in REGISTERED:
-        REGISTERED.remove(pid)
 
 async def handle_send(identifier, args):
     if len(args) < 2:
@@ -610,7 +616,8 @@ HANDLERS = {
     "quit": handle_quit,
     "register": handle_register,
     "deregister": handle_deregister,
-    "poll": handle_poll
+    "poll": handle_poll,
+    "reset": handle_reset
 }
 
 def main():
