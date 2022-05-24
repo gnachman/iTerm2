@@ -6,6 +6,7 @@ import os
 import pty
 import pwd
 import random
+import re
 import signal
 import subprocess
 import sys
@@ -21,6 +22,8 @@ LOGFILE=None
 RUNLOOP=None
 TASKS=[]
 QUITTING=False
+REGISTERED=[]
+LASTPS=None
 
 def log(message):
     if VERBOSE:
@@ -220,6 +223,88 @@ def guess_login_shell():
         return path
     return "/bin/sh"
 
+## Process monitoring
+
+def procmon_parse(output):
+    output = output.decode("utf-8")
+    lines = output.split("\n")
+    whitespace = r'\s+'
+    number = r'\d+'
+    nonspace = r'\S+'
+    letters = r'[A-Za-z]+'
+    pattern = "".join(
+        [r'^',
+         r'\s*',
+         r'(',
+         number,  # pid [capture 1]
+         r')',
+         whitespace,
+         r'(',
+         number,  # ppid [capture 2]
+         r')',
+         whitespace,
+         r'(',
+         nonspace,  # stat [capture 3]
+         r')',
+         whitespace,
+         r'(',
+         letters,  # day of week  [capture 4]
+         whitespace,
+         letters,  # name of month
+         whitespace,
+         number,  # day of month
+         whitespace,
+         number,  # hh
+         r':',
+         number,  # mm
+         r':',
+         number,  # ss
+         whitespace,
+         number,  # yyyy
+         r')',
+         whitespace,
+         r'(.*)'  # command  [capture 5]
+    ])
+    def parse(line):
+        match = re.search(pattern, line)
+        if not match:
+            return None
+        return (match.group(1), match.group(2), match.group(3), match.group(4), match.group(5))
+    rows = map(parse, lines)
+    # pid->ppid
+    parent={}
+    # ppid->[pid]
+    children={}
+    # pid->row
+    index={}
+    for row in rows:
+        if row is None:
+            continue
+        pid = row[0]
+        ppid = row[1]
+        parent[pid] = ppid
+        children[ppid] = children.get(ppid, []) + [pid]
+        index[pid] = row
+    log(f'procmon_parse: {len(index)} valid rows')
+    results = {}
+    def add(pid):
+        results[pid] = index[pid]
+        for child in children.get(pid, []):
+            add(child)
+    for pid in REGISTERED:
+        log(f'procmon_parse: Add hierarchy starting at {pid}')
+        if str(pid) in index:
+            add(str(pid))
+    log(f'procmon_parse: {len(results)} processes in output')
+    global LASTPS
+    if results == LASTPS:
+        log(f'results unchanged')
+        return None
+    lastPS = results
+    list_of_strings = map(lambda tuple: map(str, tuple), results.values())
+    list_of_joined = map(lambda strings: " ".join(strings), list_of_strings)
+    return list_of_joined
+
 ## Commands
 
 async def handle_login(identifier, args):
@@ -260,6 +345,64 @@ async def handle_run(identifier, args):
     end(identifier, 0)
     await proc.handle_read(make_monitor_process(identifier, proc, False))
     return False
+
+async def handle_register(identifier, args):
+    if len(args) < 1:
+        fail("not enough arguments")
+    try:
+        pid = int(args[0])
+    except Exception as e:
+        log(f'handle_register: {e}')
+        fail("exception decoding argument")
+    begin(identifier)
+    end(identifier, 0)
+    await register(pid)
+
+async def handle_deregister(identifier, args):
+    if len(args) < 1:
+        fail("not enough arguments")
+    try:
+        pid = int(args[0])
+    except Exception as e:
+        log(f'handle_deregister: {e}')
+        fail("exception decoding argument")
+    begin(identifier)
+    end(identifier, 0)
+    await deregister(pid)
+
+async def handle_poll(identifier, args):
+    log(f'handle_poll({identifier}, {args})')
+    env = dict(os.environ)
+    env["LANG"] = "C"
+    proc = await asyncio.create_subprocess_shell(
+        "ps -eo pid,ppid,stat,lstart,command",
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        env=env)
+    log(f'handle_poll({identifier}, {args}): run ps {proc}')
+    output, erroutput = await proc.communicate()
+    log(f'handle_poll({identifier}, {args}): read {len(output)} bytes of output')
+    begin(identifier)
+    if proc.returncode == 0:
+        log(f'handle_poll({identifier}, {args}): successful return')
+        for line in procmon_parse(output):
+            send(line)
+    else:
+        log(f'ps failed with {proc.returncode}')
+    end(identifier, proc.returncode)
+
+async def register(pid):
+    global REGISTERED
+    if pid in REGISTERED:
+        return
+    REGISTERED.append(pid)
+    log(f'After registering {pid} REGISTEREd={REGISTERED}')
+
+async def deregister(pid):
+    global REGISTERED
+    if pid in REGISTERED:
+        REGISTERED.remove(pid)
 
 async def handle_send(identifier, args):
     if len(args) < 2:
@@ -391,7 +534,7 @@ async def handle(args):
             global QUITTING
             QUITTING=True
     except Exception as e:
-        log(f'Handler for {cmd} threw {e}')
+        log(f'Handler for {cmd} threw {e}: {traceback.format_exc()}')
     log("call cleanup()")
     await cleanup()
 
@@ -464,7 +607,11 @@ HANDLERS = {
     "login": handle_login,
     "send": handle_send,
     "kill": handle_kill,
-    "quit": handle_quit}
+    "quit": handle_quit,
+    "register": handle_register,
+    "deregister": handle_deregister,
+    "poll": handle_poll
+}
 
 def main():
     if sys.stdin.isatty():

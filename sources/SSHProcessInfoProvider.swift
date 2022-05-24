@@ -143,8 +143,8 @@ class SSHProcessInfoProvider {
     }
 
     private func reallyUpdate(_ completion: @escaping () -> ()) {
-        runner.runRemoteCommand("ps -eo pid,ppid,stat,lstart,command | cat") { [weak self] data, rc in
-            if rc == 0, let string = String(data: data, encoding: .utf8) {
+        runner.poll { [weak self] data in
+            if let string = String(data: data, encoding: .utf8) {
                 self?.finishUpdate(string)
             }
             completion()
@@ -152,6 +152,11 @@ class SSHProcessInfoProvider {
     }
 
     private func finishUpdate(_ psout: String) {
+        if psout.isEmpty {
+            // No change since last update
+#warning("TODO: state restoration to handle this case")
+            return
+        }
         // Parse output of ps
         let rows = psout.components(separatedBy: "\n").compactMap { line in
             PSRow(line)
@@ -259,11 +264,13 @@ extension SSHProcessInfoProvider: ProcessInfoProvider {
     }
 
     func register(trackedPID pid: pid_t) {
+        runner.registerProcess(pid)
         tracked.insert(pid)
         needsUpdate = true
     }
 
     func unregister(trackedPID pid: pid_t) {
+        runner.deregisterProcess(pid)
         tracked.remove(pid)
     }
 

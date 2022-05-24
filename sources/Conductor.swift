@@ -10,6 +10,9 @@ import Foundation
 protocol SSHCommandRunning {
     func runRemoteCommand(_ commandLine: String,
                           completion: @escaping  (Data, Int32) -> ())
+    func registerProcess(_ pid: pid_t)
+    func deregisterProcess(_ pid: pid_t)
+    func poll(_ completion: @escaping (Data) -> ())
 }
 
 @objc(iTermConductorDelegate)
@@ -72,7 +75,7 @@ class Conductor: NSObject, Codable {
     }
     private var backgroundJobs = [Int32: State]()
 
-    enum Command: Codable, CustomDebugStringConvertible {
+    enum Command: Equatable, Codable, CustomDebugStringConvertible {
         var debugDescription: String {
             return "<Command: \(operationDescription)>"
         }
@@ -98,6 +101,9 @@ class Conductor: NSObject, Codable {
         case framerSend(Data, pid: Int32)
         case framerKill(pid: Int)
         case framerQuit
+        case framerRegister(pid: pid_t)
+        case framerDeregister(pid: pid_t)
+        case framerPoll
 
         var isFramer: Bool {
             switch self {
@@ -105,7 +111,8 @@ class Conductor: NSObject, Codable {
                     .write(_, _), .cd(_), .quit, .ps, .getpid:
                 return false
 
-            case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit:
+            case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
+                    .framerDeregister(_), .framerPoll:
                 return true
             }
         }
@@ -145,6 +152,12 @@ class Conductor: NSObject, Codable {
                 return ["kill", String(pid)].joined(separator: "\n")
             case .framerQuit:
                 return "quit"
+            case .framerRegister(pid: let pid):
+                return ["register", String(pid)].joined(separator: "\n")
+            case .framerDeregister(pid: let pid):
+                return ["dereigster", String(pid)].joined(separator: "\n")
+            case .framerPoll:
+                return "poll"
             }
         }
 
@@ -182,6 +195,12 @@ class Conductor: NSObject, Codable {
                 return "kill \(pid)"
             case .framerQuit:
                 return "quit"
+            case .framerRegister(pid: let pid):
+                return ["register", String(pid)].joined(separator: " ")
+            case .framerDeregister(pid: let pid):
+                return ["dereigster", String(pid)].joined(separator: " ")
+            case .framerPoll:
+                return "poll"
             }
         }
     }
@@ -215,6 +234,8 @@ class Conductor: NSObject, Codable {
                     return "handleRunRemoteCommand(\(command))"
                 case .handleBackgroundJob(let output, _):
                     return"handleBackgroundJob(\(output.strings.count) lines)"
+                case .handlePoll(_, _):
+                    return "handlePoll"
                 }
             }
 
@@ -226,6 +247,7 @@ class Conductor: NSObject, Codable {
             case writeOnSuccess(String)  // see runPython
             case handleRunRemoteCommand(String, (Data, Int32) -> ())
             case handleBackgroundJob(StringArray, (Data, Int32) -> ())
+            case handlePoll(StringArray, (Data) -> ())
 
             private enum Key: CodingKey {
                 case rawValue
@@ -242,6 +264,7 @@ class Conductor: NSObject, Codable {
                 case writeOnSuccess
                 case handleRunRemoteCommand
                 case handleBackgroundJob
+                case handlePoll
             }
 
             private var rawValue: Int {
@@ -262,6 +285,8 @@ class Conductor: NSObject, Codable {
                     return RawValues.handleRunRemoteCommand.rawValue
                 case .handleBackgroundJob(_, _):
                     return RawValues.handleBackgroundJob.rawValue
+                case .handlePoll(_, _):
+                    return RawValues.handlePoll.rawValue
                 }
             }
 
@@ -269,7 +294,7 @@ class Conductor: NSObject, Codable {
                 var container = encoder.container(keyedBy: Key.self)
                 try container.encode(rawValue, forKey: .rawValue)
                 switch self {
-                case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin, .handleRequestPID:
+                case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin, .handleRequestPID, .handlePoll(_, _):
                     break
                 case .handleCheckForPython(let value):
                     try container.encode(value, forKey: .stringArray)
@@ -301,6 +326,8 @@ class Conductor: NSObject, Codable {
                     self = .handleRunRemoteCommand(try container.decode(String.self, forKey: .string), {_, _ in})
                 case .handleBackgroundJob:
                     self = .handleBackgroundJob(try container.decode(StringArray.self, forKey: .stringArray), {_, _ in})
+                case .handlePoll:
+                    self = .handlePoll(try container.decode(StringArray.self, forKey: .stringArray), {_ in})
                 }
             }
         }
@@ -695,6 +722,18 @@ class Conductor: NSObject, Codable {
                 break
             }
             return
+        case .handlePoll(let output, let completion):
+            switch result {
+            case .line(let line):
+                output.strings.append(line)
+            case .sideChannelLine(_, _, _), .abort:
+                break
+            case .end(_):
+                if let data = output.strings.joined(separator: "\n").data(using: .utf8) {
+                    completion(data)
+                }
+            }
+            return
         case .handleBackgroundJob(let output, let completion):
             switch result {
             case .line(_):
@@ -876,6 +915,22 @@ class Conductor: NSObject, Codable {
 }
 
 extension Conductor: SSHCommandRunning {
+    func registerProcess(_ pid: pid_t) {
+        send(.framerRegister(pid: pid), .fireAndForget)
+    }
+
+    func deregisterProcess(_ pid: pid_t) {
+        send(.framerDeregister(pid: pid), .fireAndForget)
+    }
+
+    func poll(_ completion: @escaping (Data) -> ()) {
+        if queue.anySatisfies({ $0.command == .framerPoll }) {
+            DLog("Declining to add second poll to queue")
+            return
+        }
+        send(.framerPoll, .handlePoll(StringArray(), completion))
+    }
+
     private func addBackgroundJob(_ pid: Int32, command: Command, completion: @escaping (Data, Int32) -> ()) {
         let context = ExecutionContext(command: command, handler: .handleBackgroundJob(StringArray(), completion))
         backgroundJobs[pid] = .executing(context)
@@ -893,7 +948,6 @@ extension Conductor: SSHCommandRunning {
         // eventually %terminate.
         send(.framerRun(commandLine), .handleRunRemoteCommand(commandLine, completion))
     }
-                                                                  
 }
 
 fileprivate class ConductorPayloadBuilder {
