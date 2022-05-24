@@ -23,7 +23,7 @@ RUNLOOP=None
 TASKS=[]
 QUITTING=False
 REGISTERED=[]
-LASTPS=None
+LASTPS={}
 
 def log(message):
     if VERBOSE:
@@ -292,12 +292,16 @@ def procmon_parse(output):
     for row in rows:
         if row is None:
             continue
+        if row[4].startswith("(") and row[4].endswith(")"):
+            log(f'procmon_parse: ignore defunct {row}')
+            continue
         pid = row[0]
         ppid = row[1]
         parent[pid] = ppid
         children[ppid] = children.get(ppid, []) + [pid]
         index[pid] = row
     log(f'procmon_parse: {len(index)} valid rows')
+    # pid -> row
     results = {}
     def add(pid):
         results[pid] = index[pid]
@@ -308,14 +312,27 @@ def procmon_parse(output):
         if str(pid) in index:
             add(str(pid))
     log(f'procmon_parse: {len(results)} processes in output')
+
     global LASTPS
-    if results == LASTPS:
-        log(f'results unchanged')
-        return None
-    lastPS = results
-    list_of_strings = map(lambda tuple: map(str, tuple), results.values())
-    list_of_joined = map(lambda strings: " ".join(strings), list_of_strings)
-    return list_of_joined
+    last = dict(LASTPS)
+    LASTPS = dict(results)
+
+    def diff():
+        currentkeys = set(results.keys())
+        lastkeys = set(last.keys())
+        log(f'procmon_parse: diff current={currentkeys} last={lastkeys}')
+        for addition in currentkeys - lastkeys:
+            log(f'procmon_parse: add {addition}')
+            yield "+" + " ".join(map(str, results[addition]))
+        for removal in lastkeys - currentkeys:
+            log(f'procmon_parse: remove {removal}')
+            yield "-" + str(removal)
+        for pid in results:
+            if pid in last and results[pid] != last[pid]:
+                log(f'procmon_parse: edit {pid}')
+                yield "~" + " ".join(map(str, results[pid]))
+    return list(diff())
+
 
 ## Commands
 
@@ -360,7 +377,9 @@ async def handle_run(identifier, args):
 
 async def handle_reset(identifier, args):
     global REGISTERED
+    global LASTPS
     REGISTERED = []
+    LASTPS = {}
     begin(identifier)
     end(identifier, 0)
 

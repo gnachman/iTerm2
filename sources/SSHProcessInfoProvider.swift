@@ -7,6 +7,35 @@
 
 import Foundation
 
+fileprivate enum ProcessEdit {
+    case add(PSRow)
+    case edit(PSRow)
+    case remove(pid_t)
+
+    init?(_ line: String) {
+        switch line.first {
+        case "+":
+            if let row = PSRow(String(line.dropFirst())) {
+                self = .add(row)
+                return
+            }
+        case "-":
+            if let pid = pid_t(line.dropFirst()) {
+                self = .remove(pid)
+                return
+            }
+        case "~":
+            if let row = PSRow(String(line.dropFirst())) {
+                self = .edit(row)
+                return
+            }
+        default:
+            break
+        }
+        return nil
+    }
+}
+
 fileprivate struct PSRow {
     let pid: pid_t
     let ppid: pid_t
@@ -90,6 +119,7 @@ class SSHProcessInfoProvider {
     private var rootInfo: iTermProcessInfo?
     private let rootPID: pid_t
     private var haveBumped = false
+    private var lastRows = [pid_t: PSRow]()
 
     init(rootPID: pid_t,
          runner: SSHCommandRunning) {
@@ -156,11 +186,13 @@ class SSHProcessInfoProvider {
             // No change since last update
             return
         }
-        // Parse output of ps
-        let rows = psout.components(separatedBy: "\n").compactMap { line in
-            PSRow(line)
+        // Parse output of poll
+        let edits = psout.components(separatedBy: "\n").compactMap { line in
+            ProcessEdit(line)
         }
 
+        lastRows = apply(edits, to: lastRows)
+        let rows = Array(lastRows.values)
         let dataSource = SSHProcessDataSource(rows)
         let collection = iTermProcessCollection(dataSource: dataSource)
         for row in rows {
@@ -172,6 +204,19 @@ class SSHProcessInfoProvider {
         cachedDeepestForegroundJob = newDeepestForegroundJobCache()
         _needsUpdate = false
         rootInfo = collection.info(forProcessID: rootPID)
+    }
+
+    private func apply(_ edits: [ProcessEdit], to original: [pid_t: PSRow]) -> [pid_t: PSRow] {
+        var result = original
+        for edit in edits {
+            switch edit {
+            case .remove(let pid):
+                result.removeValue(forKey: pid)
+            case .add(let replacement), .edit(let replacement):
+                result[replacement.pid] = replacement
+            }
+        }
+        return result
     }
 
     private func newDeepestForegroundJobCache() -> [pid_t: iTermProcessInfo] {
