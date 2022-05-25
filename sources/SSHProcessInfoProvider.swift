@@ -264,7 +264,7 @@ fileprivate class SSHProcessDataSource: NSObject, ProcessDataSource {
             return nil
         }
         isForeground.pointee = ObjCBool(row.fg)
-        return (row.command as NSString).componentsInShellCommand()[0]
+        return (row.command as NSString).componentsInShellCommand()[0].lastPathComponent
     }
 
     func commandLineArguments(forProcess pid: pid_t,
@@ -401,5 +401,11 @@ class NullProcessInfoProvider: ProcessInfoProvider, SessionProcessInfoProvider {
     }
 
     func send(signal: Int32, toPID: Int32) {
+    }
+}
+
+extension String {
+    var lastPathComponent: String {
+        return (self as NSString).lastPathComponent
     }
 }

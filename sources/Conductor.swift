@@ -50,6 +50,16 @@ class Conductor: NSObject, Codable {
     @objc var framing: Bool {
         return framedPID != nil
     }
+    @objc var transitiveProcesses: [iTermProcessInfo] {
+        guard let pid = framedPID else {
+            return []
+        }
+        let mine = processInfoProvider.processInfo(for: pid)?.descendantsSkippingLevels(0) ?? []
+        let parents = parent?.transitiveProcesses ?? []
+        var result = mine
+        result.append(contentsOf: parents)
+        return result
+    }
     @objc(framedPID) var objcFramedPID: NSNumber? {
         if let pid = framedPID {
             return NSNumber(value: pid)

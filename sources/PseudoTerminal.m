@@ -1779,7 +1779,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 if ([tuple.firstObject isEqualToString:@"login"]) {
                     return nil;
                 }
-                return tuple.secondObject;
+                return tuple.secondObject.lastPathComponent;
             }];
         }
     }

@@ -2176,14 +2176,17 @@ ITERM_WEAKLY_REFERENCEABLE
     return _conductor.processInfoProvider;
 }
 
-- (NSArray<iTermTuple<NSString *, NSString *> *> *)childJobNameTuples {
+- (NSArray<iTermProcessInfo *> *)processInfoForShellAndDescendants {
+    NSMutableArray<iTermProcessInfo *> *result = [NSMutableArray array];
+    if (_conductor) {
+        [result addObjectsFromArray:_conductor.transitiveProcesses];
+    }
     pid_t thePid = [_shell pid];
 
-    [self.processInfoProvider updateSynchronously];
-
-    iTermProcessInfo *info = [self.processInfoProvider processInfoForPid:thePid];
+    [[iTermProcessCache sharedInstance] updateSynchronously];
+    iTermProcessInfo *info = [[iTermProcessCache sharedInstance] processInfoForPid:thePid];
     if (!info) {
-        return @[];
+        return result;
     }
 
     NSInteger levelsToSkip = 0;
@@ -2192,6 +2195,12 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     NSArray<iTermProcessInfo *> *allInfos = [info descendantsSkippingLevels:levelsToSkip];
+    [result addObjectsFromArray:allInfos];
+    return result;
+}
+
+- (NSArray<iTermTuple<NSString *, NSString *> *> *)childJobNameTuples {
+    NSArray<iTermProcessInfo *> *allInfos = [self processInfoForShellAndDescendants];
     return [allInfos mapWithBlock:^id(iTermProcessInfo *info) {
         if (!info.name) {
             return nil;
@@ -2230,7 +2239,7 @@ ITERM_WEAKLY_REFERENCEABLE
                     [jobsThatDontRequirePrompting indexOfObject:childNameTuple.secondObject] == NSNotFound) {
                     DLog(@"    not on the ignore list");
                     // This job is not in the ignore list.
-                    [blockingJobs addObject:childNameTuple.secondObject];
+                    [blockingJobs addObject:childNameTuple.secondObject.lastPathComponent];
                 }
             }
             if (blockingJobs.count > 0) {
