@@ -2936,14 +2936,16 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case SSH_END: {
             NSString *s = token.string;
             NSArray<NSString *> *parts = [s componentsSeparatedByString:@" "];
-            if (parts.count != 2) {
+            if (parts.count < 3) {
                 break;
             }
             NSUInteger status = [parts[1] iterm_unsignedIntegerValue];
             if (status > 255) {
                 break;
             }
+            NSString *type = parts[2];
             [self.delegate terminalDidEndSSHConductorCommandWithIdentifier:parts[0]
+                                                                      type:type
                                                                     status:status
                                                                      depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;

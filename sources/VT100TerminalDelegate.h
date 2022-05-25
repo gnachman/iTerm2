@@ -511,7 +511,10 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalDidUnhookSSHConductor;
 - (void)terminalDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier
                                                     depth:(int)depth;
-- (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier status:(uint8_t)status depth:(int)depth;
+- (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier
+                                                   type:(NSString *)type
+                                                 status:(uint8_t)status
+                                                  depth:(int)depth;
 - (void)terminalHandleSSHSideChannelOutput:(NSString *)string
                                        pid:(int32_t)pid
                                    channel:(uint8_t)channel

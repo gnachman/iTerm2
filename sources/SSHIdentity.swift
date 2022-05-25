@@ -63,6 +63,10 @@ class SSHIdentity: NSObject {
         return state.debugDescription
     }
 
+    @objc var hostname: String {
+        return state.hostname
+    }
+
     @objc
     init?(_ json: Data?) {
         guard let data = json else {

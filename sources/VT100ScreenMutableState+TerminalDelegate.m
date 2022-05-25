@@ -2506,9 +2506,13 @@
     }];
 }
 
-- (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier status:(uint8_t)status depth:(int)depth {
+- (void)terminalDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier
+                                                   type:(NSString *)type
+                                                 status:(uint8_t)status
+                                                  depth:(int)depth {
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenDidEndSSHConductorCommandWithIdentifier:identifier
+                                                           type:type
                                                          status:status
                                                           depth:depth];
 

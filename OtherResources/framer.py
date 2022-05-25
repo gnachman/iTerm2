@@ -587,7 +587,7 @@ def begin(identifier):
     send(f'begin {identifier}')
 
 def end(identifier, status):
-    send(f'end {identifier} {status}')
+    send(f'end {identifier} {status} f')
 
 async def cleanup():
     """Await tasks that have completed, clear the COMPLETED list, and remove them from TASKS."""

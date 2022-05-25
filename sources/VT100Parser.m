@@ -365,6 +365,14 @@
     }
     @synchronized (self) {
         // TODO: This doesn't attempt to handle nested conductors.
+        if (tree[@0]) {
+            // No special parsing needed by this node.
+            NSArray *tuple = tree[@0];
+            NSString *childDcsId = tuple[0];
+            NSDictionary *childTree = tuple[1];
+            [self startConductorRecoveryModeWithID:childDcsId tree:childTree];
+            return;
+        }
         [_controlParser startConductorRecoveryModeWithID:dcsID];
         _dcsHooked = YES;
         [self recoverWithConductorTree:tree];

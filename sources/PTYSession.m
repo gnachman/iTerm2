@@ -296,7 +296,6 @@ static NSString *const SESSION_ARRANGEMENT_REUSABLE_COOKIE = @"Reusable Cookie";
 static NSString *const SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS = @"Overridden Fields";  // NSArray<NSString *>
 static NSString *const SESSION_ARRANGEMENT_FILTER = @"Filter";  // NSString
 static NSString *const SESSION_ARRANGEMENT_SSH_STATE = @"SSH State";  // NSNumber
-static NSString *const SESSION_ARRANGEMENT_SSH_STACK = @"SSH Stack";  // NSArray<NSArray<NSString>>
 static NSString *const SESSION_ARRANGEMENT_CONDUCTOR = @"Conductor";  // NSString (json)
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
@@ -596,7 +595,6 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     iTermConductor *_conductor;
     iTermSSHState _sshState;
     // (unique ID, hostname)
-    NSMutableArray<iTermTuple<NSString *, SSHIdentity *> *> *_sshHostNames;
     NSMutableData *_sshWriteQueue;
 }
 
@@ -755,7 +753,6 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         }];
         _expect = [[iTermExpect alloc] initDry:YES];
         _sshState = iTermSSHStateNone;
-        _sshHostNames = [[NSMutableArray alloc] init];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:kCoprocessStatusChangeNotification
@@ -978,7 +975,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_expect release];
     [_pasteboardReporter release];
     [_conductor release];
-    [_sshHostNames release];
     [_sshWriteQueue release];
 
     [super dealloc];
@@ -1291,17 +1287,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (didRestoreContents) {
         aSession->_sshState = [arrangement[SESSION_ARRANGEMENT_SSH_STATE] unsignedIntegerValue];
-        [aSession->_sshHostNames removeAllObjects];
-        NSArray *sshStack = [NSArray castFrom:arrangement[SESSION_ARRANGEMENT_SSH_STACK]];
-        for (id obj in sshStack) {
-            NSArray *pair = [NSArray castFrom:obj];
-            if (!pair || pair.count < 2) {
-                continue;
-            }
-            SSHIdentity *ident = [[SSHIdentity alloc] init:[NSData castFrom:pair[1]]];
-            [aSession->_sshHostNames addObject:[iTermTuple tupleWithObject:[NSString castFrom:pair[0]] ?: @""
-                                                                 andObject:ident]];
-        }
     }
     aSession.cursorTypeOverride = arrangement[SESSION_ARRANGEMENT_CURSOR_TYPE_OVERRIDE];
     if (didRestoreContents && attachedToServer) {
@@ -2109,17 +2094,17 @@ ITERM_WEAKLY_REFERENCEABLE
         result = [[ProfileModel sharedInstance] defaultBookmark];
     }
 
-    if (_sshHostNames.count) {
+    if (_conductor) {
         result = [result dictionaryByMergingDictionary:@{
             KEY_SSH_CONFIG: @{},
             KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeSSHValue,
-            KEY_COMMAND_LINE: _sshHostNames.lastObject.secondObject.commandLine }];
+            KEY_COMMAND_LINE: _conductor.sshIdentity.commandLine }];
     }
     return result;
 }
 
 - (SSHIdentity *)sshIdentity {
-    return _sshHostNames.lastObject.secondObject;
+    return _conductor.sshIdentity;
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move {
@@ -4563,8 +4548,6 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
         [terminal resetByUserRequest:YES];
     }];
     [self updateDisplayBecause:@"reset terminal"];
-    [_conductor release];
-    _conductor = nil;
 }
 
 - (void)resetForRelaunch {
@@ -5062,9 +5045,6 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
                                     totalScrollbackOverflow:_screen.totalScrollbackOverflow];
         result[SESSION_ARRANGEMENT_APS] = [_automaticProfileSwitcher savedState];
         result[SESSION_ARRANGEMENT_SSH_STATE] = @(_sshState);
-        result[SESSION_ARRANGEMENT_SSH_STACK] = [_sshHostNames mapWithBlock:^id _Nullable(iTermTuple<NSString *, SSHIdentity *> * _Nonnull tuple) {
-            return @[tuple.firstObject ?: @"", tuple.secondObject.json ?: @""];
-        }];
         if (_conductor) {
             NSString *json = _conductor.jsonValue;
             if (json) {
@@ -7249,6 +7229,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewDisconnectSSH {
+    if (!_conductor.framing) {
+        NSString *title = [NSString stringWithFormat:@"Advanced SSH features are unavailable because Python %@ or later was not found on %@", [iTermConductor minimumPythonVersionForFramer], _conductor.sshIdentity.hostname ?: @"remote host"];
+        [iTermWarning showWarningWithTitle:title
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Can’t Disconnect"
+                                    window:self.view.window];
+        return;
+    }
     [_conductor quit];
 }
 
@@ -12948,7 +12939,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:(void (^)(NSString *pwd))completion {
-    if (_sshHostNames.count > 0 && self.lastDirectory.length > 0) {
+    if (_conductor != nil && self.lastDirectory.length > 0) {
         completion(self.lastDirectory);
         return;
     }
@@ -13640,7 +13631,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     NSString *directory = nil;
-    if (_sshState == iTermSSHStateProfile && _sshHostNames.count == 0) {
+    if (_sshState == iTermSSHStateProfile && !_conductor) {
         // Currently launching the session that has ssh instead of login shell.
         directory = self.environment[@"PWD"];
     }
@@ -13661,8 +13652,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _sshState = iTermSSHStateNone;
     _conductor.delegate = self;
     [_conductor start];
-    [_sshHostNames addObject:[iTermTuple tupleWithObject:uniqueID
-                                               andObject:_conductor.sshIdentity]];
 }
 
 - (void)screenDidReadSSHConductorLine:(NSString *)string depth:(int)depth {
@@ -13670,7 +13659,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidUnhookSSHConductor {
-    [self unhookSSHConductor];
+    // You get here when you're using it2ssh but python isn't available on the remote.
+    [_conductor handleUnhook];
     [self writeData:_sshWriteQueue];
     [_sshWriteQueue release];
     _sshWriteQueue = nil;
@@ -13690,9 +13680,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenDidEndSSHConductorCommandWithIdentifier:(NSString *)identifier
+                                                 type:(NSString *)type
                                                status:(uint8_t)status
                                                 depth:(int)depth {
-    [_conductor handleCommandEndWithIdentifier:identifier status:status depth:depth];
+    [_conductor handleCommandEndWithIdentifier:identifier
+                                          type:type
+                                        status:status
+                                         depth:depth];
 }
 
 - (void)screenHandleSSHSideChannelOutput:(NSString *)string
@@ -13708,28 +13702,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (NSInteger)screenEndSSH:(NSString *)uniqueID {
     DLog(@"%@", uniqueID);
-    BOOL found = NO;
     if (![_conductor ancestryContainsClientUniqueID:uniqueID]) {
         DLog(@"Ancestry does not contain this unique ID");
         return 0;
     }
+    BOOL found = NO;
+    NSInteger count = 0;
     while (_conductor != nil && !found) {
         found = [_conductor.clientUniqueID isEqual:uniqueID];
+        count += 1;
         [self unhookSSHConductor];
     }
-    const NSInteger index = [_sshHostNames indexOfObjectPassingTest:^BOOL(iTermTuple<NSString *,NSString *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
-        return [tuple.firstObject isEqualToString:uniqueID];
-    }];
-    if (index == NSNotFound) {
-        return 0;
-    }
-    const NSInteger count = _sshHostNames.count - index;
-    [_sshHostNames removeObjectsInRange:NSMakeRange(index, count)];
     return count;
 }
 
 - (NSString *)screenSSHLocation {
-    return _sshHostNames.lastObject.secondObject.compactDescription;
+    return _conductor.sshIdentity.compactDescription;
 }
 
 - (VT100Screen *)popupVT100Screen {
@@ -16374,9 +16362,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
         [mutableState appendBannerMessage:[NSString stringWithFormat:@"Disconnected from %@", identity]];
     }];
     [self unhookSSHConductor];
-    [_sshHostNames removeLastObject];
     [_sshWriteQueue setLength:0];
-
 }
 
 @end

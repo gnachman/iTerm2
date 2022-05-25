@@ -44,9 +44,18 @@ class Conductor: NSObject, Codable {
     private var autopoll = ""
     @objc var queueWrites: Bool {
         if let parent = parent {
-            return _queueWrites && parent.queueWrites
+            return nontransitiveQueueWrites && parent.queueWrites
         }
-        return _queueWrites
+        return nontransitiveQueueWrites
+    }
+    private var nontransitiveQueueWrites: Bool {
+        switch state {
+        case .unhooked:
+            return false
+
+        default:
+            return _queueWrites
+        }
     }
     @objc var framing: Bool {
         return framedPID != nil
@@ -372,12 +381,15 @@ class Conductor: NSObject, Codable {
                 return "<State: willExecute(\(context))>"
             case .executing(let context):
                 return "<State: executing(\(context))>"
+            case .unhooked:
+                return "<State: unhooked>"
             }
         }
 
         case ground  // Have not written, not expecting anything.
         case willExecute(ExecutionContext)  // After writing, before parsing begin.
         case executing(ExecutionContext)  // After parsing begin, before parsing end.
+        case unhooked  // Not using framer. IO is direct.
     }
 
     enum PartialResult {
@@ -498,7 +510,7 @@ class Conductor: NSObject, Codable {
     }
     private func treeWithChildTree(_ childTree: NSDictionary) -> NSDictionary {
         guard let framedPID = framedPID else {
-            fatalError()
+            return [0: [dcsID, childTree]]
         }
         return [framedPID: [dcsID, childTree]]
     }
@@ -560,11 +572,7 @@ class Conductor: NSObject, Codable {
             run(parsedSSHArguments.commandArgs.joined(separator: " "))
             return
         }
-        checkForPython { [weak self] in
-            self?.doFraming()
-        } otherwise: { [weak self] in
-            self?.execLoginShell()
-        }
+        checkForPython()
     }
 
     @objc func quit() {
@@ -581,6 +589,7 @@ class Conductor: NSObject, Codable {
 
     @objc func sendKeys(_ data: Data) {
         guard let pid = framedPID else {
+            delegate?.conductorWrite(string: String(data: data, encoding: .isoLatin1)!)
             return
         }
         framerSend(data: data, pid: pid)
@@ -659,8 +668,14 @@ class Conductor: NSObject, Codable {
         send(.shell(command), .failIfNonzeroStatus)
     }
 
-    private func checkForPython(_ then: @escaping () -> (), otherwise: @escaping () -> ()) {
+    private func checkForPython() {
         send(.shell("python3 -V"), .handleCheckForPython(StringArray()))
+    }
+
+    private static let minimumPythonMajorVersion = 3
+    private static let minimumPythonMinorVersion = 7
+    @objc static var minimumPythonVersionForFramer: String {
+        "\(minimumPythonMajorVersion).\(minimumPythonMinorVersion)"
     }
 
     private func update(executionContext: ExecutionContext, result: PartialResult) -> () {
@@ -689,7 +704,7 @@ class Conductor: NSObject, Codable {
                     return
                 }
                 let output = lines.strings.joined(separator: "\n")
-                let groups = output.captureGroups(regex: "^Python (3\\.[0-9][0-9]*)")
+                let groups = output.captureGroups(regex: "^Python ([0-9]\\.[0-9][0-9]*)")
                 if groups.count != 2 {
                     execLoginShell()
                     return
@@ -699,7 +714,8 @@ class Conductor: NSObject, Codable {
                 let major = Int(parts.get(0, default: "0")) ?? 0
                 let minor = Int(parts.get(1, default: "0")) ?? 0
                 DLog("Treating version \(version) as \(major).\(minor)")
-                if major == 3 && minor >= 7 {
+                if major == Self.minimumPythonMajorVersion &&
+                    minor >= Self.minimumPythonMinorVersion {
                     doFraming()
                 } else {
                     execLoginShell()
@@ -803,14 +819,14 @@ class Conductor: NSObject, Codable {
     }
 
     @objc(handleLine:depth:) func handle(line: String, depth: Int32) {
-        if depth != self.depth {
+        if depth != self.depth && framing {
             DLog("Pass line with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
             parent?.handle(line: line, depth: depth)
             return
         }
         DLog("< \(line)")
         switch state {
-        case .ground:
+        case .ground, .unhooked:
             // Tolerate unexpected inputs - this is essential for getting back on your feet when
             // restoring.
             DLog("Unexpected input: \(line)")
@@ -820,19 +836,31 @@ class Conductor: NSObject, Codable {
         }
     }
 
+    @objc func handleUnhook() {
+        DLog("< unhook")
+        state = .unhooked
+    }
     @objc func handleCommandBegin(identifier: String, depth: Int32) {
-        DLog("< command \(identifier) response will begin for depth \(depth) vs my depth of \(self.depth)")
+        // NOTE: no attempt is made to ensure this is meant for me; could be for my parent but it
+        // only logs so who cares.
+        DLog("< command \(identifier) response will begin")
     }
 
-    @objc func handleCommandEnd(identifier: String, status: UInt8, depth: Int32) {
-        if depth != self.depth {
+    // type can be "f" for framer or "r" for regular (non-framer)
+    @objc func handleCommandEnd(identifier: String, type: String, status: UInt8, depth: Int32) {
+        if (!framing && type == "f") || (framing && depth != self.depth) {
+            // The purpose of the type argument is so that a non-framing conductor with a framing
+            // parent can know whether to handle end itself or to pass it on. The depth is not
+            // useful for non-framing conductors since the parser is unaware of them.
+            // If a conductor is non-framing then its ancestors will either be framing or will not
+            // expect input.
             DLog("Pass command-end with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
-            parent?.handleCommandEnd(identifier: identifier, status: status, depth: depth)
+            parent?.handleCommandEnd(identifier: identifier, type: type, status: status, depth: depth)
             return
         }
         DLog("< command \(identifier) ended with status \(status) while in state \(state)")
         switch state {
-        case .ground:
+        case .ground, .unhooked:
             // Tolerate unexpected inputs - this is essential for getting back on your feet when
             // restoring.
             DLog("Unexpected command end in \(state)")
@@ -856,7 +884,7 @@ class Conductor: NSObject, Codable {
             send(.quit, .fireAndForget)
         } else if let jobState = backgroundJobs[pid] {
             switch jobState {
-            case .ground:
+            case .ground, .unhooked:
                 // Tolerate unexpected inputs - this is essential for getting back on your feet when
                 // restoring.
                 DLog("Unexpected termination of \(pid)")
@@ -892,7 +920,7 @@ class Conductor: NSObject, Codable {
         }
 //        DLog("pid \(pid) channel \(channel) produced: \(string)")
         switch jobState {
-        case .ground:
+        case .ground, .unhooked:
             // Tolerate unexpected inputs - this is essential for getting back on your feet when
             // restoring.
             DLog("Unexpected input: \(string)")
@@ -909,7 +937,7 @@ class Conductor: NSObject, Codable {
         switch state {
         case .ground:
             dequeue()
-        case .willExecute(_), .executing(_):
+        case .willExecute(_), .executing(_), .unhooked:
             return
         }
     }
@@ -961,6 +989,8 @@ class Conductor: NSObject, Codable {
             return context.command.operationDescription
         case .willExecute(let context):
             return context.command.operationDescription + " (preparation stage)"
+        case .unhooked:
+            return "unhooked"
         }
     }
 
