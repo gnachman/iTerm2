@@ -617,7 +617,6 @@
             }
         } else if (p == used) {
             // It might be in this block!
-            p = 0;
             if (blockOffsetPtr) {
                 yoffset += [block getNumLinesWithWrapWidth:width];
             }
@@ -625,6 +624,7 @@
             if (numTrailingEmptyLines < emptyLinesLeftToSkip) {
                 // Need to keep consuming empty lines.
                 emptyLinesLeftToSkip -= numTrailingEmptyLines;
+                p = 0;
             } else {
                 // This block has enough trailing blank lines.
                 found = YES;
