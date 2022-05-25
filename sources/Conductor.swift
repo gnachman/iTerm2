@@ -19,6 +19,7 @@ protocol SSHCommandRunning {
 protocol ConductorDelegate: Any {
     @objc(conductorWriteString:) func conductorWrite(string: String)
     func conductorAbort(reason: String)
+    func conductorQuit()
 }
 
 @objc(iTermConductor)
@@ -564,6 +565,18 @@ class Conductor: NSObject, Codable {
         } otherwise: { [weak self] in
             self?.execLoginShell()
         }
+    }
+
+    @objc func quit() {
+        queue = []
+        state = .ground
+        send(.quit, .fireAndForget)
+        delegate?.conductorQuit()
+    }
+
+    @objc(ancestryContainsClientUniqueID:)
+    func ancestryContains(clientUniqueID: String) -> Bool {
+        return self.clientUniqueID == clientUniqueID || (parent?.ancestryContains(clientUniqueID: clientUniqueID) ?? false)
     }
 
     @objc func sendKeys(_ data: Data) {

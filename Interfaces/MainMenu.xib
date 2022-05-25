@@ -315,6 +315,19 @@ DQ
                                     </items>
                                 </menu>
                             </menuItem>
+                            <menuItem title="ssh" id="NGU-fy-0o1">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="ssh" id="pbR-BZ-1Bc">
+                                    <items>
+                                        <menuItem title="Disconnect" identifier="ssh.Disconnect" id="ycJ-VX-uQI">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="sshDisconnect:" target="-1" id="ccH-a0-Ijh"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="1439"/>
                             <menuItem title="Page Setup..." keyEquivalent="P" identifier="Page Setup..." id="685">
                                 <connections>

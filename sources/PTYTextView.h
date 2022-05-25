@@ -258,6 +258,8 @@ extern NSNotificationName iTermPortholesDidChange;
 - (BOOL)textViewSmartSelectionActionsShouldUseInterpolatedStrings;
 - (void)textViewShowFindPanel;
 - (void)textViewDidAddOrRemovePorthole;
+- (NSString *)textViewCurrentSSHSessionName;
+- (void)textViewDisconnectSSH;
 
 @end
 

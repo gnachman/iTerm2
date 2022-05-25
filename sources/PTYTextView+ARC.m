@@ -88,6 +88,15 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     if (item.action == @selector(renderSelection:)) {
         return [self.selection hasSelection] && self.selection.allSubSelections.count == 1 && !self.selection.live && ![self absRangeIntersectsPortholes:self.selection.spanningAbsRange];
     }
+    if (item.action == @selector(sshDisconnect:)) {
+        NSString *name = [self.delegate textViewCurrentSSHSessionName];
+        if (name) {
+            item.title = [NSString stringWithFormat:@"Disconnect from %@", name];
+            return YES;
+        } else {
+            item.title = @"Disconnect";
+        }
+    }
     return NO;
 }
 
@@ -98,6 +107,10 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     [self.selection.allSubSelections[0] setAbsRange:VT100GridAbsWindowedRangeMake(absRange, 0, self.dataSource.width)];
     [self renderRange:absRange type:nil filename:nil];
     [self.selection clearSelection];
+}
+
+- (IBAction)sshDisconnect:(id)sender {
+    [self.delegate textViewDisconnectSSH];
 }
 
 #pragma mark - Coordinate Space Conversions
