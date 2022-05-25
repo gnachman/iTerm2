@@ -888,7 +888,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                  results:context.results
          multipleResults:((context.options & FindMultipleResults) != 0)
  includesPartialLastLine:&includesPartialLastLine];
-    context.includesPartialLastLine = includesPartialLastLine;
+    context.includesPartialLastLine = includesPartialLastLine && (blockIndex + 1 == numBlocks);
     NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context.results count]];
     BOOL haveOutOfRangeResults = NO;
     int blockPosition = [self _blockPosition:context.absBlockNum - num_dropped_blocks];
@@ -1523,6 +1523,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (void)seal {
+    if (_lineBlocks.lastBlock.hasPartial) {
+        // Can't have an interior block that is partial.
+        return;
+    }
     self.dirty = YES;
     if (_lineBlocks.lastBlock.isEmpty) {
         return;
