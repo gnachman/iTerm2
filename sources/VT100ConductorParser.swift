@@ -17,6 +17,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         case ground
         case body(String)
         case output(builder: SSHOutputTokenBuilder)
+        case autopoll(builder: SSHOutputTokenBuilder)
     }
     private var state = State.initial
     var hookDescription: String {
@@ -99,12 +100,12 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 DLog("In ground state: Found valid unhook token")
                 token.type = SSH_UNHOOK
                 return .unhook
-            } else if string.hasPrefix("%output ") {
+            } else if string.hasPrefix("%output ") || string.hasPrefix("%autopoll ") {
                 if let builder = SSHOutputTokenBuilder(string) {
                     state = .output(builder: builder)
                     return .keepGoing
                 } else {
-                    DLog("Malformed %output, unhook")
+                    DLog("Malformed %output/%autopoll, unhook")
                     return .unhook
                 }
             } else if string.hasPrefix("%terminate ") {
@@ -126,7 +127,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 return .unhook
             }
 
-        case .output(builder: let builder):
+        case .output(builder: let builder), .autopoll(builder: let builder):
             if string.hasPrefix("%end \(builder.identifier)") {
                 if builder.populate(token) {
                     state = .ground
@@ -189,24 +190,52 @@ private class SSHOutputTokenBuilder {
     let pid: Int32
     let channel: Int8
     let identifier: String
-    @objc private(set) var base64 = ""
+    enum Flavor: String {
+        case output = "%output"
+        case autopoll = "%autopoll"
+    }
+    @objc private(set) var rawString = ""
 
     init?(_ string: String) {
         let parts = string.components(separatedBy: " ")
-        guard parts.count >= 4, let pid = Int32(parts[2]), let channel = Int8(parts[3]) else {
+        guard let flavor = Flavor(rawValue: parts[0]) else {
             return nil
         }
-        self.pid = pid
+        switch flavor {
+        case .output:
+            guard parts.count >= 4,
+                  let pid = Int32(parts[2]),
+                  let channel = Int8(parts[3]) else {
+                return nil
+            }
+            self.pid = pid
+            self.channel = channel
+        case .autopoll:
+            guard parts.count >= 2 else {
+                return nil
+            }
+            self.pid = SSH_OUTPUT_AUTOPOLL_PID
+            self.channel = 1
+        }
         self.identifier = parts[1]
-        self.channel = channel
     }
 
     func append(_ string: String) {
-        base64.append(string)
+        rawString.append(string)
+        if pid == SSH_OUTPUT_AUTOPOLL_PID {
+            rawString.append("\n")
+        }
     }
 
+    private var decoded: Data? {
+        if pid == SSH_OUTPUT_AUTOPOLL_PID {
+            return (rawString + "\nEOF\n").data(using: .utf8)
+        } else {
+            return Data(base64Encoded: rawString)
+        }
+    }
     func populate(_ token: VT100Token) -> Bool {
-        guard let data = Data(base64Encoded: base64) else {
+        guard let data = decoded else {
             return false
         }
         token.csi.pointee.p.0 = pid

@@ -40,6 +40,7 @@ class Conductor: NSObject, Codable {
     @objc let parent: Conductor?
     private var _queueWrites = true
     private var restored = false
+    private var autopoll = ""
     @objc var queueWrites: Bool {
         if let parent = parent {
             return _queueWrites && parent.queueWrites
@@ -68,6 +69,12 @@ class Conductor: NSObject, Codable {
         provider.register(trackedPID: framedPID!)
         return provider
     }()
+    private var sshProcessInfoProvider: SSHProcessInfoProvider? {
+        if framedPID == nil {
+            return nil
+        }
+        return _processInfoProvider
+    }
     @objc var processInfoProvider: ProcessInfoProvider & SessionProcessInfoProvider {
         if framedPID == nil {
             return NullProcessInfoProvider()
@@ -106,6 +113,7 @@ class Conductor: NSObject, Codable {
         case framerDeregister(pid: pid_t)
         case framerPoll
         case framerReset
+        case framerAutopoll
 
         var isFramer: Bool {
             switch self {
@@ -114,7 +122,7 @@ class Conductor: NSObject, Codable {
                 return false
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
-                    .framerDeregister(_), .framerPoll, .framerReset:
+                    .framerDeregister(_), .framerPoll, .framerReset, .framerAutopoll:
                 return true
             }
         }
@@ -162,6 +170,8 @@ class Conductor: NSObject, Codable {
                 return "poll"
             case .framerReset:
                 return "reset"
+            case .framerAutopoll:
+                return "autopoll"
             }
         }
 
@@ -207,6 +217,8 @@ class Conductor: NSObject, Codable {
                 return "poll"
             case .framerReset:
                 return "reset"
+            case .framerAutopoll:
+                return "autopoll"
             }
         }
     }
@@ -554,6 +566,7 @@ class Conductor: NSObject, Codable {
     private func doFraming() {
         execFramer()
         framerLogin(cwd: initialDirectory ?? "$HOME", args: [])
+        send(.framerAutopoll, .fireAndForget)
     }
 
     private func uploadPayloads() {
@@ -838,6 +851,19 @@ class Conductor: NSObject, Codable {
             parent?.handleSideChannelOutput(string, pid: pid, channel: channel, depth: depth)
             return
         }
+        if pid == SSH_OUTPUT_AUTOPOLL_PID {
+            if string == "EOF" {
+                DLog("Handle autopoll output:\n\(autopoll)")
+                sshProcessInfoProvider?.handle(autopoll)
+                autopoll = ""
+                send(.framerAutopoll, .fireAndForget)
+            } else {
+                DLog("Add autopoll output of \(string)")
+                autopoll.append(string)
+                return
+            }
+            return
+        }
         guard let jobState = backgroundJobs[pid] else {
             return
         }
@@ -948,6 +974,7 @@ extension Conductor: SSHCommandRunning {
 
     func reset() {
         send(.framerReset, .fireAndForget)
+        send(.framerAutopoll, .fireAndForget)
     }
 
     private func addBackgroundJob(_ pid: Int32, command: Command, completion: @escaping (Data, Int32) -> ()) {

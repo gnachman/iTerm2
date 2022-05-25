@@ -24,6 +24,8 @@ TASKS=[]
 QUITTING=False
 REGISTERED=[]
 LASTPS={}
+AUTOPOLL = 0
+AUTOPOLL_TASK = None
 
 def log(message):
     if VERBOSE:
@@ -225,6 +227,53 @@ def guess_login_shell():
 
 ## Process monitoring
 
+async def autopoll(delay):
+    try:
+        global AUTOPOLL
+        while True:
+            log('autopoll: call poll()')
+            output = await poll()
+            if not len(output):
+                log(f'autopoll: sleep for {delay}')
+                await asyncio.sleep(delay)
+                log(f'autopoll: awoke')
+                continue
+            # Send poll output and sleep until client requests autopolling again.
+            identifier = random.randint(0, 10000000000000000000)
+            send(f'%autopoll {identifier}')
+            for line in output:
+                send(line)
+            send(f'%end {identifier}')
+            AUTOPOLL = 0
+            while not AUTOPOLL:
+                log(f'autopoll: sleep for {delay}')
+                await asyncio.sleep(delay)
+                log(f'autopoll: awoke')
+    except asyncio.CancelledError:
+        log('autopoll canceled')
+        raise
+    except Exception as e:
+        log(f'autopoll threw {e}: {traceback.format_exc()}')
+
+async def poll():
+    env = dict(os.environ)
+    env["LANG"] = "C"
+    proc = await asyncio.create_subprocess_shell(
+        "ps -eo pid,ppid,stat,lstart,command",
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        env=env)
+    log(f'poll: run ps {proc}')
+    output, erroutput = await proc.communicate()
+    if proc.returncode == 0:
+        log(f'poll: successful return')
+        final = procmon_parse(output)
+        log(f'poll: return parsed output')
+        return final
+    log(f'poll: ps failed with {proc.returncode}')
+    return None
+
 async def register(pid):
     global REGISTERED
     if pid in REGISTERED:
@@ -378,8 +427,10 @@ async def handle_run(identifier, args):
 async def handle_reset(identifier, args):
     global REGISTERED
     global LASTPS
+    global AUTOPOLL
     REGISTERED = []
     LASTPS = {}
+    AUTOPOLL = 0
     begin(identifier)
     end(identifier, 0)
 
@@ -407,27 +458,32 @@ async def handle_deregister(identifier, args):
     end(identifier, 0)
     await deregister(pid)
 
+async def handle_autopoll(identifier, args):
+    log(f'handle_autopoll({identifier}, {args})')
+    begin(identifier)
+    end(identifier, 0)
+    global AUTOPOLL
+    if AUTOPOLL:
+        return
+    AUTOPOLL = 1
+
+    global AUTOPOLL_TASK
+    if AUTOPOLL_TASK is not None:
+        return
+    AUTOPOLL_TASK = asyncio.create_task(autopoll(1.0))
+
+
 async def handle_poll(identifier, args):
     log(f'handle_poll({identifier}, {args})')
-    env = dict(os.environ)
-    env["LANG"] = "C"
-    proc = await asyncio.create_subprocess_shell(
-        "ps -eo pid,ppid,stat,lstart,command",
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        env=env)
-    log(f'handle_poll({identifier}, {args}): run ps {proc}')
-    output, erroutput = await proc.communicate()
+    output = await poll()
     log(f'handle_poll({identifier}, {args}): read {len(output)} bytes of output')
     begin(identifier)
-    if proc.returncode == 0:
-        log(f'handle_poll({identifier}, {args}): successful return')
-        for line in procmon_parse(output):
+    if output is not None:
+        for line in output:
             send(line)
+        end(identifier, 0)
     else:
-        log(f'ps failed with {proc.returncode}')
-    end(identifier, proc.returncode)
+        end(identifier, 1)
 
 async def handle_send(identifier, args):
     if len(args) < 2:
@@ -471,6 +527,16 @@ async def handle_kill(identifier, args):
 async def handle_quit(identifier, args):
     begin(identifier)
     end(identifier, 0)
+    global AUTOPOLL_TASK
+    if AUTOPOLL_TASK:
+        log('will cancel autopoll')
+        AUTOPOLL_TASK.cancel()
+        try:
+            log('await canceled autopoll task')
+            await AUTOPOLL_TASK
+        except asyncio.CancelledError:
+            log('autopoll is now canceled')
+        AUTOPOLL_TASK = None
     return True
 
 ## Helpers for run()
@@ -636,7 +702,8 @@ HANDLERS = {
     "register": handle_register,
     "deregister": handle_deregister,
     "poll": handle_poll,
-    "reset": handle_reset
+    "reset": handle_reset,
+    "autopoll": handle_autopoll
 }
 
 def main():

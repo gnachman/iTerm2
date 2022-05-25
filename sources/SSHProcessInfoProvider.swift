@@ -143,15 +143,15 @@ class SSHProcessInfoProvider {
     var needsUpdate: Bool {
         set {
             _needsUpdate = newValue
-            if newValue {
-                rateLimit.performRateLimitedBlock { [weak self] in
-                    self?.updateIfNeeded()
-                }
-            }
         }
         get {
             return _needsUpdate
         }
+    }
+
+    @objc func updateUrgently() {
+        needsUpdate = true
+        updateIfNeeded()
     }
 
     private func updateIfNeeded() {
@@ -162,6 +162,7 @@ class SSHProcessInfoProvider {
             self?._needsUpdate = false
         }
     }
+
     private func collectBlockAndUpdate() {
         reallyUpdate {
             let closures = self.closures
@@ -186,6 +187,10 @@ class SSHProcessInfoProvider {
             // No change since last update
             return
         }
+        handle(psout)
+    }
+
+    func handle(_ psout: String) {
         // Parse output of poll
         let edits = psout.components(separatedBy: "\n").compactMap { line in
             ProcessEdit(line)
