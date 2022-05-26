@@ -3094,12 +3094,12 @@ ITERM_WEAKLY_REFERENCEABLE
             [[_delegate realParentWindow] sendInputToAllSessions:string
                                                         encoding:optionalEncoding
                                                    forceEncoding:forceEncoding];
-        } else if (self.tmuxMode == TMUX_CLIENT) {
+        } else if (_conductor.handlesKeystrokes) {
+            [_conductor sendKeys:[string dataUsingEncoding:encoding]];
+        } else {
+            assert(self.tmuxMode == TMUX_CLIENT);
             [[_tmuxController gateway] sendKeys:string
                                    toWindowPane:self.tmuxPane];
-        } else {
-            assert(_conductor.handlesKeystrokes);
-            [_conductor sendKeys:[string dataUsingEncoding:encoding]];
         }
         PTYScroller* ptys = (PTYScroller*)[_view.scrollview verticalScroller];
         [ptys setUserScroll:NO];
@@ -7579,7 +7579,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_tmuxGateway.tmuxLogging) {
         [self printTmuxMessage:[@"> " stringByAppendingString:string]];
     }
-    [self writeTaskImpl:string encoding:NSUTF8StringEncoding forceEncoding:YES canBroadcast:NO];
+    if (_conductor && !_exited) {
+        // Running tmux inside an ssh client takes this path
+        [_conductor sendKeys:[string dataUsingEncoding:NSUTF8StringEncoding]];
+    } else {
+        [self writeTaskImpl:string encoding:NSUTF8StringEncoding forceEncoding:YES canBroadcast:NO];
+    }
 }
 
 + (dispatch_queue_t)tmuxQueue {

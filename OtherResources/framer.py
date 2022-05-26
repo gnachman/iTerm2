@@ -42,6 +42,14 @@ def send(text):
     log("> " + str(text))
     print(text)
 
+def send_esc(text):
+    if QUITTING:
+        log("[squelched] " + str(text))
+        return
+    log("> " + str(text))
+    print('\033]134;:' + str(text))
+    print('\033\\', end="")
+
 class Process:
     @staticmethod
     async def run_tty(executable, args, cwd, env):
@@ -240,10 +248,10 @@ async def autopoll(delay):
                 continue
             # Send poll output and sleep until client requests autopolling again.
             identifier = random.randint(0, 10000000000000000000)
-            send(f'%autopoll {identifier}')
+            send_esc(f'%autopoll {identifier}')
             for line in output:
-                send(line)
-            send(f'%end {identifier}')
+                send_esc(line)
+            send_esc(f'%end {identifier}')
             AUTOPOLL = 0
             while not AUTOPOLL:
                 log(f'autopoll: sleep for {delay}')
@@ -405,7 +413,7 @@ async def handle_login(identifier, args):
     global PROCESSES
     PROCESSES[proc.pid] = proc
     begin(identifier)
-    send(proc.pid)
+    send_esc(proc.pid)
     end(identifier, 0)
     await proc.handle_read(make_monitor_process(identifier, proc, True))
     return False
@@ -419,7 +427,7 @@ async def handle_run(identifier, args):
     global PROCESSES
     PROCESSES[proc.pid] = proc
     begin(identifier)
-    send(proc.pid)
+    send_esc(proc.pid)
     end(identifier, 0)
     await proc.handle_read(make_monitor_process(identifier, proc, False))
     return False
@@ -480,7 +488,7 @@ async def handle_poll(identifier, args):
     begin(identifier)
     if output is not None:
         for line in output:
-            send(line)
+            send_esc(line)
         end(identifier, 0)
     else:
         end(identifier, 1)
@@ -560,16 +568,16 @@ def make_monitor_process(identifier, proc, islogin):
 
 def print_output(identifier, pid, channel, islogin, data):
     if islogin:
-        send(f'%output {identifier} {pid} -1')
+        send_esc(f'%output {identifier} {pid} -1')
     else:
-        send(f'%output {identifier} {pid} {channel}')
+        send_esc(f'%output {identifier} {pid} {channel}')
     data = data
     encoded = base64.b64encode(data).decode("utf-8")
     n = 128
     for i in range(0, len(encoded), n):
         part = encoded[i:i+n]
-        send(part)
-    send(f'%end {identifier}')
+        send_esc(part)
+    send_esc(f'%end {identifier}')
 
 ## Infra
 
@@ -580,14 +588,14 @@ def fail(reason):
     except ValueError:
         tb = traceback.format_exc()
         log(f'fail: {tb}')
-    send(f'abort {reason}')
+    send_esc(f'abort {reason}')
     sys.exit(-1)
 
 def begin(identifier):
-    send(f'begin {identifier}')
+    send_esc(f'begin {identifier}')
 
 def end(identifier, status):
-    send(f'end {identifier} {status} f')
+    send_esc(f'end {identifier} {status} f')
 
 async def cleanup():
     """Await tasks that have completed, clear the COMPLETED list, and remove them from TASKS."""
@@ -603,7 +611,7 @@ async def cleanup():
         proc = PROCESSES[pid]
         del PROCESSES[pid]
         await proc.cleanup()
-        send(f'%terminate {proc.pid} {proc.return_code}')
+        send_esc(f'%terminate {proc.pid} {proc.return_code}')
 
 async def handle(args):
     log(f'handle {args}')

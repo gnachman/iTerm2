@@ -75,6 +75,7 @@
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
 #import "iTermVariableScope+Global.h"
+#import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
 #import "iTermVariableScope+Window.h"
 #import "iTermWarning.h"
@@ -431,6 +432,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     NSSize _previousScreenSize;
     CGFloat _previousScreenScaleFactor;
+
+    NSTimeInterval _creationTime;
 }
 
 @synthesize scope = _scope;
@@ -540,6 +543,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                      screen:(int)screenNumber
                            hotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType
                                     profile:(Profile *)profile {
+    _creationTime = [NSDate it_timeSinceBoot];
     const iTermWindowType windowType = iTermThemedWindowType(unsafeWindowType);
     iTermWindowType savedWindowType = iTermThemedWindowType(unsafeSavedWindowType);
     DLog(@"-[%p finishInitializationWithSmartLayout:%@ windowType:%d screen:%d hotkeyWindowType:%@ ",
@@ -1775,7 +1779,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 if ([tuple.firstObject isEqualToString:@"login"]) {
                     return nil;
                 }
-                return tuple.secondObject;
+                return tuple.secondObject.lastPathComponent;
             }];
         }
     }
@@ -1884,6 +1888,14 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     [self removeTab:aTab];
+}
+
+- (void)tab:(PTYTab *)tab closeSession:(PTYSession *)session {
+    [self closeSessionWithoutConfirmation:session];
+}
+
+- (void)tabProcessInfoProviderDidChange:(PTYTab *)tab {
+    [self refreshTools];
 }
 
 - (NSUInteger)numberOfTabsWithTmuxController:(TmuxController *)tmuxController {
@@ -4797,7 +4809,11 @@ ITERM_WEAKLY_REFERENCEABLE
     const NSTimeInterval timeSinceLastResize =
         [NSDate timeIntervalSinceReferenceDate] - self.timeOfLastResize;
     static const NSTimeInterval kTimeToPreserveTemporaryTitle = 0.7;
-    return timeSinceLastResize < kTimeToPreserveTemporaryTitle;
+    return timeSinceLastResize < kTimeToPreserveTemporaryTitle && [self age] > 1;
+}
+
+- (NSTimeInterval)age {
+    return [NSDate it_timeSinceBoot] - _creationTime;
 }
 
 // This takes care of updating the metal state
@@ -7028,6 +7044,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return @([iTermPreferences boolForKey:kPreferenceKeyHTMLTabTitles]);
     } else if ([option isEqualToString:PSMTabBarControlOptionMinimalNonSelectedColoredTabAlpha]) {
         return @([iTermAdvancedSettingsModel minimalDeslectedColoredTabAlpha]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionTextColor]) {
+        return [self.currentSession.textview.colorMap colorForKey:kColorMapForeground];
     }
     return nil;
 }
@@ -7066,7 +7084,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 
     // Consider automatic conversion.
-    if (![self themeSupportsAlternateDragModes]) {
+    if (![self themeSupportsAlternateDragModes] && _windowType != WINDOW_TYPE_NO_TITLE_BAR) {
         // Never convert to window drag in traditional themes.
         return NO;
     }
@@ -8081,8 +8099,11 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
     PTYSession *currentSession = [self currentSession];
     if (currentSession) {
-        [currentSession asyncCurrentLocalWorkingDirectoryOrInitialDirectory:^(NSString *oldCWD) {
+        [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:^(NSString *oldCWD) {
             DLog(@"Get local pwd so I can split: %@", oldCWD);
+            if (theBookmark.sshIdentity != nil && ![currentSession.sshIdentity isEqualTo:theBookmark.sshIdentity]) {
+                oldCWD = nil;
+            }
             PTYSession *session = [self splitVertically:isVertical
                                                  before:before
                                                 profile:theBookmark
@@ -8896,6 +8917,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
             [aTab fitSessionToCurrentViewSize:aSession];
             // Theme change affects scrollbar color.
             [aSession.textview updateScrollerForBackgroundColor];
+            // In case separate separate bg images per pane changed.
+            [aSession updateViewBackgroundImage];
         }
         // Theme change could affect tab icons
         [aTab updateIcon];
@@ -9936,12 +9959,19 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     NSString *suggestedFilename = [NSString stringWithFormat:@"iTerm2 Session %@ at %@.txt",
                                    [dateFormatter stringFromDate:now],
                                    [timeFormatter stringFromDate:now]];
-    iTermSavePanel *savePanel = [iTermSavePanel showWithOptions:kSavePanelOptionFileFormatAccessory
-                                                     identifier:@"SaveContents"
-                                               initialDirectory:NSHomeDirectory()
-                                                defaultFilename:suggestedFilename
-                                               allowedFileTypes:@[ @"txt", @"rtf" ]
-                                                         window:self.window];
+
+    __weak __typeof(self) weakSelf = self;
+    [iTermSavePanel asyncShowWithOptions:kSavePanelOptionFileFormatAccessory
+                              identifier:@"SaveContents"
+                        initialDirectory:NSHomeDirectory()
+                         defaultFilename:suggestedFilename
+                        allowedFileTypes:@[ @"txt", @"rtf" ]
+                                  window:self.window completion:^(iTermSavePanel *savePanel) {
+        [weakSelf reallySaveContents:savePanel];
+    }];
+}
+
+- (void)reallySaveContents:(iTermSavePanel *)savePanel {
     if (savePanel.path) {
         NSURL *url = [NSURL fileURLWithPath:savePanel.path];
         if (url) {
@@ -9966,8 +9996,10 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     if (self.currentSession.logging) {
         [[self currentSession] logStop];
     } else {
-        [[self retain] autorelease];  // Prevent self from getting dealloc'ed during modal panel.
-        [[self currentSession] logStart];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[self retain] autorelease];  // Prevent self from getting dealloc'ed during modal panel.
+            [[self currentSession] logStart];
+        });
     }
 }
 
@@ -10110,8 +10142,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         return YES;
     } else if ([item action] == @selector(zoomOnSelection:)) {
         return ![self inInstantReplay] && [[self currentSession] hasSelection];
-    } else if ([item action] == @selector(showFindPanel:) ||
-               [item action] == @selector(findPrevious:) ||
+    } else if ([item action] == @selector(findPrevious:) ||
                [item action] == @selector(findNext:) ||
                [item action] == @selector(jumpToSelection:) ||
                [item action] == @selector(findUrls:)) {
@@ -10635,11 +10666,14 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     }
 
     __weak __typeof(self) weakSelf = self;
-    [currentSession asyncCurrentLocalWorkingDirectoryOrInitialDirectory:^(NSString *pwd) {
+    [currentSession asyncInitialDirectoryForNewSessionBasedOnCurrentDirectory:^(NSString *pwd) {
         DLog(@"Got local pwd so I can create a tab: %@", pwd);
         PseudoTerminal *strongSelf = [[weakSelf retain] autorelease];
         if (!strongSelf) {
             return;
+        }
+        if (profile.sshIdentity != nil && ![currentSession.sshIdentity isEqual:profile.sshIdentity]) {
+            pwd = nil;
         }
         PTYSession *newSession = [strongSelf createTabWithProfile:profile
                                                       withCommand:command
@@ -10984,15 +11018,6 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 #pragma mark - Find
 
-- (IBAction)showFindPanel:(id)sender {
-    const BOOL findPanelWasOpen = self.currentSession.view.findDriver.viewController.searchIsVisible;
-    [[self currentSession] showFindPanel];
-    if (!findPanelWasOpen) {
-        [self.currentSession.view.findDriver setFilterHidden:YES];
-    }
-    [[iTermFindPasteboard sharedInstance] updateObservers:nil];
-}
-
 // findNext and findPrevious are reversed here because in the search UI next
 // goes backwards and previous goes forwards.
 // Internally, next=forward and prev=backwards.
@@ -11247,7 +11272,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         return;
     }
     self.window.documentEdited = [self.currentTab.sessions anyWithBlock:^BOOL(PTYSession *session) {
-        if ([[iTermProfilePreferences stringForKey:KEY_CUSTOM_COMMAND inProfile:session.profile] isEqualToString:kProfilePreferenceCommandTypeCustomValue]) {
+        if ([[iTermProfilePreferences stringForKey:KEY_CUSTOM_COMMAND inProfile:session.profile] isEqualToString:kProfilePreferenceCommandTypeCustomValue] ||
+            [[iTermProfilePreferences stringForKey:KEY_CUSTOM_COMMAND inProfile:session.profile] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
             return NO;
         }
         return session.hasNontrivialJob;
@@ -11300,7 +11326,11 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 }
 
 - (pid_t)toolbeltCurrentShellProcessId {
-    return [[[self currentSession] shell] pid];
+    return self.currentSession.variablesScope.effectiveRootPid.intValue;
+}
+
+- (id<ProcessInfoProvider>)toolbeltCurrentShellProcessInfoProvider {
+    return self.currentSession.processInfoProvider;
 }
 
 - (id<VT100ScreenMarkReading>)toolbeltLastCommandMark {

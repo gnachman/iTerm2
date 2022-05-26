@@ -67,10 +67,15 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
     }
 
     private func processLine(into token: VT100Token) -> ProcessingResult {
-        guard let string = String(data: line, encoding: .utf8) else {
+        // Lines take one of three forms:
+        // <content>
+        // <osc 134><content>
+        // <st><osc 134><content>
+        guard let substring = String(data: line, encoding: .utf8)?.removing(prefix: String.VT100CC_ST).removingOSC134Prefix else {
             DLog("Input \(line as NSData) invalid UTF-8")
             return .unhook
         }
+        let string = String(substring)
         DLog("Process line \(string)")
         line = Data()
         let wasInRecoveryMode = recoveryMode
@@ -262,5 +267,29 @@ private class SSHOutputTokenBuilder {
         pid = token.csi.pointee.p.0
         channel = token.csi.pointee.p.1
         data = token.savedData
+    }
+}
+
+extension String {
+    func removing(prefix: String) -> Substring {
+        guard hasPrefix(prefix) else {
+            return Substring(self)
+        }
+        return dropFirst(prefix.count)
+    }
+
+    fileprivate static let VT100CC_ST = "\u{1b}\\"
+}
+
+extension Substring {
+    var removingOSC134Prefix: Substring {
+        let osc134 = "\u{1b}]134;"
+        guard hasPrefix(osc134) else {
+            return Substring(self)
+        }
+        guard let colon = range(of: ":") else {
+            return ""
+        }
+        return self[colon.upperBound...]
     }
 }
