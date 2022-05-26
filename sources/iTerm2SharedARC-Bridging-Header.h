@@ -3,6 +3,7 @@
 //
 
 #import "DebugLogging.h"
+#import "ObjCExceptions.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermBuiltInFunctions.h"
@@ -25,6 +26,8 @@
 #import "iTermRateLimitedUpdate.h"
 #import "iTermSelection.h"
 #import "iTermSelectionExtraction.h"
+#import "iTermSocket.h"
+#import "iTermSocketAddress.h"
 #import "iTermStatusBarTextComponent.h"
 #import "iTermStoplightHotbox.h"
 #import "iTermSwiftHelpers.h"

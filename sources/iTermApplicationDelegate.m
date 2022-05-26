@@ -1101,6 +1101,12 @@ void TurnOnDebugLoggingAutomatically(void) {
         [_untitledWindowStateMachine disableInitialUntitledWindow];
     }
 
+    NSError *error = nil;
+    [[iTermSecretServer instance] listenAndReturnError:&error];
+    if (error) {
+        DLog(@"Secret server failed to start: %@", error);
+    }
+
     DLog(@"willFinishLaunching");
     if (_restorableStateController) {
         // The system doesn't tell us when it's done invoking NSWindowRestoration calls. My guess

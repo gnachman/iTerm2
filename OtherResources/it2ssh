@@ -52,7 +52,16 @@ eval_cmd=$(printf %s "J2V2YWwgIiQoZWNobyAiJDAiIHwgdHIgXFxcdlxcXGZcXFxyXFxcYiBcXF
 sanitized="$(printf %s "$conductor" | base64_decode | tr "\!'\n\\" \\b\\v\\r\\f)"
 
 SSH=/usr/bin/ssh
-TOKEN="${ITERM_SESSION_ID#*:}"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  TOKEN=""
+  for SOCKET in ~/.config/iterm2/sockets/secrets ~/.iterm2/sockets/secrets ~/.iterm2-1/sockets/secrets
+  do
+      [ -z "$TOKEN" ] && TOKEN=$(nc -U $SOCKET || true)
+  done
+else
+  TOKEN="none"
+fi
+
 
 if [ ! -d ~/.ssh ]; then
     mkdir ~/.ssh

@@ -13622,12 +13622,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                   boolArgs:(NSString *)boolArgs
                                    sshargs:(NSString *)sshargs
                                      dcsID:(NSString * _Nonnull)dcsID {
-    if (![token isEqualToString:[self guid]]) {
-        [self.screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-            [mutableState appendStringAtCursor:@"Invalid authentication token"];
-        }];
-        DLog(@"Bad token. Got %@, expected %@", token, self.guid);
-        return;
+    BOOL localOrigin = NO;
+    if ([[iTermSecretServer instance] check:token]) {
+        localOrigin = YES;
     }
 
     NSString *directory = nil;
@@ -13643,11 +13640,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                      boolArgs:boolArgs
                                         dcsID:dcsID
                                clientUniqueID:uniqueID
-                                         vars:[self.screen exfiltratedEnvironmentVariables:config.environmentVariablesToCopy]
+                                         vars:localOrigin ? [self.screen exfiltratedEnvironmentVariables:config.environmentVariablesToCopy] : @{}
                              initialDirectory:directory
                                        parent:previousConductor];
-    for (iTermTuple<NSString *, NSString *> *tuple in config.filesToCopy) {
-        [_conductor addPath:tuple.firstObject destination:tuple.secondObject];
+    if (localOrigin) {
+        for (iTermTuple<NSString *, NSString *> *tuple in config.filesToCopy) {
+            [_conductor addPath:tuple.firstObject destination:tuple.secondObject];
+        }
     }
     _sshState = iTermSSHStateNone;
     _conductor.delegate = self;

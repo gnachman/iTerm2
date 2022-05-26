@@ -974,6 +974,10 @@
 		A6024B89254D367E0036D6CF /* iTermColorSuggester.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B87254D367E0036D6CF /* iTermColorSuggester.m */; };
 		A6024B8B254DDFEE0036D6CF /* iTermNSColorCategoryTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B8A254DDFEE0036D6CF /* iTermNSColorCategoryTests.m */; };
 		A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */; };
+		A603E9FB283EE53C0028B648 /* SecretServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A603E9FA283EE53C0028B648 /* SecretServer.swift */; };
+		A603E9FE283EE9BD0028B648 /* ObjCExceptions.h in Headers */ = {isa = PBXBuildFile; fileRef = A603E9FC283EE9BD0028B648 /* ObjCExceptions.h */; };
+		A603E9FF283EE9BD0028B648 /* ObjCExceptions.m in Sources */ = {isa = PBXBuildFile; fileRef = A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */; };
+		A603EA01283EEAE60028B648 /* ObjCExceptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A603EA00283EEAE60028B648 /* ObjCExceptions.swift */; };
 		A6042CD925D0CBCD0001C8FE /* NSScroller+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6042CD725D0CBCD0001C8FE /* NSScroller+iTerm.h */; };
 		A6042CDA25D0CBCD0001C8FE /* NSScroller+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6042CD825D0CBCD0001C8FE /* NSScroller+iTerm.m */; };
 		A6047134213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h in Headers */ = {isa = PBXBuildFile; fileRef = A6047132213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h */; };
@@ -5062,6 +5066,10 @@
 		A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSURL+iTerm.h"; sourceTree = "<group>"; };
 		A60251671CCD3E5E009BABF1 /* NSURL+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSURL+iTerm.m"; sourceTree = "<group>"; };
 		A602516A1CCD40D9009BABF1 /* iTermNSURLCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSURLCategoryTest.m; sourceTree = "<group>"; };
+		A603E9FA283EE53C0028B648 /* SecretServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretServer.swift; sourceTree = "<group>"; };
+		A603E9FC283EE9BD0028B648 /* ObjCExceptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCExceptions.h; sourceTree = "<group>"; };
+		A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCExceptions.m; sourceTree = "<group>"; };
+		A603EA00283EEAE60028B648 /* ObjCExceptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjCExceptions.swift; sourceTree = "<group>"; };
 		A6042CD725D0CBCD0001C8FE /* NSScroller+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSScroller+iTerm.h"; sourceTree = "<group>"; };
 		A6042CD825D0CBCD0001C8FE /* NSScroller+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSScroller+iTerm.m"; sourceTree = "<group>"; };
 		A6047132213D9E7B009C6C6D /* iTermWorkingDirectoryPoller.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermWorkingDirectoryPoller.h; sourceTree = "<group>"; };
@@ -10185,6 +10193,9 @@
 				A6EC8054281C852200493544 /* NSAttributedString+iTerm.swift */,
 				A6EEAED82836F0580039E850 /* ProcessInfoProvider.swift */,
 				A6EEAEDA2836F1180039E850 /* SSHProcessInfoProvider.swift */,
+				A603E9FC283EE9BD0028B648 /* ObjCExceptions.h */,
+				A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */,
+				A603EA00283EEAE60028B648 /* ObjCExceptions.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -10797,6 +10808,7 @@
 				A6EC8094282DE46700493544 /* SSHIdentity.swift */,
 				A6EC8096282EBFB000493544 /* TarJob.swift */,
 				A6EC8098282EBFC900493544 /* NSDictionary+Conductor.swift */,
+				A603E9FA283EE53C0028B648 /* SecretServer.swift */,
 			);
 			name = ssh;
 			sourceTree = "<group>";
@@ -11752,6 +11764,7 @@
 				A648DAB92427E73E00C2FF02 /* iTermFlagsChangedNotification.h in Headers */,
 				A61F457622FA8C9B00E2054A /* iTermStatusBarUnreadCountController.h in Headers */,
 				A66719141DCE36C3000CE608 /* iTermAutoMasterParser.h in Headers */,
+				A603E9FE283EE9BD0028B648 /* ObjCExceptions.h in Headers */,
 				A62C8FC2248033C000E22E95 /* iTermTmuxJobManager.h in Headers */,
 				A6614A2320958ED400A10D97 /* iTermBuildingScriptWindowController.h in Headers */,
 				A66719151DCE36C3000CE608 /* iTermAppHotKeyProvider.h in Headers */,
@@ -14747,6 +14760,7 @@
 				A65429B020C492F000CE71B1 /* iTermParameterPanelWindowController.m in Sources */,
 				53FF84E3217A3F790064FE54 /* iTermSessionTitleBuiltInFunction.m in Sources */,
 				A631FC9920EF04E900EB824F /* iTermStatusBarSetupConfigureComponentWindowController.m in Sources */,
+				A603E9FF283EE9BD0028B648 /* ObjCExceptions.m in Sources */,
 				A62F8FD121D9A603008EA71C /* iTermTermkeyKeyMapper.m in Sources */,
 				A630117B20E69C23008114B7 /* iTermStatusBarSwiftyStringComponent.m in Sources */,
 				A629F59323AF49AD00C2F16B /* iTermExpect.m in Sources */,
@@ -14774,6 +14788,7 @@
 				A6EC937F24E85CEF00EEADEF /* PasteboardHistory.m in Sources */,
 				A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */,
 				A6AB55E52173E18900142244 /* iTermCumulativeSumCache.mm in Sources */,
+				A603EA01283EEAE60028B648 /* ObjCExceptions.swift in Sources */,
 				A6BC8ACC21C6EC5000796BF3 /* iTermBoxDrawingBezierCurveFactory.m in Sources */,
 				A6FF3F2E2435BA35003CCB03 /* PasteView.m in Sources */,
 				A6A39EBC24B99AC000A64433 /* iTermGraphicsUtilities.m in Sources */,
@@ -14869,6 +14884,7 @@
 				A6EC937C24E8568D00EEADEF /* iTermBuriedSessions.m in Sources */,
 				A6822748280786A5005DF0B4 /* Porthole.swift in Sources */,
 				A6AFE9392401E88D00D489C7 /* iTermImageView.m in Sources */,
+				A603E9FB283EE53C0028B648 /* SecretServer.swift in Sources */,
 				A6352253238CA23100FED5BC /* iTermOpenQuicklyItem.m in Sources */,
 				A667C24D27725341006B4DEF /* VT100ScreenConfiguration.m in Sources */,
 				A6EA071E24EA441900DD6E17 /* NSURL+IDN.m in Sources */,
