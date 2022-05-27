@@ -358,7 +358,7 @@
     }
 }
 
-// tree: [child pid: (dcs ID, tree)]
+// tree: [child pid: [dcs ID, tree]]
 - (void)startConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree {
     if (tree.count == 0) {
         return;

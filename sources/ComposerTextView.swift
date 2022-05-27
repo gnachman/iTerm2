@@ -405,11 +405,3 @@ extension NSRange {
     }
 }
 
-extension String {
-    var trimmingTrailingNewline: String {
-        if hasSuffix("\n") {
-            return String(dropLast())
-        }
-        return self
-    }
-}

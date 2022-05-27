@@ -2595,4 +2595,28 @@
     [unpauser unpause];
 }
 
+- (void)terminalBeginFramerRecovery {
+    [self appendBannerMessage:@"Recovering ssh connection…"];
+    self.terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeRecovering;
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenBeginFramerRecovery];
+        [unpauser unpause];
+    }];
+}
+
+- (void)terminalHandleFramerRecoveryString:(NSString *)string {
+    __weak __typeof(self) weakSelf = self;
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        iTermConductorRecovery *recovery = [delegate screenHandleFramerRecoveryString:string];
+        if (recovery) {
+            weakSelf.terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeSyncing;
+            [weakSelf.terminal.parser startConductorRecoveryModeWithID:recovery.dcsID
+                                                                  tree:recovery.tree];
+            [delegate screenFramerRecoveryDidFinish];
+            [weakSelf appendBannerMessage:@"ssh connection recovered!"];
+        }
+        [unpauser unpause];
+    }];
+}
+
 @end

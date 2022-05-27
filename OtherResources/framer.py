@@ -26,6 +26,7 @@ REGISTERED=[]
 LASTPS={}
 AUTOPOLL = 0
 AUTOPOLL_TASK = None
+RECOVERY_STATE={}
 
 def log(message):
     if VERBOSE:
@@ -46,7 +47,7 @@ def send_esc(text):
     if QUITTING:
         log("[squelched] " + str(text))
         return
-    log("> " + str(text))
+    log("> [osc 134] " + str(text) + " [st]")
     print('\033]134;:' + str(text))
     print('\033\\', end="")
 
@@ -143,6 +144,7 @@ class Process:
         self.__return_code = None
         self.__master = master
         self.__descr = descr
+        self.login = False
 
     @property
     def master(self):
@@ -287,7 +289,7 @@ async def register(pid):
     if pid in REGISTERED:
         return
     REGISTERED.append(pid)
-    log(f'After registering {pid} REGISTEREd={REGISTERED}')
+    log(f'After registering {pid} REGISTERED={REGISTERED}')
 
 async def deregister(pid):
     global REGISTERED
@@ -407,29 +409,34 @@ async def handle_login(identifier, args):
             ["-" + shell_name] + args,
             cwd,
             os.environ)
+        log("login shell started")
+        global PROCESSES
+        proc.login = True
+        PROCESSES[proc.pid] = proc
+        begin(identifier)
+        send_esc(proc.pid)
+        end(identifier, 0)
+        await proc.handle_read(make_monitor_process(identifier, proc, True))
     except Exception as e:
         log(f'handle_login: {e}')
-    log("login shell started")
-    global PROCESSES
-    PROCESSES[proc.pid] = proc
-    begin(identifier)
-    send_esc(proc.pid)
-    end(identifier, 0)
-    await proc.handle_read(make_monitor_process(identifier, proc, True))
+        begin(identifier)
+        end(identifier, 1)
     return False
 
 async def handle_run(identifier, args):
     """Run a command inside the user's shell"""
     try:
         proc = await Process.run_shell_tty(args[0])
+        global PROCESSES
+        PROCESSES[proc.pid] = proc
+        begin(identifier)
+        send_esc(proc.pid)
+        end(identifier, 0)
+        await proc.handle_read(make_monitor_process(identifier, proc, False))
     except Exception as e:
         log(f'handle_run: {e}')
-    global PROCESSES
-    PROCESSES[proc.pid] = proc
-    begin(identifier)
-    send_esc(proc.pid)
-    end(identifier, 0)
-    await proc.handle_read(make_monitor_process(identifier, proc, False))
+        begin(identifier)
+        end(identifier, 1)
     return False
 
 async def handle_reset(identifier, args):
@@ -442,26 +449,59 @@ async def handle_reset(identifier, args):
     begin(identifier)
     end(identifier, 0)
 
+async def handle_save(identifier, args):
+    log(f'handle_save {identifier} {args}')
+    global RECOVERY_STATE
+    try:
+        RECOVERY_STATE = dict(s.split('=', 1) for s in args)
+        code = 0
+    except Exception as e:
+        log(f'handle_save: {e}')
+        code = 1
+    begin(identifier)
+    end(identifier, code)
+
+async def handle_recover(identifier, args):
+    log("handle_recover")
+    global REGISTERED
+    REGISTERED = []
+    global LASTPS
+    LASTPS = {}
+    send_esc(f'begin-recovery')
+    for pid in PROCESSES:
+        proc = PROCESSES[pid]
+        if proc.login:
+            send_esc(f'recovery: login {pid}')
+            for key in RECOVERY_STATE:
+                send_esc(f'recovery: {key} {RECOVERY_STATE[key]}')
+        else:
+            send_esc(f'recovery: process {pid}')
+    send_esc(f'end-recovery')
+
 async def handle_register(identifier, args):
     if len(args) < 1:
-        fail("not enough arguments")
+        fail(identifier, "not enough arguments")
+        return
     try:
         pid = int(args[0])
     except Exception as e:
         log(f'handle_register: {e}')
-        fail("exception decoding argument")
+        fail(identifier, "exception decoding argument")
+        return
     begin(identifier)
     end(identifier, 0)
     await register(pid)
 
 async def handle_deregister(identifier, args):
     if len(args) < 1:
-        fail("not enough arguments")
+        fail(identifier, "not enough arguments")
+        return
     try:
         pid = int(args[0])
     except Exception as e:
         log(f'handle_deregister: {e}')
-        fail("exception decoding argument")
+        fail(identifier, "exception decoding argument")
+        return
     begin(identifier)
     end(identifier, 0)
     await deregister(pid)
@@ -495,13 +535,15 @@ async def handle_poll(identifier, args):
 
 async def handle_send(identifier, args):
     if len(args) < 2:
-        fail("not enough arguments")
+        fail(identifier, "not enough arguments")
+        return
     try:
         pid = int(args[0])
         decoded = base64.b64decode(args[1])
     except Exception as e:
         log(f'handle_send: {e}')
-        fail("exception decoding argument")
+        fail(identifier, "exception decoding argument")
+        return
     if pid not in PROCESSES:
         log("No such process")
         begin(identifier)
@@ -520,7 +562,8 @@ async def handle_kill(identifier, args):
     try:
         pid = int(args[0])
     except:
-        fail("pid not an int")
+        fail(identifier, "pid not an int")
+        return
     if pid not in PROCESSES:
         log(f'no such process')
         begin(identifier)
@@ -581,21 +624,20 @@ def print_output(identifier, pid, channel, islogin, data):
 
 ## Infra
 
-def fail(reason):
+def fail(identifier, reason):
     log(f'fail: {reason}')
-    try:
-        raise ValueError
-    except ValueError:
-        tb = traceback.format_exc()
-        log(f'fail: {tb}')
-    send_esc(f'abort {reason}')
-    sys.exit(-1)
+    begin(identifier)
+    end(identifier, 1)
 
 def begin(identifier):
     send_esc(f'begin {identifier}')
 
 def end(identifier, status):
-    send_esc(f'end {identifier} {status} f')
+    if len(PROCESSES):
+        type = "f"
+    else:
+        type = "r"
+    send_esc(f'end {identifier} {status} {type}')
 
 async def cleanup():
     """Await tasks that have completed, clear the COMPLETED list, and remove them from TASKS."""
@@ -616,13 +658,14 @@ async def cleanup():
 async def handle(args):
     log(f'handle {args}')
     if len(args) == 0:
-        log("no args")
+        fail("none", "no args")
         return False
     cmd = args[0]
     del args[0]
     identifier = random.randint(0, 10000000000000000000)
     if cmd not in HANDLERS:
-        fail("unrecognized command")
+        fail(identifier, "unrecognized command")
+        return
 
     f = HANDLERS[cmd]
     log(f'handler is {f}')
@@ -665,8 +708,8 @@ async def mainloop():
         try:
             line = await asyncio.get_event_loop().run_in_executor(None, read_line)
         except:
-            fail("exception during read_line")
-            return
+            fail("none", "exception during read_line")
+            return 0
         log(f'read from stdin "{line}" with length {len(line)}')
         if len(line):
             if len(args) and args[-1].endswith("\\"):
@@ -676,6 +719,8 @@ async def mainloop():
             log(f'args is now {args}')
         else:
             quit = await handle(args)
+            log("flush stdout")
+            sys.stdout.flush()
             if quit:
                 log("Mainloop returns 0")
                 return 0
@@ -689,6 +734,7 @@ async def update_pty_size():
         master = proc.master
         if master is not None:
             log(f'TIOCSWINSZ {proc}')
+            # TODO: This is wrong becuse it could happen while awaiting something else between begin and end.
             fcntl.ioctl(master, termios.TIOCSWINSZ, window_size)
         else:
             log(f'no master fd for {proc}')
@@ -711,7 +757,9 @@ HANDLERS = {
     "deregister": handle_deregister,
     "poll": handle_poll,
     "reset": handle_reset,
-    "autopoll": handle_autopoll
+    "autopoll": handle_autopoll,
+    "recover": handle_recover,
+    "save": handle_save
 }
 
 def main():

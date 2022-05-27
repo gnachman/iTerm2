@@ -290,6 +290,7 @@ typedef enum {
                @(117): @(XTERMCC_RESET_HIGHLIGHT_COLOR),
                @(119): @(XTERMCC_RESET_HIGHLIGHT_FOREGROUND_COLOR),
                @133: @(XTERMCC_FINAL_TERM),
+               @134: @(XTERMCC_FRAMER_WRAPPER),
                @1337: @(XTERMCC_SET_KVP),
            };
         [theMap retain];

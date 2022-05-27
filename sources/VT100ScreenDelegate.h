@@ -13,6 +13,7 @@
 @class VT100ScreenMutableState;
 @class iTermBackgroundCommandRunnerPool;
 @class iTermColorMap;
+@class iTermConductorRecovery;
 @protocol iTermMark;
 @class iTermSelection;
 @protocol iTermObject;
@@ -28,7 +29,6 @@
 @property (nonatomic, readonly) BOOL inputHandled;
 
 @end
-
 
 @protocol iTermTriggerSideEffectExecutor<NSObject>
 - (void)triggerSideEffectShowCapturedOutputToolNotVisibleAnnouncementIfNeeded;
@@ -410,5 +410,9 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 
 - (NSInteger)screenEndSSH:(NSString * _Nonnull)uniqueID;
 - (NSString * _Nonnull)screenSSHLocation;
+- (void)screenBeginFramerRecovery;
+// Returns true when recovery completes
+- (iTermConductorRecovery * _Nullable)screenHandleFramerRecoveryString:(NSString * _Nonnull)string;
+- (void)screenFramerRecoveryDidFinish;
 
 @end

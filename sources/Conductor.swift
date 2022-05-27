@@ -39,6 +39,8 @@ class Conductor: NSObject, Codable {
     private let parsedSSHArguments: ParsedSSHArguments
     private let depth: Int32
     @objc let parent: Conductor?
+    #warning("DNS")
+    @objc var autopollEnabled = false
     private var _queueWrites = true
     private var restored = false
     private var autopoll = ""
@@ -134,6 +136,7 @@ class Conductor: NSObject, Codable {
         case framerPoll
         case framerReset
         case framerAutopoll
+        case framerSave([String:String])
 
         var isFramer: Bool {
             switch self {
@@ -142,7 +145,7 @@ class Conductor: NSObject, Codable {
                 return false
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
-                    .framerDeregister(_), .framerPoll, .framerReset, .framerAutopoll:
+                    .framerDeregister(_), .framerPoll, .framerReset, .framerAutopoll, .framerSave(_):
                 return true
             }
         }
@@ -192,6 +195,9 @@ class Conductor: NSObject, Codable {
                 return "reset"
             case .framerAutopoll:
                 return "autopoll"
+            case .framerSave(let dict):
+                let kvps = dict.keys.map { "\($0)=\(dict[$0]!)" }
+                return (["save"] + kvps).joined(separator: "\n")
             }
         }
 
@@ -223,6 +229,8 @@ class Conductor: NSObject, Codable {
                 return "run “\(command)”"
             case .framerLogin(cwd: let cwd, args: let args):
                 return "login cwd=\(cwd) args=\(args)"
+            case .framerSave(let dict):
+                return "save \(dict.keys.joined(separator: ", "))"
             case .framerSend(let data, pid: let pid):
                 return "send \(data) to \(pid)"
             case .framerKill(pid: let pid):
@@ -372,6 +380,67 @@ class Conductor: NSObject, Codable {
         let handler: Handler
     }
 
+    struct Nesting: Codable {
+        let pid: pid_t
+        let dcsID: String
+    }
+
+    struct FinishedRecoveryInfo {
+        var login: pid_t
+        var dcsID: String
+        var parentage: [Nesting] = []
+        var sshargs: String
+        var boolArgs: String
+        var clientUniqueID: String
+
+        var tree: NSDictionary {
+            return ([Nesting(pid: login, dcsID: dcsID)] + parentage).tree
+        }
+    }
+
+    struct RecoveryInfo: Codable, CustomDebugStringConvertible {
+        var debugDescription: String {
+            return "login=\(String(describing: login)) dcsID=\(String(describing: dcsID)) parentage=\(parentage) sshargs=\(String(describing: sshargs)) boolArgs=\(String(describing: boolArgs)) clientUniqueID=\(String(describing: clientUniqueID))"
+        }
+        var login: pid_t?
+        var dcsID: String?
+        // [(child pid 0, dcs ID 0), (child pid 1, dcs ID 1)] -> [child pid 0: (dcs ID 0, [child pid 1: (dcis ID 1, [:])])]
+        var parentage: [Nesting] = []
+        var sshargs: String?
+        var boolArgs: String?
+        var clientUniqueID: String?
+
+        var finished: FinishedRecoveryInfo? {
+            guard let login = login,
+                  let dcsID = dcsID,
+                  let sshargs = sshargs,
+                  let boolArgs = boolArgs,
+                  let clientUniqueID = clientUniqueID else {
+                return nil
+            }
+            return FinishedRecoveryInfo(
+                login: login,
+                dcsID: dcsID,
+                parentage: parentage,
+                sshargs: sshargs,
+                boolArgs: boolArgs,
+                clientUniqueID: clientUniqueID)
+        }
+    }
+
+    enum RecoveryState: Codable, CustomDebugStringConvertible {
+        var debugDescription: String {
+            switch self {
+            case .ground:
+                return "ground"
+            case .building(let info):
+                return "building \(info)"
+            }
+        }
+        case ground
+        case building(RecoveryInfo)
+    }
+
     enum State: Codable, CustomDebugStringConvertible {
         var debugDescription: String {
             switch self {
@@ -383,6 +452,10 @@ class Conductor: NSObject, Codable {
                 return "<State: executing(\(context))>"
             case .unhooked:
                 return "<State: unhooked>"
+            case .recovery(let recoveryState):
+                return "<State: recovery \(recoveryState)>"
+            case .recovered:
+                return "<State: recovered>"
             }
         }
 
@@ -390,6 +463,8 @@ class Conductor: NSObject, Codable {
         case willExecute(ExecutionContext)  // After writing, before parsing begin.
         case executing(ExecutionContext)  // After parsing begin, before parsing end.
         case unhooked  // Not using framer. IO is direct.
+        case recovery(RecoveryState)  // In recovery mode. Will enter ground when done.
+        case recovered // short-lived state while waiting for vt100parser to get updated.
     }
 
     enum PartialResult {
@@ -466,6 +541,23 @@ class Conductor: NSObject, Codable {
             current = current?.parent
         }
         return leaf
+    }
+
+    @objc(initWithRecovery:)
+    init(recovery: ConductorRecovery) {
+        sshargs = recovery.sshargs
+        vars = [:]
+        payloads = []
+        initialDirectory = nil
+        parsedSSHArguments = ParsedSSHArguments(sshargs, booleanArgs: recovery.boolArgs)
+        depth = 0
+        framedPID = recovery.pid
+        state = .recovered
+        boolArgs = recovery.boolArgs
+        dcsID = recovery.dcsID
+        clientUniqueID = recovery.clientUniqueID
+        // TODO 
+        parent = nil
     }
 
     required init(from decoder: Decoder) throws {
@@ -575,6 +667,23 @@ class Conductor: NSObject, Codable {
         checkForPython()
     }
 
+    @objc func startRecovery() {
+        write("")
+        write("recover")
+        write("")
+        state = .recovery(.ground)
+    }
+
+    @objc func recoveryDidFinish() {
+        DLog("Recovery finished")
+        switch state {
+        case .recovered:
+            state = .ground
+        default:
+            break
+        }
+    }
+
     @objc func quit() {
         queue = []
         state = .ground
@@ -597,8 +706,14 @@ class Conductor: NSObject, Codable {
 
     private func doFraming() {
         execFramer()
+        framerSave(["dcsID": dcsID,
+                    "sshargs": sshargs,
+                    "boolArgs": boolArgs,
+                    "clientUniqueID": clientUniqueID])
         framerLogin(cwd: initialDirectory ?? "$HOME", args: [])
-        send(.framerAutopoll, .fireAndForget)
+        if autopollEnabled {
+            send(.framerAutopoll, .fireAndForget)
+        }
     }
 
     private func uploadPayloads() {
@@ -610,6 +725,10 @@ class Conductor: NSObject, Codable {
         builder.enumeratePayloads { data, destination in
             upload(data: data, destination: destination)
         }
+    }
+
+    private func framerSave(_ dict: [String: String]) {
+        send(.framerSave(dict), .fireAndForget)
     }
 
     private func framerLogin(cwd: String, args: [String]) {
@@ -826,7 +945,7 @@ class Conductor: NSObject, Codable {
         }
         DLog("< \(line)")
         switch state {
-        case .ground, .unhooked:
+        case .ground, .unhooked, .recovery(_), .recovered:
             // Tolerate unexpected inputs - this is essential for getting back on your feet when
             // restoring.
             DLog("Unexpected input: \(line)")
@@ -860,7 +979,7 @@ class Conductor: NSObject, Codable {
         }
         DLog("< command \(identifier) ended with status \(status) while in state \(state)")
         switch state {
-        case .ground, .unhooked:
+        case .ground, .unhooked, .recovery, .recovered:
             // Tolerate unexpected inputs - this is essential for getting back on your feet when
             // restoring.
             DLog("Unexpected command end in \(state)")
@@ -884,7 +1003,7 @@ class Conductor: NSObject, Codable {
             send(.quit, .fireAndForget)
         } else if let jobState = backgroundJobs[pid] {
             switch jobState {
-            case .ground, .unhooked:
+            case .ground, .unhooked, .recovery, .recovered:
                 // Tolerate unexpected inputs - this is essential for getting back on your feet when
                 // restoring.
                 DLog("Unexpected termination of \(pid)")
@@ -920,7 +1039,7 @@ class Conductor: NSObject, Codable {
         }
 //        DLog("pid \(pid) channel \(channel) produced: \(string)")
         switch jobState {
-        case .ground, .unhooked:
+        case .ground, .unhooked, .recovery, .recovered:
             // Tolerate unexpected inputs - this is essential for getting back on your feet when
             // restoring.
             DLog("Unexpected input: \(string)")
@@ -932,12 +1051,88 @@ class Conductor: NSObject, Codable {
         }
     }
 
+    @objc(handleRecoveryLine:)
+    func handleRecovery(line rawline: String) -> ConductorRecovery? {
+        let line = rawline.trimmingTrailingNewline
+        if !line.hasPrefix(":") {
+            return nil
+        }
+        if line == ":begin-recovery" {
+            state = .recovery(.building(RecoveryInfo()))
+        }
+        if line.hasPrefix(":recovery: process ") {
+            // Don't care about background jobs
+            return nil
+        }
+        switch state {
+        case .recovery(let recoveryState):
+            switch recoveryState {
+            case .ground:
+                break
+            case .building(let info):
+                if line.hasPrefix(":end-recovery") {
+                    switch recoveryState {
+                    case .ground:
+                        startRecovery()
+                    case .building(let info):
+                        guard let finished = info.finished else {
+                            quit()
+                            return nil
+                        }
+                        framedPID = finished.login
+                        state = .ground
+                        // TODO: The tree is always empty
+                        return ConductorRecovery(pid: finished.login,
+                                                 dcsID: finished.dcsID,
+                                                 tree: finished.tree,
+                                                 sshargs: finished.sshargs,
+                                                 boolArgs: finished.boolArgs,
+                                                 clientUniqueID: finished.clientUniqueID)
+                    }
+                    return nil
+                }
+
+                let recoveryPrefix = ":recovery: "
+                guard line.hasPrefix(recoveryPrefix) else {
+                    return nil
+                }
+                let trimmed = line.removing(prefix: recoveryPrefix)
+                guard let (command, value) = trimmed.split(onFirst: " ") else {
+                    return nil
+                }
+                var temp = info
+                // See corresponding call to save() that stores these values before starting a login shell.
+                switch command {
+                case "login":
+                    guard let pid = pid_t(value) else {
+                        return nil
+                    }
+                    temp.login = pid
+                case "dcsID":
+                    temp.dcsID = String(value)
+                case "sshargs":
+                    temp.sshargs = String(value)
+                case "boolArgs":
+                    temp.boolArgs = String(value)
+                case "clientUniqueID":
+                    temp.clientUniqueID = String(value)
+                default:
+                    return nil
+                }
+                state = .recovery(.building(temp))
+            }
+            return nil
+        default:
+            return nil
+        }
+    }
+
     private func send(_ command: Command, _ handler: ExecutionContext.Handler) {
         queue.append(ExecutionContext(command: command, handler: handler))
         switch state {
-        case .ground:
+        case .ground, .recovery:
             dequeue()
-        case .willExecute(_), .executing(_), .unhooked:
+        case .willExecute(_), .executing(_), .unhooked, .recovered:
             return
         }
     }
@@ -991,6 +1186,10 @@ class Conductor: NSObject, Codable {
             return context.command.operationDescription + " (preparation stage)"
         case .unhooked:
             return "unhooked"
+        case .recovery:
+            return "recovery"
+        case .recovered:
+            return "recovered"
         }
     }
 
@@ -1093,5 +1292,16 @@ extension Array {
             return self[index]
         }
         return defaultValue
+    }
+}
+
+extension Array where Element == Conductor.Nesting {
+    var tree: NSDictionary {
+        guard let first = first else {
+            return NSDictionary()
+        }
+        let tuple = [first.dcsID as NSString,
+                     Array(dropFirst()).tree]
+        return [first.pid: tuple]
     }
 }

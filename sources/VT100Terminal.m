@@ -2630,6 +2630,20 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         case XTERMCC_FINAL_TERM:
             [self executeFinalTermToken:token];
             break;
+        case XTERMCC_FRAMER_WRAPPER:
+            switch (self.framerRecoveryMode) {
+                case VT100TerminalFramerRecoveryModeNone:
+                    [_delegate terminalBeginFramerRecovery];
+                    break;
+                case VT100TerminalFramerRecoveryModeRecovering:
+                    DLog(@"Handle token in framer recovery");
+                    [_delegate terminalHandleFramerRecoveryString:token.string];
+                    break;
+                case VT100TerminalFramerRecoveryModeSyncing:
+                    DLog(@"Drop token suring framer recovery syncing %@", token);
+                    break;
+            }
+            break;
         case XTERMCC_ICON_TITLE: {
             NSString *subtitle = [[self subtitleFromIconTitle:token.string] stringByReplacingControlCharactersWithCaretLetter];
             if (!subtitle || token.string.length > 0) {
@@ -2916,24 +2930,29 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case SSH_INIT:
+            _framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
             [self.delegate terminalDidHookSSHConductorWithParams:token.string];
             break;
 
         case SSH_LINE:
+            _framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
             [self.delegate terminalDidReadSSHConductorLine:token.string
                                                      depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
 
         case SSH_UNHOOK:
+            _framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
             [self.delegate terminalDidUnhookSSHConductor];
             break;
 
         case SSH_BEGIN:
+            _framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
             [self.delegate terminalDidBeginSSHConductorCommandWithIdentifier:token.string
                                                                        depth:token.sshInfo.valid ? token.sshInfo.depth : 0];
             break;
             
         case SSH_END: {
+            _framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
             NSString *s = token.string;
             NSArray<NSString *> *parts = [s componentsSeparatedByString:@" "];
             if (parts.count < 3) {
@@ -2952,6 +2971,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         }
 
         case SSH_OUTPUT:
+            _framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
             [self.delegate terminalHandleSSHSideChannelOutput:token.string
                                                           pid:token.sshInfo.pid
                                                       channel:token.sshInfo.channel
@@ -2959,6 +2979,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case SSH_TERMINATE:
+            _framerRecoveryMode = VT100TerminalFramerRecoveryModeNone;
             [self.delegate terminalHandleSSHTerminatePID:token.csi->p[0]
                                                 withCode:token.csi->p[1]
                                                    depth:token.sshInfo.valid ? token.sshInfo.depth : 0];

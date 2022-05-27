@@ -224,6 +224,7 @@
                           @(XTERMCC_SET_HIGHLIGHT_FOREGROUND_COLOR):    @"XTERMCC_SET_HIGHLIGHT_FOREGROUND_COLOR",
 
                           @(XTERMCC_FINAL_TERM):              @"XTERMCC_FINAL_TERM",
+                          @(XTERMCC_FRAMER_WRAPPER):          @"XTERMCC_FRAMER_WRAPPER",
                           @(XTERMCC_LINK):                    @"XTERMCC_LINK",
                           @(XTERMCC_TEXT_BACKGROUND_COLOR):   @"XTERMCC_TEXT_BACKGROUND_COLOR",
                           @(XTERMCC_TEXT_FOREGROUND_COLOR):   @"XTERMCC_TEXT_FOREGROUND_COLOR",

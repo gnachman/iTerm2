@@ -13724,6 +13724,40 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _conductor.sshIdentity.compactDescription;
 }
 
+- (void)screenBeginFramerRecovery {
+    while (_conductor) {
+        [self unhookSSHConductor];
+    }
+    _conductor = [[iTermConductor alloc] init:@""
+                                     boolArgs:@""
+                                        dcsID:@""
+                               clientUniqueID:@""
+                                         vars:@{}
+                             initialDirectory:nil
+                                       parent:nil];
+    _conductor.delegate = self;
+    [_conductor startRecovery];
+}
+
+- (iTermConductorRecovery *)screenHandleFramerRecoveryString:(NSString * _Nonnull)string {
+    iTermConductorRecovery *recovery = [_conductor handleRecoveryLine:string];
+    if (!recovery) {
+        return nil;
+    }
+    while (_conductor) {
+        _conductor.delegate = nil;
+        [_conductor autorelease];
+        _conductor = _conductor.parent;
+    }
+    _conductor = [[iTermConductor alloc] initWithRecovery:recovery];
+    _conductor.delegate = self;
+    return recovery;
+}
+
+- (void)screenFramerRecoveryDidFinish {
+    [_conductor recoveryDidFinish];
+}
+
 - (VT100Screen *)popupVT100Screen {
     return _screen;
 }

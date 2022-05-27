@@ -130,6 +130,13 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic, strong, readonly) VT100Token *lastToken;
 @property(nonatomic, copy) NSDictionary<NSNumber *, id> *stringForKeypress;
 @property(atomic) BOOL dirty;
+typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {
+    VT100TerminalFramerRecoveryModeNone,
+    VT100TerminalFramerRecoveryModeRecovering,
+    VT100TerminalFramerRecoveryModeSyncing  // between when recovery begins and when the parser starts producing normal tokens
+};
+
+@property(nonatomic) VT100TerminalFramerRecoveryMode framerRecoveryMode;
 
 + (NSOrderedSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
                                 externalAttributes:(iTermExternalAttribute *)ea;

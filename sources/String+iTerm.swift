@@ -14,5 +14,28 @@ extension String {
         }
         return range(of: substring, options: .caseInsensitive, range: nil, locale:nil) != nil
     }
+
+    func substring(nsrange: NSRange) -> String {
+        return (self as NSString).substring(with: nsrange)
+    }
+
+    var trimmingTrailingNewline: String {
+        if hasSuffix("\n") {  // because of Swift's unicode juju this also drops \r\n
+            return String(dropLast())
+        }
+        return self
+    }
+
+    func split(onFirst separator: String) -> (Substring, Substring)? {
+        return Substring(self).split(onFirst: separator)
+    }
 }
 
+extension Substring {
+    func split(onFirst separator: String) -> (Substring, Substring)? {
+        guard let range = range(of: separator) else {
+            return nil
+        }
+        return (self[..<range.lowerBound], self[range.upperBound...])
+    }
+}

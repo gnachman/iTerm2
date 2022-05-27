@@ -1118,6 +1118,7 @@
 		A6153D6121F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6153D5F21F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.m */; };
 		A616839922F94AEE00661F71 /* GPBEnumArray+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A616839722F94AEE00661F71 /* GPBEnumArray+iTerm.h */; };
 		A616839A22F94AEE00661F71 /* GPBEnumArray+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */; };
+		A616CF0D284143A300EF82D0 /* ConductorRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */; };
 		A6180D6C21A35D5E0073F219 /* iTermMetalPerFrameState.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */; };
 		A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */; };
 		A6180D7021A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6E21A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h */; };
@@ -5157,6 +5158,7 @@
 		A6153D5F21F4EFA1002976FC /* iTermStatusBarStableLayoutAlgorithm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStatusBarStableLayoutAlgorithm.m; sourceTree = "<group>"; };
 		A616839722F94AEE00661F71 /* GPBEnumArray+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "GPBEnumArray+iTerm.h"; sourceTree = "<group>"; };
 		A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "GPBEnumArray+iTerm.m"; sourceTree = "<group>"; };
+		A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConductorRecovery.swift; sourceTree = "<group>"; };
 		A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalPerFrameState.h; sourceTree = "<group>"; };
 		A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalPerFrameState.m; sourceTree = "<group>"; };
 		A6180D6E21A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalPerFrameStateConfiguration.h; sourceTree = "<group>"; };
@@ -9198,6 +9200,7 @@
 				A6EEAEDF28385A090039E850 /* PTYTask+ProcessInfo.h */,
 				A6EEAEE028385A090039E850 /* PTYTask+ProcessInfo.m */,
 				A6EEAEE328385A3F0039E850 /* PTYTask+Private.h */,
+				A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -14637,6 +14640,7 @@
 				A6A4B2A72425D18D00184EAC /* iTermKeystroke.m in Sources */,
 				A630119520E70C0A008114B7 /* iTermStatusBarSetupDestinationCollectionViewController.m in Sources */,
 				A6481655228FD511008E7E0C /* iTermVariablesIndex.m in Sources */,
+				A616CF0D284143A300EF82D0 /* ConductorRecovery.swift in Sources */,
 				535EA50520D1869800FC81E0 /* iTermSwiftyStringParser.m in Sources */,
 				A653F6A124D00CE30062377E /* iTermGraphDeltaEncoder.m in Sources */,
 				5365207A21433F7A003C58FD /* iTermGitPoller.m in Sources */,
