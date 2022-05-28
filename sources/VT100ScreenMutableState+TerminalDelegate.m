@@ -892,6 +892,10 @@
 }
 
 - (void)terminalPostUserNotification:(NSString *)message {
+    [self terminalPostUserNotification:message rich:NO];
+}
+
+- (void)terminalPostUserNotification:(NSString *)message rich:(BOOL)rich {
     DLog(@"begin %@", message);
     if (!self.postUserNotifications) {
         DLog(@"Declining to allow terminal to post user notification %@", message);
@@ -900,7 +904,7 @@
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         DLog(@"Post %@", message);
-        [delegate screenPostUserNotification:message];
+        [delegate screenPostUserNotification:message rich:rich];
     }];
 }
 

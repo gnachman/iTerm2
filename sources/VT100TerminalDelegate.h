@@ -270,8 +270,11 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 // Restores the window/icon (depending on isWindow) title from a stack.
 - (void)terminalPopCurrentTitleForWindow:(BOOL)isWindow;
 
-// Posts a message to Notification center. Returns YES if the message was posted.
+// Posts a message to Notification center.
 - (void)terminalPostUserNotification:(NSString *)message;
+
+// Posts a rich notification message to Notification center.
+- (void)terminalPostUserNotification:(NSString *)message rich:(BOOL)rich;
 
 // Enters Tmux mode.
 - (void)terminalStartTmuxModeWithDCSIdentifier:(NSString *)dcsID;

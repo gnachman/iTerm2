@@ -13343,23 +13343,92 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self screenNeedsRedraw];
 }
 
-- (void)screenPostUserNotification:(NSString * _Nonnull)message {
+- (void)screenPostUserNotification:(NSString * _Nonnull)message rich:(BOOL)rich {
     if (![self shouldPostTerminalGeneratedAlert]) {
         DLog(@"Declining to allow terminal to post user notification %@", message);
         return;
     }
     DLog(@"Terminal posting user notification %@", message);
     [self incrementBadge];
-    NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
-                             [[self name] removingHTMLFromTabTitleIfNeeded],
-                             [_delegate tabNumber],
-                             message];
-    [[iTermNotificationController sharedInstance]
-     notify:@"Alert"
-     withDescription:description
-     windowIndex:[self screenWindowIndex]
-     tabIndex:[self screenTabIndex]
-     viewIndex:[self screenViewIndex]];
+
+    iTermNotificationController* controller = [iTermNotificationController sharedInstance];
+
+    if (rich) {
+        NSString *title = nil;
+        NSString *subtitle = nil;
+        NSString *description = nil;
+        NSString *image = nil;
+
+        // Parse the notification payload.
+        NSString* remainingText = message;
+        // Continue parsing until we run out of text.
+        while (remainingText.length > 0) {
+            // First search for the equals token dividing a key from value.
+            NSRange eqRange = [remainingText rangeOfString:@"="];
+            if (eqRange.location != NSNotFound) {
+                NSString *key = [remainingText substringToIndex:eqRange.location];
+                remainingText = [remainingText substringFromIndex:eqRange.location+1];
+                // Next search to see if there is a termination token indicating additional
+                // key-value pairs.
+                NSRange termRange = [remainingText rangeOfString:@";"];
+                NSString *value;
+                if (termRange.location != NSNotFound) {
+                    value = [remainingText substringToIndex:termRange.location];
+                    remainingText = [remainingText substringFromIndex:termRange.location+1];
+                } else {
+                    value = remainingText;
+                    remainingText = @"";
+                }
+
+                // Decode the value from base64.  If the data cannot be decoded continue to next key-value pair.
+                NSString *decodedValue = [value stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+                if (decodedValue == nil) {
+                    DLog(@"Rich notification value not valid base64 data: %@", value);
+                    continue;
+                }
+
+                // Handle they key and value.
+                if ([key isEqualToString:@"message"]) {
+                    description = decodedValue;
+                } else if ([key isEqualToString:@"title"]) {
+                    title = decodedValue;
+                } else if ([key isEqualToString:@"subtitle"]) {
+                    subtitle = decodedValue;
+                } else if ([key isEqualToString:@"image"]) {
+                    image = [decodedValue stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                } else {
+                    DLog(@"Unexpected key-value pair while parsing rich notification payload: %@=%@", key, value);
+                }
+            // No token, so exit.
+            } else {
+                DLog(@"No '=' token found while parsing rich notification payload: %@", remainingText);
+                break;
+            }
+        }
+
+        // description must not be nil.  If it is the empty string, the title will be used.
+        if (description == nil) {
+            description = @"";
+        }
+
+        [controller notifyRich:title
+                  withSubtitle:subtitle
+               withDescription:description
+                     withImage:image
+                   windowIndex:[self screenWindowIndex]
+                      tabIndex:[self screenTabIndex]
+                     viewIndex:[self screenViewIndex]];
+    } else {
+        NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
+                                                           [[self name] removingHTMLFromTabTitleIfNeeded],
+                                                           [_delegate tabNumber],
+                                                           message];
+        [controller notify:@"Alert"
+           withDescription:description
+               windowIndex:[self screenWindowIndex]
+                  tabIndex:[self screenTabIndex]
+                 viewIndex:[self screenViewIndex]];
+    }
 }
 
 - (void)screenUpdateCommandUseWithGuid:(NSString *)screenmarkGuid

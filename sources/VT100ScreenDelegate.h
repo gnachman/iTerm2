@@ -368,7 +368,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                               remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost;
 - (void)screenCopyStringToPasteboard:(NSString * _Nonnull)string;
 - (void)screenReportPasteboard:(NSString * _Nonnull)pasteboard completion:(void (^ _Nonnull)(void))completion;
-- (void)screenPostUserNotification:(NSString * _Nonnull)string;
+- (void)screenPostUserNotification:(NSString * _Nonnull)string rich:(BOOL)rich;
 // Called while joined. Don't let `mutableState` escape.
 - (void)screenSync:(VT100ScreenMutableState * _Nonnull)mutableState;
 - (void)screenUpdateCommandUseWithGuid:(NSString * _Nonnull)screenmarkGuid
