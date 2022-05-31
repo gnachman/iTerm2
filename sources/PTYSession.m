@@ -596,6 +596,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     iTermSSHState _sshState;
     // (unique ID, hostname)
     NSMutableData *_sshWriteQueue;
+    BOOL _jiggleUponAttach;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1868,6 +1869,11 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)showOrphanAnnouncement {
+    // Jiggle in case this is an ssh session that needs to be recovered, and also to force a redraw
+    // if possible since there won't be any content. We aren't typically attached yet so set
+    // jiggleUponAttach to force it to happen eventually.
+    [self jiggle];
+    _jiggleUponAttach = YES;
     [self.naggingController didRestoreOrphan];
 }
 
@@ -2009,9 +2015,12 @@ ITERM_WEAKLY_REFERENCEABLE
             if (!(results & iTermJobManagerAttachResultsAttached)) {
                 [self brokenPipe];
             }
-            [self->_shell setSize:_screen.size
-                         viewSize:_screen.viewSize
-                      scaleFactor:self.backingScaleFactor];
+            [self->_shell.winSizeController setGridSize:_screen.size
+                                               viewSize:_screen.viewSize
+                                            scaleFactor:self.backingScaleFactor];
+            if (_jiggleUponAttach) {
+                [_shell.winSizeController forceJiggle];
+            }
             completion();
         }];
     } else {
@@ -2020,13 +2029,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)didChangeScreen:(CGFloat)scaleFactor {
-    [_shell setSize:_screen.currentGrid.size
-           viewSize:_screen.viewSize
-        scaleFactor:scaleFactor];
-}
-
-- (void)incrementDeferResizeCount:(NSInteger)delta {
-    [_shell incrementDeferResizeCount:delta];
+    [self->_shell.winSizeController setGridSize:_screen.currentGrid.size
+                                       viewSize:_screen.viewSize
+                                    scaleFactor:scaleFactor];
 }
 
 - (void)setSize:(VT100GridSize)size {
@@ -2045,9 +2050,9 @@ ITERM_WEAKLY_REFERENCEABLE
 
     [_screen setSize:size];
     if (!self.delegate || [self.delegate sessionShouldSendWindowSizeIOCTL:self]) {
-        [_shell setSize:size
-               viewSize:_screen.viewSize
-            scaleFactor:self.backingScaleFactor];
+        [_shell.winSizeController setGridSize:size
+                                     viewSize:_screen.viewSize
+                                  scaleFactor:self.backingScaleFactor];
     }
     [_textview clearHighlights:NO];
     [_textview updatePortholeFrames];
@@ -3395,9 +3400,9 @@ ITERM_WEAKLY_REFERENCEABLE
     self.guid = [NSString uuid];
     _shell = [[PTYTask alloc] init];
     [_shell setDelegate:self];
-    [_shell setSize:_screen.size
-           viewSize:_screen.viewSize
-        scaleFactor:self.backingScaleFactor];
+    [_shell.winSizeController setGridSize:_screen.size
+                                 viewSize:_screen.viewSize
+                              scaleFactor:self.backingScaleFactor];
     [self resetForRelaunch];
     __weak __typeof(self) weakSelf = self;
     [self startProgram:_program
@@ -4871,14 +4876,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 
 - (void)jiggle {
     DLog(@"%@", [NSThread callStackSymbols]);
-    VT100GridSize size = _screen.size;
-    size.width++;
-    [_shell setSize:size
-           viewSize:_screen.viewSize
-        scaleFactor:self.backingScaleFactor];
-    [_shell setSize:_screen.size
-           viewSize:_screen.viewSize
-        scaleFactor:self.backingScaleFactor];
+    [self.shell.winSizeController jiggle];
 }
 
 - (void)clearScrollbackBuffer {
@@ -14110,9 +14108,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)updateTTYSize {
     DLog(@"%@\n%@", self, [NSThread callStackSymbols]);
-    return [_shell setSize:_screen.size
-                  viewSize:_screen.viewSize
-               scaleFactor:self.backingScaleFactor];
+    return [_shell.winSizeController setGridSize:_screen.size
+                                        viewSize:_screen.viewSize
+                                     scaleFactor:self.backingScaleFactor];
 }
 
 - (iTermStatusBarViewController *)sessionViewStatusBarViewController {

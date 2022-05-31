@@ -27,6 +27,10 @@ LASTPS={}
 AUTOPOLL = 0
 AUTOPOLL_TASK = None
 RECOVERY_STATE={}
+# 0: Not blocking on stdin
+# 1: Blocking on stdin
+# 2: Not blocking on stdin but send %ping before reading next command.
+READSTATE=0
 
 def log(message):
     if VERBOSE:
@@ -701,15 +705,22 @@ def read_line():
 
 async def mainloop():
     global RUNLOOP
+    global READSTATE
     RUNLOOP = asyncio.get_event_loop()
     args = []
     while True:
         log("reading")
         try:
+            if READSTATE == 2:
+                log('mainloop: send deferred ping')
+                # It's safe to ping because we haven't sent a begin yet.
+                ping()
+            READSTATE = 1
             line = await asyncio.get_event_loop().run_in_executor(None, read_line)
         except:
             fail("none", "exception during read_line")
             return 0
+        READSDTATE = 0
         log(f'read from stdin "{line}" with length {len(line)}')
         if len(line):
             if len(args) and args[-1].endswith("\\"):
@@ -725,6 +736,12 @@ async def mainloop():
                 log("Mainloop returns 0")
                 return 0
             args = []
+
+def ping():
+    if len(PROCESSES):
+        send_esc("%ping")
+    else:
+        log("Squelch pre-login ping")
 
 async def update_pty_size():
     log(f'update_pty_size')
@@ -745,6 +762,12 @@ def on_sigwinch(_sig, _stack):
         # There may not be an event loop yet.
         log('Ignore because no runloop')
         return
+    global READSTATE
+    if READSTATE == 1:
+        log("send ping while blocked on stdin")
+        ping()
+    else:
+        READSTATE = 2
     asyncio.run_coroutine_threadsafe(update_pty_size(), RUNLOOP)
 
 HANDLERS = {

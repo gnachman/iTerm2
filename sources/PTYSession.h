@@ -737,9 +737,6 @@ backgroundColor:(NSColor *)backgroundColor;
 // Change the size of the session and its tty.
 - (void)setSize:(VT100GridSize)size;
 
-// Adjusts the defer count. We postpone TIOCSWINSZ sending until count becomes 0.
-- (void)incrementDeferResizeCount:(NSInteger)delta;
-
 // Returns the number of pixels over or under the an ideal size.
 // Will never exceed +/- cell size/2.
 // If vertically is true, proposedSize is a height, else it's a width.

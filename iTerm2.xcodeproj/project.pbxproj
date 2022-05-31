@@ -1119,6 +1119,7 @@
 		A616839922F94AEE00661F71 /* GPBEnumArray+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A616839722F94AEE00661F71 /* GPBEnumArray+iTerm.h */; };
 		A616839A22F94AEE00661F71 /* GPBEnumArray+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */; };
 		A616CF0D284143A300EF82D0 /* ConductorRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */; };
+		A616CF112841AA1600EF82D0 /* WinSizeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A616CF102841AA1600EF82D0 /* WinSizeController.swift */; };
 		A6180D6C21A35D5E0073F219 /* iTermMetalPerFrameState.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */; };
 		A6180D6D21A35D5E0073F219 /* iTermMetalPerFrameState.m in Sources */ = {isa = PBXBuildFile; fileRef = A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */; };
 		A6180D7021A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h in Headers */ = {isa = PBXBuildFile; fileRef = A6180D6E21A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h */; };
@@ -5159,6 +5160,7 @@
 		A616839722F94AEE00661F71 /* GPBEnumArray+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "GPBEnumArray+iTerm.h"; sourceTree = "<group>"; };
 		A616839822F94AEE00661F71 /* GPBEnumArray+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "GPBEnumArray+iTerm.m"; sourceTree = "<group>"; };
 		A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConductorRecovery.swift; sourceTree = "<group>"; };
+		A616CF102841AA1600EF82D0 /* WinSizeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WinSizeController.swift; sourceTree = "<group>"; };
 		A6180D6A21A35D5E0073F219 /* iTermMetalPerFrameState.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalPerFrameState.h; sourceTree = "<group>"; };
 		A6180D6B21A35D5E0073F219 /* iTermMetalPerFrameState.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMetalPerFrameState.m; sourceTree = "<group>"; };
 		A6180D6E21A364EE0073F219 /* iTermMetalPerFrameStateConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalPerFrameStateConfiguration.h; sourceTree = "<group>"; };
@@ -9201,6 +9203,7 @@
 				A6EEAEE028385A090039E850 /* PTYTask+ProcessInfo.m */,
 				A6EEAEE328385A3F0039E850 /* PTYTask+Private.h */,
 				A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */,
+				A616CF102841AA1600EF82D0 /* WinSizeController.swift */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -14444,6 +14447,7 @@
 				A6AAD5F422F7EB61002DD12C /* iTermWindowSizeView.m in Sources */,
 				5370678D21C9D2780088D0F3 /* SIGArchiveVerifier.m in Sources */,
 				A61D2A4927555CD000E539F3 /* MenuItemPopupView.swift in Sources */,
+				A616CF112841AA1600EF82D0 /* WinSizeController.swift in Sources */,
 				A67960D21F81FCBB008A42BC /* iTermBadgeRenderer.m in Sources */,
 				A653F6A924D00FFE0062377E /* iTermRestorableStateSQLite.m in Sources */,
 				A6E112D725C615B400875D27 /* iTermHighlightLineTrigger.m in Sources */,

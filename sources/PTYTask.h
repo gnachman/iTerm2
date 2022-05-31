@@ -12,6 +12,7 @@
 @class Coprocess;
 @class iTermProcessInfo;
 @protocol iTermTask;
+@class iTermWinSizeController;
 @class PTYTab;
 @class PTYTask;
 
@@ -170,6 +171,7 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // This is used by clients so they can initialize the TTY size once when the view size is known
 // for real. It is never assigned to by PTYTask.
 @property(nonatomic) BOOL ttySizeInitialized;
+@property (nonatomic, readonly) iTermWinSizeController *winSizeController;
 
 - (instancetype)init;
 
@@ -189,13 +191,6 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
             completion:(void (^)(void))completion;
 
 - (void)writeTask:(NSData*)data;
-
-// Cause the slave to receive a SIGWINCH and change the tty's window size. If `size` equals the
-// tty's current window size then no action is taken.
-// Returns NO if it could not be set because we don't yet have a file descriptor. Returns YES if
-// it was either set or nothing was done because the value didn't change.
-- (BOOL)setSize:(VT100GridSize)size viewSize:(NSSize)viewSize scaleFactor:(CGFloat)scaleFactor;
-- (void)incrementDeferResizeCount:(NSInteger)delta;
 
 - (void)stop;
 

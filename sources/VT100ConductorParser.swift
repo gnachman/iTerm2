@@ -123,6 +123,9 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                 iTermAddCSIParameter(token.csi, pid)
                 iTermAddCSIParameter(token.csi, rc)
                 return .keepGoing
+            } else if string.hasPrefix("%") {
+                DLog("Ignore unrecognized notification \(string)")
+                return .keepGoing
             } else if wasInRecoveryMode {
                 DLog("Ignore unrecognized line in recovery mode")
                 recoveryMode = true

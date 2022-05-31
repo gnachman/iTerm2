@@ -5607,19 +5607,17 @@ ITERM_WEAKLY_REFERENCEABLE
         // Defer sending TIOCSWINSZ until things have settled. The call to -safelySetSessionSize:rows:columns: may provide a size that's too big for the display.
         // It's only after fitWindowToTab that the final size is known.
         NSArray<PTYSession *> *sessions = [self allSessions];
-        [sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull session, NSUInteger idx, BOOL * _Nonnull stop) {
-            [session incrementDeferResizeCount:1];
-        }];
-        PTYTab *tab = [self tabForSession:session];
-        [tab setLockedSession:session];
-        [self safelySetSessionSize:session rows:height columns:width];
-        PtyLog(@"sessionInitiatedResize - calling fitWindowToTab");
-        [self fitWindowToTab:tab];
-        PtyLog(@"sessionInitiatedResize - calling fitTabsToWindow");
-        [self fitTabsToWindow];
-        [tab setLockedSession:nil];
-        [sessions enumerateObjectsUsingBlock:^(PTYSession * _Nonnull session, NSUInteger idx, BOOL * _Nonnull stop) {
-            [session incrementDeferResizeCount:-1];
+        [iTermWinSizeController batchDeferChanges:[sessions mapWithBlock:^id _Nullable(PTYSession * _Nonnull session) {
+            return session.shell.winSizeController;
+        }] closure:^{
+            PTYTab *tab = [self tabForSession:session];
+            [tab setLockedSession:session];
+            [self safelySetSessionSize:session rows:height columns:width];
+            PtyLog(@"sessionInitiatedResize - calling fitWindowToTab");
+            [self fitWindowToTab:tab];
+            PtyLog(@"sessionInitiatedResize - calling fitTabsToWindow");
+            [self fitTabsToWindow];
+            [tab setLockedSession:nil];
         }];
         result = YES;
     }];
