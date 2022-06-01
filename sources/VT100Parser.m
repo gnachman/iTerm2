@@ -148,7 +148,7 @@
                         DLog(@"Allocate ssh parser with depth %@", @(sshParser.depth));
                         _sshParsers[@(pid)] = sshParser;
                     }
-                    NSLog(@"begin reparsing SSH output in token %@ at depth %@: %@", token, @(self.depth), token.savedData);
+                    DLog(@"begin reparsing SSH output in token %@ at depth %@: %@", token, @(self.depth), token.savedData);
                     NSData *data = token.savedData;
                     [sshParser putStreamData:data.bytes length:data.length];
                     const int start = CVectorCount(vector);
@@ -168,7 +168,7 @@
                         .valid = 1,
                         .depth = self.depth + 1
                     };
-                    NSLog(@"reparsing yielded %d tokens", end - start);
+                    DLog(@"reparsing yielded %d tokens", end - start);
                     for (int i = start; i < end; i++) {
                         VT100Token *token = CVectorGet(vector, i);
                         SSHInfo sshInfo = token.sshInfo;
@@ -196,11 +196,11 @@
                                     break;
                             }
                         } else {
-                            NSLog(@"Rewritten token %@ has valid SSH info %@ so not rewriting it", token, SSHInfoDescription(token.sshInfo));
+                            DLog(@"Rewritten token %@ has valid SSH info %@ so not rewriting it", token, SSHInfoDescription(token.sshInfo));
                         }
-                        NSLog(@"Emit subtoken %@ with info %@", token, SSHInfoDescription(token.sshInfo));
+                        DLog(@"Emit subtoken %@ with info %@", token, SSHInfoDescription(token.sshInfo));
                     }
-                    NSLog(@"done reparsing SSH output at depth %@", @(self.depth));
+                    DLog(@"done reparsing SSH output at depth %@", @(self.depth));
                     break;
                 }
 

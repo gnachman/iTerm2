@@ -601,12 +601,9 @@ class Conductor: NSObject, Codable {
                       function: String = #function) {
         if verbose {
             let message = messageBlock()
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = DateFormatter.dateFormat(fromTemplate: "HH:mm:ss.SSS ZZZ",
-                                                                options: 0,
-                                                                locale: nil)
-            let hms = dateFormatter.string(from: Date())
-            print("\(hms) \(file.lastPathComponent):\(line) \(function): [\(self.it_addressString)@\(depth)] \(message)")
+            if gDebugLogging.boolValue {
+                DebugLogImpl(file, Int32(line), function, "[\(self.it_addressString)@\(depth)] \(message)")
+            }
         }
     }
 
@@ -1102,7 +1099,7 @@ class Conductor: NSObject, Codable {
         let parts = pending.command.stringValue.chunk(128, continuation: pending.command.isFramer ? "\\" : "")
         // TODO: Use a single call to write to reduce number of round trips when there is a parent.
         for (i, part) in parts.enumerated() {
-            DLog("writing part \(i) or \(parts.count) of \(pending.command) with string value \(pending.command.stringValue)")
+            DLog("writing part \(i) or \(parts.count) of \(pending.command) with string value \(pending.command.stringValue.truncatedWithTrailingEllipsis(to: 100))")
             write(part)
         }
         write("")
@@ -1111,17 +1108,18 @@ class Conductor: NSObject, Codable {
     private func write(_ string: String, end: String = "\n") {
         let savedQueueWrites = _queueWrites
         _queueWrites = false
-        DLog("> \(string)")
         if let parent = parent {
             if let data = (string + end).data(using: .utf8) {
+                DLog("ask parent to send: \(string)")
                 parent.sendKeys(data)
             } else {
-                DLog("bogus string \(string)")
+                DLog("can't utf-8 encode string to send: \(string)")
             }
         } else {
             if delegate == nil {
                 DLog("[can't send - nil delegate]")
             }
+            DLog("> \(string)")
             delegate?.conductorWrite(string: string + end)
         }
         _queueWrites = savedQueueWrites
@@ -1265,9 +1263,17 @@ extension Array where Element == Conductor.Nesting {
 }
 
 extension Data {
+    func last(_ n: Int) -> Data {
+        if count < n {
+            return self
+        }
+        let i = count - n
+        return self[i...]
+    }
+    
     var semiVerboseDescription: String {
-        if count > 16 {
-            return self[..<16].semiVerboseDescription
+        if count > 32 {
+            return self[..<16].semiVerboseDescription + "…" + self.last(16).semiVerboseDescription
         }
         if let string = String(data: self, encoding: .utf8) {
             let safe = (string as NSString).escapingControlCharactersAndBackslash()!

@@ -104,7 +104,6 @@
 
 - (void)performRateLimitedBlock:(void (^)(void))block {
     [iTermGCD assertMainQueueSafe];
-    DLog(@"%@", [NSThread callStackSymbols]);
     if (_minimumInterval == 0) {
         block();
         return;

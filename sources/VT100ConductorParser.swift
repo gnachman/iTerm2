@@ -30,12 +30,12 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                       line: Int = #line,
                       function: String = #function) {
         let message = messageBlock()
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = DateFormatter.dateFormat(fromTemplate: "HH:mm:ss.SSS ZZZ",
-                                                            options: 0,
-                                                            locale: nil)
-        let hms = dateFormatter.string(from: Date())
-        print("\(hms) \(file.lastPathComponent):\(line) \(function): [\(self.it_addressString)] \(message)")
+        if gDebugLogging.boolValue {
+            DebugLogImpl("\(file.lastPathComponent)",
+                         Int32(line),
+                         "\(function)",
+                         "[\(self.it_addressString)] \(message)")
+        }
     }
 
     @objc(initWithUniqueID:)
@@ -54,6 +54,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
     func handleInput(_ context: UnsafeMutablePointer<iTermParserContext>,
                      support8BitControlCharacters: Bool,
                      token result: VT100Token) -> VT100DCSParserHookResult {
+        DLog("handleInput in \(state)")
         result.type = VT100_WAIT
         switch state {
         case .initial:
@@ -148,7 +149,18 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                     // ignore the colon itself.
                     return .osc(code, String(payload.substringAfterFirst(":")))
                 } else {
-                    state = .oscParam(code, payload + String(ascii: UInt8(esc)) + String(ascii: c))
+                    // esc followed by anything but a backslash inside an OSC means the OSC was
+                    // interrupted by another OSC. For example (newlines for clarity):
+                    // \e]134;:%output 456\e\\
+                    //   \e]134;                 <- start parsing with this line having truncated output from child
+                    // \e]134;%end 123\e\\       <- this is a well formed osc, which is what we ought to find
+                    if !skipInitialGarbage {
+                        iTermParserBacktrack(context, offset: checkpoint)
+                        return .notOSC
+                    }
+                    // Move back one character and re-parse the preceding OSC.
+                    iTermParserBacktrack(context)
+                    state = .ground
                 }
             }
         }
@@ -244,6 +256,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
             DLog("Malformed %terminate, unhook")
             return .unhook
         }
+        DLog("%terminate \(parts)")
         token.type = SSH_TERMINATE
         iTermAddCSIParameter(token.csi, pid)
         iTermAddCSIParameter(token.csi, rc)
@@ -352,6 +365,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         let peek = conditionallyPeekOSC(context)
         switch peek.result {
         case .osc(134, let payload), .osc(135, let payload):
+            DLog("While parsing body, found osc with payload \(payload.semiVerboseDescription)")
             let expectedPrefix = "end \(id) "
             if payload.hasPrefix(expectedPrefix) {
                 DLog("In body state: found valid end token")
@@ -382,13 +396,16 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         let peek = conditionallyPeekOSC(context)
         switch peek.result {
         case .osc(134, terminator):
+            DLog("found terminator for identifier \(builder.identifier)")
             if builder.populate(token) {
+                DLog("emit token")
                 state = .ground
                 return .canReadAgain
             }
             DLog("Failed to build \(builder)")
             return .unhook
         case .blocked:
+            DLog("blocked")
             peek.backtrack()
             return .blocked
         case .notOSC, .osc(_, _):
@@ -397,6 +414,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
             case .eof:
                 break
             case .data(let text):
+                DLog("consume \(text.semiVerboseDescription) for \(builder.identifier)")
                 builder.append(text)
             }
             return .canReadAgain

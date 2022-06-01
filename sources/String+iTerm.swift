@@ -40,6 +40,38 @@ extension String {
         }
         return self[i.upperBound...]
     }
+
+    func takeFirst(_ n: Int) -> Substring {
+        if n >= count {
+            return Substring(self)
+        }
+        let i = index(startIndex, offsetBy: n)
+        return self[..<i]
+    }
+
+    func takeLast(_ n: Int) -> Substring {
+        if n >= count {
+            return Substring(self)
+        }
+        let i = index(startIndex, offsetBy: count - n)
+        return self[i...]
+    }
+
+    func truncatedWithTrailingEllipsis(to maxLength: Int) -> String {
+        if count <= maxLength {
+            return self
+        }
+        return takeFirst(maxLength - 1) + "…"
+    }
+
+    var semiVerboseDescription: String {
+        let radius = 16
+        let grace = 20
+        if count < radius * 2 + grace {
+            return self
+        }
+        return takeFirst(radius) + " …[\(count - 32) bytes elided]… " + takeLast(radius)
+    }
 }
 
 extension Substring {
