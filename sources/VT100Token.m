@@ -288,6 +288,11 @@
     if (_asciiData.length) {
         [params appendFormat:@" asciiData=“%.*s”", _asciiData.length, _asciiData.buffer];
     }
+    if (type == SSH_OUTPUT) {
+        [params appendFormat:@" ssh-output=“%@” info=%@",
+         [[[NSString alloc] initWithData:_savedData encoding:NSUTF8StringEncoding] autorelease],
+         SSHInfoDescription(self.sshInfo)];
+    }
     return [NSString stringWithFormat:@"<%@: %p type=%@%@>", self.class, self, [self codeName], params];
 }
 

@@ -29,6 +29,17 @@ extension String {
     func split(onFirst separator: String) -> (Substring, Substring)? {
         return Substring(self).split(onFirst: separator)
     }
+
+    init(ascii: UInt8) {
+        self.init(Character(UnicodeScalar(ascii)))
+    }
+
+    func substringAfterFirst(_ pattern: String) -> Substring {
+        guard let i = range(of: pattern) else {
+            return Substring()
+        }
+        return self[i.upperBound...]
+    }
 }
 
 extension Substring {
@@ -39,3 +50,5 @@ extension Substring {
         return (self[..<range.lowerBound], self[range.upperBound...])
     }
 }
+
+

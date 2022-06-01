@@ -48,9 +48,9 @@
     return @"[TMUX GATEWAY]";
 }
 
-- (BOOL)handleInput:(iTermParserContext *)context
-support8BitControlCharacters:(BOOL)support8BitControlCharacters
-              token:(VT100Token *)result {
+- (VT100DCSParserHookResult)handleInput:(iTermParserContext *)context
+           support8BitControlCharacters:(BOOL)support8BitControlCharacters
+                                  token:(VT100Token *)result {
     int bytesTilNewline = iTermParserNumberOfBytesUntilCharacter(context, '\n');
     if (bytesTilNewline == -1) {
         DLog(@"No newline found.");
@@ -70,10 +70,10 @@ support8BitControlCharacters:(BOOL)support8BitControlCharacters
 
         // Tokenize the line, returning if it is a terminator like %exit.
         if ([self processLineIntoToken:result]) {
-            return YES;
+            return VT100DCSParserHookResultUnhook;
         }
     }
-    return NO;
+    return VT100DCSParserHookResultCanReadAgain;
 }
 
 // Return YES if we should unhook.

@@ -40,7 +40,7 @@ class Conductor: NSObject, Codable {
     private let depth: Int32
     @objc let parent: Conductor?
     #warning("DNS")
-    @objc var autopollEnabled = false
+    @objc var autopollEnabled = true
     private var _queueWrites = true
     private var restored = false
     private var autopoll = ""
@@ -111,7 +111,6 @@ class Conductor: NSObject, Codable {
         }
 
         case execLoginShell
-        case getShell
         case setenv(key: String, value: String)
         // Replace the conductor with this command
         case run(String)
@@ -122,8 +121,6 @@ class Conductor: NSObject, Codable {
         case write(data: Data, dest: String)
         case cd(String)
         case quit
-        case ps
-        case getpid
 
         // Framer commands
         case framerRun(String)
@@ -140,8 +137,8 @@ class Conductor: NSObject, Codable {
 
         var isFramer: Bool {
             switch self {
-            case .execLoginShell, .getShell, .setenv(_, _), .run(_), .runPython(_), .shell(_),
-                    .write(_, _), .cd(_), .quit, .ps, .getpid:
+            case .execLoginShell, .setenv(_, _), .run(_), .runPython(_), .shell(_),
+                    .write(_, _), .cd(_), .quit:
                 return false
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
@@ -154,8 +151,6 @@ class Conductor: NSObject, Codable {
             switch self {
             case .execLoginShell:
                 return "exec_login_shell"
-            case .getShell:
-                return "get_shell"
             case .setenv(let key, let value):
                 return "setenv \(key) \((value as NSString).stringEscapedForBash()!)"
             case .run(let cmd):
@@ -170,10 +165,6 @@ class Conductor: NSObject, Codable {
                 return "cd \(dir)"
             case .quit:
                 return "quit"
-            case .ps:
-                return "ps"
-            case .getpid:
-                return "getpid"
 
             case .framerRun(let command):
                 return ["run", command].joined(separator: "\n")
@@ -205,8 +196,6 @@ class Conductor: NSObject, Codable {
             switch self {
             case .execLoginShell:
                 return "starting login shell"
-            case .getShell:
-                return "querying for the login shell"
             case .setenv(let key, let value):
                 return "setting \(key)=\(value)"
             case .run(let cmd):
@@ -221,10 +210,6 @@ class Conductor: NSObject, Codable {
                 return "changing directory to \(dir)"
             case .quit:
                 return "quitting"
-            case .ps:
-                return "Running ps"
-            case .getpid:
-                return "Getting the shell's process ID"
             case .framerRun(let command):
                 return "run “\(command)”"
             case .framerLogin(cwd: let cwd, args: let args):
@@ -232,7 +217,7 @@ class Conductor: NSObject, Codable {
             case .framerSave(let dict):
                 return "save \(dict.keys.joined(separator: ", "))"
             case .framerSend(let data, pid: let pid):
-                return "send \(data) to \(pid)"
+                return "send \(data.semiVerboseDescription) to \(pid)"
             case .framerKill(pid: let pid):
                 return "kill \(pid)"
             case .framerQuit:
@@ -272,8 +257,6 @@ class Conductor: NSObject, Codable {
                     return "fireAndForget"
                 case .handleFramerLogin:
                     return "handleFramerLogin"
-                case .handleRequestPID:
-                    return "handleRequestPID"
                 case .writeOnSuccess(let code):
                     return "writeOnSuccess(\(code.count) chars)"
                 case .handleRunRemoteCommand(let command, _):
@@ -289,7 +272,6 @@ class Conductor: NSObject, Codable {
             case handleCheckForPython(StringArray)
             case fireAndForget  // don't care what the result is
             case handleFramerLogin
-            case handleRequestPID
             case writeOnSuccess(String)  // see runPython
             case handleRunRemoteCommand(String, (Data, Int32) -> ())
             case handleBackgroundJob(StringArray, (Data, Int32) -> ())
@@ -306,7 +288,6 @@ class Conductor: NSObject, Codable {
                 case handleCheckForPython
                 case fireAndForget
                 case handleFramerLogin
-                case handleRequestPID
                 case writeOnSuccess
                 case handleRunRemoteCommand
                 case handleBackgroundJob
@@ -323,8 +304,6 @@ class Conductor: NSObject, Codable {
                     return RawValues.fireAndForget.rawValue
                 case .handleFramerLogin:
                     return RawValues.handleFramerLogin.rawValue
-                case .handleRequestPID:
-                    return RawValues.handleRequestPID.rawValue
                 case .writeOnSuccess(_):
                     return RawValues.writeOnSuccess.rawValue
                 case .handleRunRemoteCommand(_, _):
@@ -340,7 +319,7 @@ class Conductor: NSObject, Codable {
                 var container = encoder.container(keyedBy: Key.self)
                 try container.encode(rawValue, forKey: .rawValue)
                 switch self {
-                case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin, .handleRequestPID, .handlePoll(_, _):
+                case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin, .handlePoll(_, _):
                     break
                 case .handleCheckForPython(let value):
                     try container.encode(value, forKey: .stringArray)
@@ -364,8 +343,6 @@ class Conductor: NSObject, Codable {
                     self = .fireAndForget
                 case .handleFramerLogin:
                     self = .handleFramerLogin
-                case .handleRequestPID:
-                    self = .handleRequestPID
                 case .writeOnSuccess:
                     self = .writeOnSuccess(try container.decode(String.self, forKey: .string))
                 case .handleRunRemoteCommand:
@@ -474,11 +451,6 @@ class Conductor: NSObject, Codable {
         case abort  // couldn't even send the command
     }
 
-    struct RemoteInfo: Codable {
-        var pid: Int?
-    }
-    private var remoteInfo = RemoteInfo()
-
     private var state: State = .ground {
         willSet {
             DLog("State \(state) -> \(newValue)")
@@ -493,7 +465,6 @@ class Conductor: NSObject, Codable {
                 return
             }
             restored = false
-            reset()
         }
     }
     @objc let boolArgs: String
@@ -540,6 +511,7 @@ class Conductor: NSObject, Codable {
             current?.delegate = delegate
             current = current?.parent
         }
+        leaf.resetTransitively()
         return leaf
     }
 
@@ -570,7 +542,6 @@ class Conductor: NSObject, Codable {
         depth = try container.decode(Int32.self, forKey: .depth)
         parent = try container.decode(Conductor?.self, forKey: .parent)
         framedPID = try container.decode(Int32?.self, forKey: .framedPID)
-        remoteInfo = try container.decode(RemoteInfo.self, forKey: .remoteInfo)
         state = try  container.decode(State.self, forKey: .state)
         queue = try container.decode([ExecutionContext].self, forKey: .queue)
         boolArgs = try container.decode(String.self, forKey: .boolArgs)
@@ -617,7 +588,6 @@ class Conductor: NSObject, Codable {
         try container.encode(depth, forKey: .depth)
         try container.encode(parent, forKey: .parent)
         try container.encode(framedPID, forKey: .framedPID)
-        try container.encode(remoteInfo, forKey: .remoteInfo)
         try container.encode(State.ground, forKey: .state)
         try container.encode([ExecutionContext](), forKey: .queue)
         try container.encode(boolArgs, forKey: .boolArgs)
@@ -631,7 +601,12 @@ class Conductor: NSObject, Codable {
                       function: String = #function) {
         if verbose {
             let message = messageBlock()
-            print("\(file):\(line) \(function): \(message)")
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = DateFormatter.dateFormat(fromTemplate: "HH:mm:ss.SSS ZZZ",
+                                                                options: 0,
+                                                                locale: nil)
+            let hms = dateFormatter.string(from: Date())
+            print("\(hms) \(file.lastPathComponent):\(line) \(function): [\(self.it_addressString)@\(depth)] \(message)")
         }
     }
 
@@ -653,8 +628,6 @@ class Conductor: NSObject, Codable {
     }
 
     @objc func start() {
-        remoteInfo = RemoteInfo()
-        requestPID()
         setEnvironmentVariables()
         uploadPayloads()
         if let dir = initialDirectory {
@@ -747,10 +720,6 @@ class Conductor: NSObject, Codable {
         send(.framerQuit, .fireAndForget)
     }
 
-    private func requestPID() {
-        send(.getpid, .handleRequestPID)
-    }
-
     private func setEnvironmentVariables() {
         for (key, value) in vars {
             send(.setenv(key: key, value: value), .failIfNonzeroStatus)
@@ -771,7 +740,11 @@ class Conductor: NSObject, Codable {
 
     private func execFramer() {
         let path = Bundle(for: Self.self).url(forResource: "framer", withExtension: "py")!
-        let pythonCode = try! String(contentsOf: path)
+        let customCode = """
+        DEPTH=\(depth)
+        """
+        let pythonCode = try! String(contentsOf: path).replacingOccurrences(of: "#{SUB}",
+                                                                            with: customCode)
         runPython(pythonCode)
     }
 
@@ -781,10 +754,6 @@ class Conductor: NSObject, Codable {
 
     private func run(_ command: String) {
         send(.run(command), .failIfNonzeroStatus)
-    }
-
-    private func shell(_ command: String) {
-        send(.shell(command), .failIfNonzeroStatus)
     }
 
     private func checkForPython() {
@@ -798,6 +767,7 @@ class Conductor: NSObject, Codable {
     }
 
     private func update(executionContext: ExecutionContext, result: PartialResult) -> () {
+        DLog("update \(executionContext) result=\(result)")
         switch executionContext.handler {
         case .failIfNonzeroStatus:
             switch result {
@@ -853,32 +823,6 @@ class Conductor: NSObject, Codable {
                 framedPID = pid
                 return
             case .abort, .sideChannelLine(_, _, _), .end(_):
-                return
-            }
-        case .handleRequestPID:
-            switch result {
-            case .line(let value):
-                guard let pid = Int(value) else {
-                    fail("Invalid process id \(value)")
-                    return
-                }
-                guard remoteInfo.pid == nil else {
-                    fail("Too many lines of output from getpid. Second is \(value)")
-                    return
-                }
-                remoteInfo.pid = pid
-                return
-            case .abort, .sideChannelLine(_, _, _):
-                return
-            case .end(let status):
-                guard status == 0 else {
-                    fail("getPID failed with status \(status)")
-                    return
-                }
-                guard remoteInfo.pid != nil else {
-                    fail("No pid")
-                    return
-                }
                 return
             }
         case .writeOnSuccess(let code):
@@ -1128,6 +1072,7 @@ class Conductor: NSObject, Codable {
     }
 
     private func send(_ command: Command, _ handler: ExecutionContext.Handler) {
+        DLog("append \(command) to queue in state \(state)")
         queue.append(ExecutionContext(command: command, handler: handler))
         switch state {
         case .ground, .recovery:
@@ -1138,20 +1083,26 @@ class Conductor: NSObject, Codable {
     }
 
     private func dequeue() {
+        DLog("dequeue")
         guard delegate != nil else {
+            DLog("delegate is nil. clear queue and reset state.")
             while let pending = queue.first {
                 queue.removeFirst()
                 update(executionContext: pending, result: .abort)
             }
+            state = .ground
             return
         }
         guard let pending = queue.first else {
+            DLog("queue is empty")
             return
         }
         queue.removeFirst()
         state = .willExecute(pending)
         let parts = pending.command.stringValue.chunk(128, continuation: pending.command.isFramer ? "\\" : "")
-        for part in parts {
+        // TODO: Use a single call to write to reduce number of round trips when there is a parent.
+        for (i, part) in parts.enumerated() {
+            DLog("writing part \(i) or \(parts.count) of \(pending.command) with string value \(pending.command.stringValue)")
             write(part)
         }
         write("")
@@ -1224,9 +1175,16 @@ extension Conductor: SSHCommandRunning {
         send(.framerPoll, .handlePoll(StringArray(), completion))
     }
 
+    @objc
     func reset() {
         send(.framerReset, .fireAndForget)
         send(.framerAutopoll, .fireAndForget)
+    }
+
+    @objc
+    func resetTransitively() {
+        parent?.reset()
+        reset()
     }
 
     private func addBackgroundJob(_ pid: Int32, command: Command, completion: @escaping (Data, Int32) -> ()) {
@@ -1303,5 +1261,18 @@ extension Array where Element == Conductor.Nesting {
         let tuple = [first.dcsID as NSString,
                      Array(dropFirst()).tree]
         return [first.pid: tuple]
+    }
+}
+
+extension Data {
+    var semiVerboseDescription: String {
+        if count > 16 {
+            return self[..<16].semiVerboseDescription
+        }
+        if let string = String(data: self, encoding: .utf8) {
+            let safe = (string as NSString).escapingControlCharactersAndBackslash()!
+            return "“\(safe)”"
+        }
+        return (self as NSData).it_hexEncoded()
     }
 }

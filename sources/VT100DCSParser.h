@@ -17,10 +17,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, readonly) NSString *hookDescription;
 
+typedef NS_ENUM(NSUInteger, VT100DCSParserHookResult) {
+    // Can't continue until new input arrives.
+    VT100DCSParserHookResultBlocked,
+
+    // May have done a partial read. Check again. (formerly NO)
+    VT100DCSParserHookResultCanReadAgain,
+
+    // Totally broken. Unhook the parser.  (formerly YES)
+    VT100DCSParserHookResultUnhook
+};
+
 // Return YES if it should unhook.
-- (BOOL)handleInput:(iTermParserContext *)context
-support8BitControlCharacters:(BOOL)support8BitControlCharacters
-              token:(VT100Token *)result;
+- (VT100DCSParserHookResult)handleInput:(iTermParserContext *)context
+           support8BitControlCharacters:(BOOL)support8BitControlCharacters
+                                  token:(VT100Token *)result;
 
 @end
 

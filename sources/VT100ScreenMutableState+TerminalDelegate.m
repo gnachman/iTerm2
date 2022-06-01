@@ -2606,6 +2606,7 @@
 
 - (void)terminalHandleFramerRecoveryString:(NSString *)string {
     __weak __typeof(self) weakSelf = self;
+    dispatch_queue_t queue = _queue;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         iTermConductorRecovery *recovery = [delegate screenHandleFramerRecoveryString:string];
         if (recovery) {
@@ -2613,9 +2614,12 @@
             [weakSelf.terminal.parser startConductorRecoveryModeWithID:recovery.dcsID
                                                                   tree:recovery.tree];
             [delegate screenFramerRecoveryDidFinish];
-            [weakSelf appendBannerMessage:@"ssh connection recovered!"];
+            dispatch_async(queue, ^{
+                [weakSelf appendBanner:@"ssh connection recovered!" andUnpause:unpauser];
+            });
+        } else {
+            [unpauser unpause];
         }
-        [unpauser unpause];
     }];
 }
 

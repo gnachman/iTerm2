@@ -517,16 +517,27 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     }
     self.stateMachine.userInfo = @{ kVT100DCSUserInfoToken: result };
     result->type = VT100_WAIT;
-    while (result->type == VT100_WAIT && iTermParserCanAdvance(context)) {
+    BOOL blocked = NO;
+    while (result->type == VT100_WAIT && iTermParserCanAdvance(context) && !blocked) {
         if (_hook && !_hookFinished) {
             DLog(@"Sending input to hook %@", _hook);
-            _hookFinished = [_hook handleInput:context
-                  support8BitControlCharacters:_support8BitControlCharacters
-                                         token:result];
-            DLog(@"Hook %@ produced %@", [_hook hookDescription], result);
-            if (_hookFinished) {
-                [self unhook];
+            const VT100DCSParserHookResult hookResult = [_hook handleInput:context
+                                              support8BitControlCharacters:_support8BitControlCharacters
+                                                                     token:result];
+            switch (hookResult) {
+                case VT100DCSParserHookResultBlocked:
+                    _hookFinished = NO;
+                    blocked = YES;
+                    break;
+                case VT100DCSParserHookResultCanReadAgain:
+                    _hookFinished = NO;
+                    break;
+                case VT100DCSParserHookResultUnhook:
+                    _hookFinished = YES;
+                    [self unhook];
+                    break;
             }
+            DLog(@"Hook %@ produced %@: %@", [_hook hookDescription], @(hookResult), result);
         } else {
             [self.stateMachine handleCharacter:iTermParserConsume(context)];
             if ([self.stateMachine.currentState.identifier isEqual:@(kVT100DCSStatePassthrough)] &&

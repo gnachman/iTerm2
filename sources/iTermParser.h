@@ -42,6 +42,7 @@ NS_INLINE BOOL iTermParserTryPeek(iTermParserContext *context, unsigned char *c)
 }
 
 NS_INLINE void iTermParserAdvance(iTermParserContext *context) {
+
     context->datap++;
     context->datalen--;
     context->rmlen++;

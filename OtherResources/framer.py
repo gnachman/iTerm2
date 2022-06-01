@@ -11,6 +11,7 @@ import signal
 import subprocess
 import sys
 import termios
+import time
 import traceback
 
 # pid -> Process
@@ -31,6 +32,15 @@ RECOVERY_STATE={}
 # 1: Blocking on stdin
 # 2: Not blocking on stdin but send %ping before reading next command.
 READSTATE=0
+#{SUB}
+BASEID=str(random.randint(0, 1048576)) + str(os.getpid()) + str(int(time.time() * 1000000))
+IDCOUNT=0
+
+def makeid():
+    global IDCOUNT
+    result = BASEID + str(IDCOUNT)
+    IDCOUNT += 1
+    return result
 
 def log(message):
     if VERBOSE:
@@ -40,20 +50,20 @@ def log(message):
         print(f'DEBUG {os.getpid()}: {message}', file=LOGFILE)
         LOGFILE.flush()
 
-def send(text):
+def send(data):
     if QUITTING:
-        log("[squelched] " + str(text))
+        log("[squelched] " + str(data))
         return
-    log("> " + str(text))
-    print(text)
+    log("> " + str(data))
+    os.write(sys.stdout.fileno(), data)
 
 def send_esc(text):
     if QUITTING:
         log("[squelched] " + str(text))
         return
     log("> [osc 134] " + str(text) + " [st]")
-    print('\033]134;:' + str(text))
-    print('\033\\', end="")
+    print('\033]134;:' + str(text) + '\033\\', end="")
+    sys.stdout.flush()
 
 class Process:
     @staticmethod
@@ -253,10 +263,10 @@ async def autopoll(delay):
                 log(f'autopoll: awoke')
                 continue
             # Send poll output and sleep until client requests autopolling again.
-            identifier = random.randint(0, 10000000000000000000)
+            identifier = makeid()
             send_esc(f'%autopoll {identifier}')
             for line in output:
-                send_esc(line)
+                send(line.encode("utf-8") + b'\n')
             send_esc(f'%end {identifier}')
             AUTOPOLL = 0
             while not AUTOPOLL:
@@ -420,7 +430,7 @@ async def handle_login(identifier, args):
         begin(identifier)
         send_esc(proc.pid)
         end(identifier, 0)
-        await proc.handle_read(make_monitor_process(identifier, proc, True))
+        await proc.handle_read(make_monitor_process(proc, True))
     except Exception as e:
         log(f'handle_login: {e}')
         begin(identifier)
@@ -436,20 +446,23 @@ async def handle_run(identifier, args):
         begin(identifier)
         send_esc(proc.pid)
         end(identifier, 0)
-        await proc.handle_read(make_monitor_process(identifier, proc, False))
+        await proc.handle_read(make_monitor_process(proc, False))
     except Exception as e:
         log(f'handle_run: {e}')
         begin(identifier)
         end(identifier, 1)
     return False
 
-async def handle_reset(identifier, args):
+def reset():
     global REGISTERED
     global LASTPS
     global AUTOPOLL
     REGISTERED = []
     LASTPS = {}
     AUTOPOLL = 0
+
+async def handle_reset(identifier, args):
+    reset()
     begin(identifier)
     end(identifier, 0)
 
@@ -467,10 +480,7 @@ async def handle_save(identifier, args):
 
 async def handle_recover(identifier, args):
     log("handle_recover")
-    global REGISTERED
-    REGISTERED = []
-    global LASTPS
-    LASTPS = {}
+    reset()
     send_esc(f'begin-recovery')
     for pid in PROCESSES:
         proc = PROCESSES[pid]
@@ -597,11 +607,11 @@ async def handle_quit(identifier, args):
 ## Helpers for run()
 
 async def start_process(args):
-    runid = random.randint(0, 10000000000000000000)
+    runid = makeid()
     PROCESSES[runid] = proc
     return runid
 
-def make_monitor_process(identifier, proc, islogin):
+def make_monitor_process(proc, islogin):
     def monitor_process(channel, value):
         log(f'monitor_process called with channel={channel} islogin={islogin} value={value}')
         if len(value) == 0:
@@ -609,21 +619,16 @@ def make_monitor_process(identifier, proc, islogin):
             log(f'add {proc.pid} to list of completed PIDs')
             COMPLETED.append(proc.pid)
             return cleanup()
-        print_output(identifier, proc.pid, channel, islogin, value)
+        print_output(makeid(), proc.pid, channel, islogin, value)
         return None
     return monitor_process
 
 def print_output(identifier, pid, channel, islogin, data):
     if islogin:
-        send_esc(f'%output {identifier} {pid} -1')
+        send_esc(f'%output {identifier} {pid} -1 {DEPTH}')
     else:
-        send_esc(f'%output {identifier} {pid} {channel}')
-    data = data
-    encoded = base64.b64encode(data).decode("utf-8")
-    n = 128
-    for i in range(0, len(encoded), n):
-        part = encoded[i:i+n]
-        send_esc(part)
+        send_esc(f'%output {identifier} {pid} {channel} {DEPTH}')
+    send(data)
     send_esc(f'%end {identifier}')
 
 ## Infra
@@ -666,7 +671,7 @@ async def handle(args):
         return False
     cmd = args[0]
     del args[0]
-    identifier = random.randint(0, 10000000000000000000)
+    identifier = makeid()
     if cmd not in HANDLERS:
         fail(identifier, "unrecognized command")
         return

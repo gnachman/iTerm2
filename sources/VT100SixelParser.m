@@ -42,15 +42,15 @@
 }
 
 // Return YES if it should unhook.
-- (BOOL)handleInput:(iTermParserContext *)context
-support8BitControlCharacters:(BOOL)support8BitControlCharacters
-              token:(VT100Token *)result {
+- (VT100DCSParserHookResult)handleInput:(iTermParserContext *)context
+           support8BitControlCharacters:(BOOL)support8BitControlCharacters
+                                  token:(VT100Token *)result {
     if (!iTermParserCanAdvance(context)) {
         result->type = VT100_WAIT;
-        return NO;
+        return VT100DCSParserHookResultCanReadAgain;
     }
     if (_esc) {
-        return [self handleInputAfterESC:context token:result];
+        return [self handleInputAfterESC:context token:result] ? VT100DCSParserHookResultUnhook : VT100DCSParserHookResultCanReadAgain;
     }
 
     while (iTermParserCanAdvance(context)) {
@@ -61,11 +61,11 @@ support8BitControlCharacters:(BOOL)support8BitControlCharacters
                     iTermParserConsume(context);
                     result->type = DCS_SIXEL;
                     result.savedData = [self combinedData];
-                    return YES;
+                    return VT100DCSParserHookResultUnhook;
                 }
                 break;
             case VT100CC_ESC:
-                return [self handleInputBeginningWithEsc:context token:result];
+                return [self handleInputBeginningWithEsc:context token:result] ? VT100DCSParserHookResultUnhook : VT100DCSParserHookResultCanReadAgain;
         }
 
         // Search for next ESC or ST.
@@ -90,7 +90,7 @@ support8BitControlCharacters:(BOOL)support8BitControlCharacters
                           context:context
                             token:result];
     }
-    return NO;
+    return VT100DCSParserHookResultCanReadAgain;
 }
 
 - (BOOL)handleInputBeginningWithEsc:(iTermParserContext *)context
