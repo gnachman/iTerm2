@@ -36,11 +36,16 @@ READSTATE=0
 BASEID=str(random.randint(0, 1048576)) + str(os.getpid()) + str(int(time.time() * 1000000))
 IDCOUNT=0
 
+def squash(i):
+    a = list(map(chr, list(range(48,58))+list(range(65,91))+list(range(97,123))))
+    b = len(a)
+    return a[i] if i < b else squash(i // b) + a[i % b]
+
 def makeid():
     global IDCOUNT
     result = BASEID + str(IDCOUNT)
     IDCOUNT += 1
-    return result
+    return squash(int(result))
 
 def log(message):
     if VERBOSE:
