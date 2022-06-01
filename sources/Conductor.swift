@@ -470,7 +470,9 @@ class Conductor: NSObject, Codable {
     @objc let boolArgs: String
     @objc let dcsID: String
     @objc let clientUniqueID: String  // provided by client when hooking dcs
-    private var verbose = true
+    private var verbose: Bool {
+        return gDebugLogging.boolValue
+    }
 
     enum CodingKeys: CodingKey {
         // Note backgroundJobs is not included because it isn't restorable.
@@ -601,9 +603,7 @@ class Conductor: NSObject, Codable {
                       function: String = #function) {
         if verbose {
             let message = messageBlock()
-            if gDebugLogging.boolValue {
-                DebugLogImpl(file, Int32(line), function, "[\(self.it_addressString)@\(depth)] \(message)")
-            }
+            DebugLogImpl(file, Int32(line), function, "[\(self.it_addressString)@\(depth)] \(message)")
         }
     }
 
@@ -737,9 +737,12 @@ class Conductor: NSObject, Codable {
 
     private func execFramer() {
         let path = Bundle(for: Self.self).url(forResource: "framer", withExtension: "py")!
-        let customCode = """
+        var customCode = """
         DEPTH=\(depth)
         """
+        if verbose {
+            customCode += "\nVERBOSE=1\n"
+        }
         let pythonCode = try! String(contentsOf: path).replacingOccurrences(of: "#{SUB}",
                                                                             with: customCode)
         runPython(pythonCode)

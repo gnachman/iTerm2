@@ -24,13 +24,12 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         return "[SSH CONDUCTOR]"
     }
 
-#warning("DNS")
     private func DLog(_ messageBlock: @autoclosure () -> String,
                       file: String = #file,
                       line: Int = #line,
                       function: String = #function) {
-        let message = messageBlock()
         if gDebugLogging.boolValue {
+            let message = messageBlock()
             DebugLogImpl("\(file.lastPathComponent)",
                          Int32(line),
                          "\(function)",
