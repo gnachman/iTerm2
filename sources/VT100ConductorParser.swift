@@ -158,7 +158,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
                         return .notOSC
                     }
                     // Move back one character and re-parse the preceding OSC.
-                    iTermParserBacktrack(context)
+                    iTermParserBacktrackBy(context, 1)
                     state = .ground
                 }
             }
