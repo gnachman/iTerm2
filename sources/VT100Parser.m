@@ -164,7 +164,7 @@
                             DLog(@"Inferring %d is the main SSH process", pid);
                             _mainSSHParserPID = pid;
                         }
-                        sshParser = [[VT100Parser alloc] init];
+                        sshParser = [[[VT100Parser alloc] init] autorelease];
                         sshParser.encoding = self.encoding;
                         sshParser.depth = self.depth + 1;
                         DLog(@"%@: Allocate ssh parser %@", self, sshParser);
@@ -441,7 +441,7 @@
         NSString *childDcsId = tuple[0];
         NSDictionary *childTree = tuple[1];
 
-        VT100Parser *childParser = [[VT100Parser alloc] init];
+        VT100Parser *childParser = [[[VT100Parser alloc] init] autorelease];
         childParser.encoding = self.encoding;
         childParser.depth = self.depth + 1;
         _sshParsers[childPID] = childParser;
