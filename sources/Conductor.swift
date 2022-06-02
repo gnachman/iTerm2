@@ -91,7 +91,7 @@ class Conductor: NSObject, Codable {
         return provider
     }()
     private var sshProcessInfoProvider: SSHProcessInfoProvider? {
-        if framedPID == nil {
+        if framedPID == nil && autopollEnabled {
             return nil
         }
         return _processInfoProvider
@@ -607,8 +607,9 @@ class Conductor: NSObject, Codable {
         if verbose {
             let message = messageBlock()
             DebugLogImpl(file, Int32(line), function, "[\(self.it_addressString)@\(depth)] \(message)")
-        } else if superVerbose {
-            NSLog("%@", "[\(self.it_addressString)@\(depth)] \(messageBlock())")
+            if superVerbose {
+                NSLog("%@", "[\(self.it_addressString)@\(depth)] \(message)")
+            }
         }
     }
 
@@ -1162,6 +1163,7 @@ class Conductor: NSObject, Codable {
             update(executionContext: context, result: .abort)
         }
         queue = []
+        parent?.forceReturnToGroundState()
     }
 
     private func fail(_ reason: String) {
@@ -1194,7 +1196,12 @@ extension Conductor: SSHCommandRunning {
     @objc
     func reset() {
         send(.framerReset, .fireAndForget)
-        send(.framerAutopoll, .fireAndForget)
+        if autopollEnabled {
+            send(.framerAutopoll, .fireAndForget)
+            if let framedPID = framedPID {
+                sshProcessInfoProvider?.register(trackedPID: framedPID)
+            }
+        }
     }
 
     @objc
@@ -1207,7 +1214,7 @@ extension Conductor: SSHCommandRunning {
     func didResynchronize() {
         DLog("didResynchronize")
         forceReturnToGroundState()
-        parent?.didResynchronize()
+        resetTransitively()
         DLog(self.debugDescription)
     }
 

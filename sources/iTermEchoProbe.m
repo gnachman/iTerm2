@@ -112,6 +112,9 @@ iTermEchoProbeState iTermEchoProbeGetNextState(iTermEchoProbeState state, VT100T
         case SSH_UNHOOK:
         case SSH_END:
         case SSH_TERMINATE:
+        case DCS_SSH_HOOK:
+        case SSH_OUTPUT:
+        case SSH_RECOVERY_BOUNDARY:
             return state;
         default:
             break;

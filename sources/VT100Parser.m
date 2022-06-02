@@ -149,6 +149,10 @@
                     break;
                 }
 
+                case SSH_UNHOOK:
+                    [_sshParsers removeAllObjects];
+                    break;
+
                 case SSH_OUTPUT: {
                     const int pid = token.csi->p[0];
                     DLog(@"%@: handling SSH_OUTPUT", self);
@@ -221,6 +225,10 @@
                         DLog(@"%@: Emit subtoken %@ with info %@", self, token, SSHInfoDescription(token.sshInfo));
                     }
                     DLog(@"%@: done reparsing SSH output at depth %@", self, @(self.depth));
+                    if (pid == SSH_OUTPUT_AUTOPOLL_PID) {
+                        // No need to keep this around, especially since it may carry some state we don't want.
+                        [_sshParsers removeObjectForKey:@(pid)];
+                    }
                     break;
                 }
 
