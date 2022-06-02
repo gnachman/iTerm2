@@ -87,17 +87,7 @@ static _Atomic int gPerformingJoinedBlock;
         _executorUpdate = [[VT100ScreenTokenExecutorUpdate alloc] init];
         __weak __typeof(self) weakSelf = self;
         _executorUpdateScheduler = [[iTermPeriodicScheduler alloc] initWithQueue:queue period:1 / 120.0 block:^{
-            __strong __typeof(self) strongSelf = weakSelf;
-            if (!strongSelf) {
-                return;
-            }
-            VT100ScreenTokenExecutorUpdate *update = [strongSelf->_executorUpdate fork];
-
-            // Not a side-effect since it might join.
-            dispatch_async(dispatch_get_main_queue(), ^{
-                id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
-                [delegate screenExecutorDidUpdate:update];
-            });
+            [weakSelf updateExecutor];
         }];
         _derivativeIntervalTree = [[IntervalTree alloc] init];
         _derivativeSavedIntervalTree = [[IntervalTree alloc] init];
@@ -158,6 +148,16 @@ static _Atomic int gPerformingJoinedBlock;
         mainThreadColorMap.delegate = strongSelf;
         block(mainThreadColorMap);
     }];
+}
+
+- (void)updateExecutor {
+    VT100ScreenTokenExecutorUpdate *update = [_executorUpdate fork];
+
+    // Not a side-effect since it might join.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        id<VT100ScreenDelegate> delegate = self.sideEffectPerformer.sideEffectPerformingScreenDelegate;
+        [delegate screenExecutorDidUpdate:update];
+    });
 }
 
 - (VT100Terminal *)terminal {
