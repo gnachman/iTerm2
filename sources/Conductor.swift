@@ -39,7 +39,6 @@ class Conductor: NSObject, Codable {
     private let parsedSSHArguments: ParsedSSHArguments
     private let depth: Int32
     @objc let parent: Conductor?
-    #warning("DNS")
     @objc var autopollEnabled = true
     private var _queueWrites = true
     private var restored = false
@@ -371,7 +370,7 @@ class Conductor: NSObject, Codable {
         var clientUniqueID: String
 
         var tree: NSDictionary {
-            return ([Nesting(pid: login, dcsID: dcsID)] + parentage).tree
+            return (parentage + [Nesting(pid: login, dcsID: dcsID)]).tree
         }
     }
 
@@ -470,8 +469,9 @@ class Conductor: NSObject, Codable {
     @objc let boolArgs: String
     @objc let dcsID: String
     @objc let clientUniqueID: String  // provided by client when hooking dcs
+    private let superVerbose = false
     private var verbose: Bool {
-        return gDebugLogging.boolValue
+        return superVerbose || gDebugLogging.boolValue
     }
 
     enum CodingKeys: CodingKey {
@@ -524,14 +524,17 @@ class Conductor: NSObject, Codable {
         payloads = []
         initialDirectory = nil
         parsedSSHArguments = ParsedSSHArguments(sshargs, booleanArgs: recovery.boolArgs)
-        depth = 0
+        if let parent = recovery.parent {
+            depth = parent.depth + 1
+        } else {
+            depth = 0
+        }
         framedPID = recovery.pid
         state = .recovered
         boolArgs = recovery.boolArgs
         dcsID = recovery.dcsID
         clientUniqueID = recovery.clientUniqueID
-        // TODO 
-        parent = nil
+        parent = recovery.parent
     }
 
     required init(from decoder: Decoder) throws {
@@ -604,6 +607,8 @@ class Conductor: NSObject, Codable {
         if verbose {
             let message = messageBlock()
             DebugLogImpl(file, Int32(line), function, "[\(self.it_addressString)@\(depth)] \(message)")
+        } else if superVerbose {
+            NSLog("%@", "[\(self.it_addressString)@\(depth)] \(messageBlock())")
         }
     }
 
@@ -638,9 +643,7 @@ class Conductor: NSObject, Codable {
     }
 
     @objc func startRecovery() {
-        write("")
-        write("recover")
-        write("")
+        write("\nrecover\n\n")
         state = .recovery(.ground)
     }
 
@@ -668,6 +671,7 @@ class Conductor: NSObject, Codable {
 
     @objc func sendKeys(_ data: Data) {
         guard let pid = framedPID else {
+            DLog("send unframed \(data.semiVerboseDescription)")
             delegate?.conductorWrite(string: String(data: data, encoding: .isoLatin1)!)
             return
         }
@@ -831,9 +835,7 @@ class Conductor: NSObject, Codable {
                 return
             case .end(let status):
                 if status == 0 {
-                    write(code)
-                    write("")
-                    write("EOF")
+                    write(code + "\nEOF\n")
                 } else {
                     fail("Status \(status) when running python code")
                 }
@@ -995,6 +997,14 @@ class Conductor: NSObject, Codable {
         }
     }
 
+    private var nesting: [Nesting] {
+        guard let framedPID = framedPID else {
+            return []
+        }
+
+        return [Nesting(pid: framedPID, dcsID: dcsID)] + (parent?.nesting ?? [])
+    }
+
     @objc(handleRecoveryLine:)
     func handleRecovery(line rawline: String) -> ConductorRecovery? {
         let line = rawline.trimmingTrailingNewline
@@ -1018,20 +1028,25 @@ class Conductor: NSObject, Codable {
                     switch recoveryState {
                     case .ground:
                         startRecovery()
-                    case .building(let info):
+                    case .building(var info):
+                        if let parent = parent {
+                            info.parentage = parent.nesting
+                        }
+
                         guard let finished = info.finished else {
                             quit()
                             return nil
                         }
                         framedPID = finished.login
                         state = .ground
-                        // TODO: The tree is always empty
+
                         return ConductorRecovery(pid: finished.login,
                                                  dcsID: finished.dcsID,
                                                  tree: finished.tree,
                                                  sshargs: finished.sshargs,
                                                  boolArgs: finished.boolArgs,
-                                                 clientUniqueID: finished.clientUniqueID)
+                                                 clientUniqueID: finished.clientUniqueID,
+                                                 parent: parent)
                     }
                     return nil
                 }
@@ -1099,13 +1114,8 @@ class Conductor: NSObject, Codable {
         }
         queue.removeFirst()
         state = .willExecute(pending)
-        let parts = pending.command.stringValue.chunk(128, continuation: pending.command.isFramer ? "\\" : "")
-        // TODO: Use a single call to write to reduce number of round trips when there is a parent.
-        for (i, part) in parts.enumerated() {
-            DLog("writing part \(i) or \(parts.count) of \(pending.command) with string value \(pending.command.stringValue.truncatedWithTrailingEllipsis(to: 100))")
-            write(part)
-        }
-        write("")
+        let chunked = pending.command.stringValue.chunk(128, continuation: pending.command.isFramer ? "\\" : "").joined(separator: "\n") + "\n"
+        write(chunked)
     }
 
     private func write(_ string: String, end: String = "\n") {
@@ -1145,14 +1155,19 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    private func fail(_ reason: String) {
-        DLog("FAIL: \(reason)")
-        let cod = currentOperationDescription
+    private func forceReturnToGroundState() {
+        DLog("forceReturnToGroundState")
         state = .ground
         for context in queue {
             update(executionContext: context, result: .abort)
         }
         queue = []
+    }
+
+    private func fail(_ reason: String) {
+        DLog("FAIL: \(reason)")
+        let cod = currentOperationDescription
+        forceReturnToGroundState()
         // Try to launch the login shell so you're not completely stuck.
         delegate?.conductorWrite(string: Command.execLoginShell.stringValue + "\n")
         delegate?.conductorAbort(reason: reason + " while " + cod)
@@ -1186,6 +1201,14 @@ extension Conductor: SSHCommandRunning {
     func resetTransitively() {
         parent?.reset()
         reset()
+    }
+
+    @objc
+    func didResynchronize() {
+        DLog("didResynchronize")
+        forceReturnToGroundState()
+        parent?.didResynchronize()
+        DLog(self.debugDescription)
     }
 
     private func addBackgroundJob(_ pid: Int32, command: Command, completion: @escaping (Data, Int32) -> ()) {

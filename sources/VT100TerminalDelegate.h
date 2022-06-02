@@ -523,6 +523,8 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalUpdateEnv:(NSString *)value;
 - (void)terminalEndSSH:(NSString *)uniqueID;
 - (void)terminalBeginFramerRecovery;
+- (void)terminalBeginFramerRecoveryForChildOfConductorAtDepth:(int)parentDepth;
 - (void)terminalHandleFramerRecoveryString:(NSString *)string;
+- (void)terminalDidResynchronizeSSH;
 
 @end

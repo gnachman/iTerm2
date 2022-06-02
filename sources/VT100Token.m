@@ -261,6 +261,7 @@
                           @(SSH_END):                         @"SSH_END",
                           @(SSH_OUTPUT):                      @"SSH_OUTPUT",
                           @(SSH_TERMINATE):                   @"SSH_TERMINATE",
+                          @(SSH_RECOVERY_BOUNDARY):           @"SSH_RECOVERY_BOUNDARY",
     };
     NSString *name = map[@(type)];
     if (name) {

@@ -32,6 +32,10 @@
     // Key is pid
     NSMutableDictionary<NSNumber *, VT100Parser *> *_sshParsers;
     int _mainSSHParserPID;
+    // for ssh conductor recovery. When true this causes the parser to emit a special token
+    // that marks the first post-recovery token to be parsed.
+    BOOL _emitRecoveryToken;
+    NSInteger _nextBoundaryNumber;
 }
 
 - (instancetype)init {
@@ -77,6 +81,16 @@
     datalen = _currentStreamLength - _streamOffset;
     DLog(@"Have %d bytes to parse", datalen);
 
+    if (_emitRecoveryToken) {
+        VT100Token *recoveryToken = [VT100Token token];
+        recoveryToken.type = SSH_RECOVERY_BOUNDARY;
+        recoveryToken.csi->p[0] = _nextBoundaryNumber - 1;
+        recoveryToken.csi->count = 1;
+        [recoveryToken retain];
+        CVectorAppend(vector, recoveryToken);
+        _emitRecoveryToken = NO;
+    }
+
     unsigned char *position = NULL;
     int length = 0;
     if (datalen == 0) {
@@ -109,6 +123,7 @@
                                         encoding:encoding
                                       savedState:_savedStateForPartialParse
                                        dcsHooked:&_dcsHooked];
+            DLog(@"%@: dcs produced %@", self, token);
             if (token->type != VT100_WAIT) {
                 [_savedStateForPartialParse removeAllObjects];
             }
@@ -136,8 +151,11 @@
 
                 case SSH_OUTPUT: {
                     const int pid = token.csi->p[0];
+                    DLog(@"%@: handling SSH_OUTPUT", self);
                     VT100Parser *sshParser = _sshParsers[@(pid)];
                     if (!sshParser) {
+                        DLog(@"%@: I lack a parser for pid %@. Existing parsers:\n%@",
+                              self,@(pid), _sshParsers);
                         if (_sshParsers.count == 0 && token.csi->p[1] == -1) {
                             DLog(@"Inferring %d is the main SSH process", pid);
                             _mainSSHParserPID = pid;
@@ -145,10 +163,11 @@
                         sshParser = [[VT100Parser alloc] init];
                         sshParser.encoding = self.encoding;
                         sshParser.depth = self.depth + 1;
-                        DLog(@"Allocate ssh parser with depth %@", @(sshParser.depth));
+                        DLog(@"%@: Allocate ssh parser %@", self, sshParser);
                         _sshParsers[@(pid)] = sshParser;
                     }
-                    DLog(@"begin reparsing SSH output in token %@ at depth %@: %@", token, @(self.depth), token.savedData);
+                    DLog(@"%@: Using child %@, begin reparsing SSH output in token %@ at depth %@: %@",
+                          self, sshParser, token, @(self.depth), token.savedData);
                     NSData *data = token.savedData;
                     [sshParser putStreamData:data.bytes length:data.length];
                     const int start = CVectorCount(vector);
@@ -168,12 +187,12 @@
                         .valid = 1,
                         .depth = self.depth + 1
                     };
-                    DLog(@"reparsing yielded %d tokens", end - start);
+                    DLog(@"%@: reparsing yielded %d tokens", self, end - start);
                     for (int i = start; i < end; i++) {
                         VT100Token *token = CVectorGet(vector, i);
                         SSHInfo sshInfo = token.sshInfo;
                         if (!sshInfo.valid) {
-                            DLog(@"Update ssh info in rewritten token %@ to %@", token, SSHInfoDescription(myInfo));
+                            DLog(@"%@: Update ssh info in rewritten token %@ to %@", self, token, SSHInfoDescription(myInfo));
                             switch (token.type) {
                                 case SSH_OUTPUT:
                                     // VT100Parser cannot emit SSH_OUTPUT.
@@ -196,11 +215,12 @@
                                     break;
                             }
                         } else {
-                            DLog(@"Rewritten token %@ has valid SSH info %@ so not rewriting it", token, SSHInfoDescription(token.sshInfo));
+                            DLog(@"%@: Rewritten token %@ has valid SSH info %@ so not rewriting it",
+                                  self, token, SSHInfoDescription(token.sshInfo));
                         }
-                        DLog(@"Emit subtoken %@ with info %@", token, SSHInfoDescription(token.sshInfo));
+                        DLog(@"%@: Emit subtoken %@ with info %@", self, token, SSHInfoDescription(token.sshInfo));
                     }
-                    DLog(@"done reparsing SSH output at depth %@", @(self.depth));
+                    DLog(@"%@: done reparsing SSH output at depth %@", self, @(self.depth));
                     break;
                 }
 
@@ -360,24 +380,50 @@
     }
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p dcsHooked=%@ depth=%@>",
+            NSStringFromClass([self class]),
+            self,
+            @(_dcsHooked),
+            @(_depth)];
+}
+
 // tree: [child pid: [dcs ID, tree]]
-- (void)startConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree {
-    if (tree.count == 0) {
-        return;
-    }
+- (NSInteger)startConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree {
+    DLog(@"%@: startConductorRecoveryModeWithID:%@ tree:%@", self, dcsID, tree);
+    [_sshParsers removeAllObjects];
+    const NSInteger boundary = [self reallyStartConductorRecoveryModeWithID:dcsID tree:tree];
+    DLog(@"After recovery:");
+    [self printParsers:@""];
+    return boundary;
+}
+
+- (void)printParsers:(NSString *)prefix {
+    [_sshParsers enumerateKeysAndObjectsUsingBlock:^(NSNumber * _Nonnull key, VT100Parser * _Nonnull obj, BOOL * _Nonnull stop) {
+        DLog(@"%@%@", prefix, obj);
+        [obj printParsers:[@"    " stringByAppendingString:prefix]];
+    }];
+}
+
+- (NSInteger)reallyStartConductorRecoveryModeWithID:(NSString *)dcsID tree:(NSDictionary *)tree {
+    DLog(@"%@: reallyStartConductorRecoveryModeWithID:%@ tree:%@", self, dcsID, tree);
     @synchronized (self) {
-        // TODO: This doesn't attempt to handle nested conductors.
+        if (tree.count == 0) {
+            return _nextBoundaryNumber++;
+        }
         if (tree[@0]) {
             // No special parsing needed by this node.
             NSArray *tuple = tree[@0];
             NSString *childDcsId = tuple[0];
             NSDictionary *childTree = tuple[1];
             [self startConductorRecoveryModeWithID:childDcsId tree:childTree];
-            return;
+            return _nextBoundaryNumber++;
         }
         [_controlParser startConductorRecoveryModeWithID:dcsID];
         _dcsHooked = YES;
         [self recoverWithConductorTree:tree];
+        _emitRecoveryToken = YES;
+        return _nextBoundaryNumber++;
     }
 }
 
@@ -391,7 +437,8 @@
         childParser.encoding = self.encoding;
         childParser.depth = self.depth + 1;
         _sshParsers[childPID] = childParser;
-        [childParser startConductorRecoveryModeWithID:childDcsId tree:childTree];
+        [childParser reallyStartConductorRecoveryModeWithID:childDcsId tree:childTree];
+        DLog(@"%@: add recovered child parser with pid %@: %@", self, childPID, childParser);
     }
 }
 

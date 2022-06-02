@@ -137,6 +137,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {
 };
 
 @property(nonatomic) VT100TerminalFramerRecoveryMode framerRecoveryMode;
+@property(nonatomic) NSInteger framerBoundaryNumber;
 
 + (NSOrderedSet<NSString *> *)sgrCodesForCharacter:(screen_char_t)c
                                 externalAttributes:(iTermExternalAttribute *)ea;

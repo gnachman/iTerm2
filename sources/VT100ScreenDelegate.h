@@ -410,9 +410,10 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 
 - (NSInteger)screenEndSSH:(NSString * _Nonnull)uniqueID;
 - (NSString * _Nonnull)screenSSHLocation;
-- (void)screenBeginFramerRecovery;
+- (void)screenBeginFramerRecovery:(int)parentDepth;
 // Returns true when recovery completes
 - (iTermConductorRecovery * _Nullable)screenHandleFramerRecoveryString:(NSString * _Nonnull)string;
 - (void)screenFramerRecoveryDidFinish;
+- (void)screenDidResynchronizeSSH;
 
 @end

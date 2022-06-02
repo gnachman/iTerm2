@@ -13722,17 +13722,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return _conductor.sshIdentity.compactDescription;
 }
 
-- (void)screenBeginFramerRecovery {
-    while (_conductor) {
-        [self unhookSSHConductor];
+- (void)screenBeginFramerRecovery:(int)parentDepth {
+    if (parentDepth < 0) {
+        while (_conductor) {
+            [self unhookSSHConductor];
+        }
     }
+    iTermConductor *previousConductor = [_conductor autorelease];
     _conductor = [[iTermConductor alloc] init:@""
                                      boolArgs:@""
                                         dcsID:@""
                                clientUniqueID:@""
                                          vars:@{}
                              initialDirectory:nil
-                                       parent:nil];
+                                       parent:previousConductor];
     _conductor.delegate = self;
     [_conductor startRecovery];
 }
@@ -13742,14 +13745,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (!recovery) {
         return nil;
     }
-    while (_conductor) {
-        _conductor.delegate = nil;
-        [_conductor autorelease];
-        _conductor = _conductor.parent;
-    }
+    _conductor.delegate = nil;
+    [_conductor autorelease];
     _conductor = [[iTermConductor alloc] initWithRecovery:recovery];
     _conductor.delegate = self;
     return recovery;
+}
+
+// This is the final step of recovery. We need to reset the internal state of the conductors since
+// some tokens may have been dropped during recovery.
+- (void)screenDidResynchronizeSSH {
+    [_conductor didResynchronize];
 }
 
 - (void)screenFramerRecoveryDidFinish {

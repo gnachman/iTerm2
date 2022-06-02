@@ -672,7 +672,7 @@ async def cleanup():
 async def handle(args):
     log(f'handle {args}')
     if len(args) == 0:
-        fail("none", "no args")
+        # During recovery a blank line is sent. Just ignore it to avoid getting out of sync.
         return False
     cmd = args[0]
     del args[0]

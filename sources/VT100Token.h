@@ -271,6 +271,7 @@ typedef enum {
     SSH_END,   // At the end of a command
     SSH_OUTPUT,  // %output
     SSH_TERMINATE,  // %terminate
+    SSH_RECOVERY_BOUNDARY
 } VT100TerminalTokenType;
 
 // A preinitialized array of screen_char_t. When ASCII data is present, it will have the codes

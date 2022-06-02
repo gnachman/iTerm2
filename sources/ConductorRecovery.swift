@@ -15,18 +15,21 @@ class ConductorRecovery: NSObject {
     @objc let sshargs: String
     @objc let boolArgs: String
     @objc let clientUniqueID: String
+    @objc let parent: Conductor?
 
     @objc init(pid: pid_t,
                dcsID: String,
                tree: NSDictionary,
                sshargs: String,
                boolArgs: String,
-               clientUniqueID: String) {
+               clientUniqueID: String,
+               parent: Conductor?) {
         self.pid = pid
         self.dcsID = dcsID
         self.tree = tree
         self.sshargs = sshargs
         self.boolArgs = boolArgs
         self.clientUniqueID = clientUniqueID
+        self.parent = parent
     }
 }

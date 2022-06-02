@@ -2582,7 +2582,7 @@
         if (sshLocation) {
             banner = [NSString stringWithFormat:@"%@ — now at %@.", preamble, sshLocation];
         } else {
-            banner = [NSString stringWithFormat:@"%@ — you’re now back at the local shell.", preamble];
+            banner = [NSString stringWithFormat:@"%@.", preamble];
         }
         dispatch_async(queue, ^{
             [weakSelf appendBanner:banner andUnpause:unpauser];
@@ -2595,11 +2595,11 @@
     [unpauser unpause];
 }
 
-- (void)terminalBeginFramerRecovery {
+- (void)terminalBeginFramerRecoveryForChildOfConductorAtDepth:(int)parentDepth {
     [self appendBannerMessage:@"Recovering ssh connection…"];
     self.terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeRecovering;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
-        [delegate screenBeginFramerRecovery];
+        [delegate screenBeginFramerRecovery:parentDepth];
         [unpauser unpause];
     }];
 }
@@ -2611,8 +2611,9 @@
         iTermConductorRecovery *recovery = [delegate screenHandleFramerRecoveryString:string];
         if (recovery) {
             weakSelf.terminal.framerRecoveryMode = VT100TerminalFramerRecoveryModeSyncing;
-            [weakSelf.terminal.parser startConductorRecoveryModeWithID:recovery.dcsID
-                                                                  tree:recovery.tree];
+            // Drop tokens until we get a SSH_RECOVERY_BOUNDARY with the right boundary number.
+            weakSelf.terminal.framerBoundaryNumber = [weakSelf.terminal.parser startConductorRecoveryModeWithID:recovery.dcsID
+                                                                                                           tree:recovery.tree];
             [delegate screenFramerRecoveryDidFinish];
             dispatch_async(queue, ^{
                 [weakSelf appendBanner:@"ssh connection recovered!" andUnpause:unpauser];
@@ -2620,6 +2621,12 @@
         } else {
             [unpauser unpause];
         }
+    }];
+}
+
+- (void)terminalDidResynchronizeSSH {
+    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
+        [delegate screenDidResynchronizeSSH];
     }];
 }
 
