@@ -329,4 +329,28 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     [proxy cancelFindExistingFileRequest:reqid reply:^{}];
 }
 
+- (void)executeShellCommand:(NSString *)command
+                       args:(NSArray<NSString *> *)args
+                        dir:(NSString *)dir
+                        env:(NSDictionary<NSString *, NSString *> *)env
+                 completion:(void (^)(NSData *stdout,
+                                      NSData *stderr,
+                                      uint8_t status,
+                                      NSTaskTerminationReason reason))completion {
+    DLog(@"executeShellCommand:%@ args:%@ dir:%@ env:%@", command, args, dir, env);
+    id<pidinfoProtocol> proxy = [_connectionToService remoteObjectProxy];
+    [proxy executeShellCommand:command
+                          args:args
+                           dir:dir
+                           env:env
+                         reply:^(NSData * _Nonnull stdout,
+                                 NSData * _Nonnull stderr,
+                                 uint8_t status,
+                                 NSTaskTerminationReason reason) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(stdout, stderr, status,reason);
+        });
+    }];
+}
+
 @end

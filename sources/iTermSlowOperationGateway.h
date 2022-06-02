@@ -66,6 +66,16 @@ NS_ASSUME_NONNULL_BEGIN
                                     pathsToIgnore:(NSString *)pathsToIgnore
                                allowNetworkMounts:(BOOL)allowNetworkMounts
                                        completion:(void (^)(NSString *path, int prefixChars, int suffixChars, BOOL workingDirectoryIsLocal))completion;
+
+- (void)executeShellCommand:(NSString *)command
+                       args:(NSArray<NSString *> *)args
+                        dir:(NSString *)dir
+                        env:(NSDictionary<NSString *, NSString *> *)env
+                 completion:(void (^)(NSData *stdout,
+                                      NSData *stderr,
+                                      uint8_t status,
+                                      NSTaskTerminationReason reason))completion;
+
 @end
 
 NS_ASSUME_NONNULL_END

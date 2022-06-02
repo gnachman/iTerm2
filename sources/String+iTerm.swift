@@ -72,6 +72,25 @@ extension String {
         }
         return takeFirst(radius) + " …[\(count - 32) bytes elided]… " + takeLast(radius)
     }
+
+    func appending(pathComponent: String) -> String {
+        return URL(fileURLWithPath: self).appendingPathComponent(pathComponent).path
+    }
+
+    var expandingTildeInPath: String {
+        return (self as NSString).expandingTildeInPath
+    }
+
+    func linesInFileContents() throws -> [String] {
+        return try String(contentsOf: URL(fileURLWithPath: self)).components(separatedBy: .newlines)
+    }
+
+    func trimmingLeadingCharacters(in charset: CharacterSet) -> Substring {
+        guard let range = self.rangeOfCharacter(from: charset.inverted) else {
+            return Substring()
+        }
+        return self[range.upperBound...]
+    }
 }
 
 extension Substring {

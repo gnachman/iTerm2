@@ -1696,6 +1696,10 @@
 		A65D97BF24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65D97BE24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib */; };
 		A65D97C024B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65D97BE24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib */; };
 		A65D97C124B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A65D97BE24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib */; };
+		A65DF49B28491E5300AA29AB /* ShellIntegrationInjection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65DF49A28491E5300AA29AB /* ShellIntegrationInjection.swift */; };
+		A65DF49D28495E9B00AA29AB /* .zshenv in Resources */ = {isa = PBXBuildFile; fileRef = A65DF49C28495E9B00AA29AB /* .zshenv */; };
+		A65DF49E28495E9B00AA29AB /* .zshenv in Resources */ = {isa = PBXBuildFile; fileRef = A65DF49C28495E9B00AA29AB /* .zshenv */; };
+		A65DF49F28495E9B00AA29AB /* .zshenv in Resources */ = {isa = PBXBuildFile; fileRef = A65DF49C28495E9B00AA29AB /* .zshenv */; };
 		A65E6F522547F1D5008A4866 /* WindowCornerFull_Square@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65E6F4E2547F1D4008A4866 /* WindowCornerFull_Square@2x.png */; };
 		A65E6F532547F1D5008A4866 /* WindowCornerFull_Square@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65E6F4E2547F1D4008A4866 /* WindowCornerFull_Square@2x.png */; };
 		A65E6F542547F1D5008A4866 /* WindowCornerFull_Square@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65E6F4E2547F1D4008A4866 /* WindowCornerFull_Square@2x.png */; };
@@ -5664,6 +5668,8 @@
 		A65B72AF1B33C07D00F947A7 /* NextTip.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = NextTip.png; path = images/NextTip.png; sourceTree = "<group>"; };
 		A65B72B01B33C07D00F947A7 /* NextTip@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "NextTip@2x.png"; path = "images/NextTip@2x.png"; sourceTree = "<group>"; };
 		A65D97BE24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermMinimalComposerViewController.xib; path = Interfaces/iTermMinimalComposerViewController.xib; sourceTree = "<group>"; };
+		A65DF49A28491E5300AA29AB /* ShellIntegrationInjection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellIntegrationInjection.swift; sourceTree = "<group>"; };
+		A65DF49C28495E9B00AA29AB /* .zshenv */ = {isa = PBXFileReference; lastKnownFileType = text; path = .zshenv; sourceTree = "<group>"; };
 		A65E6F4E2547F1D4008A4866 /* WindowCornerFull_Square@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WindowCornerFull_Square@2x.png"; path = "images/WindowCornerFull_Square@2x.png"; sourceTree = "<group>"; };
 		A65E6F4F2547F1D4008A4866 /* WindowCorner_Square@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WindowCorner_Square@2x.png"; path = "images/WindowCorner_Square@2x.png"; sourceTree = "<group>"; };
 		A65E6F502547F1D4008A4866 /* WindowCornerFull_Square.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WindowCornerFull_Square.png; path = images/WindowCornerFull_Square.png; sourceTree = "<group>"; };
@@ -7722,6 +7728,7 @@
 				5376CB3B220D2E4300FE7476 /* git.sb */,
 				A62CD06427E9124F00215E92 /* askpass.sh */,
 				A6EEAED2283072CA0039E850 /* framer.py */,
+				A65DF49C28495E9B00AA29AB /* .zshenv */,
 			);
 			name = "Other Assets";
 			sourceTree = "<group>";
@@ -10325,6 +10332,7 @@
 				A62C3A901BCAE0ED00B5629D /* iTermRecentDirectoryMO+Additions.m */,
 				A62C3B331BCC265F00B5629D /* iTermHostRecordMO+Additions.h */,
 				A62C3B341BCC265F00B5629D /* iTermHostRecordMO+Additions.m */,
+				A65DF49A28491E5300AA29AB /* ShellIntegrationInjection.swift */,
 			);
 			name = "Shell Integration";
 			sourceTree = "<group>";
@@ -12939,6 +12947,7 @@
 				A66A882424DFCCC30043728B /* graphic_elixir.png in Resources */,
 				A66F52C32106F6F100571168 /* gitdirty@2x.png in Resources */,
 				1D6ED9C919AEA20D005A7799 /* IBarCursor@2x.png in Resources */,
+				A65DF49F28495E9B00AA29AB /* .zshenv in Resources */,
 				A62DBB9B20F47CFA008B63D1 /* GoBack.png in Resources */,
 				A62DBB9E20F47CFA008B63D1 /* GoForward.png in Resources */,
 				A67F61C9214395C60093940A /* graphic_search.png in Resources */,
@@ -13366,6 +13375,7 @@
 				A67F6191214395A70093940A /* graphic_npm.png in Resources */,
 				A67F619C214395B70093940A /* graphic_php@2x.png in Resources */,
 				A6F2F219250757FE00FC227F /* PrefsShortcuts@2x.png in Resources */,
+				A65DF49E28495E9B00AA29AB /* .zshenv in Resources */,
 				A66F52C82106F6F100571168 /* gitdirty.png in Resources */,
 				A6F1B3AF268FD0F300546767 /* StatusBarIconTriggers@2x.png in Resources */,
 				1D99C8E81BD59C37001EE1FC /* SearchCursor@2x.png in Resources */,
@@ -13446,6 +13456,7 @@
 				A69C93462121140100531438 /* iTermStatusBarLargeComposerViewController.xib in Resources */,
 				A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */,
 				A67D0D441A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
+				A65DF49D28495E9B00AA29AB /* .zshenv in Resources */,
 				A6B3A73E1AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
 				5308BF5B227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */,
 				A6EC47CA21EC73F5000E1321 /* PythonLogo.png in Resources */,
@@ -14932,6 +14943,7 @@
 				530AB8B520B2098000D2AA08 /* iTermVariables.m in Sources */,
 				A648DABA2427E73E00C2FF02 /* iTermFlagsChangedNotification.m in Sources */,
 				A6905561241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.m in Sources */,
+				A65DF49B28491E5300AA29AB /* ShellIntegrationInjection.swift in Sources */,
 				A631FC9220EDDBC600EB824F /* iTermFindDriver.m in Sources */,
 				A6A73D4127C7FAED002E4CCA /* NSFileManager+CommonAdditions.m in Sources */,
 				A61A85BA24FC260700B03880 /* iTermTextViewContextMenuHelper.m in Sources */,

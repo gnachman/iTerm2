@@ -666,6 +666,49 @@ void iTermMutatePathFindersDict(void (^NS_NOESCAPE block)(NSMutableDictionary<NS
     reply();
 }
 
+- (void)executeShellCommand:(NSString *)command
+                       args:(NSArray<NSString *> *)args
+                        dir:(NSString *)dir
+                        env:(NSDictionary<NSString *, NSString *> *)env
+                      reply:(void (^)(NSData *stdout,
+                                      NSData *stderr,
+                                      uint8_t status,
+                                      NSTaskTerminationReason reason))reply {
+    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^completion)(void)) {
+        if (!shouldPerform) {
+            reply(nil, 0, 0, NO);
+            syslog(LOG_WARNING, "pidinfo wedged in executeShellCommand. count=%d",
+                   self->_numWedged);
+            return;
+        }
+
+        NSPipe *stdoutPipe = [NSPipe pipe];
+        NSPipe *stderrPipe = [NSPipe pipe];
+        NSPipe *stdinPipe = [NSPipe pipe];
+
+        NSTask *task = [[NSTask alloc] init];
+        task.launchPath = command;
+        task.arguments = args;
+        task.standardInput = stdinPipe;
+        task.standardOutput = stdoutPipe;
+        task.standardError = stderrPipe;
+
+        [task launch];
+
+        [stdinPipe.fileHandleForWriting closeFile];
+        NSData *stdout = [stdoutPipe.fileHandleForReading readDataToEndOfFile];
+        NSData *stderr = [stderrPipe.fileHandleForReading readDataToEndOfFile];
+
+        [task waitUntilExit];
+
+        if (!completion()) {
+            syslog(LOG_INFO, "executeShellCommand finished after timing out.");
+        }
+        DLog(@"Finished with stdout %@", stdout);
+        reply(stdout, stderr, task.terminationStatus, task.terminationReason);
+    }];
+}
+
 @end
 
 

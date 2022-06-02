@@ -26,6 +26,7 @@
 #import "iTermRateLimitedUpdate.h"
 #import "iTermSelection.h"
 #import "iTermSelectionExtraction.h"
+#import "iTermSlowOperationGateway.h"
 #import "iTermSocket.h"
 #import "iTermSocketAddress.h"
 #import "iTermStatusBarTextComponent.h"

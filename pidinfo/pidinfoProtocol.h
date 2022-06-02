@@ -60,6 +60,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)cancelFindExistingFileRequest:(int)reqid
                                reply:(void (^)(void))reply;
 
+- (void)executeShellCommand:(NSString *)command
+                       args:(NSArray<NSString *> *)args
+                        dir:(NSString *)dir
+                        env:(NSDictionary<NSString *, NSString *> *)env
+                      reply:(void (^)(NSData *stdout,
+                                      NSData *stderr,
+                                      uint8_t status,
+                                      NSTaskTerminationReason reason))reply;
+
 @end
 
 NS_ASSUME_NONNULL_END
