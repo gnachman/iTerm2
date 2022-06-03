@@ -19,7 +19,7 @@
 int main(int argc, const char *argv[]){
     if (argc > 1 && !strcmp(argv[1], "--launch_shell")) {
         // In theory this is not used any more because the ShellLauncher executable should be used instead.
-        return launch_shell(argc > 2 ? argv[2] : NULL);
+        return launch_shell(argc > 2 ? argv[2] : NULL, 0, NULL);
     } else if (argc > 1 && !strcmp(argv[1], "--server")) {
         // Run a server that spawns a job.
         return iterm2_server(argc - 2, (char *const *)argv + 2);

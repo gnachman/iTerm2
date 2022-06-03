@@ -25,7 +25,7 @@ static const char *UnprefixedCustomShell(const char *shell) {
     return NULL;
 }
 
-int launch_shell(const char *customShell) {
+int launch_shell(const char *customShell, int num_extra_args, const char **extra_args) {
     const char *shell = UnprefixedCustomShell(customShell) ? : getenv("SHELL");
     if (!shell) {
         err(1, "SHELL environment variable not set");
@@ -57,6 +57,14 @@ int launch_shell(const char *customShell) {
         errx(1, "shell path is too long");
     }
 
-    execlp(shell, argv0, (char*)0);
+    char *argv[num_extra_args + 2];
+    argv[0] = argv0;
+    int i;
+    for (i = 0; i < num_extra_args; i++) {
+        argv[i + 1] = strdup(extra_args[i]);
+    }
+    argv[i + 1] = NULL;
+
+    execvp(shell, argv);
     err(1, "Failed to exec %s with arg %s", shell, argv0);
 }

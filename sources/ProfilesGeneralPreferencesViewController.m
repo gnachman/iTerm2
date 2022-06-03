@@ -89,6 +89,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_subtitleText;
     IBOutlet NSButton *_configureSSHButton;
     IBOutlet NSButton *_loadShellIntegrationAutomatically;
+    IBOutlet NSTextField *_reasonShellIntegrationDisabledLabel;
 
     iTermFunctionCallTextFieldDelegate *_commandDelegate;
     iTermFunctionCallTextFieldDelegate *_sendTextAtStartDelegate;
@@ -642,20 +643,50 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     }
 }
 
-- (BOOL)shouldEnableLoadShellIntegration {
+- (BOOL)shouldEnableLoadShellIntegration:(NSString **)reasonOut {
     NSInteger tag = _commandType.selectedTag;
     NSString *param = [self stringForKey:KEY_COMMAND_LINE];
     NSArray<NSString *> *shells = @[ @"bash", @"zsh", @"fish" ];
     switch (tag) {
         case iTermGeneralProfilePreferenceCustomCommandTagCustomShell:
-        case iTermGeneralProfilePreferenceCustomCommandTagCustom:
-            return [shells containsObject:[[[param componentsInShellCommand].firstObject lastPathComponent] lowercaseString]];
-        case iTermGeneralProfilePreferenceCustomCommandTagLoginShell:
+        case iTermGeneralProfilePreferenceCustomCommandTagCustom: {
+            NSArray<NSString *> *parts = [param componentsInShellCommand];
+            if ([parts.firstObject isEqual:@"/bin/bash"]) {
+                // Apple's bash disables sourcing ENV when --posix is set 🤬
+                *reasonOut = @"macOS’s built-in bash is broken. Use homebrew bash instead.";
+                return NO;
+            }
+            NSString *shell = [parts.firstObject lastPathComponent];
+            const BOOL enable = [shells containsObject:[shell lowercaseString]];
+            if (enable) {
+                *reasonOut = nil;
+                return enable;
+            } else {
+                *reasonOut = [NSString stringWithFormat:@"%@ is not a supported shell", shell];
+                return NO;
+            }
+        }
+        case iTermGeneralProfilePreferenceCustomCommandTagLoginShell: {
             if (!_shell) {
                 _shell = [iTermOpenDirectory userShell];
             }
-            return [shells containsObject:[[_shell lastPathComponent] lowercaseString]];
+            if ([_shell isEqual:@"/bin/bash"]) {
+                // Apple's bash disables sourcing ENV when --posix is set 🤬
+                *reasonOut = @"macOS’s built-in bash is broken. Use homebrew bash instead.";
+                return NO;
+            }
+            NSString *shell = [_shell lastPathComponent];
+            const BOOL enable = [shells containsObject:[shell lowercaseString]];
+            if (enable) {
+                *reasonOut = nil;
+                return enable;
+            } else {
+                *reasonOut = [NSString stringWithFormat:@"%@ is not a supported shell", shell];
+                return NO;
+            }
+        }
         case iTermGeneralProfilePreferenceCustomCommandTagSSH:
+            *reasonOut = @"Not supported for ssh yet.";
             return NO;  // TODO
     }
     return NO;
@@ -684,7 +715,15 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         _configureSSHButton.hidden = YES;
     }
     _customDirectory.enabled = ([[self stringForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]);
-    _loadShellIntegrationAutomatically.enabled = [self shouldEnableLoadShellIntegration];
+    NSString *reason;
+    _loadShellIntegrationAutomatically.enabled = [self shouldEnableLoadShellIntegration:&reason];
+    if (reason) {
+        _reasonShellIntegrationDisabledLabel.stringValue = [@"⚠️ " stringByAppendingString:reason];
+        [_reasonShellIntegrationDisabledLabel setLabelEnabled:NO];
+        _reasonShellIntegrationDisabledLabel.hidden = NO;
+    } else {
+        _reasonShellIntegrationDisabledLabel.hidden = YES;
+    }
 }
 
 #pragma mark - SSH

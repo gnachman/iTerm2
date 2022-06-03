@@ -218,6 +218,9 @@ fileprivate class BashShellIntegrationInjection: BaseShellIntegrationInjection, 
         var options = ""
 
         for (i, arg) in argv.enumerated() {
+            if i == 0 {
+                continue
+            }
             if expectingFileArg {
                 fileArgSet = true
                 break
@@ -241,12 +244,12 @@ fileprivate class BashShellIntegrationInjection: BaseShellIntegrationInjection, 
                     options = String(lhs)
                 }
                 if options.contains("c") {
-                    // non-interactive shell. Also skip `bash -ic` interactive mode with
+                    // Non-interactive shell. Also skip `bash -ic` interactive mode with
                     // command string.
                     return
                 }
                 if options.contains("s") {
-                    // read from stdin and follow with args
+                    // Read from stdin and follow with args.
                     break
                 }
                 if options.contains("i") {
@@ -278,8 +281,7 @@ fileprivate class BashShellIntegrationInjection: BaseShellIntegrationInjection, 
             // Non-interactive shell.
             return
         }
-        env[BashEnv.ENV] = shellIntegrationDir.appending(
-            pathComponent: ".iterm2_shell_integration.bash")
+        env[BashEnv.ENV] = shellIntegrationDir.appending(pathComponent: "bash-si-loader")
         env[BashEnv.IT2_BASH_INJECT] = inject.joined(separator: " ")
         if !posixEnv.isEmpty {
             env[BashEnv.IT2_BASH_POSIX_ENV] = posixEnv

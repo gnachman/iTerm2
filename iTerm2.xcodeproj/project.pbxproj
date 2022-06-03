@@ -1700,6 +1700,9 @@
 		A65DF4A12849601A00AA29AB /* .zshenv in Resources */ = {isa = PBXBuildFile; fileRef = A65DF4A02849601A00AA29AB /* .zshenv */; };
 		A65DF4A22849601A00AA29AB /* .zshenv in Resources */ = {isa = PBXBuildFile; fileRef = A65DF4A02849601A00AA29AB /* .zshenv */; };
 		A65DF4A32849601A00AA29AB /* .zshenv in Resources */ = {isa = PBXBuildFile; fileRef = A65DF4A02849601A00AA29AB /* .zshenv */; };
+		A65DF4A52849C11D00AA29AB /* bash-si-loader in Resources */ = {isa = PBXBuildFile; fileRef = A65DF4A42849C11D00AA29AB /* bash-si-loader */; };
+		A65DF4A62849C11D00AA29AB /* bash-si-loader in Resources */ = {isa = PBXBuildFile; fileRef = A65DF4A42849C11D00AA29AB /* bash-si-loader */; };
+		A65DF4A72849C11D00AA29AB /* bash-si-loader in Resources */ = {isa = PBXBuildFile; fileRef = A65DF4A42849C11D00AA29AB /* bash-si-loader */; };
 		A65E6F522547F1D5008A4866 /* WindowCornerFull_Square@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65E6F4E2547F1D4008A4866 /* WindowCornerFull_Square@2x.png */; };
 		A65E6F532547F1D5008A4866 /* WindowCornerFull_Square@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65E6F4E2547F1D4008A4866 /* WindowCornerFull_Square@2x.png */; };
 		A65E6F542547F1D5008A4866 /* WindowCornerFull_Square@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A65E6F4E2547F1D4008A4866 /* WindowCornerFull_Square@2x.png */; };
@@ -5670,6 +5673,7 @@
 		A65D97BE24B19D2600DF45F9 /* iTermMinimalComposerViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iTermMinimalComposerViewController.xib; path = Interfaces/iTermMinimalComposerViewController.xib; sourceTree = "<group>"; };
 		A65DF49A28491E5300AA29AB /* ShellIntegrationInjection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellIntegrationInjection.swift; sourceTree = "<group>"; };
 		A65DF4A02849601A00AA29AB /* .zshenv */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = .zshenv; path = OtherResources/.zshenv; sourceTree = "<group>"; };
+		A65DF4A42849C11D00AA29AB /* bash-si-loader */ = {isa = PBXFileReference; lastKnownFileType = text; name = "bash-si-loader"; path = "OtherResources/bash-si-loader"; sourceTree = "<group>"; };
 		A65E6F4E2547F1D4008A4866 /* WindowCornerFull_Square@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WindowCornerFull_Square@2x.png"; path = "images/WindowCornerFull_Square@2x.png"; sourceTree = "<group>"; };
 		A65E6F4F2547F1D4008A4866 /* WindowCorner_Square@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "WindowCorner_Square@2x.png"; path = "images/WindowCorner_Square@2x.png"; sourceTree = "<group>"; };
 		A65E6F502547F1D4008A4866 /* WindowCornerFull_Square.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = WindowCornerFull_Square.png; path = images/WindowCornerFull_Square.png; sourceTree = "<group>"; };
@@ -7729,6 +7733,7 @@
 				5376CB3B220D2E4300FE7476 /* git.sb */,
 				A62CD06427E9124F00215E92 /* askpass.sh */,
 				A6EEAED2283072CA0039E850 /* framer.py */,
+				A65DF4A42849C11D00AA29AB /* bash-si-loader */,
 			);
 			name = "Other Assets";
 			sourceTree = "<group>";
@@ -12707,6 +12712,7 @@
 				A67F61E6214395D50093940A /* graphic_vim.png in Resources */,
 				1D8BBA7A1B30FD230005A852 /* Later.png in Resources */,
 				A6E7AE57214394CA00DE9F3B /* graphic_bq.png in Resources */,
+				A65DF4A72849C11D00AA29AB /* bash-si-loader in Resources */,
 				A66F52C92106F6F100571168 /* gitdirty.png in Resources */,
 				A67D0D491A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				A6F7A736213CB143004DE961 /* StatusBarIconLoupe@2x.png in Resources */,
@@ -13178,6 +13184,7 @@
 				A67D0D481A2EE12A003A8B35 /* CommandHistoryPopup.xib in Resources */,
 				A6F2B6D42558B51B008D6BF1 /* ScrollerHighlights.png in Resources */,
 				A6FEA28C1CF4DD2900376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */,
+				A65DF4A62849C11D00AA29AB /* bash-si-loader in Resources */,
 				A6F7A726213CB143004DE961 /* StatusBarIconHost.png in Resources */,
 				A67F6165214395990093940A /* graphic_monitor.png in Resources */,
 				A6E7AE81214394DD00DE9F3B /* graphic_curl@2x.png in Resources */,
@@ -13758,6 +13765,7 @@
 				A6B70FC119830F0D007A4284 /* NewOutput.png in Resources */,
 				1DA76A0B1B30892900CB272A /* iTermTipWindowController.xib in Resources */,
 				A67F61A7214395B70093940A /* graphic_rails.png in Resources */,
+				A65DF4A52849C11D00AA29AB /* bash-si-loader in Resources */,
 				A67D0D6B1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
 				A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */,
 				A6E7AE8C214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,

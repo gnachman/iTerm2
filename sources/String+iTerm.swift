@@ -89,7 +89,7 @@ extension String {
         guard let range = self.rangeOfCharacter(from: charset.inverted) else {
             return Substring()
         }
-        return self[range.upperBound...]
+        return self[range.lowerBound...]
     }
 }
 
