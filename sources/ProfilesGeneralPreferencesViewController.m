@@ -643,6 +643,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     }
 }
 
+- (NSString *)loginShell {
+    if (!_shell) {
+        _shell = [iTermOpenDirectory userShell];
+    }
+    return _shell;
+}
+
 - (BOOL)shouldEnableLoadShellIntegration:(NSString **)reasonOut {
     NSInteger tag = _commandType.selectedTag;
     NSString *param = [self stringForKey:KEY_COMMAND_LINE];
@@ -667,15 +674,12 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             }
         }
         case iTermGeneralProfilePreferenceCustomCommandTagLoginShell: {
-            if (!_shell) {
-                _shell = [iTermOpenDirectory userShell];
-            }
-            if ([_shell isEqual:@"/bin/bash"]) {
+            if ([self.loginShell isEqual:@"/bin/bash"]) {
                 // Apple's bash disables sourcing ENV when --posix is set 🤬
                 *reasonOut = @"macOS’s built-in bash is broken. Use homebrew bash instead.";
                 return NO;
             }
-            NSString *shell = [_shell lastPathComponent];
+            NSString *shell = [self.loginShell lastPathComponent];
             const BOOL enable = [shells containsObject:[shell lowercaseString]];
             if (enable) {
                 *reasonOut = nil;
@@ -700,8 +704,9 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         _customCommand.hidden = NO;
         _customCommand.enabled = YES;
     } else {
-        _customCommand.hidden = YES;
+        _customCommand.hidden = NO;
         _customCommand.enabled = NO;
+        _customCommand.stringValue = self.loginShell;
     }
     if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
         NSRect frame = _customCommand.frame;
