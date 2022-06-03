@@ -14,16 +14,6 @@ import Foundation
         case unsupportedShell
     }
 
-    @objc func serialize(path: String, env: [String: String]) throws -> String {
-        if env.isEmpty {
-            return ""
-        }
-        guard let serializer = ShellIntegrationInjectionFactory().createSerializer(path: path) else {
-            throw Exception.unsupportedShell
-        }
-        return serializer.serialize(env: env)
-    }
-
     private enum ShellLauncherInfo {
         case customShell(String)
         case loginShell(String)
@@ -117,19 +107,6 @@ fileprivate class ShellIntegrationInjectionFactory {
         }
     }
 
-    func createSerializer(path: String) -> ShellIntegrationSerializing? {
-        switch Shell(path: path) {
-        case .none:
-            return nil
-        case .fish:
-            return FishShellIntegrationSerialization()
-        case .bash:
-            return BashShellIntegrationSerialization()
-        case .zsh:
-            return ZshShellIntegrationSerialization()
-        }
-    }
-
     // -bash -> bash, /BIN/ZSH -> zsh
     fileprivate func supportedShellName(path: String) -> String? {
         let name = path.lastPathComponent.lowercased().removing(prefix: "-")
@@ -144,10 +121,6 @@ fileprivate protocol ShellIntegrationInjecting {
                          completion: @escaping ([String: String], [String]) -> ())
 }
 
-fileprivate protocol ShellIntegrationSerializing {
-    func serialize(env: [String: String]) -> String
-}
-
 fileprivate struct Env {
     static let XDG_DATA_DIRS = "XDG_DATA_DIRS"
     static let HOME = "HOME"
@@ -159,15 +132,6 @@ fileprivate class BaseShellIntegrationInjection {
 
     init(shellIntegrationDir: String) {
         self.shellIntegrationDir = shellIntegrationDir
-    }
-}
-
-fileprivate class FishShellIntegrationSerialization: ShellIntegrationSerializing {
-    // {a:b, c:d} -> "set -gx 'a' 'b'\nset -gx 'c' 'd'"
-    func serialize(env: [String: String]) -> String {
-        return env.map { (k, v) in
-            "set -gx \(k.asFishStringLiteral) \(v.asFishStringLiteral)"
-        }.joined(separator: "\n")
     }
 }
 
@@ -197,17 +161,6 @@ fileprivate class FishShellIntegrationInjection: BaseShellIntegrationInjection, 
     }
 }
 
-fileprivate class ZshShellIntegrationSerialization: ShellIntegrationSerializing {
-    func serialize(env: [String : String]) -> String {
-        return serialize(env: env, prefix: "builtin export", separator: "=")
-    }
-    func serialize(env: [String: String],
-                   prefix: String,
-                   separator: String) -> String {
-        return posixSerialize(env: env, prefix: prefix, separator: separator)
-    }
-}
-
 fileprivate class ZshShellIntegrationInjection: BaseShellIntegrationInjection, ShellIntegrationInjecting {
     fileprivate struct ZshEnv {
         static let ZDOTDIR = "ZDOTDIR"
@@ -230,12 +183,6 @@ fileprivate class ZshShellIntegrationInjection: BaseShellIntegrationInjection, S
         env[ZshEnv.ZDOTDIR] = shellIntegrationDir
         env[ZshEnv.ITERM_INJECT_SHELL_INTEGRATION] = "1"
         completion(env, argv)
-    }
-}
-
-fileprivate class BashShellIntegrationSerialization: ShellIntegrationSerializing {
-    func serialize(env: [String: String]) -> String {
-        return posixSerialize(env: env, prefix: "builtin export", separator: "=")
     }
 }
 
@@ -348,107 +295,4 @@ fileprivate class BashShellIntegrationInjection: BaseShellIntegrationInjection, 
         }
         argv.insert("--posix", at: 1)
     }
-}
-
-
-// {a:b, c:d} -> "builtin export 'a'='b'\nbuiltin export 'c'='d'"
-fileprivate func posixSerialize(env: [String: String],
-                                prefix: String,
-                                separator: String) -> String {
-    return env.map { (k, v) in
-        "\(prefix) \(k.asStringLiteral)\(separator)\(v.asStringLiteral)"
-    }.joined(separator: "\n")
-}
-
-fileprivate extension String {
-    // x -> 'x'
-    // x'y'z -> 'x'"'"'y'"'"'z'
-    var asStringLiteral: String {
-        let parts = components(separatedBy: "'")
-        let quoted = parts.map { "'\($0)'" }
-        return quoted.joined(separator: #""'""#)
-    }
-
-    var asFishStringLiteral: String {
-        let escaped = replacingOccurrences(
-            of: "\\",
-            with: "\\\\").replacingOccurrences(
-                of: "'",
-                with: "\\'")
-        return "'" + escaped + "'"
-    }
-}
-
-extension FileManager {
-    // Only checks system paths.
-    func which(_ name: String, env: [String: String]) -> String? {
-        if name.contains("/") {
-            return name
-        }
-        var triedPaths = Set<String>()
-        let pathComponents = env[Env.PATH]?.components(separatedBy: ":") ?? []
-        let paths = pathComponents + [
-            "~/.local/bin".expandingTildeInPath,
-            "~/bin".expandingTildeInPath]
-        if let ans = pathContaining(cmd: name, fromDirs: paths) {
-            return ans
-        }
-        triedPaths.formUnion(Set(paths))
-        let systemPaths = Self.systemPaths.filter {
-            !triedPaths.contains($0)
-        }
-        if let ans = pathContaining(cmd: name, fromDirs: systemPaths) {
-            return ans
-        }
-        return nil
-    }
-
-    fileprivate func pathContaining(cmd: String, fromDirs dirs: [String]) -> String? {
-        if cmd.contains("/") {
-            if isExecutableFile(atPath: cmd) {
-                return cmd
-            }
-            return nil
-        }
-        guard !dirs.isEmpty else {
-            return nil
-        }
-        var seen = Set<String>()
-        for dir in dirs {
-            guard !seen.contains(dir) else {
-                continue
-            }
-            seen.insert(dir)
-            let name = dir.appending(pathComponent: cmd)
-            if isExecutableFile(atPath: name) {
-                return name
-            }
-        }
-        return nil
-    }
-
-    fileprivate static var systemPaths: [String] = {
-        guard let files = try? FileManager.default.contentsOfDirectory(atPath: "/etc/paths.d") else {
-            return []
-        }
-        var result = [String]()
-        var seen = Set<String>()
-        let sortedFiles = files.sorted(by: { lhs, rhs in
-            return lhs.lastPathComponent < rhs.lastPathComponent
-        }) + ["/etc/paths"]
-        for file in sortedFiles {
-            guard let allLines = try? file.linesInFileContents() else {
-                continue
-            }
-            let lines = allLines.map {
-                $0.trimmingCharacters(in: .whitespacesAndNewlines)
-            }.filter {
-                !$0.isEmpty && !$0.hasPrefix("#") && !seen.contains($0)
-            }
-            result.append(contentsOf: lines)
-            seen.formUnion(Set(lines))
-        }
-        return result
-    }()
-
 }
