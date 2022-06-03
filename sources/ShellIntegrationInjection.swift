@@ -24,18 +24,68 @@ import Foundation
         return serializer.serialize(env: env)
     }
 
+    private enum ShellLauncherInfo {
+        case customShell(String)
+        case loginShell(String)
+        case command
+
+        init(_ argv: [String]) {
+            guard argv.starts(with: ["/usr/bin/login", "-fpl"]),
+                  argv.get(3, default: "").lastPathComponent == "ShellLauncher",
+                  argv.get(4, default: "") == "--launch_shell" else {
+                self = .command
+                return
+            }
+            guard argv.get(5, default: "").hasPrefix("SHELL="),
+                  let (_, shell) = argv[5].split(onFirst: "=") else {
+                guard let shell = iTermOpenDirectory.userShell() else {
+                    self = .command
+                    return
+                }
+                self = .loginShell(shell)
+                return
+            }
+            self = .customShell(String(shell))
+        }
+    }
+
+    private var injectors = [String: ShellIntegrationInjecting]()
+
     @objc func modifyShellEnvironment(shellIntegrationDir: String,
                                       env: [String: String],
                                       argv: [String],
                                       completion: @escaping ([String: String], [String]) -> ()) {
-        let injector = ShellIntegrationInjectionFactory().createInjector(
-            shellIntegrationDir: shellIntegrationDir,
-            path: argv[0])
-        guard let injector = injector else {
-            completion(env, argv)
+        switch ShellLauncherInfo(argv) {
+        case .command:
+            let injector = ShellIntegrationInjectionFactory().createInjector(
+                shellIntegrationDir: shellIntegrationDir,
+                path: argv[0])
+            guard let injector = injector else {
+                completion(env, argv)
+                return
+            }
+            // Keep injector from getting dealloced
+            let key = UUID().uuidString
+            injectors[key] = injector
+            injector.computeModified(env: env, argv: argv) { [weak self] env, args in
+                completion(env, args)
+                self?.injectors.removeValue(forKey: key)
+            }
+        case .customShell(let shell):
+            modifyShellEnvironment(shellIntegrationDir: shellIntegrationDir,
+                                   env: env,
+                                   argv: [shell]) { newEnv, newArgs in
+                completion(newEnv, Array(argv + newArgs.dropFirst()))
+            }
+            return
+        case .loginShell(let shell):
+            modifyShellEnvironment(shellIntegrationDir: shellIntegrationDir,
+                                   env: env,
+                                   argv: [shell]) { newEnv, newArgs in
+                completion(newEnv, Array(argv + newArgs.dropFirst()))
+            }
             return
         }
-        injector.computeModified(env: env, argv: argv, completion: completion)
     }
 }
 
@@ -162,87 +212,24 @@ fileprivate class ZshShellIntegrationInjection: BaseShellIntegrationInjection, S
     fileprivate struct ZshEnv {
         static let ZDOTDIR = "ZDOTDIR"
         static let IT2_ORIG_ZDOTDIR = "IT2_ORIG_ZDOTDIR"
+        // Nonempty to load shell integration automatically.
+        static let ITERM_INJECT_SHELL_INTEGRATION = "ITERM_INJECT_SHELL_INTEGRATION"
     }
 
     // Runs the completion block with a modified environment.
-    func computeModified(env: [String: String],
+    func computeModified(env inputEnv: [String: String],
                          argv: [String],
                          completion: @escaping ([String: String], [String]) -> ()) {
-        let zdotdir = env[ZshEnv.ZDOTDIR]
-        if !isNewZshInstall(env: env, zdotdir: zdotdir) {
-            finishZSHSetup(env: env, zdotdir: zdotdir, argv: argv, completion: completion)
-            return
-        }
-        // Not a new install
-        if zdotdir != nil {
-            // Don't prevent zsh-newuser-install from running.
-            // zsh-newuser-install never runs as root, but we assume that it does.
-            completion(env, argv)
-            return
-        }
-        // Try to get ZDOTDIR from /etc/zshenv, when all startup files are not present
-        getZshZDotdirFromGlobalZshenv(env: env, argv0: argv[0]) { [weak self] globalZDotdir in
-            guard let self = self else {
-                return
-            }
-            if let globalZDotdir = globalZDotdir {
-                if self.isNewZshInstall(env: env, zdotdir: globalZDotdir) {
-                    completion(env, argv)
-                    return
-                }
-            } else {
-                completion(env, argv)
-                return
-            }
-            self.finishZSHSetup(env: env, zdotdir: globalZDotdir, argv: argv, completion: completion)
-        }
-    }
-
-    private func finishZSHSetup(env inputEnv: [String: String],
-                                zdotdir: String?,
-                                argv: [String],
-                                completion: ([String: String], [String]) -> ()) {
         var env = inputEnv
+        let zdotdir = env[ZshEnv.ZDOTDIR]
         if let zdotdir = zdotdir {
             env[ZshEnv.IT2_ORIG_ZDOTDIR] = zdotdir
         } else {
             env.removeValue(forKey: ZshEnv.IT2_ORIG_ZDOTDIR)
         }
-        env[ZshEnv.ZDOTDIR] = shellIntegrationDir.appending(pathComponent: "zsh")
+        env[ZshEnv.ZDOTDIR] = shellIntegrationDir
+        env[ZshEnv.ITERM_INJECT_SHELL_INTEGRATION] = "1"
         completion(env, argv)
-    }
-
-    private func isNewZshInstall(env: [String: String], zdotdir maybeZDotDir: String?) -> Bool {
-        let zdotdir: String
-        if let providedDir = maybeZDotDir {
-            zdotdir = providedDir
-        } else {
-            // In this case zsh reads from root. If no dotfiles it'll run zsh-newuser-install,
-            // which fails if there are rc files in $HOME
-            zdotdir = env[Env.HOME] ?? NSHomeDirectory()
-            if zdotdir == "~" {
-                return true
-            }
-        }
-        for q in [".zshrc", ".zshenv", ".zprofile", ".zlogin"] {
-            if FileManager.default.fileExists(atPath: zdotdir.appending(pathComponent: q)) {
-                return false
-            }
-        }
-        return true
-    }
-
-    private func getZshZDotdirFromGlobalZshenv(env: [String: String],
-                                       argv0: String,
-                                       completion: @escaping (String?) -> ()) {
-        let exe = FileManager.default.which(argv0, env: env) ?? "zsh"
-        iTermSlowOperationGateway.sharedInstance().executeShellCommand(
-            exe,
-            args: [argv0.lastPathComponent, "--norcs", "--interactive", "-c", "echo -n $ZDOTDIR"],
-            dir: "/",
-            env: env) { stdout, stderr, status, reason in
-                completion(status == 0 ? String(data: stdout, encoding: .utf8) : nil)
-            }
     }
 }
 

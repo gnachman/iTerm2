@@ -1,18 +1,11 @@
-# This file can get sourced with aliases enabled. To avoid alias expansion
-# we quote everything that can be quoted. Some aliases will still break us
-# though.
-
-# Don't use [[ -v ... ]] because it doesn't work in zsh < 5.4.
+# Restore ZDOTDIR to its original value (typically empty since macOS doesn't set it by default)
 if [[ -n "${IT2_ORIG_ZDOTDIR+X}" ]]; then
-    # Normally ZDOTDIR shouldn't be exported but it was in the environment
-    # so we export it.
     'builtin' 'export' ZDOTDIR="$IT2_ORIG_ZDOTDIR"
     'builtin' 'unset' 'IT2_ORIG_ZDOTDIR'
 else
     'builtin' 'unset' 'ZDOTDIR'
 fi
 
-# Use try-always to have the right error code.
 {
     # Zsh treats empty $ZDOTDIR as if it was "/". We do the same.
     #
@@ -26,7 +19,7 @@ fi
     # Zsh ignores rc files that are directories, and so does source.
     [[ ! -r "$_it2_file" ]] || 'builtin' 'source' '--' "$_it2_file"
 } always {
-    if [[ -o 'interactive' && -n "${ITERM_SHELL_INTEGRATION_INSTALLED-}" ]]; then
+    if [[ -o 'interactive' && -n "${ITERM_INJECT_SHELL_INTEGRATION-}" ]]; then
         # ${(%):-%x} is the path to the current file.
         # On top of it we add :A:h to get the directory.
         'builtin' 'typeset' _it2_file="${${(%):-%x}:A:h}"/iterm2_shell_integration.zsh

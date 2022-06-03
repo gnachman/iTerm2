@@ -2495,22 +2495,43 @@ ITERM_WEAKLY_REFERENCEABLE
                                         hasBadPWD:env[PWD_ENVNAME]];
                 }];
             }
-            [_shell launchWithPath:argv[0]
-                         arguments:[argv subarrayFromIndex:1]
-                       environment:env
-                       customShell:customShell
-                          gridSize:_screen.size
-                          viewSize:_screen.viewSize
-                  maybeScaleFactor:_textview.window.backingScaleFactor
-                            isUTF8:isUTF8
-                        completion:^{
-                [self sendInitialText];
-                if (completion) {
-                    completion(YES);
-                }
+            [self injectShellIntegrationWithEnvironment:env
+                                                   args:argv
+                                             completion:^(NSDictionary<NSString *, NSString *> *env,
+                                                          NSArray<NSString *> *argv) {
+                [_shell launchWithPath:argv[0]
+                             arguments:[argv subarrayFromIndex:1]
+                           environment:env
+                           customShell:customShell
+                              gridSize:_screen.size
+                              viewSize:_screen.viewSize
+                      maybeScaleFactor:_textview.window.backingScaleFactor
+                                isUTF8:isUTF8
+                            completion:^{
+                    [self sendInitialText];
+                    if (completion) {
+                        completion(YES);
+                    }
+                }];
             }];
         }];
     }];
+}
+
+- (void)injectShellIntegrationWithEnvironment:(NSDictionary<NSString *, NSString *> *)env
+                                         args:(NSArray<NSString *> *)argv
+                            completion:(void (^)(NSDictionary<NSString *, NSString *> *,
+                                                 NSArray<NSString *> *))completion {
+    ShellIntegrationInjector *injector = [ShellIntegrationInjector instance];
+    NSString *dir = [[NSBundle bundleForClass:[self class]] pathForResource:@".zshenv" ofType:nil];
+    if (!dir) {
+        completion(env, argv);
+        return;
+    }
+    [injector modifyShellEnvironmentWithShellIntegrationDir:dir.stringByDeletingLastPathComponent
+                                                        env:env
+                                                       argv:argv
+                                                 completion:completion];
 }
 
 - (void)setParentScope:(iTermVariableScope *)parentScope {
