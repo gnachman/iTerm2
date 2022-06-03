@@ -88,6 +88,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTextField *_subtitleLabel;
     IBOutlet NSTextField *_subtitleText;
     IBOutlet NSButton *_configureSSHButton;
+    IBOutlet NSButton *_loadShellIntegrationAutomatically;
 
     iTermFunctionCallTextFieldDelegate *_commandDelegate;
     iTermFunctionCallTextFieldDelegate *_sendTextAtStartDelegate;
@@ -129,6 +130,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     iTermRateLimitedUpdate *_rateLimit;
     IBOutlet NSTabView *_tabView;
     NSRect _desiredFrame;
+    NSString *_shell;  // cached open directory userShell for performance
     iTermSSHConfigurationWindowController *_sshConfigurationWindowController;
 }
 
@@ -370,6 +372,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     _subtitleText.delegate = _subtitleTextDelegate;
 
     [self updateSubtitlesAllowed];
+
+    [self defineControl:_loadShellIntegrationAutomatically
+                    key:KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self addViewToSearchIndex:_urlSchemes
                    displayName:@"URL schemes handled by profile"
@@ -635,6 +642,25 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     }
 }
 
+- (BOOL)shouldEnableLoadShellIntegration {
+    NSInteger tag = _commandType.selectedTag;
+    NSString *param = [self stringForKey:KEY_COMMAND_LINE];
+    NSArray<NSString *> *shells = @[ @"bash", @"zsh", @"fish" ];
+    switch (tag) {
+        case iTermGeneralProfilePreferenceCustomCommandTagCustomShell:
+        case iTermGeneralProfilePreferenceCustomCommandTagCustom:
+            return [shells containsObject:[[[param componentsInShellCommand].firstObject lastPathComponent] lowercaseString]];
+        case iTermGeneralProfilePreferenceCustomCommandTagLoginShell:
+            if (!_shell) {
+                _shell = [iTermOpenDirectory userShell];
+            }
+            return [shells containsObject:[[_shell lastPathComponent] lowercaseString]];
+        case iTermGeneralProfilePreferenceCustomCommandTagSSH:
+            return NO;  // TODO
+    }
+    return NO;
+}
+
 - (void)updateEnabledState {
     [super updateEnabledState];
     if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue] ||
@@ -658,6 +684,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         _configureSSHButton.hidden = YES;
     }
     _customDirectory.enabled = ([[self stringForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:kProfilePreferenceInitialDirectoryCustomValue]);
+    _loadShellIntegrationAutomatically.enabled = [self shouldEnableLoadShellIntegration];
 }
 
 #pragma mark - SSH
@@ -1191,6 +1218,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         }
     }
     [super controlTextDidChange:aNotification];
+    [self updateEnabledState];
 }
 
 - (void)removeWhitespaceFromCustomCommand {

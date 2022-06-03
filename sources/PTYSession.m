@@ -2522,6 +2522,10 @@ ITERM_WEAKLY_REFERENCEABLE
                                          args:(NSArray<NSString *> *)argv
                             completion:(void (^)(NSDictionary<NSString *, NSString *> *,
                                                  NSArray<NSString *> *))completion {
+    if (![iTermProfilePreferences boolForKey:KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY inProfile:self.profile]) {
+        completion(env, argv);
+        return;
+    }
     ShellIntegrationInjector *injector = [ShellIntegrationInjector instance];
     NSString *dir = [[NSBundle bundleForClass:[self class]] pathForResource:@".zshenv" ofType:nil];
     if (!dir) {

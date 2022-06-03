@@ -1275,6 +1275,7 @@ DQ
                 <outlet property="_iconLabel" destination="Xzz-Fo-TWV" id="JMy-Cp-2Y2"/>
                 <outlet property="_imageWell" destination="CNi-xf-qcd" id="ta5-Ti-xEy"/>
                 <outlet property="_initialDirectoryType" destination="2190" id="LYF-0C-gAo"/>
+                <outlet property="_loadShellIntegrationAutomatically" destination="iWk-HJ-EKg" id="YGt-lQ-NrZ"/>
                 <outlet property="_locked" destination="imM-Ma-mjV" id="Oy4-Ab-2k5"/>
                 <outlet property="_preventAutomaticProfileSwitching" destination="N23-uy-3RA" id="cRM-BE-TkQ"/>
                 <outlet property="_profileNameField" destination="2133" id="6VF-gN-bGW"/>
@@ -1554,11 +1555,11 @@ DQ
             </connections>
         </customObject>
         <customView id="xGo-ez-mEe" userLabel="Prefs - Profiles - General" customClass="iTermPrefsProfilesGeneralView">
-            <rect key="frame" x="0.0" y="0.0" width="559" height="519"/>
+            <rect key="frame" x="0.0" y="0.0" width="559" height="516"/>
             <autoresizingMask key="autoresizingMask"/>
             <subviews>
                 <matrix verticalHuggingPriority="750" fixedFrame="YES" allowsEmptySelection="NO" translatesAutoresizingMaskIntoConstraints="NO" id="2190" userLabel="Working Directory Radio Buttons">
-                    <rect key="frame" x="50" y="82" width="240" height="78"/>
+                    <rect key="frame" x="50" y="53" width="240" height="78"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     <size key="cellSize" width="240" height="18"/>
@@ -1593,7 +1594,7 @@ DQ
                     </connections>
                 </matrix>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2129" userLabel="Working Directory Label">
-                    <rect key="frame" x="14" y="168" width="122" height="16"/>
+                    <rect key="frame" x="14" y="139" width="122" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Working Directory" id="2140">
                         <font key="font" metaFont="systemBold"/>
@@ -1602,7 +1603,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2131" userLabel="Command text field">
-                    <rect key="frame" x="146" y="231" width="393" height="21"/>
+                    <rect key="frame" x="146" y="228" width="393" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Command for new sessions (interpolated string)" drawsBackground="YES" id="2138">
                         <font key="font" metaFont="system"/>
@@ -1616,7 +1617,7 @@ DQ
                     </connections>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2132" userLabel="Command label">
-                    <rect key="frame" x="14" y="259" width="70" height="16"/>
+                    <rect key="frame" x="14" y="256" width="70" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Command" id="2137">
                         <font key="font" metaFont="systemBold"/>
@@ -1625,7 +1626,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3247" userLabel="Basics label">
-                    <rect key="frame" x="14" y="500" width="47" height="16"/>
+                    <rect key="frame" x="14" y="497" width="47" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="left" title="Basics" id="3248">
                         <font key="font" metaFont="systemBold"/>
@@ -1634,7 +1635,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2133" userLabel="Name text field">
-                    <rect key="frame" x="146" y="474" width="393" height="21"/>
+                    <rect key="frame" x="146" y="471" width="393" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" drawsBackground="YES" id="2136">
                         <font key="font" metaFont="system"/>
@@ -1647,7 +1648,7 @@ DQ
                     </connections>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2134" userLabel="Name label">
-                    <rect key="frame" x="93" y="477" width="44" height="16"/>
+                    <rect key="frame" x="93" y="474" width="44" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Name:" id="2135">
                         <font key="font" metaFont="system"/>
@@ -1656,7 +1657,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3243" userLabel="Tags label">
-                    <rect key="frame" x="100" y="426" width="37" height="16"/>
+                    <rect key="frame" x="100" y="423" width="37" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Tags:" id="3244">
                         <font key="font" metaFont="system"/>
@@ -1665,7 +1666,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2141" userLabel="Shortcut key label">
-                    <rect key="frame" x="47" y="452" width="90" height="16"/>
+                    <rect key="frame" x="47" y="449" width="90" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Shortcut key:      " id="2182">
                         <font key="font" metaFont="system"/>
@@ -1674,7 +1675,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2142" userLabel="Shortcut selection popup button">
-                    <rect key="frame" x="144" y="445" width="399" height="25"/>
+                    <rect key="frame" x="144" y="442" width="399" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="⌃⌘A" bezelStyle="rounded" alignment="left" lineBreakMode="clipping" state="on" borderStyle="borderAndBezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="2163" id="2143">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -1731,7 +1732,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <tokenField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3245" userLabel="Tags token Field">
-                    <rect key="frame" x="146" y="423" width="393" height="21"/>
+                    <rect key="frame" x="146" y="420" width="393" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">Tags with slashes create a hierarchy which you can navigate in the Profiles menu or in the tags list adjacent to lists of profiles.</string>
                     <tokenFieldCell key="cell" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" placeholderString="Example: linux, dark bg, tag/subtag/subsubtag" drawsBackground="YES" allowsEditingTextAttributes="YES" id="3246">
@@ -1748,7 +1749,7 @@ DQ
                     </connections>
                 </tokenField>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2189" userLabel="Directory text field">
-                    <rect key="frame" x="146" y="101" width="393" height="21"/>
+                    <rect key="frame" x="146" y="72" width="393" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Enter initial directory (interpolated string)" drawsBackground="YES" id="2194">
                         <font key="font" metaFont="system"/>
@@ -1762,7 +1763,7 @@ DQ
                     </connections>
                 </textField>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5033" userLabel="URL Schemes label">
-                    <rect key="frame" x="14" y="49" width="93" height="16"/>
+                    <rect key="frame" x="14" y="29" width="93" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="URL Schemes" id="5034">
                         <font key="font" metaFont="systemBold"/>
@@ -1771,7 +1772,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5035" userLabel="Schemes handled label">
-                    <rect key="frame" x="19" y="23" width="116" height="16"/>
+                    <rect key="frame" x="19" y="3" width="116" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Schemes handled:" id="5036">
                         <font key="font" metaFont="system"/>
@@ -1780,7 +1781,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5037" userLabel="URL Schemes popup button">
-                    <rect key="frame" x="143" y="16" width="400" height="26"/>
+                    <rect key="frame" x="143" y="-4" width="400" height="26"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="5038">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -1793,7 +1794,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5408" userLabel="Send text at start: label">
-                    <rect key="frame" x="25" y="203" width="113" height="16"/>
+                    <rect key="frame" x="25" y="200" width="113" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Send text at start:" id="5409">
                         <font key="font" metaFont="system"/>
@@ -1802,7 +1803,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5975" userLabel="Edit advanced configuration push button">
-                    <rect key="frame" x="225" y="75" width="58" height="28"/>
+                    <rect key="frame" x="225" y="46" width="58" height="28"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Edit…" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5976">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -1813,7 +1814,7 @@ DQ
                     </connections>
                 </button>
                 <textField toolTip="The badge is text that appears in the top right of a session." verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="sa9-oD-SMc" userLabel="Name text field">
-                    <rect key="frame" x="146" y="397" width="330" height="21"/>
+                    <rect key="frame" x="146" y="394" width="330" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Enter badge text (interpolated string)" drawsBackground="YES" id="M2Y-uM-p2q">
                         <font key="font" metaFont="system"/>
@@ -1826,7 +1827,7 @@ DQ
                     </connections>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nUa-Y1-jO4" userLabel="Name label">
-                    <rect key="frame" x="90" y="400" width="47" height="16"/>
+                    <rect key="frame" x="90" y="397" width="47" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Badge:" id="7Oa-B2-O5u">
                         <font key="font" metaFont="system"/>
@@ -1835,7 +1836,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iet-o6-fEv" userLabel="Name label">
-                    <rect key="frame" x="102" y="374" width="35" height="16"/>
+                    <rect key="frame" x="102" y="371" width="35" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Title:" id="cKG-uJ-P2E">
                         <font key="font" metaFont="system"/>
@@ -1844,7 +1845,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5410" userLabel="Send text at start text field">
-                    <rect key="frame" x="146" y="200" width="393" height="21"/>
+                    <rect key="frame" x="146" y="197" width="393" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Enter text to send at start (interpolated string)" drawsBackground="YES" id="5411">
                         <font key="font" metaFont="system"/>
@@ -1858,7 +1859,7 @@ DQ
                     </connections>
                 </textField>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2VF-JO-c2O" userLabel="Title Components Popup">
-                    <rect key="frame" x="143" y="367" width="368" height="25"/>
+                    <rect key="frame" x="143" y="364" width="368" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Components" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" autoenablesItems="NO" id="Xgh-er-la0" userLabel="Title Popup Button Cell">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -1891,7 +1892,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kFr-1J-iPo">
-                    <rect key="frame" x="516" y="366" width="25" height="25"/>
+                    <rect key="frame" x="516" y="363" width="25" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="inb-QV-C1Z">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -1902,7 +1903,7 @@ DQ
                     </connections>
                 </button>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kmy-bS-CYF" userLabel="Edit advanced configuration push button">
-                    <rect key="frame" x="477" y="392" width="68" height="28"/>
+                    <rect key="frame" x="477" y="389" width="68" height="28"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Edit…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="9iq-xC-84R">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -1913,7 +1914,7 @@ DQ
                     </connections>
                 </button>
                 <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="q57-nJ-Jbz">
-                    <rect key="frame" x="144" y="346" width="295" height="18"/>
+                    <rect key="frame" x="144" y="343" width="295" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <string key="toolTip">Can the session title be changed by control sequence? Note that this is only enabled if Session or Profile &amp; Session are selected in the title menu above.</string>
                     <buttonCell key="cell" type="check" title="Applications in terminal may change the title" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="yFQ-IJ-IID">
@@ -1925,7 +1926,7 @@ DQ
                     </connections>
                 </button>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nxn-F2-gY6">
-                    <rect key="frame" x="14" y="227" width="127" height="25"/>
+                    <rect key="frame" x="14" y="224" width="127" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Login Shell" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="KVK-Yx-UwL" id="Rq6-lu-Csd">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -1944,7 +1945,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="815-r4-Z3I">
-                    <rect key="frame" x="16" y="288" width="417" height="22"/>
+                    <rect key="frame" x="16" y="285" width="417" height="22"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Xzz-Fo-TWV" userLabel="Name label">
@@ -1985,7 +1986,7 @@ DQ
                     </subviews>
                 </customView>
                 <textField toolTip="In the Minimal theme, tabs can show a subtitle as a second line of text." verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UWv-op-rJa" userLabel="Name text field">
-                    <rect key="frame" x="146" y="318" width="393" height="21"/>
+                    <rect key="frame" x="146" y="315" width="393" height="21"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" alignment="left" placeholderString="Interpolated string" drawsBackground="YES" id="dMl-Zb-Sed">
                         <font key="font" metaFont="system"/>
@@ -1998,7 +1999,7 @@ DQ
                     </connections>
                 </textField>
                 <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1Lq-Jr-ede" userLabel="Name label">
-                    <rect key="frame" x="86" y="322" width="51" height="16"/>
+                    <rect key="frame" x="86" y="319" width="51" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" enabled="NO" sendsActionOnEndEditing="YES" alignment="right" title="Subtitle" id="Z3d-96-Mba">
                         <font key="font" metaFont="system"/>
@@ -2007,7 +2008,7 @@ DQ
                     </textFieldCell>
                 </textField>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gZ1-Kt-xEF">
-                    <rect key="frame" x="147" y="315" width="392" height="27"/>
+                    <rect key="frame" x="147" y="312" width="392" height="27"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="flV-bs-rIS">
@@ -2033,7 +2034,7 @@ DQ
                     </subviews>
                 </customView>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VCV-s2-py0">
-                    <rect key="frame" x="440" y="224" width="104" height="32"/>
+                    <rect key="frame" x="440" y="221" width="104" height="32"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="push" title="Configure…" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="tEq-8C-H4O">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -2043,9 +2044,21 @@ DQ
                         <action selector="configureSSH:" target="dVg-Ac-SiZ" id="lD6-nl-UCA"/>
                     </connections>
                 </button>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iWk-HJ-EKg">
+                    <rect key="frame" x="145" y="172" width="241" height="18"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <string key="toolTip">Available for zsh, fish, and bash. This is an alternative to installing shell integration via other methods (such as the iTerm2 &gt; Install Shell Integration menu item).</string>
+                    <buttonCell key="cell" type="check" title="Load shell integration automatically" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="jcT-vU-VZU">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="settingChanged:" target="dVg-Ac-SiZ" id="srb-k2-P02"/>
+                    </connections>
+                </button>
             </subviews>
             <accessibility identifier="prefsProfilesGeneral"/>
-            <point key="canvasLocation" x="977.5" y="-802.5"/>
+            <point key="canvasLocation" x="977.5" y="-804"/>
         </customView>
         <customView id="SCN-fS-hNB" userLabel="Prefs - Profiles - Colors" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="569" height="378"/>
