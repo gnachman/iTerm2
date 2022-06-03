@@ -147,16 +147,10 @@ fileprivate class FishShellIntegrationInjection: BaseShellIntegrationInjection, 
 
     private func modifiedEnvironment(_ originalEnv: [String: String],
                                      argv: [String]) -> [String: String] {
-        let pathSeparator = ":"
         var env = originalEnv
+        // If there was a preexisting XDG_DATA_DIRS we'd want to set this to shellIntegrationDir:$XDG_DATA_DIRS
+        env[Env.XDG_DATA_DIRS] = shellIntegrationDir
         env[FishEnv.IT2_FISH_XDG_DATA_DIRS] = shellIntegrationDir
-        if let val = env[Env.XDG_DATA_DIRS] {
-            var dirs = val.components(separatedBy: pathSeparator)
-            dirs.insert(shellIntegrationDir, at: 0)
-            env[Env.XDG_DATA_DIRS] = dirs.joined(separator: pathSeparator)
-        } else {
-            env[Env.XDG_DATA_DIRS] = shellIntegrationDir
-        }
         return env
     }
 }
