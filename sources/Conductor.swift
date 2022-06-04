@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import FileProvider
 
 protocol SSHCommandRunning {
     func runRemoteCommand(_ commandLine: String,
@@ -876,6 +877,18 @@ class Conductor: NSObject, Codable {
                     return
                 }
                 framedPID = pid
+                if #available(macOS 11.0, *) {
+                    let identifier = NSFileProviderDomainIdentifier(rawValue: "myFiles")
+                    let domain = NSFileProviderDomain(identifier: identifier, displayName: "Some Domain")
+
+                    NSFileProviderManager.add(domain) { error in
+                        guard let error = error else {
+                            return
+                        }
+
+                        NSLog(error.localizedDescription)
+                    }
+                }
                 return
             case .abort, .sideChannelLine(_, _, _):
                 return
