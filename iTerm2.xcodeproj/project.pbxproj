@@ -2808,6 +2808,11 @@
 		A6C1FD561FC2B210006B9A69 /* iTermMargin.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */; };
 		A6C1FD571FC2B210006B9A69 /* iTermMargin.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */; };
 		A6C1FD5A1FC2BD72006B9A69 /* GlyphKey.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C1FD581FC2BD72006B9A69 /* GlyphKey.h */; };
+		A6C1FE5C284C1BF200EA8A3B /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C1FE5B284C1BF200EA8A3B /* UniformTypeIdentifiers.framework */; };
+		A6C1FE5F284C1BF200EA8A3B /* FileProviderExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FE5E284C1BF200EA8A3B /* FileProviderExtension.swift */; };
+		A6C1FE61284C1BF200EA8A3B /* FileProviderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FE60284C1BF200EA8A3B /* FileProviderItem.swift */; };
+		A6C1FE63284C1BF200EA8A3B /* FileProviderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FE62284C1BF200EA8A3B /* FileProviderEnumerator.swift */; };
+		A6C1FE68284C1BF200EA8A3B /* iTermFileProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A6C1FE5A284C1BF200EA8A3B /* iTermFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A6C20CB825F6CA8C0086B09C /* iTermSlider.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C20CB625F6CA8C0086B09C /* iTermSlider.h */; };
 		A6C20CB925F6CA8C0086B09C /* iTermSlider.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C20CB725F6CA8C0086B09C /* iTermSlider.m */; };
 		A6C3005724711620002BC672 /* iTermThreadSafety.h in Headers */ = {isa = PBXBuildFile; fileRef = A6905556241DE90A0020EA6A /* iTermThreadSafety.h */; };
@@ -4036,6 +4041,13 @@
 			remoteGlobalIDString = A6866B6623CAA10A00ACD94C;
 			remoteInfo = pidinfo;
 		};
+		A6C1FE66284C1BF200EA8A3B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A6C1FE59284C1BF200EA8A3B;
+			remoteInfo = iTermFileProvider;
+		};
 		A6C537BA19315CCB00A08C18 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
@@ -4180,6 +4192,17 @@
 				759637A52593AE0700E278CC /* iTerm2SandboxedWorker.xpc in Embed XPC Services */,
 			);
 			name = "Embed XPC Services";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A6C1FE6E284C1BF200EA8A3B /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A6C1FE68284C1BF200EA8A3B /* iTermFileProvider.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -6519,6 +6542,13 @@
 		A6C1FD501FC2AC9B006B9A69 /* iTermMarginRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = iTermMarginRenderer.m; path = Metal/Renderers/iTermMarginRenderer.m; sourceTree = "<group>"; };
 		A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; name = iTermMargin.metal; path = Metal/Shaders/iTermMargin.metal; sourceTree = "<group>"; };
 		A6C1FD581FC2BD72006B9A69 /* GlyphKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GlyphKey.h; path = Metal/Infrastructure/GlyphKey.h; sourceTree = "<group>"; };
+		A6C1FE5A284C1BF200EA8A3B /* iTermFileProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = iTermFileProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6C1FE5B284C1BF200EA8A3B /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
+		A6C1FE5E284C1BF200EA8A3B /* FileProviderExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderExtension.swift; sourceTree = "<group>"; };
+		A6C1FE60284C1BF200EA8A3B /* FileProviderItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderItem.swift; sourceTree = "<group>"; };
+		A6C1FE62284C1BF200EA8A3B /* FileProviderEnumerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderEnumerator.swift; sourceTree = "<group>"; };
+		A6C1FE64284C1BF200EA8A3B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A6C1FE65284C1BF200EA8A3B /* iTermFileProvider.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iTermFileProvider.entitlements; sourceTree = "<group>"; };
 		A6C20CB625F6CA8C0086B09C /* iTermSlider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlider.h; sourceTree = "<group>"; };
 		A6C20CB725F6CA8C0086B09C /* iTermSlider.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSlider.m; sourceTree = "<group>"; };
 		A6C3005D247117A9002BC672 /* iTermLocatedString.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermLocatedString.h; sourceTree = "<group>"; };
@@ -7188,6 +7218,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6C1FE57284C1BF200EA8A3B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6C1FE5C284C1BF200EA8A3B /* UniformTypeIdentifiers.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A6C760441B45C4CF00E3C992 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -7231,6 +7269,7 @@
 				A60593B3257DF9A500CACEE6 /* ShellLauncher */,
 				7596379B2593AE0700E278CC /* iTerm2SandboxedWorker */,
 				A6822778280E26CD005DF0B4 /* SwiftyMarkdown */,
+				A6C1FE5D284C1BF200EA8A3B /* iTermFileProvider */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 			);
@@ -7676,6 +7715,7 @@
 				A663197822FF349700C502BD /* iTermServer */,
 				A60593B2257DF9A500CACEE6 /* ShellLauncher */,
 				7596379A2593AE0700E278CC /* iTerm2SandboxedWorker.xpc */,
+				A6C1FE5A284C1BF200EA8A3B /* iTermFileProvider.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -8435,6 +8475,7 @@
 				A67D194E2237045C00BD0D4D /* libsixel.a */,
 				A624232519CF70DF00182C08 /* NMSSH.framework */,
 				A60BD9181B3F5D76007D7F11 /* OpenDirectory.framework */,
+				A6C1FE5B284C1BF200EA8A3B /* UniformTypeIdentifiers.framework */,
 				1DD39AD8180B8118004E56D5 /* Other Frameworks */,
 				1DEB29301288885700B2CB9F /* Quartz.framework */,
 				1DEB29371288887100B2CB9F /* QuartzCore.framework */,
@@ -10598,6 +10639,18 @@
 			name = Language;
 			sourceTree = "<group>";
 		};
+		A6C1FE5D284C1BF200EA8A3B /* iTermFileProvider */ = {
+			isa = PBXGroup;
+			children = (
+				A6C1FE5E284C1BF200EA8A3B /* FileProviderExtension.swift */,
+				A6C1FE60284C1BF200EA8A3B /* FileProviderItem.swift */,
+				A6C1FE62284C1BF200EA8A3B /* FileProviderEnumerator.swift */,
+				A6C1FE64284C1BF200EA8A3B /* Info.plist */,
+				A6C1FE65284C1BF200EA8A3B /* iTermFileProvider.entitlements */,
+			);
+			path = iTermFileProvider;
+			sourceTree = "<group>";
+		};
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -12479,6 +12532,7 @@
 				A6725AD923D64A57001CA48A /* CopyFiles */,
 				A67A515026CCD54000281693 /* CopyFiles */,
 				A65DF4AC2849F2E700AA29AB /* CopyFiles */,
+				A6C1FE6E284C1BF200EA8A3B /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
@@ -12490,6 +12544,7 @@
 				A6C537BB19315CCB00A08C18 /* PBXTargetDependency */,
 				A6866B7123CAA10A00ACD94C /* PBXTargetDependency */,
 				759637A42593AE0700E278CC /* PBXTargetDependency */,
+				A6C1FE67284C1BF200EA8A3B /* PBXTargetDependency */,
 			);
 			name = iTerm2;
 			packageProductDependencies = (
@@ -12567,6 +12622,23 @@
 			productReference = A6866B6723CAA10A00ACD94C /* pidinfo.xpc */;
 			productType = "com.apple.product-type.xpc-service";
 		};
+		A6C1FE59284C1BF200EA8A3B /* iTermFileProvider */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A6C1FE69284C1BF200EA8A3B /* Build configuration list for PBXNativeTarget "iTermFileProvider" */;
+			buildPhases = (
+				A6C1FE56284C1BF200EA8A3B /* Sources */,
+				A6C1FE57284C1BF200EA8A3B /* Frameworks */,
+				A6C1FE58284C1BF200EA8A3B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = iTermFileProvider;
+			productName = iTermFileProvider;
+			productReference = A6C1FE5A284C1BF200EA8A3B /* iTermFileProvider.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A6C7604B1B45C4CF00E3C992 /* Build configuration list for PBXNativeTarget "iTerm2Shared" */;
@@ -12611,6 +12683,7 @@
 		0464AB0C006CD2EC7F000001 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 1330;
 				LastUpgradeCheck = 1330;
 				TargetAttributes = {
 					1D6ED85219AEA20D005A7799 = {
@@ -12658,6 +12731,11 @@
 						DevelopmentTeam = H7V7XYVQ7D;
 						ProvisioningStyle = Automatic;
 					};
+					A6C1FE59284C1BF200EA8A3B = {
+						CreatedOnToolsVersion = 13.3;
+						DevelopmentTeam = H7V7XYVQ7D;
+						ProvisioningStyle = Automatic;
+					};
 					A6C7603F1B45C4CF00E3C992 = {
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
@@ -12697,6 +12775,7 @@
 				A663197722FF349700C502BD /* iTermServer */,
 				A60593B1257DF9A500CACEE6 /* ShellLauncher */,
 				759637992593AE0700E278CC /* iTerm2SandboxedWorker */,
+				A6C1FE59284C1BF200EA8A3B /* iTermFileProvider */,
 			);
 		};
 /* End PBXProject section */
@@ -13879,6 +13958,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A6866B6523CAA10A00ACD94C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A6C1FE58284C1BF200EA8A3B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -15123,6 +15209,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A6C1FE56284C1BF200EA8A3B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A6C1FE5F284C1BF200EA8A3B /* FileProviderExtension.swift in Sources */,
+				A6C1FE61284C1BF200EA8A3B /* FileProviderItem.swift in Sources */,
+				A6C1FE63284C1BF200EA8A3B /* FileProviderEnumerator.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A6C760401B45C4CF00E3C992 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -15489,6 +15585,11 @@
 			isa = PBXTargetDependency;
 			target = A6866B6623CAA10A00ACD94C /* pidinfo */;
 			targetProxy = A6866B7023CAA10A00ACD94C /* PBXContainerItemProxy */;
+		};
+		A6C1FE67284C1BF200EA8A3B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A6C1FE59284C1BF200EA8A3B /* iTermFileProvider */;
+			targetProxy = A6C1FE66284C1BF200EA8A3B /* PBXContainerItemProxy */;
 		};
 		A6C537BB19315CCB00A08C18 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -18065,6 +18166,290 @@
 			};
 			name = Nightly;
 		};
+		A6C1FE6A284C1BF200EA8A3B /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = iTermFileProvider/iTermFileProvider.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = iTermFileProvider/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = iTermFileProvider;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTermFileProvider;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Development;
+		};
+		A6C1FE6B284C1BF200EA8A3B /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = iTermFileProvider/iTermFileProvider.entitlements;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = iTermFileProvider/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = iTermFileProvider;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTermFileProvider;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Deployment;
+		};
+		A6C1FE6C284C1BF200EA8A3B /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = iTermFileProvider/iTermFileProvider.entitlements;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = iTermFileProvider/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = iTermFileProvider;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTermFileProvider;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Beta;
+		};
+		A6C1FE6D284C1BF200EA8A3B /* Nightly */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = iTermFileProvider/iTermFileProvider.entitlements;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = iTermFileProvider/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = iTermFileProvider;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 12.3;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTermFileProvider;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Nightly;
+		};
 		A6C7604C1B45C4CF00E3C992 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -18799,6 +19184,17 @@
 				A6866B7523CAA10A00ACD94C /* Deployment */,
 				A6866B7623CAA10A00ACD94C /* Beta */,
 				A6866B7723CAA10A00ACD94C /* Nightly */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Development;
+		};
+		A6C1FE69284C1BF200EA8A3B /* Build configuration list for PBXNativeTarget "iTermFileProvider" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A6C1FE6A284C1BF200EA8A3B /* Development */,
+				A6C1FE6B284C1BF200EA8A3B /* Deployment */,
+				A6C1FE6C284C1BF200EA8A3B /* Beta */,
+				A6C1FE6D284C1BF200EA8A3B /* Nightly */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;
