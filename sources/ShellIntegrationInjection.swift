@@ -39,43 +39,83 @@ import Foundation
         }
     }
 
-    private var injectors = [String: ShellIntegrationInjecting]()
-
     @objc func modifyShellEnvironment(shellIntegrationDir: String,
                                       env: [String: String],
                                       argv: [String],
                                       completion: @escaping ([String: String], [String]) -> ()) {
+        let (env, args) = modifyShellEnvironment(shellIntegrationDir: shellIntegrationDir,
+                                                 env: env,
+                                                 argv: argv)
+        completion(env, args)
+    }
+
+    func modifyShellEnvironment(shellIntegrationDir: String,
+                                env: [String: String],
+                                argv: [String]) -> ([String: String], [String]) {
         switch ShellLauncherInfo(argv) {
         case .command:
-            let injector = ShellIntegrationInjectionFactory().createInjector(
+            guard let injector = ShellIntegrationInjectionFactory().createInjector(
                 shellIntegrationDir: shellIntegrationDir,
-                path: argv[0])
-            guard let injector = injector else {
-                completion(env, argv)
-                return
+                path: argv[0]) else {
+                return (env, argv)
             }
             // Keep injector from getting dealloced
-            let key = UUID().uuidString
-            injectors[key] = injector
-            injector.computeModified(env: env, argv: argv) { [weak self] env, args in
-                completion(env, args)
-                self?.injectors.removeValue(forKey: key)
-            }
+            return injector.computeModified(env: env, argv: argv)
         case .customShell(let shell):
-            modifyShellEnvironment(shellIntegrationDir: shellIntegrationDir,
-                                   env: env,
-                                   argv: [shell]) { newEnv, newArgs in
-                completion(newEnv, Array(argv + newArgs.dropFirst()))
-            }
-            return
+            let (newEnv, newArgs) = modifyShellEnvironment(
+                shellIntegrationDir: shellIntegrationDir,
+                env: env,
+                argv: [shell])
+            return (newEnv, Array(argv + newArgs.dropFirst()))
         case .loginShell(let shell):
-            modifyShellEnvironment(shellIntegrationDir: shellIntegrationDir,
-                                   env: env,
-                                   argv: [shell]) { newEnv, newArgs in
-                completion(newEnv, Array(argv + newArgs.dropFirst()))
-            }
-            return
+            let (newEnv, newArgs) = modifyShellEnvironment(
+                shellIntegrationDir: shellIntegrationDir,
+                env: env,
+                argv: [shell])
+            return (newEnv, Array(argv + newArgs.dropFirst()))
         }
+    }
+
+    func modifyRemoteShellEnvironment(shellIntegrationDir: String,
+                                      env: [String: String],
+                                      shell: String,
+                                      argv: [String]) -> ([String: String], [String]) {
+        guard let injector = ShellIntegrationInjectionFactory().createInjector(
+            shellIntegrationDir: shellIntegrationDir,
+            path: shell) else {
+            return (env, argv)
+        }
+        // Keep injector from getting dealloced
+        let (modifiedEnv, modifiedArgs) = injector.computeModified(env: env, argv: [shell] + argv)
+        // Remove the shell as argv[0] because framer doesn't expect it (framer knows the shell's
+        // path)
+        return (modifiedEnv, Array(modifiedArgs.dropFirst()))
+    }
+
+    func files(destinationBase: URL) -> [URL: URL] {
+        let bundle = Bundle(for: PTYSession.self)
+        let local = { (name: String) -> URL? in
+            guard let path = bundle.path(forResource: name.deletingPathExtension,
+                                         ofType: name.pathExtension) else {
+                return nil
+            }
+            return URL(fileURLWithPath: path)
+        }
+        let tuples = [
+            (local("iterm2_shell_integration.bash"),
+             destinationBase),
+            (local("iterm2_shell_integration.zsh"),
+             destinationBase),
+            (local("iterm2_shell_integration.fish"),
+             destinationBase),
+            (local("bash-si-loader"),
+             destinationBase),
+            (local(".zshenv"),
+             destinationBase),
+            (local("iterm2-shell-integration-loader.fish"),
+             destinationBase.appendingPathComponents(["fish", "vendor_conf.d"]))
+        ].filter { $0.0 != nil }
+        return Dictionary(uniqueKeysWithValues: tuples as! [(URL, URL)])
     }
 }
 
@@ -117,8 +157,7 @@ fileprivate class ShellIntegrationInjectionFactory {
 
 fileprivate protocol ShellIntegrationInjecting {
     func computeModified(env: [String: String],
-                         argv: [String],
-                         completion: @escaping ([String: String], [String]) -> ())
+                         argv: [String]) -> ([String: String], [String])
 }
 
 fileprivate struct Env {
@@ -140,9 +179,8 @@ fileprivate class FishShellIntegrationInjection: BaseShellIntegrationInjection, 
         static let IT2_FISH_XDG_DATA_DIRS = "IT2_FISH_XDG_DATA_DIRS"
     }
     func computeModified(env: [String: String],
-                         argv: [String],
-                         completion: @escaping ([String: String], [String]) -> ()) {
-        completion(modifiedEnvironment(env, argv: argv), argv)
+                         argv: [String]) -> ([String: String], [String]) {
+        return (modifiedEnvironment(env, argv: argv), argv)
     }
 
     private func modifiedEnvironment(_ originalEnv: [String: String],
@@ -165,8 +203,7 @@ fileprivate class ZshShellIntegrationInjection: BaseShellIntegrationInjection, S
 
     // Runs the completion block with a modified environment.
     func computeModified(env inputEnv: [String: String],
-                         argv: [String],
-                         completion: @escaping ([String: String], [String]) -> ()) {
+                         argv: [String]) -> ([String: String], [String]) {
         var env = inputEnv
         let zdotdir = env[ZshEnv.ZDOTDIR]
         if let zdotdir = zdotdir {
@@ -176,7 +213,7 @@ fileprivate class ZshShellIntegrationInjection: BaseShellIntegrationInjection, S
         }
         env[ZshEnv.ZDOTDIR] = shellIntegrationDir
         env[ZshEnv.ITERM_INJECT_SHELL_INTEGRATION] = "1"
-        completion(env, argv)
+        return (env, argv)
     }
 }
 
@@ -191,12 +228,11 @@ fileprivate class BashShellIntegrationInjection: BaseShellIntegrationInjection, 
     }
 
     func computeModified(env envIn: [String: String],
-                         argv argvIn: [String],
-                         completion: @escaping ([String: String], [String]) -> ()) {
+                         argv argvIn: [String]) -> ([String: String], [String]) {
         var env = envIn
         var argv = argvIn
         computeModified(env: &env, argv: &argv)
-        completion(env, argv)
+        return (env, argv)
     }
 
     private func computeModified(env: inout [String: String], argv: inout [String]) {

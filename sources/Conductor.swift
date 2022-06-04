@@ -29,7 +29,12 @@ class Conductor: NSObject, Codable {
     }
 
     private let sshargs: String
-    private let vars: [String: String]
+    private let varsToSend: [String: String]
+    // Environment variables shared from client before running ssh
+    private let clientVars: [String: String]
+    // Comes from parsedSSHArguments.commandargs but possibly modified to inject shell integration.
+    private var modifiedCommandArgs: [String]?
+    private var modifiedVars: [String: String]?
     private struct Payload: Codable {
         let path: String
         let destination: String
@@ -37,7 +42,7 @@ class Conductor: NSObject, Codable {
     private var payloads: [Payload] = []
     private let initialDirectory: String?
     private let parsedSSHArguments: ParsedSSHArguments
-    private let depth: Int32
+    @objc let depth: Int32
     @objc let parent: Conductor?
     @objc var autopollEnabled = true
     private var _queueWrites = true
@@ -109,7 +114,7 @@ class Conductor: NSObject, Codable {
             return "<Command: \(operationDescription)>"
         }
 
-        case execLoginShell
+        case execLoginShell([String])
         case setenv(key: String, value: String)
         // Replace the conductor with this command
         case run(String)
@@ -117,6 +122,7 @@ class Conductor: NSObject, Codable {
         case runPython(String)
         // Shell out to this command and then return to conductor
         case shell(String)
+        case getshell
         case write(data: Data, dest: String)
         case cd(String)
         case quit
@@ -137,7 +143,7 @@ class Conductor: NSObject, Codable {
         var isFramer: Bool {
             switch self {
             case .execLoginShell, .setenv(_, _), .run(_), .runPython(_), .shell(_),
-                    .write(_, _), .cd(_), .quit:
+                    .write(_, _), .cd(_), .quit, .getshell:
                 return false
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
@@ -148,8 +154,8 @@ class Conductor: NSObject, Codable {
 
         var stringValue: String {
             switch self {
-            case .execLoginShell:
-                return "exec_login_shell"
+            case .execLoginShell(let args):
+                return (["exec_login_shell"] + args).joined(separator: "\n")
             case .setenv(let key, let value):
                 return "setenv \(key) \((value as NSString).stringEscapedForBash()!)"
             case .run(let cmd):
@@ -164,6 +170,8 @@ class Conductor: NSObject, Codable {
                 return "cd \(dir)"
             case .quit:
                 return "quit"
+            case .getshell:
+                return "getshell"
 
             case .framerRun(let command):
                 return ["run", command].joined(separator: "\n")
@@ -193,8 +201,8 @@ class Conductor: NSObject, Codable {
 
         var operationDescription: String {
             switch self {
-            case .execLoginShell:
-                return "starting login shell"
+            case .execLoginShell(let args):
+                return "starting login shell with args \(args.joined(separator: " "))"
             case .setenv(let key, let value):
                 return "setting \(key)=\(value)"
             case .run(let cmd):
@@ -209,6 +217,8 @@ class Conductor: NSObject, Codable {
                 return "changing directory to \(dir)"
             case .quit:
                 return "quitting"
+            case .getshell:
+                return "getshell"
             case .framerRun(let command):
                 return "run “\(command)”"
             case .framerLogin(cwd: let cwd, args: let args):
@@ -236,6 +246,9 @@ class Conductor: NSObject, Codable {
     }
 
     class StringArray: Codable {
+        var string: String {
+            return strings.joined(separator: "")
+        }
         var strings = [String]()
     }
 
@@ -254,8 +267,8 @@ class Conductor: NSObject, Codable {
                     return "handleCheckForPython"
                 case .fireAndForget:
                     return "fireAndForget"
-                case .handleFramerLogin:
-                    return "handleFramerLogin"
+                case .handleFramerLogin(let output):
+                    return "handleFramerLogin(\(output.string))"
                 case .writeOnSuccess(let code):
                     return "writeOnSuccess(\(code.count) chars)"
                 case .handleRunRemoteCommand(let command, _):
@@ -264,17 +277,20 @@ class Conductor: NSObject, Codable {
                     return"handleBackgroundJob(\(output.strings.count) lines)"
                 case .handlePoll(_, _):
                     return "handlePoll"
+                case .handleGetShell(let output):
+                    return "handleGetShell(\(output.string))"
                 }
             }
 
             case failIfNonzeroStatus  // if .end(status) has status == 0 call fail("unexpected status")
             case handleCheckForPython(StringArray)
             case fireAndForget  // don't care what the result is
-            case handleFramerLogin
+            case handleFramerLogin(StringArray)
             case writeOnSuccess(String)  // see runPython
             case handleRunRemoteCommand(String, (Data, Int32) -> ())
             case handleBackgroundJob(StringArray, (Data, Int32) -> ())
             case handlePoll(StringArray, (Data) -> ())
+            case handleGetShell(StringArray)
 
             private enum Key: CodingKey {
                 case rawValue
@@ -291,6 +307,7 @@ class Conductor: NSObject, Codable {
                 case handleRunRemoteCommand
                 case handleBackgroundJob
                 case handlePoll
+                case handleGetShell
             }
 
             private var rawValue: Int {
@@ -311,6 +328,8 @@ class Conductor: NSObject, Codable {
                     return RawValues.handleBackgroundJob.rawValue
                 case .handlePoll(_, _):
                     return RawValues.handlePoll.rawValue
+                case .handleGetShell(_):
+                    return RawValues.handleGetShell.rawValue
                 }
             }
 
@@ -318,9 +337,11 @@ class Conductor: NSObject, Codable {
                 var container = encoder.container(keyedBy: Key.self)
                 try container.encode(rawValue, forKey: .rawValue)
                 switch self {
-                case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin, .handlePoll(_, _):
+                case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin(_), .handlePoll(_, _):
                     break
                 case .handleCheckForPython(let value):
+                    try container.encode(value, forKey: .stringArray)
+                case .handleGetShell(let value):
                     try container.encode(value, forKey: .stringArray)
                 case .writeOnSuccess(let value):
                     try container.encode(value, forKey: .string)
@@ -341,7 +362,7 @@ class Conductor: NSObject, Codable {
                 case .fireAndForget:
                     self = .fireAndForget
                 case .handleFramerLogin:
-                    self = .handleFramerLogin
+                    self = .handleFramerLogin(try container.decode(StringArray.self, forKey: .stringArray))
                 case .writeOnSuccess:
                     self = .writeOnSuccess(try container.decode(String.self, forKey: .string))
                 case .handleRunRemoteCommand:
@@ -350,6 +371,8 @@ class Conductor: NSObject, Codable {
                     self = .handleBackgroundJob(try container.decode(StringArray.self, forKey: .stringArray), {_, _ in})
                 case .handlePoll:
                     self = .handlePoll(try container.decode(StringArray.self, forKey: .stringArray), {_ in})
+                case .handleGetShell:
+                    self = .handleGetShell(try container.decode(StringArray.self, forKey: .stringArray))
                 }
             }
         }
@@ -476,8 +499,9 @@ class Conductor: NSObject, Codable {
 
     enum CodingKeys: CodingKey {
         // Note backgroundJobs is not included because it isn't restorable.
-      case sshargs, vars, payloads, initialDirectory, parsedSSHArguments, depth, parent,
-           framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID
+      case sshargs, varsToSend, payloads, initialDirectory, parsedSSHArguments, depth, parent,
+           framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
+           modifiedVars, modifiedCommandArgs, clientVars
     }
 
 
@@ -485,7 +509,8 @@ class Conductor: NSObject, Codable {
                boolArgs: String,
                dcsID: String,
                clientUniqueID: String,
-               vars: [String: String],
+               varsToSend: [String: String],
+               clientVars: [String: String],
                initialDirectory: String?,
                parent: Conductor?) {
         self.sshargs = sshargs
@@ -493,7 +518,9 @@ class Conductor: NSObject, Codable {
         self.dcsID = dcsID
         self.clientUniqueID = clientUniqueID
         parsedSSHArguments = ParsedSSHArguments(sshargs, booleanArgs: boolArgs)
-        self.vars = vars
+        self.varsToSend = varsToSend
+        self.clientVars = clientVars
+
         self.initialDirectory = initialDirectory
         self.depth = (parent?.depth ?? -1) + 1
         self.parent = parent
@@ -520,7 +547,8 @@ class Conductor: NSObject, Codable {
     @objc(initWithRecovery:)
     init(recovery: ConductorRecovery) {
         sshargs = recovery.sshargs
-        vars = [:]
+        varsToSend = [:]
+        clientVars = [:]
         payloads = []
         initialDirectory = nil
         parsedSSHArguments = ParsedSSHArguments(sshargs, booleanArgs: recovery.boolArgs)
@@ -540,7 +568,8 @@ class Conductor: NSObject, Codable {
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         sshargs = try container.decode(String.self, forKey: .sshargs)
-        vars = try container.decode([String: String].self, forKey: .vars)
+        varsToSend = try container.decode([String: String].self, forKey: .varsToSend)
+        clientVars = try container.decode([String: String].self, forKey: .clientVars)
         payloads = try container.decode([(Payload)].self, forKey: .payloads)
         initialDirectory = try container.decode(String?.self, forKey: .initialDirectory)
         parsedSSHArguments = try container.decode(ParsedSSHArguments.self, forKey: .parsedSSHArguments)
@@ -552,6 +581,8 @@ class Conductor: NSObject, Codable {
         boolArgs = try container.decode(String.self, forKey: .boolArgs)
         dcsID = try container.decode(String.self, forKey: .dcsID)
         clientUniqueID = try container.decode(String.self, forKey: .clientUniqueID)
+        modifiedVars = try container.decode([String: String]?.self, forKey: .modifiedVars)
+        modifiedCommandArgs = try container.decode([String]?.self, forKey: .modifiedCommandArgs)
         restored = true
     }
 
@@ -586,7 +617,8 @@ class Conductor: NSObject, Codable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(sshargs, forKey: .sshargs)
-        try container.encode(vars, forKey: .vars)
+        try container.encode(varsToSend, forKey: .varsToSend)
+        try container.encode(clientVars, forKey: .clientVars)
         try container.encode(payloads, forKey: .payloads)
         try container.encode(initialDirectory, forKey: .initialDirectory)
         try container.encode(parsedSSHArguments, forKey: .parsedSSHArguments)
@@ -598,6 +630,8 @@ class Conductor: NSObject, Codable {
         try container.encode(boolArgs, forKey: .boolArgs)
         try container.encode(dcsID, forKey: .dcsID)
         try container.encode(clientUniqueID, forKey: .clientUniqueID)
+        try container.encode(modifiedVars, forKey: .modifiedVars)
+        try container.encode(modifiedCommandArgs, forKey: .modifiedCommandArgs)
     }
 
     private func DLog(_ messageBlock: @autoclosure () -> String,
@@ -631,14 +665,14 @@ class Conductor: NSObject, Codable {
     }
 
     @objc func start() {
+        getshell()
+    }
+
+    private func didFinishGetShell() {
         setEnvironmentVariables()
         uploadPayloads()
         if let dir = initialDirectory {
             cd(dir)
-        }
-        if !parsedSSHArguments.commandArgs.isEmpty {
-            run(parsedSSHArguments.commandArgs.joined(separator: " "))
-            return
         }
         checkForPython()
     }
@@ -685,7 +719,8 @@ class Conductor: NSObject, Codable {
                     "sshargs": sshargs,
                     "boolArgs": boolArgs,
                     "clientUniqueID": clientUniqueID])
-        framerLogin(cwd: initialDirectory ?? "$HOME", args: [])
+        framerLogin(cwd: initialDirectory ?? "$HOME",
+                    args: modifiedCommandArgs ?? parsedSSHArguments.commandArgs)
         if autopollEnabled {
             send(.framerAutopoll, .fireAndForget)
         }
@@ -707,7 +742,7 @@ class Conductor: NSObject, Codable {
     }
 
     private func framerLogin(cwd: String, args: [String]) {
-        send(.framerLogin(cwd: cwd, args: args), .handleFramerLogin)
+        send(.framerLogin(cwd: cwd, args: args), .handleFramerLogin(StringArray()))
     }
 
     private func framerSend(data: Data, pid: Int32) {
@@ -723,7 +758,7 @@ class Conductor: NSObject, Codable {
     }
 
     private func setEnvironmentVariables() {
-        for (key, value) in vars {
+        for (key, value) in modifiedVars ?? varsToSend {
             send(.setenv(key: key, value: value), .failIfNonzeroStatus)
         }
     }
@@ -737,7 +772,16 @@ class Conductor: NSObject, Codable {
     }
 
     private func execLoginShell() {
-        send(.execLoginShell, .failIfNonzeroStatus)
+        if let modifiedCommandArgs = modifiedCommandArgs,
+           modifiedCommandArgs.isEmpty {
+            send(.execLoginShell(modifiedCommandArgs), .failIfNonzeroStatus)
+        } else {
+            run((parsedSSHArguments.commandArgs).joined(separator: " "))
+        }
+    }
+
+    private func getshell() {
+        send(.getshell, .handleGetShell(StringArray()))
     }
 
     private func execFramer() {
@@ -818,16 +862,22 @@ class Conductor: NSObject, Codable {
             }
         case .fireAndForget:
             return
-        case .handleFramerLogin:
+        case .handleFramerLogin(let lines):
             switch result {
-            case .line(let pidString):
-                guard let pid = Int32(pidString) else {
-                    fail("login responded with non-int pid \(pidString)")
+            case .line(let message):
+                lines.strings.append(message)
+            case .end(let status):
+                guard status == 0 else {
+                    fail(lines.string)
+                    return
+                }
+                guard let pid = Int32(lines.string) else {
+                    fail("Invalid process ID from remote: \(lines.string)")
                     return
                 }
                 framedPID = pid
                 return
-            case .abort, .sideChannelLine(_, _, _), .end(_):
+            case .abort, .sideChannelLine(_, _, _):
                 return
             }
         case .writeOnSuccess(let code):
@@ -867,6 +917,44 @@ class Conductor: NSObject, Codable {
                 }
             }
             return
+        case .handleGetShell(let lines):
+            switch result {
+            case .line(let output), .sideChannelLine(line: let output, channel: 1, pid: _):
+                lines.strings.append(output)
+                return
+            case .abort, .sideChannelLine(_, _, _):
+                return
+            case .end(let status):
+                if status != 0 {
+                    print("Failed to get shell")
+                    return
+                }
+                // If you ran `it2ssh localhost /usr/local/bin/bash` then the shell is /usr/local/bin/bash.
+                // If you ran `it2ssh localhost` then the shell comes from the response to getshell.
+                let parts = lines.strings.joined(separator: "").components(separatedBy: "\n").map {
+                    $0.trimmingCharacters(in: .whitespaces)
+                }
+                let shell = parsedSSHArguments.commandArgs.first ?? parts.get(0, default: "")
+                let home = parts.get(1, default: "")
+
+                if !shell.isEmpty && !home.isEmpty {
+                    (modifiedVars, modifiedCommandArgs) = ShellIntegrationInjector.instance.modifyRemoteShellEnvironment(
+                        shellIntegrationDir: "\(home)/.iterm2/shell-integration",
+                        env: varsToSend,
+                        shell: shell,
+                        argv: Array(parsedSSHArguments.commandArgs.dropFirst()))
+                    if let firstArg = parsedSSHArguments.commandArgs.first {
+                        modifiedCommandArgs?.insert(firstArg, at: 0)
+                    }
+                    let dict = ShellIntegrationInjector.instance.files(
+                        destinationBase: URL(fileURLWithPath: "/$HOME/.iterm2/shell-integration"))
+                    for (local, remote) in dict {
+                        payloads.append(Payload(path: local.path,
+                                                destination: remote.path))
+                    }
+                }
+                didFinishGetShell()
+            }
         case .handleBackgroundJob(let output, let completion):
             switch result {
             case .line(_):
@@ -914,7 +1002,17 @@ class Conductor: NSObject, Codable {
 
     // type can be "f" for framer or "r" for regular (non-framer)
     @objc func handleCommandEnd(identifier: String, type: String, status: UInt8, depth: Int32) {
-        if (!framing && type == "f") || (framing && depth != self.depth) {
+        let expectFraming: Bool
+        if framing {
+            expectFraming = true
+        } else {
+            switch state {
+            case .executing(let context):
+                expectFraming = context.command.isFramer
+            default:
+                expectFraming = false}
+        }
+        if (!expectFraming && type == "f") || (framing && depth != self.depth) {
             // The purpose of the type argument is so that a non-framing conductor with a framing
             // parent can know whether to handle end itself or to pass it on. The depth is not
             // useful for non-framing conductors since the parser is unaware of them.
@@ -1168,11 +1266,10 @@ class Conductor: NSObject, Codable {
 
     private func fail(_ reason: String) {
         DLog("FAIL: \(reason)")
-        let cod = currentOperationDescription
         forceReturnToGroundState()
         // Try to launch the login shell so you're not completely stuck.
-        delegate?.conductorWrite(string: Command.execLoginShell.stringValue + "\n")
-        delegate?.conductorAbort(reason: reason + " while " + cod)
+        delegate?.conductorWrite(string: Command.execLoginShell([]).stringValue + "\n")
+        delegate?.conductorAbort(reason: reason)
     }
 }
 

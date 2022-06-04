@@ -650,6 +650,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     return _shell;
 }
 
+// The return value decides if the checkbox should be enabled and *reasonOut will be displayed as long as it's not nil.
 - (BOOL)shouldEnableLoadShellIntegration:(NSString **)reasonOut {
     NSInteger tag = _commandType.selectedTag;
     NSString *param = [self stringForKey:KEY_COMMAND_LINE];
@@ -667,7 +668,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             const BOOL enable = [shells containsObject:[shell lowercaseString]];
             if (enable) {
                 *reasonOut = nil;
-                return enable;
+                return YES;
             } else {
                 *reasonOut = [NSString stringWithFormat:@"%@ is not a supported shell", shell];
                 return NO;
@@ -683,15 +684,15 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             const BOOL enable = [shells containsObject:[shell lowercaseString]];
             if (enable) {
                 *reasonOut = nil;
-                return enable;
+                return YES;
             } else {
                 *reasonOut = [NSString stringWithFormat:@"%@ is not a supported shell", shell];
                 return NO;
             }
         }
         case iTermGeneralProfilePreferenceCustomCommandTagSSH:
-            *reasonOut = @"Not supported for ssh yet.";
-            return NO;  // TODO
+            *reasonOut = @"This will only work if the remote shell is compatible.";
+            return YES;
     }
     return NO;
 }

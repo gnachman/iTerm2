@@ -2527,7 +2527,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     ShellIntegrationInjector *injector = [ShellIntegrationInjector instance];
-    NSString *dir = [[NSBundle bundleForClass:[self class]] pathForResource:@".zshenv" ofType:nil];
+    NSString *dir = NSBundle.shellIntegrationDirectory;
     if (!dir) {
         completion(env, argv);
         return;
@@ -13668,7 +13668,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                      boolArgs:boolArgs
                                         dcsID:dcsID
                                clientUniqueID:uniqueID
-                                         vars:localOrigin ? [self.screen exfiltratedEnvironmentVariables:config.environmentVariablesToCopy] : @{}
+                                   varsToSend:localOrigin ? [self.screen exfiltratedEnvironmentVariables:config.environmentVariablesToCopy] : @{}
+                                   clientVars:[self.screen exfiltratedEnvironmentVariables:nil] ?: @{}
                              initialDirectory:directory
                                        parent:previousConductor];
     if (localOrigin) {
@@ -13758,7 +13759,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                      boolArgs:@""
                                         dcsID:@""
                                clientUniqueID:@""
-                                         vars:@{}
+                                   varsToSend:@{}
+                                   clientVars:@{}
                              initialDirectory:nil
                                        parent:previousConductor];
     _conductor.delegate = self;
@@ -16414,11 +16416,14 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)conductorAbortWithReason:(NSString *)reason {
     XLog(@"conductor aborted: %@", reason);
+    NSString *location = _conductor.parent.sshIdentity.compactDescription;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState appendStringAtCursor:@"An error occurred while setting up the SSH environment:"];
         [mutableState appendCarriageReturnLineFeed];
         [mutableState appendStringAtCursor:reason];
         [mutableState appendCarriageReturnLineFeed];
+        NSString *message = [mutableState sshEndBannerTerminatingCount:1 newLocation:location];
+        [mutableState appendBannerMessage:message];
     }];
     [self unhookSSHConductor];
 }

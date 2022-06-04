@@ -77,6 +77,10 @@ extension String {
         return URL(fileURLWithPath: self).appendingPathComponent(pathComponent).path
     }
 
+    var deletingLastPathComponent: String {
+        return (self as NSString).deletingLastPathComponent
+    }
+
     var expandingTildeInPath: String {
         return (self as NSString).expandingTildeInPath
     }
@@ -90,6 +94,14 @@ extension String {
             return Substring()
         }
         return self[range.lowerBound...]
+    }
+
+    var deletingPathExtension: String {
+        return (self as NSString).deletingPathExtension
+    }
+
+    var pathExtension: String {
+        return (self as NSString).pathExtension
     }
 }
 

@@ -4270,6 +4270,21 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
 }
 
+#pragma mark - SSH
+
+- (NSString *)sshEndBannerTerminatingCount:(NSInteger)count newLocation:(NSString *)sshLocation {
+    NSString *preamble;
+    if (count == 1) {
+        preamble = @"ssh exited";
+    } else if (count > 1) {
+        preamble = [NSString stringWithFormat:@"%@ ssh sessions ended.", @(count)];
+    }
+    if (sshLocation) {
+        return [NSString stringWithFormat:@"%@ — now at %@.", preamble, sshLocation];
+    }
+    return [NSString stringWithFormat:@"%@.", preamble];
+}
+
 #pragma mark - DVR
 
 - (void)setFromFrame:(const screen_char_t *)s

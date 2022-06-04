@@ -142,7 +142,10 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable> {
 
     static func load<T: SecureUserDefaultStringTranscodable>(_ key: String) throws -> T? {
         let fileURL = try Self.path(key)
-        guard let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path) else {
+        // Check if the file exists before gettings its attributes to avoid an annoying exception
+        // while debugging.
+        guard FileManager.default.fileExists(atPath: fileURL.path),
+              let attributes = try? FileManager.default.attributesOfItem(atPath: fileURL.path) else {
             return nil
         }
         guard let owner = attributes[.ownerAccountID] as? Int, owner == 0 else {

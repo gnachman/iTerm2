@@ -82,6 +82,7 @@ class Process:
                 window_size = fcntl.ioctl(sys.stdin.fileno(), termios.TIOCGWINSZ, '00000000')
                 fcntl.ioctl(ctty_fd, termios.TIOCSWINSZ, window_size)
             log(env)
+            log(f'create subprocess args={args} cwd={cwd} executable={executable}')
             proc = await asyncio.create_subprocess_exec(
                 *args,
                 stdin=slave,
@@ -91,8 +92,6 @@ class Process:
                 env=env,
                 executable=executable,
                 preexec_fn=lambda: set_ctty(slave, master))
-        except Exception as e:
-            log(f'run_tty: {e}')
         finally:
             os.close(slave)
         return await Process.run_tty_proc(proc, master, f'run_tty({args})')
@@ -418,8 +417,13 @@ async def handle_login(identifier, args):
     log("begin handle_login")
     cwd = args[0]
     args = args[1:]
+    log(f'cwd={cwd} args={args}')
     cwd = os.path.expandvars(os.path.expanduser(cwd))
-    login_shell = guess_login_shell()
+    if args:
+        login_shell = args[0]
+        del args[0]
+    else:
+        login_shell = guess_login_shell()
     log(f'Login shell is {login_shell}')
     try:
         _, shell_name = os.path.split(login_shell)
@@ -439,6 +443,7 @@ async def handle_login(identifier, args):
     except Exception as e:
         log(f'handle_login: {e}')
         begin(identifier)
+        send_esc(f'Command failed: {e}')
         end(identifier, 1)
     return False
 

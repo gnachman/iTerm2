@@ -2571,19 +2571,8 @@
             [unpauser unpause];
             return;
         }
-        NSString *preamble;
-        if (count == 1) {
-            preamble = @"ssh exited";
-        } else if (count > 1) {
-            preamble = [NSString stringWithFormat:@"%@ ssh sessions ended.", @(count)];
-        }
-        NSString *sshLocation = [delegate screenSSHLocation];
-        NSString *banner;
-        if (sshLocation) {
-            banner = [NSString stringWithFormat:@"%@ — now at %@.", preamble, sshLocation];
-        } else {
-            banner = [NSString stringWithFormat:@"%@.", preamble];
-        }
+        NSString *banner = [weakSelf sshEndBannerTerminatingCount:count
+                                                        newLocation:[delegate screenSSHLocation]];
         dispatch_async(queue, ^{
             [weakSelf appendBanner:banner andUnpause:unpauser];
         });

@@ -381,6 +381,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)setTmuxState:(NSDictionary *)state;
 
+#pragma mark - SSH
+
+- (NSString *)sshEndBannerTerminatingCount:(NSInteger)count newLocation:(NSString *)sshLocation;
+
 #pragma mark - DVR
 
 // Load a frame from a dvr decoder.
