@@ -8,7 +8,7 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>$(TeamIdentifierPrefix)</string>
+		<string>$(TeamIdentifierPrefix)iTerm</string>
 	</array>
 </dict>
 </plist>

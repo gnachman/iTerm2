@@ -4,7 +4,7 @@
 <dict>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>$(TeamIdentifierPrefix)</string>
+		<string>$(TeamIdentifierPrefix)iTerm</string>
 	</array>
 	<key>com.apple.security.automation.apple-events</key>
 	<true/>
