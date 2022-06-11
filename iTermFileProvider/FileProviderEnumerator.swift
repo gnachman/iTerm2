@@ -1,171 +1,201 @@
-//
-//  FileProviderEnumerator.swift
-//  iTermFileProvider
-//
-//  Created by George Nachman on 6/4/22.
-//
-
 import FileProvider
-import FileProviderService
 
-protocol FileListingProvider {
-    func listFiles(_ path: SSHFilePath) async throws -> [SSHListFilesItem]
-}
-
-protocol SSHConnectionProviding {
-    func getConnections(_ completionHandler: @escaping (Result<[SSHConnectionIdentifier], Error>) -> ()) throws -> Progress
-}
-
-extension NSFileProviderItemIdentifier {
-    var sshFilePath: SSHFilePath? {
-        return SSHFilePath(rawValue)
-    }
-
-    init(sshFilePath: SSHFilePath) {
-        self.init(rawValue: sshFilePath.stringIdentifier)
-    }
-}
-
-class SSHFileItem: NSObject, NSFileProviderItem {
-    var parentItemIdentifier: NSFileProviderItemIdentifier
-    let sshFilePath: SSHFilePath
-
-    init?(parentItemIdentifier: NSFileProviderItemIdentifier,
-          connection: SSHConnectionIdentifier,
-          filename: String) {
-        let base: FilePath
-        if parentItemIdentifier == NSFileProviderItemIdentifier.rootContainer {
-            base = FilePath.root
-        } else if parentItemIdentifier == NSFileProviderItemIdentifier.trashContainer ||
-                    parentItemIdentifier == NSFileProviderItemIdentifier.workingSet {
-            return nil
-        } else if let parentFilePath = SSHFilePath(parentItemIdentifier.rawValue),
-                  parentFilePath.connection == connection {
-            base = parentFilePath.path
-        } else {
-            return nil
-        }
-
-        self.parentItemIdentifier = parentItemIdentifier
-        sshFilePath = SSHFilePath(connection: connection,
-                                  path: base.appendingPathComponent(filename))
-    }
-
-    // This assumes the parent item identifier is for a file, not root/trash/working set.
-    init(parentItemIdentifier: NSFileProviderItemIdentifier,
-         listFileItem: SSHListFilesItem) {
-        self.parentItemIdentifier = parentItemIdentifier
-        let parentSSHFilePath = parentItemIdentifier.sshFilePath!
-        self.sshFilePath = SSHFilePath(
-            connection: parentSSHFilePath.connection,
-            path: parentSSHFilePath.path.appendingPathComponent(
-                listFileItem.path))
-    }
-
-    init?(identifier: NSFileProviderItemIdentifier) {
-        if identifier == NSFileProviderItemIdentifier.rootContainer ||
-            identifier == NSFileProviderItemIdentifier.trashContainer ||
-            identifier == NSFileProviderItemIdentifier.workingSet {
-            return nil
-        }
-        guard let path = identifier.sshFilePath else {
-            return nil
-        }
-        parentItemIdentifier = path.parentIdentifier
-        sshFilePath = path
-    }
-
-    override var debugDescription: String {
-        "<SSHFileItem parent=\(parentItemIdentifier.rawValue) sshFilePath=\(sshFilePath)>"
-    }
-
-    var itemIdentifier: NSFileProviderItemIdentifier {
-        return NSFileProviderItemIdentifier(rawValue: sshFilePath.appendingPathComponent(filename).stringIdentifier)
-    }
-
-    var filename: String { sshFilePath.path.lastPathComponent }
-}
-
-// Enumerates a directory on an ssh server.
 class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
-    private let fileListingProvider: FileListingProvider
-    private let container: SSHFileItem
-    private var anchor: NSFileProviderSyncAnchor {
-        NSFileProviderSyncAnchor(int: currentVersion)
-    }
-    private var versions: [NSFileProviderSyncAnchor: [SSHFileItem]] = [:]
-    private var currentVersion = 0
+    private let path: String
+    private let anchor = NSFileProviderSyncAnchor(Data())
+    private var dataSource: CachingPaginatingDataSource
+    static var enumeratedPaths = NSCountedSet()
+    private let manager: NSFileProviderManager?
 
-    // Enumerates files within container.
-    init(container: SSHFileItem,
-         fileListingProvider: FileListingProvider) {
-        logger.debug("Extension: FileProviderEnumerator\(container, privacy: .public): init")
-        self.container = container
-        self.fileListingProvider = fileListingProvider
+    init(_ path: String, domain: NSFileProviderDomain) {
+        log("Enumerator(\(path)): Create enumerator for path \(path)")
+        self.path = path
+        manager = NSFileProviderManager(for: domain)
+        dataSource = CachingPaginatingDataSource(path, domain: domain)
+        Self.enumeratedPaths.add(path)
+        log("Paths are now: \(Self.enumeratedPaths.allObjects.compactMap { $0 as? String }.joined(separator: ", "))")
         super.init()
     }
 
-    func invalidate() {
-        logger.debug("Extension: FileProviderEnumerator\(self.container, privacy: .public): invalidate")
-        // TODO: perform invalidation of server connection if necessary
+    deinit {
+        Self.enumeratedPaths.remove(path)
+        log("Enumerator(\(path)).deinit.")
+        log("Paths are now: \(Self.enumeratedPaths.allObjects.compactMap { $0 as? String }.joined(separator: ", "))")
     }
 
-    func enumerateItems(for observer: NSFileProviderEnumerationObserver, startingAt page: NSFileProviderPage) {
-        logger.debug("Extension: FileProviderEnumerator\(self.container, privacy: .public): enumerate at \(page.rawValue, privacy: .public)")
+    func invalidate() {
+        log("Enumerator(\(path)).invalidate()")
+        // Note that the job of invalidate() is to stop enumeration of items and changes but not to
+        // destroy any cached state.
+    }
+
+    func enumerateItems(for observer: NSFileProviderEnumerationObserver,
+                        startingAt page: NSFileProviderPage) {
         Task {
-            do {
-                let sshItems = try await fetch()
-                logger.debug("Extension: FileProviderEnumerator\(self.container, privacy: .public): enumerate\(page.rawValue, privacy: .public) returning \(sshItems)")
-                observer.didEnumerate(sshItems)
-                // TODO: Support pagination
-                observer.finishEnumerating(upTo: nil)
-            } catch let error as NSFileProviderError {
-                logger.error(("Extension: FileProviderEnumerator\(self.container, privacy: .public): enumerate\(page.rawValue, privacy: .public) failed with \(error.localizedDescription, privacy: .public)"))
-                observer.finishEnumeratingWithError(error)
-            } catch {
-                logger.error(("Extension: FileProviderEnumerator\(self.container, privacy: .public): enumerate\(page.rawValue, privacy: .public) failed with non-file provide error \(error.localizedDescription, privacy: .public)"))
-                observer.finishEnumeratingWithError(NSFileProviderError(.serverUnreachable))
+            await logging("Enumerator(\(path)).enumerateItems(startingAt: \(page.description))") {
+                do {
+                    if path == RemoteFile.workingSetPrefix {
+                        await enumerateWorkingSet(observer, page: page)
+                    } else {
+                        log("Make a request to the data source")
+                        let nextPage = try await enumerate(path: path,
+                                                           page: page,
+                                                           observer: observer,
+                                                           workingSet: false)
+                        observer.finishEnumerating(upTo: nextPage)
+                    }
+                } catch {
+                    log("Finish enumerating with ERROR \(error)")
+                    observer.finishEnumeratingWithError(error)
+                }
             }
         }
-        observer.finishEnumerating(upTo: nil)
     }
 
-    private func fetch() async throws -> [SSHFileItem] {
-        let items = try await fileListingProvider.listFiles(container.sshFilePath)
-        let sshFileItems = items.map { item in
-            return SSHFileItem(parentItemIdentifier: container.itemIdentifier,
-                               listFileItem: item)
+    private func enumerateWorkingSet(_ observer: NSFileProviderEnumerationObserver,
+                                     page startPage: NSFileProviderPage) async {
+        await logging("Enumerating Working Set") {
+            for entry in await WorkingSet.instance.entries {
+                log("Enumerate \(entry.path) from working set")
+                var nextPage: NSFileProviderPage? = startPage
+                while let page = nextPage {
+                    do {
+                        log("Enumerating page \(page.description)")
+                        switch entry.kind {
+                        case .folder:
+                            nextPage = try await enumerate(path: entry.path,
+                                                           page: page,
+                                                           observer: observer,
+                                                           workingSet: true)
+                        case .file:
+                            let file = try await RemoteService.instance.lookup(entry.path)
+                            observer.didEnumerate([await FileProviderItem(file, manager: manager)])
+                        }
+                    } catch {
+                        log("Enumeration of \(path) failed with \(error.localizedDescription)")
+                        break
+                    }
+                }
+            }
+            log("Finished enumerating working set")
+            observer.finishEnumerating(upTo: nil)
         }
-        currentVersion += 1
-        versions[anchor] = sshFileItems
-        return sshFileItems
+    }
+
+    private func enumerate(path: String,
+                           page: NSFileProviderPage,
+                           observer: NSFileProviderEnumerationObserver,
+                           workingSet: Bool) async throws -> NSFileProviderPage? {
+        let (files, nextPage) = try await dataSource.request(
+            service: RemoteService.instance,
+            path: path,
+            page: page,
+            pageSize: observer.suggestedPageSize,
+            workingSet: workingSet)
+        log("For \(path), provide observer these files: \(files), nextPage=\(nextPage?.description ?? "(nil)")")
+        let root = try? await manager?.getUserVisibleURL(for: .rootContainer)
+        let items = files.map { FileProviderItem($0, userVisibleRoot: root) }
+        log("Provide \(items.count) items with next page of \(nextPage?.description ?? "(nil)")")
+        observer.didEnumerate(items)
+
+        if self.path != RemoteFile.workingSetPrefix {
+            log("If parent directory is in the working set, add these files to it.")
+            let parent = (self.path as NSString).deletingLastPathComponent
+            if await WorkingSet.instance.entries.contains(where: { $0.path == parent }) {
+                await ensureItemsInLatestWorkingSetAnchor(items)
+            }
+        }
+        return nextPage
+    }
+
+    // This is insane, but if you reveal the existance of an item after enumerating the working set, the system assumes that those items exist the next time it calls enumerateChanges.
+    // For example:
+    // enumerateChanges(working set) -> delete: [], update: [/foo] upToAnchor=1
+    // enumerate(/foo): [/foo/bar]
+    // currentAnchor: 2
+    // At this point /foo/bar is deleted from the remote.
+    // enumerateChanges(workingSet) -> delete [/foo/bar], update: [] upToAnchor=3
+    //
+    // If you fail to list /foo/bar as a deletion, it will live forever.
+    private func ensureItemsInLatestWorkingSetAnchor(_ items: [FileProviderItem]) async {
+        await dataSource.addItemsToWorkingSetAnchors(items)
     }
 
     func enumerateChanges(for observer: NSFileProviderChangeObserver,
                           from anchor: NSFileProviderSyncAnchor) {
-        logger.debug("Extension: FileProviderEnumerator\(self.container, privacy: .public): enumerateChanges versus anchor \(anchor.rawValue)")
-        Task {
-            do {
-                guard let previousItems = versions[anchor] else {
-                    observer.finishEnumeratingWithError(NSFileProviderError(.versionNoLongerAvailable))
-                    return
+        let prefix = "Enumerator(\(path)).enumerateChanges(from anchor: \(anchor.description))"
+        logging(prefix) {
+            _ = Task {
+                do {
+                    let diff = FileListDiff()
+                    try await addFiles(fromAnchor: anchor, to: diff)
+
+                    if path == RemoteFile.workingSetPrefix {
+                        try await logging("Enumerating working set") {
+                            for entry in await WorkingSet.instance.entries {
+                                log("Working set contains \(entry.path). Will add its contents.")
+                                try await addFiles(at: entry.path, to: diff)
+                            }
+                        }
+                    } else {
+                        log("Enumerating regular path \(path)")
+                        try await addFiles(at: path, to: diff)
+                    }
+                    let newAnchor = try await publishDiffs(from: diff,
+                                                           observer: observer)
+                    log("Finish enumerating up to new anchor \(newAnchor)")
+                    observer.finishEnumeratingChanges(upTo: newAnchor.identifier,
+                                                      moreComing: false)
+                    if let syncAnchor = SyncAnchor(anchor) {
+                        await SyncCache.instance.expireAnchors(upTo: syncAnchor)
+                    }
+                } catch {
+                    log("Finished with ERROR \(error)")
+                    observer.finishEnumeratingWithError(error)
                 }
-                let sshItems = try await fetch()
-                let previous = Set(previousItems)
-                let current = Set(sshItems)
-                observer.didDeleteItems(withIdentifiers: previous.subtracting(current).map { $0.itemIdentifier })
-                observer.didUpdate(Array(current.subtracting(previous)))
-                observer.finishEnumeratingChanges(upTo: anchor, moreComing: false)
-            } catch let error as NSFileProviderError {
-                observer.finishEnumeratingWithError(error)
-            } catch {
-                observer.finishEnumeratingWithError(NSFileProviderError(.serverUnreachable))
             }
         }
     }
 
+    private func addFiles(fromAnchor anchor: NSFileProviderSyncAnchor,
+                          to diff: FileListDiff) async throws {
+        guard let syncAnchor = SyncAnchor(anchor),
+            let (_, before) = await dataSource.lookup(anchor: syncAnchor) else {
+            throw NSFileProviderError(.syncAnchorExpired)
+        }
+        log("Add 'before' files from anchor \(anchor.rawValue.stringOrHex): \(before)")
+        diff.add(before: Array(before))
+    }
+
+    private func addFiles(at path: String,
+                          to diff: FileListDiff) async throws {
+        let after = try await RemoteService.instance.list(at: path,
+                                                          fromPage: nil,
+                                                          sort: .byName,
+                                                          pageSize: Int.max)
+        log("Add 'after' files at \(path): \(after)")
+        let root = try? await manager?.getUserVisibleURL(for: .rootContainer)
+        diff.add(after: after.files.map { FileProviderItem($0, userVisibleRoot: root) })
+    }
+
+    private func publishDiffs(from diff: FileListDiff,
+                              observer: NSFileProviderChangeObserver) async throws -> SyncAnchor {
+        log("Save all the after files to a new anchor: \(diff.after.map { $0.debugDescription }.joined(separator: ", "))")
+        let newAnchor = await dataSource.save(files: diff.after.map { $0.entry },
+                                              workingSet: path == RemoteFile.workingSetPrefix)
+        log("Computing diffs:")
+        log("deletions=\(diff.deletions)")
+        observer.didDeleteItems(withIdentifiers: diff.deletions)
+        log("updates=\(diff.updates)")
+        observer.didUpdate(diff.updates)
+        return newAnchor
+    }
+
     func currentSyncAnchor(completionHandler: @escaping (NSFileProviderSyncAnchor?) -> Void) {
-        completionHandler(anchor)
+        Task {
+            let anchor = await dataSource.lastAnchor
+            log("Enumerator.currentSyncAnchor called, returning \(anchor?.debugDescription ?? "(nil)"))")
+            completionHandler(anchor?.identifier)
+        }
     }
 }
-

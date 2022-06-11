@@ -95,6 +95,7 @@ class FileProviderService: NSObject, NSFileProviderServiceSource, NSXPCListenerD
         synchronized(self) {
             listeners.add(listener)
         }
+        
         listener.resume()
         return listener.endpoint
     }

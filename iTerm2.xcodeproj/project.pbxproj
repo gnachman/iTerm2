@@ -1522,10 +1522,6 @@
 		A63EB059284DB14000B2AB89 /* ConductorRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB058284DB14000B2AB89 /* ConductorRegistry.swift */; };
 		A63EB05B284DCAF300B2AB89 /* WeakBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB05A284DCAF300B2AB89 /* WeakBox.swift */; };
 		A63EB05C284EC5F900B2AB89 /* SSHIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8094282DE46700493544 /* SSHIdentity.swift */; };
-		A63EB05E284F326000B2AB89 /* SSHFileTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB05D284F326000B2AB89 /* SSHFileTypes.swift */; };
-		A63EB060284F32CC00B2AB89 /* RootListFileProviderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB05F284F32CC00B2AB89 /* RootListFileProviderEnumerator.swift */; };
-		A63EB062284FB83100B2AB89 /* EmptyFileProviderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB061284FB83100B2AB89 /* EmptyFileProviderEnumerator.swift */; };
-		A63EB064284FCC9100B2AB89 /* FileProviderEmptyItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB063284FCC9100B2AB89 /* FileProviderEmptyItem.swift */; };
 		A63F2A3923FA5698008DDEA4 /* iTermServer in CopyFiles */ = {isa = PBXBuildFile; fileRef = A663197822FF349700C502BD /* iTermServer */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A63F34D021E1E0F8000C9D52 /* iTermSessionPicker.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F34CE21E1E0F8000C9D52 /* iTermSessionPicker.h */; };
 		A63F34D121E1E0F8000C9D52 /* iTermSessionPicker.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F34CF21E1E0F8000C9D52 /* iTermSessionPicker.m */; };
@@ -2502,6 +2498,24 @@
 		A6936B561D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B541D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m */; };
 		A6936B591D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A6936B571D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h */; };
 		A6936B5A1D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */; };
+		A69412E528555C5F0086F068 /* FileProviderServicing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412E428555C5F0086F068 /* FileProviderServicing.swift */; };
+		A69412F728555D3D0086F068 /* ItemCreator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412E628555D390086F068 /* ItemCreator.swift */; };
+		A69412F828555D3D0086F068 /* SyncCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412E728555D390086F068 /* SyncCache.swift */; };
+		A69412F928555D3D0086F068 /* Remote.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412E828555D390086F068 /* Remote.swift */; };
+		A69412FA28555D3D0086F068 /* FileProviderLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412E928555D390086F068 /* FileProviderLogging.swift */; };
+		A69412FB28555D3D0086F068 /* FileProviderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412EA28555D3A0086F068 /* FileProviderItem.swift */; };
+		A69412FC28555D3D0086F068 /* ItemModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412EB28555D3A0086F068 /* ItemModifier.swift */; };
+		A69412FD28555D3D0086F068 /* FileProviderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412EC28555D3A0086F068 /* FileProviderEnumerator.swift */; };
+		A69412FE28555D3D0086F068 /* WorkingSet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412ED28555D3B0086F068 /* WorkingSet.swift */; };
+		A69412FF28555D3D0086F068 /* ItemDeleter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412EE28555D3B0086F068 /* ItemDeleter.swift */; };
+		A694130028555D3D0086F068 /* SyncAnchor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412EF28555D3B0086F068 /* SyncAnchor.swift */; };
+		A694130128555D3D0086F068 /* CachingPaginatingDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412F028555D3B0086F068 /* CachingPaginatingDataSource.swift */; };
+		A694130228555D3D0086F068 /* NSFileProviderPage+Additions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412F128555D3C0086F068 /* NSFileProviderPage+Additions.swift */; };
+		A694130328555D3D0086F068 /* FileListDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412F228555D3C0086F068 /* FileListDiff.swift */; };
+		A694130428555D3D0086F068 /* Paginator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412F328555D3C0086F068 /* Paginator.swift */; };
+		A694130528555D3D0086F068 /* FileProviderFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412F428555D3C0086F068 /* FileProviderFetcher.swift */; };
+		A694130628555D3D0086F068 /* RebaseLocalFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412F528555D3C0086F068 /* RebaseLocalFile.swift */; };
+		A694130728555D3D0086F068 /* FileProviderExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412F628555D3D0086F068 /* FileProviderExtension.swift */; };
 		A695CA7F213DAA8500486440 /* NSHost+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A695CA7D213DAA8500486440 /* NSHost+iTerm.h */; };
 		A695CA80213DAA8500486440 /* NSHost+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A695CA7E213DAA8500486440 /* NSHost+iTerm.m */; };
 		A697100618D82E79007E901D /* iTermAdvancedSettingsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A697100418D82E79007E901D /* iTermAdvancedSettingsViewController.h */; };
@@ -2829,9 +2843,6 @@
 		A6C1FD571FC2B210006B9A69 /* iTermMargin.metal in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FD531FC2B210006B9A69 /* iTermMargin.metal */; };
 		A6C1FD5A1FC2BD72006B9A69 /* GlyphKey.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C1FD581FC2BD72006B9A69 /* GlyphKey.h */; };
 		A6C1FE5C284C1BF200EA8A3B /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6C1FE5B284C1BF200EA8A3B /* UniformTypeIdentifiers.framework */; };
-		A6C1FE5F284C1BF200EA8A3B /* FileProviderExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FE5E284C1BF200EA8A3B /* FileProviderExtension.swift */; };
-		A6C1FE61284C1BF200EA8A3B /* FileProviderItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FE60284C1BF200EA8A3B /* FileProviderItem.swift */; };
-		A6C1FE63284C1BF200EA8A3B /* FileProviderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C1FE62284C1BF200EA8A3B /* FileProviderEnumerator.swift */; };
 		A6C1FE68284C1BF200EA8A3B /* iTermFileProvider.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A6C1FE5A284C1BF200EA8A3B /* iTermFileProvider.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A6C20CB825F6CA8C0086B09C /* iTermSlider.h in Headers */ = {isa = PBXBuildFile; fileRef = A6C20CB625F6CA8C0086B09C /* iTermSlider.h */; };
 		A6C20CB925F6CA8C0086B09C /* iTermSlider.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C20CB725F6CA8C0086B09C /* iTermSlider.m */; };
@@ -5593,10 +5604,6 @@
 		A63EB053284D836900B2AB89 /* SSHFileGateway.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFileGateway.swift; sourceTree = "<group>"; };
 		A63EB058284DB14000B2AB89 /* ConductorRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConductorRegistry.swift; sourceTree = "<group>"; };
 		A63EB05A284DCAF300B2AB89 /* WeakBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeakBox.swift; sourceTree = "<group>"; };
-		A63EB05D284F326000B2AB89 /* SSHFileTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFileTypes.swift; sourceTree = "<group>"; };
-		A63EB05F284F32CC00B2AB89 /* RootListFileProviderEnumerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootListFileProviderEnumerator.swift; sourceTree = "<group>"; };
-		A63EB061284FB83100B2AB89 /* EmptyFileProviderEnumerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyFileProviderEnumerator.swift; sourceTree = "<group>"; };
-		A63EB063284FCC9100B2AB89 /* FileProviderEmptyItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderEmptyItem.swift; sourceTree = "<group>"; };
 		A63F2A3A23FA5951008DDEA4 /* it2run */ = {isa = PBXFileReference; lastKnownFileType = text; name = it2run; path = sources/it2run; sourceTree = "<group>"; };
 		A63F2A3B23FB8191008DDEA4 /* keyboard.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = keyboard.py; sourceTree = "<group>"; };
 		A63F2A3C23FB8191008DDEA4 /* arrangement.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = arrangement.py; sourceTree = "<group>"; };
@@ -6342,6 +6349,24 @@
 		A6936B541D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAdditionalHotKeyTableCellView.m; sourceTree = "<group>"; };
 		A6936B571D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHotkeyPreferencesModel.h; sourceTree = "<group>"; };
 		A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotkeyPreferencesModel.m; sourceTree = "<group>"; };
+		A69412E428555C5F0086F068 /* FileProviderServicing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderServicing.swift; sourceTree = "<group>"; };
+		A69412E628555D390086F068 /* ItemCreator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ItemCreator.swift; sourceTree = "<group>"; };
+		A69412E728555D390086F068 /* SyncCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SyncCache.swift; sourceTree = "<group>"; };
+		A69412E828555D390086F068 /* Remote.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Remote.swift; sourceTree = "<group>"; };
+		A69412E928555D390086F068 /* FileProviderLogging.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProviderLogging.swift; sourceTree = "<group>"; };
+		A69412EA28555D3A0086F068 /* FileProviderItem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProviderItem.swift; sourceTree = "<group>"; };
+		A69412EB28555D3A0086F068 /* ItemModifier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ItemModifier.swift; sourceTree = "<group>"; };
+		A69412EC28555D3A0086F068 /* FileProviderEnumerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProviderEnumerator.swift; sourceTree = "<group>"; };
+		A69412ED28555D3B0086F068 /* WorkingSet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WorkingSet.swift; sourceTree = "<group>"; };
+		A69412EE28555D3B0086F068 /* ItemDeleter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ItemDeleter.swift; sourceTree = "<group>"; };
+		A69412EF28555D3B0086F068 /* SyncAnchor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SyncAnchor.swift; sourceTree = "<group>"; };
+		A69412F028555D3B0086F068 /* CachingPaginatingDataSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CachingPaginatingDataSource.swift; sourceTree = "<group>"; };
+		A69412F128555D3C0086F068 /* NSFileProviderPage+Additions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSFileProviderPage+Additions.swift"; sourceTree = "<group>"; };
+		A69412F228555D3C0086F068 /* FileListDiff.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileListDiff.swift; sourceTree = "<group>"; };
+		A69412F328555D3C0086F068 /* Paginator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Paginator.swift; sourceTree = "<group>"; };
+		A69412F428555D3C0086F068 /* FileProviderFetcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProviderFetcher.swift; sourceTree = "<group>"; };
+		A69412F528555D3C0086F068 /* RebaseLocalFile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RebaseLocalFile.swift; sourceTree = "<group>"; };
+		A69412F628555D3D0086F068 /* FileProviderExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileProviderExtension.swift; sourceTree = "<group>"; };
 		A695CA7D213DAA8500486440 /* NSHost+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSHost+iTerm.h"; sourceTree = "<group>"; };
 		A695CA7E213DAA8500486440 /* NSHost+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSHost+iTerm.m"; sourceTree = "<group>"; };
 		A696AB3921603A3F000023C3 /* iTermMetalUnavailableReason.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalUnavailableReason.h; sourceTree = "<group>"; };
@@ -6614,9 +6639,6 @@
 		A6C1FD581FC2BD72006B9A69 /* GlyphKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = GlyphKey.h; path = Metal/Infrastructure/GlyphKey.h; sourceTree = "<group>"; };
 		A6C1FE5A284C1BF200EA8A3B /* iTermFileProvider.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = iTermFileProvider.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A6C1FE5B284C1BF200EA8A3B /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
-		A6C1FE5E284C1BF200EA8A3B /* FileProviderExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderExtension.swift; sourceTree = "<group>"; };
-		A6C1FE60284C1BF200EA8A3B /* FileProviderItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderItem.swift; sourceTree = "<group>"; };
-		A6C1FE62284C1BF200EA8A3B /* FileProviderEnumerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderEnumerator.swift; sourceTree = "<group>"; };
 		A6C1FE64284C1BF200EA8A3B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A6C1FE65284C1BF200EA8A3B /* iTermFileProvider.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iTermFileProvider.entitlements; sourceTree = "<group>"; };
 		A6C20CB625F6CA8C0086B09C /* iTermSlider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSlider.h; sourceTree = "<group>"; };
@@ -10736,16 +10758,27 @@
 		A6C1FE5D284C1BF200EA8A3B /* iTermFileProvider */ = {
 			isa = PBXGroup;
 			children = (
-				A6C1FE5E284C1BF200EA8A3B /* FileProviderExtension.swift */,
-				A6C1FE60284C1BF200EA8A3B /* FileProviderItem.swift */,
-				A6C1FE62284C1BF200EA8A3B /* FileProviderEnumerator.swift */,
+				A69412F028555D3B0086F068 /* CachingPaginatingDataSource.swift */,
+				A69412F228555D3C0086F068 /* FileListDiff.swift */,
+				A69412EC28555D3A0086F068 /* FileProviderEnumerator.swift */,
+				A69412F628555D3D0086F068 /* FileProviderExtension.swift */,
+				A69412F428555D3C0086F068 /* FileProviderFetcher.swift */,
+				A69412EA28555D3A0086F068 /* FileProviderItem.swift */,
+				A69412E928555D390086F068 /* FileProviderLogging.swift */,
+				A69412E628555D390086F068 /* ItemCreator.swift */,
+				A69412EE28555D3B0086F068 /* ItemDeleter.swift */,
+				A69412EB28555D3A0086F068 /* ItemModifier.swift */,
+				A69412F128555D3C0086F068 /* NSFileProviderPage+Additions.swift */,
+				A69412F328555D3C0086F068 /* Paginator.swift */,
+				A69412F528555D3C0086F068 /* RebaseLocalFile.swift */,
+				A69412E828555D390086F068 /* Remote.swift */,
+				A69412EF28555D3B0086F068 /* SyncAnchor.swift */,
+				A69412E728555D390086F068 /* SyncCache.swift */,
+				A69412ED28555D3B0086F068 /* WorkingSet.swift */,
 				A6C1FE64284C1BF200EA8A3B /* Info.plist */,
 				A6C1FE65284C1BF200EA8A3B /* iTermFileProvider.entitlements */,
 				A63EB04D284D1DB400B2AB89 /* FileProviderServiceServer.swift */,
-				A63EB05D284F326000B2AB89 /* SSHFileTypes.swift */,
-				A63EB05F284F32CC00B2AB89 /* RootListFileProviderEnumerator.swift */,
-				A63EB061284FB83100B2AB89 /* EmptyFileProviderEnumerator.swift */,
-				A63EB063284FCC9100B2AB89 /* FileProviderEmptyItem.swift */,
+				A69412E428555C5F0086F068 /* FileProviderServicing.swift */,
 			);
 			path = iTermFileProvider;
 			sourceTree = "<group>";
@@ -15372,15 +15405,26 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A63EB064284FCC9100B2AB89 /* FileProviderEmptyItem.swift in Sources */,
-				A63EB062284FB83100B2AB89 /* EmptyFileProviderEnumerator.swift in Sources */,
-				A6C1FE5F284C1BF200EA8A3B /* FileProviderExtension.swift in Sources */,
+				A694130528555D3D0086F068 /* FileProviderFetcher.swift in Sources */,
+				A69412FD28555D3D0086F068 /* FileProviderEnumerator.swift in Sources */,
+				A694130028555D3D0086F068 /* SyncAnchor.swift in Sources */,
+				A694130328555D3D0086F068 /* FileListDiff.swift in Sources */,
+				A69412E528555C5F0086F068 /* FileProviderServicing.swift in Sources */,
+				A69412FE28555D3D0086F068 /* WorkingSet.swift in Sources */,
+				A694130128555D3D0086F068 /* CachingPaginatingDataSource.swift in Sources */,
+				A69412F828555D3D0086F068 /* SyncCache.swift in Sources */,
+				A69412FA28555D3D0086F068 /* FileProviderLogging.swift in Sources */,
+				A69412FB28555D3D0086F068 /* FileProviderItem.swift in Sources */,
+				A694130228555D3D0086F068 /* NSFileProviderPage+Additions.swift in Sources */,
+				A694130628555D3D0086F068 /* RebaseLocalFile.swift in Sources */,
 				A63EB04C284D1D1900B2AB89 /* FileProviderServiceClient.swift in Sources */,
-				A63EB060284F32CC00B2AB89 /* RootListFileProviderEnumerator.swift in Sources */,
+				A69412FC28555D3D0086F068 /* ItemModifier.swift in Sources */,
+				A69412FF28555D3D0086F068 /* ItemDeleter.swift in Sources */,
+				A694130428555D3D0086F068 /* Paginator.swift in Sources */,
 				A63EB04E284D1DB400B2AB89 /* FileProviderServiceServer.swift in Sources */,
-				A6C1FE61284C1BF200EA8A3B /* FileProviderItem.swift in Sources */,
-				A63EB05E284F326000B2AB89 /* SSHFileTypes.swift in Sources */,
-				A6C1FE63284C1BF200EA8A3B /* FileProviderEnumerator.swift in Sources */,
+				A69412F728555D3D0086F068 /* ItemCreator.swift in Sources */,
+				A694130728555D3D0086F068 /* FileProviderExtension.swift in Sources */,
+				A69412F928555D3D0086F068 /* Remote.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -17191,7 +17235,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
@@ -17221,6 +17265,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.FileProviderService;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -17265,7 +17310,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
@@ -17295,6 +17340,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.FileProviderService;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -17339,7 +17385,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
@@ -17369,6 +17415,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.FileProviderService;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
