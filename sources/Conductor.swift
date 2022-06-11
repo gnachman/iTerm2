@@ -7,6 +7,7 @@
 
 import Foundation
 import FileProvider
+import FileProviderService
 
 protocol SSHCommandRunning {
     func runRemoteCommand(_ commandLine: String,
@@ -110,6 +111,30 @@ class Conductor: NSObject, Codable {
     }
     private var backgroundJobs = [Int32: State]()
 
+    enum FileSubcommand: Codable, Equatable {
+        case ls(path: Data)
+        case fetch(path: Data)
+
+        var stringValue: String {
+            switch self {
+            case .ls(let path):
+                return "ls\n\(path.base64EncodedString())"
+            case .fetch(let path):
+                return "fetch\n\(path.base64EncodedString())"
+            }
+        }
+
+        var operationDescription: String {
+            switch self {
+            case .ls(let path):
+                return "ls \(path)"
+            case .fetch(let path):
+                return "fetch \(path)"
+            }
+        }
+    }
+
+
     enum Command: Equatable, Codable, CustomDebugStringConvertible {
         var debugDescription: String {
             return "<Command: \(operationDescription)>"
@@ -140,6 +165,7 @@ class Conductor: NSObject, Codable {
         case framerReset
         case framerAutopoll
         case framerSave([String:String])
+        case framerFile(FileSubcommand)
 
         var isFramer: Bool {
             switch self {
@@ -148,7 +174,8 @@ class Conductor: NSObject, Codable {
                 return false
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
-                    .framerDeregister(_), .framerPoll, .framerReset, .framerAutopoll, .framerSave(_):
+                    .framerDeregister(_), .framerPoll, .framerReset, .framerAutopoll, .framerSave(_),
+                    .framerFile(_):
                 return true
             }
         }
@@ -197,6 +224,8 @@ class Conductor: NSObject, Codable {
             case .framerSave(let dict):
                 let kvps = dict.keys.map { "\($0)=\(dict[$0]!)" }
                 return (["save"] + kvps).joined(separator: "\n")
+            case .framerFile(let subcommand):
+                return "file\n" + subcommand.stringValue
             }
         }
 
@@ -242,6 +271,8 @@ class Conductor: NSObject, Codable {
                 return "reset"
             case .framerAutopoll:
                 return "autopoll"
+            case .framerFile(let subcommand):
+                return "file \(subcommand.operationDescription)"
             }
         }
     }
@@ -280,6 +311,8 @@ class Conductor: NSObject, Codable {
                     return "handlePoll"
                 case .handleGetShell(let output):
                     return "handleGetShell(\(output.string))"
+                case .handleFile(_, _):
+                    return "handleFile"
                 }
             }
 
@@ -292,6 +325,7 @@ class Conductor: NSObject, Codable {
             case handleBackgroundJob(StringArray, (Data, Int32) -> ())
             case handlePoll(StringArray, (Data) -> ())
             case handleGetShell(StringArray)
+            case handleFile(StringArray, (String, Int32) -> ())
 
             private enum Key: CodingKey {
                 case rawValue
@@ -309,6 +343,7 @@ class Conductor: NSObject, Codable {
                 case handleBackgroundJob
                 case handlePoll
                 case handleGetShell
+                case handleFile
             }
 
             private var rawValue: Int {
@@ -331,6 +366,8 @@ class Conductor: NSObject, Codable {
                     return RawValues.handlePoll.rawValue
                 case .handleGetShell(_):
                     return RawValues.handleGetShell.rawValue
+                case .handleFile(_, _):
+                    return RawValues.handleFile.rawValue
                 }
             }
 
@@ -350,7 +387,13 @@ class Conductor: NSObject, Codable {
                     try container.encode(value, forKey: .string)
                 case .handleBackgroundJob(let value, _):
                     try container.encode(value, forKey: .stringArray)
+                case .handleFile(_, _):
+                    break
                 }
+            }
+
+            enum Exception: Error {
+                case noncodable
             }
 
             init(from decoder: Decoder) throws {
@@ -374,6 +417,8 @@ class Conductor: NSObject, Codable {
                     self = .handlePoll(try container.decode(StringArray.self, forKey: .stringArray), {_ in})
                 case .handleGetShell:
                     self = .handleGetShell(try container.decode(StringArray.self, forKey: .stringArray))
+                case .handleFile:
+                    self = .handleFile(StringArray(), { _, _ in })
                 }
             }
         }
@@ -738,6 +783,10 @@ class Conductor: NSObject, Codable {
         }
     }
 
+    fileprivate func framerFile(_ subcommand: FileSubcommand, completion: @escaping (String, Int32) -> ()) {
+        send(.framerFile(subcommand), .handleFile(StringArray(), completion))
+    }
+
     private func framerSave(_ dict: [String: String]) {
         send(.framerSave(dict), .fireAndForget)
     }
@@ -876,19 +925,10 @@ class Conductor: NSObject, Codable {
                     fail("Invalid process ID from remote: \(lines.string)")
                     return
                 }
-                framedPID = pid
                 if #available(macOS 11.0, *) {
-                    let identifier = NSFileProviderDomainIdentifier(rawValue: "myFiles")
-                    let domain = NSFileProviderDomain(identifier: identifier, displayName: "Some Domain")
-
-                    NSFileProviderManager.add(domain) { error in
-                        guard let error = error else {
-                            return
-                        }
-
-                        NSLog(error.localizedDescription)
-                    }
+                    ConductorRegistry.instance.register(self)
                 }
+                framedPID = pid
                 return
             case .abort, .sideChannelLine(_, _, _):
                 return
@@ -918,6 +958,17 @@ class Conductor: NSObject, Codable {
                 break
             }
             return
+        case .handleFile(let lines, let completion):
+            switch result {
+            case .line(let line):
+                lines.strings.append(line)
+            case .abort:
+                completion("", -1)
+            case .sideChannelLine(line: _, channel: _, pid: _):
+                break
+            case .end(let status):
+                completion(lines.strings.joined(separator: ""), Int32(status))
+            }
         case .handlePoll(let output, let completion):
             switch result {
             case .line(let line):
@@ -1423,5 +1474,50 @@ extension Data {
             return "“\(safe)”"
         }
         return (self as NSData).it_hexEncoded()
+    }
+}
+
+@available(macOS 11.0, *)
+extension Conductor: SSHEndpoint {
+    func performFileOperation(subcommand: FileSubcommand) async throws -> String {
+        let (output, code) = await withCheckedContinuation { continuation in
+            framerFile(subcommand) { content, code in
+                continuation.resume(returning: (content, code))
+            }
+        }
+        if code < 0 {
+            throw SSHEndpointException.connectionClosed
+        }
+        if code > 0 {
+            throw SSHEndpointException.fileNotFound
+        }
+        return output
+    }
+
+    func pathToData(_ path: String) throws -> Data {
+        guard let pathData = path.data(using: .utf8) else {
+            throw SSHEndpointException.fileNotFound
+        }
+        return pathData
+    }
+
+    func listFiles(_ path: String) async throws -> [String] {
+        let output = try await performFileOperation(subcommand: .ls(path: try pathToData(path)))
+        let lines = output.components(separatedBy: "\n")
+        let paths = lines.compactMap { encoded -> String? in
+            guard let data = Data(base64Encoded: encoded) else {
+                return nil
+            }
+            return String(data: data, encoding: .utf8)
+        }
+        return paths
+    }
+
+    func download(_ path: String) async throws -> Data {
+        let output = try await performFileOperation(subcommand: .fetch(path: try pathToData(path)))
+        guard let data = Data(base64Encoded: output) else {
+            throw SSHEndpointException.internalError
+        }
+        return data
     }
 }

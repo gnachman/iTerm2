@@ -7,13 +7,6 @@
 
 import Foundation
 
-private class WeakBox<T: AnyObject> {
-    weak var value: T?
-    init(_ value: T?) {
-        self.value = value
-    }
-}
-
 @objc(iTermCommandExplainer)
 class CommandExplainer: NSObject {
     @objc static let instance = CommandExplainer()

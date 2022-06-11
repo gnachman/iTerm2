@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import FileProviderService
 
 struct ParsedSSHArguments: Codable, CustomDebugStringConvertible {
     let hostname: String

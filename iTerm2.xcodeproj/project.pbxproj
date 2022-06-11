@@ -1506,6 +1506,26 @@
 		A63BA39518A9CB43002BE075 /* iTermSelection.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39318A9CB43002BE075 /* iTermSelection.h */; };
 		A63BA39F18B27B92002BE075 /* iTermTextExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */; };
 		A63D05C827BDCF4000B4E028 /* TerminalContentSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63D05C627BDCF0000B4E028 /* TerminalContentSnapshot.swift */; };
+		A63EB030284D1A1F00B2AB89 /* FileProviderService.h in Headers */ = {isa = PBXBuildFile; fileRef = A63EB02F284D1A1F00B2AB89 /* FileProviderService.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		A63EB033284D1A1F00B2AB89 /* FileProviderService.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A63EB02D284D1A1F00B2AB89 /* FileProviderService.framework */; };
+		A63EB034284D1A1F00B2AB89 /* FileProviderService.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A63EB02D284D1A1F00B2AB89 /* FileProviderService.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A63EB03C284D1A6A00B2AB89 /* FileProviderService.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A63EB02D284D1A1F00B2AB89 /* FileProviderService.framework */; };
+		A63EB03F284D1A9C00B2AB89 /* FileProviderService.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A63EB02D284D1A1F00B2AB89 /* FileProviderService.framework */; };
+		A63EB040284D1AA300B2AB89 /* FileProviderService.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A63EB02D284D1A1F00B2AB89 /* FileProviderService.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A63EB045284D1AB300B2AB89 /* FileProviderService.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A63EB02D284D1A1F00B2AB89 /* FileProviderService.framework */; };
+		A63EB046284D1AB800B2AB89 /* FileProviderService.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A63EB02D284D1A1F00B2AB89 /* FileProviderService.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A63EB048284D1ADC00B2AB89 /* FileProviderService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB047284D1ADC00B2AB89 /* FileProviderService.swift */; };
+		A63EB04C284D1D1900B2AB89 /* FileProviderServiceClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB04B284D1D1900B2AB89 /* FileProviderServiceClient.swift */; };
+		A63EB04E284D1DB400B2AB89 /* FileProviderServiceServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB04D284D1DB400B2AB89 /* FileProviderServiceServer.swift */; };
+		A63EB050284D1E1D00B2AB89 /* FileProviderServiceError.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB04F284D1E1D00B2AB89 /* FileProviderServiceError.swift */; };
+		A63EB055284D85F100B2AB89 /* SSHFileGateway.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB053284D836900B2AB89 /* SSHFileGateway.swift */; };
+		A63EB059284DB14000B2AB89 /* ConductorRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB058284DB14000B2AB89 /* ConductorRegistry.swift */; };
+		A63EB05B284DCAF300B2AB89 /* WeakBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB05A284DCAF300B2AB89 /* WeakBox.swift */; };
+		A63EB05C284EC5F900B2AB89 /* SSHIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8094282DE46700493544 /* SSHIdentity.swift */; };
+		A63EB05E284F326000B2AB89 /* SSHFileTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB05D284F326000B2AB89 /* SSHFileTypes.swift */; };
+		A63EB060284F32CC00B2AB89 /* RootListFileProviderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB05F284F32CC00B2AB89 /* RootListFileProviderEnumerator.swift */; };
+		A63EB062284FB83100B2AB89 /* EmptyFileProviderEnumerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB061284FB83100B2AB89 /* EmptyFileProviderEnumerator.swift */; };
+		A63EB064284FCC9100B2AB89 /* FileProviderEmptyItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A63EB063284FCC9100B2AB89 /* FileProviderEmptyItem.swift */; };
 		A63F2A3923FA5698008DDEA4 /* iTermServer in CopyFiles */ = {isa = PBXBuildFile; fileRef = A663197822FF349700C502BD /* iTermServer */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A63F34D021E1E0F8000C9D52 /* iTermSessionPicker.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F34CE21E1E0F8000C9D52 /* iTermSessionPicker.h */; };
 		A63F34D121E1E0F8000C9D52 /* iTermSessionPicker.m in Sources */ = {isa = PBXBuildFile; fileRef = A63F34CF21E1E0F8000C9D52 /* iTermSessionPicker.m */; };
@@ -3681,7 +3701,6 @@
 		A6EC808B282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EC8088282A28C600493544 /* SSHConfigurationWindow.xib */; };
 		A6EC808D282A28F500493544 /* SSHConfigurationWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC808C282A28F500493544 /* SSHConfigurationWindowController.swift */; };
 		A6EC8093282DE42800493544 /* ParsedSSHArguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8092282DE42800493544 /* ParsedSSHArguments.swift */; };
-		A6EC8095282DE46700493544 /* SSHIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8094282DE46700493544 /* SSHIdentity.swift */; };
 		A6EC8097282EBFB000493544 /* TarJob.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8096282EBFB000493544 /* TarJob.swift */; };
 		A6EC8099282EBFC900493544 /* NSDictionary+Conductor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8098282EBFC900493544 /* NSDictionary+Conductor.swift */; };
 		A6EC809B282EBFF200493544 /* URL+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC809A282EBFF200493544 /* URL+iTerm.swift */; };
@@ -4020,6 +4039,41 @@
 			remoteGlobalIDString = A66717851DCE36C3000CE608;
 			remoteInfo = iTerm2SharedARC;
 		};
+		A63EB031284D1A1F00B2AB89 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A63EB02C284D1A1F00B2AB89;
+			remoteInfo = FileProviderService;
+		};
+		A63EB03A284D1A6500B2AB89 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A63EB02C284D1A1F00B2AB89;
+			remoteInfo = FileProviderService;
+		};
+		A63EB041284D1AA600B2AB89 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A63EB02C284D1A1F00B2AB89;
+			remoteInfo = FileProviderService;
+		};
+		A63EB043284D1AAF00B2AB89 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A63EB02C284D1A1F00B2AB89;
+			remoteInfo = FileProviderService;
+		};
+		A63EB056284D86EA00B2AB89 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A63EB02C284D1A1F00B2AB89;
+			remoteInfo = FileProviderService;
+		};
 		A64FCD51238DDF61001D8199 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
@@ -4099,6 +4153,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A63EB046284D1AB800B2AB89 /* FileProviderService.framework in CopyFiles */,
 				A6E180E723D2E2B2003C4EB1 /* CoreParse.framework in CopyFiles */,
 				A6184F8E1BAB3F090088EF3C /* ColorPicker.framework in CopyFiles */,
 				A6661312225CFF7A00840E89 /* BetterFontPicker.framework in CopyFiles */,
@@ -4114,6 +4169,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A63EB040284D1AA300B2AB89 /* FileProviderService.framework in CopyFiles */,
 				A6E180E623D2E182003C4EB1 /* CoreParse.framework in CopyFiles */,
 				A6184F8D1BAB3EFB0088EF3C /* ColorPicker.framework in CopyFiles */,
 				A6661310225CFF7200840E89 /* BetterFontPicker.framework in CopyFiles */,
@@ -4132,6 +4188,7 @@
 				A6EC8053281C4A6A00493544 /* SwiftyMarkdown.framework in CopyFiles */,
 				A6A3D18E2815F74A00C0C9E0 /* Highlightr.framework in CopyFiles */,
 				530AB89C20AFF23400D2AA08 /* CoreParse.framework in CopyFiles */,
+				A63EB034284D1A1F00B2AB89 /* FileProviderService.framework in CopyFiles */,
 				A6184F8C1BAB3EF30088EF3C /* ColorPicker.framework in CopyFiles */,
 				A624232619CF70DF00182C08 /* NMSSH.framework in CopyFiles */,
 				1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */,
@@ -5527,6 +5584,19 @@
 		A63E230C2143953700609D6A /* graphic_go.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = graphic_go.png; path = "hyper-tab-icons-plus/png/graphic_go.png"; sourceTree = "<group>"; };
 		A63E230D2143953700609D6A /* graphic_grunt@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_grunt@2x.png"; path = "hyper-tab-icons-plus/png/graphic_grunt@2x.png"; sourceTree = "<group>"; };
 		A63E230E2143953700609D6A /* graphic_go@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_go@2x.png"; path = "hyper-tab-icons-plus/png/graphic_go@2x.png"; sourceTree = "<group>"; };
+		A63EB02D284D1A1F00B2AB89 /* FileProviderService.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FileProviderService.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A63EB02F284D1A1F00B2AB89 /* FileProviderService.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FileProviderService.h; sourceTree = "<group>"; };
+		A63EB047284D1ADC00B2AB89 /* FileProviderService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderService.swift; sourceTree = "<group>"; };
+		A63EB04B284D1D1900B2AB89 /* FileProviderServiceClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderServiceClient.swift; sourceTree = "<group>"; };
+		A63EB04D284D1DB400B2AB89 /* FileProviderServiceServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderServiceServer.swift; sourceTree = "<group>"; };
+		A63EB04F284D1E1D00B2AB89 /* FileProviderServiceError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderServiceError.swift; sourceTree = "<group>"; };
+		A63EB053284D836900B2AB89 /* SSHFileGateway.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFileGateway.swift; sourceTree = "<group>"; };
+		A63EB058284DB14000B2AB89 /* ConductorRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConductorRegistry.swift; sourceTree = "<group>"; };
+		A63EB05A284DCAF300B2AB89 /* WeakBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeakBox.swift; sourceTree = "<group>"; };
+		A63EB05D284F326000B2AB89 /* SSHFileTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHFileTypes.swift; sourceTree = "<group>"; };
+		A63EB05F284F32CC00B2AB89 /* RootListFileProviderEnumerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootListFileProviderEnumerator.swift; sourceTree = "<group>"; };
+		A63EB061284FB83100B2AB89 /* EmptyFileProviderEnumerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyFileProviderEnumerator.swift; sourceTree = "<group>"; };
+		A63EB063284FCC9100B2AB89 /* FileProviderEmptyItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderEmptyItem.swift; sourceTree = "<group>"; };
 		A63F2A3A23FA5951008DDEA4 /* it2run */ = {isa = PBXFileReference; lastKnownFileType = text; name = it2run; path = sources/it2run; sourceTree = "<group>"; };
 		A63F2A3B23FB8191008DDEA4 /* keyboard.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = keyboard.py; sourceTree = "<group>"; };
 		A63F2A3C23FB8191008DDEA4 /* arrangement.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = arrangement.py; sourceTree = "<group>"; };
@@ -7099,6 +7169,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A63EB045284D1AB300B2AB89 /* FileProviderService.framework in Frameworks */,
 				A667196A1DCE396A000CE608 /* libiTerm2SharedARC.a in Frameworks */,
 				A6661311225CFF7A00840E89 /* BetterFontPicker.framework in Frameworks */,
 				A690F7041B424EF8009F76D8 /* OpenDirectory.framework in Frameworks */,
@@ -7123,6 +7194,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A63EB03F284D1A9C00B2AB89 /* FileProviderService.framework in Frameworks */,
 				A67D19502237045C00BD0D4D /* libsixel.a in Frameworks */,
 				A66719691DCE3965000CE608 /* libiTerm2SharedARC.a in Frameworks */,
 				A666130F225CFF7200840E89 /* BetterFontPicker.framework in Frameworks */,
@@ -7171,6 +7243,7 @@
 				A6A3D18B2815EF4D00C0C9E0 /* Highlightr.framework in Frameworks */,
 				A6EC8050281BC67900493544 /* SwiftyMarkdown.framework in Frameworks */,
 				A666130D225CFF6900840E89 /* BetterFontPicker.framework in Frameworks */,
+				A63EB033284D1A1F00B2AB89 /* FileProviderService.framework in Frameworks */,
 				A6FB633123DE7DEC00026D52 /* SearchableComboListView.framework in Frameworks */,
 				A60BD9191B3F5D76007D7F11 /* OpenDirectory.framework in Frameworks */,
 				A624231F19CF6F2000182C08 /* NMSSH.framework in Frameworks */,
@@ -7189,6 +7262,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A60593AF257DF9A500CACEE6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A63EB02A284D1A1F00B2AB89 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -7222,6 +7302,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A63EB03C284D1A6A00B2AB89 /* FileProviderService.framework in Frameworks */,
 				A6C1FE5C284C1BF200EA8A3B /* UniformTypeIdentifiers.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -7270,6 +7351,7 @@
 				7596379B2593AE0700E278CC /* iTerm2SandboxedWorker */,
 				A6822778280E26CD005DF0B4 /* SwiftyMarkdown */,
 				A6C1FE5D284C1BF200EA8A3B /* iTermFileProvider */,
+				A63EB02E284D1A1F00B2AB89 /* FileProviderService */,
 				1DD39AD5180B8118004E56D5 /* Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
 			);
@@ -7716,6 +7798,7 @@
 				A60593B2257DF9A500CACEE6 /* ShellLauncher */,
 				7596379A2593AE0700E278CC /* iTerm2SandboxedWorker.xpc */,
 				A6C1FE5A284C1BF200EA8A3B /* iTermFileProvider.appex */,
+				A63EB02D284D1A1F00B2AB89 /* FileProviderService.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -9110,6 +9193,16 @@
 			name = AATree;
 			sourceTree = "<group>";
 		};
+		A63EB02E284D1A1F00B2AB89 /* FileProviderService */ = {
+			isa = PBXGroup;
+			children = (
+				A63EB02F284D1A1F00B2AB89 /* FileProviderService.h */,
+				A63EB047284D1ADC00B2AB89 /* FileProviderService.swift */,
+				A63EB04F284D1E1D00B2AB89 /* FileProviderServiceError.swift */,
+			);
+			path = FileProviderService;
+			sourceTree = "<group>";
+		};
 		A63F40AC1842988A003A6A6D /* Core */ = {
 			isa = PBXGroup;
 			children = (
@@ -10273,6 +10366,7 @@
 				A603E9FC283EE9BD0028B648 /* ObjCExceptions.h */,
 				A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */,
 				A603EA00283EEAE60028B648 /* ObjCExceptions.swift */,
+				A63EB05A284DCAF300B2AB89 /* WeakBox.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -10647,6 +10741,11 @@
 				A6C1FE62284C1BF200EA8A3B /* FileProviderEnumerator.swift */,
 				A6C1FE64284C1BF200EA8A3B /* Info.plist */,
 				A6C1FE65284C1BF200EA8A3B /* iTermFileProvider.entitlements */,
+				A63EB04D284D1DB400B2AB89 /* FileProviderServiceServer.swift */,
+				A63EB05D284F326000B2AB89 /* SSHFileTypes.swift */,
+				A63EB05F284F32CC00B2AB89 /* RootListFileProviderEnumerator.swift */,
+				A63EB061284FB83100B2AB89 /* EmptyFileProviderEnumerator.swift */,
+				A63EB063284FCC9100B2AB89 /* FileProviderEmptyItem.swift */,
 			);
 			path = iTermFileProvider;
 			sourceTree = "<group>";
@@ -10900,6 +10999,9 @@
 				A6EC8096282EBFB000493544 /* TarJob.swift */,
 				A6EC8098282EBFC900493544 /* NSDictionary+Conductor.swift */,
 				A603E9FA283EE53C0028B648 /* SecretServer.swift */,
+				A63EB04B284D1D1900B2AB89 /* FileProviderServiceClient.swift */,
+				A63EB053284D836900B2AB89 /* SSHFileGateway.swift */,
+				A63EB058284DB14000B2AB89 /* ConductorRegistry.swift */,
 			);
 			name = ssh;
 			sourceTree = "<group>";
@@ -11794,6 +11896,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A63EB028284D1A1F00B2AB89 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A63EB030284D1A1F00B2AB89 /* FileProviderService.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A66719091DCE36C3000CE608 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
@@ -12453,6 +12563,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				A63EB044284D1AAF00B2AB89 /* PBXTargetDependency */,
 				A6C763D71B45C5C500E3C992 /* PBXTargetDependency */,
 				1D6ED85319AEA20D005A7799 /* PBXTargetDependency */,
 			);
@@ -12473,6 +12584,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				A63EB042284D1AA600B2AB89 /* PBXTargetDependency */,
 				A6C763D51B45C5BE00E3C992 /* PBXTargetDependency */,
 				1D6EDB0D19AEA276005A7799 /* PBXTargetDependency */,
 			);
@@ -12545,6 +12657,7 @@
 				A6866B7123CAA10A00ACD94C /* PBXTargetDependency */,
 				759637A42593AE0700E278CC /* PBXTargetDependency */,
 				A6C1FE67284C1BF200EA8A3B /* PBXTargetDependency */,
+				A63EB032284D1A1F00B2AB89 /* PBXTargetDependency */,
 			);
 			name = iTerm2;
 			packageProductDependencies = (
@@ -12569,6 +12682,24 @@
 			productName = ShellLauncher;
 			productReference = A60593B2257DF9A500CACEE6 /* ShellLauncher */;
 			productType = "com.apple.product-type.tool";
+		};
+		A63EB02C284D1A1F00B2AB89 /* FileProviderService */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A63EB035284D1A1F00B2AB89 /* Build configuration list for PBXNativeTarget "FileProviderService" */;
+			buildPhases = (
+				A63EB028284D1A1F00B2AB89 /* Headers */,
+				A63EB029284D1A1F00B2AB89 /* Sources */,
+				A63EB02A284D1A1F00B2AB89 /* Frameworks */,
+				A63EB02B284D1A1F00B2AB89 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FileProviderService;
+			productName = FileProviderService;
+			productReference = A63EB02D284D1A1F00B2AB89 /* FileProviderService.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 		A663197722FF349700C502BD /* iTermServer */ = {
 			isa = PBXNativeTarget;
@@ -12598,6 +12729,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				A63EB057284D86EA00B2AB89 /* PBXTargetDependency */,
 				A6EC804E281BBBE100493544 /* PBXTargetDependency */,
 			);
 			name = iTerm2SharedARC;
@@ -12633,6 +12765,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				A63EB03B284D1A6500B2AB89 /* PBXTargetDependency */,
 			);
 			name = iTermFileProvider;
 			productName = iTermFileProvider;
@@ -12717,6 +12850,12 @@
 						DevelopmentTeam = H7V7XYVQ7D;
 						ProvisioningStyle = Automatic;
 					};
+					A63EB02C284D1A1F00B2AB89 = {
+						CreatedOnToolsVersion = 13.3;
+						DevelopmentTeam = H7V7XYVQ7D;
+						LastSwiftMigration = 1330;
+						ProvisioningStyle = Automatic;
+					};
 					A663197722FF349700C502BD = {
 						CreatedOnToolsVersion = 10.2;
 						DevelopmentTeam = H7V7XYVQ7D;
@@ -12776,6 +12915,7 @@
 				A60593B1257DF9A500CACEE6 /* ShellLauncher */,
 				759637992593AE0700E278CC /* iTerm2SandboxedWorker */,
 				A6C1FE59284C1BF200EA8A3B /* iTermFileProvider */,
+				A63EB02C284D1A1F00B2AB89 /* FileProviderService */,
 			);
 		};
 /* End PBXProject section */
@@ -13957,6 +14097,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A63EB02B284D1A1F00B2AB89 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A6866B6523CAA10A00ACD94C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -14456,6 +14603,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A63EB029284D1A1F00B2AB89 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A63EB048284D1ADC00B2AB89 /* FileProviderService.swift in Sources */,
+				A63EB05C284EC5F900B2AB89 /* SSHIdentity.swift in Sources */,
+				A63EB050284D1E1D00B2AB89 /* FileProviderServiceError.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A663197422FF349700C502BD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -14579,7 +14736,6 @@
 				A6DBC03D2003479400F1466D /* iTermImageRenderer.m in Sources */,
 				A60D20EF2597FCFA004AC979 /* iTermImage+ImageWithData.m in Sources */,
 				A65429A020BE71E400CE71B1 /* iTermOpenQuicklyModel.m in Sources */,
-				A6EC8095282DE46700493544 /* SSHIdentity.swift in Sources */,
 				A6AAD5F422F7EB61002DD12C /* iTermWindowSizeView.m in Sources */,
 				5370678D21C9D2780088D0F3 /* SIGArchiveVerifier.m in Sources */,
 				A61D2A4927555CD000E539F3 /* MenuItemPopupView.swift in Sources */,
@@ -14856,6 +15012,7 @@
 				5376CB0A2205337400FE7476 /* TmuxDashboardController.m in Sources */,
 				A6F718B22263E8A20053488E /* iTermInitialDirectory.m in Sources */,
 				A62132D327862A4800B80724 /* TokenExecutor.swift in Sources */,
+				A63EB059284DB14000B2AB89 /* ConductorRegistry.swift in Sources */,
 				A6566754219EA582005FE60E /* NSNull+iTerm.m in Sources */,
 				A629C706221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.m in Sources */,
 				A601F8902328B3E800EEE4DC /* iTermWeakReference.m in Sources */,
@@ -14922,6 +15079,7 @@
 				A66F52AE21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m in Sources */,
 				A648DABF2427E7E000C2FF02 /* iTermPreferenceDidChangeNotification.m in Sources */,
 				530AB8A820B1F57E00D2AA08 /* iTermTruncatedQuotedRecognizer.m in Sources */,
+				A63EB05B284DCAF300B2AB89 /* WeakBox.swift in Sources */,
 				A6C20CB925F6CA8C0086B09C /* iTermSlider.m in Sources */,
 				A65201772712109600322523 /* iTermTextExtractor.m in Sources */,
 				A69941C82331F7C400C76EF2 /* ToolPasteHistory.m in Sources */,
@@ -15109,6 +15267,7 @@
 				A6A983BB27E7F79E003319D1 /* LastPassDataSource.swift in Sources */,
 				A639E1A12112CA33001696DE /* iTermEchoProbe.m in Sources */,
 				A6D10E3A27F7C2BC0026DB56 /* NSPoint+MultiCursor.swift in Sources */,
+				A63EB055284D85F100B2AB89 /* SSHFileGateway.swift in Sources */,
 				A6644BE325CDCCD600419355 /* iTermLegacyView.m in Sources */,
 				535B3BBA2228DC5500D6D410 /* iTermAlertBuiltInFunction.m in Sources */,
 				530AB8A420B12B9500D2AA08 /* iTermFunctionCallTextFieldDelegate.m in Sources */,
@@ -15213,8 +15372,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A63EB064284FCC9100B2AB89 /* FileProviderEmptyItem.swift in Sources */,
+				A63EB062284FB83100B2AB89 /* EmptyFileProviderEnumerator.swift in Sources */,
 				A6C1FE5F284C1BF200EA8A3B /* FileProviderExtension.swift in Sources */,
+				A63EB04C284D1D1900B2AB89 /* FileProviderServiceClient.swift in Sources */,
+				A63EB060284F32CC00B2AB89 /* RootListFileProviderEnumerator.swift in Sources */,
+				A63EB04E284D1DB400B2AB89 /* FileProviderServiceServer.swift in Sources */,
 				A6C1FE61284C1BF200EA8A3B /* FileProviderItem.swift in Sources */,
+				A63EB05E284F326000B2AB89 /* SSHFileTypes.swift in Sources */,
 				A6C1FE63284C1BF200EA8A3B /* FileProviderEnumerator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -15571,6 +15736,31 @@
 			target = A66717851DCE36C3000CE608 /* iTerm2SharedARC */;
 			targetProxy = A60D02352683D95A00E19362 /* PBXContainerItemProxy */;
 		};
+		A63EB032284D1A1F00B2AB89 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A63EB02C284D1A1F00B2AB89 /* FileProviderService */;
+			targetProxy = A63EB031284D1A1F00B2AB89 /* PBXContainerItemProxy */;
+		};
+		A63EB03B284D1A6500B2AB89 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A63EB02C284D1A1F00B2AB89 /* FileProviderService */;
+			targetProxy = A63EB03A284D1A6500B2AB89 /* PBXContainerItemProxy */;
+		};
+		A63EB042284D1AA600B2AB89 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A63EB02C284D1A1F00B2AB89 /* FileProviderService */;
+			targetProxy = A63EB041284D1AA600B2AB89 /* PBXContainerItemProxy */;
+		};
+		A63EB044284D1AAF00B2AB89 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A63EB02C284D1A1F00B2AB89 /* FileProviderService */;
+			targetProxy = A63EB043284D1AAF00B2AB89 /* PBXContainerItemProxy */;
+		};
+		A63EB057284D86EA00B2AB89 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A63EB02C284D1A1F00B2AB89 /* FileProviderService */;
+			targetProxy = A63EB056284D86EA00B2AB89 /* PBXContainerItemProxy */;
+		};
 		A64FCD52238DDF61001D8199 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A663197722FF349700C502BD /* iTermServer */;
@@ -15778,6 +15968,7 @@
 		1D6EDB0619AEA20D005A7799 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -15854,6 +16045,7 @@
 		1D6EDB0719AEA20D005A7799 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -15926,6 +16118,7 @@
 		1D6EDB0819AEA20D005A7799 /* Nightly */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -15997,6 +16190,7 @@
 		1DD39B03180B812D004E56D5 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
@@ -16079,6 +16273,7 @@
 		1DD39B04180B812D004E56D5 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
@@ -16155,6 +16350,7 @@
 		1DD39B06180B812D004E56D5 /* Nightly */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
@@ -16880,6 +17076,310 @@
 			};
 			name = Nightly;
 		};
+		A63EB036284D1A1F00B2AB89 /* Development */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = H7V7XYVQ7D;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.FileProviderService;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				VALID_ARCHS = "$(ARCHS_STANDARD)";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Development;
+		};
+		A63EB037284D1A1F00B2AB89 /* Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.FileProviderService;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+				VALID_ARCHS = "$(ARCHS_STANDARD)";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Deployment;
+		};
+		A63EB038284D1A1F00B2AB89 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.FileProviderService;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+				VALID_ARCHS = "$(ARCHS_STANDARD)";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Beta;
+		};
+		A63EB039284D1A1F00B2AB89 /* Nightly */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Developer ID Application: GEORGE NACHMAN (H7V7XYVQ7D)";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.FileProviderService;
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+				VALID_ARCHS = "$(ARCHS_STANDARD)";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Nightly;
+		};
 		A656E9881F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -17007,6 +17507,7 @@
 		A656E98A1F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
@@ -17123,6 +17624,7 @@
 		A656E98C1F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -18241,6 +18743,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
+				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
 			name = Development;
 		};
@@ -18311,6 +18814,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				SWIFT_VERSION = 5.0;
+				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
 			name = Deployment;
 		};
@@ -18381,6 +18885,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				SWIFT_VERSION = 5.0;
+				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
 			name = Beta;
 		};
@@ -18451,6 +18956,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
 				SWIFT_VERSION = 5.0;
+				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
 			name = Nightly;
 		};
@@ -19155,6 +19661,17 @@
 				A60593B7257DF9A500CACEE6 /* Deployment */,
 				A60593B8257DF9A500CACEE6 /* Beta */,
 				A60593B9257DF9A500CACEE6 /* Nightly */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Development;
+		};
+		A63EB035284D1A1F00B2AB89 /* Build configuration list for PBXNativeTarget "FileProviderService" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A63EB036284D1A1F00B2AB89 /* Development */,
+				A63EB037284D1A1F00B2AB89 /* Deployment */,
+				A63EB038284D1A1F00B2AB89 /* Beta */,
+				A63EB039284D1A1F00B2AB89 /* Nightly */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Development;

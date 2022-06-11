@@ -488,6 +488,45 @@ async def handle_save(identifier, args):
     begin(identifier)
     end(identifier, code)
 
+async def handle_file(identifier, args):
+    log(f'handle_ls {identifier} {args}')
+    if len(args) < 2:
+        begin(identifier)
+        end(identifier, 1)
+        return
+    if args[0] == "ls":
+        await handle_file_ls(identifier, base64.b64decode(args[1]))
+    if args[0] == "fetch":
+        begin(identifier)
+        await handle_file_fetch(identifier, base64.b64decode(args[1]))
+    else:
+        begin(identifier)
+        end(identifier, 1)
+
+async def handle_file_ls(identifier, path):
+    begin(identifier)
+    try:
+        path = base64.b64decode(args[0])
+        for f in os.listdir(path):
+            print(base64.b64encode(f))
+        end(identifier, 0)
+    except Exception as e:
+        log(f'handle_file_ls {path}: {traceback.format_exc()}')
+        end(identifier, 1)
+
+async def handle_file_fetch(identifier, path):
+    begin(identifier)
+    try:
+        path = base64.b64decode(args[0])
+        with open(path) as f:
+            content = f.read()
+            print(base64.encodebytes(content))
+        end(identifier, 0)
+    except Exception as e:
+        log(f'handle_file_fetch {path}: {traceback.format_exc()}')
+        end(identifier, 1)
+
+
 async def handle_recover(identifier, args):
     log("handle_recover")
     reset()
@@ -797,7 +836,8 @@ HANDLERS = {
     "reset": handle_reset,
     "autopoll": handle_autopoll,
     "recover": handle_recover,
-    "save": handle_save
+    "save": handle_save,
+    "file": handle_file,
 }
 
 def main():

@@ -7,7 +7,7 @@
 
 import Foundation
 
-class SSHIdentity: NSObject {
+public class SSHIdentity: NSObject, Codable {
     private struct State: Equatable, Codable, CustomDebugStringConvertible {
         var debugDescription: String {
             let hostport = hostname + ":\(port)"
@@ -43,32 +43,53 @@ class SSHIdentity: NSObject {
     }
     private let state: State
 
-    @objc var commandLine: String {
+    @objc public var commandLine: String {
         return state.commandLine
     }
 
-    @objc var json: Data {
+    @objc public var json: Data {
         return try! JSONEncoder().encode(state)
     }
 
-    @objc var compactDescription: String {
+    @objc public var compactDescription: String {
         return state.compactDescription
     }
 
-    override var debugDescription: String {
+    public override var debugDescription: String {
         return state.debugDescription
     }
 
-    override var description: String {
+    public override var description: String {
         return state.debugDescription
     }
 
-    @objc var hostname: String {
+    @objc public  var hostname: String {
         return state.hostname
     }
 
+    public var stringIdentifier: String {
+        return "\((state.username ?? "").replacingOccurrences(of: "@", with: ""))@\(state.hostname.replacingOccurrences(of: ":", with: "")):\(state.port)".replacingOccurrences(of: ";", with: "")
+    }
+
+    public init?(stringIdentifier: String)  {
+        guard let at = stringIdentifier.range(of: "@"),
+              let colon = stringIdentifier.range(of: ":") else {
+            return nil
+        }
+        guard at.lowerBound < colon.lowerBound else {
+            return nil
+        }
+        let username = stringIdentifier[..<at.lowerBound]
+        guard let port = Int(stringIdentifier[colon.upperBound...]) else {
+            return nil
+        }
+        state = State(hostname: String(stringIdentifier[at.upperBound..<colon.lowerBound]),
+                      username: username.isEmpty ? nil : String(username),
+                      port: port)
+    }
+
     @objc
-    init?(_ json: Data?) {
+    public init?(_ json: Data?) {
         guard let data = json else {
             return nil
         }
@@ -80,11 +101,11 @@ class SSHIdentity: NSObject {
     }
 
     @objc
-    init(_ hostname: String, username: String?, port: Int) {
+    public init(_ hostname: String, username: String?, port: Int) {
         state = State(hostname: hostname, username: username, port: port)
     }
 
-    override func isEqual(to object: Any?) -> Bool {
+    public override func isEqual(to object: Any?) -> Bool {
         guard let other = object as? SSHIdentity else {
             return false
         }
