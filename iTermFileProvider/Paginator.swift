@@ -7,17 +7,18 @@
 
 import Foundation
 import FileProvider
+import FileProviderService
 
 struct Paginator {
     private let path: String
-    private let sorting: RemoteService.FileSorting?
+    private let sorting: FileSorting?
     private var service: RemoteService
     private(set) var page: Page
     private let pageSize: Int?
 
     // A better data type for NSFileProviderPage
     enum Page: CustomDebugStringConvertible {
-        case first(RemoteService.FileSorting)
+        case first(FileSorting)
         case later(Data)
         case finished
 

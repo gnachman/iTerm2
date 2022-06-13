@@ -7,6 +7,7 @@
 
 import Foundation
 import FileProvider
+import FileProviderService
 
 extension NSFileProviderDeleteItemOptions {
     var description: String {
@@ -19,6 +20,7 @@ extension NSFileProviderDeleteItemOptions {
 actor ItemDeleter {
     private let domain: NSFileProviderDomain
     private let manager: NSFileProviderManager
+    private let remoteService: RemoteService
 
     struct Request: CustomDebugStringConvertible {
         var identifier: NSFileProviderItemIdentifier
@@ -31,13 +33,14 @@ actor ItemDeleter {
         }
     }
 
-    init(domain: NSFileProviderDomain) {
+    init(domain: NSFileProviderDomain, remoteService: RemoteService) {
         self.domain = domain
+        self.remoteService = remoteService
         manager = NSFileProviderManager(for: domain)!
     }
 
     func delete(_ file: RemoteFile, request: Request) async throws {
-        try await RemoteService.instance.delete(file,
-                                                recursive: request.options.contains(.recursive))
+        try await remoteService.delete(file,
+                                       recursive: request.options.contains(.recursive))
     }
 }

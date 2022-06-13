@@ -7,9 +7,10 @@
 
 import Foundation
 import FileProvider
+import FileProviderService
 
 extension NSFileProviderPage {
-    var remoteServiceFileSorting: RemoteService.FileSorting? {
+    var remoteServiceFileSorting: FileSorting? {
         switch rawValue as NSData {
         case NSFileProviderPage.initialPageSortedByName:
             return .byName

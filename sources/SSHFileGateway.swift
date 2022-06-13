@@ -20,27 +20,16 @@ protocol SSHFileGatewayDelegate {
 }
 
 @available(macOS 11.0, *)
-class SSHFileGateway {
+actor SSHFileGateway {
     static let domainName = "iTerm2"
     static let domain = NSFileProviderDomain(identifier: NSFileProviderDomainIdentifier(SSHFileGateway.domainName),
                                              displayName: "SSH")
-    static let instance = SSHFileGateway()
+    private var started = false
     var manager: NSFileProviderManager?
     var messages: [MainAppToExtensionPayload.Event] = []
 
     enum Exception: Error {
         case unavailable
-    }
-
-    init() {
-        manager = nil
-        NSFileProviderManager.add(Self.domain) { error in
-            if let error = error {
-                logger.error("NSFileProviderManager callback with error: \(error.localizedDescription, privacy: .public)")
-                return
-            }
-            self.manager = NSFileProviderManager(for: Self.domain)!
-        }
     }
 
     func proxy() async throws -> iTermFileProviderServiceV1 {
@@ -68,10 +57,29 @@ class SSHFileGateway {
      }
 
     func start(delegate: SSHFileGatewayDelegate) {
+        if started {
+            return
+        }
+        started = true
+        manager = nil
+        NSFileProviderManager.remove(Self.domain) { removeError in
+            NSLog("Remove domain: \(String(describing: removeError))")
+
+            NSFileProviderManager.add(Self.domain) { error in
+                if let error = error {
+                    logger.error("NSFileProviderManager callback with error: \(error.localizedDescription, privacy: .public)")
+                    return
+                }
+                NSLog("Domain added")
+                self.manager = NSFileProviderManager(for: Self.domain)!
+            }
+        }
         Task {
             while true {
                 do {
+                    logger.error("creating proxy…")
                     let proxy = try await self.proxy()
+                    logger.error("have proxy! call run on it.")
                     try await run(proxy, delegate)
                 } catch {
                     logger.error("Failed to start proxy: \(String(describing: error), privacy: .public)")
@@ -83,6 +91,7 @@ class SSHFileGateway {
 
     private func run(_ proxy: iTermFileProviderServiceV1,
                      _ delegate: SSHFileGatewayDelegate) async throws {
+        NSLog("SSHFileGateway starting")
         while true {
             let messages = self.messages
             self.messages.removeAll()

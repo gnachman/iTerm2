@@ -7,9 +7,10 @@
 
 import Foundation
 import FileProvider
+import FileProviderService
 
 actor WorkingSet {
-    static let instance = WorkingSet()
+    private let remoteService: RemoteService
 
     enum Kind {
         case file  // includes symlinks
@@ -22,12 +23,16 @@ actor WorkingSet {
     }
     private(set) var entries = Set<Entry>()
 
+    init(remoteService: RemoteService) {
+        self.remoteService = remoteService
+    }
+
     func addFile(_ path: String,
                  domain: NSFileProviderDomain) {
         log("Add \(path) as file to working set")
         entries.insert(Entry(path: path, kind: .file))
         didChange(domain)
-        Task { await RemoteService.instance.subscribe([path]) }
+        Task { await remoteService.subscribe([path]) }
     }
 
     func addFolder(_ path: String,
@@ -35,7 +40,7 @@ actor WorkingSet {
         log("Add \(path) as folder to working set")
         entries.insert(Entry(path: path, kind: .folder))
         didChange(domain)
-        Task { await RemoteService.instance.subscribe([path]) }
+        Task { await remoteService.subscribe([path]) }
     }
 
     private func didChange(_ domain: NSFileProviderDomain) {

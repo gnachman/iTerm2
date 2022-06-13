@@ -7,6 +7,7 @@
 
 import Foundation
 import FileProvider
+import FileProviderService
 
 actor ItemCreator {
     struct Request: CustomDebugStringConvertible {
@@ -30,9 +31,11 @@ actor ItemCreator {
 
     private let domain: NSFileProviderDomain
     private let manager: NSFileProviderManager
+    private let remoteService: RemoteService
 
-    init(domain: NSFileProviderDomain) {
+    init(domain: NSFileProviderDomain, remoteService: RemoteService) {
         self.domain = domain
+        self.remoteService = remoteService
         manager = NSFileProviderManager(for: domain)!
     }
 
@@ -55,14 +58,14 @@ actor ItemCreator {
             
             switch file.kind {
             case .symlink(let target):
-                _ = try await RemoteService.instance.ln(
+                _ = try await remoteService.ln(
                     source: await rebaseLocalFile(manager, path: target),
                     file: file)
             case .folder:
-                try await RemoteService.instance.mkdir(file)
+                try await remoteService.mkdir(file)
             case .file(_):
                 request.progress.totalUnitCount = Int64(data.count)
-                try await RemoteService.instance.create(file, content: data)
+                try await remoteService.create(file, content: data)
                 request.progress.completedUnitCount = Int64(data.count)
             case .host:
                 throw NSFileProviderError(.noSuchItem)  // no appropriate error exists
@@ -147,8 +150,8 @@ extension RemoteFile {
 
 extension RemoteFile.Permissions {
     init(fileSystemFlags flags: NSFileProviderFileSystemFlags) {
-        r = flags.contains(.userReadable)
-        w = flags.contains(.userWritable)
-        x = flags.contains(.userExecutable)
+        self.init(r: flags.contains(.userReadable),
+                  w: flags.contains(.userWritable),
+                  x: flags.contains(.userExecutable))
     }
 }

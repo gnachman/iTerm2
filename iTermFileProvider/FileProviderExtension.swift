@@ -8,43 +8,27 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
     private let modifier: ItemModifier
     private let deleter: ItemDeleter
     private let manager:  NSFileProviderManager?
+    private let remoteService: RemoteService!
+    private let workingSet: WorkingSet
+    let xpcService: FileProviderService
 
-    lazy var service: FileProviderService = {
-        return FileProviderService(self)
-    }()
-    
     required init(domain: NSFileProviderDomain) {
         self.domain = domain
-        fetcher = FileProviderFetcher(domain: domain)
-        creator = ItemCreator(domain: domain)
-        modifier = ItemModifier(domain: domain)
-        deleter = ItemDeleter(domain: domain)
+        xpcService = FileProviderService()
+        remoteService = RemoteService(xpcService)
+        fetcher = FileProviderFetcher(domain: domain, remoteService: remoteService)
+        creator = ItemCreator(domain: domain, remoteService: remoteService)
+        modifier = ItemModifier(domain: domain, remoteService: remoteService)
+        deleter = ItemDeleter(domain: domain, remoteService: remoteService)
         manager = NSFileProviderManager(for: domain)
+        workingSet = WorkingSet(remoteService: remoteService)
 
         super.init()
-    }
 
-    private func startTwiddling() {
-        Task {
-            while true {
-                log("Signal change to folder2")
-                let path = "/example.com/folder2"
-                await Task { await RemoteService.instance.twiddle() }.value
-                NSFileProviderManager(for: domain)?.signalEnumerator(for: NSFileProviderItemIdentifier(rawValue: path)) { error in
-                    if let error = error {
-                        log("twiddler failed with \(error)")
-                    }
-                }
-                try await Task.sleep(nanoseconds: 1_000_000_000)
-            }
-        }
     }
 
     func invalidate() {
         log("Extension.invalidate()")
-        Task {
-            await RemoteService.instance.invalidateListFiles()
-        }
         Task { await SyncCache.instance.invalidate() }
     }
     
@@ -78,7 +62,7 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
             return RemoteFile.workingSet
         default:
             log("Looking up \(identifier.rawValue) from remote service")
-            return try await RemoteService.instance.lookup(identifier.rawValue)
+            return try await remoteService.lookup(identifier.rawValue)
         }
     }
 
@@ -223,21 +207,28 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
         return logging("Extension.enumerator(for: \(containerItemIdentifier.description))") {
             switch containerItemIdentifier {
             case .workingSet:
-                return FileProviderEnumerator(RemoteFile.workingSetPrefix, domain: domain)
+                return FileProviderEnumerator(RemoteFile.workingSetPrefix,
+                                              domain: domain,
+                                              remoteService: remoteService,
+                                              workingSet: workingSet)
             case .rootContainer, .trashContainer:
                 log("Treat as root")
                 Task {
-                    await WorkingSet.instance.addFolder("/",
-                                                        domain: domain)
+                    await workingSet.addFolder("/",
+                                               domain: domain)
                 }
-                return FileProviderEnumerator("/", domain: domain)
+                return FileProviderEnumerator("/", domain: domain,
+                                              remoteService: remoteService,
+                                              workingSet: workingSet)
             default:
                 let path = containerItemIdentifier.rawValue
                 Task {
-                    await WorkingSet.instance.addFolder(path,
-                                                        domain: domain)
+                    await workingSet.addFolder(path,
+                                               domain: domain)
                 }
-                return FileProviderEnumerator(path, domain: domain)
+                return FileProviderEnumerator(path, domain: domain,
+                                              remoteService: remoteService,
+                                              workingSet: workingSet)
             }
         }
     }

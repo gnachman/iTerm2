@@ -7,10 +7,12 @@
 
 import Foundation
 import FileProvider
+import FileProviderService
 
 actor ItemModifier {
     private let domain: NSFileProviderDomain
     private let manager: NSFileProviderManager
+    private let remoteService: RemoteService
 
     struct Request {
         let item: NSFileProviderItem
@@ -28,8 +30,9 @@ actor ItemModifier {
         var shouldFetchContent: Bool
     }
 
-    init(domain: NSFileProviderDomain) {
+    init(domain: NSFileProviderDomain, remoteService: RemoteService) {
         self.domain = domain
+        self.remoteService = remoteService
         manager = NSFileProviderManager(for: domain)!
     }
 
@@ -45,7 +48,7 @@ actor ItemModifier {
         if request.changedFields.contains(.parentItemIdentifier) ||
             request.changedFields.contains(.filename) {
             try await manager.waitForChanges(below: request.item.itemIdentifier)
-            let updated = try await RemoteService.instance.mv(
+            let updated = try await remoteService.mv(
                 file: remoteFile,
                 newParent: request.item.parentItemIdentifier.rawValue,
                 newName: request.item.filename)
@@ -55,14 +58,14 @@ actor ItemModifier {
         }
         if request.changedFields.contains(.contentModificationDate),
            case let date?? = request.item.contentModificationDate {
-            let updated = try await RemoteService.instance.setModificationDate(remoteFile, date: date)
+            let updated = try await remoteService.setModificationDate(remoteFile, date: date)
             return Output(item: await FileProviderItem(updated, manager: manager),
                           fields: request.changedFields.removing(.contentModificationDate),
                           shouldFetchContent: false)
         }
         if request.changedFields.contains(.fileSystemFlags),
            case let flags? = request.item.fileSystemFlags {
-            let updated = try await RemoteService.instance.chmod(
+            let updated = try await remoteService.chmod(
                 remoteFile,
                 permissions: RemoteFile.Permissions(fileSystemFlags: flags))
             return Output(item: await FileProviderItem(updated, manager: manager),
@@ -80,7 +83,7 @@ actor ItemModifier {
             guard let url = url else {
                 throw NSFileProviderError(.noSuchItem)
             }
-            return try await RemoteService.instance.replaceContents(remoteFile,
+            return try await remoteService.replaceContents(remoteFile,
                                                                     item: item,
                                                                     url: url)
         case .symlink(_):
@@ -88,9 +91,9 @@ actor ItemModifier {
                 throw CocoaError(.fileWriteInvalidFileName)
             }
 
-            return try await RemoteService.instance.ln(source: await rebaseLocalFile(manager,
-                                                                                     path: target),
-                                                       file: remoteFile)
+            return try await remoteService.ln(source: await rebaseLocalFile(manager,
+                                                                            path: target),
+                                              file: remoteFile)
         }
     }
 }

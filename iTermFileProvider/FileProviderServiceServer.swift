@@ -15,56 +15,65 @@ fileprivate func synchronized<T>(_ lock: AnyObject, _ closure: () throws -> T) r
   return try closure()
 }
 
-struct Sleeper {
-    private var stream: AsyncStream<Void>? = nil
-    private var unblock: () -> ()
-    private var iter: AsyncStream<Void>.AsyncIterator? = nil
-    private var count = 0
-    init() {
-        unblock = {}
-        stream = AsyncStream<Void> { continuation in
-            unblock = {
-                continuation.yield()
+actor ChunkingQueue<T> where T: CustomDebugStringConvertible {
+    private var elements = [T]()
+    private var completion: ((Result<[T], Error>) -> ())?
+
+    enum Exception: Error {
+        case superceded
+    }
+
+    func drain() async throws -> [T] {
+        return try await withCheckedThrowingContinuation { continuation in
+            get {
+                switch $0 {
+                case .failure(let error):
+                    log("ChunkingQueue: drain failed")
+                    continuation.resume(with: .failure(error))
+                case .success(let value):
+                    log("ChunkingQueue: drain succeeded")
+                    continuation.resume(with: .success(value))
+                }
             }
         }
-        iter = stream!.makeAsyncIterator()
     }
 
-    mutating func wait() async {
-        await iter!.next()
-        count -= 1
-        precondition(count == 0)
-    }
-
-    mutating func wake() {
-        if count > 0 {
-            return
+    func tryDrain() -> [T] {
+        evictIfNeeded()
+        defer {
+            elements.removeAll()
         }
-        count += 1
-        unblock()
+        return elements
     }
-}
 
-struct ChunkingQueue<T> {
-    private var elements = [T]()
-    private var sleeper = Sleeper()
-
-    mutating func drain() async -> [T] {
-        while elements.isEmpty {
-            await sleeper.wait()
+    private func evictIfNeeded() {
+        if let existing = self.completion {
+            self.completion = nil
+            log("ChunkingQueue: evicting")
+            existing(.failure(Exception.superceded))
         }
-        return drainIfPossible()
     }
 
-    mutating func drainIfPossible() -> [T] {
-        let result = elements
-        elements.removeAll()
-        return result
+    private func get(_ completion: @escaping (Result<[T], Error>) -> ()) {
+        evictIfNeeded()
+        self.completion = completion
+        completeIfPossible()
     }
 
-    mutating func append(_ element: T) {
+    private func completeIfPossible() {
+        if let completion = completion, !elements.isEmpty {
+            self.completion = nil
+            let result = elements
+            elements.removeAll()
+            log("ChunkingQueue: draining \(result)")
+            completion(.success(result))
+        }
+    }
+
+    func append(_ element: T) {
+        log("ChunkingQueue: append(\(element.debugDescription))")
         elements.append(element)
-        sleeper.wake()
+        completeIfPossible()
     }
 }
 
@@ -95,7 +104,7 @@ class FileProviderService: NSObject, NSFileProviderServiceSource, NSXPCListenerD
         synchronized(self) {
             listeners.add(listener)
         }
-        
+
         listener.resume()
         return listener.endpoint
     }
@@ -112,27 +121,24 @@ class FileProviderService: NSObject, NSFileProviderServiceSource, NSXPCListenerD
         return true
     }
 
-    weak var ext: FileProviderExtension?
     let listeners = NSHashTable<NSXPCListener>()
     private var queue = ChunkingQueue<ExtensionToMainAppPayload.Event>()
 
     // eventID -> request
     private var outstandingRequests = [String: ExtensionOriginatedRequest]()
-    init(_ ext: FileProviderExtension) {
-        self.ext = ext
-    }
 
     // Handle poll from main app.
     func poll(_ wrapper: MainAppToExtension) async throws -> ExtensionToMainApp {
+        logger.info("FileProviderServiceServer: Starting")
         alive = true
         let m2e = wrapper.value
         logger.debug("FileProviderServiceServer: poll \(m2e.debugDescription, privacy: .public)")
         let e2m: [ExtensionToMainAppPayload.Event]
         if m2e.events.isEmpty {
             logger.debug("FileProviderServiceServer: draining")
-            e2m = await queue.drain()
+            e2m = try await queue.drain()
         } else {
-            e2m = queue.drainIfPossible()
+            e2m = await queue.tryDrain()
         }
         logger.debug("FileProviderServiceServer: will handle: \(m2e.debugDescription, privacy: .public)")
         for event in m2e.events {
@@ -147,18 +153,23 @@ class FileProviderService: NSObject, NSFileProviderServiceSource, NSXPCListenerD
     }
 
     private func enqueue(_ e2m: ExtensionToMainAppPayload.Event) {
-        queue.append(e2m)
+        Task {
+            await queue.append(e2m)
+        }
     }
 
     func sendRequest(_ kindToSend: ExtensionToMainAppPayload.Event.Kind,
                      handler: @escaping (MainAppToExtensionPayload.Event.Kind) -> ()) throws {
         if !alive {
-            throw Exception.notReady
+            logger.error("FileProviderServiceServer not yet alive so sendRequest returning serverUnreachable.")
+            throw NSFileProviderError(.serverUnreachable)
         }
         let request = ExtensionOriginatedRequest(outboundEvent: ExtensionToMainAppPayload.Event(kind: kindToSend),
                                                  handler: handler)
         logger.debug("FileProviderServiceServer: sendRequest \(request.outboundEvent.debugDescription, privacy: .public)")
         outstandingRequests[request.outboundEvent.eventID] = request
-        queue.append(request.outboundEvent)
+        Task {
+            await queue.append(request.outboundEvent)
+        }
     }
 }

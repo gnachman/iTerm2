@@ -112,13 +112,21 @@ class Conductor: NSObject, Codable {
     private var backgroundJobs = [Int32: State]()
 
     enum FileSubcommand: Codable, Equatable {
-        case ls(path: Data)
+        case ls(path: Data, sorting: FileSorting)
         case fetch(path: Data)
 
         var stringValue: String {
             switch self {
-            case .ls(let path):
-                return "ls\n\(path.base64EncodedString())"
+            case .ls(let path, let sort):
+                let sortString: String
+                switch sort {
+                case .byDate:
+                    sortString = "d"
+                case .byName:
+                    sortString = "n"
+                }
+                return "ls\n\(path.base64EncodedString())\n\(sortString)"
+
             case .fetch(let path):
                 return "fetch\n\(path.base64EncodedString())"
             }
@@ -126,8 +134,8 @@ class Conductor: NSObject, Codable {
 
         var operationDescription: String {
             switch self {
-            case .ls(let path):
-                return "ls \(path)"
+            case .ls(let path, let sort):
+                return "ls \(path) \(sort)"
             case .fetch(let path):
                 return "fetch \(path)"
             }
@@ -783,6 +791,7 @@ class Conductor: NSObject, Codable {
         }
     }
 
+    @available(macOS 11.0, *)
     fileprivate func framerFile(_ subcommand: FileSubcommand, completion: @escaping (String, Int32) -> ()) {
         send(.framerFile(subcommand), .handleFile(StringArray(), completion))
     }
@@ -926,7 +935,9 @@ class Conductor: NSObject, Codable {
                     return
                 }
                 if #available(macOS 11.0, *) {
-                    ConductorRegistry.instance.register(self)
+                    Task {
+                        await ConductorRegistry.shared.register(self)
+                    }
                 }
                 framedPID = pid
                 return
@@ -1479,7 +1490,7 @@ extension Data {
 
 @available(macOS 11.0, *)
 extension Conductor: SSHEndpoint {
-    func performFileOperation(subcommand: FileSubcommand) async throws -> String {
+    private func performFileOperation(subcommand: FileSubcommand) async throws -> String {
         let (output, code) = await withCheckedContinuation { continuation in
             framerFile(subcommand) { content, code in
                 continuation.resume(returning: (content, code))
@@ -1493,6 +1504,63 @@ extension Conductor: SSHEndpoint {
         }
         return output
     }
+
+    func listFiles(_ path: String, sort: FileSorting) async throws -> [RemoteFile] {
+        guard let pathData = path.data(using: .utf8) else {
+            throw iTermFileProviderServiceError.notFound(path)
+        }
+        let json = try await performFileOperation(subcommand: .ls(path: pathData,
+                                                                  sorting: sort))
+        guard let jsonData = json.data(using: .utf8) else {
+            throw iTermFileProviderServiceError.internalError("Server returned garbage")
+        }
+        let decoder = JSONDecoder()
+        return try iTermFileProviderServiceError.wrap {
+            return try decoder.decode([RemoteFile].self, from: jsonData)
+        }
+    }
+
+    func download(_ path: String) async throws -> Data {
+        throw iTermFileProviderServiceError.todo
+    }
+
+    func stat(_ path: String) async throws -> RemoteFile {
+        throw iTermFileProviderServiceError.todo
+    }
+
+    func delete(_ path: String, recursive: Bool) async throws {
+        throw iTermFileProviderServiceError.todo
+    }
+
+    func ln(_ source: String, _ symlink: String) async throws -> RemoteFile {
+        throw iTermFileProviderServiceError.todo
+    }
+
+    func mv(_ file: String, newParent: String, newName: String) async throws -> RemoteFile {
+        throw iTermFileProviderServiceError.todo
+    }
+
+    func mkdir(_ file: String) async throws {
+        throw iTermFileProviderServiceError.todo
+    }
+
+    func create(_ file: String, content: Data) async throws {
+        throw iTermFileProviderServiceError.todo
+    }
+
+    func replace(_ file: String, content: Data) async throws -> RemoteFile {
+        throw iTermFileProviderServiceError.todo
+    }
+
+    func setModificationDate(_ file: String, date: Date) async throws -> RemoteFile {
+        throw iTermFileProviderServiceError.todo
+    }
+
+    func chmod(_ file: String, permissions: RemoteFile.Permissions) async throws -> RemoteFile {
+        throw iTermFileProviderServiceError.todo
+    }
+}
+/*
 
     func pathToData(_ path: String) throws -> Data {
         guard let pathData = path.data(using: .utf8) else {
@@ -1521,3 +1589,5 @@ extension Conductor: SSHEndpoint {
         return data
     }
 }
+*/
+

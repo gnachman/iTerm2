@@ -7,41 +7,7 @@
 
 import Foundation
 import FileProvider
-
-extension Optional where Wrapped: CustomDebugStringConvertible {
-    var debugDescriptionOrNil: String {
-        switch self {
-        case .none:
-            return "(nil)"
-        case .some(let obj):
-            return obj.debugDescription
-        }
-    }
-}
-
-extension Optional where Wrapped: CustomStringConvertible {
-    var descriptionOrNil: String {
-        switch self {
-        case .none:
-            return "(nil)"
-        case .some(let obj):
-            return obj.description
-        }
-    }
-}
-
-extension DataProtocol {
-    var hexified: String { map { .init(format: "%02x", $0) }.joined() }
-}
-
-extension Data {
-    var stringOrHex: String {
-        if let s = String(data: self, encoding: .utf8) {
-            return s
-        }
-        return hexified
-    }
-}
+import FileProviderService
 
 extension NSFileProviderPage {
     var description: String {

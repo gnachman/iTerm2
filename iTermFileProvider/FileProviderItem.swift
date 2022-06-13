@@ -1,4 +1,5 @@
 import FileProvider
+import FileProviderService
 import UniformTypeIdentifiers
 
 extension RemoteFile {

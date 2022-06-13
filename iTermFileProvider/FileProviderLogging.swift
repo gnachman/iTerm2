@@ -8,19 +8,23 @@
 import Foundation
 import OSLog
 
+@available(macOS 11.0, *)
 let logger = Logger(subsystem: "com.themcnachmans.FileProvider", category: "main")
 
+@available(macOS 11.0, *)
 class LogContext {
     @TaskLocal
     static var logContexts = ["FileProvider"]
 }
 
-func log(_ message: String) {
+@available(macOS 11.0, *)
+public func log(_ message: String) {
     let prefix = LogContext.logContexts.joined(separator: " > ")
     logger.info("\(prefix, privacy: .public): \(message, privacy: .public)")
 }
 
-func logging<T>(_ prefix: String, closure: () throws -> T) rethrows -> T {
+@available(macOS 11.0, *)
+public func logging<T>(_ prefix: String, closure: () throws -> T) rethrows -> T {
     return try LogContext.$logContexts.withValue(LogContext.logContexts + [prefix]) {
         log("begin")
         do {
@@ -35,7 +39,8 @@ func logging<T>(_ prefix: String, closure: () throws -> T) rethrows -> T {
     }
 }
 
-func logging<T>(_ prefix: String, closure: () async throws -> T) async rethrows -> T {
+@available(macOS 11.0, *)
+public func logging<T>(_ prefix: String, closure: () async throws -> T) async rethrows -> T {
     return try await LogContext.$logContexts.withValue(LogContext.logContexts + [prefix]) {
         log("begin")
         do {

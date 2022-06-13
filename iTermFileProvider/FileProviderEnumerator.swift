@@ -1,15 +1,23 @@
 import FileProvider
+import FileProviderService
 
 class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
     private let path: String
+    private let remoteService: RemoteService
+    private let workingSet: WorkingSet
     private let anchor = NSFileProviderSyncAnchor(Data())
     private var dataSource: CachingPaginatingDataSource
     static var enumeratedPaths = NSCountedSet()
     private let manager: NSFileProviderManager?
 
-    init(_ path: String, domain: NSFileProviderDomain) {
+    init(_ path: String,
+         domain: NSFileProviderDomain,
+         remoteService: RemoteService,
+         workingSet: WorkingSet) {
         log("Enumerator(\(path)): Create enumerator for path \(path)")
         self.path = path
+        self.remoteService = remoteService
+        self.workingSet = workingSet
         manager = NSFileProviderManager(for: domain)
         dataSource = CachingPaginatingDataSource(path, domain: domain)
         Self.enumeratedPaths.add(path)
@@ -55,7 +63,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
     private func enumerateWorkingSet(_ observer: NSFileProviderEnumerationObserver,
                                      page startPage: NSFileProviderPage) async {
         await logging("Enumerating Working Set") {
-            for entry in await WorkingSet.instance.entries {
+            for entry in await workingSet.entries {
                 log("Enumerate \(entry.path) from working set")
                 var nextPage: NSFileProviderPage? = startPage
                 while let page = nextPage {
@@ -68,7 +76,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                                                            observer: observer,
                                                            workingSet: true)
                         case .file:
-                            let file = try await RemoteService.instance.lookup(entry.path)
+                            let file = try await remoteService.lookup(entry.path)
                             observer.didEnumerate([await FileProviderItem(file, manager: manager)])
                         }
                     } catch {
@@ -87,7 +95,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
                            observer: NSFileProviderEnumerationObserver,
                            workingSet: Bool) async throws -> NSFileProviderPage? {
         let (files, nextPage) = try await dataSource.request(
-            service: RemoteService.instance,
+            service: remoteService,
             path: path,
             page: page,
             pageSize: observer.suggestedPageSize,
@@ -101,7 +109,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         if self.path != RemoteFile.workingSetPrefix {
             log("If parent directory is in the working set, add these files to it.")
             let parent = (self.path as NSString).deletingLastPathComponent
-            if await WorkingSet.instance.entries.contains(where: { $0.path == parent }) {
+            if await self.workingSet.entries.contains(where: { $0.path == parent }) {
                 await ensureItemsInLatestWorkingSetAnchor(items)
             }
         }
@@ -132,7 +140,7 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
 
                     if path == RemoteFile.workingSetPrefix {
                         try await logging("Enumerating working set") {
-                            for entry in await WorkingSet.instance.entries {
+                            for entry in await workingSet.entries {
                                 log("Working set contains \(entry.path). Will add its contents.")
                                 try await addFiles(at: entry.path, to: diff)
                             }
@@ -169,10 +177,10 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
 
     private func addFiles(at path: String,
                           to diff: FileListDiff) async throws {
-        let after = try await RemoteService.instance.list(at: path,
-                                                          fromPage: nil,
-                                                          sort: .byName,
-                                                          pageSize: Int.max)
+        let after = try await remoteService.list(at: path,
+                                                 fromPage: nil,
+                                                 sort: .byName,
+                                                 pageSize: Int.max)
         log("Add 'after' files at \(path): \(after)")
         let root = try? await manager?.getUserVisibleURL(for: .rootContainer)
         diff.add(after: after.files.map { FileProviderItem($0, userVisibleRoot: root) })

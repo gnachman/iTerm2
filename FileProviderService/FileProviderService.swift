@@ -9,32 +9,23 @@ import Foundation
 import FileProvider
 
 @available(macOS 11.0, *)
-public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConvertible {
-    public let identity: SSHIdentity
-    public var name: String { identity.compactDescription }
+public struct ListResult: CustomDebugStringConvertible, Codable {
+    public var files: [RemoteFile]
+    public var nextPage: Data?
 
-    public var stringIdentifier: String {
-        return identity.stringIdentifier
-    }
-    
     public var debugDescription: String {
-        return stringIdentifier
+        return "<ListResult: files=\(files) nextPage=\(nextPage?.description ?? "(nil)")>"
     }
 
-    public init(_ identity: SSHIdentity) {
-        self.identity = identity
+    public init(files: [RemoteFile], nextPage: Data?) {
+        self.files = files
+        self.nextPage = nextPage
     }
+}
 
-    public init?(stringIdentifier string: String) {
-        let parts = string.components(separatedBy: ";")
-        guard parts.count == 2 else {
-            return nil
-        }
-        guard let identity = SSHIdentity(stringIdentifier: parts[1]) else {
-            return nil
-        }
-        self.identity = identity
-    }
+public enum FileSorting: Codable {
+    case byDate
+    case byName
 }
 
 @available(macOS 11.0, *)
@@ -166,36 +157,137 @@ public class ExtensionToMainApp: NSObject, NSSecureCoding {
     }
 }
 
+public enum iTermFileProviderServiceError: Error, Codable, CustomDebugStringConvertible {
+    case todo
+    case notFound(String)
+    case unknown(String)
+    case notAFile(String)
+    case permissionDenied(String)
+    case internalError(String)  // e.g., URL with contents not readable
+    
+    public var debugDescription: String {
+        switch self {
+        case .todo:
+            return "<todo>"
+        case .notFound(let item):
+            return "<notFound \(item)>"
+        case .unknown(let reason):
+            return "<unknown \(reason)>"
+        case .notAFile(let file):
+            return "<notAFile \(file)>"
+        case .permissionDenied(let file):
+            return "<permissionDenied \(file)>"
+        case .internalError(let reason):
+            return "<internalError \(reason)>"
+        }
+    }
+
+    public static func wrap<T>(_ closure: () throws -> T) throws -> T {
+        do {
+            return try closure()
+        } catch let error as iTermFileProviderServiceError {
+            throw error
+        } catch {
+            throw iTermFileProviderServiceError.internalError(error.localizedDescription)
+        }
+    }
+}
+
+public extension Optional where Wrapped: CustomDebugStringConvertible {
+    var debugDescriptionOrNil: String {
+        switch self {
+        case .none:
+            return "(nil)"
+        case .some(let obj):
+            return obj.debugDescription
+        }
+    }
+}
+
+public extension Optional where Wrapped: CustomStringConvertible {
+    var descriptionOrNil: String {
+        switch self {
+        case .none:
+            return "(nil)"
+        case .some(let obj):
+            return obj.description
+        }
+    }
+}
+
+public extension Optional where Wrapped == Data {
+    var stringOrHex: String {
+        switch self {
+        case .some(let data):
+            return data.stringOrHex
+        case .none:
+            return "(nil)"
+        }
+    }
+}
+
+extension Int: CustomDebugStringConvertible {
+    public var debugDescription: String {
+        return String(self)
+    }
+}
+
+public extension DataProtocol {
+    var hexified: String { map { .init(format: "%02x", $0) }.joined() }
+}
+
+public extension Data {
+    var stringOrHex: String {
+        if let s = String(data: self, encoding: .utf8) {
+            return s
+        }
+        return hexified
+    }
+}
 
 @available(macOS 11.0, *)
 public class MainAppToExtensionPayload: NSObject, Codable {
     public struct Event: Codable, CustomDebugStringConvertible {
         public enum Kind: Codable, CustomDebugStringConvertible {
-            case connectionList([SSHConnectionIdentifier])
-            case fileList(iTermResult<[SSHListFilesItem], FetchError>)
-            case fetch(iTermResult<Data, FetchError>)
-            case invalidConnection
+            case list(iTermResult<ListResult, iTermFileProviderServiceError>)
+            case lookup(iTermResult<RemoteFile, iTermFileProviderServiceError>)
+            case subscribe
+            case fetch(iTermResult<Data, iTermFileProviderServiceError>)
+            case delete(iTermFileProviderServiceError?)
+            case ln(iTermResult<RemoteFile, iTermFileProviderServiceError>)
+            case mv(iTermResult<RemoteFile, iTermFileProviderServiceError>)
+            case mkdir(iTermFileProviderServiceError?)
+            case create(iTermFileProviderServiceError?)
+            case replaceContents(iTermResult<RemoteFile, iTermFileProviderServiceError>)
+            case setModificationDate(iTermResult<RemoteFile, iTermFileProviderServiceError>)
+            case chmod(iTermResult<RemoteFile, iTermFileProviderServiceError>)
 
             public var debugDescription: String {
                 switch self {
-                case .connectionList(let ids):
-                    return "<connectionList \(ids.map { $0.debugDescription }.joined(separator: ", "))>"
-                case .fileList(let result):
-                    switch result {
-                    case .success(let items):
-                        return "<fileList \(items.map { $0.debugDescription }.joined(separator: ", "))>"
-                    case .failure(let error):
-                        return "<fileList error=\(String(describing: error))>"
-                    }
+                case .list(let result):
+                    return "<list \(result)>"
+                case .lookup(let result):
+                    return "<lookup \(result)>"
+                case .subscribe:
+                    return "<subscribe>"
                 case .fetch(let result):
-                    switch result {
-                    case .success(let data):
-                        return "<fetch success: \(data.count) bytes>"
-                    case .failure(let error):
-                        return "<fetch error: \(error)>"
-                    }
-                case .invalidConnection:
-                    return "<invalidConnection>"
+                    return "<fetch \(result)>"
+                case .delete(let result):
+                    return "<delete \(result.debugDescriptionOrNil)>"
+                case .ln(let result):
+                    return "<ln \(result)>"
+                case .mv(let result):
+                    return "<mv \(result)>"
+                case .mkdir(let result):
+                    return "<mkdir \(result.debugDescriptionOrNil)>"
+                case .create(let result):
+                    return "<create \(result.debugDescriptionOrNil)>"
+                case .replaceContents(let result):
+                    return "<replaceContents \(result)>"
+                case .setModificationDate(let result):
+                    return "<setModificationDate \(result)>"
+                case .chmod(let result):
+                    return "<chmod \(result)>"
                 }
             }
         }
@@ -227,21 +319,45 @@ public class MainAppToExtensionPayload: NSObject, Codable {
 public class ExtensionToMainAppPayload: NSObject, Codable {
     public struct Event: Codable, CustomDebugStringConvertible {
         public enum Kind: Codable, CustomDebugStringConvertible {
-            case invalid
-            case listConnections
-            case listFiles(connection: SSHConnectionIdentifier, path: String)
-            case fetch(connection: SSHConnectionIdentifier, path: String)
+            case list(path: String, requestedPage: Data?, sort: FileSorting, pageSize: Int?)
+            case lookup(path: String)
+            case subscribe(paths: [String])
+            case fetch(path: String)
+            case delete(file: RemoteFile, recursive: Bool)
+            case ln(source: String, file: RemoteFile)
+            case mv(file: RemoteFile, newParent: String, newName: String)
+            case mkdir(file: RemoteFile)
+            case create(file: RemoteFile, content: Data)
+            case replaceContents(file: RemoteFile, url: URL)
+            case setModificationDate(file: RemoteFile, date: Date)
+            case chmod(file: RemoteFile, permissions: RemoteFile.Permissions)
 
             public var debugDescription: String {
                 switch self {
-                case .invalid:
-                    return "<invalid>"
-                case .listConnections:
-                    return "<listConnections>"
-                case .listFiles(connection: _, path: let path):
-                    return "<listFiles path=\(path)>"
-                case .fetch(connection: _, path: let path):
-                    return "<fetch path=\(path)>"
+                case let .list(path: path, requestedPage: requestedPage, sort: sort, pageSize: pageSize):
+                    return "<list path=\(path) page=\(requestedPage.stringOrHex) sort=\(sort) pageSize=\(pageSize.debugDescriptionOrNil)>"
+                case let .lookup(path: path):
+                    return "<lookup \(path)>"
+                case let .subscribe(paths: paths):
+                    return "<subscribe \(paths.joined(separator: ", "))>"
+                case let .fetch(path: path):
+                    return "<fetch \(path)>"
+                case let .delete(file: file, recursive: recursive):
+                    return "<delete \(file) recursive=\(recursive)>"
+                case let .ln(source: source, file: file):
+                    return "<ln \(source) -> \(file)>"
+                case let .mv(file: file, newParent: newParent, newName: newName):
+                    return "<mv \(file) to parent \(newParent) with name \(newName)>"
+                case let .mkdir(file: file):
+                    return "<mkdir \(file)>"
+                case let .create(file: file, content: content):
+                    return "<create \(file) content size=\(content.count)>"
+                case let .replaceContents(file: file, url: url):
+                    return "<replaceContents \(file) \(url)>"
+                case let .setModificationDate(file: file, date: date):
+                    return "<setModificationDate \(file) \(date)>"
+                case let .chmod(file: file, permissions: permissions):
+                    return "<chmod \(file) \(permissions)>"
                 }
             }
         }
