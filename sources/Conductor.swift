@@ -1541,7 +1541,18 @@ extension Conductor: SSHEndpoint {
     }
 
     func download(_ path: String) async throws -> Data {
-        throw iTermFileProviderServiceError.todo
+        return try await logging("download \(path)") {
+            guard let pathData = path.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(path)
+            }
+            log("perform file operation to download \(path)")
+            let b64: String = try await performFileOperation(subcommand: .fetch(path: pathData))
+            log("file operation completed with \(b64.count) characters")
+            guard let data = Data(base64Encoded: b64) else {
+                throw iTermFileProviderServiceError.internalError("Server returned garbage")
+            }
+            return data
+        }
     }
 
     func stat(_ path: String) async throws -> RemoteFile {

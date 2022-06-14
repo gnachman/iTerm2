@@ -585,7 +585,7 @@ async def handle_file_stat(identifier, path):
     log(f'handle_file_stat {identifier} {path}')
     try:
         pp = permissions(os.path.abspath(os.path.join(path, os.pardir)))
-        s = os.stat(path)
+        s = os.stat(path, follow_symlinks=False)
         obj = remotefile(pp, path, s)
         j = json.dumps(obj)
         send_esc(j)
@@ -594,15 +594,19 @@ async def handle_file_stat(identifier, path):
         file_error(identifier, e, path)
 
 async def handle_file_fetch(identifier, path):
+    log(f'handle_file_fetch {identifier} {path}')
     try:
-        path = base64.b64decode(args[0])
-        with open(path) as f:
+        with open(path, "rb") as f:
             content = f.read()
-            print(base64.encodebytes(content))
+            log(type(content))
+            encoded = base64.encodebytes(content).decode('utf8')
+            for line in encoded.split("\n"):
+                log(f'will send f{type(line)}')
+                send_esc(line)
+        log("ending")
         end(identifier, 0)
     except Exception as e:
-        log(f'handle_file_fetch {path}: {traceback.format_exc()}')
-        end(identifier, 1)
+        file_error(identifier, e, path)
 
 
 async def handle_recover(identifier, args):
