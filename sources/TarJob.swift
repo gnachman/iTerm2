@@ -90,7 +90,7 @@ struct TarJob: CustomDebugStringConvertible {
             DLog("")
 
             for (source, dest) in zip(splitSources, splitDestinations) {
-                DLog("Check source=\(source), dest=\(dest), preserving source prefix \(sources[0].pathComponents[0..<sourcePrefixCount])")
+                DLog("Check source=\(source), dest=\(dest), preserving source prefix \(sources[0].pathComponents.prefix(sourcePrefixCount))")
                 let sourceSuffix = Array(source[sourcePrefixCount...])
                 if !dest.endsWith(sourceSuffix) {
                     DLog("FAIL - destination \(dest) does not end with source suffix \(sourceSuffix)")
