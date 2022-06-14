@@ -49,25 +49,33 @@ actor ChunkingQueue<T> where T: CustomDebugStringConvertible {
     private func evictIfNeeded() {
         if let existing = self.completion {
             self.completion = nil
-            log("ChunkingQueue: evicting")
+            log("ChunkingQueue: evicting. nil completion.")
             existing(.failure(Exception.superceded))
         }
     }
 
     private func get(_ completion: @escaping (Result<[T], Error>) -> ()) {
         evictIfNeeded()
+        log("ChunkingQueue: get: Set completion")
         self.completion = completion
         completeIfPossible()
     }
 
     private func completeIfPossible() {
-        if let completion = completion, !elements.isEmpty {
-            self.completion = nil
-            let result = elements
-            elements.removeAll()
-            log("ChunkingQueue: draining \(result)")
-            completion(.success(result))
+        guard let completion = completion else {
+            log("ChunkingQueue: completeIfPossible: no completion registered")
+            return
         }
+        guard !elements.isEmpty else {
+            log("ChunkingQueue: completeIfPossible: queue is empty")
+            return
+        }
+        log("ChunkingQueue: completeIfPossible: nil completion before calling existing handler")
+        self.completion = nil
+        let result = elements
+        elements.removeAll()
+        log("ChunkingQueue: draining \(result)")
+        completion(.success(result))
     }
 
     func append(_ element: T) {
@@ -129,26 +137,28 @@ class FileProviderService: NSObject, NSFileProviderServiceSource, NSXPCListenerD
 
     // Handle poll from main app.
     func poll(_ wrapper: MainAppToExtension) async throws -> ExtensionToMainApp {
-        logger.info("FileProviderServiceServer: Starting")
+        log("FileProviderServiceServer: Starting")
         alive = true
         let m2e = wrapper.value
-        logger.debug("FileProviderServiceServer: poll \(m2e.debugDescription, privacy: .public)")
+        log("FileProviderServiceServer: poll \(m2e.debugDescription)")
         let e2m: [ExtensionToMainAppPayload.Event]
         if m2e.events.isEmpty {
-            logger.debug("FileProviderServiceServer: draining")
+            log("FileProviderServiceServer: draining")
             e2m = try await queue.drain()
         } else {
+            log("FileProviderServiceServer: tryDrain (there are \(m2e.events.count) main->extension events to handle if queue is empty)")
             e2m = await queue.tryDrain()
         }
-        logger.debug("FileProviderServiceServer: will handle: \(m2e.debugDescription, privacy: .public)")
+        log("FileProviderServiceServer: will handle: \(m2e.debugDescription)")
         for event in m2e.events {
             handle(event)
         }
+        log("FileProviderServiceServer: poll returning")
         return ExtensionToMainApp(events: e2m)
     }
 
     private func handle(_ event: MainAppToExtensionPayload.Event) {
-        logger.debug("FileProviderServiceServer: handle \(event.debugDescription, privacy: .public)")
+        log("FileProviderServiceServer: handle \(event.debugDescription)")
         outstandingRequests.removeValue(forKey: event.eventID)?.handler(event.kind)
     }
 
@@ -161,12 +171,12 @@ class FileProviderService: NSObject, NSFileProviderServiceSource, NSXPCListenerD
     func sendRequest(_ kindToSend: ExtensionToMainAppPayload.Event.Kind,
                      handler: @escaping (MainAppToExtensionPayload.Event.Kind) -> ()) throws {
         if !alive {
-            logger.error("FileProviderServiceServer not yet alive so sendRequest returning serverUnreachable.")
+            log("FileProviderServiceServer: not yet alive so sendRequest returning serverUnreachable.")
             throw NSFileProviderError(.serverUnreachable)
         }
         let request = ExtensionOriginatedRequest(outboundEvent: ExtensionToMainAppPayload.Event(kind: kindToSend),
                                                  handler: handler)
-        logger.debug("FileProviderServiceServer: sendRequest \(request.outboundEvent.debugDescription, privacy: .public)")
+        log("FileProviderServiceServer: sendRequest \(request.outboundEvent.debugDescription)")
         outstandingRequests[request.outboundEvent.eventID] = request
         Task {
             await queue.append(request.outboundEvent)

@@ -22,9 +22,9 @@ public class SSHIdentity: NSObject, Codable {
             if port == 22 {
                 hostport = hostname
             } else {
-                hostport = hostname + ":\(port)"
+                hostport = hostname + " port \(port)"
             }
-            if let username = username {
+            if let username = username, username != NSUserName() {
                 return username + "@" + hostport
             }
             return hostport
@@ -68,7 +68,7 @@ public class SSHIdentity: NSObject, Codable {
     }
 
     public var stringIdentifier: String {
-        return "\((state.username ?? "").replacingOccurrences(of: "@", with: ""))@\(state.hostname.replacingOccurrences(of: ":", with: "")):\(state.port)".replacingOccurrences(of: ";", with: "")
+        return state.compactDescription
     }
 
     public init?(stringIdentifier: String)  {

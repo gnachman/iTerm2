@@ -46,7 +46,8 @@ class Conductor: NSObject, Codable {
     private let parsedSSHArguments: ParsedSSHArguments
     @objc let depth: Int32
     @objc let parent: Conductor?
-    @objc var autopollEnabled = true
+    #warning("DNS")
+    @objc var autopollEnabled = false
     private var _queueWrites = true
     private var restored = false
     private var autopoll = ""
@@ -114,6 +115,7 @@ class Conductor: NSObject, Codable {
     enum FileSubcommand: Codable, Equatable {
         case ls(path: Data, sorting: FileSorting)
         case fetch(path: Data)
+        case stat(path: Data)
 
         var stringValue: String {
             switch self {
@@ -129,15 +131,20 @@ class Conductor: NSObject, Codable {
 
             case .fetch(let path):
                 return "fetch\n\(path.base64EncodedString())"
+
+            case .stat(let path):
+                return "stat\n\(path.base64EncodedString())"
             }
         }
 
         var operationDescription: String {
             switch self {
             case .ls(let path, let sort):
-                return "ls \(path) \(sort)"
+                return "ls \(path.stringOrHex) \(sort)"
             case .fetch(let path):
-                return "fetch \(path)"
+                return "fetch \(path.stringOrHex)"
+            case .stat(let path):
+                return "stat \(path.stringOrHex)"
             }
         }
     }
@@ -793,6 +800,7 @@ class Conductor: NSObject, Codable {
 
     @available(macOS 11.0, *)
     fileprivate func framerFile(_ subcommand: FileSubcommand, completion: @escaping (String, Int32) -> ()) {
+        mylog("Sending framerFile request \(subcommand)")
         send(.framerFile(subcommand), .handleFile(StringArray(), completion))
     }
 
@@ -875,7 +883,7 @@ class Conductor: NSObject, Codable {
     }
 
     private func update(executionContext: ExecutionContext, result: PartialResult) -> () {
-        DLog("update \(executionContext) result=\(result)")
+        mylog("update \(executionContext) result=\(result)")
         switch executionContext.handler {
         case .failIfNonzeroStatus:
             switch result {
@@ -1260,8 +1268,16 @@ class Conductor: NSObject, Codable {
         }
     }
 
+    private func mylog(_ message: String) {
+        if #available(macOS 11, *) {
+            log(message)
+        } else {
+            DLog(message)
+        }
+    }
+
     private func send(_ command: Command, _ handler: ExecutionContext.Handler) {
-        DLog("append \(command) to queue in state \(state)")
+        mylog("append \(command) to queue in state \(state)")
         queue.append(ExecutionContext(command: command, handler: handler))
         switch state {
         case .ground, .recovery:
@@ -1272,9 +1288,9 @@ class Conductor: NSObject, Codable {
     }
 
     private func dequeue() {
-        DLog("dequeue")
+        mylog("dequeue")
         guard delegate != nil else {
-            DLog("delegate is nil. clear queue and reset state.")
+            mylog("delegate is nil. clear queue and reset state.")
             while let pending = queue.first {
                 queue.removeFirst()
                 update(executionContext: pending, result: .abort)
@@ -1283,7 +1299,7 @@ class Conductor: NSObject, Codable {
             return
         }
         guard let pending = queue.first else {
-            DLog("queue is empty")
+            mylog("queue is empty")
             return
         }
         queue.removeFirst()
@@ -1506,17 +1522,21 @@ extension Conductor: SSHEndpoint {
     }
 
     func listFiles(_ path: String, sort: FileSorting) async throws -> [RemoteFile] {
-        guard let pathData = path.data(using: .utf8) else {
-            throw iTermFileProviderServiceError.notFound(path)
-        }
-        let json = try await performFileOperation(subcommand: .ls(path: pathData,
-                                                                  sorting: sort))
-        guard let jsonData = json.data(using: .utf8) else {
-            throw iTermFileProviderServiceError.internalError("Server returned garbage")
-        }
-        let decoder = JSONDecoder()
-        return try iTermFileProviderServiceError.wrap {
-            return try decoder.decode([RemoteFile].self, from: jsonData)
+        return try await logging("listFiles")  {
+            guard let pathData = path.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(path)
+            }
+            log("perform file operation to list \(path)")
+            let json = try await performFileOperation(subcommand: .ls(path: pathData,
+                                                                      sorting: sort))
+            log("file operation completed with \(json.count) characters")
+            guard let jsonData = json.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.internalError("Server returned garbage")
+            }
+            let decoder = JSONDecoder()
+            return try iTermFileProviderServiceError.wrap {
+                return try decoder.decode([RemoteFile].self, from: jsonData)
+            }
         }
     }
 
@@ -1525,7 +1545,21 @@ extension Conductor: SSHEndpoint {
     }
 
     func stat(_ path: String) async throws -> RemoteFile {
-        throw iTermFileProviderServiceError.todo
+        return try await logging("stat \(path)") {
+            guard let pathData = path.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(path)
+            }
+            log("perform file operation to stat \(path)")
+            let json = try await performFileOperation(subcommand: .stat(path: pathData))
+            log("file operation completed with \(json.count) characters")
+            guard let jsonData = json.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.internalError("Server returned garbage")
+            }
+            let decoder = JSONDecoder()
+            return try iTermFileProviderServiceError.wrap {
+                return try decoder.decode(RemoteFile.self, from: jsonData)
+            }
+        }
     }
 
     func delete(_ path: String, recursive: Bool) async throws {
@@ -1560,34 +1594,3 @@ extension Conductor: SSHEndpoint {
         throw iTermFileProviderServiceError.todo
     }
 }
-/*
-
-    func pathToData(_ path: String) throws -> Data {
-        guard let pathData = path.data(using: .utf8) else {
-            throw SSHEndpointException.fileNotFound
-        }
-        return pathData
-    }
-
-    func listFiles(_ path: String) async throws -> [String] {
-        let output = try await performFileOperation(subcommand: .ls(path: try pathToData(path)))
-        let lines = output.components(separatedBy: "\n")
-        let paths = lines.compactMap { encoded -> String? in
-            guard let data = Data(base64Encoded: encoded) else {
-                return nil
-            }
-            return String(data: data, encoding: .utf8)
-        }
-        return paths
-    }
-
-    func download(_ path: String) async throws -> Data {
-        let output = try await performFileOperation(subcommand: .fetch(path: try pathToData(path)))
-        guard let data = Data(base64Encoded: output) else {
-            throw SSHEndpointException.internalError
-        }
-        return data
-    }
-}
-*/
-

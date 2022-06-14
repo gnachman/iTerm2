@@ -287,8 +287,10 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
         try await logging("list(path: \(path), page: \(requestedPage.stringOrHex), sort: \(sort), pageSize: \(pageSize.debugDescriptionOrNil)") {
             switch self.endpoint(forPath: path) {
             case .none:
+                log("No endpoint for \(path)")
                 throw iTermFileProviderServiceError.notFound(path)
             case .root(let endpoints):
+                log("Root requested.")
                 let files = endpoints.map { endpoint in
                     RemoteFile(kind: .host,
                                absolutePath: "/" + endpoint.sshIdentity.compactDescription,
@@ -300,12 +302,18 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
                 let sorted = files.sorted { lhs, rhs in
                     return lhs.absolutePath < rhs.absolutePath
                 }
+                log("Return \(sorted)")
                 return ListResult(files: sorted, nextPage: nil)
             case .ssh(let endpoint):
-                let files = try await endpoint.listFiles(path, sort: sort)
+                log("File at endpoint \(endpoint) requested. Calling endpoint.listFiles")
+                let files = try await endpoint.listFiles(path.removingHost, sort: sort)
+                log("endpoint.listFiles returned \(files.count) items")
                 let sorted = files.sorted { lhs, rhs in
                     RemoteFile.lessThan(lhs, rhs, sort: sort)
+                }.map {
+                    $0.addingHost(endpoint.sshIdentity.compactDescription)
                 }
+                NSLog("Send \(sorted) as output of ls")
                 return ListResult(files: sorted, nextPage: nil)
             }
 
@@ -316,18 +324,22 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
         return try await logging("lookup(\(path))") { () async throws -> RemoteFile in
             switch self.endpoint(forPath: path) {
             case .none:
+                log("No endpoint for \(path)")
                 throw iTermFileProviderServiceError.notFound(path)
             case .root(_):
+                log("Lookup of root requested")
                 return RemoteFile(
                     kind: .folder,
                     absolutePath: "/",
                     permissions: RemoteFile.Permissions(r: true, w: false, x: true),
                     parentPermissions: RemoteFile.Permissions(r: true, w: false, x: true))
             case .ssh(let endpoint):
+                log("Lookup for \(path) goes to endpoint \(endpoint)")
                 let components = (path as NSString).pathComponents
                 if components.count == 2 {
                     // /example.com
                     let file = try await endpoint.stat("/")
+                    log("Return .hsot")
                     return RemoteFile(
                         kind: .host,
                         absolutePath: "/" + endpoint.sshIdentity.compactDescription,
@@ -337,7 +349,10 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
                         mtime: file.mtime)
                 }
                 precondition(components.count > 2)
-                return try await endpoint.stat(path.removingHost)
+                log("Calling out to stat")
+                let result = try await endpoint.stat(path.removingHost).addingHost(endpoint.sshIdentity.compactDescription)
+                log("stat returned \(result)")
+                return result
             }
         }
     }
@@ -383,7 +398,7 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
             case .root(_):
                 throw iTermFileProviderServiceError.permissionDenied(file.absolutePath)
             case .ssh(let endpoint):
-                return try await endpoint.ln(source, file.absolutePath)
+                return try await endpoint.ln(source, file.absolutePath.removingHost)
             }
         }
     }
@@ -399,7 +414,7 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
                 throw iTermFileProviderServiceError.permissionDenied(file.absolutePath)
             case .ssh(let endpoint):
                 return try await endpoint.mv(file.absolutePath.removingHost,
-                                             newParent: newParent,
+                                             newParent: newParent.removingHost,
                                              newName: newName)
             }
         }
@@ -556,5 +571,17 @@ class SSHEndpointProxy: SSHEndpoint {
     @MainActor
     func chmod(_ file: String, permissions: RemoteFile.Permissions) async throws -> RemoteFile {
         return try await realEndpoint(file).chmod(file, permissions: permissions)
+    }
+}
+
+@available(macOS 11.0, *)
+extension RemoteFile {
+    func addingHost(_ host: String) -> RemoteFile {
+        return RemoteFile(kind: kind,
+                          absolutePath: "/" + host + absolutePath,
+                          permissions: permissions,
+                          parentPermissions: parentPermissions,
+                          ctime: ctime,
+                          mtime: mtime)
     }
 }

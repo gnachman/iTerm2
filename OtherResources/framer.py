@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 import asyncio
 import base64
+import errno
 import fcntl
+import json
 import os
 import pty
 import pwd
 import random
 import re
 import signal
+import stat
 import subprocess
 import sys
 import termios
@@ -494,28 +497,103 @@ async def handle_file(identifier, args):
         begin(identifier)
         end(identifier, 1)
         return
-    if args[0] == "ls":
-        await handle_file_ls(identifier, base64.b64decode(args[1]))
-    if args[0] == "fetch":
-        begin(identifier)
-        await handle_file_fetch(identifier, base64.b64decode(args[1]))
-    else:
-        begin(identifier)
-        end(identifier, 1)
-
-async def handle_file_ls(identifier, path):
     begin(identifier)
+    if args[0] == "ls":
+        await handle_file_ls(identifier, base64.b64decode(args[1]).decode('latin1'), args[2])
+        return
+    if args[0] == "fetch":
+        await handle_file_fetch(identifier, base64.b64decode(args[1]).decode('latin1'))
+        return
+    if args[0] == "stat":
+        await handle_file_stat(identifier, base64.b64decode(args[1]).decode('latin1'))
+        return
+    log(f'unrecognized subcommand args[0]')
+    end(identifier, 1)
+
+def permissions(path):
+    return {
+        "r": os.access(path, os.R_OK, effective_ids=True),
+        "w": os.access(path, os.W_OK, effective_ids=True),
+        "x": os.access(path, os.X_OK, effective_ids=True) }
+
+def remotefile(pp, abspath, s):
+    if stat.S_ISLNK(s.st_mode):
+        k = {"symlink": {"_0": os.readlink(abspath) }}
+    elif stat.S_ISDIR(s.st_mode):
+        k = {"folder": {}}
+    elif stat.S_ISREG(s.st_mode):
+        k = {"file": {"_0": {"size": s[stat.ST_SIZE]}}}
+    else:
+        return None
+    to = 978307200
+    ctime = s[stat.ST_CTIME] - to
+    mtime = s[stat.ST_MTIME] - to
+    return {"absolutePath": abspath,
+            "kind": k,
+            "permissions": permissions(abspath),
+            "parentPermissions": pp,
+            "ctime": ctime,
+            "mtime": mtime}
+
+def file_error(identifier, e, path):
     try:
-        path = base64.b64decode(args[0])
-        for f in os.listdir(path):
-            print(base64.b64encode(f))
+        raise e
+    except OSError as e:
+        log(f'file_error {path}: {traceback.format_exc()}')
+        errors = {errno.EPERM: 1, errno.ENOENT: 2, errno.ENOTDIR: 3, errno.ELOOP: 4}
+        end(identifier, errors.get(e.errno, 100))
+    except PermissionError as e:
+        log(f'file_error {path}: {traceback.format_exc()}')
+        end(identifier, 1)
+    except Exception as e:
+        log(f'file_error {path}: {traceback.format_exc()}')
+        end(identifier, 255)
+
+async def handle_file_ls(identifier, path, sorting):
+    log(f'handle_file_ls {identifier} {path}')
+    try:
+        pp = permissions(path)
+        files = [(os.path.join(path, f),
+                  os.stat(os.path.join(path, f), follow_symlinks=False))
+                  for f in os.listdir(path)]
+        def fmt(t):
+            return remotefile(pp, t[0], t[1])
+
+        obj = list(filter(lambda x: x is not None, map(fmt, files)))
+        def sort_ls(d):
+            if sorting == 'n':
+                return d['absolutePath']
+            return d['mtime']
+        obj = sorted(obj, key=sort_ls)
+        log(f'After sorting contents of {path} are {obj}')
+        send_esc("[")
+        first = True
+        for entry in obj:
+            if first:
+                first = False
+            else:
+                send_esc(",")
+            j = json.dumps(entry)
+            send_esc(j)
+        send_esc("]")
+        end(identifier, 0)
+        log("handle_file_ls completed normally")
+    except Exception as e:
+        file_error(identifier, e, path)
+
+async def handle_file_stat(identifier, path):
+    log(f'handle_file_stat {identifier} {path}')
+    try:
+        pp = permissions(os.path.abspath(os.path.join(path, os.pardir)))
+        s = os.stat(path)
+        obj = remotefile(pp, path, s)
+        j = json.dumps(obj)
+        send_esc(j)
         end(identifier, 0)
     except Exception as e:
-        log(f'handle_file_ls {path}: {traceback.format_exc()}')
-        end(identifier, 1)
+        file_error(identifier, e, path)
 
 async def handle_file_fetch(identifier, path):
-    begin(identifier)
     try:
         path = base64.b64decode(args[0])
         with open(path) as f:
