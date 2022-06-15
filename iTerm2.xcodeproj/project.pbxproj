@@ -12681,6 +12681,7 @@
 				A6725AD923D64A57001CA48A /* CopyFiles */,
 				A67A515026CCD54000281693 /* CopyFiles */,
 				A65DF4AC2849F2E700AA29AB /* CopyFiles */,
+				A61C54C3285A56F90081366A /* ShellScript */,
 				A6C1FE6E284C1BF200EA8A3B /* Embed App Extensions */,
 			);
 			buildRules = (
@@ -14527,6 +14528,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "#!/bin/bash\nset -x\ntest -d ${PROJECT_DERIVED_FILE_DIR} || mkdir ${PROJECT_DERIVED_FILE_DIR}\ncp ${DERIVED_SOURCES_DIR}/*-Swift.h ${PROJECT_DERIVED_FILE_DIR}\n";
+		};
+		A61C54C3285A56F90081366A /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# https://stackoverflow.com/questions/25900607/do-finder-sync-extensions-require-a-provisioning-profile\necho re-signing file provider\nset -x\n/usr/bin/codesign --force --sign \"$CODE_SIGN_IDENTITY\" --entitlements \"${SRCROOT}/iTermFileProvider/iTermFileProvider.entitlements\" \"${TARGET_BUILD_DIR}/iTermFileProvider.appex\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
