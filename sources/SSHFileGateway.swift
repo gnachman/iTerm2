@@ -37,12 +37,12 @@ actor SSHFileGateway {
                                                object: nil,
                                                queue: nil) { _ in
             Task {
-                NSLog("Remove file provider requested")
+                log("Remove file provider requested")
                 NSFileProviderManager.remove(Self.domain) { removeError in
                     if let removeError = removeError {
-                        NSLog("Failed to remove file provider per request: \(removeError.localizedDescription)")
+                        log("Failed to remove file provider per request: \(removeError.localizedDescription)")
                     } else {
-                        NSLog("Succeeded in removing file provider")
+                        log("Succeeded in removing file provider")
                     }
                 }
             }
@@ -51,12 +51,12 @@ actor SSHFileGateway {
                                                object: nil,
                                                queue: nil) { _ in
             Task {
-                NSLog("Add file provider requested")
+                log("Add file provider requested")
                 NSFileProviderManager.add(Self.domain) { addError in
                     if let addError = addError {
-                        NSLog("Failed to add file provider per request: \(addError.localizedDescription)")
+                        log("Failed to add file provider per request: \(addError.localizedDescription)")
                     } else {
-                        NSLog("Succeeded in adding file provider")
+                        log("Succeeded in adding file provider")
                     }
                 }
             }
@@ -69,7 +69,7 @@ actor SSHFileGateway {
         }
 
         let url = try await manager.getUserVisibleURL(for: .rootContainer)
-        NSLog("root url is \(url)")
+        log("root url is \(url)")
         let services = try await FileManager().fileProviderServicesForItem(at: url)
         guard let service = services.values.first else {
             logger.error("No service for \(url, privacy: .public)")
@@ -94,14 +94,14 @@ actor SSHFileGateway {
         started = true
         manager = nil
         NSFileProviderManager.remove(Self.domain) { removeError in
-            NSLog("Remove domain: \(String(describing: removeError))")
+            log("Remove domain: \(String(describing: removeError))")
 
             NSFileProviderManager.add(Self.domain) { error in
                 if let error = error {
                     logger.error("NSFileProviderManager callback with error: \(error.localizedDescription, privacy: .public)")
                     return
                 }
-                NSLog("Domain added")
+                log("Domain added")
                 self.manager = NSFileProviderManager(for: Self.domain)!
             }
         }
@@ -122,7 +122,7 @@ actor SSHFileGateway {
 
     private func run(_ proxy: iTermFileProviderServiceV1,
                      _ delegate: SSHFileGatewayDelegate) async throws {
-        NSLog("SSHFileGateway starting")
+        log("SSHFileGateway starting")
         while true {
             let messages = self.messages
             self.messages.removeAll()

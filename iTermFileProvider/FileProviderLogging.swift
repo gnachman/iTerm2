@@ -20,7 +20,7 @@ class LogContext {
 @available(macOS 11.0, *)
 public func log(_ message: String) {
     let prefix = LogContext.logContexts.joined(separator: " > ")
-    logger.error("QQQ \(prefix, privacy: .public): \(message, privacy: .public)")
+    logger.error("FileProviderLog: \(prefix, privacy: .public): \(message, privacy: .public)")
 }
 
 @available(macOS 11.0, *)

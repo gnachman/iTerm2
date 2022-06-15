@@ -88,7 +88,7 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
     private var endpoints: [String: SSHEndpointProxy] = [:]
 
     func register(_ endpoint: SSHEndpoint) {
-        NSLog("Register endpoint \(endpoint.sshIdentity.compactDescription)")
+        log("Register endpoint \(endpoint.sshIdentity.compactDescription)")
         endpoints[endpoint.sshIdentity.stringIdentifier] = SSHEndpointProxy(endpoint)
         Task {
             await sshFileGatway.start(delegate: self)
@@ -96,7 +96,7 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
     }
 
     func handleSSHFileRequest(_ request: ExtensionToMainAppPayload.Event.Kind) async -> MainAppToExtensionPayload.Event.Kind {
-        NSLog("Handle SSH request \(request.debugDescription)")
+        log("Handle SSH request \(request.debugDescription)")
         logger.debug("handleSSHFileRequest: \(request.debugDescription, privacy: .public)")
         switch request {
         case .list(path: let path, requestedPage: let requestedPage, sort: let sort, pageSize: let pageSize):
@@ -313,7 +313,7 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
                 }.map {
                     $0.addingHost(endpoint.sshIdentity.compactDescription)
                 }
-                NSLog("Send \(sorted) as output of ls")
+                log("Send \(sorted) as output of ls")
                 return ListResult(files: sorted, nextPage: nil)
             }
 
