@@ -325,6 +325,18 @@ DQ
                                                 <action selector="sshDisconnect:" target="-1" id="ccH-a0-Ijh"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Remove File Provider" identifier="ssh.Remove File Provider" id="kyU-0L-Ich">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="removeFileProvider:" target="201" id="oT8-Bp-WIB"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Add File Provider" identifier="ssh.Add File Provider" id="7jg-eO-XJf">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="addFileProvider:" target="201" id="9w6-ep-5cn"/>
+                                            </connections>
+                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>
@@ -1613,5 +1625,11 @@ DQ
                 <outlet property="_menu" destination="8Ja-GB-Waf" id="a0G-8e-2dj"/>
             </connections>
         </customObject>
+        <menuItem title="Disconnect" identifier="ssh.Disconnect" id="lV3-vx-saW">
+            <modifierMask key="keyEquivalentModifierMask"/>
+            <connections>
+                <action selector="sshDisconnect:" target="-1" id="Dok-Az-6De"/>
+            </connections>
+        </menuItem>
     </objects>
 </document>

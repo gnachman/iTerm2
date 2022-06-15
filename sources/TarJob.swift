@@ -91,7 +91,7 @@ struct TarJob: CustomDebugStringConvertible {
 
             for (source, dest) in zip(splitSources, splitDestinations) {
                 DLog("Check source=\(source), dest=\(dest), preserving source prefix \(sources[0].pathComponents.prefix(sourcePrefixCount))")
-                let sourceSuffix = Array(source[sourcePrefixCount...])
+                let sourceSuffix = Array(source.dropFirst(sourcePrefixCount))
                 if !dest.endsWith(sourceSuffix) {
                     DLog("FAIL - destination \(dest) does not end with source suffix \(sourceSuffix)")
                     return nil
@@ -102,6 +102,7 @@ struct TarJob: CustomDebugStringConvertible {
                 }
                 DLog("OK - destination \(dest) ends with source suffix \(sourceSuffix)")
             }
+            precondition(splitSources[0].count >= sourcePrefixCount, "Split sources \(splitSources[0]) count (\(splitSources[0].count)) > sourcePrefixCount \(sourcePrefixCount). source prefix is \(sourcePrefix) based on sourceParents=\(sourceParents) and local=\(local).")
             let replacement = TarJob(sources: sources + [local],
                                      localBase: URL(fileURLWithPath: sourcePrefix),
                                      destinationBase: URL(fileURLWithPath: splitDestinations[0].dropFirst().dropLast(splitSources[0].count - sourcePrefixCount).joined(separator: "/")))

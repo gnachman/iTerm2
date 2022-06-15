@@ -1624,6 +1624,14 @@ void TurnOnDebugLoggingAutomatically(void) {
     [suUpdater checkForUpdates:(sender)];
 }
 
+- (IBAction)removeFileProvider:(id)sender {
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRemoveFileProvider" object:nil];
+}
+
+- (IBAction)addFileProvider:(id)sender {
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermAddFileProvider" object:nil];
+}
+
 #pragma mark - Main Menu
 
 - (SEL)restoreWindowArrangementSelectorAsTabs:(BOOL)asTabs fromDock:(BOOL)fromDock {

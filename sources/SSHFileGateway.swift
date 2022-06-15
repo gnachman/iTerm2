@@ -32,6 +32,37 @@ actor SSHFileGateway {
         case unavailable
     }
 
+    init() {
+        NotificationCenter.default.addObserver(forName: NSNotification.Name("iTermRemoveFileProvider"),
+                                               object: nil,
+                                               queue: nil) { _ in
+            Task {
+                NSLog("Remove file provider requested")
+                NSFileProviderManager.remove(Self.domain) { removeError in
+                    if let removeError = removeError {
+                        NSLog("Failed to remove file provider per request: \(removeError.localizedDescription)")
+                    } else {
+                        NSLog("Succeeded in removing file provider")
+                    }
+                }
+            }
+        }
+        NotificationCenter.default.addObserver(forName: NSNotification.Name("iTermAddFileProvider"),
+                                               object: nil,
+                                               queue: nil) { _ in
+            Task {
+                NSLog("Add file provider requested")
+                NSFileProviderManager.add(Self.domain) { addError in
+                    if let addError = addError {
+                        NSLog("Failed to add file provider per request: \(addError.localizedDescription)")
+                    } else {
+                        NSLog("Succeeded in adding file provider")
+                    }
+                }
+            }
+        }
+    }
+
     func proxy() async throws -> iTermFileProviderServiceV1 {
         guard let manager = manager else {
             throw Exception.unavailable

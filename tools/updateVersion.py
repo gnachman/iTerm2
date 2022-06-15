@@ -24,14 +24,47 @@ elif os.environ["CONFIGURATION"] == "Nightly":
     revision = time.strftime("%Y%m%d-nightly")
 else:
     revision = time.strftime("%Y%m%d")
-
-buildDir = os.environ["BUILT_PRODUCTS_DIR"]
-infoFile = os.environ["INFOPLIST_PATH"]
-path = os.path.join(buildDir, infoFile)
-plist = NSMutableDictionary.dictionaryWithContentsOfFile_(path)
 version = open("version.txt").read().strip() % {"extra": revision}
-print("Updating versions:", infoFile, version)
-plist["CFBundleShortVersionString"] = version
-plist["CFBundleGetInfoString"] = version
-plist["CFBundleVersion"] = version
-plist.writeToFile_atomically_(path, 1)
+
+def update(path):
+    plist = NSMutableDictionary.dictionaryWithContentsOfFile_(path)
+    print("Updating versions:", path, version)
+    if not plist:
+        print("WARNING - FAILED TO LOAD PLIST")
+    plist["CFBundleShortVersionString"] = version
+    plist["CFBundleGetInfoString"] = version
+    plist["CFBundleVersion"] = version
+    plist.writeToFile_atomically_(path, 1)
+    print(plist)
+
+
+# Update the main app's plist
+
+# /Users/gnachman/git/iterm2/Build/Development
+buildDir = os.environ["BUILT_PRODUCTS_DIR"]
+
+# iTerm2.app/Contents/Info.plist
+infoFile = os.environ["INFOPLIST_PATH"]
+
+# /Users/gnachman/git/iterm2/Build/Development/iTerm2.app/Contents/Info.plist
+path = os.path.join(buildDir, infoFile)
+
+update(path)
+
+
+# Now update extensions and plugins.
+
+# Contents/PlugIns
+BUNDLE_PLUGINS_FOLDER_PATH = os.environ["BUNDLE_PLUGINS_FOLDER_PATH"]
+
+# iTerm2.app/Contents/Frameworks
+FRAMEWORKS_FOLDER_PATH = os.environ["FRAMEWORKS_FOLDER_PATH"]
+
+paths = [
+    f'{buildDir}/iTermFileProvider.appex/Contents/Info.plist',
+    f'{buildDir}/FileProviderService.framework/Versions/A/Resources/Info.plist',
+]
+
+for path in paths:
+    update(path)
+
