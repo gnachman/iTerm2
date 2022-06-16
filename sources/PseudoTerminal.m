@@ -9818,7 +9818,20 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
             }
         }
         if (self.windowInitialized && !_fullScreen && !_restoringWindow) {
-            [[self window] makeKeyAndOrderFront:self];
+            DLog(@"insertTab: window is initialized, not full screen, and we are not restoring windows.");
+            if (self.isHotKeyWindow && self.window.alphaValue == 0) {
+                DLog(@"This appears to be an invisible hotkey window %@", self);
+                iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self];
+                if (!profileHotkey.rollingIn && profileHotkey.windowController.weaklyReferencedObject == self) {
+                    DLog(@"not already rolling in. show it");
+                    [profileHotkey showHotKeyWindow];
+                } else {
+                    DLog(@"already rolling in or still being created - no need to do anything");
+                }
+            } else {
+                DLog(@"not a hidden hotkey window. Just order front.");
+                [[self window] makeKeyAndOrderFront:self];
+            }
         } else {
             PtyLog(@"window not initialized, is fullscreen, or is being restored. Stack:\n%@", [NSThread callStackSymbols]);
         }
