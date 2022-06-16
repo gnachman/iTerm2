@@ -2641,12 +2641,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
         const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
+        const iTermIntervalTreeObjectType originalType = iTermIntervalTreeObjectTypeForObject(mark);
         [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
             ((VT100ScreenMark *)obj).code = returnCode;
         }];
         const iTermIntervalTreeObjectType type = iTermIntervalTreeObjectTypeForObject(mark);
         [self addIntervalTreeSideEffect:^(id<iTermIntervalTreeObserver>  _Nonnull observer) {
-            [observer intervalTreeDidRemoveObjectOfType:type
+            [observer intervalTreeDidRemoveObjectOfType:originalType
                                                  onLine:line];
             [observer intervalTreeDidAddObjectOfType:type
                                               onLine:line];
