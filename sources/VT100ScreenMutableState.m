@@ -2664,26 +2664,35 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
-- (void)removePromptMarksBelowLine:(int)line {
-    id<VT100ScreenMarkReading> mark = [self lastPromptMark];
-    if (!mark) {
-        return;
+- (NSArray<VT100ScreenMark *> *)promptMarksBelowLine:(int)line {
+    DLog(@"Search for all marks below line %d", line);
+    Interval *interval = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, line, 0, line)];
+    NSEnumerator *enumerator = [self.intervalTree forwardLimitEnumeratorAt:interval.location];
+    NSMutableArray<VT100ScreenMark *> *marks = [NSMutableArray array];
+    NSArray<VT100ScreenMark *> *objects = [enumerator nextObject];
+    while (objects) {
+        NSArray<VT100ScreenMark *> *screenMarks = [objects objectsOfClasses:@[ [VT100ScreenMark class]]];
+        NSArray<VT100ScreenMark *> *promptMarks = [screenMarks filteredArrayUsingBlock:^BOOL(VT100ScreenMark *mark) {
+            return mark.isPrompt;
+        }];
+        [marks addObjectsFromArray:promptMarks];
+        objects = [enumerator nextObject];
     }
+    DLog(@"Found %@ prompt marks", @(objects.count));
+    return marks;
+}
 
-    VT100GridCoordRange range = [self coordRangeForInterval:mark.entry.interval];
-    while (range.start.y >= line) {
-        if (mark == self.lastCommandMark) {
+- (void)removePromptMarksBelowLine:(int)line {
+    DLog(@"removePromptMarksBelowLine:%d", line);
+    [[self promptMarksBelowLine:line] enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        DLog(@"remove %@", obj);
+        if (obj == self.lastCommandMark) {
+            DLog(@"This was the last command mark");
             self.lastCommandMark = nil;
         }
-        DLog(@"Remove prompt mark below line: %@", mark);
-        const BOOL removed = [self removeObjectFromIntervalTree:(VT100ScreenMark *)mark];
+        const BOOL removed = [self removeObjectFromIntervalTree:obj];
         assert(removed);
-        mark = [self lastPromptMark];
-        if (!mark) {
-            return;
-        }
-        range = [self coordRangeForInterval:mark.entry.interval];
-    }
+    }];
 }
 
 - (void)setCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord {
