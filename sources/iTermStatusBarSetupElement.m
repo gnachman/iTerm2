@@ -222,7 +222,6 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 }
 
 - (nonnull id<ProcessInfoProvider>)statusBarComponentProcessInfoProvider {
-    assert(NO);
     return nil;
 }
 
