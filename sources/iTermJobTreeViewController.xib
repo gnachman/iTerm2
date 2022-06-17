@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="19455" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="20037" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="19455"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="20037"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -47,7 +47,7 @@
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="ZFX-PD-oCG">
-                                                <rect key="frame" x="1" y="1" width="356" height="17"/>
+                                                <rect key="frame" x="1" y="1" width="355" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             </tableCellView>
                                         </prototypeCellViews>
@@ -68,6 +68,7 @@
                                 <connections>
                                     <outlet property="dataSource" destination="-2" id="J0L-2h-JcW"/>
                                     <outlet property="delegate" destination="-2" id="AQF-Os-xYV"/>
+                                    <outlet property="menu" destination="h7Y-Bb-8zz" id="dbu-8k-AIn"/>
                                 </connections>
                             </outlineView>
                         </subviews>
@@ -86,8 +87,8 @@
                     </tableHeaderView>
                 </scrollView>
                 <comboBox verticalHuggingPriority="750" id="Ykw-0a-zRO" customClass="SignalPicker">
-                    <rect key="frame" x="359" y="0.0" width="99" height="22"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                    <rect key="frame" x="0.0" y="0.0" width="458" height="22"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                     <comboBoxCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" completes="NO" numberOfVisibleItems="5" id="lef-nJ-tqb">
                         <font key="font" metaFont="smallSystem"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -116,6 +117,23 @@
             </subviews>
             <point key="canvasLocation" x="139" y="151"/>
         </customView>
+        <menu id="h7Y-Bb-8zz">
+            <items>
+                <menuItem title="Copy Command" id="pEI-G1-GB6">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="copyJobName:" target="-2" id="Jiu-oR-Iv2"/>
+                    </connections>
+                </menuItem>
+                <menuItem title="Copy Process ID" id="KdW-Ay-P6t">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="copyProcessID:" target="-2" id="1CB-qe-KGJ"/>
+                    </connections>
+                </menuItem>
+            </items>
+            <point key="canvasLocation" x="1" y="-288"/>
+        </menu>
     </objects>
     <resources>
         <image name="NSRightFacingTriangleTemplate" width="10" height="14"/>

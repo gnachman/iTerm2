@@ -496,6 +496,47 @@ static int gSignalsToList[] = {
     _outlineView.tableColumns.lastObject.width = pidWidth;
     _outlineView.tableColumns.firstObject.width = totalWidth - pidWidth;
 }
+
+#pragma mark - Actions
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (menuItem.action == @selector(copyJobName:) ||
+        menuItem.action == @selector(copyProcessID:)) {
+        return [_outlineView clickedRow] >= 0;
+    }
+    return [super validateMenuItem:menuItem];
+}
+
+- (IBAction)copyJobName:(id)sender {
+    const int row = [_outlineView clickedRow];
+    if (row < 0) {
+        return;
+    }
+    id item = [_outlineView itemAtRow:row];
+    iTermJobProxy *info = item ?: _root;
+    if (!info.fullName) {
+        return;
+    }
+    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+    [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+    [pboard setString:info.fullName forType:NSPasteboardTypeString];
+}
+
+- (IBAction)copyProcessID:(id)sender {
+    const int row = [_outlineView clickedRow];
+    if (row < 0) {
+        return;
+    }
+    id item = [_outlineView itemAtRow:row];
+    iTermJobProxy *info = item ?: _root;
+    if (!info.pid) {
+        return;
+    }
+    NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+    [pboard declareTypes:@[ NSPasteboardTypeString ] owner:self];
+    [pboard setString:[@(info.pid) stringValue] forType:NSPasteboardTypeString];
+}
+
 #pragma mark - NSOutlineViewDataSource
 
 - (NSInteger)outlineView:(NSOutlineView *)outlineView numberOfChildrenOfItem:(nullable id)item {
