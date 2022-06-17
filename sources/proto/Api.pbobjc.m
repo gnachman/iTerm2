@@ -13,12 +13,187 @@
  #import "GPBProtocolBuffers_RuntimeSupport.h"
 #endif
 
- #import "Api.pbobjc.h"
+#import <stdatomic.h>
+
+#import "Api.pbobjc.h"
 // @@protoc_insertion_point(imports)
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wdirect-ivar-access"
+#pragma clang diagnostic ignored "-Wdollar-in-identifier-extension"
+
+#pragma mark - Objective C Class declarations
+// Forward declarations of Objective C classes that we can use as
+// static values in struct initializers.
+// We don't use [Foo class] because it is not a static value.
+GPBObjCClassDeclaration(ITMActivateRequest);
+GPBObjCClassDeclaration(ITMActivateRequest_App);
+GPBObjCClassDeclaration(ITMActivateResponse);
+GPBObjCClassDeclaration(ITMBroadcastDomain);
+GPBObjCClassDeclaration(ITMBroadcastDomainsChangedNotification);
+GPBObjCClassDeclaration(ITMCloseRequest);
+GPBObjCClassDeclaration(ITMCloseRequest_CloseSessions);
+GPBObjCClassDeclaration(ITMCloseRequest_CloseTabs);
+GPBObjCClassDeclaration(ITMCloseRequest_CloseWindows);
+GPBObjCClassDeclaration(ITMCloseResponse);
+GPBObjCClassDeclaration(ITMCodePointsPerCell);
+GPBObjCClassDeclaration(ITMColorPresetRequest);
+GPBObjCClassDeclaration(ITMColorPresetRequest_GetPreset);
+GPBObjCClassDeclaration(ITMColorPresetRequest_ListPresets);
+GPBObjCClassDeclaration(ITMColorPresetResponse);
+GPBObjCClassDeclaration(ITMColorPresetResponse_GetPreset);
+GPBObjCClassDeclaration(ITMColorPresetResponse_GetPreset_ColorSetting);
+GPBObjCClassDeclaration(ITMColorPresetResponse_ListPresets);
+GPBObjCClassDeclaration(ITMCoord);
+GPBObjCClassDeclaration(ITMCoordRange);
+GPBObjCClassDeclaration(ITMCreateTabRequest);
+GPBObjCClassDeclaration(ITMCreateTabResponse);
+GPBObjCClassDeclaration(ITMCustomEscapeSequenceNotification);
+GPBObjCClassDeclaration(ITMFocusChangedNotification);
+GPBObjCClassDeclaration(ITMFocusChangedNotification_Window);
+GPBObjCClassDeclaration(ITMFocusRequest);
+GPBObjCClassDeclaration(ITMFocusResponse);
+GPBObjCClassDeclaration(ITMFrame);
+GPBObjCClassDeclaration(ITMGetBroadcastDomainsRequest);
+GPBObjCClassDeclaration(ITMGetBroadcastDomainsResponse);
+GPBObjCClassDeclaration(ITMGetBufferRequest);
+GPBObjCClassDeclaration(ITMGetBufferResponse);
+GPBObjCClassDeclaration(ITMGetProfilePropertyRequest);
+GPBObjCClassDeclaration(ITMGetProfilePropertyResponse);
+GPBObjCClassDeclaration(ITMGetPromptRequest);
+GPBObjCClassDeclaration(ITMGetPromptResponse);
+GPBObjCClassDeclaration(ITMGetPropertyRequest);
+GPBObjCClassDeclaration(ITMGetPropertyResponse);
+GPBObjCClassDeclaration(ITMInjectRequest);
+GPBObjCClassDeclaration(ITMInjectResponse);
+GPBObjCClassDeclaration(ITMInvokeFunctionRequest);
+GPBObjCClassDeclaration(ITMInvokeFunctionRequest_App);
+GPBObjCClassDeclaration(ITMInvokeFunctionRequest_Method);
+GPBObjCClassDeclaration(ITMInvokeFunctionRequest_Session);
+GPBObjCClassDeclaration(ITMInvokeFunctionRequest_Tab);
+GPBObjCClassDeclaration(ITMInvokeFunctionRequest_Window);
+GPBObjCClassDeclaration(ITMInvokeFunctionResponse);
+GPBObjCClassDeclaration(ITMInvokeFunctionResponse_Error);
+GPBObjCClassDeclaration(ITMInvokeFunctionResponse_Success);
+GPBObjCClassDeclaration(ITMKeystrokeFilterRequest);
+GPBObjCClassDeclaration(ITMKeystrokeMonitorRequest);
+GPBObjCClassDeclaration(ITMKeystrokeNotification);
+GPBObjCClassDeclaration(ITMKeystrokePattern);
+GPBObjCClassDeclaration(ITMLayoutChangedNotification);
+GPBObjCClassDeclaration(ITMLineContents);
+GPBObjCClassDeclaration(ITMLineRange);
+GPBObjCClassDeclaration(ITMListProfilesRequest);
+GPBObjCClassDeclaration(ITMListProfilesResponse);
+GPBObjCClassDeclaration(ITMListProfilesResponse_Profile);
+GPBObjCClassDeclaration(ITMListPromptsRequest);
+GPBObjCClassDeclaration(ITMListPromptsResponse);
+GPBObjCClassDeclaration(ITMListSessionsRequest);
+GPBObjCClassDeclaration(ITMListSessionsResponse);
+GPBObjCClassDeclaration(ITMListSessionsResponse_Tab);
+GPBObjCClassDeclaration(ITMListSessionsResponse_Window);
+GPBObjCClassDeclaration(ITMLocationChangeNotification);
+GPBObjCClassDeclaration(ITMMenuItemRequest);
+GPBObjCClassDeclaration(ITMMenuItemResponse);
+GPBObjCClassDeclaration(ITMNewSessionNotification);
+GPBObjCClassDeclaration(ITMNotification);
+GPBObjCClassDeclaration(ITMNotificationRequest);
+GPBObjCClassDeclaration(ITMNotificationResponse);
+GPBObjCClassDeclaration(ITMPoint);
+GPBObjCClassDeclaration(ITMPreferencesRequest);
+GPBObjCClassDeclaration(ITMPreferencesRequest_Request);
+GPBObjCClassDeclaration(ITMPreferencesRequest_Request_GetDefaultProfile);
+GPBObjCClassDeclaration(ITMPreferencesRequest_Request_GetPreference);
+GPBObjCClassDeclaration(ITMPreferencesRequest_Request_SetDefaultProfile);
+GPBObjCClassDeclaration(ITMPreferencesRequest_Request_SetPreference);
+GPBObjCClassDeclaration(ITMPreferencesResponse);
+GPBObjCClassDeclaration(ITMPreferencesResponse_Result);
+GPBObjCClassDeclaration(ITMPreferencesResponse_Result_GetDefaultProfileResult);
+GPBObjCClassDeclaration(ITMPreferencesResponse_Result_GetPreferenceResult);
+GPBObjCClassDeclaration(ITMPreferencesResponse_Result_SetDefaultProfileResult);
+GPBObjCClassDeclaration(ITMPreferencesResponse_Result_SetPreferenceResult);
+GPBObjCClassDeclaration(ITMPreferencesResponse_Result_UnrecognizedResult);
+GPBObjCClassDeclaration(ITMProfileChangeRequest);
+GPBObjCClassDeclaration(ITMProfileChangedNotification);
+GPBObjCClassDeclaration(ITMProfileProperty);
+GPBObjCClassDeclaration(ITMPromptMonitorRequest);
+GPBObjCClassDeclaration(ITMPromptNotification);
+GPBObjCClassDeclaration(ITMPromptNotificationCommandEnd);
+GPBObjCClassDeclaration(ITMPromptNotificationCommandStart);
+GPBObjCClassDeclaration(ITMPromptNotificationPrompt);
+GPBObjCClassDeclaration(ITMRPCRegistrationRequest);
+GPBObjCClassDeclaration(ITMRPCRegistrationRequest_ContextMenuAttributes);
+GPBObjCClassDeclaration(ITMRPCRegistrationRequest_RPCArgument);
+GPBObjCClassDeclaration(ITMRPCRegistrationRequest_RPCArgumentSignature);
+GPBObjCClassDeclaration(ITMRPCRegistrationRequest_SessionTitleAttributes);
+GPBObjCClassDeclaration(ITMRPCRegistrationRequest_StatusBarComponentAttributes);
+GPBObjCClassDeclaration(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon);
+GPBObjCClassDeclaration(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob);
+GPBObjCClassDeclaration(ITMRange);
+GPBObjCClassDeclaration(ITMRegisterToolRequest);
+GPBObjCClassDeclaration(ITMRegisterToolResponse);
+GPBObjCClassDeclaration(ITMReorderTabsRequest);
+GPBObjCClassDeclaration(ITMReorderTabsRequest_Assignment);
+GPBObjCClassDeclaration(ITMReorderTabsResponse);
+GPBObjCClassDeclaration(ITMRestartSessionRequest);
+GPBObjCClassDeclaration(ITMRestartSessionResponse);
+GPBObjCClassDeclaration(ITMSavedArrangementRequest);
+GPBObjCClassDeclaration(ITMSavedArrangementResponse);
+GPBObjCClassDeclaration(ITMScreenUpdateNotification);
+GPBObjCClassDeclaration(ITMSelection);
+GPBObjCClassDeclaration(ITMSelectionRequest);
+GPBObjCClassDeclaration(ITMSelectionRequest_GetSelectionRequest);
+GPBObjCClassDeclaration(ITMSelectionRequest_SetSelectionRequest);
+GPBObjCClassDeclaration(ITMSelectionResponse);
+GPBObjCClassDeclaration(ITMSelectionResponse_GetSelectionResponse);
+GPBObjCClassDeclaration(ITMSelectionResponse_SetSelectionResponse);
+GPBObjCClassDeclaration(ITMSendTextRequest);
+GPBObjCClassDeclaration(ITMSendTextResponse);
+GPBObjCClassDeclaration(ITMServerOriginatedRPC);
+GPBObjCClassDeclaration(ITMServerOriginatedRPCNotification);
+GPBObjCClassDeclaration(ITMServerOriginatedRPCResultRequest);
+GPBObjCClassDeclaration(ITMServerOriginatedRPCResultResponse);
+GPBObjCClassDeclaration(ITMServerOriginatedRPC_RPCArgument);
+GPBObjCClassDeclaration(ITMSessionSummary);
+GPBObjCClassDeclaration(ITMSetBroadcastDomainsRequest);
+GPBObjCClassDeclaration(ITMSetBroadcastDomainsResponse);
+GPBObjCClassDeclaration(ITMSetProfilePropertyRequest);
+GPBObjCClassDeclaration(ITMSetProfilePropertyRequest_Assignment);
+GPBObjCClassDeclaration(ITMSetProfilePropertyRequest_GuidList);
+GPBObjCClassDeclaration(ITMSetProfilePropertyResponse);
+GPBObjCClassDeclaration(ITMSetPropertyRequest);
+GPBObjCClassDeclaration(ITMSetPropertyResponse);
+GPBObjCClassDeclaration(ITMSetTabLayoutRequest);
+GPBObjCClassDeclaration(ITMSetTabLayoutResponse);
+GPBObjCClassDeclaration(ITMSize);
+GPBObjCClassDeclaration(ITMSplitPaneRequest);
+GPBObjCClassDeclaration(ITMSplitPaneResponse);
+GPBObjCClassDeclaration(ITMSplitTreeNode);
+GPBObjCClassDeclaration(ITMSplitTreeNode_SplitTreeLink);
+GPBObjCClassDeclaration(ITMStatusBarComponentRequest);
+GPBObjCClassDeclaration(ITMStatusBarComponentRequest_OpenPopover);
+GPBObjCClassDeclaration(ITMStatusBarComponentResponse);
+GPBObjCClassDeclaration(ITMSubSelection);
+GPBObjCClassDeclaration(ITMTerminateSessionNotification);
+GPBObjCClassDeclaration(ITMTmuxRequest);
+GPBObjCClassDeclaration(ITMTmuxRequest_CreateWindow);
+GPBObjCClassDeclaration(ITMTmuxRequest_ListConnections);
+GPBObjCClassDeclaration(ITMTmuxRequest_SendCommand);
+GPBObjCClassDeclaration(ITMTmuxRequest_SetWindowVisible);
+GPBObjCClassDeclaration(ITMTmuxResponse);
+GPBObjCClassDeclaration(ITMTmuxResponse_CreateWindow);
+GPBObjCClassDeclaration(ITMTmuxResponse_ListConnections);
+GPBObjCClassDeclaration(ITMTmuxResponse_ListConnections_Connection);
+GPBObjCClassDeclaration(ITMTmuxResponse_SendCommand);
+GPBObjCClassDeclaration(ITMTmuxResponse_SetWindowVisible);
+GPBObjCClassDeclaration(ITMTransactionRequest);
+GPBObjCClassDeclaration(ITMTransactionResponse);
+GPBObjCClassDeclaration(ITMVariableChangedNotification);
+GPBObjCClassDeclaration(ITMVariableMonitorRequest);
+GPBObjCClassDeclaration(ITMVariableRequest);
+GPBObjCClassDeclaration(ITMVariableRequest_Set);
+GPBObjCClassDeclaration(ITMVariableResponse);
+GPBObjCClassDeclaration(ITMWindowedCoordRange);
 
 #pragma mark - ITMApiRoot
 
@@ -47,7 +222,7 @@ static GPBFileDescriptor *ITMApiRoot_FileDescriptor(void) {
 #pragma mark - Enum ITMSelectionMode
 
 GPBEnumDescriptor *ITMSelectionMode_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Character\000Word\000Line\000Smart\000Box\000WholeLine\000";
@@ -65,7 +240,8 @@ GPBEnumDescriptor *ITMSelectionMode_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMSelectionMode_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -89,7 +265,7 @@ BOOL ITMSelectionMode_IsValidValue(int32_t value__) {
 #pragma mark - Enum ITMNotificationType
 
 GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "NotifyOnKeystroke\000NotifyOnScreenUpdate\000N"
@@ -122,7 +298,8 @@ GPBEnumDescriptor *ITMNotificationType_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMNotificationType_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -154,7 +331,7 @@ BOOL ITMNotificationType_IsValidValue(int32_t value__) {
 #pragma mark - Enum ITMModifiers
 
 GPBEnumDescriptor *ITMModifiers_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Control\000Option\000Command\000Shift\000Function\000Nu"
@@ -173,7 +350,8 @@ GPBEnumDescriptor *ITMModifiers_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMModifiers_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -197,7 +375,7 @@ BOOL ITMModifiers_IsValidValue(int32_t value__) {
 #pragma mark - Enum ITMVariableScope
 
 GPBEnumDescriptor *ITMVariableScope_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Session\000Tab\000Window\000App\000";
@@ -213,7 +391,8 @@ GPBEnumDescriptor *ITMVariableScope_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMVariableScope_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -235,7 +414,7 @@ BOOL ITMVariableScope_IsValidValue(int32_t value__) {
 #pragma mark - Enum ITMPromptMonitorMode
 
 GPBEnumDescriptor *ITMPromptMonitorMode_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Prompt\000CommandStart\000CommandEnd\000";
@@ -250,7 +429,8 @@ GPBEnumDescriptor *ITMPromptMonitorMode_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMPromptMonitorMode_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -356,7 +536,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "id_p",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMClientOriginatedMessage_FieldNumber_Id_p,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, id_p),
@@ -365,7 +545,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "getBufferRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetBufferRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMGetBufferRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_GetBufferRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, getBufferRequest),
@@ -374,7 +554,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "getPromptRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetPromptRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMGetPromptRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_GetPromptRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, getPromptRequest),
@@ -383,7 +563,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "transactionRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTransactionRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTransactionRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_TransactionRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, transactionRequest),
@@ -392,7 +572,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "notificationRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMNotificationRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMNotificationRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_NotificationRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, notificationRequest),
@@ -401,7 +581,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "registerToolRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMRegisterToolRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRegisterToolRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_RegisterToolRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, registerToolRequest),
@@ -410,7 +590,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "setProfilePropertyRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetProfilePropertyRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSetProfilePropertyRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_SetProfilePropertyRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, setProfilePropertyRequest),
@@ -419,7 +599,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "listSessionsRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMListSessionsRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_ListSessionsRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, listSessionsRequest),
@@ -428,7 +608,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "sendTextRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSendTextRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSendTextRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_SendTextRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, sendTextRequest),
@@ -437,7 +617,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "createTabRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCreateTabRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCreateTabRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_CreateTabRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, createTabRequest),
@@ -446,7 +626,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "splitPaneRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSplitPaneRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSplitPaneRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_SplitPaneRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, splitPaneRequest),
@@ -455,7 +635,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "getProfilePropertyRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetProfilePropertyRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMGetProfilePropertyRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_GetProfilePropertyRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, getProfilePropertyRequest),
@@ -464,7 +644,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "setPropertyRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetPropertyRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSetPropertyRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_SetPropertyRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, setPropertyRequest),
@@ -473,7 +653,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "getPropertyRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetPropertyRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMGetPropertyRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_GetPropertyRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, getPropertyRequest),
@@ -482,7 +662,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "injectRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMInjectRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMInjectRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_InjectRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, injectRequest),
@@ -491,7 +671,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "activateRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMActivateRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMActivateRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_ActivateRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, activateRequest),
@@ -500,7 +680,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "variableRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMVariableRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMVariableRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_VariableRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, variableRequest),
@@ -509,7 +689,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "savedArrangementRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSavedArrangementRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSavedArrangementRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_SavedArrangementRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, savedArrangementRequest),
@@ -518,7 +698,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "focusRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMFocusRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMFocusRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_FocusRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, focusRequest),
@@ -527,7 +707,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "listProfilesRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMListProfilesRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMListProfilesRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_ListProfilesRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, listProfilesRequest),
@@ -536,7 +716,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "serverOriginatedRpcResultRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMServerOriginatedRPCResultRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMServerOriginatedRPCResultRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_ServerOriginatedRpcResultRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, serverOriginatedRpcResultRequest),
@@ -545,7 +725,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "restartSessionRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMRestartSessionRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRestartSessionRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_RestartSessionRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, restartSessionRequest),
@@ -554,7 +734,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "menuItemRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMMenuItemRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMMenuItemRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_MenuItemRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, menuItemRequest),
@@ -563,7 +743,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "setTabLayoutRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetTabLayoutRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSetTabLayoutRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_SetTabLayoutRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, setTabLayoutRequest),
@@ -572,7 +752,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "getBroadcastDomainsRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetBroadcastDomainsRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMGetBroadcastDomainsRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_GetBroadcastDomainsRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, getBroadcastDomainsRequest),
@@ -581,7 +761,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "tmuxRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTmuxRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_TmuxRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, tmuxRequest),
@@ -590,7 +770,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "reorderTabsRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMReorderTabsRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMReorderTabsRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_ReorderTabsRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, reorderTabsRequest),
@@ -599,7 +779,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "preferencesRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_PreferencesRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, preferencesRequest),
@@ -608,7 +788,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "colorPresetRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMColorPresetRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_ColorPresetRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, colorPresetRequest),
@@ -617,7 +797,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "selectionRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSelectionRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSelectionRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_SelectionRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, selectionRequest),
@@ -626,7 +806,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "statusBarComponentRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMStatusBarComponentRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMStatusBarComponentRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_StatusBarComponentRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, statusBarComponentRequest),
@@ -635,7 +815,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "setBroadcastDomainsRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetBroadcastDomainsRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSetBroadcastDomainsRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_SetBroadcastDomainsRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, setBroadcastDomainsRequest),
@@ -644,7 +824,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "closeRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCloseRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCloseRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_CloseRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, closeRequest),
@@ -653,7 +833,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "invokeFunctionRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMInvokeFunctionRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_InvokeFunctionRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, invokeFunctionRequest),
@@ -662,7 +842,7 @@ typedef struct ITMClientOriginatedMessage__storage_ {
       },
       {
         .name = "listPromptsRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMListPromptsRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMListPromptsRequest),
         .number = ITMClientOriginatedMessage_FieldNumber_ListPromptsRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMClientOriginatedMessage__storage_, listPromptsRequest),
@@ -677,14 +857,16 @@ typedef struct ITMClientOriginatedMessage__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMClientOriginatedMessage__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "submessage",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -693,9 +875,9 @@ typedef struct ITMClientOriginatedMessage__storage_ {
 @end
 
 void ITMClientOriginatedMessage_ClearSubmessageOneOfCase(ITMClientOriginatedMessage *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMClientOriginatedMessage descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMServerOriginatedMessage
 
@@ -789,7 +971,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "id_p",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMServerOriginatedMessage_FieldNumber_Id_p,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, id_p),
@@ -798,7 +980,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "error",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMServerOriginatedMessage_FieldNumber_Error,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, error),
@@ -807,7 +989,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "getBufferResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetBufferResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMGetBufferResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_GetBufferResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, getBufferResponse),
@@ -816,7 +998,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "getPromptResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetPromptResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMGetPromptResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_GetPromptResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, getPromptResponse),
@@ -825,7 +1007,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "transactionResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTransactionResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTransactionResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_TransactionResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, transactionResponse),
@@ -834,7 +1016,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "notificationResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMNotificationResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMNotificationResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_NotificationResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, notificationResponse),
@@ -843,7 +1025,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "registerToolResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMRegisterToolResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRegisterToolResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_RegisterToolResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, registerToolResponse),
@@ -852,7 +1034,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "setProfilePropertyResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetProfilePropertyResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSetProfilePropertyResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_SetProfilePropertyResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, setProfilePropertyResponse),
@@ -861,7 +1043,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "listSessionsResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMListSessionsResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_ListSessionsResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, listSessionsResponse),
@@ -870,7 +1052,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "sendTextResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSendTextResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSendTextResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_SendTextResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, sendTextResponse),
@@ -879,7 +1061,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "createTabResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCreateTabResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCreateTabResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_CreateTabResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, createTabResponse),
@@ -888,7 +1070,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "splitPaneResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSplitPaneResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSplitPaneResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_SplitPaneResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, splitPaneResponse),
@@ -897,7 +1079,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "getProfilePropertyResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetProfilePropertyResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMGetProfilePropertyResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_GetProfilePropertyResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, getProfilePropertyResponse),
@@ -906,7 +1088,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "setPropertyResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetPropertyResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSetPropertyResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_SetPropertyResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, setPropertyResponse),
@@ -915,7 +1097,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "getPropertyResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetPropertyResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMGetPropertyResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_GetPropertyResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, getPropertyResponse),
@@ -924,7 +1106,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "injectResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMInjectResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMInjectResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_InjectResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, injectResponse),
@@ -933,7 +1115,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "activateResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMActivateResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMActivateResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_ActivateResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, activateResponse),
@@ -942,7 +1124,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "variableResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMVariableResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMVariableResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_VariableResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, variableResponse),
@@ -951,7 +1133,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "savedArrangementResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSavedArrangementResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSavedArrangementResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_SavedArrangementResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, savedArrangementResponse),
@@ -960,7 +1142,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "focusResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMFocusResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMFocusResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_FocusResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, focusResponse),
@@ -969,7 +1151,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "listProfilesResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMListProfilesResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMListProfilesResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_ListProfilesResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, listProfilesResponse),
@@ -978,7 +1160,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "serverOriginatedRpcResultResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMServerOriginatedRPCResultResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMServerOriginatedRPCResultResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_ServerOriginatedRpcResultResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, serverOriginatedRpcResultResponse),
@@ -987,7 +1169,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "restartSessionResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMRestartSessionResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRestartSessionResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_RestartSessionResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, restartSessionResponse),
@@ -996,7 +1178,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "menuItemResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMMenuItemResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMMenuItemResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_MenuItemResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, menuItemResponse),
@@ -1005,7 +1187,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "setTabLayoutResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetTabLayoutResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSetTabLayoutResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_SetTabLayoutResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, setTabLayoutResponse),
@@ -1014,7 +1196,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "getBroadcastDomainsResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetBroadcastDomainsResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMGetBroadcastDomainsResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_GetBroadcastDomainsResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, getBroadcastDomainsResponse),
@@ -1023,7 +1205,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "tmuxResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTmuxResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_TmuxResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, tmuxResponse),
@@ -1032,7 +1214,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "reorderTabsResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMReorderTabsResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMReorderTabsResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_ReorderTabsResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, reorderTabsResponse),
@@ -1041,7 +1223,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "preferencesResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_PreferencesResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, preferencesResponse),
@@ -1050,7 +1232,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "colorPresetResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMColorPresetResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_ColorPresetResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, colorPresetResponse),
@@ -1059,7 +1241,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "selectionResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSelectionResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSelectionResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_SelectionResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, selectionResponse),
@@ -1068,7 +1250,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "statusBarComponentResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMStatusBarComponentResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMStatusBarComponentResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_StatusBarComponentResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, statusBarComponentResponse),
@@ -1077,7 +1259,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "setBroadcastDomainsResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetBroadcastDomainsResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSetBroadcastDomainsResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_SetBroadcastDomainsResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, setBroadcastDomainsResponse),
@@ -1086,7 +1268,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "closeResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCloseResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCloseResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_CloseResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, closeResponse),
@@ -1095,7 +1277,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "invokeFunctionResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMInvokeFunctionResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_InvokeFunctionResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, invokeFunctionResponse),
@@ -1104,7 +1286,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "listPromptsResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMListPromptsResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMListPromptsResponse),
         .number = ITMServerOriginatedMessage_FieldNumber_ListPromptsResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, listPromptsResponse),
@@ -1113,7 +1295,7 @@ typedef struct ITMServerOriginatedMessage__storage_ {
       },
       {
         .name = "notification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMNotification),
         .number = ITMServerOriginatedMessage_FieldNumber_Notification,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedMessage__storage_, notification),
@@ -1128,14 +1310,16 @@ typedef struct ITMServerOriginatedMessage__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMServerOriginatedMessage__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "submessage",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1144,9 +1328,9 @@ typedef struct ITMServerOriginatedMessage__storage_ {
 @end
 
 void ITMServerOriginatedMessage_ClearSubmessageOneOfCase(ITMServerOriginatedMessage *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMServerOriginatedMessage descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMInvokeFunctionRequest
 
@@ -1181,7 +1365,7 @@ typedef struct ITMInvokeFunctionRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "tab",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionRequest_Tab),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMInvokeFunctionRequest_Tab),
         .core.number = ITMInvokeFunctionRequest_FieldNumber_Tab,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, tab),
@@ -1191,7 +1375,7 @@ typedef struct ITMInvokeFunctionRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "session",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionRequest_Session),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMInvokeFunctionRequest_Session),
         .core.number = ITMInvokeFunctionRequest_FieldNumber_Session,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, session),
@@ -1201,7 +1385,7 @@ typedef struct ITMInvokeFunctionRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "window",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionRequest_Window),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMInvokeFunctionRequest_Window),
         .core.number = ITMInvokeFunctionRequest_FieldNumber_Window,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, window),
@@ -1211,7 +1395,7 @@ typedef struct ITMInvokeFunctionRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "app",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionRequest_App),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMInvokeFunctionRequest_App),
         .core.number = ITMInvokeFunctionRequest_FieldNumber_App,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, app),
@@ -1221,7 +1405,7 @@ typedef struct ITMInvokeFunctionRequest__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "invocation",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMInvokeFunctionRequest_FieldNumber_Invocation,
         .core.hasIndex = 0,
         .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, invocation),
@@ -1231,7 +1415,7 @@ typedef struct ITMInvokeFunctionRequest__storage_ {
       {
         .defaultValue.valueDouble = -1,
         .core.name = "timeout",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMInvokeFunctionRequest_FieldNumber_Timeout,
         .core.hasIndex = 1,
         .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, timeout),
@@ -1241,7 +1425,7 @@ typedef struct ITMInvokeFunctionRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "method",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionRequest_Method),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMInvokeFunctionRequest_Method),
         .core.number = ITMInvokeFunctionRequest_FieldNumber_Method,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMInvokeFunctionRequest__storage_, method),
@@ -1256,14 +1440,16 @@ typedef struct ITMInvokeFunctionRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMInvokeFunctionRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown | GPBDescriptorInitializationFlag_FieldsWithDefault)];
     static const char *oneofs[] = {
       "context",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1272,9 +1458,9 @@ typedef struct ITMInvokeFunctionRequest__storage_ {
 @end
 
 void ITMInvokeFunctionRequest_ClearContextOneOfCase(ITMInvokeFunctionRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMInvokeFunctionRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMInvokeFunctionRequest_Tab
 
@@ -1295,7 +1481,7 @@ typedef struct ITMInvokeFunctionRequest_Tab__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "tabId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMInvokeFunctionRequest_Tab_FieldNumber_TabId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMInvokeFunctionRequest_Tab__storage_, tabId),
@@ -1310,9 +1496,11 @@ typedef struct ITMInvokeFunctionRequest_Tab__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMInvokeFunctionRequest_Tab__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMInvokeFunctionRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1339,7 +1527,7 @@ typedef struct ITMInvokeFunctionRequest_Session__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "sessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMInvokeFunctionRequest_Session_FieldNumber_SessionId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMInvokeFunctionRequest_Session__storage_, sessionId),
@@ -1354,9 +1542,11 @@ typedef struct ITMInvokeFunctionRequest_Session__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMInvokeFunctionRequest_Session__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMInvokeFunctionRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1383,7 +1573,7 @@ typedef struct ITMInvokeFunctionRequest_Window__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "windowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMInvokeFunctionRequest_Window_FieldNumber_WindowId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMInvokeFunctionRequest_Window__storage_, windowId),
@@ -1398,9 +1588,11 @@ typedef struct ITMInvokeFunctionRequest_Window__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMInvokeFunctionRequest_Window__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMInvokeFunctionRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1429,9 +1621,11 @@ typedef struct ITMInvokeFunctionRequest_App__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMInvokeFunctionRequest_App__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMInvokeFunctionRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1458,7 +1652,7 @@ typedef struct ITMInvokeFunctionRequest_Method__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "receiver",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMInvokeFunctionRequest_Method_FieldNumber_Receiver,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMInvokeFunctionRequest_Method__storage_, receiver),
@@ -1473,9 +1667,11 @@ typedef struct ITMInvokeFunctionRequest_Method__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMInvokeFunctionRequest_Method__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMInvokeFunctionRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1505,7 +1701,7 @@ typedef struct ITMInvokeFunctionResponse__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "error",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionResponse_Error),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMInvokeFunctionResponse_Error),
         .number = ITMInvokeFunctionResponse_FieldNumber_Error,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMInvokeFunctionResponse__storage_, error),
@@ -1514,7 +1710,7 @@ typedef struct ITMInvokeFunctionResponse__storage_ {
       },
       {
         .name = "success",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMInvokeFunctionResponse_Success),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMInvokeFunctionResponse_Success),
         .number = ITMInvokeFunctionResponse_FieldNumber_Success,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMInvokeFunctionResponse__storage_, success),
@@ -1529,14 +1725,16 @@ typedef struct ITMInvokeFunctionResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMInvokeFunctionResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "disposition",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1545,14 +1743,14 @@ typedef struct ITMInvokeFunctionResponse__storage_ {
 @end
 
 void ITMInvokeFunctionResponse_ClearDispositionOneOfCase(ITMInvokeFunctionResponse *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMInvokeFunctionResponse descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - Enum ITMInvokeFunctionResponse_Status
 
 GPBEnumDescriptor *ITMInvokeFunctionResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Timeout\000Failed\000RequestMalformed\000InvalidI"
@@ -1569,7 +1767,8 @@ GPBEnumDescriptor *ITMInvokeFunctionResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMInvokeFunctionResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -1620,7 +1819,7 @@ typedef struct ITMInvokeFunctionResponse_Error__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "errorReason",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMInvokeFunctionResponse_Error_FieldNumber_ErrorReason,
         .core.hasIndex = 1,
         .core.offset = (uint32_t)offsetof(ITMInvokeFunctionResponse_Error__storage_, errorReason),
@@ -1635,9 +1834,11 @@ typedef struct ITMInvokeFunctionResponse_Error__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMInvokeFunctionResponse_Error__storage_)
-                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown | GPBDescriptorInitializationFlag_FieldsWithDefault)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMInvokeFunctionResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1664,7 +1865,7 @@ typedef struct ITMInvokeFunctionResponse_Success__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "jsonResult",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMInvokeFunctionResponse_Success_FieldNumber_JsonResult,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMInvokeFunctionResponse_Success__storage_, jsonResult),
@@ -1679,9 +1880,11 @@ typedef struct ITMInvokeFunctionResponse_Success__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMInvokeFunctionResponse_Success__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMInvokeFunctionResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMInvokeFunctionResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1714,7 +1917,7 @@ typedef struct ITMCloseRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "tabs",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCloseRequest_CloseTabs),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCloseRequest_CloseTabs),
         .number = ITMCloseRequest_FieldNumber_Tabs,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMCloseRequest__storage_, tabs),
@@ -1723,7 +1926,7 @@ typedef struct ITMCloseRequest__storage_ {
       },
       {
         .name = "sessions",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCloseRequest_CloseSessions),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCloseRequest_CloseSessions),
         .number = ITMCloseRequest_FieldNumber_Sessions,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMCloseRequest__storage_, sessions),
@@ -1732,7 +1935,7 @@ typedef struct ITMCloseRequest__storage_ {
       },
       {
         .name = "windows",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCloseRequest_CloseWindows),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCloseRequest_CloseWindows),
         .number = ITMCloseRequest_FieldNumber_Windows,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMCloseRequest__storage_, windows),
@@ -1741,7 +1944,7 @@ typedef struct ITMCloseRequest__storage_ {
       },
       {
         .name = "force",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCloseRequest_FieldNumber_Force,
         .hasIndex = 0,
         .offset = 1,  // Stored in _has_storage_ to save space.
@@ -1756,14 +1959,16 @@ typedef struct ITMCloseRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMCloseRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "target",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1772,9 +1977,9 @@ typedef struct ITMCloseRequest__storage_ {
 @end
 
 void ITMCloseRequest_ClearTargetOneOfCase(ITMCloseRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMCloseRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMCloseRequest_CloseTabs
 
@@ -1795,7 +2000,7 @@ typedef struct ITMCloseRequest_CloseTabs__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "tabIdsArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCloseRequest_CloseTabs_FieldNumber_TabIdsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMCloseRequest_CloseTabs__storage_, tabIdsArray),
@@ -1810,9 +2015,11 @@ typedef struct ITMCloseRequest_CloseTabs__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMCloseRequest_CloseTabs__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMCloseRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMCloseRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1839,7 +2046,7 @@ typedef struct ITMCloseRequest_CloseSessions__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "sessionIdsArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCloseRequest_CloseSessions_FieldNumber_SessionIdsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMCloseRequest_CloseSessions__storage_, sessionIdsArray),
@@ -1854,9 +2061,11 @@ typedef struct ITMCloseRequest_CloseSessions__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMCloseRequest_CloseSessions__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMCloseRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMCloseRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1883,7 +2092,7 @@ typedef struct ITMCloseRequest_CloseWindows__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "windowIdsArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCloseRequest_CloseWindows_FieldNumber_WindowIdsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMCloseRequest_CloseWindows__storage_, windowIdsArray),
@@ -1898,9 +2107,11 @@ typedef struct ITMCloseRequest_CloseWindows__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMCloseRequest_CloseWindows__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMCloseRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMCloseRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1942,8 +2153,10 @@ typedef struct ITMCloseResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMCloseResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -1954,7 +2167,7 @@ typedef struct ITMCloseResponse__storage_ {
 #pragma mark - Enum ITMCloseResponse_Status
 
 GPBEnumDescriptor *ITMCloseResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000NotFound\000UserDeclined\000";
@@ -1969,7 +2182,8 @@ GPBEnumDescriptor *ITMCloseResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMCloseResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -2006,7 +2220,7 @@ typedef struct ITMSetBroadcastDomainsRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "broadcastDomainsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMBroadcastDomain),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMBroadcastDomain),
         .number = ITMSetBroadcastDomainsRequest_FieldNumber_BroadcastDomainsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMSetBroadcastDomainsRequest__storage_, broadcastDomainsArray),
@@ -2021,8 +2235,10 @@ typedef struct ITMSetBroadcastDomainsRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSetBroadcastDomainsRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2064,8 +2280,10 @@ typedef struct ITMSetBroadcastDomainsResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSetBroadcastDomainsResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2076,7 +2294,7 @@ typedef struct ITMSetBroadcastDomainsResponse__storage_ {
 #pragma mark - Enum ITMSetBroadcastDomainsResponse_Status
 
 GPBEnumDescriptor *ITMSetBroadcastDomainsResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000BroadcastDomainsNotDi"
@@ -2093,7 +2311,8 @@ GPBEnumDescriptor *ITMSetBroadcastDomainsResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMSetBroadcastDomainsResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -2134,7 +2353,7 @@ typedef struct ITMStatusBarComponentRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "openPopover",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMStatusBarComponentRequest_OpenPopover),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMStatusBarComponentRequest_OpenPopover),
         .number = ITMStatusBarComponentRequest_FieldNumber_OpenPopover,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMStatusBarComponentRequest__storage_, openPopover),
@@ -2143,7 +2362,7 @@ typedef struct ITMStatusBarComponentRequest__storage_ {
       },
       {
         .name = "identifier",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMStatusBarComponentRequest_FieldNumber_Identifier,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMStatusBarComponentRequest__storage_, identifier),
@@ -2158,14 +2377,16 @@ typedef struct ITMStatusBarComponentRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMStatusBarComponentRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "request",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2174,9 +2395,9 @@ typedef struct ITMStatusBarComponentRequest__storage_ {
 @end
 
 void ITMStatusBarComponentRequest_ClearRequestOneOfCase(ITMStatusBarComponentRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMStatusBarComponentRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMStatusBarComponentRequest_OpenPopover
 
@@ -2201,7 +2422,7 @@ typedef struct ITMStatusBarComponentRequest_OpenPopover__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "sessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMStatusBarComponentRequest_OpenPopover_FieldNumber_SessionId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMStatusBarComponentRequest_OpenPopover__storage_, sessionId),
@@ -2210,7 +2431,7 @@ typedef struct ITMStatusBarComponentRequest_OpenPopover__storage_ {
       },
       {
         .name = "html",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMStatusBarComponentRequest_OpenPopover_FieldNumber_Html,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMStatusBarComponentRequest_OpenPopover__storage_, html),
@@ -2219,7 +2440,7 @@ typedef struct ITMStatusBarComponentRequest_OpenPopover__storage_ {
       },
       {
         .name = "size",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSize),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSize),
         .number = ITMStatusBarComponentRequest_OpenPopover_FieldNumber_Size,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMStatusBarComponentRequest_OpenPopover__storage_, size),
@@ -2234,9 +2455,11 @@ typedef struct ITMStatusBarComponentRequest_OpenPopover__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMStatusBarComponentRequest_OpenPopover__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMStatusBarComponentRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMStatusBarComponentRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2278,8 +2501,10 @@ typedef struct ITMStatusBarComponentResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMStatusBarComponentResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2290,7 +2515,7 @@ typedef struct ITMStatusBarComponentResponse__storage_ {
 #pragma mark - Enum ITMStatusBarComponentResponse_Status
 
 GPBEnumDescriptor *ITMStatusBarComponentResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000RequestMalformed\000Inva"
@@ -2307,7 +2532,8 @@ GPBEnumDescriptor *ITMStatusBarComponentResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMStatusBarComponentResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -2347,7 +2573,7 @@ typedef struct ITMWindowedCoordRange__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "coordRange",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoordRange),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCoordRange),
         .number = ITMWindowedCoordRange_FieldNumber_CoordRange,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMWindowedCoordRange__storage_, coordRange),
@@ -2356,7 +2582,7 @@ typedef struct ITMWindowedCoordRange__storage_ {
       },
       {
         .name = "columns",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMRange),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRange),
         .number = ITMWindowedCoordRange_FieldNumber_Columns,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMWindowedCoordRange__storage_, columns),
@@ -2371,8 +2597,10 @@ typedef struct ITMWindowedCoordRange__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMWindowedCoordRange__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2402,7 +2630,7 @@ typedef struct ITMSubSelection__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "windowedCoordRange",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMWindowedCoordRange),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMWindowedCoordRange),
         .number = ITMSubSelection_FieldNumber_WindowedCoordRange,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSubSelection__storage_, windowedCoordRange),
@@ -2420,7 +2648,7 @@ typedef struct ITMSubSelection__storage_ {
       },
       {
         .name = "connected",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSubSelection_FieldNumber_Connected,
         .hasIndex = 2,
         .offset = 3,  // Stored in _has_storage_ to save space.
@@ -2435,8 +2663,10 @@ typedef struct ITMSubSelection__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSubSelection__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2463,7 +2693,7 @@ typedef struct ITMSelection__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "subSelectionsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSubSelection),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSubSelection),
         .number = ITMSelection_FieldNumber_SubSelectionsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMSelection__storage_, subSelectionsArray),
@@ -2478,8 +2708,10 @@ typedef struct ITMSelection__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSelection__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2509,7 +2741,7 @@ typedef struct ITMSelectionRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "getSelectionRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSelectionRequest_GetSelectionRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSelectionRequest_GetSelectionRequest),
         .number = ITMSelectionRequest_FieldNumber_GetSelectionRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMSelectionRequest__storage_, getSelectionRequest),
@@ -2518,7 +2750,7 @@ typedef struct ITMSelectionRequest__storage_ {
       },
       {
         .name = "setSelectionRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSelectionRequest_SetSelectionRequest),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSelectionRequest_SetSelectionRequest),
         .number = ITMSelectionRequest_FieldNumber_SetSelectionRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMSelectionRequest__storage_, setSelectionRequest),
@@ -2533,14 +2765,16 @@ typedef struct ITMSelectionRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSelectionRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "request",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2549,9 +2783,9 @@ typedef struct ITMSelectionRequest__storage_ {
 @end
 
 void ITMSelectionRequest_ClearRequestOneOfCase(ITMSelectionRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMSelectionRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMSelectionRequest_GetSelectionRequest
 
@@ -2572,7 +2806,7 @@ typedef struct ITMSelectionRequest_GetSelectionRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "sessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSelectionRequest_GetSelectionRequest_FieldNumber_SessionId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSelectionRequest_GetSelectionRequest__storage_, sessionId),
@@ -2587,9 +2821,11 @@ typedef struct ITMSelectionRequest_GetSelectionRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSelectionRequest_GetSelectionRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMSelectionRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMSelectionRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2618,7 +2854,7 @@ typedef struct ITMSelectionRequest_SetSelectionRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "sessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSelectionRequest_SetSelectionRequest_FieldNumber_SessionId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSelectionRequest_SetSelectionRequest__storage_, sessionId),
@@ -2627,7 +2863,7 @@ typedef struct ITMSelectionRequest_SetSelectionRequest__storage_ {
       },
       {
         .name = "selection",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSelection),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSelection),
         .number = ITMSelectionRequest_SetSelectionRequest_FieldNumber_Selection,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMSelectionRequest_SetSelectionRequest__storage_, selection),
@@ -2642,9 +2878,11 @@ typedef struct ITMSelectionRequest_SetSelectionRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSelectionRequest_SetSelectionRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMSelectionRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMSelectionRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2685,7 +2923,7 @@ typedef struct ITMSelectionResponse__storage_ {
       },
       {
         .name = "getSelectionResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSelectionResponse_GetSelectionResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSelectionResponse_GetSelectionResponse),
         .number = ITMSelectionResponse_FieldNumber_GetSelectionResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMSelectionResponse__storage_, getSelectionResponse),
@@ -2694,7 +2932,7 @@ typedef struct ITMSelectionResponse__storage_ {
       },
       {
         .name = "setSelectionResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSelectionResponse_SetSelectionResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSelectionResponse_SetSelectionResponse),
         .number = ITMSelectionResponse_FieldNumber_SetSelectionResponse,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMSelectionResponse__storage_, setSelectionResponse),
@@ -2709,14 +2947,16 @@ typedef struct ITMSelectionResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSelectionResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "response",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2725,14 +2965,14 @@ typedef struct ITMSelectionResponse__storage_ {
 @end
 
 void ITMSelectionResponse_ClearResponseOneOfCase(ITMSelectionResponse *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMSelectionResponse descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - Enum ITMSelectionResponse_Status
 
 GPBEnumDescriptor *ITMSelectionResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000InvalidSession\000InvalidRange\000RequestMa"
@@ -2749,7 +2989,8 @@ GPBEnumDescriptor *ITMSelectionResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMSelectionResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -2787,7 +3028,7 @@ typedef struct ITMSelectionResponse_GetSelectionResponse__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "selection",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSelection),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSelection),
         .number = ITMSelectionResponse_GetSelectionResponse_FieldNumber_Selection,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSelectionResponse_GetSelectionResponse__storage_, selection),
@@ -2802,9 +3043,11 @@ typedef struct ITMSelectionResponse_GetSelectionResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSelectionResponse_GetSelectionResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMSelectionResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMSelectionResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2833,9 +3076,11 @@ typedef struct ITMSelectionResponse_SetSelectionResponse__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMSelectionResponse_SetSelectionResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMSelectionResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMSelectionResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2865,7 +3110,7 @@ typedef struct ITMColorPresetRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "listPresets",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetRequest_ListPresets),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMColorPresetRequest_ListPresets),
         .number = ITMColorPresetRequest_FieldNumber_ListPresets,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMColorPresetRequest__storage_, listPresets),
@@ -2874,7 +3119,7 @@ typedef struct ITMColorPresetRequest__storage_ {
       },
       {
         .name = "getPreset",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetRequest_GetPreset),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMColorPresetRequest_GetPreset),
         .number = ITMColorPresetRequest_FieldNumber_GetPreset,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMColorPresetRequest__storage_, getPreset),
@@ -2889,14 +3134,16 @@ typedef struct ITMColorPresetRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMColorPresetRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "request",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2905,9 +3152,9 @@ typedef struct ITMColorPresetRequest__storage_ {
 @end
 
 void ITMColorPresetRequest_ClearRequestOneOfCase(ITMColorPresetRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMColorPresetRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMColorPresetRequest_ListPresets
 
@@ -2930,9 +3177,11 @@ typedef struct ITMColorPresetRequest_ListPresets__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMColorPresetRequest_ListPresets__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMColorPresetRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMColorPresetRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -2959,7 +3208,7 @@ typedef struct ITMColorPresetRequest_GetPreset__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMColorPresetRequest_GetPreset_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMColorPresetRequest_GetPreset__storage_, name),
@@ -2974,9 +3223,11 @@ typedef struct ITMColorPresetRequest_GetPreset__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMColorPresetRequest_GetPreset__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMColorPresetRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMColorPresetRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3008,7 +3259,7 @@ typedef struct ITMColorPresetResponse__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "listPresets",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetResponse_ListPresets),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMColorPresetResponse_ListPresets),
         .number = ITMColorPresetResponse_FieldNumber_ListPresets,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMColorPresetResponse__storage_, listPresets),
@@ -3017,7 +3268,7 @@ typedef struct ITMColorPresetResponse__storage_ {
       },
       {
         .name = "getPreset",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetResponse_GetPreset),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMColorPresetResponse_GetPreset),
         .number = ITMColorPresetResponse_FieldNumber_GetPreset,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMColorPresetResponse__storage_, getPreset),
@@ -3041,14 +3292,16 @@ typedef struct ITMColorPresetResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMColorPresetResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "response",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3057,14 +3310,14 @@ typedef struct ITMColorPresetResponse__storage_ {
 @end
 
 void ITMColorPresetResponse_ClearResponseOneOfCase(ITMColorPresetResponse *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMColorPresetResponse descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - Enum ITMColorPresetResponse_Status
 
 GPBEnumDescriptor *ITMColorPresetResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000PresetNotFound\000RequestMalformed\000";
@@ -3079,7 +3332,8 @@ GPBEnumDescriptor *ITMColorPresetResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMColorPresetResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -3116,7 +3370,7 @@ typedef struct ITMColorPresetResponse_ListPresets__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "nameArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMColorPresetResponse_ListPresets_FieldNumber_NameArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMColorPresetResponse_ListPresets__storage_, nameArray),
@@ -3131,9 +3385,11 @@ typedef struct ITMColorPresetResponse_ListPresets__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMColorPresetResponse_ListPresets__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMColorPresetResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMColorPresetResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3160,7 +3416,7 @@ typedef struct ITMColorPresetResponse_GetPreset__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "colorSettingsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMColorPresetResponse_GetPreset_ColorSetting),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMColorPresetResponse_GetPreset_ColorSetting),
         .number = ITMColorPresetResponse_GetPreset_FieldNumber_ColorSettingsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset__storage_, colorSettingsArray),
@@ -3175,9 +3431,11 @@ typedef struct ITMColorPresetResponse_GetPreset__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMColorPresetResponse_GetPreset__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMColorPresetResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMColorPresetResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3214,7 +3472,7 @@ typedef struct ITMColorPresetResponse_GetPreset_ColorSetting__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "red",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Red,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_, red),
@@ -3223,7 +3481,7 @@ typedef struct ITMColorPresetResponse_GetPreset_ColorSetting__storage_ {
       },
       {
         .name = "green",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Green,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_, green),
@@ -3232,7 +3490,7 @@ typedef struct ITMColorPresetResponse_GetPreset_ColorSetting__storage_ {
       },
       {
         .name = "blue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Blue,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_, blue),
@@ -3241,7 +3499,7 @@ typedef struct ITMColorPresetResponse_GetPreset_ColorSetting__storage_ {
       },
       {
         .name = "alpha",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Alpha,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_, alpha),
@@ -3250,7 +3508,7 @@ typedef struct ITMColorPresetResponse_GetPreset_ColorSetting__storage_ {
       },
       {
         .name = "colorSpace",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_ColorSpace,
         .hasIndex = 4,
         .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_, colorSpace),
@@ -3259,7 +3517,7 @@ typedef struct ITMColorPresetResponse_GetPreset_ColorSetting__storage_ {
       },
       {
         .name = "key",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMColorPresetResponse_GetPreset_ColorSetting_FieldNumber_Key,
         .hasIndex = 5,
         .offset = (uint32_t)offsetof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_, key),
@@ -3274,9 +3532,11 @@ typedef struct ITMColorPresetResponse_GetPreset_ColorSetting__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMColorPresetResponse_GetPreset_ColorSetting__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMColorPresetResponse_GetPreset)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMColorPresetResponse_GetPreset)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3303,7 +3563,7 @@ typedef struct ITMPreferencesRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "requestsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesRequest_Request),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesRequest_Request),
         .number = ITMPreferencesRequest_FieldNumber_RequestsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMPreferencesRequest__storage_, requestsArray),
@@ -3318,8 +3578,10 @@ typedef struct ITMPreferencesRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPreferencesRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3353,7 +3615,7 @@ typedef struct ITMPreferencesRequest_Request__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "setPreferenceRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesRequest_Request_SetPreference),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesRequest_Request_SetPreference),
         .number = ITMPreferencesRequest_Request_FieldNumber_SetPreferenceRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPreferencesRequest_Request__storage_, setPreferenceRequest),
@@ -3362,7 +3624,7 @@ typedef struct ITMPreferencesRequest_Request__storage_ {
       },
       {
         .name = "getPreferenceRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesRequest_Request_GetPreference),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesRequest_Request_GetPreference),
         .number = ITMPreferencesRequest_Request_FieldNumber_GetPreferenceRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPreferencesRequest_Request__storage_, getPreferenceRequest),
@@ -3371,7 +3633,7 @@ typedef struct ITMPreferencesRequest_Request__storage_ {
       },
       {
         .name = "setDefaultProfileRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesRequest_Request_SetDefaultProfile),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesRequest_Request_SetDefaultProfile),
         .number = ITMPreferencesRequest_Request_FieldNumber_SetDefaultProfileRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPreferencesRequest_Request__storage_, setDefaultProfileRequest),
@@ -3380,7 +3642,7 @@ typedef struct ITMPreferencesRequest_Request__storage_ {
       },
       {
         .name = "getDefaultProfileRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesRequest_Request_GetDefaultProfile),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesRequest_Request_GetDefaultProfile),
         .number = ITMPreferencesRequest_Request_FieldNumber_GetDefaultProfileRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPreferencesRequest_Request__storage_, getDefaultProfileRequest),
@@ -3395,15 +3657,17 @@ typedef struct ITMPreferencesRequest_Request__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPreferencesRequest_Request__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "request",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMPreferencesRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3412,9 +3676,9 @@ typedef struct ITMPreferencesRequest_Request__storage_ {
 @end
 
 void ITMPreferencesRequest_Request_ClearRequestOneOfCase(ITMPreferencesRequest_Request *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMPreferencesRequest_Request descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMPreferencesRequest_Request_SetPreference
 
@@ -3437,7 +3701,7 @@ typedef struct ITMPreferencesRequest_Request_SetPreference__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "key",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPreferencesRequest_Request_SetPreference_FieldNumber_Key,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMPreferencesRequest_Request_SetPreference__storage_, key),
@@ -3446,7 +3710,7 @@ typedef struct ITMPreferencesRequest_Request_SetPreference__storage_ {
       },
       {
         .name = "jsonValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPreferencesRequest_Request_SetPreference_FieldNumber_JsonValue,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMPreferencesRequest_Request_SetPreference__storage_, jsonValue),
@@ -3461,9 +3725,11 @@ typedef struct ITMPreferencesRequest_Request_SetPreference__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPreferencesRequest_Request_SetPreference__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesRequest_Request)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMPreferencesRequest_Request)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3490,7 +3756,7 @@ typedef struct ITMPreferencesRequest_Request_GetPreference__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "key",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPreferencesRequest_Request_GetPreference_FieldNumber_Key,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMPreferencesRequest_Request_GetPreference__storage_, key),
@@ -3505,9 +3771,11 @@ typedef struct ITMPreferencesRequest_Request_GetPreference__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPreferencesRequest_Request_GetPreference__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesRequest_Request)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMPreferencesRequest_Request)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3534,7 +3802,7 @@ typedef struct ITMPreferencesRequest_Request_SetDefaultProfile__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "guid",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPreferencesRequest_Request_SetDefaultProfile_FieldNumber_Guid,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMPreferencesRequest_Request_SetDefaultProfile__storage_, guid),
@@ -3549,9 +3817,11 @@ typedef struct ITMPreferencesRequest_Request_SetDefaultProfile__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPreferencesRequest_Request_SetDefaultProfile__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesRequest_Request)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMPreferencesRequest_Request)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3580,9 +3850,11 @@ typedef struct ITMPreferencesRequest_Request_GetDefaultProfile__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMPreferencesRequest_Request_GetDefaultProfile__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesRequest_Request)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMPreferencesRequest_Request)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3609,7 +3881,7 @@ typedef struct ITMPreferencesResponse__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "resultsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesResponse_Result),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesResponse_Result),
         .number = ITMPreferencesResponse_FieldNumber_ResultsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMPreferencesResponse__storage_, resultsArray),
@@ -3624,8 +3896,10 @@ typedef struct ITMPreferencesResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPreferencesResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3661,7 +3935,7 @@ typedef struct ITMPreferencesResponse_Result__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "unrecognizedRequest",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesResponse_Result_UnrecognizedResult),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesResponse_Result_UnrecognizedResult),
         .number = ITMPreferencesResponse_Result_FieldNumber_UnrecognizedRequest,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPreferencesResponse_Result__storage_, unrecognizedRequest),
@@ -3670,7 +3944,7 @@ typedef struct ITMPreferencesResponse_Result__storage_ {
       },
       {
         .name = "setPreferenceResult",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesResponse_Result_SetPreferenceResult),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesResponse_Result_SetPreferenceResult),
         .number = ITMPreferencesResponse_Result_FieldNumber_SetPreferenceResult,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPreferencesResponse_Result__storage_, setPreferenceResult),
@@ -3679,7 +3953,7 @@ typedef struct ITMPreferencesResponse_Result__storage_ {
       },
       {
         .name = "getPreferenceResult",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesResponse_Result_GetPreferenceResult),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesResponse_Result_GetPreferenceResult),
         .number = ITMPreferencesResponse_Result_FieldNumber_GetPreferenceResult,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPreferencesResponse_Result__storage_, getPreferenceResult),
@@ -3688,7 +3962,7 @@ typedef struct ITMPreferencesResponse_Result__storage_ {
       },
       {
         .name = "setDefaultProfileResult",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesResponse_Result_SetDefaultProfileResult),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesResponse_Result_SetDefaultProfileResult),
         .number = ITMPreferencesResponse_Result_FieldNumber_SetDefaultProfileResult,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPreferencesResponse_Result__storage_, setDefaultProfileResult),
@@ -3697,7 +3971,7 @@ typedef struct ITMPreferencesResponse_Result__storage_ {
       },
       {
         .name = "getDefaultProfileResult",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPreferencesResponse_Result_GetDefaultProfileResult),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPreferencesResponse_Result_GetDefaultProfileResult),
         .number = ITMPreferencesResponse_Result_FieldNumber_GetDefaultProfileResult,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPreferencesResponse_Result__storage_, getDefaultProfileResult),
@@ -3712,15 +3986,17 @@ typedef struct ITMPreferencesResponse_Result__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPreferencesResponse_Result__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "result",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMPreferencesResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3729,9 +4005,9 @@ typedef struct ITMPreferencesResponse_Result__storage_ {
 @end
 
 void ITMPreferencesResponse_Result_ClearResultOneOfCase(ITMPreferencesResponse_Result *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMPreferencesResponse_Result descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMPreferencesResponse_Result_SetPreferenceResult
 
@@ -3767,9 +4043,11 @@ typedef struct ITMPreferencesResponse_Result_SetPreferenceResult__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPreferencesResponse_Result_SetPreferenceResult__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesResponse_Result)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMPreferencesResponse_Result)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3780,7 +4058,7 @@ typedef struct ITMPreferencesResponse_Result_SetPreferenceResult__storage_ {
 #pragma mark - Enum ITMPreferencesResponse_Result_SetPreferenceResult_Status
 
 GPBEnumDescriptor *ITMPreferencesResponse_Result_SetPreferenceResult_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000BadJson\000InvalidValue\000";
@@ -3795,7 +4073,8 @@ GPBEnumDescriptor *ITMPreferencesResponse_Result_SetPreferenceResult_Status_Enum
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMPreferencesResponse_Result_SetPreferenceResult_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -3832,7 +4111,7 @@ typedef struct ITMPreferencesResponse_Result_GetPreferenceResult__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "jsonValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPreferencesResponse_Result_GetPreferenceResult_FieldNumber_JsonValue,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMPreferencesResponse_Result_GetPreferenceResult__storage_, jsonValue),
@@ -3847,9 +4126,11 @@ typedef struct ITMPreferencesResponse_Result_GetPreferenceResult__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPreferencesResponse_Result_GetPreferenceResult__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesResponse_Result)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMPreferencesResponse_Result)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3891,9 +4172,11 @@ typedef struct ITMPreferencesResponse_Result_SetDefaultProfileResult__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPreferencesResponse_Result_SetDefaultProfileResult__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesResponse_Result)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMPreferencesResponse_Result)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3904,7 +4187,7 @@ typedef struct ITMPreferencesResponse_Result_SetDefaultProfileResult__storage_ {
 #pragma mark - Enum ITMPreferencesResponse_Result_SetDefaultProfileResult_Status
 
 GPBEnumDescriptor *ITMPreferencesResponse_Result_SetDefaultProfileResult_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000BadGuid\000";
@@ -3918,7 +4201,8 @@ GPBEnumDescriptor *ITMPreferencesResponse_Result_SetDefaultProfileResult_Status_
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMPreferencesResponse_Result_SetDefaultProfileResult_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -3956,9 +4240,11 @@ typedef struct ITMPreferencesResponse_Result_UnrecognizedResult__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMPreferencesResponse_Result_UnrecognizedResult__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesResponse_Result)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMPreferencesResponse_Result)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -3985,7 +4271,7 @@ typedef struct ITMPreferencesResponse_Result_GetDefaultProfileResult__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "guid",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPreferencesResponse_Result_GetDefaultProfileResult_FieldNumber_Guid,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMPreferencesResponse_Result_GetDefaultProfileResult__storage_, guid),
@@ -4000,9 +4286,11 @@ typedef struct ITMPreferencesResponse_Result_GetDefaultProfileResult__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPreferencesResponse_Result_GetDefaultProfileResult__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMPreferencesResponse_Result)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMPreferencesResponse_Result)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4029,7 +4317,7 @@ typedef struct ITMReorderTabsRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "assignmentsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMReorderTabsRequest_Assignment),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMReorderTabsRequest_Assignment),
         .number = ITMReorderTabsRequest_FieldNumber_AssignmentsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMReorderTabsRequest__storage_, assignmentsArray),
@@ -4044,8 +4332,10 @@ typedef struct ITMReorderTabsRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMReorderTabsRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4074,7 +4364,7 @@ typedef struct ITMReorderTabsRequest_Assignment__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "windowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMReorderTabsRequest_Assignment_FieldNumber_WindowId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMReorderTabsRequest_Assignment__storage_, windowId),
@@ -4083,7 +4373,7 @@ typedef struct ITMReorderTabsRequest_Assignment__storage_ {
       },
       {
         .name = "tabIdsArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMReorderTabsRequest_Assignment_FieldNumber_TabIdsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMReorderTabsRequest_Assignment__storage_, tabIdsArray),
@@ -4098,9 +4388,11 @@ typedef struct ITMReorderTabsRequest_Assignment__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMReorderTabsRequest_Assignment__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMReorderTabsRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMReorderTabsRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4142,8 +4434,10 @@ typedef struct ITMReorderTabsResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMReorderTabsResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4154,7 +4448,7 @@ typedef struct ITMReorderTabsResponse__storage_ {
 #pragma mark - Enum ITMReorderTabsResponse_Status
 
 GPBEnumDescriptor *ITMReorderTabsResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000InvalidAssignment\000InvalidWindowId\000Inv"
@@ -4171,7 +4465,8 @@ GPBEnumDescriptor *ITMReorderTabsResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMReorderTabsResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -4216,7 +4511,7 @@ typedef struct ITMTmuxRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "listConnections",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxRequest_ListConnections),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTmuxRequest_ListConnections),
         .number = ITMTmuxRequest_FieldNumber_ListConnections,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMTmuxRequest__storage_, listConnections),
@@ -4225,7 +4520,7 @@ typedef struct ITMTmuxRequest__storage_ {
       },
       {
         .name = "sendCommand",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxRequest_SendCommand),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTmuxRequest_SendCommand),
         .number = ITMTmuxRequest_FieldNumber_SendCommand,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMTmuxRequest__storage_, sendCommand),
@@ -4234,7 +4529,7 @@ typedef struct ITMTmuxRequest__storage_ {
       },
       {
         .name = "setWindowVisible",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxRequest_SetWindowVisible),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTmuxRequest_SetWindowVisible),
         .number = ITMTmuxRequest_FieldNumber_SetWindowVisible,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMTmuxRequest__storage_, setWindowVisible),
@@ -4243,7 +4538,7 @@ typedef struct ITMTmuxRequest__storage_ {
       },
       {
         .name = "createWindow",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxRequest_CreateWindow),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTmuxRequest_CreateWindow),
         .number = ITMTmuxRequest_FieldNumber_CreateWindow,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMTmuxRequest__storage_, createWindow),
@@ -4258,14 +4553,16 @@ typedef struct ITMTmuxRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTmuxRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "payload",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4274,9 +4571,9 @@ typedef struct ITMTmuxRequest__storage_ {
 @end
 
 void ITMTmuxRequest_ClearPayloadOneOfCase(ITMTmuxRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMTmuxRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMTmuxRequest_ListConnections
 
@@ -4299,9 +4596,11 @@ typedef struct ITMTmuxRequest_ListConnections__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMTmuxRequest_ListConnections__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTmuxRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4330,7 +4629,7 @@ typedef struct ITMTmuxRequest_SendCommand__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "connectionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTmuxRequest_SendCommand_FieldNumber_ConnectionId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMTmuxRequest_SendCommand__storage_, connectionId),
@@ -4339,7 +4638,7 @@ typedef struct ITMTmuxRequest_SendCommand__storage_ {
       },
       {
         .name = "command",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTmuxRequest_SendCommand_FieldNumber_Command,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMTmuxRequest_SendCommand__storage_, command),
@@ -4354,9 +4653,11 @@ typedef struct ITMTmuxRequest_SendCommand__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTmuxRequest_SendCommand__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTmuxRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4386,7 +4687,7 @@ typedef struct ITMTmuxRequest_SetWindowVisible__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "connectionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTmuxRequest_SetWindowVisible_FieldNumber_ConnectionId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMTmuxRequest_SetWindowVisible__storage_, connectionId),
@@ -4395,7 +4696,7 @@ typedef struct ITMTmuxRequest_SetWindowVisible__storage_ {
       },
       {
         .name = "windowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTmuxRequest_SetWindowVisible_FieldNumber_WindowId,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMTmuxRequest_SetWindowVisible__storage_, windowId),
@@ -4404,7 +4705,7 @@ typedef struct ITMTmuxRequest_SetWindowVisible__storage_ {
       },
       {
         .name = "visible",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTmuxRequest_SetWindowVisible_FieldNumber_Visible,
         .hasIndex = 2,
         .offset = 3,  // Stored in _has_storage_ to save space.
@@ -4419,9 +4720,11 @@ typedef struct ITMTmuxRequest_SetWindowVisible__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTmuxRequest_SetWindowVisible__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTmuxRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4450,7 +4753,7 @@ typedef struct ITMTmuxRequest_CreateWindow__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "connectionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTmuxRequest_CreateWindow_FieldNumber_ConnectionId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMTmuxRequest_CreateWindow__storage_, connectionId),
@@ -4459,7 +4762,7 @@ typedef struct ITMTmuxRequest_CreateWindow__storage_ {
       },
       {
         .name = "affinity",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTmuxRequest_CreateWindow_FieldNumber_Affinity,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMTmuxRequest_CreateWindow__storage_, affinity),
@@ -4474,9 +4777,11 @@ typedef struct ITMTmuxRequest_CreateWindow__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTmuxRequest_CreateWindow__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTmuxRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4512,7 +4817,7 @@ typedef struct ITMTmuxResponse__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "listConnections",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxResponse_ListConnections),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTmuxResponse_ListConnections),
         .number = ITMTmuxResponse_FieldNumber_ListConnections,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMTmuxResponse__storage_, listConnections),
@@ -4521,7 +4826,7 @@ typedef struct ITMTmuxResponse__storage_ {
       },
       {
         .name = "sendCommand",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxResponse_SendCommand),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTmuxResponse_SendCommand),
         .number = ITMTmuxResponse_FieldNumber_SendCommand,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMTmuxResponse__storage_, sendCommand),
@@ -4530,7 +4835,7 @@ typedef struct ITMTmuxResponse__storage_ {
       },
       {
         .name = "setWindowVisible",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxResponse_SetWindowVisible),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTmuxResponse_SetWindowVisible),
         .number = ITMTmuxResponse_FieldNumber_SetWindowVisible,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMTmuxResponse__storage_, setWindowVisible),
@@ -4548,7 +4853,7 @@ typedef struct ITMTmuxResponse__storage_ {
       },
       {
         .name = "createWindow",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxResponse_CreateWindow),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTmuxResponse_CreateWindow),
         .number = ITMTmuxResponse_FieldNumber_CreateWindow,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMTmuxResponse__storage_, createWindow),
@@ -4563,14 +4868,16 @@ typedef struct ITMTmuxResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTmuxResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "payload",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4579,14 +4886,14 @@ typedef struct ITMTmuxResponse__storage_ {
 @end
 
 void ITMTmuxResponse_ClearPayloadOneOfCase(ITMTmuxResponse *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMTmuxResponse descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - Enum ITMTmuxResponse_Status
 
 GPBEnumDescriptor *ITMTmuxResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000InvalidRequest\000InvalidConnectionId\000In"
@@ -4603,7 +4910,8 @@ GPBEnumDescriptor *ITMTmuxResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMTmuxResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -4641,7 +4949,7 @@ typedef struct ITMTmuxResponse_ListConnections__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "connectionsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTmuxResponse_ListConnections_Connection),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTmuxResponse_ListConnections_Connection),
         .number = ITMTmuxResponse_ListConnections_FieldNumber_ConnectionsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMTmuxResponse_ListConnections__storage_, connectionsArray),
@@ -4656,9 +4964,11 @@ typedef struct ITMTmuxResponse_ListConnections__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTmuxResponse_ListConnections__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTmuxResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4687,7 +4997,7 @@ typedef struct ITMTmuxResponse_ListConnections_Connection__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "connectionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTmuxResponse_ListConnections_Connection_FieldNumber_ConnectionId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMTmuxResponse_ListConnections_Connection__storage_, connectionId),
@@ -4696,7 +5006,7 @@ typedef struct ITMTmuxResponse_ListConnections_Connection__storage_ {
       },
       {
         .name = "owningSessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTmuxResponse_ListConnections_Connection_FieldNumber_OwningSessionId,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMTmuxResponse_ListConnections_Connection__storage_, owningSessionId),
@@ -4711,9 +5021,11 @@ typedef struct ITMTmuxResponse_ListConnections_Connection__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTmuxResponse_ListConnections_Connection__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxResponse_ListConnections)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTmuxResponse_ListConnections)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4740,7 +5052,7 @@ typedef struct ITMTmuxResponse_SendCommand__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "output",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTmuxResponse_SendCommand_FieldNumber_Output,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMTmuxResponse_SendCommand__storage_, output),
@@ -4755,9 +5067,11 @@ typedef struct ITMTmuxResponse_SendCommand__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTmuxResponse_SendCommand__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTmuxResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4786,9 +5100,11 @@ typedef struct ITMTmuxResponse_SetWindowVisible__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMTmuxResponse_SetWindowVisible__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTmuxResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4815,7 +5131,7 @@ typedef struct ITMTmuxResponse_CreateWindow__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "tabId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTmuxResponse_CreateWindow_FieldNumber_TabId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMTmuxResponse_CreateWindow__storage_, tabId),
@@ -4830,9 +5146,11 @@ typedef struct ITMTmuxResponse_CreateWindow__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTmuxResponse_CreateWindow__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMTmuxResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMTmuxResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4861,8 +5179,10 @@ typedef struct ITMGetBroadcastDomainsRequest__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMGetBroadcastDomainsRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4889,7 +5209,7 @@ typedef struct ITMBroadcastDomain__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "sessionIdsArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMBroadcastDomain_FieldNumber_SessionIdsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMBroadcastDomain__storage_, sessionIdsArray),
@@ -4904,8 +5224,10 @@ typedef struct ITMBroadcastDomain__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMBroadcastDomain__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4932,7 +5254,7 @@ typedef struct ITMGetBroadcastDomainsResponse__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "broadcastDomainsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMBroadcastDomain),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMBroadcastDomain),
         .number = ITMGetBroadcastDomainsResponse_FieldNumber_BroadcastDomainsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMGetBroadcastDomainsResponse__storage_, broadcastDomainsArray),
@@ -4947,8 +5269,10 @@ typedef struct ITMGetBroadcastDomainsResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMGetBroadcastDomainsResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -4977,7 +5301,7 @@ typedef struct ITMSetTabLayoutRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "root",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSplitTreeNode),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSplitTreeNode),
         .number = ITMSetTabLayoutRequest_FieldNumber_Root,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSetTabLayoutRequest__storage_, root),
@@ -4986,7 +5310,7 @@ typedef struct ITMSetTabLayoutRequest__storage_ {
       },
       {
         .name = "tabId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSetTabLayoutRequest_FieldNumber_TabId,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMSetTabLayoutRequest__storage_, tabId),
@@ -5001,8 +5325,10 @@ typedef struct ITMSetTabLayoutRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSetTabLayoutRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5044,8 +5370,10 @@ typedef struct ITMSetTabLayoutResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSetTabLayoutResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5056,7 +5384,7 @@ typedef struct ITMSetTabLayoutResponse__storage_ {
 #pragma mark - Enum ITMSetTabLayoutResponse_Status
 
 GPBEnumDescriptor *ITMSetTabLayoutResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000BadTabId\000WrongTree\000InvalidSize\000";
@@ -5072,7 +5400,8 @@ GPBEnumDescriptor *ITMSetTabLayoutResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMSetTabLayoutResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -5111,7 +5440,7 @@ typedef struct ITMMenuItemRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "identifier",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMMenuItemRequest_FieldNumber_Identifier,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMMenuItemRequest__storage_, identifier),
@@ -5120,7 +5449,7 @@ typedef struct ITMMenuItemRequest__storage_ {
       },
       {
         .name = "queryOnly",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMMenuItemRequest_FieldNumber_QueryOnly,
         .hasIndex = 1,
         .offset = 2,  // Stored in _has_storage_ to save space.
@@ -5135,8 +5464,10 @@ typedef struct ITMMenuItemRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMMenuItemRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5174,7 +5505,7 @@ typedef struct ITMMenuItemResponse__storage_ {
       },
       {
         .name = "checked",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMMenuItemResponse_FieldNumber_Checked,
         .hasIndex = 1,
         .offset = 2,  // Stored in _has_storage_ to save space.
@@ -5183,7 +5514,7 @@ typedef struct ITMMenuItemResponse__storage_ {
       },
       {
         .name = "enabled",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMMenuItemResponse_FieldNumber_Enabled,
         .hasIndex = 3,
         .offset = 4,  // Stored in _has_storage_ to save space.
@@ -5198,8 +5529,10 @@ typedef struct ITMMenuItemResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMMenuItemResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5210,7 +5543,7 @@ typedef struct ITMMenuItemResponse__storage_ {
 #pragma mark - Enum ITMMenuItemResponse_Status
 
 GPBEnumDescriptor *ITMMenuItemResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000BadIdentifier\000Disabled\000";
@@ -5225,7 +5558,8 @@ GPBEnumDescriptor *ITMMenuItemResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMMenuItemResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -5263,7 +5597,7 @@ typedef struct ITMRestartSessionRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "sessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRestartSessionRequest_FieldNumber_SessionId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMRestartSessionRequest__storage_, sessionId),
@@ -5272,7 +5606,7 @@ typedef struct ITMRestartSessionRequest__storage_ {
       },
       {
         .name = "onlyIfExited",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRestartSessionRequest_FieldNumber_OnlyIfExited,
         .hasIndex = 1,
         .offset = 2,  // Stored in _has_storage_ to save space.
@@ -5287,8 +5621,10 @@ typedef struct ITMRestartSessionRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMRestartSessionRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5330,8 +5666,10 @@ typedef struct ITMRestartSessionResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMRestartSessionResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5342,7 +5680,7 @@ typedef struct ITMRestartSessionResponse__storage_ {
 #pragma mark - Enum ITMRestartSessionResponse_Status
 
 GPBEnumDescriptor *ITMRestartSessionResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000SessionNotRestartable"
@@ -5358,7 +5696,8 @@ GPBEnumDescriptor *ITMRestartSessionResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMRestartSessionResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -5400,7 +5739,7 @@ typedef struct ITMServerOriginatedRPCResultRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "requestId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMServerOriginatedRPCResultRequest_FieldNumber_RequestId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMServerOriginatedRPCResultRequest__storage_, requestId),
@@ -5409,7 +5748,7 @@ typedef struct ITMServerOriginatedRPCResultRequest__storage_ {
       },
       {
         .name = "jsonException",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMServerOriginatedRPCResultRequest_FieldNumber_JsonException,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedRPCResultRequest__storage_, jsonException),
@@ -5418,7 +5757,7 @@ typedef struct ITMServerOriginatedRPCResultRequest__storage_ {
       },
       {
         .name = "jsonValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMServerOriginatedRPCResultRequest_FieldNumber_JsonValue,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedRPCResultRequest__storage_, jsonValue),
@@ -5433,14 +5772,16 @@ typedef struct ITMServerOriginatedRPCResultRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMServerOriginatedRPCResultRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "result",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5449,9 +5790,9 @@ typedef struct ITMServerOriginatedRPCResultRequest__storage_ {
 @end
 
 void ITMServerOriginatedRPCResultRequest_ClearResultOneOfCase(ITMServerOriginatedRPCResultRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMServerOriginatedRPCResultRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMServerOriginatedRPCResultResponse
 
@@ -5474,8 +5815,10 @@ typedef struct ITMServerOriginatedRPCResultResponse__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMServerOriginatedRPCResultResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5504,7 +5847,7 @@ typedef struct ITMListProfilesRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "propertiesArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMListProfilesRequest_FieldNumber_PropertiesArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMListProfilesRequest__storage_, propertiesArray),
@@ -5513,7 +5856,7 @@ typedef struct ITMListProfilesRequest__storage_ {
       },
       {
         .name = "guidsArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMListProfilesRequest_FieldNumber_GuidsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMListProfilesRequest__storage_, guidsArray),
@@ -5528,8 +5871,10 @@ typedef struct ITMListProfilesRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMListProfilesRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5556,7 +5901,7 @@ typedef struct ITMListProfilesResponse__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "profilesArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMListProfilesResponse_Profile),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMListProfilesResponse_Profile),
         .number = ITMListProfilesResponse_FieldNumber_ProfilesArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMListProfilesResponse__storage_, profilesArray),
@@ -5571,8 +5916,10 @@ typedef struct ITMListProfilesResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMListProfilesResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5599,7 +5946,7 @@ typedef struct ITMListProfilesResponse_Profile__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "propertiesArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMProfileProperty),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMProfileProperty),
         .number = ITMListProfilesResponse_Profile_FieldNumber_PropertiesArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMListProfilesResponse_Profile__storage_, propertiesArray),
@@ -5614,9 +5961,11 @@ typedef struct ITMListProfilesResponse_Profile__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMListProfilesResponse_Profile__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMListProfilesResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMListProfilesResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5645,8 +5994,10 @@ typedef struct ITMFocusRequest__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMFocusRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5673,7 +6024,7 @@ typedef struct ITMFocusResponse__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "notificationsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMFocusChangedNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMFocusChangedNotification),
         .number = ITMFocusResponse_FieldNumber_NotificationsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMFocusResponse__storage_, notificationsArray),
@@ -5688,8 +6039,10 @@ typedef struct ITMFocusResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMFocusResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5720,7 +6073,7 @@ typedef struct ITMSavedArrangementRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSavedArrangementRequest_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSavedArrangementRequest__storage_, name),
@@ -5738,7 +6091,7 @@ typedef struct ITMSavedArrangementRequest__storage_ {
       },
       {
         .name = "windowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSavedArrangementRequest_FieldNumber_WindowId,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMSavedArrangementRequest__storage_, windowId),
@@ -5753,8 +6106,10 @@ typedef struct ITMSavedArrangementRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSavedArrangementRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5765,7 +6120,7 @@ typedef struct ITMSavedArrangementRequest__storage_ {
 #pragma mark - Enum ITMSavedArrangementRequest_Action
 
 GPBEnumDescriptor *ITMSavedArrangementRequest_Action_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Restore\000Save\000List\000";
@@ -5780,7 +6135,8 @@ GPBEnumDescriptor *ITMSavedArrangementRequest_Action_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMSavedArrangementRequest_Action_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -5828,7 +6184,7 @@ typedef struct ITMSavedArrangementResponse__storage_ {
       },
       {
         .name = "namesArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSavedArrangementResponse_FieldNumber_NamesArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMSavedArrangementResponse__storage_, namesArray),
@@ -5843,8 +6199,10 @@ typedef struct ITMSavedArrangementResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSavedArrangementResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5855,7 +6213,7 @@ typedef struct ITMSavedArrangementResponse__storage_ {
 #pragma mark - Enum ITMSavedArrangementResponse_Status
 
 GPBEnumDescriptor *ITMSavedArrangementResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000ArrangementNotFound\000WindowNotFound\000Re"
@@ -5872,7 +6230,8 @@ GPBEnumDescriptor *ITMSavedArrangementResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMSavedArrangementResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -5920,7 +6279,7 @@ typedef struct ITMVariableRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "sessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMVariableRequest_FieldNumber_SessionId,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMVariableRequest__storage_, sessionId),
@@ -5929,7 +6288,7 @@ typedef struct ITMVariableRequest__storage_ {
       },
       {
         .name = "setArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMVariableRequest_Set),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMVariableRequest_Set),
         .number = ITMVariableRequest_FieldNumber_SetArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMVariableRequest__storage_, setArray),
@@ -5938,7 +6297,7 @@ typedef struct ITMVariableRequest__storage_ {
       },
       {
         .name = "getArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMVariableRequest_FieldNumber_GetArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMVariableRequest__storage_, getArray),
@@ -5947,7 +6306,7 @@ typedef struct ITMVariableRequest__storage_ {
       },
       {
         .name = "tabId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMVariableRequest_FieldNumber_TabId,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMVariableRequest__storage_, tabId),
@@ -5956,7 +6315,7 @@ typedef struct ITMVariableRequest__storage_ {
       },
       {
         .name = "app",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMVariableRequest_FieldNumber_App,
         .hasIndex = -1,
         .offset = 0,  // Stored in _has_storage_ to save space.
@@ -5965,7 +6324,7 @@ typedef struct ITMVariableRequest__storage_ {
       },
       {
         .name = "windowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMVariableRequest_FieldNumber_WindowId,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMVariableRequest__storage_, windowId),
@@ -5980,14 +6339,16 @@ typedef struct ITMVariableRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMVariableRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "scope",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -5996,9 +6357,9 @@ typedef struct ITMVariableRequest__storage_ {
 @end
 
 void ITMVariableRequest_ClearScopeOneOfCase(ITMVariableRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMVariableRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMVariableRequest_Set
 
@@ -6021,7 +6382,7 @@ typedef struct ITMVariableRequest_Set__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMVariableRequest_Set_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMVariableRequest_Set__storage_, name),
@@ -6030,7 +6391,7 @@ typedef struct ITMVariableRequest_Set__storage_ {
       },
       {
         .name = "value",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMVariableRequest_Set_FieldNumber_Value,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMVariableRequest_Set__storage_, value),
@@ -6045,9 +6406,11 @@ typedef struct ITMVariableRequest_Set__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMVariableRequest_Set__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMVariableRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMVariableRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -6085,7 +6448,7 @@ typedef struct ITMVariableResponse__storage_ {
       },
       {
         .name = "valuesArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMVariableResponse_FieldNumber_ValuesArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMVariableResponse__storage_, valuesArray),
@@ -6100,8 +6463,10 @@ typedef struct ITMVariableResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMVariableResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -6112,7 +6477,7 @@ typedef struct ITMVariableResponse__storage_ {
 #pragma mark - Enum ITMVariableResponse_Status
 
 GPBEnumDescriptor *ITMVariableResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000InvalidName\000MissingSc"
@@ -6133,7 +6498,8 @@ GPBEnumDescriptor *ITMVariableResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMVariableResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -6184,7 +6550,7 @@ typedef struct ITMActivateRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "windowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMActivateRequest_FieldNumber_WindowId,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMActivateRequest__storage_, windowId),
@@ -6193,7 +6559,7 @@ typedef struct ITMActivateRequest__storage_ {
       },
       {
         .name = "tabId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMActivateRequest_FieldNumber_TabId,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMActivateRequest__storage_, tabId),
@@ -6202,7 +6568,7 @@ typedef struct ITMActivateRequest__storage_ {
       },
       {
         .name = "sessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMActivateRequest_FieldNumber_SessionId,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMActivateRequest__storage_, sessionId),
@@ -6211,7 +6577,7 @@ typedef struct ITMActivateRequest__storage_ {
       },
       {
         .name = "orderWindowFront",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMActivateRequest_FieldNumber_OrderWindowFront,
         .hasIndex = 0,
         .offset = 1,  // Stored in _has_storage_ to save space.
@@ -6220,7 +6586,7 @@ typedef struct ITMActivateRequest__storage_ {
       },
       {
         .name = "selectTab",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMActivateRequest_FieldNumber_SelectTab,
         .hasIndex = 2,
         .offset = 3,  // Stored in _has_storage_ to save space.
@@ -6229,7 +6595,7 @@ typedef struct ITMActivateRequest__storage_ {
       },
       {
         .name = "selectSession",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMActivateRequest_FieldNumber_SelectSession,
         .hasIndex = 4,
         .offset = 5,  // Stored in _has_storage_ to save space.
@@ -6238,7 +6604,7 @@ typedef struct ITMActivateRequest__storage_ {
       },
       {
         .name = "activateApp",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMActivateRequest_App),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMActivateRequest_App),
         .number = ITMActivateRequest_FieldNumber_ActivateApp,
         .hasIndex = 6,
         .offset = (uint32_t)offsetof(ITMActivateRequest__storage_, activateApp),
@@ -6253,14 +6619,16 @@ typedef struct ITMActivateRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMActivateRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "identifier",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -6269,9 +6637,9 @@ typedef struct ITMActivateRequest__storage_ {
 @end
 
 void ITMActivateRequest_ClearIdentifierOneOfCase(ITMActivateRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMActivateRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMActivateRequest_App
 
@@ -6292,7 +6660,7 @@ typedef struct ITMActivateRequest_App__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "raiseAllWindows",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMActivateRequest_App_FieldNumber_RaiseAllWindows,
         .hasIndex = 0,
         .offset = 1,  // Stored in _has_storage_ to save space.
@@ -6301,7 +6669,7 @@ typedef struct ITMActivateRequest_App__storage_ {
       },
       {
         .name = "ignoringOtherApps",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMActivateRequest_App_FieldNumber_IgnoringOtherApps,
         .hasIndex = 2,
         .offset = 3,  // Stored in _has_storage_ to save space.
@@ -6316,9 +6684,11 @@ typedef struct ITMActivateRequest_App__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMActivateRequest_App__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMActivateRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMActivateRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -6360,8 +6730,10 @@ typedef struct ITMActivateResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMActivateResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -6372,7 +6744,7 @@ typedef struct ITMActivateResponse__storage_ {
 #pragma mark - Enum ITMActivateResponse_Status
 
 GPBEnumDescriptor *ITMActivateResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000BadIdentifier\000InvalidOption\000";
@@ -6387,7 +6759,8 @@ GPBEnumDescriptor *ITMActivateResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMActivateResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -6426,7 +6799,7 @@ typedef struct ITMInjectRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "sessionIdArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMInjectRequest_FieldNumber_SessionIdArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMInjectRequest__storage_, sessionIdArray),
@@ -6435,7 +6808,7 @@ typedef struct ITMInjectRequest__storage_ {
       },
       {
         .name = "data_p",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMInjectRequest_FieldNumber_Data_p,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMInjectRequest__storage_, data_p),
@@ -6450,8 +6823,10 @@ typedef struct ITMInjectRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMInjectRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -6493,8 +6868,10 @@ typedef struct ITMInjectResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMInjectResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -6505,7 +6882,7 @@ typedef struct ITMInjectResponse__storage_ {
 #pragma mark - Enum ITMInjectResponse_Status
 
 GPBEnumDescriptor *ITMInjectResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000";
@@ -6519,7 +6896,8 @@ GPBEnumDescriptor *ITMInjectResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMInjectResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -6560,7 +6938,7 @@ typedef struct ITMGetPropertyRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "windowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetPropertyRequest_FieldNumber_WindowId,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMGetPropertyRequest__storage_, windowId),
@@ -6569,7 +6947,7 @@ typedef struct ITMGetPropertyRequest__storage_ {
       },
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetPropertyRequest_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMGetPropertyRequest__storage_, name),
@@ -6578,7 +6956,7 @@ typedef struct ITMGetPropertyRequest__storage_ {
       },
       {
         .name = "sessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetPropertyRequest_FieldNumber_SessionId,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMGetPropertyRequest__storage_, sessionId),
@@ -6593,14 +6971,16 @@ typedef struct ITMGetPropertyRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMGetPropertyRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "identifier",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -6609,9 +6989,9 @@ typedef struct ITMGetPropertyRequest__storage_ {
 @end
 
 void ITMGetPropertyRequest_ClearIdentifierOneOfCase(ITMGetPropertyRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMGetPropertyRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMGetPropertyResponse
 
@@ -6643,7 +7023,7 @@ typedef struct ITMGetPropertyResponse__storage_ {
       },
       {
         .name = "jsonValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetPropertyResponse_FieldNumber_JsonValue,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMGetPropertyResponse__storage_, jsonValue),
@@ -6658,8 +7038,10 @@ typedef struct ITMGetPropertyResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMGetPropertyResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -6670,7 +7052,7 @@ typedef struct ITMGetPropertyResponse__storage_ {
 #pragma mark - Enum ITMGetPropertyResponse_Status
 
 GPBEnumDescriptor *ITMGetPropertyResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000UnrecognizedName\000InvalidTarget\000";
@@ -6685,7 +7067,8 @@ GPBEnumDescriptor *ITMGetPropertyResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMGetPropertyResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -6729,7 +7112,7 @@ typedef struct ITMSetPropertyRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "windowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSetPropertyRequest_FieldNumber_WindowId,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMSetPropertyRequest__storage_, windowId),
@@ -6738,7 +7121,7 @@ typedef struct ITMSetPropertyRequest__storage_ {
       },
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSetPropertyRequest_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSetPropertyRequest__storage_, name),
@@ -6747,7 +7130,7 @@ typedef struct ITMSetPropertyRequest__storage_ {
       },
       {
         .name = "jsonValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSetPropertyRequest_FieldNumber_JsonValue,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMSetPropertyRequest__storage_, jsonValue),
@@ -6756,7 +7139,7 @@ typedef struct ITMSetPropertyRequest__storage_ {
       },
       {
         .name = "sessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSetPropertyRequest_FieldNumber_SessionId,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMSetPropertyRequest__storage_, sessionId),
@@ -6771,14 +7154,16 @@ typedef struct ITMSetPropertyRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSetPropertyRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "identifier",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -6787,9 +7172,9 @@ typedef struct ITMSetPropertyRequest__storage_ {
 @end
 
 void ITMSetPropertyRequest_ClearIdentifierOneOfCase(ITMSetPropertyRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMSetPropertyRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMSetPropertyResponse
 
@@ -6825,8 +7210,10 @@ typedef struct ITMSetPropertyResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSetPropertyResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -6837,7 +7224,7 @@ typedef struct ITMSetPropertyResponse__storage_ {
 #pragma mark - Enum ITMSetPropertyResponse_Status
 
 GPBEnumDescriptor *ITMSetPropertyResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000UnrecognizedName\000InvalidValue\000Invalid"
@@ -6857,7 +7244,8 @@ GPBEnumDescriptor *ITMSetPropertyResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMSetPropertyResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -6906,7 +7294,7 @@ typedef struct ITMRegisterToolRequest__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "name",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMRegisterToolRequest_FieldNumber_Name,
         .core.hasIndex = 0,
         .core.offset = (uint32_t)offsetof(ITMRegisterToolRequest__storage_, name),
@@ -6916,7 +7304,7 @@ typedef struct ITMRegisterToolRequest__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "identifier",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMRegisterToolRequest_FieldNumber_Identifier,
         .core.hasIndex = 1,
         .core.offset = (uint32_t)offsetof(ITMRegisterToolRequest__storage_, identifier),
@@ -6936,7 +7324,7 @@ typedef struct ITMRegisterToolRequest__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "URL",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMRegisterToolRequest_FieldNumber_URL,
         .core.hasIndex = 5,
         .core.offset = (uint32_t)offsetof(ITMRegisterToolRequest__storage_, URL),
@@ -6946,7 +7334,7 @@ typedef struct ITMRegisterToolRequest__storage_ {
       {
         .defaultValue.valueBool = NO,
         .core.name = "revealIfAlreadyRegistered",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMRegisterToolRequest_FieldNumber_RevealIfAlreadyRegistered,
         .core.hasIndex = 2,
         .core.offset = 3,  // Stored in _has_storage_ to save space.
@@ -6961,13 +7349,15 @@ typedef struct ITMRegisterToolRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMRegisterToolRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown | GPBDescriptorInitializationFlag_FieldsWithDefault)];
 #if !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
     static const char *extraTextFormatInfo =
         "\001\004\003\000";
     [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
 #endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -6978,7 +7368,7 @@ typedef struct ITMRegisterToolRequest__storage_ {
 #pragma mark - Enum ITMRegisterToolRequest_ToolType
 
 GPBEnumDescriptor *ITMRegisterToolRequest_ToolType_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "WebViewTool\000";
@@ -6991,7 +7381,8 @@ GPBEnumDescriptor *ITMRegisterToolRequest_ToolType_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMRegisterToolRequest_ToolType_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -7044,7 +7435,7 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "name",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMRPCRegistrationRequest_FieldNumber_Name,
         .core.hasIndex = 0,
         .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, name),
@@ -7054,7 +7445,7 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "argumentsArray",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_RPCArgumentSignature),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMRPCRegistrationRequest_RPCArgumentSignature),
         .core.number = ITMRPCRegistrationRequest_FieldNumber_ArgumentsArray,
         .core.hasIndex = GPBNoHasBit,
         .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, argumentsArray),
@@ -7064,7 +7455,7 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
       {
         .defaultValue.valueFloat = 0,
         .core.name = "timeout",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMRPCRegistrationRequest_FieldNumber_Timeout,
         .core.hasIndex = 1,
         .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, timeout),
@@ -7074,7 +7465,7 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "defaultsArray",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_RPCArgument),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMRPCRegistrationRequest_RPCArgument),
         .core.number = ITMRPCRegistrationRequest_FieldNumber_DefaultsArray,
         .core.hasIndex = GPBNoHasBit,
         .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, defaultsArray),
@@ -7094,7 +7485,7 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "displayName",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMRPCRegistrationRequest_FieldNumber_DisplayName,
         .core.hasIndex = 3,
         .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, displayName),
@@ -7104,7 +7495,7 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "sessionTitleAttributes",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_SessionTitleAttributes),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMRPCRegistrationRequest_SessionTitleAttributes),
         .core.number = ITMRPCRegistrationRequest_FieldNumber_SessionTitleAttributes,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, sessionTitleAttributes),
@@ -7114,7 +7505,7 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "statusBarComponentAttributes",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMRPCRegistrationRequest_StatusBarComponentAttributes),
         .core.number = ITMRPCRegistrationRequest_FieldNumber_StatusBarComponentAttributes,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, statusBarComponentAttributes),
@@ -7124,7 +7515,7 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "contextMenuAttributes",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_ContextMenuAttributes),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMRPCRegistrationRequest_ContextMenuAttributes),
         .core.number = ITMRPCRegistrationRequest_FieldNumber_ContextMenuAttributes,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest__storage_, contextMenuAttributes),
@@ -7139,14 +7530,16 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMRPCRegistrationRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown | GPBDescriptorInitializationFlag_FieldsWithDefault)];
     static const char *oneofs[] = {
       "roleSpecificAttributes",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -7155,14 +7548,14 @@ typedef struct ITMRPCRegistrationRequest__storage_ {
 @end
 
 void ITMRPCRegistrationRequest_ClearRoleSpecificAttributesOneOfCase(ITMRPCRegistrationRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMRPCRegistrationRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - Enum ITMRPCRegistrationRequest_Role
 
 GPBEnumDescriptor *ITMRPCRegistrationRequest_Role_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Generic\000SessionTitle\000StatusBarComponent\000"
@@ -7179,7 +7572,8 @@ GPBEnumDescriptor *ITMRPCRegistrationRequest_Role_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMRPCRegistrationRequest_Role_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -7217,7 +7611,7 @@ typedef struct ITMRPCRegistrationRequest_RPCArgumentSignature__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_RPCArgumentSignature_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_RPCArgumentSignature__storage_, name),
@@ -7232,9 +7626,11 @@ typedef struct ITMRPCRegistrationRequest_RPCArgumentSignature__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMRPCRegistrationRequest_RPCArgumentSignature__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMRPCRegistrationRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -7263,7 +7659,7 @@ typedef struct ITMRPCRegistrationRequest_RPCArgument__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_RPCArgument_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_RPCArgument__storage_, name),
@@ -7272,7 +7668,7 @@ typedef struct ITMRPCRegistrationRequest_RPCArgument__storage_ {
       },
       {
         .name = "path",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_RPCArgument_FieldNumber_Path,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_RPCArgument__storage_, path),
@@ -7287,9 +7683,11 @@ typedef struct ITMRPCRegistrationRequest_RPCArgument__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMRPCRegistrationRequest_RPCArgument__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMRPCRegistrationRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -7318,7 +7716,7 @@ typedef struct ITMRPCRegistrationRequest_SessionTitleAttributes__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "displayName",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_SessionTitleAttributes_FieldNumber_DisplayName,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_SessionTitleAttributes__storage_, displayName),
@@ -7327,7 +7725,7 @@ typedef struct ITMRPCRegistrationRequest_SessionTitleAttributes__storage_ {
       },
       {
         .name = "uniqueIdentifier",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_SessionTitleAttributes_FieldNumber_UniqueIdentifier,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_SessionTitleAttributes__storage_, uniqueIdentifier),
@@ -7342,9 +7740,11 @@ typedef struct ITMRPCRegistrationRequest_SessionTitleAttributes__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMRPCRegistrationRequest_SessionTitleAttributes__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMRPCRegistrationRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -7385,7 +7785,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "shortDescription",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_ShortDescription,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, shortDescription),
@@ -7394,7 +7794,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
       },
       {
         .name = "detailedDescription",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_DetailedDescription,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, detailedDescription),
@@ -7403,7 +7803,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
       },
       {
         .name = "knobsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob),
         .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_KnobsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, knobsArray),
@@ -7412,7 +7812,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
       },
       {
         .name = "exemplar",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_Exemplar,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, exemplar),
@@ -7421,7 +7821,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
       },
       {
         .name = "updateCadence",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_UpdateCadence,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, updateCadence),
@@ -7430,7 +7830,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
       },
       {
         .name = "uniqueIdentifier",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_UniqueIdentifier,
         .hasIndex = 4,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, uniqueIdentifier),
@@ -7439,7 +7839,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
       },
       {
         .name = "iconsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon),
         .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_FieldNumber_IconsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_, iconsArray),
@@ -7463,9 +7863,11 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMRPCRegistrationRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -7476,7 +7878,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes__storage_ 
 #pragma mark - Enum ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format
 
 GPBEnumDescriptor *ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "PlainText\000Html\000";
@@ -7490,7 +7892,8 @@ GPBEnumDescriptor *ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMRPCRegistrationRequest_StatusBarComponentAttributes_Format_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -7535,7 +7938,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__stor
       {
         .defaultValue.valueString = nil,
         .core.name = "name",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_Name,
         .core.hasIndex = 0,
         .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_, name),
@@ -7555,7 +7958,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__stor
       {
         .defaultValue.valueString = nil,
         .core.name = "placeholder",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_Placeholder,
         .core.hasIndex = 2,
         .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_, placeholder),
@@ -7565,7 +7968,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__stor
       {
         .defaultValue.valueString = nil,
         .core.name = "jsonDefaultValue",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_JsonDefaultValue,
         .core.hasIndex = 3,
         .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_, jsonDefaultValue),
@@ -7575,7 +7978,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__stor
       {
         .defaultValue.valueString = nil,
         .core.name = "key",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_FieldNumber_Key,
         .core.hasIndex = 4,
         .core.offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_, key),
@@ -7590,9 +7993,11 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__stor
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__storage_)
-                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown | GPBDescriptorInitializationFlag_FieldsWithDefault)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMRPCRegistrationRequest_StatusBarComponentAttributes)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -7603,7 +8008,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob__stor
 #pragma mark - Enum ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type
 
 GPBEnumDescriptor *ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Checkbox\000String\000PositiveFloatingPoint\000Co"
@@ -7622,7 +8027,8 @@ GPBEnumDescriptor *ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_T
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMRPCRegistrationRequest_StatusBarComponentAttributes_Knob_Type_IsValidValue
                               extraTextFormatInfo:extraTextFormatInfo];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -7662,7 +8068,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__stor
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "data_p",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon_FieldNumber_Data_p,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__storage_, data_p),
@@ -7671,7 +8077,7 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__stor
       },
       {
         .name = "scale",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon_FieldNumber_Scale,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__storage_, scale),
@@ -7686,9 +8092,11 @@ typedef struct ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__stor
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMRPCRegistrationRequest_StatusBarComponentAttributes_Icon__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest_StatusBarComponentAttributes)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMRPCRegistrationRequest_StatusBarComponentAttributes)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -7717,7 +8125,7 @@ typedef struct ITMRPCRegistrationRequest_ContextMenuAttributes__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "displayName",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_DisplayName,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_ContextMenuAttributes__storage_, displayName),
@@ -7726,7 +8134,7 @@ typedef struct ITMRPCRegistrationRequest_ContextMenuAttributes__storage_ {
       },
       {
         .name = "uniqueIdentifier",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRPCRegistrationRequest_ContextMenuAttributes_FieldNumber_UniqueIdentifier,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMRPCRegistrationRequest_ContextMenuAttributes__storage_, uniqueIdentifier),
@@ -7741,9 +8149,11 @@ typedef struct ITMRPCRegistrationRequest_ContextMenuAttributes__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMRPCRegistrationRequest_ContextMenuAttributes__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMRPCRegistrationRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMRPCRegistrationRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -7785,8 +8195,10 @@ typedef struct ITMRegisterToolResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMRegisterToolResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -7797,7 +8209,7 @@ typedef struct ITMRegisterToolResponse__storage_ {
 #pragma mark - Enum ITMRegisterToolResponse_Status
 
 GPBEnumDescriptor *ITMRegisterToolResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000RequestMalformed\000PermissionDenied\000";
@@ -7812,7 +8224,8 @@ GPBEnumDescriptor *ITMRegisterToolResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMRegisterToolResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -7875,7 +8288,7 @@ typedef struct ITMKeystrokePattern__storage_ {
       },
       {
         .name = "keycodesArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMKeystrokePattern_FieldNumber_KeycodesArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMKeystrokePattern__storage_, keycodesArray),
@@ -7884,7 +8297,7 @@ typedef struct ITMKeystrokePattern__storage_ {
       },
       {
         .name = "charactersArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMKeystrokePattern_FieldNumber_CharactersArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMKeystrokePattern__storage_, charactersArray),
@@ -7893,7 +8306,7 @@ typedef struct ITMKeystrokePattern__storage_ {
       },
       {
         .name = "charactersIgnoringModifiersArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMKeystrokePattern_FieldNumber_CharactersIgnoringModifiersArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMKeystrokePattern__storage_, charactersIgnoringModifiersArray),
@@ -7908,8 +8321,10 @@ typedef struct ITMKeystrokePattern__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMKeystrokePattern__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -7937,7 +8352,7 @@ typedef struct ITMKeystrokeMonitorRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "patternsToIgnoreArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMKeystrokePattern),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMKeystrokePattern),
         .number = ITMKeystrokeMonitorRequest_FieldNumber_PatternsToIgnoreArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMKeystrokeMonitorRequest__storage_, patternsToIgnoreArray),
@@ -7946,7 +8361,7 @@ typedef struct ITMKeystrokeMonitorRequest__storage_ {
       },
       {
         .name = "advanced",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMKeystrokeMonitorRequest_FieldNumber_Advanced,
         .hasIndex = 0,
         .offset = 1,  // Stored in _has_storage_ to save space.
@@ -7961,8 +8376,10 @@ typedef struct ITMKeystrokeMonitorRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMKeystrokeMonitorRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -7989,7 +8406,7 @@ typedef struct ITMKeystrokeFilterRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "patternsToIgnoreArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMKeystrokePattern),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMKeystrokePattern),
         .number = ITMKeystrokeFilterRequest_FieldNumber_PatternsToIgnoreArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMKeystrokeFilterRequest__storage_, patternsToIgnoreArray),
@@ -8004,8 +8421,10 @@ typedef struct ITMKeystrokeFilterRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMKeystrokeFilterRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8037,7 +8456,7 @@ typedef struct ITMVariableMonitorRequest__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "name",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMVariableMonitorRequest_FieldNumber_Name,
         .core.hasIndex = 0,
         .core.offset = (uint32_t)offsetof(ITMVariableMonitorRequest__storage_, name),
@@ -8057,7 +8476,7 @@ typedef struct ITMVariableMonitorRequest__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "identifier",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMVariableMonitorRequest_FieldNumber_Identifier,
         .core.hasIndex = 2,
         .core.offset = (uint32_t)offsetof(ITMVariableMonitorRequest__storage_, identifier),
@@ -8072,8 +8491,10 @@ typedef struct ITMVariableMonitorRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMVariableMonitorRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown | GPBDescriptorInitializationFlag_FieldsWithDefault)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8100,7 +8521,7 @@ typedef struct ITMProfileChangeRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "guid",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMProfileChangeRequest_FieldNumber_Guid,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMProfileChangeRequest__storage_, guid),
@@ -8115,8 +8536,10 @@ typedef struct ITMProfileChangeRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMProfileChangeRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8158,8 +8581,10 @@ typedef struct ITMPromptMonitorRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPromptMonitorRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8203,7 +8628,7 @@ typedef struct ITMNotificationRequest__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "session",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMNotificationRequest_FieldNumber_Session,
         .core.hasIndex = 0,
         .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, session),
@@ -8213,7 +8638,7 @@ typedef struct ITMNotificationRequest__storage_ {
       {
         .defaultValue.valueBool = NO,
         .core.name = "subscribe",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMNotificationRequest_FieldNumber_Subscribe,
         .core.hasIndex = 1,
         .core.offset = 2,  // Stored in _has_storage_ to save space.
@@ -8233,7 +8658,7 @@ typedef struct ITMNotificationRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "rpcRegistrationRequest",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMRPCRegistrationRequest),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMRPCRegistrationRequest),
         .core.number = ITMNotificationRequest_FieldNumber_RpcRegistrationRequest,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, rpcRegistrationRequest),
@@ -8243,7 +8668,7 @@ typedef struct ITMNotificationRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "keystrokeMonitorRequest",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMKeystrokeMonitorRequest),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMKeystrokeMonitorRequest),
         .core.number = ITMNotificationRequest_FieldNumber_KeystrokeMonitorRequest,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, keystrokeMonitorRequest),
@@ -8253,7 +8678,7 @@ typedef struct ITMNotificationRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "variableMonitorRequest",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMVariableMonitorRequest),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMVariableMonitorRequest),
         .core.number = ITMNotificationRequest_FieldNumber_VariableMonitorRequest,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, variableMonitorRequest),
@@ -8263,7 +8688,7 @@ typedef struct ITMNotificationRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "profileChangeRequest",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMProfileChangeRequest),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMProfileChangeRequest),
         .core.number = ITMNotificationRequest_FieldNumber_ProfileChangeRequest,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, profileChangeRequest),
@@ -8273,7 +8698,7 @@ typedef struct ITMNotificationRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "keystrokeFilterRequest",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMKeystrokeFilterRequest),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMKeystrokeFilterRequest),
         .core.number = ITMNotificationRequest_FieldNumber_KeystrokeFilterRequest,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, keystrokeFilterRequest),
@@ -8283,7 +8708,7 @@ typedef struct ITMNotificationRequest__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "promptMonitorRequest",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMPromptMonitorRequest),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMPromptMonitorRequest),
         .core.number = ITMNotificationRequest_FieldNumber_PromptMonitorRequest,
         .core.hasIndex = -1,
         .core.offset = (uint32_t)offsetof(ITMNotificationRequest__storage_, promptMonitorRequest),
@@ -8298,14 +8723,16 @@ typedef struct ITMNotificationRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMNotificationRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown | GPBDescriptorInitializationFlag_FieldsWithDefault)];
     static const char *oneofs[] = {
       "arguments",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8314,9 +8741,9 @@ typedef struct ITMNotificationRequest__storage_ {
 @end
 
 void ITMNotificationRequest_ClearArgumentsOneOfCase(ITMNotificationRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMNotificationRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMNotificationResponse
 
@@ -8352,8 +8779,10 @@ typedef struct ITMNotificationResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMNotificationResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8364,7 +8793,7 @@ typedef struct ITMNotificationResponse__storage_ {
 #pragma mark - Enum ITMNotificationResponse_Status
 
 GPBEnumDescriptor *ITMNotificationResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000RequestMalformed\000NotS"
@@ -8385,7 +8814,8 @@ GPBEnumDescriptor *ITMNotificationResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMNotificationResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -8450,7 +8880,7 @@ typedef struct ITMNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "keystrokeNotification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMKeystrokeNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMKeystrokeNotification),
         .number = ITMNotification_FieldNumber_KeystrokeNotification,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, keystrokeNotification),
@@ -8459,7 +8889,7 @@ typedef struct ITMNotification__storage_ {
       },
       {
         .name = "screenUpdateNotification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMScreenUpdateNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMScreenUpdateNotification),
         .number = ITMNotification_FieldNumber_ScreenUpdateNotification,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, screenUpdateNotification),
@@ -8468,7 +8898,7 @@ typedef struct ITMNotification__storage_ {
       },
       {
         .name = "promptNotification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPromptNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPromptNotification),
         .number = ITMNotification_FieldNumber_PromptNotification,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, promptNotification),
@@ -8477,7 +8907,7 @@ typedef struct ITMNotification__storage_ {
       },
       {
         .name = "locationChangeNotification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMLocationChangeNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMLocationChangeNotification),
         .number = ITMNotification_FieldNumber_LocationChangeNotification,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, locationChangeNotification),
@@ -8486,7 +8916,7 @@ typedef struct ITMNotification__storage_ {
       },
       {
         .name = "customEscapeSequenceNotification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCustomEscapeSequenceNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCustomEscapeSequenceNotification),
         .number = ITMNotification_FieldNumber_CustomEscapeSequenceNotification,
         .hasIndex = 4,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, customEscapeSequenceNotification),
@@ -8495,7 +8925,7 @@ typedef struct ITMNotification__storage_ {
       },
       {
         .name = "newSessionNotification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMNewSessionNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMNewSessionNotification),
         .number = ITMNotification_FieldNumber_NewSessionNotification,
         .hasIndex = 5,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, newSessionNotification),
@@ -8504,7 +8934,7 @@ typedef struct ITMNotification__storage_ {
       },
       {
         .name = "terminateSessionNotification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMTerminateSessionNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMTerminateSessionNotification),
         .number = ITMNotification_FieldNumber_TerminateSessionNotification,
         .hasIndex = 6,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, terminateSessionNotification),
@@ -8513,7 +8943,7 @@ typedef struct ITMNotification__storage_ {
       },
       {
         .name = "layoutChangedNotification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMLayoutChangedNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMLayoutChangedNotification),
         .number = ITMNotification_FieldNumber_LayoutChangedNotification,
         .hasIndex = 7,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, layoutChangedNotification),
@@ -8522,7 +8952,7 @@ typedef struct ITMNotification__storage_ {
       },
       {
         .name = "focusChangedNotification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMFocusChangedNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMFocusChangedNotification),
         .number = ITMNotification_FieldNumber_FocusChangedNotification,
         .hasIndex = 8,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, focusChangedNotification),
@@ -8531,7 +8961,7 @@ typedef struct ITMNotification__storage_ {
       },
       {
         .name = "serverOriginatedRpcNotification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMServerOriginatedRPCNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMServerOriginatedRPCNotification),
         .number = ITMNotification_FieldNumber_ServerOriginatedRpcNotification,
         .hasIndex = 9,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, serverOriginatedRpcNotification),
@@ -8540,7 +8970,7 @@ typedef struct ITMNotification__storage_ {
       },
       {
         .name = "broadcastDomainsChanged",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMBroadcastDomainsChangedNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMBroadcastDomainsChangedNotification),
         .number = ITMNotification_FieldNumber_BroadcastDomainsChanged,
         .hasIndex = 10,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, broadcastDomainsChanged),
@@ -8549,7 +8979,7 @@ typedef struct ITMNotification__storage_ {
       },
       {
         .name = "variableChangedNotification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMVariableChangedNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMVariableChangedNotification),
         .number = ITMNotification_FieldNumber_VariableChangedNotification,
         .hasIndex = 11,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, variableChangedNotification),
@@ -8558,7 +8988,7 @@ typedef struct ITMNotification__storage_ {
       },
       {
         .name = "profileChangedNotification",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMProfileChangedNotification),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMProfileChangedNotification),
         .number = ITMNotification_FieldNumber_ProfileChangedNotification,
         .hasIndex = 12,
         .offset = (uint32_t)offsetof(ITMNotification__storage_, profileChangedNotification),
@@ -8573,8 +9003,10 @@ typedef struct ITMNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8601,7 +9033,7 @@ typedef struct ITMProfileChangedNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "guid",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMProfileChangedNotification_FieldNumber_Guid,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMProfileChangedNotification__storage_, guid),
@@ -8616,8 +9048,10 @@ typedef struct ITMProfileChangedNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMProfileChangedNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8661,7 +9095,7 @@ typedef struct ITMVariableChangedNotification__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "identifier",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMVariableChangedNotification_FieldNumber_Identifier,
         .core.hasIndex = 1,
         .core.offset = (uint32_t)offsetof(ITMVariableChangedNotification__storage_, identifier),
@@ -8671,7 +9105,7 @@ typedef struct ITMVariableChangedNotification__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "name",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMVariableChangedNotification_FieldNumber_Name,
         .core.hasIndex = 2,
         .core.offset = (uint32_t)offsetof(ITMVariableChangedNotification__storage_, name),
@@ -8681,7 +9115,7 @@ typedef struct ITMVariableChangedNotification__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "jsonNewValue",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMVariableChangedNotification_FieldNumber_JsonNewValue,
         .core.hasIndex = 3,
         .core.offset = (uint32_t)offsetof(ITMVariableChangedNotification__storage_, jsonNewValue),
@@ -8696,8 +9130,10 @@ typedef struct ITMVariableChangedNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMVariableChangedNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown | GPBDescriptorInitializationFlag_FieldsWithDefault)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8724,7 +9160,7 @@ typedef struct ITMBroadcastDomainsChangedNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "broadcastDomainsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMBroadcastDomain),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMBroadcastDomain),
         .number = ITMBroadcastDomainsChangedNotification_FieldNumber_BroadcastDomainsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMBroadcastDomainsChangedNotification__storage_, broadcastDomainsArray),
@@ -8739,8 +9175,10 @@ typedef struct ITMBroadcastDomainsChangedNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMBroadcastDomainsChangedNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8769,7 +9207,7 @@ typedef struct ITMServerOriginatedRPC__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMServerOriginatedRPC_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMServerOriginatedRPC__storage_, name),
@@ -8778,7 +9216,7 @@ typedef struct ITMServerOriginatedRPC__storage_ {
       },
       {
         .name = "argumentsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMServerOriginatedRPC_RPCArgument),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMServerOriginatedRPC_RPCArgument),
         .number = ITMServerOriginatedRPC_FieldNumber_ArgumentsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMServerOriginatedRPC__storage_, argumentsArray),
@@ -8793,8 +9231,10 @@ typedef struct ITMServerOriginatedRPC__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMServerOriginatedRPC__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8823,7 +9263,7 @@ typedef struct ITMServerOriginatedRPC_RPCArgument__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMServerOriginatedRPC_RPCArgument_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMServerOriginatedRPC_RPCArgument__storage_, name),
@@ -8832,7 +9272,7 @@ typedef struct ITMServerOriginatedRPC_RPCArgument__storage_ {
       },
       {
         .name = "jsonValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMServerOriginatedRPC_RPCArgument_FieldNumber_JsonValue,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedRPC_RPCArgument__storage_, jsonValue),
@@ -8847,9 +9287,11 @@ typedef struct ITMServerOriginatedRPC_RPCArgument__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMServerOriginatedRPC_RPCArgument__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMServerOriginatedRPC)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMServerOriginatedRPC)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8878,7 +9320,7 @@ typedef struct ITMServerOriginatedRPCNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "requestId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMServerOriginatedRPCNotification_FieldNumber_RequestId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMServerOriginatedRPCNotification__storage_, requestId),
@@ -8887,7 +9329,7 @@ typedef struct ITMServerOriginatedRPCNotification__storage_ {
       },
       {
         .name = "rpc",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMServerOriginatedRPC),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMServerOriginatedRPC),
         .number = ITMServerOriginatedRPCNotification_FieldNumber_Rpc,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMServerOriginatedRPCNotification__storage_, rpc),
@@ -8902,8 +9344,10 @@ typedef struct ITMServerOriginatedRPCNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMServerOriginatedRPCNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -8940,7 +9384,7 @@ typedef struct ITMKeystrokeNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "characters",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMKeystrokeNotification_FieldNumber_Characters,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMKeystrokeNotification__storage_, characters),
@@ -8949,7 +9393,7 @@ typedef struct ITMKeystrokeNotification__storage_ {
       },
       {
         .name = "charactersIgnoringModifiers",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMKeystrokeNotification_FieldNumber_CharactersIgnoringModifiers,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMKeystrokeNotification__storage_, charactersIgnoringModifiers),
@@ -8967,7 +9411,7 @@ typedef struct ITMKeystrokeNotification__storage_ {
       },
       {
         .name = "keyCode",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMKeystrokeNotification_FieldNumber_KeyCode,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMKeystrokeNotification__storage_, keyCode),
@@ -8976,7 +9420,7 @@ typedef struct ITMKeystrokeNotification__storage_ {
       },
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMKeystrokeNotification_FieldNumber_Session,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMKeystrokeNotification__storage_, session),
@@ -9000,13 +9444,15 @@ typedef struct ITMKeystrokeNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMKeystrokeNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
 #if !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
     static const char *extraTextFormatInfo =
         "\002\002\033\000\004\007\000";
     [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
 #endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9017,7 +9463,7 @@ typedef struct ITMKeystrokeNotification__storage_ {
 #pragma mark - Enum ITMKeystrokeNotification_Action
 
 GPBEnumDescriptor *ITMKeystrokeNotification_Action_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "KeyDown\000KeyUp\000FlagsChanged\000";
@@ -9032,7 +9478,8 @@ GPBEnumDescriptor *ITMKeystrokeNotification_Action_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMKeystrokeNotification_Action_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -9069,7 +9516,7 @@ typedef struct ITMScreenUpdateNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMScreenUpdateNotification_FieldNumber_Session,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMScreenUpdateNotification__storage_, session),
@@ -9084,8 +9531,10 @@ typedef struct ITMScreenUpdateNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMScreenUpdateNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9114,7 +9563,7 @@ typedef struct ITMPromptNotificationPrompt__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "placeholder",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPromptNotificationPrompt_FieldNumber_Placeholder,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMPromptNotificationPrompt__storage_, placeholder),
@@ -9123,7 +9572,7 @@ typedef struct ITMPromptNotificationPrompt__storage_ {
       },
       {
         .name = "prompt",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMGetPromptResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMGetPromptResponse),
         .number = ITMPromptNotificationPrompt_FieldNumber_Prompt,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMPromptNotificationPrompt__storage_, prompt),
@@ -9138,8 +9587,10 @@ typedef struct ITMPromptNotificationPrompt__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPromptNotificationPrompt__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9166,7 +9617,7 @@ typedef struct ITMPromptNotificationCommandStart__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "command",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPromptNotificationCommandStart_FieldNumber_Command,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMPromptNotificationCommandStart__storage_, command),
@@ -9181,8 +9632,10 @@ typedef struct ITMPromptNotificationCommandStart__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPromptNotificationCommandStart__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9209,7 +9662,7 @@ typedef struct ITMPromptNotificationCommandEnd__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "status",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPromptNotificationCommandEnd_FieldNumber_Status,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMPromptNotificationCommandEnd__storage_, status),
@@ -9224,8 +9677,10 @@ typedef struct ITMPromptNotificationCommandEnd__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPromptNotificationCommandEnd__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9261,7 +9716,7 @@ typedef struct ITMPromptNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPromptNotification_FieldNumber_Session,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMPromptNotification__storage_, session),
@@ -9270,7 +9725,7 @@ typedef struct ITMPromptNotification__storage_ {
       },
       {
         .name = "prompt",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPromptNotificationPrompt),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPromptNotificationPrompt),
         .number = ITMPromptNotification_FieldNumber_Prompt,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPromptNotification__storage_, prompt),
@@ -9279,7 +9734,7 @@ typedef struct ITMPromptNotification__storage_ {
       },
       {
         .name = "commandStart",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPromptNotificationCommandStart),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPromptNotificationCommandStart),
         .number = ITMPromptNotification_FieldNumber_CommandStart,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPromptNotification__storage_, commandStart),
@@ -9288,7 +9743,7 @@ typedef struct ITMPromptNotification__storage_ {
       },
       {
         .name = "commandEnd",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPromptNotificationCommandEnd),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPromptNotificationCommandEnd),
         .number = ITMPromptNotification_FieldNumber_CommandEnd,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMPromptNotification__storage_, commandEnd),
@@ -9297,7 +9752,7 @@ typedef struct ITMPromptNotification__storage_ {
       },
       {
         .name = "uniquePromptId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPromptNotification_FieldNumber_UniquePromptId,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMPromptNotification__storage_, uniquePromptId),
@@ -9312,14 +9767,16 @@ typedef struct ITMPromptNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPromptNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "event",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9328,9 +9785,9 @@ typedef struct ITMPromptNotification__storage_ {
 @end
 
 void ITMPromptNotification_ClearEventOneOfCase(ITMPromptNotification *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMPromptNotification descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMLocationChangeNotification
 
@@ -9357,7 +9814,7 @@ typedef struct ITMLocationChangeNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "hostName",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMLocationChangeNotification_FieldNumber_HostName,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMLocationChangeNotification__storage_, hostName),
@@ -9366,7 +9823,7 @@ typedef struct ITMLocationChangeNotification__storage_ {
       },
       {
         .name = "userName",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMLocationChangeNotification_FieldNumber_UserName,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMLocationChangeNotification__storage_, userName),
@@ -9375,7 +9832,7 @@ typedef struct ITMLocationChangeNotification__storage_ {
       },
       {
         .name = "directory",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMLocationChangeNotification_FieldNumber_Directory,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMLocationChangeNotification__storage_, directory),
@@ -9384,7 +9841,7 @@ typedef struct ITMLocationChangeNotification__storage_ {
       },
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMLocationChangeNotification_FieldNumber_Session,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMLocationChangeNotification__storage_, session),
@@ -9399,8 +9856,10 @@ typedef struct ITMLocationChangeNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMLocationChangeNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9431,7 +9890,7 @@ typedef struct ITMCustomEscapeSequenceNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCustomEscapeSequenceNotification_FieldNumber_Session,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMCustomEscapeSequenceNotification__storage_, session),
@@ -9440,7 +9899,7 @@ typedef struct ITMCustomEscapeSequenceNotification__storage_ {
       },
       {
         .name = "senderIdentity",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCustomEscapeSequenceNotification_FieldNumber_SenderIdentity,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMCustomEscapeSequenceNotification__storage_, senderIdentity),
@@ -9449,7 +9908,7 @@ typedef struct ITMCustomEscapeSequenceNotification__storage_ {
       },
       {
         .name = "payload",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCustomEscapeSequenceNotification_FieldNumber_Payload,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMCustomEscapeSequenceNotification__storage_, payload),
@@ -9464,8 +9923,10 @@ typedef struct ITMCustomEscapeSequenceNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMCustomEscapeSequenceNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9492,7 +9953,7 @@ typedef struct ITMNewSessionNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "sessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMNewSessionNotification_FieldNumber_SessionId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMNewSessionNotification__storage_, sessionId),
@@ -9507,8 +9968,10 @@ typedef struct ITMNewSessionNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMNewSessionNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9541,7 +10004,7 @@ typedef struct ITMFocusChangedNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "applicationActive",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMFocusChangedNotification_FieldNumber_ApplicationActive,
         .hasIndex = -1,
         .offset = 0,  // Stored in _has_storage_ to save space.
@@ -9550,7 +10013,7 @@ typedef struct ITMFocusChangedNotification__storage_ {
       },
       {
         .name = "window",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMFocusChangedNotification_Window),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMFocusChangedNotification_Window),
         .number = ITMFocusChangedNotification_FieldNumber_Window,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMFocusChangedNotification__storage_, window),
@@ -9559,7 +10022,7 @@ typedef struct ITMFocusChangedNotification__storage_ {
       },
       {
         .name = "selectedTab",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMFocusChangedNotification_FieldNumber_SelectedTab,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMFocusChangedNotification__storage_, selectedTab),
@@ -9568,7 +10031,7 @@ typedef struct ITMFocusChangedNotification__storage_ {
       },
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMFocusChangedNotification_FieldNumber_Session,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMFocusChangedNotification__storage_, session),
@@ -9583,14 +10046,16 @@ typedef struct ITMFocusChangedNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMFocusChangedNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "event",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9599,9 +10064,9 @@ typedef struct ITMFocusChangedNotification__storage_ {
 @end
 
 void ITMFocusChangedNotification_ClearEventOneOfCase(ITMFocusChangedNotification *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMFocusChangedNotification descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMFocusChangedNotification_Window
 
@@ -9633,7 +10098,7 @@ typedef struct ITMFocusChangedNotification_Window__storage_ {
       },
       {
         .name = "windowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMFocusChangedNotification_Window_FieldNumber_WindowId,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMFocusChangedNotification_Window__storage_, windowId),
@@ -9648,9 +10113,11 @@ typedef struct ITMFocusChangedNotification_Window__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMFocusChangedNotification_Window__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMFocusChangedNotification)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMFocusChangedNotification)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9661,7 +10128,7 @@ typedef struct ITMFocusChangedNotification_Window__storage_ {
 #pragma mark - Enum ITMFocusChangedNotification_Window_WindowStatus
 
 GPBEnumDescriptor *ITMFocusChangedNotification_Window_WindowStatus_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "TerminalWindowBecameKey\000TerminalWindowIs"
@@ -9677,7 +10144,8 @@ GPBEnumDescriptor *ITMFocusChangedNotification_Window_WindowStatus_EnumDescripto
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMFocusChangedNotification_Window_WindowStatus_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -9714,7 +10182,7 @@ typedef struct ITMTerminateSessionNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "sessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTerminateSessionNotification_FieldNumber_SessionId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMTerminateSessionNotification__storage_, sessionId),
@@ -9729,8 +10197,10 @@ typedef struct ITMTerminateSessionNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTerminateSessionNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9757,7 +10227,7 @@ typedef struct ITMLayoutChangedNotification__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "listSessionsResponse",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsResponse),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMListSessionsResponse),
         .number = ITMLayoutChangedNotification_FieldNumber_ListSessionsResponse,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMLayoutChangedNotification__storage_, listSessionsResponse),
@@ -9772,8 +10242,10 @@ typedef struct ITMLayoutChangedNotification__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMLayoutChangedNotification__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9802,7 +10274,7 @@ typedef struct ITMGetBufferRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetBufferRequest_FieldNumber_Session,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMGetBufferRequest__storage_, session),
@@ -9811,7 +10283,7 @@ typedef struct ITMGetBufferRequest__storage_ {
       },
       {
         .name = "lineRange",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMLineRange),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMLineRange),
         .number = ITMGetBufferRequest_FieldNumber_LineRange,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMGetBufferRequest__storage_, lineRange),
@@ -9826,8 +10298,10 @@ typedef struct ITMGetBufferRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMGetBufferRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9873,7 +10347,7 @@ typedef struct ITMGetBufferResponse__storage_ {
       },
       {
         .name = "range",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMRange),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMRange),
         .number = ITMGetBufferResponse_FieldNumber_Range,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, range),
@@ -9882,7 +10356,7 @@ typedef struct ITMGetBufferResponse__storage_ {
       },
       {
         .name = "contentsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMLineContents),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMLineContents),
         .number = ITMGetBufferResponse_FieldNumber_ContentsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, contentsArray),
@@ -9891,7 +10365,7 @@ typedef struct ITMGetBufferResponse__storage_ {
       },
       {
         .name = "cursor",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoord),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCoord),
         .number = ITMGetBufferResponse_FieldNumber_Cursor,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, cursor),
@@ -9900,7 +10374,7 @@ typedef struct ITMGetBufferResponse__storage_ {
       },
       {
         .name = "numLinesAboveScreen",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetBufferResponse_FieldNumber_NumLinesAboveScreen,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, numLinesAboveScreen),
@@ -9909,7 +10383,7 @@ typedef struct ITMGetBufferResponse__storage_ {
       },
       {
         .name = "windowedCoordRange",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMWindowedCoordRange),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMWindowedCoordRange),
         .number = ITMGetBufferResponse_FieldNumber_WindowedCoordRange,
         .hasIndex = 4,
         .offset = (uint32_t)offsetof(ITMGetBufferResponse__storage_, windowedCoordRange),
@@ -9924,8 +10398,10 @@ typedef struct ITMGetBufferResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMGetBufferResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -9936,7 +10412,7 @@ typedef struct ITMGetBufferResponse__storage_ {
 #pragma mark - Enum ITMGetBufferResponse_Status
 
 GPBEnumDescriptor *ITMGetBufferResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000InvalidLineRange\000Requ"
@@ -9953,7 +10429,8 @@ GPBEnumDescriptor *ITMGetBufferResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMGetBufferResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -9993,7 +10470,7 @@ typedef struct ITMGetPromptRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetPromptRequest_FieldNumber_Session,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMGetPromptRequest__storage_, session),
@@ -10002,7 +10479,7 @@ typedef struct ITMGetPromptRequest__storage_ {
       },
       {
         .name = "uniquePromptId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetPromptRequest_FieldNumber_UniquePromptId,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMGetPromptRequest__storage_, uniquePromptId),
@@ -10017,8 +10494,10 @@ typedef struct ITMGetPromptRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMGetPromptRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10070,7 +10549,7 @@ typedef struct ITMGetPromptResponse__storage_ {
       },
       {
         .name = "promptRange",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoordRange),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCoordRange),
         .number = ITMGetPromptResponse_FieldNumber_PromptRange,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, promptRange),
@@ -10079,7 +10558,7 @@ typedef struct ITMGetPromptResponse__storage_ {
       },
       {
         .name = "commandRange",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoordRange),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCoordRange),
         .number = ITMGetPromptResponse_FieldNumber_CommandRange,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, commandRange),
@@ -10088,7 +10567,7 @@ typedef struct ITMGetPromptResponse__storage_ {
       },
       {
         .name = "outputRange",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoordRange),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCoordRange),
         .number = ITMGetPromptResponse_FieldNumber_OutputRange,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, outputRange),
@@ -10097,7 +10576,7 @@ typedef struct ITMGetPromptResponse__storage_ {
       },
       {
         .name = "workingDirectory",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetPromptResponse_FieldNumber_WorkingDirectory,
         .hasIndex = 4,
         .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, workingDirectory),
@@ -10106,7 +10585,7 @@ typedef struct ITMGetPromptResponse__storage_ {
       },
       {
         .name = "command",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetPromptResponse_FieldNumber_Command,
         .hasIndex = 5,
         .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, command),
@@ -10124,7 +10603,7 @@ typedef struct ITMGetPromptResponse__storage_ {
       },
       {
         .name = "exitStatus",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetPromptResponse_FieldNumber_ExitStatus,
         .hasIndex = 7,
         .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, exitStatus),
@@ -10133,7 +10612,7 @@ typedef struct ITMGetPromptResponse__storage_ {
       },
       {
         .name = "uniquePromptId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetPromptResponse_FieldNumber_UniquePromptId,
         .hasIndex = 8,
         .offset = (uint32_t)offsetof(ITMGetPromptResponse__storage_, uniquePromptId),
@@ -10148,8 +10627,10 @@ typedef struct ITMGetPromptResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMGetPromptResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10160,7 +10641,7 @@ typedef struct ITMGetPromptResponse__storage_ {
 #pragma mark - Enum ITMGetPromptResponse_Status
 
 GPBEnumDescriptor *ITMGetPromptResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000RequestMalformed\000Prom"
@@ -10177,7 +10658,8 @@ GPBEnumDescriptor *ITMGetPromptResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMGetPromptResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -10199,7 +10681,7 @@ BOOL ITMGetPromptResponse_Status_IsValidValue(int32_t value__) {
 #pragma mark - Enum ITMGetPromptResponse_State
 
 GPBEnumDescriptor *ITMGetPromptResponse_State_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Editing\000Running\000Finished\000";
@@ -10214,7 +10696,8 @@ GPBEnumDescriptor *ITMGetPromptResponse_State_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMGetPromptResponse_State_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -10255,7 +10738,7 @@ typedef struct ITMListPromptsRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMListPromptsRequest_FieldNumber_Session,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMListPromptsRequest__storage_, session),
@@ -10264,7 +10747,7 @@ typedef struct ITMListPromptsRequest__storage_ {
       },
       {
         .name = "firstUniqueId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMListPromptsRequest_FieldNumber_FirstUniqueId,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMListPromptsRequest__storage_, firstUniqueId),
@@ -10273,7 +10756,7 @@ typedef struct ITMListPromptsRequest__storage_ {
       },
       {
         .name = "lastUniqueId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMListPromptsRequest_FieldNumber_LastUniqueId,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMListPromptsRequest__storage_, lastUniqueId),
@@ -10288,8 +10771,10 @@ typedef struct ITMListPromptsRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMListPromptsRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10327,7 +10812,7 @@ typedef struct ITMListPromptsResponse__storage_ {
       },
       {
         .name = "uniquePromptIdArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMListPromptsResponse_FieldNumber_UniquePromptIdArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMListPromptsResponse__storage_, uniquePromptIdArray),
@@ -10342,8 +10827,10 @@ typedef struct ITMListPromptsResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMListPromptsResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10354,7 +10841,7 @@ typedef struct ITMListPromptsResponse__storage_ {
 #pragma mark - Enum ITMListPromptsResponse_Status
 
 GPBEnumDescriptor *ITMListPromptsResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000";
@@ -10368,7 +10855,8 @@ GPBEnumDescriptor *ITMListPromptsResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMListPromptsResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -10406,7 +10894,7 @@ typedef struct ITMGetProfilePropertyRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetProfilePropertyRequest_FieldNumber_Session,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMGetProfilePropertyRequest__storage_, session),
@@ -10415,7 +10903,7 @@ typedef struct ITMGetProfilePropertyRequest__storage_ {
       },
       {
         .name = "keysArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMGetProfilePropertyRequest_FieldNumber_KeysArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMGetProfilePropertyRequest__storage_, keysArray),
@@ -10430,8 +10918,10 @@ typedef struct ITMGetProfilePropertyRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMGetProfilePropertyRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10460,7 +10950,7 @@ typedef struct ITMProfileProperty__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "key",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMProfileProperty_FieldNumber_Key,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMProfileProperty__storage_, key),
@@ -10469,7 +10959,7 @@ typedef struct ITMProfileProperty__storage_ {
       },
       {
         .name = "jsonValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMProfileProperty_FieldNumber_JsonValue,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMProfileProperty__storage_, jsonValue),
@@ -10484,8 +10974,10 @@ typedef struct ITMProfileProperty__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMProfileProperty__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10523,7 +11015,7 @@ typedef struct ITMGetProfilePropertyResponse__storage_ {
       },
       {
         .name = "propertiesArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMProfileProperty),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMProfileProperty),
         .number = ITMGetProfilePropertyResponse_FieldNumber_PropertiesArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMGetProfilePropertyResponse__storage_, propertiesArray),
@@ -10538,8 +11030,10 @@ typedef struct ITMGetProfilePropertyResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMGetProfilePropertyResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10550,7 +11044,7 @@ typedef struct ITMGetProfilePropertyResponse__storage_ {
 #pragma mark - Enum ITMGetProfilePropertyResponse_Status
 
 GPBEnumDescriptor *ITMGetProfilePropertyResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000RequestMalformed\000Erro"
@@ -10567,7 +11061,8 @@ GPBEnumDescriptor *ITMGetProfilePropertyResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMGetProfilePropertyResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -10614,7 +11109,7 @@ typedef struct ITMSetProfilePropertyRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSetProfilePropertyRequest_FieldNumber_Session,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest__storage_, session),
@@ -10623,7 +11118,7 @@ typedef struct ITMSetProfilePropertyRequest__storage_ {
       },
       {
         .name = "guidList",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetProfilePropertyRequest_GuidList),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSetProfilePropertyRequest_GuidList),
         .number = ITMSetProfilePropertyRequest_FieldNumber_GuidList,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest__storage_, guidList),
@@ -10632,7 +11127,7 @@ typedef struct ITMSetProfilePropertyRequest__storage_ {
       },
       {
         .name = "key",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSetProfilePropertyRequest_FieldNumber_Key,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest__storage_, key),
@@ -10641,7 +11136,7 @@ typedef struct ITMSetProfilePropertyRequest__storage_ {
       },
       {
         .name = "jsonValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSetProfilePropertyRequest_FieldNumber_JsonValue,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest__storage_, jsonValue),
@@ -10650,7 +11145,7 @@ typedef struct ITMSetProfilePropertyRequest__storage_ {
       },
       {
         .name = "assignmentsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSetProfilePropertyRequest_Assignment),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSetProfilePropertyRequest_Assignment),
         .number = ITMSetProfilePropertyRequest_FieldNumber_AssignmentsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest__storage_, assignmentsArray),
@@ -10665,14 +11160,16 @@ typedef struct ITMSetProfilePropertyRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSetProfilePropertyRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "target",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10681,9 +11178,9 @@ typedef struct ITMSetProfilePropertyRequest__storage_ {
 @end
 
 void ITMSetProfilePropertyRequest_ClearTargetOneOfCase(ITMSetProfilePropertyRequest *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMSetProfilePropertyRequest descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMSetProfilePropertyRequest_GuidList
 
@@ -10704,7 +11201,7 @@ typedef struct ITMSetProfilePropertyRequest_GuidList__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "guidsArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSetProfilePropertyRequest_GuidList_FieldNumber_GuidsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest_GuidList__storage_, guidsArray),
@@ -10719,9 +11216,11 @@ typedef struct ITMSetProfilePropertyRequest_GuidList__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSetProfilePropertyRequest_GuidList__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMSetProfilePropertyRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMSetProfilePropertyRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10750,7 +11249,7 @@ typedef struct ITMSetProfilePropertyRequest_Assignment__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "key",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSetProfilePropertyRequest_Assignment_FieldNumber_Key,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest_Assignment__storage_, key),
@@ -10759,7 +11258,7 @@ typedef struct ITMSetProfilePropertyRequest_Assignment__storage_ {
       },
       {
         .name = "jsonValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSetProfilePropertyRequest_Assignment_FieldNumber_JsonValue,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMSetProfilePropertyRequest_Assignment__storage_, jsonValue),
@@ -10774,9 +11273,11 @@ typedef struct ITMSetProfilePropertyRequest_Assignment__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSetProfilePropertyRequest_Assignment__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMSetProfilePropertyRequest)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMSetProfilePropertyRequest)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10818,8 +11319,10 @@ typedef struct ITMSetProfilePropertyResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSetProfilePropertyResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10830,7 +11333,7 @@ typedef struct ITMSetProfilePropertyResponse__storage_ {
 #pragma mark - Enum ITMSetProfilePropertyResponse_Status
 
 GPBEnumDescriptor *ITMSetProfilePropertyResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000RequestMalformed\000BadG"
@@ -10847,7 +11350,8 @@ GPBEnumDescriptor *ITMSetProfilePropertyResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMSetProfilePropertyResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -10884,7 +11388,7 @@ typedef struct ITMTransactionRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "begin",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMTransactionRequest_FieldNumber_Begin,
         .hasIndex = 0,
         .offset = 1,  // Stored in _has_storage_ to save space.
@@ -10899,8 +11403,10 @@ typedef struct ITMTransactionRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTransactionRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10942,8 +11448,10 @@ typedef struct ITMTransactionResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMTransactionResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -10954,7 +11462,7 @@ typedef struct ITMTransactionResponse__storage_ {
 #pragma mark - Enum ITMTransactionResponse_Status
 
 GPBEnumDescriptor *ITMTransactionResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000NoTransaction\000AlreadyInTransaction\000";
@@ -10969,7 +11477,8 @@ GPBEnumDescriptor *ITMTransactionResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMTransactionResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -11009,7 +11518,7 @@ typedef struct ITMLineRange__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "screenContentsOnly",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMLineRange_FieldNumber_ScreenContentsOnly,
         .hasIndex = 0,
         .offset = 1,  // Stored in _has_storage_ to save space.
@@ -11018,7 +11527,7 @@ typedef struct ITMLineRange__storage_ {
       },
       {
         .name = "trailingLines",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMLineRange_FieldNumber_TrailingLines,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMLineRange__storage_, trailingLines),
@@ -11027,7 +11536,7 @@ typedef struct ITMLineRange__storage_ {
       },
       {
         .name = "windowedCoordRange",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMWindowedCoordRange),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMWindowedCoordRange),
         .number = ITMLineRange_FieldNumber_WindowedCoordRange,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMLineRange__storage_, windowedCoordRange),
@@ -11042,8 +11551,10 @@ typedef struct ITMLineRange__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMLineRange__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11072,7 +11583,7 @@ typedef struct ITMRange__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "location",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRange_FieldNumber_Location,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMRange__storage_, location),
@@ -11081,7 +11592,7 @@ typedef struct ITMRange__storage_ {
       },
       {
         .name = "length",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMRange_FieldNumber_Length,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMRange__storage_, length),
@@ -11096,8 +11607,10 @@ typedef struct ITMRange__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMRange__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11126,7 +11639,7 @@ typedef struct ITMCoordRange__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "start",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoord),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCoord),
         .number = ITMCoordRange_FieldNumber_Start,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMCoordRange__storage_, start),
@@ -11135,7 +11648,7 @@ typedef struct ITMCoordRange__storage_ {
       },
       {
         .name = "end",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMCoord),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMCoord),
         .number = ITMCoordRange_FieldNumber_End,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMCoordRange__storage_, end),
@@ -11150,8 +11663,10 @@ typedef struct ITMCoordRange__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMCoordRange__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11180,7 +11695,7 @@ typedef struct ITMCoord__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "x",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCoord_FieldNumber_X,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMCoord__storage_, x),
@@ -11189,7 +11704,7 @@ typedef struct ITMCoord__storage_ {
       },
       {
         .name = "y",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCoord_FieldNumber_Y,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMCoord__storage_, y),
@@ -11204,8 +11719,10 @@ typedef struct ITMCoord__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMCoord__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11237,7 +11754,7 @@ typedef struct ITMLineContents__storage_ {
       {
         .defaultValue.valueString = nil,
         .core.name = "text",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMLineContents_FieldNumber_Text,
         .core.hasIndex = 0,
         .core.offset = (uint32_t)offsetof(ITMLineContents__storage_, text),
@@ -11247,7 +11764,7 @@ typedef struct ITMLineContents__storage_ {
       {
         .defaultValue.valueMessage = nil,
         .core.name = "codePointsPerCellArray",
-        .core.dataTypeSpecific.className = GPBStringifySymbol(ITMCodePointsPerCell),
+        .core.dataTypeSpecific.clazz = GPBObjCClass(ITMCodePointsPerCell),
         .core.number = ITMLineContents_FieldNumber_CodePointsPerCellArray,
         .core.hasIndex = GPBNoHasBit,
         .core.offset = (uint32_t)offsetof(ITMLineContents__storage_, codePointsPerCellArray),
@@ -11272,8 +11789,10 @@ typedef struct ITMLineContents__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMLineContents__storage_)
-                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown | GPBDescriptorInitializationFlag_FieldsWithDefault)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11284,7 +11803,7 @@ typedef struct ITMLineContents__storage_ {
 #pragma mark - Enum ITMLineContents_Continuation
 
 GPBEnumDescriptor *ITMLineContents_Continuation_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "ContinuationHardEol\000ContinuationSoftEol\000";
@@ -11298,7 +11817,8 @@ GPBEnumDescriptor *ITMLineContents_Continuation_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMLineContents_Continuation_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -11337,7 +11857,7 @@ typedef struct ITMCodePointsPerCell__storage_ {
       {
         .defaultValue.valueInt32 = 1,
         .core.name = "numCodePoints",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMCodePointsPerCell_FieldNumber_NumCodePoints,
         .core.hasIndex = 0,
         .core.offset = (uint32_t)offsetof(ITMCodePointsPerCell__storage_, numCodePoints),
@@ -11347,7 +11867,7 @@ typedef struct ITMCodePointsPerCell__storage_ {
       {
         .defaultValue.valueInt32 = 0,
         .core.name = "repeats",
-        .core.dataTypeSpecific.className = NULL,
+        .core.dataTypeSpecific.clazz = Nil,
         .core.number = ITMCodePointsPerCell_FieldNumber_Repeats,
         .core.hasIndex = 1,
         .core.offset = (uint32_t)offsetof(ITMCodePointsPerCell__storage_, repeats),
@@ -11362,8 +11882,10 @@ typedef struct ITMCodePointsPerCell__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescriptionWithDefault))
                                    storageSize:sizeof(ITMCodePointsPerCell__storage_)
-                                         flags:GPBDescriptorInitializationFlag_FieldsWithDefault];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown | GPBDescriptorInitializationFlag_FieldsWithDefault)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11392,8 +11914,10 @@ typedef struct ITMListSessionsRequest__storage_ {
                                         fields:NULL
                                     fieldCount:0
                                    storageSize:sizeof(ITMListSessionsRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11423,7 +11947,7 @@ typedef struct ITMSendTextRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSendTextRequest_FieldNumber_Session,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSendTextRequest__storage_, session),
@@ -11432,7 +11956,7 @@ typedef struct ITMSendTextRequest__storage_ {
       },
       {
         .name = "text",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSendTextRequest_FieldNumber_Text,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMSendTextRequest__storage_, text),
@@ -11441,7 +11965,7 @@ typedef struct ITMSendTextRequest__storage_ {
       },
       {
         .name = "suppressBroadcast",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSendTextRequest_FieldNumber_SuppressBroadcast,
         .hasIndex = 2,
         .offset = 3,  // Stored in _has_storage_ to save space.
@@ -11456,8 +11980,10 @@ typedef struct ITMSendTextRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSendTextRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11499,8 +12025,10 @@ typedef struct ITMSendTextResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSendTextResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11511,7 +12039,7 @@ typedef struct ITMSendTextResponse__storage_ {
 #pragma mark - Enum ITMSendTextResponse_Status
 
 GPBEnumDescriptor *ITMSendTextResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000";
@@ -11525,7 +12053,8 @@ GPBEnumDescriptor *ITMSendTextResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMSendTextResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -11563,7 +12092,7 @@ typedef struct ITMSize__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "width",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSize_FieldNumber_Width,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSize__storage_, width),
@@ -11572,7 +12101,7 @@ typedef struct ITMSize__storage_ {
       },
       {
         .name = "height",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSize_FieldNumber_Height,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMSize__storage_, height),
@@ -11587,8 +12116,10 @@ typedef struct ITMSize__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSize__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11617,7 +12148,7 @@ typedef struct ITMPoint__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "x",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPoint_FieldNumber_X,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMPoint__storage_, x),
@@ -11626,7 +12157,7 @@ typedef struct ITMPoint__storage_ {
       },
       {
         .name = "y",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMPoint_FieldNumber_Y,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMPoint__storage_, y),
@@ -11641,8 +12172,10 @@ typedef struct ITMPoint__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMPoint__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11671,7 +12204,7 @@ typedef struct ITMFrame__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "origin",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMPoint),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMPoint),
         .number = ITMFrame_FieldNumber_Origin,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMFrame__storage_, origin),
@@ -11680,7 +12213,7 @@ typedef struct ITMFrame__storage_ {
       },
       {
         .name = "size",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSize),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSize),
         .number = ITMFrame_FieldNumber_Size,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMFrame__storage_, size),
@@ -11695,8 +12228,10 @@ typedef struct ITMFrame__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMFrame__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11729,7 +12264,7 @@ typedef struct ITMSessionSummary__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "uniqueIdentifier",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSessionSummary_FieldNumber_UniqueIdentifier,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSessionSummary__storage_, uniqueIdentifier),
@@ -11738,7 +12273,7 @@ typedef struct ITMSessionSummary__storage_ {
       },
       {
         .name = "frame",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMFrame),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMFrame),
         .number = ITMSessionSummary_FieldNumber_Frame,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMSessionSummary__storage_, frame),
@@ -11747,7 +12282,7 @@ typedef struct ITMSessionSummary__storage_ {
       },
       {
         .name = "gridSize",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSize),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSize),
         .number = ITMSessionSummary_FieldNumber_GridSize,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMSessionSummary__storage_, gridSize),
@@ -11756,7 +12291,7 @@ typedef struct ITMSessionSummary__storage_ {
       },
       {
         .name = "title",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSessionSummary_FieldNumber_Title,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMSessionSummary__storage_, title),
@@ -11771,8 +12306,10 @@ typedef struct ITMSessionSummary__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSessionSummary__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11800,7 +12337,7 @@ typedef struct ITMSplitTreeNode__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "vertical",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSplitTreeNode_FieldNumber_Vertical,
         .hasIndex = 0,
         .offset = 1,  // Stored in _has_storage_ to save space.
@@ -11809,7 +12346,7 @@ typedef struct ITMSplitTreeNode__storage_ {
       },
       {
         .name = "linksArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSplitTreeNode_SplitTreeLink),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSplitTreeNode_SplitTreeLink),
         .number = ITMSplitTreeNode_FieldNumber_LinksArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMSplitTreeNode__storage_, linksArray),
@@ -11824,8 +12361,10 @@ typedef struct ITMSplitTreeNode__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSplitTreeNode__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11855,7 +12394,7 @@ typedef struct ITMSplitTreeNode_SplitTreeLink__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "session",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSessionSummary),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSessionSummary),
         .number = ITMSplitTreeNode_SplitTreeLink_FieldNumber_Session,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMSplitTreeNode_SplitTreeLink__storage_, session),
@@ -11864,7 +12403,7 @@ typedef struct ITMSplitTreeNode_SplitTreeLink__storage_ {
       },
       {
         .name = "node",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSplitTreeNode),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSplitTreeNode),
         .number = ITMSplitTreeNode_SplitTreeLink_FieldNumber_Node,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(ITMSplitTreeNode_SplitTreeLink__storage_, node),
@@ -11879,15 +12418,17 @@ typedef struct ITMSplitTreeNode_SplitTreeLink__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSplitTreeNode_SplitTreeLink__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "child",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMSplitTreeNode)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMSplitTreeNode)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11896,9 +12437,9 @@ typedef struct ITMSplitTreeNode_SplitTreeLink__storage_ {
 @end
 
 void ITMSplitTreeNode_SplitTreeLink_ClearChildOneOfCase(ITMSplitTreeNode_SplitTreeLink *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [ITMSplitTreeNode_SplitTreeLink descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - ITMListSessionsResponse
 
@@ -11921,7 +12462,7 @@ typedef struct ITMListSessionsResponse__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "windowsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsResponse_Window),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMListSessionsResponse_Window),
         .number = ITMListSessionsResponse_FieldNumber_WindowsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse__storage_, windowsArray),
@@ -11930,7 +12471,7 @@ typedef struct ITMListSessionsResponse__storage_ {
       },
       {
         .name = "buriedSessionsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSessionSummary),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSessionSummary),
         .number = ITMListSessionsResponse_FieldNumber_BuriedSessionsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse__storage_, buriedSessionsArray),
@@ -11945,8 +12486,10 @@ typedef struct ITMListSessionsResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMListSessionsResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -11979,7 +12522,7 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "tabsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMListSessionsResponse_Tab),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMListSessionsResponse_Tab),
         .number = ITMListSessionsResponse_Window_FieldNumber_TabsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Window__storage_, tabsArray),
@@ -11988,7 +12531,7 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
       },
       {
         .name = "windowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMListSessionsResponse_Window_FieldNumber_WindowId,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Window__storage_, windowId),
@@ -11997,7 +12540,7 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
       },
       {
         .name = "frame",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMFrame),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMFrame),
         .number = ITMListSessionsResponse_Window_FieldNumber_Frame,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Window__storage_, frame),
@@ -12006,7 +12549,7 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
       },
       {
         .name = "number",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMListSessionsResponse_Window_FieldNumber_Number,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Window__storage_, number),
@@ -12021,9 +12564,11 @@ typedef struct ITMListSessionsResponse_Window__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMListSessionsResponse_Window__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMListSessionsResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMListSessionsResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -12058,7 +12603,7 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "tabId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMListSessionsResponse_Tab_FieldNumber_TabId,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, tabId),
@@ -12067,7 +12612,7 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
       },
       {
         .name = "root",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSplitTreeNode),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSplitTreeNode),
         .number = ITMListSessionsResponse_Tab_FieldNumber_Root,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, root),
@@ -12076,7 +12621,7 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
       },
       {
         .name = "tmuxWindowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMListSessionsResponse_Tab_FieldNumber_TmuxWindowId,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, tmuxWindowId),
@@ -12085,7 +12630,7 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
       },
       {
         .name = "tmuxConnectionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMListSessionsResponse_Tab_FieldNumber_TmuxConnectionId,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, tmuxConnectionId),
@@ -12094,7 +12639,7 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
       },
       {
         .name = "minimizedSessionsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMSessionSummary),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMSessionSummary),
         .number = ITMListSessionsResponse_Tab_FieldNumber_MinimizedSessionsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMListSessionsResponse_Tab__storage_, minimizedSessionsArray),
@@ -12109,9 +12654,11 @@ typedef struct ITMListSessionsResponse_Tab__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMListSessionsResponse_Tab__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    [localDescriptor setupContainingMessageClassName:GPBStringifySymbol(ITMListSessionsResponse)];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    [localDescriptor setupContainingMessageClass:GPBObjCClass(ITMListSessionsResponse)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -12146,7 +12693,7 @@ typedef struct ITMCreateTabRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "profileName",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCreateTabRequest_FieldNumber_ProfileName,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMCreateTabRequest__storage_, profileName),
@@ -12155,7 +12702,7 @@ typedef struct ITMCreateTabRequest__storage_ {
       },
       {
         .name = "windowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCreateTabRequest_FieldNumber_WindowId,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMCreateTabRequest__storage_, windowId),
@@ -12164,7 +12711,7 @@ typedef struct ITMCreateTabRequest__storage_ {
       },
       {
         .name = "tabIndex",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCreateTabRequest_FieldNumber_TabIndex,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMCreateTabRequest__storage_, tabIndex),
@@ -12173,7 +12720,7 @@ typedef struct ITMCreateTabRequest__storage_ {
       },
       {
         .name = "command",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCreateTabRequest_FieldNumber_Command,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMCreateTabRequest__storage_, command),
@@ -12182,7 +12729,7 @@ typedef struct ITMCreateTabRequest__storage_ {
       },
       {
         .name = "customProfilePropertiesArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMProfileProperty),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMProfileProperty),
         .number = ITMCreateTabRequest_FieldNumber_CustomProfilePropertiesArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMCreateTabRequest__storage_, customProfilePropertiesArray),
@@ -12197,8 +12744,10 @@ typedef struct ITMCreateTabRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMCreateTabRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -12240,7 +12789,7 @@ typedef struct ITMCreateTabResponse__storage_ {
       },
       {
         .name = "windowId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCreateTabResponse_FieldNumber_WindowId,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(ITMCreateTabResponse__storage_, windowId),
@@ -12249,7 +12798,7 @@ typedef struct ITMCreateTabResponse__storage_ {
       },
       {
         .name = "tabId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCreateTabResponse_FieldNumber_TabId,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(ITMCreateTabResponse__storage_, tabId),
@@ -12258,7 +12807,7 @@ typedef struct ITMCreateTabResponse__storage_ {
       },
       {
         .name = "sessionId",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMCreateTabResponse_FieldNumber_SessionId,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(ITMCreateTabResponse__storage_, sessionId),
@@ -12273,8 +12822,10 @@ typedef struct ITMCreateTabResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMCreateTabResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -12285,7 +12836,7 @@ typedef struct ITMCreateTabResponse__storage_ {
 #pragma mark - Enum ITMCreateTabResponse_Status
 
 GPBEnumDescriptor *ITMCreateTabResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000InvalidProfileName\000InvalidWindowId\000In"
@@ -12303,7 +12854,8 @@ GPBEnumDescriptor *ITMCreateTabResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMCreateTabResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -12349,7 +12901,7 @@ typedef struct ITMSplitPaneRequest__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "session",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSplitPaneRequest_FieldNumber_Session,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(ITMSplitPaneRequest__storage_, session),
@@ -12367,7 +12919,7 @@ typedef struct ITMSplitPaneRequest__storage_ {
       },
       {
         .name = "before",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSplitPaneRequest_FieldNumber_Before,
         .hasIndex = 2,
         .offset = 3,  // Stored in _has_storage_ to save space.
@@ -12376,7 +12928,7 @@ typedef struct ITMSplitPaneRequest__storage_ {
       },
       {
         .name = "profileName",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSplitPaneRequest_FieldNumber_ProfileName,
         .hasIndex = 4,
         .offset = (uint32_t)offsetof(ITMSplitPaneRequest__storage_, profileName),
@@ -12385,7 +12937,7 @@ typedef struct ITMSplitPaneRequest__storage_ {
       },
       {
         .name = "customProfilePropertiesArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(ITMProfileProperty),
+        .dataTypeSpecific.clazz = GPBObjCClass(ITMProfileProperty),
         .number = ITMSplitPaneRequest_FieldNumber_CustomProfilePropertiesArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMSplitPaneRequest__storage_, customProfilePropertiesArray),
@@ -12400,8 +12952,10 @@ typedef struct ITMSplitPaneRequest__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSplitPaneRequest__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -12412,7 +12966,7 @@ typedef struct ITMSplitPaneRequest__storage_ {
 #pragma mark - Enum ITMSplitPaneRequest_SplitDirection
 
 GPBEnumDescriptor *ITMSplitPaneRequest_SplitDirection_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Vertical\000Horizontal\000";
@@ -12426,7 +12980,8 @@ GPBEnumDescriptor *ITMSplitPaneRequest_SplitDirection_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMSplitPaneRequest_SplitDirection_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -12473,7 +13028,7 @@ typedef struct ITMSplitPaneResponse__storage_ {
       },
       {
         .name = "sessionIdArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = ITMSplitPaneResponse_FieldNumber_SessionIdArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(ITMSplitPaneResponse__storage_, sessionIdArray),
@@ -12488,8 +13043,10 @@ typedef struct ITMSplitPaneResponse__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(ITMSplitPaneResponse__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -12500,7 +13057,7 @@ typedef struct ITMSplitPaneResponse__storage_ {
 #pragma mark - Enum ITMSplitPaneResponse_Status
 
 GPBEnumDescriptor *ITMSplitPaneResponse_Status_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "Ok\000SessionNotFound\000InvalidProfileName\000Ca"
@@ -12519,7 +13076,8 @@ GPBEnumDescriptor *ITMSplitPaneResponse_Status_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:ITMSplitPaneResponse_Status_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
