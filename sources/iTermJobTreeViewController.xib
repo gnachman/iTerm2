@@ -20,6 +20,10 @@
             <rect key="frame" x="0.0" y="0.0" width="480" height="266"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
             <subviews>
+                <visualEffectView blendingMode="withinWindow" material="windowBackground" state="followsWindowActiveState" id="lBb-Ii-0Mh">
+                    <rect key="frame" x="0.0" y="0.0" width="480" height="29"/>
+                    <autoresizingMask key="autoresizingMask"/>
+                </visualEffectView>
                 <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" usesPredominantAxisScrolling="NO" id="4fR-ry-Sex">
                     <rect key="frame" x="0.0" y="29" width="480" height="237"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -87,8 +91,8 @@
                     </tableHeaderView>
                 </scrollView>
                 <comboBox verticalHuggingPriority="750" id="Ykw-0a-zRO" customClass="SignalPicker">
-                    <rect key="frame" x="0.0" y="0.0" width="458" height="22"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
+                    <rect key="frame" x="4" y="0.0" width="129" height="22"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <comboBoxCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" completes="NO" numberOfVisibleItems="5" id="lef-nJ-tqb">
                         <font key="font" metaFont="smallSystem"/>
                         <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -104,8 +108,8 @@
                     </connections>
                 </comboBox>
                 <button id="ACM-dM-BU4">
-                    <rect key="frame" x="463" y="4" width="17" height="17"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxY="YES"/>
+                    <rect key="frame" x="139" y="4" width="17" height="17"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                     <buttonCell key="cell" type="square" bezelStyle="shadowlessSquare" image="NSRightFacingTriangleTemplate" imagePosition="only" alignment="center" controlSize="small" imageScaling="proportionallyDown" inset="2" id="D3j-RL-nOt">
                         <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                         <font key="font" metaFont="smallSystem"/>
