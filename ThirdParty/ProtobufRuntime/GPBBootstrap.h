@@ -46,7 +46,7 @@
 #endif
 
 // If the headers are imported into Objective-C++, we can run into an issue
-// where the defintion of NS_ENUM (really CF_ENUM) changes based on the C++
+// where the definition of NS_ENUM (really CF_ENUM) changes based on the C++
 // standard that is in effect.  If it isn't C++11 or higher, the definition
 // doesn't allow us to forward declare. We work around this one case by
 // providing a local definition. The default case has to use NS_ENUM for the
@@ -62,7 +62,11 @@
  *
  * ```
  * GPB_ENUM_FWD_DECLARE(Foo_Enum)
- * @property (nonatomic) Foo_Enum value;
+ *
+ * @interface BarClass : NSObject
+ * @property (nonatomic) enum Foo_Enum value;
+ * - (void)bazMethod:(enum Foo_Enum):value;
+ * @end
  * ```
  **/
 #define GPB_ENUM_FWD_DECLARE(X) enum X : int32_t
@@ -87,11 +91,34 @@
 #endif
 #endif
 
+/**
+ * Attribute used for Objective-C proto interface deprecations without messages.
+ **/
+#ifndef GPB_DEPRECATED
+#define GPB_DEPRECATED __attribute__((deprecated))
+#endif
+
+/**
+ * Attribute used for Objective-C proto interface deprecations with messages.
+ **/
+#ifndef GPB_DEPRECATED_MSG
+#if __has_extension(attribute_deprecated_with_message)
+#define GPB_DEPRECATED_MSG(msg) __attribute__((deprecated(msg)))
+#else
+#define GPB_DEPRECATED_MSG(msg) __attribute__((deprecated))
+#endif
+#endif
+
 // If property name starts with init we need to annotate it to get past ARC.
 // http://stackoverflow.com/questions/18723226/how-do-i-annotate-an-objective-c-property-with-an-objc-method-family/18723227#18723227
 //
 // Meant to be used internally by generated code.
 #define GPB_METHOD_FAMILY_NONE __attribute__((objc_method_family(none)))
+
+// Prevent subclassing of generated proto classes.
+#ifndef GPB_FINAL
+#define GPB_FINAL __attribute__((objc_subclassing_restricted))
+#endif  // GPB_FINAL
 
 // ----------------------------------------------------------------------------
 // These version numbers are all internal to the ObjC Protobuf runtime; they
@@ -105,7 +132,7 @@
 // Current library runtime version.
 // - Gets bumped when the runtime makes changes to the interfaces between the
 //   generated code and runtime (things added/removed, etc).
-#define GOOGLE_PROTOBUF_OBJC_VERSION 30002
+#define GOOGLE_PROTOBUF_OBJC_VERSION 30004
 
 // Minimum runtime version supported for compiling/running against.
 // - Gets changed when support for the older generated code is dropped.

@@ -34,6 +34,10 @@
 
 #import "GPBMessage.h"
 
+// TODO: Remove this import. Older generated code use the OSAtomic* apis,
+// so anyone that hasn't regenerated says building by having this. After
+// enough time has passed, this likely can be removed as folks should have
+// regenerated.
 #import <libkern/OSAtomic.h>
 
 #import "GPBBootstrap.h"
@@ -57,21 +61,6 @@ typedef struct GPBMessage_Storage *GPBMessage_StoragePtr;
   // GPBMessage_Storage with _has_storage__ as the first field.
   // Kept public because static functions need to access it.
   GPBMessage_StoragePtr messageStorage_;
-
-  // A lock to provide mutual exclusion from internal data that can be modified
-  // by *read* operations such as getters (autocreation of message fields and
-  // message extensions, not setting of values). Used to guarantee thread safety
-  // for concurrent reads on the message.
-  // NOTE: OSSpinLock may seem like a good fit here but Apple engineers have
-  // pointed out that they are vulnerable to live locking on iOS in cases of
-  // priority inversion:
-  //   http://mjtsai.com/blog/2015/12/16/osspinlock-is-unsafe/
-  //   https://lists.swift.org/pipermail/swift-dev/Week-of-Mon-20151214/000372.html
-  // Use of readOnlySemaphore_ must be prefaced by a call to
-  // GPBPrepareReadOnlySemaphore to ensure it has been created. This allows
-  // readOnlySemaphore_ to be only created when actually needed.
-  dispatch_once_t readOnlySemaphoreCreationOnce_;
-  dispatch_semaphore_t readOnlySemaphore_;
 }
 
 // Gets an extension value without autocreating the result if not found. (i.e.
@@ -105,14 +94,7 @@ CF_EXTERN_C_BEGIN
 
 
 // Call this before using the readOnlySemaphore_. This ensures it is created only once.
-NS_INLINE void GPBPrepareReadOnlySemaphore(GPBMessage *self) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdirect-ivar-access"
-  dispatch_once(&self->readOnlySemaphoreCreationOnce_, ^{
-    self->readOnlySemaphore_ = dispatch_semaphore_create(1);
-  });
-#pragma clang diagnostic pop
-}
+void GPBPrepareReadOnlySemaphore(GPBMessage *self);
 
 // Returns a new instance that was automatically created by |autocreator| for
 // its field |field|.

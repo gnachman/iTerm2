@@ -37,13 +37,13 @@
 #endif
 
 #if GPB_USE_PROTOBUF_FRAMEWORK_IMPORTS
- #import <Protobuf/Any.pbobjc.h>
- #import <Protobuf/Duration.pbobjc.h>
- #import <Protobuf/Timestamp.pbobjc.h>
+ #import <Protobuf/GPBAny.pbobjc.h>
+ #import <Protobuf/GPBDuration.pbobjc.h>
+ #import <Protobuf/GPBTimestamp.pbobjc.h>
 #else
- #import "google/protobuf/Any.pbobjc.h"
- #import "google/protobuf/Duration.pbobjc.h"
- #import "google/protobuf/Timestamp.pbobjc.h"
+ #import "GPBAny.pbobjc.h"
+ #import "GPBDuration.pbobjc.h"
+ #import "GPBTimestamp.pbobjc.h"
 #endif
 
 NS_ASSUME_NONNULL_BEGIN
@@ -112,16 +112,27 @@ typedef NS_ENUM(NSInteger, GPBWellKnownTypesErrorCode) {
  * @note: Not all second/nanos combinations can be represented in a
  * NSTimeInterval, so getting this could be a lossy transform.
  **/
-@property(nonatomic, readwrite) NSTimeInterval timeIntervalSince1970;
+@property(nonatomic, readwrite) NSTimeInterval timeInterval;
 
 /**
  * Initializes a GPBDuration with the given NSTimeInterval.
  *
- * @param timeIntervalSince1970 Time interval to configure the GPBDuration with.
+ * @param timeInterval Time interval to configure the GPBDuration with.
  *
  * @return A newly initialized GPBDuration.
  **/
-- (instancetype)initWithTimeIntervalSince1970:(NSTimeInterval)timeIntervalSince1970;
+- (instancetype)initWithTimeInterval:(NSTimeInterval)timeInterval;
+
+// These next two methods are deprecated because GBPDuration has no need of a
+// "base" time. The older methods were about symmetry with GBPTimestamp, but
+// the unix epoch usage is too confusing.
+
+/** Deprecated, use timeInterval instead. */
+@property(nonatomic, readwrite) NSTimeInterval timeIntervalSince1970
+    __attribute__((deprecated("Use timeInterval")));
+/** Deprecated, use initWithTimeInterval: instead. */
+- (instancetype)initWithTimeIntervalSince1970:(NSTimeInterval)timeIntervalSince1970
+    __attribute__((deprecated("Use initWithTimeInterval:")));
 
 @end
 

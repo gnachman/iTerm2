@@ -74,7 +74,7 @@ typedef union {
 
 /**
  * Enum listing the possible data types that a field can contain.
- * 
+ *
  * @note Do not change the order of this enum (or add things to it) without
  *       thinking about it very carefully. There are several things that depend
  *       on the order.
@@ -142,3 +142,10 @@ typedef struct GPBExtensionRange {
   /** Exclusive. */
   uint32_t end;
 } GPBExtensionRange;
+
+/**
+ A type to represent an Objective C class.
+ This is actually an `objc_class` but the runtime headers will not allow us to
+ reference `objc_class`, so we have defined our own.
+*/
+typedef struct GPBObjcClass_t GPBObjcClass_t;

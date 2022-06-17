@@ -13,19 +13,32 @@
  #import "GPBProtocolBuffers_RuntimeSupport.h"
 #endif
 
+#import <stdatomic.h>
+
 #if GPB_USE_PROTOBUF_FRAMEWORK_IMPORTS
- #import <Protobuf/Type.pbobjc.h>
- #import <Protobuf/Any.pbobjc.h>
- #import <Protobuf/SourceContext.pbobjc.h>
+ #import <Protobuf/GPBType.pbobjc.h>
+ #import <Protobuf/GPBAny.pbobjc.h>
+ #import <Protobuf/GPBSourceContext.pbobjc.h>
 #else
- #import "google/protobuf/Type.pbobjc.h"
- #import "google/protobuf/Any.pbobjc.h"
- #import "google/protobuf/SourceContext.pbobjc.h"
+ #import "GPBType.pbobjc.h"
+ #import "GPBAny.pbobjc.h"
+ #import "GPBSourceContext.pbobjc.h"
 #endif
 // @@protoc_insertion_point(imports)
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#pragma clang diagnostic ignored "-Wdollar-in-identifier-extension"
+
+#pragma mark - Objective C Class declarations
+// Forward declarations of Objective C classes that we can use as
+// static values in struct initializers.
+// We don't use [Foo class] because it is not a static value.
+GPBObjCClassDeclaration(GPBAny);
+GPBObjCClassDeclaration(GPBEnumValue);
+GPBObjCClassDeclaration(GPBField);
+GPBObjCClassDeclaration(GPBOption);
+GPBObjCClassDeclaration(GPBSourceContext);
 
 #pragma mark - GPBTypeRoot
 
@@ -54,7 +67,7 @@ static GPBFileDescriptor *GPBTypeRoot_FileDescriptor(void) {
 #pragma mark - Enum GPBSyntax
 
 GPBEnumDescriptor *GPBSyntax_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "SyntaxProto2\000SyntaxProto3\000";
@@ -68,7 +81,8 @@ GPBEnumDescriptor *GPBSyntax_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:GPBSyntax_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -114,16 +128,16 @@ typedef struct GPBType__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBType_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(GPBType__storage_, name),
-        .flags = GPBFieldOptional,
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeString,
       },
       {
         .name = "fieldsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBField),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBField),
         .number = GPBType_FieldNumber_FieldsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(GPBType__storage_, fieldsArray),
@@ -132,7 +146,7 @@ typedef struct GPBType__storage_ {
       },
       {
         .name = "oneofsArray",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBType_FieldNumber_OneofsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(GPBType__storage_, oneofsArray),
@@ -141,7 +155,7 @@ typedef struct GPBType__storage_ {
       },
       {
         .name = "optionsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBOption),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBOption),
         .number = GPBType_FieldNumber_OptionsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(GPBType__storage_, optionsArray),
@@ -150,7 +164,7 @@ typedef struct GPBType__storage_ {
       },
       {
         .name = "sourceContext",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBSourceContext),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBSourceContext),
         .number = GPBType_FieldNumber_SourceContext,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(GPBType__storage_, sourceContext),
@@ -163,7 +177,7 @@ typedef struct GPBType__storage_ {
         .number = GPBType_FieldNumber_Syntax,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(GPBType__storage_, syntax),
-        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeEnum,
       },
     };
@@ -174,8 +188,10 @@ typedef struct GPBType__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(GPBType__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -186,13 +202,13 @@ typedef struct GPBType__storage_ {
 int32_t GPBType_Syntax_RawValue(GPBType *message) {
   GPBDescriptor *descriptor = [GPBType descriptor];
   GPBFieldDescriptor *field = [descriptor fieldWithNumber:GPBType_FieldNumber_Syntax];
-  return GPBGetMessageInt32Field(message, field);
+  return GPBGetMessageRawEnumField(message, field);
 }
 
 void SetGPBType_Syntax_RawValue(GPBType *message, int32_t value) {
   GPBDescriptor *descriptor = [GPBType descriptor];
   GPBFieldDescriptor *field = [descriptor fieldWithNumber:GPBType_FieldNumber_Syntax];
-  GPBSetInt32IvarWithFieldInternal(message, field, value, descriptor.file.syntax);
+  GPBSetMessageRawEnumField(message, field, value);
 }
 
 #pragma mark - GPBField
@@ -235,7 +251,7 @@ typedef struct GPBField__storage_ {
         .number = GPBField_FieldNumber_Kind,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(GPBField__storage_, kind),
-        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeEnum,
       },
       {
@@ -244,57 +260,57 @@ typedef struct GPBField__storage_ {
         .number = GPBField_FieldNumber_Cardinality,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(GPBField__storage_, cardinality),
-        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeEnum,
       },
       {
         .name = "number",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBField_FieldNumber_Number,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(GPBField__storage_, number),
-        .flags = GPBFieldOptional,
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeInt32,
       },
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBField_FieldNumber_Name,
         .hasIndex = 3,
         .offset = (uint32_t)offsetof(GPBField__storage_, name),
-        .flags = GPBFieldOptional,
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeString,
       },
       {
         .name = "typeURL",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBField_FieldNumber_TypeURL,
         .hasIndex = 4,
         .offset = (uint32_t)offsetof(GPBField__storage_, typeURL),
-        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldTextFormatNameCustom | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeString,
       },
       {
         .name = "oneofIndex",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBField_FieldNumber_OneofIndex,
         .hasIndex = 5,
         .offset = (uint32_t)offsetof(GPBField__storage_, oneofIndex),
-        .flags = GPBFieldOptional,
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeInt32,
       },
       {
         .name = "packed",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBField_FieldNumber_Packed,
         .hasIndex = 6,
         .offset = 7,  // Stored in _has_storage_ to save space.
-        .flags = GPBFieldOptional,
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeBool,
       },
       {
         .name = "optionsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBOption),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBOption),
         .number = GPBField_FieldNumber_OptionsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(GPBField__storage_, optionsArray),
@@ -303,20 +319,20 @@ typedef struct GPBField__storage_ {
       },
       {
         .name = "jsonName",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBField_FieldNumber_JsonName,
         .hasIndex = 8,
         .offset = (uint32_t)offsetof(GPBField__storage_, jsonName),
-        .flags = GPBFieldOptional,
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeString,
       },
       {
         .name = "defaultValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBField_FieldNumber_DefaultValue,
         .hasIndex = 9,
         .offset = (uint32_t)offsetof(GPBField__storage_, defaultValue),
-        .flags = GPBFieldOptional,
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeString,
       },
     };
@@ -327,13 +343,15 @@ typedef struct GPBField__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(GPBField__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
 #if !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
     static const char *extraTextFormatInfo =
         "\001\006\004\241!!\000";
     [localDescriptor setupExtraTextInfo:extraTextFormatInfo];
 #endif  // !GPBOBJC_SKIP_MESSAGE_TEXTFORMAT_EXTRAS
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -344,31 +362,31 @@ typedef struct GPBField__storage_ {
 int32_t GPBField_Kind_RawValue(GPBField *message) {
   GPBDescriptor *descriptor = [GPBField descriptor];
   GPBFieldDescriptor *field = [descriptor fieldWithNumber:GPBField_FieldNumber_Kind];
-  return GPBGetMessageInt32Field(message, field);
+  return GPBGetMessageRawEnumField(message, field);
 }
 
 void SetGPBField_Kind_RawValue(GPBField *message, int32_t value) {
   GPBDescriptor *descriptor = [GPBField descriptor];
   GPBFieldDescriptor *field = [descriptor fieldWithNumber:GPBField_FieldNumber_Kind];
-  GPBSetInt32IvarWithFieldInternal(message, field, value, descriptor.file.syntax);
+  GPBSetMessageRawEnumField(message, field, value);
 }
 
 int32_t GPBField_Cardinality_RawValue(GPBField *message) {
   GPBDescriptor *descriptor = [GPBField descriptor];
   GPBFieldDescriptor *field = [descriptor fieldWithNumber:GPBField_FieldNumber_Cardinality];
-  return GPBGetMessageInt32Field(message, field);
+  return GPBGetMessageRawEnumField(message, field);
 }
 
 void SetGPBField_Cardinality_RawValue(GPBField *message, int32_t value) {
   GPBDescriptor *descriptor = [GPBField descriptor];
   GPBFieldDescriptor *field = [descriptor fieldWithNumber:GPBField_FieldNumber_Cardinality];
-  GPBSetInt32IvarWithFieldInternal(message, field, value, descriptor.file.syntax);
+  GPBSetMessageRawEnumField(message, field, value);
 }
 
 #pragma mark - Enum GPBField_Kind
 
 GPBEnumDescriptor *GPBField_Kind_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "TypeUnknown\000TypeDouble\000TypeFloat\000TypeInt"
@@ -404,7 +422,8 @@ GPBEnumDescriptor *GPBField_Kind_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:GPBField_Kind_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -441,7 +460,7 @@ BOOL GPBField_Kind_IsValidValue(int32_t value__) {
 #pragma mark - Enum GPBField_Cardinality
 
 GPBEnumDescriptor *GPBField_Cardinality_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "CardinalityUnknown\000CardinalityOptional\000C"
@@ -458,7 +477,8 @@ GPBEnumDescriptor *GPBField_Cardinality_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:GPBField_Cardinality_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -504,16 +524,16 @@ typedef struct GPBEnum__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBEnum_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(GPBEnum__storage_, name),
-        .flags = GPBFieldOptional,
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeString,
       },
       {
         .name = "enumvalueArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBEnumValue),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBEnumValue),
         .number = GPBEnum_FieldNumber_EnumvalueArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(GPBEnum__storage_, enumvalueArray),
@@ -522,7 +542,7 @@ typedef struct GPBEnum__storage_ {
       },
       {
         .name = "optionsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBOption),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBOption),
         .number = GPBEnum_FieldNumber_OptionsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(GPBEnum__storage_, optionsArray),
@@ -531,7 +551,7 @@ typedef struct GPBEnum__storage_ {
       },
       {
         .name = "sourceContext",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBSourceContext),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBSourceContext),
         .number = GPBEnum_FieldNumber_SourceContext,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(GPBEnum__storage_, sourceContext),
@@ -544,7 +564,7 @@ typedef struct GPBEnum__storage_ {
         .number = GPBEnum_FieldNumber_Syntax,
         .hasIndex = 2,
         .offset = (uint32_t)offsetof(GPBEnum__storage_, syntax),
-        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor),
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldHasEnumDescriptor | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeEnum,
       },
     };
@@ -555,8 +575,10 @@ typedef struct GPBEnum__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(GPBEnum__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -567,13 +589,13 @@ typedef struct GPBEnum__storage_ {
 int32_t GPBEnum_Syntax_RawValue(GPBEnum *message) {
   GPBDescriptor *descriptor = [GPBEnum descriptor];
   GPBFieldDescriptor *field = [descriptor fieldWithNumber:GPBEnum_FieldNumber_Syntax];
-  return GPBGetMessageInt32Field(message, field);
+  return GPBGetMessageRawEnumField(message, field);
 }
 
 void SetGPBEnum_Syntax_RawValue(GPBEnum *message, int32_t value) {
   GPBDescriptor *descriptor = [GPBEnum descriptor];
   GPBFieldDescriptor *field = [descriptor fieldWithNumber:GPBEnum_FieldNumber_Syntax];
-  GPBSetInt32IvarWithFieldInternal(message, field, value, descriptor.file.syntax);
+  GPBSetMessageRawEnumField(message, field, value);
 }
 
 #pragma mark - GPBEnumValue
@@ -599,25 +621,25 @@ typedef struct GPBEnumValue__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBEnumValue_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(GPBEnumValue__storage_, name),
-        .flags = GPBFieldOptional,
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeString,
       },
       {
         .name = "number",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBEnumValue_FieldNumber_Number,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(GPBEnumValue__storage_, number),
-        .flags = GPBFieldOptional,
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeInt32,
       },
       {
         .name = "optionsArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBOption),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBOption),
         .number = GPBEnumValue_FieldNumber_OptionsArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(GPBEnumValue__storage_, optionsArray),
@@ -632,8 +654,10 @@ typedef struct GPBEnumValue__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(GPBEnumValue__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -662,16 +686,16 @@ typedef struct GPBOption__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "name",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBOption_FieldNumber_Name,
         .hasIndex = 0,
         .offset = (uint32_t)offsetof(GPBOption__storage_, name),
-        .flags = GPBFieldOptional,
+        .flags = (GPBFieldFlags)(GPBFieldOptional | GPBFieldClearHasIvarOnZero),
         .dataType = GPBDataTypeString,
       },
       {
         .name = "value",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBAny),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBAny),
         .number = GPBOption_FieldNumber_Value,
         .hasIndex = 1,
         .offset = (uint32_t)offsetof(GPBOption__storage_, value),
@@ -686,8 +710,10 @@ typedef struct GPBOption__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(GPBOption__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;

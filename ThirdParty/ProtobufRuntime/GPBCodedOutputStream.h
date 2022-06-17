@@ -47,10 +47,19 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
+ * @c GPBCodedOutputStream exception names.
+ **/
+extern NSString *const GPBCodedOutputStreamException_OutOfSpace;
+extern NSString *const GPBCodedOutputStreamException_WriteFailed;
+
+/**
  * Writes out protocol message fields.
  *
  * The common uses of protocol buffers shouldn't need to use this class.
  * GPBMessage's provide a -data method that will serialize the message for you.
+ *
+ * @note Any -write* api can raise the GPBCodedOutputStreamException_*
+ *       exceptions.
  *
  * @note Subclassing of GPBCodedOutputStream is NOT supported.
  **/
@@ -168,6 +177,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 //%PDDM-EXPAND _WRITE_DECLS()
 // This block of code is generated, do not edit it directly.
+// clang-format off
 
 /**
  * Write a double for the given field number.
@@ -518,7 +528,8 @@ NS_ASSUME_NONNULL_BEGIN
  * @param fieldNumber The field number assigned to the values.
  * @param values      The values to write out.
  **/
-- (void)writeStringArray:(int32_t)fieldNumber values:(NSArray<NSString*> *)values;
+- (void)writeStringArray:(int32_t)fieldNumber
+                  values:(NSArray<NSString*> *)values;
 /**
  * Write a NSString without any tag.
  *
@@ -539,7 +550,8 @@ NS_ASSUME_NONNULL_BEGIN
  * @param fieldNumber The field number assigned to the values.
  * @param values      The values to write out.
  **/
-- (void)writeMessageArray:(int32_t)fieldNumber values:(NSArray<GPBMessage*> *)values;
+- (void)writeMessageArray:(int32_t)fieldNumber
+                   values:(NSArray<GPBMessage*> *)values;
 /**
  * Write a GPBMessage without any tag.
  *
@@ -560,7 +572,8 @@ NS_ASSUME_NONNULL_BEGIN
  * @param fieldNumber The field number assigned to the values.
  * @param values      The values to write out.
  **/
-- (void)writeBytesArray:(int32_t)fieldNumber values:(NSArray<NSData*> *)values;
+- (void)writeBytesArray:(int32_t)fieldNumber
+                 values:(NSArray<NSData*> *)values;
 /**
  * Write a NSData without any tag.
  *
@@ -582,7 +595,8 @@ NS_ASSUME_NONNULL_BEGIN
  * @param fieldNumber The field number assigned to the values.
  * @param values      The values to write out.
  **/
-- (void)writeGroupArray:(int32_t)fieldNumber values:(NSArray<GPBMessage*> *)values;
+- (void)writeGroupArray:(int32_t)fieldNumber
+                 values:(NSArray<GPBMessage*> *)values;
 /**
  * Write a GPBMessage without any tag (but does write the endGroup tag).
  *
@@ -606,7 +620,8 @@ NS_ASSUME_NONNULL_BEGIN
  * @param fieldNumber The field number assigned to the values.
  * @param values      The values to write out.
  **/
-- (void)writeUnknownGroupArray:(int32_t)fieldNumber values:(NSArray<GPBUnknownFieldSet*> *)values;
+- (void)writeUnknownGroupArray:(int32_t)fieldNumber
+                        values:(NSArray<GPBUnknownFieldSet*> *)values;
 /**
  * Write a GPBUnknownFieldSet without any tag (but does write the endGroup tag).
  *
@@ -616,6 +631,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)writeUnknownGroupNoTag:(int32_t)fieldNumber
                          value:(GPBUnknownFieldSet *)value;
 
+// clang-format on
 //%PDDM-EXPAND-END _WRITE_DECLS()
 
 /**
@@ -681,7 +697,8 @@ NS_ASSUME_NONNULL_END
 //% * @param fieldNumber The field number assigned to the values.
 //% * @param values      The values to write out.
 //% **/
-//%- (void)write##NAME##Array:(int32_t)fieldNumber values:(NSArray<##TYPE##*> *)values;
+//%- (void)write##NAME##Array:(int32_t)fieldNumber
+//%           NAME$S values:(NSArray<##TYPE##*> *)values;
 //%/**
 //% * Write a TYPE without any tag.
 //% *
@@ -705,7 +722,8 @@ NS_ASSUME_NONNULL_END
 //% * @param fieldNumber The field number assigned to the values.
 //% * @param values      The values to write out.
 //% **/
-//%- (void)write##NAME##Array:(int32_t)fieldNumber values:(NSArray<##TYPE##*> *)values;
+//%- (void)write##NAME##Array:(int32_t)fieldNumber
+//%           NAME$S values:(NSArray<##TYPE##*> *)values;
 //%/**
 //% * Write a TYPE without any tag (but does write the endGroup tag).
 //% *

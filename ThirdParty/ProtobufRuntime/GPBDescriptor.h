@@ -75,7 +75,7 @@ typedef NS_ENUM(uint8_t, GPBFieldType) {
 /** Number of extension ranges declared for the message. */
 @property(nonatomic, readonly) uint32_t extensionRangesCount;
 /** Descriptor for the file where the message was defined. */
-@property(nonatomic, readonly, assign) GPBFileDescriptor *file;
+@property(nonatomic, readonly) GPBFileDescriptor *file;
 
 /** Whether the message is in wire format or not. */
 @property(nonatomic, readonly, getter=isWireFormat) BOOL wireFormat;
@@ -182,16 +182,16 @@ typedef NS_ENUM(uint8_t, GPBFieldType) {
 @property(nonatomic, readonly, getter=isOptional) BOOL optional;
 /** Type of field (single, repeated, map). */
 @property(nonatomic, readonly) GPBFieldType fieldType;
-/** Type of the key if the field is a map. The value's type is -fieldType. */
+/** Type of the key if the field is a map. The value's type is -dataType. */
 @property(nonatomic, readonly) GPBDataType mapKeyDataType;
 /** Whether the field is packable. */
 @property(nonatomic, readonly, getter=isPackable) BOOL packable;
 
 /** The containing oneof if this field is part of one, nil otherwise. */
-@property(nonatomic, readonly, assign, nullable) GPBOneofDescriptor *containingOneof;
+@property(nonatomic, readonly, nullable) GPBOneofDescriptor *containingOneof;
 
 /** Class of the message if the field is of message type. */
-@property(nonatomic, readonly, assign, nullable) Class msgClass;
+@property(nonatomic, readonly, nullable) Class msgClass;
 
 /** Descriptor for the enum if this field is an enum. */
 @property(nonatomic, readonly, strong, nullable) GPBEnumDescriptor *enumDescriptor;
@@ -223,9 +223,12 @@ typedef NS_ENUM(uint8_t, GPBFieldType) {
 /**
  * Returns the enum value name for the given raw enum.
  *
+ * Note that there can be more than one name corresponding to a given value
+ * if the allow_alias option is used.
+ *
  * @param number The raw enum value.
  *
- * @return The name of the enum value passed, or nil if not valid.
+ * @return The first name that matches the enum value passed, or nil if not valid.
  **/
 - (nullable NSString *)enumNameForValue:(int32_t)number;
 
@@ -244,7 +247,7 @@ typedef NS_ENUM(uint8_t, GPBFieldType) {
  *
  * @param number The raw enum value.
  *
- * @return The text format name for the raw enum value, or nil if not valid.
+ * @return The first text format name which matches the enum value, or nil if not valid.
  **/
 - (nullable NSString *)textFormatNameForValue:(int32_t)number;
 
@@ -257,6 +260,33 @@ typedef NS_ENUM(uint8_t, GPBFieldType) {
  * @return YES if a value was copied into the pointer, NO otherwise.
  **/
 - (BOOL)getValue:(nullable int32_t *)outValue forEnumTextFormatName:(NSString *)textFormatName;
+
+/**
+ * Gets the number of defined enum names.
+ *
+ * @return Count of the number of enum names, including any aliases.
+ */
+@property(nonatomic, readonly) uint32_t enumNameCount;
+
+/**
+ * Gets the enum name corresponding to the given index.
+ *
+ * @param index Index into the available names.  The defined range is from 0
+ *              to self.enumNameCount - 1.
+ *
+ * @returns The enum name at the given index, or nil if the index is out of range.
+ */
+- (nullable NSString *)getEnumNameForIndex:(uint32_t)index;
+
+/**
+ * Gets the enum text format name corresponding to the given index.
+ *
+ * @param index Index into the available names.  The defined range is from 0
+ *              to self.enumNameCount - 1.
+ *
+ * @returns The text format name at the given index, or nil if the index is out of range.
+ */
+- (nullable NSString *)getEnumTextFormatNameForIndex:(uint32_t)index;
 
 @end
 
@@ -275,7 +305,7 @@ typedef NS_ENUM(uint8_t, GPBFieldType) {
 /** Whether the extension is packable. */
 @property(nonatomic, readonly, getter=isPackable) BOOL packable;
 /** The class of the message if the extension is of message type. */
-@property(nonatomic, readonly, assign) Class msgClass;
+@property(nonatomic, readonly) Class msgClass;
 /** The singleton name for the extension. */
 @property(nonatomic, readonly) NSString *singletonName;
 /** The enum descriptor if the extension is of enum type. */

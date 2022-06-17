@@ -13,16 +13,27 @@
  #import "GPBProtocolBuffers_RuntimeSupport.h"
 #endif
 
+#import <stdatomic.h>
+
 #if GPB_USE_PROTOBUF_FRAMEWORK_IMPORTS
- #import <Protobuf/Struct.pbobjc.h>
+ #import <Protobuf/GPBStruct.pbobjc.h>
 #else
- #import "google/protobuf/Struct.pbobjc.h"
+ #import "GPBStruct.pbobjc.h"
 #endif
 // @@protoc_insertion_point(imports)
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wdirect-ivar-access"
+#pragma clang diagnostic ignored "-Wdollar-in-identifier-extension"
+
+#pragma mark - Objective C Class declarations
+// Forward declarations of Objective C classes that we can use as
+// static values in struct initializers.
+// We don't use [Foo class] because it is not a static value.
+GPBObjCClassDeclaration(GPBListValue);
+GPBObjCClassDeclaration(GPBStruct);
+GPBObjCClassDeclaration(GPBValue);
 
 #pragma mark - GPBStructRoot
 
@@ -51,7 +62,7 @@ static GPBFileDescriptor *GPBStructRoot_FileDescriptor(void) {
 #pragma mark - Enum GPBNullValue
 
 GPBEnumDescriptor *GPBNullValue_EnumDescriptor(void) {
-  static GPBEnumDescriptor *descriptor = NULL;
+  static _Atomic(GPBEnumDescriptor*) descriptor = nil;
   if (!descriptor) {
     static const char *valueNames =
         "NullValue\000";
@@ -64,7 +75,8 @@ GPBEnumDescriptor *GPBNullValue_EnumDescriptor(void) {
                                            values:values
                                             count:(uint32_t)(sizeof(values) / sizeof(int32_t))
                                      enumVerifier:GPBNullValue_IsValidValue];
-    if (!OSAtomicCompareAndSwapPtrBarrier(nil, worker, (void * volatile *)&descriptor)) {
+    GPBEnumDescriptor *expected = nil;
+    if (!atomic_compare_exchange_strong(&descriptor, &expected, worker)) {
       [worker release];
     }
   }
@@ -99,7 +111,7 @@ typedef struct GPBStruct__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "fields",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBValue),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBValue),
         .number = GPBStruct_FieldNumber_Fields,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(GPBStruct__storage_, fields),
@@ -114,8 +126,10 @@ typedef struct GPBStruct__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(GPBStruct__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -161,7 +175,7 @@ typedef struct GPBValue__storage_ {
       },
       {
         .name = "numberValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBValue_FieldNumber_NumberValue,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(GPBValue__storage_, numberValue),
@@ -170,7 +184,7 @@ typedef struct GPBValue__storage_ {
       },
       {
         .name = "stringValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBValue_FieldNumber_StringValue,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(GPBValue__storage_, stringValue),
@@ -179,7 +193,7 @@ typedef struct GPBValue__storage_ {
       },
       {
         .name = "boolValue",
-        .dataTypeSpecific.className = NULL,
+        .dataTypeSpecific.clazz = Nil,
         .number = GPBValue_FieldNumber_BoolValue,
         .hasIndex = -1,
         .offset = 0,  // Stored in _has_storage_ to save space.
@@ -188,7 +202,7 @@ typedef struct GPBValue__storage_ {
       },
       {
         .name = "structValue",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBStruct),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBStruct),
         .number = GPBValue_FieldNumber_StructValue,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(GPBValue__storage_, structValue),
@@ -197,7 +211,7 @@ typedef struct GPBValue__storage_ {
       },
       {
         .name = "listValue",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBListValue),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBListValue),
         .number = GPBValue_FieldNumber_ListValue,
         .hasIndex = -1,
         .offset = (uint32_t)offsetof(GPBValue__storage_, listValue),
@@ -212,14 +226,16 @@ typedef struct GPBValue__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(GPBValue__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
     static const char *oneofs[] = {
       "kind",
     };
     [localDescriptor setupOneofs:oneofs
                            count:(uint32_t)(sizeof(oneofs) / sizeof(char*))
                    firstHasIndex:-1];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;
@@ -230,19 +246,19 @@ typedef struct GPBValue__storage_ {
 int32_t GPBValue_NullValue_RawValue(GPBValue *message) {
   GPBDescriptor *descriptor = [GPBValue descriptor];
   GPBFieldDescriptor *field = [descriptor fieldWithNumber:GPBValue_FieldNumber_NullValue];
-  return GPBGetMessageInt32Field(message, field);
+  return GPBGetMessageRawEnumField(message, field);
 }
 
 void SetGPBValue_NullValue_RawValue(GPBValue *message, int32_t value) {
   GPBDescriptor *descriptor = [GPBValue descriptor];
   GPBFieldDescriptor *field = [descriptor fieldWithNumber:GPBValue_FieldNumber_NullValue];
-  GPBSetInt32IvarWithFieldInternal(message, field, value, descriptor.file.syntax);
+  GPBSetMessageRawEnumField(message, field, value);
 }
 
 void GPBValue_ClearKindOneOfCase(GPBValue *message) {
-  GPBDescriptor *descriptor = [message descriptor];
+  GPBDescriptor *descriptor = [GPBValue descriptor];
   GPBOneofDescriptor *oneof = [descriptor.oneofs objectAtIndex:0];
-  GPBMaybeClearOneof(message, oneof, -1, 0);
+  GPBClearOneof(message, oneof);
 }
 #pragma mark - GPBListValue
 
@@ -263,7 +279,7 @@ typedef struct GPBListValue__storage_ {
     static GPBMessageFieldDescription fields[] = {
       {
         .name = "valuesArray",
-        .dataTypeSpecific.className = GPBStringifySymbol(GPBValue),
+        .dataTypeSpecific.clazz = GPBObjCClass(GPBValue),
         .number = GPBListValue_FieldNumber_ValuesArray,
         .hasIndex = GPBNoHasBit,
         .offset = (uint32_t)offsetof(GPBListValue__storage_, valuesArray),
@@ -278,8 +294,10 @@ typedef struct GPBListValue__storage_ {
                                         fields:fields
                                     fieldCount:(uint32_t)(sizeof(fields) / sizeof(GPBMessageFieldDescription))
                                    storageSize:sizeof(GPBListValue__storage_)
-                                         flags:GPBDescriptorInitializationFlag_None];
-    NSAssert(descriptor == nil, @"Startup recursed!");
+                                         flags:(GPBDescriptorInitializationFlags)(GPBDescriptorInitializationFlag_UsesClassRefs | GPBDescriptorInitializationFlag_Proto3OptionalKnown)];
+    #if defined(DEBUG) && DEBUG
+      NSAssert(descriptor == nil, @"Startup recursed!");
+    #endif  // DEBUG
     descriptor = localDescriptor;
   }
   return descriptor;

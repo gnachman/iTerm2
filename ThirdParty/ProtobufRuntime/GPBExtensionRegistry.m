@@ -34,18 +34,20 @@
 #import "GPBDescriptor.h"
 
 @implementation GPBExtensionRegistry {
-  NSMutableDictionary *mutableClassMap_;
+  CFMutableDictionaryRef mutableClassMap_;
 }
 
 - (instancetype)init {
   if ((self = [super init])) {
-    mutableClassMap_ = [[NSMutableDictionary alloc] init];
+    // The keys are ObjC classes, so straight up ptr comparisons are fine.
+    mutableClassMap_ = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, NULL,
+                                             &kCFTypeDictionaryValueCallBacks);
   }
   return self;
 }
 
 - (void)dealloc {
-  [mutableClassMap_ release];
+  CFRelease(mutableClassMap_);
   [super dealloc];
 }
 
@@ -57,25 +59,8 @@
 
 - (instancetype)copyWithZone:(NSZone *)zone {
   GPBExtensionRegistry *result = [[[self class] allocWithZone:zone] init];
-  if (result && mutableClassMap_.count) {
-    [result->mutableClassMap_ addEntriesFromDictionary:mutableClassMap_];
-  }
+  [result addExtensions:self];
   return result;
-}
-
-- (CFMutableDictionaryRef)extensionMapForContainingMessageClass:
-        (Class)containingMessageClass {
-  CFMutableDictionaryRef extensionMap = (CFMutableDictionaryRef)
-      [mutableClassMap_ objectForKey:containingMessageClass];
-  if (extensionMap == nil) {
-    // Use a custom dictionary here because the keys are numbers and conversion
-    // back and forth from NSNumber isn't worth the cost.
-    extensionMap = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, NULL,
-                                             &kCFTypeDictionaryValueCallBacks);
-    [mutableClassMap_ setObject:(id)extensionMap
-                         forKey:(id<NSCopying>)containingMessageClass];
-  }
-  return extensionMap;
 }
 
 - (void)addExtension:(GPBExtensionDescriptor *)extension {
@@ -84,8 +69,17 @@
   }
 
   Class containingMessageClass = extension.containingMessageClass;
-  CFMutableDictionaryRef extensionMap =
-      [self extensionMapForContainingMessageClass:containingMessageClass];
+  CFMutableDictionaryRef extensionMap = (CFMutableDictionaryRef)
+      CFDictionaryGetValue(mutableClassMap_, containingMessageClass);
+  if (extensionMap == nil) {
+    // Use a custom dictionary here because the keys are numbers and conversion
+    // back and forth from NSNumber isn't worth the cost.
+    extensionMap = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, NULL,
+                                             &kCFTypeDictionaryValueCallBacks);
+    CFDictionarySetValue(mutableClassMap_, containingMessageClass, extensionMap);
+    CFRelease(extensionMap);
+  }
+
   ssize_t key = extension.fieldNumber;
   CFDictionarySetValue(extensionMap, (const void *)key, extension);
 }
@@ -94,7 +88,7 @@
                                        fieldNumber:(NSInteger)fieldNumber {
   Class messageClass = descriptor.messageClass;
   CFMutableDictionaryRef extensionMap = (CFMutableDictionaryRef)
-      [mutableClassMap_ objectForKey:messageClass];
+      CFDictionaryGetValue(mutableClassMap_, messageClass);
   ssize_t key = fieldNumber;
   GPBExtensionDescriptor *result =
       (extensionMap
@@ -108,22 +102,28 @@ static void CopyKeyValue(const void *key, const void *value, void *context) {
   CFDictionarySetValue(extensionMap, key, value);
 }
 
+static void CopySubDictionary(const void *key, const void *value, void *context) {
+  CFMutableDictionaryRef mutableClassMap = (CFMutableDictionaryRef)context;
+  Class containingMessageClass = key;
+  CFMutableDictionaryRef otherExtensionMap = (CFMutableDictionaryRef)value;
+
+  CFMutableDictionaryRef extensionMap = (CFMutableDictionaryRef)
+      CFDictionaryGetValue(mutableClassMap, containingMessageClass);
+  if (extensionMap == nil) {
+    extensionMap = CFDictionaryCreateMutableCopy(kCFAllocatorDefault, 0, otherExtensionMap);
+    CFDictionarySetValue(mutableClassMap, containingMessageClass, extensionMap);
+    CFRelease(extensionMap);
+  } else {
+    CFDictionaryApplyFunction(otherExtensionMap, CopyKeyValue, extensionMap);
+  }
+}
+
 - (void)addExtensions:(GPBExtensionRegistry *)registry {
   if (registry == nil) {
     // In the case where there are no extensions just ignore.
     return;
   }
-  NSMutableDictionary *otherClassMap = registry->mutableClassMap_;
-  [otherClassMap enumerateKeysAndObjectsUsingBlock:^(id key, id value, BOOL * stop) {
-#pragma unused(stop)
-    Class containingMessageClass = key;
-    CFMutableDictionaryRef otherExtensionMap = (CFMutableDictionaryRef)value;
-
-    CFMutableDictionaryRef extensionMap =
-        [self extensionMapForContainingMessageClass:containingMessageClass];
-
-    CFDictionaryApplyFunction(otherExtensionMap, CopyKeyValue, extensionMap);
-  }];
+  CFDictionaryApplyFunction(registry->mutableClassMap_, CopySubDictionary, mutableClassMap_);
 }
 
 #pragma clang diagnostic pop
