@@ -767,6 +767,7 @@ class CommandLinePasswordDataSource: NSObject {
             configuration.listAccountsRecipe.invalidateRecipe()
             if let error = maybeError {
                 completion(nil, error)
+                return
             }
             let account = CommandLineProvidedAccount(identifier: accountIdentifier!.value,
                                                      accountName: accountName,
