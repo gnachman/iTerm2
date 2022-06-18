@@ -232,6 +232,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)checkForUTF8;
 - (void)loadDefaultTerminal;
 - (void)loadKeyBindings;
+- (void)exitCopyMode;
 
 - (void)clearHistoryForWindowPane:(int)windowPane;
 

@@ -7490,6 +7490,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_tmuxController checkForUTF8];
     [_tmuxController loadDefaultTerminal];
     [_tmuxController loadKeyBindings];
+    [_tmuxController exitCopyMode];
     [_tmuxController guessVersion];  // NOTE: This kicks off more stuff that depends on knowing the version number.
 }
 

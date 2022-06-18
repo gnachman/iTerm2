@@ -1273,6 +1273,17 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommand:@"list-keys" responseTarget:self responseSelector:@selector(handleListKeys:)];
 }
 
+// If there's an error in tmux.conf then tmux will put you in copy mode initially and that breaks
+// handling keyboard input. This is harmless in the normal case.
+// https://github.com/tmux/tmux/issues/3193
+- (void)exitCopyMode {
+    [gateway_ sendCommand:@"copy-mode -q"
+           responseTarget:nil
+         responseSelector:nil
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
 // This is a little brittle because it depends on parsing bind-keys commands
 // which could change in the future. It'd be nice for list-keys to have
 // structured output.

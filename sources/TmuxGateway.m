@@ -569,7 +569,8 @@ error:
         return;
     }
     _initialized = YES;
-    if (withError) {
+    const BOOL shouldTolerateError = !!([self currentCommandFlags] & kTmuxGatewayCommandShouldTolerateErrors);
+    if (withError && !shouldTolerateError) {
         [delegate_ tmuxInitialCommandDidFailWithError:currentCommandResponse_];
     } else {
         [delegate_ tmuxInitialCommandDidCompleteSuccessfully];
