@@ -233,7 +233,7 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
         // then repeats might be ignored, or the IME might handle it internally (such as when you press
         // "L" in AquaSKK's Hiragana mode to enter ASCII mode. See pull request 279 for more on this.
         DLog(@"Calling handleEvent:%@", event);
-        [inputContext handleEvent:event];
+        _keyPressHandled = [inputContext handleEvent:event];
     } else {
         DLog(@"Calling interpretKeyEvents:%@", event);
         [self.delegate keyboardHandler:self interpretKeyEvents:@[ event ]];
