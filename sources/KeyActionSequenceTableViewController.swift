@@ -51,6 +51,7 @@ class KeyActionSequenceTableViewController: NSObject {
         super.awakeFromNib()
         tableView?.backspace = { [weak self] in self?.removeSelected() }
         tableView?.registerForDraggedTypes([Self.pasteboardType])
+        updateRemoveEnabled()
     }
 
     @IBAction @objc(addRemove:) func addRemove(_ sender: Any) {
