@@ -18,6 +18,8 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 @implementation iTermSecureKeyboardEntryController {
     int _count;
     BOOL _focusStolen;
+    BOOL _temporarilyDisabled;
+    NSTimer *_backstop;
 }
 
 + (instancetype)sharedInstance {
@@ -82,12 +84,39 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 }
 
 - (BOOL)isDesired {
+    if (_temporarilyDisabled) {
+        return NO;
+    }
     return _enabledByUserDefault || [self currentSessionAtPasswordPrompt];
+}
+
+- (void)disableUntilDeactivated {
+    DLog(@"disableUntilDeactivated");
+    if (_backstop) {
+        DLog(@"Already have a backstop");
+        return;
+    }
+    DLog(@"Set flag");
+    _temporarilyDisabled = YES;
+    _backstop = [NSTimer scheduledTimerWithTimeInterval:1 repeats:NO block:^(NSTimer * _Nonnull timer) {
+        [[iTermSecureKeyboardEntryController sharedInstance] temporaryDisablementDidExpire];
+    }];
+    [self update];
+}
+
+- (void)temporaryDisablementDidExpire {
+    DLog(@"temporaryDisablementDidExpire _temporarilyDisabled=%@", @(_temporarilyDisabled));
+    _backstop = nil;
+    _temporarilyDisabled = NO;
+    [self update];
 }
 
 #pragma mark - Notifications
 
 - (void)applicationDidResignActive:(NSNotification *)notification {
+    _temporarilyDisabled = NO;
+    [_backstop invalidate];
+    _backstop = nil;
     if (_count > 0) {
         DLog(@"Application resigning active.");
         [self update];
@@ -146,6 +175,7 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
         if (err) {
             XLog(@"EnableSecureEventInput failed with error %d", (int)err);
         } else {
+            DLog(@"Secure keyboard entry enabled");
             _count += 1;
         }
     } else {
@@ -154,6 +184,7 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
         if (err) {
             XLog(@"DisableSecureEventInput failed with error %d", (int)err);
         } else {
+            DLog(@"Secure keyboard entry disabled");
             _count -= 1;
         }
     }

@@ -964,8 +964,10 @@ static NSString *const kArrangement = @"Arrangement";
     BOOL activatingOtherApp = [self.delegate willFinishRollingOutProfileHotKey:self];
     if (activatingOtherApp) {
         _rollOutCancelable = YES;
+        DLog(@"Schedule order-out");
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (_rollingOut) {
+                DLog(@"Order out with secure keyboard entry=%@", @(IsSecureEventInputEnabled()));
                 _rollOutCancelable = NO;
                 [self orderOut];
             }

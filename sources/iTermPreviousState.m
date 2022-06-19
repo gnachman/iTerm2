@@ -2,7 +2,10 @@
 
 #import "DebugLogging.h"
 #import "iTermController.h"
+#import "iTermNotificationController.h"
 #import "iTermPresentationController.h"
+#import "iTermSecureKeyboardEntryController.h"
+#import "iTermWarning.h"
 #import "PseudoTerminal.h"
 
 @implementation iTermPreviousState
@@ -18,6 +21,7 @@
         }
         DLog(@"Previously active pid for %p is %@", self, @(processID));
         _itermWasActiveWhenHotkeyOpened = [NSApp isActive];
+        DLog(@"_itermWasActiveWhenHotkeyOpened=%@", @(_itermWasActiveWhenHotkeyOpened));
     }
     return self;
 }
@@ -44,19 +48,48 @@
     return [NSString stringWithFormat:@"<%@: %p itermWasActive=%@ other app pid=%@>", self.class, self, @(_itermWasActiveWhenHotkeyOpened), self.previouslyActiveAppPID];
 }
 
+- (NSRunningApplication *)appToSwitchBackToIfAllowed {
+    NSRunningApplication *app = [NSRunningApplication runningApplicationWithProcessIdentifier:[_previouslyActiveAppPID intValue]];
+    if (!app) {
+        return nil;
+    }
+    if (@available(macOS 11.0, *)) {
+        if (![[iTermSecureKeyboardEntryController sharedInstance] isEnabled]) {
+            return app;
+        }
+    } else {
+        return app;
+    }
+
+    DLog(@"Secure keyboard entry is enabled.");
+    if (![[iTermSecureKeyboardEntryController sharedInstance] isDesired]) {
+        DLog(@"Some other app enabled secure keyboard entry");
+        static NSInteger count = 0;
+        if (count++ == 0) {
+            [[iTermNotificationController sharedInstance] notify:@"Can’t Switch Apps"
+                                                 withDescription:[NSString stringWithFormat:@"Can’t switch back to %@ because another app has enabled secure keyboard entry.",
+                                                                  app.localizedName]];
+        }
+        return nil;
+    }
+
+    [[iTermSecureKeyboardEntryController sharedInstance] disableUntilDeactivated];
+    return app;
+}
+
 - (BOOL)restorePreviouslyActiveApp {
     if (!_previouslyActiveAppPID) {
+        DLog(@"Don't have a previously active app PID");
         return NO;
     }
 
-    NSRunningApplication *app =
-        [NSRunningApplication runningApplicationWithProcessIdentifier:[_previouslyActiveAppPID intValue]];
-
+    NSRunningApplication *app = [self appToSwitchBackToIfAllowed];
     BOOL result = NO;
     if (app) {
         DLog(@"Restore app %@", app);
-        DLog(@"** Restore previously active app from\n%@", [NSThread callStackSymbols]);
+        DLog(@"** Restor previously active app from\n%@", [NSThread callStackSymbols]);
         result = [app activateWithOptions:0];
+        DLog(@"activateWithOptions:0 returned %@", @(result));
     }
     self.previouslyActiveAppPID = nil;
     return result;
