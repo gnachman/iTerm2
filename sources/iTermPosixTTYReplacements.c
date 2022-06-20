@@ -11,8 +11,11 @@
 #import "legacy_server.h"
 
 #include <assert.h>
+#include <fcntl.h>
 #include <signal.h>
+#include <spawn.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -21,6 +24,10 @@
 #include <util.h>
 
 #define CTRLKEY(c) ((c)-'A'+1)
+
+// https://gitlab.com/gnachman/iterm2/-/issues/10360
+int responsibility_spawnattrs_setdisclaim(posix_spawnattr_t attrs, int disclaim)
+    API_AVAILABLE(macosx(10.14));
 
 const int kNumFileDescriptorsToDup = NUM_FILE_DESCRIPTORS_TO_PASS_TO_SERVER;
 
@@ -120,6 +127,121 @@ int iTermPosixTTYReplacementForkPty(int *amaster,
             close(deadMansPipeWriteEnd);
             return pid;
     }
+}
+
+static void iTermSpawnFailed(const char *argpath, int errorFd, const char *message) {
+    iTermSignalSafeWrite(errorFd, "## spawn failed ##\n");
+    iTermSignalSafeWrite(errorFd, "Program: ");
+    iTermSignalSafeWrite(errorFd, argpath);
+    iTermSignalSafeWrite(errorFd, "\n");
+    iTermSignalSafeWrite(errorFd, message);
+    iTermSignalSafeWrite(errorFd, "\n");
+
+    sleep(1);
+    _exit(1);
+}
+
+static void iTermSpawnInitializeAttrs(const char *argpath, int errorFd, posix_spawnattr_t *attrsPtr) {
+    short flags = 0;
+    // Default signals
+    flags |= POSIX_SPAWN_SETSIGDEF;
+    // Close all file descriptors except those created by file actions.
+    flags |= POSIX_SPAWN_CLOEXEC_DEFAULT;
+    // Act like exec, not fork+exec
+    flags |= POSIX_SPAWN_SETEXEC;
+
+    int rc = posix_spawnattr_init(attrsPtr);
+    if (rc != 0) {
+        iTermSpawnFailed(argpath, errorFd, strerror(errno));
+    }
+    rc = posix_spawnattr_setflags(attrsPtr, flags);
+    if (rc != 0) {
+        iTermSpawnFailed(argpath, errorFd, strerror(errno));
+    }
+    rc = responsibility_spawnattrs_setdisclaim(attrsPtr, 1);
+    if (rc != 0) {
+        iTermSpawnFailed(argpath, errorFd, strerror(errno));
+    }
+}
+
+static void iTermSpawnInitializeActions(const char *argpath,
+                                        int errorFd,
+                                        posix_spawn_file_actions_t *actionsPtr,
+                                        int closeFileDescriptors,
+                                        int numFileDescriptorsToPreserve,
+                                        const char *initialPwd) API_AVAILABLE(macosx(10.15)) {
+    int rc = posix_spawn_file_actions_init(actionsPtr);
+    if (rc != 0) {
+        iTermSpawnFailed(argpath, errorFd, strerror(errno));
+    }
+    if (closeFileDescriptors) {
+        // Move fds 0..<n to n..<2*n and add actions to dup them back so POSIX_SPAWN_CLOEXEC_DEFAULT
+        // can close anything else that's open.
+        for (int i = 0; i < numFileDescriptorsToPreserve; i++) {
+            const int temp = numFileDescriptorsToPreserve + i;
+            close(temp);
+            dup2(i, temp);
+            posix_spawn_file_actions_adddup2(actionsPtr, temp, i);
+        }
+    }
+    if (initialPwd) {
+        posix_spawn_file_actions_addchdir_np(actionsPtr, initialPwd);
+    }
+}
+
+// uses posix_spawn with POSIX_SPAWN_SETEXEC to emulate exec but with more features.
+void iTermSpawnExec(char *argpath,
+                    char *const *argv,
+                    int closeFileDescriptors,
+                    int restoreResourceLimits,
+                    const iTermForkState *forkState,
+                    const char *initialPwd,
+                    char *const *newEnviron,
+                    int errorFd) API_AVAILABLE(macosx(10.15)) {
+    posix_spawnattr_t attrs;
+    iTermSpawnInitializeAttrs(argpath, errorFd, &attrs);
+
+    posix_spawn_file_actions_t actions;
+    iTermSpawnInitializeActions(argpath,
+                                errorFd,
+                                &actions,
+                                closeFileDescriptors,
+                                forkState->numFileDescriptorsToPreserve,
+                                initialPwd);
+
+    // setrlimit is *not* documented as being safe to use between fork and exec, but I believe it to
+    // be safe nonetheless. The implementation is simply to make a system call. Neither memory
+    // allocation nor mutex locking occurs in user space. There isn't any other way to do this besides
+    // passing the desired limits to the child process, which is pretty gross.
+    if (restoreResourceLimits) {
+        iTermResourceLimitsHelperRestoreSavedLimits();
+    }
+
+    posix_spawn(NULL,
+                argpath,
+                &actions,
+                &attrs,
+                argv,
+                newEnviron);
+
+    if (errorFd >= 0) {
+        int e = errno;
+        iTermSignalSafeWrite(errorFd, "## exec failed ##\n");
+        iTermSignalSafeWrite(errorFd, "Program: ");
+        iTermSignalSafeWrite(errorFd, argpath);
+        if (e == ENOENT) {
+            iTermSignalSafeWrite(errorFd, "\nNo such file or directory");
+        } else {
+            iTermSignalSafeWrite(errorFd, "\nErrno: ");
+            iTermSignalSafeWriteInt(errorFd, e);
+            iTermSignalSafeWrite(errorFd, "\nMessage: ");
+            iTermSignalSafeWrite(errorFd, strerror(e));
+        }
+        iTermSignalSafeWrite(errorFd, "\n");
+    }
+
+    sleep(1);
+    _exit(1);
 }
 
 void iTermExec(const char *argpath,

@@ -28,6 +28,7 @@ int iTermPosixTTYReplacementForkPty(int *amaster,
                                     int deadMansPipeWriteEnd);
 
 // Call this in the child after fork. This never returns, even if it can't exec the target.
+// DEPRECATED - Prefer iTermSpawnExec
 void iTermExec(const char *argpath,
                const char **argv,
                int closeFileDescriptors,
@@ -36,6 +37,16 @@ void iTermExec(const char *argpath,
                const char *initialPwd,
                const char **newEnviron,
                int errorFd) __attribute__((noreturn));
+
+// Alternative to iTermExec that disclaims ownership of child processes.
+void iTermSpawnExec(char *argpath,
+                    char *const *argv,
+                    int closeFileDescriptors,
+                    int restoreResourceLimits,
+                    const iTermForkState *forkState,
+                    const char *initialPwd,
+                    char *const *newEnviron,
+                    int errorFd) API_AVAILABLE(macosx(10.15))  __attribute__((noreturn));;
 
 void iTermSignalSafeWrite(int fd, const char *message);
 void iTermSignalSafeWriteInt(int fd, int n);

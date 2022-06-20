@@ -186,6 +186,31 @@ static void RemoveChild(int i) {
 
 #pragma mark - Launch
 
+static int CountArgs(const char **argv) {
+    int i = 0;
+    while (argv[i] != NULL) {
+        i += 1;
+    }
+    return i;
+}
+
+static char **DuplicateNullTerminatedArrayOfCStrings(const char **inputArray) {
+    const int count = CountArgs(inputArray);
+    char **outputArray = malloc(sizeof(char *) * (count + 1));
+    for (int i = 0; i < count; i++) {
+        outputArray[i] = strdup(inputArray[i]);
+    }
+    outputArray[count] = NULL;
+    return outputArray;
+}
+
+static void FreeNullTerminatedArrayOfCStringsIncludingEachString(char **array) {
+    for (int i = 0; array[i] != NULL; i++) {
+        free(array[i]);
+    }
+    free(array);
+}
+
 static int Launch(const iTermMultiServerRequestLaunch *launch,
                   iTermForkState *forkState,
                   iTermTTYState *ttyStatePtr,
@@ -197,18 +222,37 @@ static int Launch(const iTermMultiServerRequestLaunch *launch,
     int fd;
     forkState->numFileDescriptorsToPreserve = 3;
     FDLog(LOG_DEBUG, "Forking...");
+    char *path = strdup(launch->path);
+    char **argv = DuplicateNullTerminatedArrayOfCStrings(launch->argv);
+    char *pwd = strdup(launch->pwd);
+    char **envp = DuplicateNullTerminatedArrayOfCStrings(launch->envp);
     forkState->pid = forkpty(&fd, ttyStatePtr->tty, &ttyStatePtr->term, &ttyStatePtr->win);
     if (forkState->pid == (pid_t)0) {
         // Child
-        iTermExec(launch->path,
-                  (const char **)launch->argv,
-                  1,  /* close file descriptors */
-                  0,  /* restore resource limits */
-                  forkState,
-                  launch->pwd,
-                  launch->envp,
-                  fd);
+        if (__builtin_available(macOS 10.15, *)) {
+            iTermSpawnExec(path,
+                           argv,
+                           1,  /* close file descriptors */
+                           0,  /* restore resource limits */
+                           forkState,
+                           pwd,
+                           envp,
+                           fd);
+        } else {
+            iTermExec(path,
+                      (const char **)argv,
+                      1,  /* close file descriptors */
+                      0,  /* restore resource limits */
+                      forkState,
+                      pwd,
+                      (const char **)envp,
+                      fd);
+        }
     }
+    free(path);
+    free(pwd);
+    FreeNullTerminatedArrayOfCStringsIncludingEachString(argv);
+    FreeNullTerminatedArrayOfCStringsIncludingEachString(envp);
     if (forkState->pid == -1) {
         *errorPtr = errno;
         FDLog(LOG_DEBUG, "forkpty failed: %s", strerror(errno));
