@@ -4076,6 +4076,19 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 }
 
 - (void)findOnPageRevealRange:(VT100GridCoordRange)range {
+    const VT100GridRange visibleLines = [self rangeOfVisibleLines];
+    const VT100GridCoordRange visibleRange = VT100GridCoordRangeMake(0,
+                                                                     visibleLines.location,
+                                                                     _dataSource.width,
+                                                                     VT100GridRangeMax(visibleLines));
+    if (VT100GridCoordRangeContainsCoord(visibleRange, range.start) &&
+        VT100GridCoordRangeContainsCoord(visibleRange, range.end)) {
+        DLog(@"Entire range %@ is visible within %@ so don't scroll",
+             VT100GridCoordRangeDescription(range),
+             VT100GridCoordRangeDescription(visibleRange));
+        [self setNeedsDisplay:YES];
+        return;
+    }
     // Lock scrolling after finding text
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 
