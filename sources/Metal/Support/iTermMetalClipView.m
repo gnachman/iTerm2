@@ -11,6 +11,8 @@
 #import "iTermRateLimitedUpdate.h"
 #import <MetalKit/MetalKit.h>
 
+NSString *const iTermMetalClipViewWillScroll = @"iTermMetalClipViewWillScroll";
+
 @interface NSClipView(Private)
 - (BOOL)_shouldShowOverlayScrollersForScrollToPoint:(CGPoint)point;
 @end
@@ -30,6 +32,7 @@
 - (void)scrollToPoint:(NSPoint)newOrigin {
     DLog(@"scrollToPoint:%@\n%@", NSStringFromPoint(newOrigin), [NSThread callStackSymbols]);
     [super scrollToPoint:newOrigin];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalClipViewWillScroll object:self];
     if (_useMetal) {
         [_metalView setNeedsDisplay:YES];
     } else {

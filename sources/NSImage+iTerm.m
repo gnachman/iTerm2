@@ -580,6 +580,25 @@ static NSBitmapImageRep * iTermCreateBitmapRep(NSSize size,
     return [[NSColorSpace alloc] initWithCGColorSpace:cgColorSpace];
 }
 
+- (NSImage *)it_subimageWithRect:(NSRect)rect {
+    const NSRect bounds = NSMakeRect(0, 0, self.size.width, self.size.height);
+    NSImageRep *representation = [self bestRepresentationForRect:bounds
+                                                         context:nil
+                                                           hints:nil];
+
+    return [NSImage imageWithSize:rect.size
+                          flipped:NO
+                   drawingHandler:^BOOL(NSRect destination) {
+        BOOL ret = [representation drawInRect:destination
+                                     fromRect:rect
+                                    operation:NSCompositingOperationCopy
+                                     fraction:1.0
+                               respectFlipped:NO
+                                        hints:nil];
+        return ret;
+    }];
+}
+
 @end
 
 @implementation NSBitmapImageRep(iTerm)

@@ -62,6 +62,7 @@
 #import "iTermKeyLabels.h"
 #import "iTermLoggingHelper.h"
 #import "iTermMalloc.h"
+#import "iTermMetalClipView.h"
 #import "iTermMultiServerJobManager.h"
 #import "iTermObject.h"
 #import "iTermOpenDirectory.h"
@@ -818,6 +819,10 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(refreshTerminal:)
                                                      name:kRefreshTerminalNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(metalClipViewWillScroll:)
+                                                     name:iTermMetalClipViewWillScroll
                                                    object:nil];
 
         [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString * _Nonnull newValue) {
@@ -5552,6 +5557,12 @@ verticalSpacing:(CGFloat)verticalSpacing {
 
 - (void)refreshTerminal:(NSNotification *)notification {
     [self sync];
+}
+
+- (void)metalClipViewWillScroll:(NSNotification *)notification {
+    if (_useMetal && notification.object == _textview.enclosingScrollView.contentView) {
+        [_textview shiftTrackingChildWindows];
+    }
 }
 
 - (void)savedArrangementWasRepaired:(NSNotification *)notification {
@@ -10471,6 +10482,102 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         [weakSelf addTriggerDictionary:dict updateProfile:updateProfile];
     }];
+}
+
+- (void)textViewShowFindIndicator:(VT100GridCoordRange)range {
+    DLog(@"begin %@", VT100GridCoordRangeDescription(range));
+    VT100GridCoordRange visibleRange = range;
+    VT100GridRange visibleLines = _textview.rangeOfVisibleLines;
+    if (visibleRange.start.y > VT100GridRangeMax(visibleLines) ||
+        visibleRange.end.y < visibleLines.location) {
+        return;
+    }
+    if (visibleRange.start.y < visibleLines.location) {
+        visibleRange.start.y = visibleLines.location;
+        visibleRange.start.x = 0;
+    }
+    if (visibleRange.end.y > VT100GridRangeMax(visibleLines)) {
+        visibleRange.end.y = VT100GridRangeMax(visibleLines);
+        visibleRange.end.x = _screen.width;
+    }
+    int minX = visibleRange.start.x;
+    int maxX = visibleRange.end.x;
+    if (visibleRange.start.y != visibleRange.end.y) {
+        minX = 0;
+        maxX = _screen.width;
+    }
+    const int hmargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    const int vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const int rows = visibleRange.end.y - visibleRange.start.y + 1;
+    const VT100GridSize gridSize = VT100GridSizeMake(maxX - minX, rows);
+    const CGFloat cellWidth = [_textview charWidth];
+    const CGFloat cellHeight = [_textview lineHeight];
+    const NSSize padding = iTermTextClipDrawing.padding;
+    const NSSize imageSize = NSMakeSize(_screen.width * cellWidth + padding.width * 2,
+                                        gridSize.height * cellHeight + padding.height * 2);
+    NSImage *image = [NSImage flippedImageOfSize:imageSize drawBlock:^{
+        [NSGraphicsContext.currentContext saveGraphicsState];
+        NSAffineTransform *transform = [NSAffineTransform transform];
+        [transform translateXBy:padding.width yBy:padding.height];
+        [transform concat];
+        [iTermTextClipDrawing drawClipWithDrawingHelper:_textview.drawingHelper
+                                        numHistoryLines:_screen.numberOfScrollbackLines
+                                                  range:visibleRange];
+        [NSGraphicsContext.currentContext restoreGraphicsState];
+    }];
+    const NSRect subrect = NSMakeRect(hmargin + minX * cellWidth,
+                                      0,
+                                      (maxX - minX) * cellWidth + padding.width * 2,
+                                      rows * cellHeight + padding.height * 2);
+    NSImage *cropped = [image it_subimageWithRect:subrect];
+    // The rect in legacyView that matches `subrect`.
+    NSRect sourceRect =
+    NSMakeRect(subrect.origin.x - padding.width,
+               (visibleRange.start.y - visibleLines.location) * _textview.lineHeight + vmargin - padding.height,
+               cropped.size.width,
+               cropped.size.height);
+
+    const NSEdgeInsets shadowInsets = NSEdgeInsetsMake(12, 12, 12, 12);
+    NSImage *shadowed = [NSImage flippedImageOfSize:NSMakeSize(subrect.size.width + shadowInsets.left + shadowInsets.right,
+                                                               subrect.size.height + shadowInsets.top + shadowInsets.bottom)
+                                          drawBlock:^{
+        NSShadow *shadow = [[[NSShadow alloc] init] autorelease];
+
+        shadow.shadowOffset = NSMakeSize(0, 0);
+        shadow.shadowBlurRadius = 4;
+        shadow.shadowColor = [NSColor colorWithWhite:0 alpha:0.4];
+        [shadow set];
+
+        [cropped drawInRect:NSMakeRect(shadowInsets.left,
+                                       shadowInsets.top,
+                                       cropped.size.width,
+                                       cropped.size.height)];
+
+        // Draw again with a smaller shadow to act as an outline.
+        shadow = [[[NSShadow alloc] init] autorelease];
+
+        shadow.shadowOffset = NSMakeSize(0, 0);
+        shadow.shadowBlurRadius = 1;
+        shadow.shadowColor = [NSColor colorWithWhite:0 alpha:0.6];
+        [shadow set];
+
+        [cropped drawInRect:NSMakeRect(shadowInsets.left,
+                                       shadowInsets.top,
+                                       cropped.size.width,
+                                       cropped.size.height)];
+    }];
+    sourceRect.origin.x -= shadowInsets.left;
+    sourceRect.origin.y -= shadowInsets.top;
+    sourceRect.size.width += shadowInsets.left + shadowInsets.right;
+    sourceRect.size.height += shadowInsets.top + shadowInsets.bottom;
+    FindIndicatorWindow *window =
+    [FindIndicatorWindow showWithImage:shadowed
+                                  view:_view.legacyView
+                                  rect:sourceRect
+                      firstVisibleLine:visibleLines.location + _screen.totalScrollbackOverflow];
+    if (window) {
+        [_textview trackChildWindow:window];
+    }
 }
 
 - (BOOL)textViewCanWriteToTTY {

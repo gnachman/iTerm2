@@ -13,6 +13,7 @@
 #import "iTermURLActionHelper.h"
 #import "VT100GridTypes.h"
 
+@protocol PTYTrackingChildWindow;
 @class URLAction;
 
 NS_ASSUME_NONNULL_BEGIN
@@ -117,6 +118,11 @@ iTermURLActionHelperDelegate>
 #pragma mark - Find on Page
 
 - (void)convertMatchesToSelections;
+
+#pragma mark - Tracking Child Windows
+
+- (void)trackChildWindow:(id<PTYTrackingChildWindow>)window;
+- (void)shiftTrackingChildWindows;
 
 @end
 

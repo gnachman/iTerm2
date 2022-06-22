@@ -1422,4 +1422,35 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [self.window makeFirstResponder:self];
 }
 
+#pragma mark - Tracking Child Windows
+
+- (void)trackChildWindow:(id<PTYTrackingChildWindow>)window {
+    if (_trackingChildWindows.count == 0) {
+        // In case we're in metal and this is out of date.
+        _lastVirtualOffset = [self virtualOffset];
+    }
+    [_trackingChildWindows addObject:window];
+    __weak __typeof(self) weakSelf = self;
+    __weak __typeof(window) weakWindow = window;
+    window.requestRemoval = ^{
+        [weakSelf stopTrackingChildWindow:weakWindow];
+    };
+}
+
+- (void)stopTrackingChildWindow:(id<PTYTrackingChildWindow>)window {
+    if (!window) {
+        return;
+    }
+    [_trackingChildWindows removeObject:window];
+}
+
+- (void)shiftTrackingChildWindows {
+    const CGFloat virtualOffset = [self virtualOffset];
+    const CGFloat delta = virtualOffset - _lastVirtualOffset;
+    _lastVirtualOffset = virtualOffset;
+    [_trackingChildWindows enumerateObjectsUsingBlock:^(id<PTYTrackingChildWindow> child, NSUInteger idx, BOOL * _Nonnull stop) {
+        [child shiftVertically:delta];
+    }];
+}
+
 @end

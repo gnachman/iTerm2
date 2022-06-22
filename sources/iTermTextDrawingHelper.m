@@ -134,7 +134,7 @@ typedef struct iTermTextColorContext {
     CGFloat mutingAmount;
     BOOL hasSelectedText;
     iTermColorMap *colorMap;
-    NSView<iTermTextDrawingHelperDelegate> *delegate;
+    id<iTermTextDrawingHelperDelegate> delegate;
     NSData *findMatches;
     BOOL reverseVideo;
     screen_char_t previousCharacterAttributes;
@@ -537,6 +537,11 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                          runs:(NSArray<iTermBoxedBackgroundColorRun *> *)runs
                equivalentRows:(NSInteger)rows
                 virtualOffset:(CGFloat)virtualOffset {
+    BOOL pad = NO;
+    NSSize padding = { 0 };
+    if ([self.delegate drawingHelperShouldPadBackgrounds:&padding]) {
+        pad = YES;
+    }
     for (iTermBoxedBackgroundColorRun *box in runs) {
         iTermBackgroundColorRun *run = box.valuePointer;
 
@@ -560,9 +565,25 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         box.backgroundColor = color;
 
         [box.backgroundColor set];
-        iTermRectFillUsingOperation(rect,
-                                    enableBlending ? NSCompositingOperationSourceOver : NSCompositingOperationCopy,
-                                    virtualOffset);
+
+        if (pad) {
+            if (color.alphaComponent == 0) {
+                continue;
+            }
+            NSRect temp = rect;
+            temp.origin.x -= padding.width;
+            temp.origin.y -= padding.height;
+            temp.size.width += padding.width * 2;
+            temp.size.height += padding.height * 2;
+
+            iTermRectFillUsingOperation(temp,
+                                        enableBlending ? NSCompositingOperationSourceOver : NSCompositingOperationCopy,
+                                        virtualOffset);
+        } else {
+            iTermRectFillUsingOperation(rect,
+                                        enableBlending ? NSCompositingOperationSourceOver : NSCompositingOperationCopy,
+                                        virtualOffset);
+        }
 
         if (_debug) {
             [[NSColor yellowColor] set];

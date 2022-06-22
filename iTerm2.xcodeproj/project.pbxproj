@@ -2730,6 +2730,7 @@
 		A6AB55E1217256A600142244 /* iTermLineBlockArray.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AB55DF217256A600142244 /* iTermLineBlockArray.m */; };
 		A6AB55E42173E18900142244 /* iTermCumulativeSumCache.h in Headers */ = {isa = PBXBuildFile; fileRef = A6AB55E22173E18900142244 /* iTermCumulativeSumCache.h */; };
 		A6AB55E52173E18900142244 /* iTermCumulativeSumCache.mm in Sources */ = {isa = PBXBuildFile; fileRef = A6AB55E32173E18900142244 /* iTermCumulativeSumCache.mm */; };
+		A6ABCA252862D52900057662 /* PTYTrackingChildWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6ABCA242862D52900057662 /* PTYTrackingChildWindow.swift */; };
 		A6AC04C621F0FDBD00CD2774 /* StatusBarComposerExpand@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6AC04C421F0FDBC00CD2774 /* StatusBarComposerExpand@2x.png */; };
 		A6AC04C721F0FDBD00CD2774 /* StatusBarComposerExpand@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6AC04C421F0FDBC00CD2774 /* StatusBarComposerExpand@2x.png */; };
 		A6AC04C821F0FDBD00CD2774 /* StatusBarComposerExpand@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6AC04C421F0FDBC00CD2774 /* StatusBarComposerExpand@2x.png */; };
@@ -3135,6 +3136,8 @@
 		A6D1784521BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D1784121BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.h */; };
 		A6D1784721BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D1784221BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.m */; };
 		A6D1784821BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6D1784321BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.xib */; };
+		A6D1C41E2861430D00B68526 /* FindIndicatorWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D1C41D2861430D00B68526 /* FindIndicatorWindow.swift */; };
+		A6D1C420286192F600B68526 /* TextClipDrawing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D1C41F286192F600B68526 /* TextClipDrawing.swift */; };
 		A6D22A431BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A451BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
@@ -6546,6 +6549,7 @@
 		A6AB55DF217256A600142244 /* iTermLineBlockArray.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermLineBlockArray.m; sourceTree = "<group>"; };
 		A6AB55E22173E18900142244 /* iTermCumulativeSumCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermCumulativeSumCache.h; sourceTree = "<group>"; };
 		A6AB55E32173E18900142244 /* iTermCumulativeSumCache.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = iTermCumulativeSumCache.mm; sourceTree = "<group>"; };
+		A6ABCA242862D52900057662 /* PTYTrackingChildWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PTYTrackingChildWindow.swift; sourceTree = "<group>"; };
 		A6AC04C421F0FDBC00CD2774 /* StatusBarComposerExpand@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusBarComposerExpand@2x.png"; path = "images/StatusBarIcons/StatusBarComposerExpand@2x.png"; sourceTree = "<group>"; };
 		A6AC04C521F0FDBC00CD2774 /* StatusBarComposerExpand.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusBarComposerExpand.png; path = images/StatusBarIcons/StatusBarComposerExpand.png; sourceTree = "<group>"; };
 		A6AC5D1F1E9036D70097C0A7 /* iTermURLMark.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermURLMark.h; sourceTree = "<group>"; };
@@ -6760,6 +6764,9 @@
 		A6D1784121BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSavePanelFileFormatAccessory.h; sourceTree = "<group>"; };
 		A6D1784221BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSavePanelFileFormatAccessory.m; sourceTree = "<group>"; };
 		A6D1784321BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermSavePanelFileFormatAccessory.xib; sourceTree = "<group>"; };
+		A6D1C41D2861430D00B68526 /* FindIndicatorWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindIndicatorWindow.swift; sourceTree = "<group>"; };
+		A6D1C41F286192F600B68526 /* TextClipDrawing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextClipDrawing.swift; sourceTree = "<group>"; };
+		A6D1C42128619E4800B68526 /* iTermTextDrawingHelperDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTextDrawingHelperDelegate.h; sourceTree = "<group>"; };
 		A6D22A421BC8BE6B004084E0 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		A6D22B431BC9D368004084E0 /* iTermShellHistoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShellHistoryTest.m; sourceTree = "<group>"; };
 		A6D24D3A26BB12F700CCE211 /* CPUGovernor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CPUGovernor.swift; sourceTree = "<group>"; };
@@ -7582,7 +7589,6 @@
 				1D373E4718F3613600773D3E /* iTermShortcutInputView.h */,
 				1D8CDF501958F31700FE1BEE /* iTermSizeRememberingView.h */,
 				A6C537BC1938374600A08C18 /* iTermTabBarControlView.h */,
-				A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */,
 				A63BA39D18B27B92002BE075 /* iTermTextExtractor.h */,
 				A60BD9111B3913F6007D7F11 /* iTermTextViewAccessibilityHelper.h */,
 				1D8BBA8F1B33529E0005A852 /* iTermTip.h */,
@@ -8299,6 +8305,7 @@
 				A61D2A4827555CD000E539F3 /* MenuItemPopupView.swift */,
 				A691693C281345AF00083F99 /* SaneButton.swift */,
 				A6916940281346A400083F99 /* ExclusiveSelectionTextView.swift */,
+				A6D1C41D2861430D00B68526 /* FindIndicatorWindow.swift */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -9325,6 +9332,7 @@
 				A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */,
 				A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */,
 				A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */,
+				A62A1AE11AAE290700B49F79 /* iTermTextDrawingHelper.h */,
 				A63BA39E18B27B92002BE075 /* iTermTextExtractor.m */,
 				A6A4B2AD2426B8D600184EAC /* iTermTouchbarMappings.h */,
 				A6A4B2AE2426B8D600184EAC /* iTermTouchbarMappings.m */,
@@ -9414,6 +9422,8 @@
 				A6EEAEE328385A3F0039E850 /* PTYTask+Private.h */,
 				A616CF0C284143A300EF82D0 /* ConductorRecovery.swift */,
 				A616CF102841AA1600EF82D0 /* WinSizeController.swift */,
+				A6D1C42128619E4800B68526 /* iTermTextDrawingHelperDelegate.h */,
+				A6ABCA242862D52900057662 /* PTYTrackingChildWindow.swift */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -10413,6 +10423,7 @@
 				A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */,
 				A603EA00283EEAE60028B648 /* ObjCExceptions.swift */,
 				A63EB05A284DCAF300B2AB89 /* WeakBox.swift */,
+				A6D1C41F286192F600B68526 /* TextClipDrawing.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -14983,6 +14994,7 @@
 				A6D24D3D26BC5FA600CCE211 /* SwiftDebugLogging.swift in Sources */,
 				A6614C75210AE3FD0001EAA3 /* iTermStatusBarProgressComponent.m in Sources */,
 				A6905555241D48080020EA6A /* iTermSearchResultsMinimapView.m in Sources */,
+				A6ABCA252862D52900057662 /* PTYTrackingChildWindow.swift in Sources */,
 				A645DD4A27D6D871003947CE /* SecureUserDefaults.swift in Sources */,
 				5370679721C9D2780088D0F3 /* SIGArchiveBuilder.m in Sources */,
 				A653F6BA24D2ACA90062377E /* iTermRestorableSession.m in Sources */,
@@ -15082,6 +15094,7 @@
 				A6DBC0391FF9B30000F1466D /* iTermTexturePool.m in Sources */,
 				A6A4865E20B6758D00493302 /* iTermPreferencesBaseViewController.m in Sources */,
 				A6866B7E23CAA31900ACD94C /* iTermPidInfoClient.m in Sources */,
+				A6D1C41E2861430D00B68526 /* FindIndicatorWindow.swift in Sources */,
 				A6BEE47E26E7E4CC009C0C2C /* PTYSessionZoomState.swift in Sources */,
 				532F942C215DFEF600D509E4 /* iTermCacheableImage.m in Sources */,
 				A6614C7D210AE7350001EAA3 /* iTermPasteViewManager.m in Sources */,
@@ -15337,6 +15350,7 @@
 				A6D10E3427F7C2BC0026DB56 /* NSRange+MultiCursor.swift in Sources */,
 				A6891DCB2818605500751F40 /* JSONPortholeRenderer.swift in Sources */,
 				A630117720E6971D008114B7 /* iTermStatusBarTextComponent.m in Sources */,
+				A6D1C420286192F600B68526 /* TextClipDrawing.swift in Sources */,
 				A66319892312312600C502BD /* iTermRule.m in Sources */,
 				A6F718B12263CC3C0053488E /* ITAddressBookMgr.m in Sources */,
 				A675271E213DB6E800035F2B /* NSImageView+iTerm.m in Sources */,

@@ -28,6 +28,7 @@
 @class iTermURLActionHelper;
 @protocol Porthole;
 @class PTYMouseHandler;
+@protocol PTYTrackingChildWindow;
 
 @interface PTYTextView () <
 PTYNoteViewControllerDelegate,
@@ -46,6 +47,9 @@ NSPopoverDelegate> {
     iTermShellIntegrationWindowController *_shellIntegrationInstallerWindow;
     iTermTextViewContextMenuHelper *_contextMenuHelper;
     iTermTextPopoverViewController* _indicatorMessagePopoverViewController;
+    // Child windows that need to have their frames adjusted as you scroll.
+    NSMutableArray<id<PTYTrackingChildWindow>> *_trackingChildWindows;
+    CGFloat _lastVirtualOffset;
 }
 
 @property(nonatomic, strong) iTermSelection *selection;

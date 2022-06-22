@@ -9,6 +9,8 @@
 
 @class MTKView;
 
+extern NSString *const iTermMetalClipViewWillScroll;
+
 @interface iTermMetalClipView : NSClipView
 
 @property (nonatomic, weak) MTKView *metalView;

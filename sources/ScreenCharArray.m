@@ -23,6 +23,14 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
 @synthesize length = _length;
 @synthesize eol = _eol;
 
++ (instancetype)emptyLineOfLength:(int)length {
+    NSMutableData *data = [NSMutableData data];
+    data.length = length * sizeof(screen_char_t);
+    return [[ScreenCharArray alloc] initWithData:data
+                                        metadata:iTermImmutableMetadataDefault()
+                                    continuation:(screen_char_t){.code = EOL_HARD}];
+}
+
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary {
     self = [super init];
     if (self) {
@@ -283,6 +291,15 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     continuation.code = eol;
 
     return [[ScreenCharArray alloc] initWithData:data metadata:self.metadata continuation:continuation];
+}
+
+- (ScreenCharArray *)copyByZeroingRange:(NSRange)range {
+    ScreenCharArray *theCopy = [self copy];
+    screen_char_t *line = (screen_char_t *)theCopy->_line;
+    for (NSInteger i = 0; i < range.length; i++) {
+        line[range.location + i] = (screen_char_t){ 0 };
+    }
+    return theCopy;
 }
 
 @end

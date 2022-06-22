@@ -74,6 +74,8 @@
 // resulting image.
 - (NSImage *)it_imageFillingSize:(NSSize)size;
 
+- (NSImage *)it_subimageWithRect:(NSRect)rect;
+
 @end
 
 @interface NSBitmapImageRep(iTerm)

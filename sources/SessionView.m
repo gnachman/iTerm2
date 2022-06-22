@@ -219,7 +219,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     // its frame is 0x0.
     iTermScrollerBackgroundColorView *_legacyScrollerBackgroundView;
     iTermUnobtrusiveMessage *_unobtrusiveMessage;
-    iTermLegacyView *_legacyView;
     iTermStatusBarFilterComponent *_temporaryFilterComponent;
 }
 

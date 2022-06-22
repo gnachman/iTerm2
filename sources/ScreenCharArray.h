@@ -21,6 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) iTermImmutableMetadata metadata;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
 
++ (instancetype)emptyLineOfLength:(int)length;
+
 - (instancetype)initWithLine:(const screen_char_t *)line
                       length:(int)length
                 continuation:(screen_char_t)continuation;
@@ -70,6 +72,8 @@ NS_ASSUME_NONNULL_BEGIN
 // 1. This is the last line in history
 // 2. The top-left cell of the grid is a double-width character
 - (ScreenCharArray *)paddedToLength:(int)length eligibleForDWC:(BOOL)eligibleForDWC;
+
+- (ScreenCharArray *)copyByZeroingRange:(NSRange)range;
 
 @end
 

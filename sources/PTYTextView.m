@@ -326,6 +326,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
         _mouseHandler.mouseDelegate = self;
         _notes = [[NSMutableArray alloc] init];
         _portholes = [[NSMutableArray alloc] init];
+        _trackingChildWindows = [[NSMutableArray alloc] init];
         [self initARC];
     }
     return self;
@@ -383,7 +384,8 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     [_lastUrlActionCanceler release];
     [_portholes release];
     [_portholesNeedUpdatesJoiner release];
-    
+    [_trackingChildWindows release];
+
     [super dealloc];
 }
 
@@ -1301,6 +1303,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
         }
     }];
     [self maybeInvalidateWindowShadow];
+    [self shiftTrackingChildWindows];
 }
 
 // This view is visible only when annotations are revealed. They are subviews, and while macOS does
@@ -4041,9 +4044,19 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 
 - (void)findOnPageSelectRange:(VT100GridCoordRange)range wrapped:(BOOL)wrapped {
     [self selectCoordRange:range];
+    VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeFromCoordRange(range, _dataSource.totalScrollbackOverflow);
+    // Let the scrollview scroll if needs to before showing the find indicator.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self showFindIndicator:absRange];
+    });
     if (!wrapped) {
         [self setNeedsDisplay:YES];
     }
+}
+
+- (void)showFindIndicator:(VT100GridAbsCoordRange)absRange {
+    VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, _dataSource.totalScrollbackOverflow);
+    [self.delegate textViewShowFindIndicator:range];
 }
 
 - (VT100GridCoordRange)findOnPageSelectExternalResult:(iTermExternalSearchResult *)result {
@@ -4713,6 +4726,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return nil;
     }
     return [NSString stringWithFormat:@"%@@%@:%@", scpFile.username, scpFile.hostname, scpFile.path];
+}
+
+- (BOOL)drawingHelperShouldPadBackgrounds:(out NSSize *)padding {
+    return NO;
 }
 
 #pragma mark - Accessibility

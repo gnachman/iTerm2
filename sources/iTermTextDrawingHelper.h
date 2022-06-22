@@ -10,6 +10,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermColorMap.h"
 #import "iTermCursor.h"
+#import "iTermTextDrawingHelperDelegate.h"
 #import "iTermTimestampDrawHelper.h"
 #import "ScreenChar.h"
 #import "VT100GridTypes.h"
@@ -24,48 +25,6 @@
 @protocol VT100ScreenMarkReading;
 
 BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
-
-@protocol iTermTextDrawingHelperDelegate <NSObject>
-
-- (void)drawingHelperDrawBackgroundImageInRect:(NSRect)rect
-                        blendDefaultBackground:(BOOL)blendDefaultBackground
-                                 virtualOffset:(CGFloat)virtualOffset;
-
-- (id<VT100ScreenMarkReading>)drawingHelperMarkOnLine:(int)line;
-
-- (const screen_char_t *)drawingHelperLineAtIndex:(int)line;
-- (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line;
-
-- (iTermTextExtractor *)drawingHelperTextExtractor;
-
-- (NSArray *)drawingHelperCharactersWithNotesOnLine:(int)line;
-
-- (void)drawingHelperUpdateFindCursorView;
-
-- (NSDate *)drawingHelperTimestampForLine:(int)line;
-
-- (NSColor *)drawingHelperColorForCode:(int)theIndex
-                                 green:(int)green
-                                  blue:(int)blue
-                             colorMode:(ColorMode)theMode
-                                  bold:(BOOL)isBold
-                                 faint:(BOOL)isFaint
-                          isBackground:(BOOL)isBackground;
-
-- (PTYFontInfo *)drawingHelperFontForChar:(UniChar)ch
-                                isComplex:(BOOL)isComplex
-                               renderBold:(BOOL *)renderBold
-                             renderItalic:(BOOL *)renderItalic;
-
-- (NSData *)drawingHelperMatchesOnLine:(int)line;
-
-- (void)drawingHelperDidFindRunOfAnimatedCellsStartingAt:(VT100GridCoord)coord ofLength:(int)length;
-
-- (NSString *)drawingHelperLabelForDropTargetOnLine:(int)line;
-- (NSRect)textDrawingHelperVisibleRect;
-- (id<iTermExternalAttributeIndexReading>)drawingHelperExternalAttributesOnLine:(int)lineNumber;
-
-@end
 
 @interface iTermTextDrawingHelper : NSObject
 
@@ -85,7 +44,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 @property(nonatomic, retain) id<iTermColorMapReading> colorMap;
 
 // Required delegate.
-@property(nonatomic, assign) NSView<iTermTextDrawingHelperDelegate> *delegate;
+@property(nonatomic, assign) id<iTermTextDrawingHelperDelegate> delegate;
 
 // Size of a cell in pixels.
 @property(nonatomic, assign) NSSize cellSize;
