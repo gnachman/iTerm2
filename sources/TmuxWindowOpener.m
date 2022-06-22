@@ -217,7 +217,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 - (NSDictionary *)dictForGetUserVars:(NSNumber *)wp {
     ++pendingRequests_;
     DLog(@"Increment pending requests to %d", pendingRequests_);
-    NSString *command = [NSString stringWithFormat:@"show-options -v -p -t %%%d @uservars",
+    NSString *command = [NSString stringWithFormat:@"show-options -q -v -p -t %%%d @uservars",
                          [wp intValue]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
