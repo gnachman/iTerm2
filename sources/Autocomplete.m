@@ -487,7 +487,9 @@ const int kMaxResultContextWords = 4;
         if ([findResults_ count] == 0) {
             assert(more_);
             AcLog(@"Do another search");
+            NSRange ignore;
             more_ = [screen continueFindAllResults:findResults_
+                                          rangeOut:&ignore
                                             inContext:findContext_
                                      rangeSearched:NULL];
         }

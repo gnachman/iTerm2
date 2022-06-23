@@ -506,6 +506,9 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     if (item.action == @selector(terminalStateReset:)) {
         return YES;
     }
+    if (item.action == @selector(revealContentNavigationShortcuts:)) {
+        return self.findOnPageHelper.searchResults.count > 0;
+    }
 
     SEL theSel = [item action];
     if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
@@ -985,6 +988,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 }
 
 - (void)mouseDown:(NSEvent *)event {
+    [self.delegate textViewWillHandleMouseDown:event];
     [_mouseHandler mouseDown:event superCaller:^{ [super mouseDown:event]; }];
 }
 
@@ -2422,6 +2426,10 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     }
 
     return result;
+}
+
+- (IBAction)revealContentNavigationShortcuts:(id)sender {
+    [self convertVisibleSearchResultsToContentNavigationShortcuts];
 }
 
 - (IBAction)selectAll:(id)sender {
@@ -3980,8 +3988,9 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     return _findOnPageHelper.copiedContext;
 }
 
-- (BOOL)continueFind:(double *)progress {
+- (BOOL)continueFind:(double *)progress range:(NSRange *)rangePtr {
     return [_findOnPageHelper continueFind:progress
+                                  rangeOut:rangePtr
                                    context:[_dataSource findContext]
                                      width:[_dataSource width]
                              numberOfLines:[_dataSource numberOfLines]
@@ -3989,9 +3998,11 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 }
 
 - (BOOL)continueFindAllResults:(NSMutableArray *)results
+                      rangeOut:(NSRange *)rangePtr
                      inContext:(FindContext *)context
                  rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
     return [_dataSource continueFindAllResults:results
+                                      rangeOut:rangePtr
                                      inContext:context
                                  rangeSearched:rangeSearched];
 }
@@ -5196,7 +5207,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)updateAlphaValue {
-    if ([self allAnnotationsAreHidden] && !self.hasPortholes) {
+    if ([self allAnnotationsAreHidden] &&
+        !self.hasPortholes &&
+        self.contentNavigationShortcuts.count == 0) {
         [self setAlphaValue:0.0];
     } else {
         [self setAlphaValue:1.0];

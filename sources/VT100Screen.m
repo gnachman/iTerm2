@@ -128,6 +128,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)setSize:(VT100GridSize)size {
+    [self.delegate screenEnsureDefaultMode];
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState setSize:size delegate:delegate];
     }];
@@ -178,6 +179,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)destructivelySetScreenWidth:(int)width
                              height:(int)height
                        mutableState:(VT100ScreenMutableState *)mutableState {
+    [self.delegate screenEnsureDefaultMode];
     self.findContext.substring = nil;
     [mutableState destructivelySetScreenWidth:MAX(width, kVT100ScreenMinColumns)
                                        height:MAX(height, kVT100ScreenMinRows)];
@@ -194,6 +196,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)replaceRange:(VT100GridAbsCoordRange)range
         withPorthole:(id<Porthole>)porthole
             ofHeight:(int)numLines {
+    [self.delegate screenEnsureDefaultMode];
     [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState replaceRange:range withPorthole:porthole ofHeight:numLines];
     }];
@@ -369,9 +372,13 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (BOOL)continueFindAllResults:(NSMutableArray *)results
+                      rangeOut:(NSRange *)rangePtr
                      inContext:(FindContext *)context
                  rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
-    return [self continueFindAllResultsImpl:results inContext:context rangeSearched:rangeSearched];
+    return [self continueFindAllResultsImpl:results
+                                   rangeOut:rangePtr
+                                  inContext:context
+                              rangeSearched:rangeSearched];
 }
 
 - (NSString *)debugString {
@@ -689,6 +696,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)clearToLastMark {
+    [self.delegate screenEnsureDefaultMode];
     const long long overflow = self.totalScrollbackOverflow;
     const int cursorLine = self.currentGrid.cursor.y + _state.numberOfScrollbackLines;
     id<VT100ScreenMarkReading> lastMark = [self lastMarkPassingTest:^BOOL(__kindof id<IntervalTreeObject> obj) {
@@ -964,6 +972,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                               query:(NSString *)query
                                            refining:(iTermAsyncFilter *)refining
                                            progress:(void (^)(double))progress {
+    [self.delegate screenEnsureDefaultMode];
     return [[iTermAsyncFilter alloc] initWithQuery:query
                                         lineBuffer:_state.linebuffer
                                               grid:self.currentGrid
@@ -1130,6 +1139,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)mutateAsynchronously:(void (^)(VT100Terminal *terminal,
                                        VT100ScreenMutableState *mutableState,
                                        id<VT100ScreenDelegate> delegate))block {
+    [self.delegate screenEnsureDefaultMode];
     [_mutableState performBlockAsynchronously:block];
 }
 
@@ -1298,6 +1308,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)clearBuffer {
+    [self.delegate screenEnsureDefaultMode];
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState clearBufferSavingPrompt:YES];
     }];

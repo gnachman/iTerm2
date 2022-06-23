@@ -1453,4 +1453,143 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     }];
 }
 
+#pragma mark - Content Navigation
+
+- (ContentNavigationShortcutView *)addShortcutWithRange:(VT100GridAbsCoordRange)range
+                                          keyEquivalent:(NSString *)keyEquivalent
+                                                 action:(void (^)(id<iTermContentNavigationShortcutView>))action {
+    if (!self.contentNavigationShortcuts) {
+        self.contentNavigationShortcuts = [NSMutableArray array];
+    }
+    iTermContentNavigationShortcut *shortcut = [[iTermContentNavigationShortcut alloc] initWithRange:range
+                                                                                       keyEquivalent:keyEquivalent
+                                                                                              action:action];
+    [self.contentNavigationShortcuts addObject:shortcut];
+    return [self addViewForContentNavigationShortcut:shortcut];
+}
+
+- (NSRect)rectForAbsCoord:(VT100GridAbsCoord)coord {
+    BOOL ok;
+    VT100GridCoord relative = VT100GridCoordFromAbsCoord(coord, self.dataSource.totalScrollbackOverflow, &ok);
+    if (!ok) {
+        return NSZeroRect;
+    }
+    return [self rectForCoord:relative];
+}
+
+- (ContentNavigationShortcutView *)addViewForContentNavigationShortcut:(iTermContentNavigationShortcut *)shortcut
+                                                          {
+    const NSRect rect = NSUnionRect([self rectForAbsCoord:shortcut.range.start],
+                                    [self rectForAbsCoord:shortcut.range.end]);
+    ContentNavigationShortcutView *view = [[ContentNavigationShortcutView alloc] initWithShortcut:shortcut
+                                                                                           target:rect];
+    shortcut.view = view;
+    const NSSize size = view.bounds.size;
+    view.frame = NSMakeRect(MAX(0, rect.origin.x - size.width / 2),
+                            MAX(0, rect.origin.y - size.height / 2),
+                            size.width,
+                            size.height);
+    [self refresh];
+    [self addSubview:view];
+    [self setNeedsDisplay:YES];
+    [self updateAlphaValue];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAnnotationVisibilityDidChange object:nil];
+    [view animateIn];
+    return view;
+}
+
+- (void)removeContentNavigationShortcuts {
+    if (!self.contentNavigationShortcuts.count) {
+        return;
+    }
+    __weak __typeof(self) weakSelf = self;
+    for (iTermContentNavigationShortcut *shortcut in self.contentNavigationShortcuts) {
+        if (!shortcut.view.terminating) {
+            [shortcut.view dissolveWithCompletion:^{
+                [weakSelf removeContentNavigationShortcutView:shortcut.view];
+            }];
+        }
+    }
+}
+
+- (void)removeContentNavigationShortcutView:(id<iTermContentNavigationShortcutView>)view {
+    [self.contentNavigationShortcuts removeObjectsPassingTest:^BOOL(iTermContentNavigationShortcut *anObject) {
+        return anObject.view == view;
+    }];
+    [[NSView castFrom:view] removeFromSuperview];
+    [self refresh];
+    [self setNeedsDisplay:YES];
+    [self updateAlphaValue];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAnnotationVisibilityDidChange object:nil];
+}
+
+- (void)convertVisibleSearchResultsToContentNavigationShortcuts {
+    [self removeContentNavigationShortcuts];
+    const VT100GridRange relativeRange = [self rangeOfVisibleLines];
+    const NSRange range = NSMakeRange(relativeRange.location + self.dataSource.totalScrollbackOverflow,
+                                      relativeRange.length);
+    __weak __typeof(self) weakSelf = self;
+    iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self.dataSource];
+    ContentNavigationShortcutLayerOuter *layerOuter = [[ContentNavigationShortcutLayerOuter alloc] init];
+    NSMutableArray<SearchResult *> *results = [NSMutableArray array];
+    [self.findOnPageHelper enumerateSearchResultsInRangeOfLines:range
+                                                          block:^(SearchResult *result) {
+        [results addObject:result];
+    }];
+    if (results.count == 0) {
+        return;
+    }
+    [results sortUsingComparator:^NSComparisonResult(SearchResult *lhs, SearchResult *rhs) {
+        if (lhs.internalAbsStartY == rhs.internalAbsStartY) {
+            return [@(lhs.internalStartX) compare:@(rhs.internalStartX)];
+        }
+        return [@(lhs.internalAbsStartY) compare:@(rhs.internalAbsStartY)];
+    }];
+    NSInteger i = 0;
+    for (SearchResult *result in results) {
+        VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(result.internalAbsCoordRange,
+                                                                         self.dataSource.totalScrollbackOverflow);
+        VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range, 0, 0);
+        NSString *content = [extractor contentInRange:windowedRange
+                                    attributeProvider:nil
+                                           nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
+                                                  pad:NO
+                                   includeLastNewline:NO
+                               trimTrailingWhitespace:YES
+                                         cappedAtSize:4096
+                                         truncateTail:YES
+                                    continuationChars:nil
+                                               coords:nil];
+        NSString *folder = [self.dataSource workingDirectoryOnLine:range.start.y];
+        if (!content.length) {
+            return;
+        }
+        id<VT100RemoteHostReading> remoteHost = [self.dataSource remoteHostOnLine:range.start.y];
+        i += 1;
+        NSString *keyEquivalent;
+        if (i < 10) {
+            keyEquivalent = [@(i) stringValue];
+        } else if (i < 10 + 26) {
+            keyEquivalent = [NSString stringWithLongCharacter:'A' + i - 10];
+        } else {
+            break;
+        }
+        ContentNavigationShortcutView *view =
+        [self addShortcutWithRange:result.internalAbsCoordRange
+                     keyEquivalent:keyEquivalent
+                            action:^(id<iTermContentNavigationShortcutView> view){
+            [weakSelf.delegate textViewOpen:content workingDirectory:folder remoteHost:remoteHost];
+            [view popWithCompletion:^{
+                [weakSelf removeContentNavigationShortcutView:view];
+            }];
+            [weakSelf.delegate textViewExitShortcutNavigationMode];
+        }];
+        [layerOuter addView:view];
+    }
+    [layerOuter layoutWithin:self.enclosingScrollView.documentVisibleRect];
+    [self refresh];
+    [self.delegate textViewEnterShortcutNavigationMode];
+}
+
+
 @end

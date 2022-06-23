@@ -99,6 +99,7 @@
 }
 
 - (BOOL)continueFindAllResultsImpl:(NSMutableArray<SearchResult *> *)results
+                          rangeOut:(NSRange *)rangePtr
                          inContext:(FindContext *)context
                      rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
     context.hasWrapped = YES;
@@ -106,10 +107,12 @@
     BOOL keepSearching;
     do {
         keepSearching = [self continueFindResultsInContext:context
-                                                      toArray:results
+                                                  rangeOut:rangePtr
+                                                   toArray:results
                                              rangeSearched:rangeSearched];
     } while (keepSearching &&
              [[NSDate date] timeIntervalSinceDate:start] < context.maxTime);
+
     if (results.count > 0) {
         [self.delegate screenRefreshFindOnPageView];
     }
@@ -157,7 +160,22 @@
     return VT100GridAbsCoordFromCoord(coord, self.totalScrollbackOverflow);
 }
 
+- (void)updateRange:(NSRange *)rangePtr
+        fromContext:(FindContext *)context
+         lineBuffer:(LineBuffer *)linebuffer {
+    const long long line = [linebuffer numberOfWrappedLinesWithWidth:_state.width
+                                             upToAbsoluteBlockNumber:context.absBlockNum] + _state.totalScrollbackOverflow;
+    if (context.dir > 0) {
+        // Searching forwards
+        *rangePtr = NSMakeRange(0, line);
+    } else {
+        const long long numberOfLines = [linebuffer numberOfWrappedLinesWithWidth:_state.width] + _state.totalScrollbackOverflow;
+        *rangePtr = NSMakeRange(line, numberOfLines - line);
+    }
+}
+
 - (BOOL)continueFindResultsInContext:(FindContext *)context
+                            rangeOut:(NSRange *)rangePtr
                              toArray:(NSMutableArray *)results
                        rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
     // Append the screen contents to the scrollback buffer so they are included in the search.
@@ -246,6 +264,13 @@
                         assert(false);  // Bogus status
                 }
 
+                if (keepSearching) {
+                    [self updateRange:rangePtr
+                          fromContext:context
+                           lineBuffer:temporaryLineBuffer];
+                } else {
+                    *rangePtr = NSMakeRange(0, [_state numberOfLines] + [_state totalScrollbackOverflow]);
+                }
                 struct timeval endtime;
                 if (keepSearching) {
                     gettimeofday(&endtime, NULL);

@@ -116,6 +116,7 @@
 #import "PTYTabView.h"
 #import "PTYTask.h"
 #import "PTYTextView.h"
+#import "PTYTextView+ARC.h"
 #import "PTYWindow.h"
 #import "SessionView.h"
 #import "SplitPanel.h"
@@ -2945,14 +2946,28 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"begin");
     [self.currentSession showFilter];
 }
-
 - (IBAction)findUrls:(id)sender {
     DLog(@"begin");
     iTermFindDriver *findDriver = self.currentSession.view.findDriver;
     NSString *regex = [iTermAdvancedSettingsModel findUrlsRegex];
     DLog(@"findDriver=%@ regex=%@", findDriver, regex);
+    __weak PTYSession *session = self.currentSession;
+    __block BOOL done = NO;
     [findDriver closeViewAndDoTemporarySearchForString:regex
-                                                  mode:iTermFindModeCaseSensitiveRegex];
+                                                  mode:iTermFindModeCaseSensitiveRegex
+                                              progress:^(NSRange linesSearched) {
+        if (!session.textview || done) {
+            return;
+        }
+        const VT100GridRange visibleLines = [session.textview rangeOfVisibleLines];
+        const NSRange visibleAbsLines = NSMakeRange(visibleLines.location + session.screen.totalScrollbackOverflow,
+                                                    visibleLines.length);
+        if (NSEqualRanges(visibleAbsLines, NSIntersectionRange(visibleAbsLines, linesSearched))) {
+            [session.textview convertVisibleSearchResultsToContentNavigationShortcuts];
+            done = YES;
+            return;
+        }
+    }];
 }
 
 - (IBAction)detachTmux:(id)sender {
@@ -5595,6 +5610,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (BOOL)sessionInitiatedResize:(PTYSession *)session width:(int)width height:(int)height {
     __block BOOL result;
+    [session resetMode];
     [session.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         PtyLog(@"sessionInitiatedResize");
         // ignore resize request when we are in full screen mode.
@@ -7457,6 +7473,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)showRangeOfLines:(NSRange)rangeOfLines inSession:(PTYSession *)oldSession {
     PTYSessionZoomState *state = oldSession.stateToSaveForZoom;
     PTYSession *syntheticSession = [self syntheticSessionForSession:oldSession];
+    [oldSession resetMode];
     [syntheticSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.cursorVisible = NO;
     }];
@@ -9945,6 +9962,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 - (IBAction)clearToStartOfSelection:(id)sender {
     const long long line = self.currentSession.textview.selection.firstAbsRange.coordRange.start.y;
+    [self.currentSession resetMode];
     [self.currentSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                                                 VT100ScreenMutableState *mutableState,
                                                                 id<VT100ScreenDelegate> delegate) {

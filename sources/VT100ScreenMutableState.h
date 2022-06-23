@@ -300,6 +300,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 // Factors that could cause tokens to queue instead of execute.
 @property (nonatomic) BOOL taskPaused;
 @property (nonatomic) BOOL copyMode;
+@property (nonatomic) BOOL shortcutNavigationMode;
 
 // Factors that cause tokens to be discarded.
 @property (nonatomic) BOOL isTmuxGateway;

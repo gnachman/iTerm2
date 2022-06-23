@@ -22,7 +22,7 @@
 - (BOOL)findInProgress;
 
 // Search more. Fill in *progress with how much of the buffer has been searched.
-- (BOOL)continueFind:(double *)progress;
+- (BOOL)continueFind:(double *)progress range:(NSRange *)rangePtr;
 
 // Moves the beginning of the current selection leftward by a word.
 - (BOOL)growSelectionLeft;
@@ -105,7 +105,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 // navigate with with next-previous. When the find window is opened, the state
 // is restored.
 - (void)closeViewAndDoTemporarySearchForString:(NSString *)string
-                                          mode:(iTermFindMode)mode;
+                                          mode:(iTermFindMode)mode
+                                      progress:(void (^)(NSRange linesSearched))progress;
 
 - (void)owningViewDidBecomeFirstResponder;
 - (void)setFilterWithoutSideEffects:(NSString *)filter;

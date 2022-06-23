@@ -568,6 +568,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 }
 
 - (BOOL)continueFindAllResults:(NSMutableArray *)results
+                      rangeOut:(NSRange *)rangePtr
                      inContext:(FindContext *)context
                  rangeSearched:(VT100GridAbsCoordRange *)rangeSearched {
     return NO;

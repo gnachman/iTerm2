@@ -4892,6 +4892,9 @@ launchCoprocessWithCommand:(NSString *)command
     if (self.copyMode) {
         return YES;
     }
+    if (self.shortcutNavigationMode) {
+        return YES;
+    }
     return NO;
 }
 

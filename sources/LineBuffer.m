@@ -1467,6 +1467,14 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return [_lineBlocks numberOfWrappedLinesForWidth:width];
 }
 
+- (int)numberOfWrappedLinesWithWidth:(int)width upToAbsoluteBlockNumber:(int)absBlock {
+    int count = 0;
+    for (int i = num_dropped_blocks; i < absBlock; i++) {
+        count += [_lineBlocks.blocks[i - num_dropped_blocks] getNumLinesWithWrapWidth:width];
+    }
+    return count;
+}
+
 - (void)beginResizing {
     assert(!_lineBlocks.resizing);
     _lineBlocks.resizing = YES;

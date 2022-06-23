@@ -23,7 +23,7 @@ static NSString *gSearchString;
 
 @property(nonatomic, assign) iTermFindMode mode;
 @property(nonatomic, copy) NSString *string;
-
+@property(nonatomic, copy) void (^progress)(NSRange);
 @end
 
 @implementation FindState
@@ -183,7 +183,9 @@ static NSString *gSearchString;
     [self.viewController makeVisible];
 }
 
-- (void)closeViewAndDoTemporarySearchForString:(NSString *)string mode:(iTermFindMode)mode {
+- (void)closeViewAndDoTemporarySearchForString:(NSString *)string
+                                          mode:(iTermFindMode)mode
+                                      progress:(void (^)(NSRange linesSearched))progress {
     DLog(@"begin %@", self);
     [_viewController close];
     if (!_savedState) {
@@ -191,6 +193,7 @@ static NSString *gSearchString;
     }
     _state.mode = mode;
     _state.string = string;
+    _state.progress = progress;
     _viewController.findString = string;
     DLog(@"delegate=%@ state=%@ state.mode=%@ state.string=%@", self.delegate, _state, @(_state.mode), _state.string);
     [self.delegate findViewControllerClearSearch];
@@ -456,6 +459,7 @@ static NSString *gSearchString;
 - (void)didLoseFocus {
     if (_timer == nil) {
         [_viewController setProgress:0];
+        _state.progress = nil;
     }
     _lastEditTime = 0;
 }
@@ -468,7 +472,11 @@ static NSString *gSearchString;
     if ([self.delegate findInProgress]) {
         DLog(@"Find is in progress");
         double progress;
-        more = [self.delegate continueFind:&progress];
+        NSRange range;
+        more = [self.delegate continueFind:&progress range:&range];
+        if (_state.progress) {
+            _state.progress(range);
+        }
         [_viewController setProgress:progress];
     }
     if (!more) {
@@ -548,6 +556,9 @@ static NSString *gSearchString;
         [_timer invalidate];
         _timer = nil;
         [_viewController setProgress:1];
+        if (_state.progress) {
+            _state.progress(NSMakeRange(0, NSUIntegerMax));
+        }
     }
 }
 

@@ -1970,8 +1970,8 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return [self.delegate findInProgress];
 }
 
-- (BOOL)continueFind:(double *)progress {
-    return [self.delegate continueFind:progress];
+- (BOOL)continueFind:(double *)progress range:(NSRange *)rangePtr {
+    return [self.delegate continueFind:progress range:rangePtr];
 }
 
 - (BOOL)growSelectionLeft {

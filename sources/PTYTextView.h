@@ -261,7 +261,12 @@ extern NSNotificationName iTermPortholesDidChange;
 - (NSString *)textViewCurrentSSHSessionName;
 - (void)textViewDisconnectSSH;
 - (void)textViewShowFindIndicator:(VT100GridCoordRange)range;
-
+- (void)textViewOpen:(NSString *)string
+    workingDirectory:(NSString *)folder
+          remoteHost:(id<VT100RemoteHostReading>)remoteHost;
+- (void)textViewEnterShortcutNavigationMode;
+- (void)textViewExitShortcutNavigationMode;
+- (void)textViewWillHandleMouseDown:(NSEvent *)event;
 @end
 
 @interface iTermHighlightedRow : NSObject
@@ -562,7 +567,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)clearHighlights:(BOOL)resetContext;
 
 // Performs a find on the next chunk of text.
-- (BOOL)continueFind:(double *)progress;
+- (BOOL)continueFind:(double *)progress range:(NSRange *)rangePtr;
 
 // This textview is about to become invisible because another tab is selected.
 - (void)aboutToHide;

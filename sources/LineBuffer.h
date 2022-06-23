@@ -162,6 +162,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (LineBuffer * _Nonnull)copyWithMinimumLines:(int)minLines atWidth:(int)width;
 
 - (int)numberOfWrappedLinesWithWidth:(int)width;
+- (int)numberOfWrappedLinesWithWidth:(int)width upToAbsoluteBlockNumber:(int)absBlock;
 
 - (LineBuffer *)copy;
 

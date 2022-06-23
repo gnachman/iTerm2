@@ -3181,6 +3181,7 @@
 		A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC05020073CBA00F1466D /* NSResponder+iTerm.m */; };
 		A6DBC2FC2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC2FA2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.h */; };
 		A6DBC2FD2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC2FB2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m */; };
+		A6DBC9DA286399C6002911BE /* ContentNavigationShortcut.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC9D9286399C6002911BE /* ContentNavigationShortcut.swift */; };
 		A6DBE76C22507D1600144200 /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66C918D4D855009AC9D5 /* NSView+iTerm.m */; };
 		A6DC8134285CF3E80050788C /* GPBAny.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DC812F285CF3E70050788C /* GPBAny.pbobjc.h */; };
 		A6DC8135285CF3E80050788C /* GPBDuration.pbobjc.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DC8130285CF3E70050788C /* GPBDuration.pbobjc.h */; };
@@ -6804,6 +6805,7 @@
 		A6DBC05020073CBA00F1466D /* NSResponder+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSResponder+iTerm.m"; sourceTree = "<group>"; };
 		A6DBC2FA2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VT100ScreenMutableState+TerminalDelegate.h"; sourceTree = "<group>"; };
 		A6DBC2FB2790F6700043F329 /* VT100ScreenMutableState+TerminalDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "VT100ScreenMutableState+TerminalDelegate.m"; sourceTree = "<group>"; };
+		A6DBC9D9286399C6002911BE /* ContentNavigationShortcut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentNavigationShortcut.swift; sourceTree = "<group>"; };
 		A6DC812F285CF3E70050788C /* GPBAny.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBAny.pbobjc.h; path = ThirdParty/ProtobufRuntime/GPBAny.pbobjc.h; sourceTree = SOURCE_ROOT; };
 		A6DC8130285CF3E70050788C /* GPBDuration.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBDuration.pbobjc.h; path = ThirdParty/ProtobufRuntime/GPBDuration.pbobjc.h; sourceTree = SOURCE_ROOT; };
 		A6DC8131285CF3E70050788C /* GPBEmpty.pbobjc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GPBEmpty.pbobjc.h; path = ThirdParty/ProtobufRuntime/GPBEmpty.pbobjc.h; sourceTree = SOURCE_ROOT; };
@@ -10424,6 +10426,7 @@
 				A603EA00283EEAE60028B648 /* ObjCExceptions.swift */,
 				A63EB05A284DCAF300B2AB89 /* WeakBox.swift */,
 				A6D1C41F286192F600B68526 /* TextClipDrawing.swift */,
+				A6DBC9D9286399C6002911BE /* ContentNavigationShortcut.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -14862,6 +14865,7 @@
 				A6A4867420B67B2400493302 /* PreferenceInfo.m in Sources */,
 				A6A4B2BC2426C02800184EAC /* iTermPresetKeyMappings.m in Sources */,
 				A6BF035D21E179BD0097DA86 /* iTermWeakVariables.m in Sources */,
+				A6DBC9DA286399C6002911BE /* ContentNavigationShortcut.swift in Sources */,
 				A6110C3B2526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m in Sources */,
 				A6A453931FF318D8009FD3B7 /* iTermTexturePageCollection.mm in Sources */,
 				A6DBC05220073CBA00F1466D /* NSResponder+iTerm.m in Sources */,

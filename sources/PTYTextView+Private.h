@@ -23,6 +23,7 @@
 #import "iTermTextPopoverViewController.h"
 
 @protocol iTermCancelable;
+@class iTermContentNavigationShortcut;
 @class iTermIdempotentOperationJoiner;
 @class iTermShellIntegrationWindowController;
 @class iTermURLActionHelper;
@@ -63,6 +64,7 @@ NSPopoverDelegate> {
 @property(nonatomic, readonly, strong) NSMutableArray<id<Porthole>> *portholes;
 @property(nonatomic, strong) iTermIdempotentOperationJoiner *portholesNeedUpdatesJoiner;
 @property(nonatomic) int lastPortholeWidth;  // in cells
+@property(nonatomic, strong) NSMutableArray<iTermContentNavigationShortcut *> *contentNavigationShortcuts;
 
 - (void)addNote;
 - (void)updateAlphaValue;

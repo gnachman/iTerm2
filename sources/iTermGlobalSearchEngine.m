@@ -114,7 +114,9 @@
     NSMutableArray<SearchResult *> *results = [NSMutableArray array];
     NSString *query = [cursor.findContext.substring copy];
     const iTermFindMode mode = cursor.findContext.mode;
+    NSRange range;
     const BOOL more = [cursor.session.screen continueFindAllResults:results
+                                                           rangeOut:&range
                                                           inContext:cursor.findContext
                                                       rangeSearched:NULL];
     iTermTextExtractor *extractor = [[iTermTextExtractor alloc] initWithDataSource:cursor.session.screen];

@@ -13,8 +13,10 @@
 #import "iTermURLActionHelper.h"
 #import "VT100GridTypes.h"
 
+@class ContentNavigationShortcutView;
 @protocol PTYTrackingChildWindow;
 @class URLAction;
+@protocol iTermContentNavigationShortcutView;
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -123,6 +125,18 @@ iTermURLActionHelperDelegate>
 
 - (void)trackChildWindow:(id<PTYTrackingChildWindow>)window;
 - (void)shiftTrackingChildWindows;
+
+#pragma mark - Content Navigation Shortcuts
+
+- (void)convertVisibleSearchResultsToContentNavigationShortcuts;
+
+- (ContentNavigationShortcutView *)addShortcutWithRange:(VT100GridAbsCoordRange)range
+                                          keyEquivalent:(NSString *)keyEquivalent
+                                                 action:(void (^)(id<iTermContentNavigationShortcutView>))action;
+- (void)removeContentNavigationShortcuts;
+
+// This is meant to be used after the view finishes animating.
+- (void)removeContentNavigationShortcutView:(id<iTermContentNavigationShortcutView>)view;
 
 @end
 

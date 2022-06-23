@@ -33,6 +33,7 @@
 
 // Find more, fill in results.
 - (BOOL)continueFindAllResults:(NSMutableArray *)results
+                      rangeOut:(NSRange *)rangePtr
                      inContext:(FindContext *)context
                  rangeSearched:(VT100GridAbsCoordRange *)rangeSearched;
 
@@ -122,6 +123,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 // Search the next block (calling out to the delegate to do the real work) and update highlights and
 // search results.
 - (BOOL)continueFind:(double *)progress
+            rangeOut:(NSRange *)rangePtr
              context:(FindContext *)context
                width:(int)width
        numberOfLines:(int)numberOfLines
@@ -136,6 +138,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)setStartPoint:(VT100GridAbsCoord)startPoint;
 
 - (NSRange)rangeOfSearchResultsInRangeOfLines:(NSRange)range;
+- (void)enumerateSearchResultsInRangeOfLines:(NSRange)range
+                                       block:(void (^ NS_NOESCAPE)(SearchResult *result))block;
 - (void)overflowAdjustmentDidChange;
 - (void)addExternalResults:(NSArray<iTermExternalSearchResult *> *)externalResults
                      width:(int)width;

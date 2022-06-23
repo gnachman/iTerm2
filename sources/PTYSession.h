@@ -912,7 +912,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (BOOL)checkForCyclesInSwiftyStrings;
 - (void)applyAction:(iTermAction *)action;
 - (void)didUpdateCurrentDirectory;
-- (BOOL)copyModeConsumesEvent:(NSEvent *)event;
+- (BOOL)sessionModeConsumesEvent:(NSEvent *)event;
 - (Profile *)profileForSplit;
 - (void)compose;
 - (void)openComposerWithString:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
@@ -923,6 +923,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)performActionForCapturedOutput:(CapturedOutput *)capturedOutput;
 - (void)userInitiatedReset;
 - (void)resetForRelaunch;
+- (void)resetMode;
 
 #pragma mark - API
 

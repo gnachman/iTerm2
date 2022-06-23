@@ -602,6 +602,12 @@ DQ
                                                 <action selector="findUrls:" target="-1" id="PCp-uW-FfK"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Pick Result to Open" keyEquivalent="O" identifier="Find.Pick Result To Open" id="KTc-zQ-Rb6">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="revealContentNavigationShortcuts:" target="-1" id="5YT-AN-QYt"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem isSeparatorItem="YES" id="sV9-Bl-1d4">
                                             <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                         </menuItem>

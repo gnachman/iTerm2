@@ -90,4 +90,5 @@ static const NSTimeInterval kDefaultMaxTime = 0.1;
 - (FindContext *)copy {
     return [self copyWithZone:nil];
 }
+
 @end

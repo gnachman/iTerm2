@@ -385,7 +385,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     }
 
     if (okToRemap && [currentSession hasActionableKeyMappingForEvent:event]) {
-        if (currentSession.copyMode && [currentSession copyModeConsumesEvent:event]) {
+        if ([currentSession sessionModeConsumesEvent:event]) {
             return NO;
         }
         // Remap key.

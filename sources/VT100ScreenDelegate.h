@@ -415,5 +415,6 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (iTermConductorRecovery * _Nullable)screenHandleFramerRecoveryString:(NSString * _Nonnull)string;
 - (void)screenFramerRecoveryDidFinish;
 - (void)screenDidResynchronizeSSH;
+- (void)screenEnsureDefaultMode;
 
 @end

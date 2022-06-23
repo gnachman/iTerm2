@@ -206,6 +206,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // 2. If _searchingForNextResult is true, highlight the next result before/after
 //   the current selection and flip _searchingForNextResult to false.
 - (BOOL)continueFind:(double *)progress
+            rangeOut:(NSRange *)rangePtr
              context:(FindContext *)context
                width:(int)width
        numberOfLines:(int)numberOfLines
@@ -218,6 +219,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_findInProgress) {
         // Collect more results.
         more = [_delegate continueFindAllResults:newSearchResults
+                                        rangeOut:rangePtr
                                        inContext:context
                                    rangeSearched:NULL];
         *progress = [context progress];
@@ -545,6 +547,25 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         return NSMakeRange(NSNotFound, 0);
     } else {
         return NSMakeRange(headIndex, tailIndex - headIndex + 1);
+    }
+}
+
+- (void)enumerateSearchResultsInRangeOfLines:(NSRange)range
+                                       block:(void (^ NS_NOESCAPE)(SearchResult *result))block {
+    if (_searchResults.count == 0) {
+        return;
+    }
+    const NSInteger headIndex = [self smallestIndexOfLastSearchResultWithYLessThan:NSMaxRange(range)];
+    for (NSInteger i = headIndex; i < _searchResults.count; i++) {
+        SearchResult *result = _searchResults[i];
+        if (result.internalAbsStartY < range.location) {
+            continue;
+        }
+        if (result.isExternal) {
+            // External search results aren't supported yet.
+            continue;
+        }
+        block(result);
     }
 }
 

@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface NSBezierPath (iTerm)
 
 + (NSBezierPath *)smoothPathAroundBottomOfFrame:(NSRect)frame;
@@ -15,3 +17,6 @@
 - (CGPathRef)iterm_openCGPath CF_RETURNS_NOT_RETAINED;
 
 @end
+
+NS_ASSUME_NONNULL_END
+

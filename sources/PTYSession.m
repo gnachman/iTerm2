@@ -507,7 +507,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     uint32_t _autoLogId;
 
-    iTermCopyModeHandler *_copyModeHandler;
+    iTermSessionModeHandler *_modeHandler;
 
     // Absolute line number where touchbar status changed.
     long long _statusChangedAbsLine;
@@ -655,8 +655,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         // mode.
         [[MovePaneController sharedInstance] exitMovePaneMode];
         _lastInput = [NSDate timeIntervalSinceReferenceDate];
-        _copyModeHandler = [[iTermCopyModeHandler alloc] init];
-        _copyModeHandler.delegate = self;
+        _modeHandler = [[iTermSessionModeHandler alloc] init];
+        _modeHandler.delegate = self;
 
         _lastOutputIgnoringOutputAfterResizing = _lastInput;
         _lastUpdate = _lastInput;
@@ -914,7 +914,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_promptSubscriptions release];
     [_customEscapeSequenceNotifications release];
 
-    [_copyModeHandler release];
+    [_modeHandler release];
     [_metalDisabledTokens release];
     [_badgeSwiftyString release];
     [_subtitleSwiftyString release];
@@ -1114,6 +1114,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)appendLinesInRange:(NSRange)rangeOfLines fromSession:(PTYSession *)source {
     assert(source != self);
+    _modeHandler.mode = iTermSessionModeDefault;
 
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [source.screen enumerateLinesInRange:rangeOfLines
@@ -1140,15 +1141,15 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)setCopyMode:(BOOL)copyMode {
     [_textview removePortholeSelections];
-    _copyModeHandler.enabled = copyMode;
+    _modeHandler.mode = copyMode ? iTermSessionModeCopy : iTermSessionModeDefault;
 }
 
 - (BOOL)copyMode {
-    return _copyModeHandler.enabled;
+    return _modeHandler.mode == iTermSessionModeCopy;
 }
 
-- (BOOL)copyModeConsumesEvent:(NSEvent *)event {
-    return [_copyModeHandler wouldHandleEvent:event];
+- (BOOL)sessionModeConsumesEvent:(NSEvent *)event {
+    return [_modeHandler wouldHandleEvent:event];
 }
 
 - (void)coprocessChanged
@@ -1885,6 +1886,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
 // Session specific methods
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent {
+    _modeHandler.mode = iTermSessionModeDefault;
     _screen.delegate = self;
     if ([iTermAdvancedSettingsModel showLocationsInScrollbar] && [iTermAdvancedSettingsModel showMarksInScrollbar]) {
         _screen.intervalTreeObserver = self;
@@ -3205,6 +3207,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)appendBrokenPipeMessage:(NSString *)unpaddedMessage {
+    _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                              VT100ScreenMutableState *mutableState,
                                              id<VT100ScreenDelegate> delegate) {
@@ -3342,6 +3345,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [self cleanUpAfterBrokenPipe];
 
     if (_shouldRestart) {
+        _modeHandler.mode = iTermSessionModeDefault;
         [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                                  VT100ScreenMutableState *mutableState,
                                                  id<VT100ScreenDelegate> delegate) {
@@ -3716,7 +3720,6 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)openSelection {
-    iTermSemanticHistoryController *semanticHistoryController = _textview.semanticHistoryController;
     long long absLineNumber;
     NSArray *subSelections = _textview.selection.allSubSelections;
     if ([subSelections count]) {
@@ -3739,6 +3742,12 @@ ITERM_WEAKLY_REFERENCEABLE
         NSBeep();
         return;
     }
+
+    [self open:selection workingDirectory:workingDirectory];
+}
+
+- (void)open:(NSString *)selection workingDirectory:(NSString *)workingDirectory {
+    iTermSemanticHistoryController *semanticHistoryController = _textview.semanticHistoryController;
 
     // NOTE: The synchronous API is used here because this is a user-initiated action. We don't want
     // things to change out from under us. It's ok to block the UI while waiting for disk access
@@ -3777,6 +3786,17 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 
     [self tryOpenStringAsURL:selection];
+}
+
+- (void)textViewOpen:(NSString *)string
+    workingDirectory:(NSString *)folder
+          remoteHost:(id<VT100RemoteHostReading>)remoteHost {
+    // TODO: Open files on remote hosts when using ssh integration
+    if (remoteHost.isLocalhost) {
+        [self open:string workingDirectory:folder];
+    } else {
+        [self tryOpenStringAsURL:string];
+    }
 }
 
 - (void)tryOpenStringAsURL:(NSString *)selection {
@@ -4090,6 +4110,7 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs {
+    _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [self reallySetPreferencesFromAddressBookEntry:aePrefs terminal:terminal];
     }];
@@ -4580,6 +4601,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 }
 
 - (void)userInitiatedReset {
+    _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [terminal resetByUserRequest:YES];
     }];
@@ -4893,6 +4915,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 }
 
 - (void)clearBuffer {
+    _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState clearBufferSavingPrompt:YES];
         if (self.isTmuxClient) {
@@ -4911,6 +4934,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 }
 
 - (void)clearScrollbackBuffer {
+    _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState clearScrollbackBuffer];
     }];
@@ -5975,8 +5999,8 @@ DLog(args); \
     return [_textview findInProgress];
 }
 
-- (BOOL)continueFind:(double *)progress {
-    return [_textview continueFind:progress];
+- (BOOL)continueFind:(double *)progress range:(NSRange *)rangePtr {
+    return [_textview continueFind:progress range:rangePtr];
 }
 
 - (BOOL)growSelectionLeft {
@@ -6040,6 +6064,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)setFilter:(NSString *)filter {
+    _modeHandler.mode = iTermSessionModeDefault;
     DLog(@"setFilter:%@", filter);
     if ([filter isEqualToString:_filter]) {
         return;
@@ -6355,7 +6380,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         return NO;
     }
-    if ([PTYNoteViewController anyNoteVisible]) {
+    if ([PTYNoteViewController anyNoteVisible] || _textview.contentNavigationShortcuts.count > 0) {
         // When metal is enabled the note's superview (PTYTextView) has alphaValue=0 so it will not be visible.
         if (reason) {
             *reason = iTermMetalUnavailableReasonAnnotations;
@@ -6830,6 +6855,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)reallySetTmuxMode:(PTYSessionTmuxMode)tmuxMode {
+    _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                              VT100ScreenMutableState *mutableState,
                                              id<VT100ScreenDelegate> delegate) {
@@ -8107,14 +8133,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (accept) {
         if (_textview.selection.hasSelection &&
             !_textview.selection.live &&
-            [_copyModeHandler shouldAutoEnterWithEvent:event]) {
+            [_modeHandler.copyModeHandler shouldAutoEnterWithEvent:event]) {
             // Avoid handling the event twice (which is the cleverness)
-            [_copyModeHandler setEnabledWithoutCleverness:YES];
-            [_copyModeHandler handleAutoEnteringEvent:event];
+            [_modeHandler enterCopyModeWithoutCleverness];
+            [_modeHandler.copyModeHandler handleAutoEnteringEvent:event];
             return NO;
         }
-        if (_copyModeHandler.enabled) {
-            [_copyModeHandler handleEvent:event];
+        if (_modeHandler.mode != iTermSessionModeDefault) {
+            [_modeHandler handleEvent:event];
             return NO;
         }
         if (event.keyCode == kVK_Return) {
@@ -8623,12 +8649,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             break;
         }
 
-        case KEY_ACTION_FIND_REGEX:
+        case KEY_ACTION_FIND_REGEX: {
             [_view createFindDriverIfNeeded];
             [_view.findDriver closeViewAndDoTemporarySearchForString:action.parameter
-                                                                mode:iTermFindModeCaseSensitiveRegex];
+                                                                mode:iTermFindModeCaseSensitiveRegex
+                                                            progress:nil];
             break;
-
+        }
         case KEY_FIND_AGAIN_DOWN:
             // The UI exposes this as "find down" so it doesn't respect swapFindNextPrevious
             [self searchNext];
@@ -9122,7 +9149,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event {
     if (_textview.selection.hasSelection && !_textview.selection.live) {
-        if ([_copyModeHandler shouldAutoEnterWithEvent:event]) {
+        if ([_modeHandler shouldAutoEnterWithEvent:event]) {
             return NO;
         }
     }
@@ -10144,15 +10171,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (BOOL)textViewCopyMode {
-    return _copyModeHandler.enabled;
+    return _modeHandler.mode == iTermSessionModeCopy;
 }
 
 - (BOOL)textViewCopyModeSelecting {
-    return _copyModeHandler.state.selecting;
+    return _modeHandler.copyModeHandler.state.selecting;
 }
 
 - (VT100GridCoord)textViewCopyModeCursorCoord {
-    return _copyModeHandler.state.coord;
+    return _modeHandler.copyModeHandler.state.coord;
 }
 
 - (BOOL)textViewPasswordInput {
@@ -10166,9 +10193,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range {
-    if (_copyModeHandler.enabled) {
-        _copyModeHandler.state.coord = range.start;
-        _copyModeHandler.state.start = range.end;
+    if (_modeHandler.mode == iTermSessionModeCopy) {
+        _modeHandler.copyModeHandler.state.coord = range.start;
+        _modeHandler.copyModeHandler.state.start = range.end;
         [self.textview setNeedsDisplay:YES];
     }
 }
@@ -10250,6 +10277,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewToggleTerminalStateForMenuItem:(NSMenuItem *)menuItem {
+    _modeHandler.mode = iTermSessionModeDefault;
     const NSInteger tag = menuItem.tag;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                              VT100ScreenMutableState *mutableState,
@@ -10902,6 +10930,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)setDvrFrame {
+    _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         const screen_char_t *s = (const screen_char_t *)[_dvrDecoder decodedFrame];
         const int len = [_dvrDecoder screenCharArrayLength];
@@ -10968,7 +10997,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSMutableArray<SearchResult *> *results = [NSMutableArray array];
     BOOL more;
     VT100GridAbsCoordRange rangeSearched = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
+    NSRange ignore;
     more = [_screen continueFindAllResults:results
+                                  rangeOut:&ignore
                                  inContext:_tailFindContext
                              rangeSearched:&rangeSearched];
     DLog(@"Continue tail find found %@ results, more=%@", @(results.count), @(more));
@@ -12266,6 +12297,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)maybeResetTerminalStateOnHostChange:(id<VT100RemoteHostReading>)newRemoteHost {
+    _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal,
                                              VT100ScreenMutableState *mutableState,
                                              id<VT100ScreenDelegate> delegate) {
@@ -13898,6 +13930,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_conductor recoveryDidFinish];
 }
 
+- (void)screenEnsureDefaultMode {
+    [self resetMode];
+}
+
+- (void)resetMode {
+    _modeHandler.mode = iTermSessionModeDefault;
+}
+
 - (VT100Screen *)popupVT100Screen {
     return _screen;
 }
@@ -14165,6 +14205,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [self.view.findDriver setFilterHidden:YES];
     }
     [[iTermFindPasteboard sharedInstance] updateObservers:nil];
+}
+
+- (void)textViewEnterShortcutNavigationMode {
+    _modeHandler.mode = iTermSessionModeShortcutNavigation;
+}
+
+- (void)textViewExitShortcutNavigationMode {
+    if (_modeHandler.mode == iTermSessionModeShortcutNavigation) {
+        _modeHandler.mode = iTermSessionModeDefault;
+    }
+}
+
+- (void)textViewWillHandleMouseDown:(NSEvent *)event {
+    if (_modeHandler.mode == iTermSessionModeShortcutNavigation) {
+        _modeHandler.mode = iTermSessionModeDefault;
+    }
 }
 
 - (BOOL)sessionViewTerminalIsFirstResponder {
@@ -15334,6 +15390,30 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (NSSize)badgeLabelSizeFraction {
     return _badgeLabelSizeFraction;
+}
+
+#pragma mark - iTermShortcutNavigationModeHandlerDelegate
+
+- (void (^)(void))shortcutNavigationActionForKeyEquivalent:(NSString *)characters {
+    return [[_textview contentNavigationShortcuts] objectPassingTest:^BOOL(iTermContentNavigationShortcut *shortcut, NSUInteger index, BOOL *stop) {
+        if (shortcut.view.terminating) {
+            return NO;
+        }
+        return [shortcut.keyEquivalent caseInsensitiveCompare:characters] == NSOrderedSame;
+    }].action;
+}
+
+- (void)shortcutNavigationDidComplete {
+    [_textview removeContentNavigationShortcuts];
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.shortcutNavigationMode = NO;
+    }];
+}
+
+- (void)shortcutNavigationDidBegin {
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        mutableState.shortcutNavigationMode = YES;
+    }];
 }
 
 #pragma mark - iTermCopyModeHandlerDelegate

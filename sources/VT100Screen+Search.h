@@ -24,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
           multipleResults:(BOOL)multipleResults;
 
 - (BOOL)continueFindAllResultsImpl:(NSMutableArray<SearchResult *> *)results
+                          rangeOut:(NSRange *)rangePtr
                          inContext:(FindContext *)context
                      rangeSearched:(VT100GridAbsCoordRange *)rangeSearched;
 

@@ -1478,6 +1478,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 - (void)setFilter:(NSString *)query inSession:(PTYSession *)oldSession {
     // Join out of caution. I don't want oldSession changing unexpectedly during this method. setFilter:
     // also joins out of necessity which could cause a state update.
+    [oldSession resetMode];
     [oldSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         if (oldSession.filter != nil) {
             if (query.length == 0) {
@@ -2481,6 +2482,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // containing view.
 - (BOOL)fitSessionToCurrentViewSize:(PTYSession *)aSession {
     __block BOOL result = NO;
+    [aSession resetMode];
     [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         DLog(@"fitSessionToCurrentViewSize:%@", aSession);
         if ([aSession isTmuxClient]) {

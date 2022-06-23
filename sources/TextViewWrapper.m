@@ -65,7 +65,7 @@
 }
 
 - (CGFloat)desiredAlphaValue {
-    if ([PTYNoteViewController anyNoteVisible]) {
+    if ([PTYNoteViewController anyNoteVisible] || child_.contentNavigationShortcuts.count > 0) {
         return 1;
     }
     if ([self haveMetalDisablingChildren]) {

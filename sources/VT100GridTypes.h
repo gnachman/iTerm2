@@ -53,7 +53,7 @@ typedef struct {
 
 typedef struct {
     VT100GridCoordRange coordRange;  // inclusive of y, half-open on x
-    VT100GridRange columnWindow;
+    VT100GridRange columnWindow;  // 0s if you don't care
 } VT100GridWindowedRange;
 
 typedef struct {

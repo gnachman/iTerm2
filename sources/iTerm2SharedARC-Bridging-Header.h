@@ -47,6 +47,7 @@
 #import "LineBlock.h"
 #import "LineBufferHelpers.h"
 #import "NSAlert+iTerm.h"
+#import "NSBezierPath+iTerm.h"
 #import "NSCharacterSet+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSData+iTerm.h"
