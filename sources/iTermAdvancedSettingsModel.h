@@ -248,6 +248,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (NSString *)pathToFTP;
 + (NSString *)pathToTelnet;
 + (BOOL)performDictionaryLookupOnQuickLook;
++ (BOOL)performSQLiteIntegrityCheck;
 + (BOOL)pinEditSession;
 + (BOOL)pinchToChangeFontSizeDisabled;
 + (BOOL)pollForTmuxForegroundJob;

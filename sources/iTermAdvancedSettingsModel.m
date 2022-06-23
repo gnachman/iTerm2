@@ -401,6 +401,7 @@ DEFINE_FLOAT(notificationOcclusionThreshold, 0.4, SECTION_GENERAL @"Foreground t
 
 DEFINE_FLOAT(commandHistoryUsePower, 3, SECTION_GENERAL @"When sorting command history for auto command completion: how much should number of uses of a command contribute to its score? A higher score moves the command closer to the top of the list.\nUse 0 to ignore number of uses.");
 DEFINE_FLOAT(commandHistoryAgePower, 1, SECTION_GENERAL @"When sorting command history for auto command completion: how much should the time-since-last-use of a command contribute to its score? A higher score moves the command closer to the top of the list.\nUse 0 to ignore time since last use.");
+DEFINE_BOOL(performSQLiteIntegrityCheck, YES, SECTION_GENERAL @"Perform restorable state integrity checks?");
 
 #pragma mark - Drawing
 

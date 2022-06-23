@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "FMDatabase.h"
+#import "iTermAdvancedSettingsModel.h"
 
 @interface FMResultSet (iTerm)<iTermDatabaseResultSet>
 @end
@@ -172,6 +173,10 @@ typedef enum {
 
 - (BOOL)passesIntegrityCheck {
     assert(_advisoryLock);
+
+    if (![iTermAdvancedSettingsModel performSQLiteIntegrityCheck]) {
+        return YES;
+    }
 
     NSString *checkType = arc4random_uniform(100) == 0 ? @"integrity_check" : @"quick_check";
     NSObject *lock = [[NSObject alloc] init];
