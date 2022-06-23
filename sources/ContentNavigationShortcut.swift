@@ -65,6 +65,7 @@ class ContentNavigationShortcutView: NSView, ContentNavigationShortcutViewProtoc
 
         let containerLayer = CALayer()
         containerLayer.masksToBounds = false
+        containerLayer.opacity = 0.0
         layer = containerLayer
 
         sizeToFit()
@@ -86,7 +87,6 @@ class ContentNavigationShortcutView: NSView, ContentNavigationShortcutViewProtoc
         shapeLayer.shadowRadius = 2.0
         shapeLayer.shadowOpacity = 0.4
         shapeLayer.shadowOffset = CGSize.zero
-
         containerLayer.addSublayer(shapeLayer)
 
         addSubview(label)
@@ -104,17 +104,6 @@ class ContentNavigationShortcutView: NSView, ContentNavigationShortcutViewProtoc
 
     private func growtx(_ amount: CGFloat) -> CATransform3D {
         return CATransform3DMakeScale(amount, amount, 1.0)
-        /*
-        let size = bounds.size
-        let txToOrigin = CATransform3DMakeTranslation(size.width * -0.5,
-                                                      size.height * -0.5,
-                                                      0)
-        let txFromOrigin = CATransform3DMakeTranslation(size.width * 0.5,
-                                                      size.height * 0.5,
-                                                      0)
-        let grow = CATransform3DMakeScale(amount, amount, 1.0)
-        return CATransform3DConcat(txToOrigin, CATransform3DConcat(grow, txFromOrigin))
-         */
     }
 
     @objc
@@ -124,12 +113,17 @@ class ContentNavigationShortcutView: NSView, ContentNavigationShortcutViewProtoc
         DispatchQueue.main.async {
             self.setAnchorPoint()
             CATransaction.begin()
+            CATransaction.setValue(kCFBooleanTrue, forKey: kCATransactionDisableActions)
+            self.layer?.opacity = 1.0
+            CATransaction.commit()
+
+            CATransaction.begin()
             let animation = CAKeyframeAnimation()
             animation.keyPath = "transform"
-            let scales = [0.25, 1.3, 1.1, 1].map { self.growtx($0) }
+            let scales = [0.25, 1.3, 1].map { self.growtx($0) }
             animation.values = scales
-            animation.keyTimes = [0.0, 0.6, 0.8, 1.0]
-            animation.duration = 0.1
+            animation.keyTimes = [0.0, 0.3, 1.0]
+            animation.duration = 0.2
             CATransaction.setCompletionBlock { [weak self] in
                 // For some reason the anchor point gets set to 0,0 (perhaps by the animation?)
                 self?.setAnchorPoint()
