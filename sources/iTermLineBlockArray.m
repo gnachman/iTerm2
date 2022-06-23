@@ -341,7 +341,9 @@
     if (remainderPtr) {
         *remainderPtr = remainder;
         int nl = [block getNumLinesWithWrapWidth:width];
-        assert(*remainderPtr < nl);
+        if (!block.isEmpty) {
+            assert(*remainderPtr < nl);
+        }
     }
     return block;
 }
