@@ -699,9 +699,9 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
                                           iTermExternalAttribute **eaOut,
                                           VT100GridCoord coord,
                                           BOOL *stop))block {
-    int left = range.start.x;
+    int left = MAX(0, range.start.x);
     for (int y = MAX(0, range.start.y); y <= MIN(range.end.y, size_.height - 1); y++) {
-        const int right = y == range.end.y ? range.end.x : size_.width;
+        const int right = MAX(left, y == range.end.y ? range.end.x : size_.width);
         screen_char_t *line = [self lineDataAtLineNumber:y].mutableBytes;
         iTermExternalAttributeIndex *eaIndex = [self externalAttributesOnLine:y createIfNeeded:NO];
         [self markCharsDirty:YES inRun:VT100GridRunMake(left, y, right - left)];
