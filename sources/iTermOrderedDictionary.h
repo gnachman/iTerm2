@@ -11,7 +11,6 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermOrderedDictionary<__covariant KeyType, __covariant ObjectType> : NSObject
-@property (nonatomic, readonly) BOOL containsDuplicates;
 @property (nonatomic, readonly) NSString *debugString;
 
 + (instancetype)byMapping:(NSArray<ObjectType> *)array

@@ -59,15 +59,12 @@
     if (self) {
         _orderedKeys = array;
         _dictionary = dictionary;
-        if ([[NSSet setWithArray:array] count] != array.count) {
-            _containsDuplicates = YES;
-        }
     }
     return self;
 }
 
 - (NSString *)debugString {
-    if (!_containsDuplicates) {
+    if ([[NSSet setWithArray:_orderedKeys] count] == _orderedKeys.count) {
         return @"ok";
     }
     NSCountedSet *countedSet = [[NSCountedSet alloc] initWithArray:_orderedKeys];
