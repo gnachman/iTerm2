@@ -13644,10 +13644,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     NSString *directory = nil;
-    if (_sshState == iTermSSHStateProfile && !_conductor) {
-        // Currently launching the session that has ssh instead of login shell.
-        directory = self.environment[@"PWD"];
-    }
+    // TODO: Set directory. I think when splitting a pane or creating a tab in recycle mode we'll want to use self.environment["PWD"]
     iTermConductor *previousConductor = [_conductor autorelease];
     NSDictionary *dict = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_SSH_CONFIG inProfile:self.profile]];
 
