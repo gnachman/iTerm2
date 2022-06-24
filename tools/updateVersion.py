@@ -1,6 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
-import commands
+import subprocess
 import os
 import sys
 import time
@@ -13,9 +13,7 @@ from Foundation import NSMutableDictionary
 
 if os.environ["CONFIGURATION"] == "Development":
         cmd = "git log -1 --format=\"%H\""
-        status, output = commands.getstatusoutput(cmd)
-        if status != 0:
-                sys.exit(status)
+        output = subprocess.check_output(cmd, shell=True).decode("utf-8")
 
         revision = "git.unknown"
         for line in output.split("\n"):
@@ -33,7 +31,7 @@ infoFile = os.environ["INFOPLIST_PATH"]
 path = os.path.join(buildDir, infoFile)
 plist = NSMutableDictionary.dictionaryWithContentsOfFile_(path)
 version = open("version.txt").read().strip() % {"extra": revision}
-print "Updating versions:", infoFile, version
+print("Updating versions:", infoFile, version)
 plist["CFBundleShortVersionString"] = version
 plist["CFBundleGetInfoString"] = version
 plist["CFBundleVersion"] = version
