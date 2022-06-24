@@ -70,7 +70,6 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermOpenQuicklyWindowController.h"
 #import "iTermOrphanServerAdopter.h"
-#import "iTermPasswordManagerWindowController.h"
 #import "iTermPasteHelper.h"
 #import "iTermPreciseTimer.h"
 #import "iTermPreferences.h"
@@ -163,7 +162,6 @@ static BOOL hasBecomeActive = NO;
 @interface iTermApplicationDelegate () <
     iTermGraphCodable,
     iTermOrphanServerAdopterDelegate,
-    iTermPasswordManagerDelegate,
     iTermRestorableStateControllerDelegate,
     iTermUntitledWindowStateMachineDelegate,
     NSMenuDelegate>
@@ -174,7 +172,6 @@ static BOOL hasBecomeActive = NO;
 
 
 @implementation iTermApplicationDelegate {
-    iTermPasswordManagerWindowController *_passwordManagerWindowController;
 
     // Menu items
     IBOutlet NSMenu *bookmarkMenu;
@@ -478,23 +475,6 @@ static BOOL hasBecomeActive = NO;
 }
 
 - (void)openPasswordManagerToAccountName:(NSString *)name inSession:(PTYSession *)session {
-    id<iTermWindowController> term = [[iTermController sharedInstance] currentTerminal];
-    if (session) {
-        [session reveal];  // Unbury if needed. Otherwise there is no parent window. Issue 9734
-        term = session.delegate.realParentWindow;
-    }
-    if (term) {
-        DLog(@"Open password manager as sheet in terminal %@", term);
-        return [term openPasswordManagerToAccountName:name inSession:session];
-    } else {
-        DLog(@"Open password manager as standalone window");
-        if (!_passwordManagerWindowController) {
-            _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
-            _passwordManagerWindowController.delegate = self;
-        }
-        [[_passwordManagerWindowController window] makeKeyAndOrderFront:nil];
-        [_passwordManagerWindowController selectAccountName:name];
-    }
 }
 
 - (BOOL)warnBeforeMultiLinePaste {
@@ -1822,8 +1802,6 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (IBAction)openPasswordManager:(id)sender {
-    DLog(@"Menu item selected");
-    [self openPasswordManagerToAccountName:nil inSession:nil];
 }
 
 - (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem {
@@ -2435,31 +2413,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     [[iTermController sharedInstance] newSessionInWindowAtIndex:sender];
 }
 
-#pragma mark - iTermPasswordManagerDelegate
-
-- (void)iTermPasswordManagerEnterPassword:(NSString *)password broadcast:(BOOL)broadcast {
-  [[[[iTermController sharedInstance] currentTerminal] currentSession] enterPassword:password];
-}
-
-- (BOOL)iTermPasswordManagerCanEnterUserName {
-    return YES;
-}
-
-- (void)iTermPasswordManagerEnterUserName:(NSString *)username broadcast:(BOOL)broadcast {
-    [[[[iTermController sharedInstance] currentTerminal] currentSession] writeTask:[username stringByAppendingString:@"\n"]];
-}
-
-- (BOOL)iTermPasswordManagerCanEnterPassword {
-  PTYSession *session = [[[iTermController sharedInstance] currentTerminal] currentSession];
-  return session && ![session exited];
-}
-
-- (BOOL)iTermPasswordManagerCanBroadcast {
-    return NO;
-}
-
 - (void)currentSessionDidChange {
-    [_passwordManagerWindowController update];
     PseudoTerminal *currentWindow = [[iTermController sharedInstance] currentTerminal];
     iTermQuickLookController *quickLookController = currentWindow.currentSession.quickLookController;
     if (quickLookController) {

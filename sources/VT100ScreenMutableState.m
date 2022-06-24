@@ -4503,9 +4503,6 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 - (void)triggerSession:(Trigger *)trigger openPasswordManagerToAccountName:(NSString *)accountName {
-    [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate triggerSideEffectOpenPasswordManagerToAccountName:accountName];
-    }];
 }
 
 - (void)triggerSession:(Trigger *)trigger

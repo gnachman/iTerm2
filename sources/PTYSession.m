@@ -5283,11 +5283,6 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 }
 
 - (void)didBeginPasswordInput {
-    if ([self shouldShowPasswordManagerAutomatically]) {
-        iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-        [itad openPasswordManagerToAccountName:nil inSession:self];
-
-    }
 }
 
 // Update the tab, session view, and window title.
@@ -6656,8 +6651,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 #pragma mark - Password Management
 
 - (BOOL)canOpenPasswordManager {
-    [self sync];
-    return !_screen.echoProbeIsActive;
+    return NO;
 }
 
 - (void)enterPassword:(NSString *)password {
@@ -6744,10 +6738,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"setFocused:%@ self=%@", @(focused), self);
     if (_disableFocusReporting) {
         DLog(@"Focus reporting disabled");
-        return;
-    }
-    if ([self.delegate sessionPasswordManagerWindowIsOpen]) {
-        DLog(@"Password manager window is open");
         return;
     }
     if (focused == _focused) {
@@ -10148,9 +10138,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewDidSelectPasswordPrompt {
-    iTermApplicationDelegate *delegate = [iTermApplication.sharedApplication delegate];
-    [delegate openPasswordManagerToAccountName:nil
-                                     inSession:self];
 }
 
 - (void)textViewDidSelectRangeForFindOnPage:(VT100GridCoordRange)range {
@@ -16308,13 +16295,6 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)triggerSideEffectOpenPasswordManagerToAccountName:(NSString * _Nullable)accountName {
-    [iTermGCD assertMainQueueSafe];
-    // Dispatch because you can't have a runloop in a side-effect and the password manager is a bunch of modal UI - why take chances?
-    dispatch_async(dispatch_get_main_queue(), ^{
-        iTermApplicationDelegate *itad = [iTermApplication.sharedApplication delegate];
-        [itad openPasswordManagerToAccountName:accountName
-                                         inSession:self];
-    });
 }
 
 - (void)triggerSideEffectRunBackgroundCommand:(NSString *)command pool:(iTermBackgroundCommandRunnerPool *)pool {

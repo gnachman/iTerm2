@@ -7,7 +7,6 @@
 //
 
 #import "PasswordTrigger.h"
-#import "iTermPasswordManagerWindowController.h"
 #import "NSArray+iTerm.h"
 
 static NSString *PasswordTriggerPlaceholderString = @"Open Password Manager to Unlock";
@@ -26,10 +25,6 @@ static NSString *PasswordTriggerPlaceholderString = @"Open Password Manager to U
     self = [super init];
     if (self) {
         [self reloadData];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(passwordManagerDidLoadAccounts:)
-                                                     name:iTermPasswordManagerDidLoadAccounts
-                                                   object:nil];
     }
     return self;
 }
@@ -48,8 +43,6 @@ static NSString *PasswordTriggerPlaceholderString = @"Open Password Manager to U
 }
 
 - (void)reloadData {
-    _accountNames = [iTermPasswordManagerWindowController cachedCombinedAccountNames];
-    [self addUnlockToAccountNamesIfNeeded];
 }
 
 - (void)addUnlockToAccountNamesIfNeeded {
@@ -113,16 +106,6 @@ static NSString *PasswordTriggerPlaceholderString = @"Open Password Manager to U
                     atAbsoluteLineNumber:(long long)lineNumber
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
-    // Need to stop the world to get scope, provided it is needed. Password manager opens are so slow & rare that this is ok.
-    id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
-    id<iTermTriggerCallbackScheduler> scheduler = [scopeProvider triggerCallbackScheduler];
-    [[self paramWithBackreferencesReplacedWithValues:stringArray
-                                               scope:scopeProvider
-                                    useInterpolation:useInterpolation] then:^(NSString * _Nonnull accountName) {
-        [scheduler scheduleTriggerCallback:^{
-            [aSession triggerSession:self openPasswordManagerToAccountName:accountName];
-        }];
-    }];
     return YES;
 }
 
