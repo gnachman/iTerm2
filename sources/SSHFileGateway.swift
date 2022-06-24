@@ -64,26 +64,30 @@ actor SSHFileGateway {
     }
 
     func proxy() async throws -> iTermFileProviderServiceV1 {
+        log("proxy(): Trying to start proxy")
         guard let manager = manager else {
+            log("proxy(): Can't start proxy: no manager yet.")
             throw Exception.unavailable
         }
 
         let url = try await manager.getUserVisibleURL(for: .rootContainer)
-        log("root url is \(url)")
+        log("proxy(): root url is \(url)")
         let services = try await FileManager().fileProviderServicesForItem(at: url)
         guard let service = services.values.first else {
-            logger.error("No service for \(url, privacy: .public)")
+            log("proxy(): No service for \(url)")
             throw Exception.unavailable
         }
         let connection = try await service.fileProviderConnection()
         connection.remoteObjectInterface = iTermFileProviderServiceInterface
         connection.interruptionHandler = {
-            logger.error("service connection interrupted")
+            log("proxy(): service connection interrupted")
         }
         connection.resume()
         guard let proxy = connection.remoteObjectProxy as? iTermFileProviderServiceV1 else {
+            log("proxy(): throw serverUnreachable with ROP \(String(describing: connection.remoteObjectProxy))")
             throw NSFileProviderError(.serverUnreachable)
          }
+        log("proxy(): success")
         return proxy
      }
 
@@ -92,28 +96,30 @@ actor SSHFileGateway {
             return
         }
         started = true
+        log("start(): Set manager to nil and will remove it prior to adding")
         manager = nil
         NSFileProviderManager.remove(Self.domain) { removeError in
-            log("Remove domain: \(String(describing: removeError))")
+            log("start(): Remove domain: \(String(describing: removeError))")
 
             NSFileProviderManager.add(Self.domain) { error in
                 if let error = error {
-                    logger.error("NSFileProviderManager callback with error: \(error.localizedDescription, privacy: .public)")
+                    log("start(): NSFileProviderManager callback with error: \(error.localizedDescription)")
                     return
                 }
-                log("Domain added")
+                log("start(): Domain added")
                 self.manager = NSFileProviderManager(for: Self.domain)!
+                log("start(): manager is now \(String(describing: self.manager))")
             }
         }
         Task {
             while true {
                 do {
-                    logger.error("creating proxy…")
+                    log("creating proxy…")
                     let proxy = try await self.proxy()
-                    logger.error("have proxy! call run on it.")
+                    log("have proxy! call run on it.")
                     try await run(proxy, delegate)
                 } catch {
-                    logger.error("Failed to start proxy: \(String(describing: error), privacy: .public)")
+                    log("Failed to start proxy: \(String(describing: error))")
                     try? await Task.sleep(nanoseconds: 1_000_000_000)
                 }
             }

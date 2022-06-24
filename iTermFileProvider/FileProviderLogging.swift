@@ -9,7 +9,7 @@ import Foundation
 import OSLog
 
 @available(macOS 11.0, *)
-let logger = Logger(subsystem: "com.themcnachmans.FileProvider", category: "main")
+let logger = Logger(subsystem: "com.iterm2.FileProvider", category: "main")
 
 @available(macOS 11.0, *)
 class LogContext {

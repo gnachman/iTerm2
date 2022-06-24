@@ -50,21 +50,3 @@ infoFile = os.environ["INFOPLIST_PATH"]
 path = os.path.join(buildDir, infoFile)
 
 update(path)
-
-
-# Now update extensions and plugins.
-
-# Contents/PlugIns
-BUNDLE_PLUGINS_FOLDER_PATH = os.environ["BUNDLE_PLUGINS_FOLDER_PATH"]
-
-# iTerm2.app/Contents/Frameworks
-FRAMEWORKS_FOLDER_PATH = os.environ["FRAMEWORKS_FOLDER_PATH"]
-
-paths = [
-    f'{buildDir}/iTermFileProvider.appex/Contents/Info.plist',
-    f'{buildDir}/FileProviderService.framework/Versions/A/Resources/Info.plist',
-]
-
-for path in paths:
-    update(path)
-
