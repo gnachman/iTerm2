@@ -155,7 +155,9 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
 }
 
 - (CGEventRef)handleEvent:(CGEventRef)originalEvent ofType:(CGEventType)type {
-    CGEventRef event = [self.remappingDelegate remappedEventFromEventTappedWithType:type event:originalEvent];
+    CGEventRef event = [self.remappingDelegate remappedEventFromEventTap:self
+                                                                withType:type
+                                                                   event:originalEvent];
 
     DLog(@"Notifying observers");
     [self postEventToObservers:event type:type];
@@ -342,7 +344,9 @@ error:
 
 #pragma mark - iTermEventTapRemappingDelegate
 
-- (CGEventRef)remappedEventFromEventTappedWithType:(CGEventType)type event:(CGEventRef)event {
+- (CGEventRef)remappedEventFromEventTap:(iTermEventTap *)eventTap
+                               withType:(CGEventType)type
+                                  event:(CGEventRef)event {
     return event;
 }
 
@@ -385,7 +389,9 @@ error:
 
 #pragma mark - iTermEventTapRemappingDelegate
 
-- (CGEventRef)remappedEventFromEventTappedWithType:(CGEventType)type event:(CGEventRef)event {
+- (CGEventRef)remappedEventFromEventTap:(iTermEventTap *)eventTap
+                               withType:(CGEventType)type
+                                  event:(CGEventRef)event {
     return event;
 }
 

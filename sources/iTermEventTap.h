@@ -1,6 +1,8 @@
 #import <Foundation/Foundation.h>
 #import "iTermWeakReference.h"
 
+@class iTermEventTap;
+
 @protocol iTermEventTapRemappingDelegate<NSObject>
 
 // Called on every keypress when the event tap is enabled.
@@ -10,7 +12,9 @@
 //
 // The type may indicate the event tap was cancelled and the delegate  may call
 // -reEnable to start it up again.
-- (CGEventRef)remappedEventFromEventTappedWithType:(CGEventType)type event:(CGEventRef)event;
+- (CGEventRef)remappedEventFromEventTap:(iTermEventTap *)eventTap
+                               withType:(CGEventType)type
+                                  event:(CGEventRef)event;
 
 @end
 

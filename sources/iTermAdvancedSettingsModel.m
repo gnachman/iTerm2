@@ -667,6 +667,7 @@ DEFINE_BOOL(fastTrackpad, YES, SECTION_EXPERIMENTAL @"Trackpad scrolls fast?\nSe
 DEFINE_BOOL(supportDecsetMetaSendsEscape, YES_IF_BETA_ELSE_NO, SECTION_EXPERIMENTAL @"Support DECSET 1036?\nThis allows apps in the terminal to control whether the option key sends esc+ or acts like a regular option key.");
 DEFINE_BOOL(concurrentMutation, NO, SECTION_EXPERIMENTAL @"Mutate session state in a separate thread.");
 DEFINE_BOOL(fastTriggerRegexes, YES, SECTION_EXPERIMENTAL @"Fast regular expression evaluation for triggers.\nThis is experimental because it could potentially change how regular expressions are interpreted.");
+DEFINE_BOOL(postFakeFlagsChangedEvents, NO, SECTION_EXPERIMENTAL @"Post fake flags-changed events when remapping modifiers with an event tap.\nThis is an attempt to work around incompatibilities with AltTab in issue 10220.");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "

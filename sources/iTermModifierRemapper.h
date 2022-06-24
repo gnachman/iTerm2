@@ -2,6 +2,8 @@
 
 #import "iTermPreferences.h"
 
+@class iTermEventTap;
+
 // A simple interface to modifier remapping-related stuff.
 @interface iTermModifierRemapper : NSObject
 
@@ -25,6 +27,7 @@
 + (instancetype)sharedInstance;
 - (instancetype)init NS_UNAVAILABLE;
 
-- (CGEventRef)eventByRemappingEvent:(CGEventRef)event;
+- (CGEventRef)eventByRemappingEvent:(CGEventRef)event
+                           eventTap:(iTermEventTap *)eventTap;
 
 @end

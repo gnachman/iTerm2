@@ -45,6 +45,8 @@
 @implementation iTermModifierRemapper {
     iTermEventTap *_keyDown;
     iTermEventTap *_keyUp;
+    BOOL _remapped;
+    CGEventFlags _flags;
 }
 
 + (NSInteger)_cgMaskForMod:(int)mod {
@@ -398,21 +400,52 @@
 
 #pragma mark - iTermEventTapRemappingDelegate
 
-- (CGEventRef)remappedEventFromEventTappedWithType:(CGEventType)type event:(CGEventRef)event {
-    DLog(@"Modifier remapper got an event");
+- (CGEventRef)remappedEventFromEventTap:(iTermEventTap *)eventTap
+                               withType:(CGEventType)type
+                                  event:(CGEventRef)event {
+    DLog(@"Modifier remapper got an event: %@", [NSEvent eventWithCGEvent:event]);
     if ([NSApp isActive]) {
         DLog(@"App is active, performing remapping");
         // Remap modifier keys only while iTerm2 is active; otherwise you could just use the
         // OS's remap feature.
-        return [self eventByRemappingEvent:event];
+        const BOOL hadRemapped = _remapped;
+        CGEventRef remappedEvent = [self eventByRemappingEvent:event eventTap:eventTap];
+        if (remappedEvent) {
+            if ([iTermAdvancedSettingsModel postFakeFlagsChangedEvents]) {
+                if (hadRemapped != _remapped &&
+                    CGEventGetFlags(event) != _flags &&
+                    (CGEventGetType(event) == kCGEventKeyDown || CGEventGetType(event) == kCGEventKeyUp)) {
+                    CGEventRef fakeEvent = [self fakeFlagsChangedEvent:CGEventGetFlags(event)];
+                    DLog(@"remapped %@ -> %@, flags %@ -> %@, event type is %@. Post fake flags-changed event: %@",
+                          @(hadRemapped), @(_remapped),
+                          @(_flags), @(CGEventGetFlags(event)),
+                          @(CGEventGetType(event)),
+                          [NSEvent eventWithCGEvent:fakeEvent]);
+                    CGEventPost(kCGHIDEventTap, fakeEvent);
+                    CFRelease(fakeEvent);
+                }
+                _flags = CGEventGetFlags(remappedEvent);
+            }
+            DLog(@"Return remapped event: %@", [NSEvent eventWithCGEvent:remappedEvent]);
+        }
+        return remappedEvent;
     } else {
-        DLog(@"iTerm2 not active. The active app is %@", [[NSWorkspace sharedWorkspace] frontmostApplication]);
+        DLog(@"iTerm2 not active. The active app is %@", [[NSWorkspace sharedWorkspace] frontmostApplication]);
         return event;
     }
 }
 
+- (CGEventRef)fakeFlagsChangedEvent:(CGEventFlags)flags {
+    CGEventSourceRef source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
+    CGEventRef event = CGEventCreate(source);
+    CGEventSetType(event, kCGEventFlagsChanged);
+    CGEventSetFlags(event, flags);
+    CFRelease(source);
+    return event;
+}
+
 // Only called when the app is active.
-- (CGEventRef)eventByRemappingEvent:(CGEventRef)event {
+- (CGEventRef)eventByRemappingEvent:(CGEventRef)event eventTap:(iTermEventTap *)eventTap {
     NSEvent *cocoaEvent = [NSEvent eventWithCGEvent:event];
 
     DLog(@"Remapping event %@ from keyboard of type %@", cocoaEvent, @(CGEventGetIntegerValueField(event, kCGKeyboardEventKeyboardType)));
@@ -428,6 +461,7 @@
         // Send keystroke directly to preference panel when setting do-not-remap for a key; for
         // system keys, NSApp sendEvent: is never called so this is the last chance.
         [shortcutView handleShortcutEvent:cocoaEvent];
+        _remapped = NO;
         return nil;
     }
 
@@ -436,15 +470,18 @@
             DLog(@"Calling sendEvent:");
             [self.class remapModifiersInCGEvent:event];
             [NSApp sendEvent:[NSEvent eventWithCGEvent:event]];
+            _remapped = NO;
             return nil;
 
         case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
             DLog(@"Action is do not remap");
+            _remapped = NO;
             return event;
 
         default:
             DLog(@"Remapping as usual");
             [self.class remapModifiersInCGEvent:event];
+            _remapped = YES;
             return event;
     }
 }
