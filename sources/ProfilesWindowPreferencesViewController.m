@@ -17,6 +17,7 @@
 #import "iTermVariableScope.h"
 #import "iTermWarning.h"
 #import "NSImage+iTerm.h"
+#import "NSScreen+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "PreferencePanel.h"
 
@@ -386,12 +387,13 @@ CGFloat iTermMaxBlurRadius(void) {
     [[_screen lastItem] setTag:-1];
     [_screen addItemWithTitle:@"Screen with Cursor"];
     [[_screen lastItem] setTag:-2];
-    const int numScreens = [[NSScreen screens] count];
+    NSArray<NSScreen *> *screens = [NSScreen screens];
+    const int numScreens = [screens count];
     for (i = 0; i < numScreens; i++) {
         if (i == 0) {
             [_screen addItemWithTitle:[NSString stringWithFormat:@"Main Screen"]];
         } else {
-            [_screen addItemWithTitle:[NSString stringWithFormat:@"Screen %d", i+1]];
+            [_screen addItemWithTitle:[NSString stringWithFormat:screens[i].it_uniqueName]];
         }
         [[_screen lastItem] setTag:i];
     }
