@@ -388,12 +388,13 @@ CGFloat iTermMaxBlurRadius(void) {
     [_screen addItemWithTitle:@"Screen with Cursor"];
     [[_screen lastItem] setTag:-2];
     NSArray<NSScreen *> *screens = [NSScreen screens];
+    [_screen.menu addItem:[NSMenuItem separatorItem]];
     const int numScreens = [screens count];
     for (i = 0; i < numScreens; i++) {
         if (i == 0) {
             [_screen addItemWithTitle:[NSString stringWithFormat:@"Main Screen"]];
         } else {
-            [_screen addItemWithTitle:[NSString stringWithFormat:screens[i].it_uniqueName]];
+            [_screen addItemWithTitle:screens[i].it_uniqueName];
         }
         [[_screen lastItem] setTag:i];
     }
