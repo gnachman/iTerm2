@@ -17,7 +17,7 @@
 
 
 # -- BEGIN ITERM2 CUSTOMIZATIONS --
-if [[ "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen && "$ITERM_SHELL_INTEGRATION_INSTALLED" = "" && "$-" == *i* && "$TERM" != linux && "$TERM" != dumb ]]; then
+if [[ "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != screen && "$ITERM_ENABLE_SHELL_INTEGRATION_WITH_TMUX""$TERM" != tmux-256color && "$ITERM_SHELL_INTEGRATION_INSTALLED" = "" && "$-" == *i* && "$TERM" != linux && "$TERM" != dumb ]]; then
 
 if shopt extdebug | grep on > /dev/null; then
   echo "iTerm2 Shell Integration not installed."
@@ -95,7 +95,7 @@ _install_bash_preexec () {
 # Author: Ryan Caloras (ryan@bashhub.com)
 # Forked from Original Author: Glyph Lefkowitz
 #
-# V0.4.0
+# V0.4.1
 #
 
 # General Usage:
@@ -118,11 +118,20 @@ _install_bash_preexec () {
 #  using: the "DEBUG" trap, and the "PROMPT_COMMAND" variable. If you override
 #  either of these after bash-preexec has been installed it will most likely break.
 
+# Make sure this is bash that's running and return otherwise.
+if [[ -z "${BASH_VERSION:-}" ]]; then
+    return 1;
+fi
+
 # Avoid duplicate inclusion
-if [[ "${__bp_imported:-}" == "defined" ]]; then
+if [[ -n "${bash_preexec_imported:-}" ]]; then
     return 0
 fi
-__bp_imported="defined"
+bash_preexec_imported="defined"
+
+# WARNING: This variable is no longer used and should not be relied upon.
+# Use ${bash_preexec_imported} instead.
+__bp_imported="${bash_preexec_imported}"
 
 # Should be available to each precmd and preexec
 # functions, should they want it. $? and $_ are available as $? and $_, but
@@ -156,7 +165,8 @@ __bp_require_not_readonly() {
 # history even if it starts with a space.
 __bp_adjust_histcontrol() {
     local histcontrol
-    histcontrol="${HISTCONTROL//ignorespace}"
+    histcontrol="${HISTCONTROL:-}"
+    histcontrol="${histcontrol//ignorespace}"
     # Replace ignoreboth with ignoredups
     if [[ "$histcontrol" == *"ignoreboth"* ]]; then
         histcontrol="ignoredups:${histcontrol//ignoreboth}"
@@ -171,24 +181,30 @@ __bp_adjust_histcontrol() {
 # and unset as soon as the trace hook is run.
 __bp_preexec_interactive_mode=""
 
+# These arrays are used to add functions to be run before, or after, prompts.
+declare -a precmd_functions
+declare -a preexec_functions
+
+# Trims leading and trailing whitespace from $2 and writes it to the variable
+# name passed as $1
 __bp_trim_whitespace() {
-    local var=$@
-    var="${var#"${var%%[![:space:]]*}"}"   # remove leading whitespace characters
-    var="${var%"${var##*[![:space:]]}"}"   # remove trailing whitespace characters
-    echo -n "$var"
+    local var=${1:?} text=${2:-}
+    text="${text#"${text%%[![:space:]]*}"}"   # remove leading whitespace characters
+    text="${text%"${text##*[![:space:]]}"}"   # remove trailing whitespace characters
+    printf -v "$var" '%s' "$text"
 }
 
 
-# Returns a copy of the passed in string trimmed of whitespace
-# and removes any leading or trailing semi colons.
-# Used for manipulating substrings in PROMPT_COMMAND
+# Trims whitespace and removes any leading or trailing semicolons from $2 and
+# writes the resulting string to the variable name passed as $1. Used for
+# manipulating substrings in PROMPT_COMMAND
 __bp_sanitize_string() {
-    local sanitized_string
-    sanitized_string=$(__bp_trim_whitespace "${1:-}")
-    sanitized_string=${sanitized_string%;}
-    sanitized_string=${sanitized_string#;}
-    sanitized_string=$(__bp_trim_whitespace "$sanitized_string")
-    echo -n "$sanitized_string"
+    local var=${1:?} text=${2:-} sanitized
+    __bp_trim_whitespace sanitized "$text"
+    sanitized=${sanitized%;}
+    sanitized=${sanitized#;}
+    __bp_trim_whitespace sanitized "$sanitized"
+    printf -v "$var" '%s' "$sanitized"
 }
 
 # This function is installed as part of the PROMPT_COMMAND;
@@ -238,16 +254,14 @@ __bp_set_ret_value() {
 __bp_in_prompt_command() {
 
     local prompt_command_array
-    IFS=$'\n;' read -rd '' -a prompt_command_array <<< "$PROMPT_COMMAND"
+    IFS=$'\n;' read -rd '' -a prompt_command_array <<< "${PROMPT_COMMAND:-}"
 
     local trimmed_arg
-    trimmed_arg=$(__bp_trim_whitespace "${1:-}")
+    __bp_trim_whitespace trimmed_arg "${1:-}"
 
-    local command
+    local command trimmed_command
     for command in "${prompt_command_array[@]:-}"; do
-        local trimmed_command
-        trimmed_command=$(__bp_trim_whitespace "$command")
-        # Only execute each function if it actually exists.
+        __bp_trim_whitespace trimmed_command "$command"
         if [[ "$trimmed_command" == "$trimmed_arg" ]]; then
             return 0
         fi
@@ -316,10 +330,6 @@ __bp_preexec_invoke_exec() {
         return
     fi
 
-    # If none of the previous checks have returned out of this function, then
-    # the command is in fact interactive and we should invoke the user's
-    # preexec functions.
-
     # Invoke every function defined in our function array.
     local preexec_function
     local preexec_function_ret_value
@@ -380,17 +390,18 @@ __bp_install() {
         shopt -s extdebug > /dev/null 2>&1
     fi;
 
-    local __bp_existing_prompt_command
+    local existing_prompt_command
     # Remove setting our trap install string and sanitize the existing prompt command string
-    __bp_existing_prompt_command="${PROMPT_COMMAND//$__bp_install_string[;$'\n']}" # Edge case of appending to PROMPT_COMMAND
-    __bp_existing_prompt_command="${__bp_existing_prompt_command//$__bp_install_string}"
-    __bp_existing_prompt_command=$(__bp_sanitize_string "$__bp_existing_prompt_command")
+    existing_prompt_command="${PROMPT_COMMAND:-}"
+    existing_prompt_command="${existing_prompt_command//$__bp_install_string[;$'\n']}" # Edge case of appending to PROMPT_COMMAND
+    existing_prompt_command="${existing_prompt_command//$__bp_install_string}"
+    __bp_sanitize_string existing_prompt_command "$existing_prompt_command"
 
     # Install our hooks in PROMPT_COMMAND to allow our trap to know when we've
     # actually entered something.
     PROMPT_COMMAND=$'__bp_precmd_invoke_cmd\n'
-    if [[ -n "$__bp_existing_prompt_command" ]]; then
-        PROMPT_COMMAND+=${__bp_existing_prompt_command}$'\n'
+    if [[ -n "$existing_prompt_command" ]]; then
+        PROMPT_COMMAND+=${existing_prompt_command}$'\n'
     fi;
     PROMPT_COMMAND+='__bp_interactive_mode'
 
@@ -408,18 +419,12 @@ __bp_install() {
 # after our session has started. This allows bash-preexec to be included
 # at any point in our bash profile.
 __bp_install_after_session_init() {
-
-    # Make sure this is bash that's running this and return otherwise.
-    if [[ -z "${BASH_VERSION:-}" ]]; then
-        return 1;
-    fi
-
     # bash-preexec needs to modify these variables in order to work correctly
     # if it can't, just stop the installation
     __bp_require_not_readonly PROMPT_COMMAND HISTCONTROL HISTTIMEFORMAT || return
 
     local sanitized_prompt_command
-    sanitized_prompt_command=$(__bp_sanitize_string "$PROMPT_COMMAND")
+    __bp_sanitize_string sanitized_prompt_command "${PROMPT_COMMAND:-}"
     if [[ -n "$sanitized_prompt_command" ]]; then
         PROMPT_COMMAND=${sanitized_prompt_command}$'\n'
     fi;
@@ -506,7 +511,7 @@ function iterm2_prompt_suffix() {
 
 function iterm2_print_version_number() {
   iterm2_begin_osc
-  printf "1337;ShellIntegrationVersion=16;shell=bash"
+  printf "1337;ShellIntegrationVersion=18;shell=bash"
   iterm2_end_osc
 }
 
@@ -523,6 +528,12 @@ if [ -z "${iterm2_hostname:-}" ]; then
   fi
 fi
 
+iterm2_maybe_print_cr() {
+  if [ "$TERM_PROGRAM" = "iTerm.app" ]; then
+    printf "\r"
+  fi
+}
+
 # Runs after interactively edited command but before execution
 __iterm2_preexec() {
     # Save the returned value from our last command
@@ -530,6 +541,7 @@ __iterm2_preexec() {
 
     iterm2_begin_osc
     printf "133;C;"
+    iterm2_maybe_print_cr
     iterm2_end_osc
     # If PS1 still has the value we set it to in iterm2_preexec_invoke_cmd then
     # restore it to its original value. It might have changed if you have
@@ -539,8 +551,8 @@ __iterm2_preexec() {
       export PS1="$ITERM_ORIG_PS1"
     fi
     iterm2_ran_preexec="yes"
-
-    __bp_set_ret_value "$__iterm2_last_ret_value" "$__bp_last_argument_prev_command"
+    # preexec functions can return nonzero to prevent user's command from running.
+    return 0
 }
 
 # Prints the current directory and hostname control sequences. Modifies PS1 to
@@ -548,11 +560,12 @@ __iterm2_preexec() {
 function __iterm2_prompt_command () {
     __iterm2_last_ret_value="$?"
 
-    # Work around a bug in CentOS 7.2 where preexec doesn't run if you press
-    # ^C while entering a command.
     if [[ -z "${iterm2_ran_preexec:-}" ]]
     then
+        # This code path is taken when you press ^C while entering a command.
+        # I observed this behavior in CentOS 7.2 and macOS "GNU bash, version 5.0.18(1)-release".
         __iterm2_preexec ""
+        __bp_set_ret_value "$__iterm2_last_ret_value" "$__bp_last_argument_prev_command"
     fi
     iterm2_ran_preexec=""
 
@@ -634,4 +647,5 @@ iterm2_print_version_number
 fi
 
 # -- END ITERM2 CUSTOMIZATIONS --
+
 

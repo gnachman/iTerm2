@@ -22,13 +22,16 @@ if [ $(branch) != master ]; then
 fi
 popd
 
-cp $WEBSITE/source/shell_integration/bash Resources/shell_integration/iterm2_shell_integration.bash
-cp $WEBSITE/source/shell_integration/fish Resources/shell_integration/iterm2_shell_integration.fish
-cp $WEBSITE/source/shell_integration/tcsh Resources/shell_integration/iterm2_shell_integration.tcsh
-cp $WEBSITE/source/shell_integration/zsh  Resources/shell_integration/iterm2_shell_integration.zsh
+(cd submodules/iTerm2-shell-integration/ && make)
+SUBMODULE=submodules/iTerm2-shell-integration
+cp $SUBMODULE/shell_integration/bash Resources/shell_integration/iterm2_shell_integration.bash
+cp $SUBMODULE/shell_integration/fish Resources/shell_integration/iterm2_shell_integration.fish
+cp $SUBMODULE/shell_integration/tcsh Resources/shell_integration/iterm2_shell_integration.tcsh
+cp $SUBMODULE/shell_integration/zsh  Resources/shell_integration/iterm2_shell_integration.zsh
 DEST=$PWD/Resources/utilities
 
-pushd $WEBSITE/source/utilities
+pushd $SUBMODULE/utilities
+rm it2ssh
 files=$(find . -type f)
 tar cvfz $DEST/utilities.tgz *
 echo * > $DEST/utilities-manifest.txt
