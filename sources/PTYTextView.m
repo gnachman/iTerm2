@@ -1778,6 +1778,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     NSFont *asciiFont = proposedASCIIFont;
     if (!asciiFont) {
         asciiFont = [NSFont userFixedPitchFontOfSize:0.0];
+        ITAssertWithMessage(asciiFont != nil, @"Failed to get system fixed pitch font");
     }
     NSSize sz = [PTYTextView charSizeForFont:asciiFont
                            horizontalSpacing:1.0

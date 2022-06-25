@@ -136,6 +136,7 @@
 }
 
 - (void)setFont:(NSFont *)font {
+    assert(font != nil);
     [font_ autorelease];
     font_ = [font retain];
 
