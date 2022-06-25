@@ -178,6 +178,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // Maps the window ID of an about to be opened window to a completion block to invoke when it opens.
     NSMutableDictionary<NSNumber *, iTermTmuxPendingWindow *> *_pendingWindows;
     BOOL _hasStatusBar;
+    BOOL _focusEvents;
     int _currentWindowID;  // -1 if undefined
     // Pane -> (Key -> Value)
     NSMutableDictionary<NSNumber *, NSMutableDictionary<NSString *, NSString *> *> *_userVars;
@@ -397,6 +398,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.zoomed = windowFlags ? @([windowFlags containsString:@"Z"]) : nil;
     windowOpener.manuallyOpened = _manualOpenRequested;
     windowOpener.tabColors = _tabColors;
+    windowOpener.focusReporting = _focusEvents;
     windowOpener.profile = profile;
     windowOpener.initial = initial;
     windowOpener.anonymous = (_pendingWindows[@(windowIndex)] == nil);
@@ -465,6 +467,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.windowOptions = _windowOpenerOptions;
     windowOpener.zoomed = zoomed;
     windowOpener.tabColors = _tabColors;
+    windowOpener.focusReporting = _focusEvents;
     windowOpener.profile = [self profileForWindow:tab.tmuxWindow];
     windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
     return [windowOpener updateLayoutInTab:tab];
@@ -1201,10 +1204,17 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommand:@"show-option -g -v status"
            responseTarget:self
          responseSelector:@selector(handleStatusResponse:)];
+    [gateway_ sendCommand:@"show-option -q -g -v focus-events"
+           responseTarget:self
+         responseSelector:@selector(handleFocusEventsResponse:)];
 }
 
 - (void)handleStatusResponse:(NSString *)string {
     _hasStatusBar = [string isEqualToString:@"on"];
+}
+
+- (void)handleFocusEventsResponse:(NSString *)string {
+    _focusEvents = [string isEqualToString:@"on"];
 }
 
 - (void)checkForUTF8 {

@@ -36,6 +36,7 @@ NSString *kLayoutDictHotkeyKey = @"hotkey";
 NSString *kLayoutDictTabOpenedManually = @"manual-open";
 NSString *kLayoutDictTabIndex = @"tab-index";
 NSString *kLayoutDictTabColorKey = @"x-tab-color";
+NSString *kLayoutDictFocusReportingKey = @"x-focus-reporting";
 
 @implementation TmuxLayoutParser
 

@@ -580,7 +580,7 @@ static int OctalValue(const char *bytes) {
     if (self.tabColors[n]) {
         parseTree[kLayoutDictTabColorKey] = self.tabColors[n];
     }
-
+    parseTree[kLayoutDictFocusReportingKey] = @(self.focusReporting);
     return nil;
 }
 
