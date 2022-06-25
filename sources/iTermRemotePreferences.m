@@ -319,7 +319,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSString *filename, NSArray<NSSt
         return nil;
     }
     NSError *error = nil;
-    const BOOL ok = [data writeToFile:filename options:NSDataWritingAtomic error:&error];
+    const BOOL ok = [data writeToFile:[filename stringByResolvingSymlinksInPath] options:NSDataWritingAtomic error:&error];
     if (!ok) {
         DLog(@"Failed to save to %@: %@", filename, error);
         return nil;
