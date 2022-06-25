@@ -250,10 +250,17 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 - (void)unzip:(NSURL *)zipFileURL to:(NSURL *)destination completion:(void (^)(NSError *))completion {
     // This serializes unzips so only one can happen at a time.
     dispatch_async(_queue, ^{
+        NSError *error = nil;
         [[NSFileManager defaultManager] createDirectoryAtPath:destination.path
                                   withIntermediateDirectories:NO
                                                    attributes:nil
-                                                        error:NULL];
+                                                        error:&error];
+        if (error) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion(error);
+            });
+            return;
+        }
         [iTermCommandRunner unzipURL:zipFileURL
                        withArguments:@[ @"-o", @"-q" ]
                          destination:destination.path
