@@ -1,12 +1,10 @@
-PYTHON=python3
-
 generate: force
 	make iterm2/profile.py
 	make iterm2/binding.py
 	make iterm2/mainmenu.py
 
 install-local: force
-	${PYTHON} setup.py install
+	python3 setup.py install
 
 docs: force
 	cd docs && ./build.sh && open _build/html/index.html
@@ -15,8 +13,8 @@ force:
 
 upload: force
 	rm -f dist/*
-	${PYTHON} setup.py bdist_wheel
-	${PYTHON} setup.py sdist
+	python3 setup.py bdist_wheel
+	python3 setup.py sdist
 	twine upload dist/*
 
 mypy: force
