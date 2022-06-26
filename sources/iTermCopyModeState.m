@@ -253,6 +253,7 @@
         [_textView.selection moveSelectionEndpointTo:VT100GridAbsCoordFromCoord(_coord, overflow)];
         [_textView.selection endLiveSelection];
     }
+    [_textView scrollLineNumberRangeIntoView:VT100GridRangeMake(_coord.y, 1)];
     return !VT100GridCoordEquals(before, _coord);
 }
 

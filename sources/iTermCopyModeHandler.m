@@ -524,4 +524,25 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
     return NO;
 }
 
+- (BOOL)previousMark {
+    switch (_mode) {
+        case iTermSessionModeDefault:
+        case iTermSessionModeShortcutNavigation:
+            return NO;
+        case iTermSessionModeCopy:
+            return [_copyModeHandler.state previousMark];
+    }
+}
+
+- (BOOL)nextMark {
+    switch (_mode) {
+        case iTermSessionModeDefault:
+        case iTermSessionModeShortcutNavigation:
+            return NO;
+        case iTermSessionModeCopy:
+            return [_copyModeHandler.state nextMark];
+    }
+}
+
+
 @end

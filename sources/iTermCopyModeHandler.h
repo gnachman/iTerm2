@@ -71,6 +71,9 @@ typedef NS_ENUM(NSUInteger, iTermSessionMode) {
 - (void)enterCopyModeWithoutCleverness;
 - (BOOL)handleEvent:(NSEvent *)event;
 - (BOOL)shouldAutoEnterWithEvent:(NSEvent *)event;
+- (BOOL)previousMark;
+- (BOOL)nextMark;
+
 @end
 
 NS_ASSUME_NONNULL_END
