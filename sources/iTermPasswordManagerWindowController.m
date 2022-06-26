@@ -412,10 +412,13 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 
 - (IBAction)reallyAdd:(id)sender {
     if (_newAccount.stringValue.length == 0) {
+        DLog(@"New account name is empty");
         [_newAccountPanel it_shakeNo];
         return;
     }
-    if ([self indexOfAccountName:_newAccount.stringValue userName:_newUserName.stringValue ?: @""] != NSNotFound) {
+    const NSUInteger index = [self indexOfAccountName:_newAccount.stringValue userName:_newUserName.stringValue ?: @""];
+    if (index != NSNotFound) {
+        DLog(@"Already have an account at index %@ for name=%@ user=%@", @(index), _newAccount.stringValue, _newUserName.stringValue);
         [_newAccountPanel it_shakeNo];
         return;
     }
