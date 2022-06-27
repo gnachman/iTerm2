@@ -262,6 +262,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)seal;
 
 - (void)mergeFrom:(LineBuffer *)source;
+- (void)forceMergeFrom:(LineBuffer *)source;
 
 - (void)performBlockWithTemporaryChanges:(void (^ NS_NOESCAPE)(void))block;
 

@@ -1542,6 +1542,11 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     [self _addBlockOfSize:block_size];
 }
 
+- (void)forceMergeFrom:(LineBuffer *)source {
+    source.dirty = YES;
+    [self mergeFrom:source];
+}
+
 - (void)mergeFrom:(LineBuffer *)source {
     // State used when debugging
     NSSet<NSNumber *> *commonWidths = nil;

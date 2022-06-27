@@ -18,6 +18,7 @@
     _wantsSearchBuffer = YES;
     if (!_searchBuffer) {
         _searchBuffer = [_state.linebuffer copy];
+        DLog(@"Make fresh copy");
     }
     return _searchBuffer;
 }

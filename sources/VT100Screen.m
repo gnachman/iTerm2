@@ -1218,15 +1218,27 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
     if (_state) {
         DLog(@"merge state");
+        const BOOL mutableStateLineBufferWasDirty = mutableState.linebuffer.dirty;
         [_state mergeFrom:mutableState];
 
         if (!_wantsSearchBuffer) {
             [_searchBuffer release];
             _searchBuffer = nil;
+            DLog(@"nil out searchBuffer");
         } else if (!_searchBuffer) {
             _searchBuffer = [_state.linebuffer copy];
+            DLog(@"Initialize searchBuffer to fresh copy");
         } else {
-            [_searchBuffer mergeFrom:_state.linebuffer];
+            if (mutableStateLineBufferWasDirty) {
+                // forceMergeFrom: is necessary because _state.linebuffer will
+                // not be marked dirty since it hasn't been mutated. Because it
+                // has an old copy, the merge did mutate it but linebuffer
+                // doesn't know that the copy will be merged so it doesn't get
+                // marked dirty.
+                [_searchBuffer forceMergeFrom:_state.linebuffer];
+            } else {
+                DLog(@"Line buffer wasn't dirty so leaving searchBuffer alone");
+            }
         }
     } else {
         DLog(@"copy state");
@@ -1237,6 +1249,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         _searchBuffer = nil;
         if (_wantsSearchBuffer) {
             _searchBuffer = [_state.linebuffer copy];
+            DLog(@"Initialize searchBuffer to fresh copy");
+        } else {
+            DLog(@"nil out searchBuffer");
         }
     }
     _wantsSearchBuffer = NO;
