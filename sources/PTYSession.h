@@ -279,6 +279,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (PTYSession *)sessionSyntheticSessionFor:(PTYSession *)live;
 - (void)sessionClose:(PTYSession *)session;
 - (void)sessionProcessInfoProviderDidChange:(PTYSession *)session;
+- (void)sessionSwapWithSessionInDirection:(int)direction;
 
 @end
 

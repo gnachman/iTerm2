@@ -951,6 +951,25 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (void)sessionSwapWithSessionInDirection:(int)direction {
+    PTYSession *session = [self sessionInDirection:direction];
+    if (session == self.activeSession || !session) {
+        return;
+    }
+    [self swapSession:self.activeSession withSession:session];
+}
+
+- (PTYSession *)sessionInDirection:(int)offset {
+    DLog(@"offset=%@", @(offset));
+    NSArray *orderedSessions = [self orderedSessions];
+    NSUInteger index = [orderedSessions indexOfObject:[self activeSession]];
+    if (index == NSNotFound) {
+        return nil;
+    }
+    index = (index + orderedSessions.count + offset) % orderedSessions.count;
+    return orderedSessions[index];
+}
+
 - (void)activateSessionInDirection:(int)offset {
     DLog(@"offset=%@", @(offset));
     BOOL maximize = NO;
@@ -959,15 +978,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         maximize = YES;
         [self.activeSession toggleTmuxZoom];
     }
-    NSArray *orderedSessions = [self orderedSessions];
-    NSUInteger index = [orderedSessions indexOfObject:[self activeSession]];
-    if (index != NSNotFound) {
-        index = (index + orderedSessions.count + offset) % orderedSessions.count;
+    PTYSession *session = [self sessionInDirection:offset];
+    if (session) {
         if (isMaximized_) {
             [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
-                             with:[orderedSessions[index] view]];
+                             with:session.view];
         }
-        [self setActiveSession:orderedSessions[index] updateActivityCounter:NO];
+        [self setActiveSession:session updateActivityCounter:NO];
     }
     if (maximize) {
         [self.activeSession toggleTmuxZoom];

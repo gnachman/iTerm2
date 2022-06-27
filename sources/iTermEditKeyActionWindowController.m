@@ -323,6 +323,8 @@ const CGFloat sideMarginWidth = 40;
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Swap With Split Pane Below" tag:KEY_ACTION_SWAP_PANE_BELOW],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Swap With Split Pane on Left" tag:KEY_ACTION_SWAP_PANE_LEFT],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Swap With Split Pane on Right" tag:KEY_ACTION_SWAP_PANE_RIGHT],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Swap With Next Pane" tag:KEY_ACTION_SWAP_WITH_NEXT_PANE],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Swap With Previous Pane" tag:KEY_ACTION_SWAP_WITH_PREVIOUS_PANE],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Move Session to Split Pane" tag:KEY_ACTION_MOVE_TO_SPLIT_PANE],
         ]],
 

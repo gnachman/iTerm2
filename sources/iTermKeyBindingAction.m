@@ -414,6 +414,12 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_MOVE_TO_SPLIT_PANE:
             actionString = @"Move to Split Pane";
             break;
+        case KEY_ACTION_SWAP_WITH_NEXT_PANE:
+            actionString = @"Swap with Next Pane";
+            break;
+        case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
+            actionString = @"Swap with Previous Pane";
+            break;
     }
 
     return actionString;
@@ -490,6 +496,8 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
         case KEY_ACTION_DUPLICATE_TAB:
         case KEY_ACTION_MOVE_TO_SPLIT_PANE:
+        case KEY_ACTION_SWAP_WITH_NEXT_PANE:
+        case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
             break;
 
         case KEY_ACTION_SEQUENCE:
@@ -571,6 +579,8 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
         case KEY_ACTION_DUPLICATE_TAB:
         case KEY_ACTION_MOVE_TO_SPLIT_PANE:
+        case KEY_ACTION_SWAP_WITH_NEXT_PANE:
+        case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
             break;
 
         case KEY_ACTION_SEQUENCE:

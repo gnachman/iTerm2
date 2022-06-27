@@ -8401,6 +8401,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_SEND_SNIPPET:
         case KEY_ACTION_COMPOSE:
         case KEY_ACTION_SEND_TMUX_COMMAND:
+        case KEY_ACTION_SWAP_WITH_NEXT_PANE:
+        case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
             return NO;
 
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
@@ -8784,6 +8786,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 [session performKeyBindingAction:subaction event:event];
                 session = [[[iTermController sharedInstance] currentTerminal] currentSession] ?: self;
             }
+        case KEY_ACTION_SWAP_WITH_NEXT_PANE:
+            [self.delegate sessionSwapWithSessionInDirection:1];
+            break;
+        case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
+            [self.delegate sessionSwapWithSessionInDirection:-1];
+            break;
         }
         default:
             XLog(@"Unknown key action %@", action);
