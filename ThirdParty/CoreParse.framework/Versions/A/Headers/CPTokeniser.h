@@ -45,7 +45,7 @@
  * @bug Warning this method is deprecated, use -tokeniser:requestsToken:pushedOntoStream: instead.
  * @see tokeniser:requestsToken:pushedOntoStream:
  */
-- (NSArray *)tokeniser:(CPTokeniser *)tokeniser willProduceToken:(CPToken *)token;
+- (NSArray *)tokeniser:(CPTokeniser *)tokeniser willProduceToken:(CPToken *)token __attribute__((deprecated("Use tokeniser:requestsToken:pushedOntoStream: instead")));
 
 /**
  * Requests that you push a token onto a tokeniser's output stream.  This allows you to replace the token with any others you choose, or not output the token at all.

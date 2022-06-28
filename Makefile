@@ -92,6 +92,7 @@ x86libsixel: force
 	mv ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel/lib/libsixel-x86.a
 
 armsixel: force
+	cd submodules/libsixel && ./configure
 	cd submodules/libsixel && make clean
 	cd submodules/libsixel && CFLAGS="-target arm64-apple-macos10.14" ./configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && CFLAGS="-target arm64-apple-macos10.14" make && make install
 	rm ThirdParty/libsixel-arm/bin/*
@@ -131,7 +132,8 @@ fatlibssh2: force fatopenssl
 
 CoreParse: force
 	rm -rf ThirdParty/CoreParse.framework
-	cd submodules/CoreParse && xcodebuild -target CoreParse -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty
+	cd submodules/CoreParse && xcodebuild -target CoreParse -configuration Release CONFIGURATION_BUILD_DIR=../../ThirdParty VALID_ARCHS="arm64 x86_64"
+	cp "submodules/CoreParse//CoreParse/Tokenisation/Token Recognisers/CPRegexpRecogniser.h" ThirdParty/CoreParse.framework/Versions/A/Headers/CPRegexpRecogniser.h
 
 NMSSH: force fatlibssh2
 	rm -rf ThirdParty/NMSSH.framework

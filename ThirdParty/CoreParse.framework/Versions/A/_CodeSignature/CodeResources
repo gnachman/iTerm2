@@ -10,7 +10,7 @@
 		</data>
 		<key>Resources/Info.plist</key>
 		<data>
-		g5kj0xDleBfzN4cgbce1JVosITY=
+		jprOJNlTFIgC0nkP9FnawLs24es=
 		</data>
 		<key>Resources/en.lproj/InfoPlist.strings</key>
 		<dict>
@@ -143,13 +143,6 @@
 			qdklduMVaKZ8lTPigEz1l3+L8QyxhEvUR8xENjvFUtw=
 			</data>
 		</dict>
-		<key>Headers/CPRegexpRecogniser.h</key>
-		<dict>
-			<key>hash2</key>
-			<data>
-			sghojk8Fma8/bHKopUnMTGEDlIRGbpRDr6wxtThbpRQ=
-			</data>
-		</dict>
 		<key>Headers/CPRule.h</key>
 		<dict>
 			<key>hash2</key>
@@ -203,7 +196,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			UW7HGd1IFpaHJMHxS1bYojpbn3khU7e1mUitNNVMIus=
+			OwfkC9ewGAPUn9bnrdhrCLMfVCtmd6Ktwm89fzhLvdw=
 			</data>
 		</dict>
 		<key>Headers/CPWhiteSpaceRecogniser.h</key>
@@ -238,7 +231,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			lbekSqKAcga8a/NXW4Sw4wiBr4wVA8v5KQtIQgJIxig=
+			Dk3nOFTDVRIH65LrgLSbJtBtE1AXKwN58BalhHtBIoU=
 			</data>
 		</dict>
 		<key>Resources/en.lproj/InfoPlist.strings</key>

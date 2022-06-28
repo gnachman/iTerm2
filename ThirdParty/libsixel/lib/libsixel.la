@@ -17,7 +17,7 @@ old_library='libsixel.a'
 inherited_linker_flags=' '
 
 # Libraries that this one depends upon.
-dependency_libs=' -lm'
+dependency_libs=' -L/opt/homebrew/Cellar/libevent/2.1.12/lib -lm'
 
 # Names of additional weak libraries provided by this library
 weak_library_names=''
