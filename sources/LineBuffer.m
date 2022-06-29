@@ -190,6 +190,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 
+- (void)clear {
+    const int saved = max_lines;
+    [self setMaxLines:0];
+    [self dropExcessLinesWithWidth:num_wrapped_lines_width > 0 ? num_wrapped_lines_width : 80];
+    [self setMaxLines:saved];
+}
+
 - (int)dropExcessLinesWithWidth:(int)width {
     self.dirty = YES;
     int nl = RawNumLines(self, width);

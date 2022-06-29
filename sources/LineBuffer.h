@@ -266,6 +266,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)performBlockWithTemporaryChanges:(void (^ NS_NOESCAPE)(void))block;
 
+- (void)clear;
+
 @end
 
 NS_ASSUME_NONNULL_END

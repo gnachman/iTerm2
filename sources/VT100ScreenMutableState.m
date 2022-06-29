@@ -1277,17 +1277,25 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)clearScrollbackBuffer {
-    self.linebuffer = [[LineBuffer alloc] init];
-    [self.linebuffer setMaxLines:self.maxScrollbackLines];
-    [self.currentGrid markAllCharsDirty:YES updateTimestamps:YES];
+    const int history = self.numberOfScrollbackLines;
 
-    [self resetScrollbackOverflow];
-    [self.currentGrid markAllCharsDirty:YES updateTimestamps:YES];
-    // TODO: There's a bug here - marks on the grid seem to disappear. I think cumulative scrollback overflow is wrong.
+    // Remove all interval tree marks above the grid.
     [self removeIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
                                                                    0,
-                                                                   self.width, self.numberOfScrollbackLines + self.height)];
+                                                                   self.width, history)];
     [self removeInaccessibleIntervalTreeObjects];
+
+    // Move all remaining (i.e., on-grid) interval tree objects up.
+    [self.mutableIntervalTree bulkMoveObjects:[self.intervalTree allObjects] block:^Interval * _Nonnull(id<IntervalTreeObject> object) {
+        VT100GridAbsCoordRange range = [self absCoordRangeForInterval:object.entry.interval];
+        range.start.y -= history;
+        range.end.y -= history;
+        return [self intervalForGridAbsCoordRange:range];
+    }];
+
+    [self.linebuffer clear];
+    [self resetScrollbackOverflow];
+    [self.currentGrid markAllCharsDirty:YES updateTimestamps:YES];
     [self reloadMarkCache];
     self.lastCommandMark = nil;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
