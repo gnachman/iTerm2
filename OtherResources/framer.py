@@ -422,17 +422,23 @@ async def handle_login(identifier, args):
     args = args[1:]
     log(f'cwd={cwd} args={args}')
     cwd = os.path.expandvars(os.path.expanduser(cwd))
+    had_args = len(args) > 0
+    guessed = guess_login_shell()
     if args:
         login_shell = args[0]
         del args[0]
+        argv0 = login_shell
     else:
-        login_shell = guess_login_shell()
-    log(f'Login shell is {login_shell}')
-    try:
+        login_shell = guessed
+    if login_shell == guessed:
         _, shell_name = os.path.split(login_shell)
+        argv0 = "-" + shell_name
+
+    log(f'Login shell is {login_shell}. Guessed shell is {guessed}. argv0 is {argv0}')
+    try:
         proc = await Process.run_tty(
             login_shell,
-            ["-" + shell_name] + args,
+            [argv0] + args,
             cwd,
             os.environ)
         log("login shell started")

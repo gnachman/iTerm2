@@ -98,6 +98,13 @@ struct ParsedSSHArguments: Codable, CustomDebugStringConvertible {
         while i < args.count {
             defer { i += 1 }
             let arg = args[i]
+            if destination != nil && !arg.hasPrefix("-") {
+                // ssh localhost /bin/bash
+                //               ^^^^^^^^^
+                //               parsing this arg. After this point arguments are to /bin/bash, not to ssh client.
+                // Note that in "ssh localhost -t /bin/bash", "-t" is an argument to the ssh client.
+                optionsAllowed = false
+            }
             if optionsAllowed && arg.hasPrefix("-") {
                 if arg == "--" {
                     optionsAllowed = false
@@ -119,6 +126,10 @@ struct ParsedSSHArguments: Codable, CustomDebugStringConvertible {
                 }
 
                 i += 1
+                if i >= args.count {
+                    // Missing param. Just ignore it.
+                    continue
+                }
                 guard let paramArg = ParamArgs(String(arg.dropFirst()), value: args[i]) else {
                     continue
                 }
@@ -143,6 +154,11 @@ struct ParsedSSHArguments: Codable, CustomDebugStringConvertible {
             commandArgs.append(arg)
         }
 
+        // ssh's behavior seems to be to glue arguments together with spaces and reparse them.
+        // ["ssh", "example.com", "cat", "file with space"]   executes ["cat", "file", "with", "space"]
+        // ["ssh", "example.com", "cat", "'file with space"'] executes ["cat", "file with space"]
+
+        commandArgs = (commandArgs.joined(separator: " ") as NSString).componentsInShellCommand()
         hostname = destination ?? ""
         username = preferredUser ?? paramArgs.value(for: .loginName)
         port = preferredPort ?? paramArgs.value(for: .port).map { Int($0) } ?? 22

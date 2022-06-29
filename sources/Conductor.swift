@@ -44,6 +44,7 @@ class Conductor: NSObject, Codable {
     private var payloads: [Payload] = []
     private let initialDirectory: String?
     private let parsedSSHArguments: ParsedSSHArguments
+    private let shouldInjectShellIntegration: Bool
     @objc let depth: Int32
     @objc let parent: Conductor?
     @objc var autopollEnabled = true
@@ -561,7 +562,7 @@ class Conductor: NSObject, Codable {
         // Note backgroundJobs is not included because it isn't restorable.
       case sshargs, varsToSend, payloads, initialDirectory, parsedSSHArguments, depth, parent,
            framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
-           modifiedVars, modifiedCommandArgs, clientVars
+           modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration
     }
 
 
@@ -572,6 +573,7 @@ class Conductor: NSObject, Codable {
                varsToSend: [String: String],
                clientVars: [String: String],
                initialDirectory: String?,
+               shouldInjectShellIntegration: Bool,
                parent: Conductor?) {
         self.sshargs = sshargs
         self.boolArgs = boolArgs
@@ -582,6 +584,7 @@ class Conductor: NSObject, Codable {
         self.clientVars = clientVars
 
         self.initialDirectory = initialDirectory
+        self.shouldInjectShellIntegration = shouldInjectShellIntegration
         self.depth = (parent?.depth ?? -1) + 1
         self.parent = parent
         super.init()
@@ -611,6 +614,7 @@ class Conductor: NSObject, Codable {
         clientVars = [:]
         payloads = []
         initialDirectory = nil
+        shouldInjectShellIntegration = false
         parsedSSHArguments = ParsedSSHArguments(sshargs, booleanArgs: recovery.boolArgs)
         if let parent = recovery.parent {
             depth = parent.depth + 1
@@ -632,6 +636,7 @@ class Conductor: NSObject, Codable {
         clientVars = try container.decode([String: String].self, forKey: .clientVars)
         payloads = try container.decode([(Payload)].self, forKey: .payloads)
         initialDirectory = try container.decode(String?.self, forKey: .initialDirectory)
+        shouldInjectShellIntegration = try container.decode(Bool.self, forKey: .shouldInjectShellIntegration)
         parsedSSHArguments = try container.decode(ParsedSSHArguments.self, forKey: .parsedSSHArguments)
         depth = try container.decode(Int32.self, forKey: .depth)
         parent = try container.decode(Conductor?.self, forKey: .parent)
@@ -681,6 +686,7 @@ class Conductor: NSObject, Codable {
         try container.encode(clientVars, forKey: .clientVars)
         try container.encode(payloads, forKey: .payloads)
         try container.encode(initialDirectory, forKey: .initialDirectory)
+        try container.encode(shouldInjectShellIntegration, forKey: .shouldInjectShellIntegration)
         try container.encode(parsedSSHArguments, forKey: .parsedSSHArguments)
         try container.encode(depth, forKey: .depth)
         try container.encode(parent, forKey: .parent)
@@ -881,6 +887,23 @@ class Conductor: NSObject, Codable {
         "\(minimumPythonMajorVersion).\(minimumPythonMinorVersion)"
     }
 
+    private func shellSupportsInjection(_ shell: String, _ version: String) -> Bool {
+        let alwaysSupported = ["zsh", "fish"]
+        if alwaysSupported.contains(shell.lastPathComponent) {
+            return true
+        }
+        if shell == "bash" {
+            if version.contains("GNU bash, version 3.2.57") && version.contains("apple-darwin") {
+                // macOS's bash doesn't support --posix
+                return false
+            }
+            // Non-macOS bash
+            return true
+        }
+        // Unrecognized shell
+        return false
+    }
+
     private func update(executionContext: ExecutionContext, result: PartialResult) -> () {
         mylog("update \(executionContext) result=\(result)")
         switch executionContext.handler {
@@ -1018,8 +1041,15 @@ class Conductor: NSObject, Codable {
                 }
                 let shell = parsedSSHArguments.commandArgs.first ?? parts.get(0, default: "")
                 let home = parts.get(1, default: "")
-
-                if !shell.isEmpty && !home.isEmpty {
+                let version: String
+                if parts.count > 1 {
+                    version = parts[2...].joined(separator: "\n")
+                } else {
+                    version = ""
+                }
+                if !shell.isEmpty &&
+                    !home.isEmpty &&
+                    shouldInjectShellIntegration && shellSupportsInjection(shell.lastPathComponent, version) {
                     (modifiedVars, modifiedCommandArgs) = ShellIntegrationInjector.instance.modifyRemoteShellEnvironment(
                         shellIntegrationDir: "\(home)/.iterm2/shell-integration",
                         env: varsToSend,
@@ -1027,6 +1057,8 @@ class Conductor: NSObject, Codable {
                         argv: Array(parsedSSHArguments.commandArgs.dropFirst()))
                     if let firstArg = parsedSSHArguments.commandArgs.first {
                         modifiedCommandArgs?.insert(firstArg, at: 0)
+                    } else {
+                        modifiedCommandArgs?.insert(shell, at: 0)
                     }
                     let dict = ShellIntegrationInjector.instance.files(
                         destinationBase: URL(fileURLWithPath: "/$HOME/.iterm2/shell-integration"))

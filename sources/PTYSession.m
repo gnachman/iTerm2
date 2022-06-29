@@ -13829,7 +13829,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     iTermConductor *previousConductor = [_conductor autorelease];
     NSDictionary *dict = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_SSH_CONFIG inProfile:self.profile]];
-
+    const BOOL shouldInjectShellIntegration = [iTermProfilePreferences boolForKey:KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY inProfile:self.profile];
     iTermSSHConfiguration *config = [[[iTermSSHConfiguration alloc] initWithDictionary:dict] autorelease];
     _conductor = [[iTermConductor alloc] init:sshargs
                                      boolArgs:boolArgs
@@ -13838,6 +13838,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                    varsToSend:localOrigin ? [self.screen exfiltratedEnvironmentVariables:config.environmentVariablesToCopy] : @{}
                                    clientVars:[self.screen exfiltratedEnvironmentVariables:nil] ?: @{}
                              initialDirectory:directory
+                 shouldInjectShellIntegration:shouldInjectShellIntegration
                                        parent:previousConductor];
     if (localOrigin) {
         for (iTermTuple<NSString *, NSString *> *tuple in config.filesToCopy) {
@@ -13929,6 +13930,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                    varsToSend:@{}
                                    clientVars:@{}
                              initialDirectory:nil
+                  shouldInjectShellIntegration:NO
                                        parent:previousConductor];
     _conductor.delegate = self;
     [_conductor startRecovery];
