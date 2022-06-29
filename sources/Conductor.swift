@@ -1021,11 +1021,15 @@ class Conductor: NSObject, Codable {
                 let home = parts.get(1, default: "")
 
                 if !shell.isEmpty && !home.isEmpty {
+                    modifiedVars = varsToSend
+                    modifiedCommandArgs = parsedSSHArguments.commandArgs
+                    /*
                     (modifiedVars, modifiedCommandArgs) = ShellIntegrationInjector.instance.modifyRemoteShellEnvironment(
                         shellIntegrationDir: "\(home)/.iterm2/shell-integration",
                         env: varsToSend,
                         shell: shell,
                         argv: Array(parsedSSHArguments.commandArgs.dropFirst()))
+                     */
                     if let firstArg = parsedSSHArguments.commandArgs.first {
                         modifiedCommandArgs?.insert(firstArg, at: 0)
                     }
