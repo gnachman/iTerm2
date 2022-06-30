@@ -43,11 +43,12 @@
 #import "NSArray+iTerm.h"
 #import "NSEvent+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSImage+iTerm.h"
 #import "NSResponder+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSWindow+iTerm.h"
-#import "NSImage+iTerm.h"
+#import "NSResponder+iTerm.h""
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
@@ -482,9 +483,11 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 }
 
 - (BOOL)handleShortcutWithoutTerminal:(NSEvent *)event {
-    if ([[self keyWindow] isTerminalWindow]) {
+    if ([[self keyWindow] isTerminalWindow] && [[[self keyWindow] firstResponder] it_isTerminalResponder]) {
+        // Route to PTYTextView through normal channels.
         return NO;
     }
+    // A special key binding action that works regardless of first responder.
     if ([PTYSession handleShortcutWithoutTerminal:event]) {
         DLog(@"handled by session");
         return YES;

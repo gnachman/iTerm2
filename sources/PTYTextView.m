@@ -517,6 +517,10 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     return [self arcValidateMenuItem:item];
 }
 
+- (BOOL)it_isTerminalResponder {
+    return YES;
+}
+
 - (BOOL)resignFirstResponder {
     DLog(@"resign first responder: reset numTouches to 0");
     _mouseHandler.numTouches = 0;

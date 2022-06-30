@@ -8405,6 +8405,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
             return NO;
 
+        case KEY_ACTION_COPY_OR_SEND:
+            return [[NSApp mainMenu] performActionForItemWithSelector:@selector(copy:)];
+
+        case KEY_ACTION_PASTE_OR_SEND:
+            return [[NSApp mainMenu] performActionForItemWithSelector:@selector(paste:)];
+
         case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
             [iTermScriptFunctionCall callFunction:action.parameter
                                           timeout:[[NSDate distantFuture] timeIntervalSinceNow]
@@ -8792,7 +8798,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
             [self.delegate sessionSwapWithSessionInDirection:-1];
             break;
+        case KEY_ACTION_COPY_OR_SEND:
+            if ([self hasSelection]) {
+                [_textview copy:nil];
+                break;
+            }
+            [self regularKeyDown:[NSApp currentEvent]];
+            break;
         }
+        case KEY_ACTION_PASTE_OR_SEND:
+            if ([[PTYSession pasteboardString] length]) {
+                [_textview paste:[[NSApp mainMenu] itemWithSelector:@selector(paste:) tag:0]];
+                break;
+            }
+            [self regularKeyDown:[NSApp currentEvent]];
+            break;
         default:
             XLog(@"Unknown key action %@", action);
             break;
@@ -8912,6 +8932,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             return;
         }
     }
+    [self regularKeyDown:event];
+}
+
+- (void)regularKeyDown:(NSEvent *)event {
     if (_exited) {
         DLog(@"Terminal already dead");
         return;

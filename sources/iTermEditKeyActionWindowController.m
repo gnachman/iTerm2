@@ -348,6 +348,8 @@ const CGFloat sideMarginWidth = 40;
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Pasteboard" items:@[
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste…" tag:KEY_ACTION_PASTE_SPECIAL],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste from Selection…" tag:KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Copy or Send ^C" tag:KEY_ACTION_COPY_OR_SEND],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Paste or Send ^V" tag:KEY_ACTION_PASTE_OR_SEND],
         ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"Toggles" items:@[

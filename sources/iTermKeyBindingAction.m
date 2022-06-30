@@ -420,6 +420,12 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
             actionString = @"Swap with Previous Pane";
             break;
+        case KEY_ACTION_COPY_OR_SEND:
+            actionString = @"Copy Selection or Send ^C";
+            break;
+        case KEY_ACTION_PASTE_OR_SEND:
+            actionString = @"Paste or Send ^V";
+            break;
     }
 
     return actionString;
@@ -439,6 +445,8 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_SEND_C_QM_BACKSPACE:
         case KEY_ACTION_PASTE_SPECIAL:
         case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
+        case KEY_ACTION_COPY_OR_SEND:
+        case KEY_ACTION_PASTE_OR_SEND:
             return YES;
             
         case KEY_ACTION_IGNORE:
@@ -581,6 +589,8 @@ static NSString *GetProfileName(NSString *guid) {
         case KEY_ACTION_MOVE_TO_SPLIT_PANE:
         case KEY_ACTION_SWAP_WITH_NEXT_PANE:
         case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
+        case KEY_ACTION_COPY_OR_SEND:
+        case KEY_ACTION_PASTE_OR_SEND:
             break;
 
         case KEY_ACTION_SEQUENCE:

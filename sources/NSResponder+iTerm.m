@@ -55,4 +55,8 @@ static char iTermIgnoreFirstResponderChangesCountKey;
     return NO;
 }
 
+- (BOOL)it_isTerminalResponder {
+    return NO;
+}
+
 @end

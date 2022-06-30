@@ -3679,6 +3679,7 @@
 		A6E7AEB8214394F600DE9F3B /* graphic_ethereum.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E7AEA2214394F600DE9F3B /* graphic_ethereum.png */; };
 		A6E7AEB9214394F600DE9F3B /* graphic_ethereum.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E7AEA2214394F600DE9F3B /* graphic_ethereum.png */; };
 		A6E7AEBA214394F600DE9F3B /* graphic_ethereum.png in Resources */ = {isa = PBXBuildFile; fileRef = A6E7AEA2214394F600DE9F3B /* graphic_ethereum.png */; };
+		A6E7E122286E41730067642D /* NSMenu+iTerm.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E7E121286E41730067642D /* NSMenu+iTerm.swift */; };
 		A6E8BA0419DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E8BA0519DBCB01005C79E8 /* iTermIntegerNumberFormatter.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */; };
 		A6E9ACCA1A19956D008B0B6F /* NSWindow+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */; };
@@ -6953,6 +6954,7 @@
 		A6E7AEA0214394F600DE9F3B /* graphic_ethereum@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_ethereum@2x.png"; path = "hyper-tab-icons-plus/png/graphic_ethereum@2x.png"; sourceTree = "<group>"; };
 		A6E7AEA1214394F600DE9F3B /* graphic_database@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "graphic_database@2x.png"; path = "hyper-tab-icons-plus/png/graphic_database@2x.png"; sourceTree = "<group>"; };
 		A6E7AEA2214394F600DE9F3B /* graphic_ethereum.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = graphic_ethereum.png; path = "hyper-tab-icons-plus/png/graphic_ethereum.png"; sourceTree = "<group>"; };
+		A6E7E121286E41730067642D /* NSMenu+iTerm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSMenu+iTerm.swift"; sourceTree = "<group>"; };
 		A6E8BA0219DBCB01005C79E8 /* iTermIntegerNumberFormatter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermIntegerNumberFormatter.h; sourceTree = "<group>"; };
 		A6E8BA0319DBCB01005C79E8 /* iTermIntegerNumberFormatter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermIntegerNumberFormatter.m; sourceTree = "<group>"; };
 		A6E9ACC81A19956D008B0B6F /* NSWindow+PSM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSWindow+PSM.h"; sourceTree = "<group>"; };
@@ -8564,6 +8566,7 @@
 				A6A9839427E5C45E003319D1 /* String+iTerm.swift */,
 				A6EC809A282EBFF200493544 /* URL+iTerm.swift */,
 				A6EEAED028306F350039E850 /* NSRegularExpression+iTerm.swift */,
+				A6E7E121286E41730067642D /* NSMenu+iTerm.swift */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -15189,6 +15192,7 @@
 				538BE55620C9E69A00AD15B0 /* NSDictionary+iTerm.m in Sources */,
 				5365207621433F00003C58FD /* iTermGitPollWorker.m in Sources */,
 				A6A9839327E5C450003319D1 /* Array+iTerm.swift in Sources */,
+				A6E7E122286E41730067642D /* NSMenu+iTerm.swift in Sources */,
 				A63493E123E661B60047C31B /* iTermPresentationController.m in Sources */,
 				A66F52AE21045B7E00571168 /* iTermStatusBarNetworkUtilizationComponent.m in Sources */,
 				A648DABF2427E7E000C2FF02 /* iTermPreferenceDidChangeNotification.m in Sources */,

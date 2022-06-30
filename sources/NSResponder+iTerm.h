@@ -17,6 +17,7 @@
 - (BOOL)it_wantsScrollWheelMomentumEvents;
 - (void)it_scrollWheelMomentum:(NSEvent *)event;
 - (BOOL)it_preferredFirstResponder;
+- (BOOL)it_isTerminalResponder;
 
 @end
 
