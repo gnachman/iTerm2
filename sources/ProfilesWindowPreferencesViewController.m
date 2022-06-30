@@ -19,6 +19,7 @@
 #import "NSImage+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSTextField+iTerm.h"
+#import "NSView+iTerm.h"
 #import "PreferencePanel.h"
 
 // On macOS 10.13, we see that blur over 26 can turn red (issue 6138).
@@ -68,6 +69,7 @@ CGFloat iTermMaxBlurRadius(void) {
     IBOutlet NSButton *_useCustomTabTitle;
     IBOutlet NSTextField *_customTabTitle;
     iTermFunctionCallTextFieldDelegate *_customTabTitleDelegate;
+    NSString *_lastGuid;
 }
 
 - (void)dealloc {
@@ -234,6 +236,8 @@ CGFloat iTermMaxBlurRadius(void) {
         _customWindowTitleDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextWindow]
                                                                                         passthrough:self
                                                                                       functionsOnly:NO];
+        _customWindowTitleDelegate.canWarnAboutContextMistake = YES;
+        _customWindowTitleDelegate.contextMistakeText = @"This interpolated string is evaluated in the window’s context, not the session’s context. To access variables in the current session, use currentTab.currentSession.sessionVariableNameHere";
         _customWindowTitle.delegate = _customWindowTitleDelegate;
         [self defineControl:_customWindowTitle
                         key:KEY_CUSTOM_WINDOW_TITLE
@@ -255,6 +259,8 @@ CGFloat iTermMaxBlurRadius(void) {
         _customTabTitleDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextTab]
                                                                                         passthrough:self
                                                                                       functionsOnly:NO];
+        _customTabTitleDelegate.canWarnAboutContextMistake = YES;
+        _customTabTitleDelegate.contextMistakeText = @"This interpolated string is evaluated in the tab’s context, not the session’s context. To access variables in the current session, use currentSession.sessionVariableNameHere";
         _customTabTitle.delegate = _customTabTitleDelegate;
         [self defineControl:_customTabTitle
                         key:KEY_CUSTOM_TAB_TITLE
@@ -309,6 +315,13 @@ CGFloat iTermMaxBlurRadius(void) {
     [self loadBackgroundImageWithFilename:[self stringForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
     [self updateCustomWindowTitleEnabled];
     [self updateCustomTabTitleEnabled];
+    [_customWindowTitle it_removeWarning];
+    [_customTabTitle it_removeWarning];
+    if (![[self stringForKey:KEY_GUID] isEqual:_lastGuid]) {
+        _customTabTitleDelegate.canWarnAboutContextMistake = YES;
+        _customWindowTitleDelegate.canWarnAboutContextMistake = YES;
+        _lastGuid = [self stringForKey:KEY_GUID];
+    }
 }
 
 #pragma mark - Actions

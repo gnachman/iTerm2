@@ -51,4 +51,7 @@
 - (BOOL)containsDescendant:(NSView *)possibleDescendant;
 - (NSColor *)it_backgroundColorOfEnclosingTerminalIfBackgroundColorViewHidden;
 
+- (void)it_showWarning:(NSString *)text;
+- (void)it_removeWarning;
+
 @end

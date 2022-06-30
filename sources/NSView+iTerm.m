@@ -9,6 +9,8 @@
 #import "NSView+iTerm.h"
 #import "DebugLogging.h"
 #import "iTermApplication.h"
+#import "iTermTextPopoverViewController.h"
+#import "NSObject+iTerm.h"
 #import "NSWindow+iTerm.h"
 
 static NSInteger gTakingSnapshot;
@@ -196,6 +198,31 @@ static NSInteger gTakingSnapshot;
 
 - (NSColor *)it_backgroundColorOfEnclosingTerminalIfBackgroundColorViewHidden {
     return [self.superview it_backgroundColorOfEnclosingTerminalIfBackgroundColorViewHidden];
+}
+
+- (void)it_showWarning:(NSString *)text {
+    iTermTextPopoverViewController *popoverVC = [[iTermTextPopoverViewController alloc] initWithNibName:@"iTermTextPopoverViewController"
+                                                                  bundle:[NSBundle bundleForClass:self.class]];
+    popoverVC.popover.behavior = NSPopoverBehaviorTransient;
+    [popoverVC view];
+    popoverVC.textView.font = [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    popoverVC.textView.drawsBackground = NO;
+    [popoverVC appendString:text];
+    [popoverVC sizeToFit];
+    [popoverVC.view it_setAssociatedObject:@YES forKey:iTermDeclineFirstResponderAssociatedObjectKey];
+    [popoverVC.popover showRelativeToRect:self.bounds
+                                    ofView:self
+                             preferredEdge:NSRectEdgeMaxY];
+    [self it_setAssociatedObject:popoverVC forKey:@"PopoverWarning"];
+}
+
+- (void)it_removeWarning {
+    iTermTextPopoverViewController *vc = [self it_associatedObjectForKey:@"PopoverWarning"];
+    if (!vc) {
+        return;
+    }
+    [vc.popover close];
+    [self it_setAssociatedObject:nil forKey:@"PopoverWarning"];
 }
 
 @end

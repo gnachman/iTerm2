@@ -2925,6 +2925,8 @@ ITERM_WEAKLY_REFERENCEABLE
     delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextWindow]
                                                                    passthrough:nil
                                                                  functionsOnly:NO] autorelease];
+    delegate.canWarnAboutContextMistake = YES;
+    delegate.contextMistakeText = @"This interpolated string is evaluated in the window’s context, not the session’s context. To access variables in the current session, use currentTab.currentSession.sessionVariableNameHere";
     titleTextField.delegate = delegate;
     titleTextField.editable = YES;
     titleTextField.selectable = YES;
@@ -6728,6 +6730,8 @@ ITERM_WEAKLY_REFERENCEABLE
                                                                                            passthrough:nil
                                                                                          functionsOnly:NO];
     titleTextField.delegate = _currentTabTitleTextFieldDelegate;
+    _currentTabTitleTextFieldDelegate.canWarnAboutContextMistake = YES;
+    _currentTabTitleTextFieldDelegate.contextMistakeText = @"This interpolated string is evaluated in the tab’s context, not the session’s context. To access variables in the current session, use currentSession.sessionVariableNameHere";
     titleTextField.editable = YES;
     titleTextField.selectable = YES;
     titleTextField.stringValue = self.currentTab.variablesScope.tabTitleOverrideFormat ?: @"";

@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 extern NSString *const iTermWindowAppearanceDidChange;
+extern void *const iTermDeclineFirstResponderAssociatedObjectKey;
 
 @interface NSWindow(iTerm)
 
@@ -27,5 +28,12 @@ extern NSString *const iTermWindowAppearanceDidChange;
 - (NSView *)it_titlebarViewOfClassWithName:(NSString *)className;
 - (void)it_titleBarDoubleClick;
 - (void)it_shakeNo;
+
+// Usage:
+// - (BOOL)makeFirstResponder:(NSResponder *)responder {
+//     return [self it_makeFirstResponderIfNotDeclined:responder callSuper:^(NSResponder *newResponder) { return [super makeFirstResponder:newResponder] }];
+// }
+- (BOOL)it_makeFirstResponderIfNotDeclined:(NSResponder *)responder
+                                 callSuper:(BOOL (^ NS_NOESCAPE)(NSResponder *))callSuper;
 
 @end

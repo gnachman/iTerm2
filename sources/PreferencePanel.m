@@ -96,6 +96,7 @@
 #import "NSPopUpButton+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
+#import "NSWindow+iTerm.h""
 #import "PasteboardHistory.h"
 #import "PointerPrefsController.h"
 #import "ProfileModel.h"
@@ -287,7 +288,9 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 - (BOOL)makeFirstResponder:(NSResponder *)responder {
-    BOOL result = [super makeFirstResponder:responder];
+    BOOL result = [self it_makeFirstResponderIfNotDeclined:responder callSuper:^BOOL(NSResponder *newResponse) {
+        return [super makeFirstResponder:newResponse];
+    }];
     if (result) {
         [self.prefsPanelDelegate responderWillBecomeFirstResponder:responder];
     }
