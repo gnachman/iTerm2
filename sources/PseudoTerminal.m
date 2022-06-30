@@ -2919,7 +2919,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (IBAction)editWindowTitle:(id)sender {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"Set Window Title";
-    alert.informativeText = @"If this is empty, the window takes the active session’s title. Variables and function calls enclosed in \\(…) will be replaced with their evaluation.";
+    alert.informativeText = @"If this is empty, the window takes the active session’s title. Variables and function calls enclosed in \\(…) will be replaced with their evaluation. This interpolated string is evaluated in the window’s context.";
     NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
     iTermFunctionCallTextFieldDelegate *delegate;
     delegate = [[[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextWindow]
@@ -6722,7 +6722,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)openEditTabTitleWindow {
     NSAlert *alert = [[[NSAlert alloc] init] autorelease];
     alert.messageText = @"Set Tab Title";
-    alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will be replaced with their evaluation.";
+    alert.informativeText = @"If this is empty, the tab takes the active session’s title. Variables and function calls enclosed in \\(…) will be replaced with their evaluation. This interpolated string is evaluated in the tab’s context.";
     NSTextField *titleTextField = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 400, 24 * 3)] autorelease];
     _currentTabTitleTextFieldDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextTab]
                                                                                            passthrough:nil
