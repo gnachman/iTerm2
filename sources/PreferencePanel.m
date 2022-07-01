@@ -90,13 +90,14 @@
 #import "iTermWarning.h"
 #import "KeysPreferencesViewController.h"
 #import "NSArray+iTerm.h"
+#import "NSAppearance+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSFileManager+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSPopUpButton+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSView+iTerm.h"
-#import "NSWindow+iTerm.h""
+#import "NSWindow+iTerm.h"
 #import "PasteboardHistory.h"
 #import "PointerPrefsController.h"
 #import "ProfileModel.h"
@@ -187,7 +188,8 @@ static PreferencePanel *gSessionsPreferencePanel;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    const CGFloat baselineAlpha = 0.7;
+    const BOOL darkMode = [self.window.effectiveAppearance it_isDark];
+    const CGFloat baselineAlpha = darkMode ? 0.8 : 0.7;
     [[[NSColor blackColor] colorWithAlphaComponent:baselineAlpha] set];
     NSRectFill(dirtyRect);
 
@@ -196,9 +198,9 @@ static PreferencePanel *gSessionsPreferencePanel;
     }
     NSRect rect = [self convertRect:_cutoutView.bounds fromView:_cutoutView];
 
-    const NSInteger steps = 30;
+    const NSInteger steps = darkMode ? 15 : 30;
     const CGFloat stepSize = 0.5;
-    const CGFloat highlightAlpha = 0.2;
+    const CGFloat highlightAlpha = darkMode ? 0.0 : 0.2;
     const CGFloat alphaStride = (baselineAlpha - highlightAlpha) / steps;
     CGFloat a = baselineAlpha - alphaStride;
     [[[NSColor blackColor] colorWithAlphaComponent:a] set];
