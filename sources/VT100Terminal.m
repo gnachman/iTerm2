@@ -107,6 +107,12 @@ NSString *const kTerminalStateProtectedMode = @"Protected Mode";
 
 static const size_t VT100TerminalMaxSGRStackEntries = 10;
 
+typedef NS_ENUM(NSUInteger, VT100TerminalCopyMode) {
+    VT100TerminalCopyModeNone,
+    VT100TerminalCopyModeMonolithic,
+    VT100TerminalCopyModeSegmented,
+};
+
 @interface VT100Terminal ()
 @property(nonatomic, assign) BOOL reverseVideo;
 @property(nonatomic, assign) BOOL originMode;
@@ -120,6 +126,8 @@ static const size_t VT100TerminalMaxSGRStackEntries = 10;
 @property(nonatomic, strong) NSURL *url;
 @property(nonatomic, strong) NSString *urlParams;
 
+@property(nonatomic, readonly) VT100TerminalCopyMode copyMode;
+@property(nonatomic, copy) NSString *uidForCopyMode;  // Applies in segmented modes.
 @end
 
 #define NUM_CHARSETS 4
@@ -414,7 +422,7 @@ static const int kMaxScreenRows = 4096;
     self.protectedMode = VT100TerminalProtectedModeNone;
     self.allowColumnMode = NO;
     receivingFile_ = NO;
-    _copyingToPasteboard = NO;
+    _copyMode = VT100TerminalCopyModeNone;
     _encoding = _canonicalEncoding;
     _parser.encoding = _canonicalEncoding;
     for (int i = 0; i < NUM_CHARSETS; i++) {
@@ -1955,7 +1963,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [_delegate terminalFileReceiptEndedUnexpectedly];
             receivingFile_ = NO;
         }
-    } else if (_copyingToPasteboard) {
+    } else if (_copyMode != VT100TerminalCopyModeNone) {
         if (token->type == XTERMCC_MULTITOKEN_BODY) {
             [_delegate terminalDidReceiveBase64PasteboardString:token.string ?: @""];
             return;
@@ -1963,14 +1971,22 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [_delegate terminalDidReceiveBase64PasteboardString:[token stringForAsciiData]];
             return;
         } else if (token->type == XTERMCC_MULTITOKEN_END) {
+            if (_copyMode == VT100TerminalCopyModeSegmented) {
+                // Ignore this as there can be many of these for a single copy.
+                return;
+            }
             [_delegate terminalDidFinishReceivingPasteboard];
-            _copyingToPasteboard = NO;
+            _copyMode = VT100TerminalCopyModeNone;
             return;
-        } else {
+        } else if (_copyMode != VT100TerminalCopyModeSegmented) {
+            // In segmented mode we allow unexpected tokens. This is to work around tmux's
+            // redrawing between passthroughs. Otherwise something went wrong (ssh died?) and it's
+            // best to exit copy mode.
             [_delegate terminalPasteboardReceiptEndedUnexpectedly];
-            _copyingToPasteboard = NO;
+            _copyMode = VT100TerminalCopyModeNone;
         }
     }
+
     if (token->savingData &&
         token->type != VT100_SKIP) {  // This is the old code that echoes to the screen. Its use is discouraged.
         // We are probably copying text to the clipboard until esc]1337;EndCopy^G is received.
@@ -3981,8 +3997,47 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         }
     } else if ([key isEqualToString:@"Copy"]) {
         if ([_delegate terminalIsTrusted]) {
-            [_delegate terminalBeginCopyToPasteboard];
-            _copyingToPasteboard = YES;
+            NSArray<NSString *> *parts = [value componentsSeparatedByString:@";"];
+            int mode;
+            if (parts.count == 0) {
+                mode = 1;
+            } else {
+                mode = parts[0].intValue;
+            }
+            switch (mode) {
+                case 1:
+                    // Contains the entirety.
+                    [_delegate terminalBeginCopyToPasteboard];
+                    _copyMode = VT100TerminalCopyModeMonolithic;
+                    self.uidForCopyMode = nil;
+                    break;
+
+                case 2:
+                    if (parts.count >= 2) {
+                        // Will begin segmented.
+                        [_delegate terminalBeginCopyToPasteboard];
+                        _copyMode = VT100TerminalCopyModeSegmented;
+                        self.uidForCopyMode = parts[1];
+                    } else {
+                        _copyMode = VT100TerminalCopyModeNone;
+                    }
+                    break;
+
+                case 3:
+                    // Segmented update.
+                    if (parts.count < 2 || ![self.uidForCopyMode isEqual:parts[1]]) {
+                        _copyMode = VT100TerminalCopyModeNone;
+                        self.uidForCopyMode = nil;
+                    }
+                    break;
+
+                case 4:
+                    // End segmented.
+                    [_delegate terminalDidFinishReceivingPasteboard];
+                    _copyMode = VT100TerminalCopyModeNone;
+                    self.uidForCopyMode = nil;
+                    break;
+            }
         }
     } else if ([key isEqualToString:@"RequestUpload"]) {
         if ([_delegate terminalIsTrusted]) {
