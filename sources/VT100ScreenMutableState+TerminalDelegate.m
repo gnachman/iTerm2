@@ -353,6 +353,7 @@
 - (void)terminalRemoveTabStops {
     DLog(@"begin");
     [self.tabStops removeAllObjects];
+    DLog(@"Tabstops are now %@", self.tabStops);
 }
 
 - (void)terminalSetWidth:(int)width
@@ -1531,6 +1532,7 @@
     [tabStops enumerateObjectsUsingBlock:^(NSNumber * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [self.tabStops addObject:@(obj.intValue - 1)];
     }];
+    DLog(@"tabsts are now %@", self.tabStops);
 }
 
 - (void)terminalCommandDidStart {

@@ -1872,6 +1872,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     for (int i = 0; i < kInitialTabWindow; i += width) {
         [self.tabStops addObject:@(i)];
     }
+    DLog(@"Initial tabstops set to %@", self.tabStops);
 }
 
 // See issue 6592 for why `setBackgroundColors` exists. tl;dr ncurses makes weird assumptions.
@@ -1988,12 +1989,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)setTabStopAtCursor {
     if (self.currentGrid.cursorX < self.currentGrid.size.width) {
         [self.tabStops addObject:[NSNumber numberWithInt:self.currentGrid.cursorX]];
+        DLog(@"Set tabstop at cursor. Is now %@", self.tabStops);
     }
 }
 
 - (void)removeTabStopAtCursor {
     if (self.currentGrid.cursorX < self.currentGrid.size.width) {
         [self.tabStops removeObject:@(self.currentGrid.cursorX)];
+        DLog(@"Remove tabstop at %@", @(self.currentGrid.cursorX));
     }
 }
 
@@ -3787,6 +3790,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         self.protectedMode = [screenState[kScreenStateProtectedMode] unsignedIntegerValue];
         [self.tabStops removeAllObjects];
         [self.tabStops addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
+        DLog(@"Restored tabstops: %@", self.tabStops);
 
         [self.terminal setStateFromDictionary:screenState[kScreenStateTerminalKey]];
         NSArray<NSNumber *> *array = screenState[kScreenStateLineDrawingModeKey];
@@ -4213,6 +4217,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
             [self.tabStops addObject:@(i)];
         }
     }
+    DLog(@"tmux tabstops set to %@", self.tabStops);
 
     NSNumber *cursorMode = state[kStateDictCursorMode];
     if (cursorMode) {
