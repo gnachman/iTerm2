@@ -654,9 +654,14 @@ static _Atomic int gPerformingJoinedBlock;
                         self.config.unicodeVersion);
     ssize_t bufferOffset = 0;
     if (augmented && len > 0) {
-        screen_char_t *theLine = [self.currentGrid screenCharsAtLineNumber:pred.y];
-        theLine[pred.x].code = buffer[0].code;
-        theLine[pred.x].complexChar = buffer[0].complexChar;
+        [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)
+                                            block:^(screen_char_t *sct,
+                                                    iTermExternalAttribute *__autoreleasing *eaOut,
+                                                    VT100GridCoord coord,
+                                                    BOOL *stop) {
+            sct->code = buffer[0].code;
+            sct->complexChar = buffer[0].complexChar;
+        }];
         bufferOffset++;
 
         // Does the augmented result begin with a double-width character? If so skip over the
