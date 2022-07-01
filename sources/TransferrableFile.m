@@ -115,6 +115,20 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
         name = [NSString stringWithFormat:@"%@ (%d)%@", prefix, retries, suffix];
     } while ([[NSFileManager defaultManager] fileExistsAtPath:finalDestination] ||
              [TransferrableFile fileNameIsLocked:finalDestination]);
+    if (retries == 1) {
+        return finalDestination;
+    }
+    NSString *message = [NSString stringWithFormat:@"A file named %@ already exists. Keep both files or replace the existing file?", baseName];
+    const iTermWarningSelection selection = [iTermWarning showWarningWithTitle:message
+                                                                       actions:@[ @"Keep Both", @"Replace" ]
+                                                                     accessory:nil
+                                                                    identifier:@"NoSyncOverwriteOrReplaceFile"
+                                                                   silenceable:kiTermWarningTypePersistent
+                                                                       heading:@"Overwrite existing file?"
+                                                                        window:nil];
+    if (selection == kiTermWarningSelection1) {
+        return [destinationDirectory stringByAppendingPathComponent:baseName];
+    }
     return finalDestination;
 }
 
@@ -133,6 +147,17 @@ static NSMutableSet<NSString *> *iTermTransferrableFileLockedFileNames(void) {
 - (TransferrableFile *)successor {
     @synchronized(self) {
         return _successor;
+    }
+}
+
+- (void)didFailWithError:(NSString *)error {
+    DLog(@"didFailWithError:%@", error);
+    @synchronized(self) {
+        if (_status != kTransferrableFileStatusFinishedWithError) {
+            _status = kTransferrableFileStatusFinishedWithError;
+            _timeOfLastStatusChange = [NSDate timeIntervalSinceReferenceDate];
+            [[iTermNotificationController sharedInstance] notify:error];
+        }
     }
 }
 

@@ -48,6 +48,7 @@ typedef NS_ENUM(NSInteger, TransferrableFileStatus) {
 - (NSString *)destination;
 - (NSTimeInterval)timeOfLastStatusChange;
 - (BOOL)isDownloading;
+- (void)didFailWithError:(NSString *)error;
 
 #pragma mark - Utility
 

@@ -71,6 +71,13 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
 
 #pragma mark - Overridden methods from superclass
 
+- (void)didFailWithError:(NSString *)error {
+    @synchronized (self) {
+        [super didFailWithError:error];
+        self.error = error;
+    }
+}
+
 - (NSString *)displayName {
     return self.localPath ? [self.localPath lastPathComponent] : @"Unnamed file";
 }
@@ -177,9 +184,10 @@ NSString *const kTerminalFileShouldStopNotification = @"kTerminalFileShouldStopN
         return;
     }
     [data setLength:resultLength];
-    if (![data writeToFile:self.localPath atomically:NO]) {
+    NSError *error = nil;
+    if (![data writeToFile:self.localPath options:NSDataWritingAtomic error:&error]) {
         [[FileTransferManager sharedInstance] transferrableFile:self
-                                 didFinishTransmissionWithError:[self errorWithDescription:@"Failed to write file to disk."]];
+                                 didFinishTransmissionWithError:[self errorWithDescription:error.localizedDescription]];
         return;
     }
     if (![self quarantine:self.localPath sourceURL:nil]) {

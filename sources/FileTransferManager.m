@@ -334,7 +334,11 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 // |error| is nil on success
 - (void)transferrableFile:(TransferrableFile *)transferrableFile
     didFinishTransmissionWithError:(NSError *)error {
-    transferrableFile.status = error ? kTransferrableFileStatusFinishedWithError : kTransferrableFileStatusFinishedSuccessfully;
+    if (error) {
+        [transferrableFile didFailWithError:error.localizedDescription ?: @"File transfer failed with an unknown error"];
+    } else {
+        transferrableFile.status = kTransferrableFileStatusFinishedSuccessfully;
+    }
     XLog(@"Transfer finished. error=%@", error);
 
     TransferrableFileMenuItemViewController *controller = [self viewControllerForTransferrableFile:transferrableFile];
