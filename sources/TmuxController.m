@@ -173,6 +173,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // top of its header file)
     NSMutableDictionary *_windowOpenerOptions;
     BOOL _manualOpenRequested;
+    BOOL _allInitialWindowsAdded;
     BOOL _haveOpenedInitialWindows;
     ProfileModel *_profileModel;
     // Maps the window ID of an about to be opened window to a completion block to invoke when it opens.
@@ -397,6 +398,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.windowOptions = _windowOpenerOptions;
     windowOpener.zoomed = windowFlags ? @([windowFlags containsString:@"Z"]) : nil;
     windowOpener.manuallyOpened = _manualOpenRequested;
+    windowOpener.allInitialWindowsAdded = _allInitialWindowsAdded;
     windowOpener.tabColors = _tabColors;
     windowOpener.focusReporting = _focusEvents;
     windowOpener.profile = profile;
@@ -635,9 +637,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         gateway_.acceptNotifications = YES;
         [self sendInitialWindowsOpenedNotificationIfNeeded];
     }
+    _allInitialWindowsAdded = YES;
 }
 
 - (void)openWindowsInitial {
+    _allInitialWindowsAdded = NO;
     DLog(@"openWindowsInitial\n%@", [NSThread callStackSymbols]);
     if (!_versionKnown) {
         DLog(@"Don't know version yet");

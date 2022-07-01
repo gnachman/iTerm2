@@ -3685,7 +3685,8 @@ typedef struct {
     if (parseTree[kLayoutDictTabIndex]) {
         // Add tab at a specified index.
         [term insertTab:theTab atIndex:[parseTree[kLayoutDictTabIndex] intValue]];
-    } else if ([parseTree[kLayoutDictTabOpenedManually] boolValue]) {
+    } else if ([parseTree[kLayoutDictTabOpenedManually] boolValue] ||
+               [parseTree[kLayoutDictAllInitialWindowsAdded] boolValue]) {
         [term addTabAtAutomaticallyDeterminedLocation:theTab];
     } else {
         [term appendTab:theTab];

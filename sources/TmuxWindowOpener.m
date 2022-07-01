@@ -549,6 +549,9 @@ static int OctalValue(const char *bytes) {
     if (self.tabIndex) {
         parseTree[kLayoutDictTabIndex] = self.tabIndex;
     }
+    if (self.allInitialWindowsAdded) {
+        parseTree[kLayoutDictAllInitialWindowsAdded] = @YES;
+    }
 }
 
 // Callback for DFS of parse tree from decorateParseTree:
