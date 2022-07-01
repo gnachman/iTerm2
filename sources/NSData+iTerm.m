@@ -238,7 +238,8 @@
                                  [NSData class],
                                  [NSArray class],
                                  [NSNull class],
-                                 [NSValue class] ];
+                                 [NSValue class],
+                                 [iTermTuple class] ];
     NSError *innerError = nil;
     id obj = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithArray:classes]
                                                  fromData:self

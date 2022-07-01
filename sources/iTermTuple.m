@@ -14,6 +14,10 @@ static NSString *const iTermTupleValueKey = @"value";
 
 @implementation iTermTuple
 
++ (BOOL)supportsSecureCoding {
+    return YES;
+}
+
 + (instancetype)tupleWithObject:(id)firstObject andObject:(id)secondObject {
     iTermTuple *tuple = [[self alloc] init];
     tuple.firstObject = firstObject;
@@ -100,6 +104,10 @@ static NSString *const iTermTupleValueKey = @"value";
 @end
 
 @implementation iTermTriple
+
++ (BOOL)supportsSecureCoding {
+    return YES;
+}
 
 + (instancetype)tripleWithObject:(id)firstObject andObject:(id)secondObject object:(id)thirdObject {
     iTermTriple *triple = [super tupleWithObject:firstObject andObject:secondObject];

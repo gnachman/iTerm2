@@ -454,6 +454,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 
 @property (nonatomic, readonly) BOOL wantsMouseMovementEvents;
 
+// Checked and at the end of -refresh. Meant to be use when a reentrant call failed.
+@property (nonatomic) BOOL needsUpdateSubviewFrames;
+
 // Returns the size of a cell for a given font. hspace and vspace are multipliers and the width
 // and height.
 + (NSSize)charSizeForFont:(NSFont*)aFont
@@ -687,6 +690,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 
 - (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
 - (NSRect)rectForCoord:(VT100GridCoord)coord;
+- (void)updateSubviewFrames;
 
 #pragma mark - Testing only
 

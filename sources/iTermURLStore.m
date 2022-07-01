@@ -9,15 +9,17 @@
 #import "iTermURLStore.h"
 
 #import "DebugLogging.h"
+#import "NSObject+iTerm.h"
+#import "iTermTuple.h"
 
 #import <Cocoa/Cocoa.h>
 
 @implementation iTermURLStore {
     // { "url": NSURL.absoluteString, "params": NSString } -> @(NSInteger)
-    NSMutableDictionary<NSDictionary *, NSNumber *> *_store;
+    NSMutableDictionary<iTermTuple<NSString *, NSString *> *, NSNumber *> *_store;
 
     // @(unsigned int) -> { "url": NSURL, "params": NSString }
-    NSMutableDictionary<NSNumber *, NSDictionary *> *_reverseStore;
+    NSMutableDictionary<NSNumber *, iTermTuple<NSURL *, NSString *> *> *_reverseStore;
 
     NSCountedSet<NSNumber *> *_referenceCounts;
 
@@ -70,12 +72,12 @@
         });
         [_referenceCounts removeObject:@(code)];
         if (![_referenceCounts containsObject:@(code)]) {
-            NSDictionary *dict = _reverseStore[@(code)];
+            iTermTuple<NSURL *, NSString *> *tuple = _reverseStore[@(code)];
             [_reverseStore removeObjectForKey:@(code)];
-            NSString *url = [dict[@"url"] absoluteString];
-            NSString *params = dict[@"params"];
+            NSString *url = [tuple.firstObject absoluteString];
+            NSString *params = tuple.secondObject;
             if (url) {
-                [_store removeObjectForKey:@{ @"url": url, @"params": params }];
+                [_store removeObjectForKey:[iTermTuple tupleWithObject:url andObject:params]];
             }
         }
     }
@@ -87,7 +89,7 @@
             DLog(@"codeForURL:%@ withParams:%@ returning 0 because of nil value", url.absoluteString, params);
             return 0;
         }
-        NSDictionary *key = @{ @"url": url.absoluteString, @"params": params };
+        iTermTuple<NSString *, NSString *> *key = [iTermTuple tupleWithObject:url.absoluteString andObject:params];
         NSNumber *number = _store[key];
         if (number) {
             return number.unsignedIntValue;
@@ -107,7 +109,7 @@
 
         // Record the code/URL+params relation.
         _store[key] = number;
-        _reverseStore[number] = @{ @"url": url, @"params": params };
+        _reverseStore[number] = [iTermTuple tupleWithObject:url andObject:params];
 
         dispatch_async(dispatch_get_main_queue(), ^{
             [NSApp invalidateRestorableState];
@@ -123,7 +125,7 @@
             // Safety valve in case something goes awry. There should never be an entry at 0.
             return nil;
         }
-        return _reverseStore[@(code)][@"url"];
+        return _reverseStore[@(code)].firstObject;
     }
 }
 
@@ -133,7 +135,7 @@
             // Safety valve in case something goes awry. There should never be an entry at 0.
             return nil;
         }
-        return _reverseStore[@(code)][@"params"];
+        return _reverseStore[@(code)].secondObject;
     }
 }
 
@@ -175,6 +177,14 @@ static NSString *iTermURLStoreGetParamForKey(NSString *params, NSString *key) {
     }
 }
 
+- (iTermTuple<NSString *, NSString *> *)migratedKey:(id)unknownKey {
+    NSDictionary *dict = [NSDictionary castFrom:unknownKey];
+    if (dict) {
+        return [iTermTuple tupleWithObject:dict[@"url"] andObject:dict[@"param"]];
+    }
+    return [iTermTuple castFrom:unknownKey];
+}
+
 - (void)loadFromDictionary:(NSDictionary *)dictionary {
     @synchronized (self) {
         NSDictionary *store = dictionary[@"store"];
@@ -188,20 +198,22 @@ static NSString *iTermURLStoreGetParamForKey(NSString *params, NSString *key) {
             DLog(@"refcounts2=%@", refcounts2);
             return;
         }
-        [store enumerateKeysAndObjectsUsingBlock:^(NSDictionary * _Nonnull key, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
-            if (![key isKindOfClass:[NSDictionary class]] ||
+        [store enumerateKeysAndObjectsUsingBlock:^(id unknownKey, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
+            iTermTuple<NSString *, NSString *> *key = [self migratedKey:unknownKey];
+
+            if (!key ||
                 ![obj isKindOfClass:[NSNumber class]]) {
                 ELog(@"Unexpected types when loading dictionary: %@ -> %@", key.class, obj.class);
                 return;
             }
-            NSURL *url = [NSURL URLWithString:key[@"url"]];
+            NSURL *url = [NSURL URLWithString:key.firstObject];
             if (url == nil) {
                 XLog(@"Bogus key not a URL: %@", url);
                 return;
             }
             self->_store[key] = obj;
 
-            self->_reverseStore[obj] = @{ @"url": url, @"params": key[@"params"] ?: @"" };
+            self->_reverseStore[obj] = [iTermTuple tupleWithObject:url andObject:key.secondObject ?: @""];
             self->_nextCode = [iTermURLStore successor:MAX(obj.unsignedIntValue, self->_nextCode)];
         }];
 

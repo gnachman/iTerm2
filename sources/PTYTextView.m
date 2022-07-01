@@ -2224,7 +2224,9 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
         return YES;
     }
     // Get the number of lines that have disappeared if scrollback buffer is full.
+    _inRefresh = YES;
     const VT100SyncResult syncResult = [self.delegate textViewWillRefresh];
+    _inRefresh = NO;
     const int scrollbackOverflow = syncResult.overflow;
     const BOOL frameDidChange = [_delegate textViewResizeFrameIfNeeded];
 
@@ -2276,7 +2278,21 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
         [self.delegate textViewFindOnPageLocationsDidChange];
     }
 
+    if (_needsUpdateSubviewFrames) {
+        [self updateSubviewFrames];
+    }
     return foundBlink;
+}
+
+- (void)updateSubviewFrames {
+    if (_inRefresh) {
+        _needsUpdateSubviewFrames = YES;
+        return;
+    }
+    _needsUpdateSubviewFrames = NO;
+    [self updateNoteViewFrames];
+    [self updatePortholeFrames];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)markCursorDirty {

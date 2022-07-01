@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermTuple<T1, T2> : NSObject<NSCoding, NSCopying>
+@interface iTermTuple<T1, T2> : NSObject<NSSecureCoding, NSCopying>
 
 @property (nullable, nonatomic, strong) T1 firstObject;
 @property (nullable, nonatomic, strong) T2 secondObject;
@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@interface iTermTriple<T1, T2, T3> : iTermTuple<NSCoding, NSCopying>
+@interface iTermTriple<T1, T2, T3> : iTermTuple<NSSecureCoding, NSCopying>
 
 @property (nullable, nonatomic, strong) T3 thirdObject;
 

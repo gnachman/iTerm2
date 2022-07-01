@@ -4953,6 +4953,7 @@ launchCoprocessWithCommand:(NSString *)command
 
 // Runs on the main thread or while joined.
 - (void)tokenExecutorHandleSideEffectFlags:(NSInteger)flags {
+    DLog(@"tokenExecutorHandleSideEffectFlags:%lx", (long long)flags);
     if (flags & VT100ScreenMutableStateSideEffectFlagNeedsRedraw) {
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenNeedsRedraw];
