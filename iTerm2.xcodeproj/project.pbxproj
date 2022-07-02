@@ -14601,7 +14601,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# https://stackoverflow.com/questions/25900607/do-finder-sync-extensions-require-a-provisioning-profile\necho re-signing file provider\nset -x\n/usr/bin/codesign --force --sign \"$CODE_SIGN_IDENTITY\" --entitlements \"${SRCROOT}/iTermFileProvider/iTermFileProvider.entitlements\" \"${TARGET_BUILD_DIR}/iTermFileProvider.appex\"\n";
+			shellScript = "# https://stackoverflow.com/questions/25900607/do-finder-sync-extensions-require-a-provisioning-profile\n# echo re-signing file provider\n# set -x\n# /usr/bin/codesign --force --sign \"$CODE_SIGN_IDENTITY\" --entitlements \"${SRCROOT}/iTermFileProvider/iTermFileProvider.entitlements\" \"${TARGET_BUILD_DIR}/iTermFileProvider.appex\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
