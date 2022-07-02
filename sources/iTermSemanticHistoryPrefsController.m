@@ -407,7 +407,7 @@ enum {
             [[text_ cell] setPlaceholderString:@"Enter command"];
 
             NSString *text =
-            @"Command runs when you activate Semantic History on any text, even if it's not a valid filename. "
+            @"Command runs when you activate Semantic History on any text, even if it’s not a valid filename. "
             @"Use \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd. ";
 
             caveat_.attributedStringValue = [self attributedStringWithLearnMoreLinkAfterText:text];
