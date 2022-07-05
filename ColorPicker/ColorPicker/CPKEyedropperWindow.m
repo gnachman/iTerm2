@@ -32,7 +32,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
 }
 
 + (BOOL)canTakeScreenshot {
-    if (@available(macOS 10.15, *)) {
+    if (@available(macOS 10.16, *)) {
       return CGPreflightScreenCaptureAccess();
     }
     CGDisplayStreamRef streamRef =
