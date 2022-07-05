@@ -17,6 +17,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#import <os/log.h>
 
 static NSString *const kDebugLogFilename = @"/tmp/debuglog.txt";
 static NSString* gDebugLogHeader = nil;
@@ -205,6 +206,12 @@ int CDebugLogImpl(const char *file, int line, const char *function, const char *
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value)
 {
     if (gDebugLogging) {
+        static os_log_t log;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            log = os_log_create("com.googlecode.iterm2", "Debug Log");
+        });
+
         struct timeval tv;
         gettimeofday(&tv, NULL);
 
@@ -215,8 +222,12 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
         } else {
             lastSlash++;
         }
-        [gDebugLogStr appendFormat:@"%lld.%06lld %s:%d (%s): ",
-            (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function];
+        NSString *message = [NSString stringWithFormat:@"%lld.%06lld %s:%d (%s): %@",
+                             (long long)tv.tv_sec, (long long)tv.tv_usec, lastSlash, line, function,
+                             value];
+        os_log(log, "%{public}@", message);
+
+        [gDebugLogStr appendString:message];
         [gDebugLogStr appendString:value];
         [gDebugLogStr appendString:@"\n"];
         static const NSInteger kMaxLogSize = 1000000000;
