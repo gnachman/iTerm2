@@ -939,6 +939,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
             NSRect frame = _scrollview.frame;
             maxY -= frame.size.height;
             frame.origin.y = maxY;
+            DLog(@"Tweaking y offset of scrollview for title bar");
             _scrollview.frame = frame;
             if (PTYScrollView.shouldDismember) {
                 _scrollview.verticalScroller.frame = [self frameForScroller];
@@ -1490,6 +1491,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     PTYScrollView *scrollView = [self scrollview];
     NSRect frame = [scrollView frame];
     if (_showTitle) {
+        DLog(@"Adjust frame to make make room for title bar");
         frame.size.height -= iTermGetSessionViewTitleHeight();
         _title = [[SessionTitleView alloc] initWithFrame:NSMakeRect(0,
                                                                     self.frame.size.height - iTermGetSessionViewTitleHeight(),
@@ -1503,11 +1505,13 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         [_title setDimmingAmount:[self adjustedDimmingAmount]];
         [self addSubviewBelowFindView:_title];
     } else {
+        DLog(@"Adjust frame to eliminate title bar");
         frame.size.height += iTermGetSessionViewTitleHeight();
         [_title removeFromSuperview];
         _title = nil;
     }
     if (adjustScrollView) {
+        DLog(@"Tweaking scrollview for titlebar");
         [scrollView setFrame:frame];
         if (PTYScrollView.shouldDismember) {
             _scrollview.verticalScroller.frame = [self frameForScroller];
@@ -1540,6 +1544,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     PTYScrollView *scrollView = [self scrollview];
     NSRect frame = [scrollView frame];
     if (_showBottomStatusBar) {
+        DLog(@"Adjust frame to make room for status bar");
         iTermStatusBarViewController *statusBar = self.delegate.sessionViewStatusBarViewController;
         _title.statusBarViewController = nil;
         frame.size.height -= iTermGetStatusBarHeight();
@@ -1555,6 +1560,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         }
         [self addSubviewBelowFindView:_genericStatusBarContainer];
     } else {
+        DLog(@"Adjust frame to eliminate status bar");
         [_genericStatusBarContainer removeFromSuperview];
         _genericStatusBarContainer = nil;
         frame.size.height += iTermGetStatusBarHeight();
@@ -1713,6 +1719,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
          @(titleHeight), @(bottomStatusBarHeight), NSStringFromSize(proposedSize), NSStringFromSize(size),
          NSStringFromRect(rect));
     [self scrollview].frame = rect;
+    DLog(@"Scrollview frame is now %@", NSStringFromRect(self.scrollview.frame));
     if (PTYScrollView.shouldDismember) {
         _scrollview.verticalScroller.frame = [self frameForScroller];
     }
@@ -1726,6 +1733,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     [self updateLegacyViewFrame];
     [self updateMinimapFrameAnimated:NO];
     [_delegate sessionViewScrollViewDidResize];
+    DLog(@"Returning");
 }
 
 - (void)updateMinimapFrameAnimated:(BOOL)animated {

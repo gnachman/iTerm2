@@ -121,7 +121,7 @@
 }
 
 - (void)setScrollerStyle:(NSScrollerStyle)scrollerStyle {
-    DLog(@"%@: set scroller style to %@ from\n%@", self, @(scrollerStyle), [NSThread callStackSymbols]);
+    DLog(@"%@: set scroller style to %@ from %@:\n%@", self, @(scrollerStyle), @(self.scrollerStyle), [NSThread callStackSymbols]);
 
     if (scrollerStyle != NSScrollerStyleOverlay) {
         _ptyScrollerState = PTYScrollerStateLegacy;
@@ -135,6 +135,16 @@
         return;
     }
     [super setScrollerStyle:scrollerStyle];
+}
+
+- (void)setFrame:(NSRect)frame {
+    DLog(@"%@: set frame to %@ from %@\n%@", self, NSStringFromRect(frame), NSStringFromRect(self.frame), [NSThread callStackSymbols]);
+    [super setFrame:frame];
+}
+
+- (void)setFrameSize:(NSSize)newSize {
+    DLog(@"%@: set frame size to %@ from %@\n%@", self, NSStringFromSize(newSize), NSStringFromSize(self.frame.size), [NSThread callStackSymbols]);
+    [super setFrameSize:newSize];
 }
 
 - (iTermScrollAccumulator *)accumulator {
