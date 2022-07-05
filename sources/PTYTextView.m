@@ -694,7 +694,8 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
                         NULL,
                         NULL,
                         [_delegate textViewUnicodeNormalizationForm],
-                        [_delegate textViewUnicodeVersion]);
+                        [_delegate textViewUnicodeVersion],
+                        self.dataSource.terminalSoftAlternateScreenMode);
 
     // Count how many additional cells are needed due to double-width chars
     // that span line breaks being wrapped to the next line.
@@ -1443,6 +1444,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     _drawingHelper.blend = MIN(MAX(0.05, [_delegate textViewBlend]), 1);
     _drawingHelper.shouldShowTimestamps = self.showTimestamps;
     _drawingHelper.colorMap = _colorMap;
+    _drawingHelper.softAlternateScreenMode = self.dataSource.terminalSoftAlternateScreenMode;
 
     CGFloat rightMargin = 0;
     if (self.showTimestamps) {

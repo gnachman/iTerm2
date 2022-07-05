@@ -488,7 +488,8 @@ void StringToScreenChars(NSString *s,
                          int *cursorIndex,
                          BOOL *foundDwc,
                          iTermUnicodeNormalization normalization,
-                         NSInteger unicodeVersion);
+                         NSInteger unicodeVersion,
+                         BOOL softAlternateScreenMode);
 
 // Copy attributes from fg and bg, and zero out other fields. Text attributes like bold, italic, etc.
 // come from fg.

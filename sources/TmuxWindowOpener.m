@@ -287,9 +287,11 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 
     NSNumber *wp = [info objectAtIndex:0];
     NSNumber *alt = [info objectAtIndex:1];
+    // Lie and say it's the alternate screen because tmux doesn't support variation selector 16 yet.
     NSArray *history = [[TmuxHistoryParser sharedInstance] parseDumpHistoryResponse:response
                                                              ambiguousIsDoubleWidth:ambiguousIsDoubleWidth_
-                                                                     unicodeVersion:self.unicodeVersion];
+                                                                     unicodeVersion:self.unicodeVersion
+                                                                    alternateScreen:YES];
     if (history) {
         if ([alt boolValue]) {
             [altHistories_ setObject:history forKey:wp];

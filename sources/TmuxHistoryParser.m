@@ -29,7 +29,8 @@
 - (NSData *)dataForHistoryLine:(NSString *)hist
                   withTerminal:(VT100Terminal *)terminal
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
-                unicodeVersion:(NSInteger)unicodeVersion {
+                unicodeVersion:(NSInteger)unicodeVersion
+               alternateScreen:(BOOL)alternateScreen {
     screen_char_t *screenChars;
     NSMutableData *result = [NSMutableData data];
     NSData *histData = [hist dataUsingEncoding:NSUTF8StringEncoding];
@@ -61,7 +62,8 @@
                                 NULL,
                                 NULL,
                                 NO,
-                                unicodeVersion);
+                                unicodeVersion,
+                                alternateScreen);
             if ([token isAscii] && [terminal charset]) {
                 ConvertCharsToGraphicsCharset(screenChars, len);
             }
@@ -80,7 +82,8 @@
 // with the last element in each being the newline. Returns nil on error.
 - (NSArray *)parseDumpHistoryResponse:(NSString *)response
                ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
-                       unicodeVersion:(NSInteger)unicodeVersion {
+                       unicodeVersion:(NSInteger)unicodeVersion
+                      alternateScreen:(BOOL)alternateScreen {
     if (![response length]) {
         return [NSArray array];
     }
@@ -93,7 +96,8 @@
         NSData *data = [self dataForHistoryLine:line
                                    withTerminal:terminal
                          ambiguousIsDoubleWidth:ambiguousIsDoubleWidth
-                                 unicodeVersion:unicodeVersion];
+                                 unicodeVersion:unicodeVersion
+                                alternateScreen:alternateScreen];
         if (!data) {
             return nil;
         }

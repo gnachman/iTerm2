@@ -3040,7 +3040,8 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                             &cursorIndex,
                             NULL,
                             _normalization,
-                            self.unicodeVersion);
+                            self.unicodeVersion,
+                            self.softAlternateScreenMode);
         int cursorX = 0;
         int baseX = floor(xStart * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]);
         int i;

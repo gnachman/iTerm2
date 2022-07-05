@@ -651,7 +651,8 @@ static _Atomic int gPerformingJoinedBlock;
                         NULL,
                         &dwc,
                         self.config.normalization,
-                        self.config.unicodeVersion);
+                        self.config.unicodeVersion,
+                        self.terminal.softAlternateScreenMode);
     ssize_t bufferOffset = 0;
     if (augmented && len > 0) {
         [self.currentGrid mutateCharactersInRange:VT100GridCoordRangeMake(pred.x, pred.y, pred.x + 1, pred.y)

@@ -40,7 +40,8 @@ extension ScreenCharArray {
                                         cursorIndexPtr,
                                         foundDWCPtr,
                                         normalization,
-                                        unicodeVersion)
+                                        unicodeVersion,
+                                        false)
                 }
             }
         }

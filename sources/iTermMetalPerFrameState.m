@@ -339,7 +339,8 @@ typedef struct {
                normalization:drawingHelper.normalization
               unicodeVersion:drawingHelper.unicodeVersion
                    gridWidth:drawingHelper.gridSize.width
-            numberOfIMELines:drawingHelper.numberOfIMELines];
+            numberOfIMELines:drawingHelper.numberOfIMELines
+         softAlternateScreen:drawingHelper.softAlternateScreenMode];
     }
 }
 
@@ -440,7 +441,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
          normalization:(iTermUnicodeNormalization)normalization
         unicodeVersion:(NSInteger)unicodeVersion
              gridWidth:(int)gridWidth
-      numberOfIMELines:(int)numberOfIMELines {
+      numberOfIMELines:(int)numberOfIMELines
+   softAlternateScreen:(BOOL)softAlternateScreen {
     const int maxLen = [str length] * kMaxParts;
     screen_char_t buf[maxLen];
     screen_char_t fg = {0}, bg = {0};
@@ -455,7 +457,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                         &cursorIndex,
                         NULL,
                         normalization,
-                        unicodeVersion);
+                        unicodeVersion,
+                        softAlternateScreen);
     VT100GridCoord coord = startCoord;
     coord.y -= numberOfIMELines;
     BOOL foundCursor = NO;

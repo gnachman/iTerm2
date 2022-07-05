@@ -1347,7 +1347,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     fg.backgroundColorMode = ColorModeAlternate;
     bg.backgroundColor = ALTSEM_SYSTEM_MESSAGE;
     bg.backgroundColorMode = ColorModeAlternate;
-    StringToScreenChars(message, buffer, fg, bg, &len, NO, NULL, NULL, NO, kUnicodeVersion);
+    StringToScreenChars(message, buffer, fg, bg, &len, NO, NULL, NULL, NO, kUnicodeVersion, NO);
     [self appendLine:buffer
               length:0
              partial:NO

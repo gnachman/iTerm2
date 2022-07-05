@@ -439,11 +439,13 @@ void StringToScreenChars(NSString *s,
                          int* cursorIndex,
                          BOOL *foundDwc,
                          iTermUnicodeNormalization normalization,
-                         NSInteger unicodeVersion) {
+                         NSInteger unicodeVersion,
+                         BOOL softAlternateScreenMode) {
     __block NSInteger j = 0;
     __block BOOL foundCursor = NO;
     NSCharacterSet *ignorableCharacters = [NSCharacterSet ignorableCharactersForUnicodeVersion:unicodeVersion];
     NSCharacterSet *spacingCombiningMarks = [NSCharacterSet spacingCombiningMarksForUnicodeVersion:12];
+    const BOOL shouldSupportVS16 = [iTermAdvancedSettingsModel vs16Supported] || (!softAlternateScreenMode && [iTermAdvancedSettingsModel vs16SupportedInPrimaryScreen]);
 
     [s enumerateComposedCharacters:^(NSRange range,
                                      unichar baseBmpChar,
@@ -520,8 +522,7 @@ void StringToScreenChars(NSString *s,
                 const unichar peek = [composedOrNonBmpChar characterAtIndex:next];
                 if (peek == 0xfe0f) {
                     // VS16
-                    if ([[NSCharacterSet emojiAcceptingVS16] characterIsMember:baseChar] &&
-                        [iTermAdvancedSettingsModel vs16Supported]) {
+                    if ([[NSCharacterSet emojiAcceptingVS16] longCharacterIsMember:baseChar] && shouldSupportVS16) {
                         isDoubleWidth = YES;
                     }
                 }

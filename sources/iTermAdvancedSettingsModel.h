@@ -391,6 +391,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)userNotificationTriggerRateLimit;
 + (BOOL)openProfilesInNewWindow;
 + (BOOL)vs16Supported;
++ (BOOL)vs16SupportedInPrimaryScreen;
 + (BOOL)workAroundBigSurBug;
 + (BOOL)workAroundMultiDisplayOSBug;
 + (BOOL)workAroundNumericKeypadBug;
