@@ -492,14 +492,6 @@ static const char *GetPathToSelf(void) {
             return;
         }
 
-        int pipeFDs[2];
-        const int pipeRC = pipe(pipeFDs);
-        if (pipeRC == -1) {
-            reply(nil);
-            completion();
-            return;
-        }
-
         NSPipe *pipe = [NSPipe pipe];
 
         NSTask *task = [[NSTask alloc] init];
