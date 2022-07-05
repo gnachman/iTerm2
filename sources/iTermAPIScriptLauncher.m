@@ -563,14 +563,19 @@ static NSString *const iTermAPIScriptLauncherScriptDidFailUserNotificationCallba
     [alert runModal];
 }
 
-+ (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name {
++ (NSString *)pathToVersionsFolderForPyenvScriptNamed:(NSString *)name {
     NSArray<NSString *> *components = @[ name, @"iterm2env", @"versions" ];
     NSString *path = [[NSFileManager defaultManager] scriptsPathWithoutSpaces];
     for (NSString *part in components) {
         path = [path stringByAppendingPathComponent:part];
     }
+    return path;
+}
+
++ (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name {
+    NSString *path = [self pathToVersionsFolderForPyenvScriptNamed:name];
     NSString *pythonVersion = [iTermPythonRuntimeDownloader bestPythonVersionAt:path] ?: @"_NO_PYTHON_VERSION_FOUND_";
-    components = @[ pythonVersion, @"bin", @"python3" ];
+    NSArray<NSString *> *components = @[ pythonVersion, @"bin", @"python3" ];
     for (NSString *part in components) {
         path = [path stringByAppendingPathComponent:part];
     }

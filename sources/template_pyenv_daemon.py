@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python$$PYTHON_VERSION$$
 
 import iterm2
 # To install, update, or remove packages from PyPI, use Scripts > Manage > Manage Dependencies...

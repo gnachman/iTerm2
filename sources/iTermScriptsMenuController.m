@@ -926,9 +926,8 @@ NS_ASSUME_NONNULL_BEGIN
 }
 - (NSString *)templateForPicker:(iTermScriptTemplatePickerWindowController *)picker
                             url:(NSURL *)url {
-    NSString *python = [self pythonForPicker:picker url:url];
-    python = [python stringByDeletingLastPathComponent];
-    NSDictionary *subs = @{ @"$$PYTHON_BIN$$": python };
+    NSString *pythonVersion = [self pythonVersionForPicker:picker url:url];
+    NSDictionary *subs = @{ @"$$PYTHON_VERSION$$": pythonVersion ?: @"3" };
     NSString *templatePath = [self pathToTemplateForPicker:picker];
     NSMutableString *template = [NSMutableString stringWithContentsOfFile:templatePath
                                                                  encoding:NSUTF8StringEncoding
@@ -987,15 +986,20 @@ NS_ASSUME_NONNULL_BEGIN
     }
 }
 
-- (NSString *)pythonForPicker:(iTermScriptTemplatePickerWindowController *)picker
-                          url:(NSURL *)url {
-    NSString *fullPath;
+// Returns a string like "3.10".
+- (NSString *)pythonVersionForPicker:(iTermScriptTemplatePickerWindowController *)picker
+                                 url:(NSURL *)url {
+    NSString *raw;
     if (picker.selectedEnvironment == iTermScriptEnvironmentPrivateEnvironment) {
-        fullPath = [iTermAPIScriptLauncher prospectivePythonPathForPyenvScriptNamed:url.lastPathComponent];
+        NSString *path = [iTermAPIScriptLauncher pathToVersionsFolderForPyenvScriptNamed:url.lastPathComponent];
+        raw = [iTermPythonRuntimeDownloader bestPythonVersionAt:path];
     } else {
-        fullPath = [[iTermPythonRuntimeDownloader sharedInstance] pathToStandardPyenvPythonWithPythonVersion:nil];
+        raw = [iTermPythonRuntimeDownloader latestPythonVersion];
     }
-    return fullPath;
+    if (!raw) {
+        return nil;
+    }
+    return [[[raw componentsSeparatedByString:@"."] subarrayToIndex:2] componentsJoinedByString:@"."];
 }
 
 #pragma mark - Private

@@ -25,6 +25,7 @@
                       checkForMain:(BOOL)checkForMain
                      checkForSaved:(BOOL)checkForSaved;
 + (NSString *)prospectivePythonPathForPyenvScriptNamed:(NSString *)name;
++ (NSString *)pathToVersionsFolderForPyenvScriptNamed:(NSString *)name;
 + (NSString *)inferredPythonVersionFromScriptAt:(NSString *)path;
 
 @end

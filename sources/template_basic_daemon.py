@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/env python$$PYTHON_VERSION$$
 
 import asyncio
 import iterm2
