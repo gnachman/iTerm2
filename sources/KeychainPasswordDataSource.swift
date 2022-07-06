@@ -131,4 +131,8 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
 
     func resetErrors() {
     }
+
+    func consolidateAvailabilityChecks(_ block: () -> ()) {
+        block()
+    }
 }

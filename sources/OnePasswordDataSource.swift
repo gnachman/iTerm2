@@ -28,6 +28,15 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
 
     private var auth: OnePasswordTokenRequester.Auth? = nil
 
+    // This is a short-lived cache used to consolidate availability checks in a series of related
+    // operations.
+    enum Availability {
+        case uncached
+        case wantCache
+        case cached(Bool)
+    }
+    private var available = Availability.uncached
+
     private func getToken() throws -> OnePasswordTokenRequester.Auth? {
         switch auth {
         case .biometric, .token(_):
@@ -241,10 +250,14 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
     }
 
     func checkAvailability() -> Bool {
-        if OnePasswordUtils.checkUsability() == false {
-            return false
+        if case let .cached(value) = available {
+            return value
         }
-        return true
+        let value = OnePasswordUtils.checkUsability()
+        if case .wantCache = available {
+            available = .cached(value)
+        }
+        return value
     }
 
     func fetchAccounts(_ completion: @escaping ([PasswordManagerAccount]) -> ()) {
@@ -276,6 +289,15 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
     func reload(_ completion: () -> ()) {
         configuration.listAccountsRecipe.invalidateRecipe()
         completion()
+    }
+
+    func consolidateAvailabilityChecks(_ block: () -> ()) {
+        let saved = available
+        defer {
+            available = saved
+        }
+        available = .wantCache
+        block()
     }
 }
 

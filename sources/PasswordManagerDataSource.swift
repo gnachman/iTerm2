@@ -33,6 +33,7 @@ protocol PasswordManagerDataSource: AnyObject {
              completion: @escaping (PasswordManagerAccount?, Error?) -> ())
     func resetErrors()
     func reload(_ completion: () -> ())
+    func consolidateAvailabilityChecks(_ block: () -> ())
 }
 
 extension PasswordManagerAccount {

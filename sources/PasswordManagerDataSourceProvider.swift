@@ -145,6 +145,14 @@ class PasswordManagerDataSourceProvider: NSObject {
         }
     }
 
+    @objc static func consolidateAvailabilityChecks(_ block: () -> ()) {
+        if let dataSource = dataSource {
+            dataSource.consolidateAvailabilityChecks(block)
+            return
+        }
+        block()
+    }
+
     private static func showError(_ error: NSError) {
         let alert = NSAlert()
         let reason: String

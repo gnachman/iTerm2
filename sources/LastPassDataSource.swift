@@ -18,6 +18,15 @@ class LastPassDataSource: CommandLinePasswordDataSource {
         case needsLogin
     }
 
+    // This is a short-lived cache used to consolidate availability checks in a series of related
+    // operations.
+    enum Availability {
+        case uncached
+        case wantCache
+        case cached(Bool)
+    }
+    private var available = Availability.uncached
+
     private struct ErrorHandler {
         var requestedAuthentication = false
 
@@ -299,6 +308,17 @@ extension LastPassDataSource: PasswordManagerDataSource {
     }
 
     func checkAvailability() -> Bool {
+        if case let .cached(value) = available {
+            return value
+        }
+        let value = _checkAvailability()
+        if case .wantCache = available {
+            available = .cached(value)
+        }
+        return value
+    }
+
+    private func _checkAvailability() -> Bool {
         do {
             let request = InteractiveCommandRequest(command: LastPassUtils.pathToCLI,
                                                     args: ["status", "--color=never"],
@@ -326,6 +346,15 @@ extension LastPassDataSource: PasswordManagerDataSource {
 
     func reload(_ completion: () -> ()) {
         completion()
+    }
+
+    func consolidateAvailabilityChecks(_ block: () -> ()) {
+        let saved = available
+        defer {
+            available = saved
+        }
+        available = .wantCache
+        block()
     }
 }
 

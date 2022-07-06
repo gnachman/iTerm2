@@ -26,6 +26,12 @@ static NSString *const kPasswordManagersShouldReloadData = @"kPasswordManagersSh
 static NSString *const iTermPasswordManagerAccountNameUserNameSeparator = @"\u2002—\u2002";
 NSString *const iTermPasswordManagerDidLoadAccounts = @"iTermPasswordManagerDidLoadAccounts";
 
+typedef NS_ENUM(NSUInteger, iTermPasswordManagerReload) {
+    iTermPasswordManagerReloadUnlimited,
+    iTermPasswordManagerReloadOnce,
+    iTermPasswordManagerReloadAssumeCurrent
+};
+
 @implementation iTermPasswordManagerPanel
 
 - (NSTimeInterval)animationResizeTime:(NSRect)newFrame {
@@ -77,6 +83,7 @@ NSString *const iTermPasswordManagerDidLoadAccounts = @"iTermPasswordManagerDidL
     NSInteger _cancelCount;
     BOOL _awakeFromNibAvailabilityCheckFailed;
     iTermDismissableLinkViewController *_1pwBiometricTip;
+    iTermPasswordManagerReload _reloadPolicy;
 }
 
 static NSArray<NSString *> *gCachedCombinedAccountNames;
@@ -725,21 +732,23 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
     // is dismissed, leaving the hotkey behind another app.
     _awakeFromNibAvailabilityCheckFailed = NO;
     [NSApp activateIgnoringOtherApps:YES];
-    [self.window.sheetParent makeKeyAndOrderFront:nil];
+    [self consolidateReloads:^{
+        [self.window.sheetParent makeKeyAndOrderFront:nil];
 
-    if (success && !_awakeFromNibAvailabilityCheckFailed) {
-        if (![self.currentDataSource checkAvailability]) {
-            [self dataSourceDidBecomeUnavailable];
+        if (success && !_awakeFromNibAvailabilityCheckFailed) {
+            if (![self.currentDataSource checkAvailability]) {
+                [self dataSourceDidBecomeUnavailable];
+            } else {
+                __weak __typeof(self) weakSelf = self;
+                [self reloadAccounts:^{
+                    [weakSelf didBecomeReady];
+                }];
+            }
         } else {
-            __weak __typeof(self) weakSelf = self;
-            [self reloadAccounts:^{
-                [weakSelf didBecomeReady];
-            }];
+            DLog(@"Auth failed. Close window.");
+            [self closeOrEndSheet];
         }
-    } else {
-        DLog(@"Auth failed. Close window.");
-        [self closeOrEndSheet];
-    }
+    }];
 }
 
 - (void)didBecomeReady {
@@ -884,6 +893,17 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 }
 
 - (void)reloadAccounts:(void (^)(void))completion {
+    switch (_reloadPolicy) {
+        case iTermPasswordManagerReloadUnlimited:
+            break;
+        case iTermPasswordManagerReloadAssumeCurrent:
+            completion();
+            return;
+        case iTermPasswordManagerReloadOnce:
+            _reloadPolicy = iTermPasswordManagerReloadAssumeCurrent;
+            break;
+    }
+
     NSString *filter = [_searchField stringValue];
     if (iTermPasswordManagerDataSourceProvider.authenticated) {
         __weak __typeof(self) weakSelf = self;
@@ -899,6 +919,15 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
     } else {
         [self setAccounts:@[] filtered:@[]];
     }
+}
+
+- (void)consolidateReloads:(void (^ NS_NOESCAPE)(void))block {
+    const iTermPasswordManagerReload saved = _reloadPolicy;
+    _reloadPolicy = iTermPasswordManagerReloadOnce;
+    [iTermPasswordManagerDataSourceProvider consolidateAvailabilityChecks:^{
+        block();
+    }];
+    _reloadPolicy = saved;
 }
 
 - (void)setAccounts:(NSArray<id<PasswordManagerAccount>> *)accounts
