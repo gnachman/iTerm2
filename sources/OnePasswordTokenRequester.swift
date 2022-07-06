@@ -220,10 +220,11 @@ class OnePasswordTokenRequester {
             // Don't ask for the master password if we don't have a good CLI to use.
             return nil
         }
-        let command = CommandLinePasswordDataSource.InteractiveCommandRequest(
+        var command = CommandLinePasswordDataSource.InteractiveCommandRequest(
             command: cli,
             args: ["user", "get", "--me"],
             env: OnePasswordUtils.basicEnvironment)
+        command.useTTY = true
         let output = try! command.exec()
         if output.returnCode == 0 {
             DLog("op user get --me succeeded so biometrics must be available")

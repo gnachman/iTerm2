@@ -6,6 +6,12 @@
 //
 
 import Foundation
+import OSLog
+
+/*
+@available(macOS 11.0, *)
+private let passwordLogger = Logger(subsystem: "com.googlecode.iterm2.PasswordManager", category: "default")
+*/
 
 class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
     private let configuration: CommandLinePasswordDataSource.Configuration
@@ -156,6 +162,7 @@ class CommandLinePasswordDataSource: NSObject {
         var userData: [String: String]?
         var deadline: Date?
         var callbacks: Callbacks? = nil
+        var useTTY = false
         var executionQueue = DispatchQueue.global()
         static let ioQueue = DispatchQueue(label: "com.iterm2.pwcmd-io")
 
@@ -194,6 +201,19 @@ class CommandLinePasswordDataSource: NSObject {
         }
 
         func execAsync(_ completion: @escaping (Output?, Error?) -> ()) {
+            let tty: TTY?
+            if useTTY {
+                do {
+                    var term = termios.standard
+                    var size = winsize(ws_row: 25, ws_col: 80, ws_xpixel: 250, ws_ypixel: 800)
+                    tty = try TTY(term: &term, size: &size)
+                } catch {
+                    completion(nil, error)
+                    return
+                }
+            } else {
+                tty = nil
+            }
             executionQueue.async {
                 do {
                     let command = RunningInteractiveCommand(
@@ -201,7 +221,7 @@ class CommandLinePasswordDataSource: NSObject {
                         process: Process(),
                         stdout: Pipe(),
                         stderr: Pipe(),
-                        stdin: Pipe(),
+                        stdin: tty ?? Pipe(),
                         ioQueue: Self.ioQueue)
                     let output = try command.run()
                     completion(output, nil)
@@ -213,10 +233,33 @@ class CommandLinePasswordDataSource: NSObject {
     }
 
     private class RunningInteractiveCommand: CommandWriting {
-        private enum Event {
+        private enum Event: CustomDebugStringConvertible {
             case readOutput(Data?)
             case readError(Data?)
             case terminated(Int32, Process.TerminationReason)
+
+            var debugDescription: String {
+                switch self {
+                case .readOutput(let data):
+                    guard let data = data else {
+                        return "stdout:[eof]"
+                    }
+                    guard let string = String(data: data, encoding: .utf8) else {
+                        return "stdout:[not utf-8]"
+                    }
+                    return "stdout:\(string)"
+                case .readError(let data):
+                    guard let data = data else {
+                        return "stderr:[eof]"
+                    }
+                    guard let string = String(data: data, encoding: .utf8) else {
+                        return "stderr:[not utf-8]"
+                    }
+                    return "stderr:\(string)"
+                case .terminated(let code, let reason):
+                    return "terminated(code=\(code), reason=\(reason))"
+                }
+            }
         }
 
         private let request: InteractiveCommandRequest
@@ -224,12 +267,14 @@ class CommandLinePasswordDataSource: NSObject {
         private var stdoutChannel: DispatchIO?
         private var stderrChannel: DispatchIO?
         private var stdinChannel: DispatchIO?
-        private var stdin: Pipe
+        private var stdin: ReadWriteFileHandleVending
         private let queue: AtomicQueue<Event>
         private let timedOut = MutableAtomicObject(false)
         private let ioQueue: DispatchQueue
         private let group = DispatchGroup()
-        private let debugging = gDebugLogging.boolValue
+        private var debugging: Bool {
+            gDebugLogging.boolValue
+        }
         private let lastError = MutableAtomicObject<Error?>(nil)
         private var returnCode: Int32? = nil
         private var terminationReason: Process.TerminationReason? = nil
@@ -237,7 +282,7 @@ class CommandLinePasswordDataSource: NSObject {
         private var stderrData = Data()
         private var ran = false
 
-        private static func readingChannel(_ pipe: Pipe,
+        private static func readingChannel(_ pipe: ReadWriteFileHandleVending,
                                     ioQueue: DispatchQueue,
                                     handler: @escaping (Data?) -> ()) -> DispatchIO {
             let channel = DispatchIO(type: .stream,
@@ -292,9 +337,9 @@ class CommandLinePasswordDataSource: NSObject {
 
         init(request: InteractiveCommandRequest,
              process: Process,
-             stdout: Pipe,
-             stderr: Pipe,
-             stdin: Pipe,
+             stdout: ReadWriteFileHandleVending,
+             stderr: ReadWriteFileHandleVending,
+             stdin: ReadWriteFileHandleVending,
              ioQueue: DispatchQueue) {
             self.request = request
             self.process = process
@@ -318,7 +363,15 @@ class CommandLinePasswordDataSource: NSObject {
             process.environment = request.env
             process.standardOutput = stdout
             process.standardError = stderr
-            process.standardInput = stdin
+            // NSProcess treats Pipe and NSFileHandle as magic types and defines standardInput as
+            // Any? so the hacks trickle downhill to me here.
+            if let pipe = stdin as? Pipe {
+                process.standardInput = pipe
+            } else if let tty = stdin as? TTY {
+                process.standardInput = tty.slave
+            } else {
+                fatalError("Don't know what to do with stdin of type \(type(of: stdin))")
+            }
         }
 
         private func beginTimeoutTimer(_ date: Date) {
@@ -335,9 +388,7 @@ class CommandLinePasswordDataSource: NSObject {
             DispatchQueue.global().async {
                 self.process.waitUntilExit()
                 DLog("\(self.request.command) \(self.request.args) terminated status=\(self.process.terminationStatus) reason=\(self.process.terminationReason)")
-                if self.debugging {
-                    NSLog("TERMINATED status=\(self.process.terminationStatus) reason=\(self.process.terminationReason)")
-                }
+                self.log("TERMINATED status=\(self.process.terminationStatus) reason=\(self.process.terminationReason)")
                 self.queue.enqueue(.terminated(self.process.terminationStatus,
                                                self.process.terminationReason))
             }
@@ -367,28 +418,24 @@ class CommandLinePasswordDataSource: NSObject {
         private func mainloop() -> Output {
             var builder = OutputBuilder(userData: request.userData)
             while !allChannelsClosed || !builder.canBuild {
-                if debugging {
-                    NSLog("dequeue…")
-                }
+                log("dequeue…")
                 let event = queue.dequeue()
-                if debugging {
-                    NSLog("handle event \(event)")
-                }
+                log("handle event \(event)")
                 switch event {
                 case .readOutput(let data):
-                    DLog("\(request.command) \(request.args) read from stdout")
+                    log("\(request.command) \(request.args) read from stdout")
                     handleRead(channel: &stdoutChannel,
                                destination: &builder.stdout,
                                handler: request.callbacks?.handleStdout,
                                data: data)
                 case .readError(let data):
-                    DLog("\(request.command) \(request.args) read from stderr")
+                    log("\(request.command) \(request.args) read from stderr")
                     handleRead(channel: &stderrChannel,
                                destination: &builder.stderr,
                                handler: request.callbacks?.handleStderr,
                                data: data)
                 case .terminated(let code, let reason):
-                    DLog("\(request.command) \(request.args) terminated")
+                    log("\(request.command) \(request.args) terminated")
                     stdinChannel?.close()
                     stdinChannel = nil
                     builder.returnCode = code
@@ -443,12 +490,12 @@ class CommandLinePasswordDataSource: NSObject {
             guard let channel = stdinChannel else {
                 return
             }
-            DLog("\(request.command) \(request.args) wants to write \(data.count) bytes")
+            log("\(request.command) \(request.args) wants to write \(data.count) bytes: \(String(data: data, encoding: .utf8) ?? "(non-utf-8")")
             data.withUnsafeBytes { pointer in
                 channel.write(offset: 0,
                               data: DispatchData(bytes: pointer),
                               queue: ioQueue) { _done, _data, _error in
-                    DLog("\(self.request.command) \(self.request.args) wrote \(_data?.count ?? 0) of \(data.count) bytes. done=\(_done) error=\(_error)")
+                    self.log("\(self.request.command) \(self.request.args) wrote \(_data?.count ?? 0) of \(data.count) bytes. done=\(_done) error=\(_error)")
                     if _done, let completion = completion {
                         completion()
                     }
@@ -461,14 +508,10 @@ class CommandLinePasswordDataSource: NSObject {
                             data.withUnsafeMutableBytes {
                                 _ = region.copyBytes(to: $0)
                             }
-                            if self.debugging {
-                                NSLog("stdin> \(String(data: data, encoding: .utf8) ?? "(non-UTF8)")")
-                            }
+                            self.log("stdin> \(String(data: data, encoding: .utf8) ?? "(non-UTF8)")")
                         }
                     } else if _error != 0 {
-                        if self.debugging {
-                            NSLog("stdin error: \(_error)")
-                        }
+                        self.log("stdin error: \(_error)")
                     }
                 }
             }
@@ -476,9 +519,7 @@ class CommandLinePasswordDataSource: NSObject {
 
         func closeForWriting() {
             dispatchPrecondition(condition: .onQueue(ioQueue))
-            if debugging {
-                NSLog("close stdin")
-            }
+            log("close stdin")
             stdin.fileHandleForWriting.closeFile()
             stdinChannel?.close()
             stdinChannel = nil
@@ -490,6 +531,7 @@ class CommandLinePasswordDataSource: NSObject {
             try ObjC.catching {
                 self.process.launch()
             }
+            log("Launched \(self.process.executableURL!.path) with args \(self.process.arguments ?? [])")
             if let date = request.deadline {
                 beginTimeoutTimer(date)
             }
@@ -501,16 +543,29 @@ class CommandLinePasswordDataSource: NSObject {
             }
             let output = mainloop()
             if let error = lastError.value {
-                if debugging {
-                    NSLog("command threw \(error)")
-                }
+                log("command threw \(error)")
 
                 throw error
             }
-            if debugging {
-                NSLog("[\(request.command) \(request.args.joined(separator: " "))] Completed with return code \(output.returnCode)")
-            }
+            log("[\(request.command) \(request.args.joined(separator: " "))] Completed with return code \(output.returnCode)")
             return output
+        }
+
+        private func log(_ messageBlock: @autoclosure () -> String,
+                         file: String = #file,
+                         line: Int = #line,
+                         function: String = #function) {
+            if debugging {
+                let message = messageBlock()
+                // This is commented out because we don't want to log passwords. I keep it around
+                // only for testing locally.
+                /*
+                if #available(macOS 11.0, *) {
+                    passwordLogger.info("\(message, privacy: .public)")
+                }
+                 */
+                DebugLogImpl(file, Int32(line), function, message)
+            }
         }
     }
 
@@ -776,4 +831,63 @@ class CommandLinePasswordDataSource: NSObject {
             completion(account, nil)
         }
     }
+}
+
+protocol ReadWriteFileHandleVending: AnyObject {
+    var fileHandleForReading: FileHandle { get }
+    var fileHandleForWriting: FileHandle { get }
+}
+
+extension Pipe: ReadWriteFileHandleVending {
+}
+
+class TTY: NSObject, ReadWriteFileHandleVending {
+    private(set) var master: FileHandle
+    private(set) var slave: FileHandle?
+    private(set) var path: String = ""
+
+    init(term: inout termios,
+         size: inout winsize) throws {
+        var temp = Array<CChar>(repeating: 0, count: Int(PATH_MAX))
+        var masterFD = Int32(-1)
+        var slaveFD = Int32(-1)
+        let rc = openpty(&masterFD,
+                         &slaveFD,
+                         &temp,
+                         &term,
+                         &size)
+        if rc == -1 {
+            throw POSIXError(POSIXError.Code(rawValue: errno)!)
+        }
+        master = FileHandle(fileDescriptor: masterFD)
+        slave = FileHandle(fileDescriptor: slaveFD)
+        path = String(cString: temp)
+
+        super.init()
+    }
+
+    var fileHandleForReading: FileHandle {
+        master
+    }
+
+    var fileHandleForWriting: FileHandle {
+        master
+    }
+}
+
+extension termios {
+    static var standard: termios = {
+        let ctrl = { (c: String) -> cc_t in cc_t(c.utf8[c.utf8.startIndex] - 64) }
+        return termios(c_iflag: tcflag_t(ICRNL | IXON | IXANY | IMAXBEL | BRKINT | IUTF8),
+                       c_oflag: tcflag_t(OPOST | ONLCR),
+                       c_cflag: tcflag_t(CREAD | CS8 | HUPCL),
+                       c_lflag: tcflag_t(ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOK | ECHOKE | ECHOCTL),
+                       c_cc: (ctrl("D"), cc_t(0xff), cc_t(0xff), cc_t(0x7f),
+                              ctrl("W"), ctrl("U"), ctrl("R"), cc_t(0),
+                              ctrl("C"), cc_t(0x1c), ctrl("Z"), ctrl("Y"),
+                              ctrl("Q"), ctrl("S"), ctrl("V"), ctrl("O"),
+                              cc_t(1), cc_t(0), cc_t(0), ctrl("T")),
+                       c_ispeed: speed_t(B38400),
+                       c_ospeed: speed_t(B38400))
+    }()
 }
