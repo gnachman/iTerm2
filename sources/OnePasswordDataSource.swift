@@ -219,10 +219,12 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
                         "--generate-password",
                         "--format=json",
                         "username=\(addRequest.userName)"]
-            return InteractiveCommandRequest(
+            var request = InteractiveCommandRequest(
                 command: OnePasswordUtils.pathToCLI,
                 args: args,
                 env: OnePasswordUtils.standardEnvironment(token: token))
+            request.useTTY = true
+            return request
         } outputTransformer: { output in
             struct Response: Codable {
                 var id: String
