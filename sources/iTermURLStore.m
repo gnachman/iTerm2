@@ -163,17 +163,14 @@ static NSString *iTermURLStoreGetParamForKey(NSString *params, NSString *key) {
 
 - (NSDictionary *)dictionaryValue {
     @synchronized (self) {
-        NSError *error = nil;
-        NSData *encodedRefcounts = [NSKeyedArchiver archivedDataWithRootObject:_referenceCounts
-                                                         requiringSecureCoding:YES
-                                                                         error:&error];
-        if (error) {
-            DLog(@"Encoding refcounts failed with error %@:\n%@", error, _referenceCounts);
-            encodedRefcounts = [NSData data];
-        }
+        NSMutableArray<NSNumber *> *encodedRefcounts = [NSMutableArray array];
+        [_referenceCounts enumerateObjectsUsingBlock:^(NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
+            [encodedRefcounts addObject:obj];
+            [encodedRefcounts addObject:@([_referenceCounts countForObject:obj])];
+        }];
 
         return @{ @"store": _store,
-                  @"refcounts2": encodedRefcounts };
+                  @"refcounts3": encodedRefcounts };
     }
 }
 
@@ -189,13 +186,15 @@ static NSString *iTermURLStoreGetParamForKey(NSString *params, NSString *key) {
     @synchronized (self) {
         NSDictionary *store = dictionary[@"store"];
         NSData *refcounts = dictionary[@"refcounts"];  // deprecated
-        NSData *refcounts2 = dictionary[@"refcounts2"];
+        NSData *refcounts2 = dictionary[@"refcounts2"];  // deprecated
+        NSArray<NSNumber *> *refcounts3 = dictionary[@"refcounts3"];
 
-        if (!store || (!refcounts && !refcounts2)) {
+        if (!store || (!refcounts && !refcounts2 && !refcounts3)) {
             DLog(@"URLStore restoration dictionary missing value");
             DLog(@"store=%@", store);
             DLog(@"refcounts=%@", refcounts);
             DLog(@"refcounts2=%@", refcounts2);
+            DLog(@"refcounts3=%@", refcounts3);
             return;
         }
         [store enumerateKeysAndObjectsUsingBlock:^(id unknownKey, NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
@@ -218,13 +217,25 @@ static NSString *iTermURLStoreGetParamForKey(NSString *params, NSString *key) {
         }];
 
         NSError *error = nil;
-        _referenceCounts = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithArray:@[ [NSCountedSet class], [NSNumber class] ]]
-                                                               fromData:refcounts2
-                                                                  error:&error] ?: [[NSCountedSet alloc] init];
-        if (error) {
-            _referenceCounts = [self legacyDecodedRefcounts:dictionary];
-            NSLog(@"Failed to decode refcounts from data %@", refcounts2);
-            return;
+        if (refcounts2) {
+            _referenceCounts = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithArray:@[ [NSCountedSet class], [NSNumber class] ]]
+                                                                   fromData:refcounts2
+                                                                      error:&error] ?: [[NSCountedSet alloc] init];
+            if (error) {
+                _referenceCounts = [self legacyDecodedRefcounts:dictionary];
+                NSLog(@"Failed to decode refcounts from data %@", refcounts2);
+                return;
+            }
+        }
+        if (refcounts3) {
+            const NSInteger count = refcounts3.count;
+            for (NSInteger i = 0; i + 1 < count; i += 2) {
+                NSNumber *obj = refcounts3[i];
+                NSInteger rc = [refcounts3[i+1] integerValue];
+                for (NSInteger j = 0; j < rc; j++) {
+                    [_referenceCounts addObject:obj];
+                }
+            }
         }
     }
 }
