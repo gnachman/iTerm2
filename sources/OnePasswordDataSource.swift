@@ -183,16 +183,34 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
         return AnyRecipe(OnePasswordDynamicCommandRecipe<AccountIdentifier, String>(dataSource: self) { accountIdentifier, token in
             return InteractiveCommandRequest(
                 command: OnePasswordUtils.pathToCLI,
-                args: ["item", "get", "--field=password", accountIdentifier.value],
+                args: ["item", "get", "--format=json", "--no-color", accountIdentifier.value],
                 env: OnePasswordUtils.standardEnvironment(token: token))
-        } outputTransformer: { output in
-            guard let string = String(data: output.stdout, encoding: .utf8) else {
-                throw OPError.badOutput
+        } outputTransformer: { output throws in
+            if output.returnCode != 0 {
+                throw OPError.runtime
             }
-            if string.hasSuffix("\r") {
-                return String(string.dropLast())
+            struct Field: Codable {
+                var id: String
+                var value: String?
             }
-            return string
+            struct Item: Codable {
+                var id: String
+                var title: String
+                var fields: [Field]
+            }
+            guard let json = String(data: output.stdout, encoding: .utf8) else {
+                throw OPError.runtime
+            }
+            let item = try JSONDecoder().decode(Item.self, from: json.data(using: .utf8)!)
+
+            let passwordField = item.fields.first(where: { field in
+                field.id == "password"
+            })
+            guard let password = passwordField?.value else { throw OPError.runtime }
+            if password.hasSuffix("\r") {
+                return String(password.dropLast())
+            }
+            return password
         })
     }
 
