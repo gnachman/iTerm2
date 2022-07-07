@@ -242,6 +242,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
                              height:(int)height
                        mutableState:(VT100ScreenMutableState *)mutableState;
 - (NSDictionary<NSString *, NSString *> *)exfiltratedEnvironmentVariables:(NSArray<NSString *> *)names;
+- (void)insertText:(NSString *)text;
 
 @end
 

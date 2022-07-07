@@ -3657,6 +3657,7 @@ ITERM_WEAKLY_REFERENCEABLE
         }
         [self writeTask:string];
     }
+    [_screen insertText:string];
 }
 
 - (NSData *)dataByRemovingControlCodes:(NSData *)data {

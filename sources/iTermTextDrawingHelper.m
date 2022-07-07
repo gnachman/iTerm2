@@ -242,6 +242,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     [_replacementLineRefCache release];
     [_timestampDrawHelper release];
     [_cachedMarks release];
+    [_typeahead release];
 
     [super dealloc];
 }
@@ -3021,146 +3022,193 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                        cursorHeight:(double)cursorHeight
                                 ctx:(CGContextRef)ctx
                       virtualOffset:(CGFloat)virtualOffset {
-    iTermColorMap *colorMap = _colorMap;
-
-    // draw any text for NSTextInput
+    NSString *str = nil;
     if ([self hasMarkedText]) {
-        NSString* str = [_markedText string];
-        const int maxLen = [str length] * kMaxParts;
-        screen_char_t buf[maxLen];
-        screen_char_t fg = {0}, bg = {0};
-        int len;
-        int cursorIndex = (int)_inputMethodSelectedRange.location;
-        StringToScreenChars(str,
-                            buf,
-                            fg,
-                            bg,
-                            &len,
-                            _ambiguousIsDoubleWidth,
-                            &cursorIndex,
-                            NULL,
-                            _normalization,
-                            self.unicodeVersion,
-                            self.softAlternateScreenMode);
-        int cursorX = 0;
-        int baseX = floor(xStart * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]);
-        int i;
-        int y = (yStart + _numberOfLines - height) * _cellSize.height;
-        int cursorY = y;
-        int x = baseX;
-        int preWrapY = 0;
-        BOOL justWrapped = NO;
-        BOOL foundCursor = NO;
-        for (i = 0; i < len; ) {
-            const int remainingCharsInBuffer = len - i;
-            const int remainingCharsInLine = width - xStart;
-            int charsInLine = MIN(remainingCharsInLine,
-                                  remainingCharsInBuffer);
-            int skipped = 0;
-            if (charsInLine + i < len &&
-                ScreenCharIsDWC_RIGHT(buf[charsInLine + i])) {
-                // If we actually drew 'charsInLine' chars then half of a
-                // double-width char would be drawn. Skip it and draw it on the
-                // next line.
-                skipped = 1;
-                --charsInLine;
-            }
-            // Draw the background.
-            NSRect r = NSMakeRect(x,
-                                  y,
-                                  charsInLine * _cellSize.width,
-                                  _cellSize.height);
-            [[self defaultBackgroundColor] set];
-            iTermRectFill(r, virtualOffset);
-            [self drawAccessoriesInRect:r virtualOffset:virtualOffset];
-
-            // Draw the characters.
-            [self constructAndDrawRunsForLine:buf
-                           externalAttributes:nil
-                                          row:y
-                                      inRange:NSMakeRange(i, charsInLine)
-                              startingAtPoint:NSMakePoint(x, y)
-                                   bgselected:NO
-                                      bgColor:nil
-                     processedBackgroundColor:[self defaultBackgroundColor]
-                                     colorRun:nil
-                                      matches:nil
-                               forceTextColor:[self defaultTextColor]
-                                      context:ctx
-                                virtualOffset:virtualOffset];
-            // Draw an underline.
-            BOOL unusedBold = NO;
-            BOOL unusedItalic = NO;
-            PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:128
-                                                              isComplex:NO
-                                                             renderBold:&unusedBold
-                                                           renderItalic:&unusedItalic];
-            NSRect rect = NSMakeRect(x,
-                                     y - round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0),
-                                     charsInLine * _cellSize.width,
-                                     _cellSize.height);
-            [self drawUnderlineOrStrikethroughOfColor:[self defaultTextColor]
-                                        wantUnderline:YES
-                                                style:NSUnderlineStyleSingle
-                                                 font:fontInfo.font
-                                                 rect:rect
-                                        virtualOffset:virtualOffset];
-
-            // Save the cursor's cell coords
-            if (i <= cursorIndex && i + charsInLine > cursorIndex) {
-                // The char the cursor is at was drawn in this line.
-                const int cellsAfterStart = cursorIndex - i;
-                cursorX = x + _cellSize.width * cellsAfterStart;
-                cursorY = y;
-                foundCursor = YES;
-            }
-
-            // Advance the cell and screen coords.
-            xStart += charsInLine + skipped;
-            if (xStart == width) {
-                justWrapped = YES;
-                preWrapY = y;
-                xStart = 0;
-                yStart++;
-            } else {
-                justWrapped = NO;
-            }
-            x = floor(xStart * _cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]);
-            y = (yStart + _numberOfLines - height) * _cellSize.height;
-            i += charsInLine;
-        }
-
-        if (!foundCursor && i == cursorIndex) {
-            if (justWrapped) {
-                cursorX = [iTermPreferences intForKey:kPreferenceKeySideMargins] + width * _cellSize.width;
-                cursorY = preWrapY;
-            } else {
-                cursorX = x;
-                cursorY = y;
-            }
-        }
-        const double kCursorWidth = 2.0;
-        double rightMargin = [iTermPreferences intForKey:kPreferenceKeySideMargins] + _gridSize.width * _cellSize.width;
-        if (cursorX + kCursorWidth >= rightMargin) {
-            // Make sure the cursor doesn't draw in the margin. Shove it left
-            // a little bit so it fits.
-            cursorX = rightMargin - kCursorWidth;
-        }
-        NSRect cursorFrame = NSMakeRect(cursorX,
-                                        cursorY + round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0),
-                                        2.0,
-                                        cursorHeight);
-        _imeCursorLastPos = cursorFrame.origin;
-        [self.delegate drawingHelperUpdateFindCursorView];
-        [[colorMap processedBackgroundColorForBackgroundColor:[NSColor colorWithCalibratedRed:1.0
-                                                                                        green:1.0
-                                                                                         blue:0
-                                                                                        alpha:1.0]] set];
-        iTermRectFill(cursorFrame, virtualOffset);
-
-        return YES;
+        str = _markedText.string;
+    } else if (self.typeahead) {
+        str = self.typeahead;
     }
-    return NO;
+    if (!str) {
+        return NO;
+    }
+
+    BOOL unusedBold = NO;
+    BOOL unusedItalic = NO;
+    PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:128
+                                                      isComplex:NO
+                                                     renderBold:&unusedBold
+                                                   renderItalic:&unusedItalic];
+
+    _imeCursorLastPos =
+    [self drawMarkedText:str
+                     atX:xStart
+                       y:yStart
+                   width:width
+                  height:height
+                gridSize:_gridSize
+           numberOfLines:_numberOfLines
+            cursorHeight:cursorHeight
+             cursorIndex:_inputMethodSelectedRange.location
+  ambiguousIsDoubleWidth:_ambiguousIsDoubleWidth
+           normalization:_normalization
+          unicodeVersion:_unicodeVersion
+ softAlternateScreenMode:self.softAlternateScreenMode
+                cellSize:_cellSize
+  cellSizeWithoutSpacing:_cellSizeWithoutSpacing
+                colorMap:_colorMap
+  defaultBackgroundColor:[self defaultBackgroundColor]
+        defaultTextColor:[self defaultTextColor]
+                    font:fontInfo
+                     ctx:ctx
+           virtualOffset:virtualOffset];
+    [self.delegate drawingHelperUpdateFindCursorView];
+    return YES;
+}
+
+- (NSPoint)drawMarkedText:(NSString *)str
+                      atX:(int)xStart
+                        y:(int)yStart
+                    width:(int)width
+                   height:(int)height
+                 gridSize:(VT100GridSize)gridSize
+            numberOfLines:(int)numberOfLines
+             cursorHeight:(double)cursorHeight
+              cursorIndex:(int)cursorIndex
+   ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
+            normalization:(iTermUnicodeNormalization)normalization
+           unicodeVersion:(NSInteger)unicodeVersion
+  softAlternateScreenMode:(BOOL)softAlternateScreenMode
+                 cellSize:(NSSize)cellSize
+   cellSizeWithoutSpacing:(NSSize)cellSizeWithoutSpacing
+                 colorMap:(id<iTermColorMapReading>)colorMap
+   defaultBackgroundColor:(NSColor *)defaultBackgroundColor
+         defaultTextColor:(NSColor *)defaultTextColor
+                     font:(PTYFontInfo *)fontInfo
+                      ctx:(CGContextRef)ctx
+            virtualOffset:(CGFloat)virtualOffset {
+    const int maxLen = [str length] * kMaxParts;
+    screen_char_t buf[maxLen];
+    screen_char_t fg = {0}, bg = {0};
+    int len;
+    StringToScreenChars(str,
+                        buf,
+                        fg,
+                        bg,
+                        &len,
+                        ambiguousIsDoubleWidth,
+                        &cursorIndex,
+                        NULL,
+                        normalization,
+                        unicodeVersion,
+                        softAlternateScreenMode);
+    int cursorX = 0;
+    int baseX = floor(xStart * cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]);
+    int i;
+    int y = (yStart + numberOfLines - height) * cellSize.height;
+    int cursorY = y;
+    int x = baseX;
+    int preWrapY = 0;
+    BOOL justWrapped = NO;
+    BOOL foundCursor = NO;
+    for (i = 0; i < len; ) {
+        const int remainingCharsInBuffer = len - i;
+        const int remainingCharsInLine = width - xStart;
+        int charsInLine = MIN(remainingCharsInLine,
+                              remainingCharsInBuffer);
+        int skipped = 0;
+        if (charsInLine + i < len &&
+            ScreenCharIsDWC_RIGHT(buf[charsInLine + i])) {
+            // If we actually drew 'charsInLine' chars then half of a
+            // double-width char would be drawn. Skip it and draw it on the
+            // next line.
+            skipped = 1;
+            --charsInLine;
+        }
+        // Draw the background.
+        NSRect r = NSMakeRect(x,
+                              y,
+                              charsInLine * cellSize.width,
+                              cellSize.height);
+        [defaultBackgroundColor set];
+        iTermRectFill(r, virtualOffset);
+        [self drawAccessoriesInRect:r virtualOffset:virtualOffset];
+
+        // Draw the characters.
+        [self constructAndDrawRunsForLine:buf
+                       externalAttributes:nil
+                                      row:y
+                                  inRange:NSMakeRange(i, charsInLine)
+                          startingAtPoint:NSMakePoint(x, y)
+                               bgselected:NO
+                                  bgColor:nil
+                 processedBackgroundColor:defaultBackgroundColor
+                                 colorRun:nil
+                                  matches:nil
+                           forceTextColor:defaultTextColor
+                                  context:ctx
+                            virtualOffset:virtualOffset];
+        // Draw an underline.
+        NSRect rect = NSMakeRect(x,
+                                 y - round((cellSize.height - cellSizeWithoutSpacing.height) / 2.0),
+                                 charsInLine * cellSize.width,
+                                 cellSize.height);
+        [self drawUnderlineOrStrikethroughOfColor:defaultTextColor
+                                    wantUnderline:YES
+                                            style:NSUnderlineStyleSingle
+                                             font:fontInfo.font
+                                             rect:rect
+                                    virtualOffset:virtualOffset];
+
+        // Save the cursor's cell coords
+        if (i <= cursorIndex && i + charsInLine > cursorIndex) {
+            // The char the cursor is at was drawn in this line.
+            const int cellsAfterStart = cursorIndex - i;
+            cursorX = x + cellSize.width * cellsAfterStart;
+            cursorY = y;
+            foundCursor = YES;
+        }
+
+        // Advance the cell and screen coords.
+        xStart += charsInLine + skipped;
+        if (xStart == width) {
+            justWrapped = YES;
+            preWrapY = y;
+            xStart = 0;
+            yStart++;
+        } else {
+            justWrapped = NO;
+        }
+        x = floor(xStart * cellSize.width + [iTermPreferences intForKey:kPreferenceKeySideMargins]);
+        y = (yStart + numberOfLines - height) * cellSize.height;
+        i += charsInLine;
+    }
+
+    if (!foundCursor && i == cursorIndex) {
+        if (justWrapped) {
+            cursorX = [iTermPreferences intForKey:kPreferenceKeySideMargins] + width * cellSize.width;
+            cursorY = preWrapY;
+        } else {
+            cursorX = x;
+            cursorY = y;
+        }
+    }
+    const double kCursorWidth = 2.0;
+    double rightMargin = [iTermPreferences intForKey:kPreferenceKeySideMargins] + gridSize.width * cellSize.width;
+    if (cursorX + kCursorWidth >= rightMargin) {
+        // Make sure the cursor doesn't draw in the margin. Shove it left
+        // a little bit so it fits.
+        cursorX = rightMargin - kCursorWidth;
+    }
+    NSRect cursorFrame = NSMakeRect(cursorX,
+                                    cursorY + round((cellSize.height - cellSizeWithoutSpacing.height) / 2.0),
+                                    2.0,
+                                    cursorHeight);
+    [[colorMap processedBackgroundColorForBackgroundColor:[NSColor colorWithCalibratedRed:1.0
+                                                                                    green:1.0
+                                                                                     blue:0
+                                                                                    alpha:1.0]] set];
+    iTermRectFill(cursorFrame, virtualOffset);
+    return cursorFrame.origin;
 }
 
 #pragma mark - Drawing: Cursor

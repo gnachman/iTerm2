@@ -24,6 +24,9 @@
         [self.printBuffer appendString:string];
     } else {
         // else display string on screen
+        if (self.typeaheadController.enabled) {
+            [self.typeaheadController didRead:string];
+        }
         [self appendStringAtCursor:string];
     }
     [self appendStringToTriggerLine:string];

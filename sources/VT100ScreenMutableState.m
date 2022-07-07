@@ -788,6 +788,12 @@ static _Atomic int gPerformingJoinedBlock;
         ConvertCharsToGraphicsCharset(buffer, len);
     }
 
+    if (self.typeaheadController.enabled) {
+        [self.typeaheadController didRead:[[NSString alloc] initWithData:[NSData dataWithBytes:asciiData->buffer
+                                                                                        length:asciiData->length]
+                                                                encoding:NSASCIIStringEncoding]];
+    }
+
     [self appendScreenCharArrayAtCursor:buffer
                                  length:len
                  externalAttributeIndex:[iTermUniformExternalAttributes withAttribute:ea]];
@@ -4954,7 +4960,7 @@ launchCoprocessWithCommand:(NSString *)command
 
 // Runs on the main thread or while joined.
 - (void)tokenExecutorHandleSideEffectFlags:(NSInteger)flags {
-    DLog(@"tokenExecutorHandleSideEffectFlags:%lx", (long long)flags);
+    DLog(@"tokenExecutorHandleSideEffectFlags:%llx", (long long)flags);
     if (flags & VT100ScreenMutableStateSideEffectFlagNeedsRedraw) {
         [self performSideEffect:^(id<VT100ScreenDelegate> delegate) {
             [delegate screenNeedsRedraw];

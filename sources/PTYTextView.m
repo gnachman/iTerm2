@@ -674,10 +674,10 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 
 // Compute the length, in _charWidth cells, of the input method text.
 - (int)inputMethodEditorLength {
-    if (![self hasMarkedText]) {
+    if (![self hasMarkedText] && ![self hasTypeahead]) {
         return 0;
     }
-    NSString* str = [_drawingHelper.markedText string];
+    NSString* str = _drawingHelper.markedText.string ?: _drawingHelper.typeahead;
 
     const int maxLen = [str length] * kMaxParts;
     screen_char_t buf[maxLen];
@@ -1445,6 +1445,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     _drawingHelper.shouldShowTimestamps = self.showTimestamps;
     _drawingHelper.colorMap = _colorMap;
     _drawingHelper.softAlternateScreenMode = self.dataSource.terminalSoftAlternateScreenMode;
+    _drawingHelper.typeahead = self.dataSource.typeahead;
 
     CGFloat rightMargin = 0;
     if (self.showTimestamps) {
@@ -2096,7 +2097,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     }
 
     // Always mark the IME as needing to be drawn to keep things simple.
-    if ([self hasMarkedText]) {
+    if ([self hasMarkedText] || [self hasTypeahead]) {
         [self invalidateInputMethodEditorRect];
     }
 
@@ -3863,6 +3864,10 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     return [_keyboardHandler hasMarkedText];
 }
 
+- (BOOL)hasTypeahead {
+    return [_dataSource typeahead].length > 0;
+}
+
 - (NSRange)markedRange {
     NSRange range;
     if (_drawingHelper.inputMethodMarkedRange.length > 0) {
@@ -4259,7 +4264,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (NSPoint)cursorCenterInScreenCoords {
     NSPoint cursorCenter;
-    if ([self hasMarkedText]) {
+    if ([self hasMarkedText] || [self hasTypeahead]) {
         cursorCenter = _drawingHelper.imeCursorLastPos;
     } else {
         cursorCenter = [self cursorFrame].origin;

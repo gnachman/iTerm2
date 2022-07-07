@@ -146,5 +146,6 @@
 - (void)changeHeightOfMark:(id<iTermMark>)mark to:(int)newHeight;
 
 - (VT100GridCoordRange)coordRangeOfPorthole:(id<Porthole>)porthole;
+- (NSString *)typeahead;
 
 @end

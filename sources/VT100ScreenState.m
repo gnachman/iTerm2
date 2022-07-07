@@ -121,6 +121,7 @@ NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
 @synthesize terminalState = _terminalState;
 @synthesize config = _config;
 @synthesize exfiltratedEnvironment = _exfiltratedEnvironment;
+@synthesize typeaheadController = _typeaheadController;
 
 - (instancetype)initForMutationOnQueue:(dispatch_queue_t)queue {
     self = [super init];
@@ -138,6 +139,7 @@ NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
         _colorMap = [[iTermColorMap alloc] init];
         _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] initWithQueue:queue];
         _fakePromptDetectedAbsLine = -1;
+        _typeaheadController = [[TypeaheadController alloc] init];
     }
     return self;
 }
@@ -259,6 +261,7 @@ NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
         source.terminal.dirty = NO;
         _terminalState = [source.terminalState copy];
     }
+    [self.typeaheadController sync:source.typeaheadController];
 
     [self copySlowStuffFrom:source];
 }
@@ -274,6 +277,7 @@ NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
 
         [self copyFastStuffFrom:source];
         [self copySlowStuffFrom:source];
+        _typeaheadController = [[TypeaheadController alloc] init];
         DLog(@"Copy mutable to immutable");
     }
     return self;

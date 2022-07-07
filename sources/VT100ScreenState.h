@@ -186,6 +186,7 @@ extern NSString *const kScreenStateExfiltratedEnvironmentKey;
 @property (nonatomic, readonly) NSDictionary *terminalState;
 @property (nonatomic, copy, readonly) id<VT100ScreenConfiguration> config;
 @property (nullable, nonatomic, strong, readonly) NSArray<iTermTuple<NSString *, NSString *> *> *exfiltratedEnvironment;
+@property (nonatomic, readonly) TypeaheadController *typeaheadController;
 
 @end
 

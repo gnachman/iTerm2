@@ -48,7 +48,7 @@ static NSString *const kScreenCharImageMapKey = @"Image Map";
 static NSString *const kScreenCharCCMNextKeyKey = @"Next Key";
 static NSString *const kScreenCharHasWrappedKey = @"Has Wrapped";
 
-static iTermComplexCharRegistry *GetComplexCharRegistry(void) {
+iTermComplexCharRegistry *GetComplexCharRegistry(void) {
     static iTermComplexCharRegistry *instance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{

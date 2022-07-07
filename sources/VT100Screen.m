@@ -939,6 +939,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state stringLineAsStringAtAbsoluteLineNumber:absoluteLineNumber startPtr:startAbsLineNumber];
 }
 
+- (NSString *)typeahead {
+    return _state.typeaheadController.string;
+}
+
 #pragma mark - Private
 
 - (BOOL)isAnyCharDirty {
@@ -1276,6 +1280,37 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (long long)lastPromptLine {
     return _state.lastPromptLine;
+}
+
+- (void)insertText:(NSString *)text {
+    NSMutableData *storage = [NSMutableData dataWithLength:sizeof(screen_char_t) * text.length * 3];
+    const screen_char_t fg = {
+        .foregroundColorMode = ColorModeAlternate,
+        .foregroundColor = ALTSEM_DEFAULT,
+        .faint = 1
+    };
+    const screen_char_t bg = {
+        .backgroundColorMode = ColorModeAlternate,
+        .backgroundColor = ALTSEM_DEFAULT
+    };
+
+    int len = 0;
+    BOOL dwc = NO;
+    screen_char_t *buffer = storage.mutableBytes;
+    StringToScreenChars(text,
+                        (screen_char_t *)storage.mutableBytes,
+                        fg,
+                        bg,
+                        &len,
+                        _state.config.treatAmbiguousCharsAsDoubleWidth,
+                        NULL,
+                        &dwc,
+                        _state.config.normalization,
+                        _state.config.unicodeVersion,
+                        NO);
+    for (int i = 0; i < len; i++) {
+        [_state.typeaheadController keyPress:buffer[i]];
+    }
 }
 
 - (void)beginEchoProbeWithBackspace:(NSData *)backspace

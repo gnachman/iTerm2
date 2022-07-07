@@ -593,3 +593,7 @@ NS_INLINE void ScreenCharSetDWC_RIGHT(screen_char_t *c) {
     c->image = NO;
     c->code = DWC_RIGHT;
 }
+
+@class iTermComplexCharRegistry;
+iTermComplexCharRegistry *GetComplexCharRegistry(void);
+
