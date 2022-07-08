@@ -203,10 +203,12 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
             }
             let item = try JSONDecoder().decode(Item.self, from: json.data(using: .utf8)!)
 
-            let passwordField = item.fields.first(where: { field in
+            let passwordField = item.fields.first { field in
                 field.id == "password"
-            })
-            guard let password = passwordField?.value else { throw OPError.runtime }
+            }
+            guard let password = passwordField?.value else {
+                throw OPError.runtime
+            }
             if password.hasSuffix("\r") {
                 return String(password.dropLast())
             }
