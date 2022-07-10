@@ -410,7 +410,7 @@ typedef NS_ENUM(NSUInteger, iTermShellIntegrationInstallationState) {
                            reallySend:reallySend
                            afterRegex:@"^>> "
                           expectation:expectation]];
-    [strings addObject:[self sendText:[NSString stringWithFormat:@"    cat <<-EOF >> %@\n", script]
+    [strings addObject:[self sendText:[NSString stringWithFormat:@"    cat <<-EOF >> %@\n\n", script]
                            reallySend:reallySend
                            afterRegex:@"^> "
                           expectation:expectation]];
