@@ -49,18 +49,26 @@ class ModalPasswordAlert {
             field.placeholderString = "User name"
 
             wrapper.addArrangedSubview(field)
-            field.nextResponder = newPassword
+            field.nextKeyView = newPassword
+            newPassword.nextKeyView = field
         } else {
             usernameField = nil
         }
 
         wrapper.addArrangedSubview(newPassword)
 
+
         alert.accessoryView = wrapper
-        let timer = Timer(timeInterval: 0, repeats: false) { _ in
-            NSLog("Perform layout")
+        let timer = Timer(timeInterval: 0, repeats: false) { [weak self] _ in
+            guard let self = self else {
+                return
+            }
             alert.layout()
-            newPassword.window?.makeFirstResponder(newPassword)
+            if let username = self.username, !username.isEmpty {
+                newPassword.window?.makeFirstResponder(newPassword)
+            } else if let usernameField = usernameField {
+                usernameField.window?.makeFirstResponder(usernameField)
+            }
         }
         RunLoop.main.add(timer, forMode: .common)
 
