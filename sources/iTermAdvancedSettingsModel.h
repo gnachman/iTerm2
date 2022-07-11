@@ -168,6 +168,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)jiggleTTYSizeOnClearBuffer;
 + (BOOL)killJobsInServersOnQuit;
 + (BOOL)killSessionsOnLogout;
++ (NSString *)lastpassGroups;
 + (BOOL)laxNilPolicyInInterpolatedStrings;
 + (BOOL)logDrawingPerformance;
 + (BOOL)logRestorableStateSize;

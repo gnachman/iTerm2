@@ -114,7 +114,20 @@ class LastPassDataSource: CommandLinePasswordDataSource {
     }
 
     private var listAccountsRecipe: AnyRecipe<Void, [Account]> {
-        let args = ["ls", "--format=%ai\t%an\t%au", "iTerm2"]
+        var args = ["ls", "--format=%ag\t%ai\t%an\t%au"]
+        let groups: Set<String>
+        if iTermAdvancedSettingsModel.lastpassGroups().isEmpty {
+            let iterm = "iTerm2"
+            groups = Set([iterm])
+        } else {
+            let illegalCharacters = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: " ")).inverted
+            groups = Set(iTermAdvancedSettingsModel.lastpassGroups().components(separatedBy: ",")).filter { name in
+                name.rangeOfCharacter(from: illegalCharacters) == nil
+            }
+        }
+        if groups.count == 1, let name = groups.first {
+            args.append(name)
+        }
         let recipe = LastPassBasicCommandRecipe<Void, [Account]>(args, timeout: 5) { output in
             guard let string = String(data: output.stdout, encoding: .utf8) else {
                 throw LPError.badOutput
@@ -122,16 +135,19 @@ class LastPassDataSource: CommandLinePasswordDataSource {
             let lines = string.components(separatedBy: "\n")
             return lines.compactMap { line -> Account? in
                 let parts = line.components(separatedBy: "\t")
-                guard parts.count == 3 else {
+                guard parts.count == 4 else {
                     return nil
                 }
-                if parts[0] == "0" {
+                if parts[1] == "0" {
                     // Unsynced accounts are not safe because they don't have unique identifiers.
                     return nil
                 }
-                return Account(identifier: AccountIdentifier(value: parts[0]),
-                               userName: parts[2],
-                               accountName: parts[1])
+                guard groups.contains(parts[0]) else {
+                    return nil
+                }
+                return Account(identifier: AccountIdentifier(value: parts[1]),
+                               userName: parts[3],
+                               accountName: parts[2])
             }
         }
         return wrap("The account list could not be fetched.", AnyRecipe(recipe))
