@@ -1498,7 +1498,7 @@ ITERM_WEAKLY_REFERENCEABLE
         // This has to be done after setScreenSize:parent: because it has a side-effect of enabling
         // the terminal.
         [aSession.screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-            terminal.reportFocus = YES;
+            terminal.reportFocus = [iTermAdvancedSettingsModel focusReportingEnabled];
         }];
     }
     

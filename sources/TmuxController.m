@@ -400,7 +400,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.manuallyOpened = _manualOpenRequested;
     windowOpener.allInitialWindowsAdded = _allInitialWindowsAdded;
     windowOpener.tabColors = _tabColors;
-    windowOpener.focusReporting = _focusEvents;
+    windowOpener.focusReporting = _focusEvents && [iTermAdvancedSettingsModel focusReportingEnabled];
     windowOpener.profile = profile;
     windowOpener.initial = initial;
     windowOpener.anonymous = (_pendingWindows[@(windowIndex)] == nil);
@@ -469,7 +469,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.windowOptions = _windowOpenerOptions;
     windowOpener.zoomed = zoomed;
     windowOpener.tabColors = _tabColors;
-    windowOpener.focusReporting = _focusEvents;
+    windowOpener.focusReporting = _focusEvents && [iTermAdvancedSettingsModel focusReportingEnabled];
     windowOpener.profile = [self profileForWindow:tab.tmuxWindow];
     windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
     return [windowOpener updateLayoutInTab:tab];
