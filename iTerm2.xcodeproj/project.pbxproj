@@ -3138,6 +3138,7 @@
 		A6D1784821BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6D1784321BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.xib */; };
 		A6D1C41E2861430D00B68526 /* FindIndicatorWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D1C41D2861430D00B68526 /* FindIndicatorWindow.swift */; };
 		A6D1C420286192F600B68526 /* TextClipDrawing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D1C41F286192F600B68526 /* TextClipDrawing.swift */; };
+		A6D20C67287CC51F0007F479 /* iTermProcessInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D20C66287CC51F0007F479 /* iTermProcessInfo.swift */; };
 		A6D22A431BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A451BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
@@ -6769,6 +6770,7 @@
 		A6D1C41D2861430D00B68526 /* FindIndicatorWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindIndicatorWindow.swift; sourceTree = "<group>"; };
 		A6D1C41F286192F600B68526 /* TextClipDrawing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextClipDrawing.swift; sourceTree = "<group>"; };
 		A6D1C42128619E4800B68526 /* iTermTextDrawingHelperDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermTextDrawingHelperDelegate.h; sourceTree = "<group>"; };
+		A6D20C66287CC51F0007F479 /* iTermProcessInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermProcessInfo.swift; sourceTree = "<group>"; };
 		A6D22A421BC8BE6B004084E0 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		A6D22B431BC9D368004084E0 /* iTermShellHistoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShellHistoryTest.m; sourceTree = "<group>"; };
 		A6D24D3A26BB12F700CCE211 /* CPUGovernor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CPUGovernor.swift; sourceTree = "<group>"; };
@@ -11100,6 +11102,7 @@
 				53AFFC8A1DD2A03800E6CEC6 /* iTermLSOF.h */,
 				53AFFC8B1DD2A03800E6CEC6 /* iTermLSOF.m */,
 				A6EEAEDD283712070039E850 /* ProcessDataSource.swift */,
+				A6D20C66287CC51F0007F479 /* iTermProcessInfo.swift */,
 			);
 			name = "Process Info";
 			sourceTree = "<group>";
@@ -15343,6 +15346,7 @@
 				A678C508279A478B00C59927 /* iTermImageInfo.m in Sources */,
 				530AB8B520B2098000D2AA08 /* iTermVariables.m in Sources */,
 				A648DABA2427E73E00C2FF02 /* iTermFlagsChangedNotification.m in Sources */,
+				A6D20C67287CC51F0007F479 /* iTermProcessInfo.swift in Sources */,
 				A6905561241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.m in Sources */,
 				A65DF49B28491E5300AA29AB /* ShellIntegrationInjection.swift in Sources */,
 				A631FC9220EDDBC600EB824F /* iTermFindDriver.m in Sources */,

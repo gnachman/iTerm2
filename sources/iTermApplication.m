@@ -48,7 +48,7 @@
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSWindow+iTerm.h"
-#import "NSResponder+iTerm.h""
+#import "NSResponder+iTerm.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"

@@ -73,7 +73,7 @@ class Conductor: NSObject, Codable {
         guard let pid = framedPID else {
             return []
         }
-        let mine = processInfoProvider.processInfo(for: pid)?.descendantsSkippingLevels(0) ?? []
+        let mine = processInfoProvider.processInfo(for: pid)?.descendants(skipping: 0) ?? []
         let parents = parent?.transitiveProcesses ?? []
         var result = mine
         result.append(contentsOf: parents)

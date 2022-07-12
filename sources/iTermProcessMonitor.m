@@ -8,6 +8,7 @@
 #import "iTermProcessMonitor.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "NSArray+iTerm.h"
 
