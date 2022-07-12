@@ -11,7 +11,7 @@ import Foundation
 class iTermProcessInfo: NSObject {
     @objc let processID: pid_t
     @objc let parentProcessID: pid_t
-    private(set) weak var collection: iTermProcessCollection?
+    private(set) weak var collection: ProcessCollectionProvider?
     @objc let dataSource: ProcessDataSource
     private var childProcessIDs = IndexSet()
     private var buildingTreeString = false
@@ -20,7 +20,7 @@ class iTermProcessInfo: NSObject {
     @objc(initWithPid:ppid:collection:dataSource:)
     init(processID: pid_t,
          parentProcessID: pid_t,
-         collection: iTermProcessCollection,
+         collection: ProcessCollectionProvider,
          dataSource: ProcessDataSource) {
         self.processID = processID
         self.parentProcessID = parentProcessID
@@ -186,6 +186,14 @@ class iTermProcessInfo: NSObject {
         }
         return false
     }
+
+    lazy var executable: String? = {
+        var execName = NSString()
+        guard dataSource.commandLineArguments(forProcess: processID, execName: &execName) != nil else {
+            return nil
+        }
+        return execName as String
+    }()
 
     private struct ExpensiveValues {
         var isForegroundJob: Bool

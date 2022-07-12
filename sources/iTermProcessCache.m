@@ -8,6 +8,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermLSOF.h"
 #import "iTermProcessCache.h"
 #import "iTermProcessMonitor.h"
@@ -296,7 +297,6 @@
     });
 }
 
-// _workQueue
 + (iTermProcessCollection *)newProcessCollection {
     NSArray<NSNumber *> *allPids = [iTermLSOF allPids];
     // pid -> ppid

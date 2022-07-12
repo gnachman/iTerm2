@@ -9,6 +9,7 @@
 #import "iTermFileDescriptorMultiClient+MRR.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermClientServerProtocolMessageBox.h"
 #import "iTermFileDescriptorMultiClientState.h"
 #import "iTermFileDescriptorServer.h"
@@ -16,6 +17,7 @@
 #import "iTermMultiServerMessage.h"
 #import "iTermMultiServerMessageBuilder.h"
 #import "iTermNotificationController.h"
+#import "iTermProcessCache.h"
 #import "iTermRateLimitedUpdate.h"
 #import "iTermResult.h"
 #import "iTermThreadSafety.h"
@@ -703,30 +705,33 @@ static unsigned long long MakeUniqueID(void) {
     [self handshakeWithState:state callback:callback];
 }
 
-- (NSString *)serverPath {
-    NSDictionary *infoDictionary = [[NSBundle bundleForClass:[self class]] infoDictionary];
-    NSString *versionNumber = infoDictionary[(NSString *)kCFBundleVersionKey];
-    NSString *filename = [NSString stringWithFormat:@"iTermServer-%@", versionNumber];
+- (NSArray<NSString *> *)serverFolders {
     NSString *appSupport = [[NSFileManager defaultManager] applicationSupportDirectory];
-    NSString *regularPath = [appSupport stringByAppendingPathComponent:filename];
-    if ([[NSFileManager defaultManager] isExecutableFileAtPath:regularPath]) {
-        return regularPath;
+    NSMutableArray<NSString *> *result = [NSMutableArray array];
+    if (appSupport) {
+        [result addObject:appSupport];
     }
-    if (![[NSFileManager defaultManager] directoryIsWritable:appSupport]) {
-        NSString *dotDir = [[NSFileManager defaultManager] homeDirectoryDotDir];
-        NSString *alternatePath = [dotDir stringByAppendingPathComponent:filename];
-        if (!alternatePath) {
-            return nil;
-        }
-        if ([[NSFileManager defaultManager] isExecutableFileAtPath:alternatePath]) {
-            return alternatePath;
-        }
-        if (![[NSFileManager defaultManager] directoryIsWritable:dotDir]) {
-            return nil;
-        }
-        return alternatePath;
+
+    NSString *dotDir = [[NSFileManager defaultManager] homeDirectoryDotDir];
+    if (dotDir) {
+        [result addObject:dotDir];
     }
-    return regularPath;
+
+    return result;
+}
+
+- (NSString *)serverPath {
+    NSString *filename = iTermServerName.name;
+
+    for (NSString *folder in [self serverFolders]) {
+        NSString *path = [folder stringByAppendingPathComponent:filename];
+        if ([[NSFileManager defaultManager] isExecutableFileAtPath:path] ||
+            [[NSFileManager defaultManager] directoryIsWritable:folder]) {
+            return path;
+        }
+    }
+
+    return nil;
 }
 
 - (void)showError:(NSError *)error message:(NSString *)message badURL:(NSURL *)url {
@@ -796,6 +801,7 @@ static unsigned long long MakeUniqueID(void) {
 
     // Does the server already exist where we need it to be?
     if ([self shouldCopyServerTo:desiredPath]) {
+        [self deleteDisusedServerBinaries];
         [fileManager removeItemAtPath:desiredPath error:nil];
         
         NSString *sourcePath = [self pathToServerInBundle];
@@ -879,6 +885,15 @@ static unsigned long long MakeUniqueID(void) {
     state.writeFD = writeFD;
 
     return YES;
+}
+
+#pragma mark - Janitorial
+
+- (void)deleteDisusedServerBinaries {
+    if (@available(macOS 10.15, *)) {
+        [iTermServerDeleter deleteDisusedServersIn:[self serverFolders]
+                                          provider:[iTermProcessCache newProcessCollection]];
+    }
 }
 
 #pragma mark - Tear Down

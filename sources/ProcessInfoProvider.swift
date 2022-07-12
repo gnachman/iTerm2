@@ -8,6 +8,28 @@
 import Foundation
 
 @objc
+protocol ProcessCollectionFactory {
+    @objc(newProcessCollectionWithDataSource:)
+    func newProcessCollection(dataSource: ProcessDataSource) -> ProcessCollectionProvider
+}
+
+@objc
+protocol ProcessCollectionProvider {
+    @objc var processIDs: [pid_t] { get }
+
+    @objc(infoForProcessID:)
+    func info(forProcessID pid: pid_t) -> iTermProcessInfo?
+
+    @objc(addProcessWithProcessID:parentProcessID:)
+    @discardableResult
+    func addProcess(withProcessID: pid_t,
+                    parentProcessID: pid_t) -> iTermProcessInfo
+
+    @objc
+    func commit()
+}
+
+@objc
 protocol ProcessInfoProvider {
     @objc(processInfoForPid:)
     func processInfo(for pid: pid_t) -> iTermProcessInfo?

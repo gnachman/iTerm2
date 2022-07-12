@@ -8,13 +8,16 @@
 #import <Foundation/Foundation.h>
 
 #import "iTerm2SharedARC-Swift.h"
-#import "iTermProcessCollection.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+@protocol ProcessInfoProvider;
+@class iTermProcessCollection;
 
 @interface iTermProcessCache : NSObject<ProcessInfoProvider>
 
 + (instancetype)sharedInstance;
++ (iTermProcessCollection *)newProcessCollection;
 
 @end
 

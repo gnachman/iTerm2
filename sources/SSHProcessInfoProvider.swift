@@ -107,7 +107,7 @@ fileprivate struct PSRow {
 
 class SSHProcessInfoProvider {
     private let runner: SSHCommandRunning
-    private var collection: iTermProcessCollection?
+    private var collection: ProcessCollectionProvider?
     private var closures = [() -> ()]()
     private var _needsUpdate = false
     private let rateLimit = iTermRateLimitedUpdate(
@@ -199,7 +199,7 @@ class SSHProcessInfoProvider {
         lastRows = apply(edits, to: lastRows)
         let rows = Array(lastRows.values)
         let dataSource = SSHProcessDataSource(rows)
-        let collection = iTermProcessCollection(dataSource: dataSource)
+        let collection = ProcessCollection(dataSource: dataSource)
         for row in rows {
             collection.addProcess(withProcessID: row.pid, parentProcessID: row.ppid)
         }

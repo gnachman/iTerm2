@@ -7,7 +7,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import "iTermProcessCollection.h"
+@class iTermProcessInfo;
+@class iTermProcessMonitor;
 
 NS_ASSUME_NONNULL_BEGIN
 
