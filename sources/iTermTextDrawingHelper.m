@@ -1691,6 +1691,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                       backgroundColor:(NSColor *)backgroundColor
                         virtualOffset:(CGFloat)virtualOffset {
     NSDictionary *attributes = [attributedString attributesAtIndex:0 effectiveRange:nil];
+    NSPoint offsetPoint = point;
+    offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
     if (attributes[iTermImageCodeAttribute]) {
         // Handle cells that are part of an image.
         VT100GridCoord originInImage = VT100GridCoordMake([attributes[iTermImageColumnAttribute] intValue],
@@ -1699,7 +1701,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         [self drawImageWithCode:[attributes[iTermImageCodeAttribute] shortValue]
                          origin:VT100GridCoordMake(displayColumn, origin.y)
                          length:attributedString.length
-                        atPoint:NSMakePoint(positions[0] + point.x, point.y)
+                        atPoint:NSMakePoint(positions[0] + point.x, offsetPoint.y)
                   originInImage:originInImage
                   virtualOffset:virtualOffset];
         return attributedString.length;
@@ -1715,8 +1717,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         }];
         return attributedString.length;
     } else if (attributedString.length > 0) {
-        NSPoint offsetPoint = point;
-        offsetPoint.y -= round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0);
         [self drawTextOnlyAttributedString:attributedString
                                    atPoint:offsetPoint
                                  positions:positions
