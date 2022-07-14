@@ -470,16 +470,19 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
                                  colorSpace:(NSColorSpace *)colorSpace {
     iTermImageWrapper *image = wrapper;
     if (!image.image) {
+        DLog(@"No image in wrapper");
         return nil;
     }
 
     NSBitmapImageRep *bitmap = [image bitmapInColorSpace:colorSpace];
+    DLog(@"bitmap in colorspace %@ is %@", colorSpace, bitmap);
     // You can get an alpha-first bitmap sometimes! If my mac decides to use the LG HDR WFHD display
     // as the main display then that's what you get. Metal doesn't support these, so we have to
     // manually twiddle the bits around. There doesn't seem to be a better system. And
     // MTKTextureLoader doesn't do the right thing either - the colors are screwed up - so screw
     // MTKTextureLoader.
     bitmap = [bitmap it_bitmapWithAlphaLast];
+    DLog(@"bitmap after moving alpha last=%@", bitmap);
     if ([bitmap metalPixelFormat] == MTLPixelFormatInvalid) {
         return [self legacyTextureFromImage:image
                                     context:context
@@ -494,12 +497,16 @@ maximumExtendedDynamicRangeColorComponentValue:(CGFloat)maximumExtendedDynamicRa
                toWidth:&width
                 height:&height
           notExceeding:4096];
+    DLog(@"converted size from %@ to %@",
+         NSStringFromSize(bitmap.size), NSStringFromSize(NSMakeSize(width, height)));
     if (width == 0 || height == 0) {
         return nil;
     }
 
     if (width != bitmap.size.width || height != bitmap.size.height) {
+        DLog(@"Rescale bitmap to new size");
         bitmap = [bitmap it_bitmapScaledTo:NSMakeSize(width, height)];
+        DLog(@"bitmap=%@", bitmap);
     }
     MTLTextureDescriptor *textureDescriptor =
     [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:[bitmap metalPixelFormat]

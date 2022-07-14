@@ -306,22 +306,27 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
             DLog(@"%@ not ready", self.uniqueIdentifier);
             return nil;
         }
+        DLog(@"[%p imageWithCellSize:%@ timestamp:%@ scale:%@]",
+             self, NSStringFromSize(cellSize), @(timestamp), @(scale));
         if (!_embeddedImages) {
             _embeddedImages = [[NSMutableDictionary alloc] init];
         }
         int frame = [self.animatedImage frameForTimestamp:timestamp];  // 0 if not animated
         iTermTuple *key = [iTermTuple tupleWithObject:@(frame) andObject:@(scale)];
         NSImage *embeddedImage = _embeddedImages[key];
-
+        DLog(@"embeddedImage=%@", embeddedImage);
         NSSize region = NSMakeSize(cellSize.width * _size.width,
                                    cellSize.height * _size.height);
+        DLog(@"region=%@", NSStringFromSize(region));
         if (!NSEqualSizes(embeddedImage.size, region)) {
+            DLog(@"Sizes differ. Resize.");
             NSImage *theImage;
             if (self.animatedImage) {
                 theImage = [self.animatedImage imageForFrame:frame];
             } else {
                 theImage = [self.image.images firstObject];
             }
+            DLog(@"theImage is %@", theImage);
             NSEdgeInsets inset = _inset;
             inset.top *= cellSize.height;
             inset.bottom *= cellSize.height;
@@ -334,9 +339,12 @@ static NSSize iTermImageInfoGetSizeForRegionPreservingAspectRatio(const NSSize r
             NSImage *canvas = [theImage safelyResizedImageWithSize:region
                                                    destinationRect:destinationRect
                                                              scale:scale];
+            DLog(@"Assign %@ to %@", canvas, key);
             self.embeddedImages[key] = canvas;
         }
-        return _embeddedImages[key];
+        NSImage *image = _embeddedImages[key];
+        DLog(@"return %@", image);
+        return image;
     }
 }
 

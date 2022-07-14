@@ -128,6 +128,7 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
     NSImage *image = [run.imageInfo imageWithCellSize:cellSize timestamp:_timestamp scale:scale];
     BOOL missing = NO;
     if (!image) {
+        DLog(@"Failed to get image. Use placeholder");
         if (!run.imageInfo) {
             image = [NSImage imageOfSize:CGSizeMake(1, 1) color:[NSColor brownColor]];
         } else {
@@ -137,11 +138,14 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
     }
     if (run.imageInfo) {
         if (missing) {
+            DLog(@"record missing");
             [_missingImageUniqueIdentifiers addObject:run.imageInfo.uniqueIdentifier];
         } else {
+            DLog(@"record found");
             [_foundImageUniqueIdentifiers addObject:run.imageInfo.uniqueIdentifier];
         }
     }
+    NSLog(@"Make texture from %@", image);
     id<MTLTexture> texture = [_cellRenderer textureFromImage:[iTermImageWrapper withImage:[image it_verticallyFlippedImage]]
                                                      context:self.poolContext
                                                   colorSpace:self.configuration.colorSpace];

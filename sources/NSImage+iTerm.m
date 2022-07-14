@@ -319,8 +319,11 @@
 - (NSImage *)safelyResizedImageWithSize:(NSSize)unsafeSize
                         destinationRect:(NSRect)destinationRect
                                   scale:(CGFloat)scale {
+    DLog(@"safelyResizedImageWithSize:%@ destinationRect:%@ scale:%@",
+         NSStringFromSize(unsafeSize), NSStringFromRect(destinationRect), @(scale));
     NSSize newSize = NSMakeSize(round(unsafeSize.width) * scale, round(unsafeSize.height) * scale);
     if (!self.isValid) {
+        DLog(@"Invalid");
         return nil;
     }
 
@@ -336,13 +339,15 @@
                                              bytesPerRow:0
                                             bitsPerPixel:0];
     rep.size = newSize;
-
+    DLog(@"rep=%@", rep);
     [NSGraphicsContext saveGraphicsState];
     [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithBitmapImageRep:rep]];
-    [self drawInRect:NSMakeRect(NSMinX(destinationRect) * scale,
-                                NSMinY(destinationRect) * scale,
-                                NSWidth(destinationRect) * scale,
-                                NSHeight(destinationRect) * scale)
+    const NSRect scaledDestinationRect = NSMakeRect(NSMinX(destinationRect) * scale,
+                                                    NSMinY(destinationRect) * scale,
+                                                    NSWidth(destinationRect) * scale,
+                                                    NSHeight(destinationRect) * scale);
+    DLog(@"scaledDestinationRect=%@", NSStringFromRect(scaledDestinationRect));
+    [self drawInRect:scaledDestinationRect
             fromRect:NSZeroRect
            operation:NSCompositingOperationCopy
             fraction:1.0];
@@ -351,6 +356,7 @@
     NSImage *newImage = [[NSImage alloc] initWithSize:NSMakeSize(newSize.width / scale,
                                                                  newSize.height / scale)];
     [newImage addRepresentation:rep];
+    DLog(@"newImage=%@", newImage);
     return newImage;
 }
 

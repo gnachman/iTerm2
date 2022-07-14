@@ -209,6 +209,7 @@
     {
         NSBitmapImageRep *bitmap = _reps[colorSpace.localizedName];
         if (bitmap) {
+            DLog(@"Already have a cached bitmap in this colorspace");
             return bitmap;
         }
     }
@@ -217,14 +218,20 @@
     for (NSImageRep *rep in self.image.representations) {
         NSBitmapImageRep *bitmap = [NSBitmapImageRep castFrom:rep];
         if (bitmap && [bitmap.colorSpace isEqual:colorSpace]) {
+            DLog(@"Image has a bitmap in this colorspace");
             return bitmap;
         }
     }
 
     // Finally, convert the best representation into the desired color space.
-    CGImageRef cgImage = [[self.image bestRepresentationForScale:2] CGImageForProposedRect:nil context:nil hints:nil];
+    NSImageRep *rep = [self.image bestRepresentationForScale:2];
+    DLog(@"Need to convert colorspace. Best rep is %@", rep);
+    CGImageRef cgImage = [rep CGImageForProposedRect:nil context:nil hints:nil];
+    DLog(@"cgImage=%@", cgImage);
     NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:cgImage];
+    DLog(@"bitmap=%@", bitmap);
     bitmap = [bitmap bitmapImageRepByConvertingToColorSpace:colorSpace renderingIntent:NSColorRenderingIntentDefault];
+    DLog(@"bitmap after converting colorspace=%@", bitmap);
     _reps[colorSpace.localizedName] = bitmap;
     return bitmap;
 }
