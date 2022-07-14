@@ -28,7 +28,7 @@ static void iTermDisplayReconfigurationCallback(CGDirectDisplayID display,
     if (gShouldPostNontrivialScreenParametersChange) {
         return;
     }
-    const CGDisplayChangeSummaryFlags mask = kCGDisplayAddFlag;
+    const CGDisplayChangeSummaryFlags mask = (kCGDisplayAddFlag | kCGDisplayRemoveFlag);
     if (flags & mask) {
         gShouldPostNontrivialScreenParametersChange = YES;
         DLog(@"Set needs iTermScreenParametersDidChangeNontrivally");

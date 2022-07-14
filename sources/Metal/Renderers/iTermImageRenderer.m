@@ -145,8 +145,9 @@ static NSString *const iTermImageRendererTextureMetadataKeyImageMissing = @"iTer
             [_foundImageUniqueIdentifiers addObject:run.imageInfo.uniqueIdentifier];
         }
     }
-    NSLog(@"Make texture from %@", image);
-    id<MTLTexture> texture = [_cellRenderer textureFromImage:[iTermImageWrapper withImage:[image it_verticallyFlippedImage]]
+    NSImage *flipped = [image it_verticallyFlippedImage];
+    DLog(@"Make texture from %@ (original) -> %@ (flipped)", image, flipped);
+    id<MTLTexture> texture = [_cellRenderer textureFromImage:[iTermImageWrapper withImage:flipped]
                                                      context:self.poolContext
                                                   colorSpace:self.configuration.colorSpace];
     if (missing) {

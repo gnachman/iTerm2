@@ -13,6 +13,7 @@
 #import "NSColor+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "iTermPresentationController.h"
 
 #ifndef MAC_OS_X_VERSION_10_16
 @interface NSImage(ImageFuture)
@@ -460,19 +461,43 @@
     return (CGFloat)rep.pixelsWide / self.size.width;
 }
 
++ (CGFloat)programaticallyCreatedImageScale {
+    static CGFloat scale;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [iTermPresentationController sharedInstance];
+        [[NSNotificationCenter defaultCenter] addObserverForName:iTermScreenParametersDidChangeNontrivally
+                                                          object:nil
+                                                           queue:nil
+                                                      usingBlock:^(NSNotification * _Nonnull note) {
+            scale = 0;
+        }];
+    });
+    if (!scale) {
+        DLog(@"Recompute scale");
+        NSImage *image = [NSImage imageOfSize:NSMakeSize(1, 1) drawBlock:^{}];
+        scale = [image scaleFactor];
+    }
+    DLog(@"Programatically created images have scale %f", scale);
+    return scale;
+}
+
 - (NSImage *)it_imageScaledByX:(CGFloat)xScale y:(CGFloat)yScale {
     const NSSize size = self.size;
     if (size.width == 0 || size.height == 0) {
         return self;
     }
+    DLog(@"Scale image by x=%f y=%f. Image=%@", xScale, yScale, self);
     CGFloat adjustment = 1;
-    if ([self scaleFactor] == 1) {
+    if ([self scaleFactor] == 1 && [NSImage programaticallyCreatedImageScale] > 1) {
+        DLog(@"Use adjustment of 0.5 since we will create a 2x image");
         // We have no choice but to produce a 2x image from here. If the source is 1x, make the
         // returned image half the size in points so it'll be the same as the input image.
         adjustment = 0.5;
     }
     const NSSize destSize = NSMakeSize(self.size.width * fabs(xScale) * adjustment,
                                        self.size.height * fabs(yScale) * adjustment);
+    DLog(@"Draw into destination fo size %@", NSStringFromSize(destSize));
     NSImage *image = [NSImage imageOfSize:destSize
                                 drawBlock:^{
         NSAffineTransform *transform = [NSAffineTransform transform];
