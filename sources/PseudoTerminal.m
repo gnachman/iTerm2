@@ -4743,7 +4743,8 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)windowDidMove:(NSNotification *)notification {
-    DLog(@"%@: Window %@ moved. Called from %@", self, self.window, [NSThread callStackSymbols]);
+    NSLog(@"%@: Window %@ moved to %@. Called from %@", self, self.window, NSStringFromRect(self.window.frame),
+          [NSThread callStackSymbols]);
     if (_inWindowDidMove) {
         DLog(@"WARNING! Reentrant call to windowDidMove. Return early.");
         return;

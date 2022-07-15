@@ -18,10 +18,6 @@
                 </dict>  
             </dict>  
         </dict> 
-	<key>CFBundleIconFile</key>
-	<string>AppIcon-Beta</string>
-	<key>CFBundleIconName</key>
-	<string>AppIcon-Beta</string>
         <key>NSHumanReadableCopyright</key>
         <string>GPL v2</string>
         <key>CFBundleDevelopmentRegion</key>
@@ -326,8 +322,6 @@
         <string>MainMenu</string>
         <key>NSPrincipalClass</key>
         <string>iTermApplication</string>
-        <key>SUPublicDSAKeyFile</key>
-        <string>dsa_pub.pem</string>
         <key>SUPublicEDKey</key>
         <string>xdqAa0KXBPhMbUrutVTe87i6U7yWf7WKaCeRG7AAZ0w=</string>
         <key>NSSupportsAutomaticGraphicsSwitching</key>
