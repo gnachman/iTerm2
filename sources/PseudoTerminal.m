@@ -9239,14 +9239,6 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         // Full screen is special w/r/t the tab bar.
         return YES;
     }
-    if (![self useTransparency]) {
-        // Opaque windows have a window background behind the fake title bar.
-        return YES;
-    }
-    if (![self anyPaneIsTransparent]) {
-        // Opaque windows have a window background behind the fake title bar.
-        return YES;
-    }
     if ([iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL) {
         return YES;
     }
