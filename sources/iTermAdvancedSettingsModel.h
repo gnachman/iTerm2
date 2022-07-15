@@ -135,6 +135,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)fastForegroundJobUpdates;
 + (BOOL)fastTriggerRegexes;
 + (BOOL)fastTrackpad;
++ (NSString *)fileDropCoprocess;
 + (double)findDelaySeconds;
 
 // Regular expression for finding URLs for Edit>Find>Find URLs

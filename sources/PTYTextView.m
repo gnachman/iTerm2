@@ -2854,6 +2854,9 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
                 }
             }
 
+            if (filenames.count == 1 && [_delegate textViewPasteFile:filenames[0]]) {
+                return YES;
+            }
             // Paste filenames separated by spaces.
             [stringToPaste appendString:[filenames componentsJoinedByString:@" "]];
             if (pasteNewline) {

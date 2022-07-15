@@ -14273,6 +14273,30 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (BOOL)textViewPasteFile:(NSString *)filename {
+    NSString *swifty = [iTermAdvancedSettingsModel fileDropCoprocess];
+    if (swifty.length == 0) {
+        return NO;
+    }
+    iTermVariableScope *scope = [[[self variablesScope] copy] autorelease];
+    iTermVariables *frame = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone owner:self] autorelease];
+    [scope addVariables:frame toScopeNamed:nil];
+    [scope setValue:filename forVariableNamed:@"filename"];
+
+    iTermExpressionEvaluator *eval = [[[iTermExpressionEvaluator alloc] initWithInterpolatedString:swifty
+                                                                                             scope:scope] autorelease];
+    __weak __typeof(self) weakSelf = self;
+    [eval evaluateWithTimeout:5 completion:^(iTermExpressionEvaluator * _Nonnull evaluator) {
+        if (![NSString castFrom:evaluator.value]) {
+            return;
+        }
+        [weakSelf runCoprocessWithCompletion:^(id output, NSError *error){}
+                                 commandLine:evaluator.value
+                                        mute:@NO];
+    }];
+    return YES;
+}
+
 - (BOOL)sessionViewTerminalIsFirstResponder {
     return [self textViewIsFirstResponder];
 }

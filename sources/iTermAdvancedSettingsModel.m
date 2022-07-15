@@ -331,7 +331,7 @@ DEFINE_BOOL(shouldSetTerminfoDirs, YES, SECTION_TERMINAL @"Set $TERMINFO_DIRS to
 // See the discussion in -[VT100Output reportSecondaryDeviceAttribute]
 DEFINE_INT(xtermVersion, 2500, SECTION_TERMINAL @"xterm version for secondary device attributes (SDA).\nIncreasing this number enables more features in apps but may break things. Use 95 to recover pre-3.4.10 behavior.");
 DEFINE_BOOL(p3, YES, SECTION_TERMINAL @"Use P3 as default color space? If No, sRGB will be used.");
-
+DEFINE_STRING(fileDropCoprocess, @"", SECTION_TERMINAL @"When a file is dropped into a terminal window execute a coprocess.\nThis is an interpolated string. Use \\(filename) to reference the full path to the dropped file. If this preference is empty, the filename gets pasted instead.")
 #pragma mark Hotkey
 
 #define SECTION_HOTKEY @"Hotkey: "
