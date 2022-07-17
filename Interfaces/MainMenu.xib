@@ -31,7 +31,7 @@
                             <menuItem isSeparatorItem="YES" id="Dxk-DH-qzi">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
-                            <menuItem title="Check For Updates…" identifier="Check For Updates…" id="880">
+                            <menuItem title="Check for Updates…" identifier="Check for Updates…" id="880">
                                 <connections>
                                     <action selector="checkForUpdatesFromMenu:" target="201" id="vmh-LD-TwW"/>
                                 </connections>

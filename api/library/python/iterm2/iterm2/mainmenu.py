@@ -93,7 +93,7 @@ class MainMenu:
     class iTerm2(enum.Enum):
         ABOUT_ITERM2 = MenuItemIdentifier("About iTerm2", "About iTerm2")
         SHOW_TIP_OF_THE_DAY = MenuItemIdentifier("Show Tip of the Day", "Show Tip of the Day")
-        CHECK_FOR_UPDATES = MenuItemIdentifier("Check For Updates…", "Check For Updates…")
+        CHECK_FOR_UPDATES = MenuItemIdentifier("Check for Updates…", "Check for Updates…")
         TOGGLE_DEBUG_LOGGING = MenuItemIdentifier("Toggle Debug Logging", "Toggle Debug Logging")
         COPY_PERFORMANCE_STATS = MenuItemIdentifier("Copy Performance Stats", "Copy Performance Stats")
         CAPTURE_GPU_FRAME = MenuItemIdentifier("Capture GPU Frame", "Capture Metal Frame")
