@@ -45,6 +45,7 @@
 #import "iTermObject.h"
 #import "iTermOpenQuicklyWindow.h"
 #import "iTermOrderEnforcer.h"
+#import "iTermPasswordManagerWindowController.h"
 #import "iTermPreferences.h"
 #import "iTermProfilePreferences.h"
 #import "iTermProfilesWindowController.h"
@@ -227,6 +228,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     iTermObject,
     iTermRestorableWindowController,
     iTermTabBarControlViewDelegate,
+    iTermPasswordManagerDelegate,
     iTermUniquelyIdentifiable,
     PTYTabDelegate,
     iTermRootTerminalViewDelegate,
@@ -367,6 +369,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 
     // Used to prevent infinite reentrancy in windowDidChangeScreen:.
     BOOL _inWindowDidChangeScreen;
+
+    iTermPasswordManagerWindowController *_passwordManagerWindowController;
 
     // Keeps the touch bar from updating on every keypress which is distracting.
     iTermRateLimitedIdleUpdate *_touchBarRateLimitedUpdate;
@@ -1048,6 +1052,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_desiredTitle release];
     [_tabsTouchBarItem release];
     [_autocompleteCandidateListItem release];
+    [_passwordManagerWindowController release];
     [_touchBarRateLimitedUpdate invalidate];
     [_touchBarRateLimitedUpdate release];
     [_previousTouchBarWord release];
@@ -7133,10 +7138,38 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 
 - (void)openPasswordManagerToAccountName:(NSString *)name
                                inSession:(PTYSession *)session {
+    DLog(@"openPasswordManagerToAccountName:%@ inSession:%@", name, session);
+    if (session && !session.canOpenPasswordManager) {
+        DLog(@"Can't open password manager right now");
+        return;
+    }
+    if (_passwordManagerWindowController != nil) {
+        DLog(@"Password manager sheet already open");
+        return;
+    }
+    // It would be a shame to send a focus report to a password prompt.
+    [(session ?: self.currentSession) performBlockWithoutFocusReporting:^{
+        [session reveal];
+        DLog(@"Show the password manager as a sheet");
+        _passwordManagerWindowController.delegate = nil;
+        [_passwordManagerWindowController autorelease];
+        _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
+        _passwordManagerWindowController.delegate = self;
+
+        [self.window beginSheet:[_passwordManagerWindowController window] completionHandler:^(NSModalResponse returnCode) {
+            [[_passwordManagerWindowController window] close];
+            [_passwordManagerWindowController autorelease];
+            _passwordManagerWindowController = nil;
+        }];
+
+        [_passwordManagerWindowController selectAccountName:name];
+    }];
 }
 
 - (BOOL)tabPasswordManagerWindowIsOpen {
-    return NO;
+    return [self.window.sheets anyWithBlock:^BOOL(__kindof NSWindow *anObject) {
+        return [anObject isKindOfClass:[iTermPasswordManagerPanel class]];
+    }];
 }
 
 // You can drag the window by the pane title bar if it's the only pane in the only tab and the
@@ -11012,10 +11045,86 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     }
 }
 
+#pragma mark - iTermPasswordManagerDelegate
+
+- (BOOL)iTermPasswordManagerCanEnterPassword {
+    PTYSession *session = [self currentSession];
+    return session && ![session exited];
+}
+
+- (BOOL)iTermPasswordManagerCanBroadcast {
+    return self.broadcastSessions.count > 1;
+}
+
+- (void)iTermPasswordManagerWillClose {
+    [self.currentSession incrementDisableFocusReporting:1];
+}
+
+- (void)iTermPasswordManagerDidClose {
+    [self.currentSession incrementDisableFocusReporting:-1];
+}
 
 - (void)broadcastPassword:(NSString *)password {
-
+    [iTermBroadcastPasswordHelper tryToSendPassword:password
+                                         toSessions:self.broadcastSessions
+                                         completion:
+     ^NSArray<PTYSession *> * _Nonnull(NSArray<PTYSession *> * _Nonnull okSessions,
+                                       NSArray<PTYSession *> * _Nonnull problemSessions) {
+         if (problemSessions.count == 0) {
+             return okSessions;
+         }
+         NSArray<NSString *> *names = [problemSessions mapWithBlock:^id(PTYSession *session) {
+             return session.nameController.presentationSessionTitle;
+         }];
+         NSString *message;
+         if (names.count < 2) {
+             message = [NSString stringWithFormat:@"The session named “%@” does not appear to be at a password prompt.", names.firstObject];
+         } else {
+             message = [NSString stringWithFormat:@"The following sessions to which input is broadcast do not appear to be at a password prompt: %@", [names componentsJoinedWithOxfordComma]];
+         }
+         NSArray *actions;
+         if (okSessions.count > 0) {
+             actions = @[ @"Cancel", @"Enter Password in Sessions at Prompt" ];
+         } else {
+             actions = @[ @"OK" ];
+         }
+         iTermWarningSelection selection = [iTermWarning showWarningWithTitle:message
+                                                                      actions:actions
+                                                                    accessory:nil
+                                                                   identifier:nil
+                                                                  silenceable:kiTermWarningTypePersistent
+                                                                      heading:@"Not all sessions at password prompt"
+                                                                       window:self.window];
+         switch (selection) {
+             case kiTermWarningSelection0:
+                 return @[];
+             case kiTermWarningSelection1:
+                 return okSessions;
+             default:
+                 break;  // shouldn't happen
+         }
+         return @[];
+     }];
 }
+
+- (void)iTermPasswordManagerEnterPassword:(NSString *)password broadcast:(BOOL)broadcast {
+    if (broadcast) {
+        [self broadcastPassword:password];
+    } else {
+        [[self currentSession] enterPassword:password];
+    }
+}
+
+- (BOOL)iTermPasswordManagerCanEnterUserName {
+    return YES;
+}
+
+- (void)iTermPasswordManagerEnterUserName:(NSString *)username broadcast:(BOOL)broadcast {
+    [[self currentSession] performBlockWithoutFocusReporting:^{
+        [[self currentSession] writeTask:[username stringByAppendingString:@"\n"]];
+    }];
+}
+
 
 #pragma mark - PTYTabDelegate
 

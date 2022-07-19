@@ -6493,7 +6493,7 @@ backgroundColor:(NSColor *)backgroundColor {
 }
 
 - (BOOL)sessionPasswordManagerWindowIsOpen {
-    return NO;
+    return [self.delegate tabPasswordManagerWindowIsOpen];
 }
 
 - (BOOL)sessionShouldDragWindowByPaneTitleBar:(PTYSession *)session {

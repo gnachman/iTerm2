@@ -8,6 +8,7 @@
 
 #import "FileTransferManager.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermPasswordManagerWindowController.h"
 #import "NSArray+iTerm.h"
 #import "TransferrableFileMenuItemViewController.h"
 
@@ -15,13 +16,14 @@
 // seconds.
 static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 
-@interface FileTransferManager ()
+@interface FileTransferManager ()<iTermPasswordManagerDelegate>
 @property(nonatomic, retain) NSMutableArray *files;
 @end
 
 @implementation FileTransferManager {
     NSMutableArray *_viewControllers;
     NSTimer *_timer;  // cleanUpMenus timer. weak reference.
+    iTermPasswordManagerWindowController *_passwordManagerWindowController;
     void (^_passwordCompletion)(NSString *password);
 }
 
@@ -387,6 +389,14 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
 }
 
 - (void)asynchronouslySelectPasswordFromPasswordManager:(void (^)(NSString *password))completion {
+    if (_passwordManagerWindowController) {
+        completion(nil);
+        return;
+    }
+    _passwordManagerWindowController = [[iTermPasswordManagerWindowController alloc] init];
+    _passwordManagerWindowController.delegate = self;
+    [[_passwordManagerWindowController window] makeKeyAndOrderFront:nil];
+    _passwordCompletion = [completion copy];
 }
 
 // Shows message, returns YES if OK, NO if Cancel
@@ -410,5 +420,37 @@ static const NSTimeInterval kMaximumTimeToKeepFinishedDownload = 24 * 60 * 60;
     [_viewControllers removeObject:viewController];
 }
 
+#pragma mark - iTermPasswordManagerDelegate
+
+- (BOOL)iTermPasswordManagerCanEnterPassword {
+    return YES;
+}
+
+- (void)iTermPasswordManagerEnterPassword:(NSString *)password broadcast:(BOOL)broadcast {
+    if (_passwordCompletion) {
+        _passwordCompletion(password);
+    }
+    _passwordCompletion = nil;
+    _passwordManagerWindowController.delegate = nil;
+    _passwordManagerWindowController = nil;
+}
+
+- (void)iTermPasswordManagerEnterUserName:(NSString *)username broadcast:(BOOL)broadcast {
+    assert(false);
+}
+
+- (BOOL)iTermPasswordManagerCanEnterUserName {
+    return NO;
+}
+
+- (BOOL)iTermPasswordManagerCanBroadcast {
+    return NO;
+}
+
+- (void)iTermPasswordManagerDidClose {
+    _passwordCompletion = nil;
+    _passwordManagerWindowController.delegate = nil;
+    _passwordManagerWindowController = nil;
+}
 
 @end

@@ -753,7 +753,33 @@ static unsigned long long MakeUniqueID(void) {
 }
 
 - (BOOL)shouldCopyServerTo:(NSString *)desiredPath {
-    return NO;
+    DLog(@"%@", desiredPath);
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    if (![fileManager fileExistsAtPath:desiredPath]) {
+        DLog(@"File doesn't exist");
+        return YES;
+    }
+
+    NSError *error = nil;
+    NSDictionary<NSFileAttributeKey, id> *attributes = [fileManager attributesOfItemAtPath:desiredPath error:&error];
+    if (!attributes) {
+        DLog(@"%@", error);
+        return YES;
+    }
+
+    const long long existingFileSize = [attributes fileSize];
+
+    NSString *pathToServerInBundle = [self pathToServerInBundle];
+    attributes = [fileManager attributesOfItemAtPath:pathToServerInBundle error:&error];
+    if (!attributes) {
+        DLog(@"%@", error);
+        return YES;
+    }
+
+    const long long bundleFileSize = [attributes fileSize];
+    DLog(@"Existing size=%@ bundle size=%@", @(existingFileSize), @(bundleFileSize));
+
+    return existingFileSize != bundleFileSize;
 }
 
 // Copy iTermServer to a safe location where Autoupdate won't delete it. See issue 9022 for
