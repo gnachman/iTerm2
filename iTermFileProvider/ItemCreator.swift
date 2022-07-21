@@ -58,16 +58,20 @@ actor ItemCreator {
             
             switch file.kind {
             case .symlink(let target):
+                log("Create symlink")
                 _ = try await remoteService.ln(
                     source: await rebaseLocalFile(manager, path: target),
                     file: file)
             case .folder:
+                log("Create folder")
                 try await remoteService.mkdir(file)
             case .file(_):
+                log("Create file")
                 request.progress.totalUnitCount = Int64(data.count)
                 try await remoteService.create(file, content: data)
                 request.progress.completedUnitCount = Int64(data.count)
             case .host:
+                log("Create host")
                 throw NSFileProviderError(.noSuchItem)  // no appropriate error exists
             }
             return Item(item: await FileProviderItem(file, manager: manager),

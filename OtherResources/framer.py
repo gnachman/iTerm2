@@ -527,6 +527,12 @@ async def handle_file(identifier, args):
             return
         await handle_file_rm(identifier, base64.b64decode(args[i]).decode('latin1'), recursive)
         return
+    if sub == "ln":
+        await handle_file_ln(
+            identifier,
+            base64.b64decode(args[1]).decode('latin1'),
+            base64.b64decode(args[2]).decode('latin1'))
+        return
     log(f'unrecognized subcommand {sub}')
     end(identifier, 1)
 
@@ -601,14 +607,17 @@ async def handle_file_ls(identifier, path, sorting):
     except Exception as e:
         file_error(identifier, e, path)
 
+def send_remote_file(path):
+    pp = permissions(os.path.abspath(os.path.join(path, os.pardir)))
+    s = os.stat(path, follow_symlinks=False)
+    obj = remotefile(pp, path, s)
+    j = json.dumps(obj)
+    send_esc(j)
+
 async def handle_file_stat(identifier, path):
     log(f'handle_file_stat {identifier} {path}')
     try:
-        pp = permissions(os.path.abspath(os.path.join(path, os.pardir)))
-        s = os.stat(path, follow_symlinks=False)
-        obj = remotefile(pp, path, s)
-        j = json.dumps(obj)
-        send_esc(j)
+        send_remote_file(path)
         end(identifier, 0)
     except Exception as e:
         file_error(identifier, e, path)
@@ -642,6 +651,15 @@ async def handle_file_rm(identifier, path, recursive):
         end(identifier, 0)
     except Exception as e:
         file_error(identifier, e, path)
+
+async def handle_file_ln(identifier, pointTo, symlink):
+    log(f'handle_file_ln {pointTo} {symlink}')
+    try:
+        os.symlink(pointTo, symlink)
+        send_remote_file(symlink)
+        end(identifier, 0)
+    except Exception as e:
+        file_error(identifier, e, symlink)
 
 async def handle_recover(identifier, args):
     log("handle_recover")

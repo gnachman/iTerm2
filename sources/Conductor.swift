@@ -117,6 +117,7 @@ class Conductor: NSObject, Codable {
         case fetch(path: Data)
         case stat(path: Data)
         case rm(path: Data, recursive: Bool)
+        case ln(source: Data, symlink: Data)
 
         var stringValue: String {
             switch self {
@@ -139,6 +140,11 @@ class Conductor: NSObject, Codable {
             case .rm(let path, let recursive):
                 let args = ["rm"] + (recursive ? ["-r"] : []) + [path.base64EncodedString()]
                 return args.joined(separator: "\n")
+
+            case .ln(let source, let symlink):
+                return ["ln",
+                        source.base64EncodedString(),
+                        symlink.base64EncodedString()].joined(separator: "\n")
             }
         }
 
@@ -152,6 +158,8 @@ class Conductor: NSObject, Codable {
                 return "stat \(path.stringOrHex)"
             case .rm(path: let path, recursive: let recursive):
                 return "rm " + (recursive ? "-r " : "") + path.stringOrHex
+            case .ln(source: let source, symlink: let symlink):
+                return "ln -s \(source.stringOrHex) \(symlink.stringOrHex)"
             }
         }
     }
@@ -1585,6 +1593,17 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    private func remoteFile(_ json: String) throws -> RemoteFile {
+        log("file operation completed with \(json.count) characters")
+        guard let jsonData = json.data(using: .utf8) else {
+            throw iTermFileProviderServiceError.internalError("Server returned garbage")
+        }
+        let decoder = JSONDecoder()
+        return try iTermFileProviderServiceError.wrap {
+            return try decoder.decode(RemoteFile.self, from: jsonData)
+        }
+    }
+
     func stat(_ path: String) async throws -> RemoteFile {
         return try await logging("stat \(path)") {
             guard let pathData = path.data(using: .utf8) else {
@@ -1592,14 +1611,9 @@ extension Conductor: SSHEndpoint {
             }
             log("perform file operation to stat \(path)")
             let json = try await performFileOperation(subcommand: .stat(path: pathData))
-            log("file operation completed with \(json.count) characters")
-            guard let jsonData = json.data(using: .utf8) else {
-                throw iTermFileProviderServiceError.internalError("Server returned garbage")
-            }
-            let decoder = JSONDecoder()
-            return try iTermFileProviderServiceError.wrap {
-                return try decoder.decode(RemoteFile.self, from: jsonData)
-            }
+            let result = try remoteFile(json)
+            log("finished")
+            return result
         }
     }
 
@@ -1615,7 +1629,20 @@ extension Conductor: SSHEndpoint {
     }
 
     func ln(_ source: String, _ symlink: String) async throws -> RemoteFile {
-        throw iTermFileProviderServiceError.todo
+        try await logging("ln -s \(source) \(symlink)") {
+            guard let sourceData = source.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(source)
+            }
+            guard let symlinkData = symlink.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(symlink)
+            }
+            log("perform file operation to make a symlink")
+            let json = try await performFileOperation(subcommand: .ln(source: sourceData,
+                                                                      symlink: symlinkData))
+            let result = try remoteFile(json)
+            log("finished")
+            return result
+        }
     }
 
     func mv(_ file: String, newParent: String, newName: String) async throws -> RemoteFile {
