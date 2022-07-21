@@ -9,6 +9,7 @@ import pty
 import pwd
 import random
 import re
+import shutil
 import signal
 import stat
 import subprocess
@@ -498,22 +499,35 @@ async def handle_save(identifier, args):
     end(identifier, code)
 
 async def handle_file(identifier, args):
-    log(f'handle_ls {identifier} {args}')
+    log(f'handle_file {identifier} {args}')
     if len(args) < 2:
         begin(identifier)
         end(identifier, 1)
         return
     begin(identifier)
-    if args[0] == "ls":
+    sub = args[0]
+    if sub == "ls":
         await handle_file_ls(identifier, base64.b64decode(args[1]).decode('latin1'), args[2])
         return
-    if args[0] == "fetch":
+    if sub == "fetch":
         await handle_file_fetch(identifier, base64.b64decode(args[1]).decode('latin1'))
         return
-    if args[0] == "stat":
+    if sub == "stat":
         await handle_file_stat(identifier, base64.b64decode(args[1]).decode('latin1'))
         return
-    log(f'unrecognized subcommand args[0]')
+    if sub == "rm":
+        i = 1
+        recursive = False
+        while i < len(args) and args[i].startswith("-"):
+            if args[i] == "-r":
+                recursive = True
+            i += 1
+        if i == len(args):
+            end(identifier, 1)
+            return
+        await handle_file_rm(identifier, base64.b64decode(args[i]).decode('latin1'), recursive)
+        return
+    log(f'unrecognized subcommand {sub}')
     end(identifier, 1)
 
 def permissions(path):
@@ -614,6 +628,20 @@ async def handle_file_fetch(identifier, path):
     except Exception as e:
         file_error(identifier, e, path)
 
+async def handle_file_rm(identifier, path, recursive):
+    log(f'handle_file_rm {identifier} {path} {recursive}')
+    try:
+        if os.path.isdir(path):
+            if recursive:
+                shutil.rmtree(path)
+            else:
+                os.rmdir(path)
+        else:
+            os.unlink(path)
+        log("ending")
+        end(identifier, 0)
+    except Exception as e:
+        file_error(identifier, e, path)
 
 async def handle_recover(identifier, args):
     log("handle_recover")

@@ -2,6 +2,20 @@ import Foundation
 import FileProvider
 import FileProviderService
 
+fileprivate extension Error {
+    var asSystemFileProviderError: NSFileProviderError {
+        if let error = self as? NSFileProviderError {
+            return error
+        }
+        switch self as? iTermFileProviderServiceError {
+        case .none, .todo, .disconnected, .unknown, .internalError:
+            return NSFileProviderError(.serverUnreachable)
+        case .notFound, .notAFile, .permissionDenied:
+            return NSFileProviderError(.noSuchItem)
+        }
+    }
+}
+
 // Methods called by file provider. Proxies requests over XPC to the main app.
 actor RemoteService {
     private let xpcService: FileProviderService
@@ -24,14 +38,14 @@ actor RemoteService {
                     case .list(.success(let result)):
                         continuation.resume(with: .success(result))
                     case .list(.failure(let error)):
-                        continuation.resume(with: .failure(error))
+                        continuation.resume(with: .failure(error.asSystemFileProviderError))
                     default:
                         log("Unexpected response \(response)")
                         continuation.resume(with: .failure(NSFileProviderError(.noSuchItem)))
                     }
                 })
             } catch {
-                continuation.resume(with: .failure(error))
+                continuation.resume(with: .failure(error.asSystemFileProviderError))
             }
         }
     }
@@ -45,14 +59,14 @@ actor RemoteService {
                     case .lookup(.success(let result)):
                         continuation.resume(with: .success(result))
                     case .lookup(.failure(let error)):
-                        continuation.resume(with: .failure(error))
+                        continuation.resume(with: .failure(error.asSystemFileProviderError))
                     default:
                         log("Unexpected response \(response)")
                         continuation.resume(with: .failure(NSFileProviderError(.noSuchItem)))
                     }
                 })
             } catch {
-                continuation.resume(with: .failure(error))
+                continuation.resume(with: .failure(error.asSystemFileProviderError))
             }
         }
     }
@@ -73,14 +87,14 @@ actor RemoteService {
                             stream.yield(.success(data))
                             stream.finish()
                         case .fetch(.failure(let error)):
-                            stream.yield(.failure(error))
+                            stream.yield(.failure(error.asSystemFileProviderError))
                         default:
                             log("Unexpected response \(response)")
                             stream.yield(.failure(NSFileProviderError(.noSuchItem)))
                         }
                     })
                 } catch {
-                    stream.yield(.failure(error))
+                    stream.yield(.failure(error.asSystemFileProviderError))
                 }
             }
         }
@@ -94,7 +108,7 @@ actor RemoteService {
                     switch response {
                     case .delete(let error):
                         if let error = error {
-                            continuation.resume(with: .failure(error))
+                            continuation.resume(with: .failure(error.asSystemFileProviderError))
                         } else {
                             continuation.resume(with: .success(()))
                         }
@@ -104,7 +118,7 @@ actor RemoteService {
                     }
                 })
             } catch {
-                continuation.resume(with: .failure(error))
+                continuation.resume(with: .failure(error.asSystemFileProviderError))
             }
         }
     }
@@ -118,14 +132,14 @@ actor RemoteService {
                     case .ln(.success(let result)):
                         continuation.resume(with: .success(result))
                     case .ln(.failure(let error)):
-                        continuation.resume(with: .failure(error))
+                        continuation.resume(with: .failure(error.asSystemFileProviderError))
                     default:
                         log("Unexpected response \(response)")
                         continuation.resume(with: .failure(NSFileProviderError(.noSuchItem)))
                     }
                 })
             } catch {
-                continuation.resume(with: .failure(error))
+                continuation.resume(with: .failure(error.asSystemFileProviderError))
             }
         }
     }
@@ -139,14 +153,14 @@ actor RemoteService {
                     case .mv(.success(let result)):
                         continuation.resume(with: .success(result))
                     case .mv(.failure(let error)):
-                        continuation.resume(with: .failure(error))
+                        continuation.resume(with: .failure(error.asSystemFileProviderError))
                     default:
                         log("Unexpected response \(response)")
                         continuation.resume(with: .failure(NSFileProviderError(.noSuchItem)))
                     }
                 })
             } catch {
-                continuation.resume(with: .failure(error))
+                continuation.resume(with: .failure(error.asSystemFileProviderError))
             }
         }
     }
@@ -159,7 +173,7 @@ actor RemoteService {
                     switch response {
                     case .mkdir(let error):
                         if let error = error {
-                            continuation.resume(with: .failure(error))
+                            continuation.resume(with: .failure(error.asSystemFileProviderError))
                         } else {
                             continuation.resume(with: .success(()))
                         }
@@ -169,7 +183,7 @@ actor RemoteService {
                     }
                 })
             } catch {
-                continuation.resume(with: .failure(error))
+                continuation.resume(with: .failure(error.asSystemFileProviderError))
             }
         }
     }
@@ -182,7 +196,7 @@ actor RemoteService {
                     switch response {
                     case .create(let error):
                         if let error = error {
-                            continuation.resume(with: .failure(error))
+                            continuation.resume(with: .failure(error.asSystemFileProviderError))
                         } else {
                             continuation.resume(with: .success(()))
                         }
@@ -192,7 +206,7 @@ actor RemoteService {
                     }
                 })
             } catch {
-                continuation.resume(with: .failure(error))
+                continuation.resume(with: .failure(error.asSystemFileProviderError))
             }
         }
     }
@@ -208,14 +222,14 @@ actor RemoteService {
                     case .replaceContents(.success(let result)):
                         continuation.resume(with: .success(result))
                     case .replaceContents(.failure(let error)):
-                        continuation.resume(with: .failure(error))
+                        continuation.resume(with: .failure(error.asSystemFileProviderError))
                     default:
                         log("Unexpected response \(response)")
                         continuation.resume(with: .failure(NSFileProviderError(.noSuchItem)))
                     }
                 })
             } catch {
-                continuation.resume(with: .failure(error))
+                continuation.resume(with: .failure(error.asSystemFileProviderError))
             }
         }
     }
@@ -229,14 +243,14 @@ actor RemoteService {
                     case .setModificationDate(.success(let result)):
                         continuation.resume(with: .success(result))
                     case .setModificationDate(.failure(let error)):
-                        continuation.resume(with: .failure(error))
+                        continuation.resume(with: .failure(error.asSystemFileProviderError))
                     default:
                         log("Unexpected response \(response)")
                         continuation.resume(with: .failure(NSFileProviderError(.noSuchItem)))
                     }
                 })
             } catch {
-                continuation.resume(with: .failure(error))
+                continuation.resume(with: .failure(error.asSystemFileProviderError))
             }
         }
     }
@@ -250,14 +264,14 @@ actor RemoteService {
                     case .chmod(.success(let result)):
                         continuation.resume(with: .success(result))
                     case .chmod(.failure(let error)):
-                        continuation.resume(with: .failure(error))
+                        continuation.resume(with: .failure(error.asSystemFileProviderError))
                     default:
                         log("Unexpected response \(response)")
                         continuation.resume(with: .failure(NSFileProviderError(.noSuchItem)))
                     }
                 })
             } catch {
-                continuation.resume(with: .failure(error))
+                continuation.resume(with: .failure(error.asSystemFileProviderError))
             }
         }
     }

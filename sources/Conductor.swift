@@ -116,6 +116,7 @@ class Conductor: NSObject, Codable {
         case ls(path: Data, sorting: FileSorting)
         case fetch(path: Data)
         case stat(path: Data)
+        case rm(path: Data, recursive: Bool)
 
         var stringValue: String {
             switch self {
@@ -134,6 +135,10 @@ class Conductor: NSObject, Codable {
 
             case .stat(let path):
                 return "stat\n\(path.base64EncodedString())"
+
+            case .rm(let path, let recursive):
+                let args = ["rm"] + (recursive ? ["-r"] : []) + [path.base64EncodedString()]
+                return args.joined(separator: "\n")
             }
         }
 
@@ -145,6 +150,8 @@ class Conductor: NSObject, Codable {
                 return "fetch \(path.stringOrHex)"
             case .stat(let path):
                 return "stat \(path.stringOrHex)"
+            case .rm(path: let path, recursive: let recursive):
+                return "rm " + (recursive ? "-r " : "") + path.stringOrHex
             }
         }
     }
@@ -805,7 +812,7 @@ class Conductor: NSObject, Codable {
 
     @available(macOS 11.0, *)
     fileprivate func framerFile(_ subcommand: FileSubcommand, completion: @escaping (String, Int32) -> ()) {
-        mylog("Sending framerFile request \(subcommand)")
+        log("Sending framerFile request \(subcommand)")
         send(.framerFile(subcommand), .handleFile(StringArray(), completion))
     }
 
@@ -905,7 +912,7 @@ class Conductor: NSObject, Codable {
     }
 
     private func update(executionContext: ExecutionContext, result: PartialResult) -> () {
-        mylog("update \(executionContext) result=\(result)")
+        log("update \(executionContext) result=\(result)")
         switch executionContext.handler {
         case .failIfNonzeroStatus:
             switch result {
@@ -1299,16 +1306,8 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    private func mylog(_ message: String) {
-        if #available(macOS 11, *) {
-            log(message)
-        } else {
-            DLog(message)
-        }
-    }
-
     private func send(_ command: Command, _ handler: ExecutionContext.Handler) {
-        mylog("append \(command) to queue in state \(state)")
+        log("append \(command) to queue in state \(state)")
         queue.append(ExecutionContext(command: command, handler: handler))
         switch state {
         case .ground, .recovery:
@@ -1319,9 +1318,9 @@ class Conductor: NSObject, Codable {
     }
 
     private func dequeue() {
-        mylog("dequeue")
+        log("dequeue")
         guard delegate != nil else {
-            mylog("delegate is nil. clear queue and reset state.")
+            log("delegate is nil. clear queue and reset state.")
             while let pending = queue.first {
                 queue.removeFirst()
                 update(executionContext: pending, result: .abort)
@@ -1330,7 +1329,7 @@ class Conductor: NSObject, Codable {
             return
         }
         guard let pending = queue.first else {
-            mylog("queue is empty")
+            log("queue is empty")
             return
         }
         queue.removeFirst()
@@ -1605,7 +1604,14 @@ extension Conductor: SSHEndpoint {
     }
 
     func delete(_ path: String, recursive: Bool) async throws {
-        throw iTermFileProviderServiceError.todo
+        try await logging("delete \(path) recursive=\(recursive)") {
+            guard let pathData = path.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(path)
+            }
+            log("perform file operation to delete \(path)")
+            _ = try await performFileOperation(subcommand: .rm(path: pathData, recursive: recursive))
+            log("finished")
+        }
     }
 
     func ln(_ source: String, _ symlink: String) async throws -> RemoteFile {

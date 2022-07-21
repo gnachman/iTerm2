@@ -62,7 +62,9 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
             return RemoteFile.workingSet
         default:
             log("Looking up \(identifier.rawValue) from remote service")
-            return try await remoteService.lookup(identifier.rawValue)
+            let result = try await remoteService.lookup(identifier.rawValue)
+            log("Found \(result)")
+            return result
         }
     }
 
@@ -105,6 +107,7 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
                         request: request)
                     let tempURL = try await self.fetcher.fetchContents(fetchRequest,
                                                                        progress: progress)
+                    log("Fetch succeeded")
                     completionHandler(tempURL, item, nil)
                 } catch {
                     log("Failed to fetch \(itemIdentifier.rawValue): \(error)")
@@ -137,8 +140,10 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
         Task {
             do {
                 let item = try await creator.create(request)
+                log("Create succeded")
                 completionHandler(item.item, item.fields, false, nil)
             } catch {
+                log("Create failed with \(error)")
                 completionHandler(nil, [], false, error)
             }
         }
@@ -166,8 +171,10 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
                 do {
                     let file = try await remoteFile(for: item.itemIdentifier)
                     let update = try await modifier.modify(file, request: modifyRequest)
+                    log("Modify succeeded")
                     completionHandler(update.item, update.fields, update.shouldFetchContent, nil)
                 } catch {
+                    log("Modify failed with \(error)")
                     completionHandler(nil, [], true, error)
                 }
             }
@@ -189,6 +196,7 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
                 do {
                     let file = try await remoteFile(for: identifier)
                     try await deleter.delete(file, request: request)
+                    log("Delete succeeded")
                     completionHandler(nil)
                 } catch {
                     log("Delete failed with error: \(error)")

@@ -164,6 +164,7 @@ public enum iTermFileProviderServiceError: Error, Codable, CustomDebugStringConv
     case notAFile(String)
     case permissionDenied(String)
     case internalError(String)  // e.g., URL with contents not readable
+    case disconnected
     
     public var debugDescription: String {
         switch self {
@@ -179,6 +180,8 @@ public enum iTermFileProviderServiceError: Error, Codable, CustomDebugStringConv
             return "<permissionDenied \(file)>"
         case .internalError(let reason):
             return "<internalError \(reason)>"
+        case .disconnected:
+            return "<disconnected>"
         }
     }
 

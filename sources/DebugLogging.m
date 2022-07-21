@@ -7,6 +7,7 @@
 //
 
 #import "DebugLogging.h"
+#import "FileProviderService/FileProviderService-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "NSData+iTerm.h"
@@ -279,6 +280,12 @@ void LogForNextCrash(const char *file, int line, const char *function, NSString*
 static void StartDebugLogging() {
     [GetDebugLogLock() lock];
     if (!gDebugLogging) {
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            FileProviderLogging.callback = ^(NSString *message) {
+                DLog(@"%@", message);
+            };
+        });
         if (![iTermAdvancedSettingsModel appendToExistingDebugLog]) {
             [[NSFileManager defaultManager] removeItemAtURL:[NSURL fileURLWithPath:kDebugLogFilename]
                                                       error:nil];

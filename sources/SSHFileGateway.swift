@@ -132,9 +132,9 @@ actor SSHFileGateway {
         while true {
             let messages = self.messages
             self.messages.removeAll()
-            logger.debug("Send to extension: \(messages.map { $0.debugDescription }.joined(separator: " | "), privacy: .public)")
+            log("Send to extension: \(messages.map { $0.debugDescription }.joined(separator: " | "))")
             let e2m = try await proxy.poll(MainAppToExtension(events: messages)).value
-            logger.debug("Poll returned with \(e2m.debugDescription, privacy: .public)")
+            log("Poll returned with \(e2m.debugDescription)")
 
             for request in e2m.events {
                 let result = await delegate.handleSSHFileRequest(request.kind)

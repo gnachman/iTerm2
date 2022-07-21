@@ -10800,6 +10800,8 @@
 		A6C1FE5D284C1BF200EA8A3B /* iTermFileProvider */ = {
 			isa = PBXGroup;
 			children = (
+				A6C1FE65284C1BF200EA8A3B /* iTermFileProvider.entitlements */,
+				A6C1FE64284C1BF200EA8A3B /* Info.plist */,
 				A69412F028555D3B0086F068 /* CachingPaginatingDataSource.swift */,
 				A69412F228555D3C0086F068 /* FileListDiff.swift */,
 				A69412EC28555D3A0086F068 /* FileProviderEnumerator.swift */,
@@ -10809,11 +10811,9 @@
 				A69412E928555D390086F068 /* FileProviderLogging.swift */,
 				A63EB04D284D1DB400B2AB89 /* FileProviderServiceServer.swift */,
 				A69412E428555C5F0086F068 /* FileProviderServicing.swift */,
-				A6C1FE64284C1BF200EA8A3B /* Info.plist */,
 				A69412E628555D390086F068 /* ItemCreator.swift */,
 				A69412EE28555D3B0086F068 /* ItemDeleter.swift */,
 				A69412EB28555D3A0086F068 /* ItemModifier.swift */,
-				A6C1FE65284C1BF200EA8A3B /* iTermFileProvider.entitlements */,
 				A69412F128555D3C0086F068 /* NSFileProviderPage+Additions.swift */,
 				A69412F328555D3C0086F068 /* Paginator.swift */,
 				A69412F528555D3C0086F068 /* RebaseLocalFile.swift */,
