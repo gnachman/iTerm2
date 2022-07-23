@@ -121,6 +121,7 @@ class Conductor: NSObject, Codable {
         case mv(source: Data, dest: Data)
         case mkdir(path: Data)
         case create(path: Data, content: Data)
+        case utime(path: Data, date: Date)
 
         var stringValue: String {
             switch self {
@@ -159,6 +160,12 @@ class Conductor: NSObject, Codable {
                     "create",
                     path.base64EncodedString()
                 ] + content.base64EncodedString().chunk(80)).joined(separator: "\n")
+            case .utime(path: let path, date: let date):
+                return [
+                    "utime",
+                    path.base64EncodedString(),
+                    String(date.timeIntervalSince1970)
+                ].joined(separator: "\n")
             }
         }
 
@@ -180,6 +187,8 @@ class Conductor: NSObject, Codable {
                 return "mkdir \(path.stringOrHex)"
             case .create(path: let path, content: let content):
                 return "create \(path.stringOrHex) length=\(content.count) bytes"
+            case .utime(path: let path, date: let date):
+                return "utime \(path.stringOrHex) \(date)"
             }
         }
     }
@@ -1720,7 +1729,17 @@ extension Conductor: SSHEndpoint {
     }
 
     func setModificationDate(_ file: String, date: Date) async throws -> RemoteFile {
-        throw iTermFileProviderServiceError.todo
+        try await logging("utime \(file) \(date)") {
+            guard let pathData = file.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(file)
+            }
+            log("perform file operation to replace \(file)")
+            let json = try await performFileOperation(subcommand: .utime(path: pathData,
+                                                                         date: date))
+            let result = try remoteFile(json)
+            log("finished")
+            return result
+        }
     }
 
     func chmod(_ file: String, permissions: RemoteFile.Permissions) async throws -> RemoteFile {

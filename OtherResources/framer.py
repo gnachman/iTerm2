@@ -543,10 +543,14 @@ async def handle_file(identifier, args):
         await handle_file_mkdir(identifier, base64.b64decode(args[1]).decode('latin1'))
         return
     if sub == "create":
-        await handle_file_create(
-                                 identifier,
+        await handle_file_create(identifier,
                                  base64.b64decode(args[1]).decode('latin1'),
                                  base64.b64decode("".join(args[2:])))
+        return
+    if sub == "utime":
+        await handle_file_utime(identifier,
+                                base64.b64decode(args[1]).decode('latin1'),
+                                int(float(args[2])))
         return
     log(f'unrecognized subcommand {sub}')
     end(identifier, 1)
@@ -698,6 +702,15 @@ async def handle_file_create(identifier, path, content):
     try:
         with open(path, "wb") as f:
             f.write(content)
+        send_remote_file(path)
+        end(identifier, 0)
+    except Exception as e:
+        file_error(identifier, e, path)
+
+async def handle_file_utime(identifier, path, date):
+    log(f'handle_file_utime {identifier} {path} {date}')
+    try:
+        os.utime(path, (date, date))
         send_remote_file(path)
         end(identifier, 0)
     except Exception as e:
