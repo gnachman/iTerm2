@@ -118,6 +118,7 @@ class Conductor: NSObject, Codable {
         case stat(path: Data)
         case rm(path: Data, recursive: Bool)
         case ln(source: Data, symlink: Data)
+        case mv(source: Data, dest: Data)
 
         var stringValue: String {
             switch self {
@@ -145,6 +146,10 @@ class Conductor: NSObject, Codable {
                 return ["ln",
                         source.base64EncodedString(),
                         symlink.base64EncodedString()].joined(separator: "\n")
+            case .mv(let source, let dest):
+                return ["mv",
+                        source.base64EncodedString(),
+                        dest.base64EncodedString()].joined(separator: "\n")
             }
         }
 
@@ -160,6 +165,8 @@ class Conductor: NSObject, Codable {
                 return "rm " + (recursive ? "-r " : "") + path.stringOrHex
             case .ln(source: let source, symlink: let symlink):
                 return "ln -s \(source.stringOrHex) \(symlink.stringOrHex)"
+            case .mv(source: let source, dest: let dest):
+                return "mv \(source.stringOrHex) \(dest.stringOrHex)"
             }
         }
     }
@@ -1645,8 +1652,22 @@ extension Conductor: SSHEndpoint {
         }
     }
 
-    func mv(_ file: String, newParent: String, newName: String) async throws -> RemoteFile {
-        throw iTermFileProviderServiceError.todo
+    func mv(_ source: String, newParent: String, newName: String) async throws -> RemoteFile {
+        let dest = newParent.appending(pathComponent: newName)
+        return try await logging("mv \(source) \(dest)") {
+            guard let sourceData = source.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(source)
+            }
+            guard let destData = dest.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(newName)
+            }
+            log("perform file operation to make a symlink")
+            let json = try await performFileOperation(subcommand: .mv(source: sourceData,
+                                                                      dest: destData))
+            let result = try remoteFile(json)
+            log("finished")
+            return result
+        }
     }
 
     func mkdir(_ file: String) async throws {
