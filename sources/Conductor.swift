@@ -119,6 +119,7 @@ class Conductor: NSObject, Codable {
         case rm(path: Data, recursive: Bool)
         case ln(source: Data, symlink: Data)
         case mv(source: Data, dest: Data)
+        case mkdir(path: Data)
 
         var stringValue: String {
             switch self {
@@ -150,6 +151,8 @@ class Conductor: NSObject, Codable {
                 return ["mv",
                         source.base64EncodedString(),
                         dest.base64EncodedString()].joined(separator: "\n")
+            case .mkdir(let path):
+                return "mkdir\n\(path.base64EncodedString())"
             }
         }
 
@@ -167,6 +170,8 @@ class Conductor: NSObject, Codable {
                 return "ln -s \(source.stringOrHex) \(symlink.stringOrHex)"
             case .mv(source: let source, dest: let dest):
                 return "mv \(source.stringOrHex) \(dest.stringOrHex)"
+            case .mkdir(path: let path):
+                return "mkdir \(path.stringOrHex)"
             }
         }
     }
@@ -1670,8 +1675,15 @@ extension Conductor: SSHEndpoint {
         }
     }
 
-    func mkdir(_ file: String) async throws {
-        throw iTermFileProviderServiceError.todo
+    func mkdir(_ path: String) async throws {
+        try await logging("mkdir \(path)") {
+            guard let pathData = path.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(path)
+            }
+            log("perform file operation to mkdir \(path)")
+            _ = try await performFileOperation(subcommand: .mkdir(path: pathData))
+            log("finished")
+        }
     }
 
     func create(_ file: String, content: Data) async throws {

@@ -539,6 +539,9 @@ async def handle_file(identifier, args):
             base64.b64decode(args[1]).decode('latin1'),
             base64.b64decode(args[2]).decode('latin1'))
         return
+    if sub == "mkdir":
+        await handle_file_mkdir(identifier, base64.b64decode(args[1]).decode('latin1'))
+        return
     log(f'unrecognized subcommand {sub}')
     end(identifier, 1)
 
@@ -675,6 +678,14 @@ async def handle_file_mv(identifier, source, dest):
         end(identifier, 0)
     except Exception as e:
         file_error(identifier, e, source)
+
+async def handle_file_mkdir(identifier, path):
+    log(f'handle_file_mkdir {identifier} {path}')
+    try:
+        os.mkdir(path)
+        end(identifier, 0)
+    except Exception as e:
+        file_error(identifier, e, path)
 
 async def handle_recover(identifier, args):
     log("handle_recover")
