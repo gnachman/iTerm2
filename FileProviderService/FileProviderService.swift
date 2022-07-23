@@ -331,7 +331,7 @@ public class ExtensionToMainAppPayload: NSObject, Codable {
             case mv(file: RemoteFile, newParent: String, newName: String)
             case mkdir(file: RemoteFile)
             case create(file: RemoteFile, content: Data)
-            case replaceContents(file: RemoteFile, url: URL)
+            case replaceContents(file: RemoteFile, contents: Data)
             case setModificationDate(file: RemoteFile, date: Date)
             case chmod(file: RemoteFile, permissions: RemoteFile.Permissions)
 
@@ -355,8 +355,8 @@ public class ExtensionToMainAppPayload: NSObject, Codable {
                     return "<mkdir \(file)>"
                 case let .create(file: file, content: content):
                     return "<create \(file) content size=\(content.count)>"
-                case let .replaceContents(file: file, url: url):
-                    return "<replaceContents \(file) \(url)>"
+                case let .replaceContents(file: file, contents: contents):
+                    return "<replaceContents \(file) length=\(contents.count)>"
                 case let .setModificationDate(file: file, date: date):
                     return "<setModificationDate \(file) \(date)>"
                 case let .chmod(file: file, permissions: permissions):

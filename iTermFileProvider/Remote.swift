@@ -217,7 +217,8 @@ actor RemoteService {
                          url: URL) async throws -> RemoteFile {
         return try await withCheckedThrowingContinuation { continuation in
             do {
-                try xpcService.sendRequest(.replaceContents(file: file, url: url), handler: { response in
+                let data = try Data(contentsOf: url)
+                try xpcService.sendRequest(.replaceContents(file: file, contents: data), handler: { response in
                     switch response {
                     case .replaceContents(.success(let result)):
                         continuation.resume(with: .success(result))

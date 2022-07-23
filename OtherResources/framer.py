@@ -698,6 +698,7 @@ async def handle_file_create(identifier, path, content):
     try:
         with open(path, "wb") as f:
             f.write(content)
+        send_remote_file(path)
         end(identifier, 0)
     except Exception as e:
         file_error(identifier, e, path)

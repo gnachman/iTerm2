@@ -117,8 +117,8 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
             return await mkdir(file: file)
         case .create(file: let file, content: let content):
             return await create(file: file, content: content)
-        case .replaceContents(file: let file, url: let url):
-            return await replaceContents(file: file, url: url)
+        case .replaceContents(file: let file, contents: let contents):
+            return await replaceContents(file: file, contents: contents)
         case .setModificationDate(file: let file, date: let date):
             return await setModificationDate(file: file, date: date)
         case .chmod(file: let file, permissions: let permissions):
@@ -261,9 +261,9 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
     }
 
     func replaceContents(file: RemoteFile,
-                         url: URL) async -> MainAppToExtensionPayload.Event.Kind {
+                         contents: Data) async -> MainAppToExtensionPayload.Event.Kind {
         do {
-            return .replaceContents(.success(try await replaceContentsImpl(file: file, url: url)))
+            return .replaceContents(.success(try await replaceContentsImpl(file: file, contents: contents)))
         } catch let error as SSHEndpointException {
             return .replaceContents(.failure(iTermFileProviderServiceError(error, filename: file.absolutePath)))
         } catch let error as iTermFileProviderServiceError {
@@ -466,16 +466,13 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
     }
 
     func replaceContentsImpl(file: RemoteFile,
-                             url: URL) async throws -> RemoteFile {
-        try await logging("replace \(file.absolutePath) \(url.path)") {
+                             contents: Data) async throws -> RemoteFile {
+        try await logging("replace \(file.absolutePath) length=\(contents.count)") {
             switch self.endpoint(forPath: file.absolutePath) {
             case .none, .root:
                 throw iTermFileProviderServiceError.permissionDenied(file.absolutePath)
             case .ssh(let endpoint):
-                guard let data = try? Data(contentsOf: url) else {
-                    throw iTermFileProviderServiceError.internalError(url.path + " not readable")
-                }
-                return try await endpoint.replace(file.absolutePath.removingHost, content: data)
+                return try await endpoint.replace(file.absolutePath.removingHost, content: contents)
             }
         }
     }

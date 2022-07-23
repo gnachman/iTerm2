@@ -1705,8 +1705,18 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    // This is just create + stat
     func replace(_ file: String, content: Data) async throws -> RemoteFile {
-        throw iTermFileProviderServiceError.todo
+        try await logging("replace \(file) length=\(content.count) bytes") {
+            guard let pathData = file.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(file)
+            }
+            log("perform file operation to replace \(file)")
+            let json = try await performFileOperation(subcommand: .create(path: pathData, content: content))
+            let result = try remoteFile(json)
+            log("finished")
+            return result
+        }
     }
 
     func setModificationDate(_ file: String, date: Date) async throws -> RemoteFile {
