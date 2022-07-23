@@ -120,6 +120,7 @@ class Conductor: NSObject, Codable {
         case ln(source: Data, symlink: Data)
         case mv(source: Data, dest: Data)
         case mkdir(path: Data)
+        case create(path: Data, content: Data)
 
         var stringValue: String {
             switch self {
@@ -153,6 +154,11 @@ class Conductor: NSObject, Codable {
                         dest.base64EncodedString()].joined(separator: "\n")
             case .mkdir(let path):
                 return "mkdir\n\(path.base64EncodedString())"
+            case .create(path: let path, content: let content):
+                return ([
+                    "create",
+                    path.base64EncodedString()
+                ] + content.base64EncodedString().chunk(80)).joined(separator: "\n")
             }
         }
 
@@ -172,6 +178,8 @@ class Conductor: NSObject, Codable {
                 return "mv \(source.stringOrHex) \(dest.stringOrHex)"
             case .mkdir(path: let path):
                 return "mkdir \(path.stringOrHex)"
+            case .create(path: let path, content: let content):
+                return "create \(path.stringOrHex) length=\(content.count) bytes"
             }
         }
     }
@@ -1687,7 +1695,14 @@ extension Conductor: SSHEndpoint {
     }
 
     func create(_ file: String, content: Data) async throws {
-        throw iTermFileProviderServiceError.todo
+        try await logging("create \(file) length=\(content.count) bytes") {
+            guard let pathData = file.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(file)
+            }
+            log("perform file operation to create \(file)")
+            _ = try await performFileOperation(subcommand: .create(path: pathData, content: content))
+            log("finished")
+        }
     }
 
     func replace(_ file: String, content: Data) async throws -> RemoteFile {

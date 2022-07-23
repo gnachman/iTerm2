@@ -542,6 +542,12 @@ async def handle_file(identifier, args):
     if sub == "mkdir":
         await handle_file_mkdir(identifier, base64.b64decode(args[1]).decode('latin1'))
         return
+    if sub == "create":
+        await handle_file_create(
+                                 identifier,
+                                 base64.b64decode(args[1]).decode('latin1'),
+                                 base64.b64decode("".join(args[2:])))
+        return
     log(f'unrecognized subcommand {sub}')
     end(identifier, 1)
 
@@ -683,6 +689,15 @@ async def handle_file_mkdir(identifier, path):
     log(f'handle_file_mkdir {identifier} {path}')
     try:
         os.mkdir(path)
+        end(identifier, 0)
+    except Exception as e:
+        file_error(identifier, e, path)
+
+async def handle_file_create(identifier, path, content):
+    log(f'handle_file_create {identifier} {path} length={len(content)} bytes')
+    try:
+        with open(path, "wb") as f:
+            f.write(content)
         end(identifier, 0)
     except Exception as e:
         file_error(identifier, e, path)
