@@ -41,6 +41,7 @@ actor ItemModifier {
             let updated = try await replaceContents(remoteFile,
                                                     item: request.item,
                                                     url: url)
+            log("Modify contents to those of \(url)")
             return Output(item: await FileProviderItem(updated, manager: manager),
                           fields: request.changedFields.removing(.contents),
                           shouldFetchContent: true)
@@ -52,6 +53,7 @@ actor ItemModifier {
                 file: remoteFile,
                 newParent: request.item.parentItemIdentifier.rawValue,
                 newName: request.item.filename)
+            log("Modify parent to \(request.item.parentItemIdentifier.rawValue)")
             return Output(item: await FileProviderItem(updated, manager: manager),
                           fields: request.changedFields.removing(.parentItemIdentifier).removing(.filename),
                           shouldFetchContent: false)
@@ -59,12 +61,14 @@ actor ItemModifier {
         if request.changedFields.contains(.contentModificationDate),
            case let date?? = request.item.contentModificationDate {
             let updated = try await remoteService.setModificationDate(remoteFile, date: date)
+            log("Modify mtime to \(date)")
             return Output(item: await FileProviderItem(updated, manager: manager),
                           fields: request.changedFields.removing(.contentModificationDate),
                           shouldFetchContent: false)
         }
         if request.changedFields.contains(.fileSystemFlags),
            case let flags? = request.item.fileSystemFlags {
+            log("Modify permissions to \(flags)")
             let updated = try await remoteService.chmod(
                 remoteFile,
                 permissions: RemoteFile.Permissions(fileSystemFlags: flags))

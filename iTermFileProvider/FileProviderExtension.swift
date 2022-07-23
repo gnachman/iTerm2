@@ -1,6 +1,16 @@
 import FileProvider
 import FileProviderService
 
+private class Counter {
+    private let value = MutableAtomicObject<Int>(0)
+    func next() -> Int {
+        let newValue = value.mutate { oldValue in
+            return oldValue + 1
+        }
+        return newValue - 1
+    }
+}
+
 class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
     private let domain: NSFileProviderDomain
     private let fetcher: FileProviderFetcher
@@ -10,6 +20,7 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
     private let manager:  NSFileProviderManager?
     private let remoteService: RemoteService!
     private let workingSet: WorkingSet
+    private let counter = Counter()
     let xpcService: FileProviderService
 
     required init(domain: NSFileProviderDomain) {
@@ -33,19 +44,23 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
     }
     
     func item(for identifier: NSFileProviderItemIdentifier,
-               request: NSFileProviderRequest,
-               completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) -> Progress {
+              request: NSFileProviderRequest,
+              completionHandler: @escaping (NSFileProviderItem?, Error?) -> Void) -> Progress {
         Task {
-            await logging("Extension.item(for: \(identifier.rawValue))") {
+            let reqnum = counter.next()
+            await logging("[reqnum:\(reqnum)] Extension.item(for: \(identifier.rawValue))") {
+                log("LIFECYCLE: Start")
                 do {
                     let entry = try await remoteFile(for: identifier)
                     log("Using remote file: \(entry)")
                     // Pass it along to the item
                     let item = await FileProviderItem(entry, manager: manager)
                     log("Return \(item.terseDescription)")
+                    log("LIFECYCLE: Normal completion")
                     completionHandler(item, nil)
                 } catch {
                     log("Return error \(error)")
+                    log("LIFECYCLE: Error completion")
                     completionHandler(nil, error)
                 }
             }
@@ -90,9 +105,11 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
                                                      NSFileProviderItem?,
                                                      Error?) -> Void) -> Progress {
         let progress = Progress()
-        logging("Extension.fetchContents(for: \(itemIdentifier.description), version: \(requestedVersion.descriptionOrNil))") {
-            log("Fetching item \(itemIdentifier.rawValue)")
-            Task {
+        Task {
+            let reqnum = counter.next()
+            await logging("[reqnum: \(reqnum)] Extension.fetchContents(for: \(itemIdentifier.description), version: \(requestedVersion.descriptionOrNil))") {
+                log("LIFECYCLE: Start")
+                log("Fetching item \(itemIdentifier.rawValue)")
                 do {
                     let item = try await asyncItem(for: itemIdentifier, request: request)
                     log("Fetched item \(item.terseDescription). Can now download its contents.")
@@ -108,12 +125,14 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
                     let tempURL = try await self.fetcher.fetchContents(fetchRequest,
                                                                        progress: progress)
                     log("Fetch succeeded")
+                    log("LIFECYCLE: Normal completion")
                     completionHandler(tempURL, item, nil)
                 } catch {
                     log("Failed to fetch \(itemIdentifier.rawValue): \(error)")
                     // TODO: Convert cocoa errors like:
                     // NSCocoaErrorDomain Code=4 "The file “fetch-44BF2850-96CC-4824-AD7E-0570A97A0022” doesn’t exist."
                     // To something NSFileProvider can understand.
+                    log("LIFECYCLE: Error completion")
                     completionHandler(nil, nil, error)
                 }
             }
@@ -130,26 +149,31 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
                                                   NSFileProviderItemFields,
                                                   Bool,
                                                   Error?) -> Void) -> Progress {
-        log("Extension.createItem(basedOn: \(itemTemplate.terseDescription), fields: \(fields.description), contents: \(url.descriptionOrNil), options: \(options.description))")
-        let request = ItemCreator.Request(itemTemplate: itemTemplate,
-                                          fields: fields,
-                                          contents: url,
-                                          options: options,
-                                          request: request)
         let progress = Progress()
         Task {
-            do {
-                let item = try await creator.create(request)
-                log("Create succeded")
-                completionHandler(item.item, item.fields, false, nil)
-            } catch {
-                log("Create failed with \(error)")
-                completionHandler(nil, [], false, error)
+            let reqnum = counter.next()
+            await logging("[reqnum: \(reqnum)] Extension.createItem(basedOn: \(itemTemplate.terseDescription), fields: \(fields.description), contents: \(url.descriptionOrNil), options: \(options.description))") {
+                log("LIFECYCLE: Start")
+                let request = ItemCreator.Request(itemTemplate: itemTemplate,
+                                                  fields: fields,
+                                                  contents: url,
+                                                  options: options,
+                                                  request: request)
+                do {
+                    let item = try await creator.create(request)
+                    log("Create succeded")
+                    log("LIFECYCLE: Normal completion")
+                    completionHandler(item.item, item.fields, false, nil)
+                } catch {
+                    log("Create failed with \(error)")
+                    log("LIFECYCLE: Error completion")
+                    completionHandler(nil, [], false, error)
+                }
             }
         }
         return progress
     }
-    
+
     func modifyItem(_ item: NSFileProviderItem,
                     baseVersion version: NSFileProviderItemVersion,
                     changedFields: NSFileProviderItemFields,
@@ -167,14 +191,18 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
                                                  options: options,
                                                  request: request)
         Task {
-            await logging("Extension.modifyItem(\(item.terseDescription), baseVersion: \(version.description), changedFields: \(changedFields.description), contents: \(newContents?.path ?? "(nil)"), options: \(options.description))") {
+            let reqnum = counter.next()
+            await logging("[reqnum: \(reqnum)] Extension.modifyItem(\(item.terseDescription), baseVersion: \(version.description), changedFields: \(changedFields.description), contents: \(newContents?.path ?? "(nil)"), options: \(options.description))") {
+                log("LIFECYCLE: Start")
                 do {
                     let file = try await remoteFile(for: item.itemIdentifier)
                     let update = try await modifier.modify(file, request: modifyRequest)
                     log("Modify succeeded")
+                    log("LIFECYCLE: Normal completion")
                     completionHandler(update.item, update.fields, update.shouldFetchContent, nil)
                 } catch {
                     log("Modify failed with \(error)")
+                    log("LIFECYCLE: Error completion")
                     completionHandler(nil, [], true, error)
                 }
             }
@@ -188,31 +216,37 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
                     request: NSFileProviderRequest,
                     completionHandler: @escaping (Error?) -> Void) -> Progress {
         Task {
+            let reqnum = counter.next()
             let request = ItemDeleter.Request(identifier: identifier,
                                               version: version,
                                               options: options,
                                               request: request)
-            await logging("deleteItem(\(request))") {
+            await logging("[reqnum: \(reqnum)] Extension.deleteItem(\(request))") {
+                log("LIFECYCLE: Start")
                 do {
                     let file = try await remoteFile(for: identifier)
                     try await deleter.delete(file, request: request)
                     log("Delete succeeded")
+                    log("LIFECYCLE: Normal completion")
                     completionHandler(nil)
                 } catch {
                     log("Delete failed with error: \(error)")
+                    log("LIFECYCLE: Error completion")
                     completionHandler(error)
                 }
             }
         }
-        completionHandler(NSError(domain: NSCocoaErrorDomain,
-                                  code: NSFeatureUnsupportedError,
-                                  userInfo:[:]))
         return Progress()
     }
     
     func enumerator(for containerItemIdentifier: NSFileProviderItemIdentifier,
                     request: NSFileProviderRequest) throws -> NSFileProviderEnumerator {
-        return logging("Extension.enumerator(for: \(containerItemIdentifier.description))") {
+        let reqnum = counter.next()
+        return logging("[reqnum: \(reqnum)] Extension.enumerator(for: \(containerItemIdentifier.description))") {
+            log("LIFECYCLE: Start")
+            defer {
+                log("LIFECYCLE: Normal completion")
+            }
             switch containerItemIdentifier {
             case .workingSet:
                 return FileProviderEnumerator(RemoteFile.workingSetPrefix,

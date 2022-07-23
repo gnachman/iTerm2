@@ -552,6 +552,11 @@ async def handle_file(identifier, args):
                                 base64.b64decode(args[1]).decode('latin1'),
                                 int(float(args[2])))
         return
+    if sub == "chmod-u":
+        await handle_file_chmod_u(identifier,
+                                  base64.b64decode(args[1]).decode('latin1'),
+                                  args[2])
+        return
     log(f'unrecognized subcommand {sub}')
     end(identifier, 1)
 
@@ -711,6 +716,23 @@ async def handle_file_utime(identifier, path, date):
     log(f'handle_file_utime {identifier} {path} {date}')
     try:
         os.utime(path, (date, date))
+        send_remote_file(path)
+        end(identifier, 0)
+    except Exception as e:
+        file_error(identifier, e, path)
+
+async def handle_file_chmod_u(identifier, path, mode):
+    log(f'handle_file_chmod_u {identifier} {path} {mode}')
+    try:
+        s = os.stat(path, follow_symlinks=False)
+        value = s.st_mode & ~(stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
+        if "r" in mode:
+            value |= stat.S_IRUSR
+        if "w" in mode:
+            value |= stat.S_IWUSR
+        if "x" in mode:
+            value |= stat.S_IXUSR
+        os.chmod(path, value)
         send_remote_file(path)
         end(identifier, 0)
     except Exception as e:

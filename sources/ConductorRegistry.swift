@@ -133,6 +133,7 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
 
     private func endpoint(forPath path: String) -> DataSource? {
         guard path.hasPrefix("/") else {
+            log("Failed to find endpoint for relative path \(path)")
             return nil
         }
         let components = (path as NSString).pathComponents
@@ -142,6 +143,7 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
         if let endpoint = endpoints[components[1]], endpoint.isValid {
             return .ssh(endpoint)
         }
+        log("Failed to find endpoint for \(path) with host component of \(components[1]). I have these endpoints: \(endpoints.keys.joined(separator: ", ")). These endpoints are valid: \(endpoints.filter { $0.value.isValid }.keys.joined(separator: ", ")).")
         return nil
     }
 
@@ -309,7 +311,6 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
         try await logging("list(path: \(path), page: \(requestedPage.stringOrHex), sort: \(sort), pageSize: \(pageSize.debugDescriptionOrNil)") {
             switch self.endpoint(forPath: path) {
             case .none:
-                log("No endpoint for \(path)")
                 throw iTermFileProviderServiceError.notFound(path)
             case .root(let endpoints):
                 log("Root requested.")
@@ -346,7 +347,6 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
         return try await logging("lookup(\(path))") { () async throws -> RemoteFile in
             switch self.endpoint(forPath: path) {
             case .none:
-                log("No endpoint for \(path)")
                 throw iTermFileProviderServiceError.notFound(path)
             case .root(_):
                 log("Lookup of root requested")

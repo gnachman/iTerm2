@@ -122,6 +122,7 @@ class Conductor: NSObject, Codable {
         case mkdir(path: Data)
         case create(path: Data, content: Data)
         case utime(path: Data, date: Date)
+        case chmod(path: Data, r: Bool, w: Bool, x: Bool)
 
         var stringValue: String {
             switch self {
@@ -166,6 +167,12 @@ class Conductor: NSObject, Codable {
                     path.base64EncodedString(),
                     String(date.timeIntervalSince1970)
                 ].joined(separator: "\n")
+            case .chmod(path: let path, r: let r, w: let w, x: let x):
+                return [
+                    "chmod-u",
+                    path.base64EncodedString(),
+                    (r ? "r" : "-") + (w ? "w" : "-") + (x ? "x" : "-")
+                ].joined(separator: "\n")
             }
         }
 
@@ -189,6 +196,8 @@ class Conductor: NSObject, Codable {
                 return "create \(path.stringOrHex) length=\(content.count) bytes"
             case .utime(path: let path, date: let date):
                 return "utime \(path.stringOrHex) \(date)"
+            case .chmod(path: let path, r: let r, w: let w, x: let x):
+                return "chmod \(path.stringOrHex) r=\(r) w=\(w) x=\(x)"
             }
         }
     }
@@ -1733,7 +1742,7 @@ extension Conductor: SSHEndpoint {
             guard let pathData = file.data(using: .utf8) else {
                 throw iTermFileProviderServiceError.notFound(file)
             }
-            log("perform file operation to replace \(file)")
+            log("perform file operation to utime \(file)")
             let json = try await performFileOperation(subcommand: .utime(path: pathData,
                                                                          date: date))
             let result = try remoteFile(json)
@@ -1743,6 +1752,18 @@ extension Conductor: SSHEndpoint {
     }
 
     func chmod(_ file: String, permissions: RemoteFile.Permissions) async throws -> RemoteFile {
-        throw iTermFileProviderServiceError.todo
+        try await logging("utime \(file) \(permissions)") {
+            guard let pathData = file.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(file)
+            }
+            log("perform file operation to chmod \(file)")
+            let json = try await performFileOperation(subcommand: .chmod(path: pathData,
+                                                                         r: permissions.r,
+                                                                         w: permissions.w,
+                                                                         x: permissions.x))
+            let result = try remoteFile(json)
+            log("finished")
+            return result
+        }
     }
 }

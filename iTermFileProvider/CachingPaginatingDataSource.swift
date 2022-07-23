@@ -36,6 +36,9 @@ extension NSFileProviderSyncAnchor {
 
 extension NSFileProviderItem {
     var terseDescription: String {
+        if let flags = fileSystemFlags {
+            return "<Item \(itemIdentifier.description) \(flags)>"
+        }
         return "<Item \(itemIdentifier.description)>"
     }
 }

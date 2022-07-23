@@ -3163,6 +3163,7 @@
 		A6D8973A22154A8800325F6A /* AnnotateTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D8973822154A8800325F6A /* AnnotateTrigger.h */; };
 		A6D8973B22154A8800325F6A /* AnnotateTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D8973922154A8800325F6A /* AnnotateTrigger.m */; };
 		A6D8CC3220CE417000E79512 /* URLAction.m in Sources */ = {isa = PBXBuildFile; fileRef = A6CFDAD1185D2587005DC94B /* URLAction.m */; };
+		A6D9C515288C892F00069987 /* Mutex.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6667E96277CDDD000152678 /* Mutex.swift */; };
 		A6DBC0381FF9B30000F1466D /* iTermTexturePool.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC0361FF9B30000F1466D /* iTermTexturePool.h */; };
 		A6DBC0391FF9B30000F1466D /* iTermTexturePool.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DBC0371FF9B30000F1466D /* iTermTexturePool.m */; };
 		A6DBC03C2003479400F1466D /* iTermImageRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DBC03A2003479400F1466D /* iTermImageRenderer.h */; };
@@ -15486,6 +15487,7 @@
 				A69412FB28555D3D0086F068 /* FileProviderItem.swift in Sources */,
 				A694130228555D3D0086F068 /* NSFileProviderPage+Additions.swift in Sources */,
 				A6941309285696E30086F068 /* FileProviderLogging.swift in Sources */,
+				A6D9C515288C892F00069987 /* Mutex.swift in Sources */,
 				A694130628555D3D0086F068 /* RebaseLocalFile.swift in Sources */,
 				A63EB04C284D1D1900B2AB89 /* FileProviderServiceClient.swift in Sources */,
 				A69412FC28555D3D0086F068 /* ItemModifier.swift in Sources */,
