@@ -37,8 +37,32 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         // destroy any cached state.
     }
 
-    func enumerateItems(for observer: NSFileProviderEnumerationObserver,
+    private class LoggingEnumerationObserver: NSObject, NSFileProviderEnumerationObserver {
+        private let underlying: NSFileProviderEnumerationObserver
+        init(_ underlying: NSFileProviderEnumerationObserver) {
+            self.underlying = underlying
+        }
+        func didEnumerate(_ updatedItems: [NSFileProviderItemProtocol]) {
+            for item in updatedItems {
+                log("LEO: didEnumerate \(item.itemIdentifier.rawValue)")
+            }
+            underlying.didEnumerate(updatedItems)
+        }
+        func finishEnumerating(upTo nextPage: NSFileProviderPage?) {
+            log("LEO: Finish enumerating up to \(nextPage?.description ?? "(nil)")")
+            underlying.finishEnumerating(upTo: nextPage)
+        }
+        func finishEnumeratingWithError(_ error: Error) {
+            log("LEO: Finish enumerating with error \(error)")
+            underlying.finishEnumeratingWithError(error)
+        }
+
+        var suggestedPageSize: Int { underlying.suggestedPageSize ?? 256 }
+    }
+
+    func enumerateItems(for _observer: NSFileProviderEnumerationObserver,
                         startingAt page: NSFileProviderPage) {
+        let observer = LoggingEnumerationObserver(_observer)
         Task {
             await logging("Enumerator(\(path)).enumerateItems(startingAt: \(page.description))") {
                 do {
@@ -129,8 +153,41 @@ class FileProviderEnumerator: NSObject, NSFileProviderEnumerator {
         await dataSource.addItemsToWorkingSetAnchors(items)
     }
 
-    func enumerateChanges(for observer: NSFileProviderChangeObserver,
+    class LoggingChangeObserver: NSObject, NSFileProviderChangeObserver {
+        private let underlying: NSFileProviderChangeObserver
+        init(_ underlying: NSFileProviderChangeObserver) {
+            self.underlying = underlying
+        }
+        func didUpdate(_ updatedItems: [NSFileProviderItemProtocol]) {
+            for item in updatedItems {
+                log("LCO: didUpdate \(item.itemIdentifier)")
+            }
+            underlying.didUpdate(updatedItems)
+        }
+        func didDeleteItems(withIdentifiers deletedItemIdentifiers: [NSFileProviderItemIdentifier]) {
+            for item in deletedItemIdentifiers {
+                log("LCO: didDeleteItem \(item)")
+            }
+            underlying.didDeleteItems(withIdentifiers: deletedItemIdentifiers)
+        }
+
+        func finishEnumeratingChanges(upTo anchor: NSFileProviderSyncAnchor, moreComing: Bool) {
+            log("LCO: finishEnumeratingChanges up to \(anchor.rawValue) moreComing=\(moreComing)")
+            underlying.finishEnumeratingChanges(upTo: anchor, moreComing: moreComing)
+        }
+
+        func finishEnumeratingWithError(_ error: Error) {
+            log("LCO: finish enumerating with error \(error)")
+            underlying.finishEnumeratingWithError(error)
+        }
+        var suggestedBatchSize: Int {
+            underlying.suggestedBatchSize ?? 100
+        }
+    }
+
+    func enumerateChanges(for _observer: NSFileProviderChangeObserver,
                           from anchor: NSFileProviderSyncAnchor) {
+        let observer = LoggingChangeObserver(_observer)
         let prefix = "Enumerator(\(path)).enumerateChanges(from anchor: \(anchor.description))"
         logging(prefix) {
             _ = Task {
