@@ -158,6 +158,23 @@ class OnePasswordTokenRequester {
         case token(String)
     }
 
+    private func argsByAddingAccountArg(_ argsIn: [String]) -> [String] {
+        var args = argsIn
+        let account = iTermAdvancedSettingsModel.onePasswordAccount()!
+        if !account.isEmpty {
+            args += ["--account", account]
+        }
+        return args
+    }
+
+    private var passwordPrompt: String {
+        let account = iTermAdvancedSettingsModel.onePasswordAccount()!
+        if account.isEmpty {
+            return "Enter your 1Password master password:"
+        }
+        return "Enter the 1Password master password for account “\(account)”:"
+    }
+
     // Returns nil if a token is unneeded because biometric authentication is available.
     func get() throws -> Auth {
         if Self.biometricsAvailable == nil {
@@ -172,12 +189,12 @@ class OnePasswordTokenRequester {
                 throw OnePasswordDataSource.OPError.canceledByUser
             }
         }
-        guard let password = self.requestPassword(prompt: "Enter your 1Password master password:") else {
+        guard let password = self.requestPassword(prompt: passwordPrompt) else {
             throw OnePasswordDataSource.OPError.canceledByUser
         }
         let command = CommandLinePasswordDataSource.CommandRequestWithInput(
             command: OnePasswordUtils.pathToCLI,
-            args: ["signin", "--raw"],
+            args: argsByAddingAccountArg(["signin", "--raw"]),
             env: OnePasswordUtils.basicEnvironment,
             input: (password + "\n").data(using: .utf8)!)
         let output = try command.exec()
@@ -222,7 +239,7 @@ class OnePasswordTokenRequester {
         }
         var command = CommandLinePasswordDataSource.InteractiveCommandRequest(
             command: cli,
-            args: ["user", "get", "--me"],
+            args: argsByAddingAccountArg(["user", "get", "--me"]),
             env: OnePasswordUtils.basicEnvironment)
         command.useTTY = true
         let output = try! command.exec()

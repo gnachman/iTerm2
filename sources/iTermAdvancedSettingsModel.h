@@ -236,6 +236,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)setNoSyncVariablesToReport:(NSString *)value;
 + (double)notificationOcclusionThreshold;
 + (int)numberOfLinesForAccessibility;
++ (NSString *)onePasswordAccount;
 + (BOOL)openFileInNewWindows;
 + (BOOL)openFileOverridesSendText;
 + (BOOL)openNewWindowAtStartup;
