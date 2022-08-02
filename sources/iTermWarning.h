@@ -62,7 +62,7 @@ typedef void(^iTermWarningActionBlock)(iTermWarningSelection);
 + (void)unsilenceIdentifier:(NSString * _Nullable)identifier;
 + (void)setIdentifier:(NSString * _Nullable)identifier permanentSelection:(iTermWarningSelection)selection;
 + (BOOL)identifierIsSilenced:(NSString * _Nullable)identifier;
-;
++ (void)setIdentifier:(NSString *)identifier isSilenced:(BOOL)silenced;
 
 // Tests can use this to prevent warning popups.
 + (void)setWarningHandler:(id<iTermWarningHandler>)handler;

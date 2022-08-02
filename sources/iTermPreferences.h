@@ -262,6 +262,8 @@ extern NSString *const kPreferenceKeyDisableTransparencyForKeyWindow;
 
 + (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag;
 
++ (NSString *)warningIdentifierForNeverWarnAboutShortLivedSessions:(NSString *)guid;
+
 @end
 
 @interface iTermPreferences (FastAccessors)

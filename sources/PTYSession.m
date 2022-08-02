@@ -2692,7 +2692,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 return;
             }
         }
-        NSString *theKey = [NSString stringWithFormat:@"NeverWarnAboutShortLivedSessions_%@", guid];
+        NSString *theKey = [iTermPreferences warningIdentifierForNeverWarnAboutShortLivedSessions:guid];
         NSString *theTitle = [NSString stringWithFormat:
                               @"A session ended very soon after starting. Check that the command "
                               @"in profile \"%@\" is correct.",

@@ -73,6 +73,16 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
                            update:(BOOL (^)(void))update
                        searchable:(BOOL)searchable;
 
+// This can be useful for synthetic values.
+- (PreferenceInfo *)unsafeDefineControl:(NSControl *)control
+                                    key:(NSString *)key
+                            relatedView:(NSView *)relatedView
+                            displayName:(NSString *)forceDisplayName
+                                   type:(PreferenceInfoType)type
+                         settingChanged:(void (^)(id))settingChanged
+                                 update:(BOOL (^)(void))update
+                             searchable:(BOOL)searchable;
+
 - (void)setControl:(NSControl *)control inPreference:(PreferenceInfo *)info;
 
 - (void)addViewToSearchIndex:(NSView *)control
@@ -154,5 +164,10 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 - (NSTabView *)tabView;
 - (CGFloat)minimumWidth;
 - (void)saveDeferredUpdates;
+
+- (BOOL)keyHasSyntheticGetter:(NSString *)key;
+- (BOOL)keyHasSyntheticSetter:(NSString *)key;
+- (id)syntheticObjectForKey:(NSString *)key;
+- (void)setSyntheticValue:(id)value forKey:(NSString *)key;
 
 @end

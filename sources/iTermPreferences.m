@@ -735,6 +735,10 @@ static NSString *sPreviousVersion;
     return instance;
 }
 
++ (NSString *)warningIdentifierForNeverWarnAboutShortLivedSessions:(NSString *)guid {
+    return [NSString stringWithFormat:@"NeverWarnAboutShortLivedSessions_%@", guid];
+}
+
 @end
 
 typedef struct {

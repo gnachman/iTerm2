@@ -33,11 +33,18 @@
 }
 
 - (BOOL)boolForKey:(NSString *)key {
+    if ([self keyHasSyntheticGetter:key]) {
+        return [[self syntheticObjectForKey:key] boolValue];
+    }
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     return [iTermProfilePreferences boolForKey:key inProfile:profile];
 }
 
 - (void)setBool:(BOOL)value forKey:(NSString *)key {
+    if ([self keyHasSyntheticSetter:key]) {
+        [self setSyntheticValue:@(value) forKey:key];
+        return;
+    }
     [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
@@ -45,11 +52,18 @@
 }
 
 - (int)intForKey:(NSString *)key {
+    if ([self keyHasSyntheticGetter:key]) {
+        return [[self syntheticObjectForKey:key] intValue];
+    }
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     return [iTermProfilePreferences intForKey:key inProfile:profile];
 }
 
 - (void)setInt:(int)value forKey:(NSString *)key {
+    if ([self keyHasSyntheticSetter:key]) {
+        [self setSyntheticValue:@(value) forKey:key];
+        return;
+    }
     [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
@@ -57,11 +71,18 @@
 }
 
 - (NSInteger)integerForKey:(NSString *)key {
+    if ([self keyHasSyntheticGetter:key]) {
+        return [[self syntheticObjectForKey:key] integerValue];
+    }
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     return [iTermProfilePreferences integerForKey:key inProfile:profile];
 }
 
 - (void)setInteger:(NSInteger)value forKey:(NSString *)key {
+    if ([self keyHasSyntheticSetter:key]) {
+        [self setSyntheticValue:@(value) forKey:key];
+        return;
+    }
     [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
@@ -69,11 +90,18 @@
 }
 
 - (NSUInteger)unsignedIntegerForKey:(NSString *)key {
+    if ([self keyHasSyntheticGetter:key]) {
+        return [[self syntheticObjectForKey:key] unsignedIntegerValue];
+    }
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     return [iTermProfilePreferences unsignedIntegerForKey:key inProfile:profile];
 }
 
 - (void)setUnsignedInteger:(NSUInteger)value forKey:(NSString *)key {
+    if ([self keyHasSyntheticSetter:key]) {
+        [self setSyntheticValue:@(value) forKey:key];
+        return;
+    }
     [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
@@ -81,11 +109,18 @@
 }
 
 - (double)floatForKey:(NSString *)key {
+    if ([self keyHasSyntheticGetter:key]) {
+        return [[self syntheticObjectForKey:key] doubleValue];
+    }
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     return [iTermProfilePreferences floatForKey:key inProfile:profile];
 }
 
 - (void)setFloat:(double)value forKey:(NSString *)key {
+    if ([self keyHasSyntheticSetter:key]) {
+        [self setSyntheticValue:@(value) forKey:key];
+        return;
+    }
     [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
@@ -93,11 +128,18 @@
 }
 
 - (double)doubleForKey:(NSString *)key {
+    if ([self keyHasSyntheticGetter:key]) {
+        return [[self syntheticObjectForKey:key] doubleValue];
+    }
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     return [iTermProfilePreferences doubleForKey:key inProfile:profile];
 }
 
 - (void)setDouble:(double)value forKey:(NSString *)key {
+    if ([self keyHasSyntheticSetter:key]) {
+        [self setSyntheticValue:@(value) forKey:key];
+        return;
+    }
     [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];
@@ -105,11 +147,18 @@
 }
 
 - (NSString *)stringForKey:(NSString *)key {
+    if ([self keyHasSyntheticGetter:key]) {
+        return [self syntheticObjectForKey:key];
+    }
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     return [iTermProfilePreferences stringForKey:key inProfile:profile];
 }
 
 - (void)setString:(NSString *)value forKey:(NSString *)key {
+    if ([self keyHasSyntheticSetter:key]) {
+        [self setSyntheticValue:value forKey:key];
+        return;
+    }
     [self.delegate profilePreferencesViewController:self willSetObjectWithKey:key];
     Profile *profile = [_delegate profilePreferencesCurrentProfile];
     ProfileModel *model = [_delegate profilePreferencesCurrentModel];

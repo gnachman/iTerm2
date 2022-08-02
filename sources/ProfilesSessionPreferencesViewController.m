@@ -27,6 +27,8 @@
 #import "PSMMinimalTabStyle.h"
 #import "PreferencePanel.h"
 
+static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSessionsKey = @"ProfilesSessionPreferencesViewControllerPhonyShortLivedSessionsKey";
+
 @interface iTermStatusBarSetupPanel : NSPanel
 @end
 
@@ -81,7 +83,8 @@
     IBOutlet NSButton *_openPasswordManagerAutomatically;
     IBOutlet NSPopUpButton *_showTimestampsPopup;
     IBOutlet NSTextField *_showTimestampsLabel;
-    
+    IBOutlet NSButton *_warnAboutShortLivedSessions;
+
     iTermStatusBarSetupViewController *_statusBarSetupViewController;
     iTermStatusBarSetupPanel *_statusBarSetupWindow;
     BOOL _awoken;
@@ -133,7 +136,11 @@
     info.customSettingChangedHandler = ^(id sender) {
         [weakSelf onEndSettingDidChange];
     };
-
+    info.onUpdate = ^BOOL{
+        [weakSelf updateEnabledState];
+        return NO;
+    };
+    
     [self defineControl:_alwaysWarn
                     key:KEY_PROMPT_CLOSE
             relatedView:nil
@@ -291,10 +298,50 @@
             relatedView:_showTimestampsLabel
                    type:kPreferenceInfoTypePopup];
 
+    info = [self unsafeDefineControl:_warnAboutShortLivedSessions
+                                 key:ProfilesSessionPreferencesViewControllerPhonyShortLivedSessionsKey
+                         relatedView:nil
+                         displayName:nil
+                                type:kPreferenceInfoTypeCheckbox
+                      settingChanged:nil
+                              update:nil
+                          searchable:YES];
+    info.syntheticGetter = ^id{
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return @NO;
+        }
+        NSString *guid = [strongSelf stringForKey:KEY_GUID];
+        if (!guid) {
+            return @NO;
+        }
+        NSString *theKey = [iTermPreferences warningIdentifierForNeverWarnAboutShortLivedSessions:guid];
+        return @(![iTermWarning identifierIsSilenced:theKey]);
+    };
+    info.syntheticSetter = ^(id newValue) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        NSString *guid = [strongSelf stringForKey:KEY_GUID];
+        if (!guid) {
+            return;
+        }
+        NSString *theKey = [iTermPreferences warningIdentifierForNeverWarnAboutShortLivedSessions:guid];
+        if ([NSNumber castFrom:newValue].boolValue) {
+            [iTermWarning unsilenceIdentifier:theKey];
+        } else {
+            [iTermWarning setIdentifier:theKey permanentSelection:kiTermWarningSelection0];
+        }
+    };
+    info.shouldBeEnabled = ^BOOL {
+        return [self unsignedIntegerForKey:KEY_SESSION_END_ACTION] == iTermSessionEndActionClose;
+    };
     [self addViewToSearchIndex:_configureStatusBar
                    displayName:@"Configure status bar"
                        phrases:@[]
                            key:nil];
+    [self commitControls];
 }
 
 - (void)onEndSettingDidChange {
