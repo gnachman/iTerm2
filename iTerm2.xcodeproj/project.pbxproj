@@ -1028,6 +1028,8 @@
 		A608F22120F07658008E8009 /* iTermImageMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3B411BD40E7C00B5629D /* iTermImageMark.m */; };
 		A608F22220F08369008E8009 /* VT100DCSParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E39E18C351F400450FA1 /* VT100DCSParser.m */; };
 		A6099B0518D6B0FD00081FA9 /* iTermWarning.h in Headers */ = {isa = PBXBuildFile; fileRef = A6099B0318D6B0FD00081FA9 /* iTermWarning.h */; };
+		A60AE01A289A18EB00419B14 /* FileProviderLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412E928555D390086F068 /* FileProviderLogging.swift */; };
+		A60AE01B289A196900419B14 /* FileProviderLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412E928555D390086F068 /* FileProviderLogging.swift */; };
 		A60BB37E1EB5149100D76C09 /* iTermCopyModeState.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BB37C1EB5149100D76C09 /* iTermCopyModeState.h */; };
 		A60BB37F1EB5149100D76C09 /* iTermCopyModeState.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB37D1EB5149100D76C09 /* iTermCopyModeState.m */; };
 		A60BB3811EB51D0E00D76C09 /* iTermCopyModeState.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB37D1EB5149100D76C09 /* iTermCopyModeState.m */; };
@@ -14659,6 +14661,7 @@
 				A60D20C92597F496004AC979 /* iTermImage+ImageWithData.m in Sources */,
 				756C32AD2597AC2E0047B3A9 /* iTermImage+Sixel.m in Sources */,
 				7596379F2593AE0700E278CC /* iTerm2SandboxedWorker.m in Sources */,
+				A60AE01A289A18EB00419B14 /* FileProviderLogging.swift in Sources */,
 				A60D20D22597F4DF004AC979 /* iTermImage.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -15168,6 +15171,7 @@
 				A630117B20E69C23008114B7 /* iTermStatusBarSwiftyStringComponent.m in Sources */,
 				A629F59323AF49AD00C2F16B /* iTermExpect.m in Sources */,
 				A656E9961F99C60300158128 /* iTermSubpixelModelBuilder.mm in Sources */,
+				A60AE01B289A196900419B14 /* FileProviderLogging.swift in Sources */,
 				A6A73D6527CCA408002E4CCA /* DonateViewController.swift in Sources */,
 				A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */,
 				A6EC936724E513DB00EEADEF /* iTermSlowOperationGateway.m in Sources */,
@@ -16746,6 +16750,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
 			name = Development;
@@ -16815,6 +16820,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
 			name = Deployment;
@@ -16884,6 +16890,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
 			name = Beta;
@@ -16954,6 +16961,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
 			name = Nightly;

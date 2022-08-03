@@ -12,7 +12,7 @@ import FileProviderService
 extension FileProviderExtension: NSFileProviderServicing {
     public func supportedServiceSources(for itemIdentifier: NSFileProviderItemIdentifier,
                                         completionHandler: @escaping ([NSFileProviderServiceSource]?, Error?) -> Void) -> Progress {
-        logger.debug("Extension: supportedServiceSources(for: \(itemIdentifier.rawValue, privacy: .public)")
+        FileProviderLogging.logger.debug("Extension: supportedServiceSources(for: \(itemIdentifier.rawValue, privacy: .public)")
         completionHandler([xpcService], nil)
         let progress = Progress()
         progress.cancellationHandler = { completionHandler(nil, NSError(domain: NSCocoaErrorDomain, code: NSUserCancelledError)) }

@@ -8,11 +8,11 @@
 import Foundation
 import OSLog
 
-@available(macOS 11.0, *)
-let logger = Logger(subsystem: "com.iterm2.FileProvider", category: "main")
-
 @objc(FileProviderLogging) class FileProviderLogging: NSObject {
     @objc static var callback: ((String) -> ())? = nil
+
+    @available(macOS 11.0, *)
+    static let logger = Logger(subsystem: "com.iterm2.FileProvider", category: "main")
 }
 
 class LogContext {
@@ -23,7 +23,7 @@ class LogContext {
 public func log(_ message: String) {
     if #available(macOS 11.0, *) {
         let prefix = LogContext.logContexts.joined(separator: " > ")
-        logger.error("FileProviderLog: \(prefix, privacy: .public): \(message, privacy: .public)")
+        FileProviderLogging.logger.info("FileProviderLog: \(prefix, privacy: .public): \(message, privacy: .public)")
     }
     FileProviderLogging.callback?(message)
 }
