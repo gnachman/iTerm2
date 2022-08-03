@@ -362,6 +362,13 @@ static const CGFloat iTermStatusBarViewControllerBottomMargin = 0;
     return [[self.delegate statusBarTerminalBackgroundColor] perceivedBrightness] < 0.5;
 }
 
+- (NSColor *)statusBarComponentEffectiveBackgroundColor:(id<iTermStatusBarComponent>)component {
+    iTermStatusBarContainerView *view = [self containerViewForComponent:component];
+    if (!view) {
+        return nil;
+    }
+    return view.backgroundColor ?: [self.delegate statusBarBackgroundColor];
+}
 - (void)statusBarComponent:(id<iTermStatusBarComponent>)component writeString:(NSString *)string {
     [self.delegate statusBarWriteString:string];
 }

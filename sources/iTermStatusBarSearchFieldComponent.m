@@ -10,6 +10,8 @@
 #import "iTermMiniSearchFieldViewController.h"
 #import "iTermPreferences.h"
 #import "iTermStatusBarSetupKnobsViewController.h"
+#import "NSAppearance+iTerm.h"
+#import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -70,12 +72,18 @@ NSString *iTermStatusBarSearchComponentIsTemporaryKey = @"search: temporary";
 - (void)updateForTerminalBackgroundColor {
     NSView *view = self.statusBarComponentSearchViewController.view;
     const iTermPreferencesTabStyle tabStyle = [iTermPreferences intForKey:kPreferenceKeyTabStyle];
+    NSColor *backgroundColor = [self.delegate statusBarComponentEffectiveBackgroundColor:self];
+    const BOOL backgroundIsDark = backgroundColor.isDark;
     if (tabStyle == TAB_STYLE_MINIMAL) {
         if ([self.delegate statusBarComponentTerminalBackgroundColorIsDark:self]) {
             view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua];
         } else {
             view.appearance = [NSAppearance appearanceNamed:NSAppearanceNameAqua];
         }
+    } else if (backgroundColor != nil &&
+               view.effectiveAppearance != nil &&
+               backgroundIsDark != view.effectiveAppearance.it_isDark) {
+        view.appearance = backgroundIsDark ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
     } else {
         view.appearance = nil;
     }
