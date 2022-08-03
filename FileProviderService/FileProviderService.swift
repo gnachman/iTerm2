@@ -158,7 +158,6 @@ public class ExtensionToMainApp: NSObject, NSSecureCoding {
 }
 
 public enum iTermFileProviderServiceError: Error, Codable, CustomDebugStringConvertible {
-    case todo
     case notFound(String)
     case unknown(String)
     case notAFile(String)
