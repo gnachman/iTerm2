@@ -167,8 +167,6 @@ public enum iTermFileProviderServiceError: Error, Codable, CustomDebugStringConv
     
     public var debugDescription: String {
         switch self {
-        case .todo:
-            return "<todo>"
         case .notFound(let item):
             return "<notFound \(item)>"
         case .unknown(let reason):

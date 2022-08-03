@@ -8,7 +8,7 @@ fileprivate extension Error {
             return error
         }
         switch self as? iTermFileProviderServiceError {
-        case .none, .todo, .disconnected, .unknown, .internalError:
+        case .none, .disconnected, .unknown, .internalError:
             return NSFileProviderError(.serverUnreachable)
         case .notFound, .notAFile, .permissionDenied:
             return NSFileProviderError(.noSuchItem)
