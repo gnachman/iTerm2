@@ -13475,7 +13475,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if ([self hasAnnouncementWithIdentifier:identifier]) {
         return;
     }
-    NSString *notice = @"The terminal attempted to access the clipboard but it was denied. Enable clipboard access in “Prefs > General > Selection > Applications in terminal may read from clipboard”.";
+    NSString *notice = @"The terminal attempted to access the clipboard but it was denied. Enable clipboard access in “Prefs > General > Selection > Applications in terminal may access clipboard”.";
     iTermAnnouncementViewController *announcement =
     [iTermAnnouncementViewController announcementWithTitle:notice
                                                      style:kiTermAnnouncementViewStyleWarning

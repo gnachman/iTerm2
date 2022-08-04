@@ -5181,7 +5181,7 @@ DQ
                                             <button toolTip="Clipboard access via an escape code poses a security risk if running untrusted applications." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6383">
                                                 <rect key="frame" x="143" y="135" width="420" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <buttonCell key="cell" type="check" title="Applications in terminal may read from clipboard" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6384">
+                                                <buttonCell key="cell" type="check" title="Applications in terminal may access clipboard" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="6384">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                     <font key="font" metaFont="system"/>
                                                 </buttonCell>
