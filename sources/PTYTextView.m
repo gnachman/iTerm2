@@ -1792,7 +1792,7 @@
 }
 
 - (void)setTransparency:(double)fVal {
-    _transparency = fVal;
+   _transparency = fVal;
     [self setNeedsDisplay:YES];
     [_delegate textViewBackgroundColorDidChange];
 }
