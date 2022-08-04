@@ -8877,7 +8877,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         DLog(@"screen visibleFrame is %@, window frame is %@",
              NSStringFromRect(self.window.screen.visibleFrame),
              NSStringFromRect(self.window.frame));
-        if (!iTermApproximatelyEqualRects(self.window.screen.visibleFrame, self.window.frame, 0.5)) {
+        if (fabs(self.window.screen.visibleFrame.size.width - self.window.frame.size.width) > 0.5) {
             DLog(@"Fit window to idealized tabs preserving height");
             [self fitWindowToIdealizedTabsPreservingHeight:YES];
         } else {
