@@ -3999,7 +3999,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         if ([_delegate terminalIsTrusted]) {
             NSArray<NSString *> *parts = [value componentsSeparatedByString:@";"];
             int mode;
-            if (parts.count == 0) {
+            if (parts.count == 0 || (parts.count == 1 && [parts[0] length] == 0)) {
                 mode = 1;
             } else {
                 mode = parts[0].intValue;
