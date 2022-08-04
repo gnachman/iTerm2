@@ -2218,28 +2218,10 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
     return characterSet;
 }
 
-+ (instancetype)zeroWidthSpaceCharacterSetForUnicodeVersion:(NSInteger)version {
-    static dispatch_once_t onceToken;
-    static NSCharacterSet *characterSet;
-    dispatch_once(&onceToken, ^{
-        NSString *string =
-            @"\ufeff"  // zero width no-break space
-            @"\u200b"  // zero-width space (not supported by Terminal, is supported by Kitty)
-            @"\u200c"  // zero width non-joiner (not supported by Terminal, is supported by Kitty)
-            @"\u200d"  // zero width joiner
-            @"\u2060"  // word joiner (not supported by Terminal, is supported by Kitty)
-        ;
-        if (![iTermAdvancedSettingsModel zeroWidthSpaceAdvancesCursor]) {
-            string = [string stringByAppendingString:@"\u200b"];  // zero width space
-        }
-        characterSet = [NSCharacterSet characterSetWithCharactersInString:string];
-    });
-    return characterSet;
-}
-
 // Characters with the Default Ignorable Code Point (DI) property. See issue 9368.
 // Download http://www.unicode.org/Public/UNIDATA/DerivedCoreProperties.txt and look for the
 // Default_Ignorable_Code_point section. Give it as input to tools/default_ignorable.py
+// Then add a hack for u+200b.
 + (instancetype)ignorableCharactersForUnicodeVersion:(NSInteger)version {
     static dispatch_once_t onceToken;
     static NSMutableCharacterSet *defaultIgnorables;
@@ -2251,7 +2233,11 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
         [defaultIgnorables addCharactersInRange:NSMakeRange(0x115f, 2)];
         [defaultIgnorables addCharactersInRange:NSMakeRange(0x17b4, 2)];
         [defaultIgnorables addCharactersInRange:NSMakeRange(0x180b, 5)];
-        [defaultIgnorables addCharactersInRange:NSMakeRange(0x200b, 5)];
+        if (![iTermAdvancedSettingsModel zeroWidthSpaceAdvancesCursor]) {
+            // See issue 9786.
+            [defaultIgnorables addCharactersInRange:NSMakeRange(0x200b, 1)];
+        }
+        [defaultIgnorables addCharactersInRange:NSMakeRange(0x200c, 4)];
         [defaultIgnorables addCharactersInRange:NSMakeRange(0x202a, 5)];
         [defaultIgnorables addCharactersInRange:NSMakeRange(0x2060, 16)];
         [defaultIgnorables addCharactersInRange:NSMakeRange(0x3164, 1)];
