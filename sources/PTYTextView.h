@@ -267,7 +267,7 @@ extern NSNotificationName iTermPortholesDidChange;
 - (void)textViewEnterShortcutNavigationMode;
 - (void)textViewExitShortcutNavigationMode;
 - (void)textViewWillHandleMouseDown:(NSEvent *)event;
-- (BOOL)textViewPasteFile:(NSString *)filename;
+- (BOOL)textViewPasteFiles:(NSArray<NSString *> *)filenames;
 @end
 
 @interface iTermHighlightedRow : NSObject

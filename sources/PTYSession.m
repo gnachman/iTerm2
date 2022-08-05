@@ -14277,7 +14277,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (BOOL)textViewPasteFile:(NSString *)filename {
+- (BOOL)textViewPasteFiles:(NSArray<NSString *> *)filenames {
     NSString *swifty = [iTermAdvancedSettingsModel fileDropCoprocess];
     if (swifty.length == 0) {
         return NO;
@@ -14285,7 +14285,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     iTermVariableScope *scope = [[[self variablesScope] copy] autorelease];
     iTermVariables *frame = [[[iTermVariables alloc] initWithContext:iTermVariablesSuggestionContextNone owner:self] autorelease];
     [scope addVariables:frame toScopeNamed:nil];
-    [scope setValue:filename forVariableNamed:@"filename"];
+    NSString *joinedFilenames = [filenames componentsJoinedByString:@" "];
+    [scope setValue:joinedFilenames forVariableNamed:@"filenames"];
 
     iTermExpressionEvaluator *eval = [[[iTermExpressionEvaluator alloc] initWithInterpolatedString:swifty
                                                                                              scope:scope] autorelease];
@@ -14296,7 +14297,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
         [weakSelf runCoprocessWithCompletion:^(id output, NSError *error){}
                                  commandLine:evaluator.value
-                                        mute:@NO];
+                                        mute:@YES];
     }];
     return YES;
 }
