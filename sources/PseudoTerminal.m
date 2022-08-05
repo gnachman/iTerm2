@@ -3038,12 +3038,14 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)loadTmuxLayout:(NSMutableDictionary *)parseTree
+         visibleLayout:(NSMutableDictionary *)visibleParseTree
                 window:(int)window
         tmuxController:(TmuxController *)tmuxController
                   name:(NSString *)name {
     DLog(@"begin loadTmuxLayout");
     [self beginTmuxOriginatedResize];
     PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree
+                                  visibleLayout:visibleParseTree
                                      inTerminal:self
                                      tmuxWindow:window
                                  tmuxController:tmuxController];
@@ -8328,8 +8330,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux
                         preservingHeight:(BOOL)preserveHeight
                         sizeOfLargestTab:(NSSize)maxTabSize {
-    DLog(@"fitWindowToTabsExcludingTmuxTabs:%@ preservingHeight:%@ sizeOfLargestTab:%@",
-         @(excludeTmux), @(preserveHeight), NSStringFromSize(maxTabSize));
+    DLog(@"fitWindowToTabsExcludingTmuxTabs:%@ preservingHeight:%@ sizeOfLargestTab:%@ from\n%@",
+         @(excludeTmux), @(preserveHeight), NSStringFromSize(maxTabSize), [NSThread callStackSymbols]);
 
     _windowNeedsInitialSize = NO;
     if (togglingFullScreen_) {

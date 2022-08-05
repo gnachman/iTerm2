@@ -131,6 +131,12 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
         return NO;
     }
+    if (self.visibleLayout.length > 0) {
+        self.visibleParseTree = [parser parsedLayoutFromString:self.visibleLayout];
+        if (!self.visibleParseTree) {
+            DLog(@"Failed to parse visible layout %@, soldiering on anyway", self.visibleLayout);
+        }
+    }
     NSSet *oldPanes = [NSSet setWithArray:[tab windowPanes]];
     NSMutableArray *cmdList = [NSMutableArray array];
     for (NSNumber *addedPane in [parser windowPanesInParseTree:self.parseTree]) {
@@ -146,6 +152,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
         return NO;
     }
     [tab setTmuxLayout:self.parseTree
+         visibleLayout:self.visibleParseTree
         tmuxController:controller_
                 zoomed:_zoomed];
     return YES;
@@ -217,7 +224,7 @@ NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen = @"FullScreen
 - (NSDictionary *)dictForGetUserVars:(NSNumber *)wp {
     ++pendingRequests_;
     DLog(@"Increment pending requests to %d", pendingRequests_);
-    NSString *command = [NSString stringWithFormat:@"show-options -v -p -t %%%d @uservars",
+    NSString *command = [NSString stringWithFormat:@"show-options -v -q -p -t %%%d @uservars",
                          [wp intValue]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
@@ -462,6 +469,15 @@ static int OctalValue(const char *bytes) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
         return;
     }
+    NSMutableDictionary *visibleParseTree = nil;
+    if (self.visibleLayout.length > 0) {
+        visibleParseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.visibleLayout];
+        if (visibleParseTree) {
+            [self decorateParseTree:visibleParseTree];
+        } else {
+            DLog(@"Failed to parse visible layout %@. Soldiering on anyway.", self.visibleLayout);
+        }
+    }
     DLog(@"Parse tree: %@", parseTree);
     [self decorateParseTree:parseTree];
     DLog(@"Decorated parse tree: %@", parseTree);
@@ -470,6 +486,7 @@ static int OctalValue(const char *bytes) {
     if (tabToUpdate_) {
         DLog(@"Updating existing tab");
         [tabToUpdate_ setTmuxLayout:parseTree
+                      visibleLayout:visibleParseTree
                      tmuxController:controller_
                              zoomed:@NO];
         [tabToUpdate_ setPerTabSettings:_perTabSettings[widStr]];
@@ -482,6 +499,7 @@ static int OctalValue(const char *bytes) {
             DLog(@"Calling loadTmuxLayout");
             // Safety valve: don't open an existing tmux window.
             [term loadTmuxLayout:parseTree
+                   visibleLayout:visibleParseTree
                           window:windowIndex_
                   tmuxController:controller_
                             name:name_];

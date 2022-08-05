@@ -352,6 +352,7 @@
 // Opens a new tmux tab. window gives the tmux window id. name gives the new
 // window title.
 - (void)loadTmuxLayout:(NSMutableDictionary *)parseTree
+         visibleLayout:(NSMutableDictionary *)visibleParseTree
                 window:(int)window
         tmuxController:(TmuxController *)tmuxController
                   name:(NSString *)name;

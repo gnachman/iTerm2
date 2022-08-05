@@ -116,6 +116,7 @@ extern NSString *const PTYTabVariableTitleOverride;
                                                              sessions:(NSArray *)sessions;
 
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
+                    visibleLayout:(NSMutableDictionary *)visibleParseTree
                        inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
                    tmuxController:(TmuxController *)tmuxController;
@@ -225,6 +226,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 // Size we are given the current layout
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
+        visibleLayout:(NSMutableDictionary *)visibleParseTree
        tmuxController:(TmuxController *)tmuxController
                zoomed:(NSNumber *)zoomed;
 // Returns true if the tmux layout is too large for the window to accommodate.

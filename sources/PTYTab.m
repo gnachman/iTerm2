@@ -202,6 +202,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
     // The last tmux parse tree
     NSMutableDictionary *parseTree_;
+    NSMutableDictionary *visibleParseTree_;
 
     // Temporarily hidden live views (this is needed to hold a reference count).
     NSMutableArray *hiddenLiveViews_;  // SessionView objects
@@ -389,6 +390,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             self.tmuxWindow = [oldTab tmuxWindow];
             tmuxController_ = [oldTab tmuxController];
             parseTree_ = oldTab->parseTree_;
+            visibleParseTree_ = oldTab->visibleParseTree_;
             [tmuxController_ changeWindow:self.tmuxWindow tabTo:self];
             [self updateTmuxTitleMonitor];
         }
@@ -3625,12 +3627,14 @@ typedef struct {
                             profile:[self.tmuxController profileForWindow:self.tmuxWindow]];
     [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree_];
     if (shouldZoom) {
-        [self maximizeAfterApplyingTmuxParseTree:parseTree_ tmuxController:self.tmuxController];
+        [self maximizeAfterApplyingTmuxParseTree:visibleParseTree_ ?: parseTree_
+                                  tmuxController:self.tmuxController];
     }
     [[root_ window] makeFirstResponder:[[self activeSession] textview]];
 }
 
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
+                    visibleLayout:(NSMutableDictionary *)visibleParseTree
                        inTerminal:(NSWindowController<iTermWindowController> *)term
                        tmuxWindow:(int)tmuxWindow
                    tmuxController:(TmuxController *)tmuxController {
@@ -3681,6 +3685,7 @@ typedef struct {
     }
     theTab.tmuxWindow = tmuxWindow;
     theTab->parseTree_ = parseTree;
+    theTab->visibleParseTree_ = visibleParseTree;
 
     if (parseTree[kLayoutDictTabIndex]) {
         // Add tab at a specified index.
@@ -4672,34 +4677,43 @@ typedef struct {
     DLog(@"Maximizing");
     [self maximize];
 
-    // TODO: For tmux 2.2, we can use window_visible_layout to fix up the parse tree earlier.
-    // The approach below is to construct a fake parse tree with a single session whose size
-    // equals that of the window. See issue 5233.
-    NSMutableDictionary *child = [@{
-                                    kLayoutDictWidthKey: parseTree[kLayoutDictWidthKey],
-                                    kLayoutDictHeightKey: parseTree[kLayoutDictHeightKey],
-                                    kLayoutDictNodeType: @(kLeafLayoutNode),
-                                    kLayoutDictWindowPaneKey: @(self.activeSession.tmuxPane),
-                                    kLayoutDictXOffsetKey: @0,
-                                    kLayoutDictYOffsetKey: @0,
-                                    } mutableCopy];
-    NSMutableDictionary *maximizedParseTree =
-    [@{ kLayoutDictChildrenKey: @[ child ],
-        kLayoutDictWidthKey: parseTree[kLayoutDictWidthKey],
-        kLayoutDictHeightKey: parseTree[kLayoutDictHeightKey],
-        kLayoutDictNodeType: @(kVSplitLayoutNode),
-        kLayoutDictXOffsetKey: @0,
-        kLayoutDictYOffsetKey: @0,
-        } mutableCopy];
+    NSMutableDictionary *maximizedParseTree = [self maximizedLayoutForParseTree:parseTree];
     [PTYTab setSizesInTmuxParseTree:maximizedParseTree
                          inTerminal:realParentWindow_
                              zoomed:YES
                             profile:[tmuxController profileForWindow:self.tmuxWindow]];
+    DLog(@"PTYTab maximizeAfterApplyingTmuxParseTree using width of %@", parseTree[kLayoutDictMaximumPixelWidthKey]);
     [self resizeViewsInViewHierarchy:root_ forNewLayout:maximizedParseTree];
+    DLog(@"After resizing views in maximize, root_.width=%f, flexibleView_.width=%f",
+          root_.frame.size.width, flexibleView_.frame.size.width);
     [self fitSubviewsToRoot];
 }
 
+// For tmux pre-2.2, the passed-in layout will include the full tree with all sessions when zoomed.
+// The approach below is to construct a fake parse tree with a single session whose size
+// equals that of the window. See issue 5233.
+//
+// For tmux 2.2 and later, the passed-in layout will include only the zoomed session. See issue 10249.
+- (NSMutableDictionary *)maximizedLayoutForParseTree:(NSDictionary *)parseTree {
+    NSMutableDictionary *child = [@{
+        kLayoutDictWidthKey: parseTree[kLayoutDictWidthKey],
+        kLayoutDictHeightKey: parseTree[kLayoutDictHeightKey],
+        kLayoutDictNodeType: @(kLeafLayoutNode),
+        kLayoutDictWindowPaneKey: @(self.activeSession.tmuxPane),
+        kLayoutDictXOffsetKey: @0,
+        kLayoutDictYOffsetKey: @0,
+    } mutableCopy];
+    return [@{ kLayoutDictChildrenKey: @[ child ],
+               kLayoutDictWidthKey: parseTree[kLayoutDictWidthKey],
+               kLayoutDictHeightKey: parseTree[kLayoutDictHeightKey],
+               kLayoutDictNodeType: @(kVSplitLayoutNode),
+               kLayoutDictXOffsetKey: @0,
+               kLayoutDictYOffsetKey: @0,
+            } mutableCopy];
+}
+
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
+        visibleLayout:(NSMutableDictionary *)visibleParseTree
        tmuxController:(TmuxController *)tmuxController
                zoomed:(NSNumber *)zoomed {
     DLog(@"setTmuxLayout:tmuxController:%@zoomed:%@", tmuxController, zoomed);
@@ -4722,6 +4736,11 @@ typedef struct {
             parseTree = [PTYTab tweakedParseTree:parseTree fillingRootOfSize:[self rootViewSize]];
             DLog(@"Tweaked parse tree:\n%@", parseTree);
         }
+        DLog(@"PTYTab setTmuxLayout %@ visible parse tree yielding width of %@px. Will resize views. root_ width before=%f, flexibleView_ width before=%f",
+             visibleParseTree ? @"with" : @"without",
+             parseTree[kLayoutDictMaximumPixelWidthKey],
+             root_.frame.size.width,
+             flexibleView_.frame.size.width);
         [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree];
         [self fitSubviewsToRoot];
     } else {
@@ -4736,11 +4755,13 @@ typedef struct {
     [self updateFlexibleViewColors];
     [[root_ window] makeFirstResponder:[[self activeSession] textview]];
     parseTree_ = parseTree;
+    visibleParseTree_ = visibleParseTree;
 
     [self activateJuniorSession];
 
     if (shouldZoom) {
-        [self maximizeAfterApplyingTmuxParseTree:parseTree tmuxController:tmuxController];
+        [self maximizeAfterApplyingTmuxParseTree:visibleParseTree ?: parseTree
+                                  tmuxController:tmuxController];
     }
     [realParentWindow_ tabDidChangeTmuxLayout:self];
 }
@@ -4793,22 +4814,22 @@ typedef struct {
         const CGFloat dx = root_.frame.size.width - flexibleView_.frame.size.width;
         const CGFloat dy = root_.frame.size.height - flexibleView_.frame.size.height;
         const NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
-        DLog(@"dx=%@ dy=%@ cellSize=%@ root.frame=%@ flexibleView.frame=%@",
+        DLog(@"updatedTmuxLayoutRequiresAdjustment: dx=%@ dy=%@ cellSize=%@ root.frame=%@ flexibleView.frame=%@",
              @(dx), @(dy), NSStringFromSize(cellSize), NSStringFromRect(root_.frame),
              NSStringFromRect(flexibleView_.frame));
         if (dx > 0 || fabs(dx) >= cellSize.width) {
-            DLog(@"YES");
+            DLog(@"updatedTmuxLayoutRequiresAdjustment: YES");
             return YES;
         }
         if (dy > 0 || fabs(dy) >= cellSize.height) {
-            DLog(@"YES");
+            DLog(@"updatedTmuxLayoutRequiresAdjustment: YES");
             return YES;
         }
 
-        DLog(@"NO");
+        DLog(@"updatedTmuxLayoutRequiresAdjustment: NO");
         return NO;
     }
-    DLog(@"Using too-large check only. root %@ has size %@ vs flexible view %@ with size %@",
+    DLog(@"updatedTmuxLayoutRequiresAdjustment: Using too-large check only. root %@ has size %@ vs flexible view %@ with size %@",
          root_, NSStringFromSize(root_.frame.size),
          flexibleView_, NSStringFromSize(flexibleView_.frame.size));
     return (root_.frame.size.width > flexibleView_.frame.size.width ||
@@ -4856,8 +4877,14 @@ typedef struct {
     if ([self isTmuxTab]) {
         DLog(@"Is a tmux tab");
         // Resize the session (VT100Screen, etc.) to the size of the tmux window.
-        VT100GridSize gridSize = VT100GridSizeMake([parseTree_[kLayoutDictWidthKey] intValue],
-                                                   [parseTree_[kLayoutDictHeightKey] intValue]);
+        VT100GridSize gridSize;
+        if (visibleParseTree_) {
+            gridSize = VT100GridSizeMake([visibleParseTree_[kLayoutDictWidthKey] intValue],
+                                         [visibleParseTree_[kLayoutDictHeightKey] intValue]);
+        } else {
+            gridSize = VT100GridSizeMake([parseTree_[kLayoutDictWidthKey] intValue],
+                                         [parseTree_[kLayoutDictHeightKey] intValue]);
+        }
         [self resizeSession:self.activeSession toSize:gridSize];
 
         // Resize the scroll view

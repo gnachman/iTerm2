@@ -101,6 +101,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 // Returns YES if you should call adjustWindowSizeIfNeededForTabs: after all tabs have been updated.
 - (BOOL)setLayoutInTab:(PTYTab *)tab
               toLayout:(NSString *)layout
+         visibleLayout:(NSString *)visibleLayout
                 zoomed:(NSNumber *)zoomed;
 - (void)adjustWindowSizeIfNeededForTabs:(NSArray<PTYTab *> *)tabs;
 

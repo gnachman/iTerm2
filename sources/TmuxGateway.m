@@ -313,7 +313,7 @@ error:
     [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%num data): \"%s\"", command]];
 }
 
-- (NSNumber *)layoutIsZoomed:(NSString *)args {
+- (NSNumber *)layoutIsZoomedInLayoutChange:(NSString *)args {
     // window-layout window-visible-layout window-flags
     NSArray<NSString *> *components = [args componentsSeparatedByString:@" "];
     if (components.count < 3) {
@@ -323,20 +323,39 @@ error:
     return @([windowFlags containsString:@"Z"]);
 }
 
+- (NSString *)regularLayoutFromLayoutChange:(NSString *)args {
+    NSArray<NSString *> *components = [args componentsSeparatedByString:@" "];
+    if (components.count < 1) {
+        return nil;
+    }
+    return components[0];
+}
+
+- (NSString *)visibleLayoutFromLayoutChange:(NSString *)args {
+    NSArray<NSString *> *components = [args componentsSeparatedByString:@" "];
+    if (components.count < 2) {
+        return nil;
+    }
+    return components[1];
+}
+
 - (void)parseLayoutChangeCommand:(NSString *)command
 {
-    // %layout-change <window> <layout>
+    // %layout-change <window> <layout> [window_visible_layout window_flags]
+    DLog(@"TmuxGateway: received layout change %@", command);
     NSArray *components = [command captureComponentsMatchedByRegex:@"^%layout-change @([0-9]+) (.*)"];
     if (components.count != 3) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%layout-change <window> <layout>): \"%@\"",
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%layout-change <window> <layout> [<window_visible_layout> <window_flags>]): \"%@\"",
                                      command]];
         return;
     }
     int window = [[components objectAtIndex:1] intValue];
-    NSString *layout = [components objectAtIndex:2];
+    NSString *rest = [components objectAtIndex:2];
+
     [delegate_ tmuxUpdateLayoutForWindow:window
-                                  layout:layout
-                                  zoomed:[self layoutIsZoomed:layout]
+                                  layout:[self regularLayoutFromLayoutChange:rest]
+                           visibleLayout:[self visibleLayoutFromLayoutChange:rest]
+                                  zoomed:[self layoutIsZoomedInLayoutChange:rest]
                                     only:YES];
 }
 

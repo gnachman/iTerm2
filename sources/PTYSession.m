@@ -7487,6 +7487,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (BOOL)tmuxUpdateLayoutForWindow:(int)windowId
                            layout:(NSString *)layout
+                    visibleLayout:(NSString *)visibleLayout
                            zoomed:(NSNumber *)zoomed
                              only:(BOOL)only {
     DLog(@"tmuxUpdateLayoutForWindow:%@ layout:%@ zoomed:%@ only:%@",
@@ -7496,7 +7497,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         DLog(@"* NO TAB, DO NOTHING");
         return NO;
     }
-    const BOOL result = [_tmuxController setLayoutInTab:tab toLayout:layout zoomed:zoomed];
+    const BOOL result = [_tmuxController setLayoutInTab:tab
+                                               toLayout:layout
+                                          visibleLayout:visibleLayout
+                                                 zoomed:zoomed];
     if (result && only) {
         [_tmuxController adjustWindowSizeIfNeededForTabs:@[ tab ]];
     }
