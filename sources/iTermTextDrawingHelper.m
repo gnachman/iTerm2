@@ -33,6 +33,7 @@
 #import "NSCharacterSet+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
+#import "NSFont+iTerm.h""
 #import "NSImage+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSImage+iTerm.h"
@@ -2722,6 +2723,10 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                 combinedAttributes = [combinedAttributes dictionaryByMergingDictionary:imageAttributes];
             }
             [builder setAttributes:combinedAttributes];
+            if ([[NSFont castFrom:combinedAttributes[NSFontAttributeName]] it_hasStylisticAlternatives]) {
+                // CG APIs don't support these so we must use slow core text.
+                [builder disableFastPath];
+            }
         }
         iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_COMBINE_ATTRIBUTES]);
 

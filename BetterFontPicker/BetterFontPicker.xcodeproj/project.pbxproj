@@ -37,6 +37,8 @@
 		A6DBE7B6225ABC6000144200 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A6DBE7B5225ABC6000144200 /* Assets.xcassets */; };
 		A6DBE7B9225ABC6000144200 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6DBE7B7225ABC6000144200 /* MainMenu.xib */; };
 		A6DBE7C0225ABC7000144200 /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6DBE78C225A565700144200 /* BetterFontPicker.framework */; };
+		A6DC989C289F3BCE009D21C0 /* MenuButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DC989B289F3BCE009D21C0 /* MenuButton.swift */; };
+		A6DC989E289F3FE7009D21C0 /* OptionsButtonController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DC989D289F3FE7009D21C0 /* OptionsButtonController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -74,6 +76,8 @@
 		A6DBE7B8225ABC6000144200 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		A6DBE7BA225ABC6000144200 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A6DBE7BB225ABC6000144200 /* BetterfontPickerDemo.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BetterfontPickerDemo.entitlements; sourceTree = "<group>"; };
+		A6DC989B289F3BCE009D21C0 /* MenuButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuButton.swift; sourceTree = "<group>"; };
+		A6DC989D289F3FE7009D21C0 /* OptionsButtonController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptionsButtonController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +148,8 @@
 				A6661301225CF57C00840E89 /* VerticalSpacingIcon.png */,
 				A6661302225CF57C00840E89 /* VerticalSpacingIcon@2x.png */,
 				A6CC4AF8244C2BDD00421B9A /* SystemFontClassifier.swift */,
+				A6DC989B289F3BCE009D21C0 /* MenuButton.swift */,
+				A6DC989D289F3FE7009D21C0 /* OptionsButtonController.swift */,
 			);
 			path = BetterFontPicker;
 			sourceTree = "<group>";
@@ -296,8 +302,10 @@
 				A6CC4AF9244C2BDD00421B9A /* SystemFontClassifier.swift in Sources */,
 				A6DBE7A0225A59EB00144200 /* RecentsDataSource.swift in Sources */,
 				A66612F6225C6E3B00840E89 /* Affordance.swift in Sources */,
+				A6DC989C289F3BCE009D21C0 /* MenuButton.swift in Sources */,
 				A6DBE79E225A575D00144200 /* FavoritesDataSource.swift in Sources */,
 				A6DBE7A4225AAE5E00144200 /* TableViewController.swift in Sources */,
+				A6DC989E289F3FE7009D21C0 /* OptionsButtonController.swift in Sources */,
 				A66612F8225C6E4F00840E89 /* FontPickerPanel.swift in Sources */,
 				A6B00D1C225AC60600536A68 /* StarTableViewCell.swift in Sources */,
 				A6661300225C7C8000840E89 /* FontPickerCompositeView.swift in Sources */,

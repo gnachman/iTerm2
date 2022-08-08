@@ -49,6 +49,7 @@
 #import "ScreenChar.h"
 #import <apr-1/apr_base64.h>
 #import <Carbon/Carbon.h>
+#import <Foundation/Foundation.h>
 #import <wctype.h>
 
 @implementation NSString (iTerm)
@@ -945,22 +946,35 @@ int decode_utf8_char(const unsigned char *datap,
 }
 
 - (NSFont *)fontValue {
-    float fontSize;
-    char utf8FontName[128];
-    NSFont *aFont;
-
     if ([self length] == 0) {
         return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
     }
 
-    sscanf([self UTF8String], "%127s %g", utf8FontName, &fontSize);
-    // The sscanf man page is unclear whether it will always null terminate when the length hits the
-    // maximum field width, so ensure it is null terminated.
-    utf8FontName[127] = '\0';
-
-    DLog(@"Looking for font with string rep %@", self);
-    NSString *fontName = [NSString stringWithFormat:@"%s", utf8FontName];
-    aFont = [NSFont fontWithName:fontName size:fontSize];
+    NSScanner *scanner = [NSScanner scannerWithString:self];
+    NSString *fontName = nil;
+    [scanner scanUpToString:@" " intoString:&fontName];
+    if (!fontName) {
+        DLog(@"Failed to scan font name from “%@” so using system standard font", self);
+        return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    }
+    scanner.charactersToBeSkipped = [NSCharacterSet characterSetWithCharactersInString:@" "];
+    float fontSize = 0;
+    if (![scanner scanFloat:&fontSize]) {
+        DLog(@"Failed to scan font size from “%@” so using system standard font", self);
+        return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
+    }
+    NSString *suffix = [self substringFromIndex:scanner.scanLocation];
+    NSDictionary *dict = [NSDictionary castFrom:[NSJSONSerialization JSONObjectWithData:[suffix dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil]];
+    NSArray *featureSettings = [NSArray castFrom:dict[@"featureSettings"]];
+    NSMutableDictionary *attributes = [@{
+        NSFontNameAttribute: fontName,
+        NSFontSizeAttribute: @(fontSize),
+    } mutableCopy];
+    if (featureSettings) {
+        attributes[NSFontFeatureSettingsAttribute] = featureSettings;
+    }
+    NSFontDescriptor *descriptor = [[NSFontDescriptor alloc] initWithFontAttributes:attributes];
+    NSFont *aFont = [NSFont fontWithDescriptor:descriptor textTransform:nil];
     if (aFont == nil) {
         DLog(@"Failed to look up font named %@. Falling back to to user font", fontName);
         return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];

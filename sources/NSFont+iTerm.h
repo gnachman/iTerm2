@@ -14,5 +14,6 @@
 @property(nonatomic, readonly) NSString *stringValue;
 - (NSFont *)it_fontByAddingToPointSize:(CGFloat)delta;
 + (NSFont *)it_toolbeltFont;
+- (BOOL)it_hasStylisticAlternatives;
 
 @end

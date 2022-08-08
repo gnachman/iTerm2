@@ -2878,7 +2878,6 @@
 		A6C762B01B45C52B00E3C992 /* NSColor+Scripting.m in Sources */ = {isa = PBXBuildFile; fileRef = A6C7DE5C19A469D6001E5C75 /* NSColor+Scripting.m */; };
 		A6C762B21B45C52B00E3C992 /* NSDateFormatterExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */; };
 		A6C762B41B45C52B00E3C992 /* NSDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBBA1AE5F38C004656C2 /* NSDictionary+Profile.m */; };
-		A6C762B71B45C52B00E3C992 /* NSFont+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698218FE48B200437DA9 /* NSFont+iTerm.m */; };
 		A6C762BA1B45C52B00E3C992 /* NSMutableData+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A680AA1718CEBF5C0034D4F8 /* NSMutableData+iTerm.m */; };
 		A6C762BB1B45C52B00E3C992 /* NSMutableDictionary+Profile.m in Sources */ = {isa = PBXBuildFile; fileRef = A61ABBC11AE5F54A004656C2 /* NSMutableDictionary+Profile.m */; };
 		A6C762BD1B45C52B00E3C992 /* NSPasteboard+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60D85A71A3A8105003AEE22 /* NSPasteboard+iTerm.m */; };
@@ -3207,6 +3206,7 @@
 		A6DC8154285CF45C0050788C /* GPBSourceContext.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DC8145285CF45B0050788C /* GPBSourceContext.pbobjc.m */; };
 		A6DC8155285CF45C0050788C /* GPBType.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DC8146285CF45B0050788C /* GPBType.pbobjc.m */; };
 		A6DC8156285CF45C0050788C /* GPBFieldMask.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DC8147285CF45B0050788C /* GPBFieldMask.pbobjc.m */; };
+		A6DC989A289F2560009D21C0 /* NSFont+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698218FE48B200437DA9 /* NSFont+iTerm.m */; };
 		A6DCDD202560B410004EA8A1 /* NSAttributedString+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */; };
 		A6DCDD212560B410004EA8A1 /* NSAttributedString+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */; };
 		A6DEB2EB267BBE6C00192994 /* write_only_profile_prologue.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6DEB2EA267BBE6C00192994 /* write_only_profile_prologue.txt */; };
@@ -15432,6 +15432,7 @@
 				A6153D5921F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.m in Sources */,
 				A63F34D121E1E0F8000C9D52 /* iTermSessionPicker.m in Sources */,
 				A66DABFF20867749006391A3 /* iTermTextViewAccessibilityHelper.m in Sources */,
+				A6DC989A289F2560009D21C0 /* NSFont+iTerm.m in Sources */,
 				A667C240276C7CC2006B4DEF /* iTermFullScreenWindowManager.m in Sources */,
 				53C166AB20C21FBB003B03AF /* iTermMigrationHelper.m in Sources */,
 				A66319882312139400C502BD /* NSImage+iTerm.m in Sources */,
@@ -15714,7 +15715,6 @@
 				A6C7633B1B45C52B00E3C992 /* ToastWindowController.m in Sources */,
 				A6C7634E1B45C52B00E3C992 /* RoundedRectView.m in Sources */,
 				A6C763011B45C52B00E3C992 /* TransferrableFileMenuItemViewController.m in Sources */,
-				A6C762B71B45C52B00E3C992 /* NSFont+iTerm.m in Sources */,
 				A6C763B21B45C52B00E3C992 /* MarkTrigger.m in Sources */,
 				A6C7632D1B45C52B00E3C992 /* ThreeFingerTapGestureRecognizer.m in Sources */,
 				A6C763861B45C52B00E3C992 /* iTermProfilesPanel.m in Sources */,
