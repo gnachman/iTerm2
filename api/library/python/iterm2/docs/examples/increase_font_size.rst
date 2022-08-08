@@ -27,7 +27,7 @@ Function**, and giving it the invocation
         app = await iterm2.async_get_app(connection)
         # This regex splits the font into its name and size. Fonts always end with
         # their size in points, preceded by a space.
-        r = re.compile(r'^(.* )(\d*)$')
+        r = re.compile(r'^([^ ]* )(\d*)(.*)$')
 
         @iterm2.RPC
         async def increase_font_size(session_id):
@@ -45,10 +45,11 @@ Function**, and giving it the invocation
             groups = match.groups()
             name = groups[0]
             size = int(groups[1])
+            remainder = groups[2]
 
             # Prepare an update to the profile that increases the font size
             # by 6 points.
-            replacement = name + str(size + 6)
+            replacement = name + str(size + 6) + remainder
             change = iterm2.LocalWriteOnlyProfile()
             change.set_normal_font(replacement)
 
