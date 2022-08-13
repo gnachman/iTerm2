@@ -15,6 +15,7 @@
 + (NSString *)command;
 
 - (BOOL)supportsSessionLocation;
+- (BOOL)supportsWindowLocation;
 - (BOOL)supportsCreateNewTab;
 - (BOOL)supportsChangeProfile;
 - (BOOL)supportsOpenArrangement;
@@ -32,6 +33,9 @@
 @end
 
 @interface iTermOpenQuicklySearchSessionsCommand : iTermOpenQuicklyCommand
+@end
+
+@interface iTermOpenQuicklySearchWindowsCommand : iTermOpenQuicklyCommand
 @end
 
 @interface iTermOpenQuicklySwitchProfileCommand : iTermOpenQuicklyCommand

@@ -254,6 +254,15 @@
                 // Create the hotkey window for this profile
                 [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
             }
+        } else if ([object isKindOfClass:[PseudoTerminal class]]) {
+            PseudoTerminal *term = object;
+            if (term.isHotKeyWindow) {
+                iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
+                [[iTermHotKeyController sharedInstance] showWindowForProfileHotKey:profileHotkey url:nil];
+            } else {
+                NSWindow *window = [object window];
+                [window makeKeyAndOrderFront:nil];
+            }
         } else if ([object isKindOfClass:[iTermOpenQuicklyArrangementItem class]]) {
             // Load window arrangement
             iTermOpenQuicklyArrangementItem *item = (iTermOpenQuicklyArrangementItem *)object;

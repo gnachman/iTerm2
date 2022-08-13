@@ -3207,6 +3207,12 @@
 		A6DC8155285CF45C0050788C /* GPBType.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DC8146285CF45B0050788C /* GPBType.pbobjc.m */; };
 		A6DC8156285CF45C0050788C /* GPBFieldMask.pbobjc.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DC8147285CF45B0050788C /* GPBFieldMask.pbobjc.m */; };
 		A6DC989A289F2560009D21C0 /* NSFont+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A2698218FE48B200437DA9 /* NSFont+iTerm.m */; };
+		A6DC98A128A82608009D21C0 /* Window@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DC989F28A82608009D21C0 /* Window@2x.png */; };
+		A6DC98A228A82608009D21C0 /* Window@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DC989F28A82608009D21C0 /* Window@2x.png */; };
+		A6DC98A328A82608009D21C0 /* Window@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DC989F28A82608009D21C0 /* Window@2x.png */; };
+		A6DC98A428A82608009D21C0 /* Window.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DC98A028A82608009D21C0 /* Window.png */; };
+		A6DC98A528A82608009D21C0 /* Window.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DC98A028A82608009D21C0 /* Window.png */; };
+		A6DC98A628A82608009D21C0 /* Window.png in Resources */ = {isa = PBXBuildFile; fileRef = A6DC98A028A82608009D21C0 /* Window.png */; };
 		A6DCDD202560B410004EA8A1 /* NSAttributedString+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */; };
 		A6DCDD212560B410004EA8A1 /* NSAttributedString+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */; };
 		A6DEB2EB267BBE6C00192994 /* write_only_profile_prologue.txt in Resources */ = {isa = PBXBuildFile; fileRef = A6DEB2EA267BBE6C00192994 /* write_only_profile_prologue.txt */; };
@@ -6831,6 +6837,8 @@
 		A6DC8145285CF45B0050788C /* GPBSourceContext.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBSourceContext.pbobjc.m; path = ThirdParty/ProtobufRuntime/GPBSourceContext.pbobjc.m; sourceTree = SOURCE_ROOT; };
 		A6DC8146285CF45B0050788C /* GPBType.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBType.pbobjc.m; path = ThirdParty/ProtobufRuntime/GPBType.pbobjc.m; sourceTree = SOURCE_ROOT; };
 		A6DC8147285CF45B0050788C /* GPBFieldMask.pbobjc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GPBFieldMask.pbobjc.m; path = ThirdParty/ProtobufRuntime/GPBFieldMask.pbobjc.m; sourceTree = SOURCE_ROOT; };
+		A6DC989F28A82608009D21C0 /* Window@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Window@2x.png"; path = "images/Window@2x.png"; sourceTree = "<group>"; };
+		A6DC98A028A82608009D21C0 /* Window.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Window.png; path = images/Window.png; sourceTree = "<group>"; };
 		A6DCDD1E2560B410004EA8A1 /* NSAttributedString+PSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSAttributedString+PSM.h"; sourceTree = "<group>"; };
 		A6DCDD1F2560B410004EA8A1 /* NSAttributedString+PSM.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSAttributedString+PSM.m"; sourceTree = "<group>"; };
 		A6DDA88425B376D200AA55EE /* iTermActivityInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermActivityInfo.h; sourceTree = "<group>"; };
@@ -7970,6 +7978,8 @@
 				A6F1B3BD2693B82B00546767 /* DebugLogging@2x.png */,
 				A6F1B3AD268FD0F300546767 /* StatusBarIconTriggers.png */,
 				A6F1B3AC268FD0F300546767 /* StatusBarIconTriggers@2x.png */,
+				A6DC98A028A82608009D21C0 /* Window.png */,
+				A6DC989F28A82608009D21C0 /* Window@2x.png */,
 				A6F2B6DA2558BECC008D6BF1 /* TmuxFlowControl.png */,
 				A6F2B6D62558B8AC008D6BF1 /* Composer.png */,
 				A6F2B6D22558B51B008D6BF1 /* ScrollerHighlights.png */,
@@ -13154,6 +13164,7 @@
 				A66A882D24DFCCC30043728B /* graphic_postgres.png in Resources */,
 				A6E7AE91214394DD00DE9F3B /* graphic_composer.png in Resources */,
 				A67D0D5B1A2EE12A003A8B35 /* iTerm.strings in Resources */,
+				A6DC98A628A82608009D21C0 /* Window.png in Resources */,
 				A6C4352321D1C64800346910 /* iterm2Invoke.js in Resources */,
 				1D6ED99D19AEA20D005A7799 /* dead.png in Resources */,
 				A6F7A733213CB143004DE961 /* StatusBarIconGitBranch.png in Resources */,
@@ -13203,6 +13214,7 @@
 				A65B72AB1B3285A300F947A7 /* DisableTips.png in Resources */,
 				A6F7A72D213CB143004DE961 /* StatusBarIconNetwork@2x.png in Resources */,
 				1DBBA5E31B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
+				A6DC98A328A82608009D21C0 /* Window@2x.png in Resources */,
 				A6F7A709213CB143004DE961 /* StatusBarIconUser.png in Resources */,
 				5308BF9722828A28004BECAC /* StatusBarIconCharging.png in Resources */,
 				A6E7AE97214394DD00DE9F3B /* graphic_coffee@2x.png in Resources */,
@@ -13540,6 +13552,7 @@
 				1DE922E71AC3709200965876 /* BackgroundStripes.png in Resources */,
 				A67F61BC214395C60093940A /* graphic_shell@2x.png in Resources */,
 				A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */,
+				A6DC98A228A82608009D21C0 /* Window@2x.png in Resources */,
 				A67F61A8214395B70093940A /* graphic_rails.png in Resources */,
 				A6F7A71D213CB143004DE961 /* StatusBarIconFolder.png in Resources */,
 				A67F619F214395B70093940A /* graphic_psql@2x.png in Resources */,
@@ -13585,6 +13598,7 @@
 				A67F61EB214395D50093940A /* graphic_yarn@2x.png in Resources */,
 				A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A65E6F592547F1D5008A4866 /* WindowCornerFull_Square.png in Resources */,
+				A6DC98A528A82608009D21C0 /* Window.png in Resources */,
 				A6E7AEB3214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
 				A67F6182214395A70093940A /* graphic_nginx.png in Resources */,
 				A623D94C1F8984690011F8C3 /* key.png in Resources */,
@@ -13892,6 +13906,7 @@
 				A6E7AE6A214394CA00DE9F3B /* graphic_bower.png in Resources */,
 				1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */,
 				A60C03692089897400FE2F1F /* iTermScriptConsole.xib in Resources */,
+				A6DC98A128A82608009D21C0 /* Window@2x.png in Resources */,
 				A67F619E214395B70093940A /* graphic_psql@2x.png in Resources */,
 				A6AC04C621F0FDBD00CD2774 /* StatusBarComposerExpand@2x.png in Resources */,
 				A6FD85301B767D6300EB9DCE /* Hamburger.png in Resources */,
@@ -14160,6 +14175,7 @@
 				A6FE8D15209541BC00B5C648 /* rsa_pub.pem in Resources */,
 				A67F6167214395990093940A /* graphic_nano.png in Resources */,
 				A6E7AE7D214394DD00DE9F3B /* graphic_compile@2x.png in Resources */,
+				A6DC98A428A82608009D21C0 /* Window.png in Resources */,
 				A66A882E24DFCCC30043728B /* graphic_postgres@2x.png in Resources */,
 				A67F61ED214395D50093940A /* graphic_vim@2x.png in Resources */,
 				1DEF5E6D185F889600300319 /* Alert.png in Resources */,

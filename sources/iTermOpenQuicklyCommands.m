@@ -37,6 +37,10 @@
     return NO;
 }
 
+- (BOOL)supportsWindowLocation {
+    return NO;
+}
+
 - (BOOL)supportsCreateNewTab {
     return NO;
 }
@@ -94,6 +98,22 @@
 }
 
 - (BOOL)supportsSessionLocation {
+    return YES;
+}
+
+@end
+
+@implementation iTermOpenQuicklySearchWindowsCommand
+
++ (NSString *)restrictionDescription {
+    return @"existing windows";
+}
+
++ (NSString *)command {
+    return @"w";
+}
+
+- (BOOL)supportsWindowLocation {
     return YES;
 }
 
@@ -194,6 +214,10 @@
 }
 
 - (BOOL)supportsSnippet {
+    return YES;
+}
+
+- (BOOL)supportsWindowLocation {
     return YES;
 }
 

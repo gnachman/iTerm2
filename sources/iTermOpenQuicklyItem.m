@@ -22,6 +22,14 @@
 
 @end
 
+@implementation iTermOpenQuicklyWindowItem
+
+- (NSImage *)icon {
+    return [NSImage it_imageNamed:@"Window" forClass:self.class];
+}
+
+@end
+
 @implementation iTermOpenQuicklyProfileItem
 
 - (NSImage *)icon {

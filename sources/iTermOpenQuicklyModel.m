@@ -6,10 +6,12 @@
 #import "iTermColorPresets.h"
 #import "iTermController.h"
 #import "iTermGitPollWorker.h"
+#import "iTermHotKeyController.h"
 #import "iTermLogoGenerator.h"
 #import "iTermMinimumSubsequenceMatcher.h"
 #import "iTermOpenQuicklyCommands.h"
 #import "iTermOpenQuicklyItem.h"
+#import "iTermProfileHotKey.h"
 #import "iTermScriptsMenuController.h"
 #import "iTermSnippetsModel.h"
 #import "iTermVariableScope.h"
@@ -19,6 +21,7 @@
 #import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
+#import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
 #import "PseudoTerminal.h"
 #import "PTYSession+Scripting.h"
@@ -58,6 +61,9 @@ static const double kProfileNameMultiplierForColorPresetItem = 0.095;
 // Multipliers for script items. Ranks below profiles.
 static const double kProfileNameMultiplierForScriptItem = 0.09;
 
+// Multipliers for windows items. Windows rank below scripts since it's a redundant feature.
+static const double kProfileNameMultiplierForWindowItem = 0.08;
+
 @implementation iTermOpenQuicklyModel
 
 #pragma mark - Commands
@@ -69,6 +75,7 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
         commands = @[ [iTermOpenQuicklyWindowArrangementCommand class],
                       [iTermOpenQuicklySearchSessionsCommand class],
                       [iTermOpenQuicklySwitchProfileCommand class],
+                      [iTermOpenQuicklySearchWindowsCommand class],
                       [iTermOpenQuicklyCreateTabCommand class],
                       [iTermOpenQuicklyColorPresetCommand class],
                       [iTermOpenQuicklyScriptCommand class],
@@ -147,6 +154,10 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     } else {
         return [NSString stringWithFormat:@"%@ — %@", tabTitle, sessionName];
     }
+}
+
+- (NSString *)documentForWindow:(PseudoTerminal *)term {
+    return term.window.title ?: @"";
 }
 
 // Returns a function PTYSession -> (Feature name, Feature value) that gives the value which most distinguishes sesssions from one another.
@@ -257,6 +268,80 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
             [items addObject:item];
         }
     }
+}
+
+- (void)addWindowLocationToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
+                     withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    const BOOL multipleDisplays = [[NSScreen screens] count] > 1;
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {{
+        iTermOpenQuicklyWindowItem *item = [[iTermOpenQuicklyWindowItem alloc] init];
+        NSMutableAttributedString *attributedName = [[NSMutableAttributedString alloc] init];
+        item.score = [self scoreForWindow:term
+                                  matcher:matcher
+                           attributedName:attributedName];
+        if (item.score > 0) {
+            NSMutableArray<NSString *> *features = [NSMutableArray array];
+            if (multipleDisplays) {
+                NSString *name = [term.window.screen it_uniqueName];
+                if (name) {
+                    [features addObject:[NSString stringWithFormat:@"On %@", name]];
+                } else {
+                    [features addObject:@"Offscreen"];
+                }
+            }
+            if (term.window.isMiniaturized) {
+                [features addObject:@"Miniaturized"];
+            }
+            if (term.anyFullScreen) {
+                [features addObject:@"Full screen"];
+            }
+            if (!term.window.isOnActiveSpace && !(term.window.collectionBehavior & NSWindowCollectionBehaviorCanJoinAllSpaces)) {
+                [features addObject:@"On other Space"];
+            }
+            if (term.isHotKeyWindow) {
+                iTermProfileHotKey *profileHotkey = [[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:term];
+                iTermShortcut *shortcut = profileHotkey.shortcuts.firstObject;
+                if (shortcut) {
+                    [features addObject:[NSString stringWithFormat:@"Hotkey %@", shortcut.stringValue]];
+                } else if (profileHotkey.hasModifierActivation) {
+                    const iTermHotKeyModifierActivation mod = profileHotkey.modifierActivation;
+                    NSEventModifierFlags flags = 0;
+                    switch (mod) {
+                        case iTermHotKeyModifierActivationShift:
+                            flags = NSEventModifierFlagShift;
+                            break;
+                        case iTermHotKeyModifierActivationOption:
+                            flags = NSEventModifierFlagOption;
+                            break;
+                        case iTermHotKeyModifierActivationCommand:
+                            flags = NSEventModifierFlagCommand;
+                            break;
+                        case iTermHotKeyModifierActivationControl:
+                            flags = NSEventModifierFlagControl;
+                            break;
+                    }
+                    if (flags) {
+                        NSString *key = [NSString stringForModifiersWithMask:flags];
+                        [features addObject:[NSString stringWithFormat:@"Hotkey %@%@", key, key]];
+                    }
+                }
+            }
+            if (features.count) {
+                item.detail = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                                value:[features componentsJoinedByString:@" — "]
+                                                                   highlightedIndexes:nil];
+            }
+            if (attributedName.length) {
+                item.title = attributedName;
+            } else {
+                item.title = [_delegate openQuicklyModelDisplayStringForFeatureNamed:nil
+                                                                               value:[self documentForWindow:term]
+                                                                  highlightedIndexes:nil];
+            }
+            item.identifier = term.terminalGuid;
+            [items addObject:item];
+        }
+    }}
 }
 
 - (void)addCreateNewTabToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
@@ -478,7 +563,9 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
     if ([command supportsSessionLocation]) {
         [self addSessionLocationToItems:items withMatcher:matcher];
     }
-
+    if ([command supportsWindowLocation]) {
+        [self addWindowLocationToItems:items withMatcher:matcher];
+    }
     BOOL haveCurrentWindow = [[iTermController sharedInstance] currentTerminal] != nil;
     if ([command supportsCreateNewTab]) {
         [self addCreateNewTabToItems:items withMatcher:matcher haveCurrentWindow:haveCurrentWindow];
@@ -536,6 +623,13 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
                 return session;
             }
         }
+    } else if ([item isKindOfClass:[iTermOpenQuicklyWindowItem class]]) {
+        NSString *guid = item.identifier;
+        for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+            if ([term.terminalGuid isEqual:guid]) {
+                return term;
+            }
+        }
     } else if ([item isKindOfClass:[iTermOpenQuicklyScriptItem class]]) {
         return item;
     } else if ([item isKindOfClass:[iTermOpenQuicklyColorPresetItem class]]) {
@@ -565,6 +659,22 @@ static const double kProfileNameMultiplierForScriptItem = 0.09;
         // Make the default arrangement always be the highest-scored arrangement if it matches the query.
         score += 0.2;
     }
+    if (nameFeature.count) {
+        [attributedName appendAttributedString:nameFeature[0][0]];
+    }
+    return score;
+}
+
+- (double)scoreForWindow:(PseudoTerminal *)term
+                 matcher:(iTermMinimumSubsequenceMatcher *)matcher
+          attributedName:(NSMutableAttributedString *)attributedName {
+    NSMutableArray *nameFeature = [NSMutableArray array];
+    double score = [self scoreUsingMatcher:matcher
+                                 documents:@[ term.window.title ?: @"" ]
+                                multiplier:kProfileNameMultiplierForWindowItem
+                                      name:nil
+                                  features:nameFeature
+                                     limit:2 * kProfileNameMultiplierForWindowItem];
     if (nameFeature.count) {
         [attributedName appendAttributedString:nameFeature[0][0]];
     }

@@ -36,6 +36,9 @@
 
 @end
 
+@interface iTermOpenQuicklyWindowItem : iTermOpenQuicklyItem
+@end
+
 @interface iTermOpenQuicklyProfileItem : iTermOpenQuicklyItem
 @end
 
