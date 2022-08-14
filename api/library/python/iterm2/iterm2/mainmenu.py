@@ -93,7 +93,7 @@ class MainMenu:
     class iTerm2(enum.Enum):
         ABOUT_ITERM2 = MenuItemIdentifier("About iTerm2", "About iTerm2")
         SHOW_TIP_OF_THE_DAY = MenuItemIdentifier("Show Tip of the Day", "Show Tip of the Day")
-        CHECK_FOR_UPDATES = MenuItemIdentifier("Check For Updates…", "Check For Updates…")
+        CHECK_FOR_UPDATES = MenuItemIdentifier("Check for Updates…", "Check For Updates…")
         TOGGLE_DEBUG_LOGGING = MenuItemIdentifier("Toggle Debug Logging", "Toggle Debug Logging")
         COPY_PERFORMANCE_STATS = MenuItemIdentifier("Copy Performance Stats", "Copy Performance Stats")
         CAPTURE_GPU_FRAME = MenuItemIdentifier("Capture GPU Frame", "Capture Metal Frame")
@@ -140,6 +140,12 @@ class MainMenu:
             PAUSE_PANE = MenuItemIdentifier("Pause Pane", "trmux.Pause Pane")
             DASHBOARD = MenuItemIdentifier("Dashboard", "tmux.Dashboard")
 
+
+        class ssh(enum.Enum):
+            DISCONNECT = MenuItemIdentifier("Disconnect", "ssh.Disconnect")
+            REMOVE_FILE_PROVIDER = MenuItemIdentifier("Remove File Provider", "ssh.Remove File Provider")
+            ADD_FILE_PROVIDER = MenuItemIdentifier("Add File Provider", "ssh.Add File Provider")
+
         PAGE_SETUP = MenuItemIdentifier("Page Setup...", "Page Setup...")
 
         class Print(enum.Enum):
@@ -172,6 +178,7 @@ class MainMenu:
             LIMIT_MULTILINE_PASTE_WARNING_TO_SHELL_PROMPT = MenuItemIdentifier("Limit Multi-Line Paste Warning to Shell Prompt", "Paste Special.Limit Multi-Line Paste Warning to Shell Prompt")
             WARN_BEFORE_PASTING_ONE_LINE_ENDING_IN_A_NEWLINE_AT_SHELL_PROMPT = MenuItemIdentifier("Warn Before Pasting One Line Ending in a Newline at Shell Prompt", "Paste Special.Warn Before Pasting One Line Ending in a Newline at Shell Prompt")
 
+        RENDER_SELECTION = MenuItemIdentifier("Render Selection", "Render Selection Natively")
         OPEN_SELECTION = MenuItemIdentifier("Open Selection", "Open Selection")
         JUMP_TO_SELECTION = MenuItemIdentifier("Jump to Selection", "Find.Jump to Selection")
         SELECT_ALL = MenuItemIdentifier("Select All", "Select All")
@@ -180,12 +187,14 @@ class MainMenu:
         SELECT_CURRENT_COMMAND = MenuItemIdentifier("Select Current Command", "Select Current Command")
 
         class Find(enum.Enum):
-            FIND = MenuItemIdentifier("Find...", "Find.Find...")
+            FIND = MenuItemIdentifier("Find…", "Find.Find...")
             FIND_NEXT = MenuItemIdentifier("Find Next", "Find.Find Next")
             FIND_PREVIOUS = MenuItemIdentifier("Find Previous", "Find.Find Previous")
             USE_SELECTION_FOR_FIND = MenuItemIdentifier("Use Selection for Find", "Find.Use Selection for Find")
             FIND_GLOBALLY = MenuItemIdentifier("Find Globally...", "Find.Find Globally...")
+            SELECT_MATCHES = MenuItemIdentifier("Select Matches", "Find.ConvertMatchesToSelections")
             FIND_URLS = MenuItemIdentifier("Find URLs", "Find.Find URLs")
+            PICK_RESULT_TO_OPEN = MenuItemIdentifier("Pick Result to Open", "Find.Pick Result To Open")
             FILTER = MenuItemIdentifier("Filter", "Find.Filter")
 
 
@@ -213,14 +222,15 @@ class MainMenu:
         SHOW_TABS_IN_FULLSCREEN = MenuItemIdentifier("Show Tabs in Fullscreen", "Show Tabs in Fullscreen")
         TOGGLE_FULL_SCREEN = MenuItemIdentifier("Toggle Full Screen", "Toggle Full Screen")
         USE_TRANSPARENCY = MenuItemIdentifier("Use Transparency", "Use Transparency")
+        DISABLE_TRANSPARENCY_FOR_ACTIVE_WINDOW = MenuItemIdentifier("Disable Transparency for Active Window", "Disable Transparency for Active Window")
         ZOOM_IN_ON_SELECTION = MenuItemIdentifier("Zoom In on Selection", "Zoom In on Selection")
         ZOOM_OUT = MenuItemIdentifier("Zoom Out", "Zoom Out")
         FIND_CURSOR = MenuItemIdentifier("Find Cursor", "Find Cursor")
         SHOW_CURSOR_GUIDE = MenuItemIdentifier("Show Cursor Guide", "Show Cursor Guide")
         SHOW_TIMESTAMPS = MenuItemIdentifier("Show Timestamps", "Show Timestamps")
         SHOW_ANNOTATIONS = MenuItemIdentifier("Show Annotations", "Show Annotations")
+        SHOW_COMPOSER = MenuItemIdentifier("Show Composer", "Composer")
         AUTO_COMMAND_COMPLETION = MenuItemIdentifier("Auto Command Completion", "Auto Command Completion")
-        COMPOSER = MenuItemIdentifier("Composer", "Composer")
         OPEN_QUICKLY = MenuItemIdentifier("Open Quickly", "Open Quickly")
         MAXIMIZE_ACTIVE_PANE = MenuItemIdentifier("Maximize Active Pane", "Maximize Active Pane")
         MAKE_TEXT_BIGGER = MenuItemIdentifier("Make Text Bigger", "Make Text Bigger")
