@@ -73,6 +73,20 @@
            tabIndex:(int)tabIndex
           viewIndex:(int)viewIndex;
 
+// Generate a notification with all possible fields.
+// title, subtitle, and image file are all optional
+// and can be nil.  The description argument must
+// not be nil, but can be the empty string.
+//
+// Returns YES if the notification was posted.
+- (BOOL)notifyRich:(NSString *)title
+      withSubtitle:(NSString *)subtitle
+   withDescription:(NSString *)description
+         withImage:(NSString *)image
+       windowIndex:(int)windowIndex
+          tabIndex:(int)tabIndex
+         viewIndex:(int)viewIndex;
+
 // Adds the sticky argument.
 - (BOOL)notify:(NSString *)title
     withDescription:(NSString *)description

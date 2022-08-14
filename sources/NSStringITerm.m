@@ -39,6 +39,7 @@
 #import "NSArray+iTerm.h"
 #import "NSAttributedString+PSM.h"
 #import "NSData+iTerm.h"
+#import "NSDictionary+iTerm.h""
 #import "NSLocale+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
@@ -2298,6 +2299,19 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
 
 - (NSString *)it_stringByAppendingCharacter:(unichar)theChar {
     return [self stringByAppendingString:[NSString stringWithCharacters:&theChar length:1]];
+}
+
+- (NSDictionary<NSString *, NSString *> *)it_keyValuePairsSeparatedBy:(NSString *)separator {
+    NSArray<iTermTuple<NSString *, NSString *> *> *parts = [[self componentsSeparatedByString:separator] mapWithBlock:^id _Nullable(NSString * _Nonnull string) {
+        return [string keyValuePair];
+    }];
+    NSDictionary<NSString *, iTermTuple<NSString *,NSString *> *> *tupleDict = [parts classifyUniquelyWithBlock:^id(iTermTuple<NSString *,NSString *> *tuple) {
+        return tuple.firstObject;
+    }];
+    NSDictionary<NSString *, NSString *> *dict = [tupleDict mapValuesWithBlock:^id(NSString *key, iTermTuple<NSString *, NSString *> *tuple) {
+        return tuple.secondObject;
+    }];
+    return dict;
 }
 
 @end

@@ -13782,23 +13782,43 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self screenNeedsRedraw];
 }
 
-- (void)screenPostUserNotification:(NSString * _Nonnull)message {
+- (void)screenPostUserNotification:(NSString * _Nonnull)message rich:(BOOL)rich {
     if (![self shouldPostTerminalGeneratedAlert]) {
         DLog(@"Declining to allow terminal to post user notification %@", message);
         return;
     }
     DLog(@"Terminal posting user notification %@", message);
     [self incrementBadge];
-    NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
-                             [[self name] removingHTMLFromTabTitleIfNeeded],
-                             [_delegate tabNumber],
-                             message];
-    [[iTermNotificationController sharedInstance]
-     notify:@"Alert"
-     withDescription:description
-     windowIndex:[self screenWindowIndex]
-     tabIndex:[self screenTabIndex]
-     viewIndex:[self screenViewIndex]];
+
+    iTermNotificationController* controller = [iTermNotificationController sharedInstance];
+
+    if (rich) {
+        NSDictionary<NSString *, NSString *> *dict = [[message it_keyValuePairsSeparatedBy:@";"] mapValuesWithBlock:^id(NSString *key, NSString *encoded) {
+            return [encoded stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+        }];
+        NSString *description = dict[@"message"] ?: @"";
+        NSString *title = dict[@"title"];
+        NSString *subtitle = dict[@"subtitle"];
+        NSString *image = [dict[@"image"] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+
+        [controller notifyRich:title
+                  withSubtitle:subtitle
+               withDescription:description
+                     withImage:image
+                   windowIndex:[self screenWindowIndex]
+                      tabIndex:[self screenTabIndex]
+                     viewIndex:[self screenViewIndex]];
+    } else {
+        NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
+                                                           [[self name] removingHTMLFromTabTitleIfNeeded],
+                                                           [_delegate tabNumber],
+                                                           message];
+        [controller notify:@"Alert"
+           withDescription:description
+               windowIndex:[self screenWindowIndex]
+                  tabIndex:[self screenTabIndex]
+                 viewIndex:[self screenViewIndex]];
+    }
 }
 
 - (void)screenUpdateCommandUseWithGuid:(NSString *)screenmarkGuid

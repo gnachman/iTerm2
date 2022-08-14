@@ -4148,6 +4148,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                                                               payload:payload];
             }
         }
+    } else if ([key isEqualToString:@"Notification"]) {
+        [_delegate terminalPostUserNotification:(NSString *)value rich:YES];
     } else if ([key isEqualToString:@"Capabilities"]) {
         if ([_delegate terminalIsTrusted] && [_delegate terminalShouldSendReport]) {
             [_delegate terminalSendCapabilitiesReport];
