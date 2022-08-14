@@ -245,12 +245,12 @@ NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
 //  NSString *mine = [_linebuffer debugString];
 //  NSString *theirs = [source.linebuffer debugString];
 //  assert([mine isEqual:theirs]);
-    
-    [_primaryGrid copyDirtyFromGrid:source.primaryGrid];
+
+    [_primaryGrid copyDirtyFromGrid:source.primaryGrid didScroll:source.primaryGrid.haveScrolled];
     [source.primaryGrid markAllCharsDirty:NO updateTimestamps:NO];
 
     if (_altGrid && source.altGrid) {
-        [_altGrid copyDirtyFromGrid:source.altGrid];
+        [_altGrid copyDirtyFromGrid:source.altGrid didScroll:source.altGrid.haveScrolled];
     } else {
         _altGrid = [source.altGrid copy];
     }

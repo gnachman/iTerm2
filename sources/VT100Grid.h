@@ -256,7 +256,7 @@
 - (void)setCharsInRun:(VT100GridRun)run toChar:(unichar)c externalAttributes:(iTermExternalAttribute *)ea;
 
 // Copy everything from another grid if needed.
-- (void)copyDirtyFromGrid:(VT100Grid *)otherGrid;
+- (void)copyDirtyFromGrid:(VT100Grid *)otherGrid didScroll:(BOOL)didScroll;
 
 // Append a string starting from the cursor's current position.
 // Returns number of scrollback lines dropped from lineBuffer.

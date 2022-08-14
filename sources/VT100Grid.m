@@ -498,7 +498,14 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
         [[self lineInfoAtLineNumber:(size_.height - 1)] resetMetadata];
     }
 
-    [self markAllCharsDirty:YES updateTimestamps:NO];
+    // Mark new line at bottom of screen dirty and update its timestamp.
+    [self markCharsDirty:YES
+              inRectFrom:VT100GridCoordMake(0, size_.height - 1)
+                      to:VT100GridCoordMake(size_.width - 1, size_.height - 1)];
+    if (!lineBuffer) {
+        // Mark everything dirty if we're not using the scrollback buffer.
+        [self markAllCharsDirty:YES updateTimestamps:NO];
+    }
 
     DLog(@"scrolled screen up by 1 line");
     return numLinesDropped;
@@ -842,7 +849,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
     }
 }
 
-- (void)copyDirtyFromGrid:(VT100Grid *)otherGrid {
+- (void)copyDirtyFromGrid:(VT100Grid *)otherGrid  didScroll:(BOOL)didScroll {
     if (otherGrid == self) {
         return;
     }
@@ -850,7 +857,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
     [self setSize:otherGrid.size];
     for (int i = 0; i < size_.height; i++) {
         const VT100GridRange dirtyRange = [otherGrid dirtyRangeForLine:i];
-        if (!sizeChanged && dirtyRange.length <= 0) {
+        if (!didScroll && !sizeChanged && dirtyRange.length <= 0) {
             continue;
         }
         screen_char_t *dest = [self screenCharsAtLineNumber:i];
