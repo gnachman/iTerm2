@@ -1213,7 +1213,8 @@
     }
 
     // Background to the right of the rightmost tab and left of the leftmost tab.
-    [self drawBackgroundInRect:clipRect color:[self tabBarColor] horizontal:horizontal];
+    NSColor *marginColor = [self backgroundColorSelected:NO highlightAmount:0];
+    [self drawBackgroundInRect:clipRect color:marginColor horizontal:horizontal];
 
     // Draw line above tab bar.
     NSColor *topLineColor = [self topLineColorSelected:NO];
