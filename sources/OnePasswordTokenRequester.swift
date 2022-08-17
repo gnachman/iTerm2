@@ -175,44 +175,86 @@ class OnePasswordTokenRequester {
         return "Enter the 1Password master password for account “\(account)”:"
     }
 
-    // Returns nil if a token is unneeded because biometric authentication is available.
-    func get() throws -> Auth {
-        if Self.biometricsAvailable == nil {
-            switch checkBiometricAvailability() {
-            case .some(true):
-                DLog("biometrics are available")
-                return .biometric
-            case .some(false):
-                DLog("biometrics unavailable")
-                break
-            case .none:
-                throw OnePasswordDataSource.OPError.canceledByUser
+    func asyncGet(_ completion: @escaping (Result<Auth, Error>) -> ()) {
+        DLog("Begin asyncGet")
+        switch Self.biometricsAvailable {
+        case .none:
+            asyncCheckBiometricAvailability() { [weak self] availability in
+                guard let self = self else {
+                    DLog("Biometrics check finished but self is dealloced")
+                    return
+                }
+                switch availability {
+                case .some(true):
+                    DLog("biometrics are available")
+                    Self.biometricsAvailable = true
+                    completion(.success(.biometric))
+                case .some(false):
+                    DLog("biometrics unavailable, continue with regular auth")
+                    Self.biometricsAvailable = false
+                    self.asyncGetWithoutBiometrics(g, completion)
+                case .none:
+                    DLog("Failed to look up biometrics")
+                    completion(.failure(OnePasswordDataSource.OPError.canceledByUser))
+                }
             }
+        case .some(true):
+            completion(.success(.biometric))
+        case .some(false):
+            asyncGetWithoutBiometrics(g, completion)
         }
-        guard let password = self.requestPassword(prompt: passwordPrompt) else {
-            throw OnePasswordDataSource.OPError.canceledByUser
+    }
+
+    private func asyncGetWithoutBiometrics(_ g: Int, _ completion: @escaping (Result<Auth, Error>) -> ()) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard let password = self.requestPassword(prompt: self.passwordPrompt) else {
+            completion(.failure(OnePasswordDataSource.OPError.canceledByUser))
+            return
         }
+        self.asyncGet(password: password, g: g, completion)
+    }
+
+    private func asyncGet(password: String, g: Int, _ completion: @escaping (Result<Auth, Error>) -> ()) {
+        DLog("Read password from user entry")
         let command = CommandLinePasswordDataSource.CommandRequestWithInput(
             command: OnePasswordUtils.pathToCLI,
             args: argsByAddingAccountArg(["signin", "--raw"]),
             env: OnePasswordUtils.basicEnvironment,
             input: (password + "\n").data(using: .utf8)!)
-        let output = try command.exec()
-        if output.returnCode != 0 {
-            DLog("signin failed")
-            let reason = String(data: output.stderr, encoding: .utf8) ?? "An unknown error occurred."
-            if reason.contains("connecting to desktop app timed out") {
-                throw OnePasswordDataSource.OPError.unusableCLI
+        DLog("Will execute signin --raw")
+        command.execAsync { [weak self] output, error in
+            DLog("signin --raw finished")
+            guard let self = self else {
+                DLog("But I have been dealloced")
+                return
             }
-            showErrorMessage(reason)
-            throw OnePasswordDataSource.OPError.needsAuthentication
+            guard let output = output else {
+                DLog("But there is no output")
+                completion(.failure(error!))
+                return
+            }
+            guard output.returnCode == 0 else {
+                DLog("But the return code is nonzero")
+                DLog("signin failed")
+                let reason = String(data: output.stderr, encoding: .utf8) ?? "An unknown error occurred."
+                DLog("Failure reason is: \(reason)")
+                if reason.contains("connecting to desktop app timed out") {
+                    completion(.failure(OnePasswordDataSource.OPError.unusableCLI))
+                    return
+                }
+                self.showErrorMessage(reason)
+                completion(.failure(OnePasswordDataSource.OPError.needsAuthentication))
+                return
+            }
+            guard let token = String(data: output.stdout, encoding: .utf8) else {
+                DLog("got garbage output")
+                self.showErrorMessage("The 1Password CLI app produced garbled output instead of an auth token.")
+                completion(.failure(OnePasswordDataSource.OPError.badOutput))
+                return
+            }
+            DLog("Got a token, yay")
+            completion(.success(.token(token.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines))))
         }
-        guard let token = String(data: output.stdout, encoding: .utf8) else {
-            DLog("got garbage output")
-            showErrorMessage("The 1Password CLI app produced garbled output instead of an auth token.")
-            throw OnePasswordDataSource.OPError.badOutput
-        }
-        return .token(token.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines))
     }
 
     private func showErrorMessage(_ reason: String) {
@@ -256,6 +298,46 @@ class OnePasswordTokenRequester {
             return nil
         }
         return false
+    }
+
+    func asyncCheckBiometricAvailability(_ completion: @escaping (Bool?) -> ()) {
+        // Issue a command that is doomed to fail so we can see what the error message looks like.
+        let cli = OnePasswordUtils.pathToCLI
+        if OnePasswordUtils.usable != true {
+           DLog("No usable version of 1password's op utility was found")
+            // Don't ask for the master password if we don't have a good CLI to use.
+            completion(nil)
+            return
+        }
+        var command = CommandLinePasswordDataSource.InteractiveCommandRequest(
+            command: cli,
+            args: argsByAddingAccountArg(["user", "get", "--me"]),
+            env: OnePasswordUtils.basicEnvironment)
+        command.useTTY = true
+        command.execAsync { output, error in
+            DispatchQueue.main.async {
+                guard let output = output else {
+                    completion(false)
+                    return
+                }
+                if output.returnCode == 0 {
+                    DLog("op user get --me succeeded so biometrics must be available")
+                    completion(true)
+                    return
+                }
+                guard let string = String(data: output.stderr, encoding: .utf8) else {
+                    DLog("garbage output")
+                    completion(false)
+                    return
+                }
+                DLog("op signin returned \(string)")
+                if string.contains("error initializing client: authorization prompt dismissed, please try again") {
+                    completion(nil)
+                    return
+                }
+                completion(false)
+            }
+        }
     }
 }
 

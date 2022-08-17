@@ -569,6 +569,65 @@ class CommandLinePasswordDataSource: NSObject {
         }
     }
 
+    struct AsyncCommandRecipe<Inputs, Outputs>: Recipe {
+        private let asyncInputTransformer: (Inputs, @escaping (Result<CommandLinePasswordDataSourceExecutableCommand, Error>) -> ()) -> Void
+        private let asyncRecovery: (Error, @escaping (Error?) -> ()) -> Void
+        private let asyncOutputTransformer: (Output, @escaping (Result<Outputs, Error>) -> ()) -> Void
+
+        func transformAsync(inputs: Inputs, completion: @escaping (Outputs?, Error?) -> ()) {
+            asyncInputTransformer(inputs) { result in
+                switch result {
+                case .success(let command):
+                    DLog("\(inputs) -> \(command)")
+                    execAsync(command, retriesLeft: 3, completion: completion)
+                    return
+                case .failure(let error):
+                    completion(nil, error)
+                }
+            }
+        }
+
+        private func execAsync(_ command: CommandLinePasswordDataSourceExecutableCommand,
+                               retriesLeft: Int,
+                               completion: @escaping (Outputs?, Error?) -> ()) {
+            command.execAsync { output, error in
+                DispatchQueue.main.async {
+                    if let output = output {
+                        asyncOutputTransformer(output) { result in
+                            switch result {
+                            case .success(let outputs):
+                                completion(outputs, nil)
+                                return
+                            case .failure(let error):
+                                guard retriesLeft > 0 else {
+                                    completion(nil, error)
+                                    return
+                                }
+                                asyncRecovery(error) { maybeError in
+                                    if let error = maybeError {
+                                        completion(nil, error)
+                                        return
+                                    }
+                                    self.execAsync(command,
+                                                   retriesLeft: retriesLeft - 1,
+                                                   completion: completion)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        init(inputTransformer: @escaping (Inputs, @escaping (Result<CommandLinePasswordDataSourceExecutableCommand, Error>) -> ()) -> Void,
+             recovery: @escaping (Error, @escaping (Error?) -> ()) -> Void,
+             outputTransformer: @escaping (Output, @escaping (Result<Outputs, Error>) -> ()) -> Void) {
+            self.asyncInputTransformer = inputTransformer
+            self.asyncRecovery = recovery
+            self.asyncOutputTransformer = outputTransformer
+        }
+    }
+
     struct CommandRecipe<Inputs, Outputs>: Recipe {
         private let inputTransformer: (Inputs) throws -> (CommandLinePasswordDataSourceExecutableCommand)
         private let recovery: (Error) throws -> Void

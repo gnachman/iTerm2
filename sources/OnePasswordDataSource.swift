@@ -37,18 +37,30 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
     }
     private var available = Availability.uncached
 
-    private func getToken() throws -> OnePasswordTokenRequester.Auth? {
+    private var requester: OnePasswordTokenRequester?
+    private func asyncGetToken(_ completion: @escaping (Result<OnePasswordTokenRequester.Auth, Error>) -> ()) {
         switch auth {
         case .biometric, .token(_):
-            return auth
+            completion(.success(auth!))
+            return
         case .none:
             break
         }
-        do {
-            auth = try OnePasswordTokenRequester().get()
-            return auth
-        } catch OPError.needsAuthentication {
-            return try getToken()
+        if requester != nil {
+            DLog("WARNING: Overwriting existing token requester.")
+        }
+        requester = OnePasswordTokenRequester()
+        requester?.asyncGet { [weak self] result in
+            guard let self = self else {
+                return
+            }
+            self.requester = nil
+            switch result {
+            case .failure(OPError.needsAuthentication):
+                self.asyncGetToken(completion)
+            case .success, .failure:
+                completion(result)
+            }
         }
     }
 
@@ -78,39 +90,70 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
     }
 
     private struct OnePasswordDynamicCommandRecipe<Inputs, Outputs>: Recipe {
-        private let commandRecipe: CommandRecipe<Inputs, Outputs>
+        private let commandRecipe: AsyncCommandRecipe<Inputs, Outputs>
 
         init(dataSource: OnePasswordDataSource,
              inputTransformer: @escaping (Inputs, OnePasswordTokenRequester.Auth) throws -> (CommandLinePasswordDataSourceExecutableCommand),
              outputTransformer: @escaping (Output) throws -> Outputs) {
-            commandRecipe = CommandRecipe<Inputs, Outputs> { inputs throws -> CommandLinePasswordDataSourceExecutableCommand in
-                guard let token = try dataSource.getToken() else {
-                    throw OPError.needsAuthentication
+
+            commandRecipe = AsyncCommandRecipe<Inputs, Outputs> { (inputs, completion) in
+                dataSource.asyncGetToken { result in
+                    switch result {
+                    case .success(nil):
+                        completion(.failure(OPError.needsAuthentication))
+                        return
+                    case .failure(let error):
+                        completion(.failure(error))
+                    case .success(let token):
+                        do {
+                            let transformedInput = try inputTransformer(inputs, token)
+                            completion(.success(transformedInput))
+                            return
+                        } catch {
+                            completion(.failure(error))
+                        }
+                    }
                 }
-                return try inputTransformer(inputs, token)
-            } recovery: { error throws in
+            } recovery: { error, completion in
                 if error as? OPError == OPError.needsAuthentication {
                     dataSource.auth = nil
-                    _ = try dataSource.getToken()
+                    dataSource.asyncGetToken { result in
+                        switch result {
+                        case .success:
+                            completion(nil)
+                        case .failure(let error):
+                            completion(error)
+                        }
+                    }
                 } else {
-                    throw error
+                    completion(error)
                 }
-            } outputTransformer: { output throws -> Outputs in
+            } outputTransformer: { output, completion in
                 if output.timedOut {
                     let alert = NSAlert()
                     alert.messageText = "Timeout"
                     alert.informativeText = "1Password took too long to respond."
                     alert.addButton(withTitle: "OK")
                     alert.runModal()
-                    throw OPError.timeout;
+                    completion(.failure(OPError.timeout))
+                    return
                 }
                 if output.returnCode != 0 {
                     if output.stderr.smellsLike1PasswordAuthenticationError {
-                        throw OPError.needsAuthentication
+                        completion(.failure(OPError.needsAuthentication))
+                    } else {
+                        completion(.failure(OPError.runtime))
                     }
-                    throw OPError.runtime
+                    return
                 }
-                return try outputTransformer(output)
+                do {
+                    let transformedOutput = try outputTransformer(output)
+                    completion(.success(transformedOutput))
+                    return
+                } catch {
+                    completion(.failure(error))
+                    return
+                }
             }
         }
 
