@@ -192,7 +192,7 @@ class OnePasswordTokenRequester {
                 case .some(false):
                     DLog("biometrics unavailable, continue with regular auth")
                     Self.biometricsAvailable = false
-                    self.asyncGetWithoutBiometrics(g, completion)
+                    self.asyncGetWithoutBiometrics(completion)
                 case .none:
                     DLog("Failed to look up biometrics")
                     completion(.failure(OnePasswordDataSource.OPError.canceledByUser))
@@ -201,20 +201,20 @@ class OnePasswordTokenRequester {
         case .some(true):
             completion(.success(.biometric))
         case .some(false):
-            asyncGetWithoutBiometrics(g, completion)
+            asyncGetWithoutBiometrics(completion)
         }
     }
 
-    private func asyncGetWithoutBiometrics(_ g: Int, _ completion: @escaping (Result<Auth, Error>) -> ()) {
+    private func asyncGetWithoutBiometrics(_ completion: @escaping (Result<Auth, Error>) -> ()) {
         dispatchPrecondition(condition: .onQueue(.main))
         guard let password = self.requestPassword(prompt: self.passwordPrompt) else {
             completion(.failure(OnePasswordDataSource.OPError.canceledByUser))
             return
         }
-        self.asyncGet(password: password, g: g, completion)
+        self.asyncGet(password: password, completion)
     }
 
-    private func asyncGet(password: String, g: Int, _ completion: @escaping (Result<Auth, Error>) -> ()) {
+    private func asyncGet(password: String, _ completion: @escaping (Result<Auth, Error>) -> ()) {
         DLog("Read password from user entry")
         let command = CommandLinePasswordDataSource.CommandRequestWithInput(
             command: OnePasswordUtils.pathToCLI,
