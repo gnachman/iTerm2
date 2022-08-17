@@ -302,6 +302,9 @@ haveSpacersOnBothSidesOfIndex:(NSInteger)index
             const CGFloat maxSize = [self maximumWidthForComponent:view.component];
             const CGFloat minSize = [self minimumWidthForComponent:view.component];
             newWidth = MIN(MAX(minSize, maxSize), oldWidth + apportionment * view.component.statusBarComponentSpringConstant);
+            if (oldWidth == 0) {
+                newWidth = MAX(newWidth, minSize);
+            }
         }
         if (round(oldWidth) != round(newWidth)) {
             *changed = YES;
