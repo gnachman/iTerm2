@@ -3467,7 +3467,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     const BOOL optionPressed = ([NSEvent modifierFlags] & NSEventModifierFlagOption) != 0;
     NSDragOperation sourceMask = [sender draggingSourceOperationMask];
     DLog(@"source mask=%@, optionPressed=%@, pasteOk=%@", @(sourceMask), @(optionPressed), @(pasteOK));
-    if (!optionPressed && pasteOK && (sourceMask & (NSDragOperationGeneric | NSDragOperationCopy)) != 0) {
+    if (!optionPressed && pasteOK && (sourceMask & (NSDragOperationGeneric | NSDragOperationCopy | NSDragOperationLink)) != 0) {
         DLog(@"Allowing a filename drag");
         // No modifier key was pressed and pasting is OK, so select the paste operation.
         NSArray *filenames = [pb filenamesOnPasteboardWithShellEscaping:YES];
@@ -3482,6 +3482,10 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
         if (sourceMask & NSDragOperationGeneric) {
             // This is preferred since it doesn't have the green plus indicating a copy
             return NSDragOperationGeneric;
+        } else if (sourceMask & NSDragOperationLink) {
+            // This fixes dragging from Fork, issue 10538. Apple doesn't deign to
+            // describe the purpose of NSDragOperationLink so I'll assume this isn't a crime.
+            return NSDragOperationLink;
         } else {
             // Even if the source only allows copy, we allow it. See issue 4286.
             // Such sources are silly and we route around the damage.
@@ -3685,7 +3689,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     NSPasteboard *draggingPasteboard = [sender draggingPasteboard];
     NSDragOperation dragOperation = [sender draggingSourceOperationMask];
     DLog(@"Perform drag operation");
-    if (dragOperation & (NSDragOperationCopy | NSDragOperationGeneric)) {
+    if (dragOperation & (NSDragOperationCopy | NSDragOperationGeneric | NSDragOperationLink)) {
         DLog(@"Drag operation is acceptable");
         if ([NSEvent modifierFlags] & NSEventModifierFlagOption) {
             DLog(@"Holding option so doing an upload");
