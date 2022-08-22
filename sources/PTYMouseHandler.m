@@ -952,9 +952,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
         return NO;
     }
-    CGFloat deltaY = NAN;
     BOOL reportable = NO;
-    if ([self handleMouseEvent:event testOnly:NO deltaYOut:&deltaY reportableOut:&reportable]) {
+    if ([self handleMouseEvent:event testOnly:NO reportableOut:&reportable]) {
         DLog(@"Mouse event was handled so returning");
         return NO;
     }
@@ -971,11 +970,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([self tryToHandleSwipeBetweenTabsForScrollWheelEvent:event]) {
         DLog(@"Handled as swipe between tabs");
         return YES;
-    }
-    if (reportable && deltaY == 0) {
-        DLog(@"Reportable non-vertical scroll");
-        // Don't let horizontal scroll through when reporting mouse events.
-        return NO;
     }
     return YES;
 }
@@ -1098,13 +1092,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // Returns YES if the mouse event would be handled, ignoring trivialities like a drag that hasn't
 // changed coordinate since the last drag.
 - (BOOL)mouseEventIsReportable:(NSEvent *)event {
-    return [self handleMouseEvent:event testOnly:YES deltaYOut:NULL reportableOut:NULL];
+    return [self handleMouseEvent:event testOnly:YES reportableOut:NULL];
 }
 
 // Returns YES if the mouse event should not be handled natively.
 // If thiss changes also update wantsMouseMovementEvents
 - (BOOL)reportMouseEvent:(NSEvent *)event {
-    return [self handleMouseEvent:event testOnly:NO deltaYOut:NULL reportableOut:NULL];
+    return [self handleMouseEvent:event testOnly:NO reportableOut:NULL];
 }
 
 // When in doubt this can return YES at the cost of a little CPU when moving the mouse around.
@@ -1120,7 +1114,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // If this changes also update wantsMouseMovementEvents
 - (BOOL)handleMouseEvent:(NSEvent *)event
                 testOnly:(BOOL)testOnly
-               deltaYOut:(CGFloat *)deltaYOut
            reportableOut:(BOOL *)reportableOut {
     DLog(@"handleMouseEvent:%@ testOnly:%@", event, @(testOnly));
     if (![self.mouseDelegate mouseHandlerAnyReportingModeEnabled:self]) {
@@ -1150,9 +1143,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     VT100GridCoord coord = [self.mouseDelegate mouseHandlerCoordForPointInView:point];
     const CGFloat deltaY = [self.mouseDelegate mouseHandlerAccumulatedDeltaY:self forEvent:event];
     DLog(@"deltaY=%@", @(deltaY));
-    if (deltaYOut) {
-        *deltaYOut = deltaY;
-    }
+
+    const CGFloat deltaX = event.type == NSEventTypeScrollWheel ? event.scrollingDeltaX : 0;
 
     return [self.mouseDelegate mouseHandler:self
                            reportMouseEvent:event.type
@@ -1161,7 +1153,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                  coordinate:coord
                                       point:[self.mouseDelegate mouseHandlerReportablePointForPointInView:point]
                                       event:event
-                                     deltaY:deltaY
+                             scrollingDelta:fabs(deltaY) > fabs(deltaX) ? deltaY : deltaX
                    allowDragBeforeMouseDown:_makingThreeFingerSelection
                                    testOnly:testOnly];
 }
@@ -1264,12 +1256,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         case NSEventTypeOtherMouseDragged:
             return MOUSE_BUTTON_MIDDLE;
 
-        case NSEventTypeScrollWheel:
-            if ([event scrollingDeltaY] > 0) {
-                return MOUSE_BUTTON_SCROLLDOWN;
+        case NSEventTypeScrollWheel: {
+            const CGFloat dy = event.scrollingDeltaY;
+            const CGFloat dx = event.scrollingDeltaX;
+            if (fabs(dy) >= fabs(dx)) {
+                if (dy > 0) {
+                    return MOUSE_BUTTON_SCROLLDOWN;
+                } else if (dy < 0) {
+                    return MOUSE_BUTTON_SCROLLUP;
+                }
             } else {
-                return MOUSE_BUTTON_SCROLLUP;
+                if (dx > 0) {
+                    return MOUSE_BUTTON_SWIPE_RIGHT;
+                } else if (dx < 0) {
+                    return MOUSE_BUTTON_SWIPE_LEFT;
+                }
             }
+            return MOUSE_BUTTON_NONE;
+        }
 
         default:
             return MOUSE_BUTTON_NONE;
@@ -1281,6 +1285,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Coord not reportable");
         return NO;
     }
+    NSLog(@"%@", event);
     if (event.type != NSEventTypeScrollWheel) {
         DLog(@"Not a wheel event");
         return NO;
@@ -1295,13 +1300,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Mouse reporting is on");
         return NO;
     }
+    const BOOL vertical = fabs(event.scrollingDeltaX) > fabs(event.scrollingDeltaY);
+    if (!vertical) {
+        DLog(@"Not vertical");
+        return NO;
+    }
+
+    // Maybe send arrow keys
     if (event.it_modifierFlags & NSEventModifierFlagOption) {
         // Hold alt to disable sending arrow keys.
         DLog(@"Alt held");
-        return NO;
-    }
-    if (fabs(event.scrollingDeltaX) > fabs(event.scrollingDeltaY)) {
-        DLog(@"Not vertical");
         return NO;
     }
     const BOOL alternateMouseScroll = [self.mouseDelegate mouseHandlerAlternateScrollModeIsEnabled:self];

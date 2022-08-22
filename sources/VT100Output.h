@@ -8,7 +8,10 @@ typedef enum {
     MOUSE_BUTTON_RIGHT = 2,      // right button
     MOUSE_BUTTON_NONE = 3,       // no button pressed - for 1000/1005/1015 mode
     MOUSE_BUTTON_SCROLLDOWN = 4, // scroll down
-    MOUSE_BUTTON_SCROLLUP = 5    // scroll up
+    MOUSE_BUTTON_SCROLLUP = 5,   // scroll up
+    MOUSE_BUTTON_SWIPE_LEFT = 6,
+    MOUSE_BUTTON_SWIPE_RIGHT = 7
+
 } MouseButtonNumber;
 
 typedef NS_ENUM(NSInteger, MouseFormat) {

@@ -301,7 +301,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
                           button:(MouseButtonNumber)button
                            point:(NSPoint)point
                       coordinate:(VT100GridCoord)coord
-                          deltaY:(CGFloat)deltaY {
+                  scrollingDelta:(CGFloat)scrollingDelta {
     return NO;
 }
 
@@ -2884,7 +2884,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewProcessedBackgroundColorDidChange {
 }
 
-- (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord point:(NSPoint)point deltaY:(CGFloat)deltaY allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown testOnly:(BOOL)testOnly {
+- (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord point:(NSPoint)point scrollingDelta:(CGFloat)scrollingDelta allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown testOnly:(BOOL)testOnly {
     return YES;
 }
 
@@ -2967,7 +2967,7 @@ static NSString *const kDiffScriptPath = @"/tmp/diffs";
 - (void)textViewSelectMenuItemWithIdentifier:(NSString *)identifier title:(NSString *)title {
 }
 
-- (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord point:(NSPoint)point deltaY:(CGFloat)deltaY allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown {
+- (BOOL)textViewReportMouseEvent:(NSEventType)eventType modifiers:(NSUInteger)modifiers button:(MouseButtonNumber)button coordinate:(VT100GridCoord)coord point:(NSPoint)point scrollingDelta:(CGFloat)scrollingDelta allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown {
     return NO;
 }
 

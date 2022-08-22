@@ -70,7 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
           coordinate:(VT100GridCoord)coord
                point:(NSPoint)point
                event:(NSEvent *)event
-              deltaY:(CGFloat)deltaY
+      scrollingDelta:(CGFloat)scrollingDelta
 allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
             testOnly:(BOOL)testOnly;
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler viewCoordIsReportable:(NSPoint)coord;

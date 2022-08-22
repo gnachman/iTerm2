@@ -37,7 +37,7 @@ typedef enum {
     MOUSE_BUTTON_SCROLL_FLAG = 64,  // this is a scroll event
 
     // for SGR 1006 style, internal use only
-    MOUSE_BUTTON_SGR_RELEASE_FLAG = 128  // mouse button was released
+    MOUSE_BUTTON_SGR_RELEASE_FLAG = 256  // mouse button was released
 
 } MouseButtonModifierFlag;
 
@@ -787,12 +787,19 @@ static int VT100OutputSafeAddInt(int l, int r) {
     int cb;
 
     cb = button;
-    if (button == MOUSE_BUTTON_SCROLLDOWN || button == MOUSE_BUTTON_SCROLLUP) {
-        // convert x11 scroll button number to terminal button code
-        const int offset = MOUSE_BUTTON_SCROLLDOWN;
-        cb -= offset;
-        cb |= MOUSE_BUTTON_SCROLL_FLAG;
+    switch (button) {
+        case MOUSE_BUTTON_SCROLLDOWN:
+        case MOUSE_BUTTON_SCROLLUP:
+        case MOUSE_BUTTON_SWIPE_LEFT:
+        case MOUSE_BUTTON_SWIPE_RIGHT: {
+            // convert x11 scroll button number to terminal button code
+            const int offset = MOUSE_BUTTON_SCROLLDOWN;
+            cb -= offset;
+            cb |= MOUSE_BUTTON_SCROLL_FLAG;
+            break;
+        }
     }
+
     if (modflag & NSEventModifierFlagControl) {
         cb |= MOUSE_BUTTON_CTRL_FLAG;
     }

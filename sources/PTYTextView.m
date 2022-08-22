@@ -5461,7 +5461,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
           coordinate:(VT100GridCoord)coord
                point:(NSPoint)point
               event:(NSEvent *)event
-              deltaY:(CGFloat)deltaY
+      scrollingDelta:(CGFloat)scrollingDelta
 allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
             testOnly:(BOOL)testOnly {
     return [_delegate textViewReportMouseEvent:eventType
@@ -5469,7 +5469,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
                                         button:button
                                     coordinate:coord
                                          point:point
-                                        deltaY:deltaY
+                                scrollingDelta:scrollingDelta
                       allowDragBeforeMouseDown:allowDragBeforeMouseDown
                                       testOnly:testOnly];
 }

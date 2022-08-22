@@ -9772,7 +9772,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                           button:(MouseButtonNumber)button
                       coordinate:(VT100GridCoord)coord
                            point:(NSPoint)point
-                          deltaY:(CGFloat)deltaY
+                  scrollingDelta:(CGFloat)scrollingDelta
         allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
                         testOnly:(BOOL)testOnly {
     DLog(@"Report event type %lu, modifiers=%lu, button=%d, coord=%@ testOnly=%@ terminalMouseMode=%@ allowDragBeforeMouseDown%@",
@@ -9947,18 +9947,18 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
-                    DLog(@"normal/button/all - can report. deltaY=%@", @(deltaY));
+                    DLog(@"normal/button/all - can report. deltaY=%@", @(scrollingDelta));
                     if (testOnly) {
-                        return deltaY != 0;
+                        return scrollingDelta != 0;
                     }
-                    if (deltaY != 0) {
+                    if (scrollingDelta != 0) {
                         int steps;
                         if ([iTermAdvancedSettingsModel proportionalScrollWheelReporting]) {
                             // Cap number of reported scroll events at 32 to prevent runaway redraws.
                             // This is a mostly theoretical concern and the number can grow if it
                             // doesn't seem to be a problem.
                             DLog(@"Cap at 32");
-                            steps = MIN(32, fabs(deltaY));
+                            steps = MIN(32, fabs(scrollingDelta));
                         } else {
                             steps = 1;
                         }
