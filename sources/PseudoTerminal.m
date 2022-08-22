@@ -4623,7 +4623,14 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         DLog(@"tmuxTabLayoutDidChange. Fit window to tabs");
         [self beginTmuxOriginatedResize];
-        [self fitWindowToTabs];
+        // Make the window the right size for the tmux tabs. This prevents the
+        // non-tmux tabs from causing a window resize, which could get us into
+        // a resize loop. See issue 10249.
+        [self fitWindowToTabsExcludingTmuxTabs:NO
+                              preservingHeight:NO
+                              sizeOfLargestTab:[self sizeOfLargestTabWithExclusion:PseudoTerminalTabSizeExclusionRegular]];
+        // Ensure the non-tmux tabs fit ok.
+        [self fitNonTmuxTabsToWindow];
         [self endTmuxOriginatedResize];
     }
 }
@@ -8289,15 +8296,32 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self fitWindowToTabsExcludingTmuxTabs:excludeTmux preservingHeight:NO];
 }
 
-- (NSSize)sizeOfLargestTabExcludingTmux:(BOOL)excludeTmux {
+typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
+    PseudoTerminalTabSizeExclusionNone,
+    PseudoTerminalTabSizeExclusionTmux,
+    PseudoTerminalTabSizeExclusionRegular  // exclude non-tmux
+};
+
+- (NSSize)sizeOfLargestTabWithExclusion:(PseudoTerminalTabSizeExclusion)exclusion {
     // Determine the size of the largest tab.
     NSSize maxTabSize = NSZeroSize;
     PtyLog(@"fitWindowToTabs.......");
     DLog(@"Finding the biggest tab:");
     for (NSTabViewItem* item in [_contentView.tabView tabViewItems]) {
         PTYTab* tab = [item identifier];
-        if ([tab isTmuxTab] && excludeTmux) {
-            continue;
+        switch (exclusion) {
+            case PseudoTerminalTabSizeExclusionTmux:
+                if (tab.isTmuxTab) {
+                    continue;
+                }
+                break;
+            case PseudoTerminalTabSizeExclusionNone:
+                break;
+            case PseudoTerminalTabSizeExclusionRegular:
+                if (!tab.isTmuxTab) {
+                    continue;
+                }
+                break;
         }
         NSSize tabSize = [tab currentSize];
         PtyLog(@"The natural size of this tab is %@", NSStringFromSize(tabSize));
@@ -8324,7 +8348,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux preservingHeight:(BOOL)preserveHeight {
     [self fitWindowToTabsExcludingTmuxTabs:excludeTmux
                           preservingHeight:preserveHeight
-                          sizeOfLargestTab:[self sizeOfLargestTabExcludingTmux:excludeTmux]];
+                          sizeOfLargestTab:[self sizeOfLargestTabWithExclusion:excludeTmux ? PseudoTerminalTabSizeExclusionTmux : PseudoTerminalTabSizeExclusionNone]];
 }
 
 - (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux
@@ -8908,7 +8932,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     // preserve the tab size when we update the window size below. Modifying the title bar
     // accessories synchronously changes the tabs' sizes, causing the window not to resize when
     // the tab bar shows or hides.
-    const NSSize tabSizeBeforeUpdatingTitleBarAccessories = [self sizeOfLargestTabExcludingTmux:NO];
+    const NSSize tabSizeBeforeUpdatingTitleBarAccessories = [self sizeOfLargestTabWithExclusion:PseudoTerminalTabSizeExclusionNone];
 
     [self updateTabBarStyle];
     [self safelySetStyleMask:self.styleMask];
@@ -10293,6 +10317,17 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         [self fitTabToWindow:[[_contentView.tabView tabViewItemAtIndex:i] identifier]];
     }
     PtyLog(@"fitTabsToWindow returns");
+}
+
+- (void)fitNonTmuxTabsToWindow {
+    DLog(@"fitNonTmuxTabsToWindow starting");
+    for (PTYTab *tab in self.tabs) {
+        if (tab.tmuxTab) {
+            continue;
+        }
+        [self fitTabToWindow:tab];
+    }
+    DLog(@"fitNonTmuxTabsToWindow returning");
 }
 
 // Show a dialog confirming close. Returns YES if the window should be closed.
