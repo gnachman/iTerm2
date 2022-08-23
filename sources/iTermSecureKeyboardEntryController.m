@@ -20,6 +20,7 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
     BOOL _focusStolen;
     BOOL _temporarilyDisabled;
     NSTimer *_backstop;
+    BOOL _warningShown;
 }
 
 + (instancetype)sharedInstance {
@@ -207,8 +208,12 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
     if (![self isEnabled]) {
         return;
     }
+    if (_warningShown) {
+        return;
+    }
+    _warningShown = YES;
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:@"In macOS 12 and later, enabling Secure Keyboard Entry prevents other programs from being activated. This affects the `open` command as well as the panel shown when using Touch ID for sudo."
+    [iTermWarning showWarningWithTitle:@"Secure keyboard entry is enabled.\n\nIn macOS 12 and later, enabling Secure Keyboard Entry prevents other programs from being activated. This affects the `open` command as well as the panel shown when using Touch ID for sudo."
                                actions:@[ @"OK", @"Cancel" ]
                              accessory:nil
                             identifier:@"NoSyncMontereySecureKeyboardEntryWarning"
