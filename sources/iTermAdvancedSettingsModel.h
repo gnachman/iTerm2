@@ -271,7 +271,6 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)proportionalScrollWheelReporting;
 + (int)quickPasteBytesPerCall;
 + (double)quickPasteDelayBetweenCalls;
-+ (BOOL)recordTimerDebugInfo;
 + (BOOL)remapModifiersWithoutEventTap;
 
 // Remember window positions? If off, lets the OS pick the window position. Smart window placement takes precedence over this.

@@ -14,7 +14,6 @@
 @interface iTermTimerProxy : NSObject
 @property (nonatomic, weak) id target;
 @property (nonatomic) SEL selector;
-@property (nonatomic, copy) NSString *debugInfo;
 @property (nonatomic, weak) NSTimer *timer;
 
 - (void)performBlock:(NSTimer *)timer;
@@ -26,12 +25,6 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-#if BETA
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(debugLoggingDidBegin:)
-                                                     name:iTermDebugLoggingDidBeginNotification
-                                                   object:nil];
-#endif
     }
     return self;
 }
@@ -54,12 +47,6 @@
     return [NSString stringWithFormat:@"<%@: %p target=%@ selector=%@ timer=%@>",
             NSStringFromClass([self class]), self, self.target, NSStringFromSelector(self.selector), self.timerInfo];
 }
-
-#if BETA
-- (void)debugLoggingDidBegin:(NSNotification *)notification {
-    DLog(@"%@:\n%@", self, self.debugInfo);
-}
-#endif
 
 - (void)timerDidFire:(NSTimer *)timer {
     id target = self.target;
@@ -84,9 +71,6 @@
 
 + (instancetype)weakTimerWithTimeInterval:(NSTimeInterval)interval target:(id)target selector:(SEL)selector userInfo:(id)userInfo repeats:(BOOL)repeats {
     iTermTimerProxy *proxy = [[iTermTimerProxy alloc] init];
-    if ([iTermAdvancedSettingsModel recordTimerDebugInfo] || gDebugLogging) {
-        proxy.debugInfo = [[NSThread callStackSymbols] componentsJoinedByString:@"\n"];
-    }
     proxy.target = target;
     proxy.selector = selector;
     NSTimer *timer = [NSTimer timerWithTimeInterval:interval
@@ -100,9 +84,6 @@
 
 + (instancetype)scheduledWeakTimerWithTimeInterval:(NSTimeInterval)ti target:(id)aTarget selector:(SEL)aSelector userInfo:(id)userInfo repeats:(BOOL)yesOrNo {
     iTermTimerProxy *proxy = [[iTermTimerProxy alloc] init];
-    if ([iTermAdvancedSettingsModel recordTimerDebugInfo] || gDebugLogging) {
-        proxy.debugInfo = [[NSThread callStackSymbols] componentsJoinedByString:@"\n"];
-    }
     proxy.target = aTarget;
     proxy.selector = aSelector;
     NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:ti
@@ -118,9 +99,6 @@
                                           repeats:(BOOL)repeats
                                             block:(void (^_Nonnull)(NSTimer * _Nonnull timer))block {
     iTermTimerProxy *proxy = [[iTermTimerProxy alloc] init];
-    if ([iTermAdvancedSettingsModel recordTimerDebugInfo] || gDebugLogging) {
-        proxy.debugInfo = [[NSThread callStackSymbols] componentsJoinedByString:@"\n"];
-    }
     NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:timeInterval
                                                       target:proxy
                                                     selector:@selector(performBlock:)
