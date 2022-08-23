@@ -2550,7 +2550,7 @@ ITERM_WEAKLY_REFERENCEABLE
         completion(env, argv);
         return;
     }
-    [injector modifyShellEnvironmentWithShellIntegrationDir:dir.stringByDeletingLastPathComponent
+    [injector modifyShellEnvironmentWithShellIntegrationDir:dir
                                                         env:env
                                                        argv:argv
                                                  completion:completion];
