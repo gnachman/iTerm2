@@ -33,7 +33,7 @@
 #import "NSCharacterSet+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSDictionary+iTerm.h"
-#import "NSFont+iTerm.h""
+#import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSImage+iTerm.h"

@@ -40,6 +40,8 @@ typedef NS_ENUM(NSUInteger, iTermStatusBarPosition) {
 #define TAB_POSITION_LEFT PSMTab_LeftTab
 
 // Values for kPreferenceKeyXxxRemapping (corresponds to tags in controls).
+// Note that this serves two purposes. It describes what keys are remapped to and also the shortcuts
+// for navigating to tab/window/pane by number.
 typedef NS_ENUM(int, iTermPreferencesModifierTag) {
     kPreferencesModifierTagControl = 1,
     kPreferencesModifierTagLeftOption = 2,
@@ -51,6 +53,8 @@ typedef NS_ENUM(int, iTermPreferencesModifierTag) {
     kPreferencesModifierTagRightCommand = 8,
 
     kPreferenceModifierTagNone = 9,  // No modifier assigned (not available for all popups)
+
+    kPreferenceModifierTagFunction = 10,  // fn key, and no l/r distinction exists here
 };
 
 typedef NS_ENUM(NSInteger, iTermPreferenceSavePrefsMode) {
@@ -148,6 +152,7 @@ extern NSString *const kPreferenceKeyLeftOptionRemapping;
 extern NSString *const kPreferenceKeyRightOptionRemapping;
 extern NSString *const kPreferenceKeyLeftCommandRemapping;
 extern NSString *const kPreferenceKeyRightCommandRemapping;
+extern NSString *const kPreferenceKeyFunctionRemapping;
 extern NSString *const kPreferenceKeySwitchPaneModifier;
 extern NSString *const kPreferenceKeySwitchTabModifier;
 extern NSString *const kPreferenceKeySwitchWindowModifier;

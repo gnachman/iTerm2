@@ -41,12 +41,14 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet NSPopUpButton *_rightOptionButton;
     IBOutlet NSPopUpButton *_leftCommandButton;
     IBOutlet NSPopUpButton *_rightCommandButton;
+    IBOutlet NSPopUpButton *_functionButton;
 
     IBOutlet NSTextField *_controlButtonLabel;
     IBOutlet NSTextField *_leftOptionButtonLabel;
     IBOutlet NSTextField *_rightOptionButtonLabel;
     IBOutlet NSTextField *_leftCommandButtonLabel;
     IBOutlet NSTextField *_rightCommandButtonLabel;
+    IBOutlet NSTextField *_functionButtonLabel;
 
     IBOutlet NSPopUpButton *_switchPaneModifierButton;
     IBOutlet NSPopUpButton *_switchTabModifierButton;
@@ -119,6 +121,12 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     info = [self defineControl:_rightCommandButton
                            key:kPreferenceKeyRightCommandRemapping
                    relatedView:_rightCommandButtonLabel
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^() { [weakSelf startEventTapIfNecessary]; };
+
+    info = [self defineControl:_functionButton
+                           key:kPreferenceKeyFunctionRemapping
+                   relatedView:_functionButtonLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [weakSelf startEventTapIfNecessary]; };
 

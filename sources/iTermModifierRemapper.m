@@ -67,6 +67,9 @@
         case kPreferencesModifierTagCommandAndOption:
             return kCGEventFlagMaskCommand | kCGEventFlagMaskAlternate;
 
+        case kPreferenceModifierTagFunction:
+            return kCGEventFlagMaskSecondaryFn;
+
         default:
             return 0;
     }
@@ -96,6 +99,9 @@
         case kPreferencesModifierTagCommandAndOption:
             return NX_DEVICELCMDKEYMASK | NX_DEVICELALTKEYMASK;
 
+        case kPreferenceModifierTagFunction:
+            return NX_SECONDARYFNMASK;
+
         default:
             return 0;
     }
@@ -124,6 +130,9 @@
 
         case kPreferencesModifierTagCommandAndOption:
             return NX_DEVICERCMDKEYMASK | NX_DEVICERALTKEYMASK;
+
+        case kPreferenceModifierTagFunction:
+            return NX_SECONDARYFNMASK;
 
         default:
             return 0;
@@ -176,6 +185,14 @@
 
 + (NSInteger)_nxMaskForRightControlKey {
     return [self _nxMaskForRightMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
+}
+
++ (NSInteger)_cgMaskForFunctionKey {
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] functionRemapping]];
+}
+
++ (NSInteger) _nxMaskForFunctionKey {
+    return [self _nxMaskForLeftMod:[[iTermModifierRemapper sharedInstance] functionRemapping]];
 }
 
 + (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent {
@@ -260,6 +277,11 @@
             }
         }
     }
+    if (flags & kCGEventFlagMaskSecondaryFn) {
+        andMask &= ~kCGEventFlagMaskSecondaryFn;
+        orMask |= [self _cgMaskForFunctionKey];
+        orMask |= [self _nxMaskForFunctionKey];
+    }
     DLog(@"On output CGEventFlags=%@", @((flags & andMask) | orMask));
 
     CGEventSetFlags(cgEvent, (flags & andMask) | orMask);
@@ -319,12 +341,17 @@
   return [iTermPreferences intForKey:kPreferenceKeyRightCommandRemapping];
 }
 
+- (iTermPreferencesModifierTag)functionRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyFunctionRemapping];
+}
+
 - (BOOL)isAnyModifierRemapped {
   return ([self controlRemapping] != kPreferencesModifierTagControl ||
           [self leftOptionRemapping] != kPreferencesModifierTagLeftOption ||
           [self rightOptionRemapping] != kPreferencesModifierTagRightOption ||
           [self leftCommandRemapping] != kPreferencesModifierTagLeftCommand ||
-          [self rightCommandRemapping] != kPreferencesModifierTagRightCommand);
+          [self rightCommandRemapping] != kPreferencesModifierTagRightCommand ||
+          [self functionRemapping] != kPreferenceModifierTagFunction);
 }
 
 

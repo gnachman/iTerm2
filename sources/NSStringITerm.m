@@ -1395,6 +1395,9 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     if (keyMods & NSEventModifierFlagCommand) {
         [theKeyString appendString:@"⌘"];
     }
+    if (keyMods & NSEventModifierFlagFunction) {
+        [theKeyString appendString:@"fn"];
+    }
     return theKeyString;
 }
 

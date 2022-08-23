@@ -118,6 +118,7 @@ NSString *const kPreferenceKeyLeftOptionRemapping = @"LeftOption";
 NSString *const kPreferenceKeyRightOptionRemapping = @"RightOption";
 NSString *const kPreferenceKeyLeftCommandRemapping = @"LeftCommand";
 NSString *const kPreferenceKeyRightCommandRemapping = @"RightCommand";
+NSString *const kPreferenceKeyFunctionRemapping = @"FunctionKey";
 NSString *const kPreferenceKeySwitchPaneModifier = @"SwitchPaneModifier";
 NSString *const kPreferenceKeySwitchTabModifier = @"SwitchTabModifier";
 NSString *const kPreferenceKeySwitchWindowModifier = @"SwitchWindowModifier";
@@ -400,6 +401,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyRightOptionRemapping: @(kPreferencesModifierTagRightOption),
                   kPreferenceKeyLeftCommandRemapping: @(kPreferencesModifierTagLeftCommand),
                   kPreferenceKeyRightCommandRemapping: @(kPreferencesModifierTagRightCommand),
+                  kPreferenceKeyFunctionRemapping: @(kPreferenceModifierTagFunction),
                   kPreferenceKeySwitchPaneModifier: @(kPreferenceModifierTagNone),
                   kPreferenceKeySwitchTabModifier: @(kPreferencesModifierTagEitherCommand),
                   kPreferenceKeySwitchWindowModifier: @(kPreferencesModifierTagCommandAndOption),
@@ -660,6 +662,9 @@ static NSString *sPreviousVersion;
 
         case kPreferenceModifierTagNone:
             return NSUIntegerMax;
+
+        case kPreferenceModifierTagFunction:
+            return NSEventModifierFlagFunction;
 
         default:
             NSLog(@"Unexpected value for maskForModifierTag: %d", tag);

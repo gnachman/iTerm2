@@ -14,6 +14,7 @@
 @property(nonatomic, readonly) iTermPreferencesModifierTag rightOptionRemapping;
 @property(nonatomic, readonly) iTermPreferencesModifierTag leftCommandRemapping;
 @property(nonatomic, readonly) iTermPreferencesModifierTag rightCommandRemapping;
+@property(nonatomic, readonly) iTermPreferencesModifierTag functionRemapping;
 
 // Is any modifier set in prefs to do something other than its un-remapped behavior?
 @property(nonatomic, readonly) BOOL isAnyModifierRemapped;

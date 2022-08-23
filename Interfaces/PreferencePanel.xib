@@ -749,7 +749,7 @@ Gw
                             </subviews>
                         </clipView>
                         <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="5846">
-                            <rect key="frame" x="1" y="248" width="763" height="16"/>
+                            <rect key="frame" x="1" y="249" width="763" height="15"/>
                             <autoresizingMask key="autoresizingMask"/>
                         </scroller>
                         <scroller key="verticalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="5847">
@@ -1173,6 +1173,8 @@ DQ
                 <outlet property="_controlButton" destination="4237" id="rOx-d6-9bm"/>
                 <outlet property="_controlButtonLabel" destination="3673" id="RLd-dc-IoT"/>
                 <outlet property="_emulateUSKeyboard" destination="xcI-Ej-rao" id="ikw-qr-450"/>
+                <outlet property="_functionButton" destination="0ov-Pi-2Zd" id="Rou-hw-bgx"/>
+                <outlet property="_functionButtonLabel" destination="oJW-wG-mC7" id="qGu-Ez-3jT"/>
                 <outlet property="_hotkeyEnabled" destination="5104" id="QVB-Xu-fmz"/>
                 <outlet property="_hotkeyField" destination="5105" id="7JV-k6-QEN"/>
                 <outlet property="_hotkeyLabel" destination="5106" id="nqf-CS-llf"/>
@@ -3831,7 +3833,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="ArV-0K-qze">
                         <rect key="frame" x="1" y="1" width="523" height="95"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" id="5661">
                                 <rect key="frame" x="0.0" y="0.0" width="523" height="95"/>
@@ -4677,7 +4679,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="FMp-vf-IvG">
                         <rect key="frame" x="1" y="1" width="519" height="76"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" alternatingRowBackgroundColors="YES" columnSelection="YES" multipleSelection="NO" autosaveColumns="NO" id="69M-P0-mzb">
                                 <rect key="frame" x="0.0" y="0.0" width="519" height="76"/>
@@ -6435,11 +6437,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hJ4-9y-ajU" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="231" y="233" width="438" height="148"/>
+                                        <rect key="frame" x="231" y="208" width="438" height="173"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3673">
-                                                <rect key="frame" x="57" y="125" width="161" height="16"/>
+                                                <rect key="frame" x="57" y="150" width="161" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap control (⌃) key to:" id="3674">
                                                     <font key="font" metaFont="system"/>
@@ -6448,9 +6450,9 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4392">
-                                                <rect key="frame" x="221" y="68" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="93" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" title="⌥ Right Option" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="3" imageScaling="proportionallyDown" inset="2" selectedItem="4407" id="4401">
+                                                <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="4406" id="4401">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="4402">
@@ -6468,6 +6470,9 @@ DQ
                                                             <menuItem title="⌘ Right Command" tag="8" id="4403">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
+                                                            <menuItem title="fn Function" tag="10" id="szs-Zj-Wom">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
                                                         </items>
                                                     </menu>
                                                 </popUpButtonCell>
@@ -6477,9 +6482,9 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4410">
-                                                <rect key="frame" x="221" y="17" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="42" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" title="⌘ Right Command" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="8" imageScaling="proportionallyDown" inset="2" selectedItem="4413" id="4411">
+                                                <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="4416" id="4411">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="4412">
@@ -6497,6 +6502,9 @@ DQ
                                                             <menuItem title="⌘ Right Command" state="on" tag="8" id="4413">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
+                                                            <menuItem title="fn Function" tag="10" id="FNw-nS-Nhm">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
                                                         </items>
                                                     </menu>
                                                 </popUpButtonCell>
@@ -6506,7 +6514,7 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3677">
-                                                <rect key="frame" x="16" y="50" width="202" height="16"/>
+                                                <rect key="frame" x="16" y="75" width="202" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap left command (⌘) key to:" id="3678">
                                                     <font key="font" metaFont="system"/>
@@ -6515,7 +6523,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3689">
-                                                <rect key="frame" x="36" y="100" width="182" height="16"/>
+                                                <rect key="frame" x="36" y="125" width="182" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap left option (⌥) key to:" id="3690">
                                                     <font key="font" metaFont="system"/>
@@ -6524,9 +6532,9 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4393">
-                                                <rect key="frame" x="221" y="43" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="68" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" title="⌘ Left Command" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="7" imageScaling="proportionallyDown" inset="2" selectedItem="4398" id="4394">
+                                                <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="4397" id="4394">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="4395">
@@ -6544,6 +6552,9 @@ DQ
                                                             <menuItem title="⌘ Right Command" tag="8" id="4400">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
+                                                            <menuItem title="fn Function" tag="10" id="NUC-mC-DOm">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
                                                         </items>
                                                     </menu>
                                                 </popUpButtonCell>
@@ -6552,9 +6563,9 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4383">
-                                                <rect key="frame" x="221" y="93" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="118" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" title="⌥ Left Option" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="2" imageScaling="proportionallyDown" inset="2" selectedItem="4387" id="4384">
+                                                <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="4389" id="4384">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="4385">
@@ -6572,6 +6583,9 @@ DQ
                                                             <menuItem title="⌘ Right Command" tag="8" id="4386">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
+                                                            <menuItem title="fn Function" tag="10" id="kSp-wU-Ebo">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
                                                         </items>
                                                     </menu>
                                                 </popUpButtonCell>
@@ -6581,7 +6595,7 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4335">
-                                                <rect key="frame" x="8" y="24" width="210" height="16"/>
+                                                <rect key="frame" x="8" y="49" width="210" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap right command (⌘) key to:" id="4343">
                                                     <font key="font" metaFont="system"/>
@@ -6589,8 +6603,48 @@ DQ
                                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                             </textField>
+                                            <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0ov-Pi-2Zd">
+                                                <rect key="frame" x="221" y="16" width="163" height="26"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="Kul-ts-5Tp" id="98N-8u-4vU">
+                                                    <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="menu"/>
+                                                    <menu key="menu" title="OtherViews" id="zTX-dI-C4f">
+                                                        <items>
+                                                            <menuItem title="⌃ Control" tag="1" id="Kul-ts-5Tp"/>
+                                                            <menuItem title="⌥ Left Option" tag="2" id="U1f-7q-Ewz">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌥ Right Option" tag="3" id="PuP-g1-gdv">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ Left Command" tag="7" id="Sx4-PD-OaS">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="⌘ Right Command" tag="8" id="EmU-3L-XeT">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="fn Function" state="on" tag="10" id="j3Z-6L-rIU">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                        </items>
+                                                    </menu>
+                                                </popUpButtonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="Vjb-g7-fCP"/>
+                                                </connections>
+                                            </popUpButton>
+                                            <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oJW-wG-mC7">
+                                                <rect key="frame" x="112" y="23" width="106" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap fn key to:" id="mBL-Vc-973">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3675">
-                                                <rect key="frame" x="28" y="75" width="190" height="16"/>
+                                                <rect key="frame" x="28" y="100" width="190" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap right option (⌥) key to:" id="3676">
                                                     <font key="font" metaFont="system"/>
@@ -6599,9 +6653,9 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4237">
-                                                <rect key="frame" x="221" y="118" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="143" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                                <popUpButtonCell key="cell" type="push" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" id="4238">
+                                                <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="4242" id="4238">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
                                                     <font key="font" metaFont="menu"/>
                                                     <menu key="menu" title="OtherViews" id="4239">
@@ -6617,6 +6671,9 @@ DQ
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
                                                             <menuItem title="⌘ Right Command" tag="8" id="4345">
+                                                                <modifierMask key="keyEquivalentModifierMask"/>
+                                                            </menuItem>
+                                                            <menuItem title="fn Function" tag="10" id="xeh-uE-u2r">
                                                                 <modifierMask key="keyEquivalentModifierMask"/>
                                                             </menuItem>
                                                         </items>
@@ -6990,7 +7047,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="Fm3-fw-Qw5">
                         <rect key="frame" x="1" y="1" width="950" height="362"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" columnReordering="NO" columnResizing="NO" multipleSelection="NO" autosaveColumns="NO" typeSelect="NO" rowSizeStyle="automatic" viewBased="YES" id="5ik-Xh-beg" customClass="iTermAdvancedSettingsTableView">
                                 <rect key="frame" x="0.0" y="0.0" width="950" height="362"/>
@@ -7012,7 +7069,7 @@ DQ
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="RoD-zs-eHF">
-                                                <rect key="frame" x="11" y="1" width="562" height="17"/>
+                                                <rect key="frame" x="1" y="1" width="562" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zlz-2J-KIa">
@@ -7044,7 +7101,7 @@ DQ
                                         <tableColumnResizingMask key="resizingMask" resizeWithTable="YES"/>
                                         <prototypeCellViews>
                                             <tableCellView id="W6M-oM-X4N">
-                                                <rect key="frame" x="576" y="1" width="353" height="17"/>
+                                                <rect key="frame" x="566" y="1" width="353" height="17"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
                                                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="n68-XZ-ujb">
