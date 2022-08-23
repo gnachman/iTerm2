@@ -168,6 +168,11 @@ NS_ASSUME_NONNULL_BEGIN
     DLog(@"  create initial directory object");
     iTermInitialDirectory *initialDirectory = [iTermInitialDirectory initialDirectoryFromProfile:self.profile
                                                                                       objectType:self.objectType];
+    if (initialDirectory.mode == iTermInitialDirectoryModeHome && self.ssh) {
+        DLog(@"Not setting env[PWD] because we want home directory over ssh.");
+        completion();
+        return;
+    }
     // Keep the initial directory alive
     void *key = (void *)"iTermSessionFactory.initialDirectory";
     [self.session it_setAssociatedObject:initialDirectory forKey:key];
