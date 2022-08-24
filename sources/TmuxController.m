@@ -1857,6 +1857,9 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                                                        scope:scope
                                                   completion:
      ^(NSString *command) {
+        if (detached_) {
+            return;
+        }
          NSMutableArray *commands = [NSMutableArray array];
          if (variableWindowSize) {
              ITBetaAssert((int)size.width > 0, @"Invalid size");
