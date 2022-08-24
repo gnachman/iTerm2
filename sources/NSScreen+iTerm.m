@@ -8,6 +8,7 @@
 
 #import "NSScreen+iTerm.h"
 
+#import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "NSDate+iTerm.h"
 #import "NSObject+iTerm.h"
@@ -420,6 +421,7 @@ static io_service_t iTermGetIOService(CGDirectDisplayID displayID) {
         return YES;
     }];
     if (myWindowIsFullScreenOnThisScreen) {
+        DLog(@"No - one of my windows is fullscreen on %@", self);
         return NO;
     }
     NSSet<NSNumber *> *windowNumbers = [NSSet setWithArray:[[NSApp windows] mapWithBlock:^id(NSWindow *window) {
@@ -428,20 +430,27 @@ static io_service_t iTermGetIOService(CGDirectDisplayID displayID) {
     NSArray<NSDictionary *> *allInfos = [NSScreen it_allWindowInfoDictionaries];
     return [allInfos anyWithBlock:^BOOL(NSDictionary *windowInfo) {
         const CGRect windowFrame = [NSScreen windowBoundsRectFromWindowInfoDictionary:windowInfo];
+        DLog(@"Consider %@", windowInfo);
         if (!NSEqualRects(windowFrame, screenFrame)) {
+            DLog(@"Reject: window frame %@ != screen frame %@",
+                 NSStringFromRect(windowFrame), NSStringFromRect(screenFrame));
             return NO;
         }
         if ([windowInfo[(__bridge NSString *)kCGWindowAlpha] doubleValue] <= 0) {
+            DLog(@"Reject: Nonpositive alpha");
             return NO;
         }
         if (![windowInfo[(__bridge NSString *)kCGWindowIsOnscreen] boolValue]) {
+            DLog(@"Reject: not on screen");
             return NO;
         }
         NSNumber *windowNumber = windowInfo[(__bridge NSString *)kCGWindowNumber];
         if ([windowNumbers containsObject:windowNumber]) {
+            DLog(@"Reject: this is my window");
             // Is my own window.
             return NO;
         }
+        DLog(@"Accept: this is another app's fullscreen window");
         return YES;
     }];
 }

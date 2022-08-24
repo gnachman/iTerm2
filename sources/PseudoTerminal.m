@@ -3906,15 +3906,22 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSRect)screenFrameForEdgeSpanningWindows:(NSScreen *)screen {
+    DLog(@"Begin");
     if ([[[iTermHotKeyController sharedInstance] profileHotKeyForWindowController:self] floats]) {
+        DLog(@"It floats");
         const BOOL menuBarIsHidden = ![[iTermMenuBarObserver sharedInstance] menuBarVisibleOnScreen:screen];
+        DLog(@"menuBarIsHidden=%@", @(menuBarIsHidden));
         if (menuBarIsHidden && ![screen it_hasAnotherAppsFullScreenWindow]) {
+            DLog(@"Using screen frame %@", NSStringFromRect(screen.frame));
             // When the menu bar is hidden because it hides automatically, we should go all the way to the top of the screen (issue 7149).
             // But if we are on another app's full-screen space, the system won't allow us to do that (issue 9978).
             return screen.frame;
         }
+        DLog(@"Using screen frame excluding menu bar %@", NSStringFromRect(screen.frameExceptMenuBar));
         return screen.frameExceptMenuBar;
     } else {
+        DLog(@"non-floating hotkey window uses visible frame ignoring hidden dock %@",
+             NSStringFromRect([screen visibleFrameIgnoringHiddenDock]));
         return [screen visibleFrameIgnoringHiddenDock];
     }
 }
