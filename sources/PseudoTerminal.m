@@ -435,6 +435,9 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     CGFloat _previousScreenScaleFactor;
 
     NSTimeInterval _creationTime;
+
+    // Issue 10551
+    iTermTextView *_fieldEditor;
 }
 
 @synthesize scope = _scope;
@@ -1069,6 +1072,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_screenConfigurationAtTimeOfForceFrame release];
     [_proxyIconOrderEnforcer release];
     [_swipeIdentifier release];
+    [_fieldEditor release];
+
     [super dealloc];
 }
 
@@ -3603,6 +3608,13 @@ ITERM_WEAKLY_REFERENCEABLE
     _instantReplayWindowController.delegate = nil;
     [_instantReplayWindowController release];
     _instantReplayWindowController = nil;
+}
+
+- (id)windowWillReturnFieldEditor:(NSWindow *)sender toObject:(id)client {
+    if (!_fieldEditor) {
+        _fieldEditor = [[iTermTextView alloc] init];
+    }
+    return _fieldEditor;
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification {

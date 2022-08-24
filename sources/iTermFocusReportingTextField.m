@@ -7,6 +7,7 @@
 
 #import "iTermFocusReportingTextField.h"
 #import "iTermSearchFieldCell.h"
+#import "NSObject+iTerm.h"
 #import "NSResponder+iTerm.h"
 #import "PTYWindow.h"
 
@@ -26,6 +27,33 @@
 @end
 
 @interface iTermFocusReportingSearchField()<iTermSearchFieldControl>
+@end
+
+@implementation iTermTextView: NSTextView
+
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
+    if (menuItem.action == @selector(performFindPanelAction:) &&
+        menuItem.tag == NSFindPanelActionShowFindPanel) {
+        return YES;
+    }
+    return [super validateMenuItem:menuItem];
+}
+
+- (void)performFindPanelAction:(id)sender {
+    NSMenuItem *item = [NSMenuItem castFrom:sender];
+    if (item.tag == NSFindPanelActionShowFindPanel) {
+        NSResponder *responder = self.nextResponder;
+        while (responder) {
+            if ([responder respondsToSelector:_cmd]) {
+                [(id)responder performFindPanelAction:sender];
+                return;
+            }
+            responder = responder.nextResponder;
+        }
+    }
+    [super performFindPanelAction:sender];
+}
+
 @end
 
 @implementation iTermFocusReportingSearchField
