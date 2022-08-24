@@ -292,7 +292,7 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
     if (_needsSave) {
         return;
     }
-    DLog(@"setNeedsSave");
+    DLog(@"setNeedsSave\n%@", [NSThread callStackSymbols]);
     _needsSave = YES;
     __weak __typeof(self) weakSelf = self;
     // Introduce a delay to avoid building up a big queue.
