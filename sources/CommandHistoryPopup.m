@@ -156,4 +156,22 @@
     [self passKeyEventToDelegateForSelector:_cmd string:@"\t"];
 }
 
+- (void)insertNewline:(id)sender
+{
+    [self insertText:@"\n"];
+    [self closePopupWindow];
+}
+
+- (void)insertLineBreak:(id)sender
+{
+    [self rowSelected:self];
+}
+
+- (void)keyDown:(NSEvent *)event
+{
+    if (([event modifierFlags] & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask
+		    && [event keyCode] == 8) {
+        [self closePopupWindow];
+    }
+}
 @end
