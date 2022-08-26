@@ -65,6 +65,7 @@ const int kDefaultColorStokeWidth = 2;
 const int kMenuFontSize = 14;
 const int kMenuLabelOffsetX_PreBigSur = 20;
 const int kMenuLabelOffsetX_BigSur = 24;
+const int kMenuLabelOffsetX_BigSurOnState = 10;
 const int kMenuLabelOffsetY = 32;
 
 const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
@@ -137,7 +138,11 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
 
 - (CGFloat)colorXOffset {
     if (@available(macOS 10.16, *)) {
-        return kColorAreaOffsetX_BigSur;
+        if (!self.viewMenuHasSubmenuOnState) {
+            return kColorAreaOffsetX_BigSur - kMenuLabelOffsetX_BigSurOnState;
+        } else {
+            return kColorAreaOffsetX_BigSur;
+        }
     }
     return kColorAreaOffsetX_PreBigSur;
 }
@@ -260,6 +265,9 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
     CGFloat x;
     if (@available(macOS 10.16, *)) {
         x = kMenuLabelOffsetX_BigSur;
+        if (!self.viewMenuHasSubmenuOnState) {
+            x -= kMenuLabelOffsetX_BigSurOnState;
+        }
     } else {
         x = kMenuLabelOffsetX_PreBigSur;
     }
@@ -321,6 +329,19 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
     }
     _mouseDownIndex = [self indexForPoint:[self convertPoint:event.locationInWindow fromView:nil]];
     [self updateSelectedIndexForEvent:event];
+}
+
+- (BOOL)viewMenuHasSubmenuOnState {
+    for (NSMenuItem *mainMenuItem in NSApp.mainMenu.itemArray) {
+        if ([mainMenuItem.title isEqual:@"View"]) {
+            for (NSMenuItem *viewMenuItem in mainMenuItem.submenu.itemArray) {
+                if (viewMenuItem.state == NSControlStateValueOn) {
+                    return YES;
+                }
+            }
+        }
+    }
+    return NO;
 }
 
 @end
