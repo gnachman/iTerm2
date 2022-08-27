@@ -17,6 +17,7 @@
             <connections>
                 <outlet property="affordance" destination="ehA-Ov-jnD" id="Za6-d5-aTC"/>
                 <outlet property="memberPicker" destination="IFG-Em-Qtn" id="3vV-hn-KGg"/>
+                <outlet property="playground" destination="TQW-PQ-nzm" id="Ew3-m3-sOm"/>
                 <outlet property="window" destination="IJb-aa-gVa" id="0rv-z7-zej"/>
             </connections>
         </customObject>
@@ -740,7 +741,19 @@
                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HA8-jg-KRi" customClass="BFPCompositeView">
                         <rect key="frame" x="20" y="110" width="440" height="27"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <connections>
+                            <outlet property="delegate" destination="Voe-Tx-rLC" id="7y5-ca-rkC"/>
+                        </connections>
                     </customView>
+                    <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TQW-PQ-nzm">
+                        <rect key="frame" x="21" y="81" width="439" height="21"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" title="Hello, world" drawsBackground="YES" id="Z6T-oS-DKg">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
                 </subviews>
             </view>
             <point key="canvasLocation" x="-477" y="-583"/>

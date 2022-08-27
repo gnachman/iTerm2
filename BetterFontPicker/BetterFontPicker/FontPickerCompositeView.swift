@@ -16,7 +16,7 @@ public protocol FontPickerCompositeViewDelegate: NSObjectProtocol {
 
 @objc(BFPCompositeView)
 public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemberPickerViewDelegate, SizePickerViewDelegate, OptionsButtonControllerDelegate {
-    @objc public weak var delegate: FontPickerCompositeViewDelegate?
+    @IBOutlet @objc public weak var delegate: FontPickerCompositeViewDelegate?
     private var accessories: [NSView] = []
     @objc public let affordance = Affordance()
     private let optionsButtonController = OptionsButtonController()
@@ -24,8 +24,10 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     var sizePicker: SizePickerView? = SizePickerView()
     @objc private(set) public var horizontalSpacing: SizePickerView? = nil
     @objc private(set) public var verticalSpacing: SizePickerView? = nil
-    @objc var options: Set<Int> {
-        return optionsButtonController.options
+    @objc var options: Set<Data> {
+        return Set(optionsButtonController.options.map {
+            $0.data
+        })
     }
 
     @objc(BFPCompositeViewMode)
@@ -76,9 +78,15 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
             }
             let size = CGFloat(sizePicker?.size ?? 12)
             var descriptor = NSFontDescriptor(name: name, size: size)
-            let settings = Array(options).map {
-                [NSFontDescriptor.FeatureKey.typeIdentifier: kStylisticAlternativesType,
-                 NSFontDescriptor.FeatureKey.selectorIdentifier: $0]
+            let settings = Array(optionsButtonController.options).map {
+                switch $0 {
+                case .stylisticSet(identifier: let identifier):
+                    return [NSFontDescriptor.FeatureKey.typeIdentifier: kStylisticAlternativesType,
+                            NSFontDescriptor.FeatureKey.selectorIdentifier: identifier]
+                case .glyphVariant(tag: let tag, value: let value):
+                    return [NSFontDescriptor.FeatureKey.typeIdentifier: kCharacterAlternativesType,
+                            NSFontDescriptor.FeatureKey.selectorIdentifier: identifier]
+                }
             }
             descriptor = descriptor.addingAttributes([.featureSettings: settings])
             return NSFont(descriptor: descriptor, size: size)
@@ -296,7 +304,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
         }
     }
 
-    func optionsDidChange(_ controller: OptionsButtonController, options: Set<Int>) {
+    func optionsDidChange(_ controller: OptionsButtonController, options: Set<OptionsButtonController.Flag>) {
         if let font = font {
             delegate?.fontPickerCompositeView(self, didSelectFont: font)
         }

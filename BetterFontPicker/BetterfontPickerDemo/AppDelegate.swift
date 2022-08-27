@@ -10,10 +10,11 @@ import Cocoa
 import BetterFontPicker
 
 @NSApplicationMain
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, FontPickerCompositeViewDelegate {
     @IBOutlet weak var window: NSWindow!
     @IBOutlet weak var affordance: Affordance!
     @IBOutlet weak var memberPicker: FontFamilyMemberPickerView?
+    @IBOutlet weak var playground: NSTextField!
     let compositeView = FontPickerCompositeView(font: NSFont.systemFont(ofSize: NSFont.systemFontSize))
 
     override func awakeFromNib() {
@@ -38,5 +39,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
 
+    func fontPickerCompositeView(_ view: FontPickerCompositeView,
+                                 didSelectFont font: NSFont) {
+        playground.font = font
+    }
 }
 
