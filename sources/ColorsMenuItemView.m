@@ -55,6 +55,7 @@
 const int kNumberOfColors = 8;
 const int kColorAreaOffsetX_PreBigSur = 20;
 const int kColorAreaOffsetX_BigSur = 24;
+const int kColorAreaOffsetX_BigSur_NoneChecked = 10;
 const int kColorAreaOffsetY = 10;
 const int kColorAreaDistanceX = 18;
 const int kColorAreaDimension = 12;
@@ -65,6 +66,7 @@ const int kDefaultColorStokeWidth = 2;
 const int kMenuFontSize = 14;
 const int kMenuLabelOffsetX_PreBigSur = 20;
 const int kMenuLabelOffsetX_BigSur = 24;
+const int kMenuLabelOffsetX_BigSur_NoneChecked = 10;
 const int kMenuLabelOffsetY = 32;
 
 const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
@@ -137,7 +139,10 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
 
 - (CGFloat)colorXOffset {
     if (@available(macOS 10.16, *)) {
-        return kColorAreaOffsetX_BigSur;
+        if ([self anySiblingIsChecked]) {
+            return kColorAreaOffsetX_BigSur;
+        }
+        return kColorAreaOffsetX_BigSur_NoneChecked;
     }
     return kColorAreaOffsetX_PreBigSur;
 }
@@ -259,12 +264,22 @@ const CGFloat iTermColorsMenuItemViewDisabledAlpha = 0.3;
     NSString *labelTitle = @"Tab Color:";
     CGFloat x;
     if (@available(macOS 10.16, *)) {
-        x = kMenuLabelOffsetX_BigSur;
+        if ([self anySiblingIsChecked]) {
+            x = kMenuLabelOffsetX_BigSur;
+        } else {
+            x = kMenuLabelOffsetX_BigSur_NoneChecked;
+        }
     } else {
         x = kMenuLabelOffsetX_PreBigSur;
     }
     [labelTitle drawAtPoint:NSMakePoint(x, kMenuLabelOffsetY) withAttributes:attributes];
     [NSBezierPath setDefaultLineWidth:savedWidth];
+}
+
+- (BOOL)anySiblingIsChecked {
+    return [self.enclosingMenuItem.parentItem.submenu.itemArray anyWithBlock:^BOOL(NSMenuItem *item) {
+        return item.state != NSControlStateValueOff;
+    }];
 }
 
 - (NSColor *)colorAtIndex:(NSUInteger)index enabled:(BOOL)enabled {
