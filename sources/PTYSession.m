@@ -7717,6 +7717,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     });
 }
 
+- (void)tmuxSessionPasteDidChange:(NSString *)pasteBufferName {
+    if ([iTermPreferences boolForKey:kPreferenceKeyTmuxSyncClipboard]) {
+        [_tmuxController copyBufferToLocalPasteboard:pasteBufferName];
+    } else {
+        [[[[iTermController sharedInstance] currentTerminal] currentSession] askToMirrorTmuxPasteBuffer];
+    }
+}
+
+- (void)askToMirrorTmuxPasteBuffer {
+    [_naggingController tmuxDidUpdatePasteBuffer];
+
+
+
+}
+
 - (void)tmuxWindowPaneDidPause:(int)wp notification:(BOOL)notification {
     PTYSession *session = [_tmuxController sessionForWindowPane:wp];
     [session setTmuxPaused:YES allowAutomaticUnpause:notification];

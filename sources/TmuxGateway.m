@@ -451,6 +451,18 @@ error:
     [delegate_ tmuxSessionWindowDidChangeTo:[components[2] intValue]];
 }
 
+// %paste-changed buffer1
+- (void)parsePasedChangedCommand:(NSString *)command {
+    // For security purposes we restrict the accepted buffer names since we will output this buffer name to fetch its contents.
+    // It's an instance of attacker-controlled values that we then output which could be used as user input.
+    NSArray<NSString *> *components = [command captureComponentsMatchedByRegex:@"^%paste-changed (buffer[0-9]+)"];
+    if (components.count != 2) {
+        DLog(@"Unexpected syntax: %@", command);
+        return;
+    }
+    [delegate_ tmuxSessionPasteDidChange:components[1]];
+}
+
 - (void)parsePauseCommand:(NSString *)command {
     NSArray<NSString *> *components = [command captureComponentsMatchedByRegex:@"^%pause %([0-9]+)$"];
     if (components.count != 2) {
@@ -787,6 +799,8 @@ error:
                [command hasPrefix:@"%pane-mode-changed"]) {  // copy mode, etc
         // New in tmux 2.5. Don't care.
         TmuxLog(@"Ignore %@", command);
+    } else if ([command hasPrefix:@"%paste-changed "]) {
+        if (acceptNotifications_) [self parsePasedChangedCommand:command];
     } else if ([command hasPrefix:@"%exit "] ||
                [command isEqualToString:@"%exit"]) {
         TmuxLog(@"tmux exit message: %@", command);

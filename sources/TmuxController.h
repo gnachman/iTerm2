@@ -257,5 +257,6 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)activeWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
 - (void)activeWindowDidChangeTo:(int)windowID;
 - (void)setCurrentLatency:(NSTimeInterval)latency forPane:(int)wp;
+- (void)copyBufferToLocalPasteboard:(NSString *)bufferName;
 
 @end

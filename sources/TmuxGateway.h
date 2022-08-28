@@ -66,6 +66,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 - (void)tmuxActiveWindowPaneDidChangeInWindow:(int)windowID toWindowPane:(int)paneID;
 - (void)tmuxSessionWindowDidChangeTo:(int)windowID;
 - (void)tmuxWindowPaneDidPause:(int)wp notification:(BOOL)notification;
+- (void)tmuxSessionPasteDidChange:(NSString *)pasteBufferName;
 @end
 
 typedef NS_ENUM(NSInteger, ControlCommand) {

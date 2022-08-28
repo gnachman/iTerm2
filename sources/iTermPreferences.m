@@ -70,6 +70,7 @@ NSString *const kPreferenceKeyUseTmuxStatusBar = @"UseTmuxStatusBar";
 NSString *const kPreferenceKeyTmuxPauseModeAgeLimit = @"TmuxPauseModeAgeLimit";
 NSString *const kPreferenceKeyTmuxUnpauseAutomatically = @"TmuxUnpauseAutomatically";
 NSString *const kPreferenceKeyTmuxWarnBeforePausing = @"TmuxWarnBeforePausing";
+NSString *const kPreferenceKeyTmuxSyncClipboard = @"TmuxSyncClipboard";
 NSString *const kPreferenceKeyPhonyAllowSendingClipboardContents = @"PhonyAllowSendingClipboardContents";
 
 NSString *const kPreferenceKeyUseMetal = @"UseMetal";
@@ -353,6 +354,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyTmuxUnpauseAutomatically: @NO,
                   kPreferenceKeyPhonyAllowSendingClipboardContents: @(iTermPasteboardReporterConfigurationAskEachTime),
                   kPreferenceKeyTmuxWarnBeforePausing: @YES,
+                  kPreferenceKeyTmuxSyncClipboard: @NO,
                   kPreferenceKeyUseMetal: @YES,
                   kPreferenceKeyDisableMetalWhenUnplugged: @YES,
                   kPreferenceKeyPreferIntegratedGPU: @YES,

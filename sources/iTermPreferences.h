@@ -102,6 +102,7 @@ extern NSString *const kPreferenceKeyUseTmuxStatusBar;
 extern NSString *const kPreferenceKeyTmuxPauseModeAgeLimit;
 extern NSString *const kPreferenceKeyTmuxUnpauseAutomatically;
 extern NSString *const kPreferenceKeyTmuxWarnBeforePausing;
+extern NSString *const kPreferenceKeyTmuxSyncClipboard;
 extern NSString *const kPreferenceKeyUseMetal;
 extern NSString *const kPreferenceKeyDisableMetalWhenUnplugged;
 extern NSString *const kPreferenceKeyPreferIntegratedGPU;

@@ -3422,6 +3422,20 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_tmuxBufferMonitor setCurrentLatency:latency forPane:wp];
 }
 
+- (void)copyBufferToLocalPasteboard:(NSString *)bufferName {
+    [gateway_ sendCommand:[NSString stringWithFormat:@"show-buffer -b %@", bufferName]
+           responseTarget:self
+         responseSelector:@selector(handleShowBuffer:)];
+}
+
+- (void)handleShowBuffer:(NSString *)content {
+    if ([content length]) {
+        NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
+        [pasteboard clearContents];
+        [pasteboard declareTypes:@[ NSPasteboardTypeString ] owner:nil];
+        [pasteboard setString:content forType:NSPasteboardTypeString];
+    }
+}
 #pragma mark - iTermTmuxBufferSizeMonitorDelegate
 
 - (void)tmuxBufferSizeMonitor:(iTermTmuxBufferSizeMonitor *)sender

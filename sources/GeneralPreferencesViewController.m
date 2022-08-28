@@ -141,6 +141,8 @@ enum {
     IBOutlet NSButton *_unpauseTmuxAutomatically;
     IBOutlet NSButton *_tmuxWarnBeforePausing;
 
+    IBOutlet NSButton *_syncTmuxClipboard;
+
     IBOutlet NSTabView *_tabView;
 
     IBOutlet NSButton *_enterCopyModeAutomatically;
@@ -532,6 +534,10 @@ enum {
                    type:kPreferenceInfoTypeCheckbox];
     [self defineControl:_tmuxWarnBeforePausing
                     key:kPreferenceKeyTmuxWarnBeforePausing
+            displayName:nil
+                   type:kPreferenceInfoTypeCheckbox];
+    [self defineControl:_syncTmuxClipboard
+                    key:kPreferenceKeyTmuxSyncClipboard
             displayName:nil
                    type:kPreferenceInfoTypeCheckbox];
 

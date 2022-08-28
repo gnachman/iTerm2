@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "iTermPreferences.h"
 #import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 #import "ProfileModel.h"
@@ -27,6 +28,7 @@ NSString *const kTurnOffBracketedPasteOnHostChangeUserDefaultsKey = @"NoSyncTurn
 static NSString *const iTermNaggingControllerAskAboutChangingProfileIdentifier = @"AskAboutChangingProfile";
 static NSString *const iTermNaggingControllerTmuxWindowsShouldCloseAfterDetach = @"TmuxWindowsShouldCloseAfterDetach";
 static NSString *const kTurnOffSlowTriggersOfferUserDefaultsKey = @"kTurnOffSlowTriggersOfferUserDefaultsKey";
+static NSString *const iTermNaggingControllerOfferToSyncTmuxClipboard = @"NoSyncOfferToSyncTmuxClipboard";
 
 static NSString *const iTermNaggingControllerUserDefaultNeverAskAboutSettingAlternateMouseScroll = @"NoSyncNeverAskAboutSettingAlternateMouseScroll";
 
@@ -436,6 +438,41 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
 
             case 2: // Help
                 [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/slow_triggers"]];
+                break;
+        }
+    }];
+}
+
+- (void)tmuxDidUpdatePasteBuffer {
+    if (![self.delegate naggingControllerCanShowMessageWithIdentifier:iTermNaggingControllerOfferToSyncTmuxClipboard]) {
+        DLog(@"Don't show warning");
+        return;
+    }
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyTmuxSyncClipboard]) {
+        DLog(@"Nag disabled");
+        return;
+    }
+    if ([iTermPreferences boolForKey:kPreferenceKeyTmuxSyncClipboard]) {
+        return;
+    }
+    [self.delegate naggingControllerShowMessage:@"The tmux paste buffer was updated. Would you like to mirror it to the local clipboard from now on?"
+                                     isQuestion:YES
+                                      important:NO
+                                     identifier:iTermNaggingControllerOfferToSyncTmuxClipboard
+                                        options:@[ @"_Always", @"_Never" ]
+                                     completion:^(int selection) {
+        switch (selection) {
+            case -2:  // Dismiss programatically
+                break;
+            case -1: // No
+                break;
+
+            case 0: // Always
+                [iTermPreferences setBool:YES forKey:kPreferenceKeyTmuxSyncClipboard];
+                break;
+
+            case 1:  // Never
+                [iTermPreferences setBool:NO forKey:kPreferenceKeyTmuxSyncClipboard];
                 break;
         }
     }];
