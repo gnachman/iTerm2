@@ -219,7 +219,7 @@ class SGRSelectionExtractor: StringSelectionExtractor {
         let temp = NSMutableAttributedString()
         super.extract(temp, attributeProvider: attributeProvider)
         let result = NSMutableString()
-        let sgr0 = "\u{1b}[0"
+        let sgr0 = "\u{1b}[0m"
         temp.enumerateAttribute(sgrAttribute,
                                 in: NSMakeRange(0, temp.length),
                                 options: []) { value, range, stop in
