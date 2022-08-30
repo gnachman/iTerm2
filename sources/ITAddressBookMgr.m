@@ -28,6 +28,7 @@
 #import "ITAddressBookMgr.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermDynamicProfileManager.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermHotKeyController.h"
@@ -690,6 +691,11 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
         NSString *command = bookmark[KEY_COMMAND_LINE];
         if ([[command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] ] length] > 0) {
             if (ssh) {
+                NSDictionary *dict = bookmark[KEY_SSH_CONFIG];
+                iTermSSHConfiguration *config = [[iTermSSHConfiguration alloc] initWithDictionary:dict];
+                if (!config.sshIntegration) {
+                    return [NSString stringWithFormat:@"ssh %@", command];
+                }
                 NSString *wrappedCommand = [NSString stringWithFormat:@"%@ %@",
                                             iTermPathToSSH(),
                                             command];
