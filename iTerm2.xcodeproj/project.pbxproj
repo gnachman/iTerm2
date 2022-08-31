@@ -1427,8 +1427,6 @@
 		A631FCA520EF0DFB00EB824F /* iTermStatusBarKnobColorViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A631FCA020EF0BCC00EB824F /* iTermStatusBarKnobColorViewController.xib */; };
 		A6339DD71D232CEE000BAD78 /* StatusItem.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DD51D232CEE000BAD78 /* StatusItem.png */; };
 		A6339DD81D232CEE000BAD78 /* StatusItem@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DD61D232CEE000BAD78 /* StatusItem@2x.png */; };
-		A6339DDB1D232DF2000BAD78 /* StatusItemAlt.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DD91D232DF2000BAD78 /* StatusItemAlt.png */; };
-		A6339DDC1D232DF2000BAD78 /* StatusItemAlt@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6339DDA1D232DF2000BAD78 /* StatusItemAlt@2x.png */; };
 		A634817924AFC4AF0003C11B /* iTermFocusablePanel.h in Headers */ = {isa = PBXBuildFile; fileRef = A634817724AFC4AF0003C11B /* iTermFocusablePanel.h */; };
 		A634817A24AFC4AF0003C11B /* iTermFocusablePanel.m in Sources */ = {isa = PBXBuildFile; fileRef = A634817824AFC4AF0003C11B /* iTermFocusablePanel.m */; };
 		A63493E023E661B60047C31B /* iTermPresentationController.h in Headers */ = {isa = PBXBuildFile; fileRef = A63493DE23E661B60047C31B /* iTermPresentationController.h */; };
@@ -5544,8 +5542,6 @@
 		A631FCA020EF0BCC00EB824F /* iTermStatusBarKnobColorViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = iTermStatusBarKnobColorViewController.xib; sourceTree = "<group>"; };
 		A6339DD51D232CEE000BAD78 /* StatusItem.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusItem.png; path = images/StatusItem.png; sourceTree = "<group>"; };
 		A6339DD61D232CEE000BAD78 /* StatusItem@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusItem@2x.png"; path = "images/StatusItem@2x.png"; sourceTree = "<group>"; };
-		A6339DD91D232DF2000BAD78 /* StatusItemAlt.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = StatusItemAlt.png; path = images/StatusItemAlt.png; sourceTree = "<group>"; };
-		A6339DDA1D232DF2000BAD78 /* StatusItemAlt@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "StatusItemAlt@2x.png"; path = "images/StatusItemAlt@2x.png"; sourceTree = "<group>"; };
 		A6339DE51D23433A000BAD78 /* iTermWindowImpl.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermWindowImpl.m; sourceTree = "<group>"; };
 		A6339DE61D235AA2000BAD78 /* iTermWindowScriptingImpl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermWindowScriptingImpl.m; sourceTree = "<group>"; };
 		A634817724AFC4AF0003C11B /* iTermFocusablePanel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFocusablePanel.h; sourceTree = "<group>"; };
@@ -8167,8 +8163,6 @@
 				1D99C8E31BD59C37001EE1FC /* SearchCursor@2x.png */,
 				A6339DD51D232CEE000BAD78 /* StatusItem.png */,
 				A6339DD61D232CEE000BAD78 /* StatusItem@2x.png */,
-				A6339DD91D232DF2000BAD78 /* StatusItemAlt.png */,
-				A6339DDA1D232DF2000BAD78 /* StatusItemAlt@2x.png */,
 				A663010619CFCE74004AF81C /* SuppressAllOutput.png */,
 				A663010719CFCE74004AF81C /* SuppressAllOutput@2x.png */,
 				A6B3A7481AC8A9A3008E8D4E /* TestBackground.png */,
@@ -14056,7 +14050,6 @@
 				1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */,
 				A66F52C12106F6F100571168 /* gitdirty@2x.png in Resources */,
 				A65FF3C320F1854F008BD0AE /* iTermMiniSearchFieldViewController.xib in Resources */,
-				A6339DDB1D232DF2000BAD78 /* StatusItemAlt.png in Resources */,
 				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
 				A69A15741D7FD78200A9E7EF /* TipCalendar@2x.png in Resources */,
 				A67F61AA214395B70093940A /* graphic_rails@2x.png in Resources */,
@@ -14137,7 +14130,6 @@
 				A6C1FD4E1FC2A65E006B9A69 /* Licenses.txt in Resources */,
 				A6EC804A281B3AF300493544 /* TextViewPortholeRenderer-light.css in Resources */,
 				A6F7A734213CB143004DE961 /* StatusBarIconLoupe@2x.png in Resources */,
-				A6339DDC1D232DF2000BAD78 /* StatusItemAlt@2x.png in Resources */,
 				A6C978F424A0194500971AA7 /* WindowCornerFull@2x.png in Resources */,
 				A6E7AEA3214394F600DE9F3B /* graphic_git.png in Resources */,
 				A67F118018D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
