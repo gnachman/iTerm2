@@ -3613,6 +3613,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (id)windowWillReturnFieldEditor:(NSWindow *)sender toObject:(id)client {
     if (!_fieldEditor) {
         _fieldEditor = [[iTermTextView alloc] init];
+        _fieldEditor.fieldEditor = YES;
     }
     return _fieldEditor;
 }
