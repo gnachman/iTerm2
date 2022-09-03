@@ -749,6 +749,32 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     _metalClipView.legacyView = _legacyView;
 }
 
+- (void)insertSubview:(NSView *)subview atIndex:(NSInteger)index {
+    [super insertSubview:subview atIndex:index];
+    [self sanityCheckSubviewOrder];
+}
+
+- (void)addSubview:(NSView *)view positioned:(NSWindowOrderingMode)place relativeTo:(NSView *)otherView {
+    [super addSubview:view positioned:place relativeTo:otherView];
+    [self sanityCheckSubviewOrder];
+}
+
+- (void)sanityCheckSubviewOrder {
+    NSInteger l = [self.subviews indexOfObjectPassingTest:^BOOL(__kindof NSView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return obj == _legacyView;
+    }];
+    NSInteger s = [self.subviews indexOfObjectPassingTest:^BOOL(__kindof NSView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        return obj == _scrollview;
+    }];
+    if (l != NSNotFound && s != NSNotFound && l > s)  {
+        NSString *message = [NSString stringWithFormat:@"Wrong subview order.\n%@\n%@", [self subviews], [NSThread callStackSymbols]];
+#if BETA
+        ITCriticalError(NO, @"%@", message);
+#else
+        DLog(@"%@", message);
+#endif
+    }
+}
 - (void)installMetalViewWithDataSource:(id<iTermMetalDriverDataSource>)dataSource NS_AVAILABLE_MAC(10_11) {
     if (_metalView) {
         [self removeMetalView];
@@ -867,11 +893,12 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)addSubviewBelowFindView:(NSView *)aView {
     if ([aView isKindOfClass:[PTYScrollView class]]) {
-        NSInteger i = [self.subviews indexOfObjectPassingTest:^BOOL(__kindof NSView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-            return [obj isKindOfClass:[MTKView class]];
+        NSIndexSet *indexes = [self.subviews indexesOfObjectsPassingTest:^BOOL(__kindof NSView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+            return [obj isKindOfClass:[MTKView class]] || obj == _legacyView;
         }];
-        if (i != NSNotFound) {
-            // Insert scrollview after metal view
+        if (indexes.count) {
+            // Insert scrollview after metal view and legacy view
+            const NSUInteger i = [indexes lastIndex];
             [self addSubview:aView positioned:NSWindowAbove relativeTo:self.subviews[i]];
             return;
         }
