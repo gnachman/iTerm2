@@ -383,6 +383,11 @@ NSString* ScreenCharArrayToStringDebug(const screen_char_t *screenChars,
     }
     NSMutableString* result = [NSMutableString stringWithCapacity:lineLength];
     for (int i = 0; i < lineLength; ++i) {
+        if (screenChars[i].image) {
+            VT100GridCoord coord = GetPositionOfImageInChar(screenChars[i]);
+            [result appendFormat:@"[img %d %d,%d]", screenChars[i].code, coord.x, coord.y];
+            continue;
+        }
         const unichar c = screenChars[i].code;
         if (c != 0 && !ScreenCharIsDWC_RIGHT(screenChars[i])) {
             [result appendString:ScreenCharToStr(&screenChars[i]) ?: @"😮"];

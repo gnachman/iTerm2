@@ -12,6 +12,7 @@
 #import "IntervalTree.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermEchoProbe.h"
+#import "iTermImageMark.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermTextExtractor.h"
 #import "LineBuffer.h"
@@ -231,8 +232,93 @@ NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
     }
 }
 
+// Search for images in the mutable area of the old instance of VT100ScreenState and check in the
+// updated version if any cell of that image is still present. If not, it can be released.
+- (void)releaseOverwrittenImagesIn:(VT100ScreenMutableState *)updated {
+    DLog(@"Start");
+    if (self.width != updated.width || self.height != updated.height) {
+        // It's way too complicated to check if an image was overwritten when the grid resizes.
+        // These will stay in memory until they exit scrollback history.
+        DLog(@"Size changed %dx%d -> %dx%d", self.width, self.height, updated.width, updated.height);
+        return;
+    }
+    Interval *topOfScreen = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, self.numberOfScrollbackLines, 0, self.numberOfScrollbackLines)];
+    const int height = self.height;
+    NSMutableArray<iTermMark *> *marksToRemove = [NSMutableArray array];
+    BOOL done = NO;
+    for (NSArray<id<IntervalTreeObject>> *objects in [_intervalTree reverseLimitEnumerator]) {
+        if (done) {
+            break;
+        }
+        for (id<IntervalTreeObject> object in objects) {
+            DLog(@"Consider %@", object);
+            if (object.entry.interval.limit <= topOfScreen.location) {
+                DLog(@"Above top of screen");
+                done = YES;
+                break;
+            }
+            iTermImageMark *imageMark = [iTermImageMark castFrom:object];
+            if (!imageMark || !imageMark.imageCode) {
+                DLog(@"Not an image");
+                continue;
+            }
+            VT100GridAbsCoordRange coordRange = [self absCoordRangeForInterval:imageMark.entry.interval];
+            if (![updated imageInUse:imageMark above:coordRange.end.y searchHeight:height]) {
+                DLog(@"Not in use. Add to delete list.");
+                [marksToRemove addObject:imageMark.progenitor];
+            }
+        }
+    }
+    for (iTermMark *mark in marksToRemove) {
+        DLog(@"Remove %@", mark);
+        [[updated mutableIntervalTree] removeObject:mark];
+    }
+}
+
+// Search cells backwards from the image mark to see if any of it is still referenced.
+- (BOOL)imageInUse:(iTermImageMark *)mark above:(long long)aboveAbsY searchHeight:(int)searchHeight {
+    const int code = mark.imageCode.intValue;
+    iTermImageInfo *imageInfo = [[iTermImageRegistry sharedInstance] infoForCode:code];
+    if (!imageInfo) {
+        DLog(@"No image info with code %d", code);
+        return NO;
+    }
+    const long long aboveY = aboveAbsY - self.cumulativeScrollbackOverflow;
+    if (aboveY < 0) {
+        DLog(@"Image has scrolled off");
+        return NO;
+    }
+    const long long startY = MAX(0, aboveAbsY - imageInfo.size.height);
+    __block BOOL found = NO;
+    [self enumerateLinesInRange:NSMakeRange(startY, aboveAbsY - startY + 1)
+                          block:^(int line,
+                                  ScreenCharArray *sca,
+                                  iTermImmutableMetadata metadata,
+                                  BOOL *stop) {
+        DLog(@"Check line %d: %@", line, sca);
+        if ([self screenCharArray:sca containsImageCode:code]) {
+            found = YES;
+            *stop = YES;
+        }
+    }];
+    return found;
+}
+
+- (BOOL)screenCharArray:(ScreenCharArray *)sca containsImageCode:(int)code {
+    const int width = sca.length;
+    const screen_char_t *line = sca.line;
+    for (int i = 0; i < width; i++) {
+        if (line[i].image && line[i].code == code) {
+            DLog(@"Found code %d at column %d", code, i);
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (void)mergeFrom:(VT100ScreenMutableState *)source {
     [self copyFastStuffFrom:source];
+    [self releaseOverwrittenImagesIn:source];
 
     const BOOL lineBufferDirty = (!_linebuffer || source.linebuffer.dirty);
     if (lineBufferDirty) {
