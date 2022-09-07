@@ -143,6 +143,21 @@ libgit2: force
 	mkdir -p submodules/libgit2/build
 	MAKE=/usr/local/bin/cmake PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET="10.14" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 .. && ${CMAKE} -j22 --build . && ${CMAKE} --build . -j22 --target install
 
+bindeps: SwiftyMarkdown Highlightr
+	cd BetterFontPicker && make
+	cd ColorPicker && make
+	cd SearchableComboListView && make
+
+SwiftyMarkdown: force
+	cd submodules/SwiftyMarkdown && xcodebuild
+	rm -rf ThirdParty/SwiftyMarkdown.framework
+	mv submodules/SwiftyMarkdown/build/Release/SwiftyMarkdown.framework ThirdParty/SwiftyMarkdown.framework
+
+Highlightr: force
+	cd submodules/Highlightr && xcodebuild -project Highlightr.xcodeproj -target Highlightr-macOS
+	rm -rf ThirdParty/Highlightr.framework
+	mv submodules/Highlightr/build/Release/Highlightr.framework ThirdParty/Highlightr.framework
+
 deps: force
 	make fatlibsixel
 	make fatopenssl
