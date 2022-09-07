@@ -3634,7 +3634,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     // Wait for the high-pri task to begin.
     DLog(@"will wait");
-    dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+
+    // Wait in a silly default-qos dispatch queue to avoid a priority inversion where the
+    // user-interactive main thread is blocked on default-priority token executor.
+    static dispatch_once_t onceToken;
+    static dispatch_queue_t defaultQoSQueue;
+    dispatch_once(&onceToken, ^{
+        defaultQoSQueue = dispatch_queue_create("com.iterm2.default-qos-queue", DISPATCH_QUEUE_SERIAL);
+    });
+    dispatch_sync(defaultQoSQueue, ^{
+        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
+    });
     DLog(@"done waiting");
 
     // The mutation queue is now blocked on group2.
