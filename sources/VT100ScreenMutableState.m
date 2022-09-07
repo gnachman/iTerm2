@@ -3613,47 +3613,17 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     DLog(@"begin");
     [iTermGCD setMainQueueSafe:YES];
 
-    dispatch_group_t group = dispatch_group_create();
-    dispatch_group_enter(group);
-
-    dispatch_group_t group2 = dispatch_group_create();
-    dispatch_group_enter(group2);
-
-    // Ask the token executor to run a high-pri task. This will be the next thing it does.
-    DLog(@"schedule high-pri task");
-    [_tokenExecutor scheduleHighPriorityTask:^{
-        DLog(@"high-pri task running");
-        // Unblock the main queue.
-        dispatch_group_leave(group);
-
-        // Wait for the main queue to finish.
-        DLog(@"start waiting");
-        dispatch_group_wait(group2, DISPATCH_TIME_FOREVER);
+    // Stop the token executor while we run `block`.
+    DLog(@"Calling whilePaused:");
+    [_tokenExecutor whilePaused:^{
+        // The token executor is now stopped. This runs on the main thread.
         DLog(@"done waiting");
+        block();
+        DLog(@"block finished");
+        [iTermGCD setMainQueueSafe:NO];
+        DLog(@"unblock executor");
     }];
-
-    // Wait for the high-pri task to begin.
-    DLog(@"will wait");
-
-    // Wait in a silly default-qos dispatch queue to avoid a priority inversion where the
-    // user-interactive main thread is blocked on default-priority token executor.
-    static dispatch_once_t onceToken;
-    static dispatch_queue_t defaultQoSQueue;
-    dispatch_once(&onceToken, ^{
-        defaultQoSQueue = dispatch_queue_create("com.iterm2.default-qos-queue", DISPATCH_QUEUE_SERIAL);
-    });
-    dispatch_sync(defaultQoSQueue, ^{
-        dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
-    });
-    DLog(@"done waiting");
-
-    // The mutation queue is now blocked on group2.
-    block();
-    DLog(@"block finished");
-    [iTermGCD setMainQueueSafe:NO];
-    // Unblock the token executor
-    DLog(@"unblock executor");
-    dispatch_group_leave(group2);
+    DLog(@"returning");
 }
 
 // This runs on the main queue while the mutation queue waits on `group`.
