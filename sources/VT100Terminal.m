@@ -3518,7 +3518,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             if (graphicRendition.fgColorCode < 8) {
                 [result addObject:[NSString stringWithFormat:@"%@", @(graphicRendition.fgColorCode + 30)]];
             } else if (graphicRendition.fgColorCode < 16) {
-                [result addObject:[NSString stringWithFormat:@"%@", @(graphicRendition.fgColorCode + 90)]];
+                [result addObject:[NSString stringWithFormat:@"%@", @(graphicRendition.fgColorCode - 8 + 90)]];
             } else {
                 [result addObject:[NSString stringWithFormat:@"38:5:%@", @(graphicRendition.fgColorCode)]];
             }
