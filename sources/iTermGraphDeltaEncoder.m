@@ -35,10 +35,26 @@
     return self;
 }
 
+- (void)encodeChildrenWithKey:(NSString *)key
+                  identifiers:(NSArray<NSString *> *)identifiers
+                   generation:(NSInteger)generation
+                        block:(BOOL (^)(NSString * _Nonnull,
+                                        NSUInteger,
+                                        iTermGraphEncoder * _Nonnull,
+                                        BOOL * _Nonnull))block {
+    if (identifiers.count > 16 && _previousRevision.graphRecords.count > 16) {
+        // Avoid quadratic complexity when encoding a big child into a big array.
+        // Each of `identifiers` needs to check if it exists in `_previousRevision`.
+        [_previousRevision ensureIndexOfGraphRecords];
+    }
+    [super encodeChildrenWithKey:key identifiers:identifiers generation:generation block:block];
+}
+
 - (BOOL)encodeChildWithKey:(NSString *)key
                 identifier:(NSString *)identifier
                 generation:(NSInteger)generation
                      block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block {
+    // This is called N times for N identifiers in a single array `key`
     iTermEncoderGraphRecord *record = [_previousRevision childRecordWithKey:key
                                                                  identifier:identifier];
     if (!record) {

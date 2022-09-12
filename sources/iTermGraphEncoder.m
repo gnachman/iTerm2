@@ -186,6 +186,24 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
     return YES;
 }
 
+- (void)encodeChildrenWithKey:(NSString *)key
+                  identifiers:(NSArray<NSString *> *)identifiers
+                   generation:(NSInteger)generation
+                        block:(BOOL (^)(NSString *identifier,
+                                        NSUInteger idx,
+                                        iTermGraphEncoder *subencoder,
+                                        BOOL *stop))block {
+    [identifiers enumerateObjectsUsingBlock:^(NSString * _Nonnull identifier,
+                                              NSUInteger idx,
+                                              BOOL * _Nonnull stop) {
+        [self transaction:^BOOL{
+            return [self encodeChildWithKey:key identifier:identifier generation:generation block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+                return block(identifier, idx, subencoder, stop);
+            }];
+        }];
+    }];
+}
+
 - (void)encodeArrayWithKey:(NSString *)key
                 generation:(NSInteger)generation
                identifiers:(NSArray<NSString *> *)identifiers
@@ -202,18 +220,18 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
                   generation:generation
                        block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
         NSMutableArray<NSString *> *savedIdentifiers = [NSMutableArray array];
-        [identifiers enumerateObjectsUsingBlock:^(NSString * _Nonnull identifier,
-                                                  NSUInteger idx,
-                                                  BOOL * _Nonnull stop) {
-            [subencoder transaction:^BOOL {
-                return [subencoder encodeChildWithKey:@"" identifier:identifier generation:iTermGenerationAlwaysEncode block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
-                    const BOOL result = block(identifier, idx, subencoder, stop);
-                    if (result) {
-                        [savedIdentifiers addObject:identifier];
-                    }
-                    return result;
-                }];
-            }];
+        [subencoder encodeChildrenWithKey:@""
+                              identifiers:identifiers
+                               generation:iTermGenerationAlwaysEncode
+                                    block:^BOOL (NSString * _Nonnull identifier,
+                                                 NSUInteger idx,
+                                                 iTermGraphEncoder * _Nonnull subencoder,
+                                                 BOOL * _Nonnull stop) {
+            const BOOL result = block(identifier, idx, subencoder, stop);
+            if (result) {
+                [savedIdentifiers addObject:identifier];
+            }
+            return result;
         }];
         NSArray<NSString *> *orderedIdentifiers = savedIdentifiers;
         if (options & iTermGraphEncoderArrayOptionsReverse) {

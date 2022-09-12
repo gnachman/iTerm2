@@ -56,6 +56,14 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
                 generation:(NSInteger)generation
                      block:(BOOL (^ NS_NOESCAPE)(iTermGraphEncoder *subencoder))block;
 
+- (void)encodeChildrenWithKey:(NSString *)key
+                  identifiers:(NSArray<NSString *> *)identifiers
+                   generation:(NSInteger)generation
+                        block:(BOOL (^)(NSString *identifier,
+                                        NSUInteger idx,
+                                        iTermGraphEncoder *subencoder,
+                                        BOOL *stop))block;
+
 // Return nil from block to stop adding elements. Otherwise, return identifier.
 // The block should use `identifier` as the key for the POD/graph it encodes.
 // The keys of the POD/graphs encoded with `subencoder` are ignored.
