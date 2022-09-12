@@ -33,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 // You probably want to use arrayWithKey or dictionaryWithKey. This is very low level.
 - (iTermEncoderGraphRecord * _Nullable)childRecordWithKey:(NSString *)key
                                                identifier:(NSString *)identifier;
+- (void)ensureIndexOfGraphRecords;
 
 - (void)enumerateArrayWithKey:(NSString *)key
                         block:(void (^NS_NOESCAPE)(NSString *identifier,
