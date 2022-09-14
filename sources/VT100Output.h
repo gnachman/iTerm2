@@ -69,6 +69,7 @@ BOOL VT100OutputCursorInformationGetLineDrawingMode(VT100OutputCursorInformation
 @property(nonatomic, assign) BOOL cursorMode;
 @property(nonatomic, assign) BOOL optionIsMetaForSpecialKeys;
 @property(nonatomic, assign) VT100EmulationLevel vtLevel;
+
 - (NSDictionary *)configDictionary;
 
 - (NSData *)keyArrowUp:(unsigned int)modflag;
