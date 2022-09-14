@@ -600,6 +600,9 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     // (unique ID, hostname)
     NSMutableData *_sshWriteQueue;
     BOOL _jiggleUponAttach;
+
+    // Are we currently enqueuing the bytes to write a focus report?
+    BOOL _reportingFocus;
 }
 
 @synthesize isDivorced = _divorced;
@@ -984,6 +987,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pasteboardReporter release];
     [_conductor release];
     [_sshWriteQueue release];
+    [_lastNonFocusReportingWrite release];
+    [_lastFocusReportDate release];
 
     [super dealloc];
 }
@@ -2987,6 +2992,9 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (newline) {
         _activityInfo.lastNewline = [NSDate it_timeSinceBoot];
+    }
+    if (!_reportingFocus) {
+        self.lastNonFocusReportingWrite = [NSDate date];
     }
     [_shell writeTask:data];
 }
@@ -6808,7 +6816,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     _focused = focused;
     if (_screen.terminalReportFocus) {
         DLog(@"Will report focus");
+        _reportingFocus = YES;
+        self.lastFocusReportDate = [NSDate date];
         [self writeLatin1EncodedData:[_screen.terminalOutput reportFocusGained:focused] broadcastAllowed:NO];
+        _reportingFocus = NO;
     }
     if (focused && [self isTmuxClient]) {
         DLog(@"Tell tmux about focus change");
@@ -12381,7 +12392,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             if ([number boolValue]) {
                 terminal.reportFocus = NO;
             } else if (!number) {
-                [self offerToTurnOffFocusReportingOnHostChange];
+                [self offerToTurnOffFocusReporting];
             }
         }
         if (terminal.bracketedPasteMode && ![self shellIsFishForHost:newRemoteHost]) {
@@ -12449,7 +12460,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self queueAnnouncement:announcement identifier:kTurnOffMouseReportingOnHostChangeAnnouncementIdentifier];
 }
 
-- (void)offerToTurnOffFocusReportingOnHostChange {
+- (void)offerToTurnOffFocusReporting {
     NSString *title =
     @"Looks like focus reporting was left on when an ssh session ended unexpectedly or an app misbehaved. Turn it off?";
     iTermAnnouncementViewController *announcement =
@@ -13111,7 +13122,25 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [self queueAnnouncement:announcement identifier:identifier];
         }
     }
+    if (audible && [self wasFocusReportedVeryRecently] && ![self haveWrittenAnythingBesidesFocusReportVeryRecently]) {
+        [self offerToTurnOffFocusReporting];
+        return NO;
+    }
     return NO;
+}
+
+static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshold = 0.1;
+
+- (BOOL)wasFocusReportedVeryRecently {
+    NSDate *date = self.lastFocusReportDate;
+    if (!date) {
+        return NO;
+    }
+    return -[date timeIntervalSinceNow] < PTYSessionFocusReportBellSquelchTimeIntervalThreshold;
+}
+
+- (BOOL)haveWrittenAnythingBesidesFocusReportVeryRecently {
+    return -[self.lastNonFocusReportingWrite timeIntervalSinceNow] < PTYSessionFocusReportBellSquelchTimeIntervalThreshold;
 }
 
 - (NSString *)profileName {

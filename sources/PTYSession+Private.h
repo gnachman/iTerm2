@@ -102,6 +102,8 @@ TriggerDelegate> {
 @property(nonatomic, retain) id<VT100RemoteHostReading> currentHost;
 @property(nonatomic, retain) iTermExpectation *pasteBracketingOopsieExpectation;
 @property(nonatomic, copy) NSString *cookie;
+@property(nonatomic, strong) NSDate *lastNonFocusReportingWrite;
+@property(nonatomic, strong) NSDate *lastFocusReportDate;
 
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
                identifier:(NSString *)identifier;
