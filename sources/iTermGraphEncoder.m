@@ -193,6 +193,9 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
                                         NSUInteger idx,
                                         iTermGraphEncoder *subencoder,
                                         BOOL *stop))block {
+    if (identifiers.count > 16 && _children.count == 0) {
+        _children = [[NSMutableArray alloc] initWithCapacity:identifiers.count];
+    }
     [identifiers enumerateObjectsUsingBlock:^(NSString * _Nonnull identifier,
                                               NSUInteger idx,
                                               BOOL * _Nonnull stop) {
