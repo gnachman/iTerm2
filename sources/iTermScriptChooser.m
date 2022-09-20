@@ -13,6 +13,7 @@
 @interface iTermScriptChooser()<NSOpenSavePanelDelegate>
 @property (nonatomic, copy) BOOL (^validator)(NSURL *);
 @property (nonatomic, copy) void (^completion)(NSURL *, SIGIdentity *);
+@property (nonatomic, copy) void (^multiCompletion)(NSArray<NSURL *> *, SIGIdentity *);
 @property (nonatomic, strong) NSOpenPanel *panel;
 @end
 
@@ -103,6 +104,13 @@
     [chooser choose];
 }
 
++ (void)chooseMultipleWithValidator:(BOOL (^)(NSURL *))validator completion:(void (^)(NSArray<NSURL *> *, SIGIdentity *))completion {
+    iTermScriptChooser *chooser = [[self alloc] init];
+    chooser.validator = validator;
+    chooser.multiCompletion = completion;
+    [chooser choose];
+}
+
 - (iTermSigningAccessoryView *)newSigningAccessoryView {
     return [[iTermSigningAccessoryView alloc] init];
 }
@@ -113,7 +121,7 @@
     self.panel.directoryURL = [NSURL fileURLWithPath:[[NSFileManager defaultManager] scriptsPath]];
     self.panel.canChooseFiles = YES;
     self.panel.canChooseDirectories = YES;
-    self.panel.allowsMultipleSelection = NO;
+    self.panel.allowsMultipleSelection = (self.multiCompletion != nil);
     _signingAccessoryView  = [self newSigningAccessoryView];
     self.panel.accessoryView = _signingAccessoryView;
     [self.panel beginWithCompletionHandler:^(NSModalResponse result) {
@@ -123,10 +131,18 @@
 }
 
 - (void)didChooseWithResult:(NSModalResponse)result {
-    if (result != NSModalResponseOK) {
-        self.completion(nil, nil);
+    if (self.multiCompletion) {
+        if (result != NSModalResponseOK) {
+            self.multiCompletion(nil, nil);
+        } else {
+            self.multiCompletion(self.panel.URLs, _signingAccessoryView.selectedSigningIdentity);
+        }
     } else {
-        self.completion(self.panel.URL, _signingAccessoryView.selectedSigningIdentity);
+        if (result != NSModalResponseOK) {
+            self.completion(nil, nil);
+        } else {
+            self.completion(self.panel.URL, _signingAccessoryView.selectedSigningIdentity);
+        }
     }
     self.panel = nil;
 }
