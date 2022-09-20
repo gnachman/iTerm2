@@ -347,23 +347,25 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)chooseAndExportScript {
-    [iTermScriptChooser chooseWithValidator:^BOOL(NSURL *url) {
+    [iTermScriptChooser chooseMultipleWithValidator:^BOOL(NSURL *url) {
         return [iTermScriptExporter urlIsScript:url];
-    } completion:^(NSURL *url, SIGIdentity *signingIdentity) {
-        if (!url) {
+    } completion:^(NSArray<NSURL *> *urls, SIGIdentity *signingIdentity) {
+        if (!urls) {
             return;
         }
-        [iTermScriptExporter exportScriptAtURL:url signingIdentity:signingIdentity completion:^(NSString *errorMessage, NSURL *zipURL) {
-            if (errorMessage || !zipURL) {
-                NSAlert *alert = [[NSAlert alloc] init];
-                alert.messageText = @"Export Failed";
-                alert.informativeText = errorMessage ?: @"Failed to create archive";
-                [alert runModal];
-                return;
-            }
+        for (NSURL *url in urls) {
+            [iTermScriptExporter exportScriptAtURL:url signingIdentity:signingIdentity completion:^(NSString *errorMessage, NSURL *zipURL) {
+                if (errorMessage || !zipURL) {
+                    NSAlert *alert = [[NSAlert alloc] init];
+                    alert.messageText = @"Export Failed";
+                    alert.informativeText = errorMessage ?: @"Failed to create archive";
+                    [alert runModal];
+                    return;
+                }
 
-            [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ zipURL ]];
-        }];
+                [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ zipURL ]];
+            }];
+        }
     }];
 }
 
@@ -373,10 +375,13 @@ NS_ASSUME_NONNULL_BEGIN
     }
     NSOpenPanel *panel = [[NSOpenPanel alloc] init];
     panel.allowedFileTypes = @[ @"zip", @"its", @"py" ];
+    panel.allowsMultipleSelection = YES;
     if ([panel runModal] == NSModalResponseOK) {
-        NSURL *url = panel.URL;
+        NSArray<NSURL *> *urls = [panel.URLs copy];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self importFromURL:url];
+            for (NSURL *url in urls) {
+                [self importFromURL:url];
+            }
         });
     }
 }

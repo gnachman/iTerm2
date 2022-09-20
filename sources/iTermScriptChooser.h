@@ -14,4 +14,7 @@
 + (void)chooseWithValidator:(BOOL (^)(NSURL *))validator
                  completion:(void (^)(NSURL *, SIGIdentity *))completion;
 
++ (void)chooseMultipleWithValidator:(BOOL (^)(NSURL *))validator
+                         completion:(void (^)(NSArray<NSURL *> *, SIGIdentity *))completion;
+
 @end
