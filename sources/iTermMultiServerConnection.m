@@ -255,7 +255,7 @@
     // Normally use application support for the socket because that's where we keep everything
     // else. But for some users the path may be too long to fit in sockaddr_un.sun_path, in which
     // case we'll fall back to their home directory.
-    NSString *appSupportPath = [[NSFileManager defaultManager] applicationSupportDirectory];
+    NSString *appSupportPath = [[[NSFileManager defaultManager] applicationSupportDirectory] stringByAppendingFormat:@"/this is some really long fake stuff blah blah blah who cares i just need it to be really long"];
     NSString *normalFilename = [NSString stringWithFormat:@"iterm2-daemon-%d.socket", number];
     NSURL *normalURL = [[NSURL fileURLWithPath:appSupportPath] URLByAppendingPathComponent:normalFilename];
     if ([self pathIsSafe:normalURL.path] && [[NSFileManager defaultManager] directoryIsWritable:appSupportPath]) {
@@ -263,7 +263,7 @@
     }
 
     NSString *homedir = NSHomeDirectory();
-    NSString *dotdir = [homedir stringByAppendingPathComponent:@".iterm2"];
+    NSString *dotdir = [homedir stringByAppendingPathComponent:@".iterm2/fjklds fjkld fjalkdfj ldskfj dslkf jdslk fjsdkl fjsdlk fjsdlk fjsdlk fjsdlkf jsdlkf jsdalkf jsdalkf jdslkf jdslk fjasdlk fjlsa"];
     NSString *shortFilename = [NSString stringWithFormat:@"%d.socket", number];
     NSURL *shortURL = [[NSURL fileURLWithPath:dotdir] URLByAppendingPathComponent:shortFilename];
 
@@ -296,6 +296,10 @@
     if (self) {
         _thread = [iTermThread withLabel:@"com.iterm2.multi-server-conn" stateFactory:^iTermSynchronizedState * _Nullable(dispatch_queue_t  _Nonnull queue) {
             NSString *const path = [self.class pathForNumber:number];
+            ITAssertWithMessage([iTermMultiServerConnection pathIsSafe:path],
+                                @"Available is %@. Path is unsafe: %@",
+                                @([iTermMultiServerConnection available]),
+                                path);
             iTermFileDescriptorMultiClient *client = [[iTermFileDescriptorMultiClient alloc] initWithPath:path];
             client.delegate = self;
             return [[iTermMultiServerPerConnectionState alloc] initWithQueue:queue client:client];

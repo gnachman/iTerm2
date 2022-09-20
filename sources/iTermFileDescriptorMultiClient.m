@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "iTermClientServerProtocolMessageBox.h"
 #import "iTermFileDescriptorMultiClientState.h"
+#import "iTermMultiServerConnection.h"
 #import "iTermFileDescriptorServer.h"
 #import "iTermMalloc.h"
 #import "iTermMultiServerMessage.h"
@@ -30,6 +31,11 @@
 
 NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescriptorMultiClientErrorDomain";
 
+static BOOL PathIsSafe(NSString *path) {
+    struct sockaddr_un addr;
+    return (strlen(path.UTF8String) + 1 <= sizeof(addr.sun_path));
+}
+
 @implementation iTermFileDescriptorMultiClient {
     NSString *_socketPath;  // Thread safe because this is only assigned to in -initWithPath:
     iTermThread<iTermFileDescriptorMultiClientState *> *_thread;
@@ -39,6 +45,8 @@ NSString *const iTermFileDescriptorMultiClientErrorDomain = @"iTermFileDescripto
 
 - (instancetype)initWithPath:(NSString *)path {
     self = [super init];
+    NSString *message = [NSString stringWithFormat:@"Path is too long: %@", path];
+    ITAssertWithMessage(PathIsSafe(path), @"%@", message);
     if (self) {
         _socketPath = [path copy];
         _thread = [iTermThread withLabel:@"com.iterm2.multi-client"

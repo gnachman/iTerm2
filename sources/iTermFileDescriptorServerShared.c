@@ -348,6 +348,12 @@ int iTermFileDescriptorServerSocketBindListen(const char *path) {
 
     struct sockaddr_un local;
     local.sun_family = AF_UNIX;
+    if ((uint64_t)strlen(path) + 1 >= (uint64_t)sizeof(local.sun_path)) {
+        char *message = malloc(1048576);
+        snprintf(message, sizeof(message), "Path %s exceeds length limit of %lu", path, sizeof(local.sun_path));
+        __assert_rtn(__func__, __FILE__, __LINE__, message);
+        assert(0);
+    }
     assert((uint64_t)strlen(path) + 1 < (uint64_t)sizeof(local.sun_path));
     strcpy(local.sun_path, path);
     unlink(local.sun_path);
