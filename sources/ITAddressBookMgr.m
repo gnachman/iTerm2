@@ -701,7 +701,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
                                             command];
                 command = [NSString stringWithFormat:@"/usr/bin/login -fpq %@ %@ -c %@",
                            [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
-                           [iTermOpenDirectory userShell],
+                           [iTermOpenDirectory userShell] ?: @"/bin/zsh",
                            [wrappedCommand stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
             }
             return command;
