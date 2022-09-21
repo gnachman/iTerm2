@@ -645,7 +645,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 - (NSString *)loginShell {
     if (!_shell) {
-        _shell = [iTermOpenDirectory userShell];
+        _shell = [iTermOpenDirectory userShell] ?: @"/bin/zsh";
     }
     return _shell;
 }
