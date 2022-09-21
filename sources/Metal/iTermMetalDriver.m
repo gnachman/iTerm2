@@ -423,7 +423,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
     NSError *error;
     if (![captureManager startCaptureWithDescriptor:captureDescriptor error:&error]) {
-        ITCriticalError(NO, @"Failed to start capture, error %@", error);
+        DLog(@"Failed to start capture, error %@", error);
         return nil;
     }
     return captureDescriptor;

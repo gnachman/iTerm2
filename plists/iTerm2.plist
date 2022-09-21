@@ -322,6 +322,8 @@
 	<string>An application in iTerm2 wants to use speech recognition.</string>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
+        <key>MetalCaptureEnabled</key>
+        <true />
 	<key>NSSystemAdministrationUsageDescription</key>
 	<string>The operation being performed by a program in iTerm2 requires elevated permission.</string>
 	<key>OSAScriptingDefinition</key>
