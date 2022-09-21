@@ -328,6 +328,8 @@
         <string>iTermApplication</string>
         <key>NSSupportsAutomaticGraphicsSwitching</key>
         <true/>
+        <key>MetalCaptureEnabled</key>
+        <true />
         <key>SUPublicEDKey</key>
         <string>xdqAa0KXBPhMbUrutVTe87i6U7yWf7WKaCeRG7AAZ0w=</string>
         <key>SUFeedURLForTesting</key>
