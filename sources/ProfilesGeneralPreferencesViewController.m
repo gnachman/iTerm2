@@ -707,7 +707,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     } else {
         _customCommand.hidden = NO;
         _customCommand.enabled = NO;
-        _customCommand.stringValue = self.loginShell;
+        _customCommand.stringValue = self.loginShell ?: @"";
     }
     if ([[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
         NSRect frame = _customCommand.frame;
