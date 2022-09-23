@@ -176,6 +176,7 @@ NSString *const kPreferenceKeyActions = @"Actions";
 NSString *const kPreferenceKeySnippets = @"Snippets";
 NSString *const kPreferenceKeyHTMLTabTitles = @"HTMLTabTitles";
 NSString *const kPreferenceKeyDisableTransparencyForKeyWindow = @"DisableTransparencyForKeyWindow";
+NSString *const kPreferenceKeyNeverBlockSystemShutdown = @"NeverBlockSystemShutdown";
 
 // NOTE: If you update this list, also update preferences.py.
 
@@ -452,7 +453,8 @@ static NSString *sPreviousVersion;
                   kPreferenceKeySizeChangesAffectProfile: @NO,
                   kPreferenceKeyHTMLTabTitles: @NO,
 
-                  kPreferenceKeyDisableTransparencyForKeyWindow: @NO
+                  kPreferenceKeyDisableTransparencyForKeyWindow: @NO,
+                  kPreferenceKeyNeverBlockSystemShutdown: @NO
               };
     }
     return dict;

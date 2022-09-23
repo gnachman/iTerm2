@@ -222,6 +222,7 @@ extern NSString *const kPreferenceKeyActions;
 extern NSString *const kPreferenceKeySnippets;
 
 extern NSString *const kPreferenceKeyDisableTransparencyForKeyWindow;
+extern NSString *const kPreferenceKeyNeverBlockSystemShutdown;
 
 @interface iTermPreferences : NSObject
 
