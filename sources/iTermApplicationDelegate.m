@@ -746,6 +746,20 @@ static BOOL hasBecomeActive = NO;
     });
     [[iTermPresentationController sharedInstance] update];
 }
+
+- (BOOL)systemIsShuttingDown {
+    NSAppleEventDescriptor *currentAppleEvent = [[NSAppleEventManager sharedAppleEventManager] currentAppleEvent];
+    NSAppleEventDescriptor *reason = [currentAppleEvent attributeDescriptorForKeyword:kEventParamReason];
+    switch (reason.typeCodeValue) {
+        case kAEShutDown:
+        case kAERestart:
+        case kAEReallyLogOut:
+            return YES;
+        default:
+            return NO;
+    }
+}
+
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSNotification *)theNotification {
     DLog(@"applicationShouldTerminate:");
     NSArray *terminals;
@@ -757,32 +771,34 @@ static BOOL hasBecomeActive = NO;
     int numSessions = 0;
 
     iTermPromptOnCloseReason *reason = [iTermPromptOnCloseReason noReason];
-    for (PseudoTerminal *term in terminals) {
-        numSessions += [[term allSessions] count];
+    if (![self systemIsShuttingDown] || ![iTermPreferences boolForKey:kPreferenceKeyNeverBlockSystemShutdown]) {
+        for (PseudoTerminal *term in terminals) {
+            numSessions += [[term allSessions] count];
 
-        [reason addReason:term.promptOnCloseReason];
-    }
-
-    // Display prompt if we need to
-    if (!quittingBecauseLastWindowClosed_ &&  // cmd-q
-        [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit]) {  // preference is to prompt on quit cmd
-        if (terminals.count > 0) {
-            [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEnabled]];
-        } else if ([iTermPreferences boolForKey:kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows]) {
-            [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEvenIfThereAreNoWindowsEnabled]];
+            [reason addReason:term.promptOnCloseReason];
         }
-    }
-    quittingBecauseLastWindowClosed_ = NO;
-    if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] && numSessions > 1) {
-        // closing multiple sessions
-        [reason addReason:[iTermPromptOnCloseReason closingMultipleSessionsPreferenceEnabled]];
-    }
-    if ([iTermAdvancedSettingsModel runJobsInServers] &&
-        self.sparkleRestarting &&
-        [iTermAdvancedSettingsModel restoreWindowContents] &&
-        [[iTermController sharedInstance] willRestoreWindowsAtNextLaunch]) {
-        // Nothing will be lost so just restart without asking.
-        reason = [iTermPromptOnCloseReason noReason];
+
+        // Display prompt if we need to
+        if (!quittingBecauseLastWindowClosed_ &&  // cmd-q
+            [iTermPreferences boolForKey:kPreferenceKeyPromptOnQuit]) {  // preference is to prompt on quit cmd
+            if (terminals.count > 0) {
+                [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEnabled]];
+            } else if ([iTermPreferences boolForKey:kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows]) {
+                [reason addReason:[iTermPromptOnCloseReason alwaysConfirmQuitPreferenceEvenIfThereAreNoWindowsEnabled]];
+            }
+        }
+        quittingBecauseLastWindowClosed_ = NO;
+        if ([iTermPreferences boolForKey:kPreferenceKeyConfirmClosingMultipleTabs] && numSessions > 1) {
+            // closing multiple sessions
+            [reason addReason:[iTermPromptOnCloseReason closingMultipleSessionsPreferenceEnabled]];
+        }
+        if ([iTermAdvancedSettingsModel runJobsInServers] &&
+            self.sparkleRestarting &&
+            [iTermAdvancedSettingsModel restoreWindowContents] &&
+            [[iTermController sharedInstance] willRestoreWindowsAtNextLaunch]) {
+            // Nothing will be lost so just restart without asking.
+            reason = [iTermPromptOnCloseReason noReason];
+        }
     }
 
     if (reason.hasReason) {

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="20037" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21223" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="20037"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21223"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -1079,6 +1079,7 @@ DQ
                 <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
                 <outlet property="_copyLastNewline" destination="5747" id="y4f-IT-rUT"/>
+                <outlet property="_disableConfirmationOnShutdown" destination="OZb-Kv-fKa" id="u0v-RR-67h"/>
                 <outlet property="_doubleClickPerformsSmartSelection" destination="wgv-Ah-fFr" id="OZU-W2-nQN"/>
                 <outlet property="_enableAPI" destination="hxX-te-qT5" id="37I-pK-Hmx"/>
                 <outlet property="_enableBonjour" destination="5051" id="lpI-Ub-bAd"/>
@@ -4906,11 +4907,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8ns-Nz-VFk" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="259" y="354" width="259" height="114"/>
+                                        <rect key="frame" x="148" y="331" width="459" height="137"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1950">
-                                                <rect key="frame" x="18" y="78" width="227" height="18"/>
+                                                <rect key="frame" x="111" y="101" width="227" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Quit when all windows are closed" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1951">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4921,7 +4922,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1996">
-                                                <rect key="frame" x="18" y="58" width="229" height="18"/>
+                                                <rect key="frame" x="111" y="81" width="229" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Confirm closing multiple sessions" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="1997">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4933,7 +4934,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4757">
-                                                <rect key="frame" x="18" y="38" width="225" height="18"/>
+                                                <rect key="frame" x="111" y="61" width="225" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Confirm &quot;Quit iTerm2 (⌘Q)&quot;" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="4758">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -4944,8 +4945,20 @@ DQ
                                                     <outlet property="nextKeyView" destination="4570" id="5184"/>
                                                 </connections>
                                             </button>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="OZb-Kv-fKa">
+                                                <rect key="frame" x="18" y="19" width="426" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Disable all confirmations on system shutdown, restart, and log out" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="h9O-XG-Evs">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="D0R-CO-3mv"/>
+                                                    <outlet property="nextKeyView" destination="4570" id="i2b-jd-3V4"/>
+                                                </connections>
+                                            </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7pa-hD-WIi">
-                                                <rect key="frame" x="28" y="18" width="219" height="18"/>
+                                                <rect key="frame" x="135" y="41" width="219" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Even if there are no windows" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="riN-eN-PZd">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -6773,11 +6786,11 @@ DQ
                     <rect key="frame" x="265" y="36" width="629" height="397"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <view key="contentView" id="e7Z-SC-6xP">
-                        <rect key="frame" x="3" y="3" width="623" height="379"/>
+                        <rect key="frame" x="4" y="5" width="621" height="377"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5571" customClass="ArrangementPreviewView">
-                                <rect key="frame" x="4" y="3" width="619" height="374"/>
+                                <rect key="frame" x="4" y="1" width="619" height="374"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             </customView>
                         </subviews>
@@ -7466,10 +7479,10 @@ DQ
         <viewController id="wEw-Xc-e6F" userLabel="Global Snippets Editing View Controller" customClass="iTermSnippetsEditingViewController"/>
     </objects>
     <resources>
-        <image name="NSActionTemplate" width="15" height="15"/>
-        <image name="NSAddTemplate" width="14" height="13"/>
-        <image name="NSLockUnlockedTemplate" width="17" height="15"/>
-        <image name="NSRemoveTemplate" width="14" height="4"/>
+        <image name="NSActionTemplate" width="20" height="20"/>
+        <image name="NSAddTemplate" width="18" height="17"/>
+        <image name="NSLockUnlockedTemplate" width="21" height="19"/>
+        <image name="NSRemoveTemplate" width="18" height="5"/>
         <image name="PrefsAdvanced" width="32" height="32"/>
         <image name="PrefsAppearance" width="32" height="32"/>
         <image name="PrefsArrangements" width="32" height="32"/>

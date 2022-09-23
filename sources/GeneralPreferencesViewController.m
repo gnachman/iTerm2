@@ -151,6 +151,8 @@ enum {
 
     IBOutlet NSPopUpButton *_allowsSendingClipboardContents;
     IBOutlet NSTextField *_allowsSendingClipboardContentsLabel;
+
+    IBOutlet NSButton *_disableConfirmationOnShutdown;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -258,6 +260,11 @@ enum {
     info.onChange = ^{
         [weakSelf updateEnabledState];
     };
+
+    [self defineControl:_disableConfirmationOnShutdown
+                    key:kPreferenceKeyNeverBlockSystemShutdown
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     [self defineControl:_evenIfThereAreNoWindows
                     key:kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows
