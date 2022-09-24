@@ -88,8 +88,6 @@ typedef NS_OPTIONS(NSUInteger, iTermGraphEncoderArrayOptions) {
 
 - (instancetype)init NS_UNAVAILABLE;
 
-- (void)rollback;
-
 @end
 
 

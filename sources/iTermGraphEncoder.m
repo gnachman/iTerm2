@@ -21,6 +21,7 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
     NSString *_identifier;
     NSInteger _generation;
     NSString *_key;
+    // This is append-only, otherwise rolling back a transaction breaks.
     NSMutableArray<iTermEncoderGraphRecord *> *_children;
     iTermEncoderGraphRecord *_record;
 }
@@ -199,6 +200,8 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
     [identifiers enumerateObjectsUsingBlock:^(NSString * _Nonnull identifier,
                                               NSUInteger idx,
                                               BOOL * _Nonnull stop) {
+        // transaction is slow because it makes a copy in case of rollback.
+        // Do I need a transactio nfor each identifier?
         [self transaction:^BOOL{
             return [self encodeChildWithKey:key identifier:identifier generation:generation block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
                 return block(identifier, idx, subencoder, stop);
@@ -266,22 +269,18 @@ NSInteger iTermGenerationAlwaysEncode = NSIntegerMax;
     }
 }
 
-- (void)rollback {
-    assert(_state == iTermGraphEncoderStateLive);
-    [_pod removeAllObjects];
-    [_children removeAllObjects];
-    _state = iTermGraphEncoderStateRolledBack;
-}
-
 - (void)transaction:(BOOL (^)(void))block {
     NSMutableDictionary<NSString *, id> *savedPOD = [_pod mutableCopy];
-    NSMutableArray<iTermEncoderGraphRecord *> *savedChildren = [_children mutableCopy];
+    const NSUInteger savedCount = _children.count;
     const BOOL commit = block();
     if (commit) {
         return;
     }
     _pod = savedPOD;
-    _children = savedChildren;
+    if (savedCount < _children.count) {
+        DLog(@"Roll back from %@ to %@", @(_children.count), @(savedCount));
+        [_children removeObjectsInRange:NSMakeRange(savedCount, _children.count - savedCount)];
+    }
 }
 
 @end
