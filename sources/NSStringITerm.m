@@ -111,7 +111,24 @@
 
     NSString* info = nil;
     DLog(@"Getting pasteboard string...");
-    if ([bestType isEqualToString:NSPasteboardTypeFileURL]) {
+    const BOOL remote = ([board availableTypeFromArray:@[ (NSPasteboardType)@"com.apple.is-remote-clipboard" ]] != nil);
+    const BOOL isURL = [bestType isEqualToString:NSPasteboardTypeFileURL];
+    if (remote && isURL) {
+        DLog(@"Pasteboard has a string from a remote clipboard");
+        NSArray<NSURL *> *urls = [board readObjectsForClasses:@[ [NSURL class] ]
+                                                           options:nil];
+        NSArray<NSString *> *strings = [urls mapWithBlock:^id _Nullable(NSURL * _Nonnull url) {
+            DLog(@"Load %@", url);
+            NSAttributedString *attributedString = [[NSAttributedString alloc] initWithURL:url
+                                                                                   options:@{}
+                                                                        documentAttributes:nil
+                                                                                     error:nil];
+            DLog(@"Got string of length %@", @(attributedString.length));
+            return attributedString.string;
+        }];
+        DLog(@"Concatenate %@ strings", @(strings.count));
+        info = [strings componentsJoinedByString:@"\n"];
+    } else if (isURL) {
         NSArray<NSURL *> *urls = [board readObjectsForClasses:@[ [NSURL class] ]
                                                            options:nil];
         NSMutableArray *escapedFilenames = [NSMutableArray array];
