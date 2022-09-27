@@ -6,6 +6,6 @@ framework module SearchableComboListView {
 }
 
 module SearchableComboListView.Swift {
-    header "SearchableComboListView-Swift.h"
-    requires objc
+  header "SearchableComboListView-Swift.h"
+  requires objc
 }
