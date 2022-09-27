@@ -219,6 +219,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 // are "well formed".
 - (void)numberOfSessionsDidChange;
 - (BOOL)updatePaneTitles;
+- (void)updateSessionOrdinals;
 
 - (void)resizeViewsInViewHierarchy:(NSView *)view
                       forNewLayout:(NSMutableDictionary *)parseTree;

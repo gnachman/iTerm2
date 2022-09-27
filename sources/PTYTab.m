@@ -611,6 +611,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         DLog(@"PTYTab numberOfSessionsDidChange triggering windowDidResize");
         [tmuxController_ windowDidResize:realParentWindow_];
     }
+    [self updateSessionOrdinals];
+    [realParentWindow_ invalidateRestorableState];
+    if (self.isBroadcasting) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
+    }
+    [_delegate numberOfSessionsDidChangeInTab:self];
+}
+
+- (void)updateSessionOrdinals {
     int i = 1;
     NSArray *orderedSessions = [self orderedSessions];
     for (PTYSession *aSession in orderedSessions) {
@@ -623,11 +632,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (i == 9) {
         [(SessionView *)[[orderedSessions lastObject] view] setOrdinal:9];
     }
-    [realParentWindow_ invalidateRestorableState];
-    if (self.isBroadcasting) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:iTermBroadcastDomainsDidChangeNotification object:nil];
-    }
-    [_delegate numberOfSessionsDidChangeInTab:self];
 }
 
 + (void)_recursiveSetDelegateIn:(NSSplitView *)node to:(id)delegate {
@@ -5181,6 +5185,9 @@ typedef struct {
 
     [session1 didMoveSession];
     [session2 didMoveSession];
+
+    [session1Tab updateSessionOrdinals];
+    [session2Tab updateSessionOrdinals];
 }
 
 - (void)_recursivePopulateSplitTreeNode:(ITMSplitTreeNode *)node

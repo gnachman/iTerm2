@@ -234,7 +234,8 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
         [[movingSession retain] autorelease];
         PTYTab *theTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
         [theTab removeSession:movingSession];
-        if ([[theTab sessions] count] == 0) {
+        const NSUInteger sourceCount = theTab.sessions.count;
+        if (sourceCount == 0) {
             [[theTab realParentWindow] closeTab:theTab];
         }
 
@@ -245,6 +246,10 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
                                               performSetup:NO];
         [destinationTab fitSessionToCurrentViewSize:movingSession];
         [destinationTab checkInvariants:@"After move"];
+        [destinationTab updateSessionOrdinals];
+        if (sourceCount) {
+            [theTab updateSessionOrdinals];
+        }
     } else {
         [destinationTab checkInvariants:@"Before swap"];
         [destinationTab swapSession:dest withSession:session_];
