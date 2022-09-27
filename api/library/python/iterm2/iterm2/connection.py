@@ -470,7 +470,7 @@ Please check the following:
 
 If you'd prefer to retry connecting automatically instead of
 raising an exception, pass retry=true to run_until_complete()
-or run_forever()
+or run_forever().
 
 """, file=sys.stderr)
                     path = self._unix_domain_socket_path()
@@ -478,7 +478,7 @@ or run_forever()
                     if exists:
                         print(f"If you have downgraded from iTerm2 3.3.12+ to an older version, you must\nmanually delete the file at {path}.\n", file=sys.stderr)
                     done = True
-                    raise
+                    raise ConnectionRefusedError("Problem connecting to iTerm2")
             finally:
                 self._remove_auth()
 
@@ -499,7 +499,10 @@ def run_until_complete(
         does not need to return a value.
     :param retry: Keep trying to connect until it succeeds?
     """
-    return Connection().run_until_complete(coro, retry, debug)
+    try:
+        return Connection().run_until_complete(coro, retry, debug)
+    except (ConnectionRefusedError) as exception:
+        sys.exit(1)
 
 
 def run_forever(
@@ -519,7 +522,10 @@ def run_forever(
         does not need to return a value.
     :param retry: Keep trying to connect until it succeeds?
     """
-    Connection().run_forever(coro, retry, debug)
+    try:
+        Connection().run_forever(coro, retry, debug)
+    except (ConnectionRefusedError) as exception:
+        sys.exit(1)
 
 def add_disconnect_callback(callback: typing.Callable[[], None]):
     """Add a function to run on the next disconnection.
