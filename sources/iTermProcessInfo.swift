@@ -150,7 +150,7 @@ class iTermProcessInfo: NSObject {
 
     @objc(descendantsSkippingLevels:)
     func descendants(skipping levels: Int) -> [iTermProcessInfo] {
-        if levels <= 0 {
+        if levels < 0 {
             return flattenedTree
         }
         return children.flatMap {
