@@ -9,12 +9,12 @@
 import Foundation
 
 class Mutex {
-    private let sema = DispatchSemaphore(value: 1)
+    private var unfairLock = os_unfair_lock_s()
     private func lock() {
-        sema.wait()
+        os_unfair_lock_lock(&unfairLock)
     }
     private func unlock() {
-        sema.signal()
+        os_unfair_lock_unlock(&unfairLock)
     }
     func sync<T>(_ closure: () throws -> T) rethrows -> T {
         lock()
