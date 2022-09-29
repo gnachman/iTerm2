@@ -31,3 +31,9 @@
 [submodule "submodules/SwiftyMarkdown"]
 	path = submodules/SwiftyMarkdown
 	url = https://github.com/gnachman/SwiftyMarkdown
+[submodule "submodules/Highlightr"]
+	path = submodules/Highlightr
+	url = https://github.com/gnachman/Highlightr
+[submodule "submodules/powerline-extra-symbols"]
+	path = submodules/powerline-extra-symbols
+	url = https://github.com/ryanoasis/powerline-extra-symbols

@@ -439,6 +439,7 @@ DEFINE_BOOL(animateGraphStatusBarComponents, YES, SECTION_DRAWING @"Animate grap
 DEFINE_BOOL(disableTopRightIndicators, NO, SECTION_DRAWING @"Disable indicator icons that appear in the top right of a session?\nThis includes the following indicators: maximized pane, broadcast input, coprocess running, alert on next mark, output suppression, zoom, copy mode, and debug logging.");
 DEFINE_STRING(nativeRenderingCSSLight, @"", SECTION_DRAWING @"Path to CSS file to customize native drawing (for light background colors).");
 DEFINE_STRING(nativeRenderingCSSDark, @"", SECTION_DRAWING @"Path to CSS file to customize native drawing (for dark background colors).");
+DEFINE_BOOL(supportPowerlineExtendedSymbols, YES, SECTION_DRAWING @"Include extended symbols when drawing Powerline natively.");
 
 #pragma mark - Semantic History
 

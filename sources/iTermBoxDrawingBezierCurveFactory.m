@@ -24,6 +24,27 @@
     }
 }
 
++ (NSDictionary *)powerlineExtendedSymbols {
+    if (![iTermAdvancedSettingsModel supportPowerlineExtendedSymbols]) {
+        return @{};
+    }
+    return @{ @(0xE0A3): @"uniE0A3_column-number",
+              @(0xE0B0): @"uniE0B0_Powerline_normal-left",
+              @(0xE0B2): @"uniE0B2_Powerline_normal-right",
+              @(0xE0B4): @"uniE0B4_right-half-circle-thick",
+              @(0xE0B5): @"uniE0B5_right-half-circle-thin",
+              @(0xE0B6): @"uniE0B6_left-half-circle-thick",
+              @(0xE0B7): @"uniE0B7_left-half-circle-thin",
+              @(0xE0B8): @"uniE0B8_lower-left-triangle",
+              @(0xE0C0): @"uniE0C0_flame-thick",
+              @(0xE0C1): @"uniE0C1_flame-thin",
+              @(0xE0CE): @"uniE0CE_lego_separator",
+              @(0xE0CF): @"uniE0CF_lego_separator_thin",
+              @(0xE0D0): @"uniE0D0_lego_block_facing_WIP",
+              @(0xE0D1): @"uniE0D1_lego_block_sideways",
+              @(0xE0D3): @"uniE0D3_lego_block_facing_WIP-3d-good" };
+}
+
 + (NSCharacterSet *)boxDrawingCharactersWithBezierPathsIncludingPowerline {
     static NSCharacterSet *sBoxDrawingCharactersWithBezierPaths;
     static dispatch_once_t onceToken;
@@ -43,6 +64,12 @@
             NSMutableCharacterSet *temp = [[self boxDrawingCharactersWithBezierPathsExcludingPowerline] mutableCopy];
             [temp addCharactersInRange:NSMakeRange(0xE0A0, 3)];
             [temp addCharactersInRange:NSMakeRange(0xE0B0, 4)];
+
+            // Extended power line glyphs
+            for (NSNumber *code in self.powerlineExtendedSymbols) {
+                [temp addCharactersInRange:NSMakeRange(code.integerValue, 1)];
+            }
+
             sBoxDrawingCharactersWithBezierPaths = temp;
         };
     });
@@ -279,12 +306,22 @@
         return image;
     }
 
-    NSString *pdfPath = [[NSBundle bundleForClass:self] pathForResource:pdfName ofType:@"pdf"];
-    NSData* pdfData = [NSData dataWithContentsOfFile:pdfPath];
-    NSPDFImageRep *pdfImageRep = [NSPDFImageRep imageRepWithData:pdfData];
-    NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(pdfImageRep.size.width * 2,
-                                                              pdfImageRep.size.height * 2)];
-    [image addRepresentation:pdfImageRep];
+    NSString *path = [[NSBundle bundleForClass:self] pathForResource:pdfName ofType:@"pdf"];
+    NSImage *image;
+    if (path) {
+        NSData* pdfData = [NSData dataWithContentsOfFile:path];
+        NSPDFImageRep *pdfImageRep = [NSPDFImageRep imageRepWithData:pdfData];
+        image = [[NSImage alloc] initWithSize:NSMakeSize(cellSize.width * 2,
+                                                         cellSize.height * 2)];
+        [image addRepresentation:pdfImageRep];
+    } else {
+        path = [[NSBundle bundleForClass:self] pathForResource:pdfName ofType:@"eps"];
+        NSData *data = [NSData dataWithContentsOfFile:path];
+        NSEPSImageRep *epsImageRep = [NSEPSImageRep imageRepWithData:data];
+        image = [[NSImage alloc] initWithSize:NSMakeSize(cellSize.width * 2,
+                                                         cellSize.height * 2)];
+        [image addRepresentation:epsImageRep];
+    }
     return image;
 }
 
@@ -345,6 +382,18 @@
     return NO;
 }
 
++ (BOOL)haveCustomGlyph:(unichar)code {
+    return self.powerlineExtendedSymbols[@(code)] != nil;
+}
+
++ (void)drawCustomGlyphForCode:(unichar)code cellSize:(NSSize)cellSize color:(CGColorRef)color {
+    [self drawPDFWithName:self.powerlineExtendedSymbols[@(code)]
+                 cellSize:cellSize
+                  stretch:NO
+                    color:color
+              antialiased:YES];
+}
+
 + (void)drawCodeInCurrentContext:(unichar)code
                         cellSize:(NSSize)cellSize
                            scale:(CGFloat)scale
@@ -355,6 +404,12 @@
         [self drawPowerlineCode:code
                        cellSize:cellSize
                           color:colorRef];
+        return;
+    }
+    if (useNativePowerlineGlyphs && [self haveCustomGlyph:code]) {
+        [self drawCustomGlyphForCode:code
+                            cellSize:cellSize
+                               color:colorRef];
         return;
     }
     if (code == iTermFullBlock) {

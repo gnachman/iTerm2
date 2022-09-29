@@ -150,4 +150,7 @@ deps: force
 	make CoreParse
 	make NMSSH
        
+powerline-extra-symbols: force
+	cp submodules/powerline-extra-symbols/src/*eps ThirdParty/PowerlineExtraSymbols/
+
 force:
