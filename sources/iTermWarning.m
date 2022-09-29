@@ -342,7 +342,7 @@ static BOOL gShowingWarning;
     if (gWarningHandler) {
         result = [gWarningHandler warningWouldShowAlert:alert identifier:_identifier];
     } else {
-        DLog(@"Show warning %@", self);
+        DLog(@"Show warning %@\n%@", self, [NSThread callStackSymbols]);
         gShowingWarning = YES;
         if (self.window) {
             result = [alert runSheetModalForWindow:self.window];
