@@ -59,6 +59,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)sanityCheck;
 - (void)oopsWithWidth:(int)width block:(void (^)(void))block;
 - (NSSet<NSNumber *> *)cachedWidths;
+- (NSInteger)numberOfWrappedLinesForWidth:(int)width
+                          upToBlockAtIndex:(NSInteger)limit;
 
 @end
 

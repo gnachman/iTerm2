@@ -655,6 +655,14 @@
     return nil;
 }
 
+- (NSInteger)numberOfWrappedLinesForWidth:(int)width
+                          upToBlockAtIndex:(NSInteger)limit {
+    [self buildCacheForWidth:width];
+    [self updateCacheIfNeeded];
+
+    return [[_numLinesCaches numLinesCacheForWidth:width] sumOfValuesInRange:NSMakeRange(0, limit)];
+}
+
 #pragma mark - Low level method
 
 - (id)objectAtIndexedSubscript:(NSUInteger)index {

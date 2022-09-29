@@ -1475,11 +1475,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 }
 
 - (int)numberOfWrappedLinesWithWidth:(int)width upToAbsoluteBlockNumber:(int)absBlock {
-    int count = 0;
-    for (int i = num_dropped_blocks; i < absBlock; i++) {
-        count += [_lineBlocks.blocks[i - num_dropped_blocks] getNumLinesWithWrapWidth:width];
+    if (absBlock <= num_dropped_blocks) {
+        return 0;
     }
-    return count;
+    return [_lineBlocks numberOfWrappedLinesForWidth:width upToBlockAtIndex:absBlock - num_dropped_blocks];
 }
 
 - (void)beginResizing {
