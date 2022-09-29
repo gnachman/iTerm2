@@ -192,11 +192,14 @@
     if ([bestRep isKindOfClass:[NSBitmapImageRep class]]) {
         NSBitmapImageRep *bitmap = (NSBitmapImageRep *)bestRep;
         CGImageRef cgimage = bitmap.CGImage;
-
-        NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithCGImage:cgimage];
-        cookedImage = [[NSImage alloc] initWithSize:NSMakeSize(CGImageGetWidth(cgimage) / scale,
-                                                               CGImageGetHeight(cgimage) / scale)];
-        [cookedImage addRepresentation:rep];
+        if (cgimage) {
+            NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithCGImage:cgimage];
+            cookedImage = [[NSImage alloc] initWithSize:NSMakeSize(CGImageGetWidth(cgimage) / scale,
+                                                                   CGImageGetHeight(cgimage) / scale)];
+            [cookedImage addRepresentation:rep];
+        } else {
+            cookedImage = self.image;
+        }
     } else {
         cookedImage = self.image;
     }
