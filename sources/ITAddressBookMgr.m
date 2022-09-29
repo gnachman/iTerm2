@@ -283,8 +283,12 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
     return [plist colorValue];
 }
 
++ (NSFont *)defaultFont {
+    return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
+}
+
 + (NSFont *)fontWithDesc:(NSString *)fontDesc {
-    return [fontDesc fontValue];
+    return [fontDesc fontValue] ?: [self defaultFont];
 }
 
 - (void)setBookmarks:(NSArray *)newBookmarksArray defaultGuid:(NSString *)guid {
