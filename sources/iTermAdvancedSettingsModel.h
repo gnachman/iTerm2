@@ -332,6 +332,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)supportREPCode;
 + (BOOL)suppressMultilinePasteWarningWhenNotAtShellPrompt;
 + (BOOL)suppressMultilinePasteWarningWhenPastingOneLineWithTerminalNewline;
++ (BOOL)supportPowerlineExtendedSymbols;
 + (BOOL)suppressRestartAnnouncement;
 + (BOOL)swapFindNextPrevious;
 + (BOOL)synchronizeQueryWithFindPasteboard;

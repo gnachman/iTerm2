@@ -2580,6 +2580,51 @@
 		A69D6AE527B649B5006E3991 /* RunLengthEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69D6AE427B649B5006E3991 /* RunLengthEncoder.swift */; };
 		A69D721B264716FC009D6EAC /* UnselectedTabShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */; };
 		A69D721C264716FC009D6EAC /* UnselectedTabShadow.png in Resources */ = {isa = PBXBuildFile; fileRef = A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */; };
+		A69F1B9E28E65A4F0054204E /* uniE0B4_right-half-circle-thick.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8A28E65A4C0054204E /* uniE0B4_right-half-circle-thick.eps */; };
+		A69F1B9F28E65A4F0054204E /* uniE0B4_right-half-circle-thick.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8A28E65A4C0054204E /* uniE0B4_right-half-circle-thick.eps */; };
+		A69F1BA028E65A4F0054204E /* uniE0B4_right-half-circle-thick.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8A28E65A4C0054204E /* uniE0B4_right-half-circle-thick.eps */; };
+		A69F1BA128E65A4F0054204E /* uniE0CE_lego_separator.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8B28E65A4C0054204E /* uniE0CE_lego_separator.eps */; };
+		A69F1BA228E65A4F0054204E /* uniE0CE_lego_separator.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8B28E65A4C0054204E /* uniE0CE_lego_separator.eps */; };
+		A69F1BA328E65A4F0054204E /* uniE0CE_lego_separator.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8B28E65A4C0054204E /* uniE0CE_lego_separator.eps */; };
+		A69F1BA428E65A4F0054204E /* uniE0B6_left-half-circle-thick.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8C28E65A4C0054204E /* uniE0B6_left-half-circle-thick.eps */; };
+		A69F1BA528E65A4F0054204E /* uniE0B6_left-half-circle-thick.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8C28E65A4C0054204E /* uniE0B6_left-half-circle-thick.eps */; };
+		A69F1BA628E65A4F0054204E /* uniE0B6_left-half-circle-thick.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8C28E65A4C0054204E /* uniE0B6_left-half-circle-thick.eps */; };
+		A69F1BA728E65A4F0054204E /* uniE0B7_left-half-circle-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8D28E65A4C0054204E /* uniE0B7_left-half-circle-thin.eps */; };
+		A69F1BA828E65A4F0054204E /* uniE0B7_left-half-circle-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8D28E65A4C0054204E /* uniE0B7_left-half-circle-thin.eps */; };
+		A69F1BA928E65A4F0054204E /* uniE0B7_left-half-circle-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8D28E65A4C0054204E /* uniE0B7_left-half-circle-thin.eps */; };
+		A69F1BAA28E65A4F0054204E /* uniE0A3_column-number.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8E28E65A4C0054204E /* uniE0A3_column-number.eps */; };
+		A69F1BAB28E65A4F0054204E /* uniE0A3_column-number.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8E28E65A4C0054204E /* uniE0A3_column-number.eps */; };
+		A69F1BAC28E65A4F0054204E /* uniE0A3_column-number.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8E28E65A4C0054204E /* uniE0A3_column-number.eps */; };
+		A69F1BAD28E65A4F0054204E /* uniE0CF_lego_separator_thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8F28E65A4C0054204E /* uniE0CF_lego_separator_thin.eps */; };
+		A69F1BAE28E65A4F0054204E /* uniE0CF_lego_separator_thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8F28E65A4C0054204E /* uniE0CF_lego_separator_thin.eps */; };
+		A69F1BAF28E65A4F0054204E /* uniE0CF_lego_separator_thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8F28E65A4C0054204E /* uniE0CF_lego_separator_thin.eps */; };
+		A69F1BB028E65A4F0054204E /* uniE0D0_lego_block_facing_WIP.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9028E65A4C0054204E /* uniE0D0_lego_block_facing_WIP.eps */; };
+		A69F1BB128E65A4F0054204E /* uniE0D0_lego_block_facing_WIP.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9028E65A4C0054204E /* uniE0D0_lego_block_facing_WIP.eps */; };
+		A69F1BB228E65A4F0054204E /* uniE0D0_lego_block_facing_WIP.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9028E65A4C0054204E /* uniE0D0_lego_block_facing_WIP.eps */; };
+		A69F1BB328E65A4F0054204E /* uniE0D1_lego_block_sideways.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9128E65A4D0054204E /* uniE0D1_lego_block_sideways.eps */; };
+		A69F1BB428E65A4F0054204E /* uniE0D1_lego_block_sideways.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9128E65A4D0054204E /* uniE0D1_lego_block_sideways.eps */; };
+		A69F1BB528E65A4F0054204E /* uniE0D1_lego_block_sideways.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9128E65A4D0054204E /* uniE0D1_lego_block_sideways.eps */; };
+		A69F1BB928E65A4F0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9328E65A4D0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps */; };
+		A69F1BBA28E65A4F0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9328E65A4D0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps */; };
+		A69F1BBB28E65A4F0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9328E65A4D0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps */; };
+		A69F1BBC28E65A4F0054204E /* uniE0B5_right-half-circle-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9428E65A4D0054204E /* uniE0B5_right-half-circle-thin.eps */; };
+		A69F1BBD28E65A4F0054204E /* uniE0B5_right-half-circle-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9428E65A4D0054204E /* uniE0B5_right-half-circle-thin.eps */; };
+		A69F1BBE28E65A4F0054204E /* uniE0B5_right-half-circle-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9428E65A4D0054204E /* uniE0B5_right-half-circle-thin.eps */; };
+		A69F1BBF28E65A4F0054204E /* uniE0B0_Powerline_normal-left.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9528E65A4D0054204E /* uniE0B0_Powerline_normal-left.eps */; };
+		A69F1BC028E65A4F0054204E /* uniE0B0_Powerline_normal-left.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9528E65A4D0054204E /* uniE0B0_Powerline_normal-left.eps */; };
+		A69F1BC128E65A4F0054204E /* uniE0B0_Powerline_normal-left.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9528E65A4D0054204E /* uniE0B0_Powerline_normal-left.eps */; };
+		A69F1BC828E65A4F0054204E /* uniE0C0_flame-thick.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9828E65A4E0054204E /* uniE0C0_flame-thick.eps */; };
+		A69F1BC928E65A4F0054204E /* uniE0C0_flame-thick.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9828E65A4E0054204E /* uniE0C0_flame-thick.eps */; };
+		A69F1BCA28E65A4F0054204E /* uniE0C0_flame-thick.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9828E65A4E0054204E /* uniE0C0_flame-thick.eps */; };
+		A69F1BCB28E65A4F0054204E /* uniE0B8_lower-left-triangle.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9928E65A4E0054204E /* uniE0B8_lower-left-triangle.eps */; };
+		A69F1BCC28E65A4F0054204E /* uniE0B8_lower-left-triangle.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9928E65A4E0054204E /* uniE0B8_lower-left-triangle.eps */; };
+		A69F1BCD28E65A4F0054204E /* uniE0B8_lower-left-triangle.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9928E65A4E0054204E /* uniE0B8_lower-left-triangle.eps */; };
+		A69F1BCE28E65A4F0054204E /* uniE0B2_Powerline_normal-right.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9A28E65A4E0054204E /* uniE0B2_Powerline_normal-right.eps */; };
+		A69F1BCF28E65A4F0054204E /* uniE0B2_Powerline_normal-right.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9A28E65A4E0054204E /* uniE0B2_Powerline_normal-right.eps */; };
+		A69F1BD028E65A4F0054204E /* uniE0B2_Powerline_normal-right.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9A28E65A4E0054204E /* uniE0B2_Powerline_normal-right.eps */; };
+		A69F1BD728E65A4F0054204E /* uniE0C1_flame-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */; };
+		A69F1BD828E65A4F0054204E /* uniE0C1_flame-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */; };
+		A69F1BD928E65A4F0054204E /* uniE0C1_flame-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
 		A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAA18C3347200B241ED /* VT100Output.h */; };
@@ -6453,6 +6498,21 @@
 		A69D559A232A0CF3002E0F99 /* iTermSessionLauncher.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSessionLauncher.m; sourceTree = "<group>"; };
 		A69D6AE427B649B5006E3991 /* RunLengthEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunLengthEncoder.swift; sourceTree = "<group>"; };
 		A69D721A264716FC009D6EAC /* UnselectedTabShadow.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = UnselectedTabShadow.png; sourceTree = "<group>"; };
+		A69F1B8A28E65A4C0054204E /* uniE0B4_right-half-circle-thick.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0B4_right-half-circle-thick.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0B4_right-half-circle-thick.eps"; sourceTree = "<group>"; };
+		A69F1B8B28E65A4C0054204E /* uniE0CE_lego_separator.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = uniE0CE_lego_separator.eps; path = ThirdParty/PowerlineExtraSymbols/uniE0CE_lego_separator.eps; sourceTree = "<group>"; };
+		A69F1B8C28E65A4C0054204E /* uniE0B6_left-half-circle-thick.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0B6_left-half-circle-thick.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0B6_left-half-circle-thick.eps"; sourceTree = "<group>"; };
+		A69F1B8D28E65A4C0054204E /* uniE0B7_left-half-circle-thin.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0B7_left-half-circle-thin.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0B7_left-half-circle-thin.eps"; sourceTree = "<group>"; };
+		A69F1B8E28E65A4C0054204E /* uniE0A3_column-number.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0A3_column-number.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0A3_column-number.eps"; sourceTree = "<group>"; };
+		A69F1B8F28E65A4C0054204E /* uniE0CF_lego_separator_thin.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = uniE0CF_lego_separator_thin.eps; path = ThirdParty/PowerlineExtraSymbols/uniE0CF_lego_separator_thin.eps; sourceTree = "<group>"; };
+		A69F1B9028E65A4C0054204E /* uniE0D0_lego_block_facing_WIP.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = uniE0D0_lego_block_facing_WIP.eps; path = ThirdParty/PowerlineExtraSymbols/uniE0D0_lego_block_facing_WIP.eps; sourceTree = "<group>"; };
+		A69F1B9128E65A4D0054204E /* uniE0D1_lego_block_sideways.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = uniE0D1_lego_block_sideways.eps; path = ThirdParty/PowerlineExtraSymbols/uniE0D1_lego_block_sideways.eps; sourceTree = "<group>"; };
+		A69F1B9328E65A4D0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0D3_lego_block_facing_WIP-3d-good.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0D3_lego_block_facing_WIP-3d-good.eps"; sourceTree = "<group>"; };
+		A69F1B9428E65A4D0054204E /* uniE0B5_right-half-circle-thin.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0B5_right-half-circle-thin.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0B5_right-half-circle-thin.eps"; sourceTree = "<group>"; };
+		A69F1B9528E65A4D0054204E /* uniE0B0_Powerline_normal-left.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0B0_Powerline_normal-left.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0B0_Powerline_normal-left.eps"; sourceTree = "<group>"; };
+		A69F1B9828E65A4E0054204E /* uniE0C0_flame-thick.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0C0_flame-thick.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0C0_flame-thick.eps"; sourceTree = "<group>"; };
+		A69F1B9928E65A4E0054204E /* uniE0B8_lower-left-triangle.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0B8_lower-left-triangle.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0B8_lower-left-triangle.eps"; sourceTree = "<group>"; };
+		A69F1B9A28E65A4E0054204E /* uniE0B2_Powerline_normal-right.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0B2_Powerline_normal-right.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0B2_Powerline_normal-right.eps"; sourceTree = "<group>"; };
+		A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0C1_flame-thin.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0C1_flame-thin.eps"; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -7964,6 +8024,7 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A69F1B8928E65A300054204E /* Powerline Extended Symbols */,
 				A66E805127545CBC003ABDF9 /* SecureKeyboardEntry.png */,
 				A66E804927544E60003ABDF9 /* SecureKeyboardEntry@2x.png */,
 				A6EA848127223B02009D14AB /* graphic_emacs.png */,
@@ -10498,6 +10559,28 @@
 				A69CCB16211BC296008ADA71 /* NSData+GZIP.m */,
 			);
 			name = GZIP;
+			sourceTree = "<group>";
+		};
+		A69F1B8928E65A300054204E /* Powerline Extended Symbols */ = {
+			isa = PBXGroup;
+			children = (
+				A69F1B8E28E65A4C0054204E /* uniE0A3_column-number.eps */,
+				A69F1B9528E65A4D0054204E /* uniE0B0_Powerline_normal-left.eps */,
+				A69F1B9A28E65A4E0054204E /* uniE0B2_Powerline_normal-right.eps */,
+				A69F1B8A28E65A4C0054204E /* uniE0B4_right-half-circle-thick.eps */,
+				A69F1B9428E65A4D0054204E /* uniE0B5_right-half-circle-thin.eps */,
+				A69F1B8C28E65A4C0054204E /* uniE0B6_left-half-circle-thick.eps */,
+				A69F1B8D28E65A4C0054204E /* uniE0B7_left-half-circle-thin.eps */,
+				A69F1B9928E65A4E0054204E /* uniE0B8_lower-left-triangle.eps */,
+				A69F1B9828E65A4E0054204E /* uniE0C0_flame-thick.eps */,
+				A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */,
+				A69F1B8B28E65A4C0054204E /* uniE0CE_lego_separator.eps */,
+				A69F1B8F28E65A4C0054204E /* uniE0CF_lego_separator_thin.eps */,
+				A69F1B9028E65A4C0054204E /* uniE0D0_lego_block_facing_WIP.eps */,
+				A69F1B9128E65A4D0054204E /* uniE0D1_lego_block_sideways.eps */,
+				A69F1B9328E65A4D0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps */,
+			);
+			name = "Powerline Extended Symbols";
 			sourceTree = "<group>";
 		};
 		A6A2698B18FF850E00437DA9 /* Misc View Controllers */ = {
@@ -13067,6 +13150,7 @@
 				1DEDF56E19C917FD005B023A /* new-tab@2x.png in Resources */,
 				A66A882A24DFCCC30043728B /* graphic_erlang@2x.png in Resources */,
 				A6F7A748213CB143004DE961 /* StatusBarIconPaste@2x.png in Resources */,
+				A69F1BD928E65A4F0054204E /* uniE0C1_flame-thin.eps in Resources */,
 				A6F7A742213CB143004DE961 /* StatusBarIconHost@2x.png in Resources */,
 				A6E7AEAB214394F600DE9F3B /* graphic_docker@2x.png in Resources */,
 				A6F7A71E213CB143004DE961 /* StatusBarIconFolder.png in Resources */,
@@ -13088,6 +13172,7 @@
 				5308BF5D227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */,
 				A686C19A1ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A6EC8048281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */,
+				A69F1BBE28E65A4F0054204E /* uniE0B5_right-half-circle-thin.eps in Resources */,
 				A67D0D461A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				A67F6163214395990093940A /* graphic_mysql@2x.png in Resources */,
 				A629F58723AF2DF200C2F16B /* utilities.tgz in Resources */,
@@ -13116,12 +13201,14 @@
 				A665C1FC2440461500F623F0 /* WindowCorner@2x.png in Resources */,
 				A6F7A721213CB143004DE961 /* StatusBarIconCPU@2x.png in Resources */,
 				A690F7031B424C55009F76D8 /* Media.xcassets in Resources */,
+				A69F1BB528E65A4F0054204E /* uniE0D1_lego_block_sideways.eps in Resources */,
 				1D8BBA6D1B30F5C30005A852 /* Navigate@2x.png in Resources */,
 				A69C93482121140100531438 /* iTermStatusBarLargeComposerViewController.xib in Resources */,
 				A67F6152214395870093940A /* graphic_less.png in Resources */,
 				A6F7A74B213CB143004DE961 /* StatusBarIconRAM.png in Resources */,
 				A6F7A71B213CB143004DE961 /* StatusBarIconUser@2x.png in Resources */,
 				530AB7BE20A641E000D2AA08 /* repl_banner.txt in Resources */,
+				A69F1BB228E65A4F0054204E /* uniE0D0_lego_block_facing_WIP.eps in Resources */,
 				A67D0D7C1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				A6F2B6D52558B51B008D6BF1 /* ScrollerHighlights.png in Resources */,
 				A6F1B3B0268FD0F300546767 /* StatusBarIconTriggers@2x.png in Resources */,
@@ -13170,6 +13257,7 @@
 				A67F6189214395A70093940A /* graphic_perl@2x.png in Resources */,
 				A65B725F1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
 				A67F61CF214395C60093940A /* graphic_read@2x.png in Resources */,
+				A69F1BA628E65A4F0054204E /* uniE0B6_left-half-circle-thick.eps in Resources */,
 				1D6ED9A219AEA20D005A7799 /* ColorPresets.plist in Resources */,
 				A67F6172214395990093940A /* graphic_mysql.png in Resources */,
 				A67F6192214395A70093940A /* graphic_npm.png in Resources */,
@@ -13182,6 +13270,7 @@
 				1D6ED9A619AEA20D005A7799 /* DefaultGlobalKeyMap.plist in Resources */,
 				53AA764B237E35A50094D75A /* OpenQuicklyActionIcon.png in Resources */,
 				1D6ED9A719AEA20D005A7799 /* EncodingsWithLowerCase.plist in Resources */,
+				A69F1BA028E65A4F0054204E /* uniE0B4_right-half-circle-thick.eps in Resources */,
 				A67F61AF214395B70093940A /* graphic_psql.png in Resources */,
 				A6BEE47C26E0A624009C0C2C /* FilterIndicator.png in Resources */,
 				A67A50B326CCD3E300281693 /* xterm in Resources */,
@@ -13234,6 +13323,7 @@
 				53FF981A209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */,
 				A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */,
 				A67F619D214395B70093940A /* graphic_php@2x.png in Resources */,
+				A69F1BBB28E65A4F0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps in Resources */,
 				A6F2B6D92558B8AC008D6BF1 /* Composer.png in Resources */,
 				1D6ED9BB19AEA20D005A7799 /* SmartSelectionRules.plist in Resources */,
 				A67F61CC214395C60093940A /* graphic_shell.png in Resources */,
@@ -13241,7 +13331,9 @@
 				A66F52C62106F6F100571168 /* gitdown.png in Resources */,
 				A6614C79210AE5FD0001EAA3 /* MiniPasteView.xib in Resources */,
 				5308BF9A22828A28004BECAC /* StatusBarIconCharging@2x.png in Resources */,
+				A69F1BC128E65A4F0054204E /* uniE0B0_Powerline_normal-left.eps in Resources */,
 				53FF980D20918D23008688D7 /* template_basic_simple.py in Resources */,
+				A69F1BCD28E65A4F0054204E /* uniE0B8_lower-left-triangle.eps in Resources */,
 				A62DBBA120F47CFA008B63D1 /* GoForward@2x.png in Resources */,
 				A65B72571B1A5D7500F947A7 /* WarningSign@2x.png in Resources */,
 				A67F614F214395870093940A /* graphic_java@2x.png in Resources */,
@@ -13251,10 +13343,12 @@
 				A6E7AEB4214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
 				A67D0D521A2EE12A003A8B35 /* FindView.xib in Resources */,
 				A65DF4AB2849F2AA00AA29AB /* iterm2-shell-integration-loader.fish in Resources */,
+				A69F1BCA28E65A4F0054204E /* uniE0C0_flame-thick.eps in Resources */,
 				A6A3D192281663EE00C0C9E0 /* extensions.json in Resources */,
 				A6FEA28A1CF4DD2700376F28 /* iTermHotkeyPreferencesWindowController.xib in Resources */,
 				1D6ED9BF19AEA20D005A7799 /* closebutton@2x.png in Resources */,
 				A65D7CB521E1EBCE00E3D81C /* StopStatusIcon@2x.png in Resources */,
+				A69F1BAC28E65A4F0054204E /* uniE0A3_column-number.eps in Resources */,
 				1DE922E81AC3709200965876 /* BackgroundStripes.png in Resources */,
 				1D6ED9C019AEA20D005A7799 /* IBarCursorXMR.png in Resources */,
 				A6F1B3C42693B82C00546767 /* DebugLogging.png in Resources */,
@@ -13293,6 +13387,7 @@
 				A6E7AE8B214394DD00DE9F3B /* graphic_compile.png in Resources */,
 				A6FE8D0F2093893900B5C648 /* iTermOptionalComponentDownloadWindowController.xib in Resources */,
 				A629F5BB23B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */,
+				A69F1BD028E65A4F0054204E /* uniE0B2_Powerline_normal-right.eps in Resources */,
 				A65E6F572547F1D5008A4866 /* WindowCorner_Square@2x.png in Resources */,
 				1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */,
 				A6E7AEA8214394F600DE9F3B /* graphic_docker.png in Resources */,
@@ -13303,6 +13398,7 @@
 				A66A882424DFCCC30043728B /* graphic_elixir.png in Resources */,
 				A66F52C32106F6F100571168 /* gitdirty@2x.png in Resources */,
 				1D6ED9C919AEA20D005A7799 /* IBarCursor@2x.png in Resources */,
+				A69F1BAF28E65A4F0054204E /* uniE0CF_lego_separator_thin.eps in Resources */,
 				A65DF4A32849601A00AA29AB /* .zshenv in Resources */,
 				A62DBB9B20F47CFA008B63D1 /* GoBack.png in Resources */,
 				A62DBB9E20F47CFA008B63D1 /* GoForward.png in Resources */,
@@ -13357,6 +13453,7 @@
 				A6A64E6E2508C5B50040490B /* OpenQuicklySnippetIcon@2x.png in Resources */,
 				1D6ED9DE19AEA20D005A7799 /* PrefsAdvanced.png in Resources */,
 				A629F58F23AF437400C2F16B /* utilities-manifest.txt in Resources */,
+				A69F1BA328E65A4F0054204E /* uniE0CE_lego_separator.eps in Resources */,
 				1D8BBA751B30F7FB0005A852 /* Dismiss.png in Resources */,
 				1D6ED9DF19AEA20D005A7799 /* PrefsGeneral@2x.png in Resources */,
 				A65B72541B1A5D7500F947A7 /* WarningSign.png in Resources */,
@@ -13395,6 +13492,7 @@
 				A6E7AE60214394CA00DE9F3B /* graphic_clojure.png in Resources */,
 				A66E805427545CBC003ABDF9 /* SecureKeyboardEntry.png in Resources */,
 				A66F52D52106F6F100571168 /* gitdown@2x.png in Resources */,
+				A69F1BA928E65A4F0054204E /* uniE0B7_left-half-circle-thin.eps in Resources */,
 				A65D97C124B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */,
 				A6971F3720D8D3CE0075CFD4 /* iTermAdvancedGPUSettingsWindowController.xib in Resources */,
 				A6E16C7124A8696D00C6DB06 /* WindowCornerFull_BigSur.png in Resources */,
@@ -13416,6 +13514,7 @@
 				A63011AC20E7EE05008114B7 /* iTermStatusBarKnobCheckboxViewController.xib in Resources */,
 				A697101418DFA7F9007E901D /* closebutton@2x.png in Resources */,
 				A67F61AE214395B70093940A /* graphic_psql.png in Resources */,
+				A69F1BBD28E65A4F0054204E /* uniE0B5_right-half-circle-thin.eps in Resources */,
 				A65D97C024B19D2600DF45F9 /* iTermMinimalComposerViewController.xib in Resources */,
 				A6E7AE6B214394CA00DE9F3B /* graphic_bower.png in Resources */,
 				A6E7AEB9214394F600DE9F3B /* graphic_ethereum.png in Resources */,
@@ -13429,6 +13528,7 @@
 				A6EEAED628336C2A0039E850 /* framer.py in Resources */,
 				A6E7AE5F214394CA00DE9F3B /* graphic_clojure.png in Resources */,
 				A6E7AE8D214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
+				A69F1B9F28E65A4F0054204E /* uniE0B4_right-half-circle-thick.eps in Resources */,
 				A6A64E6A2508C5B50040490B /* OpenQuicklySnippetIcon.png in Resources */,
 				A6B9662325F95DAD00D45CBD /* iTermTriggersPanel.xib in Resources */,
 				A67F118318D82B9500B23C7B /* PrefsAdvanced@2x.png in Resources */,
@@ -13439,6 +13539,7 @@
 				1DC2A1CF1949165D005769D5 /* Maximized@2x.png in Resources */,
 				A67F6142214395870093940A /* graphic_http@2x.png in Resources */,
 				A6E7AE87214394DD00DE9F3B /* graphic_curl.png in Resources */,
+				A69F1BCC28E65A4F0054204E /* uniE0B8_lower-left-triangle.eps in Resources */,
 				A6E7AE90214394DD00DE9F3B /* graphic_composer.png in Resources */,
 				A6E7AE5C214394CA00DE9F3B /* graphic_bullhorn.png in Resources */,
 				A690F7021B424C55009F76D8 /* Media.xcassets in Resources */,
@@ -13460,6 +13561,7 @@
 				A6C7DE5A19A459E9001E5C75 /* iTerm2.sdef in Resources */,
 				A67D0D8D1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
 				A67A50B226CCD3E300281693 /* xterm in Resources */,
+				A69F1BB428E65A4F0054204E /* uniE0D1_lego_block_sideways.eps in Resources */,
 				A6F7A714213CB143004DE961 /* StatusBarIconClock@2x.png in Resources */,
 				A67D0D691A2EE12A003A8B35 /* iTermPasteSpecialViewController.xib in Resources */,
 				A6C978F524A0194500971AA7 /* WindowCornerFull@2x.png in Resources */,
@@ -13473,6 +13575,7 @@
 				A67F616B214395990093940A /* graphic_micro@2x.png in Resources */,
 				A67F61E5214395D50093940A /* graphic_vim.png in Resources */,
 				A65E6F562547F1D5008A4866 /* WindowCorner_Square@2x.png in Resources */,
+				A69F1BCF28E65A4F0054204E /* uniE0B2_Powerline_normal-right.eps in Resources */,
 				A62DBB9D20F47CFA008B63D1 /* GoForward.png in Resources */,
 				A67F61F92143976F0093940A /* graphic_icons.json in Resources */,
 				A67F61EE214395D50093940A /* graphic_vim@2x.png in Resources */,
@@ -13487,6 +13590,7 @@
 				A6F1B3B2268FD0F300546767 /* StatusBarIconTriggers.png in Resources */,
 				1D99C8E51BD59C37001EE1FC /* SearchCursor.png in Resources */,
 				A6E7AEA7214394F600DE9F3B /* graphic_docker.png in Resources */,
+				A69F1BC928E65A4F0054204E /* uniE0C0_flame-thick.eps in Resources */,
 				A6E16C6B24A866F300C6DB06 /* WindowCorner_BigSur@2x.png in Resources */,
 				A6E7AEAA214394F600DE9F3B /* graphic_docker@2x.png in Resources */,
 				537A1FBD22169B2200FBEE5A /* MinimalPasteView.xib in Resources */,
@@ -13508,6 +13612,7 @@
 				A60BB3871EB54BD200D76C09 /* CopyMode.png in Resources */,
 				A67F61DF214395D50093940A /* graphic_yarn.png in Resources */,
 				A6E7AEB0214394F600DE9F3B /* graphic_git@2x.png in Resources */,
+				A69F1BB128E65A4F0054204E /* uniE0D0_lego_block_facing_WIP.eps in Resources */,
 				53AA7647237E35A50094D75A /* OpenQuicklyActionIcon@2x.png in Resources */,
 				A6E7AE6E214394CA00DE9F3B /* graphic_bower@2x.png in Resources */,
 				5308BF9922828A28004BECAC /* StatusBarIconCharging@2x.png in Resources */,
@@ -13520,6 +13625,7 @@
 				A65B72AD1B3285A300F947A7 /* DisableTips@2x.png in Resources */,
 				53FF980C20918D23008688D7 /* template_basic_simple.py in Resources */,
 				A67A508B26CCD3E300281693 /* xterm-256color in Resources */,
+				A69F1BC028E65A4F0054204E /* uniE0B0_Powerline_normal-left.eps in Resources */,
 				A67F61CB214395C60093940A /* graphic_shell.png in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				A67F61D1214395C60093940A /* graphic_ruby.png in Resources */,
@@ -13548,6 +13654,7 @@
 				A686A1171C86A6DD0024C2DE /* NewOutputForDarkTheme.png in Resources */,
 				A6DC98A228A82608009D21C0 /* Window@2x.png in Resources */,
 				A67F61A8214395B70093940A /* graphic_rails.png in Resources */,
+				A69F1BA528E65A4F0054204E /* uniE0B6_left-half-circle-thick.eps in Resources */,
 				A6F7A71D213CB143004DE961 /* StatusBarIconFolder.png in Resources */,
 				A67F619F214395B70093940A /* graphic_psql@2x.png in Resources */,
 				A63011BC20E83082008114B7 /* iTermStatusBarKnobTextViewController.xib in Resources */,
@@ -13596,6 +13703,7 @@
 				A6E7AEB3214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
 				A67F6182214395A70093940A /* graphic_nginx.png in Resources */,
 				A623D94C1F8984690011F8C3 /* key.png in Resources */,
+				A69F1BAB28E65A4F0054204E /* uniE0A3_column-number.eps in Resources */,
 				A67F618E214395A70093940A /* graphic_nodejs@2x.png in Resources */,
 				A67F61E2214395D50093940A /* graphic_zip.png in Resources */,
 				A6EC8047281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */,
@@ -13656,6 +13764,7 @@
 				1DBBA5E21B3CB0590026E3B6 /* restore-arrangement@2x.png in Resources */,
 				A67D0D6C1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
 				53FF9825209283D2008688D7 /* template_pyenv_daemon.py in Resources */,
+				A69F1BAE28E65A4F0054204E /* uniE0CF_lego_separator_thin.eps in Resources */,
 				A67F617F214395A70093940A /* graphic_perl.png in Resources */,
 				A67F6168214395990093940A /* graphic_nano.png in Resources */,
 				536EF5B923F6684D00B81875 /* it2run in Resources */,
@@ -13674,6 +13783,7 @@
 				A66F52C22106F6F100571168 /* gitdirty@2x.png in Resources */,
 				A6F7A73B213CB143004DE961 /* StatusBarIconClock.png in Resources */,
 				A67F616E214395990093940A /* graphic_nano@2x.png in Resources */,
+				A69F1BA828E65A4F0054204E /* uniE0B7_left-half-circle-thin.eps in Resources */,
 				A65D7CB321E1EBCB00E3D81C /* StopStatusIcon@2x.png in Resources */,
 				A686C1961ADF62F200906FAE /* Zoomed.png in Resources */,
 				A636C3B922891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */,
@@ -13694,6 +13804,7 @@
 				A6A64E6D2508C5B50040490B /* OpenQuicklySnippetIcon@2x.png in Resources */,
 				A6A64E652508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
 				A63821F0229E50CD005D74BE /* Warning@2x.png in Resources */,
+				A69F1BA228E65A4F0054204E /* uniE0CE_lego_separator.eps in Resources */,
 				537A1FB922168DF800FBEE5A /* MinimalFindView.xib in Resources */,
 				A6C978F224A0194500971AA7 /* WindowCornerFull.psd in Resources */,
 				A6E7AE93214394DD00DE9F3B /* graphic_coffee.png in Resources */,
@@ -13705,6 +13816,7 @@
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
 				A67D0D8A1A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */,
+				A69F1BD828E65A4F0054204E /* uniE0C1_flame-thin.eps in Resources */,
 				A6EC808A282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */,
 				A67D0D6F1A2EE12A003A8B35 /* MainMenu.strings in Resources */,
 				A67F6145214395870093940A /* graphic_java.png in Resources */,
@@ -13722,6 +13834,7 @@
 				A67D0D601A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
 				A6F7A732213CB143004DE961 /* StatusBarIconGitBranch.png in Resources */,
 				A67F61C8214395C60093940A /* graphic_search.png in Resources */,
+				A69F1BBA28E65A4F0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps in Resources */,
 				A6B3A7391AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
 				A665C1FE2440461500F623F0 /* WindowCorner.png in Resources */,
 				A66F52C52106F6F100571168 /* gitdown.png in Resources */,
@@ -13789,6 +13902,7 @@
 				A6E7AE6D214394CA00DE9F3B /* graphic_bower@2x.png in Resources */,
 				534690251C94FE8000B7E4E9 /* overflowImage.png in Resources */,
 				A6E7AE70214394CA00DE9F3B /* graphic_atom.png in Resources */,
+				A69F1BAA28E65A4F0054204E /* uniE0A3_column-number.eps in Resources */,
 				A66F52C72106F6F100571168 /* gitdirty.png in Resources */,
 				A67F61BB214395C60093940A /* graphic_shell@2x.png in Resources */,
 				A6EC8089282A28CD00493544 /* SSHConfigurationWindow.xib in Resources */,
@@ -13818,6 +13932,7 @@
 				A6CEDA5F19988A7300BB57EC /* LogoFrame.png in Resources */,
 				A67D0D441A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				A6B3A73E1AC74E02008E8D4E /* FindCursorCell1.png in Resources */,
+				A69F1BA428E65A4F0054204E /* uniE0B6_left-half-circle-thick.eps in Resources */,
 				5308BF5B227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */,
 				A6EC47CA21EC73F5000E1321 /* PythonLogo.png in Resources */,
 				A67F61CA214395C60093940A /* graphic_shell.png in Resources */,
@@ -13836,6 +13951,7 @@
 				A6339DD81D232CEE000BAD78 /* StatusItem@2x.png in Resources */,
 				A6F7A740213CB143004DE961 /* StatusBarIconHost@2x.png in Resources */,
 				1D8BBA681B30F5C30005A852 /* Navigate.png in Resources */,
+				A69F1B9E28E65A4F0054204E /* uniE0B4_right-half-circle-thick.eps in Resources */,
 				A65429A320BE7ECA00CE71B1 /* ScriptIcon.png in Resources */,
 				A65E6F5B2547F1D5008A4866 /* WindowCorner_Square.png in Resources */,
 				1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */,
@@ -13871,6 +13987,9 @@
 				A60C0351208964FD00FE2F1F /* it2_api_wrapper.sh in Resources */,
 				A686A11D1C86AA930024C2DE /* DeadForDarkTheme.png in Resources */,
 				1D5FDD9B1208E91100C46BA3 /* Warning.png in Resources */,
+				A69F1BB328E65A4F0054204E /* uniE0D1_lego_block_sideways.eps in Resources */,
+				A69F1BA728E65A4F0054204E /* uniE0B7_left-half-circle-thin.eps in Resources */,
+				A69F1BA128E65A4F0054204E /* uniE0CE_lego_separator.eps in Resources */,
 				A663010B19CFCE74004AF81C /* SuppressAllOutput@2x.png in Resources */,
 				A67F61F0214395D50093940A /* graphic_zip@2x.png in Resources */,
 				A6E7AE89214394DD00DE9F3B /* graphic_compile.png in Resources */,
@@ -13891,6 +14010,7 @@
 				A67F615E214395990093940A /* graphic_monitor@2x.png in Resources */,
 				A67F617B214395A70093940A /* graphic_nodejs.png in Resources */,
 				A67F61AD214395B70093940A /* graphic_psql.png in Resources */,
+				A69F1BBF28E65A4F0054204E /* uniE0B0_Powerline_normal-left.eps in Resources */,
 				1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */,
 				A67D0D411A2EE12A003A8B35 /* ProfilesWindow.xib in Resources */,
 				A6F7A722213CB143004DE961 /* StatusBarIconCPU.png in Resources */,
@@ -13918,6 +14038,7 @@
 				A65B725D1B1A630100F947A7 /* CheckMark@2x.png in Resources */,
 				A686A1161C86A6CB0024C2DE /* NewOutputForDarkTheme@2x.png in Resources */,
 				A6F2B6D32558B51B008D6BF1 /* ScrollerHighlights.png in Resources */,
+				A69F1BCB28E65A4F0054204E /* uniE0B8_lower-left-triangle.eps in Resources */,
 				A68BADFB1E0DD52F00E4BB7B /* Touch Bar Function Keys.png in Resources */,
 				A67F6147214395870093940A /* graphic_less@2x.png in Resources */,
 				1D8BBA701B30F7FB0005A852 /* Dismiss@2x.png in Resources */,
@@ -13966,6 +14087,7 @@
 				A69A15731D7FD78200A9E7EF /* TipCalendar.png in Resources */,
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
 				A6F2B6D72558B8AC008D6BF1 /* Composer.png in Resources */,
+				A69F1BD728E65A4F0054204E /* uniE0C1_flame-thin.eps in Resources */,
 				A67D0D861A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
 				A67F61F52143976F0093940A /* graphic_colors.json in Resources */,
 				A61A85A324F1CCB900B03880 /* iTermGlobalSearch.xib in Resources */,
@@ -13998,6 +14120,7 @@
 				A60D02412687F86C00E19362 /* iTermStatusBarKnobFontViewController.xib in Resources */,
 				A60BB3891EB54BD700D76C09 /* CopyMode@2x.png in Resources */,
 				A67F616D214395990093940A /* graphic_nano@2x.png in Resources */,
+				A69F1BB028E65A4F0054204E /* uniE0D0_lego_block_facing_WIP.eps in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				A66A882B24DFCCC30043728B /* graphic_postgres.png in Resources */,
 				A66A882824DFCCC30043728B /* graphic_erlang@2x.png in Resources */,
@@ -14017,6 +14140,7 @@
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
 				A6F7A725213CB143004DE961 /* StatusBarIconHost.png in Resources */,
 				A6350298229B5F620042B779 /* YosemiteAddTab.png in Resources */,
+				A69F1BB928E65A4F0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps in Resources */,
 				53C5650821B8CDF5002B3167 /* PowerlineSolidLeftArrow.pdf in Resources */,
 				A65B72B41B33C07D00F947A7 /* NextTip@2x.png in Resources */,
 				A6EC8046281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */,
@@ -14045,6 +14169,7 @@
 				A618FFD0224602F800B8FD88 /* StatusBarIconAction.png in Resources */,
 				A67F6134214395570093940A /* graphic_gulp.png in Resources */,
 				A67F61E1214395D50093940A /* graphic_zip.png in Resources */,
+				A69F1BC828E65A4F0054204E /* uniE0C0_flame-thick.eps in Resources */,
 				A6F7A73D213CB143004DE961 /* StatusBarIconJobs@2x.png in Resources */,
 				A67F6184214395A70093940A /* graphic_npm@2x.png in Resources */,
 				1DC2A1CE1949165D005769D5 /* Maximized@2x.png in Resources */,
@@ -14059,6 +14184,7 @@
 				A67D0D5F1A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
 				A67D0D561A2EE12A003A8B35 /* InstantReplay.xib in Resources */,
 				A65B725A1B1A630100F947A7 /* CheckMark.png in Resources */,
+				A69F1BBC28E65A4F0054204E /* uniE0B5_right-half-circle-thin.eps in Resources */,
 				A6A64E6C2508C5B50040490B /* OpenQuicklySnippetIcon@2x.png in Resources */,
 				5308BF9822828A28004BECAC /* StatusBarIconCharging@2x.png in Resources */,
 				A67D0D321A2EE12A003A8B35 /* AboutWindow.xib in Resources */,
@@ -14086,6 +14212,7 @@
 				A68E333B1DE78D08003F1D8E /* Man Page Touch Bar Icon.png in Resources */,
 				A6E7AEAF214394F600DE9F3B /* graphic_git@2x.png in Resources */,
 				A67F61A4214395B70093940A /* graphic_python@2x.png in Resources */,
+				A69F1BCE28E65A4F0054204E /* uniE0B2_Powerline_normal-right.eps in Resources */,
 				A629F57D23AF2DD900C2F16B /* utilities.tgz in Resources */,
 				A6339DD71D232CEE000BAD78 /* StatusItem.png in Resources */,
 				A630118520E6A61D008114B7 /* iTermStatusBarSetupViewController.xib in Resources */,
@@ -14095,6 +14222,7 @@
 				1D48B285165F362B000046EE /* TabClose_Front_Pressed@2x.png in Resources */,
 				A629F5B923B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */,
 				1D48B286165F362B000046EE /* TabClose_Front@2x.png in Resources */,
+				A69F1BAD28E65A4F0054204E /* uniE0CF_lego_separator_thin.eps in Resources */,
 				1D48B28C165F3669000046EE /* TabClose_Front_Pressed.png in Resources */,
 				A67F619B214395B70093940A /* graphic_php@2x.png in Resources */,
 				A66F52CA2106F6F100571168 /* gitup.png in Resources */,
