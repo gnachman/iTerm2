@@ -670,7 +670,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                 *reasonOut = nil;
                 return YES;
             } else {
-                *reasonOut = [NSString stringWithFormat:@"%@ is not a supported shell", shell];
+                *reasonOut = [NSString stringWithFormat:@"Automatic loading doesn’t work with %@", shell];
                 return NO;
             }
         }
@@ -686,7 +686,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                 *reasonOut = nil;
                 return YES;
             } else {
-                *reasonOut = [NSString stringWithFormat:@"%@ is not a supported shell", shell];
+                *reasonOut = [NSString stringWithFormat:@"Automatic loading doesn’t work with %@", shell];
                 return NO;
             }
         }
@@ -724,7 +724,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     NSString *reason;
     _loadShellIntegrationAutomatically.enabled = [self shouldEnableLoadShellIntegration:&reason];
     if (reason) {
-        _reasonShellIntegrationDisabledLabel.stringValue = [@"⚠️ " stringByAppendingString:reason];
+        _reasonShellIntegrationDisabledLabel.stringValue = reason;
         [_reasonShellIntegrationDisabledLabel setLabelEnabled:NO];
         _reasonShellIntegrationDisabledLabel.hidden = NO;
     } else {
