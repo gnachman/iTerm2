@@ -1017,9 +1017,11 @@ class Conductor: NSObject, Codable {
                     fail("Invalid process ID from remote: \(lines.string)")
                     return
                 }
-                if #available(macOS 11.0, *) {
-                    Task {
-                        await ConductorRegistry.shared.register(self)
+                if iTermAdvancedSettingsModel.enableSSHFileProvider() {
+                    if #available(macOS 11.0, *) {
+                        Task {
+                            await ConductorRegistry.shared.register(self)
+                        }
                     }
                 }
                 framedPID = pid

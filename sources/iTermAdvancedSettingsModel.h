@@ -125,6 +125,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (void)setEchoProbeDuration:(double)value;
 + (BOOL)enableCharacterAccentMenu;
 + (BOOL)enableSemanticHistoryOnNetworkMounts;
++ (BOOL)enableSSHFileProvider;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
 + (BOOL)escapeWithQuotes;
 + (BOOL)excludeBackgroundColorsFromCopiedStyle;

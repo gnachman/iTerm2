@@ -12,7 +12,7 @@ import FileProviderService
 import OSLog
 
 @available(macOS 11.0, *)
-let logger = Logger(subsystem: "com.googlecode.iterm2.SSHFileGateway", category: "default")
+let logger = iTermLogger()
 
 protocol SSHFileGatewayDelegate {
     @available(macOS 11.0, *)

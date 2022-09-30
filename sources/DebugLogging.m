@@ -87,7 +87,6 @@ static void WriteDebugLogHeader() {
                         @"Key window: %@\n"
                         @"Windows: %@\n"
                         @"Ordered windows: %@\n"
-                        @"Default notification center:\n%@\n"
                         @"Pinned messages: %@\n"
                         @"------ END HEADER ------\n\n",
                         [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"],
@@ -99,7 +98,6 @@ static void WriteDebugLogHeader() {
                         [[NSApplication sharedApplication] keyWindow],
                         windows,
                         [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
-                        [[NSNotificationCenter defaultCenter] debugDescription],
                         pinnedMessages];
     [gDebugLogHeader release];
     gDebugLogHeader = [header copy];
