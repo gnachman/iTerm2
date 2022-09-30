@@ -536,6 +536,10 @@ DEFINE_BOOL(pollForTmuxForegroundJob, NO, SECTION_TMUX @"Poll for foreground job
 DEFINE_STRING(tmuxTitlePrefix, @"↣ ", SECTION_TMUX @"Insert this string at the start of tab and window titles to indicate tmux integration.");
 DEFINE_BOOL(tmuxIncludeClientNameInWindowTitle, YES, SECTION_TMUX @"When using tmux integration, should the tmux client name (typically the name of the attaching session or the host name) appear in brackets in the window title?");
 
+#define SECTION_SSH @"SSH Integration: "
+
+DEFINE_BOOL(enableSSHFileProvider, NO, SECTION_SSH @"Enable cloud filesystem for SSH integration.\nThis feature is still in development and doesn't work well.");
+
 #pragma mark Warnings
 
 #define SECTION_WARNINGS @"Warnings: "

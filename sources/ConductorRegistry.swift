@@ -97,7 +97,7 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
 
     func handleSSHFileRequest(_ request: ExtensionToMainAppPayload.Event.Kind) async -> MainAppToExtensionPayload.Event.Kind {
         log("Handle SSH request \(request.debugDescription)")
-        logger.debug("handleSSHFileRequest: \(request.debugDescription, privacy: .public)")
+        logger.debug("handleSSHFileRequest: \(request.debugDescription)")
         switch request {
         case .list(path: let path, requestedPage: let requestedPage, sort: let sort, pageSize: let pageSize):
             return await list(path: path, requestedPage: requestedPage, sort: sort, pageSize: pageSize)

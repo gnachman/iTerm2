@@ -2625,6 +2625,9 @@
 		A69F1BD728E65A4F0054204E /* uniE0C1_flame-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */; };
 		A69F1BD828E65A4F0054204E /* uniE0C1_flame-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */; };
 		A69F1BD928E65A4F0054204E /* uniE0C1_flame-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */; };
+		A69F1BDB28E7570C0054204E /* FileProviderDebugLoggingShim.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F1BDA28E7570C0054204E /* FileProviderDebugLoggingShim.swift */; };
+		A69F1BDC28E7571A0054204E /* FileProviderDebugLoggingShim.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F1BDA28E7570C0054204E /* FileProviderDebugLoggingShim.swift */; };
+		A69F1BDD28E7571B0054204E /* FileProviderDebugLoggingShim.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F1BDA28E7570C0054204E /* FileProviderDebugLoggingShim.swift */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
 		A6A13AAC18C3347200B241ED /* VT100Output.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAA18C3347200B241ED /* VT100Output.h */; };
@@ -6513,6 +6516,7 @@
 		A69F1B9928E65A4E0054204E /* uniE0B8_lower-left-triangle.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0B8_lower-left-triangle.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0B8_lower-left-triangle.eps"; sourceTree = "<group>"; };
 		A69F1B9A28E65A4E0054204E /* uniE0B2_Powerline_normal-right.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0B2_Powerline_normal-right.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0B2_Powerline_normal-right.eps"; sourceTree = "<group>"; };
 		A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0C1_flame-thin.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0C1_flame-thin.eps"; sourceTree = "<group>"; };
+		A69F1BDA28E7570C0054204E /* FileProviderDebugLoggingShim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderDebugLoggingShim.swift; sourceTree = "<group>"; };
 		A6A13AA018C2D23300B241ED /* iTermColorMap.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermColorMap.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA118C2D23300B241ED /* iTermColorMap.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermColorMap.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSColor+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -9325,6 +9329,7 @@
 				A63EB047284D1ADC00B2AB89 /* FileProviderService.swift */,
 				A63EB04F284D1E1D00B2AB89 /* FileProviderServiceError.swift */,
 				A694130A285698DC0086F068 /* RemoteFile.swift */,
+				A69F1BDA28E7570C0054204E /* FileProviderDebugLoggingShim.swift */,
 			);
 			path = FileProviderService;
 			sourceTree = "<group>";
@@ -14797,6 +14802,7 @@
 				A60D20C92597F496004AC979 /* iTermImage+ImageWithData.m in Sources */,
 				756C32AD2597AC2E0047B3A9 /* iTermImage+Sixel.m in Sources */,
 				7596379F2593AE0700E278CC /* iTerm2SandboxedWorker.m in Sources */,
+				A69F1BDD28E7571B0054204E /* FileProviderDebugLoggingShim.swift in Sources */,
 				A60AE01A289A18EB00419B14 /* FileProviderLogging.swift in Sources */,
 				A60D20D22597F4DF004AC979 /* iTermImage.m in Sources */,
 			);
@@ -14844,6 +14850,7 @@
 				A694130B285698DC0086F068 /* RemoteFile.swift in Sources */,
 				A63EB048284D1ADC00B2AB89 /* FileProviderService.swift in Sources */,
 				A63EB05C284EC5F900B2AB89 /* SSHIdentity.swift in Sources */,
+				A69F1BDB28E7570C0054204E /* FileProviderDebugLoggingShim.swift in Sources */,
 				A69413082856831C0086F068 /* FileProviderLogging.swift in Sources */,
 				A63EB050284D1E1D00B2AB89 /* FileProviderServiceError.swift in Sources */,
 			);
@@ -15628,6 +15635,7 @@
 				A69412FB28555D3D0086F068 /* FileProviderItem.swift in Sources */,
 				A694130228555D3D0086F068 /* NSFileProviderPage+Additions.swift in Sources */,
 				A6941309285696E30086F068 /* FileProviderLogging.swift in Sources */,
+				A69F1BDC28E7571A0054204E /* FileProviderDebugLoggingShim.swift in Sources */,
 				A6D9C515288C892F00069987 /* Mutex.swift in Sources */,
 				A694130628555D3D0086F068 /* RebaseLocalFile.swift in Sources */,
 				A63EB04C284D1D1900B2AB89 /* FileProviderServiceClient.swift in Sources */,
