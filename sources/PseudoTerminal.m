@@ -5854,6 +5854,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self setDimmingForSession:aSession];
         [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
         [[aSession view] didBecomeVisible];
+        [aSession.textview updateScrollerForBackgroundColor];
     }
 
     for (PTYSession *session in [self allSessions]) {

@@ -1501,8 +1501,10 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     // colors are based on the terminal background color. That means the appearance must be changed to get
     // legacy scrollbars to change color.
     if ([self.delegate textViewTerminalBackgroundColorDeterminesWindowDecorationColor]) {
+        DLog(@"%@ set scroller appearance using isDark=%@", self, @(isDark));
         scroller.appearance = isDark ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
     } else {
+        DLog(@"%@ set scroller appearance to nil", self);
         scroller.appearance = nil;
     }
 }

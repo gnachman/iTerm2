@@ -190,6 +190,12 @@
     return [self scrollerStyle] == NSScrollerStyleLegacy;
 }
 
+- (void)viewDidChangeEffectiveAppearance {
+    DLog(@"Appearance of %@ is now %@ from %@",
+         self, self.effectiveAppearance, [NSThread callStackSymbols]);
+    [super viewDidChangeEffectiveAppearance];
+}
+
 @end
 
 @implementation PTYScrollView {
