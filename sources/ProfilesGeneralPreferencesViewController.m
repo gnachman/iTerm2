@@ -661,7 +661,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             NSArray<NSString *> *parts = [param componentsInShellCommand];
             if ([parts.firstObject isEqual:@"/bin/bash"]) {
                 // Apple's bash disables sourcing ENV when --posix is set 🤬
-                *reasonOut = @"macOS’s built-in bash is broken. Use homebrew bash instead.";
+                *reasonOut = @"Shell integration injection requires a more modern version of bash.";
                 return NO;
             }
             NSString *shell = [parts.firstObject lastPathComponent];
@@ -669,15 +669,18 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             if (enable) {
                 *reasonOut = nil;
                 return YES;
-            } else {
+            } else if (shell) {
                 *reasonOut = [NSString stringWithFormat:@"Automatic loading doesn’t work with %@", shell];
+                return NO;
+            } else {
+                *reasonOut = nil;
                 return NO;
             }
         }
         case iTermGeneralProfilePreferenceCustomCommandTagLoginShell: {
             if ([self.loginShell isEqual:@"/bin/bash"]) {
                 // Apple's bash disables sourcing ENV when --posix is set 🤬
-                *reasonOut = @"macOS’s built-in bash is broken. Use homebrew bash instead.";
+                *reasonOut = @"Shell integration injection requires a more modern version of bash.";
                 return NO;
             }
             NSString *shell = [self.loginShell lastPathComponent];
@@ -685,8 +688,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
             if (enable) {
                 *reasonOut = nil;
                 return YES;
-            } else {
+            } else if (shell) {
                 *reasonOut = [NSString stringWithFormat:@"Automatic loading doesn’t work with %@", shell];
+                return NO;
+            } else {
+                *reasonOut = nil;
                 return NO;
             }
         }
@@ -943,6 +949,8 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         case iTermGeneralProfilePreferenceCustomCommandTagSSH:
             value = kProfilePreferenceCommandTypeSSHValue;
             _customCommand.delegate = _commandDelegate;
+            [self setString:@"" forKey:KEY_COMMAND_LINE];
+            _customCommand.stringValue = @"";
             break;
     }
     [self setString:value forKey:KEY_CUSTOM_COMMAND];
@@ -958,8 +966,6 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagCustomShell];
         _customCommand.placeholderString = @"Enter full path to shell";
         [self removeWhitespaceFromCustomCommand];
-        [[NSUserDefaults standardUserDefaults] setObject:_customCommand.stringValue
-                                                  forKey:KEY_COMMAND_LINE];
     } else if ([value isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
         [_commandType selectItemWithTag:iTermGeneralProfilePreferenceCustomCommandTagSSH];
         _customCommand.placeholderString = @"Arguments to ssh";

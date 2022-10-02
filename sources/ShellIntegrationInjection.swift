@@ -126,6 +126,10 @@ fileprivate class ShellIntegrationInjectionFactory {
         case bash = "bash"
 
         init?(path: String) {
+            if path == "/bin/bash" {
+                // Refuse to work with macOS’s bash. See note in ProfilesGeneralPreferencesViewController.
+                return nil
+            }
             let name = path.lastPathComponent.lowercased().removing(prefix: "-")
             guard let shell = Shell(rawValue: String(name)) else {
                 return nil
