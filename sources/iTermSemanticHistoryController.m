@@ -117,6 +117,11 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     [self launchAppWithBundleIdentifier:bundleIdentifier args:@[ path ]];
 }
 
+- (void)openAppWithBundleIdentifier:(NSString *)bundleIdentifier args:(NSArray *)args {
+    args = [@[ @"-nb", bundleIdentifier, @"--args" ] arrayByAddingObjectsFromArray: args];
+    [self launchTaskWithPath:@"/usr/bin/open" arguments:args completion:nil];
+}
+
 - (NSBundle *)applicationBundleWithIdentifier:(NSString *)bundleIdentifier {
     NSString *bundlePath =
         [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleIdentifier];
@@ -318,27 +323,6 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
     [self launchTaskWithPath:novaUtil arguments:args completion:nil];
 }
 
-- (void)launchIntelliJIDEAWithArguments:(NSArray<NSString *> *)args path:(NSString *)path {
-    NSBundle *bundle = [self applicationBundleWithIdentifier:kIntelliJIDEAIdentifier];
-    if (!bundle) {
-        DLog(@"Failed to find IDEA bundle");
-        return;
-    }
-    NSString *launcher = [self intelliJIDEALauncherInApplicationBundle:bundle];
-    if (!launcher) {
-        DLog(@"Failed to find launcher in %@", bundle);
-        if (path) {
-            DLog(@"Launch idea with path %@", path);
-            [self launchAppWithBundleIdentifier:kIntelliJIDEAIdentifier
-                                           path:path];
-        }
-        return;
-    }
-    [self launchTaskWithPath:launcher
-                   arguments:args
-                  completion:nil];
-}
-
 - (NSString *)absolutePathForAppBundleWithIdentifier:(NSString *)bundleId {
     return [[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundleId];
 }
@@ -378,6 +362,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
               kBBEditIdentifier,
               kEmacsAppIdentifier,
               kIntelliJIDEAIdentifier,
+              kWebStormIdentifier,
+              kRiderIdentifier,
               kNovaAppIdentifier ];
 }
 
@@ -451,7 +437,13 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         [self openDocumentInNova:path line:lineNumber column:columnNumber];
         return;
     }
-    if ([identifier isEqualToString:kIntelliJIDEAIdentifier]) {
+    // WebStorm doesn't actually support --line, but it's harmless to try.
+    NSArray *jetbrains = @[
+        kIntelliJIDEAIdentifier,
+        kWebStormIdentifier,
+        kRiderIdentifier
+    ];
+    if ([jetbrains containsObject:identifier]) {
         NSArray<NSString *> *args = @[];
         if (path) {
             if (lineNumber) {
@@ -460,7 +452,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
                 args = @[ path ];
             }
         }
-        [self launchIntelliJIDEAWithArguments:args path:path];
+        [self openAppWithBundleIdentifier:identifier args:args];
         return;
     }
 
