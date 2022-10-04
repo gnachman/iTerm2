@@ -2490,7 +2490,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             break;
 
         case VT100CSI_REP:
-            [_delegate terminalRepeatPreviousCharacter:token.csi->p[0]];
+            [_delegate terminalRepeatPreviousCharacter:MIN(65535, token.csi->p[0])];
             break;
 
         case VT100CSI_DECRQPSR:
