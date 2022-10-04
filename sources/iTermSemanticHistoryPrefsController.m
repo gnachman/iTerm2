@@ -34,6 +34,8 @@ NSString *kVSCodiumIdentifier = @"com.visualstudio.code.oss";
 NSString *kVSCodeInsidersIdentifier = @"com.microsoft.VSCodeInsiders";
 NSString *kEmacsAppIdentifier = @"org.gnu.Emacs";
 NSString *kIntelliJIDEAIdentifier = @"com.jetbrains.intellij.ce";
+NSString *kWebStormIdentifier = @"com.jetbrains.WebStorm";
+NSString *kRiderIdentifier = @"com.jetbrains.rider";
 NSString *kNovaAppIdentifier = @"com.panic.Nova";
 
 NSString *kSemanticHistoryBestEditorAction = @"best editor";
@@ -84,6 +86,8 @@ enum {
     kEmacsAppTag,
     kVSCodiumTag,
     kIntelliJTag,
+    kWebStormTag,
+    kRiderTag,
     kNovaTag
     // Only append to the end of the list; never delete or change.
 };
@@ -133,6 +137,8 @@ enum {
                                kVSCodeInsidersIdentifier: @"vscode",
                                kEmacsAppIdentifier: @"",
                                kIntelliJIDEAIdentifier: @"",
+                               kWebStormIdentifier: @"",
+                               kRiderIdentifier: @"",
                                kNovaAppIdentifier: @""
     };
     return schemes[editor];
@@ -153,7 +159,9 @@ enum {
               kVSCodiumIdentifier,
               kVSCodeInsidersIdentifier,
               kEmacsAppIdentifier,
-              kIntelliJIDEAIdentifier ];
+              kIntelliJIDEAIdentifier,
+              kWebStormIdentifier,
+              kRiderIdentifier ];
 }
 
 + (NSString *)bestEditor {
@@ -179,6 +187,8 @@ enum {
                                   kVSCodeInsidersIdentifier,
                                   kEmacsAppIdentifier,
                                   kIntelliJIDEAIdentifier,
+                                  kWebStormIdentifier,
+                                  kRiderIdentifier,
                                   kNovaAppIdentifier ];
     return [editorBundleIds containsObject:bundleId];
 }
@@ -197,6 +207,8 @@ enum {
                           kVSCodeInsidersIdentifier: @(kVSCodeInsidersTag),
                                 kEmacsAppIdentifier: @(kEmacsAppTag),
                             kIntelliJIDEAIdentifier: @(kIntelliJTag),
+                                kWebStormIdentifier: @(kWebStormTag),
+                                   kRiderIdentifier: @(kRiderTag),
                                  kNovaAppIdentifier: @(kNovaTag)
     };
     return tags;
@@ -239,6 +251,8 @@ enum {
                            kVSCodeInsidersIdentifier: @"VS Code Insiders",
                                  kEmacsAppIdentifier: @"Emacs.app",
                              kIntelliJIDEAIdentifier: @"IntelliJ IDEA",
+                                 kWebStormIdentifier: @"WebStorm",
+                                    kRiderIdentifier: @"Rider",
                                   kNovaAppIdentifier: @"Nova"
     };
 
@@ -309,6 +323,8 @@ enum {
                          @(kVSCodeInsidersTag): kVSCodeInsidersIdentifier,
                                @(kEmacsAppTag): kEmacsAppIdentifier,
                                @(kIntelliJTag): kIntelliJIDEAIdentifier,
+                               @(kWebStormTag): kWebStormIdentifier,
+                                  @(kRiderTag): kRiderIdentifier,
                                    @(kNovaTag): kNovaAppIdentifier
     };
     return map[@([[editors_ selectedItem] tag])];

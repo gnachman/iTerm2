@@ -24,6 +24,8 @@ extern NSString *kTextmate2Identifier;
 extern NSString *kBBEditIdentifier;
 extern NSString *kEmacsAppIdentifier;
 extern NSString *kIntelliJIDEAIdentifier;
+extern NSString *kWebStormIdentifier;
+extern NSString *kRiderIdentifier;
 extern NSString *kNovaAppIdentifier;
 
 extern NSString *kSemanticHistoryBestEditorAction;
