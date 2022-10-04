@@ -3912,7 +3912,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     }
     NSString *params = [token.string substringToIndex:index];
     NSString *urlString = [token.string substringFromIndex:index + 1];
-    if (urlString.length > 2083) {
+    if (urlString.length > [iTermAdvancedSettingsModel maxURLLength]) {
         return;
     }
     self.url = urlString.length ? [NSURL URLWithUserSuppliedString:urlString] : nil;

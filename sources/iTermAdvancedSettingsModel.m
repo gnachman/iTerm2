@@ -332,6 +332,8 @@ DEFINE_BOOL(shouldSetTerminfoDirs, YES, SECTION_TERMINAL @"Set $TERMINFO_DIRS to
 DEFINE_INT(xtermVersion, 2500, SECTION_TERMINAL @"xterm version for secondary device attributes (SDA).\nIncreasing this number enables more features in apps but may break things. Use 95 to recover pre-3.4.10 behavior.");
 DEFINE_BOOL(p3, YES, SECTION_TERMINAL @"Use P3 as default color space? If No, sRGB will be used.");
 DEFINE_STRING(fileDropCoprocess, @"", SECTION_TERMINAL @"When files are dropped into a terminal window, execute a silent coprocess.\nThis is an interpolated string. Use \\(filenames) to reference the shell-quoted, space-delimited full paths to the dropped files. If this preference is empty, the filenames get pasted instead.")
+DEFINE_INT(maxURLLength, 2097152, SECTION_TERMINAL @"Maximum length for OSC 8 URLs");
+
 #pragma mark Hotkey
 
 #define SECTION_HOTKEY @"Hotkey: "
