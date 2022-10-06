@@ -108,9 +108,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (void)userDidPressReturn {
+    DLog(@"userDidPressReturn");
     [self mutateAsynchronously:^(VT100Terminal * _Nonnull terminal,
                                  VT100ScreenMutableState * _Nonnull mutableState,
                                  id<VT100ScreenDelegate>  _Nonnull delegate) {
+        DLog(@"mutableState.fakePromptDetectedAbsLine=%@", @(mutableState.fakePromptDetectedAbsLine));
         if (mutableState.fakePromptDetectedAbsLine >= 0) {
             [mutableState didInferEndOfCommand];
         }

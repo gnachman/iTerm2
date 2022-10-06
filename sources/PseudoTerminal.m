@@ -7823,8 +7823,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         autocompleteView = [[AutocompleteView alloc] init];
     }
     if ([[autocompleteView window] isVisible]) {
+        DLog(@"more");
         [autocompleteView more];
     } else {
+        DLog(@"Will open popup");
         [self openPopupWindow:autocompleteView];
         NSString *currentCommand = [[self currentSession] currentCommand];
         [autocompleteView addCommandEntries:[[self currentSession] autocompleteSuggestionsForCurrentCommand]
