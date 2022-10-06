@@ -12662,12 +12662,16 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (NSArray *)autocompleteSuggestionsForCurrentCommand {
+    DLog(@"begin");
     NSString *command;
     if (_screen.commandRange.start.x < 0) {
+        DLog(@"no command range");
         return nil;
     }
     command = [_screen commandInRange:_screen.commandRange];
     id<VT100RemoteHostReading> host = [_screen remoteHostOnLine:[_screen numberOfLines]];
+    DLog(@"command=%@ host=%@", command, host);
+
     NSString *trimmedCommand =
     [command stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     return [[iTermShellHistoryController sharedInstance] commandHistoryEntriesWithPrefix:trimmedCommand

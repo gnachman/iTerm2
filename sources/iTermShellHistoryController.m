@@ -457,6 +457,7 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
             onHost:(id<VT100RemoteHostReading>)host
        inDirectory:(NSString *)directory
           withMark:(id<VT100ScreenMarkReading>)mark {
+    DLog(@"addCommand:%@ onHost:%@ inDirectory:%@ withMark:%@", command, host, directory, mark);
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kCommandHistoryHasEverBeenUsed];
 
     iTermHostRecordMO *hostRecord = [self recordForHost:host];
@@ -470,12 +471,14 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
     iTermCommandHistoryEntryMO *theEntry = nil;
     for (iTermCommandHistoryEntryMO *entry in hostRecord.entries) {
         if ([entry.command isEqualToString:command]) {
+            DLog(@"Add to existing entry");
             theEntry = entry;
             break;
         }
     }
 
     if (!theEntry) {
+        DLog(@"Create new entry");
         theEntry = [iTermCommandHistoryEntryMO commandHistoryEntryInContext:_managedObjectContext];
         theEntry.command = command;
         [hostRecord addEntriesObject:theEntry];
@@ -529,11 +532,14 @@ static NSString *iTermShellIntegrationRemoteHostKey(id<VT100RemoteHostReading> s
     iTermHostRecordMO *hostRecord = [self recordForHost:host];
     for (iTermCommandHistoryEntryMO *entry in hostRecord.entries) {
         if (emptyPartialCommand || [entry.command caseInsensitiveHasPrefix:partialCommand]) {
+            DLog(@"Add candidate %@", entry.command);
             // The FinalTerm algorithm doesn't require |partialCommand| to be a prefix of the
             // history entry, but based on how our autocomplete works, it makes sense to only
             // accept prefixes. Their scoring algorithm is implemented in case this should change.
             entry.matchLocation = @0;
             [result addObject:entry];
+        } else {
+            DLog(@"Skip candidate %@", entry.command);
         }
     }
 

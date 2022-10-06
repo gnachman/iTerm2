@@ -691,6 +691,7 @@ const int kMaxResultContextWords = 4;
 
 - (void)addCommandEntries:(NSArray<iTermCommandHistoryEntryMO *> *)entries
                   context:(NSString *)context {
+    DLog(@"Added %@ entries", @(entries.count));
     int i = 0;
     NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
     for (iTermCommandHistoryEntryMO *entry in entries) {

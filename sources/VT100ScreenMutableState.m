@@ -2965,6 +2965,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (BOOL)commandDidEndAtAbsCoord:(VT100GridAbsCoord)coord {
+    DLog(@"commandDidEndAtAbsCoord self.commandStartCoord.x=%d", self.commandStartCoord.x);
     if (self.commandStartCoord.x != -1) {
         [self didUpdatePromptLocation];
         [self commandDidEndWithRange:self.commandRange];
@@ -2992,6 +2993,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         // Screen didn't think we were in a command.
         self.fakePromptDetectedAbsLine = -1;
     }
+}
+
+- (void)setFakePromptDetectedAbsLine:(long long)fakePromptDetectedAbsLine {
+    DLog(@"fakePromptDetectedAbsLine <- %@\n%@", @(fakePromptDetectedAbsLine), [NSThread callStackSymbols]);
+    [super setFakePromptDetectedAbsLine:fakePromptDetectedAbsLine];
 }
 
 - (void)incrementClearCountForCommandMark:(id<VT100ScreenMarkReading>)mark {
