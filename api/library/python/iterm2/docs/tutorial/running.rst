@@ -112,6 +112,8 @@ Auto-Run Scripts
 If you'd like your script to launch automatically when iTerm2 starts, move it
 to `$HOME/Library/ApplicationSupport/iTerm2/Scripts/AutoLaunch`.
 
+.. _running-repl:
+
 REPL
 ----
 

@@ -93,6 +93,8 @@ class Connection:
         connection and returns it without creating an asyncio event loop.
 
         :returns: A new connection to iTerm2.
+
+        .. seealso:: ":ref:`Running in a REPL <running-repl>`"
         """
         connection = Connection()
 
