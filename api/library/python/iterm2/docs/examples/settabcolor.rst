@@ -7,15 +7,21 @@ Set Tab Color
 
 This script sets the tab color for the current session to a hard-coded value. It also turns on the use of tab color for that session. It does not modify the underlying profile, so only the current session is affected.
 
+It also shows how to parse the ITERM_SESSION_ID environment variable to set the tab color for the tab that originally ran this script, instead of the currently active tab.
+
 .. code-block:: python
 
     #!/usr/bin/env python3.7
 
-    import iterm2
+    import iterm2, os, re
+
+    def original_session(app):
+        '''Gets the session based on the ITERM_SESSION_ID env var'''
+        return re.match(r'^(\w+:)?(.*)', os.environ.get('ITERM_SESSION_ID')).group(2)
 
     async def main(connection):
         app=await iterm2.async_get_app(connection)
-        session=app.current_terminal_window.current_tab.current_session
+        session=app.current_terminal_window.current_tab.current_session # or original_session(app)
         change = iterm2.LocalWriteOnlyProfile()
         color = iterm2.Color(255, 128, 128)
         change.set_tab_color(color)
