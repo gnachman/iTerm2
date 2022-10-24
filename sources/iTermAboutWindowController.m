@@ -9,6 +9,7 @@
 #import "iTermAboutWindowController.h"
 #import "iTermLaunchExperienceController.h"
 #import "NSArray+iTerm.h"
+#import "NSMutableAttributedString+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 
@@ -128,8 +129,9 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
 
     NSRect rect = _patronsTextView.enclosingScrollView.frame;
     [_patronsTextView sizeToFit];
-    CGFloat diff = _patronsTextView.frame.size.height - rect.size.height;
-    rect.size.height = _patronsTextView.frame.size.height;
+    const CGFloat desiredHeight = [_patronsTextView.textStorage heightForWidth:rect.size.width];
+    CGFloat diff = desiredHeight - rect.size.height;
+    rect.size.height = desiredHeight;
     rect.origin.y -= diff;
     _patronsTextView.enclosingScrollView.frame = rect;
     
@@ -151,9 +153,10 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
     [style setMinimumLineHeight:18];
     [style setMaximumLineHeight:18];
-
+    [style setLineSpacing:3];
     return @{ NSForegroundColorAttributeName: [NSColor controlTextColor],
-              NSParagraphStyleAttributeName: style };
+              NSParagraphStyleAttributeName: style
+    };
 }
 
 - (void)setPatrons:(NSArray *)patronNames {
