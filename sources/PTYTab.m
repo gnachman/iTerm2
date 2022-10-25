@@ -5318,12 +5318,38 @@ typedef struct {
     [self updateUseMetal];
 }
 
+- (NSArray<PTYSession *> *)sessionsUnderView:(NSView *)parent {
+    if ([parent isKindOfClass:[SessionView class]]) {
+        SessionView *sessionView = (SessionView *)parent;
+        return @[ [self sessionForSessionView:sessionView] ];
+    }
+    if ([parent isKindOfClass:[PTYSplitView class]]) {
+        PTYSplitView *splitView = (PTYSplitView *)parent;
+        return [splitView.subviews flatMapWithBlock:^NSArray *(__kindof NSView *child) {
+            return [self sessionsUnderView:child];
+        }];
+    }
+    // You shouldn't get here.
+    return @[];
+}
+
+- (NSArray<PTYSession *> *)sessionsAdjacentToSplitter:(int)splitterIndex
+                                                   of:(PTYSplitView *)splitView {
+    NSArray<PTYSession *> *before = [self sessionsUnderView:splitView.subviews[splitterIndex]];
+    NSArray<PTYSession *> *after = [self sessionsUnderView:splitView.subviews[splitterIndex + 1]];
+    return [before arrayByAddingObjectsFromArray:after];
+}
+
 - (void)splitView:(PTYSplitView *)splitView
   draggingDidEndOfSplit:(int)splitterIndex
            pixels:(NSSize)pxMoved {
     DLog(@"%@: draggingDidEndOfSplit:%@", self, @(splitterIndex));
     _numberOfSplitViewDragsInProgress--;
     DLog(@"%@ split drags in progress", @(_numberOfSplitViewDragsInProgress));
+    for (PTYSession *session in [self sessionsAdjacentToSplitter:splitterIndex of:splitView]) {
+        DLog(@"session did resize: %@", session);
+        [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidResizeNotification object:session];
+    }
     if (![self isTmuxTab]) {
         // Don't care for non-tmux tabs.
         return;
@@ -6270,8 +6296,12 @@ typedef struct {
     }
 }
 
-- (BOOL)sessionBelongsToTabWhoseSplitsAreBeingDragged {
+- (BOOL)sessionBelongsToTmuxTabWhoseSplitsAreBeingDragged {
     return _isDraggingSplitInTmuxTab;
+}
+
+- (BOOL)sessionBelongsToTabWhoseSplitsAreBeingDragged {
+    return _numberOfSplitViewDragsInProgress > 0;
 }
 
 - (void)sessionDoubleClickOnTitleBar:(PTYSession *)session {

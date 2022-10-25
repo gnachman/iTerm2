@@ -38,6 +38,7 @@ extern NSString *const PTYSessionCreatedNotification;
 extern NSString *const PTYSessionTerminatedNotification;
 extern NSString *const PTYSessionRevivedNotification;
 extern NSString *const iTermSessionWillTerminateNotification;
+extern NSString *const PTYSessionDidResizeNotification;
 
 @class CapturedOutput;
 @protocol ExternalSearchResultsController;
@@ -199,7 +200,10 @@ typedef enum {
 - (BOOL)session:(PTYSession *)session shouldAllowDrag:(id<NSDraggingInfo>)sender;
 - (BOOL)session:(PTYSession *)session performDragOperation:(id<NSDraggingInfo>)sender;
 
-// Indicates if the splits are currently being dragged. Affects how resizing works for tmux tabs.
+// Indicates if the splits in a tmux tab are currently being dragged. Affects how resizing works for tmux tabs.
+- (BOOL)sessionBelongsToTmuxTabWhoseSplitsAreBeingDragged;
+
+// As above but for all tabs, not just tmux.
 - (BOOL)sessionBelongsToTabWhoseSplitsAreBeingDragged;
 
 // User double clicked on title bar

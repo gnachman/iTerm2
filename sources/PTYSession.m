@@ -208,6 +208,7 @@ NSString *const PTYSessionCreatedNotification = @"PTYSessionCreatedNotification"
 NSString *const PTYSessionTerminatedNotification = @"PTYSessionTerminatedNotification";
 NSString *const PTYSessionRevivedNotification = @"PTYSessionRevivedNotification";
 NSString *const iTermSessionWillTerminateNotification = @"iTermSessionDidTerminate";
+NSString *const PTYSessionDidResizeNotification = @"PTYSessionDidResizeNotification";
 
 NSString *const kPTYSessionTmuxFontDidChange = @"kPTYSessionTmuxFontDidChange";
 NSString *const kPTYSessionCapturedOutputDidChange = @"kPTYSessionCapturedOutputDidChange";
@@ -13779,6 +13780,9 @@ static const NSTimeInterval PTYSessionFocusOrMouseReportBellSquelchTimeIntervalT
 }
 
 - (void)screenDidResize {
+    DLog(@"screenDidResize");
+    [[NSNotificationCenter defaultCenter] postNotificationName:PTYSessionDidResizeNotification
+                                                        object:self];
     [self.delegate sessionDidResize:self];
 }
 
@@ -14462,14 +14466,14 @@ static const NSTimeInterval PTYSessionFocusOrMouseReportBellSquelchTimeIntervalT
     // send us a new layout.
     if (self.isTmuxClient) {
         // This makes dragging a split pane in a tmux tab look way better.
-        return ![_delegate sessionBelongsToTabWhoseSplitsAreBeingDragged];
+        return ![_delegate sessionBelongsToTmuxTabWhoseSplitsAreBeingDragged];
     } else {
         return YES;
     }
 }
 
 - (NSSize)sessionViewScrollViewWillResize:(NSSize)proposedSize {
-    if ([self isTmuxClient] && ![_delegate sessionBelongsToTabWhoseSplitsAreBeingDragged]) {
+    if ([self isTmuxClient] && ![_delegate sessionBelongsToTmuxTabWhoseSplitsAreBeingDragged]) {
         NSSize idealSize = [self idealScrollViewSizeWithStyle:_view.scrollview.scrollerStyle];
         NSSize maximumSize = NSMakeSize(idealSize.width + _textview.charWidth - 1,
                                         idealSize.height + _textview.lineHeight - 1);

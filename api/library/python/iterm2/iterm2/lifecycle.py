@@ -187,6 +187,7 @@ class LayoutChangeMonitor:
         * A tab moves from one window to another.
         * The order of tabs within a window changes.
         * A session is buried or disintered.
+        * A session or window is resized.
 
         Use :class:`~iterm2.App` to examine the updated application state.
 

@@ -654,6 +654,14 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
                                                  selector:@selector(layoutChanged:)
                                                      name:iTermDidCreateTerminalWindowNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
+                                                     name:NSWindowDidEndLiveResizeNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(layoutChanged:)
+                                                     name:@"iTermWindowDidResize"
+                                                   object:nil];
         // End layoutChanged:
 
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -691,6 +699,10 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(profileDidChange:)
                                                      name:kReloadAddressBookNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(sessionDidResize:)
+                                                     name:PTYSessionDidResizeNotification
                                                    object:nil];
     }
     return self;
@@ -797,6 +809,30 @@ static BOOL iTermAPIHelperLastApplescriptAuthRequiredSetting;
         notification.terminateSessionNotification.sessionId = session.guid;
         [self postAPINotification:notification toConnectionKey:key];
     }];
+}
+
+- (void)sessionDidResize:(NSNotification *)notification {
+    PTYSession *session = notification.object;
+    DLog(@"%@", session);
+    if (![session isKindOfClass:[PTYSession class]]) {
+        DLog(@"Not a session");
+        return;
+    }
+    NSWindow *window = session.delegate.realParentWindow.window;
+    if (!window) {
+        DLog(@"No window");
+        return;
+    }
+    if (window.inLiveResize) {
+        DLog(@"In live resize");
+        return;
+    }
+    if (session.delegate.sessionBelongsToTabWhoseSplitsAreBeingDragged) {
+        DLog(@"Splits being dragged");
+        return;
+    }
+    DLog(@"Calling layoutChanged:");
+    [self layoutChanged:nil];
 }
 
 - (void)layoutChanged:(NSNotification *)notification {
