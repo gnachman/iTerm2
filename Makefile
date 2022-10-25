@@ -153,4 +153,19 @@ deps: force
 powerline-extra-symbols: force
 	cp submodules/powerline-extra-symbols/src/*eps ThirdParty/PowerlineExtraSymbols/
 
+bindeps: SwiftyMarkdown Highlightr
+	cd BetterFontPicker && make
+	cd ColorPicker && make
+	cd SearchableComboListView && make
+
+SwiftyMarkdown: force
+	cd submodules/SwiftyMarkdown && xcodebuild
+	rm -rf ThirdParty/SwiftyMarkdown.framework
+	mv submodules/SwiftyMarkdown/build/Release/SwiftyMarkdown.framework ThirdParty/SwiftyMarkdown.framework
+
+Highlightr: force
+	cd submodules/Highlightr && xcodebuild -project Highlightr.xcodeproj -target Highlightr-macOS
+	rm -rf ThirdParty/Highlightr.framework
+	mv submodules/Highlightr/build/Release/Highlightr.framework ThirdParty/Highlightr.framework
+
 force:

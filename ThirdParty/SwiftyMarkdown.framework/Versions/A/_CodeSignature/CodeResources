@@ -6,7 +6,7 @@
 	<dict>
 		<key>Resources/Info.plist</key>
 		<data>
-		soM1E4eR0Yk78ZJxbvwWlQNQWQY=
+		Jex2ECjeS5oA7/Zd/OiUMDMQxrI=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -15,56 +15,70 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			tu/T4oNxhuOaGuz+ScON1PRaB6SO9VcrzynN1ZT0p9k=
+			1ws3Q5+PbTomPLhkuGpnaQIDy+hKfPex8QvubbHXGK0=
 			</data>
 		</dict>
 		<key>Modules/SwiftyMarkdown.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			W7thOsZWOMIUfHSdUl6MMjXVJTE8YCns9X8O+NN6JrQ=
+			IfFQ7On/O1/H2qZNQpw81yc4bxX1hTDz01Wj092+Jco=
 			</data>
 		</dict>
 		<key>Modules/SwiftyMarkdown.swiftmodule/Project/x86_64-apple-macos.swiftsourceinfo</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			PAN2lwvh1LmhD4W6ms47o9MoNgG8pqA0fenWFSX9CYY=
+			bho6hb8qLGRMYz95LnYWVH4x+HRmIoCbxysAABKXPo0=
+			</data>
+		</dict>
+		<key>Modules/SwiftyMarkdown.swiftmodule/arm64-apple-macos.abi.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			KnRdWE4y6t4QM5zi5JDptPdHFgJy1Tku+7GLkZS2aNM=
 			</data>
 		</dict>
 		<key>Modules/SwiftyMarkdown.swiftmodule/arm64-apple-macos.swiftdoc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			jgdl7HhVy66q0DWzYTXJidqYe+4AXshutUBc1/UV1R4=
+			222n5YvcLJE0cmUa+Jn0HmqVhrbFi7yes6X71ZPlKLw=
 			</data>
 		</dict>
 		<key>Modules/SwiftyMarkdown.swiftmodule/arm64-apple-macos.swiftmodule</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			piqk1mOO8YsNUrSGTpqi0ntkcvYX4QfM+1ZJcJAv8GA=
+			aDhrzHKjbJ9Ee0xjUM2GkvYAhG0j4jdlmhotPM0AH1s=
+			</data>
+		</dict>
+		<key>Modules/SwiftyMarkdown.swiftmodule/x86_64-apple-macos.abi.json</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			KnRdWE4y6t4QM5zi5JDptPdHFgJy1Tku+7GLkZS2aNM=
 			</data>
 		</dict>
 		<key>Modules/SwiftyMarkdown.swiftmodule/x86_64-apple-macos.swiftdoc</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			NqSqlfRdAWkdt5L1vaaXYYFbQnluIHkVTrXgl5C/2lg=
+			9Ky2/oKcLjZyBb+P+l6LJJ75cymsikNV9mdZXHse8lQ=
 			</data>
 		</dict>
 		<key>Modules/SwiftyMarkdown.swiftmodule/x86_64-apple-macos.swiftmodule</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			oI6eFDQGlDoULRozonyLB0YWc/zhh4lZZH3uZq1E5HA=
+			7vfgjLCo01ed/30qB0vw2l7w/iTHiQA0PX8AeyjJdts=
 			</data>
 		</dict>
 		<key>Resources/Info.plist</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			YjixtNFifDdvZ36vQ48zVh6bUt3CjeLzo+6tq472yRE=
+			TQK0dvd70dk1JmivpGXxpRsVqwsWu1X69f/cY3UZRBk=
 			</data>
 		</dict>
 	</dict>
