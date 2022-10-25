@@ -18,6 +18,8 @@
                 </dict>  
             </dict>  
         </dict> 
+        <key>CFBundleExecutable</key>
+        <string>iTerm2</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon-Beta</string>
 	<key>CFBundleIconName</key>
