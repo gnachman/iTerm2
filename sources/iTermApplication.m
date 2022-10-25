@@ -756,7 +756,9 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 - (void)toggleLeader {
     if (_leader) {
         DLog(@"leader up");
-        [[NSCursor arrowCursor] set];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.01 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [[NSCursor arrowCursor] set];
+        });
         NSEvent *event = [self currentEvent];
         NSEvent *flagUp = [NSEvent keyEventWithType:NSEventTypeFlagsChanged
                                            location:event.locationInWindow
