@@ -289,12 +289,7 @@ error:
 }
 
 + (instancetype)sharedInstance {
-    static dispatch_once_t onceToken;
-    static id instance;
-    dispatch_once(&onceToken, ^{
-        instance = [[iTermFlagsChangedEventTap alloc] initPrivate];
-    });
-    return instance;
+    return [self sharedInstanceCreatingIfNeeded:YES];
 }
 
 - (instancetype)initPrivate {
@@ -371,12 +366,7 @@ error:
 }
 
 + (instancetype)sharedInstance {
-    static dispatch_once_t onceToken;
-    static id instance;
-    dispatch_once(&onceToken, ^{
-        instance = [[iTermKeyDownEventTap alloc] initPrivate];
-    });
-    return instance;
+    return [self sharedInstanceCreatingIfNeeded:YES];
 }
 
 - (instancetype)initPrivate {

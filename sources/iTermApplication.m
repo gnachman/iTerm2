@@ -528,7 +528,7 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
         return YES;
     }
     if ([self routeEventToShortcutInputView:event]) {
-        [[iTermFlagsChangedEventTap sharedInstance] resetCount];
+        [[iTermFlagsChangedEventTap sharedInstanceCreatingIfNeeded:NO] resetCount];
         return YES;
     }
     DLog(@"Posting flags-changed notification for event %@", event);
