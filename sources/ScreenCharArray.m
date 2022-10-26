@@ -269,7 +269,7 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     if (self.length == length) {
         return self;
     }
-    NSMutableData *data = [NSMutableData dataWithLength:sizeof(screen_char_t) * length];
+    NSMutableData *data = [NSMutableData dataWithLength:sizeof(screen_char_t) * MAX(self.length, length)];
     screen_char_t *buffer = (screen_char_t *)data.mutableBytes;
     memmove(buffer, self.line, self.length * sizeof(screen_char_t));
 
