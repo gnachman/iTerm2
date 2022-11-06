@@ -7,8 +7,6 @@ Set Tab Color
 
 This script sets the tab color for the current session to a hard-coded value. It also turns on the use of tab color for that session. It does not modify the underlying profile, so only the current session is affected.
 
-It also shows how to parse the ITERM_SESSION_ID environment variable to set the tab color for the tab that originally ran this script, instead of the currently active tab.
-
 .. code-block:: python
 
     #!/usr/bin/env python3.7
