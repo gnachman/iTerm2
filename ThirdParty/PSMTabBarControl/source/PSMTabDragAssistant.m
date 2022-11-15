@@ -426,7 +426,9 @@
         if ([self sourceTabBar] != [self destinationTabBar]) {
             //remove the tracking rects and bindings registered on the old tab
             [[self sourceTabBar] removeTrackingRect:[[self draggedCell] closeButtonTrackingTag]];
+            [[self draggedCell] setCloseButtonTrackingTag:0];
             [[self sourceTabBar] removeTrackingRect:[[self draggedCell] cellTrackingTag]];
+            [[self draggedCell] setCellTrackingTag:0];
             [[self sourceTabBar] removeTabForCell:[self draggedCell]];
 
             int i, insertIndex;
@@ -531,12 +533,14 @@
             willDropTabViewItem:[[self draggedCell] representedObject]
                        inTabBar:control];
     }
-    //add the dragged tab to the new window
+    // Add the dragged tab to the new window.
     [[control cells] insertObject:[self draggedCell] atIndex:0];
 
-    //remove the tracking rects and bindings registered on the old tab
+    // Remove the tracking rects and bindings registered on the old tab.
     [[self sourceTabBar] removeTrackingRect:[[self draggedCell] closeButtonTrackingTag]];
+    self.draggedCell.closeButtonTrackingTag = 0;
     [[self sourceTabBar] removeTrackingRect:[[self draggedCell] cellTrackingTag]];
+    self.draggedCell.cellTrackingTag = 0;
     [[self sourceTabBar] removeTabForCell:[self draggedCell]];
 
     //rebind the cell to the new control
