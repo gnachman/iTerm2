@@ -2263,7 +2263,7 @@ static const int kMaxScreenRows = 4096;
     if (payload) {
         return [NSString stringWithFormat:@"%cP1$r%@%c\\", VT100CC_ESC, payload, VT100CC_ESC];
     }
-    return [NSString stringWithFormat:@"%cP0$r%@%c\\", VT100CC_ESC, pt, VT100CC_ESC];
+    return [NSString stringWithFormat:@"%cP0$r%@%c\\", VT100CC_ESC, @"", VT100CC_ESC];
 }
 
 - (NSString *)decrqssPayload:(NSString *)pt {
