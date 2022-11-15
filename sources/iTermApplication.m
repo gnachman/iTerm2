@@ -834,5 +834,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     }
 }
 
+- (void)reportException:(NSException *)exception {
+    CrashLog(@"reportException: %@", exception.debugDescription);
+    [super reportException:exception];
+}
+
 @end
 
