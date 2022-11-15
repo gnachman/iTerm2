@@ -662,5 +662,10 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     _it_restorableStateInvalid = YES;
 }
 
+- (void)reportException:(NSException *)exception {
+    CrashLog(@"reportException: %@", exception.debugDescription);
+    [super reportException:exception];
+}
+
 @end
 
