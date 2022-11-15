@@ -3375,7 +3375,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 - (iTermPromise<NSString *> *)decrqssPromise:(NSString *)pt {
     return [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
         [[[self decrqssPayloadPromise:pt] then:^(NSString * _Nonnull payload) {
-            [seal fulfill:[NSString stringWithFormat:@"%cP1$r%@%@%c\\", VT100CC_ESC, payload, @"", VT100CC_ESC]];
+            [seal fulfill:[NSString stringWithFormat:@"%cP1$r%@%@%c\\", VT100CC_ESC, payload, pt, VT100CC_ESC]];
 
         }] catchError:^(NSError * _Nonnull error) {
             [seal fulfill:[NSString stringWithFormat:@"%cP0$r%@%c\\", VT100CC_ESC, @"", VT100CC_ESC]];
