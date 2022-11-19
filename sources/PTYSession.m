@@ -6823,6 +6823,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         DLog(@"Is tmux gateway");
         return;
     }
+    [self setAlertOnNextMark:!focused];
     _focused = focused;
     if (_screen.terminalReportFocus) {
         DLog(@"Will report focus");
