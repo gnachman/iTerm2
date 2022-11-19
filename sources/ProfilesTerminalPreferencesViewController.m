@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermController.h"
 #import "iTermShellHistoryController.h"
+#import "iTerm2SharedARC-Swift.h"
 
 @implementation ProfilesTerminalPreferencesViewController {
     IBOutlet NSTextField *_numScrollbackLines;
@@ -38,6 +39,9 @@
     IBOutlet NSButton *_flashingBell;
     IBOutlet NSButton *_bellIconInTabs;
     IBOutlet NSButton *_setLocaleVars;
+    IBOutlet NSPopUpButton *_localeVars;
+    IBOutlet NSTextField *_localeName;
+    IBOutlet NSButton *_changeLocale;
     IBOutlet NSButton *_forceCommandPromptToFirstColumn;
     IBOutlet NSButton *_showMarkIndicators;
     IBOutlet NSButton *_allowCursorBlinkControlSequence;
@@ -102,6 +106,7 @@
         assert(weakInfo);
         NSUInteger tag = [self unsignedIntegerForKey:weakInfo.key];
         [strongSelf->_characterEncoding selectItemWithTag:tag];
+        [strongSelf updateCustomLocaleControls];
         return YES;
     };
 
@@ -213,10 +218,16 @@
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
-    [self defineControl:_setLocaleVars
-                    key:KEY_SET_LOCALE_VARS
-            relatedView:nil
-                   type:kPreferenceInfoTypeCheckbox];
+    info = [self defineControl:_localeVars
+                           key:KEY_SET_LOCALE_VARS
+                   relatedView:nil
+                          type:kPreferenceInfoTypePopup];
+    
+    info.onUpdate = ^BOOL {
+        [weakSelf updateCustomLocaleControls];
+        return NO;
+    };
+    [self updateCustomLocaleControls];
 
     [self defineControl:_forceCommandPromptToFirstColumn
                     key:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
@@ -237,6 +248,51 @@
 - (void)layoutSubviewsForEditCurrentSessionMode {
     _terminalType.enabled = NO;
     _setLocaleVars.enabled = NO;
+}
+
+- (NSAttributedString *)attributedStringForLocale:(NSString *)lang {
+    NSString *title = [iTermLocaleGuesser titleForLocale:lang] ?: @"(No description available)";
+    NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] init];
+    NSFont *monoFont = [NSFont userFixedPitchFontOfSize:[NSFont systemFontSize]];
+    NSAttributedString *langAS = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"LANG=%@", lang]
+                                                                 attributes:@{ NSFontAttributeName: monoFont} ];
+    NSAttributedString *titleAS = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"\u2002\u2002\u2002%@", title]
+                                                                  attributes:@{NSForegroundColorAttributeName: [[NSColor textColor] colorWithAlphaComponent:0.5] }];
+    [attributedString appendAttributedString:langAS];
+    [attributedString appendAttributedString:titleAS];
+    return attributedString;
+}
+
+- (void)updateCustomLocaleControls {
+    _changeLocale.hidden = YES;
+    _localeName.stringValue = @"";
+
+    switch ((iTermSetLocalVarsMode)[self unsignedIntegerForKey:KEY_SET_LOCALE_VARS]) {
+        case iTermSetLocalVarsModeCustom: {
+            _changeLocale.hidden = NO;
+            if ([self stringForKey:KEY_CUSTOM_LOCALE].length) {
+                _localeName.attributedStringValue = [self attributedStringForLocale:[self stringForKey:KEY_CUSTOM_LOCALE]];
+            } else {
+                _localeName.stringValue = @"No locale selected.";
+            }
+            break;
+        }
+        case iTermSetLocalVarsModeSetAutomatically: {
+            _changeLocale.hidden = YES;
+            iTermLocaleGuesser *localeGuesser = [[iTermLocaleGuesser alloc] initWithEncoding:[self unsignedIntegerForKey:KEY_CHARACTER_ENCODING]];
+            NSString *lang = [localeGuesser valueForLanguageEnvironmentVariable];
+            if (lang.length) {
+                _localeName.attributedStringValue = [self attributedStringForLocale:lang];
+            } else {
+                _localeName.stringValue = @"No valid locale exists for this machine’s language and country.";
+            }
+            break;
+        }
+        case iTermSetLocalVarsModeDoNotSet:
+            _changeLocale.hidden = YES;
+            _localeName.stringValue = @"$LANG will not be set.";
+            break;
+    }
 }
 
 #pragma mark - Character Encoding
@@ -288,6 +344,19 @@ static NSInteger CompareEncodingByLocalizedName(id a, id b, void *unused) {
 
 - (IBAction)closeFilterAlertsPanel:(id)sender {
     [_filterAlertsPanel.sheetParent endSheet:_filterAlertsPanel];
+}
+
+- (IBAction)changeCustomLocale:(id)sender {
+    iTermLocalePrompt *prompt = [[iTermLocalePrompt alloc] init];
+    prompt.defaultLocale = [self stringForKey:KEY_CUSTOM_LOCALE];
+    prompt.message = @"Select your preferred locale:";
+    prompt.allowRemember = NO;
+    [prompt requestLocaleFromUserForProfile:nil inWindow:self.view.window];
+    NSString *locale = prompt.selectedLocale;
+    if (locale) {
+        [self setString:locale forKey:KEY_CUSTOM_LOCALE];
+        [self updateCustomLocaleControls];
+    }
 }
 
 @end

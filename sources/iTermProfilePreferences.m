@@ -196,7 +196,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_BACKGROUND_IMAGE_LOCATION, KEY_DYNAMIC_PROFILE_PARENT_NAME,
                              KEY_DYNAMIC_PROFILE_PARENT_GUID,
                              KEY_DYNAMIC_PROFILE_FILENAME, KEY_TMUX_PANE_TITLE,
-                             KEY_SUBTITLE];
+                             KEY_SUBTITLE, KEY_CUSTOM_LOCALE];
 
         NSArray *color = @[ KEY_FOREGROUND_COLOR, KEY_BACKGROUND_COLOR, KEY_BOLD_COLOR,
                             KEY_LINK_COLOR, KEY_SELECTION_COLOR, KEY_SELECTED_TEXT_COLOR,
@@ -553,7 +553,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_SEND_TERMINAL_GENERATED_ALERT: @YES,
                   KEY_FLASHING_BELL: @NO,
                   KEY_VISUAL_BELL: @NO,
-                  KEY_SET_LOCALE_VARS: @YES,
+                  KEY_SET_LOCALE_VARS: @(iTermSetLocalVarsModeSetAutomatically),
+                  KEY_CUSTOM_LOCALE: @"",
                   KEY_SESSION_END_ACTION: @(iTermSessionEndActionDefault),
                   KEY_PROMPT_CLOSE: @(PROMPT_NEVER),
                   KEY_UNDO_TIMEOUT: @(5),

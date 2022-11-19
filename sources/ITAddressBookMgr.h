@@ -202,6 +202,7 @@
 #define KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY @"Load Shell Integration Automatically"
 
 #define KEY_SET_LOCALE_VARS                   @"Set Local Environment Vars"
+#define KEY_CUSTOM_LOCALE                     @"Custom Locale"
 #define KEY_CHARACTER_ENCODING                @"Character Encoding"
 #define KEY_SCROLLBACK_LINES                  @"Scrollback Lines"
 #define KEY_UNLIMITED_SCROLLBACK              @"Unlimited Scrollback"
@@ -427,6 +428,12 @@ typedef NS_ENUM(NSUInteger, iTermLoggingStyle) {
     iTermLoggingStylePlainText,
     iTermLoggingStyleHTML,
     iTermLoggingStyleAsciicast
+};
+
+typedef NS_ENUM(NSUInteger, iTermSetLocalVarsMode) {
+    iTermSetLocalVarsModeDoNotSet = 0,
+    iTermSetLocalVarsModeSetAutomatically = 1,
+    iTermSetLocalVarsModeCustom = 2
 };
 
 static inline iTermLoggingStyle iTermLoggingStyleFromUserDefaultsValue(NSUInteger value) {

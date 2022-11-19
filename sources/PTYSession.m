@@ -2410,26 +2410,55 @@ ITERM_WEAKLY_REFERENCEABLE
         env[@"ITERM2_COOKIE"] = self.cookie;
     }
     DLog(@"Begin locale logic");
-    if (!_profile[KEY_SET_LOCALE_VARS] ||
-        [_profile[KEY_SET_LOCALE_VARS] boolValue]) {
-        DLog(@"Setting locale vars...");
-        NSString *lang = [self valueForLanguageEnvironmentVariable];
-        if (lang) {
-            DLog(@"set LANG=%@", lang);
-            env[@"LANG"] = lang;
-        } else if ([self shouldSetCtype]){
-            DLog(@"should set ctype...");
-            NSString *fallback = [iTermAdvancedSettingsModel fallbackLCCType];
-            if (fallback.length) {
-                env[@"LC_CTYPE"] = fallback;
-            } else {
-                // Try just the encoding by itself, which might work.
-                NSString *encName = [self encodingName];
-                DLog(@"See if encoding %@ is supported...", encName);
-                if (encName && [self _localeIsSupported:encName]) {
-                    DLog(@"Set LC_CTYPE=%@", encName);
-                    env[@"LC_CTYPE"] = encName;
+    switch ([iTermProfilePreferences unsignedIntegerForKey:KEY_SET_LOCALE_VARS inProfile:_profile]) {
+        case iTermSetLocalVarsModeDoNotSet:
+            break;
+        case iTermSetLocalVarsModeCustom: {
+            NSString *lang = [iTermProfilePreferences stringForKey:KEY_CUSTOM_LOCALE inProfile:_profile];
+            if (lang.length) {
+                env[@"LANG"] = lang;
+            }
+            break;
+        }
+        case iTermSetLocalVarsModeSetAutomatically: {
+            DLog(@"Setting locale vars...");
+
+            iTermLocaleGuesser *localeGuesser = [[[iTermLocaleGuesser alloc] initWithEncoding:self.encoding] autorelease];
+            NSDictionary *localeVars = [localeGuesser dictionaryWithLANG];
+            DLog(@"localeVars=%@", localeVars);
+            if (!localeVars) {
+                // Failed to guess.
+                iTermLocalePrompt *prompt = [[[iTermLocalePrompt alloc] init] autorelease];
+                if (self.originalProfile.profileIsDynamic) {
+                    DLog(@"Disable remember");
+                    prompt.allowRemember = NO;
                 }
+                localeVars = [prompt requestLocaleFromUserForProfile:self.originalProfile[KEY_NAME] ?: @"(Unnamed profile)"
+                                                            inWindow:self.view.window];
+                DLog(@"updated localeVars=%@", localeVars);
+                NSString *lang = localeVars[@"LANG"];
+                if (prompt.remember && localeVars != nil && lang != nil) {
+                    DLog(@"Save");
+                    // User chose a locale and wants us to keep using it.
+                    [iTermProfilePreferences setObject:lang
+                                                forKey:KEY_CUSTOM_LOCALE
+                                             inProfile:self.originalProfile
+                                                 model:[self profileModel]];
+                    [iTermProfilePreferences setUnsignedInteger:iTermSetLocalVarsModeCustom
+                                                         forKey:KEY_SET_LOCALE_VARS
+                                                      inProfile:self.originalProfile
+                                                          model:self.profileModel];
+                    [[NSNotificationCenter defaultCenter] postNotificationName:kSessionProfileDidChange
+                                                                        object:self.originalProfile[KEY_GUID]];
+                }
+            }
+            if (!localeVars) {
+                DLog(@"Using LC_CTYPE");
+                localeVars = [localeGuesser dictionaryWithLC_CTYPE];
+            }
+            if (localeVars) {
+                DLog(@"Merge %@", localeVars);
+                [env it_mergeFrom:localeVars];
             }
         }
     }
@@ -7956,46 +7985,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
-- (NSString*)encodingName
-{
-    // Get the encoding, perhaps as a fully written out name.
-    CFStringEncoding cfEncoding = CFStringConvertNSStringEncodingToEncoding([self encoding]);
-    // Convert it to the expected (IANA) format.
-    NSString* ianaEncoding = (NSString*)CFStringConvertEncodingToIANACharSetName(cfEncoding);
-    DLog(@"iana encoding is %@", ianaEncoding);
-    // Fix up lowercase letters.
-    static NSDictionary* lowerCaseEncodings;
-    if (!lowerCaseEncodings) {
-        NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"EncodingsWithLowerCase" ofType:@"plist"];
-        lowerCaseEncodings = [NSDictionary dictionaryWithContentsOfFile:plistFile];
-        [lowerCaseEncodings retain];
-    }
-    if ([ianaEncoding rangeOfCharacterFromSet:[NSCharacterSet lowercaseLetterCharacterSet]].length) {
-        // Some encodings are improperly returned as lower case. For instance,
-        // "utf-8" instead of "UTF-8". If this isn't in the allowed list of
-        // lower-case encodings, then uppercase it.
-        if (lowerCaseEncodings) {
-            if (![lowerCaseEncodings objectForKey:ianaEncoding]) {
-                ianaEncoding = [ianaEncoding uppercaseString];
-                DLog(@"Convert to uppser case. ianaEncoding is now %@", ianaEncoding);
-            }
-        }
-    }
-
-    if (ianaEncoding != nil) {
-        // Mangle the names slightly
-        NSMutableString* encoding = [[[NSMutableString alloc] initWithString:ianaEncoding] autorelease];
-        [encoding replaceOccurrencesOfString:@"ISO-" withString:@"ISO" options:0 range:NSMakeRange(0, [encoding length])];
-        [encoding replaceOccurrencesOfString:@"EUC-" withString:@"euc" options:0 range:NSMakeRange(0, [encoding length])];
-        DLog(@"After mangling, encoding is now %@", encoding);
-        return encoding;
-    }
-
-    DLog(@"Return nil encoding");
-
-    return nil;
-}
-
 #pragma mark PTYTextViewDelegate
 
 - (BOOL)isPasting {
@@ -10930,114 +10919,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [file download];
 }
 
-- (NSString *)localeForLanguage:(NSString *)languageCode
-                        country:(NSString *)countryCode {
-    DLog(@"localeForLanguage:country: languageCode=%@, countryCode=%@", languageCode, countryCode);
-    if (languageCode && countryCode) {
-        return [NSString stringWithFormat:@"%@_%@", languageCode, countryCode];
-    } else if (languageCode) {
-        return languageCode;
-    } else {
-        return [[NSLocale currentLocale] localeIdentifier];
-    }
-}
-
-- (NSArray<NSString *> *)preferredLanguageCodesByRemovingCountry {
-    return [[NSLocale preferredLanguages] mapWithBlock:^id(NSString *language) {
-        DLog(@"Found preferred language: %@", language);
-        NSUInteger index = [language rangeOfString:@"-" options:0].location;
-        if (index == NSNotFound) {
-            return language;
-        } else {
-            return [language substringToIndex:index];
-        }
-    }];
-}
-
-// "en-US" -> "en_US"
-- (NSString *)languageToLocale:(NSString *)code {
-    return [code stringByReplacingOccurrencesOfString:@"-" withString:@"_"];
-}
-
-- (NSArray<NSString *> *)languageCodesUpToAndIncludingFirstTwoLetterCode:(NSArray<NSString *> *)allCodes {
-    NSInteger lastIndexToInclude = [allCodes indexOfObjectPassingTest:^BOOL(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        return obj.length <= 2;
-    }];
-    if (lastIndexToInclude == NSNotFound) {
-        return allCodes;
-    }
-    return [allCodes subarrayToIndex:lastIndexToInclude + 1];
-}
-
-- (NSString *)valueForLanguageEnvironmentVariable {
-    DLog(@"Looking for a locale...");
-    DLog(@"Preferred languages are: %@", [NSLocale preferredLanguages]);
-    NSArray<NSString *> *languageCodes = [self languageCodesUpToAndIncludingFirstTwoLetterCode:[self preferredLanguageCodesByRemovingCountry]];
-    DLog(@"Considering these languages: %@", languageCodes);
-
-    NSString *const countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
-    NSArray<NSString *> *languagePlusCountryCodes = @[];
-    if (countryCode) {
-        languagePlusCountryCodes = [languageCodes mapWithBlock:^id(NSString *language) {
-            return [self localeForLanguage:language country:countryCode];
-        }];
-    }
-    DLog(@"Country code is %@. Combos are %@", countryCode, languagePlusCountryCodes);
-
-    NSString *encoding = [self encodingName];
-    NSArray<NSString *> *languageCountryEncoding = @[];
-    if (encoding) {
-        languageCountryEncoding = [languagePlusCountryCodes mapWithBlock:^id(NSString *languageCountry) {
-            return [NSString stringWithFormat:@"%@.%@", languageCountry, encoding];
-        }];
-    }
-    DLog(@"Encoding is %@. Combos are %@", encoding, languageCountryEncoding);
-
-    NSArray<NSString *> *candidates = [@[ languageCountryEncoding, languagePlusCountryCodes, languageCodes ] flattenedArray];
-    DLog(@"Initial candidates are: %@", candidates);
-
-    // Sort non-hyphenated codes last so en_US always precedes en.
-    NSArray<NSString *> *preferredLanguages = [[NSLocale preferredLanguages] sortedArrayUsingComparator:^NSComparisonResult(NSString *lhs, NSString *rhs) {
-        const BOOL lhsHasHyphen = [lhs containsString:@"-"];
-        const BOOL rhsHasHyphen = [rhs containsString:@"-"];
-        if (lhsHasHyphen == rhsHasHyphen) {
-            return NSOrderedSame;
-        }
-        if (lhsHasHyphen) {
-            return NSOrderedAscending;
-        }
-        return NSOrderedDescending;
-    }];
-    // Add locale-based candidates with encoding suffix
-    NSArray<NSString *> *additionalCandidates =
-    [preferredLanguages mapWithBlock:^NSString *(NSString *code) {
-        return [NSString stringWithFormat:@"%@.%@", [self languageToLocale:code], encoding];
-    }];
-
-    NSLog(@"Add extra candidates (plus encoding) based on preferred languages: %@", additionalCandidates);
-    candidates = [candidates arrayByAddingObjectsFromArray:additionalCandidates];
-
-    additionalCandidates =
-    [preferredLanguages mapWithBlock:^NSString *(NSString *code) {
-        return [self languageToLocale:code];
-    }];
-
-    NSLog(@"Add extra candidates based on preferred languages: %@", additionalCandidates);
-    candidates = [candidates arrayByAddingObjectsFromArray:additionalCandidates];
-
-    DLog(@"Candidates are: %@", candidates);
-
-    for (NSString *candidate in candidates) {
-        DLog(@"Check if %@ is supported", candidate);
-        if ([self _localeIsSupported:candidate]) {
-            DLog(@"YES. Using %@", candidate);
-            return candidate;
-        }
-        DLog(@"No");
-    }
-    return nil;
-}
-
 - (void)setDvrFrame {
     _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
@@ -11226,24 +11107,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         aLine = [aLine stringByReplacingOccurrencesOfString:@"\r" withString:@""];
         [self printTmuxMessage:aLine];
     }
-}
-
-- (BOOL)_localeIsSupported:(NSString*)theLocale
-{
-    // Keep a copy of the current locale setting for this process
-    char* backupLocale = setlocale(LC_CTYPE, NULL);
-
-    // Try to set it to the proposed locale
-    BOOL supported;
-    if (setlocale(LC_CTYPE, [theLocale UTF8String])) {
-        supported = YES;
-    } else {
-        supported = NO;
-    }
-
-    // Restore locale and return
-    setlocale(LC_CTYPE, backupLocale);
-    return supported;
 }
 
 #pragma mark - VT100ScreenDelegate
@@ -15332,17 +15195,19 @@ static const NSTimeInterval PTYSessionFocusOrMouseReportBellSquelchTimeIntervalT
     [_textview.window makeFirstResponder:_textview];
 }
 
-- (void)statusBarSetLayout:(nonnull iTermStatusBarLayout *)layout {
-    ProfileModel *model;
+- (ProfileModel *)profileModel {
     if (self.isDivorced && [_overriddenFields containsObject:KEY_STATUS_BAR_LAYOUT]) {
-        model = [ProfileModel sessionsInstance];
+        return [ProfileModel sessionsInstance];
     } else {
-        model = [ProfileModel sharedInstance];
+        return [ProfileModel sharedInstance];
     }
+}
+
+- (void)statusBarSetLayout:(nonnull iTermStatusBarLayout *)layout {
     [iTermProfilePreferences setObject:[layout dictionaryValue]
                                 forKey:KEY_STATUS_BAR_LAYOUT
                              inProfile:self.originalProfile
-                                 model:model];
+                                 model:[self profileModel]];
 }
 
 - (void)statusBarPerformAction:(iTermAction *)action {
