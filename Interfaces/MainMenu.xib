@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="20037" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21507" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="20037"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21507"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -323,18 +323,6 @@ DQ
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
                                                 <action selector="sshDisconnect:" target="-1" id="ccH-a0-Ijh"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Remove File Provider" identifier="ssh.Remove File Provider" id="kyU-0L-Ich">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="removeFileProvider:" target="201" id="oT8-Bp-WIB"/>
-                                            </connections>
-                                        </menuItem>
-                                        <menuItem title="Add File Provider" identifier="ssh.Add File Provider" id="7jg-eO-XJf">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="addFileProvider:" target="201" id="9w6-ep-5cn"/>
                                             </connections>
                                         </menuItem>
                                     </items>
