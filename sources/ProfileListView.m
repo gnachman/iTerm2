@@ -42,7 +42,7 @@
 #import "NSView+RecursiveDescription.h"
 #import "NSWindow+iTerm.h"
 
-#define kProfileTableViewDataType @"iTerm2ProfileGuid"
+#define kProfileTableViewDataType @"com.googlecode.iterm2.iTerm2ProfileGuid"
 
 // NSAttributedString attribute keys used as source values by
 // iTermProfileListViewTextField. One of these colors will be used as the
@@ -295,24 +295,26 @@ const CGFloat kDefaultTagsWidth = 80;
 
 #pragma mark -  Drag drop
 
-- (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard
-{
+- (id<NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    [pbItem setData:[self dataForRow:row]
+            forType:kProfileTableViewDataType];
+    return pbItem;
+}
+
+- (NSData *)dataForRow:(NSInteger)rowIndex {
     // Copy guid to pboard
-    NSInteger rowIndex = [rowIndexes firstIndex];
-    NSMutableSet* guids = [[[NSMutableSet alloc] init] autorelease];
-    while (rowIndex != NSNotFound) {
-        Profile* profile = [dataSource_ profileAtIndex:rowIndex];
-        NSString* guid = [profile objectForKey:KEY_GUID];
+    NSMutableSet *guids = [[[NSMutableSet alloc] init] autorelease];
+    if (rowIndex != NSNotFound) {
+        Profile *profile = [dataSource_ profileAtIndex:rowIndex];
+        NSString *guid = [profile objectForKey:KEY_GUID];
         [guids addObject:guid];
-        rowIndex = [rowIndexes indexGreaterThanIndex:rowIndex];
     }
 
     NSData *data = [NSKeyedArchiver archivedDataWithRootObject:guids
                                          requiringSecureCoding:NO
                                                          error:nil];
-    [pboard declareTypes:[NSArray arrayWithObject:kProfileTableViewDataType] owner:self];
-    [pboard setData:data forType:kProfileTableViewDataType];
-    return YES;
+    return data;
 }
 
 - (NSDragOperation)tableView:(NSTableView *)aTableView
@@ -343,16 +345,28 @@ const CGFloat kDefaultTagsWidth = 80;
     [[self undoManager] registerUndoWithTarget:self
                                       selector:@selector(setRowOrder:)
                                         object:[self rowOrder]];
-    NSPasteboard* pboard = [info draggingPasteboard];
-    NSData* rowData = [pboard dataForType:kProfileTableViewDataType];
 
-    NSError *error = nil;
-    NSKeyedUnarchiver *unarchiver = [[[NSKeyedUnarchiver alloc] initForReadingFromData:rowData error:&error] autorelease];
-    if (error) {
-        return NO;
-    }
-    NSSet<NSString *> *guids = [unarchiver decodeObjectOfClass:[NSSet class] forKey:NSKeyedArchiveRootObjectKey];
-    if (!guids) {
+    NSMutableSet<NSString *> *guids = [NSMutableSet set];
+    [info enumerateDraggingItemsWithOptions:0
+                                    forView:aTableView
+                                    classes:@[ [NSPasteboardItem class]]
+                              searchOptions:@{}
+                                 usingBlock:^(NSDraggingItem * _Nonnull draggingItem, NSInteger idx, BOOL * _Nonnull stop) {
+        NSPasteboardItem *item = draggingItem.item;
+        NSData *rowData = [item dataForType:kProfileTableViewDataType];
+        NSError *error = nil;
+        NSKeyedUnarchiver *unarchiver = [[[NSKeyedUnarchiver alloc] initForReadingFromData:rowData error:&error] autorelease];
+        if (error) {
+            return;
+        }
+        NSSet<NSString *> *itemGUIDs = [unarchiver decodeObjectOfClasses:[NSSet setWithArray:@[ [NSSet class], [NSString class] ]]
+                                                                  forKey:NSKeyedArchiveRootObjectKey];
+        if (!guids) {
+            return;
+        }
+        [guids unionSet:itemGUIDs];
+    }];
+    if (!guids.count) {
         return NO;
     }
     NSMutableDictionary* map = [[[NSMutableDictionary alloc] init] autorelease];
