@@ -1619,11 +1619,5 @@ DQ
                 <outlet property="_menu" destination="8Ja-GB-Waf" id="a0G-8e-2dj"/>
             </connections>
         </customObject>
-        <menuItem title="Disconnect" identifier="ssh.Disconnect" id="lV3-vx-saW">
-            <modifierMask key="keyEquivalentModifierMask"/>
-            <connections>
-                <action selector="sshDisconnect:" target="-1" id="Dok-Az-6De"/>
-            </connections>
-        </menuItem>
     </objects>
 </document>

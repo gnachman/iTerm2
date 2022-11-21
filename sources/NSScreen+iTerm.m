@@ -287,31 +287,8 @@ static io_service_t iTermGetIOService(CGDirectDisplayID displayID) {
     return 0;
 }
 
-- (NSString *)it_legacyNonUniqueName NS_DEPRECATED_MAC(10_14, 10_15) {
-    const CGDirectDisplayID displayID = [self it_displayID];
-    io_service_t ioServicePort = iTermGetIOService(displayID);
-    if (ioServicePort == 0) {
-        return [self it_fallbackName];
-    }
-
-    NSDictionary *info = (__bridge_transfer NSDictionary *)IODisplayCreateInfoDictionary(ioServicePort, kIODisplayOnlyPreferredName);
-    if (!info) {
-        return [self it_fallbackName];
-    }
-
-    NSDictionary *productName = info[@"DisplayProductName"];
-    if (!productName.allValues.firstObject) {
-        return [self it_fallbackName];
-    }
-    return productName.allValues.firstObject;
-}
-
 - (NSString *)it_nonUniqueName {
-    if (@available(macOS 10.15, *)) {
-        return [self localizedName];
-    } else {
-        return [self it_legacyNonUniqueName];
-    }
+    return [self localizedName];
 }
 
 - (NSString *)it_fallbackName {

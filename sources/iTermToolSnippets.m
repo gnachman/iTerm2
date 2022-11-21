@@ -25,7 +25,7 @@
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
-static NSString *const iTermToolSnippetsPasteboardType = @"iTermToolSnippetsPasteboardType";
+static NSString *const iTermToolSnippetsPasteboardType = @"com.googlecode.iterm2.iTermToolSnippetsPasteboardType";
 
 typedef NS_ENUM(NSUInteger, iTermToolSnippetsAction) {
     iTermToolSnippetsActionSend,
@@ -404,22 +404,11 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 
 #pragma mark Drag-Drop
 
-- (BOOL)tableView:(NSTableView *)tableView
-writeRowsWithIndexes:(NSIndexSet *)rowIndexes
-     toPasteboard:(NSPasteboard*)pboard {
-    [pboard declareTypes:@[ iTermToolSnippetsPasteboardType, NSPasteboardTypeString ]
-                   owner:self];
-
-    NSArray<NSNumber *> *plist = [rowIndexes.it_array mapWithBlock:^id(NSNumber *anObject) {
-        return _snippets[anObject.integerValue].guid;
-    }];
-    [pboard setPropertyList:plist
-                    forType:iTermToolSnippetsPasteboardType];
-    [pboard setString:[[rowIndexes.it_array mapWithBlock:^id(NSNumber *anObject) {
-        return _snippets[anObject.integerValue].value;
-    }] componentsJoinedByString:@"\n"]
-              forType:NSPasteboardTypeString];
-    return YES;
+- (id<NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    [pbItem setPropertyList:_snippets[row].guid forType:iTermToolSnippetsPasteboardType];
+    [pbItem setString:_snippets[row].value forType:NSPasteboardTypeString];
+    return pbItem;
 }
 
 - (NSDragOperation)tableView:(NSTableView *)aTableView
@@ -448,8 +437,16 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
               row:(NSInteger)row
     dropOperation:(NSTableViewDropOperation)operation {
     [self pushUndo];
-    NSPasteboard *pboard = [info draggingPasteboard];
-    NSArray<NSString *> *guids = [pboard propertyListForType:iTermToolSnippetsPasteboardType];
+
+    NSMutableArray<NSString *> *guids = [NSMutableArray array];
+    [info enumerateDraggingItemsWithOptions:0
+                                    forView:aTableView
+                                    classes:@[ [NSPasteboardItem class]]
+                              searchOptions:@{}
+                                 usingBlock:^(NSDraggingItem * _Nonnull draggingItem, NSInteger idx, BOOL * _Nonnull stop) {
+        NSPasteboardItem *item = draggingItem.item;
+        [guids addObject:[item propertyListForType:iTermToolSnippetsPasteboardType]];
+    }];
     [[iTermSnippetsModel sharedInstance] moveSnippetsWithGUIDs:guids
                                                        toIndex:row];
     return YES;

@@ -172,10 +172,21 @@ extern NSString *kWindowPasteboardType;
        acceptDrop:(id <NSDraggingInfo>)info
               row:(NSInteger)row
     dropOperation:(NSTableViewDropOperation)operation {
-    NSPasteboard *pb = [info draggingPasteboard];
-    NSArray* pair = [pb propertyListForType:kWindowPasteboardType];
-    NSNumber *sessionNumber = pair[0];
-    NSArray *draggedItems = pair[1];
+
+    __block NSNumber *sessionNumber = nil;
+    NSMutableArray<NSArray *> *draggedItems = [NSMutableArray array];
+    [info enumerateDraggingItemsWithOptions:0
+                                    forView:aTableView
+                                    classes:@[ [NSPasteboardItem class]]
+                              searchOptions:@{}
+                                 usingBlock:^(NSDraggingItem * _Nonnull draggingItem, NSInteger idx, BOOL * _Nonnull stop) {
+        NSPasteboardItem *item = draggingItem.item;
+        NSArray *array = [item propertyListForType:kWindowPasteboardType];
+        sessionNumber = array[0];
+        [draggedItems addObjectsFromArray:array[1]];
+    }];
+
+
     iTermTmuxSessionObject *targetSessionObject = _model[row];
     for (NSArray *tuple in draggedItems) {
         NSNumber *windowId = [tuple objectAtIndex:1];

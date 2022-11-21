@@ -7,6 +7,7 @@
 
 #import "iTermStatusBarSetupElement.h"
 #import "iTermStatusBarComponent.h"
+#import "NSData+iTerm.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -111,14 +112,7 @@ NSString *const iTermStatusBarElementPasteboardType = @"com.iterm2.status-bar-el
 
 
 - (nullable id)pasteboardPropertyListForType:(NSString *)type {
-    // I am using the bundleID as a type
-    if (![type isEqualToString:iTermStatusBarElementPasteboardType]) {
-        return nil;
-    }
-
-    return [NSKeyedArchiver archivedDataWithRootObject:self
-                                 requiringSecureCoding:NO
-                                                 error:nil];
+    return [NSData it_dataWithArchivedObject:self];
 }
 
 #pragma mark - NSPasteboardReading

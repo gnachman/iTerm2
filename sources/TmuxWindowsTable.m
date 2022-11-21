@@ -10,7 +10,7 @@
 #import "FutureMethods.h"
 #import "NSTextField+iTerm.h"
 
-NSString *kWindowPasteboardType = @"kWindowPasteboardType";
+NSString *kWindowPasteboardType = @"com.googlecode.iterm2.kWindowPasteboardType";
 
 @implementation TmuxWindowsTable {
     NSMutableArray *model_;
@@ -202,15 +202,12 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     [self updateEnabledStateOfButtons];
 }
 
-- (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard *)pboard {
-    NSArray* selectedItems = [[self filteredModel] objectsAtIndexes:rowIndexes];
-    [pboard declareTypes:[NSArray arrayWithObject:kWindowPasteboardType] owner:self];
-    [pboard setPropertyList:[NSArray arrayWithObjects:
-                             [delegate_ selectedSessionNumber],
-                             selectedItems,
-                             nil]
+- (id<NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    NSArray *selectedItems = [[self filteredModel] objectsAtIndexes:[NSIndexSet indexSetWithIndex:row]];
+    [pbItem setPropertyList:@[ [delegate_ selectedSessionNumber], selectedItems ]
                     forType:kWindowPasteboardType];
-    return YES;
+    return pbItem;
 }
 
 #pragma mark NSSearchField delegate

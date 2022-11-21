@@ -30,7 +30,6 @@
         if (configuration) {
             configuration.applicationNameForUserAgent = @"iTerm2";
             WKPreferences *prefs = [[WKPreferences alloc] init];
-            prefs.javaEnabled = NO;
             prefs.javaScriptEnabled = YES;
             prefs.javaScriptCanOpenWindowsAutomatically = NO;
             configuration.preferences = prefs;

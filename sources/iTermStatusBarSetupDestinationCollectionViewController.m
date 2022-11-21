@@ -16,6 +16,7 @@
 
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
+#import "NSData+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSView+iTerm.h"
 
@@ -287,18 +288,11 @@ canDragItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     _draggingIndexPath = nil;
 }
 
-- (BOOL)collectionView:(NSCollectionView *)collectionView
-writeItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
-          toPasteboard:(NSPasteboard *)pasteboard {
-    [pasteboard clearContents];
-
-    NSArray *objects = [indexPaths.allObjects mapWithBlock:^id(NSIndexPath *indexPath) {
-        NSUInteger index = [indexPath indexAtPosition:1];
-        return self->_elements[index];
-    }];
-    [pasteboard writeObjects:objects];
-
-    return YES;
+- (id<NSPasteboardWriting>)collectionView:(NSCollectionView *)collectionView pasteboardWriterForItemAtIndex:(NSUInteger)index {
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    [pbItem setData:[NSData it_dataWithArchivedObject:_elements[index]]
+            forType:iTermStatusBarElementPasteboardType];
+    return pbItem;
 }
 
 //- draggingImageForItemsAtIndexPaths:withEvent:offset:
@@ -338,11 +332,19 @@ draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
             acceptDrop:(id<NSDraggingInfo>)draggingInfo
              indexPath:(NSIndexPath *)indexPath
          dropOperation:(NSCollectionViewDropOperation)dropOperation {
-    NSData *data = [draggingInfo.draggingPasteboard dataForType:iTermStatusBarElementPasteboardType];
+    __block NSData *data = nil;
+    [draggingInfo enumerateDraggingItemsWithOptions:0 forView:collectionView classes:@[[NSPasteboardItem class]] searchOptions:@{} usingBlock:^(NSDraggingItem * _Nonnull draggingItem, NSInteger idx, BOOL * _Nonnull stop) {
+        NSPasteboardItem *item = draggingItem.item;
+        data = [item dataForType:iTermStatusBarElementPasteboardType];
+    }];
+    if (!data) {
+        DLog(@"No objects on pasteboard");
+        return NO;
+    }
     NSError *error = nil;
     NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
     unarchiver.requiresSecureCoding = NO;
-    iTermStatusBarSetupElement *element = [unarchiver decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+    iTermStatusBarSetupElement *element = [data it_unarchivedObjectOfClasses:@[ [iTermStatusBarSetupElement class] ]];
     if (error || !element) {
         DLog(@"Reject drop: %@", error);
         return NO;

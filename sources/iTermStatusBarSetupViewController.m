@@ -408,18 +408,11 @@ canDragItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
     return YES;
 }
 
-- (BOOL)collectionView:(NSCollectionView *)collectionView
-writeItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths
-          toPasteboard:(NSPasteboard *)pasteboard {
-    [pasteboard clearContents];
-
-    NSArray *objects = [indexPaths.allObjects mapWithBlock:^id(NSIndexPath *indexPath) {
-        NSUInteger index = [indexPath indexAtPosition:1];
-        return self->_elements[index];
-    }];
-    [pasteboard writeObjects:objects];
-
-    return YES;
+- (nullable id<NSPasteboardWriting>)collectionView:(NSCollectionView *)collectionView pasteboardWriterForItemAtIndex:(NSUInteger)index {
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    [pbItem setData:[NSData it_dataWithArchivedObject:_elements[index]]
+            forType:iTermStatusBarElementPasteboardType];
+    return pbItem;
 }
 
 - (NSImage *)collectionView:(NSCollectionView *)collectionView draggingImageForItemsAtIndexPaths:(NSSet<NSIndexPath *> *)indexPaths

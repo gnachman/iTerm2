@@ -22,7 +22,7 @@
 
 static const CGFloat kButtonHeight = 23;
 static const CGFloat kMargin = 4;
-static NSString *const iTermToolActionsPasteboardType = @"iTermToolActionsPasteboardType";
+static NSString *const iTermToolActionsPasteboardType = @"com.googlecode.iterm2.iTermToolActionsPasteboardType";
 
 
 @interface iTermToolActions() <NSTableViewDataSource, NSTableViewDelegate>
@@ -354,18 +354,10 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
 
 #pragma mark Drag-Drop
 
-- (BOOL)tableView:(NSTableView *)tableView
-writeRowsWithIndexes:(NSIndexSet *)rowIndexes
-     toPasteboard:(NSPasteboard*)pboard {
-    [pboard declareTypes:@[ iTermToolActionsPasteboardType ]
-                   owner:self];
-
-    NSArray<NSNumber *> *plist = [rowIndexes.it_array mapWithBlock:^id(NSNumber *anObject) {
-        return @(_actions[anObject.integerValue].identifier);
-    }];
-    [pboard setPropertyList:plist
-                    forType:iTermToolActionsPasteboardType];
-    return YES;
+-(id<NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    [pbItem setPropertyList:@(_actions[row].identifier) forType:iTermToolActionsPasteboardType];
+    return pbItem;
 }
 
 - (NSDragOperation)tableView:(NSTableView *)aTableView
@@ -394,8 +386,16 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
               row:(NSInteger)row
     dropOperation:(NSTableViewDropOperation)operation {
     [self pushUndo];
-    NSPasteboard *pboard = [info draggingPasteboard];
-    NSArray<NSNumber *> *identifiers = [pboard propertyListForType:iTermToolActionsPasteboardType];
+
+    NSMutableArray<NSNumber *> *identifiers = [NSMutableArray array];
+    [info enumerateDraggingItemsWithOptions:0
+                                    forView:aTableView
+                                    classes:@[ [NSPasteboardItem class]]
+                              searchOptions:@{}
+                                 usingBlock:^(NSDraggingItem * _Nonnull draggingItem, NSInteger idx, BOOL * _Nonnull stop) {
+        NSPasteboardItem *item = draggingItem.item;
+        [identifiers addObject:[item propertyListForType:iTermToolActionsPasteboardType]];
+    }];
     [[iTermActionsModel sharedInstance] moveActionsWithIdentifiers:identifiers
                                                            toIndex:row];
     return YES;

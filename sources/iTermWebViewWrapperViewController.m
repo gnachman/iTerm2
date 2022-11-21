@@ -124,7 +124,6 @@ NSString *const iTermWebViewErrorDomain = @"com.iterm2.webview";
     configuration.applicationNameForUserAgent = @"iTerm2";
 
     WKPreferences *prefs = [[NSClassFromString(@"WKPreferences") alloc] init];
-    prefs.javaEnabled = NO;
     prefs.javaScriptEnabled = YES;
     prefs.javaScriptCanOpenWindowsAutomatically = NO;
     @try {

@@ -21,7 +21,7 @@
 
 #import <Carbon/Carbon.h>
 
-static NSString *const iTermActionsEditingPasteboardType = @"iTermActionsEditingPasteboardType";
+static NSString *const iTermActionsEditingPasteboardType = @"com.googlecode.iterm2.iTermActionsEditingPasteboardType";
 
 @interface iTermActionsEditingView: NSView
 @end
@@ -376,18 +376,10 @@ static NSString *const iTermActionsEditingPasteboardType = @"iTermActionsEditing
 
 #pragma mark Drag-Drop
 
-- (BOOL)tableView:(NSTableView *)tableView
-writeRowsWithIndexes:(NSIndexSet *)rowIndexes
-     toPasteboard:(NSPasteboard*)pboard {
-    [pboard declareTypes:@[ iTermActionsEditingPasteboardType ]
-                   owner:self];
-
-    NSArray<NSNumber *> *plist = [rowIndexes.it_array mapWithBlock:^id(NSNumber *anObject) {
-        return @(_actions[anObject.integerValue].identifier);
-    }];
-    [pboard setPropertyList:plist
-                    forType:iTermActionsEditingPasteboardType];
-    return YES;
+- (id<NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    [pbItem setPropertyList:@[ @(_actions[row].identifier) ] forType:iTermActionsEditingPasteboardType];
+    return pbItem;
 }
 
 - (NSDragOperation)tableView:(NSTableView *)aTableView
@@ -416,9 +408,13 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
               row:(NSInteger)row
     dropOperation:(NSTableViewDropOperation)operation {
     [self pushUndo];
-    NSPasteboard *pboard = [info draggingPasteboard];
-    NSArray<NSNumber *> *identifiers = [pboard propertyListForType:iTermActionsEditingPasteboardType];
-    [[iTermActionsModel sharedInstance] moveActionsWithIdentifiers:identifiers
+    NSMutableArray<NSNumber *> *allIdentifiers = [NSMutableArray array];
+    [info enumerateDraggingItemsWithOptions:0 forView:aTableView classes:@[[NSPasteboardItem class]] searchOptions:@{} usingBlock:^(NSDraggingItem * _Nonnull draggingItem, NSInteger idx, BOOL * _Nonnull stop) {
+        NSPasteboardItem *item = draggingItem.item;
+        NSArray<NSNumber *> *identifiers = [item propertyListForType:iTermActionsEditingPasteboardType];
+        [allIdentifiers addObjectsFromArray:identifiers];
+    }];
+    [[iTermActionsModel sharedInstance] moveActionsWithIdentifiers:allIdentifiers
                                                            toIndex:row];
     return YES;
 }

@@ -19,7 +19,7 @@
 #import "NSTableView+iTerm.h"
 #import "NSTextField+iTerm.h"
 
-static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditingPasteboardType";
+static NSString *const iTermSnippetsEditingPasteboardType = @"com.googlecode.iterm2.iTermSnippetsEditingPasteboardType";
 
 @interface iTermSnippetsEditingView: NSView
 @end
@@ -347,18 +347,10 @@ static NSString *const iTermSnippetsEditingPasteboardType = @"iTermSnippetsEditi
 
 #pragma mark Drag-Drop
 
-- (BOOL)tableView:(NSTableView *)tableView
-writeRowsWithIndexes:(NSIndexSet *)rowIndexes
-     toPasteboard:(NSPasteboard*)pboard {
-    [pboard declareTypes:@[ iTermSnippetsEditingPasteboardType ]
-                   owner:self];
-
-    NSArray<NSString *> *plist = [rowIndexes.it_array mapWithBlock:^id(NSNumber *anObject) {
-        return _snippets[anObject.integerValue].guid;
-    }];
-    [pboard setPropertyList:plist
-                    forType:iTermSnippetsEditingPasteboardType];
-    return YES;
+- (id<NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
+    NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
+    [pbItem setPropertyList:@[ _snippets[row].guid ] forType:iTermSnippetsEditingPasteboardType];
+    return pbItem;
 }
 
 - (NSDragOperation)tableView:(NSTableView *)aTableView
@@ -387,9 +379,13 @@ writeRowsWithIndexes:(NSIndexSet *)rowIndexes
               row:(NSInteger)row
     dropOperation:(NSTableViewDropOperation)operation {
     [self pushUndo];
-    NSPasteboard *pboard = [info draggingPasteboard];
-    NSArray<NSString *> *guids = [pboard propertyListForType:iTermSnippetsEditingPasteboardType];
-    [[iTermSnippetsModel sharedInstance] moveSnippetsWithGUIDs:guids
+    NSMutableArray<NSString *> *allGuids = [NSMutableArray array];
+    [info enumerateDraggingItemsWithOptions:0 forView:aTableView classes:@[[NSPasteboardItem class]] searchOptions:@{} usingBlock:^(NSDraggingItem * _Nonnull draggingItem, NSInteger idx, BOOL * _Nonnull stop) {
+        NSPasteboardItem *item = draggingItem.item;
+        NSArray<NSString *> *guids = [item propertyListForType:iTermSnippetsEditingPasteboardType];
+        [allGuids addObjectsFromArray:guids];
+    }];
+    [[iTermSnippetsModel sharedInstance] moveSnippetsWithGUIDs:allGuids
                                                        toIndex:row];
     return YES;
 }
