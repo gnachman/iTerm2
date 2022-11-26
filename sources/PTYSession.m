@@ -999,8 +999,9 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p %dx%d metal=%@ id=%@>",
-            [self class], self, [_screen width], [_screen height], @(self.useMetal), _guid];
+    NSString *synthetic = _synthetic ? @" Synthetic" : @"";
+    return [NSString stringWithFormat:@"<%@: %p %dx%d metal=%@ id=%@%@>",
+            [self class], self, [_screen width], [_screen height], @(self.useMetal), _guid, synthetic];
 }
 
 - (void)didFinishInitialization {

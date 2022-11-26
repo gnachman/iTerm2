@@ -7436,6 +7436,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     newSession.profile = profile;
 
     [self setupSession:newSession withSize:nil];
+    [newSession setSize:oldSession.screen.size];
     [[newSession view] setViewId:[[oldSession view] viewId]];
     [[newSession view] setShowTitle:[[oldSession view] showTitle] adjustScrollView:YES];
     [[newSession view] setShowBottomStatusBar:oldSession.view.showBottomStatusBar adjustScrollView:YES];
@@ -7446,6 +7447,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     PTYTab *theTab = [tabViewItem identifier];
     newSession.delegate = theTab;
 
+    DLog(@"Live session: %@, synthetic session: %@", oldSession, newSession);
     return newSession;
 }
 

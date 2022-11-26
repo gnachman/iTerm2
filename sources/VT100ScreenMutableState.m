@@ -128,6 +128,10 @@ static _Atomic int gPerformingJoinedBlock;
     return self;
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p sideEffectPerformer=%@>", NSStringFromClass([self class]), self, self.sideEffectPerformer];
+}
+
 // The block will be called twice, once for the mutable-thread copy and later with the main-thread copy.
 - (void)mutateColorMap:(void (^)(iTermColorMap *colorMap))block {
     DLog(@"begin");

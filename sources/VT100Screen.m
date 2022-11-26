@@ -1219,7 +1219,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         [mutableState resetScrollbackOverflow];
     }
     if (_state) {
-        DLog(@"merge state");
+        DLog(@"%@: merge state", self);
         const BOOL mutableStateLineBufferWasDirty = mutableState.linebuffer.dirty;
         [_state mergeFrom:mutableState];
 
@@ -1258,7 +1258,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }
     _wantsSearchBuffer = NO;
     [mutableState didSynchronize:resetOverflow];
-    DLog(@"End overflow=%@ haveScrolled=%@", @(overflow), @(_state.currentGrid.haveScrolled));
+    DLog(@"%@: End overflow=%@ haveScrolled=%@", self, @(overflow), @(_state.currentGrid.haveScrolled));
     return (VT100SyncResult) {
         .overflow = overflow,
         .haveScrolled = _state.currentGrid.haveScrolled
