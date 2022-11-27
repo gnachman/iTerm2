@@ -123,35 +123,35 @@
     // First, find the splitter that was clicked on. It will be the one closest
     // to the mouse. The OS seems to give a bit of wiggle room so it's not
     // necessary exactly under the mouse.
-    int clickedOnSplitterIndex = -1;
+    __block int clickedOnSplitterIndex = -1;
     NSArray *subviews = [self subviews];
     NSPoint locationInWindow = [theEvent locationInWindow];
     locationInWindow.y--;
-    NSPoint locationInView = [self convertPoint:locationInWindow fromView:nil];
-    int x = 0;
-    int y = 0;
-    int bestDistance = -1;
+    const NSPoint locationInView = [self convertPoint:locationInWindow fromView:nil];
+    __block int x = 0;
+    __block int y = 0;
+    __block int bestDistance = -1;
     const BOOL isVertical = [self isVertical];
     if (isVertical) {
-        int mouseX = locationInView.x;
+        const int mouseX = locationInView.x;
         x = 0;
-        int bestX = 0;
-        for (int i = 0; i < subviews.count; i++) {
-            x += [[subviews objectAtIndex:i] frame].size.width;
+        __block int bestX = 0;
+        [subviews enumerateObjectsUsingBlock:^(NSView *subview, NSUInteger i, BOOL * _Nonnull stop) {
+            x += [subview frame].size.width;
             if (bestDistance < 0 || abs(x - mouseX) < bestDistance) {
                 bestDistance = abs(x - mouseX);
                 clickedOnSplitterIndex = i;
                 bestX = x;
             }
             x += [self dividerThickness];
-        }
+        }];
         x = bestX;
     } else {
-        int mouseY = locationInView.y;
-        int bestY = 0;
+        const int mouseY = locationInView.y;
+        __block int bestY = 0;
         y = 0;
-        for (int i = 0; i < subviews.count - 1; i++) {
-            float subviewHeight = [[subviews objectAtIndex:i] frame].size.height;
+        [subviews enumerateObjectsUsingBlock:^(NSView *subview, NSUInteger i, BOOL * _Nonnull stop) {
+            const float subviewHeight = [subview frame].size.height;
             y += subviewHeight;
             if (bestDistance < 0 || abs(y - mouseY) < bestDistance) {
                 bestDistance = abs(y - mouseY);
@@ -159,7 +159,7 @@
                 bestY = y;
             }
             y += [self dividerThickness];
-        }
+        }];
         y = bestY;
     }
 

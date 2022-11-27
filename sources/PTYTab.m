@@ -5335,7 +5335,13 @@ typedef struct {
 
 - (NSArray<PTYSession *> *)sessionsAdjacentToSplitter:(int)splitterIndex
                                                    of:(PTYSplitView *)splitView {
+    if (splitterIndex < 0 || splitterIndex >= splitView.subviews.count) {
+        return @[];
+    }
     NSArray<PTYSession *> *before = [self sessionsUnderView:splitView.subviews[splitterIndex]];
+    if (splitterIndex + 1 >= splitView.subviews.count) {
+        return before;
+    }
     NSArray<PTYSession *> *after = [self sessionsUnderView:splitView.subviews[splitterIndex + 1]];
     return [before arrayByAddingObjectsFromArray:after];
 }
@@ -5358,29 +5364,31 @@ typedef struct {
     [self updateUseMetal];
     // Find a session view adjacent to the moved splitter.
     NSArray *subviews = [splitView subviews];
-    NSView *theView = [subviews objectAtIndex:splitterIndex];  // the view right of or below the dragged splitter.
-    while ([theView isKindOfClass:[NSSplitView class]]) {
-        NSSplitView *subSplitView = (NSSplitView *)theView;
-        theView = [[subSplitView subviews] objectAtIndex:0];
-    }
-    SessionView *sessionView = (SessionView *)theView;
-    PTYSession *session = [self sessionForSessionView:sessionView];
-
-    // Determine the number of characters moved
-    NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
-    int amount;
-    if (pxMoved.width) {
-        amount = pxMoved.width / cellSize.width;
-    } else {
-        amount = pxMoved.height / cellSize.height;
-    }
-
-    // Ask the tmux server to perform the move and we'll update our layout when
-    // it finishes.
-    if (amount != 0) {
-        [tmuxController_ windowPane:[session tmuxPane]
-                          resizedBy:amount
-                       horizontally:[splitView isVertical]];
+    NSView *theView = [subviews uncheckedObjectAtIndex:splitterIndex];  // the view right of or below the dragged splitter.
+    if (theView) {
+        while ([theView isKindOfClass:[NSSplitView class]]) {
+            NSSplitView *subSplitView = (NSSplitView *)theView;
+            theView = [[subSplitView subviews] objectAtIndex:0];
+        }
+        SessionView *sessionView = (SessionView *)theView;
+        PTYSession *session = [self sessionForSessionView:sessionView];
+        
+        // Determine the number of characters moved
+        NSSize cellSize = [PTYTab cellSizeForBookmark:[self.tmuxController profileForWindow:self.tmuxWindow]];
+        int amount;
+        if (pxMoved.width) {
+            amount = pxMoved.width / cellSize.width;
+        } else {
+            amount = pxMoved.height / cellSize.height;
+        }
+        
+        // Ask the tmux server to perform the move and we'll update our layout when
+        // it finishes.
+        if (amount != 0) {
+            [tmuxController_ windowPane:[session tmuxPane]
+                              resizedBy:amount
+                           horizontally:[splitView isVertical]];
+        }
     }
     [self updateUseMetal];
 }
