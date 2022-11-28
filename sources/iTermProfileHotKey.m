@@ -168,7 +168,9 @@ static NSString *const kArrangement = @"Arrangement";
         return;
     }
     [self getWindowControllerFromProfile:[self profile] url:url completion:^(PseudoTerminal *windowController) {
-        self.windowController = [windowController weakSelf];
+        if (_windowController.weaklyReferencedObject == nil) {
+            self.windowController = [windowController weakSelf];
+        }
         if (completion) {
             completion();
         }
