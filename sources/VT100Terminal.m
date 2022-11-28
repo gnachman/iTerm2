@@ -3172,6 +3172,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
                                                              hexEncodedKey,
                                                              [@"256" hexEncodedString]]]];
+                ok = YES;
                 break;
             case kDcsTermcapTerminfoRequestNumberOfColors2:
                 [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
@@ -3182,6 +3183,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
                                                              hexEncodedKey,
                                                              [@"8" hexEncodedString]]]];
+                ok = YES;
                 break;
 
             // key_backspace               kbs       kb     backspace key
