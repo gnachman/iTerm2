@@ -263,7 +263,8 @@ NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
                 continue;
             }
             VT100GridAbsCoordRange coordRange = [self absCoordRangeForInterval:imageMark.entry.interval];
-            if (![updated imageInUse:imageMark above:coordRange.end.y searchHeight:height]) {
+            if (![updated imageInUse:imageMark above:coordRange.end.y searchHeight:height] &&
+                imageMark.progenitor != nil) {
                 DLog(@"Not in use. Add to delete list.");
                 [marksToRemove addObject:imageMark.progenitor];
             }
