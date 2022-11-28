@@ -604,9 +604,6 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     // Are we currently enqueuing the bytes to write a focus report?
     BOOL _reportingFocus;
-
-    // Are we currently enqueuing the bytes to write a mouse report?
-    BOOL _reportingMouse;
 }
 
 @synthesize isDivorced = _divorced;
@@ -993,7 +990,6 @@ ITERM_WEAKLY_REFERENCEABLE
     [_sshWriteQueue release];
     [_lastNonFocusReportingWrite release];
     [_lastFocusReportDate release];
-    [_lastMouseReportDate release];
 
     [super dealloc];
 }
@@ -3030,11 +3026,6 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (!_reportingFocus) {
         self.lastNonFocusReportingWrite = [NSDate date];
-    }
-    if (_reportingMouse) {
-        self.lastMouseReportDate = [NSDate date];
-    } else {
-        self.lastNonMouseReportingWrite = [NSDate date];
     }
     [_shell writeTask:data];
 }
@@ -9805,27 +9796,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
          (unsigned long)eventType, (unsigned long)modifiers, button,
          VT100GridCoordDescription(coord), @(testOnly), @(_screen.terminalMouseMode),
          @(allowDragBeforeMouseDown));
-    _reportingMouse = YES;
-    const BOOL result = [self reallyReportMouseEvent:eventType
-                                           modifiers:modifiers
-                                              button:button
-                                          coordinate:coord
-                                               point:point
-                                              deltaY:deltaY
-                            allowDragBeforeMouseDown:allowDragBeforeMouseDown
-                                            testOnly:testOnly];
-    _reportingMouse = NO;
-    return result;
-}
 
-- (BOOL)reallyReportMouseEvent:(NSEventType)eventType
-                     modifiers:(NSUInteger)modifiers
-                        button:(MouseButtonNumber)button
-                    coordinate:(VT100GridCoord)coord
-                         point:(NSPoint)point
-                        deltaY:(CGFloat)deltaY
-      allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
-                      testOnly:(BOOL)testOnly {
     switch (eventType) {
         case NSEventTypeLeftMouseDown:
         case NSEventTypeRightMouseDown:
@@ -13027,43 +12998,21 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [self offerToTurnOffFocusReporting];
         return NO;
     }
-    if ([self wasMouseReportMadeVeryRecently] && ![self haveWrittenAnythingBesidesMouseReportVeryRecently]) {
-        [self offerToTurnOffMouseReportingOnHostChange];
-        return NO;
-    }
     return NO;
 }
 
-static const NSTimeInterval PTYSessionFocusOrMouseReportBellSquelchTimeIntervalThreshold = 0.1;
+static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshold = 0.1;
 
 - (BOOL)wasFocusReportedVeryRecently {
     NSDate *date = self.lastFocusReportDate;
     if (!date) {
         return NO;
     }
-    return -[date timeIntervalSinceNow] < PTYSessionFocusOrMouseReportBellSquelchTimeIntervalThreshold;
-}
-
-- (BOOL)wasMouseReportMadeVeryRecently {
-    NSDate *date = self.lastMouseReportDate;
-    if (!date) {
-        return NO;
-    }
-    return -[date timeIntervalSinceNow] < PTYSessionFocusOrMouseReportBellSquelchTimeIntervalThreshold;
+    return -[date timeIntervalSinceNow] < PTYSessionFocusReportBellSquelchTimeIntervalThreshold;
 }
 
 - (BOOL)haveWrittenAnythingBesidesFocusReportVeryRecently {
-    if (self.lastNonFocusReportingWrite == nil) {
-        return NO;
-    }
-    return -[self.lastNonFocusReportingWrite timeIntervalSinceNow] < PTYSessionFocusOrMouseReportBellSquelchTimeIntervalThreshold;
-}
-
-- (BOOL)haveWrittenAnythingBesidesMouseReportVeryRecently {
-    if (self.lastNonMouseReportingWrite == nil) {
-        return NO;
-    }
-    return -[self.lastNonMouseReportingWrite timeIntervalSinceNow] < PTYSessionFocusOrMouseReportBellSquelchTimeIntervalThreshold;
+    return -[self.lastNonFocusReportingWrite timeIntervalSinceNow] < PTYSessionFocusReportBellSquelchTimeIntervalThreshold;
 }
 
 - (NSString *)profileName {

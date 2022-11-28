@@ -104,8 +104,6 @@ TriggerDelegate> {
 @property(nonatomic, copy) NSString *cookie;
 @property(nonatomic, strong) NSDate *lastNonFocusReportingWrite;
 @property(nonatomic, strong) NSDate *lastFocusReportDate;
-@property(nonatomic, strong) NSDate *lastNonMouseReportingWrite;
-@property(nonatomic, strong) NSDate *lastMouseReportDate;
 
 - (void)queueAnnouncement:(iTermAnnouncementViewController *)announcement
                identifier:(NSString *)identifier;
