@@ -1216,7 +1216,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     }
     const NSRect documentVisibleRect = self.enclosingScrollView.documentVisibleRect;
     const int overflow = [_dataSource scrollbackOverflow];
-    const int firstRow = MAX(0, documentVisibleRect.origin.y / _lineHeight - overflow);
+    const int firstRow = MAX(0, documentVisibleRect.origin.y / _lineHeight - overflow) + _drawingHelper.numberOfIMELines;
     const NSRect result = [self visibleRectExcludingTopMarginStartingAtRow:firstRow];
     DLog(@"adjustedDocumentVisibleRect is %@", NSStringFromRect(result));
     return result;
@@ -1235,7 +1235,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     // called. Force the last lines to be drawn so the screen doesn't appear to jump as in issue
     // 9676.
     const int height = _dataSource.height;
-    const CGFloat virtualOffset = (_dataSource.numberOfLines - height) * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const CGFloat virtualOffset = (_dataSource.numberOfLines - height + _drawingHelper.numberOfIMELines) * _lineHeight - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     DLog(@"Force draw last rows. numberOfLines=%@ height=%@ lineHeight=%@ bottomMargins=%@ -> virtualOffset=%@",
          @(_dataSource.numberOfLines), @(height), @(_lineHeight), @([iTermPreferences intForKey:kPreferenceKeyTopBottomMargins]), @(virtualOffset));
     return virtualOffset;
@@ -1330,7 +1330,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 
 - (NSRect)bottommostRectExcludingTopMargin {
     const int height = _dataSource.height;
-    return [self visibleRectExcludingTopMarginStartingAtRow:_dataSource.numberOfLines - height];
+    return [self visibleRectExcludingTopMarginStartingAtRow:_dataSource.numberOfLines - height + _drawingHelper.numberOfIMELines];
 }
 
 - (NSRect)visibleRectExcludingTopMarginStartingAtRow:(int)row {

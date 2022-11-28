@@ -118,7 +118,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 
 - (void)setDebugString:(NSString *)debugString;
 
-- (const iTermData *const)lineForRow:(int)y;
+- (ScreenCharArray *)screenCharArrayForRow:(int)y;
 
 - (CGRect)relativeFrame;
 - (CGRect)containerRect;

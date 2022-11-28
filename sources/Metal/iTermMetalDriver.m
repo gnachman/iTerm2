@@ -602,9 +602,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqBuildRowData ofBlock:^{
         [self addRowDataToFrameData:frameData];
     }];
-    for (iTermMetalRowData *rowData in frameData.rows) {
-        [rowData.lineData checkForOverrun];
-    }
 
     // If we're rendering to an intermediate texture because there's something complicated
     // behind text and we need to use the fancy subpixel antialiasing algorithm, create it now.
@@ -621,9 +618,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqUpdateRenderers ofBlock:^{
         [self updateRenderersForNewFrameData:frameData];
     }];
-    for (iTermMetalRowData *rowData in frameData.rows) {
-        [rowData.lineData checkForOverrun];
-    }
 
     // Create each renderer's transient state, which its per-frame object.
     __block id<MTLCommandBuffer> commandBuffer;
@@ -632,9 +626,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         frameData.commandBuffer = commandBuffer;
         [self createTransientStatesWithFrameData:frameData view:view commandBuffer:commandBuffer];
     }];
-    for (iTermMetalRowData *rowData in frameData.rows) {
-        [rowData.lineData checkForOverrun];
-    }
 
     // Copy state from frame data to transient states
     [frameData measureTimeForStat:iTermMetalFrameDataStatPqPopulateTransientStates ofBlock:^{
@@ -657,9 +648,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         [self enqueueDrawCallsForFrameData:frameData
                              commandBuffer:commandBuffer];
     }];
-    for (iTermMetalRowData *rowData in frameData.rows) {
-        [rowData.lineData checkForOverrun];
-    }
 }
 
 - (void)addRowDataToFrameData:(iTermMetalFrameData *)frameData {
@@ -671,7 +659,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         rowData.keysData = [iTermGlyphKeyData dataOfLength:sizeof(iTermMetalGlyphKey) * columns];
         rowData.attributesData = [iTermAttributesData dataOfLength:sizeof(iTermMetalGlyphAttributes) * columns];
         rowData.backgroundColorRLEData = [iTermBackgroundColorRLEsData dataOfLength:sizeof(iTermMetalBackgroundColorRLE) * columns];
-        rowData.lineData = [frameData.perFrameState lineForRow:y];
+        rowData.screenCharArray = [frameData.perFrameState screenCharArrayForRow:y];
         iTermMetalGlyphKey *glyphKeys = (iTermMetalGlyphKey *)rowData.keysData.mutableBytes;
         int drawableGlyphs = 0;
         int rles = 0;
@@ -700,7 +688,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         [rowData.attributesData checkForOverrun];
         [rowData.backgroundColorRLEData checkForOverrun];
         [frameData.debugInfo addRowData:rowData];
-        [rowData.lineData checkForOverrun];
     }
 }
 

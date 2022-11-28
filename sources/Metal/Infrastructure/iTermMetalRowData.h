@@ -10,6 +10,7 @@
 #import "iTermData.h"
 #import "iTermMarkRenderer.h"
 
+@class ScreenCharArray;
 @class iTermMetalImageRun;
 
 NS_CLASS_AVAILABLE(10_11, NA)
@@ -26,7 +27,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) iTermData *backgroundColorRLEData;
 
 // screen_char_t
-@property (nonatomic, strong) const iTermData *const lineData;
+@property (nonatomic, strong) ScreenCharArray *screenCharArray;
 
 @property (nonatomic) int numberOfBackgroundRLEs;
 

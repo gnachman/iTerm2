@@ -16,6 +16,7 @@
 #import "iTermSelection.h"
 #import "iTermTextDrawingHelper.h"
 #import "PTYTextView.h"
+#import "ScreenCharArray.h"
 #import "VT100Screen.h"
 #import "VT100ScreenMark.h"
 
@@ -23,10 +24,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 @implementation iTermMetalPerFrameStateRow
 
+- (instancetype)initEmptyFrom:(iTermMetalPerFrameStateRow *)source {
+    self = [super init];
+    if (self) {
+        _date = source->_date;
+        _screenCharLine = [ScreenCharArray emptyLineOfLength:source->_screenCharLine.length];
+        _selectedIndexSet = [NSIndexSet indexSet];
+        _markStyle = @(iTermMarkStyleNone);
+    }
+    return self;
+}
+
 - (instancetype)initWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                              textView:(PTYTextView *)textView
                                screen:(VT100Screen *)screen
-                              rowSize:(size_t)rowSize
+                                width:(size_t)width
                   allowOtherMarkStyle:(BOOL)allowOtherMarkStyle
                     timestampsEnabled:(BOOL)timestampsEnabled
                                   row:(int)i
@@ -36,19 +48,9 @@ NS_ASSUME_NONNULL_BEGIN
         if (timestampsEnabled) {
             _date = [textView drawingHelperTimestampForLine:i];
         }
-        iTermData *data = [iTermScreenCharData dataOfLength:rowSize];
-        screen_char_t *myBuffer = data.mutableBytes;
-        ITAssertWithMessage(rowSize == (screen.width + 1) * sizeof(screen_char_t),
-                            @"I was given row size of %@ but the right value is %@",
-                            @(rowSize),
-                            @((screen.width + 1) * sizeof(screen_char_t)));
-        const screen_char_t *line = [screen getLineAtIndex:i withBuffer:myBuffer];
+        _screenCharLine = [[screen screenCharArrayForLine:i] paddedOrTruncatedToLength:width];
+        [_screenCharLine makeSafe];
 
-        if (line != myBuffer) {
-            memcpy(myBuffer, line, rowSize);
-        }
-        [data checkForOverrun];
-        _screenCharLine = data;
         _selectedIndexSet = [textView.selection selectedIndexesIncludingTabFillersInAbsoluteLine:totalScrollbackOverflow + i];
 
         NSData *findMatches = [drawingHelper.delegate drawingHelperMatchesOnLine:i];
@@ -90,6 +92,10 @@ NS_ASSUME_NONNULL_BEGIN
 
 }
 
+- (iTermMetalPerFrameStateRow *)emptyCopy {
+    return [[iTermMetalPerFrameStateRow alloc] initEmptyFrom:self];
+}
+
 @end
 
 @implementation iTermMetalPerFrameStateRowFactory {
@@ -124,7 +130,7 @@ NS_ASSUME_NONNULL_BEGIN
     return [[iTermMetalPerFrameStateRow alloc] initWithDrawingHelper:_drawingHelper
                                                             textView:_textView
                                                               screen:_screen
-                                                             rowSize:(_width + 1) * sizeof(screen_char_t)
+                                                               width:_width
                                                  allowOtherMarkStyle:_allowOtherMarkStyle
                                                    timestampsEnabled:_timestampsEnabled
                                                                  row:line

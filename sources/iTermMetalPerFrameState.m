@@ -256,8 +256,7 @@ typedef struct {
         _cursorInfo.type = drawingHelper.cursorType;
         _cursorInfo.cursorColor = [self backgroundColorForCursor];
         {
-            iTermData *lineData = _rows[_cursorInfo.coord.y]->_screenCharLine;
-            const screen_char_t *const line = (const screen_char_t *const)lineData.bytes;
+            const screen_char_t *const line = _rows[_cursorInfo.coord.y]->_screenCharLine.line;
             const screen_char_t screenChar = line[_cursorInfo.coord.x];
             if (screenChar.code) {
                 if (ScreenCharIsDWC_RIGHT(screenChar)) {
@@ -316,7 +315,6 @@ typedef struct {
                     }
                 }
             }
-            [lineData checkForOverrun];
         }
     } else {
         _cursorInfo.cursorVisible = NO;
@@ -434,6 +432,25 @@ typedef struct {
     [textView.indicatorsHelper didDraw];
 }
 
+- (screen_char_t)screenCharStyledForMarkedText:(screen_char_t)input {
+    screen_char_t c = input;
+    c.foregroundColor = ALTSEM_DEFAULT;
+    c.fgGreen = 0;
+    c.fgBlue = 0;
+    c.foregroundColorMode = ColorModeAlternate;
+
+    c.backgroundColor = ALTSEM_DEFAULT;
+    c.bgGreen = 0;
+    c.bgBlue = 0;
+    c.backgroundColorMode = ColorModeAlternate;
+
+    c.underline = YES;
+    c.underlineStyle = VT100UnderlineStyleSingle;
+    c.strikethrough = NO;
+
+    return c;
+}
+
 - (void)copyMarkedText:(NSString *)str
         cursorLocation:(int)cursorLocation
                     to:(VT100GridCoord)startCoord
@@ -470,56 +487,32 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         justWrapped = YES;
     }
 
-    // If the screen contents are getting moved up to make room for a multi-row IME line, clear out the lines at the bottom it adds.
-    for (int i = 0; i < numberOfIMELines; i++) {
-        const int y = _rows.count - i - 1;
-        const iTermData *lineData = _rows[y]->_screenCharLine;
-        screen_char_t *line = (screen_char_t *)lineData.mutableBytes;
-        memset(line, 0, sizeof(screen_char_t) * gridWidth);
-    }
     _imeInfo = [[iTermMetalIMEInfo alloc] init];
+    // i indexes into buf.
     for (int i = 0; i < len; i++) {
         if (coord.y >= 0 && coord.y < _rows.count) {
             if (i == cursorIndex) {
                 foundCursor = YES;
                 _imeInfo.cursorCoord = coord;
             }
-            const iTermData *lineData = _rows[coord.y]->_screenCharLine;
-            screen_char_t *line = (screen_char_t *)lineData.mutableBytes;
-            screen_char_t c = buf[i];
-            c.foregroundColor = ALTSEM_DEFAULT;
-            c.fgGreen = 0;
-            c.fgBlue = 0;
-            c.foregroundColorMode = ColorModeAlternate;
 
-            c.backgroundColor = ALTSEM_DEFAULT;
-            c.bgGreen = 0;
-            c.bgBlue = 0;
-            c.backgroundColorMode = ColorModeAlternate;
-
-            c.underline = YES;
-            c.underlineStyle = VT100UnderlineStyleSingle;
-            c.strikethrough = NO;
-            
-            if (i + 1 < len &&
-                coord.x == gridWidth -1 &&
-                ScreenCharIsDWC_RIGHT(buf[i+1]) &&
-                !buf[i+1].complexChar) {
+            const BOOL wouldSplit = (i + 1 < len &&
+                                     coord.x == gridWidth - 1 &&
+                                     ScreenCharIsDWC_RIGHT(buf[i+1]) &&
+                                     !buf[i+1].complexChar);
+            if (wouldSplit) {
                 // Bump DWC to start of next line instead of splitting it
-                c.code = ' ';
-                c.complexChar = NO;
                 i--;
             } else {
                 if (!foundStart) {
                     foundStart = YES;
                     [_imeInfo setRangeStart:coord];
                 }
-                const NSInteger offset = coord.x * sizeof(screen_char_t);
-                assert(offset < (NSInteger)lineData.length);
-                line[coord.x] = c;
+                ScreenCharArray *sca = _rows[coord.y]->_screenCharLine;
+                const screen_char_t styled = [self screenCharStyledForMarkedText:buf[i]];
+                _rows[coord.y]->_screenCharLine = [sca screenCharArrayBySettingCharacterAtIndex:coord.x
+                                                                                             to:styled];
             }
-            [lineData checkForOverrun];
-
         }
         justWrapped = NO;
         coord.x++;
@@ -677,8 +670,8 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     if (_configuration->_timestampsEnabled) {
         *datePtr = _rows[row]->_date;
     }
-    const iTermData *lineData = _rows[row]->_screenCharLine;
-    const screen_char_t *const line = (const screen_char_t *const)lineData.bytes;
+    const ScreenCharArray *lineData = [_rows[row]->_screenCharLine paddedToAtLeastLength:width];
+    const screen_char_t *const line = (const screen_char_t *const)lineData.line;
     iTermExternalAttributeIndex *eaIndex = _rows[row]->_eaIndex;
     NSIndexSet *selectedIndexes = _rows[row]->_selectedIndexSet;
     NSData *findMatches = _rows[row]->_matches;
@@ -890,7 +883,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             const int italicBit = line[x].italic ? (1 << 1) : 0;
             glyphKeys[x].typeface = (boldBit | italicBit);
             glyphKeys[x].drawable = YES;
-            if (x < width &&
+            if (x + 1 < width &&
                 line[x + 1].complexChar &&
                 !(!line[x].complexChar && line[x].code < 128) &&
                 ComplexCharCodeIsSpacingCombiningMark(line[x + 1].code)) {
@@ -933,7 +926,6 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
             attributes[_cursorInfo.coord.x].foregroundColor.w = 1;
         }
     }
-    [lineData checkForOverrun];
 }
 
 - (BOOL)useThinStrokesWithAttributes:(iTermMetalGlyphAttributes *)attributes {
@@ -1225,8 +1217,9 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 - (void)setDebugString:(NSString *)debugString {
-    iTermData *data = _rows[0]->_screenCharLine;
-    screen_char_t *line = data.mutableBytes;
+    NSMutableData *mutableData NS_VALID_UNTIL_END_OF_SCOPE;
+    mutableData = [_rows[0]->_screenCharLine mutableLineData];
+    screen_char_t *line = (screen_char_t *)mutableData.mutableBytes;
     for (int i = 0, o = MAX(0, _configuration->_gridSize.width - (int)debugString.length);
          i < debugString.length && o < _configuration->_gridSize.width;
          i++, o++) {
@@ -1237,10 +1230,12 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                   gridSize:_configuration->_gridSize];
         line[o].code = [debugString characterAtIndex:i];
     }
-    [data checkForOverrun];
+    _rows[0]->_screenCharLine = [[ScreenCharArray alloc] initWithData:mutableData
+                                                             metadata:_rows[0]->_screenCharLine.metadata
+                                                         continuation:_rows[0]->_screenCharLine.continuation];
 }
 
-- (const iTermData *const)lineForRow:(int)y {
+- (id)screenCharArrayForRow:(int)y {
     return _rows[y]->_screenCharLine;
 }
 
@@ -1386,13 +1381,13 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     return [iTermSmartCursorColor neighborsForCursorAtCoord:_cursorInfo.coord
                                                    gridSize:_configuration->_gridSize
                                                  lineSource:^const screen_char_t *(int y) {
-                                                     const int i = y + self->_numberOfScrollbackLines - self->_visibleRange.start.y;
-                                                     if (i >= 0 && i < self->_rows.count) {
-                                                         return (const screen_char_t *)self->_rows[i]->_screenCharLine.bytes;
-                                                     } else {
-                                                         return nil;
-                                                     }
-                                                 }];
+        const int i = y + self->_numberOfScrollbackLines - self->_visibleRange.start.y;
+        if (i >= 0 && i < self->_rows.count) {
+            return (const screen_char_t *)self->_rows[i]->_screenCharLine.line;
+        } else {
+            return nil;
+        }
+    }];
 }
 
 - (vector_float4)fastCursorColorForCharacter:(screen_char_t)screenChar

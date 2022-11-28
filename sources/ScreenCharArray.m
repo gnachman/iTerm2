@@ -302,5 +302,44 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     return theCopy;
 }
 
+- (ScreenCharArray *)paddedOrTruncatedToLength:(NSUInteger)newLength {
+    if (newLength == self.length) {
+        return self;
+    }
+    if (newLength < self.length) {
+        return [[ScreenCharArray alloc] initWithCopyOfLine:self.line length:newLength continuation:self.continuation];
+    }
+    return [self paddedToLength:newLength eligibleForDWC:NO];
+}
+
+- (ScreenCharArray *)paddedToAtLeastLength:(NSUInteger)newLength {
+    if (newLength <= self.length) {
+        return self;
+    }
+    return [self paddedToLength:newLength eligibleForDWC:NO];
+}
+
+- (NSMutableData *)mutableLineData {
+    return [[NSMutableData alloc] initWithBytes:self.line length:sizeof(screen_char_t) * self.length];
+}
+
+- (ScreenCharArray *)screenCharArrayBySettingCharacterAtIndex:(int)i
+                                                           to:(screen_char_t)c {
+    assert(i >= 0);
+    assert(i < self.length);
+    
+    NSMutableData *temp = [self mutableLineData];
+    screen_char_t *line = (screen_char_t *)temp.mutableBytes;
+    line[i] = c;
+    return [[ScreenCharArray alloc] initWithData:temp metadata:self.metadata continuation:self.continuation];
+}
+
+- (void)makeSafe {
+    if (_data != nil) {
+        return;
+    }
+    _data = [NSData dataWithBytes:_line length:_length * sizeof(screen_char_t)];
+    _line = _data.bytes;
+}
 @end
 

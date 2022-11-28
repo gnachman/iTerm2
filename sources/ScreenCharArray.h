@@ -74,7 +74,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (ScreenCharArray *)paddedToLength:(int)length eligibleForDWC:(BOOL)eligibleForDWC;
 
 - (ScreenCharArray *)copyByZeroingRange:(NSRange)range;
-
+- (ScreenCharArray *)paddedOrTruncatedToLength:(NSUInteger)newLength;
+- (ScreenCharArray *)paddedToAtLeastLength:(NSUInteger)newLength;
+- (NSMutableData *)mutableLineData;
+- (ScreenCharArray *)screenCharArrayBySettingCharacterAtIndex:(int)i
+                                                           to:(screen_char_t)c;
+// Ensures that if this object outlives the raw pointer it was initialized with that there won't be a dangling pointer.
+- (void)makeSafe;
 @end
 
 NS_ASSUME_NONNULL_END

@@ -10,6 +10,7 @@
 #import "iTermMetalGlyphKey.h"
 #import "iTermTextRendererCommon.h"
 #import "ScreenChar.h"
+#import "ScreenCharArray.h"
 
 @implementation iTermMetalRowData
 
@@ -66,8 +67,8 @@
 
     @autoreleasepool {
         NSMutableString *lineString = [NSMutableString string];
-        const screen_char_t *const line = (screen_char_t *)_lineData.mutableBytes;
-        for (int i = 0; i < _lineData.length / sizeof(screen_char_t); i++) {
+        const screen_char_t *const line = _screenCharArray.line;
+        for (int i = 0; i < _screenCharArray.length; i++) {
             screen_char_t c = line[i];
             [lineString appendFormat:@"%4d: %@\n", i, [self formatChar:c]];
         }
