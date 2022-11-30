@@ -174,15 +174,19 @@ NSString *const PTYSessionSlownessEventExecute = @"execute";
 }
 
 - (void)loadFromProfileArray:(NSArray *)array {
+    DLog(@"%@", [NSThread callStackSymbols]);
     NSMutableDictionary<NSDictionary *, NSArray<Trigger *> *> *table = [[_triggers classifyWithBlock:^id(Trigger *trigger) {
         return [trigger dictionaryValue];
     }] mutableCopy];
     _triggers = [array mapWithBlock:^Trigger *(NSDictionary *profileDict) {
+        DLog(@"%@", profileDict);
         NSDictionary *dict = [Trigger triggerNormalizedDictionary:profileDict];
         NSArray<Trigger *> *triggers = table[dict];
         if (!triggers.count) {
+            DLog(@"This is a new trigger");
             return [Trigger triggerFromDict:profileDict];
         }
+        DLog(@"Use second trigger from %@", triggers);
         table[dict] = [triggers arrayByRemovingFirstObject];
         return triggers[0];
     }];

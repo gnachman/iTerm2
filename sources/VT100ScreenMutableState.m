@@ -350,7 +350,7 @@ static _Atomic int gPerformingJoinedBlock;
 #pragma mark - Accessors
 
 - (void)setConfig:(VT100MutableScreenConfiguration *)config {
-    DLog(@"begin %@", config);
+    DLog(@"%@ begin %@", self, config);
     assert(VT100ScreenMutableState.performingJoinedBlock);
     [super setConfig:config];
     NSSet<NSString *> *dirty = [config dirtyKeyPaths];
