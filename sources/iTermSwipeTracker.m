@@ -71,6 +71,11 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
     DLog(@"Got event %@", iTermShortEventPhasesString(event));
     while (1) {
         @autoreleasepool {
+            if ([self isSwipeTrackingDisabled]) {
+                DLog(@"Abort because swipe tracking was diabled");
+                [self abort];
+                break;
+            }
             DLog(@"Continue tracking.");
             if (event) {
                 [self internalHandleEvent:event];
@@ -90,10 +95,19 @@ NSString *const iTermSwipeHandlerCancelSwipe = @"iTermSwipeHandlerCancelSwipe";
     return YES;
 }
 
+- (BOOL)isSwipeTrackingDisabled {
+    // Based on the debug log in 10707 at timestamp 1666046431.466278 the osEnabled flag is changing
+    // after the swipe begins. I blame Logitech for getting overly creative.
+    const BOOL osEnabled = [NSEvent isSwipeTrackingFromScrollEventsEnabled];
+    const BOOL appEnabled = [iTermAdvancedSettingsModel allowInteractiveSwipeBetweenTabs];
+    DLog(@"osEnabled=%@ appEnabled=%@", @(osEnabled), @(appEnabled));
+    return (!osEnabled ||
+            !appEnabled);
+}
+
 - (BOOL)internalHandleEvent:(NSEvent *)event {
     DLog(@"internalHandleEvent: %@", iTermShortEventPhasesString(event));
-    if (![NSEvent isSwipeTrackingFromScrollEventsEnabled] ||
-        ![iTermAdvancedSettingsModel allowInteractiveSwipeBetweenTabs]) {
+    if ([self isSwipeTrackingDisabled]) {
         DLog(@"Swipe tracking not enabled");
         return NO;
     }
