@@ -623,14 +623,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionTextColor = @"PSMTabBarControlOp
     // remove tracking
     [[NSNotificationCenter defaultCenter] removeObserver:cell];
 
-    if ([cell closeButtonTrackingTag] != 0) {
-        [self removeTrackingRect:[cell closeButtonTrackingTag]];
-        [cell setCloseButtonTrackingTag:0];
-    }
-    if ([cell cellTrackingTag] != 0) {
-        [self removeTrackingRect:[cell cellTrackingTag]];
-        [cell setCellTrackingTag:0];
-    }
+    [cell removeCloseButtonTrackingRectFrom:self];
+    [cell removeCellTrackingRectFrom:self];
     [self removeAllToolTips];
 
     // pull from collection
@@ -1153,15 +1147,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionTextColor = @"PSMTabBarControlOp
 }
 
 - (void)removeCell:(PSMTabBarCell *)cell {
-    if ([cell closeButtonTrackingTag] != 0) {
-        [self removeTrackingRect:[cell closeButtonTrackingTag]];
-        [cell setCloseButtonTrackingTag:0];
-    }
-
-    if ([cell cellTrackingTag] != 0) {
-        [self removeTrackingRect:[cell cellTrackingTag]];
-        [cell setCellTrackingTag:0];
-    }
+    [cell removeCloseButtonTrackingRectFrom:self];
+    [cell removeCellTrackingRectFrom:self];
     [[self cells] removeObject:cell];
 }
 
@@ -1173,15 +1160,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionTextColor = @"PSMTabBarControlOp
     for (i = 0; i < cellCount; i++) {
         id cell = [_cells objectAtIndex:i];
         [[NSNotificationCenter defaultCenter] removeObserver:cell];
-        if ([cell closeButtonTrackingTag] != 0) {
-            [self removeTrackingRect:[cell closeButtonTrackingTag]];
-            [cell setCloseButtonTrackingTag:0];
-        }
-
-        if ([cell cellTrackingTag] != 0) {
-            [self removeTrackingRect:[cell cellTrackingTag]];
-            [cell setCellTrackingTag:0];
-        }
+        [cell removeCloseButtonTrackingRectFrom:self];
+        [cell removeCellTrackingRectFrom:self];
     }
 
     //remove all tooltip rects
@@ -1308,11 +1288,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionTextColor = @"PSMTabBarControlOp
                     NSRect closeRect = [cell closeButtonRectForFrame:cellRect];
 
                     // Add the tracking rect for the close button highlight.
-                    if ([cell closeButtonTrackingTag]) {
-                        [self removeTrackingRect:[cell closeButtonTrackingTag]];
-                    }
-                    tag = [self addTrackingRect:closeRect owner:cell userData:nil assumeInside:NO];
-                    [cell setCloseButtonTrackingTag:tag];
+                    [cell removeCloseButtonTrackingRectFrom:self];
+                    [cell setCloseButtonTrackingRect:closeRect userData:nil assumeInside:NO view:self];
 
                     // highlight the close button if the currently selected tab has the mouse over it
                     // this will happen if the user clicks a close button in a tab and all the tabs are
@@ -1327,11 +1304,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionTextColor = @"PSMTabBarControlOp
                 }
 
             // Add entire-tab tracking rect.
-            if ([cell cellTrackingTag]) {
-                [self removeTrackingRect:[cell cellTrackingTag]];
-            }
-            tag = [self addTrackingRect:cellRect owner:cell userData:nil assumeInside:NO];
-            [cell setCellTrackingTag:tag];
+            [cell removeCellTrackingRectFrom:self];
+            [cell setCellTrackingRect:cellRect userData:nil assumeInside:NO view:self];
             [cell setEnabled:YES];
 
             //add the tooltip tracking rect
@@ -2462,8 +2436,8 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionTextColor = @"PSMTabBarControlOp
     [movingCell setControlView:destinationTabBar];
 
     // Remove the tracking rects and bindings registered on the old tab.
-    [self removeTrackingRect:[movingCell closeButtonTrackingTag]];
-    [self removeTrackingRect:[movingCell cellTrackingTag]];
+    [movingCell removeCloseButtonTrackingRectFrom:self];
+    [movingCell removeCellTrackingRectFrom:self];
     [self removeTabForCell:movingCell];
 
     if ([self.delegate respondsToSelector:@selector(tabView:willDropTabViewItem:inTabBar:)]) {

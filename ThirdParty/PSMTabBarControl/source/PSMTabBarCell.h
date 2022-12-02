@@ -33,8 +33,6 @@
 @property(nonatomic, readonly) BOOL closeButtonVisible;
 @property(nonatomic, assign) int tabState;
 @property(nonatomic, assign) NSRect frame;
-@property(nonatomic, assign) NSTrackingRectTag cellTrackingTag;  // right side tracking, if dragging
-@property(nonatomic, assign) NSTrackingRectTag closeButtonTrackingTag;  // left side tracking, if dragging
 @property(nonatomic, assign) BOOL isInOverflowMenu;
 @property(nonatomic, assign) BOOL closeButtonPressed;
 @property(nonatomic, assign) BOOL closeButtonOver;
@@ -80,5 +78,18 @@
 // iTerm additions
 - (void)updateForStyle;
 - (void)updateHighlight;
+
+- (void)removeCloseButtonTrackingRectFrom:(NSView *)view;
+- (void)removeCellTrackingRectFrom:(NSView *)view;
+
+- (void)setCellTrackingRect:(NSRect)rect
+                   userData:(NSDictionary *)data
+               assumeInside:(BOOL)flag
+                       view:(NSView *)view;
+
+- (void)setCloseButtonTrackingRect:(NSRect)rect
+                          userData:(NSDictionary *)data
+                      assumeInside:(BOOL)flag
+                              view:(NSView *)view;
 
 @end
