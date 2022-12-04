@@ -257,7 +257,8 @@ typedef struct {
         _cursorInfo.cursorColor = [self backgroundColorForCursor];
         {
             const screen_char_t *const line = _rows[_cursorInfo.coord.y]->_screenCharLine.line;
-            const screen_char_t screenChar = line[_cursorInfo.coord.x];
+            const screen_char_t screenChar = _cursorInfo.coord.x < _rows[_cursorInfo.coord.y]->_screenCharLine.length ? line[_cursorInfo.coord.x] : (screen_char_t){0};
+            
             if (screenChar.code) {
                 if (ScreenCharIsDWC_RIGHT(screenChar)) {
                     _cursorInfo.doubleWidth = NO;
