@@ -50,6 +50,7 @@ extern NSString *const iTermSessionDidChangeTabNotification;
 - (SessionView *)removeAndClearSession;
 - (void)moveSessionToNewWindow:(PTYSession *)movingSession
                        atPoint:(NSPoint)point;
+- (void)moveSession:(PTYSession *)movingSession toTabInWindow:(NSWindow *)window;
 
 // Move the window by |distance|.
 - (void)moveWindowBy:(NSPoint)distance;

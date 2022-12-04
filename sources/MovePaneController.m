@@ -85,6 +85,39 @@ NSString *const iTermSessionDidChangeTabNotification = @"iTermSessionDidChangeTa
     [window setFrameOrigin:origin];
 }
 
+- (void)moveSession:(PTYSession *)movingSession toTabInWindow:(NSWindow *)window {
+    PTYTab *oldTab = [movingSession.delegate.realParentWindow tabForSession:movingSession];
+    assert(oldTab);
+    if (oldTab.sessions.count < 2) {
+        return;
+    }
+
+    NSWindowController<iTermWindowController> *term = oldTab.realParentWindow;
+
+    if (movingSession.isTmuxClient) {
+        [[movingSession tmuxController] breakOutWindowPane:[movingSession tmuxPane]
+                                                toTabAside:term.terminalGuid];
+        return;
+    }
+    SessionView *oldView = movingSession.view;
+    [[oldView retain] autorelease];
+    [[movingSession retain] autorelease];
+
+    [oldTab removeSession:movingSession];
+    NSInteger i = [term.tabs indexOfObject:oldTab];
+    if (i == NSNotFound) {
+        // I don't think this should be possible. It is just paranoia.
+        i = term.tabs.count;
+    } else {
+        i += 1;
+    }
+    [term insertSession:movingSession atIndex:i];
+    [oldTab numberOfSessionsDidChange];
+    [term.currentTab numberOfSessionsDidChange];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionDidChangeTabNotification object:movingSession];
+    [movingSession didMoveSession];
+}
+
 - (void)moveSessionToNewWindow:(PTYSession *)movingSession atPoint:(NSPoint)point {
     if ([movingSession isTmuxClient]) {
         [[movingSession tmuxController] breakOutWindowPane:[movingSession tmuxPane]

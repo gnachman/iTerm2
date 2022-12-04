@@ -63,6 +63,7 @@ static NSString *const iTermTmuxControllerEncodingPrefixPerTabSettings = @"T_";
 
 static NSString *const iTermTmuxControllerSplitStateCompletion = @"completion";
 static NSString *const iTermTmuxControllerSplitStateInitialPanes = @"initial panes";
+static NSString *const iTermTmuxControllerPhonyAffinity = @"phony";
 
 // Unsupported global options:
 static NSString *const kAggressiveResize = @"aggressive-resize";
@@ -2081,9 +2082,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 {
     [windowPositions_ setObject:[NSValue valueWithPoint:screenPoint]
                          forKey:[NSNumber numberWithInt:windowPane]];
-    [gateway_ sendCommand:[NSString stringWithFormat:@"break-pane %@ \"%%%d\"", [self breakPaneWindowPaneFlag], windowPane]
-           responseTarget:nil
-         responseSelector:nil];
+    [self breakOutWindowPane:windowPane toTabAside:iTermTmuxControllerPhonyAffinity];
 }
 
 - (void)breakOutWindowPane:(int)windowPane toTabAside:(NSString *)sibling
@@ -2101,7 +2100,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 {
     if ([windowId hasPrefix:@"@"]) {
         windowId = [windowId substringFromIndex:1];
-        [affinities_ setValue:windowGuid equalToValue:windowId];
+        if ([windowGuid isEqualToString:iTermTmuxControllerPhonyAffinity]) {
+            _pendingWindows[@(windowId.intValue)] = [iTermTmuxPendingWindow trivialInstance];
+        } else {
+            [affinities_ setValue:windowGuid equalToValue:windowId];
+        }
     }
 }
 

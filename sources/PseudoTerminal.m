@@ -9780,6 +9780,12 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 }
 
+- (IBAction)moveSessionToTab:(id)sender {
+    [[MovePaneController sharedInstance] moveSession:[self currentSession]
+                                       toTabInWindow:self.window];
+
+}
+
 // Max window frame size that fits on screens.
 - (NSRect)maxFrame
 {
@@ -10109,6 +10115,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         return [[iTermToolbeltView configuredTools] count] > 0;
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self allSessions] count] > 1);
+    } else if ([item action] == @selector(moveSessionToTab:)) {
+        result = [self tabForSession:self.currentSession].sessions.count > 1;
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
                [item action] == @selector(openSplitVerticallySheet:)) {
         result = ![[self currentTab] isTmuxTab];

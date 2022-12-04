@@ -1340,6 +1340,9 @@ DQ
                                     <action selector="mergeAllWindows:" target="-1" id="Xzh-bw-9Mo"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="7sO-I5-Tdu">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
                             <menuItem title="Arrange Windows Horizontally" identifier="Arrange Windows Horizontally" id="1178">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
@@ -1352,13 +1355,22 @@ DQ
                                     <action selector="arrangeSplitPanesEvenly:" target="201" id="eE4-2D-fTq"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="1466">
+                                <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                            </menuItem>
                             <menuItem title="Move Session to Window" identifier="Move Session to Window" id="Hlz-4M-IYw">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="moveSessionToWindow:" target="-1" id="wG5-71-6aQ"/>
                                 </connections>
                             </menuItem>
-                            <menuItem isSeparatorItem="YES" id="1466">
+                            <menuItem title="Move Session to Tab" identifier="Move Session to Tab" id="GfE-qn-Fur">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="moveSessionToTab:" target="-1" id="gBR-Yc-45o"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="wb3-aB-v5h">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>
                             <menuItem title="Save Window Arrangement" keyEquivalent="S" identifier="Save Window Arrangement" id="1205">
