@@ -21,6 +21,7 @@ NSString *const iTermKeyBindingDictionaryKeyParameter = @"Text";
 NSString *const iTermKeyBindingDictionaryKeyLabel = @"Label";
 NSString *const iTermKeyBindingDictionaryKeyVersion = @"Version";
 NSString *const iTermKeyBindingDictionaryKeyEscaping = @"Escaping";
+NSString *const iTermKeyBindingDictionaryKeyApplyMode = @"Apply Mode";
 
 
 static NSString *GetProfileName(NSString *guid) {
@@ -65,30 +66,35 @@ static NSString *GetProfileName(NSString *guid) {
 
 + (instancetype)withAction:(KEY_ACTION)action
                  parameter:(NSString *)parameter
-                  escaping:(iTermSendTextEscaping)escaping {
+                  escaping:(iTermSendTextEscaping)escaping
+                 applyMode:(iTermActionApplyMode)applyMode {
     return [[self alloc] initWithDictionary:@{ iTermKeyBindingDictionaryKeyAction: @(action),
                                                iTermKeyBindingDictionaryKeyParameter: parameter ?: @"",
                                                iTermKeyBindingDictionaryKeyVersion: @2,
-                                               iTermKeyBindingDictionaryKeyEscaping: @(escaping)
+                                               iTermKeyBindingDictionaryKeyEscaping: @(escaping),
+                                               iTermKeyBindingDictionaryKeyApplyMode: @(applyMode)
     }];
 }
 
 + (instancetype)withAction:(KEY_ACTION)action
                  parameter:(NSString *)parameter
                      label:(NSString *)label
-                  escaping:(iTermSendTextEscaping)escaping {
+                  escaping:(iTermSendTextEscaping)escaping
+                 applyMode:(iTermActionApplyMode)applyMode {
     if (label) {
         return [[self alloc] initWithDictionary:@{ iTermKeyBindingDictionaryKeyAction: @(action),
                                                    iTermKeyBindingDictionaryKeyParameter: parameter ?: @"",
                                                    iTermKeyBindingDictionaryKeyLabel: label,
                                                    iTermKeyBindingDictionaryKeyVersion: @2,
-                                                   iTermKeyBindingDictionaryKeyEscaping: @(escaping)
+                                                   iTermKeyBindingDictionaryKeyEscaping: @(escaping),
+                                                   iTermKeyBindingDictionaryKeyApplyMode: @(applyMode)
         }];
     } else {
         return [[self alloc] initWithDictionary:@{ iTermKeyBindingDictionaryKeyAction: @(action),
                                                    iTermKeyBindingDictionaryKeyParameter: parameter ?: @"",
                                                    iTermKeyBindingDictionaryKeyVersion: @2,
-                                                   iTermKeyBindingDictionaryKeyEscaping: @(escaping)
+                                                   iTermKeyBindingDictionaryKeyEscaping: @(escaping),
+                                                   iTermKeyBindingDictionaryKeyApplyMode: @(applyMode)
         }];
     }
 }
@@ -119,6 +125,8 @@ static NSString *GetProfileName(NSString *guid) {
         _keyAction = [dictionary[iTermKeyBindingDictionaryKeyAction] intValue];
         _parameter = [dictionary[iTermKeyBindingDictionaryKeyParameter] ?: @"" copy];
         _label = [dictionary[iTermKeyBindingDictionaryKeyLabel] ?: @"" copy];
+        _applyMode = [dictionary[iTermKeyBindingDictionaryKeyApplyMode] unsignedIntegerValue];
+
         const int version = [dictionary[iTermKeyBindingDictionaryKeyVersion] intValue];
         if (version == 0) {
             _escaping = iTermSendTextEscapingCompatibility;
@@ -157,7 +165,9 @@ static NSString *GetProfileName(NSString *guid) {
                             iTermKeyBindingDictionaryKeyParameter: _parameter ?: @"",
                             iTermKeyBindingDictionaryKeyLabel: _label ?: [NSNull null],
                             iTermKeyBindingDictionaryKeyVersion: @(version),
-                            iTermKeyBindingDictionaryKeyEscaping: escaping };
+                            iTermKeyBindingDictionaryKeyEscaping: escaping,
+                            iTermKeyBindingDictionaryKeyApplyMode: @(_applyMode)
+    };
     return [temp dictionaryByRemovingNullValues];
 }
 
@@ -428,6 +438,20 @@ static NSString *GetProfileName(NSString *guid) {
             break;
     }
 
+    switch (self.applyMode) {
+        case iTermActionApplyModeCurrentSession:
+            return actionString;
+        case iTermActionApplyModeAllSessions:
+            return [NSString stringWithFormat:@"In all sessions, %@", actionString];
+        case iTermActionApplyModeUnfocusedSessions:
+            return [NSString stringWithFormat:@"In unfocused sessions, %@", actionString];
+        case iTermActionApplyModeAllInWindow:
+            return [NSString stringWithFormat:@"In all sessions in the window, %@", actionString];
+        case iTermActionApplyModeAllInTab:
+            return [NSString stringWithFormat:@"In all sessions in the tab, %@", actionString];
+        case iTermActionApplyModeBroadcasting:
+            return [NSString stringWithFormat:@"In all broadcasted-to sessions, %@", actionString];
+    }
     return actionString;
 }
 

@@ -371,6 +371,12 @@ static iTermController *gSharedInstance;
     }
 }
 
+- (NSArray<PTYSession *> *)allSessions {
+    return [_terminalWindows flatMapWithBlock:^NSArray *(PseudoTerminal *anObject) {
+        return anObject.allSessions;
+    }];
+}
+
 - (NSArray<PseudoTerminal *> *)terminalsSortedByNumber {
     return [_terminalWindows sortedArrayUsingComparator:^NSComparisonResult(PseudoTerminal *obj1, PseudoTerminal *obj2) {
         return [@([obj1 number]) compare:@([obj2 number])];

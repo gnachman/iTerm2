@@ -203,6 +203,7 @@ NSString *const iTermKeyMappingsLeaderDidChange = @"iTermKeyMappingsLeaderDidCha
         if (rowIndex >= 0 && rowIndex < [allKeys count]) {
             originalKeystroke = [[iTermKeystroke alloc] initWithSerialized:allKeys[rowIndex]];
         } else {
+            DLog(@"Invalid index %@", @(rowIndex));
             return;
         }
     } else if ([keyStroke keyInBindingDictionary:mutableKeyMapping]) {

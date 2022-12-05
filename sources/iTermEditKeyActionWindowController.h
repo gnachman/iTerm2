@@ -28,13 +28,14 @@ typedef NS_ENUM(NSUInteger, iTermEditKeyActionWindowControllerMode) {
 @property(nonatomic, strong) iTermKeystroke *currentKeystroke;
 @property(nonatomic, copy) NSString *touchBarItemID;
 @property(nonatomic, readonly) iTermKeystrokeOrTouchbarItem *keystrokeOrTouchbarItem;
-@property(nonatomic, copy) NSString *parameterValue;
+@property(nonatomic, readonly, copy) NSString *parameterValue;
 @property(nonatomic, copy) NSString *label;
-@property(nonatomic) int action;
+@property(nonatomic, readonly) int action;
 @property(nonatomic, readonly) BOOL ok;
 @property(nonatomic, readonly) iTermVariablesSuggestionContext suggestContext;
 @property(nonatomic, readonly) iTermAction *unboundAction;
 @property(nonatomic) iTermSendTextEscaping escaping;
+@property(nonatomic, readonly) iTermActionApplyMode applyMode;
 
 - (instancetype)init NS_UNAVAILABLE;
 - (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
@@ -45,5 +46,6 @@ typedef NS_ENUM(NSUInteger, iTermEditKeyActionWindowControllerMode) {
 @property(nonatomic) BOOL isNewMapping;
 
 @property(nonatomic, readonly) iTermEditKeyActionWindowControllerMode mode;
+- (void)setAction:(KEY_ACTION)keyAction parameter:(NSString *)parameter applyMode:(iTermActionApplyMode)applyMode;
 
 @end

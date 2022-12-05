@@ -24,6 +24,7 @@
                        action:(KEY_ACTION)action
                     parameter:(NSString *)parameter
                      escaping:(iTermSendTextEscaping)escaping
+                    applyMode:(iTermActionApplyMode)applyMode
                       version:(int)version {
     self = [super init];
     if (self) {
@@ -33,6 +34,7 @@
         static NSInteger nextIdentifier;
         _identifier = nextIdentifier++;
         _escaping = escaping;
+        _applyMode = applyMode;
         _version = version;
     }
     return self;
@@ -53,6 +55,7 @@
                         action:[dictionary[@"action"] intValue]
                      parameter:dictionary[@"parameter"] ?: @""
                       escaping:escaping
+                     applyMode:[dictionary[@"applyMode"] unsignedIntegerValue]
                        version:version];
     if (self) {
         _dictionary = [dictionary copy];
@@ -68,7 +71,8 @@
               @"title": _title ?: @"",
               @"parameter": _parameter ?: @"",
               @"version": @(_version),
-              @"escaping": @(_escaping)
+              @"escaping": @(_escaping),
+              @"applyMode": @(_applyMode)
     };
 }
 
@@ -86,7 +90,8 @@
 - (NSString *)displayString {
     return [[iTermKeyBindingAction withAction:_action
                                     parameter:_parameter ?: @""
-                                     escaping:_escaping] displayName];
+                                     escaping:_escaping
+                                    applyMode:_applyMode] displayName];
 }
 
 @end

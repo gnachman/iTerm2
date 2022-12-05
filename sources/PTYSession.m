@@ -8345,7 +8345,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [self.textview.window makeFirstResponder:self.textview];
     [self performKeyBindingAction:[iTermKeyBindingAction withAction:action.action
                                                           parameter:action.parameter
-                                                           escaping:action.escaping]
+                                                           escaping:action.escaping
+                                                          applyMode:action.applyMode]
                             event:nil];
 }
 
@@ -8354,6 +8355,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (!action) {
         return NO;
     }
+    NSArray<PTYSession *> *sessions = [PTYSession sessionsForActionApplyMode:action.applyMode focused:nil];
+    if (action.applyMode != iTermActionApplyModeCurrentSession && sessions.count > 0) {
+        for (PTYSession *session in sessions) {
+            [session reallyPerformKeyBindingAction:action event:event];
+        }
+        return YES;
+    }
+
     switch (action.keyAction) {
         case KEY_ACTION_INVALID:
             // No action
@@ -8475,11 +8484,42 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return NO;
 }
 
++ (NSArray<PTYSession *> *)sessionsForActionApplyMode:(iTermActionApplyMode)mode focused:(PTYSession *)focused {
+    switch (mode) {
+        case iTermActionApplyModeCurrentSession:
+            return @[ focused ];
+        case iTermActionApplyModeAllSessions:
+            return [[iTermController sharedInstance] allSessions];
+        case iTermActionApplyModeUnfocusedSessions:
+            return [[[iTermController sharedInstance] allSessions] arrayByRemovingObject:focused];
+        case iTermActionApplyModeAllInWindow:
+            return [focused.delegate.realParentWindow allSessions] ?: @[];
+        case iTermActionApplyModeAllInTab:
+            return [focused.delegate sessions] ?: @[];
+        case iTermActionApplyModeBroadcasting:
+            if (!focused) {
+                return @[];
+            }
+            if (focused.delegate.realParentWindow.broadcastMode == BROADCAST_OFF) {
+                return @[ focused ];
+            }
+            return focused.delegate.realParentWindow.broadcastSessions ?: @[ focused ];
+    }
+    return @[];
+}
+
 - (void)performKeyBindingAction:(iTermKeyBindingAction *)action event:(NSEvent *)event {
     if (!action) {
         return;
     }
+    for (PTYSession *session in [PTYSession sessionsForActionApplyMode:action.applyMode focused:self]) {
+        [session reallyPerformKeyBindingAction:action event:event];
+    }
+}
+
+- (void)reallyPerformKeyBindingAction:(iTermKeyBindingAction *)action event:(NSEvent *)event {
     BOOL isTmuxGateway = (!_exited && self.tmuxMode == TMUX_GATEWAY);
+    id<iTermWindowController> windowController = self.delegate.realParentWindow ?: [[iTermController sharedInstance] currentTerminal];
 
     switch (action.keyAction) {
         case KEY_ACTION_MOVE_TAB_LEFT:
@@ -8620,22 +8660,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             [[iTermController sharedInstance] irAdvance:-1];
             break;
         case KEY_ACTION_SELECT_PANE_LEFT:
-            [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
+            [windowController selectPaneLeft:nil];
             break;
         case KEY_ACTION_SELECT_PANE_RIGHT:
-            [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
+            [windowController selectPaneRight:nil];
             break;
         case KEY_ACTION_SELECT_PANE_ABOVE:
-            [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
+            [windowController selectPaneUp:nil];
             break;
         case KEY_ACTION_SELECT_PANE_BELOW:
-            [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
+            [windowController selectPaneDown:nil];
             break;
         case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
         case KEY_ACTION_REMAP_LOCALLY:
             break;
         case KEY_ACTION_TOGGLE_FULLSCREEN:
-            [[[iTermController sharedInstance] currentTerminal] toggleFullScreenMode:nil];
+            [windowController toggleFullScreenMode:nil];
             break;
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
             [[_delegate realParentWindow] newWindowWithBookmarkGuid:action.parameter];
@@ -8767,30 +8807,30 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             break;
 
         case KEY_ACTION_DECREASE_HEIGHT:
-            [[[iTermController sharedInstance] currentTerminal] decreaseHeight:nil];
+            [windowController decreaseHeightOfSession:self];
             break;
         case KEY_ACTION_INCREASE_HEIGHT:
-            [[[iTermController sharedInstance] currentTerminal] increaseHeight:nil];
+            [windowController increaseHeightOfSession:self];
             break;
 
         case KEY_ACTION_DECREASE_WIDTH:
-            [[[iTermController sharedInstance] currentTerminal] decreaseWidth:nil];
+            [windowController decreaseWidthOfSession:self];
             break;
         case KEY_ACTION_INCREASE_WIDTH:
-            [[[iTermController sharedInstance] currentTerminal] increaseWidth:nil];
+            [windowController increaseWidthOfSession:self];
             break;
 
         case KEY_ACTION_SWAP_PANE_LEFT:
-            [[[iTermController sharedInstance] currentTerminal] swapPaneLeft];
+            [windowController swapPaneLeft];
             break;
         case KEY_ACTION_SWAP_PANE_RIGHT:
-            [[[iTermController sharedInstance] currentTerminal] swapPaneRight];
+            [windowController swapPaneRight];
             break;
         case KEY_ACTION_SWAP_PANE_ABOVE:
-            [[[iTermController sharedInstance] currentTerminal] swapPaneUp];
+            [windowController swapPaneUp];
             break;
         case KEY_ACTION_SWAP_PANE_BELOW:
-            [[[iTermController sharedInstance] currentTerminal] swapPaneDown];
+            [windowController swapPaneDown];
             break;
         case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
             [self setXtermMouseReporting:![self xtermMouseReporting]];

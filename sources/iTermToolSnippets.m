@@ -304,6 +304,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
                                                                   action:KEY_ACTION_SEND_SNIPPET
                                                                parameter:snippet.actionKey
                                                                 escaping:snippet.escaping
+                                                               applyMode:iTermActionApplyModeCurrentSession
                                                                  version:snippet.version];
                 [wrapper.delegate.delegate toolbeltApplyActionToCurrentSession:action];
                 break;

@@ -1393,7 +1393,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
         iTermKeyBindingAction *action = [iTermKeyBindingAction withAction:KEY_ACTION_SEND_TMUX_COMMAND
                                                                 parameter:dict[@"command"]
-                                                                 escaping:iTermSendTextEscapingNone];
+                                                                 escaping:iTermSendTextEscapingNone
+                                                                applyMode:iTermActionApplyModeCurrentSession];
         NSString *dictKey = [keystroke keyInBindingDictionary:fakeProfile[KEY_KEYBOARD_MAP]];
         NSInteger index = NSNotFound;
         if (dictKey) {

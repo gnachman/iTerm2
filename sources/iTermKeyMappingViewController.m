@@ -40,6 +40,8 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
     IBOutlet NSPanel *_touchBarMitigationsPanel;
     NSOpenPanel *_openPanel;
     NSSavePanel *_savePanel;
+    // Index of row being edited. Valid after presenting the edit key mapping sheet.
+    NSInteger _rowIndex;
 }
 
 - (instancetype)init {
@@ -256,6 +258,7 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
 #pragma mark - Modal Sheets
 
 - (void)presentEditActionSheet:(iTermEditKeyActionWindowController *)editActionWindowController {
+    _rowIndex = _tableView.selectedRow;
     [self.view.window beginSheet:editActionWindowController.window completionHandler:^(NSModalResponse returnCode) {
         [self editActionWindowCompletionHandler:editActionWindowController];
     }];
@@ -265,11 +268,12 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
     if (editActionWindowController.ok) {
         [_delegate keyMapping:self
                 didChangeItem:editActionWindowController.keystrokeOrTouchbarItem
-                      atIndex:[_tableView selectedRow]
+                      atIndex:_rowIndex
                      toAction:[iTermKeyBindingAction withAction:editActionWindowController.action
                                                       parameter:editActionWindowController.parameterValue
                                                           label:editActionWindowController.label
-                                                       escaping:editActionWindowController.escaping]
+                                                       escaping:editActionWindowController.escaping
+                                                      applyMode:editActionWindowController.applyMode]
                    isAddition:editActionWindowController.isNewMapping];
     }
     [editActionWindowController close];
@@ -293,7 +297,7 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
                                                            mode:iTermEditKeyActionWindowControllerModeTouchBarItem];
     editActionWindowController.isNewMapping = YES;
     editActionWindowController.touchBarItemID = [iTermTouchBarIDPrefix stringByAppendingString:[NSString uuid]];
-    editActionWindowController.action = KEY_ACTION_IGNORE;
+    [editActionWindowController setAction:KEY_ACTION_IGNORE parameter:@"" applyMode:iTermActionApplyModeCurrentSession];
     editActionWindowController.escaping = iTermSendTextEscapingCommon;
     [self presentEditActionSheet:editActionWindowController];
 }
@@ -304,7 +308,7 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
     [[iTermEditKeyActionWindowController alloc] initWithContext:iTermVariablesSuggestionContextSession | iTermVariablesSuggestionContextApp
                                                            mode:iTermEditKeyActionWindowControllerModeKeyboardShortcut];
     editActionWindowController.isNewMapping = YES;
-    editActionWindowController.action = KEY_ACTION_IGNORE;
+    [editActionWindowController setAction:KEY_ACTION_IGNORE parameter:@"" applyMode:iTermActionApplyModeCurrentSession];
     editActionWindowController.escaping = iTermSendTextEscapingCommon;
     [self presentEditActionSheet:editActionWindowController];
 }
@@ -382,8 +386,9 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
     }];
     _editActionWindowController.isNewMapping = NO;
 
-    _editActionWindowController.parameterValue = binding[iTermKeyBindingDictionaryKeyParameter];
-    _editActionWindowController.action = [binding[iTermKeyBindingDictionaryKeyAction] intValue];
+    [_editActionWindowController setAction:(KEY_ACTION)[binding[iTermKeyBindingDictionaryKeyAction] intValue]
+                                 parameter:binding[iTermKeyBindingDictionaryKeyParameter]
+                                 applyMode:[binding[iTermKeyBindingDictionaryKeyApplyMode] unsignedIntegerValue]];
     iTermSendTextEscaping escaping;
     if ([binding[iTermKeyBindingDictionaryKeyVersion] intValue] == 0) {
         escaping = iTermSendTextEscapingCompatibility;
@@ -485,7 +490,8 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
                           atIndex:NSNotFound
                          toAction:[iTermKeyBindingAction withAction:action.keyAction
                                                           parameter:action.parameter
-                                                           escaping:action.escaping]
+                                                           escaping:action.escaping
+                                                          applyMode:action.applyMode]
                        isAddition:YES];
     }
 
@@ -510,7 +516,8 @@ static NSString *const INTERCHANGE_TOUCH_BAR_ITEMS = @"Touch Bar Items";
                          toAction:[iTermKeyBindingAction withAction:action.keyAction
                                                           parameter:action.parameter
                                                               label:action.label
-                                                           escaping:action.escaping]
+                                                           escaping:action.escaping
+                                                          applyMode:action.applyMode]
                        isAddition:YES];
     }
 }

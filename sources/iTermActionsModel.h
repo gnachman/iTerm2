@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSInteger identifier;
 @property (nonatomic, readonly) NSString *displayString;
 @property (nonatomic, readonly) iTermSendTextEscaping escaping;
+@property (nonatomic, readonly) iTermActionApplyMode applyMode;
 @property (nonatomic, readonly) int version;
 
 + (int)currentVersion;
@@ -28,6 +29,7 @@ NS_ASSUME_NONNULL_BEGIN
                        action:(KEY_ACTION)action
                     parameter:(NSString *)parameter
                      escaping:(iTermSendTextEscaping)escaping
+                    applyMode:(iTermActionApplyMode)applyMode
                       version:(int)version NS_DESIGNATED_INITIALIZER;
 
 - (instancetype)initWithDictionary:(NSDictionary *)dictionary;

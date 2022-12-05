@@ -271,8 +271,9 @@ static NSButton *iTermToolActionsNewButton(NSString *imageName, NSString *title,
         windowController.isNewMapping = YES;
         windowController.escaping = iTermSendTextEscapingCommon;
     }
-    windowController.parameterValue = action.parameter;
-    windowController.action = action.action;
+    [windowController setAction:action.action
+                      parameter:action.parameter
+                      applyMode:action.applyMode];
     [self.window beginSheet:windowController.window completionHandler:^(NSModalResponse returnCode) {
         [self editActionDidComplete:action];
     }];

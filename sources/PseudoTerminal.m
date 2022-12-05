@@ -8600,32 +8600,28 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
                                       horizontally:NO];
 }
 
-- (void)swapPaneLeft
-{
+- (void)swapPaneLeft {
     PTYSession* session = [[self currentTab] sessionLeftOf:[[self currentTab] activeSession]];
     if (session) {
         [[self currentTab] swapSession:[[self currentTab] activeSession] withSession:session];
     }
 }
 
-- (void)swapPaneRight
-{
+- (void)swapPaneRight {
     PTYSession* session = [[self currentTab] sessionRightOf:[[self currentTab] activeSession]];
     if (session) {
         [[self currentTab] swapSession:[[self currentTab] activeSession] withSession:session];
     }
 }
 
-- (void)swapPaneUp
-{
+- (void)swapPaneUp {
     PTYSession* session = [[self currentTab] sessionAbove:[[self currentTab] activeSession]];
     if (session) {
         [[self currentTab] swapSession:[[self currentTab] activeSession] withSession:session];
     }
 }
 
-- (void)swapPaneDown
-{
+- (void)swapPaneDown {
     PTYSession* session = [[self currentTab] sessionBelow:[[self currentTab] activeSession]];
     if (session) {
         [[self currentTab] swapSession:[[self currentTab] activeSession] withSession:session];
@@ -8804,27 +8800,44 @@ typedef NS_ENUM(NSUInteger, PseudoTerminalTabSizeExclusion) {
 }
 
 - (IBAction)increaseHeight:(id)sender {
-    [self sessionInitiatedResize:self.currentSession
-                           width:self.currentSession.columns
-                          height:self.currentSession.rows+1];
+    [self increaseHeightOfSession:self.currentSession];
 }
 
 - (IBAction)decreaseHeight:(id)sender {
-    [self sessionInitiatedResize:self.currentSession
-                           width:self.currentSession.columns
-                          height:self.currentSession.rows-1];
+    [self decreaseHeightOfSession:self.currentSession];
 }
 
 - (IBAction)increaseWidth:(id)sender {
-    [self sessionInitiatedResize:self.currentSession
-                           width:self.currentSession.columns+1
-                          height:self.currentSession.rows];
+    [self increaseWidthOfSession:self.currentSession];
 }
 
 - (IBAction)decreaseWidth:(id)sender {
-    [self sessionInitiatedResize:self.currentSession
-                           width:self.currentSession.columns-1
-                          height:self.currentSession.rows];
+    [self decreaseWidthOfSession:self.currentSession];
+}
+
+
+- (IBAction)increaseHeightOfSession:(PTYSession *)session {
+    [self sessionInitiatedResize:session
+                           width:session.columns
+                          height:session.rows+1];
+}
+
+- (IBAction)decreaseHeightOfSession:(PTYSession *)session {
+    [self sessionInitiatedResize:session
+                           width:session.columns
+                          height:session.rows-1];
+}
+
+- (IBAction)increaseWidthOfSession:(PTYSession *)session {
+    [self sessionInitiatedResize:session
+                           width:session.columns+1
+                          height:session.rows];
+}
+
+- (IBAction)decreaseWidthOfSession:(PTYSession *)session {
+    [self sessionInitiatedResize:session
+                           width:session.columns-1
+                          height:session.rows];
 
 }
 

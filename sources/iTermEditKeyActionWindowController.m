@@ -27,7 +27,14 @@
 
 const CGFloat sideMarginWidth = 40;
 
+@interface iTermEditKeyActionDetailView: NSView
+@end
+
+@implementation iTermEditKeyActionDetailView
+@end
+
 @interface iTermEditKeyActionWindowConfiguration: NSObject
+@property (nonatomic, readonly) BOOL applyHidden;
 @property (nonatomic, readonly) BOOL parameterHidden;
 @property (nonatomic, readonly) BOOL parameterLabelHidden;
 @property (nonatomic, readonly) BOOL profilePopupHidden;
@@ -65,12 +72,15 @@ const CGFloat sideMarginWidth = 40;
         _pasteSpecialHidden = YES;
         _snippetsHidden = YES;
         _showSecondary = NO;
+        _applyHidden = YES;
 
         switch (tag) {
             case KEY_ACTION_SEND_SNIPPET:
                 _snippetsHidden = NO;
                 _parameterValue = @"";
+                _applyHidden = NO;
                 break;
+
             case KEY_ACTION_COMPOSE:
                 _parameterHidden = NO;
                 _parameterPlaceholder = @"Text for composer";
@@ -79,17 +89,20 @@ const CGFloat sideMarginWidth = 40;
             case KEY_ACTION_HEX_CODE:
                 _parameterHidden = NO;
                 _parameterPlaceholder = @"ex: 0x7f 0x20";
+                _applyHidden = NO;
                 break;
 
             case KEY_ACTION_VIM_TEXT:
             case KEY_ACTION_TEXT:
                 _parameterHidden = NO;
                 _parameterPlaceholder = @"Enter value to send";
+                _applyHidden = NO;
                 break;
 
             case KEY_ACTION_RUN_COPROCESS:
                 _parameterHidden = NO;
                 _parameterPlaceholder = @"Enter command to run";
+                _applyHidden = NO;
                 break;
 
             case KEY_ACTION_SEND_TMUX_COMMAND:
@@ -108,22 +121,30 @@ const CGFloat sideMarginWidth = 40;
                 _parameterPlaceholder = @"characters to send";
                 _parameterLabelHidden = NO;
                 _parameterLabel = @"Esc+";
+                _applyHidden = NO;
                 break;
 
             case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
             case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
             case KEY_ACTION_NEW_TAB_WITH_PROFILE:
             case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
+                _profileLabelHidden = NO;
+                _profilePopupHidden = NO;
+                _parameterValue = @"";
+                break;
+
             case KEY_ACTION_SET_PROFILE:
                 _profileLabelHidden = NO;
                 _profilePopupHidden = NO;
                 _parameterValue = @"";
+                _applyHidden = NO;
                 break;
 
             case KEY_ACTION_LOAD_COLOR_PRESET:
                 _colorPresetsLabelHidden = NO;
                 _colorPresetsPopupHidden = NO;
                 _parameterValue = @"";
+                _applyHidden = NO;
                 break;
 
             case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
@@ -138,6 +159,7 @@ const CGFloat sideMarginWidth = 40;
             case KEY_ACTION_FIND_REGEX:
                 _parameterHidden = NO;
                 _parameterPlaceholder = @"Regular Expression";
+                _applyHidden = NO;
                 break;
 
             case KEY_ACTION_INVOKE_SCRIPT_FUNCTION:
@@ -151,12 +173,14 @@ const CGFloat sideMarginWidth = 40;
                                                                        passthrough:nil
                                                                      functionsOnly:YES];
                 }
+                _applyHidden = NO;
                 break;
 
             case KEY_ACTION_PASTE_SPECIAL_FROM_SELECTION:
             case KEY_ACTION_PASTE_SPECIAL:
                 _pasteSpecialHidden = NO;
                 _parameterValue = @"";
+                _applyHidden = NO;
                 break;
 
             case KEY_ACTION_MOVE_END_OF_SELECTION_LEFT:
@@ -170,6 +194,28 @@ const CGFloat sideMarginWidth = 40;
 
             case KEY_ACTION_SEQUENCE:
                 _showSecondary = YES;
+                _parameterValue = @"";
+                break;
+
+            case KEY_ACTION_SCROLL_END:
+            case KEY_ACTION_SCROLL_HOME:
+            case KEY_ACTION_SCROLL_LINE_DOWN:
+            case KEY_ACTION_SCROLL_LINE_UP:
+            case KEY_ACTION_SCROLL_PAGE_DOWN:
+            case KEY_ACTION_SCROLL_PAGE_UP:
+            case KEY_ACTION_SEND_C_H_BACKSPACE:
+            case KEY_ACTION_SEND_C_QM_BACKSPACE:
+            case KEY_ACTION_DECREASE_HEIGHT:
+            case KEY_ACTION_INCREASE_HEIGHT:
+            case KEY_ACTION_DECREASE_WIDTH:
+            case KEY_ACTION_INCREASE_WIDTH:
+            case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
+            case KEY_ACTION_PASTE_OR_SEND:
+                _applyHidden = NO;
+                _parameterValue = @"";
+                break;
+
+            case KEY_ACTION_COPY_OR_SEND:
                 _parameterValue = @"";
                 break;
 
@@ -218,6 +264,7 @@ const CGFloat sideMarginWidth = 40;
     IBOutlet NSPopUpButton *_snippetsPopup;
     IBOutlet NSView *_pasteSpecialViewContainer;
     IBOutlet NSButton *_okButton;
+    NSPopUpButton *_applyButton;
 
     iTermPasteSpecialViewController *_pasteSpecialViewController;
     iTermFunctionCallTextFieldDelegate *_functionCallDelegate;
@@ -418,10 +465,34 @@ const CGFloat sideMarginWidth = 40;
     _okButton.enabled = [self shouldEnableOK];
     (void)[_comboView selectItemWithTag:self.action];
 
-    [self loadParameter:self.parameterValue action:self.action secondary:NO];
+    _applyButton = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
+    [_applyButton addItemWithTitle:@"Apply to current sesssion"];
+    _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeCurrentSession;
+    [_applyButton addItemWithTitle:@"Apply to all sessions"];
+    _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeAllSessions;
+    [_applyButton addItemWithTitle:@"Apply to all sessions except current"];
+    _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeUnfocusedSessions;
+    [_applyButton addItemWithTitle:@"Apply to all sessions in window"];
+    _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeAllInWindow;
+    [_applyButton addItemWithTitle:@"Apply to all sesssions in tab"];
+    _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeAllInTab;
+    [_applyButton addItemWithTitle:@"Apply to broadcasted-to sessions"];
+    _applyButton.menu.itemArray.lastObject.tag = iTermActionApplyModeBroadcasting;
+
+    _applyButton.target = self;
+    _applyButton.action = @selector(parameterDidChange:);
+    [_detail addSubview:_applyButton];
+
+    [self loadParameter:self.parameterValue
+                 action:self.action
+              applyMode:self.applyMode
+              secondary:NO];
 }
 
-- (void)loadParameter:(NSString *)parameterValue action:(KEY_ACTION)action secondary:(BOOL)secondary {
+- (void)loadParameter:(NSString *)parameterValue
+               action:(KEY_ACTION)action
+            applyMode:(iTermActionApplyMode)applyMode
+            secondary:(BOOL)secondary {
     _parameter.stringValue = parameterValue ?: @"";
     if (action == KEY_ACTION_SELECT_MENU_ITEM) {
         [_menuToSelectPopup reloadData];
@@ -478,6 +549,14 @@ const CGFloat sideMarginWidth = 40;
     if (_pasteSpecialViewController.view.superview == nil) {
         [_pasteSpecialViewContainer addSubview:_pasteSpecialViewController.view];
     }
+    _applyMode = applyMode;
+    [_applyButton selectItemWithTag:applyMode];
+}
+
+- (void)setAction:(KEY_ACTION)keyAction parameter:(NSString *)parameter applyMode:(iTermActionApplyMode)applyMode {
+    [self setAction:keyAction];
+    _parameterValue = [parameter copy];
+    _applyMode = applyMode;
 }
 
 - (void)setAction:(int)action {
@@ -492,6 +571,7 @@ const CGFloat sideMarginWidth = 40;
                                        action:self.action
                                     parameter:self.parameterValue
                                      escaping:self.escaping
+                                    applyMode:self.applyMode
                                       version:[iTermAction currentVersion]];
 }
 
@@ -605,7 +685,39 @@ const CGFloat sideMarginWidth = 40;
     if (!_sequenceTableViewController.hasSelection) {
         (void)[_secondaryComboView selectItemWithTag:-1];
     }
+    _applyButton.hidden = config.applyHidden;
+    if (config.applyHidden) {
+        [_applyButton selectItemWithTag:iTermActionApplyModeCurrentSession];
+    } else {
+        [_applyButton sizeToFit];
+        NSRect applyButtonFrame = _applyButton.frame;
+        applyButtonFrame.origin.x = [self desiredMinXForApplyButton];
+        applyButtonFrame.origin.y = [self desiredYOriginForApplyButton];
+        applyButtonFrame.size.width = _comboViewContainer.frame.size.width;
+        _applyButton.frame = applyButtonFrame;
+        _applyButton.autoresizingMask = 0;
+    }
     [self updateFrameAnimated:animated];
+}
+
+- (CGFloat)desiredMinXForApplyButton {
+    return NSMinX(_shortcutField.frame) - NSMinX(_keyboardShortcutLabel.frame) - 4;
+}
+
+- (CGFloat)desiredYOriginForApplyButton {
+    NSView *lowestView = [[[_detail subviews] filteredArrayUsingBlock:^BOOL(__kindof NSView *view) {
+        return !view.isHidden && view != _applyButton;
+    }] minWithBlock:^NSComparisonResult(__kindof NSView *lhs, __kindof NSView *rhs) {
+        return [@(NSMinY(lhs.frame)) compare:@(NSMinY(rhs.frame))];
+    }];
+    CGFloat bottom;
+    if (lowestView) {
+        bottom = NSMinY(lowestView.frame);
+    } else {
+        NSRect actionFrame = [_detail convertRect:_comboViewContainer.bounds fromView:_comboViewContainer];
+        bottom = NSMinY(actionFrame);
+    }
+    return bottom - _applyButton.frame.size.height - 4;
 }
 
 - (BOOL)anyAccessoryVisible {
@@ -684,13 +796,18 @@ const CGFloat sideMarginWidth = 40;
 }
 
 - (CGFloat)accessoryHeight {
+    CGFloat height = 0;
+    if (!_applyButton.isHidden) {
+        height += _applyButton.frame.size.height + 4;
+    }
     if (![self anyAccessoryVisible]) {
-        return 0;
+        return height;
     }
     if (!_sequenceContainer.isHidden) {
-        return MAX(NSHeight(_sequenceContainer.frame), self.nonSequenceAccessoryHeight);
+        height += MAX(NSHeight(_sequenceContainer.frame), self.nonSequenceAccessoryHeight);
+        return height;
     }
-    return [self nonSequenceAccessoryHeight];
+    return height + [self nonSequenceAccessoryHeight];
 }
 
 - (CGFloat)nonSequenceAccessoryHeight {
@@ -759,8 +876,12 @@ const CGFloat sideMarginWidth = 40;
             break;
     }
 
-    self.action = _comboView.selectedTag;
-    self.parameterValue = [self parameterValueForAction:self.action];
+    const KEY_ACTION keyAction = _comboView.selectedTag;
+    const BOOL secondary = !_secondaryComboViewContainer.hidden;
+    const BOOL hasApplyMode = !secondary && !_applyButton.isHidden;
+    [self setAction:keyAction
+          parameter:[self parameterValueForAction:keyAction]
+          applyMode:hasApplyMode ? _applyButton.selectedTag : iTermActionApplyModeCurrentSession];
 
     self.ok = YES;
     [self.window.sheetParent endSheet:self.window];
@@ -820,7 +941,8 @@ const CGFloat sideMarginWidth = 40;
     const KEY_ACTION action = _secondaryComboView.selectedTag;
     return [iTermKeyBindingAction withAction:action
                                    parameter:[self parameterValueForAction:action]
-                                    escaping:self.escaping];
+                                    escaping:self.escaping
+                                   applyMode:_applyButton.isHidden ? iTermActionApplyModeCurrentSession : _applyButton.selectedTag];
 }
 
 - (void)searchableComboView:(iTermSearchableComboView *)view didSelectItem:(iTermSearchableComboViewItem *)didSelectItem {
@@ -860,14 +982,20 @@ const CGFloat sideMarginWidth = 40;
 - (void)keyActionSequenceTableViewController:(iTermKeyActionSequenceTableViewController *)sender
                           selectionDidChange:(iTermKeyBindingAction *)action {
     [self updateViewsAnimated:NO secondary:YES];
-    [self loadParameter:action.parameter action:action.keyAction secondary:YES];
+    [self loadParameter:action.parameter
+                 action:action.keyAction
+              applyMode:action.applyMode
+              secondary:YES];
 }
 
 - (void)keyActionSequenceTableViewControllerDidChange:(iTermKeyActionSequenceTableViewController *)sender
                                               actions:(NSArray<iTermKeyBindingAction *> * _Nonnull)actions {
     if (sender.hasSelection) {
         iTermKeyBindingAction *action = sender.selectedItem;
-        [self loadParameter:action.parameter action:action.keyAction secondary:YES];
+        [self loadParameter:action.parameter
+                     action:action.keyAction
+                  applyMode:_applyMode
+                  secondary:YES];
     } else {
         [self updateViewsAnimated:NO secondary:YES];
     }

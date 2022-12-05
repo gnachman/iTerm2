@@ -74,7 +74,8 @@ class KeyActionSequenceTableViewController: NSObject {
         }
         let replacement = iTermKeyBindingAction.withAction(action,
                                                            parameter: "",
-                                                           escaping: .none)
+                                                           escaping: .none,
+                                                           applyMode: .currentSession)
         let row = tableView.selectedRow
         precondition(row >= 0 && row < _actions.count)
         _actions[row] = replacement
@@ -100,7 +101,8 @@ class KeyActionSequenceTableViewController: NSObject {
         let insertAfter = maybeSelectedRow ?? actions.count - 1
         let action = iTermKeyBindingAction.withAction(.ACTION_NEXT_SESSION,
                                                       parameter: "",
-                                                      escaping: .none)
+                                                      escaping: .none,
+                                                      applyMode: .currentSession)
         let row = insertAfter + 1
         _actions.insert(action, at: row)
         delegate?.keyActionSequenceTableViewControllerDidChange(self, actions: _actions)

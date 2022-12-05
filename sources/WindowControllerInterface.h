@@ -149,6 +149,7 @@
 // The current mode for broadcasting of input.
 - (BroadcastMode)broadcastMode;
 - (void)setBroadcastMode:(BroadcastMode)mode;
+- (NSArray<PTYSession *> *)broadcastSessions;
 
 // Returns true if the window is in 10.7-style fullscreen.
 - (BOOL)lionFullScreen;
@@ -200,6 +201,11 @@
 - (void)decreaseHeight:(id)sender;
 - (void)increaseWidth:(id)sender;
 - (void)decreaseWidth:(id)sender;
+
+- (void)increaseHeightOfSession:(PTYSession *)session;
+- (void)decreaseHeightOfSession:(PTYSession *)session;
+- (void)increaseWidthOfSession:(PTYSession *)session;
+- (void)decreaseWidthOfSession:(PTYSession *)session;
 
 // If soft is true, don't kill tmux session. Otherwise is just like closeTab.
 - (void)closeTab:(PTYTab *)aTab soft:(BOOL)soft;
@@ -280,6 +286,11 @@
 - (void)selectPaneRight:(id)sender;
 - (void)selectPaneUp:(id)sender;
 - (void)selectPaneDown:(id)sender;
+
+- (void)swapPaneLeft;
+- (void)swapPaneRight;
+- (void)swapPaneUp;
+- (void)swapPaneDown;
 
 // Enable or disable transparency support for a window.
 - (void)toggleUseTransparency:(id)sender;
