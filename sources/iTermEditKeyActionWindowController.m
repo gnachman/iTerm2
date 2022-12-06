@@ -211,6 +211,7 @@ const CGFloat sideMarginWidth = 40;
             case KEY_ACTION_INCREASE_WIDTH:
             case KEY_ACTION_TOGGLE_MOUSE_REPORTING:
             case KEY_ACTION_PASTE_OR_SEND:
+            case KEY_ACTION_ALERT_ON_NEXT_MARK:
                 _applyHidden = NO;
                 _parameterValue = @"";
                 break;
@@ -306,7 +307,8 @@ const CGFloat sideMarginWidth = 40;
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Run Coprocess" tag:KEY_ACTION_RUN_COPROCESS],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Start Instant Replay" tag:KEY_ACTION_IR_BACKWARD],
             [[iTermSearchableComboViewItem alloc] initWithLabel:@"Undo" tag:KEY_ACTION_UNDO],
-            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send tmux command" tag:KEY_ACTION_SEND_TMUX_COMMAND],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Send tmux Command" tag:KEY_ACTION_SEND_TMUX_COMMAND],
+            [[iTermSearchableComboViewItem alloc] initWithLabel:@"Alert on Next Mark" tag:KEY_ACTION_ALERT_ON_NEXT_MARK],
         ]],
 
         [[iTermSearchableComboViewGroup alloc] initWithLabel:@"New Tab or Window" items:@[

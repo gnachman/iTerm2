@@ -8433,6 +8433,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         case KEY_ACTION_SEND_TMUX_COMMAND:
         case KEY_ACTION_SWAP_WITH_NEXT_PANE:
         case KEY_ACTION_SWAP_WITH_PREVIOUS_PANE:
+        case KEY_ACTION_ALERT_ON_NEXT_MARK:
             return NO;
 
         case KEY_ACTION_COPY_OR_SEND:
@@ -8874,6 +8875,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
             }
             [self regularKeyDown:[NSApp currentEvent]];
             break;
+
+        case KEY_ACTION_ALERT_ON_NEXT_MARK:
+            self.alertOnNextMark = YES;
+            break;
+
         default:
             XLog(@"Unknown key action %@", action);
             break;
