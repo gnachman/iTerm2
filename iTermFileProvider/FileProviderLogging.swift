@@ -86,4 +86,3 @@ public func logging<T>(_ prefix: String, closure: () async throws -> T) async re
         }
     }
 }
-

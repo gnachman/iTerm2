@@ -1028,7 +1028,6 @@
 		A608F22120F07658008E8009 /* iTermImageMark.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3B411BD40E7C00B5629D /* iTermImageMark.m */; };
 		A608F22220F08369008E8009 /* VT100DCSParser.m in Sources */ = {isa = PBXBuildFile; fileRef = A647E39E18C351F400450FA1 /* VT100DCSParser.m */; };
 		A6099B0518D6B0FD00081FA9 /* iTermWarning.h in Headers */ = {isa = PBXBuildFile; fileRef = A6099B0318D6B0FD00081FA9 /* iTermWarning.h */; };
-		A60AE01A289A18EB00419B14 /* FileProviderLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412E928555D390086F068 /* FileProviderLogging.swift */; };
 		A60AE01B289A196900419B14 /* FileProviderLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412E928555D390086F068 /* FileProviderLogging.swift */; };
 		A60BB37E1EB5149100D76C09 /* iTermCopyModeState.h in Headers */ = {isa = PBXBuildFile; fileRef = A60BB37C1EB5149100D76C09 /* iTermCopyModeState.h */; };
 		A60BB37F1EB5149100D76C09 /* iTermCopyModeState.m in Sources */ = {isa = PBXBuildFile; fileRef = A60BB37D1EB5149100D76C09 /* iTermCopyModeState.m */; };
@@ -14811,7 +14810,6 @@
 				756C32AD2597AC2E0047B3A9 /* iTermImage+Sixel.m in Sources */,
 				7596379F2593AE0700E278CC /* iTerm2SandboxedWorker.m in Sources */,
 				A69F1BDD28E7571B0054204E /* FileProviderDebugLoggingShim.swift in Sources */,
-				A60AE01A289A18EB00419B14 /* FileProviderLogging.swift in Sources */,
 				A60D20D22597F4DF004AC979 /* iTermImage.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -16911,6 +16909,10 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				OTHER_LDFLAGS = (
+					"-rpath",
+					"@executable_path/../Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -16983,6 +16985,10 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				OTHER_LDFLAGS = (
+					"-rpath",
+					"@executable_path/../Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -17054,6 +17060,10 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				OTHER_LDFLAGS = (
+					"-rpath",
+					"@executable_path/../Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -17125,6 +17135,10 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				OTHER_LDFLAGS = (
+					"-rpath",
+					"@executable_path/../Frameworks",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
