@@ -960,6 +960,23 @@ int decode_utf8_char(const unsigned char *datap,
 
     DLog(@"Looking for font with string rep %@", self);
     NSString *fontName = [NSString stringWithFormat:@"%s", utf8FontName];
+    if (@available(macOS 12, *)) {
+        if ([fontName hasPrefix:@"."] && ![fontName hasPrefix:@".AppleSystemUIFont"]) {
+            // Well this is terrible
+            // Starting in, I guess, Ventura you can't round-trip font names for some mystery fonts.
+            // Somehow users have a font name of .SFNS-Regular in their prefs. This came from maybe
+            // an older OS version? Who the hell knows.
+            // Anyway when you try to create it now it gives you motherfucking times roman out of pure
+            // unadulterated spite.
+            // I reversed coretext and found that it fucks you for not names that start with a . except
+            // .AppleSystemUIFont. I guess I have to reverse this code every new OS version?
+            // 🖕to you too, CoreText.
+            // This will probably break something but fucked if I know what.
+            // Issue 10625
+            DLog(@"Translate font %@ to system font", fontName);
+            return [NSFont systemFontOfSize:fontSize];
+        }
+    }
     aFont = [NSFont fontWithName:fontName size:fontSize];
     if (aFont == nil) {
         DLog(@"Failed to look up font named %@. Falling back to to user font", fontName);
