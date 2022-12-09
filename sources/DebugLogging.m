@@ -275,14 +275,12 @@ void LogForNextCrash(const char *file, int line, const char *function, NSString*
 static void StartDebugLogging() {
     [GetDebugLogLock() lock];
     if (!gDebugLogging) {
-#if FILE_PROVIDER_LOGGING_AVAILABLE
         static dispatch_once_t onceToken;
         dispatch_once(&onceToken, ^{
             FileProviderLogging.callback = ^(NSString *message) {
                 DLog(@"%@", message);
             };
         });
-#endif
         if (![iTermAdvancedSettingsModel appendToExistingDebugLog]) {
             [[NSFileManager defaultManager] removeItemAtURL:[NSURL fileURLWithPath:kDebugLogFilename]
                                                       error:nil];

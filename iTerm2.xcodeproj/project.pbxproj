@@ -972,7 +972,7 @@
 		A6024B89254D367E0036D6CF /* iTermColorSuggester.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B87254D367E0036D6CF /* iTermColorSuggester.m */; };
 		A6024B8B254DDFEE0036D6CF /* iTermNSColorCategoryTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B8A254DDFEE0036D6CF /* iTermNSColorCategoryTests.m */; };
 		A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */; };
-		A6038307294305EA00FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; settings = {COMPILER_FLAGS = "-DFILE_PROVIDER_LOGGING_AVAILABLE=1"; }; };
+		A6038307294305EA00FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		A60383082943067000FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		A6038309294306BA00FE11C2 /* iTermSandboxedWorkerClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 7577E2A02593B88700905402 /* iTermSandboxedWorkerClient.m */; };
 		A603830A294306C400FE11C2 /* iTermAdvancedSettingsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100A18D94CDA007E901D /* iTermAdvancedSettingsModel.m */; };
@@ -983,6 +983,7 @@
 		A60383132943AAB700FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		A60383142943AABF00FE11C2 /* iTermAdvancedSettingsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100A18D94CDA007E901D /* iTermAdvancedSettingsModel.m */; };
 		A60383152943AAD100FE11C2 /* iTermUserDefaultsObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EF57D021994DDC00C76698 /* iTermUserDefaultsObserver.m */; };
+		A60383182943AF1800FE11C2 /* iTerm2SandboxedWorkerShims.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60383172943AF1800FE11C2 /* iTerm2SandboxedWorkerShims.swift */; };
 		A603E9FB283EE53C0028B648 /* SecretServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A603E9FA283EE53C0028B648 /* SecretServer.swift */; };
 		A603E9FE283EE9BD0028B648 /* ObjCExceptions.h in Headers */ = {isa = PBXBuildFile; fileRef = A603E9FC283EE9BD0028B648 /* ObjCExceptions.h */; };
 		A603E9FF283EE9BD0028B648 /* ObjCExceptions.m in Sources */ = {isa = PBXBuildFile; fileRef = A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */; };
@@ -5262,6 +5263,8 @@
 		A60251671CCD3E5E009BABF1 /* NSURL+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSURL+iTerm.m"; sourceTree = "<group>"; };
 		A602516A1CCD40D9009BABF1 /* iTermNSURLCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSURLCategoryTest.m; sourceTree = "<group>"; };
 		A603830D2943A92800FE11C2 /* AsyncFileProviderLogging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncFileProviderLogging.swift; sourceTree = "<group>"; };
+		A60383162943AF1500FE11C2 /* iTerm2SandboxedWorker-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTerm2SandboxedWorker-Bridging-Header.h"; sourceTree = "<group>"; };
+		A60383172943AF1800FE11C2 /* iTerm2SandboxedWorkerShims.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTerm2SandboxedWorkerShims.swift; sourceTree = "<group>"; };
 		A603E9FA283EE53C0028B648 /* SecretServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretServer.swift; sourceTree = "<group>"; };
 		A603E9FC283EE9BD0028B648 /* ObjCExceptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCExceptions.h; sourceTree = "<group>"; };
 		A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCExceptions.m; sourceTree = "<group>"; };
@@ -9024,6 +9027,8 @@
 				759637A02593AE0700E278CC /* main.m */,
 				759637A22593AE0700E278CC /* Info.plist */,
 				A60D20C82597F496004AC979 /* iTermImage+ImageWithData.m */,
+				A60383172943AF1800FE11C2 /* iTerm2SandboxedWorkerShims.swift */,
+				A60383162943AF1500FE11C2 /* iTerm2SandboxedWorker-Bridging-Header.h */,
 			);
 			path = iTerm2SandboxedWorker;
 			sourceTree = "<group>";
@@ -13034,6 +13039,7 @@
 					759637992593AE0700E278CC = {
 						CreatedOnToolsVersion = 12.3;
 						DevelopmentTeam = H7V7XYVQ7D;
+						LastSwiftMigration = 1410;
 						ProvisioningStyle = Automatic;
 					};
 					874206460564169600CFC3F1 = {
@@ -14818,6 +14824,7 @@
 				756C32AD2597AC2E0047B3A9 /* iTermImage+Sixel.m in Sources */,
 				A6038309294306BA00FE11C2 /* iTermSandboxedWorkerClient.m in Sources */,
 				A603830A294306C400FE11C2 /* iTermAdvancedSettingsModel.m in Sources */,
+				A60383182943AF1800FE11C2 /* iTerm2SandboxedWorkerShims.swift in Sources */,
 				7596379F2593AE0700E278CC /* iTerm2SandboxedWorker.m in Sources */,
 				A60D20D22597F4DF004AC979 /* iTermImage.m in Sources */,
 				A60383082943067000FE11C2 /* DebugLogging.m in Sources */,
@@ -16916,6 +16923,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
 				INFOPLIST_FILE = iTerm2SandboxedWorker/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -16930,6 +16938,8 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -16989,6 +16999,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
 				INFOPLIST_FILE = iTerm2SandboxedWorker/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -17001,6 +17012,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -17060,6 +17072,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
 				INFOPLIST_FILE = iTerm2SandboxedWorker/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -17072,6 +17085,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -17131,6 +17145,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				HEADER_SEARCH_PATHS = ThirdParty/libsixel/include;
 				INFOPLIST_FILE = iTerm2SandboxedWorker/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ThirdParty/libsixel/lib",
@@ -17144,6 +17159,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
