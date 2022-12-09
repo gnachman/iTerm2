@@ -972,11 +972,17 @@
 		A6024B89254D367E0036D6CF /* iTermColorSuggester.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B87254D367E0036D6CF /* iTermColorSuggester.m */; };
 		A6024B8B254DDFEE0036D6CF /* iTermNSColorCategoryTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A6024B8A254DDFEE0036D6CF /* iTermNSColorCategoryTests.m */; };
 		A60251681CCD3E5E009BABF1 /* NSURL+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */; };
-		A6038307294305EA00FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
+		A6038307294305EA00FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; settings = {COMPILER_FLAGS = "-DFILE_PROVIDER_LOGGING_AVAILABLE=1"; }; };
 		A60383082943067000FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
 		A6038309294306BA00FE11C2 /* iTermSandboxedWorkerClient.m in Sources */ = {isa = PBXBuildFile; fileRef = 7577E2A02593B88700905402 /* iTermSandboxedWorkerClient.m */; };
 		A603830A294306C400FE11C2 /* iTermAdvancedSettingsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100A18D94CDA007E901D /* iTermAdvancedSettingsModel.m */; };
 		A603830B294306D800FE11C2 /* iTermUserDefaultsObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EF57D021994DDC00C76698 /* iTermUserDefaultsObserver.m */; };
+		A603830E2943A92800FE11C2 /* AsyncFileProviderLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = A603830D2943A92800FE11C2 /* AsyncFileProviderLogging.swift */; };
+		A603830F2943A96900FE11C2 /* AsyncFileProviderLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = A603830D2943A92800FE11C2 /* AsyncFileProviderLogging.swift */; };
+		A60383102943A96A00FE11C2 /* AsyncFileProviderLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = A603830D2943A92800FE11C2 /* AsyncFileProviderLogging.swift */; };
+		A60383132943AAB700FE11C2 /* DebugLogging.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD39B19180B82F5004E56D5 /* DebugLogging.m */; };
+		A60383142943AABF00FE11C2 /* iTermAdvancedSettingsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A697100A18D94CDA007E901D /* iTermAdvancedSettingsModel.m */; };
+		A60383152943AAD100FE11C2 /* iTermUserDefaultsObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EF57D021994DDC00C76698 /* iTermUserDefaultsObserver.m */; };
 		A603E9FB283EE53C0028B648 /* SecretServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A603E9FA283EE53C0028B648 /* SecretServer.swift */; };
 		A603E9FE283EE9BD0028B648 /* ObjCExceptions.h in Headers */ = {isa = PBXBuildFile; fileRef = A603E9FC283EE9BD0028B648 /* ObjCExceptions.h */; };
 		A603E9FF283EE9BD0028B648 /* ObjCExceptions.m in Sources */ = {isa = PBXBuildFile; fileRef = A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */; };
@@ -2628,7 +2634,7 @@
 		A69F1BD728E65A4F0054204E /* uniE0C1_flame-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */; };
 		A69F1BD828E65A4F0054204E /* uniE0C1_flame-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */; };
 		A69F1BD928E65A4F0054204E /* uniE0C1_flame-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */; };
-		A69F1BDB28E7570C0054204E /* FileProviderDebugLoggingShim.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F1BDA28E7570C0054204E /* FileProviderDebugLoggingShim.swift */; };
+		A69F1BDB28E7570C0054204E /* FileProviderDebugLoggingShim.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F1BDA28E7570C0054204E /* FileProviderDebugLoggingShim.swift */; settings = {COMPILER_FLAGS = "-DFILE_PROVIDER_LOGGING_AVAILABLE=1"; }; };
 		A69F1BDC28E7571A0054204E /* FileProviderDebugLoggingShim.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69F1BDA28E7570C0054204E /* FileProviderDebugLoggingShim.swift */; };
 		A6A13AA218C2D23300B241ED /* iTermColorMap.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA018C2D23300B241ED /* iTermColorMap.h */; };
 		A6A13AA718C2D45900B241ED /* NSColor+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AA518C2D45900B241ED /* NSColor+iTerm.h */; };
@@ -5255,6 +5261,7 @@
 		A60251661CCD3E5E009BABF1 /* NSURL+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSURL+iTerm.h"; sourceTree = "<group>"; };
 		A60251671CCD3E5E009BABF1 /* NSURL+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSURL+iTerm.m"; sourceTree = "<group>"; };
 		A602516A1CCD40D9009BABF1 /* iTermNSURLCategoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermNSURLCategoryTest.m; sourceTree = "<group>"; };
+		A603830D2943A92800FE11C2 /* AsyncFileProviderLogging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncFileProviderLogging.swift; sourceTree = "<group>"; };
 		A603E9FA283EE53C0028B648 /* SecretServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretServer.swift; sourceTree = "<group>"; };
 		A603E9FC283EE9BD0028B648 /* ObjCExceptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCExceptions.h; sourceTree = "<group>"; };
 		A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCExceptions.m; sourceTree = "<group>"; };
@@ -10920,6 +10927,7 @@
 				A69412EF28555D3B0086F068 /* SyncAnchor.swift */,
 				A69412E728555D390086F068 /* SyncCache.swift */,
 				A69412ED28555D3B0086F068 /* WorkingSet.swift */,
+				A603830D2943A92800FE11C2 /* AsyncFileProviderLogging.swift */,
 			);
 			path = iTermFileProvider;
 			sourceTree = "<group>";
@@ -14859,6 +14867,7 @@
 				A63EB048284D1ADC00B2AB89 /* FileProviderService.swift in Sources */,
 				A63EB05C284EC5F900B2AB89 /* SSHIdentity.swift in Sources */,
 				A69F1BDB28E7570C0054204E /* FileProviderDebugLoggingShim.swift in Sources */,
+				A60383102943A96A00FE11C2 /* AsyncFileProviderLogging.swift in Sources */,
 				A69413082856831C0086F068 /* FileProviderLogging.swift in Sources */,
 				A63EB050284D1E1D00B2AB89 /* FileProviderServiceError.swift in Sources */,
 			);
@@ -15423,6 +15432,7 @@
 				A6A4867620B67B9D00493302 /* ProfilePreferencesViewController.m in Sources */,
 				A6A4866120B6763900493302 /* ArrangementPreviewView.m in Sources */,
 				A6D4C26821E18CB5009CF11B /* iTermScriptInspector.m in Sources */,
+				A603830F2943A96900FE11C2 /* AsyncFileProviderLogging.swift in Sources */,
 				535EA50120D0F15400FC81E0 /* iTermQuotedRecognizer.m in Sources */,
 				A6180D7521A36F730073F219 /* iTermMetalPerFrameStateRow.m in Sources */,
 				A6A9839127E5C427003319D1 /* PasswordManagerDataSourceProvider.swift in Sources */,
@@ -15637,11 +15647,13 @@
 			files = (
 				A694130528555D3D0086F068 /* FileProviderFetcher.swift in Sources */,
 				A69412FD28555D3D0086F068 /* FileProviderEnumerator.swift in Sources */,
+				A60383152943AAD100FE11C2 /* iTermUserDefaultsObserver.m in Sources */,
 				A694130028555D3D0086F068 /* SyncAnchor.swift in Sources */,
 				A694130328555D3D0086F068 /* FileListDiff.swift in Sources */,
 				A69412E528555C5F0086F068 /* FileProviderServicing.swift in Sources */,
 				A69412FE28555D3D0086F068 /* WorkingSet.swift in Sources */,
 				A694130128555D3D0086F068 /* CachingPaginatingDataSource.swift in Sources */,
+				A60383132943AAB700FE11C2 /* DebugLogging.m in Sources */,
 				A69412F828555D3D0086F068 /* SyncCache.swift in Sources */,
 				A69412FB28555D3D0086F068 /* FileProviderItem.swift in Sources */,
 				A694130228555D3D0086F068 /* NSFileProviderPage+Additions.swift in Sources */,
@@ -15653,7 +15665,9 @@
 				A69412FC28555D3D0086F068 /* ItemModifier.swift in Sources */,
 				A69412FF28555D3D0086F068 /* ItemDeleter.swift in Sources */,
 				A694130428555D3D0086F068 /* Paginator.swift in Sources */,
+				A60383142943AABF00FE11C2 /* iTermAdvancedSettingsModel.m in Sources */,
 				A63EB04E284D1DB400B2AB89 /* FileProviderServiceServer.swift in Sources */,
+				A603830E2943A92800FE11C2 /* AsyncFileProviderLogging.swift in Sources */,
 				A69412F728555D3D0086F068 /* ItemCreator.swift in Sources */,
 				A694130728555D3D0086F068 /* FileProviderExtension.swift in Sources */,
 				A69412F928555D3D0086F068 /* Remote.swift in Sources */,

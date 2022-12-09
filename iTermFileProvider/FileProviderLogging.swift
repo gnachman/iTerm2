@@ -70,20 +70,3 @@ public func logging<T>(_ prefix: String, closure: () throws -> T) rethrows -> T 
         }
     }
 }
-
-@available(macOS 10.15, *)
-public func logging<T>(_ prefix: String, closure: () async throws -> T) async rethrows -> T {
-    return try await LogContext.$logContexts.withValue(LogContext.logContexts + [prefix]) {
-        log("begin")
-        do {
-            defer {
-                log("end")
-            }
-            return try await closure()
-        } catch {
-            log("Exiting logging scope with uncaught error \(error)")
-            throw error
-        }
-    }
-}
-
