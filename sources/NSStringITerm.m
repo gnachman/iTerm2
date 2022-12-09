@@ -982,7 +982,7 @@ int decode_utf8_char(const unsigned char *datap,
         return [NSFont userFixedPitchFontOfSize:0.0] ?: [NSFont systemFontOfSize:[NSFont systemFontSize]];
     }
     if (@available(macOS 12, *)) {
-        if ([fontName hasPrefix:@"."] && ![fontName isEqualToString:@".AppleSystemUIFont"]) {
+        if ([fontName hasPrefix:@"."] && ![fontName hasPrefix:@".AppleSystemUIFont"]) {
             // Well this is terrible
             // Starting in, I guess, Ventura you can't round-trip font names for some mystery fonts.
             // Somehow users have a font name of .SFNS-Regular in their prefs. This came from maybe
