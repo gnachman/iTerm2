@@ -2074,6 +2074,9 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Before, range of visible lines is %@", VT100GridRangeDescription(_textview.rangeOfVisibleLines));
 
     [_screen setSize:size];
+    // Sync so that we'll have an updated model as we go forward so that, for example, tail find
+    // will be sane.
+    [self sync];
     if (!self.delegate || [self.delegate sessionShouldSendWindowSizeIOCTL:self]) {
         [_shell.winSizeController setGridSize:size
                                      viewSize:_screen.viewSize
@@ -8097,7 +8100,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)sync {
-    DLog(@"sync");
+    DLog(@"sync\n%@", [NSThread callStackSymbols]);
     [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
                  resetOverflow:NO];
 }
