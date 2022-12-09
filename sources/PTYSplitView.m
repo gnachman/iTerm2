@@ -117,7 +117,7 @@
 
 - (void)mouseDown:(NSEvent *)theEvent
 {
-    if (self.subviews.count == 0) {
+    if (self.subviews.count <= 1) {
         return;
     }
     // First, find the splitter that was clicked on. It will be the one closest
@@ -164,7 +164,7 @@
     }
 
     // mouseDown blocks and lets the user drag things around.
-    if (clickedOnSplitterIndex < 0) {
+    if (clickedOnSplitterIndex < 0 || clickedOnSplitterIndex >= self.subviews.count) {
         // You don't seem to have clicked on a splitter.
         DLog(@"Click in PTYSplitView was not on splitter");
         return;
