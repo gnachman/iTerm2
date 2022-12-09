@@ -99,7 +99,6 @@ static void WriteDebugLogHeader() {
                         windows,
                         [(iTermApplication *)NSApp orderedWindowsPlusAllHotkeyPanels],
                         pinnedMessages];
-    [gDebugLogHeader release];
     gDebugLogHeader = [header copy];
 }
 
@@ -137,7 +136,6 @@ static void FlushDebugLog() {
     }
 
     [gDebugLogStr setString:@""];
-    [gDebugLogHeader release];
     gDebugLogHeader = nil;
     [GetDebugLogLock() unlock];
 }
@@ -148,7 +146,7 @@ void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
 
     va_list args;
     va_start(args, value);
-    NSString *s = [[[NSString alloc] initWithFormat:value arguments:args] autorelease];
+    NSString *s = [[NSString alloc] initWithFormat:value arguments:args];
     va_end(args);
 
     NSString *log = [NSString stringWithFormat:@"%lld.%06lld [%@]: %@\n", (long long)tv.tv_sec, (long long)tv.tv_usec, key, s];
@@ -161,7 +159,7 @@ void AppendPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
     if (prev) {
         [prev appendString:log];
     } else {
-        gPinnedMessages[key] = [[log mutableCopy] autorelease];
+        gPinnedMessages[key] = [log mutableCopy];
     }
     [GetDebugLogLock() unlock];
 }
@@ -176,7 +174,7 @@ void SetPinnedDebugLogMessage(NSString *key, NSString *value, ...) {
 
     va_list args;
     va_start(args, value);
-    NSString *s = [[[NSString alloc] initWithFormat:value arguments:args] autorelease];
+    NSString *s = [[NSString alloc] initWithFormat:value arguments:args];
     va_end(args);
 
     NSString *log = [NSString stringWithFormat:@"%lld.%06lld [%@]: %@\n", (long long)tv.tv_sec, (long long)tv.tv_usec, key, s];
@@ -243,8 +241,8 @@ void LogForNextCrash(const char *file, int line, const char *function, NSString*
             fileNumber = (fileNumber + 1) % 3;
             [[NSFileManager defaultManager] removeItemAtPath:path error:nil];
             [[NSFileManager defaultManager] createFileAtPath:path contents:nil attributes:nil];
-            handle = [[NSFileHandle fileHandleForWritingAtPath:path] retain];
-            NSDateFormatter *dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+            handle = [NSFileHandle fileHandleForWritingAtPath:path];
+            NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
             dateFormatter.dateFormat = [NSDateFormatter dateFormatFromTemplate:@"yyyy-MM-dd HH:mm:ss.SSS ZZZ"
                                                                        options:0
                                                                         locale:nil];
@@ -252,7 +250,7 @@ void LogForNextCrash(const char *file, int line, const char *function, NSString*
             NSString *string = [NSString stringWithFormat:@"%@ %@\n", @(getpid()), [dateFormatter stringFromDate:date]];
             [handle writeData:[string dataUsingEncoding:NSUTF8StringEncoding]];
         }
-        handleToUse = [[handle retain] autorelease];
+        handleToUse = handle;
         numLines++;
     }
 
@@ -301,7 +299,7 @@ static BOOL StopDebugLogging() {
         gDebugLogging = NO;
         FlushDebugLog();
 
-        [gDebugLogStr release];
+        gDebugLogStr = nil;
         result = YES;
     }
     [GetDebugLogLock() unlock];
@@ -320,7 +318,7 @@ BOOL TurnOffDebugLoggingSilently(void) {
 
 void ToggleDebugLogging(void) {
     if (!gDebugLogging) {
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Debug Logging Enabled";
         alert.informativeText = @"Please reproduce the bug. Then toggle debug logging again to save the log.";
         [alert addButtonWithTitle:@"OK"];
@@ -328,7 +326,7 @@ void ToggleDebugLogging(void) {
         StartDebugLogging();
     } else {
         StopDebugLogging();
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Debug Logging Stopped";
         alert.informativeText = @"Please send /tmp/debuglog.txt to the developers.";
         [alert addButtonWithTitle:@"OK"];
@@ -354,7 +352,7 @@ void DLogC(const char *format, va_list args) {
     NSDictionary *userInfo = self.userInfo;
     NSString *const stackKey = @"original stack";
     if (!userInfo[stackKey]) {
-        NSMutableDictionary *temp = [[userInfo mutableCopy] autorelease];
+        NSMutableDictionary *temp = [userInfo mutableCopy];
         temp[stackKey] = self.callStackSymbols;
         userInfo = temp;
     }
