@@ -90,7 +90,8 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
                              kPreferenceKeyAppVersion,
                              @"CGFontRenderingFontSmoothingDisabled",
                              @"PreventEscapeSequenceFromChangingProfile",
-                             @"PreventEscapeSequenceFromClearingHistory" ];
+                             @"PreventEscapeSequenceFromClearingHistory",
+                             @"Coprocess MRU"];
     return ![exemptKeys containsObject:key] &&
             ![key hasPrefix:@"NS"] &&
             ![key hasPrefix:@"SU"] &&
