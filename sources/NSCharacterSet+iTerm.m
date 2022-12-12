@@ -2629,4 +2629,21 @@ unichar iTermMinimumDefaultEmojiPresentationCodePoint = 0x2300;
     return emoji;
 }
 
++ (NSCharacterSet *)flagCharactersForUnicodeVersion:(NSInteger)version {
+    if (version < 9) {
+        return [NSCharacterSet characterSetWithCharactersInString:@""];
+    }
+
+    static dispatch_once_t onceToken;
+    static NSMutableCharacterSet *characterSet;
+    dispatch_once(&onceToken, ^{
+        characterSet = [[NSMutableCharacterSet alloc] init];
+        // Emoji flag sequences:
+        [characterSet addCharactersInRange:NSMakeRange(0x1F1E6, 0x1F200 - 0x1F1E6)];
+        // Emoji tag sequences:
+        [characterSet addCharactersInRange:NSMakeRange(0x1F3F4, 1)];
+    });
+    return characterSet;
+}
+
 @end

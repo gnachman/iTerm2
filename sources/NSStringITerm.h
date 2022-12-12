@@ -66,7 +66,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 + (NSString *)stringWithInt:(int)num;
 + (BOOL)isDoubleWidthCharacter:(int)unicode
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
-                unicodeVersion:(NSInteger)version;
+                unicodeVersion:(NSInteger)version
+                fullWidthFlags:(BOOL)fullWidthFlags;
 + (NSString *)stringWithLongCharacter:(UTF32Char)longCharacter;
 
 // Returns the current string on the pasteboard (if any).

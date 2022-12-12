@@ -451,6 +451,7 @@ void StringToScreenChars(NSString *s,
     NSCharacterSet *ignorableCharacters = [NSCharacterSet ignorableCharactersForUnicodeVersion:unicodeVersion];
     NSCharacterSet *spacingCombiningMarks = [NSCharacterSet spacingCombiningMarksForUnicodeVersion:12];
     const BOOL shouldSupportVS16 = [iTermAdvancedSettingsModel vs16Supported] || (!softAlternateScreenMode && [iTermAdvancedSettingsModel vs16SupportedInPrimaryScreen]);
+    const BOOL fullWidthFlags = [iTermAdvancedSettingsModel fullWidthFlags];
 
     [s enumerateComposedCharacters:^(NSRange range,
                                      unichar baseBmpChar,
@@ -496,7 +497,8 @@ void StringToScreenChars(NSString *s,
 
                 isDoubleWidth = [NSString isDoubleWidthCharacter:baseBmpChar
                                           ambiguousIsDoubleWidth:ambiguousIsDoubleWidth
-                                                  unicodeVersion:unicodeVersion];
+                                                  unicodeVersion:unicodeVersion
+                                                  fullWidthFlags:fullWidthFlags];
             }
         }
         if (composedOrNonBmpChar) {
@@ -522,7 +524,8 @@ void StringToScreenChars(NSString *s,
             }
             isDoubleWidth = [NSString isDoubleWidthCharacter:baseChar
                                       ambiguousIsDoubleWidth:ambiguousIsDoubleWidth
-                                              unicodeVersion:unicodeVersion];
+                                              unicodeVersion:unicodeVersion
+                                              fullWidthFlags:fullWidthFlags];
             if (!isDoubleWidth && composedLength > next) {
                 const unichar peek = [composedOrNonBmpChar characterAtIndex:next];
                 if (peek == 0xfe0f) {

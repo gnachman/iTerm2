@@ -61,7 +61,8 @@
 
 + (BOOL)isDoubleWidthCharacter:(int)unicode
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
-                unicodeVersion:(NSInteger)version {
+                unicodeVersion:(NSInteger)version
+                fullWidthFlags:(BOOL)fullWidthFlags {
     if (unicode <= 0xa0 ||
         (unicode > 0x452 && unicode < 0x1100)) {
         // Quickly cover the common cases.
@@ -73,6 +74,9 @@
     }
     if (ambiguousIsDoubleWidth &&
         [[NSCharacterSet ambiguousWidthCharacterSetForUnicodeVersion:version] longCharacterIsMember:unicode]) {
+        return YES;
+    }
+    if (fullWidthFlags && [[NSCharacterSet flagCharactersForUnicodeVersion:version] longCharacterIsMember:unicode]) {
         return YES;
     }
     return NO;

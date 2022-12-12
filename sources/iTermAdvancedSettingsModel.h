@@ -149,6 +149,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)fontChangeAffectsBroadcastingSessions;
 + (double)fractionOfCharacterSelectingNextNeighbor;
 + (BOOL)fullHeightCursor;
++ (BOOL)fullWidthFlags;
 + (NSString *)gitSearchPath;
 + (double)gitTimeout;
 + (BOOL)hdrCursor;
