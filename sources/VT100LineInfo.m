@@ -57,7 +57,7 @@
 #ifdef ITERM_DEBUG
     assert(now > 0);
 #endif
-    _metadata.timestamp = now;
+    _metadata.timestamp = round(now);
     _cachedEncodedMetadata = nil;
 }
 
