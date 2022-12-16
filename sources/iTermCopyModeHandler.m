@@ -130,10 +130,6 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
     return iTermCopyModeActionNone;
 }
 
-static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierFlagOption |
-                                                                NSEventModifierFlagControl |
-                                                                NSEventModifierFlagCommand);
-
 @implementation iTermCopyModeHandler {
     iTermNSKeyBindingEmulator *_keyBindingEmulator;
 }
