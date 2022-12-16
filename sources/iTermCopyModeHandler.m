@@ -8,15 +8,16 @@
 #import "iTermCopyModeHandler.h"
 
 #import "iTermCopyModeState.h"
+#import "iTermNSKeyBindingEmulator.h"
 #import "iTermNotificationController.h"
 #import "iTermPreferences.h"
 #import "NSEvent+iTerm.h"
+#import "NSFileManager+iTerm.h"
 
 #import <Cocoa/Cocoa.h>
 
 typedef NS_ENUM(NSUInteger, iTermCopyModeAction) {
     iTermCopyModeActionNone,
-
     iTermCopyModeActionCopySelection,
     iTermCopyModeActionExitCopyMode,
     iTermCopyModeActionMoveBackwardWord,
@@ -46,13 +47,110 @@ typedef NS_ENUM(NSUInteger, iTermCopyModeAction) {
     iTermCopyModeActionToggleBoxSelection,
     iTermCopyModeActionToggleCharacterSelection,
     iTermCopyModeActionToggleLineSelection,
+
+    iTermCopyModeAction_Count
 };
+
+static NSString *iTermCopyModeActionName(iTermCopyModeAction action) {
+    switch (action) {
+        case iTermCopyModeActionNone:
+            return @"None";
+        case iTermCopyModeActionCopySelection:
+            return @"CopySelection";
+        case iTermCopyModeActionExitCopyMode:
+            return @"ExitCopyMode";
+        case iTermCopyModeActionMoveBackwardWord:
+            return @"MoveBackwardWord";
+        case iTermCopyModeActionMoveBackwardBigWord:
+            return @"MoveBackwardBigWord";
+        case iTermCopyModeActionMoveDown:
+            return @"MoveDown";
+        case iTermCopyModeActionMoveForwardWord:
+            return @"MoveForwardWord";
+        case iTermCopyModeActionMoveForwardBigWord:
+            return @"MoveForwardBigWord";
+        case iTermCopyModeActionMoveLeft:
+            return @"MoveLeft";
+        case iTermCopyModeActionMoveRight:
+            return @"MoveRight";
+        case iTermCopyModeActionMoveToBottomOfVisibleArea:
+            return @"MoveToBottomOfVisibleArea";
+        case iTermCopyModeActionMoveToEnd:
+            return @"MoveToEnd";
+        case iTermCopyModeActionMoveToEndOfLine:
+            return @"MoveToEndOfLine";
+        case iTermCopyModeActionMoveToMiddleOfVisibleArea:
+            return @"MoveToMiddleOfVisibleArea";
+        case iTermCopyModeActionMoveToStart:
+            return @"MoveToStart";
+        case iTermCopyModeActionMoveToStartOfIndentation:
+            return @"MoveToStartOfIndentation";
+        case iTermCopyModeActionMoveToStartOfLine:
+            return @"MoveToStartOfLine";
+        case iTermCopyModeActionMoveToStartOfNextLine:
+            return @"MoveToStartOfNextLine";
+        case iTermCopyModeActionMoveToTopOfVisibleArea:
+            return @"MoveToTopOfVisibleArea";
+        case iTermCopyModeActionMoveUp:
+            return @"MoveUp";
+        case iTermCopyModeActionNextMark:
+            return @"NextMark";
+        case iTermCopyModeActionPageDown:
+            return @"PageDown";
+        case iTermCopyModeActionPageUp:
+            return @"PageUp";
+        case iTermCopyModeActionPreviousMark:
+            return @"PreviousMark";
+        case iTermCopyModeActionQuit:
+            return @"Quit";
+        case iTermCopyModeActionShowFindPanel:
+            return @"ShowFindPanel";
+        case iTermCopyModeActionSwap:
+            return @"Swap";
+        case iTermCopyModeActionToggleBoxSelection:
+            return @"ToggleBoxSelection";
+        case iTermCopyModeActionToggleCharacterSelection:
+            return @"ToggleCharacterSelection";
+        case iTermCopyModeActionToggleLineSelection:
+            return @"ToggleLineSelection";
+        case iTermCopyModeAction_Count:
+            break;
+    }
+    return @"Undefined";
+}
+
+iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
+    for (NSUInteger i = 0; i < iTermCopyModeAction_Count; i++) {
+        if ([iTermCopyModeActionName(i) isEqualToString:name]) {
+            *ok = YES;
+            return i;
+        }
+    }
+    *ok = NO;
+    return iTermCopyModeActionNone;
+}
 
 static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierFlagOption |
                                                                 NSEventModifierFlagControl |
                                                                 NSEventModifierFlagCommand);
 
-@implementation iTermCopyModeHandler
+@implementation iTermCopyModeHandler {
+    iTermNSKeyBindingEmulator *_keyBindingEmulator;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        NSString *path;
+        path = [[[NSFileManager defaultManager] applicationSupportDirectoryWithoutCreating] stringByAppendingPathComponent:@"CopyModeKeyBindings.dict"];
+        if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
+            path = [[NSBundle bundleForClass:[iTermCopyModeHandler class]] pathForResource:@"iTermCopyModeKeyBindings" ofType:@"dict"];
+        }
+
+        _keyBindingEmulator = [[iTermNSKeyBindingEmulator alloc] initWithFile:path allowedActions:nil];
+    }
+    return self;
+}
 
 - (void)setEnabled:(BOOL)copyMode {
     if (copyMode && [self shouldAutoEnterWithEventIgnoringPrefs:NSApp.currentEvent]) {
@@ -255,135 +353,24 @@ static const NSEventModifierFlags sCopyModeEventModifierMask = (NSEventModifierF
             return [_state moveToEndOfLine];
         case iTermCopyModeActionNone:
             return NO;
+        case iTermCopyModeAction_Count:
+            return NO;
     }
 }
 
 - (iTermCopyModeAction)actionForEvent:(NSEvent *)event {
-    NSString *const string = event.charactersIgnoringModifiers;
-    const unichar code = [string length] > 0 ? [string characterAtIndex:0] : 0;
-
-    if ((event.it_modifierFlags & sCopyModeEventModifierMask) == NSEventModifierFlagControl) {
-        switch (code) {
-            case 'b':
-                return iTermCopyModeActionPageUp;
-            case 'f':
-                return iTermCopyModeActionPageDown;
-            case ' ':
-                return iTermCopyModeActionToggleCharacterSelection;
-            case 'c':
-            case 'g':
-                return iTermCopyModeActionExitCopyMode;
-            case 'k':
-                return iTermCopyModeActionCopySelection;
-            case 'v':
-                return iTermCopyModeActionToggleBoxSelection;
-        }
+    BOOL pointless = NO;
+    NSMutableArray<NSEvent *> *extraEvents = [NSMutableArray array];
+    NSString *name = nil;
+    if (![_keyBindingEmulator handlesEvent:event pointlessly:&pointless extraEvents:extraEvents action:&name]) {
         return iTermCopyModeActionNone;
     }
-    if ((event.it_modifierFlags & sCopyModeEventModifierMask) == NSEventModifierFlagOption) {
-        switch (code) {
-            case 'b':
-            case NSLeftArrowFunctionKey:
-                return iTermCopyModeActionMoveBackwardWord;
-            case 'f':
-            case NSRightArrowFunctionKey:
-                return iTermCopyModeActionMoveForwardWord;
-            case 'm':
-                return iTermCopyModeActionMoveToStartOfIndentation;
-        }
+    BOOL ok = NO;
+    const iTermCopyModeAction action = iTermCopyModeActionFromName(name, &ok);
+    if (!ok) {
         return iTermCopyModeActionNone;
     }
-    if ((event.it_modifierFlags & sCopyModeEventModifierMask) == NSEventModifierFlagCommand) {
-        switch (code) {
-            case NSHomeFunctionKey:
-            case NSUpArrowFunctionKey:
-                return iTermCopyModeActionMoveToStart;
-            case NSEndFunctionKey:
-            case NSDownArrowFunctionKey:
-                return iTermCopyModeActionMoveToEnd;
-            case NSLeftArrowFunctionKey:
-                return iTermCopyModeActionMoveToStartOfLine;
-            case NSRightArrowFunctionKey:
-                return iTermCopyModeActionMoveToEndOfLine;
-        }
-        return iTermCopyModeActionNone;
-    }
-    if ((event.it_modifierFlags & sCopyModeEventModifierMask) == 0) {
-        switch (code) {
-            case NSPageUpFunctionKey:
-                return iTermCopyModeActionPageUp;
-            case NSPageDownFunctionKey:
-                return iTermCopyModeActionPageDown;
-            case '\t':
-                if (event.it_modifierFlags & NSEventModifierFlagShift) {
-                    return iTermCopyModeActionMoveBackwardWord;
-                } else {
-                    return iTermCopyModeActionMoveForwardWord;
-                }
-            case '\n':
-            case '\r':
-                return iTermCopyModeActionMoveToStartOfNextLine;
-            case 27:
-            case 'q':
-                return iTermCopyModeActionQuit;
-            case ' ':
-            case 'v':
-                return iTermCopyModeActionToggleCharacterSelection;
-            case 'b':
-                return iTermCopyModeActionMoveBackwardWord;
-            case 'B':
-                return iTermCopyModeActionMoveBackwardBigWord;
-            case '0':
-                return iTermCopyModeActionMoveToStartOfLine;
-            case 'H':
-                return iTermCopyModeActionMoveToTopOfVisibleArea;
-            case 'G':
-            case NSEndFunctionKey:
-                return iTermCopyModeActionMoveToEnd;
-            case 'L':
-                return iTermCopyModeActionMoveToBottomOfVisibleArea;
-            case 'M':
-                return iTermCopyModeActionMoveToMiddleOfVisibleArea;
-            case 'V':
-                return iTermCopyModeActionToggleLineSelection;
-            case 'g':
-            case NSHomeFunctionKey:
-                return iTermCopyModeActionMoveToStart;
-            case 'h':
-            case NSLeftArrowFunctionKey:
-                return iTermCopyModeActionMoveLeft;
-            case 'j':
-            case NSDownArrowFunctionKey:
-                return iTermCopyModeActionMoveDown;
-            case 'k':
-            case NSUpArrowFunctionKey:
-                return iTermCopyModeActionMoveUp;
-            case 'l':
-            case NSRightArrowFunctionKey:
-                return iTermCopyModeActionMoveRight;
-            case 'o':
-                return iTermCopyModeActionSwap;
-            case 'w':
-                return iTermCopyModeActionMoveForwardWord;
-            case 'W':
-                return iTermCopyModeActionMoveForwardBigWord;
-            case 'y':
-                return iTermCopyModeActionCopySelection;
-            case '/':
-                return iTermCopyModeActionShowFindPanel;
-            case '[':
-                return iTermCopyModeActionPreviousMark;
-            case ']':
-                return iTermCopyModeActionNextMark;
-            case '^':
-                return iTermCopyModeActionMoveToStartOfIndentation;
-            case '$':
-                return iTermCopyModeActionMoveToEndOfLine;
-        }
-        return iTermCopyModeActionNone;
-    }
-
-    return iTermCopyModeActionNone;
+    return action;
 }
 
 - (void)educateAboutCopyMode {

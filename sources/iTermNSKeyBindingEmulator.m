@@ -17,16 +17,11 @@
 #import <Carbon/Carbon.h>
 #import <wctype.h>
 
-// The key binding dictionary forms a tree. This is the root of the tree.
-// Entries map a "normalized key" (as produced by dictionaryKeyForCharacters:andFlags:) to either a
-// dictionary subtree, or to an array with a selector and its arguments.
-static NSDictionary *gRootKeyBindingsDictionary;
-static NSSet<NSString *> *gPointlessFirstKeystrokes;
 
 @interface iTermNSKeyBindingEmulator ()
 
 // The current subtree.
-@property(nonatomic, retain) NSDictionary *currentDict;
+@property(nonatomic, strong) NSDictionary *currentDict;
 
 @end
 
@@ -46,40 +41,76 @@ static struct {
 };
 
 @implementation iTermNSKeyBindingEmulator {
+    // The key binding dictionary forms a tree. This is the root of the tree.
+    // Entries map a "normalized key" (as produced by dictionaryKeyForCharacters:andFlags:) to either a
+    // dictionary subtree, or to an array with a selector and its arguments.
+    NSDictionary *_root;
+    NSSet<NSString *> *_pointlessFirstKeystrokes;
     NSMutableArray *_savedEvents;
+    NSSet<NSString *> *_allowedActions;  // If nil all are allowed
 }
 
-+ (void)initialize {
-    if (self == [iTermNSKeyBindingEmulator self]) {
-        [self loadKeyBindingsDictionary];
-        AppendPinnedDebugLogMessage(@"NSKeyBindingEmulator", @"Key bindings are:\n%@", gRootKeyBindingsDictionary);
-    }
++ (instancetype)sharedInstance {
+    static iTermNSKeyBindingEmulator *instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] initWithFile:[self userFile] allowedActions:[NSSet setWithObject:@"insertText:"]];
+    });
+    return instance;
 }
 
-+ (void)loadKeyBindingsDictionary {
++ (NSString *)userFile {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory,
                                                          NSUserDomainMask,
                                                          YES);
 
     if (![paths count]) {
         AppendPinnedDebugLogMessage(@"NSKeyBindingEmulator", @"Failed to find library directory.");
-        return;
+        return nil;
     }
     NSString *bindPath =
         [paths[0] stringByAppendingPathComponent:@"KeyBindings/DefaultKeyBinding.dict"];
+    return bindPath;
+}
+
+
+- (instancetype)initWithFile:(NSString *)bindPath allowedActions:(NSSet<NSString *> *)allowedActions {
+    self = [super init];
+    if (self) {
+        _allowedActions = [allowedActions copy];
+        if (bindPath) {
+            [self loadKeyBindingsDictionary:bindPath allowedActions:allowedActions];
+        }
+    }
+    return self;
+}
+
+- (void)loadKeyBindingsDictionary:(NSString *)bindPath
+                   allowedActions:(NSSet<NSString *> *)allowedActions {
+    NSMutableSet<NSString *> *temp = [NSMutableSet set];
+    _root = [iTermNSKeyBindingEmulator keyBindingsDictionaryForFile:bindPath
+                                           pointlessFirstKeystrokes:temp
+                                                     allowedActions:allowedActions];
+    _pointlessFirstKeystrokes = temp;
+}
+
++ (NSDictionary *)keyBindingsDictionaryForFile:(NSString *)bindPath
+                      pointlessFirstKeystrokes:(NSMutableSet<NSString *> *)temp
+                                allowedActions:(NSSet<NSString *> *)allowedActions {
     NSDictionary *theDict = [NSDictionary dictionaryWithContentsOfFile:bindPath];
     AppendPinnedDebugLogMessage(@"NSKeyBindingEmulator", @"Load dictionary\n%@", theDict);
     DLog(@"Loaded key bindings dictionary:\n%@", theDict);
 
     NSDictionary *keyBindingDictionary = [self keyBindingDictionaryByNormalizingModifiersInKeys:theDict];
-    NSMutableSet<NSString *> *temp = [NSMutableSet set];
-    gRootKeyBindingsDictionary = [[self keyBindingDictionaryByPruningUselessBranches:keyBindingDictionary
-                                                                 pointlessKeystrokes:temp] retain];
-    gPointlessFirstKeystrokes = [temp retain];
+    NSDictionary *result = [self keyBindingDictionaryByPruningUselessBranches:keyBindingDictionary
+                                                          pointlessKeystrokes:temp
+                                                               allowedActions:allowedActions];
+    return result;
 }
 
 + (NSDictionary *)keyBindingDictionaryByPruningUselessBranches:(NSDictionary *)node
-                                           pointlessKeystrokes:(NSMutableSet<NSString *> *)pointless {
+                                           pointlessKeystrokes:(NSMutableSet<NSString *> *)pointless
+                                                allowedActions:(NSSet<NSString *> *)allowedActions {
     // Remove leafs that do not have an insertText: action.
     // Recursively rune dictionary values, removing them if empty.
     // Returns nil if the result would be an empty dictionary.
@@ -94,9 +125,11 @@ static struct {
     for (NSString *key in node) {
         id value = node[key];
         if ([value isKindOfClass:[NSDictionary class]]) {
-            value = [self keyBindingDictionaryByPruningUselessBranches:value pointlessKeystrokes:nil];
+            value = [self keyBindingDictionaryByPruningUselessBranches:value
+                                                   pointlessKeystrokes:nil
+                                                        allowedActions:allowedActions];
         } else if ([value isKindOfClass:[NSArray class]]) {
-            if (![[value firstObject] isEqualToString:@"insertText:"]) {
+            if (allowedActions && ![allowedActions containsObject:value]) {
                 value = nil;
             }
         } else {
@@ -262,13 +295,44 @@ static struct {
     return [NSString stringWithFormat:@"[code %d]", value];
 }
 
++ (UTF32Char)codeForNormalizedCharacters:(NSString *)characters {
+    NSScanner *scanner = [NSScanner scannerWithString:characters];
+    if (![scanner scanString:@"[code " intoString:nil]) {
+        return 0;
+    }
+    int result;
+    if (![scanner scanInt:&result]) {
+        return 0;
+    }
+    if (![scanner scanString:@"]" intoString:nil]) {
+        return 0;
+    }
+    if (!scanner.isAtEnd) {
+        return 0;
+    }
+    return result;
+}
+
++ (NSUInteger)normalizedFlags:(NSUInteger)nonNormalFlags forCharacters:(NSString *)characters {
+    const UTF32Char c = [self codeForNormalizedCharacters:characters];
+    switch (c) {
+        case NSUpArrowFunctionKey:
+        case NSDownArrowFunctionKey:
+        case NSLeftArrowFunctionKey:
+        case NSRightArrowFunctionKey:
+            return nonNormalFlags | NSEventModifierFlagNumericPad;
+    }
+    return nonNormalFlags;
+}
+
 // Returns a normalized key for characters and a modifier mask.
 + (NSString *)dictionaryKeyForCharacters:(NSString *)nonNormalChars
-                                andFlags:(NSUInteger)flags {
+                                andFlags:(NSUInteger)nonNormalFlags {
     NSString *characters = [self normalizedCharacters:nonNormalChars];
     if (!characters) {
         return nil;
     }
+    NSUInteger flags = [self normalizedFlags:nonNormalFlags forCharacters:characters];
     NSMutableString *theKey = [NSMutableString string];
     for (int i = 0; i < sizeof(gModifiers) / sizeof(gModifiers[0]); i++) {
         if ((gModifiers[i].mask & flags) == gModifiers[i].mask) {
@@ -285,20 +349,17 @@ static struct {
     self = [super init];
     if (self) {
         _savedEvents = [[NSMutableArray alloc] init];
-        _currentDict = [gRootKeyBindingsDictionary retain];
+        _currentDict = _root;
     }
     return self;
 }
 
-- (void)dealloc {
-    [_savedEvents release];
-    [_currentDict release];
-    [super dealloc];
-}
-
-- (BOOL)handlesEvent:(NSEvent *)event pointlessly:(BOOL *)pointlessly extraEvents:(NSMutableArray *)extraEvents {
+- (BOOL)handlesEvent:(NSEvent *)event
+         pointlessly:(BOOL *)pointlessly
+         extraEvents:(NSMutableArray *)extraEvents
+              action:(out NSString *__autoreleasing *)actionPtr {
     *pointlessly = NO;
-    if (!gRootKeyBindingsDictionary && [gPointlessFirstKeystrokes count] == 0) {
+    if (!_root && [_pointlessFirstKeystrokes count] == 0) {
         DLog(@"Short-circuit DefaultKeyBindings handling because no bindings are defined and there are no pointless leaders");
         [_savedEvents removeAllObjects];
         return NO;
@@ -306,7 +367,7 @@ static struct {
     DLog(@"Checking if default key bindings should handle %@", event);
     NSArray *possibleKeys = [self dictionaryKeysForEvent:event];
     if (possibleKeys.count == 0) {
-        self.currentDict = gRootKeyBindingsDictionary;
+        self.currentDict = _root;
         DLog(@"Couldn't normalize event to key!");
         NSLog(@"WARNING: Unexpected charactersIgnoringModifiers=%@ in event %@",
               event.charactersIgnoringModifiers, event);
@@ -333,11 +394,11 @@ static struct {
     }
 
     // Not (or no longer) in a multi-keystroke binding. Move to the root of the tree.
-    self.currentDict = gRootKeyBindingsDictionary;
+    self.currentDict = _root;
     DLog(@"Default key binding is %@", obj);
 
     for (NSString *theKey in possibleKeys) {
-        if ([gPointlessFirstKeystrokes containsObject:theKey]) {
+        if ([_pointlessFirstKeystrokes containsObject:theKey]) {
             *pointlessly = YES;
             DLog(@"Keystroke is pointless. Caller should not pass to handleEvent or interpretKeyEvents.");
             return YES;
@@ -351,12 +412,16 @@ static struct {
     }
 
     NSArray *theArray = (NSArray *)obj;
-    BOOL result = ([theArray[0] isEqualToString:@"insertText:"]);
-    if (!result) {
+    const BOOL allowed = (_allowedActions == nil || [_allowedActions containsObject:theArray[0]]);
+    if (!allowed) {
         [extraEvents addObjectsFromArray:_savedEvents];
     }
     [_savedEvents removeAllObjects];
-    return result;
+
+    if (actionPtr) {
+        *actionPtr = theArray[0];
+    }
+    return allowed;
 }
 
 #pragma mark - Private
@@ -388,10 +453,10 @@ static struct {
                    unicodeString);
     CFRelease(keyboard);
 
-    NSString *theString = (NSString *)CFStringCreateWithCharacters(kCFAllocatorDefault,
-                                                                   unicodeString,
-                                                                   1);
-    return [theString autorelease];
+    NSString *theString = (__bridge_transfer NSString *)CFStringCreateWithCharacters(kCFAllocatorDefault,
+                                                                                     unicodeString,
+                                                                                     1);
+    return theString;
 }
 
 // Returns all possible keys for an event, from most preferred to least.

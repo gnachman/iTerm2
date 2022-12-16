@@ -136,6 +136,12 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return result;
 }
 
+- (NSString *)applicationSupportDirectoryWithoutCreating {
+    NSString *base = [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) lastObject];
+    NSString *appname = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleNameKey];
+    return [base stringByAppendingPathComponent:appname];
+}
+
 - (NSString *)spacelessAppSupportWithoutCreatingLink {
     NSString *dotdir = [self homeDirectoryDotDir];
     NSString *nospaces = [dotdir stringByAppendingPathComponent:@"AppSupport"];

@@ -47,7 +47,7 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _keyBindingEmulator = [[iTermNSKeyBindingEmulator alloc] init];
+        _keyBindingEmulator = [iTermNSKeyBindingEmulator sharedInstance];
     }
     return self;
 }
@@ -104,7 +104,7 @@ static iTermKeyboardHandler *sCurrentKeyboardHandler;
 
     NSMutableArray *eventsToHandle = [NSMutableArray array];
     BOOL pointlessly;
-    if ([_keyBindingEmulator handlesEvent:event pointlessly:&pointlessly extraEvents:eventsToHandle]) {
+    if ([_keyBindingEmulator handlesEvent:event pointlessly:&pointlessly extraEvents:eventsToHandle action:nil]) {
         if (!pointlessly) {
             DLog(@"iTermNSKeyBindingEmulator reports that event is handled, sending to interpretKeyEvents.");
             [self.delegate keyboardHandler:self interpretKeyEvents:@[ event ]];
