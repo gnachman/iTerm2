@@ -46,6 +46,9 @@
 }
 
 + (NSSet<NSNumber *> *)doubleWidthPowerlineSymbols {
+    if (![iTermAdvancedSettingsModel makeSomePowerlineSymbolsWide]) {
+        return [NSSet set];
+    }
     return [NSSet setWithArray:@[ @(0xE0B8), @(0xE0C0), @(0xE0C1),
                                   @(0xE0CE), @(0xE0CF), @(0xE0D0),
                                   @(0xE0D1), @(0xE0D3) ]];

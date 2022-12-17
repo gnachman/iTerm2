@@ -427,6 +427,7 @@ DEFINE_INT(minimumWeightDifferenceForBoldFont, 4, SECTION_DRAWING @"Minimum weig
 DEFINE_FLOAT(underlineCursorHeight, 2, SECTION_DRAWING @"Thickness of underline cursor.");
 DEFINE_BOOL(preferSpeedToFullLigatureSupport, YES, SECTION_DRAWING @"Improves drawing performance at the expense of disallowing alphanumeric characters to belong to ligatures.");
 DEFINE_BOOL(forceAntialiasingOnRetina, NO, SECTION_DRAWING @"Force text to be anti-aliased on Retina displays.\nEnable this to use non-AA text on non-retina displays, which sometimes looks better.");
+DEFINE_BOOL(makeSomePowerlineSymbolsWide, YES, SECTION_DRAWING @"Draw certain Powerline symbols double-width?\nThis matches how most “nerd” fonts render them, but your favorite one might not do this. An example code point that is affected is U+E0B8.");
 
 #if ENABLE_LOW_POWER_GPU_DETECTION
 DEFINE_BOOL(useLowPowerGPUWhenUnplugged, NO, SECTION_DRAWING @"Metal renderer uses integrated GPU when not connected to power?\nFor this to be effective you must disable “Disable Metal renderer when not connected to power”.");

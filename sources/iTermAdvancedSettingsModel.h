@@ -177,6 +177,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)logRestorableStateSize;
 + (BOOL)logTimestampsWithPlainText;
 + (BOOL)lowFiCombiningMarks;
++ (BOOL)makeSomePowerlineSymbolsWide;
 + (int)maxURLLength;
 + (double)maximumFrameRate;
 + (int)maxHistoryLinesToRestore;
