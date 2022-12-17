@@ -534,6 +534,11 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                   _descriptor.glyphSize.height * _radius - inset);
         rect.size = NSMakeSize(_descriptor.cellSize.width * _descriptor.scale + inset * 2,
                                _descriptor.cellSize.height * _descriptor.scale + inset * 2);
+        if (_string.length > 0 &&
+            _useNativePowerlineGlyphs &&
+            [iTermBoxDrawingBezierCurveFactory isDoubleWidthPowerlineGlyph:[_string characterAtIndex:0]]) {
+            rect.size.width *= 2;
+        }
         return rect;
     }
 

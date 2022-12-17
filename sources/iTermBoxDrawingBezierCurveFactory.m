@@ -45,6 +45,12 @@
               @(0xE0D3): @"uniE0D3_lego_block_facing_WIP-3d-good" };
 }
 
++ (NSSet<NSNumber *> *)doubleWidthPowerlineSymbols {
+    return [NSSet setWithArray:@[ @(0xE0B8), @(0xE0C0), @(0xE0C1),
+                                  @(0xE0CE), @(0xE0CF), @(0xE0D0),
+                                  @(0xE0D1), @(0xE0D3) ]];
+}
+
 + (NSCharacterSet *)boxDrawingCharactersWithBezierPathsIncludingPowerline {
     static NSCharacterSet *sBoxDrawingCharactersWithBezierPaths;
     static dispatch_once_t onceToken;
@@ -382,13 +388,21 @@
     return NO;
 }
 
++ (BOOL)isDoubleWidthPowerlineGlyph:(unichar)code {
+    return [[iTermBoxDrawingBezierCurveFactory doubleWidthPowerlineSymbols] containsObject:@(code)];
+}
+
 + (BOOL)haveCustomGlyph:(unichar)code {
     return self.powerlineExtendedSymbols[@(code)] != nil;
 }
 
 + (void)drawCustomGlyphForCode:(unichar)code cellSize:(NSSize)cellSize color:(CGColorRef)color {
+    NSSize adjustedCellSize = cellSize;
+    if ([[iTermBoxDrawingBezierCurveFactory doubleWidthPowerlineSymbols] containsObject:@(code)]) {
+        adjustedCellSize.width *= 2;
+    }
     [self drawPDFWithName:self.powerlineExtendedSymbols[@(code)]
-                 cellSize:cellSize
+                 cellSize:adjustedCellSize
                   stretch:NO
                     color:color
               antialiased:YES];

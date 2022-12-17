@@ -19,5 +19,6 @@
         useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs;
 
 + (BOOL)isPowerlineGlyph:(unichar)code;
++ (BOOL)isDoubleWidthPowerlineGlyph:(unichar)code;
 
 @end
