@@ -79,6 +79,8 @@ extern NSString *const kPreferenceKeyAddBonjourHostsToProfiles;
 extern NSString *const kPreferenceKeyCheckForUpdatesAutomatically;
 extern NSString *const kPreferenceKeyCheckForTestReleases;
 extern NSString *const kPreferenceKeyLoadPrefsFromCustomFolder;
+extern NSString *const kPreferenceKeyOpenAIAPIKey;
+extern NSString *const kPreferenceKeyAIPrompt;
 
 // Note: if kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection is false, then use the default value (.never).
 // Otherwise, respect this value.

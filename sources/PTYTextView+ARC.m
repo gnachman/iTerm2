@@ -97,6 +97,9 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
             item.title = @"Disconnect";
         }
     }
+    if (item.action == @selector(performNaturalLanguageQuery:)) {
+        return [self.delegate textViewNaturalLanguageQuery] != nil;
+    }
     return NO;
 }
 
@@ -111,6 +114,10 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 
 - (IBAction)sshDisconnect:(id)sender {
     [self.delegate textViewDisconnectSSH];
+}
+
+- (IBAction)performNaturalLanguageQuery:(id)sender {
+    [self.delegate textViewPerformNaturalLanguageQuery];
 }
 
 #pragma mark - Coordinate Space Conversions

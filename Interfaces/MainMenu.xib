@@ -497,6 +497,12 @@ DQ
                                     <action selector="renderSelection:" target="-1" id="CYd-u9-J4s"/>
                                 </connections>
                             </menuItem>
+                            <menuItem isSeparatorItem="YES" id="b0A-74-lFS"/>
+                            <menuItem title="Engage Artificial Intelligence" keyEquivalent="b" identifier="Engage Artificial Intelligence" id="zgu-Gv-WUr">
+                                <connections>
+                                    <action selector="performNaturalLanguageQuery:" target="-1" id="oJ4-at-Hbh"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="jHq-aL-J2z"/>
                             <menuItem title="Snippets" id="s0f-jP-7Pk" userLabel="Snippets">
                                 <modifierMask key="keyEquivalentModifierMask"/>

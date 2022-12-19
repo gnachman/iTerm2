@@ -8,7 +8,7 @@
 import Foundation
 
 struct RegexCache {
-    fileprivate static var instance = RegexCache()
+    static var instance = RegexCache()
     private var cache: [String: Result<NSRegularExpression, Error>] = [:]
 
     mutating func get(_ pattern: String) throws -> NSRegularExpression? {

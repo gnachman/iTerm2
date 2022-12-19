@@ -604,6 +604,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     // Are we currently enqueuing the bytes to write a focus report?
     BOOL _reportingFocus;
+
+    AITermControllerObjC *_aiterm;
 }
 
 @synthesize isDivorced = _divorced;
@@ -990,6 +992,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_sshWriteQueue release];
     [_lastNonFocusReportingWrite release];
     [_lastFocusReportDate release];
+    [_aiterm release];
 
     [super dealloc];
 }
@@ -8491,7 +8494,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 + (NSArray<PTYSession *> *)sessionsForActionApplyMode:(iTermActionApplyMode)mode focused:(PTYSession *)focused {
     switch (mode) {
         case iTermActionApplyModeCurrentSession:
-            return @[ focused ];
+            return focused ? @[ focused ] : @[];
         case iTermActionApplyModeAllSessions:
             return [[iTermController sharedInstance] allSessions];
         case iTermActionApplyModeUnfocusedSessions:
@@ -14288,6 +14291,59 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                         mute:@YES];
     }];
     return YES;
+}
+
+- (NSString *)textViewNaturalLanguageQuery {
+    return [self naturalLanguageQuery];
+}
+
+- (NSString *)naturalLanguageQuery {
+    NSString *query = nil;
+    if (_textview.selection.hasSelection) {
+        query = _textview.selectedText;
+    } else {
+        query = self.currentCommand;
+    }
+    if (query.length == 0) {
+        return nil;
+    }
+    if (query.length >= [iTermAdvancedSettingsModel aiMaxTokens] / 8) {
+        return nil;
+    }
+    return query;
+}
+
+- (void)textViewPerformNaturalLanguageQuery {
+    NSString *query = [self naturalLanguageQuery];
+    if (!query) {
+        NSBeep();
+        return;
+    }
+    [_aiterm release];
+    __weak __typeof(self) weakSelf = self;
+    _aiterm = [[AITermControllerObjC alloc] initWithQuery:query
+                                                 inWindow:self.view.window
+                                               completion:^(NSArray<NSString *> * _Nullable choices, NSString * _Nullable error) {
+        [weakSelf handleAIChoices:choices error:error];
+    }];
+}
+
+- (void)handleAIChoices:(NSArray<NSString *> *)choices error:(NSString *)error {
+    if (error) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem with the AI query: %@", error]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:nil
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"AI Error"
+                                    window:self.view.window];
+        return;
+    }
+    if (choices.count == 0) {
+        return;
+    }
+    [self setComposerString:choices[0]];
+    [self.composerManager reveal];
 }
 
 - (BOOL)sessionViewTerminalIsFirstResponder {

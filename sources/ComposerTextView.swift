@@ -62,6 +62,24 @@ class ComposerTextView: MultiCursorTextView {
         suggestionRange = NSRange(location: NSNotFound, length: 0)
     }
 
+    @objc var firstSelectionIsNontrivial: Bool {
+        return (multiCursorSelectedRanges.first?.length ?? 0) > 0
+    }
+
+    @objc func replaceSelectionOrWholeString(string: String) {
+        if multiCursorSelectedRanges.count > 1 || firstSelectionIsNontrivial {
+            for range in multiCursorSelectedRanges.reversed() {
+                multiCursorReplaceCharacters(in: range, with: string)
+            }
+        } else {
+            multiCursorReplaceCharacters(in: NSRange(location: 0, length: textStorage?.length ?? 0),
+                                         with: string)
+        }
+    }
+
+    override func cancelOperation(_ sender: Any?) {
+    }
+    
     override func viewDidMoveToWindow() {
         if window == nil {
             undoManager?.removeAllActions(withTarget: textStorage!)

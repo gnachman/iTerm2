@@ -153,6 +153,13 @@ enum {
     IBOutlet NSTextField *_allowsSendingClipboardContentsLabel;
 
     IBOutlet NSButton *_disableConfirmationOnShutdown;
+
+    IBOutlet NSTextField *_openAIAPIKey;
+    IBOutlet NSTextField *_openAIAPIKeyLabel;
+
+    IBOutlet NSTextField *_aiPrompt;
+    IBOutlet NSTextField *_aiPromptLabel;
+    IBOutlet NSImageView *_aiPromptWarning;  // Image shown when prompt lacks {}
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -548,6 +555,18 @@ enum {
             displayName:nil
                    type:kPreferenceInfoTypeCheckbox];
 
+    [self defineControl:_openAIAPIKey
+                    key:kPreferenceKeyOpenAIAPIKey
+            relatedView:_openAIAPIKeyLabel
+                   type:kPreferenceInfoTypeStringTextField];
+    info = [self defineControl:_aiPrompt
+                           key:kPreferenceKeyAIPrompt
+                   relatedView:_aiPromptLabel
+                          type:kPreferenceInfoTypeStringTextField];
+    info.observer = ^{
+        [weakSelf updateAIPromptWarning];
+    };
+
     info = [self defineControl:_allowsSendingClipboardContents
                            key:kPreferenceKeyPhonyAllowSendingClipboardContents
                    relatedView:_allowsSendingClipboardContentsLabel
@@ -563,6 +582,14 @@ enum {
     [self updateEnabledState];
     [self commitControls];
     [self updateValueForInfo:allowSendingClipboardInfo];
+}
+
+- (void)updateAIPromptWarning {
+    if ([[self stringForKey:kPreferenceKeyAIPrompt] containsString:@"{}"]) {
+        _aiPromptWarning.alphaValue = 0.0;
+    } else {
+        _aiPromptWarning.alphaValue = 1.0;
+    }
 }
 
 - (NSString *)alwaysOpenLegend {

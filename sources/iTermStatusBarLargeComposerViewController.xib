@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="20037" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21507" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="20037"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21507"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -72,6 +72,17 @@
                         <action selector="help:" target="-2" id="1tB-yN-5o5"/>
                     </connections>
                 </button>
+                <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dkw-XI-f0G">
+                    <rect key="frame" x="26" y="-1" width="169" height="27"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES"/>
+                    <buttonCell key="cell" type="bevel" title="Engage Artificial Intelligence" bezelStyle="rounded" image="sparkles.square.filled.on.square" catalog="system" imagePosition="left" alignment="right" imageScaling="proportionallyDown" inset="2" id="zb3-gB-4Zi">
+                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="smallSystem"/>
+                    </buttonCell>
+                    <connections>
+                        <action selector="performNaturalLanguageQuery:" target="-2" id="952-oQ-cQ4"/>
+                    </connections>
+                </button>
             </subviews>
             <connections>
                 <outlet property="_textView" destination="Gmj-Uu-ZiB" id="IOP-e2-9dG"/>
@@ -79,4 +90,7 @@
             <point key="canvasLocation" x="143" y="132"/>
         </customView>
     </objects>
+    <resources>
+        <image name="sparkles.square.filled.on.square" catalog="system" width="17" height="16"/>
+    </resources>
 </document>

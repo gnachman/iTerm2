@@ -92,6 +92,7 @@
     CommandHistoryPopupWindowController *_historyWindowController;
     NSInteger _completionGeneration;
     iTermTextPopoverViewController *_popoverVC;
+    AITermControllerObjC *_aitermController;
 }
 
 - (void)awakeFromNib {
@@ -214,6 +215,44 @@
     }
 }
 
+- (NSString *)aiPrompt {
+    if (self.textView.selectedRange.length > 0) {
+        return [self.textView.string substringWithRange:self.textView.selectedRange];
+    } else {
+        return self.textView.string;
+    }
+}
+
+- (IBAction)performNaturalLanguageQuery:(id)sender {
+    __weak __typeof(self) weakSelf = self;
+
+    _aitermController = [[AITermControllerObjC alloc] initWithQuery:self.aiPrompt
+                                                           inWindow:self.view.window
+                                                         completion:^(NSArray<NSString *> *choices, NSString *error) {
+        if (choices.count >= 1) {
+            [weakSelf acceptSuggestion:choices[0]];
+        } else {
+            [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem with the AI query: %@", error]
+                                       actions:@[ @"OK" ]
+                                     accessory:nil
+                                    identifier:nil
+                                   silenceable:kiTermWarningTypePersistent
+                                       heading:@"AI Error"
+                                        window:weakSelf.view.window];
+        }
+    }];
+}
+
+- (void)acceptSuggestion:(NSString *)string {
+    // It likes to spam whitespace around the command.
+    NSMutableCharacterSet *trim = [NSMutableCharacterSet whitespaceAndNewlineCharacterSet];
+
+    // Sometimes it'll give a command wrapped in markdown backticks. This could be too aggressive in some edge cases.
+    [trim addCharactersInString:@"`"];
+
+    [self.textView replaceSelectionOrWholeStringWithString:[string stringByTrimmingCharactersInSet:trim]];
+}
+
 - (IBAction)help:(id)sender {
     [_popoverVC.popover close];
     _popoverVC = [[iTermTextPopoverViewController alloc] initWithNibName:@"iTermTextPopoverViewController"
@@ -234,6 +273,7 @@
          @"^⇧↓\tAdd cursor below\n"
          @"^⇧-click\tAdd cursor\n"
          @"⌥-drag\tAdd cursors\n"
+         @"⌘B\tNatural language AI lookup\n"
          @"⌘F\tOpen Find bar\n"
          @"⌥⌘V\tOpen in Advanced Paste\n"
          @"⌘-click\tOpen in explainshell.com\n"
@@ -247,7 +287,6 @@
                                     ofView:_help
                              preferredEdge:NSRectEdgeMaxY];
 }
-
 
 #pragma mark - PopupDelegate
 

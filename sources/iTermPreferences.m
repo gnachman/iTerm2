@@ -178,6 +178,9 @@ NSString *const kPreferenceKeyHTMLTabTitles = @"HTMLTabTitles";
 NSString *const kPreferenceKeyDisableTransparencyForKeyWindow = @"DisableTransparencyForKeyWindow";
 NSString *const kPreferenceKeyNeverBlockSystemShutdown = @"NeverBlockSystemShutdown";
 
+NSString *const kPreferenceKeyOpenAIAPIKey = @"NoSyncOpenAIAPIKey";
+NSString *const kPreferenceKeyAIPrompt = @"AI Prompt";
+
 // NOTE: If you update this list, also update preferences.py.
 
 static NSMutableDictionary *gObservers;
@@ -362,6 +365,8 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyMetalMaximizeThroughput: @YES,
                   kPreferenceKeyEnableAPIServer: @NO,
                   kPreferenceKeyAPIAuthentication: @0,  // ignored — synthetic value
+                  kPreferenceKeyOpenAIAPIKey: @"",
+                  kPreferenceKeyAIPrompt: @"Unix command, without any English prose, to {}",
 
                   kPreferenceKeyTabStyle_Deprecated: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),
