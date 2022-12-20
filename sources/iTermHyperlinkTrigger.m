@@ -7,6 +7,7 @@
 
 #import "NSURL+iTerm.h"
 #import "iTermHyperlinkTrigger.h"
+#import "ScreenChar.h"
 
 #import <CoreServices/CoreServices.h>
 #import <QuartzCore/QuartzCore.h>
@@ -44,7 +45,8 @@
                         useInterpolation:(BOOL)useInterpolation
                                     stop:(BOOL *)stop {
     const NSRange rangeInString = capturedRanges[0];
-    
+    const NSRange rangeOnScreen = [stringLine rangeOfScreenCharsForRangeInString:rangeInString];
+
     // Need to stop the world to get scope, provided it is needed. This is potentially going to be a performance problem for a small number of users.
     id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
     id<iTermTriggerCallbackScheduler> scheduler = [scopeProvider triggerCallbackScheduler];
@@ -53,7 +55,7 @@
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull urlString) {
         [scheduler scheduleTriggerCallback:^{
             [self performActionWithURLString:urlString
-                                       range:rangeInString
+                                       range:rangeOnScreen
                                      session:aSession
                           absoluteLineNumber:lineNumber];
         }];
