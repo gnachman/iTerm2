@@ -12,6 +12,7 @@ import AppKit
 protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerTextViewDidFinishWithCancel:) func composerTextViewDidFinish(cancel: Bool)
     @objc(composerTextViewSend:) func composerTextViewSend(string: String)
+    @objc(composerTextViewEnqueue:) func composerTextViewEnqueue(string: String)
     @objc(composerTextViewSendToAdvancedPaste:) func composerTextViewSendToAdvancedPaste(content: String)
 
     // Optional
@@ -79,7 +80,7 @@ class ComposerTextView: MultiCursorTextView {
 
     override func cancelOperation(_ sender: Any?) {
     }
-    
+
     override func viewDidMoveToWindow() {
         if window == nil {
             undoManager?.removeAllActions(withTarget: textStorage!)
@@ -122,6 +123,13 @@ class ComposerTextView: MultiCursorTextView {
                     composerDelegate?.composerTextViewSend(string: command)
                 }
                 return
+            }
+            let justOption = flags.intersection(mask) == [.option]
+            if justOption {
+                suggestion = nil
+                for command in take() {
+                    composerDelegate?.composerTextViewEnqueue(string: command)
+                }
             }
         }
         super.keyDown(with: event)

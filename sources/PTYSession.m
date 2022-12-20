@@ -606,6 +606,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     BOOL _reportingFocus;
 
     AITermControllerObjC *_aiterm;
+    NSMutableArray<NSString *> *_commandQueue;
 }
 
 @synthesize isDivorced = _divorced;
@@ -750,6 +751,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         _pwdPoller = [[iTermWorkingDirectoryPoller alloc] init];
         _pwdPoller.delegate = self;
         _graphicSource = [[iTermGraphicSource alloc] init];
+        _commandQueue = [[NSMutableArray alloc] init];
 
         // This is a placeholder. When the profile is set it will get updated.
         iTermStandardKeyMapper *standardKeyMapper = [[iTermStandardKeyMapper alloc] init];
@@ -993,6 +995,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_lastNonFocusReportingWrite release];
     [_lastFocusReportDate release];
     [_aiterm release];
+    [_commandQueue release];
 
     [super dealloc];
 }
@@ -11719,6 +11722,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // currentMarkOrNotePosition is used for navigating next/previous
         self.currentMarkOrNotePosition = newMark.entry.interval;
     }
+    if (_commandQueue.count) {
+        NSString *command = [[[_commandQueue firstObject] retain] autorelease];
+        [_commandQueue removeObjectAtIndex:0];
+        [self sendCommand:command];
+    }
     if (!alert) {
         completion();
         return;
@@ -16053,7 +16061,21 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [_textview.window makeFirstResponder:_textview];
 }
 
+- (void)composerManager:(iTermComposerManager *)composerManager enqueueCommand:(NSString *)command {
+    if (self.currentCommand != nil && self.currentCommand.length == 0) {
+        // At shell prompt
+        [self sendCommand:command];
+        return;
+    }
+    // Send when next mark is received.
+    [_commandQueue addObject:[command copy]];
+}
+
 - (void)composerManager:(iTermComposerManager *)composerManager sendCommand:(NSString *)command {
+    [self sendCommand:command];
+}
+
+- (void)sendCommand:(NSString *)command {
     if (_screen.commandRange.start.x < 0) {
         id<VT100RemoteHostReading> host = [self currentHost] ?: [VT100RemoteHost localhost];
         [[iTermShellHistoryController sharedInstance] addCommand:command

@@ -119,6 +119,10 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     [self.delegate minimalComposer:self sendCommand:string dismiss:NO];
 }
 
+- (void)composerTextViewEnqueue:(NSString *)string {
+    [self.delegate minimalComposer:self enqueueCommand:string dismiss:NO];
+}
+
 #pragma mark - iTermDragHandleViewDelegate
 
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {

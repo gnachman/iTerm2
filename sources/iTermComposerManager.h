@@ -23,6 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)composerManager:(iTermComposerManager *)composerManager
             sendCommand:(NSString *)command;
 - (void)composerManager:(iTermComposerManager *)composerManager
+         enqueueCommand:(NSString *)command;
+- (void)composerManager:(iTermComposerManager *)composerManager
     sendToAdvancedPaste:(NSString *)command;
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager;
 - (NSAppearance *_Nullable)composerManagerAppearance:(iTermComposerManager *)composerManager;

@@ -18,6 +18,9 @@ NS_ASSUME_NONNULL_BEGIN
             sendCommand:(NSString *)command
                 dismiss:(BOOL)dismiss;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
+         enqueueCommand:(NSString *)command
+                dismiss:(BOOL)dismiss;
+- (void)minimalComposer:(iTermMinimalComposerViewController *)composer
     sendToAdvancedPaste:(NSString *)content;
 @end
 

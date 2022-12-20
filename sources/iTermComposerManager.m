@@ -180,6 +180,21 @@
 
 #pragma mark - iTermMinimalComposerViewControllerDelegate
 
+- (void)minimalComposer:(iTermMinimalComposerViewController *)composer
+         enqueueCommand:(NSString *)command
+                dismiss:(BOOL)dismiss {
+    NSString *string = composer.stringValue;
+    if (dismiss) {
+        [self dismissMinimalView];
+    }
+    if (command.length == 0) {
+        _saved = string;
+        return;
+    }
+    _saved = nil;
+    [self.delegate composerManager:self enqueueCommand:[command stringByAppendingString:@"\n"]];
+}
+
 - (void)minimalComposer:(nonnull iTermMinimalComposerViewController *)composer
             sendCommand:(nonnull NSString *)command
                 dismiss:(BOOL)dismiss {
