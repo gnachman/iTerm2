@@ -75,6 +75,7 @@ NSString *const kPreferenceKeyPhonyAllowSendingClipboardContents = @"PhonyAllowS
 
 NSString *const kPreferenceKeyUseMetal = @"UseMetal";
 NSString *const kPreferenceKeyDisableMetalWhenUnplugged = @"disableMetalWhenUnplugged";
+NSString *const kPreferenceKeyDisableInLowPowerMode = @"disableMetalInLowPowerMode";
 NSString *const kPreferenceKeyPreferIntegratedGPU = @"preferIntegratedGPU";
 NSString *const kPreferenceKeyMetalMaximizeThroughput = @"metalMaximizeThroughput";
 NSString *const kPreferenceKeyEnableAPIServer = @"EnableAPIServer";
@@ -361,6 +362,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyTmuxSyncClipboard: @NO,
                   kPreferenceKeyUseMetal: @YES,
                   kPreferenceKeyDisableMetalWhenUnplugged: @YES,
+                  kPreferenceKeyDisableInLowPowerMode: @YES,
                   kPreferenceKeyPreferIntegratedGPU: @YES,
                   kPreferenceKeyMetalMaximizeThroughput: @YES,
                   kPreferenceKeyEnableAPIServer: @NO,

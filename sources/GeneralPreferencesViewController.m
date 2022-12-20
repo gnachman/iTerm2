@@ -345,6 +345,15 @@ enum {
         [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
     };
 
+    _advancedGPUWindowController.viewController.disableInLowPowerMode.target = self;
+    _advancedGPUWindowController.viewController.disableInLowPowerMode.action = @selector(settingChanged:);
+    info = [self defineUnsearchableControl:_advancedGPUWindowController.viewController.disableInLowPowerMode
+                                       key:kPreferenceKeyDisableInLowPowerMode
+                                      type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermMetalSettingsDidChangeNotification object:nil];
+    };
+
     _advancedGPUWindowController.viewController.preferIntegratedGPU.target = self;
     _advancedGPUWindowController.viewController.preferIntegratedGPU.action = @selector(settingChanged:);
     info = [self defineUnsearchableControl:_advancedGPUWindowController.viewController.preferIntegratedGPU
@@ -375,6 +384,7 @@ enum {
     [self addViewToSearchIndex:_advancedGPUPrefsButton
                    displayName:@"Advanced GPU settings"
                        phrases:@[ _advancedGPUWindowController.viewController.disableWhenDisconnected.title,
+                                  _advancedGPUWindowController.viewController.disableInLowPowerMode.title,
                                   _advancedGPUWindowController.viewController.preferIntegratedGPU.title,
                                   _advancedGPUWindowController.viewController.maximizeThroughput.title ]
                            key:nil];

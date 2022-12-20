@@ -31,6 +31,11 @@
     }
 
     self.preferIntegratedGPU.enabled = (foundLowPower && foundHighPower);
+    if (@available(macOS 12.0, *)) {
+        self.disableInLowPowerMode.enabled = YES;
+    } else {
+        self.disableInLowPowerMode.enabled = NO;
+    }
 }
 
 @end

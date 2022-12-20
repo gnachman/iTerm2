@@ -6378,7 +6378,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [devices release];
     });
     if (@available(macOS 12.0, *)) {
-        if ([[NSProcessInfo processInfo] isLowPowerModeEnabled]) {
+        if ([iTermPreferences boolForKey:kPreferenceKeyDisableInLowPowerMode] &&
+            [[NSProcessInfo processInfo] isLowPowerModeEnabled]) {
             if (reason) {
                 *reason = iTermMetalUnavailableReasonLowerPowerMode;
             }
