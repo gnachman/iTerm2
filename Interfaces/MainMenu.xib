@@ -724,6 +724,12 @@ DQ
                                     <action selector="clearBuffer:" target="-1" id="220"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Clear Instant Replay" keyEquivalent="k" identifier="Clear Instant Replay" id="dxF-XL-vIa">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="clearInstantReplay:" target="-1" id="r9X-aA-p10"/>
+                                </connections>
+                            </menuItem>
                             <menuItem title="Clear Scrollback Buffer" keyEquivalent="K" identifier="Clear Scrollback Buffer" id="755">
                                 <connections>
                                     <action selector="clearScrollbackBuffer:" target="-1" id="756"/>

@@ -612,6 +612,7 @@ backgroundColor:(NSColor *)backgroundColor;
 
 // Begin showing DVR frames from some live session.
 - (void)setDvr:(DVR*)dvr liveSession:(PTYSession*)liveSession;
+- (void)clearInstantReplay;
 
 - (void)willRetireSyntheticSession:(PTYSession *)syntheticSession;
 

@@ -1081,6 +1081,14 @@ ITERM_WEAKLY_REFERENCEABLE
     return _textview;
 }
 
+- (void)clearInstantReplay {
+    if (_dvrDecoder) {
+        [_dvr releaseDecoder:_dvrDecoder];
+        _dvrDecoder = nil;
+    }
+    [_screen.dvr clear];
+}
+
 - (void)irAdvance:(int)dir
 {
     if (!_dvr) {

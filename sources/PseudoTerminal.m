@@ -10036,6 +10036,10 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     }];
 }
 
+- (IBAction)clearInstantReplay:(id)sender {
+    [self.currentSession clearInstantReplay];
+}
+
 - (IBAction)clearToLastMark:(id)sender {
     [self.currentSession.screen clearToLastMark];
 }
@@ -10276,6 +10280,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         return self.currentSession.screen.lastMark != nil;
     } else if (item.action == @selector(clearToStartOfSelection:)) {
         return self.currentSession.hasSelection;
+    } else if (item.action == @selector(clearInstantReplay:)) {
+        return ![[self currentSession] liveSession] && self.currentSession.screen.dvr.canClear;
     }
 
     return result;

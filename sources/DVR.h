@@ -40,6 +40,7 @@
 @property(nonatomic, readonly) BOOL readOnly;
 @property(nonatomic, readonly) BOOL empty;
 @property(nonatomic, readonly) NSDictionary *dictionaryValue;
+@property(nonatomic, readonly) BOOL canClear;
 
 // Allocates a circular buffer of the given size in bytes to store screen
 // contents. Somewhat more memory is used because there's some per-frame
@@ -66,5 +67,6 @@
 
 - (NSDictionary *)dictionaryValueFrom:(long long)from to:(long long)to;
 - (long long)firstTimestampAfter:(long long)timestamp;
+- (void)clear;
 
 @end

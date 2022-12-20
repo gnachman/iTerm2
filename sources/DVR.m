@@ -104,6 +104,20 @@
                      info:info];
 }
 
+- (BOOL)canClear {
+    return !readOnly_ && decoders_.count == 0;
+}
+
+- (void)clear {
+    if (![self canClear]) {
+        return;
+    }
+    [buffer_ autorelease];
+    buffer_ = [[DVRBuffer alloc] initWithBufferCapacity:capacity_];
+    [encoder_ autorelease];
+    encoder_ = [[DVREncoder alloc] initWithBuffer:buffer_];
+}
+
 - (DVRDecoder*)getDecoder
 {
     DVRDecoder* decoder = [[DVRDecoder alloc] initWithBuffer:buffer_];
