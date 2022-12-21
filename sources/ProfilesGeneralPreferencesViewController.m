@@ -1176,6 +1176,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                                                           tty:@"TTY"
                                                                                          user:@"User"
                                                                                          host:@"Host"
+                                                                                homeDirectory:nil
                                                                                      tmuxPane:nil
                                                                                      iconName:@"“Shell”"
                                                                                    windowName:@""

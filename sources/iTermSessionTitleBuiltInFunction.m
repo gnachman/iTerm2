@@ -22,6 +22,7 @@ static NSString *const iTermSessionTitleArgPath = @"path";
 static NSString *const iTermSessionTitleArgTTY = @"tty";
 static NSString *const iTermSessionTitleArgUser = @"username";
 static NSString *const iTermSessionTitleArgHost = @"hostname";
+static NSString *const iTermSessionTitleArgHomeDirectory = @"homeDirectory";
 static NSString *const iTermSessionTitleArgTmuxPane = @"tmuxPane";
 static NSString *const iTermSessionTitleArgTmuxRole = @"tmuxRole";
 static NSString *const iTermSessionTitleArgTmuxClientName = @"tmuxClientName";
@@ -48,6 +49,7 @@ static NSString *const iTermSessionTitleSession = @"session";
        iTermSessionTitleArgTTY: iTermVariableKeySessionTTY,
        iTermSessionTitleArgUser: iTermVariableKeySessionUsername,
        iTermSessionTitleArgHost: iTermVariableKeySessionHostname,
+       iTermSessionTitleArgHomeDirectory: iTermVariableKeySessionHomeDirectory,
        iTermSessionTitleArgTmuxPane: iTermVariableKeySessionTmuxPaneTitle,
        iTermSessionTitleArgTmuxRole: iTermVariableKeySessionTmuxRole,
        iTermSessionTitleArgTmuxClientName: iTermVariableKeySessionTmuxClientName,
@@ -117,6 +119,7 @@ static NSString *const iTermSessionTitleSession = @"session";
     NSString *tty = trim(parameters[iTermSessionTitleArgTTY]);
     NSString *user = trim(parameters[iTermSessionTitleArgUser]);
     NSString *host = trim(parameters[iTermSessionTitleArgHost]);
+    NSString *homeDirectory = trim(parameters[iTermSessionTitleArgHomeDirectory]);
     NSString *tmuxPane = trim(parameters[iTermSessionTitleArgTmuxPane]);
     NSString *iconName = trim(parameters[iTermSessionTitleArgIconName]);
     NSString *windowName = trim(parameters[iTermSessionTitleArgWindowName]);
@@ -137,6 +140,7 @@ static NSString *const iTermSessionTitleSession = @"session";
                                              tty:tty
                                             user:user
                                             host:host
+                                   homeDirectory:homeDirectory
                                         tmuxPane:tmuxPane
                                         iconName:iconName
                                       windowName:windowName
@@ -172,6 +176,7 @@ static NSString *const iTermSessionTitleSession = @"session";
                               tty:(NSString *)ttyVariable
                              user:(NSString *)userVariable
                              host:(NSString *)hostVariable
+                    homeDirectory:(NSString *)homeDirectoryVariable
                          tmuxPane:(NSString *)tmuxPaneVariable
                          iconName:(NSString *)iconName
                        windowName:(NSString *)windowName
@@ -284,7 +289,7 @@ static NSString *const iTermSessionTitleSession = @"session";
             } else if (c == 'H') {
                 [userHostPWD appendString:hostVariable ?: @""];
             } else if (c == 'P') {
-                [userHostPWD appendString:[self prettyPWD:pwdVariable forHost:hostVariable] ?: @""];
+                [userHostPWD appendString:[self prettyPWD:pwdVariable homeDirectory:homeDirectoryVariable] ?: @""];
             } else {
                 [userHostPWD appendCharacter:c];
             }
@@ -325,18 +330,11 @@ NSString *iTermColumnsByRowsString(int columns, int rows) {
     return [NSString stringWithFormat:@"%d✕%d", columns, rows];
 }
 
-+ (NSString *)prettyPWD:(NSString *)absolutePath forHost:(NSString *)host {
-    if (!host) {
++ (NSString *)prettyPWD:(NSString *)absolutePath
+          homeDirectory:(NSString *)home {
+    if (!home) {
         return absolutePath;
     }
-    if (![[NSHost fullyQualifiedDomainName] isEqualToString:host]) {
-        return absolutePath;
-    }
-    static NSString *home;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        home = NSHomeDirectory();
-    });
     if (![absolutePath hasPrefix:home]) {
         return absolutePath;
     }

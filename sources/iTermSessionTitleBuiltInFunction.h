@@ -22,6 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
                               tty:(NSString *)ttyVariable
                              user:(NSString *)userVariable
                              host:(NSString *)hostVariable
+                    homeDirectory:(nullable NSString *)homeDirectory
                          tmuxPane:(nullable NSString *)tmuxPaneVariable
                          iconName:(NSString *)iconName
                        windowName:(NSString *)windowName

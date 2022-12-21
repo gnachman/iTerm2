@@ -73,6 +73,8 @@ extern NSString *const iTermVariableKeySessionBellCount;  // NSNumber. Number of
 extern NSString *const iTermVariableKeySessionLogFilename;  // NSString. Path to log file. Unset if not logging.
 extern NSString *const iTermVariableKeySessionMouseInfo;  // [x=NSNumber, y=NSNumber, button=NSNumber, count=NSNumber, modifiers=NSNumber, sideEffects=NSNumber, state=NSNumber]. Info about last lcick.
 extern NSString *const iTermVariableKeySessionApplicationKeypad;  // NSNumber. Boolean - in application keypad mode?
+extern NSString *const iTermVariableKeySessionHomeDirectory;  // NSString. Value of $HOME, including remote host when ssh integration+framer used.
+extern NSString *const iTermVariableKeySSHIntegrationLevel;  // NSNumber. 0=none, 1=basic, 2=framer
 
 extern NSString *const iTermVariableKeyWindowTitleOverrideFormat;
 extern NSString *const iTermVariableKeyWindowCurrentTab;

@@ -22,6 +22,7 @@ protocol ConductorDelegate: Any {
     @objc(conductorWriteString:) func conductorWrite(string: String)
     func conductorAbort(reason: String)
     func conductorQuit()
+    func conductorStateDidChange()
 }
 
 @objc(iTermConductor)
@@ -111,6 +112,7 @@ class Conductor: NSObject, Codable {
         return _processInfoProvider
     }
     private var backgroundJobs = [Int32: State]()
+    @objc var homeDirectory: String?
 
     enum FileSubcommand: Codable, Equatable {
         case ls(path: Data, sorting: FileSorting)
@@ -799,12 +801,14 @@ class Conductor: NSObject, Codable {
     @objc func startRecovery() {
         write("\nrecover\n\n")
         state = .recovery(.ground)
+        delegate?.conductorStateDidChange()
     }
 
     @objc func recoveryDidFinish() {
         DLog("Recovery finished")
         switch state {
         case .recovered:
+            delegate?.conductorStateDidChange()
             state = .ground
         default:
             break
@@ -816,6 +820,7 @@ class Conductor: NSObject, Codable {
         state = .ground
         send(.quit, .fireAndForget)
         delegate?.conductorQuit()
+        delegate?.conductorStateDidChange()
     }
 
     @objc(ancestryContainsClientUniqueID:)
@@ -838,11 +843,18 @@ class Conductor: NSObject, Codable {
                     "sshargs": sshargs,
                     "boolArgs": boolArgs,
                     "clientUniqueID": clientUniqueID])
+        runRemoteCommand("echo $HOME") { [weak self] data, status in
+            if status == 0 {
+                self?.homeDirectory = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                self?.delegate?.conductorStateDidChange()
+            }
+        }
         framerLogin(cwd: initialDirectory ?? "$HOME",
                     args: modifiedCommandArgs ?? parsedSSHArguments.commandArgs)
         if autopollEnabled {
             send(.framerAutopoll, .fireAndForget)
         }
+        delegate?.conductorStateDidChange()
     }
 
     private func uploadPayloads() {
@@ -994,8 +1006,8 @@ class Conductor: NSObject, Codable {
                 let major = Int(parts.get(0, default: "0")) ?? 0
                 let minor = Int(parts.get(1, default: "0")) ?? 0
                 DLog("Treating version \(version) as \(major).\(minor)")
-                if major == Self.minimumPythonMajorVersion &&
-                    minor >= Self.minimumPythonMinorVersion {
+                if major > Self.minimumPythonMajorVersion ||
+                    (major == Self.minimumPythonMajorVersion && minor >= Self.minimumPythonMinorVersion) {
                     doFraming()
                 } else {
                     execLoginShell()
@@ -1025,6 +1037,7 @@ class Conductor: NSObject, Codable {
                     }
                 }
                 framedPID = pid
+                delegate?.conductorStateDidChange()
                 return
             case .abort, .sideChannelLine(_, _, _):
                 return
@@ -1315,6 +1328,7 @@ class Conductor: NSObject, Codable {
                                                  boolArgs: finished.boolArgs,
                                                  clientUniqueID: finished.clientUniqueID,
                                                  parent: parent)
+                        delegate?.conductorStateDidChange()
                     }
                     return nil
                 }
@@ -1489,6 +1503,7 @@ extension Conductor: SSHCommandRunning {
         backgroundJobs[pid] = .executing(context)
     }
 
+    @objc
     func runRemoteCommand(_ commandLine: String,
                           completion: @escaping (Data, Int32) -> ()) {
         if framedPID == 0 {

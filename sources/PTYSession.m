@@ -700,6 +700,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         [self.variablesScope setValue:@"" forVariableNamed:iTermVariableKeySessionSelection];
         [self.variablesScope setValue:@0 forVariableNamed:iTermVariableKeySessionSelectionLength];
         [self.variablesScope setValue:@NO forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
+        [self.variablesScope setValue:NSHomeDirectory() forVariableNamed:iTermVariableKeySessionHomeDirectory];
+        [self.variablesScope setValue:@0 forVariableNamed:iTermVariableKeySSHIntegrationLevel];
 
         _variables.primaryKey = iTermVariableKeySessionID;
         _jobPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionJobPid
@@ -1611,6 +1613,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 aSession->_conductor = [iTermConductor newConductorWithJSON:conductor delegate:aSession];
             }
             if (aSession->_conductor) {
+                [aSession updateVariablesFromConductor];
                 [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
                     [terminal.parser startConductorRecoveryModeWithID:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID]
                                                                  tree:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_TREE]];
@@ -13882,6 +13885,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _sshState = iTermSSHStateNone;
     _conductor.delegate = self;
     [_conductor start];
+    [self updateVariablesFromConductor];
 }
 
 - (void)screenDidReadSSHConductorLine:(NSString *)string depth:(int)depth {
@@ -13902,6 +13906,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [_conductor autorelease];
     _conductor = [_conductor.parent retain];
     _conductor.delegate = self;
+    [self updateVariablesFromConductor];
 }
 
 - (void)screenDidBeginSSHConductorCommandWithIdentifier:(NSString *)identifier
@@ -13966,6 +13971,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                              initialDirectory:nil
                   shouldInjectShellIntegration:NO
                                        parent:previousConductor];
+    [self updateVariablesFromConductor];
     _conductor.delegate = self;
     [_conductor startRecovery];
 }
@@ -13979,6 +13985,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [_conductor autorelease];
     _conductor = [[iTermConductor alloc] initWithRecovery:recovery];
     _conductor.delegate = self;
+    [self updateVariablesFromConductor];
     return recovery;
 }
 
@@ -16780,6 +16787,40 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     }];
     [self unhookSSHConductor];
     [_sshWriteQueue setLength:0];
+}
+
+- (void)conductorStateDidChange {
+    DLog(@"conductorDidExfiltrateState");
+    [self updateVariablesFromConductor];
+}
+
+- (void)updateVariablesFromConductor {
+    if (!_conductor) {
+        self.variablesScope.homeDirectory = NSHomeDirectory();
+        self.variablesScope.sshIntegrationLevel = 0;
+        return;
+    }
+    const NSInteger level = _conductor.framing ? 2 : 1;
+    self.variablesScope.sshIntegrationLevel = level;
+    switch (level) {
+        case 0: {
+            const BOOL onLocalhost = (self.currentHost == nil || self.currentHost.isLocalhost);
+            if (onLocalhost) {
+                self.variablesScope.homeDirectory = NSHomeDirectory();
+                break;
+            }
+            // SSHed without integration
+            self.variablesScope.homeDirectory = nil;
+            break;
+        }
+        case 1:
+            // Definitely ssh'ed, but no way to get home dir.
+            self.variablesScope.homeDirectory = nil;
+            break;
+        case 2:
+            self.variablesScope.homeDirectory = _conductor.homeDirectory;
+            break;
+    }
 }
 
 @end

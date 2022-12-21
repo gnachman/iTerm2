@@ -361,4 +361,20 @@
     [self setValue:@(value) forVariableNamed:iTermVariableKeySessionApplicationKeypad];
 }
 
+- (NSString *)homeDirectory {
+    return [self valueForVariableName:iTermVariableKeySessionHomeDirectory];
+}
+
+- (void)setHomeDirectory:(NSString *)homeDirectory {
+    [self setValue:homeDirectory forVariableNamed:iTermVariableKeySessionHomeDirectory];
+}
+
+- (NSInteger)sshIntegrationLevel {
+    return [[self valueForVariableName:iTermVariableKeySSHIntegrationLevel] integerValue];
+}
+
+- (void)setSshIntegrationLevel:(NSInteger)level {
+    [self setValue:@(level) forVariableNamed:iTermVariableKeySSHIntegrationLevel];
+}
+
 @end

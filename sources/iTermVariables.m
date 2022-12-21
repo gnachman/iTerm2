@@ -87,6 +87,8 @@ NSString *const iTermVariableKeySessionLogFilename = @"logFilename";
 NSString *const iTermVariableKeySessionTmuxWindowPaneIndex = @"tmuxWindowPaneIndex";
 NSString *const iTermVariableKeySessionMouseInfo = @"mouseInfo";
 NSString *const iTermVariableKeySessionApplicationKeypad = @"applicationKeypad";
+NSString *const iTermVariableKeySessionHomeDirectory = @"homeDirectory";
+NSString *const iTermVariableKeySSHIntegrationLevel = @"sshIntegrationLevel";
 
 #pragma mark - Window Context
 
