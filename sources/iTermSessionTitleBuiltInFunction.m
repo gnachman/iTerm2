@@ -10,6 +10,7 @@
 #import "DebugLogging.h"
 #import "iTermProfilePreferences.h"
 #import "iTermVariableScope.h"
+#import "NSHost+iTerm.h"
 #import "PTYSession.h"
 
 // Arguments to title BIF
@@ -283,7 +284,7 @@ static NSString *const iTermSessionTitleSession = @"session";
             } else if (c == 'H') {
                 [userHostPWD appendString:hostVariable ?: @""];
             } else if (c == 'P') {
-                [userHostPWD appendString:pwdVariable ?: @""];
+                [userHostPWD appendString:[self prettyPWD:pwdVariable forHost:hostVariable] ?: @""];
             } else {
                 [userHostPWD appendCharacter:c];
             }
@@ -322,6 +323,24 @@ static NSString *const iTermSessionTitleSession = @"session";
 
 NSString *iTermColumnsByRowsString(int columns, int rows) {
     return [NSString stringWithFormat:@"%d✕%d", columns, rows];
+}
+
++ (NSString *)prettyPWD:(NSString *)absolutePath forHost:(NSString *)host {
+    if (!host) {
+        return absolutePath;
+    }
+    if (![[NSHost fullyQualifiedDomainName] isEqualToString:host]) {
+        return absolutePath;
+    }
+    static NSString *home;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        home = NSHomeDirectory();
+    });
+    if (![absolutePath hasPrefix:home]) {
+        return absolutePath;
+    }
+    return [@"~" stringByAppendingString:[absolutePath stringByRemovingPrefix:home]];
 }
 
 @end
