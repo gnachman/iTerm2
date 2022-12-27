@@ -49,11 +49,14 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     _largeComposerViewController.textView.font = font;
 }
 
-- (void)setHost:(id<VT100RemoteHostReading>)host workingDirectory:(NSString *)pwd shell:(NSString *)shell tmuxController:(nonnull TmuxController *)tmuxController {
+- (void)setHost:(id<VT100RemoteHostReading>)host
+workingDirectory:(NSString *)pwd
+          scope:(iTermVariableScope *)scope
+ tmuxController:(nonnull TmuxController *)tmuxController {
     [self view];
     _largeComposerViewController.host = host;
     _largeComposerViewController.workingDirectory = pwd;
-    _largeComposerViewController.shell = shell;
+    _largeComposerViewController.scope = scope;
     _largeComposerViewController.tmuxController = tmuxController;
 }
 

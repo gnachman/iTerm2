@@ -18,7 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) IBOutlet iTermComposerTextView *textView;
 @property (nonatomic, strong, nullable) id<VT100RemoteHostReading> host;
 @property (nonatomic, strong, nullable) NSString *workingDirectory;
-@property (nonatomic, copy) NSString *shell;
+@property (nonatomic, copy) iTermVariableScope *scope;
 @property (nonatomic, weak, nullable) TmuxController *tmuxController;
 
 @end

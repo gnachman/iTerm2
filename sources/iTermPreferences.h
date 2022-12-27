@@ -227,6 +227,8 @@ extern NSString *const kPreferenceKeySnippets;
 extern NSString *const kPreferenceKeyDisableTransparencyForKeyWindow;
 extern NSString *const kPreferenceKeyNeverBlockSystemShutdown;
 
+extern NSString *const iTermDefaultAIPrompt;
+
 @interface iTermPreferences : NSObject
 
 // This should be called early during startup to set user defaults keys that fix problematic Apple

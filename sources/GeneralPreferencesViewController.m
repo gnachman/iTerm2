@@ -159,7 +159,7 @@ enum {
 
     IBOutlet NSTextField *_aiPrompt;
     IBOutlet NSTextField *_aiPromptLabel;
-    IBOutlet NSImageView *_aiPromptWarning;  // Image shown when prompt lacks {}
+    IBOutlet NSImageView *_aiPromptWarning;  // Image shown when prompt lacks \(ai.prompt)
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -595,7 +595,7 @@ enum {
 }
 
 - (void)updateAIPromptWarning {
-    if ([[self stringForKey:kPreferenceKeyAIPrompt] containsString:@"{}"]) {
+    if ([[self stringForKey:kPreferenceKeyAIPrompt] containsString:@"\\(ai.prompt)"]) {
         _aiPromptWarning.alphaValue = 0.0;
     } else {
         _aiPromptWarning.alphaValue = 1.0;
@@ -713,6 +713,15 @@ enum {
 
 - (IBAction)pythonAPIAuthHelp:(id)sender {
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/python-api-auth.html"]];
+}
+
+- (IBAction)resetAIPrompt:(id)sender {
+    [self setString:iTermDefaultAIPrompt forKey:kPreferenceKeyAIPrompt];
+    _aiPrompt.stringValue = iTermDefaultAIPrompt;
+}
+
+- (IBAction)aiPromptHelp:(id)sender {
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://iterm2.com/ai-prompt-help"]];
 }
 
 #pragma mark - Notifications

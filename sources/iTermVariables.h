@@ -75,6 +75,8 @@ extern NSString *const iTermVariableKeySessionMouseInfo;  // [x=NSNumber, y=NSNu
 extern NSString *const iTermVariableKeySessionApplicationKeypad;  // NSNumber. Boolean - in application keypad mode?
 extern NSString *const iTermVariableKeySessionHomeDirectory;  // NSString. Value of $HOME, including remote host when ssh integration+framer used.
 extern NSString *const iTermVariableKeySSHIntegrationLevel;  // NSNumber. 0=none, 1=basic, 2=framer
+extern NSString *const iTermVariableKeyShell;  // NSString. Value of last path component of $SHELL
+extern NSString *const iTermVariableKeyUname;  // NSString. Value of uname -a
 
 extern NSString *const iTermVariableKeyWindowTitleOverrideFormat;
 extern NSString *const iTermVariableKeyWindowCurrentTab;

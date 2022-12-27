@@ -7,15 +7,18 @@
 
 #import "iTermScriptFunctionCall.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 @class iTermBuiltInFunctions;
 @class iTermScriptFunctionCall;
 @class iTermVariableScope;
 
 @protocol iTermObject<NSObject>
 
-- (NSString *)description;
-- (iTermBuiltInFunctions *)objectMethodRegistry;
-- (iTermVariableScope *)objectScope;
+@property (readonly, copy) NSString *description;
+
+- (iTermBuiltInFunctions * _Nullable)objectMethodRegistry;
+- (iTermVariableScope * _Nullable)objectScope;
 
 @end
 
@@ -29,3 +32,5 @@ void iTermCallMethodOnObject(id<iTermObject> object,
                              NSDictionary *args,
                              void (^completion)(id, NSError *));
 
+
+NS_ASSUME_NONNULL_END

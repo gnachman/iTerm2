@@ -140,7 +140,7 @@
     _minimalViewController.view.appearance = [self.delegate composerManagerAppearance:self];
     [_minimalViewController setHost:[self.delegate composerManagerRemoteHost:self]
                    workingDirectory:[self.delegate composerManagerWorkingDirectory:self]
-                              shell:[self.delegate composerManagerShell:self]
+                              scope:[self.delegate composerManagerScope:self]
                      tmuxController:[self.delegate composerManagerTmuxController:self]];
     [_minimalViewController setFont:[self.delegate composerManagerFont:self]];
     [superview addSubview:_minimalViewController.view];

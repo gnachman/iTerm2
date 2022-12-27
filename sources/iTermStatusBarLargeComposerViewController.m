@@ -118,9 +118,10 @@
     [self.textView.composerDelegate composerTextViewSendToAdvancedPaste:content];
 }
 
-- (void)setShell:(NSString *)shell {
-    _shell = [shell copy];
+- (void)setScope:(iTermVariableScope *)scope {
+    _scope = scope;
 
+    NSString *shell = [scope valueForVariableName:@"shell"] ?: @"zsh";
     iTermSearchPathsCacheEntry *entry = self.cache[shell];
     if (entry) {
         if ([NSDate it_timeSinceBoot] - entry.timestamp < 60) {
@@ -227,6 +228,7 @@
     __weak __typeof(self) weakSelf = self;
 
     _aitermController = [[AITermControllerObjC alloc] initWithQuery:self.aiPrompt
+                                                              scope:self.scope
                                                            inWindow:self.view.window
                                                          completion:^(NSArray<NSString *> *choices, NSString *error) {
         if (choices.count >= 1) {
@@ -400,7 +402,9 @@
     const NSInteger generation = ++_completionGeneration;
     NSArray<NSString *> *directories;
     if (onFirstWord) {
-        iTermSearchPathsCacheEntry *entry = self.cache[self.shell];
+        // TODO: Get search paths from remote host when ssh integration is in use.
+        NSString *shell = [self.scope valueForVariableName:iTermVariableKeyTabID] ?: @"zsh";
+        iTermSearchPathsCacheEntry *entry = self.cache[shell];
         NSArray<NSString *> *paths = nil;
         if (entry.ready) {
             paths = entry.paths;

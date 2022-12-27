@@ -83,7 +83,9 @@
                                     iTermVariableKeySessionMouseInfo,
                                     iTermVariableKeySessionApplicationKeypad,
                                     iTermVariableKeySessionHomeDirectory,
-                                    iTermVariableKeySSHIntegrationLevel];
+                                    iTermVariableKeySSHIntegrationLevel,
+                                    iTermVariableKeyShell,
+                                    iTermVariableKeyUname];
     [names enumerateObjectsUsingBlock:^(NSString * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         [self recordUseOfVariableNamed:obj inContext:iTermVariablesSuggestionContextSession];
     }];

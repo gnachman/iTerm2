@@ -31,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (id<VT100RemoteHostReading>)composerManagerRemoteHost:(iTermComposerManager *)composerManager;
 - (NSString *_Nullable)composerManagerWorkingDirectory:(iTermComposerManager *)composerManager;
 - (NSString *)composerManagerShell:(iTermComposerManager *)composerManager;
+- (NSString *)composerManagerUName:(iTermComposerManager *)composerManager;
 - (TmuxController * _Nullable)composerManagerTmuxController:(iTermComposerManager *)composerManager;
 - (NSFont *)composerManagerFont:(iTermComposerManager *)composerManager;
 @end

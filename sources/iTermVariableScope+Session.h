@@ -58,6 +58,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL applicationKeypad;
 @property (nullable, nonatomic, strong) NSString *homeDirectory;
 @property (nonatomic) NSInteger sshIntegrationLevel;
+@property (nullable, nonatomic, copy) NSString *shell;
+@property (nullable, nonatomic, copy) NSString *uname;
 
 @end
 

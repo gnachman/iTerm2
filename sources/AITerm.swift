@@ -7,7 +7,7 @@ protocol AITermControllerDelegate: AnyObject {
 }
 
 @objc
-class AITermControllerObjC: NSObject, AITermControllerDelegate {
+class AITermControllerObjC: NSObject, AITermControllerDelegate, iTermObject {
     private static let apiKeyUserDefaultsKey = "NoSyncOpenAIAPIKey"
     private let controller: AITermController
     private let handler: ([String]?, String?) -> ()
@@ -18,34 +18,45 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate {
     // handler([…], nil): Valid response
     // handler(nil, …): Error
     // handler(nil, nil): User canceled
-    @objc(initWithQuery:inWindow:completion:)
+    @objc(initWithQuery:scope:inWindow:completion:)
     init(query: String,
+         scope: iTermVariableScope,
          window: NSWindow,
          handler: @escaping ([String]?, String?) -> ()) {
-        self.handler = handler
+        let pleaseWait = PleaseWaitWindow(owningWindow: window,
+                                          message: "Thinking…",
+                                          image: NSImage.it_imageNamed("aiterm", for: AITermControllerObjC.self))
+        self.pleaseWait = pleaseWait
+        self.handler = { choices, error in
+            if !pleaseWait.canceled {
+                handler(choices, error)
+            }
+        }
         self.ownerWindow = window
         self.query = query
 
         let maybeApiKey = UserDefaults.standard.string(forKey: Self.apiKeyUserDefaultsKey)
         let registration = AITermController.Registration(apiKey: maybeApiKey)
         controller = AITermController(registration: registration)
-        pleaseWait = PleaseWaitWindow(owningWindow: window,
-                                      message: "Thinking…",
-                                      image: NSImage.it_imageNamed("aiterm", for: AITermControllerObjC.self))
         super.init()
 
         controller.delegate = self
 
         let template = iTermPreferences.string(forKey: kPreferenceKeyAIPrompt) ?? ""
-        let sanitized = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        let prompt = {
-            if template.contains("{}") {
-                return template.replacingOccurrences(of: "{}", with: sanitized)
-            } else {
-                return query
+        let sanitizedPrompt = query.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let myScope = scope.copy() as! iTermVariableScope
+        let frame = iTermVariables(context: [], owner: self)
+        myScope.add(frame, toScopeNamed: "ai")
+        myScope.setValue(sanitizedPrompt, forVariableNamed: "ai.prompt")
+        let swiftyString = iTermSwiftyString(string: template, scope: myScope)
+        swiftyString.evaluateSynchronously(false, with: myScope) { maybeResult, maybeError, _ in
+            if let prompt = maybeResult {
+                Timer.scheduledTimer(withTimeInterval: 0, repeats: false) { _ in
+                    self.controller.request(query: prompt)
+                }
             }
-        }()
-        controller.request(query: prompt)
+        }
     }
 
     func aitermControllerWillSendRequest(_ sender: AITermController) {
@@ -82,6 +93,15 @@ class AITermControllerObjC: NSObject, AITermControllerDelegate {
             }
         }
     }
+
+    func objectMethodRegistry() -> iTermBuiltInFunctions? {
+        return nil
+    }
+
+    func objectScope() -> iTermVariableScope? {
+        return nil
+    }
+
 }
 
 class AITermController {
@@ -403,3 +423,4 @@ class AITermRegistrationWindow: NSWindow {
         true
     }
 }
+

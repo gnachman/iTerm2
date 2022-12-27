@@ -377,4 +377,20 @@
     [self setValue:@(level) forVariableNamed:iTermVariableKeySSHIntegrationLevel];
 }
 
+- (NSString *)shell {
+    return [self valueForVariableName:iTermVariableKeyShell];
+}
+
+- (void)setShell:(NSString *)shell {
+    [self setValue:shell forVariableNamed:iTermVariableKeyShell];
+}
+
+- (NSString *)uname {
+    return [self valueForVariableName:iTermVariableKeyUname];
+}
+
+- (void)setUname:(NSString *)uname {
+    [self setValue:uname forVariableNamed:iTermVariableKeyUname];
+}
+
 @end

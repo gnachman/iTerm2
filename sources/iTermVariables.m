@@ -89,6 +89,8 @@ NSString *const iTermVariableKeySessionMouseInfo = @"mouseInfo";
 NSString *const iTermVariableKeySessionApplicationKeypad = @"applicationKeypad";
 NSString *const iTermVariableKeySessionHomeDirectory = @"homeDirectory";
 NSString *const iTermVariableKeySSHIntegrationLevel = @"sshIntegrationLevel";
+NSString *const iTermVariableKeyShell = @"shell";
+NSString *const iTermVariableKeyUname = @"uname";
 
 #pragma mark - Window Context
 

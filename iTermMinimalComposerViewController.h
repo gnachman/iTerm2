@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class TmuxController;
 @protocol VT100RemoteHostReading;
 @class iTermMinimalComposerViewController;
+@class iTermVariableScope;
 
 @protocol iTermMinimalComposerViewControllerDelegate<NSObject>
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
@@ -32,7 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)makeFirstResponder;
 - (void)setHost:(id<VT100RemoteHostReading>)host
 workingDirectory:(NSString *)pwd
-          shell:(NSString *)shell
+          scope:(iTermVariableScope *)scope
  tmuxController:(TmuxController *)tmuxController;
 - (void)setFont:(NSFont *)font;
 

@@ -112,7 +112,9 @@ class Conductor: NSObject, Codable {
         return _processInfoProvider
     }
     private var backgroundJobs = [Int32: State]()
-    @objc var homeDirectory: String?
+    @objc private(set) var homeDirectory: String?
+    @objc private(set) var uname: String?
+    @objc private(set) var shell: String?
 
     enum FileSubcommand: Codable, Equatable {
         case ls(path: Data, sorting: FileSorting)
@@ -617,7 +619,8 @@ class Conductor: NSObject, Codable {
         // Note backgroundJobs is not included because it isn't restorable.
       case sshargs, varsToSend, payloads, initialDirectory, parsedSSHArguments, depth, parent,
            framedPID, remoteInfo, state, queue, boolArgs, dcsID, clientUniqueID,
-           modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration
+           modifiedVars, modifiedCommandArgs, clientVars, shouldInjectShellIntegration,
+           homeDirectory, shell, uname
     }
 
 
@@ -703,6 +706,9 @@ class Conductor: NSObject, Codable {
         clientUniqueID = try container.decode(String.self, forKey: .clientUniqueID)
         modifiedVars = try container.decode([String: String]?.self, forKey: .modifiedVars)
         modifiedCommandArgs = try container.decode([String]?.self, forKey: .modifiedCommandArgs)
+        homeDirectory = try? container.decode(String?.self, forKey: .homeDirectory)
+        shell = try? container.decode(String?.self, forKey: .shell)
+        uname = try? container.decode(String?.self, forKey: .uname)
         restored = true
     }
 
@@ -753,6 +759,9 @@ class Conductor: NSObject, Codable {
         try container.encode(clientUniqueID, forKey: .clientUniqueID)
         try container.encode(modifiedVars, forKey: .modifiedVars)
         try container.encode(modifiedCommandArgs, forKey: .modifiedCommandArgs)
+        try container.encode(homeDirectory, forKey: .homeDirectory)
+        try container.encode(shell, forKey: .shell)
+        try container.encode(uname, forKey: .uname)
     }
 
     private func DLog(_ messageBlock: @autoclosure () -> String,
@@ -843,6 +852,12 @@ class Conductor: NSObject, Codable {
                     "sshargs": sshargs,
                     "boolArgs": boolArgs,
                     "clientUniqueID": clientUniqueID])
+        runRemoteCommand("uname -a") { [weak self] data, status in
+            if status == 0 {
+                self?.uname = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                self?.delegate?.conductorStateDidChange()
+            }
+        }
         runRemoteCommand("echo $HOME") { [weak self] data, status in
             if status == 0 {
                 self?.homeDirectory = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1135,6 +1150,8 @@ class Conductor: NSObject, Codable {
                                                 destination: remote.path))
                     }
                 }
+                self.shell = shell
+                delegate?.conductorStateDidChange()
                 didFinishGetShell()
             }
         case .handleBackgroundJob(let output, let completion):

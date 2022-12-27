@@ -702,6 +702,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         [self.variablesScope setValue:@NO forVariableNamed:iTermVariableKeySessionShowingAlternateScreen];
         [self.variablesScope setValue:NSHomeDirectory() forVariableNamed:iTermVariableKeySessionHomeDirectory];
         [self.variablesScope setValue:@0 forVariableNamed:iTermVariableKeySSHIntegrationLevel];
+        self.variablesScope.shell = [self bestGuessAtUserShell];
+        self.variablesScope.uname = [self bestGuessAtUName];
 
         _variables.primaryKey = iTermVariableKeySessionID;
         _jobPidRef = [[iTermVariableReference alloc] initWithPath:iTermVariableKeySessionJobPid
@@ -1566,6 +1568,7 @@ ITERM_WEAKLY_REFERENCEABLE
 
     aSession.shortLivedSingleUse = [arrangement[SESSION_ARRANGEMENT_SHORT_LIVED_SINGLE_USE] boolValue];
     aSession.hostnameToShell = [[arrangement[SESSION_ARRANGEMENT_HOSTNAME_TO_SHELL] mutableCopy] autorelease];
+    [aSession.variablesScope setValue:[aSession bestGuessAtUserShell] forVariableNamed:iTermVariableKeySSHIntegrationLevel];
 
     if (arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS]) {
         aSession.substitutions = arrangement[SESSION_ARRANGEMENT_SUBSTITUTIONS];
@@ -12301,6 +12304,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [self maybeResetTerminalStateOnHostChange:host];
     }
     self.currentHost = host;
+    [self updateVariablesFromConductor];
 }
 
 - (BOOL)shellIsFishForHost:(id<VT100RemoteHostReading>)host {
@@ -13304,6 +13308,34 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (name && shell) {
         self.hostnameToShell[name] = shell;
     }
+    if (shell) {
+        [self.variablesScope setValue:shell forVariableNamed:iTermVariableKeyShell];
+    }
+}
+
+- (NSString *)bestGuessAtUserShell {
+    return [[self.variablesScope valueForVariableName:iTermVariableKeyShell] lastPathComponent] ?: [[iTermOpenDirectory userShell] lastPathComponent] ?: @"zsh";
+}
+
+- (NSString *)bestGuessAtUName {
+    NSString *name = self.currentHost.usernameAndHostname;
+    NSString *unameString = nil;
+    if (name) {
+        unameString = _conductor.uname;
+    }
+    if (!unameString) {
+        struct utsname utsname = { 0 };
+        if (uname(&utsname)) {
+            return @"Darwin";
+        }
+        unameString = [NSString stringWithFormat:@"%s %s %s %s %s",
+                       utsname.sysname,
+                       utsname.nodename,
+                       utsname.release,
+                       utsname.version,
+                       utsname.machine];
+    }
+    return unameString;
 }
 
 - (void)screenSuggestShellIntegrationUpgrade {
@@ -14346,6 +14378,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [_aiterm release];
     __weak __typeof(self) weakSelf = self;
     _aiterm = [[AITermControllerObjC alloc] initWithQuery:query
+                                                    scope:self.variablesScope
                                                  inWindow:self.view.window
                                                completion:^(NSArray<NSString *> * _Nullable choices, NSString * _Nullable error) {
         [weakSelf handleAIChoices:choices error:error];
@@ -16120,7 +16153,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (NSString *)composerManagerShell:(iTermComposerManager *)composerManager {
-    return [ITAddressBookMgr customShellForProfile:self.profile] ?: [iTermOpenDirectory userShell] ?: @"/bin/bash";
+    return [self bestGuessAtUserShell];
+}
+
+- (NSString *)composerManagerUName:(iTermComposerManager *)composerManager {
+    return [self bestGuessAtUName];
 }
 
 - (TmuxController *)composerManagerTmuxController:(iTermComposerManager *)composerManager {
@@ -16798,6 +16835,8 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     if (!_conductor) {
         self.variablesScope.homeDirectory = NSHomeDirectory();
         self.variablesScope.sshIntegrationLevel = 0;
+        self.variablesScope.shell = [self bestGuessAtUserShell];
+        self.variablesScope.uname = [self bestGuessAtUName];
         return;
     }
     const NSInteger level = _conductor.framing ? 2 : 1;
@@ -16811,14 +16850,20 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
             }
             // SSHed without integration
             self.variablesScope.homeDirectory = nil;
+            self.variablesScope.shell = nil;
+            self.variablesScope.uname = nil;
             break;
         }
         case 1:
-            // Definitely ssh'ed, but no way to get home dir.
+            // Definitely ssh'ed, but no way to get this info.
             self.variablesScope.homeDirectory = nil;
+            self.variablesScope.shell = nil;
+            self.variablesScope.uname = nil;
             break;
         case 2:
             self.variablesScope.homeDirectory = _conductor.homeDirectory;
+            self.variablesScope.shell = _conductor.shell;
+            self.variablesScope.uname = _conductor.uname;
             break;
     }
 }

@@ -182,6 +182,12 @@ NSString *const kPreferenceKeyNeverBlockSystemShutdown = @"NeverBlockSystemShutd
 NSString *const kPreferenceKeyOpenAIAPIKey = @"NoSyncOpenAIAPIKey";
 NSString *const kPreferenceKeyAIPrompt = @"AI Prompt";
 
+NSString *const iTermDefaultAIPrompt =
+@"You are going to translate a natural language description to a series of commands for the \\(shell) shell.\n"
+@"Here is some information about the environment: \\(uname)\n"
+@"Respond with one or more commands. Do not include any explanation or additional text besides the commands."
+@"Request: \\(ai.prompt)\n";
+
 // NOTE: If you update this list, also update preferences.py.
 
 static NSMutableDictionary *gObservers;
@@ -368,7 +374,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyEnableAPIServer: @NO,
                   kPreferenceKeyAPIAuthentication: @0,  // ignored — synthetic value
                   kPreferenceKeyOpenAIAPIKey: @"",
-                  kPreferenceKeyAIPrompt: @"Unix command, without any English prose, to {}",
+                  kPreferenceKeyAIPrompt: iTermDefaultAIPrompt,
 
                   kPreferenceKeyTabStyle_Deprecated: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),

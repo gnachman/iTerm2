@@ -103,6 +103,14 @@ extension String {
     var pathExtension: String {
         return (self as NSString).pathExtension
     }
+
+    func substituting(_ substitutions: [String: String]) -> String {
+        var temp = self
+        for (key, value) in substitutions {
+            temp = temp.replacingOccurrences(of: key, with: value)
+        }
+        return temp
+    }
 }
 
 extension Substring {
