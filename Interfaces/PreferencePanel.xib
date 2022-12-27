@@ -1187,6 +1187,7 @@ DQ
                 <outlet property="_hotkeyLabel" destination="5106" id="nqf-CS-llf"/>
                 <outlet property="_keyMappingView" destination="zLA-QA-WQd" id="SJH-CO-sM8"/>
                 <outlet property="_keyMappingViewController" destination="4x3-hD-7hx" id="XhT-BU-0nz"/>
+                <outlet property="_languageAgnosticKeyBindings" destination="1qT-GT-9CH" id="VVz-rT-500"/>
                 <outlet property="_leader" destination="VaP-HN-lHT" id="rt6-SX-aE4"/>
                 <outlet property="_leaderHelpButton" destination="wLd-OV-msN" id="OfG-s4-Npc"/>
                 <outlet property="_leftCommandButton" destination="4393" id="Acz-Ri-0zT"/>
@@ -6285,29 +6286,29 @@ DQ
             <point key="canvasLocation" x="-303.5" y="1297"/>
         </customView>
         <customView id="Z7N-XT-vVo" userLabel="Prefs - Keys" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="932" height="439"/>
+            <rect key="frame" x="0.0" y="0.0" width="932" height="471"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <tabView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="8E3-yy-qfF">
-                    <rect key="frame" x="0.0" y="10" width="919" height="430"/>
+                    <rect key="frame" x="0.0" y="10" width="919" height="462"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                     <font key="font" metaFont="system"/>
                     <tabViewItems>
                         <tabViewItem label="Key Bindings" identifier="" id="Nxa-UI-aa0">
                             <view key="view" id="Hvj-tK-pw4">
-                                <rect key="frame" x="10" y="33" width="899" height="384"/>
+                                <rect key="frame" x="10" y="33" width="899" height="416"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="djo-Ir-CU7" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="17" y="-3" width="865" height="384"/>
+                                        <rect key="frame" x="17" y="-2" width="865" height="415"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zLA-QA-WQd">
-                                                <rect key="frame" x="20" y="40" width="825" height="344"/>
+                                                <rect key="frame" x="20" y="71" width="825" height="344"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                             </customView>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="blX-M8-y6R">
-                                                <rect key="frame" x="279" y="16" width="50" height="16"/>
+                                                <rect key="frame" x="279" y="20" width="50" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Leader:" id="QBh-RQ-Cgg">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -6316,14 +6317,14 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="VaP-HN-lHT" customClass="iTermShortcutInputView">
-                                                <rect key="frame" x="335" y="13" width="216" height="21"/>
+                                                <rect key="frame" x="335" y="18" width="216" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <connections>
                                                     <outlet property="shortcutDelegate" destination="8TE-cq-5cL" id="DTk-g2-eft"/>
                                                 </connections>
                                             </customView>
                                             <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="wLd-OV-msN">
-                                                <rect key="frame" x="560" y="9" width="25" height="25"/>
+                                                <rect key="frame" x="560" y="14" width="25" height="25"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="qbd-7n-uOM">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -6331,6 +6332,18 @@ DQ
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="showLeaderHelp:" target="8TE-cq-5cL" id="DoN-h3-aIk"/>
+                                                </connections>
+                                            </button>
+                                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1qT-GT-9CH">
+                                                <string key="identifier">When enabled, key bindings will be found by virtual keycode rather than by the character produced by pressing the key. This is useful if you switch between input languages but want your key bindings to remain the same regardless. Shortcuts defined by tmux in tmux integration mode take priority and will continue to take input language into account because tmux doesn’t know anything about physical keys.</string>
+                                                <rect key="frame" x="210" y="46" width="444" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Interpret key bindings based on physical key, ignoring input language" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="FHl-07-Ufh">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="8TE-cq-5cL" id="YqN-MN-GBU"/>
                                                 </connections>
                                             </button>
                                         </subviews>
@@ -6830,7 +6843,7 @@ DQ
                 </tabView>
             </subviews>
             <accessibility identifier="prefsKeys"/>
-            <point key="canvasLocation" x="756" y="-218.5"/>
+            <point key="canvasLocation" x="756" y="-202.5"/>
         </customView>
         <customView id="rwh-oX-e8l" userLabel="Prefs - Arrangements" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="911" height="433"/>

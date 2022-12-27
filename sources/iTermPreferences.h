@@ -170,6 +170,8 @@ extern NSString *const kPreferenceKeyEnableHapticFeedbackForEsc;
 extern NSString *const kPreferenceKeyEnableSoundForEsc;
 extern NSString *const kPreferenceKeyVisualIndicatorForEsc;
 
+extern NSString *const kPreferenceKeyLanguageAgnosticKeyBindings;
+
 // Migration to multi-hotkey window will move these settings into a profile.
 extern NSString *const kPreferenceKeyHotKeyTogglesWindow_Deprecated;  // Deprecated
 extern NSString *const kPreferenceKeyHotkeyProfileGuid_Deprecated;  // Deprecated

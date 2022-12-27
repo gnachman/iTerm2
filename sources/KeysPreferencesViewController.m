@@ -75,6 +75,7 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet iTermShortcutInputView *_leader;
     IBOutlet NSButton *_leaderHelpButton;
     iTermTextPopoverViewController *_popoverVC;
+    IBOutlet NSButton *_languageAgnosticKeyBindings;
 }
 
 - (void)dealloc {
@@ -92,6 +93,11 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     _hotkeyField.leaderAllowed = NO;
 
     [_keyMappingViewController addViewsToSearchIndex:self];
+
+    [self defineControl:_languageAgnosticKeyBindings
+                    key:kPreferenceKeyLanguageAgnosticKeyBindings
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
 
     // Modifier remapping
     info = [self defineControl:_controlButton

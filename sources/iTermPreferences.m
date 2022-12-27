@@ -133,6 +133,7 @@ NSString *const kPreferenceKeyHotkeyModifiers = @"HotkeyModifiers";
 NSString *const kPreferenceKeyEnableHapticFeedbackForEsc = @"HapticFeedbackForEsc";
 NSString *const kPreferenceKeyEnableSoundForEsc = @"SoundForEsc";
 NSString *const kPreferenceKeyVisualIndicatorForEsc = @"VisualIndicatorForEsc";
+NSString *const kPreferenceKeyLanguageAgnosticKeyBindings = @"LanguageAgnosticKeyBindings";
 
 NSString *const kPreferenceKeyHotKeyTogglesWindow_Deprecated = @"HotKeyTogglesWindow";  // deprecated
 NSString *const kPreferenceKeyHotkeyProfileGuid_Deprecated = @"HotKeyBookmark";  // deprecated
@@ -432,6 +433,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyEnableHapticFeedbackForEsc: @NO,
                   kPreferenceKeyEnableSoundForEsc: @NO,
                   kPreferenceKeyVisualIndicatorForEsc: @NO,
+                  kPreferenceKeyLanguageAgnosticKeyBindings: @NO,
 
                   kPreferenceKeyCmdClickOpensURLs: @YES,
                   kPreferenceKeyControlLeftClickBypassesContextMenu: @NO,
