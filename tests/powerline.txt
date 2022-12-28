@@ -11,10 +11,29 @@
             U+E0B6    
             U+E0B7    
             U+E0B8    
+            U+E0B9        Negative slope diagonal
+            U+E0BA        Bottom right triangle
+            U+E0BB        Positive slope diagonal
+            U+E0BC        Top left triangle
+            U+E0BD        Positive slope diagonal
+            U+E0BE        Top right triangle
+            U+E0BF        Negative slope diagonal
             U+E0C0    
             U+E0C1    
+            U+E0C2    
+            U+E0C3    
+            U+E0C4    
+            U+E0C5    
+            U+E0C6    
+            U+E0C7    
+            U+E0C8    
+            U+E0CA    
+            U+E0CC    
+            U+E0CD    
             U+E0CE    
             U+E0CF    
             U+E0D0    
             U+E0D1    
+            U+E0D2    
             U+E0D3    
+            U+E0D4    

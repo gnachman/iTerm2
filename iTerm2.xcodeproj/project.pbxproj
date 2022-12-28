@@ -2617,15 +2617,9 @@
 		A69F1BAD28E65A4F0054204E /* uniE0CF_lego_separator_thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8F28E65A4C0054204E /* uniE0CF_lego_separator_thin.eps */; };
 		A69F1BAE28E65A4F0054204E /* uniE0CF_lego_separator_thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8F28E65A4C0054204E /* uniE0CF_lego_separator_thin.eps */; };
 		A69F1BAF28E65A4F0054204E /* uniE0CF_lego_separator_thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B8F28E65A4C0054204E /* uniE0CF_lego_separator_thin.eps */; };
-		A69F1BB028E65A4F0054204E /* uniE0D0_lego_block_facing_WIP.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9028E65A4C0054204E /* uniE0D0_lego_block_facing_WIP.eps */; };
-		A69F1BB128E65A4F0054204E /* uniE0D0_lego_block_facing_WIP.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9028E65A4C0054204E /* uniE0D0_lego_block_facing_WIP.eps */; };
-		A69F1BB228E65A4F0054204E /* uniE0D0_lego_block_facing_WIP.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9028E65A4C0054204E /* uniE0D0_lego_block_facing_WIP.eps */; };
 		A69F1BB328E65A4F0054204E /* uniE0D1_lego_block_sideways.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9128E65A4D0054204E /* uniE0D1_lego_block_sideways.eps */; };
 		A69F1BB428E65A4F0054204E /* uniE0D1_lego_block_sideways.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9128E65A4D0054204E /* uniE0D1_lego_block_sideways.eps */; };
 		A69F1BB528E65A4F0054204E /* uniE0D1_lego_block_sideways.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9128E65A4D0054204E /* uniE0D1_lego_block_sideways.eps */; };
-		A69F1BB928E65A4F0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9328E65A4D0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps */; };
-		A69F1BBA28E65A4F0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9328E65A4D0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps */; };
-		A69F1BBB28E65A4F0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9328E65A4D0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps */; };
 		A69F1BBC28E65A4F0054204E /* uniE0B5_right-half-circle-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9428E65A4D0054204E /* uniE0B5_right-half-circle-thin.eps */; };
 		A69F1BBD28E65A4F0054204E /* uniE0B5_right-half-circle-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9428E65A4D0054204E /* uniE0B5_right-half-circle-thin.eps */; };
 		A69F1BBE28E65A4F0054204E /* uniE0B5_right-half-circle-thin.eps in Resources */ = {isa = PBXBuildFile; fileRef = A69F1B9428E65A4D0054204E /* uniE0B5_right-half-circle-thin.eps */; };
@@ -3913,6 +3907,30 @@
 		A6F2F21B250757FE00FC227F /* PrefsShortcuts.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F2F217250757FE00FC227F /* PrefsShortcuts.png */; };
 		A6F2F21C250757FE00FC227F /* PrefsShortcuts.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F2F217250757FE00FC227F /* PrefsShortcuts.png */; };
 		A6F2F21D250757FE00FC227F /* PrefsShortcuts.png in Resources */ = {isa = PBXBuildFile; fileRef = A6F2F217250757FE00FC227F /* PrefsShortcuts.png */; };
+		A6F31A27295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A21295BC41500C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf */; };
+		A6F31A28295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A21295BC41500C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf */; };
+		A6F31A29295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A21295BC41500C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf */; };
+		A6F31A2A295BC41700C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A22295BC41600C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf */; };
+		A6F31A2B295BC41700C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A22295BC41600C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf */; };
+		A6F31A2C295BC41700C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A22295BC41600C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf */; };
+		A6F31A2D295BC41700C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A23295BC41600C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf */; };
+		A6F31A2E295BC41700C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A23295BC41600C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf */; };
+		A6F31A2F295BC41700C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A23295BC41600C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf */; };
+		A6F31A30295BC41700C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A24295BC41600C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf */; };
+		A6F31A31295BC41700C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A24295BC41600C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf */; };
+		A6F31A32295BC41700C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A24295BC41600C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf */; };
+		A6F31A33295BC41700C1A51E /* uniE0C4_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A25295BC41600C1A51E /* uniE0C4_PowerlineExtraSymbols.pdf */; };
+		A6F31A34295BC41700C1A51E /* uniE0C4_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A25295BC41600C1A51E /* uniE0C4_PowerlineExtraSymbols.pdf */; };
+		A6F31A35295BC41700C1A51E /* uniE0C4_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A25295BC41600C1A51E /* uniE0C4_PowerlineExtraSymbols.pdf */; };
+		A6F31A36295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A26295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf */; };
+		A6F31A37295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A26295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf */; };
+		A6F31A38295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A26295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf */; };
+		A6F31A3A295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A39295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf */; };
+		A6F31A3B295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A39295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf */; };
+		A6F31A3C295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A39295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf */; };
+		A6F31A3E295BC61F00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A3D295BC61E00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf */; };
+		A6F31A3F295BC61F00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A3D295BC61E00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf */; };
+		A6F31A40295BC61F00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf in Resources */ = {isa = PBXBuildFile; fileRef = A6F31A3D295BC61E00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf */; };
 		A6F385DE1FA55E2000739939 /* iTermSmartCursorColor.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */; };
 		A6F385DF1FA55E2000739939 /* iTermSmartCursorColor.m in Sources */ = {isa = PBXBuildFile; fileRef = A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */; };
 		A6F3DA8B24540A20001D50C9 /* iTermUntitledWindowStateMachine.h in Headers */ = {isa = PBXBuildFile; fileRef = A6F3DA8924540A20001D50C9 /* iTermUntitledWindowStateMachine.h */; };
@@ -6538,9 +6556,7 @@
 		A69F1B8D28E65A4C0054204E /* uniE0B7_left-half-circle-thin.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0B7_left-half-circle-thin.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0B7_left-half-circle-thin.eps"; sourceTree = "<group>"; };
 		A69F1B8E28E65A4C0054204E /* uniE0A3_column-number.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0A3_column-number.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0A3_column-number.eps"; sourceTree = "<group>"; };
 		A69F1B8F28E65A4C0054204E /* uniE0CF_lego_separator_thin.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = uniE0CF_lego_separator_thin.eps; path = ThirdParty/PowerlineExtraSymbols/uniE0CF_lego_separator_thin.eps; sourceTree = "<group>"; };
-		A69F1B9028E65A4C0054204E /* uniE0D0_lego_block_facing_WIP.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = uniE0D0_lego_block_facing_WIP.eps; path = ThirdParty/PowerlineExtraSymbols/uniE0D0_lego_block_facing_WIP.eps; sourceTree = "<group>"; };
 		A69F1B9128E65A4D0054204E /* uniE0D1_lego_block_sideways.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = uniE0D1_lego_block_sideways.eps; path = ThirdParty/PowerlineExtraSymbols/uniE0D1_lego_block_sideways.eps; sourceTree = "<group>"; };
-		A69F1B9328E65A4D0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0D3_lego_block_facing_WIP-3d-good.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0D3_lego_block_facing_WIP-3d-good.eps"; sourceTree = "<group>"; };
 		A69F1B9428E65A4D0054204E /* uniE0B5_right-half-circle-thin.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0B5_right-half-circle-thin.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0B5_right-half-circle-thin.eps"; sourceTree = "<group>"; };
 		A69F1B9528E65A4D0054204E /* uniE0B0_Powerline_normal-left.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0B0_Powerline_normal-left.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0B0_Powerline_normal-left.eps"; sourceTree = "<group>"; };
 		A69F1B9828E65A4E0054204E /* uniE0C0_flame-thick.eps */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "uniE0C0_flame-thick.eps"; path = "ThirdParty/PowerlineExtraSymbols/uniE0C0_flame-thick.eps"; sourceTree = "<group>"; };
@@ -7161,6 +7177,14 @@
 		A6F2D54C2563455D0036B9C5 /* auth.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = auth.py; sourceTree = "<group>"; };
 		A6F2F216250757FD00FC227F /* PrefsShortcuts@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "PrefsShortcuts@2x.png"; path = "images/PrefsShortcuts@2x.png"; sourceTree = "<group>"; };
 		A6F2F217250757FE00FC227F /* PrefsShortcuts.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PrefsShortcuts.png; path = images/PrefsShortcuts.png; sourceTree = "<group>"; };
+		A6F31A21295BC41500C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = uniE0C9_PowerlineExtraSymbols.pdf; path = ThirdParty/PowerlineExtraSymbols/uniE0C9_PowerlineExtraSymbols.pdf; sourceTree = "<group>"; };
+		A6F31A22295BC41600C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = uniE0CC_PowerlineExtraSymbols.pdf; path = ThirdParty/PowerlineExtraSymbols/uniE0CC_PowerlineExtraSymbols.pdf; sourceTree = "<group>"; };
+		A6F31A23295BC41600C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = uniE0CD_PowerlineExtraSymbols.pdf; path = ThirdParty/PowerlineExtraSymbols/uniE0CD_PowerlineExtraSymbols.pdf; sourceTree = "<group>"; };
+		A6F31A24295BC41600C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = uniE0C8_PowerlineExtraSymbols.pdf; path = ThirdParty/PowerlineExtraSymbols/uniE0C8_PowerlineExtraSymbols.pdf; sourceTree = "<group>"; };
+		A6F31A25295BC41600C1A51E /* uniE0C4_PowerlineExtraSymbols.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = uniE0C4_PowerlineExtraSymbols.pdf; path = ThirdParty/PowerlineExtraSymbols/uniE0C4_PowerlineExtraSymbols.pdf; sourceTree = "<group>"; };
+		A6F31A26295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = uniE0C6_PowerlineExtraSymbols.pdf; path = ThirdParty/PowerlineExtraSymbols/uniE0C6_PowerlineExtraSymbols.pdf; sourceTree = "<group>"; };
+		A6F31A39295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = uniE0D2_PowerlineExtraSymbols.pdf; path = ThirdParty/PowerlineExtraSymbols/uniE0D2_PowerlineExtraSymbols.pdf; sourceTree = "<group>"; };
+		A6F31A3D295BC61E00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf */ = {isa = PBXFileReference; lastKnownFileType = image.pdf; name = uniE0D0_PowerlineExtraSymbols.pdf; path = ThirdParty/PowerlineExtraSymbols/uniE0D0_PowerlineExtraSymbols.pdf; sourceTree = "<group>"; };
 		A6F385DC1FA55E2000739939 /* iTermSmartCursorColor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSmartCursorColor.h; sourceTree = "<group>"; };
 		A6F385DD1FA55E2000739939 /* iTermSmartCursorColor.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSmartCursorColor.m; sourceTree = "<group>"; };
 		A6F3DA8924540A20001D50C9 /* iTermUntitledWindowStateMachine.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermUntitledWindowStateMachine.h; sourceTree = "<group>"; };
@@ -10618,6 +10642,14 @@
 		A69F1B8928E65A300054204E /* Powerline Extended Symbols */ = {
 			isa = PBXGroup;
 			children = (
+				A6F31A3D295BC61E00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf */,
+				A6F31A39295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf */,
+				A6F31A25295BC41600C1A51E /* uniE0C4_PowerlineExtraSymbols.pdf */,
+				A6F31A26295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf */,
+				A6F31A24295BC41600C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf */,
+				A6F31A21295BC41500C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf */,
+				A6F31A22295BC41600C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf */,
+				A6F31A23295BC41600C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf */,
 				A69F1B8E28E65A4C0054204E /* uniE0A3_column-number.eps */,
 				A69F1B9528E65A4D0054204E /* uniE0B0_Powerline_normal-left.eps */,
 				A69F1B9A28E65A4E0054204E /* uniE0B2_Powerline_normal-right.eps */,
@@ -10630,9 +10662,7 @@
 				A69F1B9D28E65A4E0054204E /* uniE0C1_flame-thin.eps */,
 				A69F1B8B28E65A4C0054204E /* uniE0CE_lego_separator.eps */,
 				A69F1B8F28E65A4C0054204E /* uniE0CF_lego_separator_thin.eps */,
-				A69F1B9028E65A4C0054204E /* uniE0D0_lego_block_facing_WIP.eps */,
 				A69F1B9128E65A4D0054204E /* uniE0D1_lego_block_sideways.eps */,
-				A69F1B9328E65A4D0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps */,
 			);
 			name = "Powerline Extended Symbols";
 			sourceTree = "<group>";
@@ -13235,6 +13265,7 @@
 				A67D0D461A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				A67F6163214395990093940A /* graphic_mysql@2x.png in Resources */,
 				A629F58723AF2DF200C2F16B /* utilities.tgz in Resources */,
+				A6F31A32295BC41700C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf in Resources */,
 				A67D0D4C1A2EE12A003A8B35 /* configPanel.strings in Resources */,
 				A63011B520E7EE6B008114B7 /* iTermStatusBarKnobNumericViewController.xib in Resources */,
 				A6EC808B282A28CE00493544 /* SSHConfigurationWindow.xib in Resources */,
@@ -13268,7 +13299,6 @@
 				A6F7A74B213CB143004DE961 /* StatusBarIconRAM.png in Resources */,
 				A6F7A71B213CB143004DE961 /* StatusBarIconUser@2x.png in Resources */,
 				530AB7BE20A641E000D2AA08 /* repl_banner.txt in Resources */,
-				A69F1BB228E65A4F0054204E /* uniE0D0_lego_block_facing_WIP.eps in Resources */,
 				A67D0D7C1A2EE12A003A8B35 /* PasteView.xib in Resources */,
 				A6F2B6D52558B51B008D6BF1 /* ScrollerHighlights.png in Resources */,
 				A6F1B3B0268FD0F300546767 /* StatusBarIconTriggers@2x.png in Resources */,
@@ -13294,6 +13324,7 @@
 				A6038322294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict in Resources */,
 				A65429A820BE7ECE00CE71B1 /* ScriptIcon@2x.png in Resources */,
 				A630119120E6B723008114B7 /* iTermStatusBarSetupCollectionViewItem.xib in Resources */,
+				A6F31A40295BC61F00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf in Resources */,
 				A65429A720BE7ECE00CE71B1 /* ScriptIcon.png in Resources */,
 				A6EA848827223B02009D14AB /* graphic_emacs@2x.png in Resources */,
 				A65E6F5D2547F1D5008A4866 /* WindowCorner_Square.png in Resources */,
@@ -13364,6 +13395,7 @@
 				A6E7AE97214394DD00DE9F3B /* graphic_coffee@2x.png in Resources */,
 				1DE922EC1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */,
 				A66A1FB01A3A230A00F4A3A7 /* iTermWindowShortcutAccessoryView.xib in Resources */,
+				A6F31A35295BC41700C1A51E /* uniE0C4_PowerlineExtraSymbols.pdf in Resources */,
 				1DA76A0D1B30892900CB272A /* iTermTipWindowController.xib in Resources */,
 				A67F6169214395990093940A /* graphic_nano.png in Resources */,
 				A67D0D881A2EE12A003A8B35 /* PseudoTerminal.strings in Resources */,
@@ -13378,13 +13410,13 @@
 				A6E7AEB7214394F600DE9F3B /* graphic_database@2x.png in Resources */,
 				A67D0D701A2EE12A003A8B35 /* MainMenu.strings in Resources */,
 				A67F61E9214395D50093940A /* graphic_yo@2x.png in Resources */,
+				A6F31A2C295BC41700C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf in Resources */,
 				A6F7A70F213CB143004DE961 /* StatusBarIconJobs.png in Resources */,
 				A67D0D791A2EE12A003A8B35 /* PasteboardHistory.xib in Resources */,
 				A629F58523AF2DEE00C2F16B /* iterm2_shell_integration.fish in Resources */,
 				53FF981A209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */,
 				A60BB38B1EB54BD900D76C09 /* CopyMode@2x.png in Resources */,
 				A67F619D214395B70093940A /* graphic_php@2x.png in Resources */,
-				A69F1BBB28E65A4F0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps in Resources */,
 				A6F2B6D92558B8AC008D6BF1 /* Composer.png in Resources */,
 				1D6ED9BB19AEA20D005A7799 /* SmartSelectionRules.plist in Resources */,
 				A67F61CC214395C60093940A /* graphic_shell.png in Resources */,
@@ -13448,6 +13480,7 @@
 				A6E7AE8B214394DD00DE9F3B /* graphic_compile.png in Resources */,
 				A6FE8D0F2093893900B5C648 /* iTermOptionalComponentDownloadWindowController.xib in Resources */,
 				A629F5BB23B081DD00C2F16B /* MouseReportingCursorOverlay@2x.png in Resources */,
+				A6F31A3C295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf in Resources */,
 				A69F1BD028E65A4F0054204E /* uniE0B2_Powerline_normal-right.eps in Resources */,
 				A65E6F572547F1D5008A4866 /* WindowCorner_Square@2x.png in Resources */,
 				1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */,
@@ -13476,9 +13509,11 @@
 				A67F6180214395A70093940A /* graphic_perl.png in Resources */,
 				A67D0D641A2EE12A003A8B35 /* iTermOpenQuicklyWindowController.xib in Resources */,
 				A6F2F21D250757FE00FC227F /* PrefsShortcuts.png in Resources */,
+				A6F31A38295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf in Resources */,
 				A6B3A7371AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
 				1D6ED9D119AEA20D005A7799 /* TabClose_Front_Pressed@2x.png in Resources */,
 				1D6ED9D219AEA20D005A7799 /* TabClose_Front@2x.png in Resources */,
+				A6F31A29295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
 				A635F1E525076203008C3038 /* iTermActionsEditingViewController.xib in Resources */,
 				A6A64E632508BE650040490B /* StatusBarIconSnippet.png in Resources */,
 				A67F614C214395870093940A /* graphic_http.png in Resources */,
@@ -13519,6 +13554,7 @@
 				1D6ED9DF19AEA20D005A7799 /* PrefsGeneral@2x.png in Resources */,
 				A65B72541B1A5D7500F947A7 /* WarningSign.png in Resources */,
 				A631FCA520EF0DFB00EB824F /* iTermStatusBarKnobColorViewController.xib in Resources */,
+				A6F31A2F295BC41700C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf in Resources */,
 				1D6ED9E019AEA20D005A7799 /* PrefsAppearance.png in Resources */,
 				A6A64E6B2508C5B50040490B /* OpenQuicklySnippetIcon.png in Resources */,
 				A67F61EC214395D50093940A /* graphic_yarn@2x.png in Resources */,
@@ -13586,6 +13622,7 @@
 				A6F7A744213CB143004DE961 /* StatusBarIconPaste.png in Resources */,
 				A66C8189294E751800452A11 /* AITerm.xib in Resources */,
 				A60D02422687F86C00E19362 /* iTermStatusBarKnobFontViewController.xib in Resources */,
+				A6F31A2E295BC41700C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf in Resources */,
 				A67D0D751A2EE12A003A8B35 /* NumberOfSpacesAccessoryView.xib in Resources */,
 				A6FE8D08209382C000B5C648 /* download@2x.png in Resources */,
 				A6EEAED628336C2A0039E850 /* framer.py in Resources */,
@@ -13675,7 +13712,6 @@
 				A60BB3871EB54BD200D76C09 /* CopyMode.png in Resources */,
 				A67F61DF214395D50093940A /* graphic_yarn.png in Resources */,
 				A6E7AEB0214394F600DE9F3B /* graphic_git@2x.png in Resources */,
-				A69F1BB128E65A4F0054204E /* uniE0D0_lego_block_facing_WIP.eps in Resources */,
 				53AA7647237E35A50094D75A /* OpenQuicklyActionIcon@2x.png in Resources */,
 				A6E7AE6E214394CA00DE9F3B /* graphic_bower@2x.png in Resources */,
 				5308BF9922828A28004BECAC /* StatusBarIconCharging@2x.png in Resources */,
@@ -13689,6 +13725,8 @@
 				53FF980C20918D23008688D7 /* template_basic_simple.py in Resources */,
 				A67A508B26CCD3E300281693 /* xterm-256color in Resources */,
 				A69F1BC028E65A4F0054204E /* uniE0B0_Powerline_normal-left.eps in Resources */,
+				A6F31A31295BC41700C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf in Resources */,
+				A6F31A37295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf in Resources */,
 				A67F61CB214395C60093940A /* graphic_shell.png in Resources */,
 				A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				A67F61D1214395C60093940A /* graphic_ruby.png in Resources */,
@@ -13763,6 +13801,7 @@
 				A67F61EB214395D50093940A /* graphic_yarn@2x.png in Resources */,
 				A686C1991ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A65E6F592547F1D5008A4866 /* WindowCornerFull_Square.png in Resources */,
+				A6F31A28295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
 				A6DC98A528A82608009D21C0 /* Window.png in Resources */,
 				A6E7AEB3214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
 				A67F6182214395A70093940A /* graphic_nginx.png in Resources */,
@@ -13778,6 +13817,7 @@
 				A66E804C27544E61003ABDF9 /* SecureKeyboardEntry@2x.png in Resources */,
 				1DE922EB1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */,
 				A6FE8D0B209382C000B5C648 /* download.png in Resources */,
+				A6F31A3F295BC61F00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf in Resources */,
 				A6E16C6024A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */,
 				A629F58023AF2DE500C2F16B /* iterm2_shell_integration.tcsh in Resources */,
 				A6B70FC219830F0D007A4284 /* NewOutput.png in Resources */,
@@ -13841,10 +13881,12 @@
 				A6BEE47826E0A624009C0C2C /* FilterIndicator@2x.png in Resources */,
 				A6F7A717213CB143004DE961 /* StatusBarIconRAM@2x.png in Resources */,
 				A60E046226DEEE5E00DD162B /* MiniFilterViewController.xib in Resources */,
+				A6F31A34295BC41700C1A51E /* uniE0C4_PowerlineExtraSymbols.pdf in Resources */,
 				A67F61BF214395C60093940A /* graphic_ruby@2x.png in Resources */,
 				A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */,
 				A67D0D4E1A2EE12A003A8B35 /* DirectoriesPopup.xib in Resources */,
 				A6F7A741213CB143004DE961 /* StatusBarIconHost@2x.png in Resources */,
+				A6F31A2B295BC41700C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf in Resources */,
 				A66F52C22106F6F100571168 /* gitdirty@2x.png in Resources */,
 				A6F7A73B213CB143004DE961 /* StatusBarIconClock.png in Resources */,
 				A67F616E214395990093940A /* graphic_nano@2x.png in Resources */,
@@ -13853,6 +13895,7 @@
 				A686C1961ADF62F200906FAE /* Zoomed.png in Resources */,
 				A636C3B922891BD900A83E2F /* StatusBarIconNoBattery@2x.png in Resources */,
 				A62CD06627E9124F00215E92 /* askpass.sh in Resources */,
+				A6F31A3B295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf in Resources */,
 				A618FFD1224602F800B8FD88 /* StatusBarIconAction.png in Resources */,
 				A6EA848727223B02009D14AB /* graphic_emacs@2x.png in Resources */,
 				53FF9821209283BE008688D7 /* template_basic_daemon.py in Resources */,
@@ -13899,7 +13942,6 @@
 				A67D0D601A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
 				A6F7A732213CB143004DE961 /* StatusBarIconGitBranch.png in Resources */,
 				A67F61C8214395C60093940A /* graphic_search.png in Resources */,
-				A69F1BBA28E65A4F0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps in Resources */,
 				A6B3A7391AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
 				A665C1FE2440461500F623F0 /* WindowCorner.png in Resources */,
 				A66F52C52106F6F100571168 /* gitdown.png in Resources */,
@@ -14022,6 +14064,7 @@
 				A65429A320BE7ECA00CE71B1 /* ScriptIcon.png in Resources */,
 				A65E6F5B2547F1D5008A4866 /* WindowCorner_Square.png in Resources */,
 				1D8BBA851B31DC0D0005A852 /* ChevronDown@2x.png in Resources */,
+				A6F31A36295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf in Resources */,
 				A6B9661A25F95DAD00D45CBD /* iTermTriggersPanel.xib in Resources */,
 				A6B3A7351AC74E02008E8D4E /* FindCursorCell4.png in Resources */,
 				A62A1F781E711DCF00363EE9 /* iTermHelpMessageViewController.xib in Resources */,
@@ -14041,6 +14084,7 @@
 				A6B3A7381AC74E02008E8D4E /* FindCursorCell3.png in Resources */,
 				A61BB46822001E650027F47D /* iTermRecordingIcon.icns in Resources */,
 				A6C7DE5919A459E9001E5C75 /* iTerm2.sdef in Resources */,
+				A6F31A3E295BC61F00C1A51E /* uniE0D0_PowerlineExtraSymbols.pdf in Resources */,
 				1DE922EA1AC370DC00965876 /* BackgroundStripes@2x.png in Resources */,
 				A69B457B1967B03B00F5444D /* BrokenPipeDivider.png in Resources */,
 				53AA7649237E35A50094D75A /* OpenQuicklyActionIcon.png in Resources */,
@@ -14189,7 +14233,6 @@
 				A60D02412687F86C00E19362 /* iTermStatusBarKnobFontViewController.xib in Resources */,
 				A60BB3891EB54BD700D76C09 /* CopyMode@2x.png in Resources */,
 				A67F616D214395990093940A /* graphic_nano@2x.png in Resources */,
-				A69F1BB028E65A4F0054204E /* uniE0D0_lego_block_facing_WIP.eps in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 				A66A882B24DFCCC30043728B /* graphic_postgres.png in Resources */,
 				A66A882824DFCCC30043728B /* graphic_erlang@2x.png in Resources */,
@@ -14209,7 +14252,6 @@
 				A697101218DFA7D5007E901D /* closebutton@2x.png in Resources */,
 				A6F7A725213CB143004DE961 /* StatusBarIconHost.png in Resources */,
 				A6350298229B5F620042B779 /* YosemiteAddTab.png in Resources */,
-				A69F1BB928E65A4F0054204E /* uniE0D3_lego_block_facing_WIP-3d-good.eps in Resources */,
 				53C5650821B8CDF5002B3167 /* PowerlineSolidLeftArrow.pdf in Resources */,
 				A65B72B41B33C07D00F947A7 /* NextTip@2x.png in Resources */,
 				A6EC8046281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */,
@@ -14229,6 +14271,7 @@
 				A6BF8D1A21EB188E003CF805 /* iTermDependencyEditorWindowController.xib in Resources */,
 				A68E333C1DE78D08003F1D8E /* Man Page Touch Bar Icon@2x.png in Resources */,
 				A6F1B3C22693B82C00546767 /* DebugLogging.png in Resources */,
+				A6F31A30295BC41700C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf in Resources */,
 				53C5650121B8C26C002B3167 /* PowerlineVersionControlBranch.pdf in Resources */,
 				A65B72521B1A5D7500F947A7 /* WarningSign.png in Resources */,
 				A65429A420BE7ECA00CE71B1 /* ScriptIcon@2x.png in Resources */,
@@ -14262,6 +14305,7 @@
 				A66F52C42106F6F100571168 /* gitdown.png in Resources */,
 				A6EC937624E78A5900EEADEF /* iTermEditSnippetWindowController.xib in Resources */,
 				A629F57C23AF2DD900C2F16B /* iterm2_shell_integration.fish in Resources */,
+				A6F31A3A295BC58C00C1A51E /* uniE0D2_PowerlineExtraSymbols.pdf in Resources */,
 				A6CEDA6119988A7300BB57EC /* LogoShadow.png in Resources */,
 				A629F57B23AF2DD900C2F16B /* iterm2_shell_integration.zsh in Resources */,
 				A6E7AEB2214394F600DE9F3B /* graphic_ethereum@2x.png in Resources */,
@@ -14319,6 +14363,7 @@
 				A67F61A7214395B70093940A /* graphic_rails.png in Resources */,
 				A65DF4A52849C11D00AA29AB /* bash-si-loader in Resources */,
 				A67D0D6B1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
+				A6F31A2D295BC41700C1A51E /* uniE0CD_PowerlineExtraSymbols.pdf in Resources */,
 				A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */,
 				A6E7AE8C214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A67F618A214395A70093940A /* graphic_nginx@2x.png in Resources */,
@@ -14332,6 +14377,7 @@
 				A6E7AEA3214394F600DE9F3B /* graphic_git.png in Resources */,
 				A67F118018D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
 				A6EC80852829E28900493544 /* it2ssh in Resources */,
+				A6F31A27295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
 				A67F61DB214395D50093940A /* graphic_yo.png in Resources */,
 				A65429B220C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */,
 				A6F2B6DB2558BECC008D6BF1 /* TmuxFlowControl.png in Resources */,
@@ -14378,6 +14424,7 @@
 				9DB3D6E9176CBC0C0071CCF8 /* PrefsKeyboard@2x.png in Resources */,
 				A67D0D8C1A2EE12A003A8B35 /* SplitPanel.xib in Resources */,
 				A69C93392121101B00531438 /* iTermsStatusBarComposerViewController.xib in Resources */,
+				A6F31A33295BC41700C1A51E /* uniE0C4_PowerlineExtraSymbols.pdf in Resources */,
 				9DB3D6EC176CC47E0071CCF8 /* PrefsMouse.png in Resources */,
 				5308BF9522828A28004BECAC /* StatusBarIconCharging.png in Resources */,
 				A66A883124DFCCC30043728B /* graphic_elixir@2x.png in Resources */,
@@ -14395,6 +14442,7 @@
 				1DA76A241B308AD000CB272A /* iTermTipCardViewController.xib in Resources */,
 				A6F7A72B213CB143004DE961 /* StatusBarIconNetwork@2x.png in Resources */,
 				A65D7CB021E1EBCA00E3D81C /* StopStatusIcon.png in Resources */,
+				A6F31A2A295BC41700C1A51E /* uniE0CC_PowerlineExtraSymbols.pdf in Resources */,
 				9DB3D6F0176CCABE0071CCF8 /* PrefsArrangements.png in Resources */,
 				9DB3D6F1176CCABE0071CCF8 /* PrefsArrangements@2x.png in Resources */,
 				A67F61A1214395B70093940A /* graphic_python.png in Resources */,
