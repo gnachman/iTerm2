@@ -31,6 +31,8 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
    withArguments:(NSArray<NSString *> *)arguments
      destination:(NSString *)destination
       completion:(void (^)(NSError *))completion {
+    DLog(@"zipURL=%@ arguments=%@ destination=%@", zipURL, arguments, destination);
+    
     NSArray<NSString *> *fullArgs = [arguments arrayByAddingObject:zipURL.path];
     iTermCommandRunner *runner = [[self alloc] initWithCommand:@"/usr/bin/unzip"
                                                  withArguments:fullArgs
@@ -38,6 +40,7 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
     NSMutableString *errorText = [NSMutableString string];
     runner.outputHandler = ^(NSData *data, void (^handled)(void)) {
         NSString *string = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        DLog(@"output: %@", string);
         if (string) {
             [errorText appendString:string];
         } else {
@@ -51,6 +54,7 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
         handled();
     };
     runner.completion = ^(int status) {
+        DLog(@"completed status=%@", @(status));
         if (!status) {
             completion(nil);
             return;
@@ -166,6 +170,7 @@ static NSString *const iTermCommandRunnerErrorDomain = @"com.iterm2.command-runn
     _task.arguments = self.arguments;
     DLog(@"runCommand: Launching %@", _task);
     @try {
+        DLog(@"In %@ run: %@ %@", _task.currentDirectoryURL.path, _task.launchPath, _task.arguments);
         [_task launch];
         DLog(@"Launched %@", self);
     } @catch (NSException *e) {

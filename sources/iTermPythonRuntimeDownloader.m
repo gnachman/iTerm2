@@ -228,8 +228,11 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                                  minimumEnvironmentVersion:(NSInteger)minimumEnvironmentVersion
                                         requiredToContinue:(BOOL)requiredToContinue
                                             withCompletion:(void (^)(iTermPythonRuntimeDownloaderStatus))completion {
+    DLog(@"confirm=%@ pythonVersion=%@ minimumEnvironmentVersion=%@ requiredToContinue=%@",
+         @(confirm), pythonVersion, @(minimumEnvironmentVersion), @(requiredToContinue));
     if (![self shouldDownloadEnvironmentForPythonVersion:pythonVersion
                                minimumEnvironmentVersion:minimumEnvironmentVersion]) {
+        DLog(@"Don't need it");
         [self performPeriodicUpgradeCheck];
         completion(iTermPythonRuntimeDownloaderStatusNotNeeded);
         return;
@@ -248,14 +251,18 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 }
 
 - (void)unzip:(NSURL *)zipFileURL to:(NSURL *)destination completion:(void (^)(NSError *))completion {
+    DLog(@"zipFileURL=%@ destination=%@", zipFileURL, destination);
+
     // This serializes unzips so only one can happen at a time.
     dispatch_async(_queue, ^{
         NSError *error = nil;
+        DLog(@"mkdir %@", destination.path);
         [[NSFileManager defaultManager] createDirectoryAtPath:destination.path
                                   withIntermediateDirectories:NO
                                                    attributes:nil
                                                         error:&error];
         if (error) {
+            DLog(@"failed %@", error);
             dispatch_async(dispatch_get_main_queue(), ^{
                 completion(error);
             });
@@ -265,6 +272,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                        withArguments:@[ @"-o", @"-q" ]
                          destination:destination.path
                           completion:^(NSError *error) {
+            DLog(@"%@", error);
             completion(error);
         }];
     });
@@ -276,15 +284,17 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
               requiredToContinue:(BOOL)requiredToContinue
                    pythonVersion:(NSString *)pythonVersion
              latestFullComponent:(NSNumber *)latestFullComponent {
+    DLog(@"installedVersion=%@ silent=%@ confirm=%@ requiredToContinue=%@ pythonVersion=%@ latestFullComponent=%@",
+         @(installedVersion), @(silent), @(confirm), @(requiredToContinue), pythonVersion, latestFullComponent);
     if (_status == iTermPythonRuntimeDownloaderStatusWorking) {
-        // Already existed and had a current phase.
+        DLog(@"Already existed and had a current phase");
         [[_downloadController window] makeKeyAndOrderFront:nil];
         return;
     }
 
     _status = iTermPythonRuntimeDownloaderStatusWorking;
     _downloadGroup = dispatch_group_create();
-    dispatch_group_t group = _downloadGroup;
+    __block dispatch_group_t group = _downloadGroup;
     dispatch_group_enter(_downloadGroup);
     if (_downloadController.isWindowLoaded) {
         [_downloadController.window close];
@@ -309,18 +319,25 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                              requestedPythonVersion:pythonVersion
                                    nextPhaseFactory:
      ^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *currentPhase) {
+        DLog(@"Begin manifest phase");
         iTermPythonRuntimeDownloader *strongSelf = weakSelf;
         if (!strongSelf) {
+            DLog(@"self dealloced");
             return nil;
         }
         iTermManifestDownloadPhase *mphase = [iTermManifestDownloadPhase castFrom:currentPhase];
         if (mphase.version <= installedVersion) {
+            DLog(@"mphase gave version %@ but I have %@", @(mphase.version), @(installedVersion));
             strongSelf->_status = iTermPythonRuntimeDownloaderStatusRequestedVersionNotFound;
-            dispatch_group_leave(group);
+            if (group) {
+                dispatch_group_leave(group);
+                group = nil;
+            }
             return nil;
         }
         iTermDownloadableComponentInfo *const info = [mphase infoGivenExistingFullComponent:latestFullComponent];
         if (stillNeedsConfirmation) {
+            DLog(@"Request confirmation from user with alert box");
             NSAlert *alert = [[NSAlert alloc] init];
             alert.messageText = @"Download Python Runtime?";
             if (requiredToContinue) {
@@ -331,8 +348,12 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             [alert addButtonWithTitle:silent ? @"Download" : @"OK"];
             [alert addButtonWithTitle:@"Cancel"];
             if ([alert runModal] == NSAlertSecondButtonReturn) {
+                DLog(@"Canceled by user");
                 declined = YES;
-                dispatch_group_leave(group);
+                if (group) {
+                    dispatch_group_leave(group);
+                    group = nil;
+                }
                 strongSelf->_status = iTermPythonRuntimeDownloaderStatusCanceledByUser;
                 return nil;
             }
@@ -342,12 +363,14 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             [strongSelf->_downloadController.window makeKeyAndOrderFront:nil];
             raiseOnCompletion = YES;
         }
+        DLog(@"Return download phase");
         return [[iTermPayloadDownloadPhase alloc] initWithURL:info.URL
                                                       version:mphase.version
                                             expectedSignature:info.signature
                                        requestedPythonVersion:mphase.requestedPythonVersion
                                              expectedVersions:mphase.pythonVersionsInArchive
                                              nextPhaseFactory:^iTermOptionalComponentDownloadPhase *(iTermOptionalComponentDownloadPhase *completedPhase) {
+            DLog(@"Download phase completed");
             const BOOL shouldContinue = [weakSelf payloadDownloadPhaseDidComplete:(iTermPayloadDownloadPhase *)completedPhase
                                                                  sitePackagesOnly:info.isSitePackagesOnly
                                                               latestFullComponent:latestFullComponent];
@@ -362,6 +385,11 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             [weakSelf showDownloadFailedAlertWithError:lastPhase.error
                                          pythonVersion:pythonVersion
                                     requiredToContinue:requiredToContinue];
+
+            if (group) {
+                dispatch_group_leave(group);
+                group = nil;
+            }
             return;
         }
         if (lastPhase == manifestPhase) {
@@ -428,7 +456,10 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 - (BOOL)payloadDownloadPhaseDidComplete:(iTermPayloadDownloadPhase *)payloadPhase
                        sitePackagesOnly:(BOOL)sitePackagesOnly
                     latestFullComponent:(NSNumber *)latestFullComponent {
+    DLog(@"sitePackagesOnly=%@ latestFullComponent=%@", @(sitePackagesOnly), latestFullComponent);
+
     if (!payloadPhase || payloadPhase.error) {
+        DLog(@"Download failed");
         [_downloadController.window makeKeyAndOrderFront:nil];
         [[iTermNotificationController sharedInstance] notify:@"Download failed ☹️"];
         _status = iTermPythonRuntimeDownloaderStatusError;
@@ -438,6 +469,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     NSString *tempfile = [[NSWorkspace sharedWorkspace] temporaryFileNameWithPrefix:@"iterm2-pyenv" suffix:@".zip"];
     const BOOL ok = [self writeInputStream:payloadPhase.stream toFile:tempfile];
     if (!ok) {
+        DLog(@"Failed to write to %@", tempfile);
         [[iTermNotificationController sharedInstance] notify:@"Could not extract archive ☹️"];
         _status = iTermPythonRuntimeDownloaderStatusError;
         dispatch_group_leave(self->_downloadGroup);
@@ -450,6 +482,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                                                    error:nil];
     NSError *verifyError = [iTermSignatureVerifier validateFileURL:tempURL withEncodedSignature:payloadPhase.expectedSignature publicKey:pubkey];
     if (verifyError) {
+        DLog(@"Signature validation failed");
         [[NSFileManager defaultManager] removeItemAtPath:tempfile error:nil];
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Signature Verification Failed";
@@ -460,6 +493,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         self->_downloadController = nil;
         dispatch_group_leave(self->_downloadGroup);
     } else {
+        DLog(@"Signature OK");
         void (^completion)(NSError *) = ^(NSError *error){
             if (!error) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermPythonRuntimeDownloaderDidInstallRuntimeNotification object:nil];
@@ -480,12 +514,14 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             dispatch_group_leave(self->_downloadGroup);
         };
         if (sitePackagesOnly) {
+            DLog(@"Installing site packages only");
             [self installSitePackagesFromZip:tempfile
                               runtimeVersion:payloadPhase.version
                               pythonVersions:payloadPhase.expectedVersions
                          latestFullComponent:latestFullComponent.integerValue
                                   completion:completion];
         } else {
+            DLog(@"Installing environment");
             [self installPythonEnvironmentFromZip:tempfile
                                    runtimeVersion:payloadPhase.version
                                    pythonVersions:payloadPhase.expectedVersions
@@ -547,6 +583,8 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                     pythonVersions:(NSArray<NSString *> *)pythonVersions
                latestFullComponent:(NSInteger)latestFullComponent
                         completion:(void (^)(NSError *))completion {
+    DLog(@"zip=%@ runtimeVersion=%@ pythonVersions=%@ latestFullComponent=%@",
+         zip, @(runtimeVersion), pythonVersions, @(latestFullComponent));
     NSURL *const finalDestination =
     [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(runtimeVersion) stringValue]
                                         creatingSymlinkIfNeeded:YES]];
@@ -569,6 +607,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                                to:overwritableURL
                        completion:^(NSError *error) {
         if (error) {
+            DLog(@"failed with %@", error);
             completion(error);
             return;
         }
@@ -582,6 +621,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         [self performSubstitutions:subs inFilesUnderFolder:tempDestination];
         [self unzip:[NSURL fileURLWithPath:zip] to:tempDestination completion:^(NSError *error) {
             if (error) {
+                DLog(@"Failed with %@", error);
                 completion(error);
                 return;
             }
@@ -597,12 +637,14 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
 - (void)copyFullEnvironmentFrom:(NSURL *)source
                              to:(NSURL *)destination
                      completion:(void (^)(NSError *))completion {
+    DLog(@"source=%@ destinatino=%@", source, destination);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSError *error = nil;
         [[NSFileManager defaultManager] copyItemAtURL:source
                                                 toURL:destination
                                                 error:&error];
         dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"Finished with error=%@", error);
             completion(error);
         });
     });
@@ -612,16 +654,20 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
                          runtimeVersion:(int)runtimeVersion
                          pythonVersions:(NSArray<NSString *> *)pythonVersions
                              completion:(void (^)(NSError *))completion {
+    DLog(@"zip=%@ runtimeVersion=%@ pythonVersions=%@", zip, @(runtimeVersion), pythonVersions);
     NSURL *finalDestination = [NSURL fileURLWithPath:[self pathToStandardPyenvWithVersion:[@(runtimeVersion) stringValue]
                                                                   creatingSymlinkIfNeeded:YES]];
     NSURL *tempDestination = [NSURL fileURLWithPath:[[[NSFileManager defaultManager] spacelessAppSupportCreatingLink] stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]]];
 
     [[NSFileManager defaultManager] removeItemAtPath:finalDestination.path error:nil];
     [self unzip:[NSURL fileURLWithPath:zip] to:tempDestination completion:^(NSError *error) {
+        DLog(@"unzip done error=%@", error);;
         if (!error) {
             NSDictionary<NSString *, NSString *> *subs = @{ @"__ITERM2_ENV__": finalDestination.path,
                                                             @"__ITERM2_PYENV__": [finalDestination.path stringByAppendingPathComponent:@"pyenv"] };
+            DLog(@"perform subs");
             [self performSubstitutions:subs inFilesUnderFolder:tempDestination];
+            DLog(@"finish installing");
             [self finishInstallingRuntimeVersion:runtimeVersion
                                   pythonVersions:pythonVersions
                                  tempDestination:tempDestination
@@ -649,6 +695,8 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                        tempDestination:(NSURL *)tempDestination
                       finalDestination:(NSURL *)finalDestination
                             completion:(void (^)(NSError *))completion {
+    DLog(@"runtimeVersion=%@ pythonVersions=%@ tempDestination=%@ finalDestination=%@",
+         @(runtimeVersion), pythonVersions, tempDestination, finalDestination);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         NSArray<NSString *> *twoPartVersions = iTermConvertThreePartVersionNumbersToTwoPart(pythonVersions);
         NSArray<NSString *> *extendedPythonVersions = [NSSet setWithArray:[pythonVersions arrayByAddingObjectsFromArray:twoPartVersions]].allObjects;
@@ -659,10 +707,12 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                  pythonVersion:nil
                 runtimeVersion:runtimeVersion];
         NSError *error = nil;
+        DLog(@"Move %@ to %@", [tempDestination URLByAppendingPathComponent:@"iterm2env"], finalDestination);
         [[NSFileManager defaultManager] moveItemAtURL:[tempDestination URLByAppendingPathComponent:@"iterm2env"]
                                                 toURL:finalDestination
                                                 error:&error];
         if (error) {
+            DLog(@"Move failed with error=%@", error);
             dispatch_async(dispatch_get_main_queue(), ^{
                 completion(error);
             });
@@ -670,6 +720,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
         }
         // Delete older versions that have the same Python versions.
         NSSet<NSString *> *versionsToRemove = [NSSet setWithArray:twoPartVersions];
+        DLog(@"versionsToRemove=%@", versionsToRemove);
         for (int i = 1; i < runtimeVersion; i++) {
             NSSet<NSString *> *pythonVersionsInOldRuntime = [self twoPartPythonVersionsInRuntimeVersion:i];
             if (![pythonVersionsInOldRuntime isSubsetOfSet:versionsToRemove]) {
@@ -678,6 +729,8 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                 continue;
             }
             NSError *error = nil;
+            DLog(@"Remove %@", [self pathToStandardPyenvWithVersion:[@(i) stringValue]
+                                            creatingSymlinkIfNeeded:NO]);
             [[NSFileManager defaultManager] removeItemAtPath:[self pathToStandardPyenvWithVersion:[@(i) stringValue]
                                                                           creatingSymlinkIfNeeded:NO]
                                                        error:&error];
@@ -686,9 +739,11 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
             }
         }
 
+        DLog(@"rm temp destination %@", tempDestination);
         [[NSFileManager defaultManager] removeItemAtURL:tempDestination error:&error];
         DLog(@"%@", error);
         dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"Done");
             completion(nil);
         });
     });
@@ -702,18 +757,23 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
         [[NSFileManager defaultManager] removeItemAtPath:pathToVersionedEnvironment
                                                    error:nil];
         NSError *error = nil;
+        DLog(@"Will link %@ to %@", container, pathToVersionedEnvironment);
         [[NSFileManager defaultManager] linkItemAtPath:container
                                                 toPath:pathToVersionedEnvironment
                                                  error:&error];
+        DLog(@"Done linking error=%@", error);
     }
 }
 
 - (void)createDeepLinksTo:(NSString *)container
            runtimeVersion:(int)runtimeVersion
               forVersions:(NSArray<NSString *> *)pythonVersions {
+    DLog(@"container=%@ runtimeVersion=%@", container, @(runtimeVersion));
     for (NSString *pythonVersion in pythonVersions) {
+        DLog(@"Begin linking %@", pythonVersion);
         [self createDeepLinkTo:container pythonVersion:pythonVersion runtimeVersion:runtimeVersion];
     }
+    DLog(@"Done");
 }
 
 - (BOOL)busy {
@@ -724,6 +784,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                       dependencies:(NSArray<NSString *> *)dependencies
                      pythonVersion:(nullable NSString *)pythonVersion
                         completion:(void (^)(BOOL ok))completion {
+    DLog(@"Begin folder=%@ dependencies=%@ pythonVersion=%@", folder, dependencies, pythonVersion);
     iTermBuildingScriptWindowController *pleaseWait = [iTermBuildingScriptWindowController newPleaseWaitWindowController];
     id token = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidBecomeActiveNotification
                                                                  object:nil
@@ -754,12 +815,16 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                       dependencies:(NSArray<NSString *> *)dependencies
                     createSetupCfg:(BOOL)createSetupCfg
                         completion:(void (^)(iTermInstallPythonStatus))completion {
+    DLog(@"Begin. container=%@ eventualLocation=%@ pythonVersion=%@ environmentVersion=%@ dependencies=%@ createSetupCfg=%@",
+         container, eventualLocation, pythonVersion, @(environmentVersion), dependencies, @(createSetupCfg));
     NSString *source = [self pathToStandardPyenvWithVersion:pythonVersion
                                     creatingSymlinkIfNeeded:NO];
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        DLog(@"On bg queue");
         NSError *error = nil;
         NSString *destination = [container URLByAppendingPathComponent:@"iterm2env"].path;
         BOOL ok;
+        DLog(@"mkdir %@", container.path);
         ok = [[NSFileManager defaultManager] createDirectoryAtPath:container.path
                                        withIntermediateDirectories:YES
                                                         attributes:nil
@@ -767,9 +832,12 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
         if (!ok) {
             XLog(@"Failed to create %@: %@", container, error);
         }
+
+        DLog(@"Will create hard links at %@ to %@", source, destination);
         ok = [[NSFileManager defaultManager] linkItemAtPath:source
                                                      toPath:destination
                                                       error:&error];
+        DLog(@"Done creating hard links. error=%@", error);
         dispatch_async(dispatch_get_main_queue(), ^{
             if (!ok) {
                 XLog(@"Failed to link %@ to %@: %@", source, destination, error);
@@ -790,6 +858,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
             [self replaceShebangInScriptAtPath:pip3 with:[NSString stringWithFormat:@"#!%@", pathToPython]];
 
             [self installDependencies:dependencies to:container pythonVersion:pythonVersion completion:^(NSArray<NSString *> *failures, NSArray<NSData *> *outputs) {
+                DLog(@"Dependency installation finished with these failures: %@", failures);
                 if (failures.count) {
                     NSAlert *alert = [[NSAlert alloc] init];
                     alert.messageText = @"Dependency Installation Failed";
@@ -831,6 +900,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
 
                 NSString *pythonVersionToUse = pythonVersion ?: [self.class latestPythonVersion];
                 if (!pythonVersionToUse) {
+                    DLog(@"Could not determine Python version");
                     NSAlert *alert = [[NSAlert alloc] init];
                     alert.messageText = @"Could not determine Python version";
                     alert.informativeText = @"Please file an issue report.";
@@ -853,6 +923,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
 }
 
 - (void)replaceShebangInScriptAtPath:(NSString *)scriptPath with:(NSString *)newShebang {
+    DLog(@"scriptPath=%@ newShebang=%@", scriptPath, newShebang);
     NSError *error = nil;
     NSString *script = [NSString stringWithContentsOfFile:scriptPath encoding:NSUTF8StringEncoding error:&error];
     if (!script) {
@@ -893,7 +964,9 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
               pythonVersion:(NSString *)pythonVersion
                  completion:(void (^)(NSArray<NSString *> *failures,
                                       NSArray<NSData *> *outputs))completion {
+    DLog(@"dependencies=%@ container=%@ pythonVersion=%@", dependencies, container, pythonVersion);
     if (dependencies.count == 0) {
+        DLog(@"No more deps");
         completion(@[], @[]);
         return;
     }
@@ -902,6 +975,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
                withArguments:@[ @"install", dependencies.firstObject ]
                   completion:^(BOOL thisOK, NSData *output) {
                       if (!thisOK) {
+                          DLog(@"Running pip3 failed so don't install dependencies");
                           completion(@[ dependencies.firstObject ], @[ output ?: [NSData data] ]);
                           return;
                       }
@@ -924,9 +998,11 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
              pythonVersion:(NSString *)pythonVersion
              withArguments:(NSArray<NSString *> *)arguments
                 completion:(void (^)(BOOL ok, NSData *output))completion {
+    DLog(@"container=%@ pythonVersion=%@ arguments=%@", container, pythonVersion, arguments);
     NSString *pip3 = [self pip3At:[container.path stringByAppendingPathComponent:@"iterm2env"]
                     pythonVersion:pythonVersion];
     if (!pip3) {
+        DLog(@"pip3 not found");
         completion(NO, [[NSString stringWithFormat:@"pip3 not found for python version %@ in %@", pythonVersion, container.path] dataUsingEncoding:NSUTF8StringEncoding]);
         return;
     }
@@ -974,6 +1050,7 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
 }
 
 - (void)performSubstitutions:(NSDictionary *)subs inFilesUnderFolder:(NSURL *)folderURL {
+    DLog(@"subs=%@ folderURL=%@", subs, folderURL);
     NSMutableDictionary *dataSubs = [NSMutableDictionary dictionary];
     [subs enumerateKeysAndObjectsUsingBlock:^(NSString *  _Nonnull key, NSString *  _Nonnull obj, BOOL * _Nonnull stop) {
         NSData *dataKey = [key dataUsingEncoding:NSUTF8StringEncoding];
@@ -984,9 +1061,11 @@ static NSArray<NSString *> *iTermConvertThreePartVersionNumbersToTwoPart(NSArray
     for (NSString *file in directoryEnumerator) {
         [self performSubstitutions:dataSubs inFile:[folderURL.path stringByAppendingPathComponent:file]];
     }
+    DLog(@"Done");
 }
 
 - (void)performSubstitutions:(NSDictionary *)subs inFile:(NSString *)path {
+    DLog(@"Perform subs in %@", path);
     NSMutableData *data = [NSMutableData dataWithContentsOfFile:path];
     [subs enumerateKeysAndObjectsUsingBlock:^(NSData * _Nonnull key, NSData * _Nonnull obj, BOOL * _Nonnull stop) {
         const NSInteger count = [data it_replaceOccurrencesOfData:key withData:obj];
