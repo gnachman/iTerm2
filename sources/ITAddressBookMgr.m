@@ -286,7 +286,7 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
 }
 
 + (NSFont *)fontWithDesc:(NSString *)fontDesc {
-    return [fontDesc fontValue];
+    return [(fontDesc ?: @"") fontValue];
 }
 
 - (void)setBookmarks:(NSArray *)newBookmarksArray defaultGuid:(NSString *)guid {
