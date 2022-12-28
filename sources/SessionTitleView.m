@@ -112,6 +112,11 @@ static const CGFloat kButtonSize = 17;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
+- (void)scrollWheel:(NSEvent *)event {
+    DLog(@"%@", event);
+    [super scrollWheel:event];
+}
+
 - (NSMenu *)menu {
     return delegate_.menu;
 }

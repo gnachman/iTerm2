@@ -1682,6 +1682,7 @@
 		A65943CC1F83382B00598B1E /* iTermMetalClipView.m in Sources */ = {isa = PBXBuildFile; fileRef = A65943CA1F83382B00598B1E /* iTermMetalClipView.m */; };
 		A65B0400278CAA4600CD889E /* VT100ScreenMutableState+Resizing.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B03FE278CAA4600CD889E /* VT100ScreenMutableState+Resizing.h */; };
 		A65B0401278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B03FF278CAA4600CD889E /* VT100ScreenMutableState+Resizing.m */; };
+		A65B3792295CB769008EEBF3 /* PTYTabView.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E533B403B2959201A8A066 /* PTYTabView.m */; };
 		A65B49A8244199CF002B1C68 /* iTermSocketUnixDomainAddress.h in Headers */ = {isa = PBXBuildFile; fileRef = A65B49A6244199CF002B1C68 /* iTermSocketUnixDomainAddress.h */; };
 		A65B49A9244199CF002B1C68 /* iTermSocketUnixDomainAddress.m in Sources */ = {isa = PBXBuildFile; fileRef = A65B49A7244199CF002B1C68 /* iTermSocketUnixDomainAddress.m */; };
 		A65B72521B1A5D7500F947A7 /* WarningSign.png in Resources */ = {isa = PBXBuildFile; fileRef = A65B72501B1A5D7500F947A7 /* WarningSign.png */; };
@@ -2959,7 +2960,6 @@
 		A6C762D61B45C52B00E3C992 /* LineBufferPosition.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D78B55D183EE1C000014D49 /* LineBufferPosition.m */; };
 		A6C762D81B45C52B00E3C992 /* PseudoTerminal.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */; };
 		A6C762DB1B45C52B00E3C992 /* PTYSession.m in Sources */ = {isa = PBXBuildFile; fileRef = F52ED8DD037F0A7D01A8A066 /* PTYSession.m */; };
-		A6C762DE1B45C52B00E3C992 /* PTYTabView.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E533B403B2959201A8A066 /* PTYTabView.m */; };
 		A6C762E01B45C52B00E3C992 /* PTYTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7561026DDA6303A80106 /* PTYTextView.m */; };
 		A6C762E11B45C52B00E3C992 /* PTYWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F56B230B03A1B36701A8A066 /* PTYWindow.m */; };
 		A6C762E41B45C52B00E3C992 /* TaskNotifier.m in Sources */ = {isa = PBXBuildFile; fileRef = A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */; };
@@ -15287,6 +15287,7 @@
 				A6BC8AD021C7608B00796BF3 /* iTermImageCache.m in Sources */,
 				A671AC6026D95C0400B23C95 /* HTMLEncoding.swift in Sources */,
 				A60E045B26DD556900DD162B /* NSDate+iTerm.m in Sources */,
+				A65B3792295CB769008EEBF3 /* PTYTabView.m in Sources */,
 				A6B6178C287CC16C008A0C54 /* iTermServerDeleter.swift in Sources */,
 				A6A9838D27E5B3E5003319D1 /* iTermApplication.m in Sources */,
 				A63493E923E945BA0047C31B /* iTermGlobalScopeController.m in Sources */,
@@ -16011,7 +16012,6 @@
 				A667F3901B49FC2E00705186 /* iTermToolbeltSplitView.m in Sources */,
 				A6C763371B45C52B00E3C992 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m in Sources */,
 				A6C763421B45C52B00E3C992 /* iTermFontPanel.m in Sources */,
-				A6C762DE1B45C52B00E3C992 /* PTYTabView.m in Sources */,
 				A6C762D81B45C52B00E3C992 /* PseudoTerminal.m in Sources */,
 				A6CEC1081DCE8146009F4FD2 /* GPBCodedInputStream.m in Sources */,
 				A6C763431B45C52B00E3C992 /* iTermImageWell.m in Sources */,

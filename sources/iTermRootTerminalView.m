@@ -186,6 +186,7 @@ NS_CLASS_AVAILABLE_MAC(10_14)
         _tabView.allowsTruncatedLabels = NO;
         _tabView.controlSize = NSControlSizeSmall;
         _tabView.tabViewType = NSNoTabsNoBorder;
+        _tabView.swipeHandler = delegate;
         [self addSubview:_tabView];
 
         // Create the tab bar.
@@ -420,6 +421,11 @@ NS_CLASS_AVAILABLE_MAC(10_14)
     _tabBarControl.itermTabBarDelegate = nil;
     _tabBarControl.delegate = nil;
     _leftTabBarDragHandle.delegate = nil;
+}
+
+- (void)setDelegate:(id<iTermRootTerminalViewDelegate>)delegate {
+    _delegate = delegate;
+    _tabView.swipeHandler = delegate;
 }
 
 - (void)invalidateAutomaticTabBarBackingHiding {

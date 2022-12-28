@@ -13,6 +13,7 @@
 @class iTermImageView;
 @class iTermRootTerminalView;
 @class iTermStatusBarViewController;
+@protocol iTermSwipeHandler;
 @class iTermTabBarControlView;
 @protocol iTermTabBarControlViewDelegate;
 @class iTermToolbeltView;
@@ -20,7 +21,7 @@
 @protocol PSMTabBarControlDelegate;
 @class PTYTabView;
 
-@protocol iTermRootTerminalViewDelegate<iTermTabBarControlViewDelegate>
+@protocol iTermRootTerminalViewDelegate<iTermTabBarControlViewDelegate, iTermSwipeHandler>
 - (void)repositionWidgets;
 - (void)rootTerminalViewDidResizeContentArea;
 - (BOOL)haveTopBorder;
