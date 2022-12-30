@@ -37,6 +37,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)activeUpdateCadence;
 + (int)adaptiveFrameRateThroughputThreshold;
 + (BOOL)addNewTabAtEndOfTabs;
++ (BOOL)addUtilitiesToPATH;
 + (BOOL)aggressiveBaseCharacterDetection;
 + (BOOL)aggressiveFocusFollowsMouse;
 + (int)aiMaxTokens;

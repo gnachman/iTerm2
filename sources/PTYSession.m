@@ -2432,12 +2432,13 @@ ITERM_WEAKLY_REFERENCEABLE
         env[@"ITERM2_COOKIE"] = self.cookie;
     }
 
-    // Add utilities to $PATH
-    NSString *path = env[PATH_ENVNAME] ?: [NSString stringWithUTF8String:_PATH_DEFPATH];
-    NSArray *pathComponents = [path componentsSeparatedByString:@":"] ?: @[];
-    pathComponents = [pathComponents arrayByAddingObject:[iTermPathToSSH() stringByDeletingLastPathComponent]];
-    path = [pathComponents componentsJoinedByString:@":"];
-    env[PATH_ENVNAME] = path;
+    if ([iTermAdvancedSettingsModel addUtilitiesToPATH]) {
+        NSString *path = env[PATH_ENVNAME] ?: [NSString stringWithUTF8String:_PATH_DEFPATH];
+        NSArray *pathComponents = [path componentsSeparatedByString:@":"] ?: @[];
+        pathComponents = [pathComponents arrayByAddingObject:[iTermPathToSSH() stringByDeletingLastPathComponent]];
+        path = [pathComponents componentsJoinedByString:@":"];
+        env[PATH_ENVNAME] = path;
+    }
 
     DLog(@"Begin locale logic");
     switch ([iTermProfilePreferences unsignedIntegerForKey:KEY_SET_LOCALE_VARS inProfile:_profile]) {

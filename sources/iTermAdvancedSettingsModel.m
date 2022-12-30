@@ -681,6 +681,7 @@ DEFINE_BOOL(postFakeFlagsChangedEvents, NO, SECTION_EXPERIMENTAL @"Post fake fla
 DEFINE_BOOL(fullWidthFlags, YES, SECTION_EXPERIMENTAL @"Flag emoji render full-width");
 DEFINE_INT(aiMaxTokens, 80, SECTION_EXPERIMENTAL @"Maximum tokens for OpenAI");
 DEFINE_STRING(aiModel, @"code-davinci-002", SECTION_EXPERIMENTAL @"OpenAI Model name");
+DEFINE_BOOL(addUtilitiesToPATH, YES, SECTION_EXPERIMENTAL @"Add path to iTerm2 utilities to $PATH for new sessions?");
 
 #pragma mark - Scripting
 #define SECTION_SCRIPTING @"Scripting: "
