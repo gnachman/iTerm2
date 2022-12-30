@@ -447,6 +447,8 @@ static inline iTermLoggingStyle iTermLoggingStyleFromUserDefaultsValue(NSUIntege
     return iTermLoggingStyleRaw;
 }
 
+NSString *iTermPathToSSH(void);
+
 @interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
 
 + (id)sharedInstance;

@@ -1578,6 +1578,7 @@
 		A64AE5172084128500D02F06 /* NSThread+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A64AE5152084128500D02F06 /* NSThread+iTerm.h */; };
 		A64AE5182084128500D02F06 /* NSThread+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A64AE5162084128500D02F06 /* NSThread+iTerm.m */; };
 		A64B68DB2337314E009DA064 /* ToolCapturedOutputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */; };
+		A64BD0CE295FAA7C001F3F7E /* it2ssh in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6EC80842829E28800493544 /* it2ssh */; };
 		A64D6A042495608500FC0CDE /* iTermAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A663011619CFE450004AF81C /* iTermAboutWindowController.m */; };
 		A64DE9AA237A8555002E390C /* iTermFakeWindowTitleLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */; };
 		A64DE9AB237A8555002E390C /* iTermFakeWindowTitleLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */; };
@@ -3795,7 +3796,6 @@
 		A6EC8076281F7F7A00493544 /* PTYScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF755F026DDA6303A80106 /* PTYScrollView.m */; };
 		A6EC80812828E9F600493544 /* Conductor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC80802828E9F600493544 /* Conductor.swift */; };
 		A6EC8083282987FC00493544 /* VT100ConductorParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EC8082282987FC00493544 /* VT100ConductorParser.swift */; };
-		A6EC80852829E28900493544 /* it2ssh in Resources */ = {isa = PBXBuildFile; fileRef = A6EC80842829E28800493544 /* it2ssh */; };
 		A6EC80862829E28900493544 /* it2ssh in Resources */ = {isa = PBXBuildFile; fileRef = A6EC80842829E28800493544 /* it2ssh */; };
 		A6EC80872829E28900493544 /* it2ssh in Resources */ = {isa = PBXBuildFile; fileRef = A6EC80842829E28800493544 /* it2ssh */; };
 		A6EC8089282A28CD00493544 /* SSHConfigurationWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = A6EC8088282A28C600493544 /* SSHConfigurationWindow.xib */; };
@@ -4331,6 +4331,16 @@
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 1;
+		};
+		A64BD0CD295FAA67001F3F7E /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = utilities;
+			dstSubfolderSpec = 7;
+			files = (
+				A64BD0CE295FAA7C001F3F7E /* it2ssh in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 		A65DF4AC2849F2E700AA29AB /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -7643,7 +7653,6 @@
 				1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */,
 				1DB9D8F0183FE9EF0029F0B5 /* iTermHotKeyController.h */,
 				1D7B9A671491D82F003A2A22 /* IntervalMap.h */,
-				20E74F4804E9089700000106 /* ITAddressBookMgr.h */,
 				1D407A2614BABE8700BD5035 /* iTerm.h */,
 				A663010E19CFE41A004AF81C /* iTermAboutWindow.h */,
 				A663011519CFE450004AF81C /* iTermAboutWindowController.h */,
@@ -9415,6 +9424,7 @@
 				A699BAE418C8394700D425A7 /* CVector.h */,
 				A62132D42786542900B80724 /* CVector.m */,
 				1DD39B19180B82F5004E56D5 /* DebugLogging.m */,
+				20E74F4804E9089700000106 /* ITAddressBookMgr.h */,
 				20E74F4904E9089700000106 /* ITAddressBookMgr.m */,
 				A6D463E82404482D005D073D /* iTermAlphaBlendingHelper.h */,
 				A6D463E92404482D005D073D /* iTermAlphaBlendingHelper.m */,
@@ -12916,6 +12926,7 @@
 				A67A515026CCD54000281693 /* CopyFiles */,
 				A65DF4AC2849F2E700AA29AB /* CopyFiles */,
 				A6C1FE6E284C1BF200EA8A3B /* Embed Foundation Extensions */,
+				A64BD0CD295FAA67001F3F7E /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -14376,7 +14387,6 @@
 				A6C978F424A0194500971AA7 /* WindowCornerFull@2x.png in Resources */,
 				A6E7AEA3214394F600DE9F3B /* graphic_git.png in Resources */,
 				A67F118018D82B9500B23C7B /* PrefsAdvanced.png in Resources */,
-				A6EC80852829E28900493544 /* it2ssh in Resources */,
 				A6F31A27295BC41700C1A51E /* uniE0C9_PowerlineExtraSymbols.pdf in Resources */,
 				A67F61DB214395D50093940A /* graphic_yo.png in Resources */,
 				A65429B220C4931100CE71B1 /* iTermParameterPanelWindowController.xib in Resources */,

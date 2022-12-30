@@ -228,6 +228,7 @@ static NSString *TERM_ENVNAME = @"TERM";
 static NSString *COLORFGBG_ENVNAME = @"COLORFGBG";
 static NSString *PWD_ENVNAME = @"PWD";
 static NSString *PWD_ENVVALUE = @"~";
+static NSString *PATH_ENVNAME = @"PATH";
 
 // Constants for saved window arrangement keys.
 static NSString *const SESSION_ARRANGEMENT_COLUMNS = @"Columns";
@@ -2430,6 +2431,14 @@ ITERM_WEAKLY_REFERENCEABLE
         self.cookie = [[iTermWebSocketCookieJar sharedInstance] randomStringForCookie];
         env[@"ITERM2_COOKIE"] = self.cookie;
     }
+
+    // Add utilities to $PATH
+    NSString *path = env[PATH_ENVNAME] ?: [NSString stringWithUTF8String:_PATH_DEFPATH];
+    NSArray *pathComponents = [path componentsSeparatedByString:@":"] ?: @[];
+    pathComponents = [pathComponents arrayByAddingObject:[iTermPathToSSH() stringByDeletingLastPathComponent]];
+    path = [pathComponents componentsJoinedByString:@":"];
+    env[PATH_ENVNAME] = path;
+
     DLog(@"Begin locale logic");
     switch ([iTermProfilePreferences unsignedIntegerForKey:KEY_SET_LOCALE_VARS inProfile:_profile]) {
         case iTermSetLocalVarsModeDoNotSet:

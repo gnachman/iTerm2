@@ -58,8 +58,8 @@ const NSInteger iTermMaxInitialSessionSize = 1250;
 
 static NSMutableArray<NSNotification *> *sDelayedNotifications;
 
-static NSString *iTermPathToSSH(void) {
-    return [[NSBundle bundleForClass:[ITAddressBookMgr class]] pathForResource:@"it2ssh" ofType:nil];
+NSString *iTermPathToSSH(void) {
+    return [[NSBundle bundleForClass:[ITAddressBookMgr class]] pathForResource:@"utilities/it2ssh" ofType:nil];
 }
 
 iTermWindowType iTermWindowDefaultType(void) {
