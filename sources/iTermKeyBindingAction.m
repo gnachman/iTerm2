@@ -272,19 +272,39 @@ static NSString *GetProfileName(NSString *guid) {
             break;
         }
         case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
-            actionString = [NSString stringWithFormat:@"New Window with \"%@\" Profile", GetProfileName(_parameter)];
+            if ([[ProfileModel sharedInstance] bookmarkWithGuid:_parameter]) {
+                actionString = [NSString stringWithFormat:@"New Window with \"%@\" Profile", GetProfileName(_parameter)];
+            } else {
+                actionString = @"New Window with unavailable Profile";
+            }
             break;
         case KEY_ACTION_NEW_TAB_WITH_PROFILE:
-            actionString = [NSString stringWithFormat:@"New Tab with \"%@\" Profile", GetProfileName(_parameter)];
+            if ([[ProfileModel sharedInstance] bookmarkWithGuid:_parameter]) {
+                actionString = [NSString stringWithFormat:@"New Tab with \"%@\" Profile", GetProfileName(_parameter)];
+            } else {
+                actionString = @"New Tab with unavailable Profile";
+            }
             break;
         case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
-            actionString = [NSString stringWithFormat:@"Split Horizontally with \"%@\" Profile", GetProfileName(_parameter)];
+            if ([[ProfileModel sharedInstance] bookmarkWithGuid:_parameter]) {
+                actionString = [NSString stringWithFormat:@"Split Horizontally with \"%@\" Profile", GetProfileName(_parameter)];
+            } else {
+                actionString = @"Split Horizontally with unavailable Profile";
+            }
             break;
         case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
-            actionString = [NSString stringWithFormat:@"Split Vertically with \"%@\" Profile", GetProfileName(_parameter)];
+            if ([[ProfileModel sharedInstance] bookmarkWithGuid:_parameter]) {
+                actionString = [NSString stringWithFormat:@"Split Vertically with \"%@\" Profile", GetProfileName(_parameter)];
+            } else {
+                actionString = @"Split Vertically with unavailable Profile";
+            }
             break;
         case KEY_ACTION_SET_PROFILE:
-            actionString = [NSString stringWithFormat:@"Change Profile to \"%@\"", GetProfileName(_parameter)];
+            if ([[ProfileModel sharedInstance] bookmarkWithGuid:_parameter]) {
+                actionString = [NSString stringWithFormat:@"Change Profile to \"%@\"", GetProfileName(_parameter)];
+            } else {
+                actionString = @"Change Profile to unavailable profile";
+            }
             break;
         case KEY_ACTION_LOAD_COLOR_PRESET:
             actionString = [NSString stringWithFormat:@"Load Color Preset \"%@\"", _parameter];
