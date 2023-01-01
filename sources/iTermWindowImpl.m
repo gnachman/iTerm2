@@ -182,7 +182,7 @@ ITERM_WEAKLY_REFERENCEABLE
         extra = [NSString stringWithFormat:@" Alpha last changed from:\n%@\n", _lastAlphaChangeStack];
     }
 #endif
-    return [NSString stringWithFormat:@"<%@: %p frame=%@ title=%@ alpha=%f isMain=%d isKey=%d isVisible=%d delegate=%p%@>",
+    return [NSString stringWithFormat:@"<%@: %p frame=%@ title=%@ alpha=%f isMain=%d isKey=%d isVisible=%d collectionBehavior=%@ delegate=%p%@>",
             [self class],
             self,
             [NSValue valueWithRect:self.frame],
@@ -191,8 +191,14 @@ ITERM_WEAKLY_REFERENCEABLE
             (int)self.isMainWindow,
             (int)self.isKeyWindow,
             (int)self.isVisible,
+            @(self.collectionBehavior),
             self.delegate,
             extra];
+}
+
+- (void)setCollectionBehavior:(NSWindowCollectionBehavior)collectionBehavior {
+    DLog(@"%@: setCollectionBehavior=%@\n%@", self, @(collectionBehavior), [NSThread callStackSymbols]);
+    [super setCollectionBehavior:collectionBehavior];
 }
 
 - (NSString *)windowIdentifier {
