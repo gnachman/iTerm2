@@ -37,6 +37,7 @@ NSString *const kPreferenceKeyPromptOnQuitEvenIfThereAreNoWindows = @"PromptOnQu
 NSString *const kPreferenceKeyInstantReplayMemoryMegabytes = @"IRMemory";
 NSString *const kPreferenceKeySavePasteAndCommandHistory = @"SavePasteHistory";  // The key predates command history
 NSString *const kPreferenceKeyAddBonjourHostsToProfiles = @"EnableRendezvous";  // The key predates the name Bonjour
+NSString *const kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdates = @"NotifyOnlyForCriticalShellIntegrationUpdates";  // BOOL
 NSString *const kPreferenceKeyCheckForUpdatesAutomatically = @"SUEnableAutomaticChecks";  // Key defined by Sparkle
 NSString *const kPreferenceKeyCheckForTestReleases = @"CheckTestRelease";
 NSString *const kPreferenceKeyLoadPrefsFromCustomFolder = @"LoadPrefsFromCustomFolder";
@@ -342,6 +343,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyInstantReplayMemoryMegabytes: @4,
                   kPreferenceKeySavePasteAndCommandHistory: @NO,
                   kPreferenceKeyAddBonjourHostsToProfiles: @NO,
+                  kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdates: @YES,
                   kPreferenceKeyCheckForUpdatesAutomatically: @YES,
                   kPreferenceKeyCheckForTestReleases: @NO,
                   kPreferenceKeyLoadPrefsFromCustomFolder: @NO,

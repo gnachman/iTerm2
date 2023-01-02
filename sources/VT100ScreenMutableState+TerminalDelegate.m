@@ -1625,12 +1625,16 @@
         shell = params[@"shell"];
     }
 
-    NSDictionary<NSString *, NSNumber *> *lastVersionByShell =
-        @{ @"tcsh": @2,
-           @"bash": @5,
-           @"zsh": @5,
-           @"fish": @5 };
-    NSInteger latestKnownVersion = [lastVersionByShell[shell ?: @""] integerValue];
+    NSDictionary<NSString *, NSNumber *> *latestVersionByShell;
+    if ([iTermPreferences boolForKey:kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdates]) {
+        latestVersionByShell = @{ @"tcsh": @2,
+                                  @"bash": @5,
+                                  @"zsh": @5,
+                                  @"fish": @5 };
+    } else {
+#include "iTermLatestVersionByShell.h"
+    }
+    NSInteger latestKnownVersion = [latestVersionByShell[shell ?: @""] integerValue];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         if (shell) {

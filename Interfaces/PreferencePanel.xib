@@ -1095,6 +1095,7 @@ DQ
                 <outlet property="_loadPrefsFromCustomFolder" destination="5614" id="9l7-ub-H9J"/>
                 <outlet property="_maxVertically" destination="4540" id="Voi-dz-2WX"/>
                 <outlet property="_nightlyBuildNotice" destination="12T-17-tZZ" id="d2S-M3-V72"/>
+                <outlet property="_notifyOnlyCriticalShellIntegrationUpdates" destination="swc-Bv-Lbu" id="7ic-JY-Xfm"/>
                 <outlet property="_openAIAPIKey" destination="Xrd-YE-9w7" id="2q4-5o-bfa"/>
                 <outlet property="_openAIAPIKeyLabel" destination="RYR-Tl-aPi" id="aYu-i7-V0s"/>
                 <outlet property="_openBookmark" destination="1959" id="PNp-By-R5Y"/>
@@ -5211,11 +5212,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="agx-XH-Dlv" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="155" y="376" width="445" height="94"/>
+                                        <rect key="frame" x="155" y="300" width="445" height="170"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5051">
-                                                <rect key="frame" x="110" y="58" width="202" height="18"/>
+                                                <rect key="frame" x="67" y="134" width="202" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Add Bonjour hosts to Profiles" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5063">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5226,8 +5227,20 @@ DQ
                                                     <outlet property="nextKeyView" destination="5048" id="uHG-f2-Hoi"/>
                                                 </connections>
                                             </button>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="swc-Bv-Lbu">
+                                                <rect key="frame" x="67" y="112" width="310" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Notify only for critical shell integration updates" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="jvo-OV-rbu">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="QJ6-pf-xTg"/>
+                                                    <outlet property="nextKeyView" destination="5048" id="Q5t-jx-9Tl"/>
+                                                </connections>
+                                            </button>
                                             <button toolTip="Selects whether to install the beta or release build when updating." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5049">
-                                                <rect key="frame" x="110" y="18" width="199" height="18"/>
+                                                <rect key="frame" x="67" y="68" width="199" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Update to Beta test releases" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5065">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5238,7 +5251,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5048">
-                                                <rect key="frame" x="110" y="38" width="222" height="18"/>
+                                                <rect key="frame" x="67" y="88" width="222" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Check for updates automatically" bezelStyle="regularSquare" imagePosition="left" alignment="left" inset="2" id="5066">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5250,7 +5263,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="12T-17-tZZ">
-                                                <rect key="frame" x="38" y="5" width="369" height="11"/>
+                                                <rect key="frame" x="38" y="55" width="369" height="11"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" controlSize="mini" lineBreakMode="clipping" title="This build is in the nightly build channel. It cannot update to beta or release builds." id="XaQ-Gu-7BD">
                                                     <font key="font" metaFont="miniSystem"/>

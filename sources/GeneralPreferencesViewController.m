@@ -76,6 +76,8 @@ enum {
     // Enable bonjour
     IBOutlet NSButton *_enableBonjour;
 
+    IBOutlet NSButton *_notifyOnlyCriticalShellIntegrationUpdates;
+
     // Check for updates automatically
     IBOutlet NSButton *_checkUpdate;
 
@@ -391,6 +393,11 @@ enum {
 
     [self defineControl:_enableBonjour
                     key:kPreferenceKeyAddBonjourHostsToProfiles
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_notifyOnlyCriticalShellIntegrationUpdates
+                    key:kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdates
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 
