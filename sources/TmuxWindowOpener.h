@@ -62,6 +62,7 @@ extern NSString *const kTmuxWindowOpenerWindowOptionStyleValueFullScreen;
 @property (nonatomic, copy) NSString *windowGUID;  // the expected window GUID, or nil if unknown.
 @property (nonatomic, copy) NSDictionary<NSString *, NSString *> *perWindowSettings;
 @property (nonatomic, copy) NSDictionary<NSString *, NSString *> *perTabSettings;
+@property (nonatomic) BOOL shouldWorkAroundTabBug;
 
 + (TmuxWindowOpener *)windowOpener;
 - (BOOL)openWindows:(BOOL)initial;

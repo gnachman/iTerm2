@@ -209,6 +209,7 @@ static NSString *const kAggressiveResize = @"aggressive-resize";
     // If we don't tell tmux to change the active window or pane in response to its notification
     // we'll eventually catch up to its current state and remain stable.
     NSInteger _suppressActivityChanges;
+    BOOL _shouldWorkAroundTabBug;
 }
 
 @synthesize gateway = gateway_;
@@ -406,6 +407,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.windowGUID = [self windowGUIDInAffinities:affinities];
     windowOpener.perWindowSettings = _perWindowSettings;
     windowOpener.perTabSettings = _perTabSettings;
+    windowOpener.shouldWorkAroundTabBug = _shouldWorkAroundTabBug;
     DLog(@"windowGUID=%@ perWindowSettings=%@ perTabSettings=%@",
          windowOpener.windowGUID, windowOpener.perWindowSettings, windowOpener.perTabSettings);
     if (originalTerminalGUID) {
@@ -470,6 +472,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.focusReporting = _focusEvents && [iTermAdvancedSettingsModel focusReportingEnabled];
     windowOpener.profile = [self profileForWindow:tab.tmuxWindow];
     windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
+    windowOpener.shouldWorkAroundTabBug = _shouldWorkAroundTabBug;
     return [windowOpener updateLayoutInTab:tab];
 }
 
@@ -564,7 +567,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
 
 - (void)initialListWindowsResponse:(NSString *)response {
     DLog(@"initialListWindowsResponse called");
-    TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
+    TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields] workAroundTabBug:_shouldWorkAroundTabBug];
     if (!doc) {
         DLog(@"Failed to parse %@", response);
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Bad response for initial list windows request: %@", response]];
@@ -1166,6 +1169,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     windowOpener.gateway = gateway_;
     windowOpener.target = self;
     windowOpener.selector = @selector(panesDidUnpause:);
+    windowOpener.shouldWorkAroundTabBug = _shouldWorkAroundTabBug;
 
     windowOpener.minimumServerVersion = self.gateway.minimumServerVersion;
     [windowOpener unpauseWindowPanes:wps];
@@ -1517,10 +1521,15 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         return;
     }
 
+    if ([response isEqualToString:@"next-3.4"]) {
+        // Work around a bug where tmux sends \t instead of tab in list-windows response.
+        _shouldWorkAroundTabBug = YES;
+    }
+
     NSString *nextPrefix = @"next-";
     if ([response hasPrefix:nextPrefix]) {
         [self handleDisplayMessageVersion:[response substringFromIndex:nextPrefix.length]];
-         return;
+        return;
     }
     if ([response hasSuffix:@"-rc"]) {
         response = [response stringByDroppingLastCharacters:3];
@@ -2882,7 +2891,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         // In case of error.
         response = @"";
     }
-    TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
+    TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]
+                                      workAroundTabBug:_shouldWorkAroundTabBug];
     id object = userData[0];
     SEL selector = NSSelectorFromString(userData[1]);
     id target = userData[2];
@@ -3107,7 +3117,8 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     if (tabIndex.intValue < 0) {
         tabIndex = nil;
     }
-    TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
+    TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]
+                                      workAroundTabBug:_shouldWorkAroundTabBug];
     if (!doc) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Bad response for list windows request: %@",
                                          response]];

@@ -19,12 +19,14 @@
 
 @interface TSVParser : NSObject
 
-+ (TSVDocument *)documentFromString:(NSString *)string withFields:(NSArray *)fields;
++ (TSVDocument *)documentFromString:(NSString *)string
+                         withFields:(NSArray *)fields
+                   workAroundTabBug:(BOOL)workAroundTabBug;
 
 @end
 
 @interface NSString (TSV)
 
-- (TSVDocument *)tsvDocumentWithFields:(NSArray *)fields;
+- (TSVDocument *)tsvDocumentWithFields:(NSArray *)fields workAroundTabBug:(BOOL)workAroundTabBug;
 
 @end

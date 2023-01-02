@@ -32,6 +32,7 @@ extern NSString *kStateDictMouseSGRMode;  // tmux 3.1+
 + (NSString *)format;
 + (TmuxStateParser *)sharedInstance;
 - (NSMutableDictionary *)parsedStateFromString:(NSString *)layout
-                                     forPaneId:(int)paneId;
+                                     forPaneId:(int)paneId
+                              workAroundTabBug:(BOOL)workAroundTabBug;
 
 @end

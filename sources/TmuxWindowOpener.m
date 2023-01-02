@@ -391,7 +391,8 @@ static int OctalValue(const char *bytes) {
     }
 
     NSDictionary *state = [[TmuxStateParser sharedInstance] parsedStateFromString:response
-                                                                        forPaneId:[wp intValue]];
+                                                                        forPaneId:[wp intValue]
+                                                                 workAroundTabBug:self.shouldWorkAroundTabBug];
     [states_ setObject:state forKey:wp];
     [self requestDidComplete];
 }

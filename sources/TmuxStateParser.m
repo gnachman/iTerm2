@@ -108,7 +108,7 @@ NSString *kStateDictMouseSGRMode = @"mouse_sgr_flag";  // tmux 3.1+
 }
 
 + (NSMutableDictionary *)dictionaryForState:(NSString *)state
-{
+                           workAroundTabBug:(BOOL)workAroundTabBug {
     // State is a collection of key-value pairs. Each KVP is delimited by
     // newlines. The key is to the left of the first =, the value is to the
     // right.
@@ -142,6 +142,9 @@ NSString *kStateDictMouseSGRMode = @"mouse_sgr_flag";  // tmux 3.1+
                                 nil];
 
     NSArray *fields = [state componentsSeparatedByString:@"\t"];
+    if (fields.count == 1 && workAroundTabBug) {
+        fields = [state componentsSeparatedByString:@"\\t"];
+    }
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
     for (NSString *kvp in fields) {
         NSRange eq = [kvp rangeOfString:@"="];
@@ -165,10 +168,10 @@ NSString *kStateDictMouseSGRMode = @"mouse_sgr_flag";  // tmux 3.1+
 
 - (NSMutableDictionary *)parsedStateFromString:(NSString *)stateLines
                                      forPaneId:(int)paneId
-{
+                              workAroundTabBug:(BOOL)workAroundTabBug {
     NSArray *states = [stateLines componentsSeparatedByString:@"\n"];
     for (NSString *state in states) {
-        NSMutableDictionary *dict = [[self class] dictionaryForState:state];
+        NSMutableDictionary *dict = [[self class] dictionaryForState:state workAroundTabBug:workAroundTabBug];
         NSNumber *paneIdNumber = [dict objectForKey:kStateDictPaneId];
         if (paneIdNumber && [paneIdNumber intValue] == paneId) {
             return dict;
