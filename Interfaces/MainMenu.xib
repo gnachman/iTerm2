@@ -1609,9 +1609,11 @@ DQ
         <customObject id="201" userLabel="iTermApplicationDelegate" customClass="iTermApplicationDelegate">
             <connections>
                 <outlet property="_buriedSessions" destination="PTu-aD-qbz" id="Fl9-Gn-jv2"/>
+                <outlet property="_captureGPUFrameMenuItem" destination="8KO-hG-xdC" id="boz-fC-4l8"/>
                 <outlet property="_composerMenuItem" destination="Bhs-45-5yR" id="Od6-HK-qOR"/>
                 <outlet property="_enterFullScreenMenuItem" destination="914" id="pbn-Hb-GK3"/>
                 <outlet property="_installPythonRuntime" destination="0D0-tt-wlA" id="nad-Fp-mh8"/>
+                <outlet property="_iterm2Menu" destination="57" id="xrG-8D-NNQ"/>
                 <outlet property="_scriptsMenu" destination="CZD-7u-bch" id="2Q5-aI-74T"/>
                 <outlet property="_showTipOfTheDay" destination="ft3-BP-igZ" id="WZt-qp-iuC"/>
                 <outlet property="_splitHorizontally" destination="1289" id="Arv-ON-Put"/>

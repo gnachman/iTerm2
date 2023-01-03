@@ -204,6 +204,8 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *_splitVertically;
     IBOutlet NSMenuItem *_triggers;
     IBOutlet NSMenuItem *_enterFullScreenMenuItem;
+    IBOutlet NSMenu *_iterm2Menu;
+    IBOutlet NSMenuItem *_captureGPUFrameMenuItem;
 
     // If set, skip performing launch actions.
     BOOL quiet_;
@@ -338,6 +340,11 @@ static BOOL hasBecomeActive = NO;
         _splitVertically.title = [@"│⃞ " stringByAppendingString:_splitVertically.title];
         _splitVerticallyWithCurrentProfile.title = [@"│⃞ " stringByAppendingString:_splitVerticallyWithCurrentProfile.title];
     }
+
+#if !BETA
+    [_iterm2Menu removeItem:_captureGPUFrameMenuItem];
+#endif
+
     [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
     _triggers.submenu.delegate = self;
 }
