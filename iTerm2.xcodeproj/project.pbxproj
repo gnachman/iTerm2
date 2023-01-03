@@ -1580,6 +1580,8 @@
 		A64B68DB2337314E009DA064 /* ToolCapturedOutputView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB83956192E9A610037E548 /* ToolCapturedOutputView.m */; };
 		A64BD0CE295FAA7C001F3F7E /* it2ssh in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6EC80842829E28800493544 /* it2ssh */; };
 		A64BD0D0296264C4001F3F7E /* iTermLatestVersionByShell.h in Headers */ = {isa = PBXBuildFile; fileRef = A64BD0CF296264C4001F3F7E /* iTermLatestVersionByShell.h */; };
+		A64BD0D32964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.h in Headers */ = {isa = PBXBuildFile; fileRef = A64BD0D12964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.h */; };
+		A64BD0D42964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.mm in Sources */ = {isa = PBXBuildFile; fileRef = A64BD0D22964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.mm */; };
 		A64D6A042495608500FC0CDE /* iTermAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A663011619CFE450004AF81C /* iTermAboutWindowController.m */; };
 		A64DE9AA237A8555002E390C /* iTermFakeWindowTitleLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */; };
 		A64DE9AB237A8555002E390C /* iTermFakeWindowTitleLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */; };
@@ -5807,6 +5809,8 @@
 		A64AE5152084128500D02F06 /* NSThread+iTerm.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSThread+iTerm.h"; sourceTree = "<group>"; };
 		A64AE5162084128500D02F06 /* NSThread+iTerm.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSThread+iTerm.m"; sourceTree = "<group>"; };
 		A64BD0CF296264C4001F3F7E /* iTermLatestVersionByShell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermLatestVersionByShell.h; sourceTree = "<group>"; };
+		A64BD0D12964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAtomicMutableArrayOfWeakObjects.h; sourceTree = "<group>"; };
+		A64BD0D22964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = iTermAtomicMutableArrayOfWeakObjects.mm; sourceTree = "<group>"; };
 		A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFakeWindowTitleLabel.h; sourceTree = "<group>"; };
 		A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFakeWindowTitleLabel.m; sourceTree = "<group>"; };
 		A64FCD56238DE785001D8199 /* iTermFileDescriptorServerShared.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorServerShared.h; sourceTree = "<group>"; };
@@ -9588,6 +9592,8 @@
 				A6D1C42128619E4800B68526 /* iTermTextDrawingHelperDelegate.h */,
 				A6ABCA242862D52900057662 /* PTYTrackingChildWindow.swift */,
 				A6B152DC29255ED500628436 /* iTermLocaleGuesser.swift */,
+				A64BD0D12964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.h */,
+				A64BD0D22964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.mm */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -12621,6 +12627,7 @@
 				A6DBC0452005DC2B00F1466D /* iTermTuple.h in Headers */,
 				A6566753219EA582005FE60E /* NSNull+iTerm.h in Headers */,
 				A60C035C2089698500FE2F1F /* iTermAPIScriptLauncher.h in Headers */,
+				A64BD0D32964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.h in Headers */,
 				A6F718CA2266DB380053488E /* iTermURLActionHelper.h in Headers */,
 				A66EF82C1EF59CFC0005891A /* iTermRateLimitedUpdate.h in Headers */,
 				A614F2621FE47D8600EEE919 /* iTermCharacterBitmap.h in Headers */,
@@ -15512,6 +15519,7 @@
 				A6BC9B1F214A2AE900F50C09 /* iTermVariableReference.m in Sources */,
 				A64B68DB2337314E009DA064 /* ToolCapturedOutputView.m in Sources */,
 				530098512259A44D00A69348 /* iTermSoundPlayer.m in Sources */,
+				A64BD0D42964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.mm in Sources */,
 				A621F10726F53071001DD3A6 /* iTermExternalAttributeIndex.m in Sources */,
 				A6D1784721BC5A1500FE499C /* iTermSavePanelFileFormatAccessory.m in Sources */,
 				A62CD06B27E93F5B00215E92 /* iTermSwiftHelpers.m in Sources */,

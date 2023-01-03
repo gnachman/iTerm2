@@ -10,6 +10,7 @@ extern "C" {
 #import "LineBlock.h"
 #import "DebugLogging.h"
 #import "FindContext.h"
+#import "iTermAtomicMutableArrayOfWeakObjects.h"
 #import "iTermExternalAttributeIndex.h"
 #import "iTermMalloc.h"
 #import "iTermMetadata.h"
@@ -230,7 +231,7 @@ struct iTermNumFullLinesCacheKeyHasher {
 // Use -modifyWithBlock: to get a iTermLineBlockMutationCertificate which allows mutation safely because
 // you can't get a certificate without copying (if needed).
 @property(nonatomic) LineBlock *owner;  // nil if I am an owner. This is the line block that is responsible for freeing malloced data.
-@property(nonatomic) NSMutableArray<iTermWeakBox<LineBlock *> *> *clients;  // Copy-on write instances that still exist and have me as the owner.
+@property(nonatomic) iTermAtomicMutableArrayOfWeakObjects<LineBlock *> *clients;  // Copy-on write instances that still exist and have me as the owner.
 @end
 
 // Use iTermAssignToConstPointer if you need to change anything that is `const T * const` to make
@@ -335,7 +336,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     if (cll_capacity > 0) {
         metadata_ = (LineBlockMetadata *)iTermCalloc(sizeof(LineBlockMetadata), cll_capacity);
     }
-    self.clients = [NSMutableArray array];
+    self.clients = [iTermAtomicMutableArrayOfWeakObjects array];
 }
 
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary {
@@ -456,9 +457,9 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
         if (self.owner != nil) {
             shouldFreeBuffers = NO;
             // I don't own my memory so I should not free it. Remove myself from the owner's client
-            // list to ensure its list of clients doesn't get too big.f
-            [self.owner.clients removeObjectsPassingTest:^BOOL(iTermWeakBox<LineBlock *> *box) {
-                return box.object == self || box.object == nil;
+            // list to ensure its list of clients doesn't get too big.
+            [self.owner.clients removeObjectsPassingTest:^BOOL(LineBlock *block) {
+                return block == self || block == nil;
             }];
         }
     }
@@ -1048,14 +1049,17 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     *lineNum = 0;
     // offset: the relevant part of the raw line begins at this offset into it
     *lineLength = location.length - offset;  // the length of the suffix of the raw line, beginning at the wrapped line we want
+    // assert(*lineLength >= 0);
     if (*lineLength > width) {
         // return an infix of the full line
         if (width > 1 && ScreenCharIsDWC_RIGHT(buffer_start[location.prev + offset + width])) {
             // Result would end with the first half of a double-width character
             *lineLength = width - 1;
+            // assert(*lineLength >= 0);
             *includesEndOfLine = EOL_DWC;
         } else {
             *lineLength = width;
+            // assert(*lineLength >= 0);
             *includesEndOfLine = EOL_SOFT;
         }
     } else {
@@ -1586,6 +1590,13 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         DLog(@"Drop entry");
         iTermMetadataSetExternalAttributes(&metadata_[first_entry].lineMetadata, nil);
         first_entry += 1;
+    }
+    if (first_entry < cll_entries) {
+        // Force number_of_wrapped_lines to be recomputed for the first line in this block since it
+        // may have experienced a partial drop (the first raw line was shorted by removing some from
+        // its start).
+        metadata_[first_entry].width_for_number_of_wrapped_lines = 0;
+        metadata_[first_entry].number_of_wrapped_lines = -1;
     }
 #ifdef TEST_LINEBUFFER_SANITY
     [self checkAndResetCachedNumlines:"dropLines" width: width];
@@ -2359,7 +2370,7 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
         }
         assert(self.clients != nil);
 
-        NSArray<LineBlock *> *myClients = self.clients.arrayByStrongifyingWeakBoxes;
+        NSArray<LineBlock *> *myClients = self.clients.strongObjects;
         if (self.owner == nil && !myClients.count) {
             // I have neither an owner nor clients, so copy-on-write is unneeded.
             return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
@@ -2373,8 +2384,8 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
 
         if (self.owner != nil) {
             // I am no longer a client. Remove myself from my owner's client list.
-            [self.owner.clients removeObjectsPassingTest:^BOOL(iTermWeakBox<LineBlock *> *box) {
-                return box.object == self;
+            [self.owner.clients removeObjectsPassingTest:^BOOL(LineBlock *block) {
+                return block == self;
             }];
             // Since I am not a client anymore, I now have no owner.
             self.owner = nil;
@@ -2401,7 +2412,7 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
         for (LineBlock *client in [myClients subarrayFromIndex:1]) {
             assert(client != newOwner);
             client.owner = newOwner;
-            [newOwner.clients addObject:[iTermWeakBox boxFor:client]];
+            [newOwner.clients addObject:client];
         }
 
         // All clients were transferred and now I should have none.
@@ -2423,7 +2434,7 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
 
         // Create ownership relation.
         copy.owner = owner;
-        [owner.clients addObject:[iTermWeakBox boxFor:copy]];
+        [owner.clients addObject:copy];
 
         [(id<iTermLineBlockMutationCertificate>)_cachedMutationCert invalidate];
         _cachedMutationCert = nil;

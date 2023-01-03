@@ -107,7 +107,7 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     self = [super init];
     if (self) {
         _line = line;
-        _length = length;
+        _length = MAX(0, length);
         _continuation = continuation;
         _metadata = metadata;
         iTermImmutableMetadataRetain(_metadata);

@@ -171,7 +171,9 @@ extern "C" {
     const NSInteger cachedNumLines = _values[0];
     const NSInteger delta = value - cachedNumLines;
     if (_sums.size() > 1) {
-        // Only ok to _drop_ lines from the first block when there are others after it.
+        // Delta must be negative if there are at least two blocks. It doesn't make sense to grow
+        // the first block when there is a second block already. It is allowed to shrink when lines
+        // are dropped, though.
         assert(delta <= 0);
     }
     _offset += delta;
