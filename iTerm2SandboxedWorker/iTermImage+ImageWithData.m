@@ -104,11 +104,62 @@
 #if DECODE_IMAGES_IN_PROCESS
             [self.images addObject:image];
 #else
-            return nil;
+            // SVG takes this path.
+            NSImage *safeImage = [self renderedImageOfUnknownType:image data:data];
+            if (safeImage) {
+                self.size = safeImage.size;
+                [self.images addObject:safeImage];
+            } else {
+                return nil;
+            }
 #endif
         }
     }
     return self;
+}
+
+- (NSImage *)renderedImageOfUnknownType:(NSImage *)unsafeImage data:(NSData *)data {
+    NSSize size = unsafeImage.size;
+    if (size.width <= 0 || size.height <= 0) {
+        size = NSMakeSize(1024, 1024);
+    }
+    const CGFloat largest = MAX(size.width, size.height);
+    const CGFloat maxSize = 4096;
+    if (largest <= maxSize) {
+        // Image size is reasonable.
+        NSImage *dest = [[NSImage alloc] initWithSize:size];
+        NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithData:[unsafeImage TIFFRepresentation]];
+        if (!rep) {
+            return nil;
+        }
+        [dest addRepresentation:rep];
+        return dest;
+    }
+
+    // Image is really big so we must redraw it.
+    const CGFloat overage = largest / maxSize;
+    size = NSMakeSize(MAX(1.0, round(size.width / overage)),
+                      MAX(1.0, round(size.height / overage)));
+
+
+    NSBitmapImageRep *bitmapRep = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:nil
+                                                                          pixelsWide:size.width
+                                                                          pixelsHigh:size.height
+                                                                       bitsPerSample:8
+                                                                     samplesPerPixel:4
+                                                                            hasAlpha:YES
+                                                                            isPlanar:NO
+                                                                      colorSpaceName:NSCalibratedRGBColorSpace
+                                                                         bytesPerRow:0
+                                                                        bitsPerPixel:0];
+    [NSGraphicsContext saveGraphicsState];
+    [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithBitmapImageRep:bitmapRep]];
+    [unsafeImage drawInRect:NSMakeRect(0, 0, size.width, size.height)];
+    [NSGraphicsContext restoreGraphicsState];
+
+    NSImage *dest = [[NSImage alloc] initWithSize:size];
+    [dest addRepresentation:bitmapRep];
+    return dest;
 }
 
 @end
