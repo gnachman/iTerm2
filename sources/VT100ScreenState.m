@@ -296,9 +296,9 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         DLog(@"Image has scrolled off");
         return NO;
     }
-    const long long startY = MAX(0, aboveAbsY - imageInfo.size.height);
+    const long long startY = MAX(0, aboveY - imageInfo.size.height);
     __block BOOL found = NO;
-    [self enumerateLinesInRange:NSMakeRange(startY, aboveAbsY - startY + 1)
+    [self enumerateLinesInRange:NSMakeRange(startY, aboveY - startY + 1)
                           block:^(int line,
                                   ScreenCharArray *sca,
                                   iTermImmutableMetadata metadata,
