@@ -123,6 +123,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)drawBottomLineForHorizontalTabBar;
 + (BOOL)drawOutlineAroundCursor;
 + (BOOL)dwcLineCache;
++ (double)dynamicProfilesNotificationLatency;
 + (NSString *)dynamicProfilesPath;
 + (double)echoProbeDuration;
 + (void)setEchoProbeDuration:(double)value;

@@ -85,6 +85,7 @@
           return nil;
       }
       _events = [[SCEvents alloc] init];
+      _events.notificationLatency = [iTermAdvancedSettingsModel dynamicProfilesNotificationLatency];
       _events.delegate = self;
       _paths = self.pathsToWatch;
       DLog(@"Watching files: %@, folders: %@", _paths.files, _paths.folders);
