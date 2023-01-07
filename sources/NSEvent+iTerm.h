@@ -13,6 +13,7 @@
 @property(nonatomic, readonly) NSEvent *mouseUpEventFromGesture;
 @property(nonatomic, readonly) NSEvent *mouseDownEventFromGesture;
 @property(nonatomic, readonly) BOOL it_isNumericKeypadKey;
+@property(nonatomic, readonly) BOOL it_isVerticalScroll;
 
 // Returns a new event with the mouse button number set to `buttonNumber`, and
 // other values the same as self.

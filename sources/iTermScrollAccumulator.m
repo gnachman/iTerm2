@@ -33,22 +33,29 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
 }
 
 @implementation iTermScrollAccumulator {
-    CGFloat _accumulatedDeltaY;
+    CGFloat _accumulatedDelta;
     BOOL _shouldAccumulate;
     CGFloat _lineHeight;
 }
 
-- (CGFloat)deltaYForEvent:(NSEvent *)event lineHeight:(CGFloat)lineHeight {
-    _lineHeight = lineHeight;
+- (instancetype)init {
+    if (self = [super init]) {
+        _isVertical = YES;
+    }
+    return self;
+}
+
+- (CGFloat)deltaForEvent:(NSEvent *)event increment:(CGFloat)increment {
+    _lineHeight = increment;
     switch (event.type) {
         case NSEventTypeScrollWheel: {
             CGFloat result;
-            const CGFloat accumulatedDeltaY = [self accumulatedDeltaYForScrollEvent:event];
-            const CGFloat sign = (accumulatedDeltaY > 0) ? 1 : -1;
+            const CGFloat accumulatedDelta = [self accumulatedDeltaForScrollEvent:event];
+            const CGFloat sign = (accumulatedDelta > 0) ? 1 : -1;
             const CGFloat factor = MAX(0, [iTermAdvancedSettingsModel scrollWheelAcceleration]);
-            result = pow(fabs(accumulatedDeltaY), factor) * sign;
-            DLog(@"deltaYForEvent:%@ lineHeight:%@ ^ accel:%@ -> %@. deltaY=%@ scrollingDeltaY=%@ Accumulator <- %@",
-                 event, @(lineHeight), @([iTermAdvancedSettingsModel scrollWheelAcceleration]), @(result), @(event.deltaY), @(event.scrollingDeltaY), @(_accumulatedDeltaY));
+            result = pow(fabs(accumulatedDelta), factor) * sign;
+            DLog(@"deltaForEvent:%@ lineHeight:%@ ^ accel:%@ -> %@. delta=%@ scrollingDelta=%@ Accumulator <- %@",
+                 event, @(increment), @([iTermAdvancedSettingsModel scrollWheelAcceleration]), @(result), @([self delta:event]), @([self scrollingDelta:event]), @(_accumulatedDelta));
             return result;
         }
             
@@ -58,10 +65,10 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
 }
 
 // Get a delta Y out of the event with the most precision available and a consistent interpretation.
-- (CGFloat)adjustedDeltaYForEvent:(NSEvent *)event {
-    DLog(@"scrollingDeltaY=%@ deltaY=%@ lineHeight=%@ hasPreciseScrollingDeltas=%@ fastTrackpad=%@ _lineHeight=%@",
-         @(event.scrollingDeltaY),
-         @(event.deltaY),
+- (CGFloat)adjustedDeltaForEvent:(NSEvent *)event {
+    DLog(@"scrollingDelta=%@ delta=%@ lineHeight=%@ hasPreciseScrollingDeltas=%@ fastTrackpad=%@ _lineHeight=%@",
+         @([self scrollingDelta:event]),
+         @([self delta:event]),
          @(_lineHeight),
          @(event.hasPreciseScrollingDeltas),
          @([iTermAdvancedSettingsModel fastTrackpad]),
@@ -69,22 +76,22 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
     if (event.hasPreciseScrollingDeltas) {
         if ([iTermAdvancedSettingsModel fastTrackpad]) {
             // This is based on what Terminal.app does. See issue 9427.
-            return RoundAwayFromZero(event.deltaY);
+            return RoundAwayFromZero([self delta:event]);
         }
-        return event.scrollingDeltaY / _lineHeight;
+        return [self scrollingDelta:event] / _lineHeight;
     } else {
-        return event.scrollingDeltaY;
+        return [self scrollingDelta:event];
     }
 }
 
 // Non-trackpad code path
-- (CGFloat)accumulatedDeltaYForMouseWheelEvent:(NSEvent *)event {
-    const CGFloat deltaY = [self adjustedDeltaYForEvent:event];
-    const int roundDeltaY = round(deltaY);
-    if (roundDeltaY == 0 && deltaY != 0) {
-        return deltaY > 0 ? 1 : -1;
+- (CGFloat)accumulatedDeltaForMouseWheelEvent:(NSEvent *)event {
+    const CGFloat delta = [self adjustedDeltaForEvent:event];
+    const int roundDelta = round(delta);
+    if (roundDelta == 0 && delta != 0) {
+        return delta > 0 ? 1 : -1;
     } else {
-        return roundDeltaY;
+        return roundDelta;
     }
 }
 
@@ -97,23 +104,23 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
     return phase == NSEventPhaseEnded || phase == NSEventPhaseCancelled;
 }
 
-- (CGFloat)accumulatedDeltaYForTrackpadEvent:(NSEvent *)event {
+- (CGFloat)accumulatedDeltaForTrackpadEvent:(NSEvent *)event {
     if ([self shouldBeginAccumulatingForEvent:event]) {
-        _accumulatedDeltaY = 0;
+        _accumulatedDelta = 0;
     }
-    const CGFloat delta = [self adjustedDeltaYForEvent:event];
-    _accumulatedDeltaY += delta;
-    const CGFloat absAccumulatedDelta = fabs(_accumulatedDeltaY);
+    const CGFloat delta = [self adjustedDeltaForEvent:event];
+    _accumulatedDelta += delta;
+    const CGFloat absAccumulatedDelta = fabs(_accumulatedDelta);
     int roundDelta;
     
-    // Deltas will be accumulated into _accumulatedDeltaY.
+    // Deltas will be accumulated into _accumulatedDelta.
     // If it is large (>=1), return its integer part. This enables quick scroll, which feels like natural trackpad.
-    // If `delta * _accumulatedDeltaY < 0`, it means turnaround. Round delta to turn around quickly (fabs 0.5 is enough to move).
+    // If `delta * _accumulatedDelta < 0`, it means turnaround. Round delta to turn around quickly (fabs 0.5 is enough to move).
     // If it is not large enough, return 0 and keep accumulating.
     if (absAccumulatedDelta >= 1) {
-        roundDelta = RoundTowardZero(_accumulatedDeltaY);
-        _accumulatedDeltaY -= roundDelta;
-    } else if (delta * _accumulatedDeltaY < 0) {
+        roundDelta = RoundTowardZero(_accumulatedDelta);
+        _accumulatedDelta -= roundDelta;
+    } else if (delta * _accumulatedDelta < 0) {
         roundDelta = round(delta);
     } else {
         roundDelta = 0;
@@ -121,24 +128,24 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
     return roundDelta;
 }
 
-- (CGFloat)accumulatedDeltaYForScrollEvent:(NSEvent *)event {
+- (CGFloat)accumulatedDeltaForScrollEvent:(NSEvent *)event {
     if (event.phase == NSEventPhaseNone && event.momentumPhase == NSEventPhaseNone) {
         // Mouse wheel
-        return [self accumulatedDeltaYForMouseWheelEvent:event];
+        return [self accumulatedDeltaForMouseWheelEvent:event];
     } else {
         // Something modern like a trackpad
-        return [self accumulatedDeltaYForTrackpadEvent:event];
+        return [self accumulatedDeltaForTrackpadEvent:event];
     }
 }
 
 - (void)reset {
-    _accumulatedDeltaY = 0;
+    _accumulatedDelta = 0;
 }
 
-- (CGFloat)legacyDeltaYForEvent:(NSEvent *)theEvent lineHeight:(CGFloat)lineHeight {
-    CGFloat delta = theEvent.scrollingDeltaY;
+- (CGFloat)legacyDeltaForEvent:(NSEvent *)theEvent increment:(CGFloat)increment {
+    CGFloat delta = [self scrollingDelta:theEvent];
     if (theEvent.hasPreciseScrollingDeltas) {
-        delta /= lineHeight;
+        delta /= increment;
     }
     if ([iTermAdvancedSettingsModel sensitiveScrollWheel]) {
         if (delta > 0) {
@@ -149,13 +156,29 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
             return 0;
         }
     }
-    _accumulatedDeltaY += delta;
+    _accumulatedDelta += delta;
     CGFloat amount = 0;
-    if (fabs(_accumulatedDeltaY) >= 1) {
-        amount = RoundTowardZero(_accumulatedDeltaY);
-        _accumulatedDeltaY = _accumulatedDeltaY - amount;
+    if (fabs(_accumulatedDelta) >= 1) {
+        amount = RoundTowardZero(_accumulatedDelta);
+        _accumulatedDelta = _accumulatedDelta - amount;
     }
     return amount;
+}
+
+- (CGFloat)delta:(NSEvent *)event {
+    if (self.isVertical) {
+        return event.deltaY;
+    } else {
+        return event.deltaX;
+    }
+}
+
+- (CGFloat)scrollingDelta:(NSEvent *)event {
+    if (self.isVertical) {
+        return event.scrollingDeltaY;
+    } else {
+        return event.scrollingDeltaX;
+    }
 }
 
 @end

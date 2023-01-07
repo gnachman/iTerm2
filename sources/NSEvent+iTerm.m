@@ -193,4 +193,8 @@
     }
 }
 
+- (BOOL)it_isVerticalScroll {
+    return fabs(self.scrollingDeltaX) < fabs(self.scrollingDeltaY);
+}
+
 @end

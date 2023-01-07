@@ -933,23 +933,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self.mouseDelegate mouseHandlerJiggle:self];
     }
     if ([self scrollWheelShouldSendDataForEvent:event at:point]) {
-        DLog(@"Scroll wheel sending data");
-
-        const CGFloat deltaY = [self.mouseDelegate mouseHandler:self accumulateVerticalScrollFromEvent:event];
-        BOOL forceLatin1 = NO;
-        NSString *stringToSend = [self.mouseDelegate mouseHandler:self
-                                                      stringForUp:deltaY >= 0
-                                                            flags:event.it_modifierFlags
-                                                           latin1:&forceLatin1];
-
-        if (stringToSend) {
-            for (int i = 0; i < ceil(fabs(deltaY)); i++) {
-                [self.mouseDelegate mouseHandler:self
-                                      sendString:stringToSend
-                                          latin1:forceLatin1];
-            }
-            [self.mouseDelegate mouseHandlerRemoveSelection:self];
-        }
+        [self sendDataForScrollEvent:event];
         return NO;
     }
     CGFloat deltaY = NAN;
@@ -978,6 +962,26 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return NO;
     }
     return YES;
+}
+
+- (void)sendDataForScrollEvent:(NSEvent *)event {
+    DLog(@"Scroll wheel sending data");
+    const CGFloat delta = [self.mouseDelegate mouseHandler:self accumulateScrollFromEvent:event];
+    BOOL forceLatin1 = NO;
+    NSString *stringToSend = [self.mouseDelegate mouseHandler:self
+                                           stringForUpOrRight:delta >= 0
+                                                     vertical:event.it_isVerticalScroll
+                                                        flags:event.it_modifierFlags
+                                                       latin1:&forceLatin1];
+
+    if (stringToSend) {
+        for (int i = 0; i < ceil(fabs(delta)); i++) {
+            [self.mouseDelegate mouseHandler:self
+                                  sendString:stringToSend
+                                      latin1:forceLatin1];
+        }
+        [self.mouseDelegate mouseHandlerRemoveSelection:self];
+    }
 }
 
 // See issue 1350
@@ -1300,13 +1304,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Alt held");
         return NO;
     }
-    if (fabs(event.scrollingDeltaX) > fabs(event.scrollingDeltaY)) {
-        DLog(@"Not vertical");
-        return NO;
-    }
     const BOOL alternateMouseScroll = [self.mouseDelegate mouseHandlerAlternateScrollModeIsEnabled:self];
     NSString *upString = [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
     NSString *downString = [iTermAdvancedSettingsModel alternateMouseScrollStringForDown];
+
+    if (event.it_isVerticalScroll && !alternateMouseScroll) {
+        DLog(@"Horizontal scroll without alternateMouseScroll enabled, return NO");
+        return NO;
+    }
 
     if (alternateMouseScroll || upString.length || downString.length) {
         DLog(@"Feature enabled, have strings.");

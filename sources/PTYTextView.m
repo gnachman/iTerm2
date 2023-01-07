@@ -173,6 +173,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 
     iTermRateLimitedUpdate *_shadowRateLimit;
     NSMutableArray<PTYNoteViewController *> *_notes;
+    iTermScrollAccumulator *_horizontalScrollAccumulator;
 }
 
 
@@ -315,6 +316,10 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
         [self refuseFirstResponderAtCurrentMouseLocation];
 
         _scrollAccumulator = [[iTermScrollAccumulator alloc] init];
+
+        _horizontalScrollAccumulator = [[iTermScrollAccumulator alloc] init];
+        _horizontalScrollAccumulator.isVertical = NO;
+
         _keyboardHandler = [[iTermKeyboardHandler alloc] init];
         _keyboardHandler.delegate = self;
 
@@ -374,6 +379,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     [_contextMenuHelper release];
     [_highlightedRows release];
     [_scrollAccumulator release];
+    [_horizontalScrollAccumulator release];
     [_shadowRateLimit release];
     _keyboardHandler.delegate = nil;
     [_keyboardHandler release];
@@ -5493,9 +5499,20 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
     [self scrollLineDown:nil];
 }
 
-- (CGFloat)mouseHandler:(PTYMouseHandler *)mouseHandler accumulateVerticalScrollFromEvent:(NSEvent *)event {
+- (CGFloat)mouseHandler:(PTYMouseHandler *)mouseHandler accumulateScrollFromEvent:(NSEvent *)event {
     PTYScrollView *scrollView = (PTYScrollView *)self.enclosingScrollView;
-    return [self scrollDeltaYAdjustedForMouseReporting:[scrollView accumulateVerticalScrollFromEvent:event]];
+    if (event.it_isVerticalScroll) {
+        return [self scrollDeltaYAdjustedForMouseReporting:[scrollView accumulateVerticalScrollFromEvent:event]];
+    }
+
+    // Horizontal scroll
+    CGFloat delta;
+    if ([iTermAdvancedSettingsModel useModernScrollWheelAccumulator]) {
+        delta = [_horizontalScrollAccumulator deltaForEvent:event increment:self.charWidth];
+    } else {
+        delta = [_horizontalScrollAccumulator legacyDeltaForEvent:event increment:self.charWidth];
+    }
+    return [self scrollDeltaXAdjustedForMouseReporting:delta];
 }
 
 - (void)mouseHandler:(PTYMouseHandler *)handler
@@ -5529,19 +5546,30 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 }
 
 - (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler
-               stringForUp:(BOOL)up  // if NO, then down
+        stringForUpOrRight:(BOOL)upOrRight  // if NO, then down/left
+                  vertical:(BOOL)vertical
                      flags:(NSEventModifierFlags)flags
                     latin1:(out BOOL *)forceLatin1 {
-    const BOOL down = !up;
+    const BOOL downOrLeft = !upOrRight;
 
     if ([self mouseHandlerAlternateScrollModeIsEnabled:mouseHandler]) {
         *forceLatin1 = YES;
-        NSData *data = down ? [_dataSource.terminalOutput keyArrowDown:flags] :
-                              [_dataSource.terminalOutput keyArrowUp:flags];
+        NSData *data;
+        if (vertical) {
+            data = downOrLeft ? [_dataSource.terminalOutput keyArrowDown:flags] :
+            [_dataSource.terminalOutput keyArrowUp:flags];
+        } else {
+            data = downOrLeft ? [_dataSource.terminalOutput keyArrowLeft:flags] :
+            [_dataSource.terminalOutput keyArrowRight:flags];
+        }
         return [[[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding] autorelease];
     } else {
         *forceLatin1 = NO;
-        NSString *string = down ? [iTermAdvancedSettingsModel alternateMouseScrollStringForDown] :
+        if (!vertical) {
+            // Legacy code path not supported
+            return @"";
+        }
+        NSString *string = downOrLeft ? [iTermAdvancedSettingsModel alternateMouseScrollStringForDown] :
                                   [iTermAdvancedSettingsModel alternateMouseScrollStringForUp];
         return [string stringByExpandingVimSpecialCharacters];
     }
@@ -5589,11 +5617,20 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 }
 
 - (CGFloat)scrollDeltaYAdjustedForMouseReporting:(CGFloat)deltaY {
+    return [self scrollDeltaWithUnit:self.enclosingScrollView.verticalLineScroll
+                               delta:deltaY];
+}
+
+- (CGFloat)scrollDeltaXAdjustedForMouseReporting:(CGFloat)deltaX {
+    return [self scrollDeltaWithUnit:self.charWidth delta:deltaX];
+}
+
+- (CGFloat)scrollDeltaWithUnit:(CGFloat)unit delta:(CGFloat)delta {
     if (![iTermAdvancedSettingsModel fastTrackpad]) {
-        return deltaY;
+        return delta;
     }
     // This value is used for mouse reporting and we need to report lines, not pixels.
-    const CGFloat frac = deltaY / self.enclosingScrollView.verticalLineScroll;
+    const CGFloat frac = delta / unit;
     if (frac < 0) {
         return floor(frac);
     }
@@ -5602,8 +5639,8 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 
 - (CGFloat)mouseHandlerAccumulatedDeltaY:(PTYMouseHandler *)sender
                                 forEvent:(NSEvent *)event {
-    const CGFloat deltaY = [_scrollAccumulator deltaYForEvent:event
-                                                   lineHeight:self.enclosingScrollView.verticalLineScroll];
+    const CGFloat deltaY = [_scrollAccumulator deltaForEvent:event
+                                                   increment:self.enclosingScrollView.verticalLineScroll];
     return [self scrollDeltaYAdjustedForMouseReporting:deltaY];
 }
 

@@ -79,7 +79,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 - (BOOL)mouseHandlerShouldReportClicksAndDrags:(PTYMouseHandler *)mouseHandler;
 - (BOOL)mouseHandlerShouldReportScroll:(PTYMouseHandler *)mouseHandler;
 - (void)mouseHandlerJiggle:(PTYMouseHandler *)mouseHandler;
-- (CGFloat)mouseHandler:(PTYMouseHandler *)mouseHandler accumulateVerticalScrollFromEvent:(NSEvent *)event;
+- (CGFloat)mouseHandler:(PTYMouseHandler *)mouseHandler accumulateScrollFromEvent:(NSEvent *)event;
 - (void)mouseHandler:(PTYMouseHandler *)handler
           sendString:(NSString *)string
               latin1:(BOOL)forceLatin1;
@@ -88,7 +88,8 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
 - (BOOL)mouseHandler:(PTYMouseHandler *)mouseHandler moveSelectionToGridCoord:(VT100GridCoord)coord
            viewCoord:(NSPoint)locationInTextView;
 - (NSString *)mouseHandler:(PTYMouseHandler *)mouseHandler
-               stringForUp:(BOOL)up  // if NO, then down
+        stringForUpOrRight:(BOOL)upOrRight  // if NO, then down/left
+                  vertical:(BOOL)vertical
                      flags:(NSEventModifierFlags)flags
                     latin1:(out BOOL *)forceLatin1;
 - (BOOL)mouseHandlerShowingAlternateScreen:(PTYMouseHandler *)mouseHandler;

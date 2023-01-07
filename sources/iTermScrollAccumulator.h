@@ -11,11 +11,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermScrollAccumulator : NSObject
 
-// Add scrolling delta to the accumulator if needed and return the number of lines to scroll by.
-- (CGFloat)deltaYForEvent:(NSEvent *)event lineHeight:(CGFloat)lineHeight;
+// Defaults to YES.
+@property (nonatomic) BOOL isVertical;
+
+// Add scrolling delta to the accumulator if needed and return the number of cells to scroll by.
+- (CGFloat)deltaForEvent:(NSEvent *)event increment:(CGFloat)increment;
 
 // Legacy algorithm, to be kept around until the new algorithm has been validated.
-- (CGFloat)legacyDeltaYForEvent:(NSEvent *)theEvent lineHeight:(CGFloat)lineHeight;
+- (CGFloat)legacyDeltaForEvent:(NSEvent *)theEvent increment:(CGFloat)increment;
 
 // Resets the internal accumulator to 0.
 - (void)reset;
