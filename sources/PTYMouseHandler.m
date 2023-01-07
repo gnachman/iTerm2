@@ -1252,6 +1252,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 - (MouseButtonNumber)mouseReportingButtonNumberForEvent:(NSEvent *)event {
+    DLog(@"Button number %@ %@", @(event.buttonNumber), @(event.type));
+    if (event.type == NSEventTypeScrollWheel) {
+        DLog(@"X: %@ Y: %@", @(event.scrollingDeltaX), @(event.scrollingDeltaY));
+    }
     switch (event.type) {
         case NSEventTypeLeftMouseDragged:
         case NSEventTypeLeftMouseDown:
@@ -1266,13 +1270,29 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         case NSEventTypeOtherMouseDown:
         case NSEventTypeOtherMouseUp:
         case NSEventTypeOtherMouseDragged:
-            return MOUSE_BUTTON_MIDDLE;
+            switch (event.buttonNumber) {
+                case 2:
+                    return MOUSE_BUTTON_MIDDLE;
+                case 3:
+                    return MOUSE_BUTTON_BACKWARD;
+                case 4:
+                    return MOUSE_BUTTON_FORWARD;
+            }
+
 
         case NSEventTypeScrollWheel:
-            if ([event scrollingDeltaY] > 0) {
-                return MOUSE_BUTTON_SCROLLDOWN;
+            if (fabs(event.scrollingDeltaX) > fabs(event.scrollingDeltaY)) {
+                if ([event scrollingDeltaX] > 0) {
+                    return MOUSE_BUTTON_SCROLLRIGHT;
+                } else {
+                    return MOUSE_BUTTON_SCROLLLEFT;
+                }
             } else {
-                return MOUSE_BUTTON_SCROLLUP;
+                if ([event scrollingDeltaY] > 0) {
+                    return MOUSE_BUTTON_SCROLLDOWN;
+                } else {
+                    return MOUSE_BUTTON_SCROLLUP;
+                }
             }
 
         default:
