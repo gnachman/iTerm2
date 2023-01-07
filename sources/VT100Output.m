@@ -36,8 +36,8 @@ typedef enum {
     // scroll flag
     MOUSE_BUTTON_SCROLL_FLAG = 64,  // this is a scroll event
 
-    // for SGR 1006 style, internal use only
-    MOUSE_BUTTON_SGR_RELEASE_FLAG = 128  // mouse button was released
+    // extra buttons flag
+    MOUSE_BUTTON_EXTRA_FLAG = 128,
 
 } MouseButtonModifierFlag;
 
@@ -727,6 +727,10 @@ typedef enum {
 }
 
 - (NSData *)mouseReport:(int)button coord:(VT100GridCoord)coord point:(NSPoint)point {
+    return [self mouseReport:button release:false coord:coord point:point];
+}
+
+- (NSData *)mouseReport:(int)button release:(bool)release coord:(VT100GridCoord)coord point:(NSPoint)point {
     switch (self.mouseFormat) {
         case MOUSE_FORMAT_XTERM_EXT: {
             // TODO: This doesn't handle positions greater than 223 correctly. It should use UTF-8.
@@ -740,10 +744,10 @@ typedef enum {
             return [[NSString stringWithFormat:@"\033[%d;%d;%dM", 32 + button, coord.x, coord.y]  dataUsingEncoding:NSUTF8StringEncoding];
 
         case MOUSE_FORMAT_SGR:
-            return [[self reportForSGRButton:button x:coord.x y:coord.y]  dataUsingEncoding:NSUTF8StringEncoding];
+            return [[self reportForSGRButton:button release:release x:coord.x y:coord.y]  dataUsingEncoding:NSUTF8StringEncoding];
 
         case MOUSE_FORMAT_SGR_PIXEL:
-            return [[self reportForSGRButton:button x:point.x y:point.y]  dataUsingEncoding:NSUTF8StringEncoding];
+            return [[self reportForSGRButton:button release:release x:point.x y:point.y]  dataUsingEncoding:NSUTF8StringEncoding];
 
         case MOUSE_FORMAT_XTERM:
         default:
@@ -752,11 +756,11 @@ typedef enum {
     return [NSData data];
 }
 
-- (NSString *)reportForSGRButton:(int)button x:(int)x y:(int)y {
-    if (button & MOUSE_BUTTON_SGR_RELEASE_FLAG) {
+- (NSString *)reportForSGRButton:(int)button release:(bool)release x:(int)x y:(int)y {
+    if (release) {
         // Mouse release event.
         return [NSString stringWithFormat:@"\033[<%d;%d;%dm",
-                 button ^ MOUSE_BUTTON_SGR_RELEASE_FLAG,
+                 button,
                  x,
                  y];
     }
@@ -790,12 +794,14 @@ static int VT100OutputSafeAddInt(int l, int r) {
 - (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord point:(NSPoint)point {
     int cb;
 
-    cb = button;
-    if (button == MOUSE_BUTTON_SCROLLDOWN || button == MOUSE_BUTTON_SCROLLUP) {
-        // convert x11 scroll button number to terminal button code
-        const int offset = MOUSE_BUTTON_SCROLLDOWN;
-        cb -= offset;
+    // convert x11 button number to terminal button code
+    cb = button & 3;
+    if (button == MOUSE_BUTTON_SCROLLDOWN || button == MOUSE_BUTTON_SCROLLUP ||
+        button == MOUSE_BUTTON_SCROLLLEFT || button == MOUSE_BUTTON_SCROLLRIGHT) {
         cb |= MOUSE_BUTTON_SCROLL_FLAG;
+    }
+    if (button >= MOUSE_BUTTON_BACKWARD) {
+        cb |= MOUSE_BUTTON_EXTRA_FLAG;
     }
     if (modflag & NSEventModifierFlagControl) {
         cb |= MOUSE_BUTTON_CTRL_FLAG;
@@ -816,10 +822,9 @@ static int VT100OutputSafeAddInt(int l, int r) {
 - (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag at:(VT100GridCoord)coord point:(NSPoint)point {
     int cb;
 
-    if (self.mouseFormat == MOUSE_FORMAT_SGR || self.mouseFormat == MOUSE_FORMAT_SGR_PIXEL) {
-        // for SGR 1006 and 1016 modes
-        cb = button | MOUSE_BUTTON_SGR_RELEASE_FLAG;
-    } else {
+    // convert x11 button number to terminal button code
+    cb = button & 3;
+    if (self.mouseFormat != MOUSE_FORMAT_SGR && self.mouseFormat != MOUSE_FORMAT_SGR_PIXEL) {
         // for 1000/1005/1015 mode
         // To quote the xterm docs:
         // The low two bits of C b encode button information:
@@ -827,6 +832,9 @@ static int VT100OutputSafeAddInt(int l, int r) {
         cb = 3;
     }
 
+    if (button >= MOUSE_BUTTON_BACKWARD) {
+        cb |= MOUSE_BUTTON_EXTRA_FLAG;
+    }
     if (modflag & NSEventModifierFlagControl) {
         cb |= MOUSE_BUTTON_CTRL_FLAG;
     }
@@ -837,6 +845,7 @@ static int VT100OutputSafeAddInt(int l, int r) {
         cb |= MOUSE_BUTTON_META_FLAG;
     }
     return [self mouseReport:cb
+                       release:true
                        coord:VT100GridCoordMake(coord.x + 1,
                                                 coord.y + 1)
                        point:NSMakePoint(VT100OutputDoubleToInt(VT100OutputSafeAddInt(point.x, 1)),
@@ -851,8 +860,12 @@ static int VT100OutputSafeAddInt(int l, int r) {
     } else {
         cb = button % 3;
     }
-    if (button > 3) {
+    if (button == MOUSE_BUTTON_SCROLLDOWN || button == MOUSE_BUTTON_SCROLLUP ||
+        button == MOUSE_BUTTON_SCROLLLEFT || button == MOUSE_BUTTON_SCROLLRIGHT) {
         cb |= MOUSE_BUTTON_SCROLL_FLAG;
+    }
+    if (button >= MOUSE_BUTTON_BACKWARD) {
+        cb |= MOUSE_BUTTON_EXTRA_FLAG;
     }
     if (modflag & NSEventModifierFlagControl) {
         cb |= MOUSE_BUTTON_CTRL_FLAG;

@@ -10049,7 +10049,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                     if (testOnly) {
                         return deltaY != 0;
                     }
-                    if (deltaY != 0) {
+//                    if (deltaY != 0) {
                         int steps;
                         if ([iTermAdvancedSettingsModel proportionalScrollWheelReporting]) {
                             // Cap number of reported scroll events at 32 to prevent runaway redraws.
@@ -10076,8 +10076,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                         broadcastAllowed:NO];
                         }
                         return YES;
-                    }
-                    return NO;
+//                    }
+//                    return NO;
 
                 case MOUSE_REPORTING_NONE:
                 case MOUSE_REPORTING_HIGHLIGHT:
