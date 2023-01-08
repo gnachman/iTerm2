@@ -154,7 +154,6 @@ static NSString *const iTermSubpixelModelString = @"O";
                         kCGEncodingMacRoman);
 #pragma clang diagnostic pop
 
-#warning TODO: Test
     CGColorSpaceRef cgColorSpace = [[NSColorSpace it_defaultColorSpace] CGColorSpace];
     CGContextSetFillColorSpace(ctx, cgColorSpace);
     CGContextSetFillColor(ctx, components);
