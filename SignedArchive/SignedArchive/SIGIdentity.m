@@ -10,7 +10,6 @@
 
 #import "SIGCertificate.h"
 #import "SIGKey.h"
-#import "SIGKeychain.h"
 #import "SIGPolicy.h"
 #import "SIGTrust.h"
 
@@ -26,11 +25,6 @@
 }
 
 + (NSArray<SIGIdentity *> *)allSigningIdentities {
-    SIGKeychain *keychain = [SIGKeychain sharedInstance];
-    if (keychain == nil) {
-        return @[];
-    }
-
     NSDictionary *query = [self queryForSigningIdentities];
 
     CFTypeRef result = NULL;

@@ -791,12 +791,10 @@
 		5370679121C9D2780088D0F3 /* SIGTrust.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370677121C9D2750088D0F3 /* SIGTrust.m */; };
 		5370679221C9D2780088D0F3 /* SIGIdentity.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677221C9D2750088D0F3 /* SIGIdentity.h */; };
 		5370679321C9D2780088D0F3 /* SIGPartialInputStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677321C9D2750088D0F3 /* SIGPartialInputStream.h */; };
-		5370679421C9D2780088D0F3 /* SIGKeychain.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370677421C9D2750088D0F3 /* SIGKeychain.m */; };
 		5370679521C9D2780088D0F3 /* SIGSigningAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677521C9D2760088D0F3 /* SIGSigningAlgorithm.h */; };
 		5370679621C9D2780088D0F3 /* SIGArchiveBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677621C9D2760088D0F3 /* SIGArchiveBuilder.h */; };
 		5370679721C9D2780088D0F3 /* SIGArchiveBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370677721C9D2760088D0F3 /* SIGArchiveBuilder.m */; };
 		5370679821C9D2780088D0F3 /* SIGSHA2SigningAlgorithm.m in Sources */ = {isa = PBXBuildFile; fileRef = 5370677821C9D2760088D0F3 /* SIGSHA2SigningAlgorithm.m */; };
-		5370679921C9D2780088D0F3 /* SIGKeychain.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677921C9D2760088D0F3 /* SIGKeychain.h */; };
 		5370679A21C9D2780088D0F3 /* SIGArchiveVerifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677A21C9D2760088D0F3 /* SIGArchiveVerifier.h */; };
 		5370679B21C9D2780088D0F3 /* SIGVerificationAlgorithm.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677B21C9D2770088D0F3 /* SIGVerificationAlgorithm.h */; };
 		5370679C21C9D2780088D0F3 /* SIGCertificate.h in Headers */ = {isa = PBXBuildFile; fileRef = 5370677C21C9D2770088D0F3 /* SIGCertificate.h */; };
@@ -5041,12 +5039,10 @@
 		5370677121C9D2750088D0F3 /* SIGTrust.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGTrust.m; path = SignedArchive/SIGTrust.m; sourceTree = "<group>"; };
 		5370677221C9D2750088D0F3 /* SIGIdentity.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGIdentity.h; path = SignedArchive/SIGIdentity.h; sourceTree = "<group>"; };
 		5370677321C9D2750088D0F3 /* SIGPartialInputStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGPartialInputStream.h; path = SignedArchive/SIGPartialInputStream.h; sourceTree = "<group>"; };
-		5370677421C9D2750088D0F3 /* SIGKeychain.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGKeychain.m; path = SignedArchive/SIGKeychain.m; sourceTree = "<group>"; };
 		5370677521C9D2760088D0F3 /* SIGSigningAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGSigningAlgorithm.h; path = SignedArchive/SIGSigningAlgorithm.h; sourceTree = "<group>"; };
 		5370677621C9D2760088D0F3 /* SIGArchiveBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGArchiveBuilder.h; path = SignedArchive/SIGArchiveBuilder.h; sourceTree = "<group>"; };
 		5370677721C9D2760088D0F3 /* SIGArchiveBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGArchiveBuilder.m; path = SignedArchive/SIGArchiveBuilder.m; sourceTree = "<group>"; };
 		5370677821C9D2760088D0F3 /* SIGSHA2SigningAlgorithm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SIGSHA2SigningAlgorithm.m; path = SignedArchive/SIGSHA2SigningAlgorithm.m; sourceTree = "<group>"; };
-		5370677921C9D2760088D0F3 /* SIGKeychain.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGKeychain.h; path = SignedArchive/SIGKeychain.h; sourceTree = "<group>"; };
 		5370677A21C9D2760088D0F3 /* SIGArchiveVerifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGArchiveVerifier.h; path = SignedArchive/SIGArchiveVerifier.h; sourceTree = "<group>"; };
 		5370677B21C9D2770088D0F3 /* SIGVerificationAlgorithm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGVerificationAlgorithm.h; path = SignedArchive/SIGVerificationAlgorithm.h; sourceTree = "<group>"; };
 		5370677C21C9D2770088D0F3 /* SIGCertificate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SIGCertificate.h; path = SignedArchive/SIGCertificate.h; sourceTree = "<group>"; };
@@ -8987,8 +8983,6 @@
 				5370676E21C9D2740088D0F3 /* SIGIdentity.m */,
 				5370677D21C9D2770088D0F3 /* SIGKey.h */,
 				5370676A21C9D2740088D0F3 /* SIGKey.m */,
-				5370677921C9D2760088D0F3 /* SIGKeychain.h */,
-				5370677421C9D2750088D0F3 /* SIGKeychain.m */,
 				5370677321C9D2750088D0F3 /* SIGPartialInputStream.h */,
 				5370676721C9D2730088D0F3 /* SIGPartialInputStream.m */,
 				5370676821C9D2730088D0F3 /* SIGPolicy.h */,
@@ -12661,7 +12655,6 @@
 				A66719561DCE36C3000CE608 /* iTermRecentDirectoryMO.h in Headers */,
 				A6556EA91FCB42E0000CC89C /* iTermCharacterSource.h in Headers */,
 				A630117E20E69D43008114B7 /* iTermStatusBarComponentKnob.h in Headers */,
-				5370679921C9D2780088D0F3 /* SIGKeychain.h in Headers */,
 				5378FA40224DAE4700CA2B2D /* iTermPreferencesSearch.h in Headers */,
 				A656674F219EA46E005FE60E /* NSNumber+iTerm.h in Headers */,
 				A6EC936F24E787BA00EEADEF /* iTermSnippetsModel.h in Headers */,
@@ -15056,7 +15049,6 @@
 				A6A4866620B676EB00493302 /* GeneralPreferencesViewController.m in Sources */,
 				A6A802EA226ED20800BC70DC /* iTermPrintGuard.m in Sources */,
 				A653F66C24CE7CE30062377E /* iTermGraphEncoder.m in Sources */,
-				5370679421C9D2780088D0F3 /* SIGKeychain.m in Sources */,
 				A66319872308C60000C502BD /* NSStringITerm.m in Sources */,
 				5370678A21C9D2780088D0F3 /* SIGKey.m in Sources */,
 				A6F718C62265B2580053488E /* iTermPathCleaner.m in Sources */,

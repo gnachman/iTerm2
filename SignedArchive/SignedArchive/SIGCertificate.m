@@ -9,7 +9,6 @@
 #import "SIGCertificate.h"
 
 #import "SIGKey.h"
-#import "SIGKeychain.h"
 #import "SIGTrust.h"
 
 @implementation SIGCertificate {
@@ -187,10 +186,6 @@
 
 - (SIGCertificate *)issuer {
     if (!_secCertificate) {
-        return nil;
-    }
-    SIGKeychain *keychain = [SIGKeychain sharedInstance];
-    if (keychain == nil) {
         return nil;
     }
     CFDataRef issuerName = SecCertificateCopyNormalizedIssuerSequence(_secCertificate);

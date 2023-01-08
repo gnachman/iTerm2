@@ -25,7 +25,6 @@
 		A6BC8B3121C8D81F00796BF3 /* SIGIdentity.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC8AEF21C78C1700796BF3 /* SIGIdentity.m */; };
 		A6BC8B3221C8D81F00796BF3 /* SIGPartialInputStream.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC8B0F21C8CE7600796BF3 /* SIGPartialInputStream.m */; };
 		A6BC8B3321C8D81F00796BF3 /* SIGKey.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC8AF721C791A700796BF3 /* SIGKey.m */; };
-		A6BC8B3421C8D81F00796BF3 /* SIGKeychain.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC8AF321C78C5E00796BF3 /* SIGKeychain.m */; };
 		A6BC8B3521C8D81F00796BF3 /* SIGTrust.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC8B0B21C8C67300796BF3 /* SIGTrust.m */; };
 		A6BC8B3E21C8E30600796BF3 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BC8B3D21C8E30600796BF3 /* main.m */; };
 		A6BC8B4221C8E3AB00796BF3 /* libSignedArchive.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A6BC8B2321C8D80D00796BF3 /* libSignedArchive.a */; };
@@ -126,8 +125,6 @@
 		A6BC8AEB21C78A3000796BF3 /* SIGArchiveBuilder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SIGArchiveBuilder.m; sourceTree = "<group>"; };
 		A6BC8AEE21C78C1700796BF3 /* SIGIdentity.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SIGIdentity.h; sourceTree = "<group>"; };
 		A6BC8AEF21C78C1700796BF3 /* SIGIdentity.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SIGIdentity.m; sourceTree = "<group>"; };
-		A6BC8AF221C78C5E00796BF3 /* SIGKeychain.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SIGKeychain.h; sourceTree = "<group>"; };
-		A6BC8AF321C78C5E00796BF3 /* SIGKeychain.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SIGKeychain.m; sourceTree = "<group>"; };
 		A6BC8AF621C791A700796BF3 /* SIGKey.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SIGKey.h; sourceTree = "<group>"; };
 		A6BC8AF721C791A700796BF3 /* SIGKey.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SIGKey.m; sourceTree = "<group>"; };
 		A6BC8AFA21C7982800796BF3 /* SIGArchiveVerifier.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SIGArchiveVerifier.h; sourceTree = "<group>"; };
@@ -259,8 +256,6 @@
 				A6BC8AEF21C78C1700796BF3 /* SIGIdentity.m */,
 				A6BC8AF621C791A700796BF3 /* SIGKey.h */,
 				A6BC8AF721C791A700796BF3 /* SIGKey.m */,
-				A6BC8AF221C78C5E00796BF3 /* SIGKeychain.h */,
-				A6BC8AF321C78C5E00796BF3 /* SIGKeychain.m */,
 				A6BC8B0E21C8CE7600796BF3 /* SIGPartialInputStream.h */,
 				A6BC8B0F21C8CE7600796BF3 /* SIGPartialInputStream.m */,
 				53F5893C21C9AF38004A372B /* SIGPolicy.h */,
@@ -498,7 +493,6 @@
 				A665C1CD243A4DF000F623F0 /* SIGArchiveCommon.m in Sources */,
 				A6BC8B5321C965C100796BF3 /* SIGSHA2SigningAlgorithm.m in Sources */,
 				A6BC8B5B21C96E4200796BF3 /* SIGSHA2VerificationAlgorithm.m in Sources */,
-				A6BC8B3421C8D81F00796BF3 /* SIGKeychain.m in Sources */,
 				A6BC8B3521C8D81F00796BF3 /* SIGTrust.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
