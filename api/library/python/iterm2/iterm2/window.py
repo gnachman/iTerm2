@@ -431,6 +431,10 @@ class Window:
     async def async_activate(self) -> None:
         """
         Gives the window keyboard focus and orders it to the front.
+
+        Note that this won't activate the app. Use the :meth:`async_activate`
+        method on :class:`~iterm2.app.App` to activate the app. You'll probably
+        want to call both methods.
         """
         await iterm2.rpc.async_activate(
             self.connection,
