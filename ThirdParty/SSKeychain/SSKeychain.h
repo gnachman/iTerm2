@@ -61,10 +61,6 @@ extern NSString *const kSSKeychainWhereKey;
 // If set, use iCloud keychain.
 @property (class) BOOL synchronized;
 
-// If set and synchronized is off, gives the path to the keychain to use.
-// If unset and synchronized is off, the login keychain is used.
-@property (class, copy) NSString *pathToKeychain;
-
 #pragma mark - Classic methods
 
 /**
@@ -138,7 +134,6 @@ extern NSString *const kSSKeychainWhereKey;
 
 #pragma mark - Configuration
 
-#if __IPHONE_4_0 && TARGET_OS_IPHONE
 /**
  Returns the accessibility type for all future passwords saved to the Keychain.
 
@@ -162,6 +157,5 @@ extern NSString *const kSSKeychainWhereKey;
  @see accessibilityType
  */
 + (void)setAccessibilityType:(CFTypeRef)accessibilityType;
-#endif
 
 @end

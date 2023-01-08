@@ -17,12 +17,8 @@ NSString *const kSSKeychainLabelKey = @"labl";
 NSString *const kSSKeychainLastModifiedKey = @"mdat";
 NSString *const kSSKeychainWhereKey = @"svce";
 
-#if __IPHONE_4_0 && TARGET_OS_IPHONE
-    static CFTypeRef SSKeychainAccessibilityType = NULL;
-#endif
-
+static CFTypeRef SSKeychainAccessibilityType = NULL;
 static BOOL SSKeychainSynchronized = NO;
-static NSString *SSKeychainPathToKeychain = nil;
 
 @implementation SSKeychain
 
@@ -32,14 +28,6 @@ static NSString *SSKeychainPathToKeychain = nil;
 
 + (BOOL)synchronized {
     return SSKeychainSynchronized;
-}
-
-+ (void)setPathToKeychain:(NSString *)pathToKeychain {
-    SSKeychainPathToKeychain = [pathToKeychain copy];
-}
-
-+ (NSString *)pathToKeychain {
-    return SSKeychainPathToKeychain;
 }
 
 + (NSString *)passwordForService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing *)error {
@@ -94,7 +82,6 @@ static NSString *SSKeychainPathToKeychain = nil;
 }
 
 
-#if __IPHONE_4_0 && TARGET_OS_IPHONE
 + (CFTypeRef)accessibilityType {
     return SSKeychainAccessibilityType;
 }
@@ -107,15 +94,11 @@ static NSString *SSKeychainPathToKeychain = nil;
     }
     SSKeychainAccessibilityType = accessibilityType;
 }
-#endif
 
 + (void)updateQuery:(SSKeychainQuery *)query {
     if (self.synchronized) {
         query.synchronizationMode = SSKeychainQuerySynchronizationModeYes;
         return;
-    }
-    if (self.pathToKeychain) {
-        query.pathToKeychain = self.pathToKeychain;
     }
 }
 

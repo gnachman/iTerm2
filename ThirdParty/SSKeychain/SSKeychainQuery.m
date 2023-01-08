@@ -15,10 +15,7 @@
 @synthesize service = _service;
 @synthesize label = _label;
 @synthesize passwordData = _passwordData;
-
-#if __IPHONE_3_0 && TARGET_OS_IPHONE
 @synthesize accessGroup = _accessGroup;
-#endif
 
 @synthesize synchronizationMode = _synchronizationMode;
 
@@ -40,40 +37,17 @@
     if (self.label) {
         [query setObject:self.label forKey:(__bridge id)kSecAttrLabel];
     }
-#if __IPHONE_4_0 && TARGET_OS_IPHONE
     CFTypeRef accessibilityType = [SSKeychain accessibilityType];
     if (accessibilityType) {
         [query setObject:(__bridge id)accessibilityType forKey:(__bridge id)kSecAttrAccessible];
     }
-#endif
-    SecKeychainRef keychain = NULL;
-    if (![self getKeychain:&keychain query:query error:error]) {
-        return NO;
-    }
     status = SecItemAdd((__bridge CFDictionaryRef)query, NULL);
-    if (keychain != NULL) {
-        CFRelease(keychain);
-    }
 
     if (status != errSecSuccess && error != NULL) {
         *error = [[self class] errorWithCode:status];
     }
 
     return (status == errSecSuccess);
-}
-
-- (BOOL)getKeychain:(SecKeychainRef *)keychainPtr query:(NSMutableDictionary *)query error:(NSError * __autoreleasing *)error {
-    if (self.pathToKeychain) {
-        const OSStatus status = SecKeychainOpen(self.pathToKeychain.UTF8String, keychainPtr);
-        if (*keychainPtr == NULL) {
-            if (error) {
-                *error = [[self class] errorWithCode:status];
-            }
-            return NO;
-        }
-        query[(__bridge id)kSecMatchSearchList] = @[(__bridge id)*keychainPtr];
-    }
-    return YES;
 }
 
 - (BOOL)deleteItem:(NSError *__autoreleasing *)error {
@@ -86,27 +60,10 @@
     }
 
     NSMutableDictionary *query = [self query];
-    SecKeychainRef keychain = NULL;
-    if (![self getKeychain:&keychain query:query error:error]) {
-        return NO;
-    }
-#if TARGET_OS_IPHONE
     status = SecItemDelete((__bridge CFDictionaryRef)query);
-#else
-    CFTypeRef result = NULL;
-    [query setObject:@YES forKey:(__bridge id)kSecReturnRef];
-    status = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result);
-    if (status == errSecSuccess) {
-        status = SecKeychainItemDelete((SecKeychainItemRef)result);
-        CFRelease(result);
-    }
-#endif
 
     if (status != errSecSuccess && error != NULL) {
         *error = [[self class] errorWithCode:status];
-    }
-    if (keychain != NULL) {
-        CFRelease(keychain);
     }
     return (status == errSecSuccess);
 }
@@ -117,16 +74,9 @@
     NSMutableDictionary *query = [self query];
     [query setObject:@YES forKey:(__bridge id)kSecReturnAttributes];
     [query setObject:(__bridge id)kSecMatchLimitAll forKey:(__bridge id)kSecMatchLimit];
-    SecKeychainRef keychain = NULL;
-    if (![self getKeychain:&keychain query:query error:error]) {
-        return nil;
-    }
 
     CFTypeRef result = NULL;
     status = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result);
-    if (keychain != NULL) {
-        CFRelease(keychain);
-    }
     if (status != errSecSuccess && error != NULL) {
         *error = [[self class] errorWithCode:status];
         return nil;
@@ -149,15 +99,8 @@
     NSMutableDictionary *query = [self query];
     [query setObject:@YES forKey:(__bridge id)kSecReturnData];
     [query setObject:(__bridge id)kSecMatchLimitOne forKey:(__bridge id)kSecMatchLimit];
-    SecKeychainRef keychain = NULL;
-    if (![self getKeychain:&keychain query:query error:error]) {
-        return NO;
-    }
 
     status = SecItemCopyMatching((__bridge CFDictionaryRef)query, &result);
-    if (keychain != NULL) {
-        CFRelease(keychain);
-    }
 
     if (status != errSecSuccess && error != NULL) {
         *error = [[self class] errorWithCode:status];
@@ -201,11 +144,9 @@
         [dictionary setObject:self.account forKey:(__bridge id)kSecAttrAccount];
     }
 
-#if __IPHONE_3_0 && TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR
     if (self.accessGroup) {
         [dictionary setObject:self.accessGroup forKey:(__bridge id)kSecAttrAccessGroup];
     }
-#endif
 
     id value;
 
