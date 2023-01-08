@@ -16,7 +16,6 @@
 #import "NSStringITerm.h"
 
 const int iTermKeystrokeKeyCodeUnavailable = 0;
-static const int iTermNoCharacter = -1;
 
 @implementation iTermKeystroke {
     // When set, self.character = self.modifiedCharacter and it should be treated as a modified
