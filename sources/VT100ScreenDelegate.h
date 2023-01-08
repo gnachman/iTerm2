@@ -393,7 +393,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                                   boolArgs:(NSString * _Nonnull)boolArgs
                                    sshargs:(NSString * _Nonnull)sshargs
                                      dcsID:(NSString * _Nonnull)dcsID
-                                savedState:(NSDictionary *)savedState;
+                                savedState:(NSDictionary * _Nonnull)savedState;
 - (void)screenDidReadSSHConductorLine:(NSString * _Nonnull)string depth:(int)depth;
 - (void)screenDidUnhookSSHConductor;
 - (void)screenDidBeginSSHConductorCommandWithIdentifier:(NSString * _Nonnull)identifier

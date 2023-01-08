@@ -123,15 +123,20 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
                                               forKey:kUrlHandlersUserDefaultsKey];
 }
 
-- (Profile *)profileForScheme:(NSString *)url {
-    NSString* handlerId = (NSString *)LSCopyDefaultHandlerForURLScheme((CFStringRef)url);
+- (Profile *)profileForScheme:(NSString *)scheme {
+    NSURL *schemeAsURL = [NSURL URLWithString:[scheme stringByAppendingString:@":"]];
+    NSString *handlerId = nil;
+    if (schemeAsURL) {
+        NSURL *appURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:schemeAsURL];
+        if (appURL) {
+            NSBundle *bundle = [NSBundle bundleWithURL:appURL];
+            handlerId = bundle.bundleIdentifier;
+        }
+    }
     Profile *profile = nil;
     if ([handlerId isEqualToString:@"com.googlecode.iterm2"] ||
         [handlerId isEqualToString:@"net.sourceforge.iterm"]) {
-        profile = [[ProfileModel sharedInstance] bookmarkWithGuid:[self guidForScheme:url]];
-    }
-    if (handlerId) {
-        CFRelease(handlerId);
+        profile = [[ProfileModel sharedInstance] bookmarkWithGuid:[self guidForScheme:scheme]];
     }
     return profile;
 }
