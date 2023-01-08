@@ -514,7 +514,8 @@
 }
 
 - (KEY_ACTION)boundActionForEvent:(NSEvent *)cocoaEvent {
-    if (cocoaEvent.type == NSEventTypeFlagsChanged) {
+    if (cocoaEvent.type != NSEventTypeKeyDown) {
+        DLog(@"Not keydown %@", cocoaEvent);
         return -1;
     }
     iTermKeystroke *keystroke = [iTermKeystroke withEvent:cocoaEvent];

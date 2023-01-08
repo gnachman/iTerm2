@@ -212,19 +212,28 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
     }
 }
 
+- (NSEvent *)eventByRemappingEvent:(NSEvent *)event {
+    if (![[iTermModifierRemapper sharedInstance] isAnyModifierRemapped]) {
+        DLog(@"Not remapping modifiers");
+        return event;
+    }
+    CGEventRef maybeRemappedCGEvent = [[iTermModifierRemapper sharedInstance] eventByRemappingEvent:[event CGEvent]
+                                                                                           eventTap:nil];
+    if (!maybeRemappedCGEvent) {
+        return nil;
+    }
+    event = [NSEvent eventWithCGEvent:maybeRemappedCGEvent];
+    DLog(@"Remapped modifiers to %@", event);
+    return event;
+}
+
 - (NSEvent *)eventByRemappingForSecureInput:(NSEvent *)event {
-    if ([[iTermModifierRemapper sharedInstance] isAnyModifierRemapped] &&
-        (IsSecureEventInputEnabled() || ![[iTermModifierRemapper sharedInstance] isRemappingModifiers])) {
+    if (IsSecureEventInputEnabled() || ![[iTermModifierRemapper sharedInstance] isRemappingModifiers]) {
         // The event tap is not working, but we can still remap modifiers for non-system
         // keys. Only things like cmd-tab will not be remapped in this case. Otherwise,
         // the event tap performs the remapping.
-        CGEventRef maybeRemappedCGEvent = [[iTermModifierRemapper sharedInstance] eventByRemappingEvent:[event CGEvent]
-                                                                                               eventTap:nil];
-        if (!maybeRemappedCGEvent) {
-            return nil;
-        }
-        event = [NSEvent eventWithCGEvent:maybeRemappedCGEvent];
-        DLog(@"Remapped modifiers to %@", event);
+        DLog(@"May need remapping because secure input is on or event tap not running");
+        return [self eventByRemappingEvent:event];
     }
     return event;
 }
@@ -593,35 +602,59 @@ static const char *iTermApplicationKVOKey = "iTermApplicationKVOKey";
 
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent *)event {
-    if ([event type] == NSEventTypeFlagsChanged) {
-        if (_leader) {
-            [self makeCursorSparkles];
-        }
-        event = [self eventByRemappingForSecureInput:event];
-        if (!event) {
-            DLog(@"Disard event");
-            return;
-        }
-        if ([self handleFlagsChangedEvent:event]) {
-            return;
-        }
-    } else if ([event type] == NSEventTypeKeyDown) {
-        event = [self eventByRemappingForSecureInput:event];
-        if (!event) {
-            DLog(@"Disard event");
-            return;
-        }
-        if ([self handleKeyDownEvent:event]) {
-            return;
-        }
-        DLog(@"NSKeyDown event taking the regular path");
-    } else if (event.type == NSEventTypeKeyUp) {
-        if (_leader) {
-            [self makeCursorSparkles];
-        }
-    } else if (event.type == NSEventTypeScrollWheel && (event.momentumPhase == NSEventPhaseChanged ||
-                                                        event.momentumPhase == NSEventPhaseEnded)) {
-        [self handleScrollWheelEvent:event];
+    switch (event.type) {
+        case NSEventTypeFlagsChanged:
+            if (_leader) {
+                [self makeCursorSparkles];
+            }
+            event = [self eventByRemappingForSecureInput:event];
+            if (!event) {
+                DLog(@"Disard event");
+                return;
+            }
+            if ([self handleFlagsChangedEvent:event]) {
+                return;
+            }
+            break;
+        case NSEventTypeKeyDown:
+            event = [self eventByRemappingForSecureInput:event];
+            if (!event) {
+                DLog(@"Disard event");
+                return;
+            }
+            if ([self handleKeyDownEvent:event]) {
+                return;
+            }
+            DLog(@"NSKeyDown event taking the regular path");
+            break;
+        case NSEventTypeKeyUp:
+            if (_leader) {
+                [self makeCursorSparkles];
+            }
+            break;
+        case NSEventTypeScrollWheel:
+            event = [self eventByRemappingEvent:event];
+            if (event.momentumPhase == NSEventPhaseChanged ||
+                event.momentumPhase == NSEventPhaseEnded) {
+                [self handleScrollWheelEvent:event];
+            }
+            break;
+        case NSEventTypeMouseMoved:
+        case NSEventTypeMouseExited:
+        case NSEventTypeMouseEntered:
+        case NSEventTypeLeftMouseUp:
+        case NSEventTypeLeftMouseDown:
+        case NSEventTypeLeftMouseDragged:
+        case NSEventTypeRightMouseUp:
+        case NSEventTypeRightMouseDown:
+        case NSEventTypeRightMouseDragged:
+        case NSEventTypeOtherMouseUp:
+        case NSEventTypeOtherMouseDown:
+        case NSEventTypeOtherMouseDragged:
+            event = [self eventByRemappingEvent:event];
+            break;
+        default:
+            break;
     }
 
     [super sendEvent:event];
