@@ -257,36 +257,6 @@ static CGFloat iTermAreaOfIntersection(NSRect r1, NSRect r2) {
     return (CGDirectDisplayID)number.unsignedLongLongValue;
 }
 
-static io_service_t iTermGetIOService(CGDirectDisplayID displayID) {
-    io_iterator_t serialPortIterator = 0;
-    io_service_t ioServ = 0;
-    CFMutableDictionaryRef matching = IOServiceMatching("IODisplayConnect");
-    const kern_return_t kernResult = IOServiceGetMatchingServices(kIOMasterPortDefault, matching, &serialPortIterator);
-    if (kernResult != KERN_SUCCESS) {
-        return 0;
-    }
-    if (serialPortIterator == 0) {
-        return 0;
-    }
-
-    ioServ = IOIteratorNext(serialPortIterator);
-    while (ioServ != 0) {
-        NSDictionary *info = (__bridge_transfer NSDictionary *)IODisplayCreateInfoDictionary(ioServ, kIODisplayOnlyPreferredName);
-        const unsigned int vendorID = [info[@kDisplayVendorID] unsignedIntValue];
-        const unsigned int productID = [info[@kDisplayProductID] unsignedIntValue];
-        const unsigned int serialNumber = [info[@kDisplaySerialNumber] unsignedIntValue];
-
-        if (CGDisplayVendorNumber(displayID) == vendorID &&
-            CGDisplayModelNumber(displayID) == productID &&
-            CGDisplaySerialNumber(displayID) == serialNumber) {
-            return ioServ;
-        }
-
-        ioServ = IOIteratorNext(serialPortIterator);
-    }
-    return 0;
-}
-
 - (NSString *)it_nonUniqueName {
     return [self localizedName];
 }

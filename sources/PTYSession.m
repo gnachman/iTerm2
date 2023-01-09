@@ -11752,7 +11752,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     self.alertOnNextMark = NO;
     NSString *action = [iTermApplication.sharedApplication delegate].markAlertAction;
     if ([action isEqualToString:kMarkAlertActionPostNotification]) {
-        NSString *sound = NSUserNotificationDefaultSoundName;
         [[iTermNotificationController sharedInstance] notify:@"Mark Set"
                                              withDescription:[NSString stringWithFormat:@"Session %@ #%d had a mark set.",
                                                               [[self name] removingHTMLFromTabTitleIfNeeded],

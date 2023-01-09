@@ -1276,8 +1276,6 @@ PSMTabBarControlOptionKey PSMTabBarControlOptionTextColor = @"PSMTabBarControlOp
             }
             [cell setFrame:cellRect];
 
-            NSTrackingRectTag tag;
-
             // close button tracking rect
             if ([cell hasCloseButton] &&
                 ([[cell representedObject] isEqualTo:[_tabView selectedTabViewItem]] ||
