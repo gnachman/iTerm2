@@ -578,7 +578,7 @@ static void HexDump(iTermClientServerProtocolMessage *message) {
             addr = i;
             offset = 0;
         }
-        offset += sprintf(buffer + offset, "%02x ", bytes[i]);
+        offset += snprintf(buffer + offset, sizeof(buffer) - offset, "%02x ", bytes[i]);
     }
     if (offset > 0) {
         FDLog(LOG_DEBUG, "%04d  %s", addr, buffer);
