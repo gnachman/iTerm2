@@ -70,7 +70,7 @@ typedef enum {
 #define KEY_BACKSPACE        "\010"
 
 // Reporting formats
-#define KEY_FUNCTION_FORMAT  "\033[%d~"
+#define KEY_FUNCTION_FORMAT  @"\033[%d~"
 
 #define REPORT_POSITION      "\033[%d;%dR"
 #define REPORT_POSITION_Q    "\033[?%d;%dR"
@@ -604,6 +604,10 @@ typedef enum {
     return nil;
 }
 
+- (NSData *)dataForStandardFunctionKeyWithCode:(int)code {
+    return [[NSString stringWithFormat:KEY_FUNCTION_FORMAT, code] dataUsingEncoding:NSISOLatin1StringEncoding];
+}
+
 // Reference: http://www.utexas.edu/cc/faqs/unix/VT200-function-keys.html
 // http://www.cs.utk.edu/~shuford/terminal/misc_old_terminals_news.txt
 - (NSData *)keyFunction:(int)no modifiers:(NSEventModifierFlags)modifiers {
@@ -620,35 +624,35 @@ typedef enum {
             return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
                                   length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
         } else {
-            sprintf(str, KEY_FUNCTION_FORMAT, no + 10);
+            return [self dataForStandardFunctionKeyWithCode:no + 10];
         }
     } else if (no <= 10) {
         if (_keyStrings[TERMINFO_KEY_F0+no]) {
             return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
                                   length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
         } else {
-            sprintf(str, KEY_FUNCTION_FORMAT, no + 11);
+            return [self dataForStandardFunctionKeyWithCode:no + 11];
         }
     } else if (no <= 14) {
         if (_keyStrings[TERMINFO_KEY_F0+no]) {
             return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
                                   length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
         } else {
-            sprintf(str, KEY_FUNCTION_FORMAT, no + 12);
+            return [self dataForStandardFunctionKeyWithCode:no + 12];
         }
     } else if (no <= 16) {
         if (_keyStrings[TERMINFO_KEY_F0+no]) {
             return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
                                   length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
         } else {
-            sprintf(str, KEY_FUNCTION_FORMAT, no + 13);
+            return [self dataForStandardFunctionKeyWithCode:no + 13];
         }
     } else if (no <= 20) {
         if (_keyStrings[TERMINFO_KEY_F0+no]) {
             return [NSData dataWithBytes:_keyStrings[TERMINFO_KEY_F0+no]
                                   length:strlen(_keyStrings[TERMINFO_KEY_F0+no])];
         } else {
-            sprintf(str, KEY_FUNCTION_FORMAT, no + 14);
+            return [self dataForStandardFunctionKeyWithCode:no + 14];
         }
     } else if (no <= 35) {
         if (_keyStrings[TERMINFO_KEY_F0+no]) {
@@ -1205,9 +1209,10 @@ static int VT100OutputSafeAddInt(int l, int r) {
                                    length:strlen(_keyStrings[terminfo])];
     } else {
         if (mod) {
-            char buf[20];
-            sprintf(buf, cursorMod, mod);
-            theSuffix = [NSData dataWithBytes:buf length:strlen(buf)];
+            NSString *format = [NSString stringWithCString:cursorMod encoding:NSUTF8StringEncoding];
+            NSString *string = [format stringByReplacingOccurrencesOfString:@"%d"
+                                                                 withString:[@(mod) stringValue]];
+            theSuffix = [string dataUsingEncoding:NSISOLatin1StringEncoding];
         } else {
             if (self.cursorMode) {
                 theSuffix = [NSData dataWithBytes:cursorSet

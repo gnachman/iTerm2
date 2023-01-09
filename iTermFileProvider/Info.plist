@@ -12,6 +12,8 @@
 		<string>com.apple.fileprovider-nonui</string>
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).FileProviderExtension</string>
+                <key>CFBundleVersion</key>
+                <string>1.0</string>
 	</dict>
 </dict>
 </plist>

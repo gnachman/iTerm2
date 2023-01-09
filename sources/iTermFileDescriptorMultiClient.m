@@ -1196,21 +1196,20 @@ static unsigned long long MakeUniqueID(void) {
 
 #if BETA
 static void HexDump(NSData *data) {
-    char buffer[80];
+    NSMutableString *dest = [NSMutableString string];
     const unsigned char *bytes = (const unsigned char *)data.bytes;
     int addr = 0;
-    int offset = 0;
     DLog(@"- Begin hex dump of outbound message -");
     for (int i = 0; i < data.length; i++) {
         if (i % 16 == 0 && i > 0) {
-            DLog(@"%4d  %s", addr, buffer);
+            DLog(@"%4d  %@", addr, dest);
             addr = i;
-            offset = 0;
+            dest = [NSMutableString string];
         }
-        offset += sprintf(buffer + offset, "%02x ", bytes[i]);
+        [dest appendFormat:@"%02x ", bytes[i]];
     }
-    if (offset > 0) {
-        DLog(@"%04d  %s", addr, buffer);
+    if (dest.length) {
+        DLog(@"%04d  %@", addr, dest);
     }
     DLog(@"- End hex dump of outbound message -");
 }
