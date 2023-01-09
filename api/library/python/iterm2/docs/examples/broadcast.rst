@@ -29,7 +29,7 @@ This demonstrates:
         topLeft = await bottomLeft.async_split_pane(vertical=False, before=True)
         topRight = await bottomRight.async_split_pane(vertical=False, before=True)
         await bottomLeft.async_activate()
-        broadcast_to = [ topLeft, topRight, bottomRight ]
+        broadcast_to = [ topLeft, bottomLeft, topRight, bottomRight ]
 
         async def async_handle_keystroke(keystroke):
             if keystroke.keycode == iterm2.Keycode.ESCAPE:
