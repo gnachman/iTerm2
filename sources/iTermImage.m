@@ -14,6 +14,7 @@
 #import "iTermSandboxedWorkerClient.h"
 #if DECODE_IMAGES_IN_PROCESS
 #import "iTermImage+ImageWithData.h"
+#warning Decoding images in process because address sanitizer is enabled.
 #endif
 
 static const CGFloat kMaxDimension = 10000;

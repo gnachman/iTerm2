@@ -99,9 +99,6 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
             commandRecipe = AsyncCommandRecipe<Inputs, Outputs> { (inputs, completion) in
                 dataSource.asyncGetToken { result in
                     switch result {
-                    case .success(nil):
-                        completion(.failure(OPError.needsAuthentication))
-                        return
                     case .failure(let error):
                         completion(.failure(error))
                     case .success(let token):

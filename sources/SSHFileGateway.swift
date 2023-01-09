@@ -72,24 +72,52 @@ actor SSHFileGateway {
 
         let url = try await manager.getUserVisibleURL(for: .rootContainer)
         log("proxy(): root url is \(url)")
-        let services = try await FileManager().fileProviderServicesForItem(at: url)
-        guard let service = services.values.first else {
-            log("proxy(): No service for \(url)")
-            throw Exception.unavailable
+
+        FileManager().getFileProviderServicesForItem(at: url) { services, error in
+
         }
-        let connection = try await service.fileProviderConnection()
-        connection.remoteObjectInterface = iTermFileProviderServiceInterface
-        connection.interruptionHandler = {
-            log("proxy(): service connection interrupted")
+
+        return try await withCheckedThrowingContinuation { checkedContinuation in
+            FileManager().getFileProviderServicesForItem(at: url) { services, error in
+                SSHFileGateway.handleServices(services,
+                                              error: error,
+                                              checkedContinuation: checkedContinuation)
+            }
         }
-        connection.resume()
-        guard let proxy = connection.remoteObjectProxy as? iTermFileProviderServiceV1 else {
-            log("proxy(): throw serverUnreachable with ROP \(String(describing: connection.remoteObjectProxy))")
-            throw NSFileProviderError(.serverUnreachable)
-         }
-        log("proxy(): success")
-        return proxy
      }
+
+    private static func handleServices(_ services: [NSFileProviderServiceName: NSFileProviderService]?,
+                                       error: Error?,
+                                       checkedContinuation: CheckedContinuation<iTermFileProviderServiceV1, Error>) {
+        if let error {
+            checkedContinuation.resume(with: .failure(error))
+            return
+        }
+        guard let service = services?.values.first else {
+            log("proxy(): No service found")
+            checkedContinuation.resume(with: .failure(Exception.unavailable))
+            return
+        }
+
+        service.getFileProviderConnection { xpcConnection, xpcError in
+            guard let connection = xpcConnection else {
+                checkedContinuation.resume(with: .failure(xpcError!))
+                return
+            }
+            connection.remoteObjectInterface = iTermFileProviderServiceInterface
+            connection.interruptionHandler = {
+                log("proxy(): service connection interrupted")
+            }
+            connection.resume()
+            guard let proxy = connection.remoteObjectProxy as? iTermFileProviderServiceV1 else {
+                log("proxy(): throw serverUnreachable with ROP \(String(describing: connection.remoteObjectProxy))")
+                checkedContinuation.resume(with: .failure(NSFileProviderError(.serverUnreachable)))
+                return
+            }
+            log("proxy(): success")
+            checkedContinuation.resume(with: .success(proxy))
+        }
+    }
 
     func start(delegate: SSHFileGatewayDelegate) {
         if started {
