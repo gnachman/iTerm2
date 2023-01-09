@@ -123,22 +123,24 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
                                               forKey:kUrlHandlersUserDefaultsKey];
 }
 
-- (Profile *)profileForScheme:(NSString *)scheme {
+- (NSString *)bundleIDForDefaultHandlerForScheme:(NSString *)scheme {
     NSURL *schemeAsURL = [NSURL URLWithString:[scheme stringByAppendingString:@":"]];
-    NSString *handlerId = nil;
-    if (schemeAsURL) {
-        NSURL *appURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:schemeAsURL];
-        if (appURL) {
-            NSBundle *bundle = [NSBundle bundleWithURL:appURL];
-            handlerId = bundle.bundleIdentifier;
-        }
+    if (!schemeAsURL) {
+        return nil;
     }
-    Profile *profile = nil;
-    if ([handlerId isEqualToString:@"com.googlecode.iterm2"] ||
-        [handlerId isEqualToString:@"net.sourceforge.iterm"]) {
-        profile = [[ProfileModel sharedInstance] bookmarkWithGuid:[self guidForScheme:scheme]];
+    NSURL *appURL = [[NSWorkspace sharedWorkspace] URLForApplicationToOpenURL:schemeAsURL];
+    if (!appURL) {
+        return nil;
     }
-    return profile;
+    NSBundle *bundle = [NSBundle bundleWithURL:appURL];
+    return bundle.bundleIdentifier;
+}
+
+- (Profile *)profileForScheme:(NSString *)scheme {
+    if (![self iTermIsDefaultForScheme:scheme]) {
+        return nil;
+    }
+    return [[ProfileModel sharedInstance] bookmarkWithGuid:[self guidForScheme:scheme]];
 }
 
 - (BOOL)pickApplicationToOpenFile:(NSString *)fullPath {
@@ -230,12 +232,10 @@ static NSString *const kOldStyleUrlHandlersUserDefaultsKey = @"URLHandlers";
 }
 
 - (BOOL)iTermIsDefaultForScheme:(NSString *)scheme {
-    CFStringRef handler = LSCopyDefaultHandlerForURLScheme((CFStringRef)scheme);
+    NSString *handlerId = [self bundleIDForDefaultHandlerForScheme:scheme];
     NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
-    BOOL result = [iTermBundleId isEqualToString:(NSString *)handler];
-    CFRelease(handler);
+    BOOL result = [handlerId isEqualToString:iTermBundleId] || [@"net.sourceforge.iterm" isEqualToString:iTermBundleId];
     return result;
-
 }
 
 - (void)setDefaultTerminal:(NSString *)bundleId {

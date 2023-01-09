@@ -1296,7 +1296,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     iTermCallMethodByIdentifier(self.scope.tab.tabID,
                                 @"iterm2.set_title",
                                 @{ @"title": value },
-                                nil);
+                                ^(id obj, NSError *error) { });
 }
 
 - (void)windowTitleDidChange {
