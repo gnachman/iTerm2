@@ -930,6 +930,12 @@ DQ
                                     <action selector="restartSession:" target="-1" id="zO6-It-s2w"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Duplicate Session" identifier="Duplicate Session" id="doq-sh-bZB">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="duplicateSession:" target="-1" id="cDv-Jr-q9u"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="ibp-nX-yTw">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>

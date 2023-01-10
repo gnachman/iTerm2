@@ -100,10 +100,17 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     if (item.action == @selector(performNaturalLanguageQuery:)) {
         return [self.delegate textViewNaturalLanguageQuery] != nil;
     }
+    if (item.action == @selector(duplicateSession:)) {
+        return [self.delegate textViewCanDuplicateSession];
+    }
     return NO;
 }
 
 #pragma mark - Actions
+
+- (IBAction)duplicateSession:(id)sender {
+    [self.delegate textViewDuplicateSession];
+}
 
 - (IBAction)renderSelection:(id)sender {
     VT100GridAbsCoordRange absRange = self.selection.spanningAbsRange;

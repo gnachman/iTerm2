@@ -608,6 +608,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     AITermControllerObjC *_aiterm;
     NSMutableArray<NSString *> *_commandQueue;
+
+    NSMutableDictionary<NSString *, void (^)(PTYSession *)> *_pendingDuplicationCompletionBlocks;
 }
 
 @synthesize isDivorced = _divorced;
@@ -757,7 +759,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         _pwdPoller.delegate = self;
         _graphicSource = [[iTermGraphicSource alloc] init];
         _commandQueue = [[NSMutableArray alloc] init];
-
+        _pendingDuplicationCompletionBlocks = [[NSMutableDictionary alloc] init];
         // This is a placeholder. When the profile is set it will get updated.
         iTermStandardKeyMapper *standardKeyMapper = [[iTermStandardKeyMapper alloc] init];
         standardKeyMapper.delegate = self;
@@ -1001,6 +1003,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_lastFocusReportDate release];
     [_aiterm release];
     [_commandQueue release];
+    [_pendingDuplicationCompletionBlocks release];
 
     [super dealloc];
 }
@@ -7392,6 +7395,42 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_conductor quit];
 }
 
+- (BOOL)textViewCanDuplicateSession {
+    return self.tmuxMode == TMUX_NONE;
+}
+
+- (void)textViewDuplicateSession {
+    if (self.tmuxMode != TMUX_NONE) {
+        return;
+    }
+    [self.delegate.realParentWindow addTabWithDuplicateOfSession:self];
+}
+
+- (void)duplicateInWindowController:(PseudoTerminal *)windowController
+                     withCompletion:(void (^)(PTYSession *))completion {
+    if (_conductor) {
+        NSString *dupid = [_conductor duplicate];
+        if (!dupid) {
+            completion(nil);
+            return;
+        }
+        _pendingDuplicationCompletionBlocks[dupid] = [[completion copy] autorelease];
+        return;
+    }
+    MutableProfile *customizedProfile = [[self.profile mutableCopy] autorelease];
+    if (self.currentLocalWorkingDirectory) {
+        customizedProfile[KEY_CUSTOM_DIRECTORY] = @"Yes";
+        customizedProfile[KEY_WORKING_DIRECTORY] = self.currentLocalWorkingDirectory;
+    }
+    [windowController asyncCreateTabWithProfile:customizedProfile
+                                    withCommand:self.program
+                                    environment:self.environment
+                                       tabIndex:nil
+                                 didMakeSession:nil
+                                     completion:^(PTYSession *newSession, BOOL ok) {
+        completion(newSession);
+    }];
+}
 
 - (void)highlightMarkOrNote:(id<IntervalTreeImmutableObject>)obj {
     if ([obj isKindOfClass:[iTermMark class]]) {
@@ -16847,6 +16886,29 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)conductorStateDidChange {
     DLog(@"conductorDidExfiltrateState");
     [self updateVariablesFromConductor];
+}
+
+- (void)conductorDidDuplicateWithId:(NSString *)dupid newConductor:(iTermConductor *)newConductor {
+#warning TODO
+    void (^completion)(PTYSession *) = _pendingDuplicationCompletionBlocks[dupid];
+    if (!completion) {
+        [newConductor quit];
+        return;
+    }
+    PTYSession *newSession = [[PTYSession alloc] initSynthetic:NO];
+    [newSession adoptConductor:newConductor];
+}
+
+- (void)adoptConductor:(iTermConductor *)conductor {
+    [_conductor autorelease];
+    _conductor = [conductor retain];
+    _conductor.delegate = self;
+    _sshState = iTermSSHStateNone;
+    [self.shell 
+}
+
+- (void)conductorDidFailToDuplicateWithId:(NSString *)dupid {
+#warning TODO
 }
 
 - (void)updateVariablesFromConductor {

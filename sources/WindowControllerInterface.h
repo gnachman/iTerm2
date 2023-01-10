@@ -50,6 +50,7 @@
 
 // Add a tab with the same panes and profiles.
 - (void)createDuplicateOfTab:(PTYTab *)theTab;
+- (void)addTabWithDuplicateOfSession:(PTYSession *)source;
 
 // Set background color for tab chrome.
 - (void)updateTabColors;

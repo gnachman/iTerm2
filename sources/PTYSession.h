@@ -930,6 +930,8 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)userInitiatedReset;
 - (void)resetForRelaunch;
 - (void)resetMode;
+- (void)duplicateInWindowController:(PseudoTerminal *)windowController
+                     withCompletion:(void (^)(PTYSession *))completion;
 
 #pragma mark - API
 

@@ -23,6 +23,12 @@ protocol ConductorDelegate: Any {
     func conductorAbort(reason: String)
     func conductorQuit()
     func conductorStateDidChange()
+    func conductorDidDuplicate(id: String, newConductor: Conductor)
+    func conductorDidFailToDuplicate(id: String)
+}
+
+enum ConductorException: Error {
+    case notFraming
 }
 
 @objc(iTermConductor)
@@ -247,6 +253,7 @@ class Conductor: NSObject, Codable {
         case framerAutopoll
         case framerSave([String:String])
         case framerFile(FileSubcommand)
+        case framerDuplicate(String)
 
         var isFramer: Bool {
             switch self {
@@ -256,7 +263,7 @@ class Conductor: NSObject, Codable {
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
                     .framerDeregister(_), .framerPoll, .framerReset, .framerAutopoll, .framerSave(_),
-                    .framerFile(_):
+                    .framerFile(_), .framerDuplicate(_):
                 return true
             }
         }
@@ -307,6 +314,8 @@ class Conductor: NSObject, Codable {
                 return (["save"] + kvps).joined(separator: "\n")
             case .framerFile(let subcommand):
                 return "file\n" + subcommand.stringValue
+            case .framerDuplicate(let id):
+                return "framerDuplicate(\(id))"
             }
         }
 
@@ -354,6 +363,8 @@ class Conductor: NSObject, Codable {
                 return "autopoll"
             case .framerFile(let subcommand):
                 return "file \(subcommand.operationDescription)"
+            case .framerDuplicate(let id):
+                return "duplicate \(id)"
             }
         }
     }
@@ -394,6 +405,8 @@ class Conductor: NSObject, Codable {
                     return "handleGetShell(\(output.string))"
                 case .handleFile(_, _):
                     return "handleFile"
+                case .handleDuplicate(id: let id, pwd: let pwd):
+                    return "handleDuplicate(id: \(id), pwd: \(String(describing: pwd)))"
                 }
             }
 
@@ -407,11 +420,13 @@ class Conductor: NSObject, Codable {
             case handlePoll(StringArray, (Data) -> ())
             case handleGetShell(StringArray)
             case handleFile(StringArray, (String, Int32) -> ())
+            case handleDuplicate(id: String, pwd: String?)
 
             private enum Key: CodingKey {
                 case rawValue
                 case stringArray
                 case string
+                case maybeString
             }
 
             private enum RawValues: Int, Codable {
@@ -425,6 +440,7 @@ class Conductor: NSObject, Codable {
                 case handlePoll
                 case handleGetShell
                 case handleFile
+                case handleDuplicate
             }
 
             private var rawValue: Int {
@@ -449,6 +465,8 @@ class Conductor: NSObject, Codable {
                     return RawValues.handleGetShell.rawValue
                 case .handleFile(_, _):
                     return RawValues.handleFile.rawValue
+                case .handleDuplicate:
+                    return RawValues.handleDuplicate.rawValue
                 }
             }
 
@@ -468,6 +486,9 @@ class Conductor: NSObject, Codable {
                     try container.encode(value, forKey: .string)
                 case .handleBackgroundJob(let value, _):
                     try container.encode(value, forKey: .stringArray)
+                case .handleDuplicate(id: let id, pwd: let pwd):
+                    try container.encode(id, forKey: .string)
+                    try container.encode(pwd, forKey: .maybeString)
                 case .handleFile(_, _):
                     break
                 }
@@ -500,6 +521,10 @@ class Conductor: NSObject, Codable {
                     self = .handleGetShell(try container.decode(StringArray.self, forKey: .stringArray))
                 case .handleFile:
                     self = .handleFile(StringArray(), { _, _ in })
+                case .handleDuplicate:
+                    self = .handleDuplicate(id: try container.decode(String.self, forKey: .string),
+                                            pwd: try container.decode(Optional<String>.self,
+                                                                      forKey: .maybeString))
                 }
             }
         }
@@ -857,6 +882,15 @@ class Conductor: NSObject, Codable {
         framerSend(data: data, pid: pid)
     }
 
+    @objc(duplicateInDirectory:) func duplicate(pwd: String?) -> String? {
+        guard framing else {
+            return nil
+        }
+        let id = UUID().uuidString
+        send(.framerDuplicate(id), .handleDuplicate(id: id, pwd: pwd))
+        return id
+    }
+
     private func doFraming() {
         execFramer()
         framerSave(["dcsID": dcsID,
@@ -1103,6 +1137,30 @@ class Conductor: NSObject, Codable {
                 break
             case .end(let status):
                 completion(lines.strings.joined(separator: ""), Int32(status))
+            }
+        case .handleDuplicate(let id, let initialPwd):
+            switch result {
+            case .line:
+                break
+            case .abort:
+                delegate?.conductorDidFailToDuplicate(id: id)
+            case .sideChannelLine(line: _, channel: _, pid: _):
+                break
+            case .end(let status):
+                if status != 0 {
+                    delegate?.conductorDidFailToDuplicate(id: id)
+                } else {
+                    let newConductor = Conductor(sshargs,
+                                                 boolArgs: boolArgs,
+                                                 dcsID: dcsID,
+                                                 clientUniqueID: clientUniqueID,
+                                                 varsToSend: varsToSend,
+                                                 clientVars: clientVars,
+                                                 initialDirectory: initialPwd ?? initialDirectory,
+                                                 shouldInjectShellIntegration: shouldInjectShellIntegration,
+                                                 parent: self)
+                    delegate?.conductorDidDuplicate(id: id, newConductor: newConductor)
+                }
             }
         case .handlePoll(let output, let completion):
             switch result {

@@ -10479,6 +10479,10 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     }
 }
 
+- (void)addTabWithDuplicateOfSession:(PTYSession *)source {
+    [source duplicateInWindowController:self withCompletion:^(PTYSession *theDuplicate) {}];
+}
+
 - (void)saveTabAsWindowArrangement:(id)sender {
     PTYTab *theTab = (PTYTab *)[[sender representedObject] identifier];
     if (!theTab) {
