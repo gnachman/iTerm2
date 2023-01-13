@@ -3349,7 +3349,7 @@ DQ
                         <slider toolTip="How much of the background image is visible through the background color." verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="6320">
                             <rect key="frame" x="-2" y="-6" width="215" height="28"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                            <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.050000000000000003" maxValue="1" doubleValue="0.40000000000000002" tickMarkPosition="below" sliderType="linear" id="6321"/>
+                            <sliderCell key="cell" continuous="YES" alignment="left" minValue="0" maxValue="1" doubleValue="0.40000000000000002" tickMarkPosition="below" sliderType="linear" id="6321"/>
                             <connections>
                                 <action selector="settingChanged:" target="BMA-OA-Kzc" id="O9z-H1-Kma"/>
                                 <outlet property="nextKeyView" destination="4976" id="6322"/>
