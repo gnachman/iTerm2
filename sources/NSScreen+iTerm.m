@@ -93,9 +93,11 @@
 }
 
 - (CGFloat)notchHeight {
+#ifdef MAX_OS_VERSION_12_0
     if (@available(macOS 12.0, *)) {
         return self.safeAreaInsets.top;
     }
+#endif
     return 0;
 }
 
@@ -107,11 +109,13 @@
 }
 
 - (CGFloat)it_menuBarHeight {
+#ifdef MAX_OS_VERSION_12_0
     if (@available(macOS 12, *)) {
         // When the "current" screen has a notch, there doesn't seem to be a way to get the height
         // of the menu bar on other screens :(
         return MAX(24, self.safeAreaInsets.top);
     }
+#endif
     return NSApp.mainMenu.menuBarHeight;
 }
 
