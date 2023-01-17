@@ -1580,6 +1580,9 @@
 		A64BD0D0296264C4001F3F7E /* iTermLatestVersionByShell.h in Headers */ = {isa = PBXBuildFile; fileRef = A64BD0CF296264C4001F3F7E /* iTermLatestVersionByShell.h */; };
 		A64BD0D32964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.h in Headers */ = {isa = PBXBuildFile; fileRef = A64BD0D12964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.h */; };
 		A64BD0D42964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.mm in Sources */ = {isa = PBXBuildFile; fileRef = A64BD0D22964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.mm */; };
+		A64BD0DB296FDBF4001F3F7E /* conductor.sh in Resources */ = {isa = PBXBuildFile; fileRef = A64BD0DA296FDBF4001F3F7E /* conductor.sh */; };
+		A64BD0DC296FDBF4001F3F7E /* conductor.sh in Resources */ = {isa = PBXBuildFile; fileRef = A64BD0DA296FDBF4001F3F7E /* conductor.sh */; };
+		A64BD0DD296FDBF4001F3F7E /* conductor.sh in Resources */ = {isa = PBXBuildFile; fileRef = A64BD0DA296FDBF4001F3F7E /* conductor.sh */; };
 		A64D6A042495608500FC0CDE /* iTermAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A663011619CFE450004AF81C /* iTermAboutWindowController.m */; };
 		A64DE9AA237A8555002E390C /* iTermFakeWindowTitleLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */; };
 		A64DE9AB237A8555002E390C /* iTermFakeWindowTitleLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */; };
@@ -5807,6 +5810,7 @@
 		A64BD0CF296264C4001F3F7E /* iTermLatestVersionByShell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermLatestVersionByShell.h; sourceTree = "<group>"; };
 		A64BD0D12964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAtomicMutableArrayOfWeakObjects.h; sourceTree = "<group>"; };
 		A64BD0D22964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = iTermAtomicMutableArrayOfWeakObjects.mm; sourceTree = "<group>"; };
+		A64BD0DA296FDBF4001F3F7E /* conductor.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; name = conductor.sh; path = "submodules/iTerm2-shell-integration/ssh-helpers/conductor.sh"; sourceTree = "<group>"; };
 		A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFakeWindowTitleLabel.h; sourceTree = "<group>"; };
 		A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFakeWindowTitleLabel.m; sourceTree = "<group>"; };
 		A64FCD56238DE785001D8199 /* iTermFileDescriptorServerShared.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorServerShared.h; sourceTree = "<group>"; };
@@ -8051,6 +8055,7 @@
 		1D03D42719144C3B0049EB8F /* Other Assets */ = {
 			isa = PBXGroup;
 			children = (
+				A64BD0DA296FDBF4001F3F7E /* conductor.sh */,
 				A65DF4A82849F2AA00AA29AB /* iterm2-shell-integration-loader.fish */,
 				A65DF4A02849601A00AA29AB /* .zshenv */,
 				A6EC80842829E28800493544 /* it2ssh */,
@@ -13500,6 +13505,7 @@
 				A65E6F572547F1D5008A4866 /* WindowCorner_Square@2x.png in Resources */,
 				1D8BBA871B31DC160005A852 /* ChevronDown@2x.png in Resources */,
 				A6E7AEA8214394F600DE9F3B /* graphic_docker.png in Resources */,
+				A64BD0DD296FDBF4001F3F7E /* conductor.sh in Resources */,
 				A63821F1229E50CD005D74BE /* Warning@2x.png in Resources */,
 				A6E16C6424A85D5F00C6DB06 /* BigSurAddTab.png in Resources */,
 				A60BB3881EB54BD300D76C09 /* CopyMode.png in Resources */,
@@ -13717,6 +13723,7 @@
 				A6E7AE8A214394DD00DE9F3B /* graphic_compile.png in Resources */,
 				A6EC804B281B3AF300493544 /* TextViewPortholeRenderer-light.css in Resources */,
 				A629F57E23AF2DDF00C2F16B /* iterm2_shell_integration.bash in Resources */,
+				A64BD0DC296FDBF4001F3F7E /* conductor.sh in Resources */,
 				A631FCA420EF0DFA00EB824F /* iTermStatusBarKnobColorViewController.xib in Resources */,
 				A67F61DC214395D50093940A /* graphic_yo.png in Resources */,
 				A67F6139214395680093940A /* graphic_heroku@2x.png in Resources */,
@@ -14020,6 +14027,7 @@
 				A663010819CFCE74004AF81C /* SuppressAllOutput.png in Resources */,
 				A67F61E7214395D50093940A /* graphic_yo@2x.png in Resources */,
 				A6EC47C621EC6D05000E1321 /* StatusBar.png in Resources */,
+				A64BD0DB296FDBF4001F3F7E /* conductor.sh in Resources */,
 				A6E7AE61214394CA00DE9F3B /* graphic_atom@2x.png in Resources */,
 				A629F5B623B081DD00C2F16B /* MouseReportingCursorOverlay@1x.png in Resources */,
 				A6E7AEB5214394F600DE9F3B /* graphic_database@2x.png in Resources */,

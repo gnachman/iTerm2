@@ -2620,15 +2620,26 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [self updateFlexibleViewColors];
 }
 
+- (SessionView *)sessionViewWithGUID:(NSString *)guid {
+    for (SessionView *view in [self sessionViews]) {
+        PTYSession *session = [self sessionForSessionView:view];
+        if ([session.guid isEqualToString:guid]) {
+            return view;
+        }
+    }
+    return nil;
+}
+
 // NOTE: This has a side effect of updating idMap. It maps a number (the "arrangement ID") to a
 // sessionView. It also calls -[SessionView saveFrameSize].
 - (BOOL)_recursiveEncodeArrangementForView:(NSView *)view
                                      idMap:(NSMutableDictionary<NSNumber *, SessionView *> *)idMap
                                isMaximized:(BOOL)isMaximized
                                   contents:(BOOL)contents
-                                   encoder:(id<iTermEncoderAdapter>)encoder {
+                                   encoder:(id<iTermEncoderAdapter>)encoder
+                                   options:(NSDictionary *)options {
     DLog(@"Encode view %@", view);
-    if (isMaximized) {
+    if (isMaximized && options[PTYTabArrangementOptionsOnlySessionID] == nil) {
         encoder[TAB_ARRANGEMENT_IS_MAXIMIZED] = @YES;
     }
     isMaximized = NO;
@@ -2639,8 +2650,12 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         encoder[TAB_ARRANGEMENT_SPLITTER_ID] = splitView.stringUniqueIdentifier;
         encoder[SPLITTER_IS_VERTICAL] = @(splitView.isVertical);
 
+        NSArray<NSView *> *subviews = splitView.subviews;
+        if (options[PTYTabArrangementOptionsOnlySessionID] != nil) {
+            subviews = @[ [self sessionViewWithGUID:options[PTYTabArrangementOptionsOnlySessionID]] ];
+        }
         iTermOrderedDictionary<NSString *, __kindof NSView *> *index =
-        [iTermOrderedDictionary byMapping:splitView.subviews
+        [iTermOrderedDictionary byMapping:subviews
                                     block:^id _Nonnull(NSUInteger i, __kindof NSView *_Nonnull view) {
             if ([view isKindOfClass:[PTYSplitView class]]) {
                 PTYSplitView *splitView = view;
@@ -2660,7 +2675,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                       idMap:idMap
                                                 isMaximized:isMaximized
                                                    contents:contents
-                                                    encoder:encoder];
+                                                    encoder:encoder
+                                                    options:options];
         }];
         DLog(@"Done encoding splitter view %@", view);
         return YES;
@@ -2677,9 +2693,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     [encoder encodeDictionaryWithKey:TAB_ARRANGEMENT_SESSION
                           generation:iTermGenerationAlwaysEncode
                                block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
-        return [session encodeArrangementWithContents:contents encoder:encoder];
+        return [session encodeArrangementWithContents:contents
+                                              encoder:encoder
+                                   replacementProfile:options[PTYTabArrangementOptionsReplacementProfile]
+                                          saveProgram:[options[PTYTabArrangementOptionsReplacementSaveProgram] ?: @YES boolValue]
+                                         pendingJumps:options[PTYTabArrangementOptionsPendingJumps]];
     }];
-    encoder[TAB_ARRANGEMENT_IS_ACTIVE] = @(session == [self activeSession]);
+    encoder[TAB_ARRANGEMENT_IS_ACTIVE] = @(session == [self activeSession] || options[PTYTabArrangementOptionsOnlySessionID] != nil);
 
     if (idMap) {
         const NSUInteger arrangementID = idMap.count;
@@ -3157,7 +3177,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 // contents.
 - (BOOL)encodeArrangementNodeWithContents:(BOOL)includeContents
                       fromArrangementNode:(NSDictionary *)node
-                                  encoder:(id<iTermEncoderAdapter>)encoder {
+                                  encoder:(id<iTermEncoderAdapter>)encoder
+                                  options:(NSDictionary *)options {
     DLog(@"Encode arragnement for %@ from node %@", self, node);
     if ([node[TAB_ARRANGEMENT_VIEW_TYPE] isEqual:VIEW_TYPE_SPLITTER]) {
         // Add everything in node except SUBVIEWS
@@ -3189,7 +3210,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
             NSDictionary *subnode = index[identifier];
             if (![self encodeArrangementNodeWithContents:includeContents
                                      fromArrangementNode:subnode
-                                                 encoder:encoder]) {
+                                                 encoder:encoder
+                                                 options:options]) {
                 // If one leaf fails to encode, toss the whole tab out because it'll be a disaster
                 // trying to restore it.
                 ok = NO;
@@ -3235,6 +3257,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }];
 }
 
+static NSString *const PTYTabArrangementOptionsOnlySessionID = @"PTYTabArrangementOptionsOnlySessionID";
+static NSString *const PTYTabArrangementOptionsReplacementProfile = @"PTYTabArrangementOptionsReplacementProfile";
+static NSString *const PTYTabArrangementOptionsReplacementSaveProgram = @"PTYTabArrangementOptionsReplacementSaveProgram";
+static NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangementOptionsPendingJumps";
+
 // This method used to take a gross shortcut and call -unmaximize and
 // -maximize. Because we support 10.7 window restoration, it gets called
 // periodically. Issue 3389 calls out a "flash" that happens because of this.
@@ -3246,7 +3273,30 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     iTermMutableDictionaryEncoderAdapter *adapter = [[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict];
     const BOOL commit = [self encodeWithContents:contents
                                   constructIdMap:constructIdMap
-                                         encoder:adapter];
+                                         encoder:adapter
+                                         options:@{}];
+    if (!commit) {
+        return nil;
+    }
+    return dict;
+}
+
+- (NSDictionary *)arrangementWithOnlySession:(PTYSession *)session
+                                     profile:(Profile *)profile
+                                 saveProgram:(BOOL)saveProgram
+                                pendingJumps:(NSArray<NSString *> *)pendingJumps {
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    iTermMutableDictionaryEncoderAdapter *adapter = [[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict];
+
+    NSDictionary *options = [@{ PTYTabArrangementOptionsOnlySessionID: session.guid,
+                                PTYTabArrangementOptionsReplacementProfile: profile,
+                                PTYTabArrangementOptionsPendingJumps: pendingJumps ?: [NSNull null],
+                                PTYTabArrangementOptionsReplacementSaveProgram: @(saveProgram),
+                             } dictionaryByRemovingNullValues];
+    const BOOL commit = [self encodeWithContents:NO
+                                  constructIdMap:NO
+                                         encoder:adapter
+                                         options:options];
     if (!commit) {
         return nil;
     }
@@ -3255,17 +3305,18 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 - (BOOL)encodeWithContents:(BOOL)contents
                    encoder:(id<iTermEncoderAdapter>)encoder {
-    return [self encodeWithContents:contents constructIdMap:NO encoder:encoder];
+    return [self encodeWithContents:contents constructIdMap:NO encoder:encoder options:@{}];
 }
 
 - (BOOL)encodeWithContents:(BOOL)contents
             constructIdMap:(BOOL)constructIdMap
-                   encoder:(id<iTermEncoderAdapter>)encoder {
+                   encoder:(id<iTermEncoderAdapter>)encoder
+                   options:(NSDictionary *)options {
     DLog(@"Encode tab %@", self);
     encoder[TAB_GUID] = _guid;
     encoder[TAB_ARRANGEMENT_TITLE_OVERRIDE] = self.titleOverride.length ? self.titleOverride : nil;
 
-    if (isMaximized_) {
+    if (isMaximized_ && options[PTYTabArrangementOptionsOnlySessionID] == nil) {
         DLog(@"Tab is maximized");
         // We never construct id map in this case because it must already exist.
         assert(!constructIdMap);
@@ -3289,7 +3340,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                           block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
             return [self encodeArrangementNodeWithContents:contents
                                        fromArrangementNode:mutableRootNode
-                                                   encoder:encoder];
+                                                   encoder:encoder
+                                                   options:options];
         }];
     }
     // Build a new arrangement. If |constructIdMap| is set then pass in
@@ -3305,7 +3357,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                                   idMap:constructIdMap ? idMap_ : nil
                                             isMaximized:NO
                                                contents:contents
-                                                encoder:encoder];
+                                                encoder:encoder
+                                                options:options];
     }];
 }
 

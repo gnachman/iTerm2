@@ -2171,6 +2171,50 @@ ITERM_WEAKLY_REFERENCEABLE
     [self restartSessionWithConfirmation:self.currentSession];
 }
 
+- (IBAction)duplicateSession:(id)sender {
+    DLog(@"duplicateSession");
+    PTYSession *session = self.currentSession;
+    MutableProfile *profile = [[session.profile mutableCopy] autorelease];
+    NSArray<NSString *> *pendingJumps = nil;
+    if (session.sshIdentity) {
+        NSArray<NSString *> *sequence = session.sshCommandLineSequence;
+        if (![profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
+            // Local session in which the user ran it2ssh. Change to ssh profile to first host.
+            assert(sequence.count > 0);
+            profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeSSHValue;
+            profile[KEY_COMMAND_LINE] = sequence[0];
+        }
+        if (sequence.count > 1) {
+            pendingJumps = [sequence subarrayFromIndex:1];
+        }
+        // TOOD: Should specify a pwd for each host along the way. This will do the wrong thing if
+        // there are jump hosts.
+        NSString *pwd = session.variablesScope.path;
+        if (pwd) {
+            profile[KEY_CUSTOM_DIRECTORY] = kProfilePreferenceInitialDirectoryCustomValue;
+            profile[KEY_WORKING_DIRECTORY] = pwd;
+        }
+    } else if (session.currentLocalWorkingDirectory) {
+        profile[KEY_CUSTOM_DIRECTORY] = @"Yes";
+        profile[KEY_WORKING_DIRECTORY] = session.currentLocalWorkingDirectory;
+    }
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    iTermMutableDictionaryEncoderAdapter *encoder =
+        [[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict];
+    [session encodeArrangementWithContents:YES encoder:encoder];
+
+    NSDictionary *tabArrangement = [self.currentTab arrangementWithOnlySession:session
+                                                                       profile:profile
+                                                                   saveProgram:NO
+                                                                  pendingJumps:pendingJumps];
+    [self openTabWithArrangement:tabArrangement
+                           named:@"Unnamed arrangement"
+                 hasFlexibleView:NO
+                         viewMap:nil
+                      sessionMap:nil
+              partialAttachments:nil];
+}
+
 - (void)restartSessionWithConfirmation:(PTYSession *)aSession {
     assert(aSession.isRestartable);
     [[self retain] autorelease];
@@ -10212,6 +10256,8 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         }
     } else if ([item action] == @selector(restartSession:)) {
         return [[self currentSession] isRestartable];
+    } else if ([item action] == @selector(duplicateSession:)) {
+        return [[self currentSession] tmuxMode] == TMUX_NONE;
     } else if ([item action] == @selector(resetCharset:)) {
         result = ![[[self currentSession] screen] allCharacterSetPropertiesHaveDefaultValues];
     } else if ([item action] == @selector(openCommandHistory:)) {

@@ -107,6 +107,9 @@ NS_INLINE NSUInteger iTermCombineHash(NSUInteger hash1, NSUInteger hash2) {
 - (NSString *)tastefulDescription;
 - (id)it_jsonSafeValue;
 
+- (NSData *)it_keyValueCodedData;
++ (instancetype)it_fromKeyValueCodedData:(NSData *)data;
+
 @end
 
 NS_ASSUME_NONNULL_END

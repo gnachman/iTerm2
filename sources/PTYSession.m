@@ -143,6 +143,7 @@
 #import "NSFont+iTerm.h"
 #import "NSHost+iTerm.h"
 #import "NSImage+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "NSPasteboard+iTerm.h"
 #import "NSScreen+iTerm.h"
 #import "NSStringITerm.h"
@@ -302,6 +303,7 @@ static NSString *const SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS = @"Overridden Fiel
 static NSString *const SESSION_ARRANGEMENT_FILTER = @"Filter";  // NSString
 static NSString *const SESSION_ARRANGEMENT_SSH_STATE = @"SSH State";  // NSNumber
 static NSString *const SESSION_ARRANGEMENT_CONDUCTOR = @"Conductor";  // NSString (json)
+static NSString *const SESSION_ARRANGEMENT_PENDING_JUMPS = @"Pending Jumps";  // NSArray<NSString *>, optional.
 
 // Keys for dictionary in SESSION_ARRANGEMENT_PROGRAM
 static NSString *const kProgramType = @"Type";  // Value will be one of the kProgramTypeXxx constants.
@@ -608,6 +610,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     AITermControllerObjC *_aiterm;
     NSMutableArray<NSString *> *_commandQueue;
+    NSMutableArray<NSString *> *_pendingJumps;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1001,6 +1004,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_lastFocusReportDate release];
     [_aiterm release];
     [_commandQueue release];
+    [_pendingJumps release];
 
     [super dealloc];
 }
@@ -1554,6 +1558,9 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         haveSavedProgramData = NO;
     }
+    if (arrangement[SESSION_ARRANGEMENT_PENDING_JUMPS]) {
+        aSession->_pendingJumps = [arrangement[SESSION_ARRANGEMENT_PENDING_JUMPS] copy];
+    }
 
     if (arrangement[SESSION_ARRANGEMENT_ENVIRONMENT]) {
         aSession.environment = arrangement[SESSION_ARRANGEMENT_ENVIRONMENT];
@@ -1619,8 +1626,12 @@ ITERM_WEAKLY_REFERENCEABLE
             if (aSession->_conductor) {
                 [aSession updateVariablesFromConductor];
                 [aSession.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-                    [terminal.parser startConductorRecoveryModeWithID:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID]
-                                                                 tree:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_TREE]];
+                    NSData *data = [NSData castFrom:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_TREE]];
+                    NSDictionary *dict = [NSDictionary it_fromKeyValueCodedData:data];
+                    if (dict) {
+                        [terminal.parser startConductorRecoveryModeWithID:arrangement[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID]
+                                                                     tree:dict];
+                    }
                 }];
             }
             // iTerm2 is currently configured to run jobs in servers, but we
@@ -2160,6 +2171,18 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (SSHIdentity *)sshIdentity {
     return _conductor.sshIdentity;
+}
+
+- (NSArray<NSString *> *)sshCommandLineSequence {
+    assert(_conductor);
+    NSMutableArray<NSString *> *sequence = [NSMutableArray array];
+    iTermConductor *current = _conductor;
+    [sequence insertObject:current.sshargs atIndex:0];
+    while (current.parent) {
+        current = current.parent;
+        [sequence insertObject:current.sshargs atIndex:0];
+    }
+    return sequence;
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode move:(BOOL)move {
@@ -5107,6 +5130,18 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 
 - (BOOL)encodeArrangementWithContents:(BOOL)includeContents
                               encoder:(id<iTermEncoderAdapter>)result {
+    return [self encodeArrangementWithContents:includeContents
+                                       encoder:result
+                            replacementProfile:nil
+                                   saveProgram:YES
+                                  pendingJumps:nil];
+}
+
+- (BOOL)encodeArrangementWithContents:(BOOL)includeContents
+                              encoder:(id<iTermEncoderAdapter>)result
+                   replacementProfile:(Profile *)replacementProfile
+                          saveProgram:(BOOL)saveProgram
+                         pendingJumps:(NSArray<NSString *> *)pendingJumps {
     DLog(@"Construct arrangement for session %@ with includeContents=%@", self, @(includeContents));
     if (_filter.length && _liveSession != nil) {
         DLog(@"Encode live session because this one is filtered.");
@@ -5118,27 +5153,32 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     }
     result[SESSION_ARRANGEMENT_COLUMNS] = @(_screen.width);
     result[SESSION_ARRANGEMENT_ROWS] = @(_screen.height);
-    result[SESSION_ARRANGEMENT_BOOKMARK] = _profile;
+    result[SESSION_ARRANGEMENT_BOOKMARK] = replacementProfile ?: _profile;
 
     if (_substitutions) {
         result[SESSION_ARRANGEMENT_SUBSTITUTIONS] = _substitutions;
     }
 
-    NSString *const programType = [self programType];
-    if ([programType isEqualToString:kProgramTypeCustomShell]) {
-        // The shell launcher command could change from run to run (e.g., if you move iTerm2).
-        // I don't want to use a magic string, so setting program to an empty dict.
-        assert(self.customShell.length);
-        NSDictionary *dict = @{ kProgramType: kProgramTypeCustomShell };
-        dict = [dict dictionaryBySettingObject:self.customShell forKey:kCustomShell];
-        result[SESSION_ARRANGEMENT_PROGRAM] = dict;
-    } else if ([programType isEqualToString:kProgramTypeShellLauncher]) {
-        NSDictionary *dict = @{ kProgramType: kProgramTypeShellLauncher };
-        result[SESSION_ARRANGEMENT_PROGRAM] = dict;
-    } else if ([programType isEqualToString:kProgramTypeCommand] &&
-               self.program) {
-        result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeCommand,
-                                                 kProgramCommand: self.program };
+    if (saveProgram) {
+        NSString *const programType = [self programType];
+        if ([programType isEqualToString:kProgramTypeCustomShell]) {
+            // The shell launcher command could change from run to run (e.g., if you move iTerm2).
+            // I don't want to use a magic string, so setting program to an empty dict.
+            assert(self.customShell.length);
+            NSDictionary *dict = @{ kProgramType: kProgramTypeCustomShell };
+            dict = [dict dictionaryBySettingObject:self.customShell forKey:kCustomShell];
+            result[SESSION_ARRANGEMENT_PROGRAM] = dict;
+        } else if ([programType isEqualToString:kProgramTypeShellLauncher]) {
+            NSDictionary *dict = @{ kProgramType: kProgramTypeShellLauncher };
+            result[SESSION_ARRANGEMENT_PROGRAM] = dict;
+        } else if ([programType isEqualToString:kProgramTypeCommand] &&
+                   self.program) {
+            result[SESSION_ARRANGEMENT_PROGRAM] = @{ kProgramType: kProgramTypeCommand,
+                                                     kProgramCommand: self.program };
+        }
+    }
+    if (pendingJumps) {
+        result[SESSION_ARRANGEMENT_PENDING_JUMPS] = [[pendingJumps copy] autorelease];
     }
     result[SESSION_ARRANGEMENT_KEYLABELS] = _keyLabels ?: @{};
     result[SESSION_ARRANGEMENT_KEYLABELS_STACK] = [_keyLabelsStack mapWithBlock:^id(iTermKeyLabels *anObject) {
@@ -5237,7 +5277,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     }
     if ( _conductor) {
         result[SESSION_ARRANGEMENT_CONDUCTOR_DCS_ID] = _conductor.dcsID;
-        result[SESSION_ARRANGEMENT_CONDUCTOR_TREE] = _conductor.tree;
+        result[SESSION_ARRANGEMENT_CONDUCTOR_TREE] = _conductor.tree.it_keyValueCodedData;
     }
 
     result[SESSION_ARRANGEMENT_SHOULD_EXPECT_PROMPT_MARKS] = @(_screen.shouldExpectPromptMarks);
@@ -13930,7 +13970,15 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     _sshState = iTermSSHStateNone;
     _conductor.delegate = self;
-    [_conductor start];
+    NSArray<NSString *> *jumps = _pendingJumps;
+    if (!previousConductor && jumps.count) {
+        [_conductor startJumpingTo:jumps];
+    } else if (previousConductor.subsequentJumps.count) {
+        [_conductor startJumpingTo:previousConductor.subsequentJumps];
+        [previousConductor childDidBeginJumping];
+    } else {
+        [_conductor start];
+    }
     [self updateVariablesFromConductor];
 }
 

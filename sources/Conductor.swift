@@ -31,7 +31,7 @@ class Conductor: NSObject, Codable {
         return "<Conductor: \(self.it_addressString) \(sshargs) dcs=\(dcsID) clientUniqueID=\(clientUniqueID) state=\(state) parent=\(String(describing: parent?.debugDescription))>"
     }
 
-    private let sshargs: String
+    @objc let sshargs: String
     private let varsToSend: [String: String]
     // Environment variables shared from client before running ssh
     private let clientVars: [String: String]
@@ -46,12 +46,16 @@ class Conductor: NSObject, Codable {
     private let initialDirectory: String?
     private let parsedSSHArguments: ParsedSSHArguments
     private let shouldInjectShellIntegration: Bool
-    @objc let depth: Int32
+    private let depth: Int32
     @objc let parent: Conductor?
-    @objc var autopollEnabled = true
+    @objc var autopollEnabled = false
     private var _queueWrites = true
     private var restored = false
     private var autopoll = ""
+    // Jumps that children must do.
+    @objc private(set) var subsequentJumps: [String] = []
+    // If non-nil, a jump that I haven't done yet.
+    private var myJump: String?
     @objc var queueWrites: Bool {
         if let parent = parent {
             return nontransitiveQueueWrites && parent.queueWrites
@@ -233,10 +237,12 @@ class Conductor: NSObject, Codable {
         case write(data: Data, dest: String)
         case cd(String)
         case quit
+        case eval(String)  // string is base-64 encoded bash code
 
         // Framer commands
         case framerRun(String)
         case framerLogin(cwd: String, args: [String])
+        case framerEval(String)
         case framerSend(Data, pid: Int32)
         case framerKill(pid: Int)
         case framerQuit
@@ -251,12 +257,12 @@ class Conductor: NSObject, Codable {
         var isFramer: Bool {
             switch self {
             case .execLoginShell, .setenv(_, _), .run(_), .runPython(_), .shell(_),
-                    .write(_, _), .cd(_), .quit, .getshell:
+                    .write(_, _), .cd(_), .quit, .getshell, .eval(_):
                 return false
 
             case .framerRun, .framerLogin, .framerSend, .framerKill, .framerQuit, .framerRegister(_),
                     .framerDeregister(_), .framerPoll, .framerReset, .framerAutopoll, .framerSave(_),
-                    .framerFile(_):
+                    .framerFile(_), .framerEval:
                 return true
             }
         }
@@ -279,6 +285,8 @@ class Conductor: NSObject, Codable {
                 return "cd \(dir)"
             case .quit:
                 return "quit"
+            case .eval(let b64):
+                return "eval \(b64)"
             case .getshell:
                 return "getshell"
 
@@ -286,6 +294,8 @@ class Conductor: NSObject, Codable {
                 return ["run", command].joined(separator: "\n")
             case .framerLogin(cwd: let cwd, args: let args):
                 return (["login", cwd] + args).joined(separator: "\n")
+            case .framerEval(let script):
+                return ["eval", script.base64Encoded].joined(separator: "\n")
             case .framerSend(let data, pid: let pid):
                 return (["send", String(pid), data.base64EncodedString()]).joined(separator: "\n")
             case .framerKill(pid: let pid):
@@ -328,12 +338,16 @@ class Conductor: NSObject, Codable {
                 return "changing directory to \(dir)"
             case .quit:
                 return "quitting"
+            case .eval:
+                return "evaling"
             case .getshell:
                 return "getshell"
             case .framerRun(let command):
                 return "run “\(command)”"
             case .framerLogin(cwd: let cwd, args: let args):
                 return "login cwd=\(cwd) args=\(args)"
+            case .framerEval:
+                return "eval"
             case .framerSave(let dict):
                 return "save \(dict.keys.joined(separator: ", "))"
             case .framerSend(let data, pid: let pid):
@@ -382,6 +396,8 @@ class Conductor: NSObject, Codable {
                     return "fireAndForget"
                 case .handleFramerLogin(let output):
                     return "handleFramerLogin(\(output.string))"
+                case .handleJump:
+                    return "handleJump"
                 case .writeOnSuccess(let code):
                     return "writeOnSuccess(\(code.count) chars)"
                 case .handleRunRemoteCommand(let command, _):
@@ -401,6 +417,7 @@ class Conductor: NSObject, Codable {
             case handleCheckForPython(StringArray)
             case fireAndForget  // don't care what the result is
             case handleFramerLogin(StringArray)
+            case handleJump(StringArray)
             case writeOnSuccess(String)  // see runPython
             case handleRunRemoteCommand(String, (Data, Int32) -> ())
             case handleBackgroundJob(StringArray, (Data, Int32) -> ())
@@ -419,6 +436,7 @@ class Conductor: NSObject, Codable {
                 case handleCheckForPython
                 case fireAndForget
                 case handleFramerLogin
+                case handleJump
                 case writeOnSuccess
                 case handleRunRemoteCommand
                 case handleBackgroundJob
@@ -437,6 +455,8 @@ class Conductor: NSObject, Codable {
                     return RawValues.fireAndForget.rawValue
                 case .handleFramerLogin:
                     return RawValues.handleFramerLogin.rawValue
+                case .handleJump:
+                    return RawValues.handleJump.rawValue
                 case .writeOnSuccess(_):
                     return RawValues.writeOnSuccess.rawValue
                 case .handleRunRemoteCommand(_, _):
@@ -456,7 +476,8 @@ class Conductor: NSObject, Codable {
                 var container = encoder.container(keyedBy: Key.self)
                 try container.encode(rawValue, forKey: .rawValue)
                 switch self {
-                case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin(_), .handlePoll(_, _):
+                case .failIfNonzeroStatus, .fireAndForget, .handleFramerLogin(_), .handlePoll(_, _),
+                        .handleJump:
                     break
                 case .handleCheckForPython(let value):
                     try container.encode(value, forKey: .stringArray)
@@ -488,6 +509,8 @@ class Conductor: NSObject, Codable {
                     self = .fireAndForget
                 case .handleFramerLogin:
                     self = .handleFramerLogin(try container.decode(StringArray.self, forKey: .stringArray))
+                case .handleJump:
+                    self = .handleJump(try container.decode(StringArray.self, forKey: .stringArray))
                 case .writeOnSuccess:
                     self = .writeOnSuccess(try container.decode(String.self, forKey: .string))
                 case .handleRunRemoteCommand:
@@ -602,7 +625,7 @@ class Conductor: NSObject, Codable {
 
     private var state: State = .ground {
         willSet {
-            DLog("State \(state) -> \(newValue)")
+            DLog("[\(framedPID.map { String($0) } ?? "unframed")] state \(state) -> \(newValue)")
         }
     }
 
@@ -652,7 +675,16 @@ class Conductor: NSObject, Codable {
 
         self.initialDirectory = initialDirectory
         self.shouldInjectShellIntegration = shouldInjectShellIntegration
-        self.depth = (parent?.depth ?? -1) + 1
+        if let parent {
+            if parent.framing {
+                self.depth = parent.depth + 1
+            } else {
+                // Use same depth as parent because it won't wrap input for us.
+                self.depth = parent.depth
+            }
+        } else {
+            self.depth = 0
+        }
         self.parent = parent
         super.init()
         DLog("Conductor starting")
@@ -684,7 +716,11 @@ class Conductor: NSObject, Codable {
         shouldInjectShellIntegration = false
         parsedSSHArguments = ParsedSSHArguments(sshargs, booleanArgs: recovery.boolArgs)
         if let parent = recovery.parent {
-            depth = parent.depth + 1
+            if parent.framing {
+                depth = parent.depth + 1
+            } else {
+                depth = parent.depth
+            }
         } else {
             depth = 0
         }
@@ -809,6 +845,39 @@ class Conductor: NSObject, Codable {
         getshell()
     }
 
+    @objc(startJumpingTo:) func startJumping(to jumps: [String]) {
+        precondition(!jumps.isEmpty)
+        myJump = jumps.first!
+        subsequentJumps = Array(jumps.dropFirst())
+        start()
+    }
+
+    private var jumpScript: String {
+        defer {
+            myJump = nil
+        }
+        let path = Bundle(for: Conductor.self).path(forResource: "utilities/it2ssh", ofType: nil)!
+        let it2ssh = try! String(contentsOfFile: path)
+        let code = """
+        #!/usr/bin/env bash
+        rm $SELF
+        unset SELF
+        it2ssh_wrapper() {
+        \(it2ssh)
+        }
+        it2ssh_wrapper \(myJump!)
+        """
+        return code
+    }
+
+    private func jumpWithEval() {
+        eval(code: jumpScript)
+    }
+
+    @objc func childDidBeginJumping() {
+        myJump = nil
+    }
+
     private func didFinishGetShell() {
         setEnvironmentVariables()
         uploadPayloads()
@@ -843,6 +912,10 @@ class Conductor: NSObject, Codable {
         delegate?.conductorStateDidChange()
     }
 
+    func eval(code: String) {
+        send(.eval(code.base64Encoded), .fireAndForget)
+    }
+
     @objc(ancestryContainsClientUniqueID:)
     func ancestryContains(clientUniqueID: String) -> Bool {
         return self.clientUniqueID == clientUniqueID || (parent?.ancestryContains(clientUniqueID: clientUniqueID) ?? false)
@@ -850,7 +923,7 @@ class Conductor: NSObject, Codable {
 
     @objc func sendKeys(_ data: Data) {
         guard let pid = framedPID else {
-            DLog("send unframed \(data.semiVerboseDescription)")
+            DLog("[sendKeys] Write: \(data.stringOrHex)")
             delegate?.conductorWrite(string: String(data: data, encoding: .isoLatin1)!)
             return
         }
@@ -875,8 +948,12 @@ class Conductor: NSObject, Codable {
                 self?.delegate?.conductorStateDidChange()
             }
         }
-        framerLogin(cwd: initialDirectory ?? "$HOME",
-                    args: modifiedCommandArgs ?? parsedSSHArguments.commandArgs)
+        if myJump != nil {
+            framerJump()
+        } else {
+            framerLogin(cwd: initialDirectory ?? "$HOME",
+                        args: modifiedCommandArgs ?? parsedSSHArguments.commandArgs)
+        }
         if autopollEnabled {
             send(.framerAutopoll, .fireAndForget)
         }
@@ -906,6 +983,10 @@ class Conductor: NSObject, Codable {
 
     private func framerLogin(cwd: String, args: [String]) {
         send(.framerLogin(cwd: cwd, args: args), .handleFramerLogin(StringArray()))
+    }
+
+    private func framerJump() {
+        send(.framerEval(jumpScript), .handleJump(StringArray()))
     }
 
     private func framerSend(data: Data, pid: Int32) {
@@ -938,6 +1019,8 @@ class Conductor: NSObject, Codable {
         if let modifiedCommandArgs = modifiedCommandArgs,
            modifiedCommandArgs.isEmpty {
             send(.execLoginShell(modifiedCommandArgs), .failIfNonzeroStatus)
+        } else if parsedSSHArguments.commandArgs.isEmpty {
+            send(.execLoginShell([]), .failIfNonzeroStatus)
         } else {
             run((parsedSSHArguments.commandArgs).joined(separator: " "))
         }
@@ -1035,6 +1118,8 @@ class Conductor: NSObject, Codable {
                 if major > Self.minimumPythonMajorVersion ||
                     (major == Self.minimumPythonMajorVersion && minor >= Self.minimumPythonMinorVersion) {
                     doFraming()
+                } else if myJump != nil {
+                    jumpWithEval()
                 } else {
                     execLoginShell()
                 }
@@ -1047,26 +1132,21 @@ class Conductor: NSObject, Codable {
             case .line(let message):
                 lines.strings.append(message)
             case .end(let status):
-                guard status == 0 else {
-                    fail(lines.string)
-                    return
-                }
-                guard let pid = Int32(lines.string) else {
-                    fail("Invalid process ID from remote: \(lines.string)")
-                    return
-                }
-                if iTermAdvancedSettingsModel.enableSSHFileProvider() {
-                    if #available(macOS 11.0, *) {
-                        Task {
-                            await ConductorRegistry.shared.register(self)
-                        }
-                    }
-                }
-                framedPID = pid
-                delegate?.conductorStateDidChange()
+                finalizeFraming(status: status, lines: lines)
                 return
             case .abort, .sideChannelLine(_, _, _):
                 return
+            }
+        case .handleJump(let lines):
+            // TODO: Would be nice to offer to reconnect?
+            switch result {
+            case .line(let message):
+                lines.strings.append(message)
+            case .end(let status):
+                finalizeFraming(status: status, lines: lines)
+                return
+            case .abort, .sideChannelLine:
+                break
             }
         case .writeOnSuccess(let code):
             switch result {
@@ -1182,7 +1262,28 @@ class Conductor: NSObject, Codable {
         }
     }
 
+    private func finalizeFraming(status: UInt8, lines: StringArray) {
+        guard status == 0 else {
+            fail(lines.string)
+            return
+        }
+        guard let pid = Int32(lines.string) else {
+            fail("Invalid process ID from remote: \(lines.string)")
+            return
+        }
+        if iTermAdvancedSettingsModel.enableSSHFileProvider() {
+            if #available(macOS 11.0, *) {
+                Task {
+                    await ConductorRegistry.shared.register(self)
+                }
+            }
+        }
+        framedPID = pid
+        delegate?.conductorStateDidChange()
+    }
+
     @objc(handleLine:depth:) func handle(line: String, depth: Int32) {
+        DLog("[\(framedPID.map { String($0) } ?? "unframed")] handle input: \(line)")
         if depth != self.depth && framing {
             DLog("Pass line with depth \(depth) to parent \(String(describing: parent)) because my depth is \(self.depth)")
             parent?.handle(line: line, depth: depth)
@@ -1207,11 +1308,12 @@ class Conductor: NSObject, Codable {
     @objc func handleCommandBegin(identifier: String, depth: Int32) {
         // NOTE: no attempt is made to ensure this is meant for me; could be for my parent but it
         // only logs so who cares.
-        DLog("< command \(identifier) response will begin")
+        DLog("[\(framedPID.map { String($0) } ?? "unframed")] begin \(identifier) depth=\(depth)")
     }
 
     // type can be "f" for framer or "r" for regular (non-framer)
     @objc func handleCommandEnd(identifier: String, type: String, status: UInt8, depth: Int32) {
+        DLog("[\(framedPID.map { String($0) } ?? "unframed")] end \(identifier) depth=\(depth)")
         let expectFraming: Bool
         if framing {
             expectFraming = true
@@ -1442,7 +1544,7 @@ class Conductor: NSObject, Codable {
             if delegate == nil {
                 DLog("[can't send - nil delegate]")
             }
-            DLog("> \(string)")
+            DLog("[to \(framedPID.map { String($0) } ?? "non-framing")] Write: \(string)")
             delegate?.conductorWrite(string: string + end)
         }
         _queueWrites = savedQueueWrites

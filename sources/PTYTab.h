@@ -132,6 +132,11 @@ extern NSString *const PTYTabVariableTitleOverride;
 + (NSDictionary *)arrangementForSessionWithGUID:(NSString *)sessionGUID
                                   inArrangement:(NSDictionary *)arrangement;
 
+- (NSDictionary *)arrangementWithOnlySession:(PTYSession *)session
+                                     profile:(Profile *)profile
+                                 saveProgram:(BOOL)saveProgram
+                                pendingJumps:(NSArray<NSString *> *)pendingJumps;
+
 + (void)openPartialAttachmentsForArrangement:(NSDictionary *)arrangement
                                   completion:(void (^)(NSDictionary *))completion;
 

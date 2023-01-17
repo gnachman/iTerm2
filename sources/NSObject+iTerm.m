@@ -314,6 +314,9 @@
             if (oops) {
                 return oops;
             }
+            if (![key isKindOfClass:[NSString class]]) {
+                return [NSString stringWithFormat:@"key %@ in dictionary at %@ is %@, not NSString", key, path, NSStringFromClass([key class])];
+            }
         }
         return nil;
     }
@@ -335,6 +338,23 @@
 
 - (NSString *)it_addressString {
     return [NSString stringWithFormat:@"%p", self];
+}
+
+- (NSData *)it_keyValueCodedData {
+    NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
+    [archiver encodeObject:self forKey:@"root"];
+    [archiver finishEncoding];
+    return [archiver encodedData];
+}
+
++ (instancetype)it_fromKeyValueCodedData:(NSData *)data {
+    NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:nil];
+    if (!unarchiver) {
+        return nil;
+    }
+    NSDictionary *dictionary = [unarchiver decodeObjectOfClass:[self class] forKey:@"root"];
+    [unarchiver finishDecoding];
+    return dictionary;
 }
 
 @end

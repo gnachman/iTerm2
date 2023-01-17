@@ -43,7 +43,7 @@
     NSArray *maybeSessionFrameTuples =
     [_sessions mapWithBlock:^id(PTYSession *session) {
         DLog(@"Encode session %@", session);
-        NSMutableDictionary *dict = [NSMutableDictionary dictionary];;
+        NSMutableDictionary *dict = [NSMutableDictionary dictionary];
         iTermMutableDictionaryEncoderAdapter *encoder =
             [[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict];
         [session encodeArrangementWithContents:YES encoder:encoder];

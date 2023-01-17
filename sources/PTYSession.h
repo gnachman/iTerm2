@@ -577,6 +577,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, copy) NSDictionary *foundingArrangement;
 @property(nonatomic, readonly) id<ExternalSearchResultsController> externalSearchResultsController;
 @property(nonatomic, readonly) SSHIdentity *sshIdentity;
+@property(nonatomic, readonly) NSArray<NSString *> *sshCommandLineSequence;
 @property(nonatomic, readonly) id<ProcessInfoProvider> processInfoProvider;
 
 #pragma mark - methods
@@ -854,6 +855,12 @@ backgroundColor:(NSColor *)backgroundColor;
 
 - (BOOL)encodeArrangementWithContents:(BOOL)includeContents
                               encoder:(id<iTermEncoderAdapter>)encoder;
+
+- (BOOL)encodeArrangementWithContents:(BOOL)includeContents
+                              encoder:(id<iTermEncoderAdapter>)encoder
+                   replacementProfile:(Profile *)replacementProfile
+                          saveProgram:(BOOL)saveProgram
+                         pendingJumps:(NSArray<NSString *> *)pendingJumps;
 
 - (void)toggleTmuxZoom;
 - (void)forceTmuxDetach;

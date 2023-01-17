@@ -14,6 +14,7 @@ import signal
 import stat
 import subprocess
 import sys
+import tempfile
 import termios
 import time
 import traceback
@@ -415,6 +416,26 @@ def procmon_parse(output):
     return list(diff())
 
 
+async def save_and_exec(identifier, code):
+    log("begin save_and_exec")
+    try:
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        tmpname = tmp.name
+        log(f'save_and_exec: tmp={tmpname}')
+        tmp.write(code.encode("utf-8"))
+        tmp.close()
+        st = os.stat(tmpname)
+        os.chmod(tmpname, st.st_mode | stat.S_IEXEC)
+
+        e = dict(os.environ)
+        e["SELF"] = tmpname
+        await run_login_shell(identifier, "/bin/sh", ["sh", tmpname], os.getcwd(), e)
+    except Exception as e:
+        log(f'save_and_exec: {traceback.format_exc()}')
+        begin(identifier)
+        send_esc(f'Command failed: {e}')
+        end(identifier, 1)
+
 ## Commands
 
 async def handle_login(identifier, args):
@@ -436,12 +457,16 @@ async def handle_login(identifier, args):
         argv0 = "-" + shell_name
 
     log(f'Login shell is {login_shell}. Guessed shell is {guessed}. argv0 is {argv0}')
+    return await run_login_shell(identifier, login_shell, [argv0] + args, cwd, os.environ)
+
+async def run_login_shell(identifier, login_shell, argv, directory, environment):
+    log(f'run_login_shell: dir={directory} command={login_shell} {argv}')
     try:
         proc = await Process.run_tty(
             login_shell,
-            [argv0] + args,
-            cwd,
-            os.environ)
+            argv,
+            directory,
+            environment)
         log("login shell started")
         global PROCESSES
         proc.login = True
@@ -451,7 +476,7 @@ async def handle_login(identifier, args):
         end(identifier, 0)
         await proc.handle_read(make_monitor_process(proc, True))
     except Exception as e:
-        log(f'handle_login: {e}')
+        log(f'run_login_shell: {e}')
         begin(identifier)
         send_esc(f'Command failed: {e}')
         end(identifier, 1)
@@ -497,6 +522,10 @@ async def handle_save(identifier, args):
         code = 1
     begin(identifier)
     end(identifier, code)
+
+async def handle_eval(identifier, args):
+    log(f'handle_eval {identifier} [{len(args[0])} bytes]')
+    await save_and_exec(identifier, base64.b64decode(args[0]).decode('latin1'))
 
 async def handle_file(identifier, args):
     log(f'handle_file {identifier} {args}')
@@ -1049,6 +1078,7 @@ HANDLERS = {
     "recover": handle_recover,
     "save": handle_save,
     "file": handle_file,
+    "eval": handle_eval
 }
 
 def main():
