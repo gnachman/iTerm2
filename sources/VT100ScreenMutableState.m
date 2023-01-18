@@ -4580,7 +4580,7 @@ launchCoprocessWithCommand:(NSString *)command
 - (void)triggerSession:(Trigger *)trigger setCurrentDirectory:(NSString *)currentDirectory {
     // Stop the world (this affects a variable)
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
-        [delegate triggerSideEffectCurrentDirectoryDidChange];
+        [delegate triggerSideEffectCurrentDirectoryDidChange:currentDirectory];
     }];
     // This can be sync
     [self currentDirectoryDidChangeTo:currentDirectory completion:^{}];

@@ -2175,18 +2175,26 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"duplicateSession");
     PTYSession *session = self.currentSession;
     MutableProfile *profile = [[session.profile mutableCopy] autorelease];
-    NSArray<NSString *> *pendingJumps = nil;
+    NSArray<iTermSSHReconnectionInfo *> *pendingJumps = nil;
     if (session.sshIdentity) {
-        NSArray<NSString *> *sequence = session.sshCommandLineSequence;
-        if (![profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
+        NSArray<iTermSSHReconnectionInfo *> *sequence = session.sshCommandLineSequence;
+        if ([profile[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
+            // SSH command type
+            if (sequence[0].initialDirectory) {
+                profile[KEY_CUSTOM_DIRECTORY] = @"Yes";
+                profile[KEY_WORKING_DIRECTORY] = sequence[0].initialDirectory;
+            }
+        } else {
             // Local session in which the user ran it2ssh. Change to ssh profile to first host.
             assert(sequence.count > 0);
             profile[KEY_CUSTOM_COMMAND] = kProfilePreferenceCommandTypeSSHValue;
-            profile[KEY_COMMAND_LINE] = sequence[0];
+            profile[KEY_COMMAND_LINE] = sequence[0].sshargs;
+            if (sequence[0].initialDirectory) {
+                profile[KEY_CUSTOM_DIRECTORY] = @"Yes";
+                profile[KEY_WORKING_DIRECTORY] = sequence[0].initialDirectory;
+            }
         }
-        if (sequence.count > 1) {
-            pendingJumps = [sequence subarrayFromIndex:1];
-        }
+        pendingJumps = sequence;
         // TOOD: Should specify a pwd for each host along the way. This will do the wrong thing if
         // there are jump hosts.
         NSString *pwd = session.variablesScope.path;

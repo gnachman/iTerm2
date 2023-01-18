@@ -610,7 +610,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     AITermControllerObjC *_aiterm;
     NSMutableArray<NSString *> *_commandQueue;
-    NSMutableArray<NSString *> *_pendingJumps;
+    NSMutableArray<iTermSSHReconnectionInfo *> *_pendingJumps;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1559,7 +1559,9 @@ ITERM_WEAKLY_REFERENCEABLE
         haveSavedProgramData = NO;
     }
     if (arrangement[SESSION_ARRANGEMENT_PENDING_JUMPS]) {
-        aSession->_pendingJumps = [arrangement[SESSION_ARRANGEMENT_PENDING_JUMPS] copy];
+        aSession->_pendingJumps = [[[NSArray castFrom:arrangement[SESSION_ARRANGEMENT_PENDING_JUMPS]] mapWithBlock:^id _Nullable(id  _Nonnull data) {
+            return [[[iTermSSHReconnectionInfo alloc] initWithData: data] autorelease];
+        }] mutableCopy];
     }
 
     if (arrangement[SESSION_ARRANGEMENT_ENVIRONMENT]) {
@@ -2173,14 +2175,14 @@ ITERM_WEAKLY_REFERENCEABLE
     return _conductor.sshIdentity;
 }
 
-- (NSArray<NSString *> *)sshCommandLineSequence {
+- (NSArray<iTermSSHReconnectionInfo *> *)sshCommandLineSequence {
     assert(_conductor);
-    NSMutableArray<NSString *> *sequence = [NSMutableArray array];
+    NSMutableArray<iTermSSHReconnectionInfo *> *sequence = [NSMutableArray array];
     iTermConductor *current = _conductor;
-    [sequence insertObject:current.sshargs atIndex:0];
+    [sequence insertObject:current.reconnectionInfo atIndex:0];
     while (current.parent) {
         current = current.parent;
-        [sequence insertObject:current.sshargs atIndex:0];
+        [sequence insertObject:current.reconnectionInfo atIndex:0];
     }
     return sequence;
 }
@@ -5141,7 +5143,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
                               encoder:(id<iTermEncoderAdapter>)result
                    replacementProfile:(Profile *)replacementProfile
                           saveProgram:(BOOL)saveProgram
-                         pendingJumps:(NSArray<NSString *> *)pendingJumps {
+                         pendingJumps:(NSArray<iTermSSHReconnectionInfo *> *)pendingJumps {
     DLog(@"Construct arrangement for session %@ with includeContents=%@", self, @(includeContents));
     if (_filter.length && _liveSession != nil) {
         DLog(@"Encode live session because this one is filtered.");
@@ -5178,7 +5180,9 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
         }
     }
     if (pendingJumps) {
-        result[SESSION_ARRANGEMENT_PENDING_JUMPS] = [[pendingJumps copy] autorelease];
+        result[SESSION_ARRANGEMENT_PENDING_JUMPS] = [pendingJumps mapWithBlock:^id _Nullable(iTermSSHReconnectionInfo * _Nonnull info) {
+            return [info serialized];
+        }];
     }
     result[SESSION_ARRANGEMENT_KEYLABELS] = _keyLabels ?: @{};
     result[SESSION_ARRANGEMENT_KEYLABELS_STACK] = [_keyLabelsStack mapWithBlock:^id(iTermKeyLabels *anObject) {
@@ -5226,6 +5230,13 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
             if (json) {
                 result[SESSION_ARRANGEMENT_CONDUCTOR] = json;
             }
+        }
+    } else {
+        if (_conductor &&
+            [self.profile[KEY_CUSTOM_COMMAND] isEqualTo:kProfilePreferenceCommandTypeSSHValue]) {
+            result[SESSION_ARRANGEMENT_PENDING_JUMPS] = [self.sshCommandLineSequence mapWithBlock:^id _Nullable(iTermSSHReconnectionInfo * _Nonnull anObject) {
+                return anObject.serialized;
+            }];
         }
     }
     result[SESSION_ARRANGEMENT_GUID] = _guid;
@@ -12515,7 +12526,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenCurrentDirectoryDidChangeTo:(NSString *)newPath
                                remoteHost:(id<VT100RemoteHostReading> _Nullable)remoteHost {
     DLog(@"%@\n%@", newPath, [NSThread callStackSymbols]);
-    [self didUpdateCurrentDirectory];
+    [self didUpdateCurrentDirectory:newPath];
     [self.variablesScope setValue:newPath forVariableNamed:iTermVariableKeySessionPath];
 
     [self tryAutoProfileSwitchWithHostname:remoteHost.hostname
@@ -13321,8 +13332,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 }
 
-- (void)didUpdateCurrentDirectory {
+- (void)didUpdateCurrentDirectory:(NSString *)newPath {
     _shouldExpectCurrentDirUpdates = YES;
+    _conductor.currentDirectory = newPath;
 }
 
 - (NSString *)shellIntegrationUpgradeUserDefaultsKeyForHost:(id<VT100RemoteHostReading>)host {
@@ -13949,6 +13961,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         // Currently launching the session that has ssh instead of login shell.
         directory = self.environment[@"PWD"];
     }
+    if (_pendingJumps.count) {
+        directory = _pendingJumps[0].initialDirectory;
+        [_pendingJumps removeObjectAtIndex:0];
+    }
     iTermConductor *previousConductor = [_conductor autorelease];
     NSDictionary *dict = [NSDictionary castFrom:[iTermProfilePreferences objectForKey:KEY_SSH_CONFIG inProfile:self.profile]];
     const BOOL shouldInjectShellIntegration = [iTermProfilePreferences boolForKey:KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY inProfile:self.profile];
@@ -13970,7 +13986,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     _sshState = iTermSSHStateNone;
     _conductor.delegate = self;
-    NSArray<NSString *> *jumps = _pendingJumps;
+    NSArray<iTermSSHReconnectionInfo *> *jumps = _pendingJumps;
     if (!previousConductor && jumps.count) {
         [_conductor startJumpingTo:jumps];
     } else if (previousConductor.subsequentJumps.count) {
@@ -16817,9 +16833,9 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     [self.genericScope setValue:value forVariableNamed:name];
 }
 
-- (void)triggerSideEffectCurrentDirectoryDidChange {
+- (void)triggerSideEffectCurrentDirectoryDidChange:(NSString *)newPath {
     [iTermGCD assertMainQueueSafe];
-    [self didUpdateCurrentDirectory];
+    [self didUpdateCurrentDirectory:newPath];
 }
 
 #pragma mark - iTermPasteboardReporterDelegate

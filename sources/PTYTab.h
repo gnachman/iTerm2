@@ -135,7 +135,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 - (NSDictionary *)arrangementWithOnlySession:(PTYSession *)session
                                      profile:(Profile *)profile
                                  saveProgram:(BOOL)saveProgram
-                                pendingJumps:(NSArray<NSString *> *)pendingJumps;
+                                pendingJumps:(NSArray<iTermSSHReconnectionInfo *> *)pendingJumps;
 
 + (void)openPartialAttachmentsForArrangement:(NSDictionary *)arrangement
                                   completion:(void (^)(NSDictionary *))completion;

@@ -9,7 +9,7 @@
 
 @implementation NSArray (CommonAdditions)
 
-- (NSArray *)mapWithBlock:(id (^NS_NOESCAPE)(id anObject))block {
+- (instancetype)mapWithBlock:(id (^NS_NOESCAPE)(id anObject))block {
     NSMutableArray *temp = [NSMutableArray array];
     for (id anObject in self) {
         id mappedObject = block(anObject);

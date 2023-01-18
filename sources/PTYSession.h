@@ -49,6 +49,7 @@ extern NSString *const PTYSessionDidResizeNotification;
 @class iTermEchoProbe;
 @class iTermImageWrapper;
 @class iTermKeyBindingAction;
+@class iTermSSHReconnectionInfo;
 @class iTermScriptHistoryEntry;
 @class iTermStatusBarViewController;
 @class iTermSwiftyStringGraph;
@@ -577,7 +578,7 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, copy) NSDictionary *foundingArrangement;
 @property(nonatomic, readonly) id<ExternalSearchResultsController> externalSearchResultsController;
 @property(nonatomic, readonly) SSHIdentity *sshIdentity;
-@property(nonatomic, readonly) NSArray<NSString *> *sshCommandLineSequence;
+@property(nonatomic, readonly) NSArray<iTermSSHReconnectionInfo *> *sshCommandLineSequence;
 @property(nonatomic, readonly) id<ProcessInfoProvider> processInfoProvider;
 
 #pragma mark - methods
@@ -860,7 +861,7 @@ backgroundColor:(NSColor *)backgroundColor;
                               encoder:(id<iTermEncoderAdapter>)encoder
                    replacementProfile:(Profile *)replacementProfile
                           saveProgram:(BOOL)saveProgram
-                         pendingJumps:(NSArray<NSString *> *)pendingJumps;
+                         pendingJumps:(NSArray<iTermSSHReconnectionInfo *> *)pendingJumps;
 
 - (void)toggleTmuxZoom;
 - (void)forceTmuxDetach;
@@ -924,7 +925,6 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)updateStatusBarStyle;
 - (BOOL)checkForCyclesInSwiftyStrings;
 - (void)applyAction:(iTermAction *)action;
-- (void)didUpdateCurrentDirectory;
 - (BOOL)sessionModeConsumesEvent:(NSEvent *)event;
 - (Profile *)profileForSplit;
 - (void)compose;

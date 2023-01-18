@@ -25,6 +25,36 @@ protocol ConductorDelegate: Any {
     func conductorStateDidChange()
 }
 
+struct SSHReconnectionInfo: Codable {
+    var sshargs: String
+    var initialDirectory: String?
+    var boolargs: String
+}
+
+@objc(iTermSSHReconnectionInfo)
+class SSHReconnectionInfoObjC: NSObject {
+    private(set) var state: SSHReconnectionInfo
+    init(_ info: SSHReconnectionInfo) {
+        self.state = info
+    }
+
+    @objc(initWithData:) init?(serialized: Data) {
+        do {
+            state = try JSONDecoder().decode(SSHReconnectionInfo.self, from: serialized)
+        } catch {
+            return nil
+        }
+    }
+
+    @objc var sshargs: String { state.sshargs }
+    @objc var initialDirectory: String? { state.initialDirectory }
+    @objc var boolargs: String { state.boolargs }
+
+    @objc var serialized: Data {
+        return try! JSONEncoder().encode(state)
+    }
+}
+
 @objc(iTermConductor)
 class Conductor: NSObject, Codable {
     override var debugDescription: String {
@@ -53,9 +83,12 @@ class Conductor: NSObject, Codable {
     private var restored = false
     private var autopoll = ""
     // Jumps that children must do.
-    @objc private(set) var subsequentJumps: [String] = []
+    private(set) var subsequentJumps: [SSHReconnectionInfo] = []
+    @objc(subsequentJumps) var subsequentJumps_objc: [SSHReconnectionInfoObjC] {
+        return subsequentJumps.map { SSHReconnectionInfoObjC($0) }
+    }
     // If non-nil, a jump that I haven't done yet.
-    private var myJump: String?
+    private var myJump: SSHReconnectionInfo?
     @objc var queueWrites: Bool {
         if let parent = parent {
             return nontransitiveQueueWrites && parent.queueWrites
@@ -127,6 +160,11 @@ class Conductor: NSObject, Codable {
         set {
             _terminalConfiguration = newValue.map { CodableNSDictionary($0) }
         }
+    }
+    @objc var reconnectionInfo: SSHReconnectionInfoObjC {
+        return SSHReconnectionInfoObjC(SSHReconnectionInfo(sshargs: sshargs,
+                                                           initialDirectory: currentDirectory ?? initialDirectory,
+                                                           boolargs: boolArgs))
     }
 
     enum FileSubcommand: Codable, Equatable {
@@ -642,6 +680,8 @@ class Conductor: NSObject, Codable {
     @objc let boolArgs: String
     @objc let dcsID: String
     @objc let clientUniqueID: String  // provided by client when hooking dcs
+    @objc var currentDirectory: String?
+
     private let superVerbose = false
     private var verbose: Bool {
         return superVerbose || gDebugLogging.boolValue
@@ -845,10 +885,10 @@ class Conductor: NSObject, Codable {
         getshell()
     }
 
-    @objc(startJumpingTo:) func startJumping(to jumps: [String]) {
+    @objc(startJumpingTo:) func startJumping(to jumps: [SSHReconnectionInfoObjC]) {
         precondition(!jumps.isEmpty)
-        myJump = jumps.first!
-        subsequentJumps = Array(jumps.dropFirst())
+        myJump = jumps.first!.state
+        subsequentJumps = Array(jumps.dropFirst().map { $0.state })
         start()
     }
 
@@ -865,7 +905,7 @@ class Conductor: NSObject, Codable {
         it2ssh_wrapper() {
         \(it2ssh)
         }
-        it2ssh_wrapper \(myJump!)
+        it2ssh_wrapper \(myJump!.sshargs)
         """
         return code
     }

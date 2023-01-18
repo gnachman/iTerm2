@@ -3284,7 +3284,7 @@ static NSString *const PTYTabArrangementOptionsPendingJumps = @"PTYTabArrangemen
 - (NSDictionary *)arrangementWithOnlySession:(PTYSession *)session
                                      profile:(Profile *)profile
                                  saveProgram:(BOOL)saveProgram
-                                pendingJumps:(NSArray<NSString *> *)pendingJumps {
+                                pendingJumps:(NSArray<iTermSSHReconnectionInfo *> *)pendingJumps {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     iTermMutableDictionaryEncoderAdapter *adapter = [[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict];
 
