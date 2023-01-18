@@ -48,6 +48,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)allowIdempotentTriggers;
 + (BOOL)allowInteractiveSwipeBetweenTabs;
 + (BOOL)allowTabbarInTitlebarAccessoryBigSur;
++ (BOOL)allowLiveResize;
 + (BOOL)alternateMouseScroll;
 + (BOOL)alwaysUseStatusBarComposer;
 + (BOOL)animateGraphStatusBarComponents;

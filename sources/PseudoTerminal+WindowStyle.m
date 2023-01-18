@@ -982,6 +982,10 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
     if (hotkeyWindowType == iTermHotkeyWindowTypeFloatingPanel) {
         mask = NSWindowStyleMaskNonactivatingPanel;
     }
+    NSWindowStyleMask resizable = NSWindowStyleMaskResizable;
+    if (![iTermAdvancedSettingsModel allowLiveResize]) {
+        resizable = 0;
+    }
     switch (iTermThemedWindowType(windowType)) {
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
@@ -997,7 +1001,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
-                    NSWindowStyleMaskResizable);
+                    resizable);
 
         case WINDOW_TYPE_TRADITIONAL_FULL_SCREEN:
             return mask | NSWindowStyleMaskBorderless | NSWindowStyleMaskMiniaturizable;
@@ -1008,7 +1012,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
-                    NSWindowStyleMaskResizable);
+                    resizable);
 
         case WINDOW_TYPE_COMPACT_MAXIMIZED:
             return (mask |
@@ -1017,7 +1021,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
                     NSWindowStyleMaskTexturedBackground |
-                    NSWindowStyleMaskResizable);
+                    resizable);
 
         case WINDOW_TYPE_MAXIMIZED:
             return (mask |
@@ -1025,7 +1029,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
                     NSWindowStyleMaskTexturedBackground |
-                    NSWindowStyleMaskResizable);
+                    resizable);
 
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_ACCESSORY:
@@ -1037,7 +1041,7 @@ BOOL iTermWindowTypeIsCompact(iTermWindowType windowType) {
                     NSWindowStyleMaskTitled |
                     NSWindowStyleMaskClosable |
                     NSWindowStyleMaskMiniaturizable |
-                    NSWindowStyleMaskResizable |
+                    resizable |
                     NSWindowStyleMaskTexturedBackground);
     }
 }
