@@ -161,7 +161,7 @@ extern NSNotificationName iTermPortholesDidChange;
                           button:(MouseButtonNumber)button
                       coordinate:(VT100GridCoord)coord
                            point:(NSPoint)point
-                          deltaY:(CGFloat)deltaY
+                           delta:(CGSize)delta
         allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
                         testOnly:(BOOL)testOnly;
 

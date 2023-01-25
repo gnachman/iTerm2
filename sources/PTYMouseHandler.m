@@ -936,9 +936,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self sendDataForScrollEvent:event];
         return NO;
     }
-    CGFloat deltaY = NAN;
     BOOL reportable = NO;
-    if ([self handleMouseEvent:event testOnly:NO deltaYOut:&deltaY reportableOut:&reportable]) {
+    if ([self handleMouseEvent:event testOnly:NO deltaOut:NULL reportableOut:&reportable]) {
         DLog(@"Mouse event was handled so returning");
         return NO;
     }
@@ -955,11 +954,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([self tryToHandleSwipeBetweenTabsForScrollWheelEvent:event]) {
         DLog(@"Handled as swipe between tabs");
         return YES;
-    }
-    if (reportable && deltaY == 0) {
-        DLog(@"Reportable non-vertical scroll");
-        // Don't let horizontal scroll through when reporting mouse events.
-        return NO;
     }
     return YES;
 }
@@ -1102,13 +1096,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // Returns YES if the mouse event would be handled, ignoring trivialities like a drag that hasn't
 // changed coordinate since the last drag.
 - (BOOL)mouseEventIsReportable:(NSEvent *)event {
-    return [self handleMouseEvent:event testOnly:YES deltaYOut:NULL reportableOut:NULL];
+    return [self handleMouseEvent:event testOnly:YES deltaOut:NULL reportableOut:NULL];
 }
 
 // Returns YES if the mouse event should not be handled natively.
 // If thiss changes also update wantsMouseMovementEvents
 - (BOOL)reportMouseEvent:(NSEvent *)event {
-    return [self handleMouseEvent:event testOnly:NO deltaYOut:NULL reportableOut:NULL];
+    return [self handleMouseEvent:event testOnly:NO deltaOut:NULL reportableOut:NULL];
 }
 
 // When in doubt this can return YES at the cost of a little CPU when moving the mouse around.
@@ -1124,7 +1118,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // If this changes also update wantsMouseMovementEvents
 - (BOOL)handleMouseEvent:(NSEvent *)event
                 testOnly:(BOOL)testOnly
-               deltaYOut:(CGFloat *)deltaYOut
+                deltaOut:(CGSize *)deltaOut
            reportableOut:(BOOL *)reportableOut {
     DLog(@"handleMouseEvent:%@ testOnly:%@", event, @(testOnly));
     if (![self.mouseDelegate mouseHandlerAnyReportingModeEnabled:self]) {
@@ -1152,10 +1146,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     VT100GridCoord coord = [self.mouseDelegate mouseHandlerCoordForPointInView:point];
-    const CGFloat deltaY = [self.mouseDelegate mouseHandlerAccumulatedDeltaY:self forEvent:event];
-    DLog(@"deltaY=%@", @(deltaY));
-    if (deltaYOut) {
-        *deltaYOut = deltaY;
+    const CGSize delta = [self.mouseDelegate mouseHandlerAccumulatedDelta:self forEvent:event];
+    DLog(@"delta=%@", NSStringFromSize(delta));
+    if (deltaOut) {
+        *deltaOut = delta;
     }
 
     return [self.mouseDelegate mouseHandler:self
@@ -1165,7 +1159,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                  coordinate:coord
                                       point:[self.mouseDelegate mouseHandlerReportablePointForPointInView:point]
                                       event:event
-                                     deltaY:deltaY
+                                      delta:delta
                    allowDragBeforeMouseDown:_makingThreeFingerSelection
                                    testOnly:testOnly];
 }

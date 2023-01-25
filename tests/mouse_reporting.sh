@@ -21,25 +21,6 @@ read_bytes()
   dd bs=1 count=$numbytes 2>/dev/null
 }
 
-read_x10()
-{
-  prefix=$(read_bytes 3)
-  button=$(read_bytes 1)
-  cx=$(read_bytes 1)
-  cy=$(read_bytes 1)
-  
-  cmd=$(printf "mb=%d mx=%d my=%d" "'$button'" "'$cx'" "'$cy'")
-  eval $cmd
-
-  ## Values > 127 are signed
-  [ $mx -lt 0 ] && mx=$(( 223 + $mx )) || mx=$(( $mx - 32 ))
-  [ $my -lt 0 ] && my=$(( 223 + $my )) || my=$(( $my - 32 ))
-
-  ## Button pressed is in first 2 bytes; use bitwise AND
-  b=$(( ($mb & 67) + 1 ))
-  output_mouse $mx $my $b
-}
-
 ordinal_for_next_byte_of_input()
 {
   c=$(read_bytes 1)
@@ -51,6 +32,7 @@ ordinal_for_next_byte_of_input()
 ## e.g., é -> 233
 read_utf8_codepoint()
 {
+  echo "read next byte" >> /tmp/log
   c=$(ordinal_for_next_byte_of_input)
 
   [ $(( $c & 0xfc )) -eq 248 ] && length=5 mask=3
@@ -63,6 +45,7 @@ read_utf8_codepoint()
   length=$(( $length - 1 ))
   mask=0x3f
   while [ $length -gt 0 ]; do
+    echo "read next byte" >> /tmp/log
     c=$(ordinal_for_next_byte_of_input)
     value=$(( ($value << 6) + ($c & $mask) ))
     length=$(( $length - 1 ))
@@ -81,56 +64,122 @@ is_decimal_digit()
 read_decimal()
 {
   c=$(read_bytes 1)
+  read_decimal_after "$c"
+}
+
+read_decimal_after()
+{
+  c="$1"
   while [ $(is_decimal_digit "$c") -eq 1 ]; do
     printf "%s" "$c"
     c=$(read_bytes 1)
   done
 }
 
+read_x10()
+{
+  echo read_x10 >> /tmp/log
+  button=$(read_bytes 1)
+  cx=$(read_bytes 1)
+  cy=$(read_bytes 1)
+  
+  cmd=$(printf "mb=%d mx=%d my=%d" "'$button'" "'$cx'" "'$cy'")
+  eval $cmd
+
+  ## Values > 127 are signed
+  [ $mx -lt 0 ] && mx=$(( 223 + $mx )) || mx=$(( $mx - 32 ))
+  [ $my -lt 0 ] && my=$(( 223 + $my )) || my=$(( $my - 32 ))
+
+  ## Button pressed is in first 2 bytes; use bitwise AND
+  b=$(( ($mb & 195) + 1 ))
+  output_mouse $mx $my $b
+}
+
 read_utf8()
 {
-  prefix=$(read_bytes 3)
-  button=$(read_bytes 1)
-  button=$(printf "%d" "'$button'")
-
-  b=$(( ($button & 67) + 1 ))
+  echo read_utf8 >> /tmp/log
+  echo "utf8: will read button" >> /tmp/log
+  button=$(( $(read_utf8_codepoint) - 32 ))
+echo "utf8: read button of $button" >> /tmp/log
+  b=$(( ($button & 195) + 1 ))
   cx=$(( $(read_utf8_codepoint) - 32 ))
   cy=$(( $(read_utf8_codepoint) - 32 ))
+echo "utf8: cx=$cx cy=$cy"
 
   output_mouse $cx $cy $b
 }
 
 read_sgr()
 {
+  echo read_sgr >> /tmp/log
   ## This loses whether it was a press or release because the last call to
   ## read_decimal swallows the terminal letter, which indicates this (m vs M).
-  prefix=$(read_bytes 3)   ## CSI <
   button=$(read_decimal)
   cx=$(read_decimal)
   cy=$(read_decimal)
-  b=$(( ($button & 67) + 1 ))
+  echo "read_sgr: button=$button cx=$cx cy=$cy" >> /tmp/log
+  b=$(( ($button & 195) + 1 ))
+  echo "read_sgr: b=$b" >> /tmp/log
 
   output_mouse $cx $cy $b
 }
 
 read_urxvt()
 {
-  prefix=$(read_bytes 2)   ## CSI
-  button=$(read_decimal)
+  echo read_urxvt >> /tmp/log
+  button=$(read_decimal_after "$1")
   cx=$(read_decimal)
   cy=$(read_decimal)
-  b=$(( ($button & 67) + 1 ))
+  b=$(( ($button & 195) + 1 ))
 
   output_mouse $cx $cy $b
 }
 
+# xterm: esc [ M (char) (char) (char)
+# urxvt: esc [ (digit) ; (digit) ; (digit) M
+# sgr:   esc [ < (digit) ; (digit) ; (digit) m
+# sgr:   esc [ < (digit) ; (digit) ; (digit) M
+
 read_report()
 {
-  format=$1
-  [ $format == $x10_format ] && read_x10
-  [ $format == $utf8_format ] && read_utf8
-  [ $format == $sgr_format ] && read_sgr
-  [ $format == $urxvt_format ] && read_urxvt
+  peek=$(read_bytes 1)
+  esc=$(printf "\e")
+  while [ "$peek" != $esc ]; do
+    echo "reading again, got $(od -tx1 <<< $peek)" >> /tmp/log
+    peek=$(read_bytes 1)
+  done
+  echo "Got an esc" >> /tmp/log
+
+  if [[ $(read_bytes 1) != "[" ]]; then
+    read_report
+    return
+  fi
+
+  peek=$(read_bytes 1)
+  if [[ $peek == "M" ]]; then
+      echo "xterm format" >> /tmp/log
+      format=$1
+      [ $format == $x10_format ] && read_x10 "$peek"
+      [ $format == $utf8_format ] && read_utf8 "$peek"
+      return
+  fi
+  if [[ $peek == "<" ]]; then
+    echo "sgr format" >> /tmp/log
+    read_sgr "$peek"
+    return
+  fi
+  case $peek in
+    ''|*[!0-9]*)
+      echo "unrecognized format. peek=$peek" >> /tmp/log
+      read_report
+      ;;
+
+    *)
+      echo "urxvt format" >> /tmp/log
+      read_urxvt "$peek"
+      return
+      ;;
+esac
 }
 
 clean_up()
@@ -186,6 +235,7 @@ printf "${ESC}[?${mv}h        "   ## Turn on mouse reporting
 printf "${ESC}[?25l"  ## Turn off cursor
 printf "${format}"    ## Set the reporting format
 
+IGNORE=0
 while :
 do
   [ $mv -eq $normal_tracking ] && mv_str="Normal Tracking"
@@ -199,25 +249,34 @@ do
   print_buttons "$mv_str" "$f_str" "Exit"
 
   eval $(read_report $format)
-
+  if [[ $IGNORE > 0 ]]; then
+    echo decrement >> /tmp/log
+      IGNORE=$(($IGNORE - 1))
+  fi
+  echo "ignore = $IGNORE, mousey=$MOUSEY, button=$BUTTON, but_row=$but_row " >> /tmp/log
   case $MOUSEY in
        $but_row) ## Calculate which on-screen button has been pressed
                  button=$(( ($MOUSEX - $gutter) / $but_width + 1 ))
                  case $button in
-                      1) printf "${ESC}[?${mv}l"
-                         [ $mv -eq $normal_tracking ] && next_mode=$button_tracking
-                         [ $mv -eq $button_tracking ] && next_mode=$any_event_tracking
-                         [ $mv -eq $any_event_tracking ] && next_mode=$normal_tracking
-                         mv=$next_mode
-                         printf "${ESC}[?${mv}h"
+                      1) if [[ $BUTTON = 1 && $IGNORE = 0 ]]; then 
+                            printf "${ESC}[?${mv}l"
+                            [ $mv -eq $normal_tracking ] && next_mode=$button_tracking
+                            [ $mv -eq $button_tracking ] && next_mode=$any_event_tracking
+                            [ $mv -eq $any_event_tracking ] && next_mode=$normal_tracking
+                            mv=$next_mode
+                            printf "${ESC}[?${mv}h"
+                            IGNORE=2
+                      fi
                          ;;
-                      2)
-                         [ $format == $x10_format ] && new_format=$utf8_format
-                         [ $format == $utf8_format ] && new_format=$sgr_format
-                         [ $format == $sgr_format ] && new_format=$urxvt_format
-                         [ $format == $urxvt_format ] && new_format=$x10_format
-                         format=$new_format
-                         printf "%s" "$format"
+                      2) if [[ $BUTTON = 1 && $IGNORE = 0 ]]; then
+                            [ $format == $x10_format ] && new_format=$utf8_format
+                            [ $format == $utf8_format ] && new_format=$sgr_format
+                            [ $format == $sgr_format ] && new_format=$urxvt_format
+                            [ $format == $urxvt_format ] && new_format=$x10_format
+                            format=$new_format
+                            printf "%s" "$format"
+                            IGNORE=2
+                      fi
                          ;;
                       3) break ;;
                  esac

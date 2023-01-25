@@ -70,7 +70,7 @@ NS_ASSUME_NONNULL_BEGIN
           coordinate:(VT100GridCoord)coord
                point:(NSPoint)point
                event:(NSEvent *)event
-              deltaY:(CGFloat)deltaY
+               delta:(CGSize)delta
 allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
             testOnly:(BOOL)testOnly;
 - (BOOL)mouseHandler:(PTYMouseHandler *)handler viewCoordIsReportable:(NSPoint)coord;
@@ -111,7 +111,7 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
 - (void)mouseHandlerMakeKeyAndOrderFrontAndMakeFirstResponderAndActivateApp:(PTYMouseHandler *)sender;
 
 - (id<iTermSwipeHandler>)mouseHandlerSwipeHandler:(PTYMouseHandler *)sender;
-- (CGFloat)mouseHandlerAccumulatedDeltaY:(PTYMouseHandler *)sender forEvent:(NSEvent *)event;
+- (CGSize)mouseHandlerAccumulatedDelta:(PTYMouseHandler *)sender forEvent:(NSEvent *)event;
 - (long long)mouseHandlerTotalScrollbackOverflow:(PTYMouseHandler *)sender;
 - (void)mouseHandlerSetClickCoord:(VT100GridCoord)coord
                            button:(NSInteger)button

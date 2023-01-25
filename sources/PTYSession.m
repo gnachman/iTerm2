@@ -9921,7 +9921,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                           button:(MouseButtonNumber)button
                       coordinate:(VT100GridCoord)coord
                            point:(NSPoint)point
-                          deltaY:(CGFloat)deltaY
+                           delta:(CGSize)delta
         allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
                         testOnly:(BOOL)testOnly {
     DLog(@"Report event type %lu, modifiers=%lu, button=%d, coord=%@ testOnly=%@ terminalMouseMode=%@ allowDragBeforeMouseDown%@",
@@ -10096,39 +10096,37 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
-                    DLog(@"normal/button/all - can report. deltaY=%@", @(deltaY));
+                    DLog(@"normal/button/all - can report. delta=%@", NSStringFromSize(delta));
                     if (testOnly) {
-                        return deltaY != 0;
+                        return delta.height != 0;
                     }
-//                    if (deltaY != 0) {
-                        int steps;
-                        if ([iTermAdvancedSettingsModel proportionalScrollWheelReporting]) {
-                            // Cap number of reported scroll events at 32 to prevent runaway redraws.
-                            // This is a mostly theoretical concern and the number can grow if it
-                            // doesn't seem to be a problem.
-                            DLog(@"Cap at 32");
-                            steps = MIN(32, fabs(deltaY));
-                        } else {
-                            steps = 1;
-                        }
-                        if (steps == 1 && [iTermAdvancedSettingsModel doubleReportScrollWheel]) {
-                            // This works around what I believe is a bug in tmux or a bug in
-                            // how users use tmux. See the thread on tmux-users with subject
-                            // "Mouse wheel events and server_client_assume_paste--the perfect storm of bugs?".
-                            DLog(@"Double reporting");
-                            steps = 2;
-                        }
-                        DLog(@"steps=%d", steps);
-                        for (int i = 0; i < steps; i++) {
-                            [self writeLatin1EncodedData:[_screen.terminalOutput mousePress:button
-                                                                              withModifiers:modifiers
-                                                                                         at:coord
-                                                                                      point:point]
-                                        broadcastAllowed:NO];
-                        }
-                        return YES;
-//                    }
-//                    return NO;
+                    const CGFloat chosenDelta = (fabs(delta.width) > fabs(delta.height)) ? delta.width : delta.height;
+                    int steps;
+                    if ([iTermAdvancedSettingsModel proportionalScrollWheelReporting]) {
+                        // Cap number of reported scroll events at 32 to prevent runaway redraws.
+                        // This is a mostly theoretical concern and the number can grow if it
+                        // doesn't seem to be a problem.
+                        DLog(@"Cap at 32");
+                        steps = MIN(32, fabs(chosenDelta));
+                    } else {
+                        steps = 1;
+                    }
+                    if (steps == 1 && [iTermAdvancedSettingsModel doubleReportScrollWheel]) {
+                        // This works around what I believe is a bug in tmux or a bug in
+                        // how users use tmux. See the thread on tmux-users with subject
+                        // "Mouse wheel events and server_client_assume_paste--the perfect storm of bugs?".
+                        DLog(@"Double reporting");
+                        steps = 2;
+                    }
+                    DLog(@"steps=%d", steps);
+                    for (int i = 0; i < steps; i++) {
+                        [self writeLatin1EncodedData:[_screen.terminalOutput mousePress:button
+                                                                          withModifiers:modifiers
+                                                                                     at:coord
+                                                                                  point:point]
+                                    broadcastAllowed:NO];
+                    }
+                    return YES;
 
                 case MOUSE_REPORTING_NONE:
                 case MOUSE_REPORTING_HIGHLIGHT:

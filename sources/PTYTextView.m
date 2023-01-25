@@ -5469,7 +5469,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
           coordinate:(VT100GridCoord)coord
                point:(NSPoint)point
               event:(NSEvent *)event
-              deltaY:(CGFloat)deltaY
+               delta:(CGSize)delta
 allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
             testOnly:(BOOL)testOnly {
     return [_delegate textViewReportMouseEvent:eventType
@@ -5477,7 +5477,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
                                         button:button
                                     coordinate:coord
                                          point:point
-                                        deltaY:deltaY
+                                         delta:delta
                       allowDragBeforeMouseDown:allowDragBeforeMouseDown
                                       testOnly:testOnly];
 }
@@ -5616,6 +5616,13 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     return [self.delegate textViewSwipeHandler];
 }
 
+- (CGSize)scrollDeltaAdjustedForMouseReporting:(CGSize)delta {
+    if (fabs(delta.width) > fabs(delta.height)) {
+        return CGSizeMake([self scrollDeltaXAdjustedForMouseReporting:delta.width], 0);
+    }
+    return CGSizeMake(0, [self scrollDeltaYAdjustedForMouseReporting:delta.height]);
+}
+
 - (CGFloat)scrollDeltaYAdjustedForMouseReporting:(CGFloat)deltaY {
     return [self scrollDeltaWithUnit:self.enclosingScrollView.verticalLineScroll
                                delta:deltaY];
@@ -5637,11 +5644,20 @@ dragSemanticHistoryWithEvent:(NSEvent *)event
     return ceil(frac);
 }
 
-- (CGFloat)mouseHandlerAccumulatedDeltaY:(PTYMouseHandler *)sender
-                                forEvent:(NSEvent *)event {
-    const CGFloat deltaY = [_scrollAccumulator deltaForEvent:event
-                                                   increment:self.enclosingScrollView.verticalLineScroll];
-    return [self scrollDeltaYAdjustedForMouseReporting:deltaY];
+- (CGSize)mouseHandlerAccumulatedDelta:(PTYMouseHandler *)sender
+                              forEvent:(NSEvent *)event {
+    CGSize delta = { 0 };
+    if (event.type != NSEventTypeScrollWheel) {
+        return delta;
+    }
+    if (event.it_isVerticalScroll) {
+        delta.height = [_scrollAccumulator deltaForEvent:event
+                                               increment:self.enclosingScrollView.verticalLineScroll];
+    } else {
+        delta.width = [_horizontalScrollAccumulator deltaForEvent:event
+                                                        increment:self.charWidth];
+    }
+    return [self scrollDeltaAdjustedForMouseReporting:delta];
 }
 
 - (long long)mouseHandlerTotalScrollbackOverflow:(nonnull PTYMouseHandler *)sender {
