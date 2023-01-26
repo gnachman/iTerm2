@@ -1270,11 +1270,6 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 - (void)beginResizing {
     assert(!_lineBlocks.resizing);
     _lineBlocks.resizing = YES;
-
-    // Just a sanity check, not a real limitation.
-    dispatch_async(dispatch_get_main_queue(), ^{
-        assert(!_lineBlocks.resizing);
-    });
 }
 
 - (void)endResizing {
