@@ -2905,19 +2905,28 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if ([arrangement[TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         DLog(@"_recursiveOpenPartialAttachments: found splitter");
         NSArray<NSDictionary<NSString *, id> *> *subArrangements = [arrangement objectForKey:SUBVIEWS];
+        NSObject *lock = [[NSObject alloc] init];
         __block NSDictionary *result = [[NSDictionary alloc] init];
         dispatch_group_t group = dispatch_group_create();
         for (NSDictionary *subArrangement in subArrangements) {
             dispatch_group_enter(group);
             DLog(@"_recursiveOpenPartialAttachments: recurse");
             [self _recursiveOpenPartialAttachments:subArrangement completion:^(NSDictionary *dict) {
+                // This will run on a job manager's queue. There are many job managers, each with
+                // its own queue.
                 DLog(@"_recursiveOpenPartialAttachments: got a result from a subview");
-                result = [result dictionaryByMergingDictionary:[dict copy]];
+                @synchronized(lock) {
+                    result = [result dictionaryByMergingDictionary:[dict copy]];
+                }
                 dispatch_group_leave(group);
             }];
         }
         dispatch_group_notify(group, dispatch_get_main_queue(), ^{
             DLog(@"_recursiveOpenPartialAttachments: got results from all subviews");
+            // Force a memory barrier just out of paranoia.
+            @synchronized(lock) {
+                result = [result copy];
+            }
             completion(result);
         });
     } else {
