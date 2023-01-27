@@ -527,7 +527,6 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
     @try {
         [view removeTrackingArea:area];
     } @catch (NSException *exception) {
-        DLog(@"Remove failed with exception: %@", exception);
     }
     *areaPtr = nil;
 }
