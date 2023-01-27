@@ -508,7 +508,7 @@ static unsigned long long MakeUniqueID(void) {
 
 // Called on job manager's queue via [self launchChildWithExecutablePath:…]
 - (iTermMultiServerClientOriginatedMessage)copyLaunchRequest:(iTermMultiServerClientOriginatedMessage)original {
-    assert(original.type == iTermMultiServerRPCTypeLaunch);
+    ITAssertWithMessage(original.type == iTermMultiServerRPCTypeLaunch, @"Type is %@", @(original.type));
 
     // Encode and decode the message so we can have our own copy of it.
     iTermClientServerProtocolMessage temp;
@@ -516,13 +516,13 @@ static unsigned long long MakeUniqueID(void) {
 
     {
         const int status = iTermMultiServerProtocolEncodeMessageFromClient(&original, &temp);
-        assert(status == 0);
+        ITAssertWithMessage(status == 0, @"On encode: status is %@", @(status));
     }
 
     iTermMultiServerClientOriginatedMessage messageCopy;
     {
         const int status = iTermMultiServerProtocolParseMessageFromClient(&temp, &messageCopy);
-        assert(status == 0);
+        ITAssertWithMessage(status == 0, @"On decode: status is %@ for encoded length %@", @(status), @(temp.ioVectors[0].iov_len));
     }
 
     return messageCopy;
