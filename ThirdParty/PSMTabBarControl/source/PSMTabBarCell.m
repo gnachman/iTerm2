@@ -522,13 +522,12 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
         return;
     }
     if (![view.trackingAreas containsObject:area]) {
-        [self logTrackingChange:@"View %@ does not contain area %@", view, area];
         return;
     }
     @try {
         [view removeTrackingArea:area];
     } @catch (NSException *exception) {
-        [self logTrackingChange:@"Remove failed with exception: %@", exception];
+        DLog(@"Remove failed with exception: %@", exception);
     }
     *areaPtr = nil;
 }
@@ -546,7 +545,6 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
                                                        userInfo:userData];
     [view addTrackingArea:area];
     _cellTrackingArea = area;
-    [self logTrackingChange:@"Set cell tracking area to %@ for view %@", area, view];
 }
 
 - (void)setCloseButtonTrackingRect:(NSRect)rect
@@ -562,17 +560,6 @@ static NSRect PSMConvertAccessibilityFrameToScreen(NSView *view, NSRect frame) {
                                                        userInfo:userData];
     [view addTrackingArea:area];
     _closeButtonTrackingArea = area;
-    [self logTrackingChange:@"Set close button tracking area to %@ for view %@", area, view];
-}
-
-- (void)logTrackingChange:(NSString *)format, ... {
-#if BETA
-    va_list args;
-    va_start(args, format);
-    NSString *s = [[NSString alloc] initWithFormat:format arguments:args];
-    va_end(args);
-    AppendPinnedDebugLogMessage(@"Tracking tags", @"%@\n%@", s, [NSThread callStackSymbols]);
-#endif
 }
 
 #pragma mark - Drag Support
