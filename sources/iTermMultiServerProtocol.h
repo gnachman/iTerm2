@@ -277,5 +277,18 @@ iTermMultiServerProtocolGetFileDescriptor(iTermClientServerProtocolMessage *mess
 void
 iTermMultiServerProtocolLogMessageFromClient(iTermMultiServerClientOriginatedMessage *message);
 
+typedef void iTermMultiServerProtocolLogFunction(const char *file, int line, const char *func, const char *format, ...);
+
+void
+iTermMultiServerProtocolLogMessageFromClient(iTermMultiServerClientOriginatedMessage *message);
+
 void
 iTermMultiServerProtocolLogMessageFromServer(iTermMultiServerServerOriginatedMessage *message);
+
+void
+iTermMultiServerProtocolLogMessageFromClient2(iTermMultiServerClientOriginatedMessage *message,
+                                              iTermMultiServerProtocolLogFunction logFunction);
+
+void
+iTermMultiServerProtocolLogMessageFromServer2(iTermMultiServerServerOriginatedMessage *message,
+                                              iTermMultiServerProtocolLogFunction logFunction);

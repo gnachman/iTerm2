@@ -17,6 +17,8 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
+#define LogToLogFunc(args...) logFunction(__FILE__, __LINE__, __FUNCTION__, args)
+
 typedef enum iTermMultiServerProtocolError {
     iTermMultiServerProtocolErrorEncodingFailed = -1,
 
@@ -700,13 +702,15 @@ done:
     return status;
 }
 
-static void LogHandshakeRequest(iTermMultiServerRequestHandshake *message) {
-    FDLog(LOG_DEBUG, "Handshake request [maximumProtocolVersion=%d]",
+static void LogHandshakeRequest(iTermMultiServerRequestHandshake *message,
+                                iTermMultiServerProtocolLogFunction logFunction) {
+    LogToLogFunc("Handshake request [maximumProtocolVersion=%d]",
           message->maximumProtocolVersion);
 }
 
-static void LogLaunchRequest(iTermMultiServerRequestLaunch *message) {
-    FDLog(LOG_DEBUG, "Launch request [path=%s columns=%d rows=%d pixel_width=%d pixel_height=%d isUTF8=%d pwd=%s uniqueId=%lld argc=%d envc=%d]",
+static void LogLaunchRequest(iTermMultiServerRequestLaunch *message,
+                             iTermMultiServerProtocolLogFunction logFunction) {
+    LogToLogFunc("Launch request [path=%s columns=%d rows=%d pixel_width=%d pixel_height=%d isUTF8=%d pwd=%s uniqueId=%lld argc=%d envc=%d]",
           message->path,
           message->columns,
           message->rows,
@@ -718,29 +722,31 @@ static void LogLaunchRequest(iTermMultiServerRequestLaunch *message) {
           message->argc,
           message->envc);
     for (int i = 0; i < message->argc; i++) {
-        FDLog(LOG_DEBUG, "  Arg %d for launch request %lld: %s",
+        LogToLogFunc("  Arg %d for launch request %lld: %s",
               i, message->uniqueId, message->argv[i]);
     }
     for (int i = 0; i < message->envc; i++) {
-        FDLog(LOG_DEBUG, "  Env %d for launch request %lld: %s",
+        LogToLogFunc("  Env %d for launch request %lld: %s",
               i, message->uniqueId, message->envp[i]);
     }
 }
 
-static void LogWaitRequest(iTermMultiServerRequestWait *message) {
-    FDLog(LOG_DEBUG, "Wait Request [pid=%d removePreemptively=%d]",
+static void LogWaitRequest(iTermMultiServerRequestWait *message,
+                           iTermMultiServerProtocolLogFunction logFunction) {
+    LogToLogFunc("Wait Request [pid=%d removePreemptively=%d]",
           message->pid, message->removePreemptively);
 }
 
 void
-iTermMultiServerProtocolLogMessageFromClient(iTermMultiServerClientOriginatedMessage *message) {
+iTermMultiServerProtocolLogMessageFromClient2(iTermMultiServerClientOriginatedMessage *message,
+                                              iTermMultiServerProtocolLogFunction logFunction) {
     switch (message->type) {
         case iTermMultiServerRPCTypeHandshake:
-            LogHandshakeRequest(&message->payload.handshake);
+            LogHandshakeRequest(&message->payload.handshake, logFunction);
             break;
 
         case iTermMultiServerRPCTypeLaunch:
-            LogLaunchRequest(&message->payload.launch);
+            LogLaunchRequest(&message->payload.launch, logFunction);
             break;
 
         case iTermMultiServerRPCTypeReportChild:
@@ -748,7 +754,7 @@ iTermMultiServerProtocolLogMessageFromClient(iTermMultiServerClientOriginatedMes
             break;
 
         case iTermMultiServerRPCTypeWait:
-            LogWaitRequest(&message->payload.wait);
+            LogWaitRequest(&message->payload.wait, logFunction);
             break;
 
         case iTermMultiServerRPCTypeTermination:
@@ -758,15 +764,42 @@ iTermMultiServerProtocolLogMessageFromClient(iTermMultiServerClientOriginatedMes
     }
 }
 
-static void LogHandshakeResponse(iTermMultiServerResponseHandshake *message) {
-    FDLog(LOG_DEBUG, "Handshake response [protocolVersion=%d numChildren=%d pid=%d]",
+static void FDLogWrapper(const char *file, int line, const char *func, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    char *temp = NULL;
+#if ITERM_SERVER
+    extern const char *gMultiServerSocketPath;
+    asprintf(&temp, "iTermServer(pid=%d, path=%s) %s:%d %s: %s", getpid(), gMultiServerSocketPath, file, line, func, format);
+    vsyslog(LOG_DEBUG, temp, args);
+#else
+    // Because xcode is hot garbage, syslog(LOG_DEBUG) goes to its console so we turn that off for debug builds.
+#if !DEBUG
+    extern void DLogC(const char *format, va_list args);
+    asprintf(&temp, "iTermClient(pid=%d) %s:%d %s: %s", getpid(), file, line, func, format);
+    DLogC(temp, args);
+#endif  // DEBUG
+#endif  // ITERM_SERVER
+    va_end(args);
+    free(temp);
+}
+
+void
+iTermMultiServerProtocolLogMessageFromClient(iTermMultiServerClientOriginatedMessage *message) {
+    iTermMultiServerProtocolLogMessageFromClient2(message, FDLogWrapper);
+}
+
+static void LogHandshakeResponse(iTermMultiServerResponseHandshake *message,
+                                 iTermMultiServerProtocolLogFunction logFunction) {
+    LogToLogFunc("Handshake response [protocolVersion=%d numChildren=%d pid=%d]",
           message->protocolVersion,
           message->numChildren,
           message->pid);
 }
 
-static void LogLaunchResponse(iTermMultiServerResponseLaunch *message) {
-    FDLog(LOG_DEBUG, "Launch response [status=%d pid=%d fd=%d uniqueId=%lld tty=%s]",
+static void LogLaunchResponse(iTermMultiServerResponseLaunch *message,
+                              iTermMultiServerProtocolLogFunction logFunction) {
+    LogToLogFunc("Launch response [status=%d pid=%d fd=%d uniqueId=%lld tty=%s]",
           message->status,
           message->pid,
           message->fd,
@@ -774,8 +807,9 @@ static void LogLaunchResponse(iTermMultiServerResponseLaunch *message) {
           message->tty);
 }
 
-static void LogReportChild(iTermMultiServerReportChild *message) {
-    FDLog(LOG_DEBUG, "Report child [isLast=%d pid=%d path=%s isUTF8=%d pwd=%s terminated=%d tty=%s fd=%d argc=%d envc=%d]",
+static void LogReportChild(iTermMultiServerReportChild *message,
+                           iTermMultiServerProtocolLogFunction logFunction) {
+    LogToLogFunc("Report child [isLast=%d pid=%d path=%s isUTF8=%d pwd=%s terminated=%d tty=%s fd=%d argc=%d envc=%d]",
           message->isLast,
           message->pid,
           message->path,
@@ -787,54 +821,64 @@ static void LogReportChild(iTermMultiServerReportChild *message) {
           message->argc,
           message->envc);
     for (int i = 0; i < message->argc; i++) {
-        FDLog(LOG_DEBUG, "  Arg %d of child with pid %d: %s",
+        LogToLogFunc("  Arg %d of child with pid %d: %s",
               i, message->pid, message->argv[i]);
     }
     for (int i = 0; i < message->envc; i++) {
-        FDLog(LOG_DEBUG, "  Env %d of child with pid %d: %s",
+        LogToLogFunc("  Env %d of child with pid %d: %s",
               i, message->pid, message->envp[i]);
     }
 }
 
-static void LogWaitResponse(iTermMultiServerResponseWait *message) {
-    FDLog(LOG_DEBUG, "Wait response [pid=%d status=%d resultType=%d]",
+static void LogWaitResponse(iTermMultiServerResponseWait *message,
+                            iTermMultiServerProtocolLogFunction logFunction) {
+    LogToLogFunc("Wait response [pid=%d status=%d resultType=%d]",
           message->pid, message->status, message->resultType);
 }
 
-static void LogTermination(iTermMultiServerReportTermination *message) {
-    FDLog(LOG_DEBUG, "Report termination [pid=%d]",
+static void LogTermination(iTermMultiServerReportTermination *message,
+                           iTermMultiServerProtocolLogFunction logFunction) {
+    LogToLogFunc("Report termination [pid=%d]",
           message->pid);
 }
 
-static void LogHello(iTermMultiServerHello *message) {
-    FDLog(LOG_DEBUG, "Hello");
+static void LogHello(iTermMultiServerHello *message,
+                     iTermMultiServerProtocolLogFunction logFunction) {
+    LogToLogFunc("Hello");
+}
+
+void
+iTermMultiServerProtocolLogMessageFromServer2(iTermMultiServerServerOriginatedMessage *message,
+                                              iTermMultiServerProtocolLogFunction logFunction) {
+    switch (message->type) {
+        case iTermMultiServerRPCTypeHandshake:
+            LogHandshakeResponse(&message->payload.handshake, logFunction);
+            break;
+
+        case iTermMultiServerRPCTypeLaunch:
+            LogLaunchResponse(&message->payload.launch, logFunction);
+            break;
+
+        case iTermMultiServerRPCTypeReportChild:
+            LogReportChild(&message->payload.reportChild, logFunction);
+            break;
+
+        case iTermMultiServerRPCTypeWait:
+            LogWaitResponse(&message->payload.wait, logFunction);
+            break;
+
+        case iTermMultiServerRPCTypeTermination:
+            LogTermination(&message->payload.termination, logFunction);
+            break;
+
+        case iTermMultiServerRPCTypeHello:
+            LogHello(&message->payload.hello, logFunction);
+            break;
+    }
 }
 
 void
 iTermMultiServerProtocolLogMessageFromServer(iTermMultiServerServerOriginatedMessage *message) {
-    switch (message->type) {
-        case iTermMultiServerRPCTypeHandshake:
-            LogHandshakeResponse(&message->payload.handshake);
-            break;
-
-        case iTermMultiServerRPCTypeLaunch:
-            LogLaunchResponse(&message->payload.launch);
-            break;
-
-        case iTermMultiServerRPCTypeReportChild:
-            LogReportChild(&message->payload.reportChild);
-            break;
-
-        case iTermMultiServerRPCTypeWait:
-            LogWaitResponse(&message->payload.wait);
-            break;
-
-        case iTermMultiServerRPCTypeTermination:
-            LogTermination(&message->payload.termination);
-            break;
-
-        case iTermMultiServerRPCTypeHello:
-            LogHello(&message->payload.hello);
-            break;
-    }
+    iTermMultiServerProtocolLogMessageFromServer2(message, FDLogWrapper);
 }
+

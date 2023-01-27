@@ -506,6 +506,32 @@ static unsigned long long MakeUniqueID(void) {
     }]];
 }
 
+static NSMutableArray *gCurrentMultiServerLogLineStorage;
+static void iTermMultiServerStringForMessageFromClientLogger(const char *file,
+                                                             int line,
+                                                             const char *func,
+                                                             const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    NSString *string = [[NSString alloc] initWithFormat:[NSString stringWithUTF8String:format]
+                                            arguments:args];
+    [gCurrentMultiServerLogLineStorage addObject:string];
+    va_end(args);
+};
+
+static NSString *iTermMultiServerStringForMessageFromClient(iTermMultiServerClientOriginatedMessage *message) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        gCurrentMultiServerLogLineStorage = [NSMutableArray array];
+    });
+    @synchronized(gCurrentMultiServerLogLineStorage) {
+        iTermMultiServerProtocolLogMessageFromClient2(message, iTermMultiServerStringForMessageFromClientLogger);
+        NSString *result = [gCurrentMultiServerLogLineStorage componentsJoinedByString:@"\n"];
+        [gCurrentMultiServerLogLineStorage removeAllObjects];
+        return result;
+    }
+}
+
 // Called on job manager's queue via [self launchChildWithExecutablePath:…]
 - (iTermMultiServerClientOriginatedMessage)copyLaunchRequest:(iTermMultiServerClientOriginatedMessage)original {
     ITAssertWithMessage(original.type == iTermMultiServerRPCTypeLaunch, @"Type is %@", @(original.type));
@@ -522,7 +548,18 @@ static unsigned long long MakeUniqueID(void) {
     iTermMultiServerClientOriginatedMessage messageCopy;
     {
         const int status = iTermMultiServerProtocolParseMessageFromClient(&temp, &messageCopy);
-        ITAssertWithMessage(status == 0, @"On decode: status is %@ for encoded length %@", @(status), @(temp.ioVectors[0].iov_len));
+        if (status) {
+            iTermClientServerProtocolMessage temp;
+            iTermClientServerProtocolMessageInitialize(&temp);
+            (void)iTermMultiServerProtocolEncodeMessageFromClient(&original, &temp);
+            NSData *data = [NSData dataWithBytes:temp.ioVectors[0].iov_base
+                                          length:temp.ioVectors[0].iov_len];
+            NSString *description = iTermMultiServerStringForMessageFromClient(&messageCopy);
+            ITAssertWithMessage(status == 0, @"On decode: status is %@ for %@ based on %@",
+                                @(status),
+                                [data debugDescription],
+                                description);
+        }
     }
 
     return messageCopy;
