@@ -3314,7 +3314,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 
     NSColor *cursorTextColor;
     if (_reverseVideo) {
-        cursorTextColor = [_colorMap colorForKey:kColorMapBackground];
+        cursorTextColor = [_colorMap colorForKey:kColorMapForeground];
     } else {
         cursorTextColor = [_delegate drawingHelperColorForCode:ALTSEM_CURSOR
                                                          green:0

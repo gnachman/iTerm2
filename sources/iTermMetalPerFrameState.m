@@ -304,7 +304,7 @@ typedef struct {
                                                              components[3]);
                 } else {
                     if (_configuration->_reverseVideo) {
-                        _cursorInfo.textColor = [_configuration->_colorMap fastColorForKey:kColorMapBackground];
+                        _cursorInfo.textColor = [_configuration->_colorMap fastColorForKey:kColorMapForeground];
                     } else {
                         _cursorInfo.textColor = [self colorForCode:ALTSEM_CURSOR
                                                              green:0
