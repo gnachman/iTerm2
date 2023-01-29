@@ -270,10 +270,11 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
                 continue;
             }
             VT100GridAbsCoordRange coordRange = [self absCoordRangeForInterval:imageMark.entry.interval];
-            if (![updated imageInUse:imageMark above:coordRange.end.y searchHeight:height] &&
-                imageMark.progenitor != nil) {
+            iTermMark *progenitor = imageMark.progenitor;
+            if (progenitor != nil &&
+                ![updated imageInUse:imageMark above:coordRange.end.y searchHeight:height]) {
                 DLog(@"Not in use. Add to delete list.");
-                [marksToRemove addObject:imageMark.progenitor];
+                [marksToRemove addObject:progenitor];
             }
         }
     }
