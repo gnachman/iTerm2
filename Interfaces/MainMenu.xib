@@ -682,6 +682,12 @@ DQ
                                                             <action selector="toggleAlertOnNextMark:" target="-1" id="hTO-Iy-yuC"/>
                                                         </connections>
                                                     </menuItem>
+                                                    <menuItem title="Alert on Marks in Offscreen Sessions" identifier="Marks and Alerts.Alerts.Alert on Marks in Offscreen Sessions" id="qcQ-i5-i8s">
+                                                        <modifierMask key="keyEquivalentModifierMask"/>
+                                                        <connections>
+                                                            <action selector="toggleAlertOnMarksInOffscreenSessions:" target="201" id="WEg-8X-bzA"/>
+                                                        </connections>
+                                                    </menuItem>
                                                     <menuItem isSeparatorItem="YES" id="cY7-mh-hpz">
                                                         <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                                                     </menuItem>

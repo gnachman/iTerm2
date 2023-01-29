@@ -183,6 +183,7 @@ NSString *const kPreferenceKeyNeverBlockSystemShutdown = @"NeverBlockSystemShutd
 
 NSString *const kPreferenceKeyOpenAIAPIKey = @"NoSyncOpenAIAPIKey";
 NSString *const kPreferenceKeyAIPrompt = @"AI Prompt";
+NSString *const kPreferenceKeyAlertOnMarksInOffscreenSessions = @"Alert On Marks in Offscreen Sessions";
 
 NSString *const iTermDefaultAIPrompt =
 @"You are going to translate a natural language description to a series of commands for the \\(shell) shell.\n"
@@ -378,6 +379,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyAPIAuthentication: @0,  // ignored — synthetic value
                   kPreferenceKeyOpenAIAPIKey: @"",
                   kPreferenceKeyAIPrompt: iTermDefaultAIPrompt,
+                  kPreferenceKeyAlertOnMarksInOffscreenSessions: @NO,
 
                   kPreferenceKeyTabStyle_Deprecated: @(TAB_STYLE_LIGHT),
                   kPreferenceKeyTabStyle: @(TAB_STYLE_LIGHT),

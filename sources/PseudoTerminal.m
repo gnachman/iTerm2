@@ -5853,6 +5853,7 @@ ITERM_WEAKLY_REFERENCEABLE
     // If the user is currently select-dragging the text view, stop it so it
     // doesn't keep going in the background.
     [[[self currentSession] textview] aboutToHide];
+    [self.currentTab willDeselectTab];
 
     if ([[autocompleteView window] isVisible]) {
         [autocompleteView close];
@@ -5973,6 +5974,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [[iTermFindPasteboard sharedInstance] updateObservers:nil];
     [self updateBackgroundImage];
     [_contentView setCurrentSessionAlpha:self.currentSession.textview.transparencyAlpha];
+    [tab didSelectTab];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSelectedTabDidChange object:tab];
     DLog(@"Finished");
 }

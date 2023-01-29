@@ -46,6 +46,7 @@
                 isUTF8:[args[@"isUTF8"] boolValue]
          substitutions:nil
            arrangement:nil
+       fromArrangement:NO
             completion:^(BOOL ok) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [aCommand resumeExecutionWithResult:nil];

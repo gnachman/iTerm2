@@ -278,5 +278,7 @@ extern NSString *const PTYTabVariableTitleOverride;
 - (void)arrangeSplitPanesEvenly;
 - (void)bounceMetal;
 - (void)makeActive;
+- (void)willDeselectTab;
+- (void)didSelectTab;
 
 @end

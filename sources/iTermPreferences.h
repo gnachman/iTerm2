@@ -216,6 +216,7 @@ extern NSString *const kPreferenceKeyPasteWarningNumberOfSpacesPerTab;
 extern NSString *const kPreferenceKeyShowFullscreenTabBar;
 extern NSString *const kPreferenceKeyDefaultToolbeltWidth;
 extern NSString *const kPreferenceKeySizeChangesAffectProfile;
+extern NSString *const kPreferenceKeyAlertOnMarksInOffscreenSessions;
 
 // Set to YES on the first launch of a version that supports multiple hotkey windows.
 extern NSString *const kPreferenceKeyHotkeyMigratedFromSingleToMulti;

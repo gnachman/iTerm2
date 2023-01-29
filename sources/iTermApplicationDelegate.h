@@ -43,6 +43,7 @@ extern NSString *const kMarkAlertActionModalAlert;
 extern NSString *const kMarkAlertActionPostNotification;
 extern NSString *const kShowFullscreenTabsSettingDidChange;
 extern NSString *const iTermApplicationWillTerminate;
+extern NSString *const iTermDidToggleAlertOnMarksInOffscreenSessionsNotification;
 
 void TurnOnDebugLoggingAutomatically(void);
 

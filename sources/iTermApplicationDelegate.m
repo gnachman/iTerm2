@@ -144,6 +144,7 @@ static NSString *const kMarkAlertAction = @"Mark Alert Action";
 NSString *const kMarkAlertActionModalAlert = @"Modal Alert";
 NSString *const kMarkAlertActionPostNotification = @"Post Notification";
 NSString *const kShowFullscreenTabsSettingDidChange = @"kShowFullscreenTabsSettingDidChange";
+NSString *const iTermDidToggleAlertOnMarksInOffscreenSessionsNotification = @"iTermDidToggleAlertOnMarksInOffscreenSessionsNotification";
 
 static NSString *const kScreenCharRestorableStateKey = @"kScreenCharRestorableStateKey";
 static NSString *const kURLStoreRestorableStateKey = @"kURLStoreRestorableStateKey";
@@ -452,6 +453,9 @@ static BOOL hasBecomeActive = NO;
     } else if (menuItem.action == @selector(toggleDisableTransparencyForActiveWindow:)) {
         const BOOL value = [iTermPreferences boolForKey:kPreferenceKeyDisableTransparencyForKeyWindow];
         menuItem.state = value ? NSControlStateValueOn : NSControlStateValueOff;
+        return YES;
+    } else if (menuItem.action == @selector(toggleAlertOnMarksInOffscreenSessions:)) {
+        menuItem.state = [iTermPreferences boolForKey:kPreferenceKeyAlertOnMarksInOffscreenSessions];
         return YES;
     } else {
         return YES;
@@ -2312,6 +2316,13 @@ void TurnOnDebugLoggingAutomatically(void) {
 - (IBAction)loadRecording:(id)sender {
     [iTermRecordingCodec loadRecording];
 }
+
+- (IBAction)toggleAlertOnMarksInOffscreenSessions:(id)sender {
+    [iTermPreferences setBool:![iTermPreferences boolForKey:kPreferenceKeyAlertOnMarksInOffscreenSessions]
+                    forKey:kPreferenceKeyAlertOnMarksInOffscreenSessions];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermDidToggleAlertOnMarksInOffscreenSessionsNotification object:nil];
+}
+
 
 #pragma mark - Private
 

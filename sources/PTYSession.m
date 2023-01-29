@@ -611,6 +611,9 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     AITermControllerObjC *_aiterm;
     NSMutableArray<NSString *> *_commandQueue;
     NSMutableArray<iTermSSHReconnectionInfo *> *_pendingJumps;
+
+    // If true the session was just created and an offscreen mark alert would be annoying.
+    BOOL _temporarilySuspendOffscreenMarkAlerts;
 }
 
 @synthesize isDivorced = _divorced;
@@ -760,6 +763,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         _pwdPoller.delegate = self;
         _graphicSource = [[iTermGraphicSource alloc] init];
         _commandQueue = [[NSMutableArray alloc] init];
+        _alertOnMarksinOffscreenSessions = [iTermPreferences boolForKey:kPreferenceKeyAlertOnMarksInOffscreenSessions];
 
         // This is a placeholder. When the profile is set it will get updated.
         iTermStandardKeyMapper *standardKeyMapper = [[iTermStandardKeyMapper alloc] init];
@@ -841,6 +845,18 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
                                                  selector:@selector(metalClipViewWillScroll:)
                                                      name:iTermMetalClipViewWillScroll
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(alertOnMarksinOffscreenSessionsDidChange:)
+                                                     name:iTermDidToggleAlertOnMarksInOffscreenSessionsNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(windowDidMiniaturize:)
+                                                     name:@"iTermWindowWillMiniaturize"
+                                                   object:nil];
+        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+                                                               selector:@selector(activeSpaceDidChange:)
+                                                                   name:NSWorkspaceActiveSpaceDidChangeNotification
+                                                                 object:nil];
 
         [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString * _Nonnull newValue) {
             if (!weakSelf.view.window.isKeyWindow) {
@@ -1788,6 +1804,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                                            windowController:(PseudoTerminal *)aSession.delegate.realParentWindow
                                                                       ready:nil
                                                                  completion:completion];
+                launchRequest.fromArrangement = YES;
                 iTermSessionFactory *factory = [[[iTermSessionFactory alloc] init] autorelease];
                 launchRequest.arrangementName = arrangementName;
                 [factory attachOrLaunchWithRequest:launchRequest];
@@ -2575,9 +2592,19 @@ ITERM_WEAKLY_REFERENCEABLE
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
          arrangement:(NSString *)arrangementName
+     fromArrangement:(BOOL)fromArrangement
           completion:(void (^)(BOOL))completion {
-    DLog(@"startProgram:%@ environment:%@ isUTF8:%@ substitutions:%@",
-         command, environment, @(isUTF8), substitutions);
+    DLog(@"startProgram:%@ ssh:%@ environment:%@ customShell:%@ isUTF8:%@ substitutions:%@ arrangementName:%@ fromArrangement:%@, self=%@",
+         command,
+         @(ssh),
+         environment,
+         customShell,
+         @(isUTF8),
+         substitutions,
+         arrangementName,
+         @(fromArrangement),
+         self);
+    _temporarilySuspendOffscreenMarkAlerts = fromArrangement;
     self.program = command;
     self.customShell = customShell;
     self.environment = environment ?: @{};
@@ -3555,6 +3582,7 @@ ITERM_WEAKLY_REFERENCEABLE
                 isUTF8:_isUTF8
          substitutions:_substitutions
            arrangement:nil
+       fromArrangement:NO
             completion:^(BOOL ok) {
         [weakSelf.delegate sessionDidRestart:self];
     }];
@@ -5724,6 +5752,26 @@ verticalSpacing:(CGFloat)verticalSpacing {
     }
 }
 
+- (void)alertOnMarksinOffscreenSessionsDidChange:(NSNotification *)notification {
+    DLog(@"alertOnMarksinOffscreenSessionsDidChange for %@", self);
+    _alertOnMarksinOffscreenSessions = [iTermPreferences boolForKey:kPreferenceKeyAlertOnMarksInOffscreenSessions];
+    [self sync];
+}
+
+- (void)windowDidMiniaturize:(NSNotification *)notification {
+    DLog(@"windowDidMiniaturize for %@", self);
+    if (_alertOnMarksinOffscreenSessions) {
+        [self sync];
+    }
+}
+
+- (void)activeSpaceDidChange:(NSNotification *)notification {
+    DLog(@"activeSpaceDidChange for %@", self);
+    if (_alertOnMarksinOffscreenSessions) {
+        [self sync];
+    }
+}
+
 - (void)savedArrangementWasRepaired:(NSNotification *)notification {
     if ([notification.object isEqual:_naggingController.missingSavedArrangementProfileGUID]) {
         Profile *newProfile = notification.userInfo[@"new profile"];
@@ -6925,6 +6973,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (focused == _focused) {
         DLog(@"No change");
         return;
+    }
+    if (_alertOnMarksinOffscreenSessions && [self.delegate hasMaximizedPane]) {
+        DLog(@"Sync because _alertOnMarksinOffscreenSessions and maximized");
+        [self sync];
     }
     if (self.isTmuxGateway) {
         DLog(@"Is tmux gateway");
@@ -8226,7 +8278,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return syncResult;
 }
 
+- (void)enableOffscreenMarkAlertsIfNeeded {
+    DLog(@"enableOffscreenMarkAlertsIfNeeded %@", self);
+    if (_temporarilySuspendOffscreenMarkAlerts) {
+        DLog(@"_temporarilySuspendOffscreenMarkAlerts = NO for %@", self);
+        _temporarilySuspendOffscreenMarkAlerts = NO;
+        [self sync];
+    }
+}
+
 - (BOOL)textViewShouldAcceptKeyDownEvent:(NSEvent *)event {
+    [self enableOffscreenMarkAlertsIfNeeded];
     const BOOL accept = [self shouldAcceptKeyDownEvent:event];
     if (accept) {
         [_cadenceController didHandleKeystroke];
@@ -11794,10 +11856,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_commandQueue removeObjectAtIndex:0];
         [self sendCommand:command];
     }
-    if (!alert) {
+    BOOL shouldAlert = alert;
+    if (!alert &&
+        [iTermPreferences boolForKey:kPreferenceKeyAlertOnMarksInOffscreenSessions] &&
+        !_temporarilySuspendOffscreenMarkAlerts) {
+        shouldAlert = ![self.delegate sessionIsInSelectedTab:self];
+    }
+    if (!shouldAlert) {
+        DLog(@"Will enable offscreen mark alerts for %@", self);
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"Actually enable offscreen mark alerts for %@", weakSelf);
+            [weakSelf enableOffscreenMarkAlertsIfNeeded];
+        });
         completion();
         return;
     }
+    DLog(@"Alert for %@", self);
     self.alertOnNextMark = NO;
     NSString *action = [iTermApplication.sharedApplication delegate].markAlertAction;
     if ([action isEqualToString:kMarkAlertActionPostNotification]) {
@@ -12826,8 +12901,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.stringForKeypress = [self stringForKeypress];
         dirty = YES;
     }
-    if (self.alertOnNextMark != _config.alertOnNextMark) {
-        _config.alertOnNextMark = self.alertOnNextMark;
+    const BOOL compoundAlertOnNextMark = [self shouldAlert];
+    if (compoundAlertOnNextMark != _config.alertOnNextMark) {
+        _config.alertOnNextMark = compoundAlertOnNextMark;
         dirty = YES;
     }
     const double dimmingAmount = _view.adjustedDimmingAmount;
@@ -12879,6 +12955,34 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (dirty) {
         _config.isDirty = dirty;
     }
+}
+
+- (BOOL)shouldAlert {
+    if (self.alertOnNextMark) {
+        DLog(@"self.alertOnNextMark -> YES");
+        return YES;
+    }
+    if (!_alertOnMarksinOffscreenSessions) {
+        DLog(@"!_alertOnMarksinOffscreenSessions -> NO");
+        return NO;
+    }
+    if (_temporarilySuspendOffscreenMarkAlerts) {
+        DLog(@"_temporarilySuspendOffscreenMarkAlerts -> NO");
+        return NO;
+    }
+    if ([self.delegate hasMaximizedPane] && ![self.delegate sessionIsActiveInTab:self]) {
+        DLog(@"hasMaximizedPane && !sessionIsActiveInTab -> YES");
+        return YES;
+    }
+    if (!self.view.window.isVisible ||
+        self.view.window.isMiniaturized ||
+        ![self.view.window isOnActiveSpace] ||
+        ![self.delegate sessionIsInSelectedTab:self]) {
+        DLoG(@"offscreen -> YES");
+        return YES;
+    }
+    DLog(@"Otherwise -> NO");
+    return NO;
 }
 
 // As long as this is constant, stringForKeypress will return the same value.
@@ -14117,6 +14221,20 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)resetMode {
     _modeHandler.mode = iTermSessionModeDefault;
+}
+
+- (void)enclosingTabWillBeDeselected {
+    DLog(@"enclosingTabWillBeDeselected %@", self);
+    if (_alertOnMarksinOffscreenSessions) {
+        [self sync];
+    }
+}
+
+- (void)enclosingTabDidBecomeSelected {
+    DLog(@"enclosingTabDidBecomeSelected %@", self);
+    if (_alertOnMarksinOffscreenSessions) {
+        [self sync];
+    }
 }
 
 - (VT100Screen *)popupVT100Screen {

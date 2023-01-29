@@ -55,7 +55,7 @@
                                     trigger:(Trigger * _Nonnull)trigger;
 - (void)triggerSideEffectSetValue:(id _Nullable)value
                  forVariableNamed:(NSString * _Nonnull)name;
-- (void)triggerSideEffectCurrentDirectoryDidChange:(NSString *)newPath;
+- (void)triggerSideEffectCurrentDirectoryDidChange:(NSString * _Nonnull)newPath;
 - (void)triggerSideEffectShowCapturedOutputTool;
 
 @end

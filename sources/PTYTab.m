@@ -765,6 +765,19 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         [self setActiveSession:activeSession];
     }
 }
+- (void)willDeselectTab {
+    DLog(@"willDeselectTab %@", self);
+    for (PTYSession *session in self.sessions) {
+        [session enclosingTabWillBeDeselected];
+    }
+}
+
+- (void)didSelectTab {
+    DLog(@"didSelectTab %@", self);
+    for (PTYSession *session in self.sessions) {
+        [session enclosingTabDidBecomeSelected];
+    }
+}
 
 - (void)sessionSelectContainingTab {
     [self makeActive];
@@ -2485,8 +2498,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                             style:[parentWindow_ scrollerStyle]];
     NSSize size = [[aSession view] maximumPossibleScrollViewContentSize];
     DLog(@"Max size is %@", [NSValue valueWithSize:size]);
-    int width = (size.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / [[aSession textview] charWidth];
-    int height = (size.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / [[aSession textview] lineHeight];
+    const NSSize cellSize = NSMakeSize(MAX(1.0, [[aSession textview] charWidth]),
+                                       MAX(1.0, [[aSession textview] lineHeight]));
+    int width = (size.width - [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2) / cellSize.width;
+    int height = (size.height - [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2) / cellSize.height;
     PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
     if (width <= 0) {
         XLog(@"WARNING: Session has %d width", width);

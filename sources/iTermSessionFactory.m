@@ -404,6 +404,7 @@ NS_ASSUME_NONNULL_BEGIN
                            isUTF8:request.isUTF8
                     substitutions:request.substitutions
                       arrangement:request.arrangementName
+                  fromArrangement:request.fromArrangement
                        completion:^(BOOL ok) {
         [request.windowController setWindowTitle];
         if (completion) {

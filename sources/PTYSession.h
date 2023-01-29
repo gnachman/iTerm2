@@ -311,6 +311,8 @@ backgroundColor:(NSColor *)backgroundColor;
 @property(nonatomic, assign) BOOL active;
 
 @property(nonatomic, assign) BOOL alertOnNextMark;
+// This comes from prefs and is kept up to date.
+@property(nonatomic, readonly) BOOL alertOnMarksinOffscreenSessions;
 @property(nonatomic, copy) NSColor *tabColor;
 
 @property(nonatomic, readonly) DVR *dvr;
@@ -664,6 +666,7 @@ backgroundColor:(NSColor *)backgroundColor;
               isUTF8:(BOOL)isUTF8
        substitutions:(NSDictionary *)substitutions
          arrangement:(NSString *)arrangement
+     fromArrangement:(BOOL)fromArrangement
           completion:(void (^)(BOOL))completion;
 
 // This is an alternative to runCommandWithOldCwd and startProgram. It attaches
@@ -937,6 +940,8 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)userInitiatedReset;
 - (void)resetForRelaunch;
 - (void)resetMode;
+- (void)enclosingTabWillBeDeselected;
+- (void)enclosingTabDidBecomeSelected;
 
 #pragma mark - API
 
