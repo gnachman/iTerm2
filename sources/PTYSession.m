@@ -12978,7 +12978,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         self.view.window.isMiniaturized ||
         ![self.view.window isOnActiveSpace] ||
         ![self.delegate sessionIsInSelectedTab:self]) {
-        DLoG(@"offscreen -> YES");
+        DLog(@"offscreen -> YES");
         return YES;
     }
     DLog(@"Otherwise -> NO");
