@@ -1,5 +1,5 @@
 #import <Foundation/Foundation.h>
-#import "iTermWeakReference.h"
+#import "iTermWeakBox.h"
 
 @class iTermEventTap;
 
@@ -18,7 +18,7 @@
 
 @end
 
-@protocol iTermEventTapObserver<NSObject, iTermWeaklyReferenceable>
+@protocol iTermEventTapObserver<NSObject>
 - (void)eventTappedWithType:(CGEventType)type event:(CGEventRef)event;
 @end
 
@@ -37,7 +37,7 @@
 // observer.
 @property(nonatomic, assign) id<iTermEventTapRemappingDelegate> remappingDelegate;
 
-@property(nonatomic, readonly) NSArray<iTermWeakReference<id<iTermEventTapObserver>> *> *observers;
+@property(nonatomic, readonly) NSArray<iTermWeakBox<id<iTermEventTapObserver>> *> *weakObservers;
 
 // `types` is from CGEventMaskBit(kCGEventKeyDown), for example
 - (instancetype)initWithEventTypes:(CGEventMask)types NS_DESIGNATED_INITIALIZER;
