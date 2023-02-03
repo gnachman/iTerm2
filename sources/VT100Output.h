@@ -2,6 +2,7 @@
 #import "VT100GridTypes.h"
 
 typedef enum {
+    MOUSE_BUTTON_UNKNOWN = -1,   // unknown button
     // X11 button number
     MOUSE_BUTTON_LEFT = 0,       // left button
     MOUSE_BUTTON_MIDDLE = 1,     // middle button
@@ -13,6 +14,8 @@ typedef enum {
     MOUSE_BUTTON_SCROLLRIGHT = 7,// scroll right
     MOUSE_BUTTON_BACKWARD = 8,   // backward (4th button)
     MOUSE_BUTTON_FORWARD = 9,    // forward (5th button)
+    MOUSE_BUTTON_10 = 10,        // extra button 1
+    MOUSE_BUTTON_11 = 11,        // extra button 2
 } MouseButtonNumber;
 
 typedef NS_ENUM(NSInteger, MouseFormat) {

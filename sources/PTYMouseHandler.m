@@ -1271,6 +1271,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     return MOUSE_BUTTON_BACKWARD;
                 case 4:
                     return MOUSE_BUTTON_FORWARD;
+                case 5:
+                    return MOUSE_BUTTON_10;
+                case 6:
+                    return MOUSE_BUTTON_11;
+                default:
+                    return MOUSE_BUTTON_UNKNOWN;
             }
 
 
