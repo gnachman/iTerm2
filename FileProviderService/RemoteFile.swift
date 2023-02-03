@@ -63,7 +63,14 @@ public struct RemoteFile: Codable, Equatable, CustomDebugStringConvertible
     public var parentPermissions: Permissions?
     public var ctime: Date?
     public var mtime: Date?
-
+    public var size: Int? {
+        switch kind {
+        case .file(let fileInfo):
+            return fileInfo.size
+        case .folder, .host, .symlink:
+            return nil
+        }
+    }
     public static let workingSetPrefix = ".working"
     public static var workingSet: RemoteFile {
         return RemoteFile(kind: .folder,

@@ -11060,12 +11060,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 {
     SCPFile *previous = nil;
     for (NSString *file in localFilenames) {
-        SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
-        scpFile.path = [[[SCPPath alloc] init] autorelease];
-        scpFile.path.hostname = destinationPath.hostname;
-        scpFile.path.username = destinationPath.username;
+        SCPPath *path = [[[SCPPath alloc] init] autorelease];
+        path.hostname = destinationPath.hostname;
+        path.username = destinationPath.username;
         NSString *filename = [file lastPathComponent];
-        scpFile.path.path = [destinationPath.path stringByAppendingPathComponent:filename];
+        path.path = [destinationPath.path stringByAppendingPathComponent:filename];
+
+        if (@available(macOS 11, *)) {
+            if ([_conductor canTransferFilesTo:path]) {
+                [_conductor uploadFile:file to:path];
+                break;
+            }
+        }
+        SCPFile *scpFile = [[[SCPFile alloc] init] autorelease];
+        scpFile.path = path;
         scpFile.localPath = file;
 
         if (previous) {
@@ -11078,6 +11086,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)startDownloadOverSCP:(SCPPath *)path
 {
+    if (@available(macOS 11, *)) {
+        if ([_conductor canTransferFilesTo:path]) {
+            [_conductor download:path];
+            return;
+        }
+    }
     SCPFile *file = [[[SCPFile alloc] init] autorelease];
     file.path = path;
     [file download];

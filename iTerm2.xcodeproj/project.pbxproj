@@ -2461,6 +2461,7 @@
 		A687B66A25AD6FF600E0A658 /* iTermGitClient.m in Sources */ = {isa = PBXBuildFile; fileRef = A687B66925AD6FF600E0A658 /* iTermGitClient.m */; };
 		A688AA59298AFEE7007F4603 /* DoubleTapHotkeyStateMachine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A688AA58298AFEE7007F4603 /* DoubleTapHotkeyStateMachine.swift */; };
 		A688AA5A298B07BB007F4603 /* iTermBaseHotKey.m in Sources */ = {isa = PBXBuildFile; fileRef = A6FEA26B1CF2C86800376F28 /* iTermBaseHotKey.m */; };
+		A688AA5C298C389B007F4603 /* ConductorFileTransfer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A688AA5B298C389B007F4603 /* ConductorFileTransfer.swift */; };
 		A6891DCA2818605500751F40 /* MarkdownPortholeRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6891DC82818605500751F40 /* MarkdownPortholeRenderer.swift */; };
 		A6891DCB2818605500751F40 /* JSONPortholeRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6891DC92818605500751F40 /* JSONPortholeRenderer.swift */; };
 		A68A30C1186D0DC1007F550F /* iTermFindCursorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */; };
@@ -6402,6 +6403,7 @@
 		A687B66925AD6FF600E0A658 /* iTermGitClient.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermGitClient.m; sourceTree = "<group>"; };
 		A6889E84213274E600ABB237 /* iTerm2.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = iTerm2.entitlements; sourceTree = "<group>"; };
 		A688AA58298AFEE7007F4603 /* DoubleTapHotkeyStateMachine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleTapHotkeyStateMachine.swift; sourceTree = "<group>"; };
+		A688AA5B298C389B007F4603 /* ConductorFileTransfer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConductorFileTransfer.swift; sourceTree = "<group>"; };
 		A6891DC82818605500751F40 /* MarkdownPortholeRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MarkdownPortholeRenderer.swift; sourceTree = "<group>"; };
 		A6891DC92818605500751F40 /* JSONPortholeRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = JSONPortholeRenderer.swift; sourceTree = "<group>"; };
 		A68A30BF186D0DC1007F550F /* iTermFindCursorView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFindCursorView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -11284,6 +11286,7 @@
 				A63EB04B284D1D1900B2AB89 /* FileProviderServiceClient.swift */,
 				A63EB053284D836900B2AB89 /* SSHFileGateway.swift */,
 				A63EB058284DB14000B2AB89 /* ConductorRegistry.swift */,
+				A688AA5B298C389B007F4603 /* ConductorFileTransfer.swift */,
 			);
 			name = ssh;
 			sourceTree = "<group>";
@@ -15289,6 +15292,7 @@
 				A629F58B23AF38CA00C2F16B /* iTermClickableTextField.m in Sources */,
 				A6BF035921E179680097DA86 /* iTermRecordedVariable.m in Sources */,
 				A61A85B224F23CDE00B03880 /* iTermGlobalSearchEngineCursor.m in Sources */,
+				A688AA5C298C389B007F4603 /* ConductorFileTransfer.swift in Sources */,
 				A6A2D6E424345D4000A4DF5B /* iTermMinimalComposerViewController.m in Sources */,
 				A658882A201F06ED006F48DB /* iTermTexture.m in Sources */,
 				A6AFD68D24496F1C007D0660 /* iTermClientServerProtocolMessageBox.m in Sources */,

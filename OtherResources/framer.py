@@ -539,7 +539,11 @@ async def handle_file(identifier, args):
         await handle_file_ls(identifier, base64.b64decode(args[1]).decode('latin1'), args[2])
         return
     if sub == "fetch":
-        await handle_file_fetch(identifier, base64.b64decode(args[1]).decode('latin1'))
+        if len(args) >= 4:
+            await handle_file_fetch(identifier, base64.b64decode(args[1]).decode('latin1'), int(args[2]), int(args[3]))
+        else:
+            await handle_file_fetch(identifier, base64.b64decode(args[1]).decode('latin1'), 0, float('inf'))
+        return
         return
     if sub == "stat":
         await handle_file_stat(identifier, base64.b64decode(args[1]).decode('latin1'))
@@ -573,6 +577,11 @@ async def handle_file(identifier, args):
         return
     if sub == "create":
         await handle_file_create(identifier,
+                                 base64.b64decode(args[1]).decode('latin1'),
+                                 base64.b64decode("".join(args[2:])))
+        return
+    if sub == "append":
+        await handle_file_append(identifier,
                                  base64.b64decode(args[1]).decode('latin1'),
                                  base64.b64decode("".join(args[2:])))
         return
@@ -675,11 +684,16 @@ async def handle_file_stat(identifier, path):
     except Exception as e:
         file_error(identifier, e, path)
 
-async def handle_file_fetch(identifier, path):
+async def handle_file_fetch(identifier, path, offset, size):
     log(f'handle_file_fetch {identifier} {path}')
     try:
         with open(path, "rb") as f:
-            content = f.read()
+            if offset > 0:
+                f.seek(offset)
+            if size == float('inf'):
+                content = f.read()
+            else:
+                content = f.read(size)
             log(type(content))
             encoded = base64.encodebytes(content).decode('utf8')
             for line in encoded.split("\n"):
@@ -735,6 +749,16 @@ async def handle_file_create(identifier, path, content):
     log(f'handle_file_create {identifier} {path} length={len(content)} bytes')
     try:
         with open(path, "wb") as f:
+            f.write(content)
+        send_remote_file(path)
+        end(identifier, 0)
+    except Exception as e:
+        file_error(identifier, e, path)
+
+async def handle_file_append(identifier, path, content):
+    log(f'handle_file_append {identifier} {path} length={len(content)} bytes')
+    try:
+        with open(path, "ab") as f:
             f.write(content)
         send_remote_file(path)
         end(identifier, 0)

@@ -169,13 +169,14 @@ class Conductor: NSObject, Codable {
 
     enum FileSubcommand: Codable, Equatable {
         case ls(path: Data, sorting: FileSorting)
-        case fetch(path: Data)
+        case fetch(path: Data, chunk: DownloadChunk?)
         case stat(path: Data)
         case rm(path: Data, recursive: Bool)
         case ln(source: Data, symlink: Data)
         case mv(source: Data, dest: Data)
         case mkdir(path: Data)
         case create(path: Data, content: Data)
+        case append(path: Data, content: Data)
         case utime(path: Data, date: Date)
         case chmod(path: Data, r: Bool, w: Bool, x: Bool)
 
@@ -191,8 +192,12 @@ class Conductor: NSObject, Codable {
                 }
                 return "ls\n\(path.base64EncodedString())\n\(sortString)"
 
-            case .fetch(let path):
-                return "fetch\n\(path.base64EncodedString())"
+            case .fetch(let path, let chunk):
+                if let chunk {
+                    return "fetch\n\(path.base64EncodedString())\n\(chunk.offset)\n\(chunk.size)"
+                } else {
+                    return "fetch\n\(path.base64EncodedString())"
+                }
 
             case .stat(let path):
                 return "stat\n\(path.base64EncodedString())"
@@ -212,10 +217,15 @@ class Conductor: NSObject, Codable {
             case .mkdir(let path):
                 return "mkdir\n\(path.base64EncodedString())"
             case .create(path: let path, content: let content):
-                return ([
+                return [
                     "create",
-                    path.base64EncodedString()
-                ] + content.base64EncodedString().chunk(80)).joined(separator: "\n")
+                    path.base64EncodedString(),
+                    content.base64EncodedString()].joined(separator: "\n")
+            case .append(path: let path, content: let content):
+                return [
+                    "append",
+                    path.base64EncodedString(),
+                    content.base64EncodedString()].joined(separator: "\n")
             case .utime(path: let path, date: let date):
                 return [
                     "utime",
@@ -235,8 +245,12 @@ class Conductor: NSObject, Codable {
             switch self {
             case .ls(let path, let sort):
                 return "ls \(path.stringOrHex) \(sort)"
-            case .fetch(let path):
-                return "fetch \(path.stringOrHex)"
+            case .fetch(let path, let chunk):
+                if let chunk {
+                    return "fetch \(path.stringOrHex) offset=\(chunk.offset) size=\(chunk.size)"
+                } else {
+                    return "fetch \(path.stringOrHex)"
+                }
             case .stat(let path):
                 return "stat \(path.stringOrHex)"
             case .rm(path: let path, recursive: let recursive):
@@ -249,6 +263,8 @@ class Conductor: NSObject, Codable {
                 return "mkdir \(path.stringOrHex)"
             case .create(path: let path, content: let content):
                 return "create \(path.stringOrHex) length=\(content.count) bytes"
+            case .append(path: let path, content: let content):
+                return "append \(path.stringOrHex) length=\(content.count) bytes"
             case .utime(path: let path, date: let date):
                 return "utime \(path.stringOrHex) \(date)"
             case .chmod(path: let path, r: let r, w: let w, x: let x):
@@ -892,6 +908,32 @@ class Conductor: NSObject, Codable {
         start()
     }
 
+    @objc(canTransferFilesTo:)
+    func canTransferFilesTo(_ path: SCPPath) -> Bool {
+        guard framing else {
+            return false
+        }
+        return sshIdentity.hostname == path.hostname && (sshIdentity.username == nil || sshIdentity.username == path.username)
+    }
+
+    @available(macOS 11, *)
+    @objc(download:)
+    func download(path: SCPPath) {
+        let file = ConductorFileTransfer(path: path,
+                                         localPath: nil,
+                                         delegate: self)
+        file.download()
+    }
+
+    @available(macOS 11, *)
+    @objc(uploadFile:to:)
+    func upload(file: String, to destinationPath: SCPPath) {
+        let file = ConductorFileTransfer(path: destinationPath,
+                                         localPath: file,
+                                         delegate: self)
+        file.upload()
+    }
+
     private var jumpScript: String {
         defer {
             myJump = nil
@@ -1343,8 +1385,20 @@ class Conductor: NSObject, Codable {
 
     @objc func handleUnhook() {
         DLog("< unhook")
+        switch state {
+        case .executing(let context), .willExecute(let context):
+            update(executionContext: context, result: .abort)
+        case .ground, .recovered, .unhooked, .recovery:
+            break
+        }
+        DLog("Abort pending commands")
+        while let pending = queue.first {
+            queue.removeFirst()
+            update(executionContext: pending, result: .abort)
+        }
         state = .unhooked
     }
+
     @objc func handleCommandBegin(identifier: String, depth: Int32) {
         // NOTE: no attempt is made to ensure this is meant for me; could be for my parent but it
         // only logs so who cares.
@@ -1719,7 +1773,9 @@ extension String {
                                                self.distance(from: index,
                                                              to: self.endIndex)))
             let part = String(self[index..<end]) + (end < self.endIndex ? continuation : "")
-            parts.append(part)
+            if !part.isEmpty {
+                parts.append(part)
+            }
             index = end
         }
         return parts
@@ -1769,6 +1825,7 @@ extension Data {
 
 @available(macOS 11.0, *)
 extension Conductor: SSHEndpoint {
+    @MainActor
     private func performFileOperation(subcommand: FileSubcommand) async throws -> String {
         let (output, code) = await withCheckedContinuation { continuation in
             framerFile(subcommand) { content, code in
@@ -1784,6 +1841,7 @@ extension Conductor: SSHEndpoint {
         return output
     }
 
+    @MainActor
     func listFiles(_ path: String, sort: FileSorting) async throws -> [RemoteFile] {
         return try await logging("listFiles")  {
             guard let pathData = path.data(using: .utf8) else {
@@ -1803,13 +1861,14 @@ extension Conductor: SSHEndpoint {
         }
     }
 
-    func download(_ path: String) async throws -> Data {
-        return try await logging("download \(path)") {
+    @MainActor
+    func download(_ path: String, chunk: DownloadChunk?) async throws -> Data {
+        return try await logging("download \(path) \(String(describing: chunk))") {
             guard let pathData = path.data(using: .utf8) else {
                 throw iTermFileProviderServiceError.notFound(path)
             }
             log("perform file operation to download \(path)")
-            let b64: String = try await performFileOperation(subcommand: .fetch(path: pathData))
+            let b64: String = try await performFileOperation(subcommand: .fetch(path: pathData, chunk: chunk))
             log("file operation completed with \(b64.count) characters")
             guard let data = Data(base64Encoded: b64) else {
                 throw iTermFileProviderServiceError.internalError("Server returned garbage")
@@ -1829,6 +1888,7 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    @MainActor
     func stat(_ path: String) async throws -> RemoteFile {
         return try await logging("stat \(path)") {
             guard let pathData = path.data(using: .utf8) else {
@@ -1842,6 +1902,7 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    @MainActor
     func delete(_ path: String, recursive: Bool) async throws {
         try await logging("delete \(path) recursive=\(recursive)") {
             guard let pathData = path.data(using: .utf8) else {
@@ -1853,6 +1914,7 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    @MainActor
     func ln(_ source: String, _ symlink: String) async throws -> RemoteFile {
         try await logging("ln -s \(source) \(symlink)") {
             guard let sourceData = source.data(using: .utf8) else {
@@ -1870,6 +1932,7 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    @MainActor
     func mv(_ source: String, newParent: String, newName: String) async throws -> RemoteFile {
         let dest = newParent.appending(pathComponent: newName)
         return try await logging("mv \(source) \(dest)") {
@@ -1888,6 +1951,19 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    @MainActor
+    func rm(_ file: String, recursive: Bool) async throws {
+        try await logging("rm \(recursive ? "-rf " : "-f") \(file)") {
+            log("perform file operation to unlink")
+            guard let fileData = file.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(file)
+            }
+            _ = try await performFileOperation(subcommand: .rm(path: fileData,
+                                                               recursive: recursive))
+        }
+    }
+
+    @MainActor
     func mkdir(_ path: String) async throws {
         try await logging("mkdir \(path)") {
             guard let pathData = path.data(using: .utf8) else {
@@ -1899,6 +1975,7 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    @MainActor
     func create(_ file: String, content: Data) async throws {
         try await logging("create \(file) length=\(content.count) bytes") {
             guard let pathData = file.data(using: .utf8) else {
@@ -1910,7 +1987,20 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    @MainActor
+    func append(_ file: String, content: Data) async throws {
+        try await logging("append \(file) length=\(content.count) bytes") {
+            guard let pathData = file.data(using: .utf8) else {
+                throw iTermFileProviderServiceError.notFound(file)
+            }
+            log("perform file operation to append \(file)")
+            _ = try await performFileOperation(subcommand: .append(path: pathData, content: content))
+            log("finished")
+        }
+    }
+
     // This is just create + stat
+    @MainActor
     func replace(_ file: String, content: Data) async throws -> RemoteFile {
         try await logging("replace \(file) length=\(content.count) bytes") {
             guard let pathData = file.data(using: .utf8) else {
@@ -1924,6 +2014,7 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    @MainActor
     func setModificationDate(_ file: String, date: Date) async throws -> RemoteFile {
         try await logging("utime \(file) \(date)") {
             guard let pathData = file.data(using: .utf8) else {
@@ -1938,6 +2029,7 @@ extension Conductor: SSHEndpoint {
         }
     }
 
+    @MainActor
     func chmod(_ file: String, permissions: RemoteFile.Permissions) async throws -> RemoteFile {
         try await logging("utime \(file) \(permissions)") {
             guard let pathData = file.data(using: .utf8) else {
@@ -1982,5 +2074,133 @@ struct CodableNSDictionary: Codable {
                                                       format: .binary,
                                                       options: 0)
         try container.encode(data)
+    }
+}
+
+@available(macOS 11.0, *)
+extension Conductor: ConductorFileTransferDelegate {
+    func beginDownload(fileTransfer: ConductorFileTransfer) {
+        guard let path = fileTransfer.localPath() else {
+            fileTransfer.fail(reason: "No local path specified")
+            return
+        }
+        let remotePath = fileTransfer.path.path!
+
+        FileManager.default.createFile(atPath: path, contents: nil, attributes: nil)
+        guard let fileHandle = FileHandle(forUpdatingAtPath: path) else {
+            fileTransfer.fail(reason: "Could not open \(path)")
+            return
+        }
+        Task {
+            await reallyBeginDownload(fileTransfer: fileTransfer,
+                                      remotePath: remotePath,
+                                      fileHandle: fileHandle)
+        }
+    }
+
+    @MainActor
+    private func reallyBeginDownload(fileTransfer: ConductorFileTransfer,
+                                     remotePath: String,
+                                     fileHandle: FileHandle) async {
+        do {
+            let info = try await stat(fileTransfer.path.path)
+            let sizeKnown: Bool
+            if let size = info.size {
+                sizeKnown = true
+                fileTransfer.fileSize = size
+            } else {
+                sizeKnown = false
+            }
+            var done = false
+            var offset = 0
+
+            let chunkSize = 1024
+            defer {
+                try? fileHandle.close()
+            }
+            while !done {
+                if fileTransfer.isStopped {
+                    fileTransfer.abort()
+                    return
+                }
+                let chunk = DownloadChunk(offset: offset, size: chunkSize)
+                let data = try await download(remotePath, chunk: chunk)
+                if data.isEmpty {
+                    done = true
+                } else {
+                    try fileHandle.write(contentsOf: data)
+                    if !sizeKnown {
+                        fileTransfer.fileSize = fileTransfer.fileSize + data.count
+                    }
+                    fileTransfer.didTransferBytes(UInt(data.count))
+                    offset += data.count
+                }
+            }
+            fileTransfer.didFinishSuccessfully()
+        } catch {
+            fileTransfer.fail(reason: error.localizedDescription)
+        }
+    }
+
+    func beginUpload(fileTransfer: ConductorFileTransfer) {
+        guard let path = fileTransfer.localPath() else {
+            fileTransfer.fail(reason: "No local filename specified")
+            return
+        }
+        Task {
+            await reallyBeginUpload(fileTransfer: fileTransfer,
+                                    from: path)
+        }
+    }
+
+    @MainActor
+    private func reallyBeginUpload(fileTransfer: ConductorFileTransfer,
+                                   from path: String) async {
+        let tempfile = fileTransfer.path.path + ".uploading-\(UUID().uuidString)"
+        do {
+            let fileURL = URL(fileURLWithPath: path)
+            let data = try Data(contentsOf: fileURL)
+            // Make an empty file and then upload chunks so we don't monopolize the connection.
+            try await create(tempfile,
+                             content: Data())
+            fileTransfer.fileSize = data.count
+            var offset = 0
+            while offset < data.count {
+                if fileTransfer.isStopped {
+                    fileTransfer.abort()
+                    return
+                }
+                let maxChunkSize = 1024
+                let chunk = data.subdata(in: offset..<min(data.count, offset + maxChunkSize))
+                offset += chunk.count
+                try await append(tempfile, content: chunk)
+                fileTransfer.didTransferBytes(UInt(chunk.count))
+            }
+            // Find a good name
+            var proposedName = fileTransfer.path.path!
+            var remoteName: String?
+            for i in 0..<100 {
+                let info = try? await stat(proposedName)
+                if info == nil {
+                    remoteName = proposedName
+                    break
+                }
+                proposedName = fileTransfer.path.path + " (\(i + 2))"
+            }
+            guard let remoteName else {
+                throw ConductorFileTransfer.ConductorFileTransferError("Too many iterations to find a valid file name on remote host for upload")
+            }
+            fileTransfer.remoteName = remoteName
+            // Rename the tempfile to the proper name
+            _ = try await mv(
+                tempfile,
+                newParent: remoteName.deletingLastPathComponent,
+                newName: remoteName.lastPathComponent)
+            fileTransfer.didFinishSuccessfully()
+        } catch {
+            // Delete the temp file
+            try? await rm(tempfile, recursive: false)
+            fileTransfer.fail(reason: error.localizedDescription)
+        }
     }
 }

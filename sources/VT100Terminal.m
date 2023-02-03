@@ -3182,6 +3182,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                 [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,
                                                              hexEncodedKey,
                                                              [@"256" hexEncodedString]]]];
+                ok = YES;
                 break;
             case kDcsTermcapTerminfoRequestDirectColorWidth:
                 [parts addObject:[iTermPromise promiseValue:[NSString stringWithFormat:kFormat,

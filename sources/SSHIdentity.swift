@@ -67,6 +67,10 @@ public class SSHIdentity: NSObject, Codable {
         return state.hostname
     }
 
+    @objc public var username: String? {
+        return state.username
+    }
+
     public var stringIdentifier: String {
         return state.compactDescription
     }

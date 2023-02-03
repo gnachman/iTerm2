@@ -8,44 +8,73 @@
 import Foundation
 import FileProviderService
 
-enum SSHEndpointException: Error {
+enum SSHEndpointException: LocalizedError {
     case connectionClosed
     case fileNotFound
     case internalError  // e.g., non-decodable data from fetch
+
+    var errorDescription: String? {
+        get {
+            switch self {
+            case .connectionClosed:
+                return "Connection closed"
+            case .fileNotFound:
+                return "File not found"
+            case .internalError:
+                return "Internal error"
+            }
+        }
+    }
+}
+
+struct DownloadChunk: Codable, Equatable {
+    var offset: Int
+    var size: Int
 }
 
 protocol SSHEndpoint: AnyObject {
     @available(macOS 11.0, *)
+    @MainActor
     func listFiles(_ path: String, sort: FileSorting) async throws -> [RemoteFile]
 
     @available(macOS 11.0, *)
-    func download(_ path: String) async throws -> Data
+    @MainActor
+    func download(_ path: String, chunk: DownloadChunk?) async throws -> Data
 
     @available(macOS 11.0, *)
+    @MainActor
     func stat(_ path: String) async throws -> RemoteFile
 
     @available(macOS 11.0, *)
+    @MainActor
     func delete(_ path: String, recursive: Bool) async throws
 
     @available(macOS 11.0, *)
+    @MainActor
     func ln(_ source: String, _ symlink: String) async throws -> RemoteFile
 
     @available(macOS 11.0, *)
+    @MainActor
     func mv(_ file: String, newParent: String, newName: String) async throws -> RemoteFile
 
     @available(macOS 11.0, *)
+    @MainActor
     func mkdir(_ file: String) async throws
 
     @available(macOS 11.0, *)
+    @MainActor
     func create(_ file: String, content: Data) async throws
 
     @available(macOS 11.0, *)
+    @MainActor
     func replace(_ file: String, content: Data) async throws -> RemoteFile
 
     @available(macOS 11.0, *)
+    @MainActor
     func setModificationDate(_ file: String, date: Date) async throws -> RemoteFile
 
     @available(macOS 11.0, *)
+    @MainActor
     func chmod(_ file: String, permissions: RemoteFile.Permissions) async throws -> RemoteFile
 
     var sshIdentity: SSHIdentity { get }
@@ -391,7 +420,8 @@ public struct SSHConnectionIdentifier: Codable, Hashable, CustomDebugStringConve
             case .root(_):
                 throw iTermFileProviderServiceError.notAFile(path)
             case .ssh(let endpoint):
-                return try await endpoint.download(path.removingHost)
+                return try await endpoint.download(path.removingHost,
+                                                   chunk: nil)
             }
         }
     }
@@ -543,8 +573,8 @@ class SSHEndpointProxy: SSHEndpoint {
     }
 
     @MainActor
-    func download(_ path: String) async throws -> Data {
-        return try await realEndpoint(path).download(path)
+    func download(_ path: String, chunk: DownloadChunk?) async throws -> Data {
+        return try await realEndpoint(path).download(path, chunk: chunk)
     }
 
     @MainActor
