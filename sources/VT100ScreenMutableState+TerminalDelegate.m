@@ -2542,6 +2542,36 @@
     }];
 }
 
+- (void)terminalBeginSSHIntegeration:(NSString *)args {
+    DLog(@"begin %@", args);
+    if (args) {
+        // Save args
+        NSArray<NSString *> *parts = [args componentsSeparatedByString:@" "];
+        if (parts.count < 4) {
+            DLog(@"Not enough parts");
+            return;
+        }
+        _sshIntegrationFlags = parts;
+        return;
+    }
+    if (!_sshIntegrationFlags) {
+        return;
+    }
+    // Send conductor
+    NSString *token = _sshIntegrationFlags[0];
+    NSString *uniqueID = _sshIntegrationFlags[1];
+    NSString *encodedBA = _sshIntegrationFlags[2];
+    NSString *sshArgs = _sshIntegrationFlags[3];
+    _sshIntegrationFlags = nil;
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenBeginSSHIntegrationWithToken:token
+                                            uniqueID:uniqueID
+                                           encodedBA:encodedBA
+                                             sshArgs:sshArgs];
+        [unpauser unpause];
+    }];
+}
+
 - (void)terminalUpdateEnv:(NSString *)value {
     DLog(@"begin %@", value);
     const NSInteger colon = [value rangeOfString:@":"].location;
@@ -2569,6 +2599,7 @@
 }
 
 - (void)terminalEndSSH:(NSString *)uniqueID {
+    _sshIntegrationFlags = nil;
     __weak __typeof(self) weakSelf = self;
     dispatch_queue_t queue = _queue;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {

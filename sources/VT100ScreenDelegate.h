@@ -409,7 +409,10 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
                                    depth:(int)depth;
 
 - (void)screenDidTerminateSSHProcess:(int)pid code:(int)code depth:(int)depth;
-
+- (void)screenBeginSSHIntegrationWithToken:(NSString *)token
+                                  uniqueID:(NSString *)uniqueID
+                                 encodedBA:(NSString *)encodedBA
+                                   sshArgs:(NSString *)sshArgs;
 - (NSInteger)screenEndSSH:(NSString * _Nonnull)uniqueID;
 - (NSString * _Nonnull)screenSSHLocation;
 - (void)screenBeginFramerRecovery:(int)parentDepth;

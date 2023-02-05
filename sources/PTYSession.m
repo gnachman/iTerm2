@@ -14178,7 +14178,28 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         count += 1;
         [self unhookSSHConductor];
     }
+    // it2ssh waits for a newline before exiting. This is in case ssh dies while iTerm2 is sending
+    // conductor.sh.
+    [self writeTaskNoBroadcast:@"\n"];
     return count;
+}
+
+- (void)screenBeginSSHIntegrationWithToken:(NSString *)token
+                                  uniqueID:(NSString *)uniqueID
+                                 encodedBA:(NSString *)encodedBA
+                                   sshArgs:(NSString *)sshArgs {
+    NSURL *path = [[NSBundle bundleForClass:[PTYSession class]] URLForResource:@"conductor" withExtension:@"sh"];
+    NSString *conductorSH = [NSString stringWithContentsOfURL:path encoding:NSUTF8StringEncoding error:nil];
+    // Ensure it doesn't contain empty lines.
+    conductorSH = [conductorSH stringByReplacingOccurrencesOfString:@"\n\n" withString:@"\n \n"];
+
+    [self writeTaskNoBroadcast:conductorSH];
+    [self writeTaskNoBroadcast:[NSString stringWithFormat:@"main %@ %@ %@ %@\n",
+                                [token base64EncodedWithEncoding:NSUTF8StringEncoding],
+                                [uniqueID base64EncodedWithEncoding:NSUTF8StringEncoding],
+                                [encodedBA base64EncodedWithEncoding:NSUTF8StringEncoding],
+                                [sshArgs base64EncodedWithEncoding:NSUTF8StringEncoding]]];
+    [self writeTaskNoBroadcast:@"EOF\n"];
 }
 
 - (NSString *)screenSSHLocation {

@@ -41,6 +41,7 @@ iTermTriggerScopeProvider> {
     dispatch_queue_t _queue;
     PTYTriggerEvaluator *_triggerEvaluator;
     dispatch_group_t _tmuxGroup;
+    NSArray<NSString *> *_sshIntegrationFlags;
 }
 
 @property (atomic) BOOL hadCommand;

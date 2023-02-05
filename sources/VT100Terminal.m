@@ -4165,6 +4165,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         if ([_delegate terminalIsTrusted]) {
             [_delegate terminalUpdateEnv:value];
         }
+    } else if ([key isEqualToString:@"it2ssh"]) {
+        [_delegate terminalBeginSSHIntegeration:value];
+    } else if ([key isEqualToString:@"SendConductor"]) {
+        [_delegate terminalBeginSSHIntegeration:nil];
     } else if ([key isEqualToString:@"EndSSH"]) {
         if ([_delegate terminalIsTrusted] && value.length > 0) {
             [_delegate terminalEndSSH:value];

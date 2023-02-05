@@ -20065,7 +20065,7 @@
 					"-DITERM_DEBUG=1",
 					"-DBETA=1",
 				);
-				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",

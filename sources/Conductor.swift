@@ -78,7 +78,7 @@ class Conductor: NSObject, Codable {
     private let shouldInjectShellIntegration: Bool
     private let depth: Int32
     @objc let parent: Conductor?
-    @objc var autopollEnabled = false
+    @objc var autopollEnabled = true
     private var _queueWrites = true
     private var restored = false
     private var autopoll = ""
