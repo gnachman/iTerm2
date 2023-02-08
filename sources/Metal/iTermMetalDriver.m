@@ -83,9 +83,7 @@ typedef struct {
     CGSize glyphSize;
     CGSize asciiOffset;
     CGContextRef context;
-#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
     NSInteger unfamiliarTextureCount;
-#endif
     CGFloat maximumExtendedDynamicRangeColorComponentValue NS_AVAILABLE_MAC(10_15);
     CGFloat legacyScrollbarWidth;
 } iTermMetalDriverMainThreadState;
@@ -161,11 +159,9 @@ typedef struct {
     // be nonnil and holds the state needed by those calls. Will bet set to nil if the frame will
     // be drawn by reallyDrawInMTKView:.
     iTermMetalDriverAsyncContext *_context;
-#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
     // Used to work around a bug where presentDrawable: sometimes doesn't work. It only seems to
     // happen with a never-before-seen texture. Holds weak refs to drawables' textures.
     NSPointerArray *_familiarTextures;
-#endif
 }
 
 - (nullable instancetype)initWithDevice:(nonnull id<MTLDevice>)device {
@@ -219,9 +215,7 @@ typedef struct {
         });
         _queue = queue;
 #endif
-#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
         _familiarTextures = [NSPointerArray weakObjectsPointerArray];
-#endif
 
         _currentFrames = [NSMutableArray array];
         _currentDrawableTime = [[MovingAverage alloc] init];
@@ -500,19 +494,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
             return NO;
         }
     }
-#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
     if (!frameData.textureIsFamiliar) {
-        if (_mainThreadState.unfamiliarTextureCount < _maxFramesInFlight) {
-            DLog(@"Texture is unfamiliar for %@", frameData);
-            self.needsDrawAfterDuration = 0;
-        } else {
-            DLog(@"Avoid redrawing unfamiliar texture to break loop");
-        }
-        _mainThreadState.unfamiliarTextureCount += 1;
-    } else {
+        NSLog(@"Texture is unfamiliar for %@", frameData);
         _mainThreadState.unfamiliarTextureCount = 0;
     }
-#endif  // ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 #endif  // ENABLE_PRIVATE_QUEUE
 
     @synchronized(self) {
@@ -797,7 +782,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     }
 }
 
-#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 - (BOOL)textureIsFamiliar:(id<MTLTexture>)texture {
     // -compact only does its job if you manually insert a nil pointer!
     // https://stackoverflow.com/questions/31322290/nspointerarray-weird-compaction/40274426
@@ -811,7 +795,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     }
     return NO;
 }
-#endif
 
 // Main thread
 - (void)acquireScarceResources:(iTermMetalFrameData *)frameData view:(MTKView *)view {
@@ -838,7 +821,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
             NSTimeInterval duration = [frameData measureTimeForStat:iTermMetalFrameDataStatMtGetCurrentDrawable ofBlock:^{
                 frameData.destinationDrawable = view.currentDrawable;
                 frameData.destinationTexture = [self destinationTextureForFrameData:frameData];
-#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
                 frameData.textureIsFamiliar = [self textureIsFamiliar:frameData.destinationDrawable.texture];
                 if (!frameData.textureIsFamiliar) {
                     [_familiarTextures addPointer:(__bridge void *)frameData.destinationDrawable.texture];
@@ -846,7 +828,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                 while (_familiarTextures.count > _maxFramesInFlight) {
                     [_familiarTextures removePointerAtIndex:0];
                 }
-#endif
             }];
             [_currentDrawableTime addValue:duration];
             if (frameData.destinationDrawable == nil) {

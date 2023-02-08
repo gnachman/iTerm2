@@ -146,9 +146,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, strong) dispatch_group_t group;  // nonnil implies synchronous
 @property (nonatomic) BOOL deferCurrentDrawable;
 @property (nonatomic, strong) MTLCaptureDescriptor *captureDescriptor NS_AVAILABLE_MAC(10_15);
-#if ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 @property (nonatomic) BOOL textureIsFamiliar;
-#endif  // ENABLE_UNFAMILIAR_TEXTURE_WORKAROUND
 @property (nonatomic) CGFloat maximumExtendedDynamicRangeColorComponentValue;
 
 // When drawing to an intermediate texture there may be two passes (i.e., two render encoders)
