@@ -147,7 +147,8 @@ fi
 send_conductor='printf "\033]1337;SendConductor'"$st"'"'
 
 # Run a command on the remote host that instructs iTerm2 to send a script, then reads the script and executes it.
-sanitized="$send_conductor"';s="";IFS=""; stty -echo; while read -r l;do [ "$l" = EOF ]&&break; s="$s$l\n"; done; unset IFS; eval "$s"'
+# I tried many ways to concatenate s and l and this is the only one that works on both Ubuntu 18 and Ubuntu 20.
+sanitized="$send_conductor"';s="";IFS=""; stty -echo; while read -r l;do [ "$l" = EOF ]&&break; s=$(printf "%s\n%s" "$s" "$l"); done; unset IFS; eval "$s"'
 
 # If ssh gets a signal, let it2ssh keep running.
 set +e
