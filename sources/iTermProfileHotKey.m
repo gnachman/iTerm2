@@ -101,10 +101,10 @@ static NSString *const kArrangement = @"Arrangement";
                                                  selector:@selector(windowDidBecomeKey:)
                                                      name:NSWindowDidBecomeKeyNotification
                                                    object:nil];
-        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
-                                                               selector:@selector(activeSpaceDidChange:)
-                                                                   name:NSWorkspaceActiveSpaceDidChangeNotification
-                                                                 object:nil];
+//        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+//                                                               selector:@selector(activeSpaceDidChange:)
+//                                                                   name:NSWorkspaceActiveSpaceDidChangeNotification
+//                                                                 object:nil];
     }
     return self;
 }

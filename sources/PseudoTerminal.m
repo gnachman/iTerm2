@@ -815,10 +815,10 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                              selector:@selector(draggingDidBeginOrEnd:)
                                                  name:PSMTabDragDidBeginNotification
                                                object:nil];
-    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
-                                                           selector:@selector(activeSpaceDidChange:)
-                                                               name:NSWorkspaceActiveSpaceDidChangeNotification
-                                                             object:nil];
+//    [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+//                                                           selector:@selector(activeSpaceDidChange:)
+//                                                               name:NSWorkspaceActiveSpaceDidChangeNotification
+//                                                             object:nil];
     PtyLog(@"set window inited");
     self.windowInitialized = YES;
     useTransparency_ = [iTermProfilePreferences boolForKey:KEY_INITIAL_USE_TRANSPARENCY inProfile:profile];
@@ -2091,13 +2091,13 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)activeSpaceDidChange:(NSNotification *)notification {
-    DLog(@"Active space did change. active=%@ self.window.isOnActiveSpace=%@", @(NSApp.isActive), @(self.window.isOnActiveSpace));
-    if ([(iTermApplication *)NSApp isUIElement] && !NSApp.isActive && self.lionFullScreen && self.window.isOnActiveSpace) {
-        DLog(@"Activating app because lion full screen window is on active space. %@", self);
-        [NSApp activateIgnoringOtherApps:YES];
-    }
-}
+//- (void)activeSpaceDidChange:(NSNotification *)notification {
+//    DLog(@"Active space did change. active=%@ self.window.isOnActiveSpace=%@", @(NSApp.isActive), @(self.window.isOnActiveSpace));
+//    if ([(iTermApplication *)NSApp isUIElement] && !NSApp.isActive && self.lionFullScreen && self.window.isOnActiveSpace) {
+//        DLog(@"Activating app because lion full screen window is on active space. %@", self);
+//        [NSApp activateIgnoringOtherApps:YES];
+//    }
+//}
 
 - (void)keyBindingsDidChange:(NSNotification *)notification {
     [self updateTouchBarIfNeeded:NO];

@@ -63,10 +63,10 @@ NSString *const TERMINAL_ARRANGEMENT_PROFILE_GUID = @"Hotkey Profile GUID";
 - (instancetype)init {
     self = [super init];
     if (self) {
-        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
-                                                               selector:@selector(activeSpaceDidChange:)
-                                                                   name:NSWorkspaceActiveSpaceDidChangeNotification
-                                                                 object:nil];
+//        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
+//                                                               selector:@selector(activeSpaceDidChange:)
+//                                                                   name:NSWorkspaceActiveSpaceDidChangeNotification
+//                                                                 object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(applicationDidBecomeActive:)
                                                      name:NSApplicationDidBecomeActiveNotification
