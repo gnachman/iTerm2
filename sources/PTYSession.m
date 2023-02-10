@@ -5303,7 +5303,19 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
         result[SESSION_ARRANGEMENT_REUSABLE_COOKIE] = _cookie;
     }
     if (_overriddenFields.count > 0) {
-        result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = _overriddenFields.allObjects;
+        if (replacementProfile) {
+            NSMutableSet<NSString *> *combinedOverriddenFields = [[_overriddenFields mutableCopy] autorelease];
+            for (NSString *key in [[NSSet setWithArray:[_profile allKeys]] setByAddingObjectsFromSet:[NSSet setWithArray:[replacementProfile allKeys]]]) {
+                id mine = _profile[key];
+                id theirs = replacementProfile[key];
+                if (![NSObject object:mine isEqualToObject:theirs]) {
+                    [combinedOverriddenFields addObject:key];
+                }
+            }
+            result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = combinedOverriddenFields;
+        } else {
+            result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = _overriddenFields.allObjects;
+        }
     }
     if (self.tmuxMode == TMUX_GATEWAY && self.tmuxController.sessionName) {
         result[SESSION_ARRANGEMENT_IS_TMUX_GATEWAY] = @YES;
