@@ -2206,6 +2206,7 @@ ITERM_WEAKLY_REFERENCEABLE
         profile[KEY_CUSTOM_DIRECTORY] = @"Yes";
         profile[KEY_WORKING_DIRECTORY] = session.currentLocalWorkingDirectory;
     }
+    DLog(@"Will use profile:\n%@", profile);
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     iTermMutableDictionaryEncoderAdapter *encoder =
         [[iTermMutableDictionaryEncoderAdapter alloc] initWithMutableDictionary:dict];

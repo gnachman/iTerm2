@@ -700,13 +700,14 @@ iTermWindowType iTermThemedWindowType(iTermWindowType windowType) {
                 if (!config.sshIntegration) {
                     return [NSString stringWithFormat:@"ssh %@", command];
                 }
-                NSString *wrappedCommand = [NSString stringWithFormat:@"%@ %@",
+                NSString *wrappedCommand = [NSString stringWithFormat:@"'%@' %@",
                                             iTermPathToSSH(),
                                             command];
                 command = [NSString stringWithFormat:@"/usr/bin/login -fpq %@ %@ -c %@",
                            [NSUserName() stringWithBackslashEscapedShellCharactersIncludingNewlines:YES],
                            [iTermOpenDirectory userShell] ?: @"/bin/zsh",
                            [wrappedCommand stringWithBackslashEscapedShellCharactersIncludingNewlines:YES]];
+                DLog(@"wrappedCommand=%@, command=%@", wrappedCommand, command);
             }
             return command;
         }

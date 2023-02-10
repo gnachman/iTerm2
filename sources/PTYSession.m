@@ -5313,6 +5313,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
                 }
             }
             result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = combinedOverriddenFields;
+            DLog(@"Combined overridden fields are: %@", combinedOverriddenFields);
         } else {
             result[SESSION_ARRANGEMENT_OVERRIDDEN_FIELDS] = _overriddenFields.allObjects;
         }

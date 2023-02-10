@@ -14873,7 +14873,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/bin/bash\nset -x\ntest -d ${PROJECT_DERIVED_FILE_DIR} || mkdir ${PROJECT_DERIVED_FILE_DIR}\ncp ${DERIVED_SOURCES_DIR}/*-Swift.h ${PROJECT_DERIVED_FILE_DIR}\n";
+			shellScript = "#!/bin/bash\nset -x\ntest -d \"${PROJECT_DERIVED_FILE_DIR}\" || mkdir \"${PROJECT_DERIVED_FILE_DIR}\"\ncp \"${DERIVED_SOURCES_DIR}\"/*-Swift.h \"${PROJECT_DERIVED_FILE_DIR}\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
