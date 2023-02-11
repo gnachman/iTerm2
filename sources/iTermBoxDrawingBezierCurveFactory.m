@@ -979,7 +979,7 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
         horizontalCenter,
         horizontalCenter + scale/2,
         horizontalCenter + scale,
-        cellSize.width
+        cellSize.width - scale/2
     };
     CGFloat ys[] = {
         0,
@@ -988,8 +988,7 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
         verticalCenter,
         verticalCenter + scale/2,
         verticalCenter + scale,
-        cellSize.height
-
+        cellSize.height - scale/2
     };
     CGFloat (^centerPoint)(CGFloat) = ^CGFloat(CGFloat value) {
         CGFloat nearest = value;

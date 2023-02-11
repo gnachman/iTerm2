@@ -14635,6 +14635,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self.view updateTrackingAreas];
 }
 
+
 - (void)handleAIChoices:(NSArray<NSString *> *)choices error:(NSString *)error {
     if (error) {
         [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"There was a problem with the AI query: %@", error]
