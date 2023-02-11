@@ -1616,11 +1616,13 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 - (void)refuseFirstResponderAtCurrentMouseLocation {
     DLog(@"set refuse location");
     _mouseLocationToRefuseFirstResponderAt = [NSEvent mouseLocation];
+    [self.delegate textViewUpdateTrackingAreas];
 }
 
 - (void)resetMouseLocationToRefuseFirstResponderAt {
     DLog(@"reset refuse location from\n%@", [NSThread callStackSymbols]);
     _mouseLocationToRefuseFirstResponderAt = NSMakePoint(DBL_MAX, DBL_MAX);
+    [self.delegate textViewUpdateTrackingAreas];
 }
 
 #pragma mark - Geometry

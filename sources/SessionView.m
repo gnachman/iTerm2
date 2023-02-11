@@ -1150,6 +1150,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 // constantly, plus it can miss mouse exit events and spurious mouse enter events (issue 3345).
 // I believe it also caused hangs (issue 3974).
 - (void)updateTrackingAreas {
+    [super updateTrackingAreas];
     DLog(@"updateTrackingAreas\n%@", [NSThread callStackSymbols]);
     if ([self window]) {
         NSTrackingAreaOptions trackingOptions;

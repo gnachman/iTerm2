@@ -270,7 +270,7 @@ extern NSNotificationName iTermPortholesDidChange;
 - (BOOL)textViewPasteFiles:(NSArray<NSString *> *)filenames;
 - (NSString *)textViewNaturalLanguageQuery;
 - (void)textViewPerformNaturalLanguageQuery;
-
+- (void)textViewUpdateTrackingAreas;
 @end
 
 @interface iTermHighlightedRow : NSObject

@@ -11773,7 +11773,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenMouseModeDidChange {
     [_textview updateCursor:nil];
-    [_textview updateTrackingAreas];
+    [self.view updateTrackingAreas];
     [self.variablesScope setValue:@(_screen.terminalMouseMode)
                  forVariableNamed:iTermVariableKeySessionMouseReportingMode];
 }
@@ -14629,6 +14629,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                completion:^(NSArray<NSString *> * _Nullable choices, NSString * _Nullable error) {
         [weakSelf handleAIChoices:choices error:error];
     }];
+}
+
+- (void)textViewUpdateTrackingAreas {
+    [self.view updateTrackingAreas];
 }
 
 - (void)handleAIChoices:(NSArray<NSString *> *)choices error:(NSString *)error {
