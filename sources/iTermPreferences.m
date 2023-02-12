@@ -116,7 +116,9 @@ NSString *const kPreferenceKeyEnableProxyIcon = @"EnableProxyIcon";
 NSString *const kPreferenceKeyDimBackgroundWindows = @"DimBackgroundWindows";
 NSString *const kPreferenceKeySeparateStatusBarsPerPane = @"SeparateStatusBarsPerPane";
 
-NSString *const kPreferenceKeyControlRemapping = @"Control";
+NSString *const kPreferenceKeyControlRemapping_Deprecated = @"Control"; // deprecated
+NSString *const kPreferenceKeyLeftControlRemapping = @"LeftControl";
+NSString *const kPreferenceKeyRightControlRemapping = @"RightControl";
 NSString *const kPreferenceKeyLeftOptionRemapping = @"LeftOption";
 NSString *const kPreferenceKeyRightOptionRemapping = @"RightOption";
 NSString *const kPreferenceKeyLeftCommandRemapping = @"LeftCommand";
@@ -417,7 +419,10 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyDimBackgroundWindows: @NO,
                   kPreferenceKeySeparateStatusBarsPerPane: @NO,
 
-                  kPreferenceKeyControlRemapping: @(kPreferencesModifierTagControl),
+                  kPreferenceKeyControlRemapping_Deprecated: @(kPreferencesModifierTagLegacyRightControl),
+                  kPreferenceKeyLeftControlRemapping: @(kPreferencesModifierTagLeftControl),
+                  kPreferenceKeyRightControlRemapping: @(kPreferencesModifierTagRightControl),
+
                   kPreferenceKeyLeftOptionRemapping: @(kPreferencesModifierTagLeftOption),
                   kPreferenceKeyRightOptionRemapping: @(kPreferencesModifierTagRightOption),
                   kPreferenceKeyLeftCommandRemapping: @(kPreferencesModifierTagLeftCommand),
@@ -536,7 +541,9 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyCharactersConsideredPartOfAWordForSelection: BLOCK(computedWordChars),
                   kPreferenceKeyTabStyle: BLOCK(computedTabStyle),
                   kPreferenceKeyUseMetal: BLOCK(computedUseMetal),
-                  kPreferenceKeyTabsHaveCloseButton: BLOCK(computedTabsHaveCloseButton)
+                  kPreferenceKeyTabsHaveCloseButton: BLOCK(computedTabsHaveCloseButton),
+                  kPreferenceKeyLeftControlRemapping: BLOCK(computedLeftControlRemapping),
+                  kPreferenceKeyRightControlRemapping: BLOCK(computedRightControlRemapping),
                   };
     }
     return dict;
@@ -671,7 +678,7 @@ static NSString *sPreviousVersion;
 
 + (NSUInteger)maskForModifierTag:(iTermPreferencesModifierTag)tag {
     switch (tag) {
-        case kPreferencesModifierTagControl:
+        case kPreferencesModifierTagLegacyRightControl:
             return NSEventModifierFlagControl;
 
         case kPreferencesModifierTagEitherCommand:
@@ -727,6 +734,32 @@ static NSString *sPreviousVersion;
     }
     // New value is not set yet. This migrates all users to automatic.
     return @(TAB_STYLE_AUTOMATIC);
+}
+
++ (NSNumber *)computedLeftControlRemapping {
+    NSNumber *value;
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyLeftControlRemapping];
+    if (value) {
+        return value;
+    }
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyControlRemapping_Deprecated];
+    if (value) {
+        return @(value.intValue);
+    }
+    return [self defaultObjectForKey:kPreferenceKeyLeftControlRemapping];
+}
+
++ (NSNumber *)computedRightControlRemapping {
+    NSNumber *value;
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyRightControlRemapping];
+    if (value) {
+        return value;
+    }
+    value = [[NSUserDefaults standardUserDefaults] objectForKey:kPreferenceKeyControlRemapping_Deprecated];
+    if (value) {
+        return @(value.intValue);
+    }
+    return [self defaultObjectForKey:kPreferenceKeyRightControlRemapping];
 }
 
 + (NSNumber *)computedTabsHaveCloseButton {

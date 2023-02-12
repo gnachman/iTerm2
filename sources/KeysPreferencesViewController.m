@@ -38,14 +38,18 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 @end
 
 @implementation KeysPreferencesViewController {
-    IBOutlet NSPopUpButton *_controlButton;
+    IBOutlet NSPopUpButton *_leftControlButton;
+    IBOutlet NSPopUpButton *_rightControlButton;
     IBOutlet NSPopUpButton *_leftOptionButton;
     IBOutlet NSPopUpButton *_rightOptionButton;
     IBOutlet NSPopUpButton *_leftCommandButton;
     IBOutlet NSPopUpButton *_rightCommandButton;
     IBOutlet NSPopUpButton *_functionButton;
 
-    IBOutlet NSTextField *_controlButtonLabel;
+    IBOutlet NSButton *_resetRemappingButton;
+
+    IBOutlet NSTextField *_leftControlButtonLabel;
+    IBOutlet NSTextField *_rightControlButtonLabel;
     IBOutlet NSTextField *_leftOptionButtonLabel;
     IBOutlet NSTextField *_rightOptionButtonLabel;
     IBOutlet NSTextField *_leftCommandButtonLabel;
@@ -102,9 +106,15 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                    type:kPreferenceInfoTypeCheckbox];
 
     // Modifier remapping
-    info = [self defineControl:_controlButton
-                           key:kPreferenceKeyControlRemapping
-                   relatedView:_controlButtonLabel
+    info = [self defineControl:_leftControlButton
+                           key:kPreferenceKeyLeftControlRemapping
+                   relatedView:_leftControlButtonLabel
+                          type:kPreferenceInfoTypePopup];
+    info.onChange = ^() { [weakSelf startEventTapIfNecessary]; [weakSelf updateRemapLabelColors]; };
+
+    info = [self defineControl:_rightControlButton
+                           key:kPreferenceKeyRightControlRemapping
+                   relatedView:_rightControlButtonLabel
                           type:kPreferenceInfoTypePopup];
     info.onChange = ^() { [weakSelf startEventTapIfNecessary]; [weakSelf updateRemapLabelColors]; };
 
@@ -397,7 +407,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 }
 
 - (NSArray<iTermTuple<NSControl *, NSNumber *> *> *)modifierRemappingTuples {
-    return @[[iTermTuple tupleWithObject:_controlButton andObject:@(kPreferencesModifierTagControl)],
+    return @[[iTermTuple tupleWithObject:_leftControlButton andObject:@(kPreferencesModifierTagLeftControl)],
+             [iTermTuple tupleWithObject:_rightControlButton andObject:@(kPreferencesModifierTagRightControl)],
              [iTermTuple tupleWithObject:_leftOptionButton andObject:@(kPreferencesModifierTagLeftOption)],
              [iTermTuple tupleWithObject:_rightOptionButton andObject:@(kPreferencesModifierTagRightOption)],
              [iTermTuple tupleWithObject:_leftCommandButton andObject:@(kPreferencesModifierTagLeftCommand)],
@@ -412,12 +423,14 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
 }
 
 - (void)updateRemapLabelColors {
+    BOOL remappingAnyModifier = NO;
     for (iTermTuple<NSControl *, NSNumber *> *tuple in [self modifierRemappingTuples]) {
         PreferenceInfo *info = [self infoForControl:tuple.firstObject];
         NSTextField *textField = [NSTextField castFrom:info.relatedView];
         if ([self intForKey:info.key] == tuple.secondObject.intValue) {
             textField.textColor = [NSColor controlTextColor];
         } else {
+            remappingAnyModifier = YES;
             textField.textColor = [NSColor colorWithName:@"iTermBlueTextColor" dynamicProvider:^NSColor * _Nonnull(NSAppearance * _Nonnull appearance) {
                 if (appearance.it_isDark) {
                     return [NSColor colorWithSRGBRed:0.8 green:0.8 blue:1.0 alpha:1.0];
@@ -427,6 +440,8 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
             }];
         }
     }
+
+    _resetRemappingButton.enabled = remappingAnyModifier;
 }
 
 - (void)postModifierChangedNotification {

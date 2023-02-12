@@ -7,12 +7,6 @@
 #import "NSArray+iTerm.h"
 #import "iTerm2SharedARC-Swift.h"
 
-static const CGEventFlags kCGEventHotKeyModifierMask = (kCGEventFlagMaskShift |
-                                                        kCGEventFlagMaskAlternate |
-                                                        kCGEventFlagMaskCommand |
-                                                        kCGEventFlagMaskControl);
-
-
 @interface iTermBaseHotKey()<iTermEventTapObserver>
 
 // Override this to do a thing that needs to be done. `siblings` are other hotkeys (besides the one

@@ -217,7 +217,7 @@ static const CGFloat kButtonSize = 17;
             prefix = [NSString stringForModifiersWithMask:(NSEventModifierFlagCommand | NSEventModifierFlagOption)];
             break;
 
-        case kPreferencesModifierTagControl:
+        case kPreferencesModifierTagLegacyRightControl:
             prefix = [NSString stringForModifiersWithMask:NSEventModifierFlagControl];
             break;
     }

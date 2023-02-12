@@ -96,7 +96,7 @@
         case kPreferencesModifierTagCommandAndOption:
             return [NSString stringForModifiersWithMask:(NSEventModifierFlagCommand | NSEventModifierFlagOption)];
 
-        case kPreferencesModifierTagControl:
+        case kPreferencesModifierTagLegacyRightControl:
             return [NSString stringForModifiersWithMask:NSEventModifierFlagControl];
     }
 

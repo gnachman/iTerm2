@@ -9,7 +9,8 @@
 
 // These are convenience methods for looking up the preferences setting for
 // what each modifier ought to do.
-@property(nonatomic, readonly) iTermPreferencesModifierTag controlRemapping;
+@property(nonatomic, readonly) iTermPreferencesModifierTag leftControlRemapping;
+@property(nonatomic, readonly) iTermPreferencesModifierTag rightControlRemapping;
 @property(nonatomic, readonly) iTermPreferencesModifierTag leftOptionRemapping;
 @property(nonatomic, readonly) iTermPreferencesModifierTag rightOptionRemapping;
 @property(nonatomic, readonly) iTermPreferencesModifierTag leftCommandRemapping;

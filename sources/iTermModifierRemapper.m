@@ -51,7 +51,9 @@
 
 + (NSInteger)_cgMaskForMod:(int)mod {
     switch (mod) {
-        case kPreferencesModifierTagControl:
+        case kPreferencesModifierTagLegacyRightControl:
+        case kPreferencesModifierTagLeftControl:
+        case kPreferencesModifierTagRightControl:
             return kCGEventFlagMaskControl;
 
         case kPreferencesModifierTagLeftOption:
@@ -77,8 +79,14 @@
 
 + (NSInteger)_nxMaskForLeftMod:(int)mod {
     switch (mod) {
-        case kPreferencesModifierTagControl:
+        case kPreferencesModifierTagLegacyRightControl:
             return NX_DEVICELCTLKEYMASK;
+
+        case kPreferencesModifierTagLeftControl:
+            return NX_DEVICELCTLKEYMASK;
+
+        case kPreferencesModifierTagRightControl:
+            return NX_DEVICERCTLKEYMASK;
 
         case kPreferencesModifierTagLeftOption:
             return NX_DEVICELALTKEYMASK;
@@ -109,7 +117,13 @@
 
 + (NSInteger)_nxMaskForRightMod:(int)mod {
     switch (mod) {
-        case kPreferencesModifierTagControl:
+        case kPreferencesModifierTagLegacyRightControl:
+            return NX_DEVICERCTLKEYMASK;
+
+        case kPreferencesModifierTagLeftControl:
+            return NX_DEVICELCTLKEYMASK;
+
+        case kPreferencesModifierTagRightControl:
             return NX_DEVICERCTLKEYMASK;
 
         case kPreferencesModifierTagLeftOption:
@@ -172,19 +186,19 @@
 }
 
 + (NSInteger)_cgMaskForLeftControlKey {
-    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] leftControlRemapping]];
 }
 
 + (NSInteger)_cgMaskForRightControlKey {
-    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
+    return [self _cgMaskForMod:[[iTermModifierRemapper sharedInstance] rightControlRemapping]];
 }
 
 + (NSInteger)_nxMaskForLeftControlKey {
-    return [self _nxMaskForLeftMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
+    return [self _nxMaskForLeftMod:[[iTermModifierRemapper sharedInstance] leftControlRemapping]];
 }
 
 + (NSInteger)_nxMaskForRightControlKey {
-    return [self _nxMaskForRightMod:[[iTermModifierRemapper sharedInstance] controlRemapping]];
+    return [self _nxMaskForRightMod:[[iTermModifierRemapper sharedInstance] rightControlRemapping]];
 }
 
 + (NSInteger)_cgMaskForFunctionKey {
@@ -321,8 +335,12 @@
   return [_keyDown isEnabled];
 }
 
-- (iTermPreferencesModifierTag)controlRemapping {
-  return [iTermPreferences intForKey:kPreferenceKeyControlRemapping];
+- (iTermPreferencesModifierTag)leftControlRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyLeftControlRemapping];
+}
+
+- (iTermPreferencesModifierTag)rightControlRemapping {
+    return [iTermPreferences intForKey:kPreferenceKeyRightControlRemapping];
 }
 
 - (iTermPreferencesModifierTag)leftOptionRemapping {
@@ -346,7 +364,8 @@
 }
 
 - (BOOL)isAnyModifierRemapped {
-  return ([self controlRemapping] != kPreferencesModifierTagControl ||
+  return ([self leftControlRemapping] != kPreferencesModifierTagLeftControl ||
+          [self rightControlRemapping] != kPreferencesModifierTagRightControl ||
           [self leftOptionRemapping] != kPreferencesModifierTagLeftOption ||
           [self rightOptionRemapping] != kPreferencesModifierTagRightOption ||
           [self leftCommandRemapping] != kPreferencesModifierTagLeftCommand ||
