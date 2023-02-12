@@ -35,6 +35,7 @@ typedef NS_ENUM(NSInteger, PreferenceInfoType) {
 @property(nonatomic) NSRange range;  // For integer fields, the range of legal values.
 @property(nonatomic, readonly) NSArray<NSString *> *searchKeywords;
 @property(nonatomic, strong) NSStepper *associatedStepper;
+@property(nonatomic, strong) NSView *relatedView;
 
 // If set to YES, don't process changes until keyboard focus exits the control. Defaults to NO.
 // Only supported on controls of type kPreferenceInfoTypeIntegerTextField.

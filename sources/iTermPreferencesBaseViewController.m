@@ -485,6 +485,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     PreferenceInfo *info = [PreferenceInfo infoForPreferenceWithKey:key
                                                                type:type
                                                             control:control];
+    info.relatedView = relatedView;
     info.customSettingChangedHandler = settingChanged;
     info.onUpdate = update;
     [_keyMap setObject:info forKey:control];

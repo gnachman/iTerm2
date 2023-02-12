@@ -6593,15 +6593,15 @@ DQ
                         </tabViewItem>
                         <tabViewItem label="Remap Modifiers" identifier="1" id="ZPU-LD-eKa">
                             <view key="view" id="cf3-jz-e1B">
-                                <rect key="frame" x="10" y="33" width="899" height="384"/>
+                                <rect key="frame" x="10" y="33" width="899" height="416"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hJ4-9y-ajU" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="231" y="208" width="438" height="173"/>
+                                        <rect key="frame" x="231" y="200" width="438" height="213"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3673">
-                                                <rect key="frame" x="57" y="150" width="161" height="16"/>
+                                                <rect key="frame" x="57" y="190" width="161" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap control (⌃) key to:" id="3674">
                                                     <font key="font" metaFont="system"/>
@@ -6610,7 +6610,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4392">
-                                                <rect key="frame" x="221" y="93" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="133" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="4406" id="4401">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -6642,7 +6642,7 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4410">
-                                                <rect key="frame" x="221" y="42" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="82" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="4416" id="4411">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -6674,7 +6674,7 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3677">
-                                                <rect key="frame" x="16" y="75" width="202" height="16"/>
+                                                <rect key="frame" x="16" y="115" width="202" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap left command (⌘) key to:" id="3678">
                                                     <font key="font" metaFont="system"/>
@@ -6683,7 +6683,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3689">
-                                                <rect key="frame" x="36" y="125" width="182" height="16"/>
+                                                <rect key="frame" x="36" y="165" width="182" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap left option (⌥) key to:" id="3690">
                                                     <font key="font" metaFont="system"/>
@@ -6692,7 +6692,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4393">
-                                                <rect key="frame" x="221" y="68" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="108" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="4397" id="4394">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -6723,7 +6723,7 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4383">
-                                                <rect key="frame" x="221" y="118" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="158" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="4389" id="4384">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -6755,7 +6755,7 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4335">
-                                                <rect key="frame" x="8" y="49" width="210" height="16"/>
+                                                <rect key="frame" x="8" y="89" width="210" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap right command (⌘) key to:" id="4343">
                                                     <font key="font" metaFont="system"/>
@@ -6764,7 +6764,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0ov-Pi-2Zd">
-                                                <rect key="frame" x="221" y="16" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="56" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="Kul-ts-5Tp" id="98N-8u-4vU">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -6795,7 +6795,7 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oJW-wG-mC7">
-                                                <rect key="frame" x="112" y="23" width="106" height="16"/>
+                                                <rect key="frame" x="112" y="63" width="106" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap fn key to:" id="mBL-Vc-973">
                                                     <font key="font" metaFont="system"/>
@@ -6804,7 +6804,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3675">
-                                                <rect key="frame" x="28" y="100" width="190" height="16"/>
+                                                <rect key="frame" x="28" y="140" width="190" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Remap right option (⌥) key to:" id="3676">
                                                     <font key="font" metaFont="system"/>
@@ -6813,7 +6813,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4237">
-                                                <rect key="frame" x="221" y="143" width="163" height="26"/>
+                                                <rect key="frame" x="221" y="183" width="163" height="26"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="⌃ Control" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" tag="1" imageScaling="proportionallyDown" inset="2" selectedItem="4242" id="4238">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -6844,6 +6844,17 @@ DQ
                                                     <outlet property="nextKeyView" destination="4383" id="5289"/>
                                                 </connections>
                                             </popUpButton>
+                                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zye-UW-rZn">
+                                                <rect key="frame" x="151" y="13" width="138" height="32"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="push" title="Reset to Defaults" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="wh0-TX-q91">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="resetModifierRemapping:" target="8TE-cq-5cL" id="6X7-ok-Tum"/>
+                                                </connections>
+                                            </button>
                                         </subviews>
                                     </customView>
                                 </subviews>
