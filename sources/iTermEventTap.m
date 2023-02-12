@@ -251,7 +251,6 @@ static CGEventRef iTermEventTapCallback(CGEventTapProxy proxy,
     CFRunLoopAddSource(CFRunLoopGetCurrent(),
                        _eventSource,
                        kCFRunLoopCommonModes);
-    CFRelease(_eventSource);
 
     return YES;
 
