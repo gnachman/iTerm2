@@ -85,6 +85,7 @@ extern NSString *const iTermVariableKeyWindowID;
 extern NSString *const iTermVariableKeyWindowFrame;
 extern NSString *const iTermVariableKeyWindowStyle;
 extern NSString *const iTermVariableKeyWindowNumber;
+extern NSString *const iTermVariableKeyWindowIsHotkeyWindow;
 
 @protocol iTermObject;
 @class iTermVariables;

@@ -823,7 +823,7 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
     self.windowInitialized = YES;
     useTransparency_ = [iTermProfilePreferences boolForKey:KEY_INITIAL_USE_TRANSPARENCY inProfile:profile];
     number_ = [[iTermController sharedInstance] allocateWindowNumber];
-    [_scope setValue:@(number_ + 1) forVariableNamed:@"number"];
+    [_scope setValue:@(number_ + 1) forVariableNamed:iTermVariableKeyWindowNumber];
 
     // Update the collection behavior.
     self.hotkeyWindowType = hotkeyWindowType;
@@ -988,6 +988,8 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
 - (void)setHotkeyWindowType:(iTermHotkeyWindowType)hotkeyWindowType {
     _hotkeyWindowType = hotkeyWindowType;
     self.window.collectionBehavior = self.desiredWindowCollectionBehavior;
+    [_scope setValue:@(hotkeyWindowType != iTermHotkeyWindowTypeNone)
+    forVariableNamed:iTermVariableKeyWindowIsHotkeyWindow];
 }
 
 - (void)finishToolbeltInitialization {
