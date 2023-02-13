@@ -254,7 +254,8 @@ static dispatch_queue_t iTermPathFinderQueue(void) {
                                       @"^(\\[\\d+, ?\\d+])",
                                       @"^(\", line \\d+, column \\d+)",
                                       @"^(\", line \\d+, in)",
-                                      @"^(\\(\\d+, ?\\d+\\))"];
+                                      @"^(\\(\\d+, ?\\d+\\))",
+                                      @"^(\\(\\d+\\))"];
     // NOTE: If you change this also update regexes in iTermPathCleaner.
     for (NSString *regex in regexes) {
         NSString *value = [suffix stringByMatching:regex capture:1];

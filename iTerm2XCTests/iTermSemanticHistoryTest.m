@@ -444,6 +444,23 @@
     XCTAssert(lineNumber.integerValue == 123);
 }
 
+- (void)testGetFullPathWithLineNumberInParensAfterFilename {
+    NSString *lineNumber = nil;
+    NSString *columnNumber = nil;
+    static NSString *const kFilename = @"/path/to/file";
+    static NSString *const kWorkingDirectory = @"/working/directory";
+    NSString *kFilenameWithLineNumber = [NSString stringWithFormat:@"%@(123):", kFilename];
+    [_semanticHistoryController.fakeFileManager.files addObject:kFilename];
+    NSString *actual = [_semanticHistoryController cleanedUpPathFromPath:kFilenameWithLineNumber
+                                                                  suffix:nil
+                                                        workingDirectory:kWorkingDirectory
+                                                     extractedLineNumber:&lineNumber
+                                                            columnNumber:&columnNumber];
+    NSString *expected = kFilename;
+    XCTAssert([expected isEqualToString:actual]);
+    XCTAssert(lineNumber.integerValue == 123);
+}
+
 - (void)testGetFullPathFailsWithJustStrippedChars {
     NSString *lineNumber = nil;
     NSString *columnNumber = nil;
