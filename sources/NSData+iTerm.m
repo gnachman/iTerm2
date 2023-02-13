@@ -68,7 +68,10 @@
     return string;
 }
 
-+ (NSData *)dataWithTGZContainingFiles:(NSArray<NSString *> *)files relativeToPath:(NSString *)basePath error:(NSError **)error {
++ (NSData *)dataWithTGZContainingFiles:(NSArray<NSString *> *)files
+                        relativeToPath:(NSString *)basePath
+                  includeExtendedAttrs:(BOOL)includeExtendedAttrs
+                                 error:(NSError **)error {
     NSArray<NSString *> *args = @[ @"-c",  // Create
                                    @"-z",  // gzip
                                    @"-b",
@@ -76,6 +79,9 @@
                                    @"-f",
                                    @"-",  // write to stdout
                                    [NSString stringWithFormat:@"-C%@", basePath] ];  // Base path
+    if (!includeExtendedAttrs) {
+        args = [@[@"--no-xattrs"] arrayByAddingObjectsFromArray:args];
+    }
     args = [args arrayByAddingObjectsFromArray:files];  // Files to zip
 
     NSTask *task = [[NSTask alloc] init];

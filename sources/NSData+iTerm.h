@@ -19,7 +19,10 @@ NS_ASSUME_NONNULL_BEGIN
   // Base-64 decodes string and returns data or nil.
 + (NSData * _Nullable)dataWithBase64EncodedString:(NSString *)string;
 
-+ (NSData * _Nullable)dataWithTGZContainingFiles:(NSArray<NSString *> *)files relativeToPath:(NSString *)basePath error:(NSError * _Nullable __autoreleasing * _Nullable)error;
++ (NSData * _Nullable)dataWithTGZContainingFiles:(NSArray<NSString *> *)files
+                                  relativeToPath:(NSString *)basePath
+                            includeExtendedAttrs:(BOOL)includeExtendedAttrs
+                                           error:(NSError * _Nullable __autoreleasing * _Nullable)error;
 
 // returns a string the the data base-64 encoded into 77-column lines divided by lineBreak.
 - (NSString *)stringWithBase64EncodingWithLineBreak:(NSString *)lineBreak;

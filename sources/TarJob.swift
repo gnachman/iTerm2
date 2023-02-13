@@ -52,7 +52,8 @@ struct TarJob: CustomDebugStringConvertible {
 
     func tarballData() throws -> Data? {
         return try NSData(tgzContainingFiles: relativeSourcePaths,
-                          relativeToPath: localBase.path) as Data?
+                          relativeToPath: localBase.path,
+                          includeExtendedAttrs: false) as Data?
     }
 
     private func adding(local: URL, destination destinationParent: URL) -> TarJob? {

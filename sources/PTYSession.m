@@ -12143,12 +12143,28 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenRequestUpload:(NSString *)args completion:(void (^)(void))completion {
     // Dispatch out of fear that NSOpenPanel might do something funky with ruloops even though it doesn't seem to currently.
     dispatch_async(dispatch_get_main_queue(), ^{
-        [self requestUpload];
+        NSArray<NSString *> *parts = [args componentsSeparatedByString:@";"];
+        NSDictionary<NSString *, NSString *> *dict = [parts keyValuePairsWithBlock:^iTermTuple *(NSString *object) {
+            return [object keyValuePair];
+        }];
+        [self requestUploadWithFormat:dict[@"format"] version:dict[@"version"]];
         completion();
     });
 }
 
-- (void)requestUpload {
+- (void)requestUploadWithFormat:(NSString *)format version:(NSString *)version {
+    if (format && ![format isEqualToString:@"tgz"]) {
+        NSString *identifier = @"UploadInUnsupportedFormatRequested";
+        if (![self announcementWithIdentifier:identifier]) {
+            iTermAnnouncementViewController *announcement =
+            [iTermAnnouncementViewController announcementWithTitle:@"An upload with an unsupported archive format was requested. You may need a newer version of iTerm2."
+                                                             style:kiTermAnnouncementViewStyleWarning
+                                                       withActions:@[]
+                                                        completion:^(int selection) {}];
+            [self queueAnnouncement:announcement identifier:identifier];
+        }
+        return;
+    }
     NSOpenPanel *panel = [NSOpenPanel openPanel];
     panel.canChooseDirectories = YES;
     panel.canChooseFiles = YES;
@@ -12189,7 +12205,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 return [@"." stringByAppendingPathComponent:relativePath];
             }];
             NSError *error = nil;
-            NSData *data = [NSData dataWithTGZContainingFiles:relativePaths relativeToPath:base error:&error];
+            BOOL includeExtendedAttrs = YES;
+            if (version) {
+                NSString *versionString = [version stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+                if ([versionString containsString:@"tar (GNU tar)"]) {
+                    includeExtendedAttrs = NO;
+                }
+            }
+            NSData *data = [NSData dataWithTGZContainingFiles:relativePaths
+                                               relativeToPath:base
+                                         includeExtendedAttrs:includeExtendedAttrs
+                                                        error:&error];
             if (!data && error) {
                 NSString *message = error.userInfo[@"errorMessage"];
                 if (message) {
