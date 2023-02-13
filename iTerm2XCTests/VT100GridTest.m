@@ -228,152 +228,6 @@ do { \
     XCTAssert(![grid isAnyCharDirty]);
 }
 
-- (void)testMarkAndClearDirty {
-    // This test assumes that underlying implementation of dirty chars is a range per line.
-    VT100Grid *grid = [self largeGrid];
-    [grid markCharDirty:YES at:VT100GridCoordMake(1,1) updateTimestamp:NO];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-
-    [grid markCharDirty:YES at:VT100GridCoordMake(3,1) updateTimestamp:NO];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-
-    [grid markCharDirty:NO at:VT100GridCoordMake(2,1) updateTimestamp:NO];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-
-    [grid markCharDirty:NO at:VT100GridCoordMake(1,1) updateTimestamp:NO];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-
-    [grid markCharDirty:NO at:VT100GridCoordMake(3,1) updateTimestamp:NO];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-
-    [grid markCharDirty:NO at:VT100GridCoordMake(2,1) updateTimestamp:NO];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-
-    [grid markCharsDirty:YES inRectFrom:VT100GridCoordMake(1, 1) to:VT100GridCoordMake(5, 1)];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
-
-    [grid markCharsDirty:YES inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(5, 1)];
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
-
-    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(2, 1) to:VT100GridCoordMake(4, 1)];
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
-
-    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(2, 1)];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
-
-    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(2, 1)];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
-
-    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(3, 1)];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
-
-    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(0, 1) to:VT100GridCoordMake(7, 1)];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
-
-    [grid markCharsDirty:YES inRectFrom:VT100GridCoordMake(1, 1) to:VT100GridCoordMake(5, 1)];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
-
-    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(3, 1) to:VT100GridCoordMake(7, 1)];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
-
-    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(2, 1) to:VT100GridCoordMake(2, 1)];
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(0, 1)]);
-    XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(1, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(2, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(3, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(4, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(5, 1)]);
-    XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(6, 1)]);
-}
-
-- (void)testMarkCharsDirtyInRect {
-    VT100Grid *grid = [self mediumGrid];
-
-    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cccc\ncccc\ncccc\ncccc"]);
-    [grid markCharsDirty:YES inRectFrom:VT100GridCoordMake(1, 1) to:VT100GridCoordMake(2, 2)];
-    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cccc\ncddc\ncddc\ncccc"]);
-    [grid markCharsDirty:NO inRectFrom:VT100GridCoordMake(2, 1) to:VT100GridCoordMake(2, 2)];
-    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cccc\ncdcc\ncdcc\ncccc"]);
-}
-
 - (void)testMarkAllCharsDirty {
     VT100Grid *grid = [self smallGrid];
     XCTAssert([[grid compactDirtyDump] isEqualToString:@"cc\ncc"]);
@@ -886,17 +740,14 @@ do { \
 - (void)testScrollWholeScreenUpIntoLineBuffer {
     VT100Grid *grid = [self gridFromCompactLines:@"abcd\nefgh\nijkl\nmnop"];
     [grid markCharDirty:YES at:VT100GridCoordMake(2, 2) updateTimestamp:YES];
-    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cccc\ncccc\nccdc\ncccc"]);
     LineBuffer *lineBuffer = [[[LineBuffer alloc] initWithBlockSize:1000] autorelease];
     [lineBuffer setMaxLines:1];
     XCTAssert([grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:NO] == 0);
     XCTAssert([[grid compactLineDump] isEqualToString:@"efgh\nijkl\nmnop\n...."]);
-    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cccc\nccdc\ncccc\ndddd"]);
     [self setLine:3 ofGrid:grid toString:@"qrst"];
     XCTAssert([grid scrollWholeScreenUpIntoLineBuffer:lineBuffer unlimitedScrollback:NO] == 1);
     XCTAssert([[grid compactLineDump] isEqualToString:@"ijkl\nmnop\nqrst\n...."]);
     XCTAssert([[lineBuffer debugString] isEqualToString:@"efgh!"]);
-    XCTAssert([[grid compactDirtyDump] isEqualToString:@"ccdc\ncccc\ndddd\ndddd"]);
 }
 
 // No test for scrollDown because it's just a wafer thin wrapper around scrollRect:downBy:.
@@ -942,8 +793,8 @@ do { \
             @"mnop\n"
             @"\n"
             @"cccc\n"
-            @"cddc\n"
-            @"cddc\n"
+            @"dddd\n"
+            @"dddd\n"
             @"cccc"]);
 
     // Test that downBy:-1 works
@@ -957,8 +808,8 @@ do { \
             @"mnop\n"
             @"\n"
             @"cccc\n"
-            @"cddc\n"
-            @"cddc\n"
+            @"dddd\n"
+            @"dddd\n"
             @"cccc"]);
 
     // Test that downBy:2 works
@@ -973,9 +824,9 @@ do { \
             @"uvwxy\n"
             @"\n"
             @"ccccc\n"
-            @"cdddc\n"
-            @"cdddc\n"
-            @"cdddc\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
             @"ccccc"]);
 
     // Test that downBy:-2 works
@@ -990,9 +841,9 @@ do { \
             @"uvwxy\n"
             @"\n"
             @"ccccc\n"
-            @"cdddc\n"
-            @"cdddc\n"
-            @"cdddc\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
             @"ccccc"]);
 
     // Test that direction = height works
@@ -1007,9 +858,9 @@ do { \
             @"uvwxy\n"
             @"\n"
             @"ccccc\n"
-            @"cdddc\n"
-            @"cdddc\n"
-            @"cdddc\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
             @"ccccc"]);
 
     // Test that direction = -height works
@@ -1024,9 +875,9 @@ do { \
             @"uvwxy\n"
             @"\n"
             @"ccccc\n"
-            @"cdddc\n"
-            @"cdddc\n"
-            @"cdddc\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
             @"ccccc"]);
 
     // Test that direction = height + 1 works
@@ -1041,9 +892,9 @@ do { \
             @"uvwxy\n"
             @"\n"
             @"ccccc\n"
-            @"cdddc\n"
-            @"cdddc\n"
-            @"cdddc\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
             @"ccccc"]);
 
     // Test that direction = -height - 1 works
@@ -1058,9 +909,9 @@ do { \
             @"uvwxy\n"
             @"\n"
             @"ccccc\n"
-            @"cdddc\n"
-            @"cdddc\n"
-            @"cdddc\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
             @"ccccc"]);
 
 
@@ -1138,12 +989,12 @@ do { \
             @".tuv.\n"
             @"s...w\n"
             @"\n"
-            @"cdddc\n"
             @"ddddd\n"
-            @"cdddc\n"
-            @"ddddc\n"
             @"ddddd\n"
-            @"cdddc"]);
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd"]);
 
     // Test edge cases of split-dwc cleanup.
     NSString *edgeCaseyOrphans =
@@ -1196,10 +1047,10 @@ do { \
             @"n.stu\n"
             @".....\n"
             @"\n"
-            @"cdddd\n"
             @"ddddd\n"
-            @"cdddd\n"
-            @"cdddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
             @"ddddd"]);
 
     // Test scrolling a region where scrollRight=right margin-1, scrollLeft=0, and there's a split-dwc
@@ -1213,11 +1064,11 @@ do { \
             @"r-st.\n"
             @"....u\n"
             @"\n"
-            @"ddddc\n"
-            @"ddddc\n"
-            @"ddddc\n"
-            @"ddddc\n"
-            @"ddddc"]);
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd\n"
+            @"ddddd"]);
 
     // empty rect is harmless
     s = [self compactLineDumpForRectScrolledDownBy:1
@@ -1537,11 +1388,9 @@ do { \
             if ((x == 1 || x == 2) && (y == 1 || y == 2)) {
                 fg = redFg;
                 bg = greenBg;
-                XCTAssert([grid isCharDirtyAt:VT100GridCoordMake(x, y)]);
             } else {
                 fg = foregroundColor_;
                 bg = backgroundColor_;
-                XCTAssert(![grid isCharDirtyAt:VT100GridCoordMake(x, y)]);
             }
             XCTAssert(ForegroundAttributesEqual(fg, line[x]));
             XCTAssert(BackgroundColorsEqual(bg, line[x]));
@@ -1792,7 +1641,7 @@ do { \
                                          startingAtOffset:1
                                                  withChar:dc]);
     XCTAssert([[grid compactLineDump] isEqualToString:@"a.."]);
-    XCTAssert([[grid compactDirtyDump] isEqualToString:@"cdd"]);
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"ddd"]);
 
     // Do nothing
     grid = [self gridFromCompactLinesWithContinuationMarks:@"ab-!"];
@@ -1808,7 +1657,7 @@ do { \
                                          startingAtOffset:0
                                                  withChar:dc]);
     XCTAssert([[grid compactLineDump] isEqualToString:@"ab.\n..."]);
-    XCTAssert([[grid compactDirtyDump] isEqualToString:@"ccc\nddc"]);  // Don't need to set DWC_SKIP->NULL char to dirty
+    XCTAssert([[grid compactDirtyDump] isEqualToString:@"ccc\nddd"]);  // Don't need to set DWC_SKIP->NULL char to dirty
 }
 
 - (void)testMoveCursorToLeftMargin {

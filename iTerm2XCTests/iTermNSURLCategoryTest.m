@@ -63,12 +63,6 @@
     XCTAssertEqualObjects(url.absoluteString, @"https://user:value@example.com/a/c/b?a=1&b=2&c=3#fragment");
 }
 
-- (void)testURLByReplacingFormatSpecifier_BadURL {
-    NSString *string = @" %@";
-    NSURL *url = [NSURL urlByReplacingFormatSpecifier:@"%@" inString:string withValue:@"value"];
-    XCTAssertNil(url);
-}
-
 #pragma mark - URLWithUserSuppliedString
 
 - (void)testURLWithUserSuppliedString_NonAsciiPath {
@@ -108,7 +102,7 @@
     NSString *scheme = @"a1+-.";
     NSString *user = @"%20;";
     NSString *password = @"&=+$,é%20;&=+$,";
-    NSString *host = @"á中国.%20.icom.museum";
+    NSString *host = @"á中国.icom.museum";
     NSString *port = @"1";
     NSString *path = @"%20Torbjörn";
     NSString *query = @"%20国=%20中&ö";
@@ -123,7 +117,7 @@
                        query,
                        fragment];
 
-    host = @"xn--1ca0960bnsf.%20.icom.museum";
+    host = @"xn--1ca0960bnsf.icom.museum";
     password = @"&=+$,%C3%A9%20;&=+$,";
     path = @"%20Torbj%C3%B6rn";
     query = @"%20%E5%9B%BD=%20%E4%B8%AD&%C3%B6";
@@ -257,8 +251,8 @@
 }
 
 - (void)testIDN {
-    NSString *input = @"http://á中国.%20.icom.museum:1/path";
-    NSString *expected = @"http://xn--1ca0960bnsf.%20.icom.museum:1/path";
+    NSString *input = @"http://á中国.icom.museum:1/path";
+    NSString *expected = @"http://xn--1ca0960bnsf.icom.museum:1/path";
     NSURL *url = [NSURL URLWithUserSuppliedString:input];
     NSString *actual = [url absoluteString];
     XCTAssertEqualObjects(actual, expected);

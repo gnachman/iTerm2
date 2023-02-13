@@ -74,7 +74,11 @@
 }
 
 - (BOOL)fileExistsAtPathLocally:(NSString *)filename
-         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths {
+         additionalNetworkPaths:(NSArray<NSString *> *)additionalNetworkPaths
+             allowNetworkMounts:(BOOL)allowNetworkMounts {
+    if (allowNetworkMounts) {
+        return YES;
+    }
     if (![self fileIsLocal:filename additionalNetworkPaths:additionalNetworkPaths]) {
         return NO;
     }
