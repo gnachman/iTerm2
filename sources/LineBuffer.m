@@ -1381,6 +1381,11 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     const int savedMaxLines = max_lines;
     const int savedNumLines = num_wrapped_lines_cache;
     const int savedNumLinesWidth = num_wrapped_lines_width;
+    const int savedCursorRawline = cursor_rawline;
+    const int savedDroppedChars = droppedChars;
+    const int savedNumDroppedBlocks = num_dropped_blocks;
+    const int savedCursorX = cursor_x;
+
     // Don't try to restore _mayHaveDoubleWidthCharacter because setting it also modifies the line
     // blocks. It has to be a monotonic transition and is OK to leave because it's merely a
     // heuristic.
@@ -1392,6 +1397,10 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     max_lines = savedMaxLines;
     num_wrapped_lines_cache = savedNumLines;
     num_wrapped_lines_width = savedNumLinesWidth;
+    cursor_rawline = savedCursorRawline;
+    droppedChars = savedDroppedChars;
+    num_dropped_blocks = savedNumDroppedBlocks;
+    cursor_x = savedCursorX;
 
     while (_lineBlocks.blocks.count > numberOfBlocks) {
         [_lineBlocks removeLastBlock];
@@ -1625,6 +1634,9 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         }
     }
 
+    num_dropped_blocks = source->num_dropped_blocks;
+    //assert([self isEqual:source]);
+
     if (gDebugLogging) {
         stage4 = [_lineBlocks dumpWidths:commonWidths];
 
@@ -1639,6 +1651,32 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
             DLog(@"Stage 4:\n%@", stage4);
         }
     }
+}
+
+- (BOOL)isEqual:(LineBuffer *)other {
+    if (![other isKindOfClass:[LineBuffer class]]) {
+        return NO;
+    }
+    if (block_size != other->block_size) {
+        return NO;
+    }
+    if (cursor_x != other->cursor_x) {
+        return NO;
+    }
+    if (cursor_rawline != other->cursor_rawline) {
+        return NO;
+    }
+    if (max_lines != other->max_lines) {
+        return NO;
+    }
+    if (num_dropped_blocks != other->num_dropped_blocks) {
+        return NO;
+    }
+    if (droppedChars != other->droppedChars) {
+        return NO;
+    }
+
+    return [_lineBlocks isEqual:other->_lineBlocks];
 }
 
 @end

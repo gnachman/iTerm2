@@ -200,6 +200,23 @@
     return _numLinesCaches.cachedWidths;
 }
 
+- (BOOL)isEqual:(id)object {
+    iTermLineBlockArray *other = [iTermLineBlockArray castFrom:object];
+    if (!other) {
+        return NO;
+    }
+    if (self.count != other.count) {
+        return NO;
+    }
+    for (NSInteger i = 0; i < self.count; i++) {
+        LineBlock *lhs = self[i];
+        LineBlock *rhs = other[i];
+        if (![lhs isEqual:rhs]) {
+            return NO;
+        }
+    }
+    return YES;
+}
 #pragma mark - High level methods
 
 - (void)setResizing:(BOOL)resizing {

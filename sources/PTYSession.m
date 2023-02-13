@@ -2137,13 +2137,20 @@ ITERM_WEAKLY_REFERENCEABLE
     [_textview clearHighlights:NO];
     [_textview updatePortholeFrames];
     [[_delegate realParentWindow] invalidateRestorableState];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf startTailFindIfVisible];
+    });
+    [self updateMetalDriver];
+    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
+                                                    iTermVariableKeySessionRows: @(_screen.height) }];
+}
+
+- (void)startTailFindIfVisible {
     if (!_tailFindTimer &&
         [_delegate sessionBelongsToVisibleTab]) {
         [self beginContinuousTailFind];
     }
-    [self updateMetalDriver];
-    [self.variablesScope setValuesFromDictionary:@{ iTermVariableKeySessionColumns: @(_screen.width),
-                                                    iTermVariableKeySessionRows: @(_screen.height) }];
 }
 
 - (Profile *)profileForSplit {
@@ -11254,7 +11261,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [notification object] == self &&
         [_delegate sessionBelongsToVisibleTab]) {
         DLog(@"Session contents changed. Begin tail find.");
-        [self beginContinuousTailFind];
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf startTailFindIfVisible];
+        });
     }
 }
 

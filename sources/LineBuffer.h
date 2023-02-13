@@ -49,6 +49,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) BOOL mayHaveDoubleWidthCharacter;
 // Absolute block number of last block.
 @property(nonatomic, readonly) int largestAbsoluteBlockNumber;
+@property(nonatomic, readonly) BOOL dirty;
 // Returns the metadata associated with a line when wrapped to the specified width.
 - (iTermImmutableMetadata)metadataForLineNumber:(int)lineNum width:(int)width;
 
@@ -171,7 +172,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (ScreenCharArray * _Nullable)unwrappedLineAtIndex:(int)i;
 - (unsigned int)numberOfUnwrappedLines;
-
+- (BOOL)isEqual:(LineBuffer *)other;
 
 @end
 

@@ -18,6 +18,7 @@
     _wantsSearchBuffer = YES;
     if (!_searchBuffer) {
         _searchBuffer = [_state.linebuffer copy];
+        //assert([_searchBuffer isEqual:_state.linebuffer]);
         DLog(@"Make fresh copy");
     }
     return _searchBuffer;
@@ -32,8 +33,20 @@
                 inContext:(FindContext *)context
           multipleResults:(BOOL)multipleResults {
     DLog(@"begin self=%@ aString=%@", self, aString);
+
+    // It's too hard to reason about merging the search buffer with the real
+    // buffer when the real buffer is a moving target! When state is shared
+    // then _state.linebuffer is the mutation line buffer. But _searchBuffer is
+    // kept in sync with the non-mutation linebuffer by merging it
+    // periodically. We can't mix and match who we merge with because merging
+    // uses progenitor pointers and expects a consistent pair of LineBuffers
+    // for the merge.
+    assert(!self.stateIsShared);
+
     @autoreleasepool {
         LineBuffer *tempLineBuffer = [self searchBuffer];
+
+        //assert([tempLineBuffer isEqual:_state.linebuffer]);
         [tempLineBuffer performBlockWithTemporaryChanges:^{
             // Append the screen contents to the scrollback buffer so they are included in the search.
             [_state.currentGrid appendLines:[_state.currentGrid numberOfLinesUsed]
@@ -96,6 +109,7 @@
             [tempLineBuffer prepareToSearchFor:aString startingAt:startPos options:opts mode:mode withContext:context];
             context.hasWrapped = NO;
         }];
+        //assert([tempLineBuffer isEqual:_state.linebuffer]);
     }
 }
 

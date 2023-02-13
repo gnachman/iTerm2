@@ -55,6 +55,8 @@ VT100ScreenSideEffectPerforming> {
 - (VT100GridCoordRange)commandRange;
 - (const screen_char_t *)getLineAtIndex:(int)theIndex;
 - (id)objectOnOrBeforeLine:(int)line ofClass:(Class)cls;
+- (void)updateSearchBuffer:(BOOL)force;
+- (BOOL)stateIsShared;
 
 @end
 

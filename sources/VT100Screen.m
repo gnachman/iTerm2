@@ -1144,6 +1144,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [_mutableState performBlockAsynchronously:block];
 }
 
+- (BOOL)stateIsShared {
+    return _sharedStateCount > 0;
+}
+
 - (VT100ScreenState *)switchToSharedState {
     ++_sharedStateCount;
     DLog(@"switch to shared state. count becomes %@", @(_sharedStateCount));
@@ -1166,6 +1170,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         [_mutableState.altGrid markAllCharsDirty:YES updateTimestamps:NO];
     }
     [_state mergeFrom:_mutableState];
+
+    // This is important during resizing since the search buffer has to be kept in lockstep with the readonly line buffer.
+    [self updateSearchBuffer:YES];
+    //if (_searchBuffer) {
+    //    assert([_searchBuffer isEqual:_state.linebuffer]);
+    //}
     if (resetDirty) {
         DLog(@"reset dirty");
         // More cells in the mutable grid were marked dirty since the last refresh.
@@ -1222,25 +1232,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         const BOOL mutableStateLineBufferWasDirty = mutableState.linebuffer.dirty;
         [_state mergeFrom:mutableState];
 
-        if (!_wantsSearchBuffer) {
-            [_searchBuffer release];
-            _searchBuffer = nil;
-            DLog(@"nil out searchBuffer");
-        } else if (!_searchBuffer) {
-            _searchBuffer = [_state.linebuffer copy];
-            DLog(@"Initialize searchBuffer to fresh copy");
-        } else {
-            if (mutableStateLineBufferWasDirty) {
-                // forceMergeFrom: is necessary because _state.linebuffer will
-                // not be marked dirty since it hasn't been mutated. Because it
-                // has an old copy, the merge did mutate it but linebuffer
-                // doesn't know that the copy will be merged so it doesn't get
-                // marked dirty.
-                [_searchBuffer forceMergeFrom:_state.linebuffer];
-            } else {
-                DLog(@"Line buffer wasn't dirty so leaving searchBuffer alone");
-            }
-        }
+        [self updateSearchBuffer:mutableStateLineBufferWasDirty];
     } else {
         DLog(@"copy state");
         [_state autorelease];
@@ -1262,6 +1254,33 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         .overflow = overflow,
         .haveScrolled = _state.currentGrid.haveScrolled
     };
+}
+
+- (void)updateSearchBuffer:(BOOL)force {
+    if (!_state) {
+        return;
+    }
+    if (!_wantsSearchBuffer) {
+        [_searchBuffer release];
+        _searchBuffer = nil;
+        DLog(@"nil out searchBuffer");
+    } else if (!_searchBuffer) {
+        _searchBuffer = [_state.linebuffer copy];
+        //assert([_searchBuffer isEqual:_state.linebuffer]);
+        DLog(@"Initialize searchBuffer to fresh copy");
+    } else {
+        if (force) {
+            // forceMergeFrom: is necessary because _state.linebuffer will
+            // not be marked dirty since it hasn't been mutated. Because it
+            // has an old copy, the merge did mutate it but linebuffer
+            // doesn't know that the copy will be merged so it doesn't get
+            // marked dirty.
+            [_searchBuffer forceMergeFrom:_state.linebuffer];
+            //assert([_searchBuffer isEqual:_state.linebuffer]);
+        } else {
+            DLog(@"Line buffer wasn't dirty so leaving searchBuffer alone");
+        }
+    }
 }
 
 - (void)injectData:(NSData *)data {

@@ -18,6 +18,7 @@ extern "C" {
 #import "LineBufferHelpers.h"
 #import "NSArray+iTerm.h"
 #import "NSBundle+iTerm.h"
+#import "NSObject+iTerm.h"
 #import "RegexKitLite.h"
 #import "iTermAdvancedSettingsModel.h"
 }
@@ -553,6 +554,34 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     theCopy->_mayHaveDoubleWidthCharacter = _mayHaveDoubleWidthCharacter;
 
     return theCopy;
+}
+
+- (BOOL)isEqual:(id)object {
+    LineBlock *other = [LineBlock castFrom:object];
+    if (!other) {
+        return NO;
+    }
+    if (start_offset != other->start_offset) {
+        return NO;
+    }
+    if (first_entry != other->first_entry) {
+        return NO;
+    }
+    if (buffer_size != other->buffer_size) {
+        return NO;
+    }
+    if (cll_entries != other->cll_entries) {
+        return NO;
+    }
+    if (is_partial != other->is_partial) {
+        return NO;
+    }
+    for (int i = 0; i < cll_entries; i++) {
+        if (cumulative_line_lengths[i] != other->cumulative_line_lengths[i]) {
+            return NO;
+        }
+    }
+    return memcmp(raw_buffer, other->raw_buffer, sizeof(screen_char_t) * buffer_size) == 0;
 }
 
 - (int)rawSpaceUsed {
