@@ -100,6 +100,7 @@ typedef struct {
 @end
 
 @implementation iTermMetalDriver {
+    BOOL _justWroteCapture;
     iTermMarginRenderer *_marginRenderer;
     iTermBackgroundImageRenderer *_backgroundImageRenderer;
     iTermBackgroundColorRenderer *_backgroundColorRenderer;
@@ -332,6 +333,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
     iTermMetalDriverAsyncContext *context = _context;
     BOOL ok = [self reallyDrawInMTKView:view startToStartTime:dt];
+    if (!ok) {
+        NSLog(@"Aborted this frame");
+    }
+    ok = YES;
     context.aborted = !ok;
     if (_context && context) {
         // Explicit draw call (drawSynchronously or drawAsynchronously) that failed.
@@ -417,13 +422,16 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
     NSError *error;
     if (![captureManager startCaptureWithDescriptor:captureDescriptor error:&error]) {
-        DLog(@"Failed to start capture, error %@", error);
+        NSLog(@"Failed to start capture, error %@", error);
         return nil;
     }
     return captureDescriptor;
 }
 
 - (BOOL)reallyDrawInMTKView:(nonnull MTKView *)view startToStartTime:(NSTimeInterval)startToStartTime {
+    if (_justWroteCapture) {
+        return NO;
+    }
     @synchronized (self) {
         [_inFlightHistogram addValue:_currentFrames.count];
     }
@@ -475,12 +483,14 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         }
     }
 
-    if (self.captureDebugInfoForNextFrame) {
-        frameData.debugInfo = [[iTermMetalDebugInfo alloc] init];
-        if (@available(macOS 10.15, *)) {
-            frameData.captureDescriptor = [self triggerProgrammaticCapture:frameData.device];
+    if (self.captureDebugInfoForNextFrame && arc4random_uniform(4)==0) { // && !frameData.textureIsFamiliar && arc4random_uniform(2)==0) {
+//        frameData.debugInfo = [[iTermMetalDebugInfo alloc] init];
+        frameData.captureDescriptor = [self triggerProgrammaticCapture:frameData.device];
+        if (frameData.captureDescriptor) {
+            NSLog(@"Capture %@ %@", frameData.textureIsFamiliar ? @"familiar" : @"UNFAMILIAR",
+                  frameData);
         }
-        self.captureDebugInfoForNextFrame = NO;
+//        _justWroteCapture = YES;
     }
     if (_total > 1) {
         [_startToStartHistogram addValue:startToStartTime * 1000];
@@ -516,7 +526,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
             [self->_fpsMovingAverage addValue:now - self->_lastFrameTime];
         }
         self->_lastFrameTime = now;
-
+        NSLog(@"Drawing %@", frameData);
         [self performPrivateQueueSetupForFrameData:frameData view:view];
     };
 #if ENABLE_PRIVATE_QUEUE
@@ -1788,22 +1798,25 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
 - (BOOL)didComplete:(BOOL)completed withFrameData:(iTermMetalFrameData *)frameData {
     DLog(@"did complete (completed=%@) %@", @(completed), frameData);
+    NSLog(@"didcomplete(%@) %@", @(completed), @(frameData.frameNumber));
     if (!completed) {
         DLog(@"first time completed %@", frameData);
-        if (frameData.debugInfo) {
+//        if (frameData.debugInfo) {
             DLog(@"have debug info %@", frameData);
             if (@available(macOS 10.15, *)) {
                 if (frameData.captureDescriptor) {
                     MTLCaptureManager* captureManager = [MTLCaptureManager sharedCaptureManager];
                     [captureManager stopCapture];
-                    [frameData.debugInfo addMetalCapture:frameData.captureDescriptor.outputURL];
+                    NSLog(@"Saved frame (%@) %@ to capture %@", frameData.textureIsFamiliar ? @"familiar" : @"UNFAMILIAR",
+                          @(frameData.frameNumber), frameData.captureDescriptor.outputURL.path);
+//                    [frameData.debugInfo addMetalCapture:frameData.captureDescriptor.outputURL];
                 }
             }
-            NSData *archive = [frameData.debugInfo newArchive];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self.dataSource metalDriverDidProduceDebugInfo:archive];
-            });
-        }
+//            NSData *archive = [frameData.debugInfo newArchive];
+//            dispatch_async(dispatch_get_main_queue(), ^{
+//                [self.dataSource metalDriverDidProduceDebugInfo:archive];
+//            });
+//        }
 
         completed = YES;
         [self complete:frameData];

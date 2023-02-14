@@ -145,7 +145,7 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (void)metalDriverDidProduceDebugInfo:(nonnull NSData *)archive {
-    NSString *filename = @"/tmp/iTerm2-frame-capture.zip";
+    NSString *filename = [NSString stringWithFormat:@"/tmp/iTerm2-frame-capture-%@.zip", @([NSDate timeIntervalSinceReferenceDate])];
     [archive writeToFile:filename atomically:NO];
     [[NSWorkspace sharedWorkspace] activateFileViewerSelectingURLs:@[ [NSURL fileURLWithPath:filename] ]];
 }
