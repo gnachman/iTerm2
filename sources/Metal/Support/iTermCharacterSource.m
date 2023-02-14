@@ -739,6 +739,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                                        cellSize:NSMakeSize(_descriptor.cellSize.width * _descriptor.scale,
                                                                            _descriptor.cellSize.height * _descriptor.scale)
                                                            scale:_descriptor.scale
+                                                       isPoints:NO
                                                           offset:offset
                                                           color:[[self textColorForIteration:iteration] CGColor]
                                                            useNativePowerlineGlyphs:_useNativePowerlineGlyphs];

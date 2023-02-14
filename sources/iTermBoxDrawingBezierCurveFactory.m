@@ -263,6 +263,7 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
                  cellSize:(NSSize)regularCellSize
                     color:(CGColorRef)color
                     scale:(CGFloat)scale
+                 isPoints:(BOOL)isPoints
                    offset:(CGPoint)offset {
     NSSize cellSize = regularCellSize;
     if ([[iTermBoxDrawingBezierCurveFactory doubleWidthPowerlineSymbols] containsObject:@(code)]) {
@@ -294,34 +295,44 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
             break;
         case 0xE0B9:  // (Extended) Negative slope diagonal line
         case 0xE0BF:
-            [self drawComponents:@"a1g7" cellSize:cellSize scale:scale offset:offset color:color solid:NO];
+            [self drawComponents:@"a1g7" cellSize:cellSize scale:scale isPoints:isPoints offset:offset color:color solid:NO];
             break;
 
         case 0xE0BA:  // (Extended) Lower right triangle
-            [self drawComponents:@"a7g1 g1g7 g7a7" cellSize:cellSize scale:scale offset:offset color:color solid:YES];
+            [self drawComponents:@"a7g1 g1g7 g7a7" cellSize:cellSize scale:scale isPoints:isPoints offset:offset color:color solid:YES];
             break;
 
         case 0xE0BB:  // (Extended) Positive slope diagonal line
         case 0XE0BD:  // same
-            [self drawComponents:@"a7g1" cellSize:cellSize scale:scale offset:offset color:color solid:NO];
+            [self drawComponents:@"a7g1" cellSize:cellSize scale:scale isPoints:isPoints offset:offset color:color solid:NO];
             break;
 
         case 0xE0BC:  // (Extended) Upper left triangle
-            [self drawComponents:@"a1g1 g1a7 a7a1" cellSize:cellSize scale:scale offset:offset color:color solid:YES];
+            [self drawComponents:@"a1g1 g1a7 a7a1" cellSize:cellSize scale:scale isPoints:isPoints offset:offset color:color solid:YES];
             break;
 
         case 0xE0BE:  // (Extended) Top right triangle
-            [self drawComponents:@"g1a1 a1g7 g7g1" cellSize:cellSize scale:scale offset:offset color:color solid:YES];
+            [self drawComponents:@"g1a1 a1g7 g7g1" cellSize:cellSize scale:scale isPoints:isPoints offset:offset color:color solid:YES];
             break;
     }
 }
 
-+ (void)drawComponents:(NSString *)components cellSize:(NSSize)cellSize scale:(CGFloat)scale offset:(CGPoint)offset color:(CGColorRef)color solid:(BOOL)solid {
-    NSArray<NSBezierPath *> *paths = [self bezierPathsForComponents:components cellSize:cellSize scale:scale offset:offset];
++ (void)drawComponents:(NSString *)components
+              cellSize:(NSSize)cellSize
+                 scale:(CGFloat)scale
+              isPoints:(BOOL)isPoints
+                offset:(CGPoint)offset
+                 color:(CGColorRef)color
+                 solid:(BOOL)solid {
+    NSArray<NSBezierPath *> *paths = [self bezierPathsForComponents:components
+                                                           cellSize:cellSize
+                                                              scale:scale
+                                                           isPoints:isPoints
+                                                             offset:offset];
     if (!paths) {
         return;
     }
-    [self drawPaths:paths color:color scale:scale solid:solid];
+    [self drawPaths:paths color:color scale:scale isPoints:isPoints solid:solid];
 }
 
 + (NSImage *)bitmapForImage:(NSImage *)image {
@@ -505,6 +516,7 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
 + (void)drawCodeInCurrentContext:(unichar)code
                         cellSize:(NSSize)cellSize
                            scale:(CGFloat)scale
+                        isPoints:(BOOL)isPoints
                           offset:(CGPoint)offset
                            color:(CGColorRef)colorRef
         useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs {
@@ -513,6 +525,7 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
                        cellSize:cellSize
                           color:colorRef
                           scale:scale
+                       isPoints:isPoints
                          offset:offset];
         return;
     }
@@ -533,19 +546,25 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
     NSArray<NSBezierPath *> *paths = [iTermBoxDrawingBezierCurveFactory bezierPathsForBoxDrawingCode:code
                                                                                             cellSize:cellSize
                                                                                                scale:scale
+                                                                                            isPoints:isPoints
                                                                                               offset:offset
                                                                                                solid:&solid];
-    [self drawPaths:paths color:colorRef scale:scale solid:solid];
+    [self drawPaths:paths color:colorRef scale:scale isPoints:isPoints solid:solid];
 }
 
-+ (void)drawPaths:(NSArray<NSBezierPath *> *)paths color:(CGColorRef)colorRef scale:(CGFloat)scale solid:(BOOL)solid {
++ (void)drawPaths:(NSArray<NSBezierPath *> *)paths
+            color:(CGColorRef)colorRef
+            scale:(CGFloat)scale
+         isPoints:(BOOL)isPoints
+            solid:(BOOL)solid {
     NSColor *color = [NSColor colorWithCGColor:colorRef];
     [color set];
     for (NSBezierPath *path in paths) {
         if (solid) {
             [path fill];
         } else {
-            [path setLineWidth:scale];
+            CGFloat lineWidth;
+            [path setLineWidth:isPoints ? 1.0 : scale];
             [path stroke];
         }
     }
@@ -554,6 +573,7 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
 + (NSArray<NSBezierPath *> *)bezierPathsForBoxDrawingCode:(unichar)code
                                                  cellSize:(NSSize)cellSize
                                                     scale:(CGFloat)scale
+                                                 isPoints:(BOOL)isPoints
                                                    offset:(CGPoint)offset
                                                     solid:(out BOOL *)solid {
     NSArray<NSBezierPath *> *solidBoxPaths = [self bezierPathsForSolidBoxesForCode:code
@@ -955,12 +975,14 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
     return [self bezierPathsForComponents:components
                                  cellSize:cellSize
                                     scale:scale
+                                 isPoints:isPoints
                                    offset:offset];
 }
 
 + (NSArray<NSBezierPath *> *)bezierPathsForComponents:(NSString *)components
                                              cellSize:(NSSize)cellSize
                                                 scale:(CGFloat)scale
+                                             isPoints:(BOOL)isPoints
                                                offset:(CGPoint)offset {
     CGFloat horizontalCenter = cellSize.width / 2.0;
     CGFloat verticalCenter = cellSize.height / 2.0;
@@ -972,24 +994,56 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
     int lastY = -1;
     int i = 0;
     int length = components.length;
+
+    CGFloat fullPoint;
+    CGFloat halfPoint;
+    // The purpose of roundedUpHalfPoint is to change how we draw thick center lines in lowdpi vs highdpi.
+    // In high DPI, they will be 3 pixels wide and actually centered.
+    // In low DPI, thick centered lines will be 2 pixels wide and off center.
+    // Center - halfpoint and center + roundedUpHalfPoint form a pair of coordinates that give this result.
+    CGFloat roundedUpHalfPoint;
+    CGFloat xShift;
+    CGFloat yShift;
+
+    if (isPoints && scale >= 2) {
+        // Legacy renderer, high DPI
+        fullPoint = 1.0;
+        roundedUpHalfPoint = halfPoint = 0.5;
+        yShift = xShift = 0;
+    } else if (scale >= 2) {
+        // GPU renderer, high DPI
+        fullPoint = 2.0;
+        roundedUpHalfPoint = halfPoint = 1.0;
+        yShift = xShift = 1.0;
+    } else {
+        // Low DPI
+        halfPoint = 0;
+        roundedUpHalfPoint = 1.0;
+        fullPoint = 1.0;
+        yShift = xShift = -0.5;
+    }
+
+
     CGFloat xs[] = {
         0,
-        horizontalCenter - scale,
-        horizontalCenter - scale/2,
-        horizontalCenter,
-        horizontalCenter + scale/2,
-        horizontalCenter + scale,
-        cellSize.width - scale/2
+        horizontalCenter - fullPoint + xShift,
+        horizontalCenter - halfPoint + xShift,
+        horizontalCenter + xShift,
+        horizontalCenter + roundedUpHalfPoint + xShift,
+        horizontalCenter + fullPoint + xShift,
+        cellSize.width - halfPoint + xShift,
     };
     CGFloat ys[] = {
         0,
-        verticalCenter - scale,
-        verticalCenter - scale/2,
-        verticalCenter,
-        verticalCenter + scale/2,
-        verticalCenter + scale,
-        cellSize.height - scale/2
+        verticalCenter - fullPoint + yShift,
+        verticalCenter - halfPoint + yShift,
+        verticalCenter + yShift,
+        verticalCenter + roundedUpHalfPoint + yShift,
+        verticalCenter + fullPoint + yShift,
+        cellSize.height - halfPoint + yShift,
     };
+
+
     CGFloat (^centerPoint)(CGFloat) = ^CGFloat(CGFloat value) {
         CGFloat nearest = value;
         if (nearest > 0) {

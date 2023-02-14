@@ -1390,7 +1390,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     CGColorRef color = (CGColorRef)attributes[(NSString *)kCTForegroundColorAttributeName];
     [iTermBoxDrawingBezierCurveFactory drawCodeInCurrentContext:theCharacter
                                                        cellSize:_cellSize
-                                                          scale:1
+                                                          scale:self.isRetina ? 2.0 : 1.0
+                                                       isPoints:YES
                                                          offset:CGPointZero
                                                           color:color
                                        useNativePowerlineGlyphs:self.useNativePowerlineGlyphs];

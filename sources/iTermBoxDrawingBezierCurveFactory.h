@@ -14,6 +14,7 @@
 + (void)drawCodeInCurrentContext:(unichar)code
                         cellSize:(NSSize)cellSize
                            scale:(CGFloat)scale
+                        isPoints:(BOOL)isPoints
                           offset:(CGPoint)offset
                            color:(CGColorRef)color
         useNativePowerlineGlyphs:(BOOL)useNativePowerlineGlyphs;
