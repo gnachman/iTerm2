@@ -577,7 +577,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_USE_LIBTICKIT_PROTOCOL: @NO,
                   KEY_PLACE_PROMPT_AT_FIRST_COLUMN: @YES,
                   KEY_SHOW_MARK_INDICATORS: @YES,
-                  KEY_SHOW_OFFSCREEN_COMMANDLINE: @YES,
+                  KEY_SHOW_OFFSCREEN_COMMANDLINE: @NO,
                   KEY_HAS_HOTKEY: @NO,
                   KEY_HOTKEY_MODIFIER_FLAGS: @0,
                   KEY_HOTKEY_CHARACTERS: @"",
