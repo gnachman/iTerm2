@@ -44,6 +44,7 @@
     IBOutlet NSButton *_changeLocale;
     IBOutlet NSButton *_forceCommandPromptToFirstColumn;
     IBOutlet NSButton *_showMarkIndicators;
+    IBOutlet NSButton *_showOffscreenCommandLine;
     IBOutlet NSButton *_allowCursorBlinkControlSequence;
 
     IBOutlet NSPanel *_filterAlertsPanel;
@@ -236,6 +237,11 @@
 
     [self defineControl:_showMarkIndicators
                     key:KEY_SHOW_MARK_INDICATORS
+            relatedView:nil
+                   type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_showOffscreenCommandLine
+                    key:KEY_SHOW_OFFSCREEN_COMMANDLINE
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
 

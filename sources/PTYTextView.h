@@ -58,6 +58,8 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
 };
 
+extern NSTimeInterval PTYTextViewHighlightLineAnimationDuration;
+
 extern NSNotificationName iTermPortholesDidChange;
 
 @protocol PTYTextViewDelegate <NSObject, iTermBadgeLabelDelegate, iTermObject>
@@ -271,6 +273,7 @@ extern NSNotificationName iTermPortholesDidChange;
 - (NSString *)textViewNaturalLanguageQuery;
 - (void)textViewPerformNaturalLanguageQuery;
 - (void)textViewUpdateTrackingAreas;
+- (BOOL)textViewShouldShowOffscreenCommandLine;
 @end
 
 @interface iTermHighlightedRow : NSObject

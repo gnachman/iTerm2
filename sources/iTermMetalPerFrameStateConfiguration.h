@@ -82,6 +82,10 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _timestampsEnabled;
     BOOL _blinkingItemsVisible;
     NSFont *_timestampFont;
+
+    // Offscreen command line
+    NSColor *_offscreenCommandLineBackgroundColor;
+    NSColor *_offscreenCommandLineOutlineColor;
 };
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper

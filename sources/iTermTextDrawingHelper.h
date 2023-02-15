@@ -19,9 +19,11 @@
 @class iTermExternalAttributeIndex;
 @protocol iTermExternalAttributeIndexReading;
 @class iTermFindOnPageHelper;
+@class iTermOffscreenCommandLine;
 @class iTermSelection;
 @class iTermTextExtractor;
 @class PTYFontInfo;
+@class ScreenCharArray;
 @protocol VT100ScreenMarkReading;
 
 BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
@@ -259,6 +261,14 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
 @property (nonatomic, readonly) NSColor *blockCursorFillColorRespectingSmartSelection;
 @property (nonatomic) BOOL softAlternateScreenMode;
+@property (nonatomic, strong) iTermOffscreenCommandLine *offscreenCommandLine;
+@property (nonatomic, readonly) NSRect offscreenCommandLineFrame;
+@property (nonatomic, readonly) NSColor *offscreenCommandLineBackgroundColor;
+@property (nonatomic, readonly) NSColor *offscreenCommandLineOutlineColor;
+
++ (NSRect)offscreenCommandLineFrameForVisibleRect:(NSRect)visibleRect
+                                         cellSize:(NSSize)cellSize
+                                         gridSize:(VT100GridSize)gridSize;
 
 // imageSize: size of image to draw
 // destinationRect: rect bounding the region of a scrollview's content view (i.e., very tall view) that's being drawn

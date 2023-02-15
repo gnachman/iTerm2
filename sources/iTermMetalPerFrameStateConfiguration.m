@@ -107,6 +107,13 @@ static vector_float4 VectorForColor(NSColor *color) {
     // Timestamps
     _timestampsEnabled = drawingHelper.shouldShowTimestamps;
     _timestampFont = textView.font;
+
+    // Offscreen command line
+    if (textView.drawingHelper.offscreenCommandLine) {
+        _offscreenCommandLineBackgroundColor = [textView.drawingHelper.offscreenCommandLineBackgroundColor colorUsingColorSpace:_colorSpace];
+        _offscreenCommandLineOutlineColor = [textView.drawingHelper.offscreenCommandLineOutlineColor colorUsingColorSpace:_colorSpace];
+        _offscreenCommandLineBackgroundColor = [textView.drawingHelper.offscreenCommandLineBackgroundColor colorUsingColorSpace:_colorSpace];
+    }
 }
 
 @end

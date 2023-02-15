@@ -217,7 +217,9 @@ static NSString *const kIntervalLengthKey = @"Length";
 }
 
 - (id)nextObject {
-    return [[_source nextObject] doppelganger];
+    return [[_source nextObject] mapWithBlock:^id _Nullable(id  _Nonnull anObject) {
+        return [anObject doppelganger];
+    }];
 }
 
 - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state

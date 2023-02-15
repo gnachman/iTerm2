@@ -14671,6 +14671,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self.view updateTrackingAreas];
 }
 
+- (BOOL)textViewShouldShowOffscreenCommandLine {
+    return [iTermProfilePreferences boolForKey:KEY_SHOW_OFFSCREEN_COMMANDLINE inProfile:self.profile];
+}
 
 - (void)handleAIChoices:(NSArray<NSString *> *)choices error:(NSString *)error {
     if (error) {

@@ -92,6 +92,8 @@
 
 #import <WebKit/WebKit.h>
 
+NSTimeInterval PTYTextViewHighlightLineAnimationDuration = 0.75;
+
 NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
 
 @interface iTermHighlightRowView: NSView<iTermMetalDisabling>
@@ -1451,6 +1453,13 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     _drawingHelper.shouldShowTimestamps = self.showTimestamps;
     _drawingHelper.colorMap = _colorMap;
     _drawingHelper.softAlternateScreenMode = self.dataSource.terminalSoftAlternateScreenMode;
+    const VT100GridRange range = [self rangeOfVisibleLines];
+    if ([_delegate textViewShouldShowOffscreenCommandLine]) {
+        _drawingHelper.offscreenCommandLine = [self.dataSource offscreenCommandLineBefore:range.location];
+        [_drawingHelper.offscreenCommandLine setBackgroundColor:[_drawingHelper offscreenCommandLineBackgroundColor]];
+    } else {
+        _drawingHelper.offscreenCommandLine = nil;
+    }
 
     CGFloat rightMargin = 0;
     if (self.showTimestamps) {
@@ -3038,7 +3047,7 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
         [highlightingView removeFromSuperview];
         [highlightingView release];
     }];
-    const NSTimeInterval duration = 0.75;
+    const NSTimeInterval duration = PTYTextViewHighlightLineAnimationDuration;
 
     CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"opacity"];
     animation.fromValue = (id)@0.75;
@@ -5293,11 +5302,24 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                  allowOverflow:(BOOL)allowRightMarginOverflow {
     if (event.type == NSEventTypeLeftMouseUp && event.clickCount == 1) {
         const NSPoint windowPoint = [event locationInWindow];
-        const NSPoint viewPoint = [self.enclosingScrollView convertPoint:windowPoint fromView:nil];
-        NSString *message = [_indicatorsHelper helpTextForIndicatorAt:viewPoint];
+        const NSPoint enclosingViewPoint = [self.enclosingScrollView convertPoint:windowPoint fromView:nil];
+        NSString *message = [_indicatorsHelper helpTextForIndicatorAt:enclosingViewPoint];
         if (message) {
-            [self showIndicatorMessage:message at:viewPoint];
+            [self showIndicatorMessage:message at:enclosingViewPoint];
             return VT100GridCoordMake(-1, -1);
+        }
+        if (_drawingHelper.offscreenCommandLine) {
+            NSRect rect = [iTermTextDrawingHelper offscreenCommandLineFrameForVisibleRect:[self adjustedDocumentVisibleRect]
+                                                                                 cellSize:NSMakeSize(_charWidth, _lineHeight)
+                                                                                 gridSize:VT100GridSizeMake(_dataSource.width, _dataSource.height)];
+            const NSPoint viewPoint = [self convertPoint:windowPoint fromView:nil];
+            if (NSPointInRect(viewPoint, rect)) {
+                DLog(@"Highlight %@", @(_drawingHelper.offscreenCommandLine.absoluteLineNumber));
+                [self highlightMarkOnLine:_drawingHelper.offscreenCommandLine.absoluteLineNumber - _dataSource.totalScrollbackOverflow
+                             hasErrorCode:NO];
+                [self scrollToAbsoluteOffset:_drawingHelper.offscreenCommandLine.absoluteLineNumber height:1];
+                return VT100GridCoordMake(-1, -1);
+            }
         }
     }
     const NSPoint temp =

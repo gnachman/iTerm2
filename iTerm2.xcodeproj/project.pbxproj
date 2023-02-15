@@ -2228,6 +2228,13 @@
 		A67D19582237289900BD0D4D /* iTermImage.m in Sources */ = {isa = PBXBuildFile; fileRef = A6755F421D728FFA00F3726C /* iTermImage.m */; };
 		A67D19792238D50800BD0D4D /* iTermSetFindStringNotification.h in Headers */ = {isa = PBXBuildFile; fileRef = A67D19772238D50800BD0D4D /* iTermSetFindStringNotification.h */; };
 		A67D197A2238D50800BD0D4D /* iTermSetFindStringNotification.m in Sources */ = {isa = PBXBuildFile; fileRef = A67D19782238D50800BD0D4D /* iTermSetFindStringNotification.m */; };
+		A67DAF13299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = A67DAF11299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.h */; };
+		A67DAF14299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = A67DAF12299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.m */; };
+		A67DAF1A299C926200AD331A /* iTermSolidColor.metal in Sources */ = {isa = PBXBuildFile; fileRef = A67DAF19299C926200AD331A /* iTermSolidColor.metal */; };
+		A67DAF1B299C926200AD331A /* iTermSolidColor.metal in Sources */ = {isa = PBXBuildFile; fileRef = A67DAF19299C926200AD331A /* iTermSolidColor.metal */; };
+		A67DAF1C299C926200AD331A /* iTermSolidColor.metal in Sources */ = {isa = PBXBuildFile; fileRef = A67DAF19299C926200AD331A /* iTermSolidColor.metal */; };
+		A67DAF1D299D61D100AD331A /* iTermTextDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1AE21AAE290700B49F79 /* iTermTextDrawingHelper.m */; };
+		A67DAF1F299D634000AD331A /* OffscreenCommandLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A67DAF1E299D634000AD331A /* OffscreenCommandLine.swift */; };
 		A67E0AD0186E4B71009B2B68 /* TaskNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */; };
 		A67F118018D82B9500B23C7B /* PrefsAdvanced.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */; };
 		A67F118118D82B9500B23C7B /* PrefsAdvanced.png in Resources */ = {isa = PBXBuildFile; fileRef = A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */; };
@@ -2999,7 +3006,6 @@
 		A6C763171B45C52B00E3C992 /* iTermMouseCursor.m in Sources */ = {isa = PBXBuildFile; fileRef = A6AE1ECC191FF9DB00780C19 /* iTermMouseCursor.m */; };
 		A6C7631A1B45C52B00E3C992 /* iTermProfileSearchToken.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D468BBF1B056CD600226083 /* iTermProfileSearchToken.m */; };
 		A6C7631D1B45C52B00E3C992 /* iTermSelectionScrollHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F711A23D195009B1CB6 /* iTermSelectionScrollHelper.m */; };
-		A6C7631F1B45C52B00E3C992 /* iTermTextDrawingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1AE21AAE290700B49F79 /* iTermTextDrawingHelper.m */; };
 		A6C763211B45C52B00E3C992 /* iTermLaunchServices.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E713B918FCCDD1008D94DD /* iTermLaunchServices.m */; };
 		A6C763231B45C52B00E3C992 /* MovePaneController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D29732614082676004C5DBE /* MovePaneController.m */; };
 		A6C763241B45C52B00E3C992 /* MovingAverage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9053C517A5CCF100A0B64E /* MovingAverage.m */; };
@@ -6173,6 +6179,10 @@
 		A67D1952223704C400BD0D4D /* VT100SixelParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100SixelParser.m; sourceTree = "<group>"; };
 		A67D19772238D50800BD0D4D /* iTermSetFindStringNotification.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSetFindStringNotification.h; sourceTree = "<group>"; };
 		A67D19782238D50800BD0D4D /* iTermSetFindStringNotification.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSetFindStringNotification.m; sourceTree = "<group>"; };
+		A67DAF11299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermOffscreenCommandLineBackgroundRenderer.h; sourceTree = "<group>"; };
+		A67DAF12299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermOffscreenCommandLineBackgroundRenderer.m; sourceTree = "<group>"; };
+		A67DAF19299C926200AD331A /* iTermSolidColor.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = iTermSolidColor.metal; path = Metal/Shaders/iTermSolidColor.metal; sourceTree = "<group>"; };
+		A67DAF1E299D634000AD331A /* OffscreenCommandLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffscreenCommandLine.swift; sourceTree = "<group>"; };
 		A67E0ACE186E4B71009B2B68 /* TaskNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = TaskNotifier.h; sourceTree = "<group>"; tabWidth = 4; };
 		A67E0ACF186E4B71009B2B68 /* TaskNotifier.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = TaskNotifier.m; sourceTree = "<group>"; tabWidth = 4; };
 		A67F117E18D82B9500B23C7B /* PrefsAdvanced.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = PrefsAdvanced.png; path = images/PrefsAdvanced.png; sourceTree = "<group>"; };
@@ -9597,6 +9607,7 @@
 				A6B152DC29255ED500628436 /* iTermLocaleGuesser.swift */,
 				A64BD0D12964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.h */,
 				A64BD0D22964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.mm */,
+				A67DAF1E299D634000AD331A /* OffscreenCommandLine.swift */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -9735,6 +9746,7 @@
 		A67960871F81FC81008A42BC /* Shaders */ = {
 			isa = PBXGroup;
 			children = (
+				A67DAF19299C926200AD331A /* iTermSolidColor.metal */,
 				A67960C21F81FCA6008A42BC /* iTermShaderTypes.h */,
 				A67960BD1F81FCA5008A42BC /* iTermBackgroundColor.metal */,
 				A67960BC1F81FCA5008A42BC /* iTermBackgroundImage.metal */,
@@ -9798,6 +9810,8 @@
 				A6A453921FF318D8009FD3B7 /* iTermTexturePageCollection.mm */,
 				A68400BA1FF98101008D3EE2 /* iTermTimestampsRenderer.h */,
 				A68400BB1FF98101008D3EE2 /* iTermTimestampsRenderer.m */,
+				A67DAF11299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.h */,
+				A67DAF12299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.m */,
 			);
 			name = Renderers;
 			sourceTree = "<group>";
@@ -12311,6 +12325,7 @@
 				A6F0E2562795407A00022D20 /* VT100Screen+Search.h in Headers */,
 				A616839922F94AEE00661F71 /* GPBEnumArray+iTerm.h in Headers */,
 				A673DEBE22624A90004EBF4D /* iTermCopyModeHandler.h in Headers */,
+				A67DAF13299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.h in Headers */,
 				A6153D5821F4EF1A002976FC /* iTermStatusBarTightlyPackedLayoutAlgorithm.h in Headers */,
 				A6A4B2BB2426C02800184EAC /* iTermPresetKeyMappings.h in Headers */,
 				A635F1EB2507621A008C3038 /* iTermSnippetsEditingViewController.h in Headers */,
@@ -14899,6 +14914,7 @@
 				A67960F91F8202C2008A42BC /* iTermBadge.metal in Sources */,
 				A6DBC04E2005F45700F1466D /* iTermHighlightRow.metal in Sources */,
 				A60D023A2684521400E19362 /* Phony.swift in Sources */,
+				A67DAF1C299C926200AD331A /* iTermSolidColor.metal in Sources */,
 				A60EBD191FAED954008C7F5B /* iTermCopyBackground.metal in Sources */,
 				A67960F81F8202C2008A42BC /* iTermBackgroundImage.metal in Sources */,
 			);
@@ -14921,6 +14937,7 @@
 				A638A05120EB47A900DE347F /* iTermTextShaderCommon.metal in Sources */,
 				A67960F31F8202C1008A42BC /* iTermCursorGuide.metal in Sources */,
 				A60D023B2684526000E19362 /* Phony.swift in Sources */,
+				A67DAF1B299C926200AD331A /* iTermSolidColor.metal in Sources */,
 				A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */,
 				A68400B31FF8644F008D3EE2 /* iTermFulScreenFlash.metal in Sources */,
 				A67960F11F8202C1008A42BC /* iTermBadge.metal in Sources */,
@@ -14978,6 +14995,7 @@
 				A67960E91F8202C0008A42BC /* iTermBadge.metal in Sources */,
 				A6DBC04C2005F45700F1466D /* iTermHighlightRow.metal in Sources */,
 				A60D02342683D61000E19362 /* Phony.swift in Sources */,
+				A67DAF1A299C926200AD331A /* iTermSolidColor.metal in Sources */,
 				A60EBD171FAED952008C7F5B /* iTermCopyBackground.metal in Sources */,
 				A67960E81F8202C0008A42BC /* iTermBackgroundImage.metal in Sources */,
 			);
@@ -15053,6 +15071,7 @@
 				A630118420E6A613008114B7 /* iTermStatusBarSetupViewController.m in Sources */,
 				5370678C21C9D2780088D0F3 /* SIGVerificationAlgorithm.m in Sources */,
 				A6FF3F2F2435BA3C003CCB03 /* FindView.m in Sources */,
+				A67DAF1D299D61D100AD331A /* iTermTextDrawingHelper.m in Sources */,
 				53E9DFE6220D53110070C9C0 /* SetHostnameTrigger.m in Sources */,
 				A6481658228FE6B1008E7E0C /* iTermObject.m in Sources */,
 				A62EED9B20E0104000943DE3 /* iTermScriptArchive.m in Sources */,
@@ -15338,6 +15357,7 @@
 				A630119520E70C0A008114B7 /* iTermStatusBarSetupDestinationCollectionViewController.m in Sources */,
 				A6481655228FD511008E7E0C /* iTermVariablesIndex.m in Sources */,
 				A616CF0D284143A300EF82D0 /* ConductorRecovery.swift in Sources */,
+				A67DAF1F299D634000AD331A /* OffscreenCommandLine.swift in Sources */,
 				535EA50520D1869800FC81E0 /* iTermSwiftyStringParser.m in Sources */,
 				A653F6A124D00CE30062377E /* iTermGraphDeltaEncoder.m in Sources */,
 				5365207A21433F7A003C58FD /* iTermGitPoller.m in Sources */,
@@ -15679,6 +15699,7 @@
 				A639E1A12112CA33001696DE /* iTermEchoProbe.m in Sources */,
 				A6D10E3A27F7C2BC0026DB56 /* NSPoint+MultiCursor.swift in Sources */,
 				A63EB055284D85F100B2AB89 /* SSHFileGateway.swift in Sources */,
+				A67DAF14299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.m in Sources */,
 				A6644BE325CDCCD600419355 /* iTermLegacyView.m in Sources */,
 				535B3BBA2228DC5500D6D410 /* iTermAlertBuiltInFunction.m in Sources */,
 				530AB8A420B12B9500D2AA08 /* iTermFunctionCallTextFieldDelegate.m in Sources */,
@@ -15950,7 +15971,6 @@
 				A6CEC1071DCE8146009F4FD2 /* GPBArray.m in Sources */,
 				A6C763C11B45C52B00E3C992 /* VT100CSIParser.m in Sources */,
 				A66BFADD1CD072DB00DA2346 /* iTermThroughputEstimator.m in Sources */,
-				A6C7631F1B45C52B00E3C992 /* iTermTextDrawingHelper.m in Sources */,
 				A6C7638C1B45C52B00E3C992 /* ProfileTableView.m in Sources */,
 				A6C762DB1B45C52B00E3C992 /* PTYSession.m in Sources */,
 				A6C763291B45C52B00E3C992 /* PTYFontInfo.m in Sources */,

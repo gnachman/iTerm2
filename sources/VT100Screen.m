@@ -576,6 +576,31 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state coordRangeForInterval:mark.entry.interval];
 }
 
+- (iTermOffscreenCommandLine *)offscreenCommandLineBefore:(int)line {
+    if (line >= _state.numberOfScrollbackLines && _state.terminalSoftAlternateScreenMode) {
+        return nil;
+    }
+    const long long absLine = [self lineNumberOfMarkBeforeAbsLine:line + _state.totalScrollbackOverflow + 1];
+    if (absLine < 0) {
+        return nil;
+    }
+    if (absLine < _state.totalScrollbackOverflow + _state.numberOfScrollbackLines &&
+        absLine >= _state.totalScrollbackOverflow) {
+        if (absLine - _state.totalScrollbackOverflow == line) {
+            return nil;
+        }
+        const int commandLineNumber = absLine - _state.totalScrollbackOverflow;
+        ScreenCharArray *sca = [_state screenCharArrayForLine:commandLineNumber];
+        NSDate *date = nil;
+        const NSTimeInterval timestamp = [_state metadataOnLine:commandLineNumber].timestamp;
+        if (timestamp) {
+            date = [NSDate dateWithTimeIntervalSince1970:timestamp];
+        }
+        return [[[iTermOffscreenCommandLine alloc] initWithCharacters:sca absoluteLineNumber:absLine date:date] autorelease];
+    }
+    return nil; 
+}
+
 - (NSArray *)charactersWithNotesOnLine:(int)line {
     NSMutableArray *result = [NSMutableArray array];
     Interval *interval = [_state intervalForGridCoordRange:VT100GridCoordRangeMake(0,

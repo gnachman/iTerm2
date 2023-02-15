@@ -1,0 +1,153 @@
+//
+//  iTermOffscreenCommandLineBackgroundRenderer.m
+//  iTerm2SharedARC
+//
+//  Created by George Nachman on 2/14/23.
+//
+
+#import "iTermOffscreenCommandLineBackgroundRenderer.h"
+#import "iTermPreferences.h"
+
+static const int iTermOffscreenCommandLineBackgroundRendererNumQuads = 3;
+
+@interface iTermOffscreenCommandLineBackgroundRendererTransientState()
+@property (nonatomic) vector_float4 outlineColor;
+@property (nonatomic) vector_float4 backgroundColor;
+@property (nonatomic) CGFloat rowHeight;  // pixels
+@end
+
+@implementation iTermOffscreenCommandLineBackgroundRendererTransientState
+
+- (void)setOutlineColor:(vector_float4)outlineColor
+        backgroundColor:(vector_float4)backgroundColor
+              rowHeight:(CGFloat)rowHeight {
+    self.outlineColor = outlineColor;
+    self.backgroundColor = backgroundColor;
+    self.rowHeight = rowHeight;
+}
+
+@end
+
+@implementation iTermOffscreenCommandLineBackgroundRenderer {
+    iTermMetalRenderer *_solidColorRenderer;
+    iTermMetalBufferPool *_colorsPool;
+    iTermMetalBufferPool *_verticesPool;
+}
+
+- (instancetype)initWithDevice:(id<MTLDevice>)device {
+    self = [super init];
+    if (self) {
+        _solidColorRenderer = [[iTermMetalRenderer alloc] initWithDevice:device
+                                                      vertexFunctionName:@"iTermSolidColorVertexShader"
+                                                    fragmentFunctionName:@"iTermSolidColorFragmentShader"
+                                                                blending:[iTermMetalBlending atop]
+                                                     transientStateClass:[iTermOffscreenCommandLineBackgroundRendererTransientState class]];
+        _colorsPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(vector_float4) * iTermOffscreenCommandLineBackgroundRendererNumQuads];
+        _verticesPool = [[iTermMetalBufferPool alloc] initWithDevice:device bufferSize:sizeof(iTermVertex) * 6 * iTermOffscreenCommandLineBackgroundRendererNumQuads];
+    }
+    return self;
+}
+
+- (BOOL)rendererDisabled {
+    return NO;
+}
+
+- (iTermMetalFrameDataStat)createTransientStateStat {
+#warning DNS
+    return iTermMetalFrameDataStatPqCreateBadgeTS;
+}
+
+- (id<MTLBuffer>)colorsBufferWithColors:(vector_float4 *)colorsPtr
+                          poolContext:(iTermMetalBufferPoolContext *)poolContext {
+    return [_colorsPool requestBufferFromContext:poolContext
+                                      withBytes:colorsPtr
+                                 checkIfChanged:YES];
+}
+
+- (void)drawWithFrameData:(iTermMetalFrameData *)frameData
+           transientState:(__kindof iTermMetalRendererTransientState *)transientState {
+    iTermOffscreenCommandLineBackgroundRendererTransientState *tState = transientState;
+    const CGFloat viewportHeight = tState.configuration.viewportSize.y;
+    const CGFloat viewportWidth = tState.configuration.viewportSize.x;
+    const CGFloat scale = tState.configuration.scale;
+    const CGFloat topMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+
+    const CGRect fieldQuad = CGRectMake(scale,
+                                        viewportHeight - topMargin * scale - tState.rowHeight + scale,
+                                        viewportWidth - scale * 2,
+                                        tState.rowHeight - scale * 2);
+    const CGRect upperLineQuad = CGRectMake(scale,
+                                            viewportHeight - topMargin * scale - scale,
+                                            viewportWidth - scale * 2,
+                                            scale);
+    const CGRect lowerLineQuad = CGRectMake(scale,
+                                            viewportHeight - topMargin * scale - tState.rowHeight,
+                                            viewportWidth - scale * 2,
+                                            scale);
+
+    const iTermVertex vertices[iTermOffscreenCommandLineBackgroundRendererNumQuads * 6] = {
+        // Field
+        { { CGRectGetMaxX(fieldQuad), CGRectGetMinY(fieldQuad) }, { 1, 0 } },
+        { { CGRectGetMinX(fieldQuad), CGRectGetMinY(fieldQuad) }, { 0, 0 } },
+        { { CGRectGetMinX(fieldQuad), CGRectGetMaxY(fieldQuad) }, { 0, 1 } },
+
+        { { CGRectGetMaxX(fieldQuad), CGRectGetMinY(fieldQuad) }, { 1, 0 } },
+        { { CGRectGetMinX(fieldQuad), CGRectGetMaxY(fieldQuad) }, { 0, 1 } },
+        { { CGRectGetMaxX(fieldQuad), CGRectGetMaxY(fieldQuad) }, { 1, 1 } },
+
+        // Upper line
+        { { CGRectGetMaxX(upperLineQuad), CGRectGetMinY(upperLineQuad) }, { 1, 0 } },
+        { { CGRectGetMinX(upperLineQuad), CGRectGetMinY(upperLineQuad) }, { 0, 0 } },
+        { { CGRectGetMinX(upperLineQuad), CGRectGetMaxY(upperLineQuad) }, { 0, 1 } },
+
+        { { CGRectGetMaxX(upperLineQuad), CGRectGetMinY(upperLineQuad) }, { 1, 0 } },
+        { { CGRectGetMinX(upperLineQuad), CGRectGetMaxY(upperLineQuad) }, { 0, 1 } },
+        { { CGRectGetMaxX(upperLineQuad), CGRectGetMaxY(upperLineQuad) }, { 1, 1 } },
+
+        // Lower line
+        { { CGRectGetMaxX(lowerLineQuad), CGRectGetMinY(lowerLineQuad) }, { 1, 0 } },
+        { { CGRectGetMinX(lowerLineQuad), CGRectGetMinY(lowerLineQuad) }, { 0, 0 } },
+        { { CGRectGetMinX(lowerLineQuad), CGRectGetMaxY(lowerLineQuad) }, { 0, 1 } },
+
+        { { CGRectGetMaxX(lowerLineQuad), CGRectGetMinY(lowerLineQuad) }, { 1, 0 } },
+        { { CGRectGetMinX(lowerLineQuad), CGRectGetMaxY(lowerLineQuad) }, { 0, 1 } },
+        { { CGRectGetMaxX(lowerLineQuad), CGRectGetMaxY(lowerLineQuad) }, { 1, 1 } },
+    };
+    assert(sizeof(vertices) / sizeof(*vertices) == iTermOffscreenCommandLineBackgroundRendererNumQuads * 6);
+
+    vector_float4 colors[iTermOffscreenCommandLineBackgroundRendererNumQuads] = {
+        tState.backgroundColor,
+        tState.outlineColor,
+        tState.outlineColor
+    };
+    assert(sizeof(colors) / sizeof(*colors) == iTermOffscreenCommandLineBackgroundRendererNumQuads);
+    tState.vertexBuffer = [_verticesPool requestBufferFromContext:tState.poolContext
+                                                        withBytes:vertices
+                                                   checkIfChanged:YES];
+    id<MTLBuffer> colorsBuffer = [self colorsBufferWithColors:colors poolContext:tState.poolContext];
+    [_solidColorRenderer drawWithTransientState:tState
+                                  renderEncoder:frameData.renderEncoder
+                               numberOfVertices:sizeof(vertices) / sizeof(*vertices)
+                                   numberOfPIUs:0
+                                  vertexBuffers:@{ @(iTermVertexInputIndexVertices): tState.vertexBuffer,
+                                                   @(iTermVertexColorArray): colorsBuffer
+                                                }
+                                fragmentBuffers:@{}
+                                       textures:@{}];
+}
+
+- (nullable __kindof iTermMetalRendererTransientState *)createTransientStateForConfiguration:(nonnull iTermRenderConfiguration *)configuration
+                                                                               commandBuffer:(nonnull id<MTLCommandBuffer>)commandBuffer {
+    iTermOffscreenCommandLineBackgroundRendererTransientState * _Nonnull tState =
+        [_solidColorRenderer createTransientStateForConfiguration:configuration
+                                                    commandBuffer:commandBuffer];
+
+    [self initializeTransientState:tState];
+
+    return tState;
+}
+
+- (void)initializeTransientState:(iTermOffscreenCommandLineBackgroundRendererTransientState *)tState {
+}
+
+@end

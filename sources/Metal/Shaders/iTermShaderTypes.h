@@ -10,7 +10,8 @@ typedef enum iTermVertexInputIndex {
     iTermVertexInputIndexOffset,
     iTermVertexInputIndexCursorDescription,
     iTermVertexInputIndexDefaultBackgroundColorInfo,  // Points at iTermMetalBackgroundColorInfo
-    iTermVertexTextInfo
+    iTermVertexTextInfo,
+    iTermVertexColorArray  // Points at per-quad vector_float4 color
 } iTermVertexInputIndex;
 
 typedef enum iTermTextureIndex {

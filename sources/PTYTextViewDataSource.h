@@ -12,6 +12,7 @@
 @class iTermColorMap;
 @class iTermExternalAttributeIndex;
 @protocol iTermMark;
+@class iTermOffscreenCommandLine;
 @protocol IntervalTreeImmutableObject;
 @class PTYAnnotation;
 @protocol PTYAnnotationReading;
@@ -146,5 +147,6 @@
 - (void)changeHeightOfMark:(id<iTermMark>)mark to:(int)newHeight;
 
 - (VT100GridCoordRange)coordRangeOfPorthole:(id<Porthole>)porthole;
+- (iTermOffscreenCommandLine *)offscreenCommandLineBefore:(int)line;
 
 @end

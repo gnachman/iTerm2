@@ -211,6 +211,7 @@
 #define KEY_USE_CANONICAL_PARSER              @"Use Canonical Parser"  // Deprecated
 #define KEY_PLACE_PROMPT_AT_FIRST_COLUMN      @"Place Prompt at First Column"
 #define KEY_SHOW_MARK_INDICATORS              @"Show Mark Indicators"
+#define KEY_SHOW_OFFSCREEN_COMMANDLINE        @"Show Offscreen Command line"
 
 // Session
 #define KEY_AUTOLOG                           @"Automatically Log"

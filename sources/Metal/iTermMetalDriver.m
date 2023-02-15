@@ -25,6 +25,7 @@
 #import "iTermMetalFrameData.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalRowData.h"
+#import "iTermOffscreenCommandLineBackgroundRenderer.h"
 #import "iTermPreciseTimer.h"
 #import "iTermPreferences.h"
 #import "iTermTextRendererTransientState.h"
@@ -37,6 +38,7 @@
 #import "NSArray+iTerm.h"
 #import "NSColor+iTerm.h"
 #import "NSMutableData+iTerm.h"
+#import "PTYTextView.h"
 #import <stdatomic.h>
 
 @interface iTermMetalDriverAsyncContext : NSObject
@@ -105,6 +107,7 @@ typedef struct {
     iTermMarginRenderer *_marginRenderer;
     iTermBackgroundImageRenderer *_backgroundImageRenderer;
     iTermBackgroundColorRenderer *_backgroundColorRenderer;
+    iTermOffscreenCommandLineBackgroundRenderer *_offscreenCommandLineBackgroundRenderer;
     iTermTextRenderer *_textRenderer;
     iTermMarkRenderer *_markRenderer;
     iTermBadgeRenderer *_badgeRenderer;
@@ -182,6 +185,7 @@ typedef struct {
         _backgroundImageRenderer = [[iTermBackgroundImageRenderer alloc] initWithDevice:device];
         _textRenderer = [[iTermTextRenderer alloc] initWithDevice:device];
         _backgroundColorRenderer = [[iTermBackgroundColorRenderer alloc] initWithDevice:device];
+        _offscreenCommandLineBackgroundRenderer = [[iTermOffscreenCommandLineBackgroundRenderer alloc] initWithDevice:device];
         _markRenderer = [[iTermMarkRenderer alloc] initWithDevice:device];
         _badgeRenderer = [[iTermBadgeRenderer alloc] initWithDevice:device];
         _flashRenderer = [[iTermFullScreenFlashRenderer alloc] initWithDevice:device];
@@ -1276,7 +1280,17 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                             repeatingRows:count];
         }];
     }
-
+    if (!_offscreenCommandLineBackgroundRenderer.rendererDisabled) {
+        iTermOffscreenCommandLineBackgroundRendererTransientState *offscreenState = [frameData transientStateForRenderer:_offscreenCommandLineBackgroundRenderer];
+        if (!frameData.perFrameState.haveOffscreenCommandLine) {
+            offscreenState.shouldDraw = NO;
+        } else {
+            offscreenState.shouldDraw = YES;
+            [offscreenState setOutlineColor:frameData.perFrameState.offscreenCommandLineOutlineColor
+                            backgroundColor:frameData.perFrameState.offscreenCommandLineBackgroundColor
+                                  rowHeight:frameData.cellSize.height];
+        }
+    }
     // Tell the text state that it's done getting row data.
     if (!_textRenderer.rendererDisabled) {
         [textState willDraw];
@@ -1302,7 +1316,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 - (void)populateHighlightRowRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermHighlightRowRendererTransientState *tState = [frameData transientStateForRenderer:_highlightRowRenderer];
     [frameData.perFrameState metalEnumerateHighlightedRows:^(vector_float3 color, NSTimeInterval age, int row) {
-        const CGFloat opacity = MAX(0, 0.75 - age);
+        const CGFloat opacity = MAX(0, PTYTextViewHighlightLineAnimationDuration - age);
         [tState setOpacity:opacity color:color row:row];
     }];
 }
@@ -1637,6 +1651,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
     [self drawCursorBeforeTextWithFrameData:frameData];
 
+    [self drawRenderer:_offscreenCommandLineBackgroundRenderer
+             frameData:frameData
+                  stat:iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLine];
+
     if (frameData.intermediateRenderPassDescriptor) {
         [frameData measureTimeForStat:iTermMetalFrameDataStatPqEnqueueDrawEndEncodingToIntermediateTexture ofBlock:^{
             [frameData.renderEncoder endEncoding];
@@ -1903,6 +1921,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
 - (NSArray<id<iTermMetalRenderer>> *)nonCellRenderers {
     NSArray *shared = @[ _backgroundImageRenderer,
+                         _offscreenCommandLineBackgroundRenderer,
                          _badgeRenderer,
                          _copyBackgroundRenderer,
                          _indicatorRenderer,

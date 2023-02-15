@@ -8,6 +8,7 @@
 #import "iTermMetalPerFrameState.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAlphaBlendingHelper.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
@@ -115,6 +116,7 @@ typedef struct {
     NSArray<iTermHighlightedRow *> *_highlightedRows;
     NSTimeInterval _startTime;
     NSEdgeInsets _extraMargins;
+    BOOL _haveOffscreenCommandLine;
 }
 @end
 
@@ -163,6 +165,7 @@ typedef struct {
     [self loadIndicatorsFromTextView:textView];
     [self loadHighlightedRowsFromTextView:textView];
     [self loadAnnotationRangesFromTextView:textView];
+    [self loadOffscreenCommandLine:textView];
 }
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -347,6 +350,10 @@ typedef struct {
     _highlightedRows = [textView.highlightedRows copy];
 }
 
+- (BOOL)haveOffscreenCommandLine {
+    return _haveOffscreenCommandLine;
+}
+
 - (iTermCharacterSourceDescriptor *)characterSourceDescriptorForASCIIWithGlyphSize:(CGSize)glyphSize
                                                                        asciiOffset:(CGSize)asciiOffset {
     return [iTermCharacterSourceDescriptor characterSourceDescriptorWithAsciiFont:_configuration->_asciiFont
@@ -391,6 +398,22 @@ typedef struct {
     return _configuration->_scale;
 }
 
+- (vector_float4)offscreenCommandLineOutlineColor {
+    const float a = (float)_configuration->_offscreenCommandLineOutlineColor.alphaComponent;
+    return simd_make_float4((float)_configuration->_offscreenCommandLineOutlineColor.redComponent * a,
+                            (float)_configuration->_offscreenCommandLineOutlineColor.greenComponent * a,
+                            (float)_configuration->_offscreenCommandLineOutlineColor.blueComponent * a,
+                            a);
+}
+
+- (vector_float4)offscreenCommandLineBackgroundColor {
+    const float a = (float)_configuration->_offscreenCommandLineBackgroundColor.alphaComponent;
+    return simd_make_float4((float)_configuration->_offscreenCommandLineBackgroundColor.redComponent * a,
+                            (float)_configuration->_offscreenCommandLineBackgroundColor.greenComponent * a,
+                            (float)_configuration->_offscreenCommandLineBackgroundColor.blueComponent * a,
+                            a);
+}
+
 // Populate _rowToAnnotationRanges.
 - (void)loadAnnotationRangesFromTextView:(PTYTextView *)textView {
     NSRange rangeOfRows = NSMakeRange(_visibleRange.start.y, _visibleRange.end.y - _visibleRange.start.y + 1);
@@ -407,6 +430,16 @@ typedef struct {
         }
         return dict;
     }];
+}
+
+- (void)loadOffscreenCommandLine:(PTYTextView *)textView {
+    _haveOffscreenCommandLine = textView.drawingHelper.offscreenCommandLine != nil;
+    if (_haveOffscreenCommandLine) {
+        _rows[0]->_screenCharLine = textView.drawingHelper.offscreenCommandLine.characters;
+        _rows[0]->_selectedIndexSet = [[NSIndexSet alloc] init];
+        _rows[0]->_matches = nil;
+        _rows[0]->_date = textView.drawingHelper.offscreenCommandLine.date;
+    }
 }
 
 - (void)loadIndicatorsFromTextView:(PTYTextView *)textView {
@@ -1046,6 +1079,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         vector_float4 color = VectorForColor([_configuration->_colorMap colorForKey:key],
                                              _configuration->_colorSpace);
         if (isFaint) {
+            // TODO: I think this is wrong and the color components need premultiplied alpha.
             color.w = 0.5;
         }
         return color;

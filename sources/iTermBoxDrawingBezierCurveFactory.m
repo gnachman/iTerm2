@@ -563,7 +563,6 @@ typedef NS_OPTIONS(NSUInteger, iTermPowerlineDrawingOptions) {
         if (solid) {
             [path fill];
         } else {
-            CGFloat lineWidth;
             [path setLineWidth:isPoints ? 1.0 : scale];
             [path stroke];
         }
