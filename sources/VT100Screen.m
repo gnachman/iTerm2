@@ -580,25 +580,31 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (line >= _state.numberOfScrollbackLines && _state.terminalSoftAlternateScreenMode) {
         return nil;
     }
-    const long long absLine = [self lineNumberOfMarkBeforeAbsLine:line + _state.totalScrollbackOverflow + 1];
-    if (absLine < 0) {
+    id<VT100ScreenMarkReading> mark = [self screenMarkBeforeAbsLine:line + _state.totalScrollbackOverflow + 1];
+    if (!mark) {
         return nil;
     }
-    if (absLine < _state.totalScrollbackOverflow + _state.numberOfScrollbackLines &&
-        absLine >= _state.totalScrollbackOverflow) {
-        if (absLine - _state.totalScrollbackOverflow == line) {
-            return nil;
-        }
-        const int commandLineNumber = absLine - _state.totalScrollbackOverflow;
-        ScreenCharArray *sca = [_state screenCharArrayForLine:commandLineNumber];
-        NSDate *date = nil;
-        const NSTimeInterval timestamp = [_state metadataOnLine:commandLineNumber].timestamp;
-        if (timestamp) {
-            date = [NSDate dateWithTimeIntervalSince1970:timestamp];
-        }
-        return [[[iTermOffscreenCommandLine alloc] initWithCharacters:sca absoluteLineNumber:absLine date:date] autorelease];
+    if (!mark.hasCode) {
+        return nil;
     }
-    return nil; 
+    const long long absLine = [_state absCoordRangeForInterval:mark.entry.interval].start.y;
+    if (absLine >= _state.totalScrollbackOverflow + _state.numberOfScrollbackLines) {
+        return nil;
+    }
+    if (absLine < _state.totalScrollbackOverflow) {
+        return nil;
+    }
+    if (absLine - _state.totalScrollbackOverflow == line) {
+        return nil;
+    }
+    const int commandLineNumber = absLine - _state.totalScrollbackOverflow;
+    ScreenCharArray *sca = [_state screenCharArrayForLine:commandLineNumber];
+    NSDate *date = nil;
+    const NSTimeInterval timestamp = [_state metadataOnLine:commandLineNumber].timestamp;
+    if (timestamp) {
+        date = [NSDate dateWithTimeIntervalSince1970:timestamp];
+    }
+    return [[[iTermOffscreenCommandLine alloc] initWithCharacters:sca absoluteLineNumber:absLine date:date] autorelease];
 }
 
 - (NSArray *)charactersWithNotesOnLine:(int)line {
@@ -821,11 +827,11 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return objects;
 }
 
-- (long long)lineNumberOfMarkBeforeAbsLine:(long long)absLine {
+- (id<VT100ScreenMarkReading>)screenMarkBeforeAbsLine:(long long)absLine {
     const long long overflow = self.totalScrollbackOverflow;
     const long long line = absLine - overflow;
     if (line < 0 || line > INT_MAX) {
-        return -1;
+        return nil;
     }
     Interval *interval = [_state intervalForGridCoordRange:VT100GridCoordRangeMake(0, line, 0, line)];
     NSEnumerator *enumerator = [_state.intervalTree reverseLimitEnumeratorAt:interval.limit];
@@ -834,12 +840,20 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         for (id object in objects) {
             if ([object isKindOfClass:[VT100ScreenMark class]]) {
                 id<VT100ScreenMarkReading> mark = object;
-                return overflow + [_state coordRangeForInterval:mark.entry.interval].start.y;
+                return mark;
             }
         }
         objects = [enumerator nextObject];
     }
-    return -1;
+    return nil;
+}
+
+- (long long)lineNumberOfMarkBeforeAbsLine:(long long)absLine {
+    id<VT100ScreenMarkReading> mark = [self screenMarkAtOrBeforeAbsLine:absLine];
+    if (!mark) {
+        return -1;
+    }
+    return [_state absCoordRangeForInterval:mark.entry.interval].start.y;
 }
 
 - (long long)lineNumberOfMarkAfterAbsLine:(long long)absLine {
