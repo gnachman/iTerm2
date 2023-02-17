@@ -1,6 +1,9 @@
-#!/usr/bin/env python3
+#!/Library/Frameworks/Python.framework/Versions/3.9/bin/python3
+
+# We can't use the python in $PATH because xcode ships with Python and we need one that has pybobjc.
 
 import os
+import sys
 import time
 import subprocess
 
