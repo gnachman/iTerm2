@@ -95,6 +95,7 @@
 NSTimeInterval PTYTextViewHighlightLineAnimationDuration = 0.75;
 
 NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
+NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChangeFontNotification";
 
 @interface iTermHighlightRowView: NSView<iTermMetalDisabling>
 @end
@@ -1800,6 +1801,10 @@ NSNotificationName iTermPortholesDidChange = @"iTermPortholesDidChange";
     nonAsciiFont:(NSFont *)proposedNonASCIIFont
     horizontalSpacing:(CGFloat)horizontalSpacing
     verticalSpacing:(CGFloat)verticalSpacing {
+    if (_primaryFont.font != nil) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:PTYTextViewWillChangeFontNotification object:self];
+    }
+
     NSFont *asciiFont = proposedASCIIFont;
     if (!asciiFont) {
         asciiFont = [NSFont userFixedPitchFontOfSize:0.0];

@@ -1268,6 +1268,8 @@ ITERM_WEAKLY_REFERENCEABLE
         }]) {
             [self fitWindowToIdealizedTabsPreservingHeight:NO];
         }
+        TmuxController *first = self.uniqueTmuxControllers.firstObject;
+        [first restoreWindowFrame:self];
     }
 }
 

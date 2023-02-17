@@ -31,6 +31,7 @@
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
+#import "PTYTextView.h"
 #import "RegexKitLite.h"
 #import "TmuxControllerRegistry.h"
 #import "TmuxDashboardController.h"
@@ -210,6 +211,11 @@ static NSString *const kAggressiveResize = @"aggressive-resize";
     // we'll eventually catch up to its current state and remain stable.
     NSInteger _suppressActivityChanges;
     BOOL _shouldWorkAroundTabBug;
+
+    // Window frames before font size changes. Used to preserve window size in
+    // the face of font sizes by just setting it back to the right size after
+    // font size changes are finished happening.
+    NSMutableDictionary<NSString *, NSValue *> *_savedFrames;
 }
 
 @synthesize gateway = gateway_;
@@ -258,6 +264,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         _listWindowsQueue = [[NSMutableArray alloc] init];
         _paneToActivateWhenCreated = -1;
         _buriedWindows = [[NSMutableDictionary alloc] init];
+        _savedFrames = [[NSMutableDictionary alloc] init];
         __weak __typeof(self) weakSelf = self;
         [iTermPreferenceDidChangeNotification subscribe:self
                                                   block:^(iTermPreferenceDidChangeNotification * _Nonnull notification) {
@@ -265,6 +272,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
                 [weakSelf enablePauseModeIfPossible];
             }
         }];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(textViewWillChangeFont:)
+                                                     name:PTYTextViewWillChangeFontNotification
+                                                   object:nil];
+
         _windowSizes = [[NSMutableDictionary alloc] init];
         DLog(@"Create %@ with gateway=%@", self, gateway_);
     }
@@ -306,6 +318,7 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [_perWindowSettings release];
     [_lastSavePerTabSettingsCommand release];
     [_perTabSettings release];
+    [_savedFrames release];
 
     [super dealloc];
 }
@@ -3462,6 +3475,51 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
         return;
     }
     [session tmuxControllerSessionSetTTL:ttl redzone:redzone];
+}
+
+#pragma mark - Notifications
+
+- (void)textViewWillChangeFont:(NSNotification *)notification {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
+        return;
+    }
+    if (_savedFrames.count) {
+        return;
+    }
+    NSArray *terminals = [[iTermController sharedInstance] terminals];
+    for (PseudoTerminal *term in terminals) {
+        if ([self windowControllerHasTmuxTabOfMine:term]) {
+            _savedFrames[term.terminalGuid] = [NSValue valueWithRect:term.window.frame];
+        }
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [_savedFrames removeAllObjects];
+    });
+}
+
+- (BOOL)windowControllerHasTmuxTabOfMine:(PseudoTerminal *)term {
+    return [term.tabs anyWithBlock:^BOOL(PTYTab *tab) {
+        return tab.isTmuxTab && tab.tmuxController == self;
+    }];
+}
+
+- (void)restoreWindowFrame:(PseudoTerminal *)term {
+    if ([iTermPreferences boolForKey:kPreferenceKeyAdjustWindowForFontSizeChange]) {
+        return;
+    }
+    NSRect savedFrame;
+    if ([self getSavedFrameForWindowController:term frame:&savedFrame]) {
+        [term.window setFrame:savedFrame display:YES];
+    }
+}
+
+- (BOOL)getSavedFrameForWindowController:(PseudoTerminal *)term frame:(NSRect *)framePtr {
+    NSValue *value = _savedFrames[term.terminalGuid];
+    if (!value) {
+        return NO;
+    }
+    *framePtr = value.rectValue;
+    return YES;
 }
 
 @end

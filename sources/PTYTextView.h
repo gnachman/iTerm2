@@ -61,6 +61,7 @@ typedef NS_ENUM(NSInteger, PTYCharType) {
 extern NSTimeInterval PTYTextViewHighlightLineAnimationDuration;
 
 extern NSNotificationName iTermPortholesDidChange;
+extern NSNotificationName PTYTextViewWillChangeFontNotification;
 
 @protocol PTYTextViewDelegate <NSObject, iTermBadgeLabelDelegate, iTermObject>
 
