@@ -89,7 +89,11 @@ enum {
     return [NSImage imageOfSize:size drawBlock:^{
         const NSRect rect = NSMakeRect(0, 0, size.width, size.height);
         [ibeam drawInRect:rect];
-        [overlay drawInRect:rect];
+        NSRect dest = NSMakeRect((ibeam.size.width - overlay.size.width) / 2.0,
+                                 (ibeam.size.height - overlay.size.height) / 2.0,
+                                 overlay.size.width,
+                                 overlay.size.height);
+        [overlay drawInRect:dest fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1];
     }];
 }
 
