@@ -153,8 +153,8 @@ class LastPassDataSource: CommandLinePasswordDataSource {
         return wrap("The account list could not be fetched.", AnyRecipe(recipe))
     }
 
-    private var getPasswordRecipe: AnyRecipe<AccountIdentifier, String> {
-        let recipe = LastPassDynamicCommandRecipe<AccountIdentifier, String> {
+    private var getPasswordRecipe: AnyRecipe<AccountIdentifier, Password> {
+        let recipe = LastPassDynamicCommandRecipe<AccountIdentifier, Password> {
             let args = ["show", "--password", $0.value]
             return InteractiveCommandRequest(command: LastPassUtils.pathToCLI,
                                              args: args,
@@ -166,7 +166,7 @@ class LastPassDataSource: CommandLinePasswordDataSource {
             guard let string = String(data: output.stdout, encoding: .utf8) else {
                 throw LPError.badOutput
             }
-            return string.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+            return Password(password: string.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines))
         }
         return wrap("The password could not be fetched.", AnyRecipe(recipe))
     }

@@ -40,11 +40,11 @@ fileprivate class KeychainAccount: NSObject, PasswordManagerAccount {
         return keychainAccountName
     }
 
-    func fetchPassword(_ completion: (String?, Error?) -> ()) {
+    func fetchPassword(_ completion: (String?, String?, Error?) -> ()) {
         do {
-            completion(try password(), nil)
+            completion(try password(), nil, nil)
         } catch {
-            completion(nil, error)
+            completion(nil, nil, error)
         }
     }
 

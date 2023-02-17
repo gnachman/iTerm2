@@ -536,17 +536,21 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 - (IBAction)enterPassword:(id)sender {
     DLog(@"enterPassword");
     __weak __typeof(self) weakSelf = self;
-    [self fetchSelectedPassword:^(NSString *password) {
+    [self fetchSelectedPassword:^(NSString *password, NSString *otp) {
         if (!password) {
             return;
         }
-        [weakSelf didFetchPasswordToEnter:password];
+        [weakSelf didFetchPasswordToEnter:password otp:otp];
     }];
 }
 
-- (void)didFetchPasswordToEnter:(NSString *)password {
+- (void)didFetchPasswordToEnter:(NSString *)password otp:(NSString *)otp {
     DLog(@"enterPassword: giving password to delegate");
-    NSString *twoFactorCode = [_twoFactorCode.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    NSString *secondFactor = _twoFactorCode.stringValue;
+    if (otp && [secondFactor length] == 0) {
+        secondFactor = otp;
+    }
+    NSString *twoFactorCode = [secondFactor stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     [_delegate iTermPasswordManagerEnterPassword:[password stringByAppendingString:twoFactorCode]
                                        broadcast:_broadcastButton.state == NSControlStateValueOn];
     DLog(@"enterPassword: closing sheet");
@@ -599,8 +603,14 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
                 return;
             }
             __weak __typeof(self) weakSelf = self;
-            [self fetchClickedPassword:^(NSString *password) {
-                [weakSelf revealPassword:password forAccountName:accountName];
+            [self fetchClickedPassword:^(NSString *password, NSString *otp) {
+                NSString *formatted;
+                if (otp) {
+                    formatted = [NSString stringWithFormat:@"%@\n%@", password, otp];
+                } else {
+                    formatted = password;
+                }
+                [weakSelf revealPassword:formatted forAccountName:accountName];
             }];
         }
     }
@@ -626,11 +636,15 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
 
 - (IBAction)copyPassword:(id)sender {
     __weak __typeof(self) weakSelf = self;
-    [self fetchClickedPassword:^(NSString *password) {
+    [self fetchClickedPassword:^(NSString *password, NSString *otp) {
         if (!password) {
             return;
         }
-        [weakSelf didFetchPasswordToCopy:password];
+        if (otp) {
+            [weakSelf didFetchPasswordToCopy:[password stringByAppendingString:otp]];
+        } else {
+            [weakSelf didFetchPasswordToCopy:password];
+        }
     }];
 }
 
@@ -760,38 +774,38 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
     }
 }
 
-- (void)fetchClickedPassword:(void (^)(NSString *password))completion {
+- (void)fetchClickedPassword:(void (^)(NSString *password, NSString *otp))completion {
     DLog(@"clickedPassword");
     [self fetchPasswordForRow:[_tableView clickedRow] completion:completion];
 }
 
-- (void)fetchSelectedPassword:(void (^)(NSString *password))completion {
+- (void)fetchSelectedPassword:(void (^)(NSString *password, NSString *otp))completion {
     DLog(@"selectedPassword");
     NSInteger index = [_tableView selectedRow];
     [self fetchPasswordForRow:index completion:completion];
 }
 
-- (void)fetchPasswordForRow:(NSInteger)index completion:(void (^)(NSString *password))completion {
+- (void)fetchPasswordForRow:(NSInteger)index completion:(void (^)(NSString *password, NSString *otp))completion {
     DLog(@"row=%@", @(index));
     if (!iTermPasswordManagerDataSourceProvider.authenticated) {
         DLog(@"passwordForRow: return nil, not authenticated");
-        completion(nil);
+        completion(nil, nil);
         return;
     }
     if (index < 0) {
         DLog(@"passwordForRow: return nil, negative index");
-        completion(nil);
+        completion(nil, nil);
         return;
     }
     if (index >= _entries.count) {
         DLog(@"index too big");
-        completion(nil);
+        completion(nil, nil);
         return;
     }
 
     const NSInteger cancelCount = [self incrBusy];
     __weak __typeof(self) weakSelf = self;
-    [_entries[index] fetchPassword:^(NSString * _Nullable password, NSError * _Nullable error) {
+    [_entries[index] fetchPassword:^(NSString * _Nullable password, NSString * _Nullable otp, NSError * _Nullable error) {
         [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
             [weakSelf decrBusy];
             if (error) {
@@ -802,10 +816,10 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
                                      error.localizedDescription];
                 [alert addButtonWithTitle:@"OK"];
                 [self runModal:alert];
-                completion(nil);
+                completion(nil, nil);
             } else {
                 DLog(@"passwordForRow: return nonnil password");
-                completion(password ?: @"");
+                completion(password ?: @"", otp);
             }
         }];
     }];
@@ -1012,7 +1026,7 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
 
         __weak __typeof(self) weakSelf = self;
         const NSInteger cancelCount = [self incrBusy]; // 1
-        [entry fetchPassword:^(NSString * _Nullable maybePassword, NSError * _Nullable error) {
+        [entry fetchPassword:^(NSString * _Nullable maybePassword, NSString * _Nullable maybeOTP, NSError * _Nullable error) {
             [weakSelf ifCancelCountUnchanged:cancelCount perform:^{
                 if (error) {
                     [weakSelf decrBusy]; // (1)

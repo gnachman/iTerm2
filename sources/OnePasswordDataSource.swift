@@ -219,8 +219,8 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
         return AnyRecipe<Void, [Account]>(cache)
     }
 
-    private var getPasswordRecipe: AnyRecipe<AccountIdentifier, String> {
-        return AnyRecipe(OnePasswordDynamicCommandRecipe<AccountIdentifier, String>(dataSource: self) { accountIdentifier, token in
+    private var getPasswordRecipe: AnyRecipe<AccountIdentifier, Password> {
+        return AnyRecipe(OnePasswordDynamicCommandRecipe<AccountIdentifier, Password>(dataSource: self) { accountIdentifier, token in
             return InteractiveCommandRequest(
                 command: OnePasswordUtils.pathToCLI,
                 args: ["item", "get", "--format=json", "--no-color", accountIdentifier.value],
@@ -231,7 +231,9 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
             }
             struct Field: Codable {
                 var id: String
+                var type: String?
                 var value: String?
+                var totp: String?
             }
             struct Item: Codable {
                 var id: String
@@ -243,16 +245,25 @@ class OnePasswordDataSource: CommandLinePasswordDataSource {
             }
             let item = try JSONDecoder().decode(Item.self, from: json.data(using: .utf8)!)
 
-            let passwordField = item.fields.first { field in
-                field.id == "password"
-            }
-            guard let password = passwordField?.value else {
-                throw OPError.runtime
-            }
-            if password.hasSuffix("\r") {
-                return String(password.dropLast())
-            }
-            return password
+            let password = try {
+                let passwordField = item.fields.first { field in
+                    field.id == "password"
+                }
+                guard let password = passwordField?.value else {
+                    throw OPError.runtime
+                }
+                if password.hasSuffix("\r") {
+                    return String(password.dropLast())
+                }
+                return password
+            }()
+            let otp = {
+                let otpField = item.fields.first { field in
+                    field.type == "OTP"
+                }
+                return otpField?.totp
+            }()
+            return Password(password: password, otp: otp)
         })
     }
 

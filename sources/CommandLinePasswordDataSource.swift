@@ -22,9 +22,9 @@ class CommandLineProvidedAccount: NSObject, PasswordManagerAccount {
         return "\(accountName)\u{2002}—\u{2002}\(userName)"
     }
 
-    func fetchPassword(_ completion: @escaping (String?, Error?) -> ()) {
+    func fetchPassword(_ completion: @escaping (String?, String?, Error?) -> ()) {
         configuration.getPasswordRecipe.transformAsync(inputs: CommandLinePasswordDataSource.AccountIdentifier(value: identifier)) { result, error in
-            completion(result, error)
+            completion(result?.password, result?.otp, error)
         }
     }
 
@@ -844,9 +844,14 @@ class CommandLinePasswordDataSource: NSObject {
         let password: String
     }
 
+    struct Password {
+        var password: String
+        var otp: String?
+    }
+
     struct Configuration {
         let listAccountsRecipe: AnyRecipe<Void, [Account]>
-        let getPasswordRecipe: AnyRecipe<AccountIdentifier, String>
+        let getPasswordRecipe: AnyRecipe<AccountIdentifier, Password>
         let setPasswordRecipe: AnyRecipe<SetPasswordRequest, Void>
         let deleteRecipe: AnyRecipe<AccountIdentifier, Void>
         let addAccountRecipe: AnyRecipe<AddRequest, AccountIdentifier>

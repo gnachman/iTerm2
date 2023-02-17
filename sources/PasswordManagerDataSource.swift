@@ -13,7 +13,7 @@ protocol PasswordManagerAccount: AnyObject {
     @objc var userName: String { get }
     @objc var displayString: String { get }
 
-    @objc(fetchPassword:) func fetchPassword(_ completion: @escaping (String?, Error?) -> ())
+    @objc(fetchPassword:) func fetchPassword(_ completion: @escaping (String?, String?, Error?) -> ())
     @objc(setPassword:completion:) func set(password: String,
                                             completion: @escaping (Error?)-> ())
     @objc(delete:) func delete(_ completion: @escaping (Error?) -> ())
