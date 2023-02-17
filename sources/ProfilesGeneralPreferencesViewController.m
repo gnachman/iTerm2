@@ -846,6 +846,11 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 - (void)populateBookmarkUrlSchemesFromProfile:(Profile*)profile {
     if ([[[_urlSchemes menu] itemArray] count] == 0) {
         NSArray* urlArray = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleURLTypes"];
+        urlArray = [urlArray sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *obj1, NSDictionary *obj2) {
+            NSString *lhs = obj1[@"CFBundleURLSchemes"][0];
+            NSString *rhs = obj2[@"CFBundleURLSchemes"][0];
+            return [lhs compare:rhs];
+        }];
         [_urlSchemes addItemWithTitle:@"Select URL Schemes…"];
         for (NSDictionary *dict in urlArray) {
             NSString *scheme = dict[@"CFBundleURLSchemes"][0];

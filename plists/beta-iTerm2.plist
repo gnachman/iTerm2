@@ -289,6 +289,22 @@
                 </dict>
                 <dict>
                         <key>CFBundleURLName</key>
+                        <string>Gemini URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>gemini</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
+                        <string>Titan URL</string>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>titan</string>
+                        </array>
+                </dict>
+                <dict>
+                        <key>CFBundleURLName</key>
                         <string>whois URL</string>
                         <key>CFBundleURLSchemes</key>
                         <array>
