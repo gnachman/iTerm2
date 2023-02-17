@@ -164,7 +164,8 @@ class CommandLinePasswordDataSource: NSObject {
         var callbacks: Callbacks? = nil
         var useTTY = false
         var executionQueue = DispatchQueue.global()
-        static let ioQueue = DispatchQueue(label: "com.iterm2.pwcmd-io")
+        // This queue will block on the main queue, so it has to have the same priority.
+        static let ioQueue = DispatchQueue(label: "com.iterm2.pwcmd-io", qos: .userInitiated)
 
         struct Callbacks {
             var callbackQueue: DispatchQueue
