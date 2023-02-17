@@ -10010,6 +10010,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
          (unsigned long)eventType, (unsigned long)modifiers, button,
          VT100GridCoordDescription(coord), @(testOnly), @(_screen.terminalMouseMode),
          @(allowDragBeforeMouseDown));
+    // Ignore unknown buttons.
+    if (button == MOUSE_BUTTON_UNKNOWN) {
+        return NO;
+    }
 
     switch (eventType) {
         case NSEventTypeLeftMouseDown:
