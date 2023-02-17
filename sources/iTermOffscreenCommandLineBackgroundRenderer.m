@@ -53,8 +53,7 @@ static const int iTermOffscreenCommandLineBackgroundRendererNumQuads = 3;
 }
 
 - (iTermMetalFrameDataStat)createTransientStateStat {
-#warning DNS
-    return iTermMetalFrameDataStatPqCreateBadgeTS;
+    return iTermMetalFrameDataStatPqCreateOffscreenCommandLineTS;
 }
 
 - (id<MTLBuffer>)colorsBufferWithColors:(vector_float4 *)colorsPtr

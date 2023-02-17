@@ -3033,7 +3033,11 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     if (!self.offscreenCommandLine) {
         return nil;
     }
-    return [[self defaultBackgroundColor] it_colorByDimmingByAmount:0.7];
+    if ([[self defaultBackgroundColor] isDark]) {
+        return [[self defaultBackgroundColor] it_colorByDimmingByAmount:0.7];
+    } else {
+        return [[self defaultBackgroundColor] it_colorByDimmingByAmount:0.1];
+    }
 }
 
 - (NSColor *)offscreenCommandLineOutlineColor {

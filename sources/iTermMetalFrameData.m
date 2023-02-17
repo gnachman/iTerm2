@@ -56,6 +56,7 @@ void iTermMetalFrameDataStatsBundleInitialize(iTermPreciseTimerStats *bundle) {
         "copyBackground<<<<",
         "mark<<<<",
         "cursor<<<<",
+        "offscreen<<<<",
         "margin<<<<",
         "text<<<<",
         "indicators<<<<",
