@@ -186,6 +186,40 @@
     [[self delegate] splitView:self
          draggingDidEndOfSplit:clickedOnSplitterIndex
                         pixels:changePx];
+
+    if (theEvent.clickCount == 2 && self.subviews.count > clickedOnSplitterIndex + 1) {
+        [self equalizeViewsAdjacentToSplitter:clickedOnSplitterIndex];
+    }
+}
+
+- (void)equalizeViewsAdjacentToSplitter:(NSInteger)i {
+    NSView *first = self.subviews[i];
+    NSView *second = self.subviews[i + 1];
+    CGFloat combined;
+
+    if (self.isVertical) {
+        combined = first.frame.size.width + second.frame.size.width;
+    } else {
+        combined = second.frame.size.height + second.frame.size.height;
+    }
+    const CGFloat newFirst = round(combined / 2.0);
+    const CGFloat newSecond = combined - newFirst;
+
+    NSRect firstRect = first.frame;
+    NSRect secondRect = second.frame;
+
+    if (self.isVertical) {
+        firstRect.size.width = newFirst;
+        secondRect.origin.x = NSMaxX(firstRect) + self.dividerThickness;
+        secondRect.size.width = newSecond;
+    } else {
+        firstRect.size.height = newFirst;
+        secondRect.origin.y = NSMaxY(firstRect) + self.dividerThickness;
+        secondRect.size.height = newSecond;
+    }
+
+    first.frame = firstRect;
+    second.frame = secondRect;
 }
 
 - (void)didAddSubview:(NSView *)subview {
