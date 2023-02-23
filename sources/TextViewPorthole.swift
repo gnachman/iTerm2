@@ -10,7 +10,7 @@ import Foundation
 
 @objc
 class TextViewPorthole: NSObject {
-    let config: PortholeConfig
+    var config: PortholeConfig
     let textView: ExclusiveSelectionTextView
     let textStorage = NSTextStorage()
     private let layoutManager = TextPortholeLayoutManager()
@@ -69,6 +69,19 @@ class TextViewPorthole: NSObject {
         }
     }
 
+    private static func selectedTextAttributes(config: PortholeConfig) -> [NSAttributedString.Key: Any]? {
+        guard let selectionTextColor = config.colorMap.color(forKey: kColorMapSelectedText),
+              let selectionBackgroundColor = config.colorMap.color(forKey: kColorMapSelection) else {
+            return nil
+        }
+        var selectedTextAttributes: [NSAttributedString.Key : Any] = [.backgroundColor: selectionBackgroundColor]
+
+        if config.useSelectedTextColor {
+            selectedTextAttributes[.foregroundColor] = selectionTextColor
+        }
+        return selectedTextAttributes
+    }
+
     init(_ config: PortholeConfig,
          renderer: TextViewPortholeRenderer,
          uuid: String? = nil,
@@ -115,10 +128,8 @@ class TextViewPorthole: NSObject {
         textView.isEditable = false
         textView.isSelectable = true
         textView.drawsBackground = false
-        if let selectionTextColor = config.colorMap.color(forKey: kColorMapSelectedText),
-           let selectionBackgroundColor = config.colorMap.color(forKey: kColorMapSelection) {
-            textView.selectedTextAttributes = [.foregroundColor: selectionTextColor,
-                                               .backgroundColor: selectionBackgroundColor]
+        if let selectedTextAttributes = Self.selectedTextAttributes(config: config) {
+            textView.selectedTextAttributes = selectedTextAttributes
         }
         textContainer.widthTracksTextView = true
         textContainer.heightTracksTextView = true
@@ -368,6 +379,7 @@ extension TextViewPorthole: Porthole {
 
     static func config(fromDictionary dict: [String: AnyObject],
                        colorMap: iTermColorMapReading,
+                       useSelectedTextColor: Bool,
                        font: NSFont) -> (config: PortholeConfig,
                                          uuid: String,
                                          savedLines: [ScreenCharArray],
@@ -396,7 +408,8 @@ extension TextViewPorthole: Porthole {
                                        baseDirectory: baseDirectory,
                                        font: font,
                                        type: type,
-                                       filename: filename),
+                                       filename: filename,
+                                       useSelectedTextColor: useSelectedTextColor),
                 uuid: uuid,
                 savedLines: savedLines.compactMap { ScreenCharArray(dictionary: $0) },
                 language: dict[Self.languageKey] as? String,
@@ -479,7 +492,8 @@ extension TextViewPorthole: NSTextViewDelegate {
         return true
     }
 
-    func updateColors() {
+    func updateColors(useSelectedTextColor: Bool) {
+        config.useSelectedTextColor = useSelectedTextColor
         let visualAttributes = VisualAttributes(colorMap: config.colorMap,
                                                 font: config.font)
         guard visualAttributes != savedVisualAttributes else {
@@ -489,6 +503,9 @@ extension TextViewPorthole: NSTextViewDelegate {
         containerView.color = visualAttributes.textColor
         containerView.backgroundColor = visualAttributes.backgroundColor
         textView.textStorage?.setAttributedString(renderer.render(visualAttributes: visualAttributes))
+        if let selectedTextAttributes = Self.selectedTextAttributes(config: config) {
+            textView.selectedTextAttributes = selectedTextAttributes
+        }
         updateAppearance()
         updateLanguage()
     }

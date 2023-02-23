@@ -102,7 +102,8 @@ extension PTYTextView: ExternalSearchResultsController {
                                     baseDirectory: baseDirectory,
                                     font: font,
                                     type: type,
-                                    filename: filename)
+                                    filename: filename,
+                                    useSelectedTextColor: delegate?.textViewShouldUseSelectedTextColor() ?? true)
         let porthole = makePorthole(for: config)
         replace(range: absRange, withPorthole: porthole)
     }
@@ -159,6 +160,7 @@ extension PTYTextView: ExternalSearchResultsController {
         DLog("hydratePorthole(\(mark))")
         guard let porthole = PortholeRegistry.instance.get(mark.uniqueIdentifier,
                                                            colorMap: colorMap,
+                                                           useSelectedTextColor: delegate?.textViewShouldUseSelectedTextColor() ?? true,
                                                            font: font) as? Porthole else {
             return nil
         }
@@ -310,10 +312,10 @@ extension PTYTextView: ExternalSearchResultsController {
     }
 
     @objc
-    func updatePortholeColors() {
-        DLog("updatePortholeColors")
+    func updatePortholeColors(useSelectedTextColor: Bool) {
+        DLog("updatePortholeColors(useSelectedTextColor: \(useSelectedTextColor))")
         for porthole in typedPortholes {
-            porthole.updateColors()
+            porthole.updateColors(useSelectedTextColor: useSelectedTextColor)
         }
     }
 

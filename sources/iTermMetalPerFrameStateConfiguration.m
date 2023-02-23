@@ -50,6 +50,7 @@ static vector_float4 VectorForColor(NSColor *color) {
     _asciiAntialias = drawingHelper.asciiAntiAlias || forceAA;
     _nonasciiAntialias = (_useNonAsciiFont ? drawingHelper.nonAsciiAntiAlias : _asciiAntialias)  || forceAA;
     _useNativePowerlineGlyphs = drawingHelper.useNativePowerlineGlyphs;
+    _useSelectedTextColor = drawingHelper.useSelectedTextColor;
     _showBroadcastStripes = drawingHelper.showStripes;
     _processedDefaultBackgroundColor = [[drawingHelper defaultBackgroundColor] colorUsingColorSpace:textView.window.screen.colorSpace ?: [NSColorSpace it_defaultColorSpace]];
     _isFrontTextView = (textView == [[iTermController sharedInstance] frontTextView]);

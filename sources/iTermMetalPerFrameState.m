@@ -1340,7 +1340,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
         rawColor = VectorForColor([_configuration->_colorMap colorForKey:kColorMapLink],
                                   _configuration->_colorSpace);
         caches->havePreviousCharacterAttributes = NO;
-    } else if (selected) {
+    } else if (selected && _configuration->_useSelectedTextColor) {
         // Selected text.
         rawColor = VectorForColor([colorMap colorForKey:kColorMapSelectedText],
                                   _configuration->_colorSpace);

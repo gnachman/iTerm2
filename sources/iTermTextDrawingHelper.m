@@ -2161,7 +2161,7 @@ NSColor *iTermTextDrawingHelperGetTextColor(iTermTextDrawingHelper *self,
         rawColor = [context->colorMap colorForKey:kColorMapLink];
         assert(rawColor);
         context->havePreviousCharacterAttributes = NO;
-    } else if (context->hasSelectedText) {
+    } else if (context->hasSelectedText && self.useSelectedTextColor) {
         // Selected text.
         rawColor = [context->colorMap colorForKey:kColorMapSelectedText];
         assert(rawColor);

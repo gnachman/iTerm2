@@ -221,6 +221,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_USE_TAB_COLOR COLORS_DARK_MODE_SUFFIX,
                              KEY_USE_TAB_COLOR,
 
+                             KEY_USE_SELECTED_TEXT_COLOR,
+
                              KEY_USE_UNDERLINE_COLOR COLORS_LIGHT_MODE_SUFFIX,
                              KEY_USE_UNDERLINE_COLOR COLORS_DARK_MODE_SUFFIX,
                              KEY_USE_UNDERLINE_COLOR,
@@ -460,6 +462,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_USE_TAB_COLOR: @NO,
                   KEY_USE_TAB_COLOR COLORS_LIGHT_MODE_SUFFIX: @NO,
                   KEY_USE_TAB_COLOR COLORS_DARK_MODE_SUFFIX: @NO,
+
+                  KEY_USE_SELECTED_TEXT_COLOR: @YES,
 
                   KEY_UNDERLINE_COLOR: [NSNull null],
                   KEY_UNDERLINE_COLOR COLORS_LIGHT_MODE_SUFFIX: [NSNull null],

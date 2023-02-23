@@ -1454,6 +1454,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _drawingHelper.shouldShowTimestamps = self.showTimestamps;
     _drawingHelper.colorMap = _colorMap;
     _drawingHelper.softAlternateScreenMode = self.dataSource.terminalSoftAlternateScreenMode;
+    _drawingHelper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
+
     const VT100GridRange range = [self rangeOfVisibleLines];
     if ([_delegate textViewShouldShowOffscreenCommandLine]) {
         _drawingHelper.offscreenCommandLine = [self.dataSource offscreenCommandLineBefore:range.location];
@@ -4625,7 +4627,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _drawingHelper.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
                                                                               towardsGrayLevel:0.5];
     }
-    [self updatePortholeColors];
+    [self updatePortholeColorsWithUseSelectedTextColor:[_delegate textViewShouldUseSelectedTextColor]];
     [self setNeedsDisplay:YES];
 }
 

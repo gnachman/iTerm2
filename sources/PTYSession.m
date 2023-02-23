@@ -4180,7 +4180,14 @@ ITERM_WEAKLY_REFERENCEABLE
         }
     }] mutableCopy] autorelease];
     [self load16ANSIColorsFromProfile:aDict darkMode:dark into:colorTable];
+    const BOOL didUseSelectedTextColor = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_USE_SELECTED_TEXT_COLOR, self.profile, dark) inProfile:self.profile];
+    const BOOL willUseSelectedTextColor = [iTermProfilePreferences boolForKey:iTermAmendedColorKey(KEY_USE_SELECTED_TEXT_COLOR, aDict, dark) inProfile:aDict];
+
     [_screen setColorsFromDictionary:colorTable];
+
+    if (didUseSelectedTextColor != willUseSelectedTextColor) {
+        [_textview updatePortholeColorsWithUseSelectedTextColor:willUseSelectedTextColor];
+    }
     self.cursorGuideColor = [[iTermProfilePreferences objectForKey:iTermAmendedColorKey(KEY_CURSOR_GUIDE_COLOR, aDict, dark)
                                                          inProfile:aDict] colorValueForKey:iTermAmendedColorKey(KEY_CURSOR_GUIDE_COLOR, aDict, dark)];
     if (!_cursorGuideSettingHasChanged) {
@@ -14677,6 +14684,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (BOOL)textViewShouldShowOffscreenCommandLine {
     return [iTermProfilePreferences boolForKey:KEY_SHOW_OFFSCREEN_COMMANDLINE inProfile:self.profile];
+}
+
+- (BOOL)textViewShouldUseSelectedTextColor {
+    const BOOL dark = self.view.effectiveAppearance.it_isDark;
+    NSString *key = iTermAmendedColorKey(KEY_USE_SELECTED_TEXT_COLOR, self.profile, dark);
+    return [iTermProfilePreferences boolForKey:key inProfile:self.profile];
 }
 
 - (void)handleAIChoices:(NSArray<NSString *> *)choices error:(NSString *)error {

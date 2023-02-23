@@ -265,6 +265,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 @property (nonatomic, readonly) NSRect offscreenCommandLineFrame;
 @property (nonatomic, readonly) NSColor *offscreenCommandLineBackgroundColor;
 @property (nonatomic, readonly) NSColor *offscreenCommandLineOutlineColor;
+@property (nonatomic) BOOL useSelectedTextColor;
 
 + (NSRect)offscreenCommandLineFrameForVisibleRect:(NSRect)visibleRect
                                          cellSize:(NSSize)cellSize

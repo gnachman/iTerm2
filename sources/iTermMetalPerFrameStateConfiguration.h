@@ -54,6 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
     BOOL _useCustomBoldColor;
     BOOL _brightenBold;
     BOOL _useNativePowerlineGlyphs;
+    BOOL _useSelectedTextColor;
 
     // Focus
     BOOL _isFrontTextView;

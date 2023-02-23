@@ -116,6 +116,7 @@
 #define KEY_MINIMUM_CONTRAST       @"Minimum Contrast"
 #define KEY_TAB_COLOR              @"Tab Color"
 #define KEY_USE_TAB_COLOR          @"Use Tab Color"
+#define KEY_USE_SELECTED_TEXT_COLOR @"Use Selected Text Color"
 #define KEY_UNDERLINE_COLOR        @"Underline Color"
 #define KEY_USE_UNDERLINE_COLOR    @"Use Underline Color"
 #define KEY_CURSOR_BOOST           @"Cursor Boost"

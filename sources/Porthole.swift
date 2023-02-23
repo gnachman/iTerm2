@@ -72,9 +72,10 @@ struct PortholeConfig: CustomDebugStringConvertible {
     var font: NSFont
     var type: String?
     var filename: String?
+    var useSelectedTextColor: Bool
 
     var debugDescription: String {
-        "PortholeConfig(text=\(text) baseDirectory=\(String(describing: baseDirectory)) font=\(font) type=\(String(describing: type)) filename=\(String(describing: filename))"
+        "PortholeConfig(text=\(text) baseDirectory=\(String(describing: baseDirectory)) font=\(font) type=\(String(describing: type)) filename=\(String(describing: filename)) useSelectedTextColor=\(useSelectedTextColor)"
     }
 }
 
@@ -93,7 +94,7 @@ protocol ObjCPorthole: AnyObject {
     @objc var dictionaryValue: [String: AnyObject] { get }
     @objc func desiredHeight(forWidth width: CGFloat) -> CGFloat  // includes top and bottom margin
     @objc func removeSelection()
-    @objc func updateColors()
+    @objc func updateColors(useSelectedTextColor: Bool)
     @objc var savedLines: [ScreenCharArray] { get set }
     // Inset the view by this amount top and bottom.
     @objc var outerMargin: CGFloat { get }
@@ -184,7 +185,7 @@ class PortholeRegistry: NSObject {
         }
     }
 
-    func get(_ key: String, colorMap: iTermColorMapReading, font: NSFont) -> ObjCPorthole? {
+    func get(_ key: String, colorMap: iTermColorMapReading, useSelectedTextColor: Bool, font: NSFont) -> ObjCPorthole? {
         mutex.sync {
             if let porthole = portholes[key] {
                 return porthole
@@ -196,6 +197,7 @@ class PortholeRegistry: NSObject {
             DLog("hydrating \(key)")
             guard let porthole = PortholeFactory.porthole(dict,
                                                           colorMap: colorMap,
+                                                          useSelectedTextColor: useSelectedTextColor,
                                                           font: font) else {
                 return nil
             }

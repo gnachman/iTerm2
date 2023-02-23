@@ -26,6 +26,7 @@ class PortholeFactory: NSObject {
     @objc
     static func porthole(_ dictionary: [String: AnyObject],
                          colorMap: iTermColorMapReading,
+                         useSelectedTextColor: Bool,
                          font: NSFont) -> ObjCPorthole? {
         guard let (type, info) = PortholeType.unwrap(dictionary: dictionary) else {
             return nil
@@ -35,6 +36,7 @@ class PortholeFactory: NSObject {
             guard let (config, uuid, savedLines, language, languages, wideMode) = TextViewPorthole.config(
                 fromDictionary: info,
                 colorMap: colorMap,
+                useSelectedTextColor: useSelectedTextColor,
                 font: font) else {
                 return nil
             }
