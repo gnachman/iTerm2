@@ -650,6 +650,51 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
     });
 }
 
+- (int)runtimeVersionFromFilename:(NSString *)filename {
+    NSString *name = [[filename lastPathComponent] stringByDeletingPathExtension];
+    NSScanner *scanner = [[NSScanner alloc] initWithString:name];
+    if (![scanner scanString:@"iterm2env-" intoString:nil]) {
+        return -1;
+    }
+    int version = -1;
+    if (![scanner scanInt:&version]) {
+        return -1;
+    }
+    return version;
+}
+
+- (void)installPythonEnvironmentFromZip:(NSString *)zip completion:(void (^)(NSError *))completion {
+    DLog(@"zip=%@", zip);
+    const int runtimeVersion = [self runtimeVersionFromFilename:zip];
+    if (runtimeVersion < 0) {
+        completion([NSError errorWithDomain:@"com.googlecode.iterm2"
+                                       code:-1
+                                   userInfo:@{ NSLocalizedDescriptionKey: @"Invalid filename. Expected `iterm2env-<version>.zip`."}]);
+        return;
+    }
+    [self installPythonEnvironmentFromZip:zip
+                           runtimeVersion:runtimeVersion
+                           pythonVersions:nil
+                               completion:completion];
+
+}
+
+- (NSArray<NSString *> *)discoveredPythonVersionsAt:(NSString *)base {
+    NSURL *url = [NSURL fileURLWithPath:[base stringByAppendingPathComponents:@[ @"iterm2env", @"versions" ]]];
+    NSDirectoryEnumerator *enumerator = [NSFileManager.defaultManager enumeratorAtURL:url
+                                                           includingPropertiesForKeys:nil
+                                                                              options:NSDirectoryEnumerationSkipsSubdirectoryDescendants
+                                                                         errorHandler:nil];
+    NSMutableArray<NSString *> *result = [NSMutableArray array];
+    for (NSURL *url in enumerator) {
+        if (![[NSFileManager defaultManager] itemIsDirectory:url.path]) {
+            continue;
+        }
+        [result addObject:url.lastPathComponent];
+    }
+    return result;
+}
+
 - (void)installPythonEnvironmentFromZip:(NSString *)zip
                          runtimeVersion:(int)runtimeVersion
                          pythonVersions:(NSArray<NSString *> *)pythonVersions
@@ -669,7 +714,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
             [self performSubstitutions:subs inFilesUnderFolder:tempDestination];
             DLog(@"finish installing");
             [self finishInstallingRuntimeVersion:runtimeVersion
-                                  pythonVersions:pythonVersions
+                                  pythonVersions:pythonVersions ?: [self discoveredPythonVersionsAt:tempDestination.path]
                                  tempDestination:tempDestination
                                 finalDestination:finalDestination
                                       completion:completion];

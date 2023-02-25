@@ -99,4 +99,6 @@ typedef NS_ENUM(NSUInteger, iTermInstallPythonStatus) {
 // if something goes wrong.
 - (int)versionInMetadataAtURL:(NSURL *)metadataURL;
 
+- (void)installPythonEnvironmentFromZip:(NSString *)zip completion:(void (^)(NSError *))completion;
+
 @end

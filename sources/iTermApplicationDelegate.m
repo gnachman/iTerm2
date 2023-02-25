@@ -2164,6 +2164,37 @@ void TurnOnDebugLoggingAutomatically(void) {
      }];
 }
 
+- (IBAction)installAlreadyDownloadedPythonRuntime:(id)sender {
+    __weak NSOpenPanel *panel = [[NSOpenPanel alloc] init];
+    panel.canChooseFiles = YES;
+    panel.canChooseDirectories = NO;
+    panel.allowsMultipleSelection = NO;
+    [panel beginWithCompletionHandler:^(NSModalResponse result) {
+        if (panel.URL != nil && result == NSModalResponseOK) {
+            [[iTermPythonRuntimeDownloader sharedInstance] installPythonEnvironmentFromZip:panel.URL.path
+                                                                                completion:^(NSError *error) {
+                if (!error) {
+                    [iTermWarning showWarningWithTitle:@"Installed successfully!"
+                                               actions:@[ @"OK" ]
+                                             accessory:nil
+                                            identifier:nil
+                                           silenceable:kiTermWarningTypePersistent
+                                               heading:@"Python Runtime"
+                                                window:nil];
+                } else {
+                    [iTermWarning showWarningWithTitle:error.localizedDescription ?: @"Unknown error"
+                                               actions:@[ @"OK" ]
+                                             accessory:nil
+                                            identifier:nil
+                                           silenceable:kiTermWarningTypePersistent
+                                               heading:@"Error Installing Python Runtime"
+                                                window:nil];
+                }
+            }];
+        }
+    }];
+}
+
 - (IBAction)buildScriptMenu:(id)sender {
     [iTermScriptConsole sharedInstance];
     [self.scriptsMenuController build];

@@ -1180,6 +1180,12 @@ DQ
                                                 <action selector="installPythonRuntime:" target="201" id="uxc-3n-hZc"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Install Already-Downloaded Python Runtime" alternate="YES" identifier="Install Python Runtime" id="t3w-Wj-vG8">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES"/>
+                                            <connections>
+                                                <action selector="installAlreadyDownloadedPythonRuntime:" target="201" id="3fX-lc-mur"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem title="Reveal Scripts in Finder" identifier="Reveal in Finder" id="eeH-ly-45H">
                                             <modifierMask key="keyEquivalentModifierMask"/>
                                             <connections>
