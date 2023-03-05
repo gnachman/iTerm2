@@ -2497,7 +2497,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
             return NO;
         }
     }
-    if (!ScreenCharacterAttributesEqual(c, pc)) {
+    if (!ScreenCharacterAttributesEqual(*c, *pc)) {
         return NO;
     }
 
