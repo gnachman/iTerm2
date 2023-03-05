@@ -8,6 +8,13 @@
 
 #import <Foundation/Foundation.h>
 
+// The "explicit" property angers c++.
+#if defined(__cplusplus)
+@class iTermTemporaryDoubleBufferedGridController;
+@protocol iTermTemporaryDoubleBufferedGridControllerDelegate;
+@protocol iTermTemporaryDoubleBufferedGridControllerReading;
+#else  // __cplusplus
+
 #import "VT100GridTypes.h"
 #import "PTYTextViewDataSource.h"
 
@@ -65,3 +72,5 @@
 - (void)resetExplicitly;
 
 @end
+
+#endif  // __cplusplus
