@@ -763,13 +763,6 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         int last_line_length = [block getRawLineLength: ([block numEntries]-1)];
         const screen_char_t *lastRawLine = [block rawLine: ([block numEntries]-1)];
         int num_overflow_lines = [block numberOfFullLinesFromBuffer:lastRawLine length:last_line_length width:width];
-#if BETA
-        const int legacy_num_overflow_lines = iTermLineBlockNumberOfFullLinesImpl(lastRawLine,
-                                                                                  last_line_length,
-                                                                                  width,
-                                                                                  _mayHaveDoubleWidthCharacter);
-        assert(num_overflow_lines == legacy_num_overflow_lines);
-#endif
 
         int min_x = OffsetOfWrappedLine(lastRawLine,
                                         num_overflow_lines,
