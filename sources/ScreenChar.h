@@ -424,9 +424,6 @@ NSString* CharToStr(unichar code, BOOL isComplex);
 // unichars. Returns the number of code points appended to dest.
 int ExpandScreenChar(const screen_char_t *sct, unichar* dest);
 
-// Convert a code into a utf-32 char.
-UTF32Char CharToLongChar(unichar code, BOOL isComplex);
-
 // Add a code point to the end of an existing complex char. A replacement key is
 // returned.
 int AppendToComplexChar(int key, unichar codePoint);

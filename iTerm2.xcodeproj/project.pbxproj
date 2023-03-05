@@ -987,6 +987,8 @@
 		A6038321294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict in Resources */ = {isa = PBXBuildFile; fileRef = A603831F294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict */; };
 		A6038322294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict in Resources */ = {isa = PBXBuildFile; fileRef = A603831F294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict */; };
 		A6038323294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict in Resources */ = {isa = PBXBuildFile; fileRef = A603831F294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict */; };
+		A603A96829B12CEA000E9E98 /* SearchTests.m in Sources */ = {isa = PBXBuildFile; fileRef = A603A96729B12CEA000E9E98 /* SearchTests.m */; };
+		A603A96A29B12D93000E9E98 /* zalgo_for_unit_test.txt in Resources */ = {isa = PBXBuildFile; fileRef = A603A96929B12D92000E9E98 /* zalgo_for_unit_test.txt */; };
 		A603E9FB283EE53C0028B648 /* SecretServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A603E9FA283EE53C0028B648 /* SecretServer.swift */; };
 		A603E9FE283EE9BD0028B648 /* ObjCExceptions.h in Headers */ = {isa = PBXBuildFile; fileRef = A603E9FC283EE9BD0028B648 /* ObjCExceptions.h */; };
 		A603E9FF283EE9BD0028B648 /* ObjCExceptions.m in Sources */ = {isa = PBXBuildFile; fileRef = A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */; };
@@ -1301,6 +1303,8 @@
 		A62A1F771E711BC000363EE9 /* iTermHelpMessageViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A62A1F741E711BC000363EE9 /* iTermHelpMessageViewController.m */; };
 		A62A1F781E711DCF00363EE9 /* iTermHelpMessageViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A62A1F751E711BC000363EE9 /* iTermHelpMessageViewController.xib */; };
 		A62A1F791E711DD000363EE9 /* iTermHelpMessageViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A62A1F751E711BC000363EE9 /* iTermHelpMessageViewController.xib */; };
+		A62B04A529B428B60077B955 /* Highlightr.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */; };
+		A62B04A629B428D30077B955 /* Highlightr.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = A6A3D18A2815EF4D00C0C9E0 /* Highlightr.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A62C3A891BCAE03300B5629D /* iTermDirectoryTreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3A871BCAE03300B5629D /* iTermDirectoryTreeNode.h */; };
 		A62C3A8A1BCAE03300B5629D /* iTermDirectoryTreeNode.m in Sources */ = {isa = PBXBuildFile; fileRef = A62C3A881BCAE03300B5629D /* iTermDirectoryTreeNode.m */; };
 		A62C3A8D1BCAE08300B5629D /* iTermDirectoryTree.h in Headers */ = {isa = PBXBuildFile; fileRef = A62C3A8B1BCAE08300B5629D /* iTermDirectoryTree.h */; };
@@ -4177,6 +4181,13 @@
 			remoteGlobalIDString = A66717851DCE36C3000CE608;
 			remoteInfo = iTerm2SharedARC;
 		};
+		A62B04A729B429A70077B955 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 874206460564169600CFC3F1;
+			remoteInfo = iTerm2;
+		};
 		A63EB031284D1A1F00B2AB89 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
@@ -4268,13 +4279,6 @@
 			remoteGlobalIDString = A6C7603F1B45C4CF00E3C992;
 			remoteInfo = iTerm2Shared;
 		};
-		A6C764221B45CB2800E3C992 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 874206460564169600CFC3F1;
-			remoteInfo = iTerm2;
-		};
 		A6E1524E27614A2D00D0F41C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0464AB0C006CD2EC7F000001 /* Project object */;
@@ -4307,6 +4311,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				A62B04A629B428D30077B955 /* Highlightr.framework in CopyFiles */,
 				A63EB040284D1AA300B2AB89 /* FileProviderService.framework in CopyFiles */,
 				A6E180E623D2E182003C4EB1 /* CoreParse.framework in CopyFiles */,
 				A6184F8D1BAB3EFB0088EF3C /* ColorPicker.framework in CopyFiles */,
@@ -5319,6 +5324,8 @@
 		A60383162943AF1500FE11C2 /* iTerm2SandboxedWorker-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "iTerm2SandboxedWorker-Bridging-Header.h"; sourceTree = "<group>"; };
 		A60383172943AF1800FE11C2 /* iTerm2SandboxedWorkerShims.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTerm2SandboxedWorkerShims.swift; sourceTree = "<group>"; };
 		A603831F294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict */ = {isa = PBXFileReference; lastKnownFileType = text.plist; name = iTermCopyModeKeyBindings.dict; path = OtherResources/iTermCopyModeKeyBindings.dict; sourceTree = SOURCE_ROOT; };
+		A603A96729B12CEA000E9E98 /* SearchTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SearchTests.m; sourceTree = "<group>"; };
+		A603A96929B12D92000E9E98 /* zalgo_for_unit_test.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = zalgo_for_unit_test.txt; sourceTree = "<group>"; };
 		A603E9FA283EE53C0028B648 /* SecretServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecretServer.swift; sourceTree = "<group>"; };
 		A603E9FC283EE9BD0028B648 /* ObjCExceptions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjCExceptions.h; sourceTree = "<group>"; };
 		A603E9FD283EE9BD0028B648 /* ObjCExceptions.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjCExceptions.m; sourceTree = "<group>"; };
@@ -7411,6 +7418,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A62B04A529B428B60077B955 /* Highlightr.framework in Frameworks */,
 				A63EB03F284D1A9C00B2AB89 /* FileProviderService.framework in Frameworks */,
 				A67D19502237045C00BD0D4D /* libsixel.a in Frameworks */,
 				A66719691DCE3965000CE608 /* libiTerm2SharedARC.a in Frameworks */,
@@ -11041,6 +11049,7 @@
 		A6C7641D1B45CB2800E3C992 /* iTerm2XCTests */ = {
 			isa = PBXGroup;
 			children = (
+				A603A96929B12D92000E9E98 /* zalgo_for_unit_test.txt */,
 				A6C7641E1B45CB2800E3C992 /* Supporting Files */,
 				C6675EB91C4FE95E0041173B /* Utilities */,
 				A6BC9B20214A395A00F50C09 /* iTermVariablesTest.m */,
@@ -11080,6 +11089,7 @@
 				A6024B8A254DDFEE0036D6CF /* iTermNSColorCategoryTests.m */,
 				A60F6FEA270B7F1D0017A003 /* iTermModifyOtherKeys1Test.m */,
 				A6E152482761390200D0F41C /* LineBufferTests.swift */,
+				A603A96729B12CEA000E9E98 /* SearchTests.m */,
 			);
 			path = iTerm2XCTests;
 			sourceTree = "<group>";
@@ -12895,6 +12905,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				A62B04A829B429A70077B955 /* PBXTargetDependency */,
 				A63EB042284D1AA600B2AB89 /* PBXTargetDependency */,
 				A6C763D51B45C5BE00E3C992 /* PBXTargetDependency */,
 				1D6EDB0D19AEA276005A7799 /* PBXTargetDependency */,
@@ -13115,7 +13126,6 @@
 			);
 			dependencies = (
 				A6E1524F27614A2D00D0F41C /* PBXTargetDependency */,
-				A6C764231B45CB2800E3C992 /* PBXTargetDependency */,
 			);
 			name = iTerm2XCTests;
 			productName = iTerm2XCTests;
@@ -14761,6 +14771,7 @@
 				A6E15195275DFCB400D0F41C /* PTYTextViewTest-golden-travis-testSurrogatePair.png in Resources */,
 				A6E151DB275DFCB400D0F41C /* PTYTextViewTest-golden-nonretina-testUnderlineCursor.png in Resources */,
 				A6E151BE275DFCB400D0F41C /* PTYTextViewTest-golden-testSmartCursorColor_reverseVideoNondefaultBackgroundOnlyUnderCursor.png in Resources */,
+				A603A96A29B12D93000E9E98 /* zalgo_for_unit_test.txt in Resources */,
 				A6BDB0B31B45FD8300F511E6 /* TestBackground.png in Resources */,
 				A6E15212275DFCB400D0F41C /* PTYTextViewTest-golden-nonretina-testBadge.png in Resources */,
 				A6E15159275DFCB400D0F41C /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_allWhite.png in Resources */,
@@ -16109,6 +16120,7 @@
 				533292A6237E75360027EB49 /* iTermPythonArgumentParserTests.m in Sources */,
 				A608CCFD214DE7C1007A7B87 /* iTermSemanticHistoryTest.m in Sources */,
 				A608CD03214DE7C1007A7B87 /* VT100GridTest.m in Sources */,
+				A603A96829B12CEA000E9E98 /* SearchTests.m in Sources */,
 				A608CD08214DE7C1007A7B87 /* iTermTextExtractorTest.m in Sources */,
 				A608CD0D214DE7C1007A7B87 /* iTermFunctionCallSuggesterTest.m in Sources */,
 				A6F22AC22396374500C5D1A9 /* iTermSyntheticConfParserTests.m in Sources */,
@@ -16181,6 +16193,11 @@
 			target = A66717851DCE36C3000CE608 /* iTerm2SharedARC */;
 			targetProxy = A60D02352683D95A00E19362 /* PBXContainerItemProxy */;
 		};
+		A62B04A829B429A70077B955 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 874206460564169600CFC3F1 /* iTerm2 */;
+			targetProxy = A62B04A729B429A70077B955 /* PBXContainerItemProxy */;
+		};
 		A63EB032284D1A1F00B2AB89 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = A63EB02C284D1A1F00B2AB89 /* FileProviderService */;
@@ -16245,11 +16262,6 @@
 			isa = PBXTargetDependency;
 			target = A6C7603F1B45C4CF00E3C992 /* iTerm2Shared */;
 			targetProxy = A6C763D61B45C5C500E3C992 /* PBXContainerItemProxy */;
-		};
-		A6C764231B45CB2800E3C992 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 874206460564169600CFC3F1 /* iTerm2 */;
-			targetProxy = A6C764221B45CB2800E3C992 /* PBXContainerItemProxy */;
 		};
 		A6E1524F27614A2D00D0F41C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

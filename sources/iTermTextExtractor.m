@@ -843,6 +843,9 @@ const NSInteger kLongMaximumWordLength = 100000;
 
 - (iTermTextExtractorClass)classForCharacter:(screen_char_t)theCharacter
                     definitionOfAlphanumeric:(iTermAlphaNumericDefinition)definition {
+    if (theCharacter.image) {
+        return kTextExtractorClassOther;
+    }
     if (!theCharacter.complexChar && !theCharacter.image) {
         if (theCharacter.code == TAB_FILLER) {
             return kTextExtractorClassWhitespace;
@@ -1209,6 +1212,9 @@ const NSInteger kLongMaximumWordLength = 100000;
                                        !theChar.complexChar) {
                                        // Is a backslash at the right edge of a window.
                                        // no-op
+                                   } else if (theChar.image) {
+                                       // Treat images as nulls.
+                                       return YES;
                                    } else if (theChar.complexChar ||
                                               theChar.code < ITERM2_PRIVATE_BEGIN ||
                                               theChar.code > ITERM2_PRIVATE_END) {
@@ -1248,6 +1254,9 @@ const NSInteger kLongMaximumWordLength = 100000;
                               !theChar.complexChar) {
                               // Is a backslash at the right edge of a window.
                               // no-op
+                          } else if (theChar.image) {
+                              // Treat images as nulls.
+                              return YES;
                           } else if (theChar.complexChar ||
                                      theChar.code < ITERM2_PRIVATE_BEGIN ||
                                      theChar.code > ITERM2_PRIVATE_END) {

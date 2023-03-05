@@ -2037,9 +2037,13 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
 
             limit = tempPosition + tempResultLength - 1;
             // find i so that i-deltas[i] == limit
-            while (numUnichars >= 0 && numUnichars + deltas[numUnichars] > limit) {
-                --numUnichars;
+
+            // If this is -1 it means we have nothing to search.
+            int lastIndexToInclude = MAX(-1, numUnichars - 1);
+            while (lastIndexToInclude >= 0 && lastIndexToInclude + deltas[lastIndexToInclude] >= limit) {
+                lastIndexToInclude -= 1;
             }
+            numUnichars = lastIndexToInclude + 1;
             NSRange range = NSMakeRange(tempPosition, tempResultLength);
             if (tempPosition != -1 &&
                 tempPosition <= skip &&

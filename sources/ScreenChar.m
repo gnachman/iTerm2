@@ -152,18 +152,6 @@ int ExpandScreenChar(const screen_char_t *sct, unichar* dest) {
     return [GetComplexCharRegistry() expandScreenChar:sct[0] to:dest];
 }
 
-UTF32Char CharToLongChar(unichar code, BOOL isComplex)
-{
-    NSString* aString = CharToStr(code, isComplex);
-    unichar firstChar = [aString characterAtIndex:0];
-    if (IsHighSurrogate(firstChar) && [aString length] >= 2) {
-        unichar secondChar = [aString characterAtIndex:0];
-        return DecodeSurrogatePair(firstChar, secondChar);
-    } else {
-        return firstChar;
-    }
-}
-
 screen_char_t ImageCharForNewImage(NSString *name,
                                    int width,
                                    int height,
@@ -339,7 +327,7 @@ NSString* ScreenCharArrayToString(const screen_char_t *screenChars,
     int o = 0;
     for (int i = start; i < end; ++i) {
         const unichar c = screenChars[i].code;
-        if (c >= ITERM2_PRIVATE_BEGIN && c <= ITERM2_PRIVATE_END) {
+        if (screenChars[i].image || (!screenChars[i].complexChar && c >= ITERM2_PRIVATE_BEGIN && c <= ITERM2_PRIVATE_END)) {
             // Skip private-use characters which signify things like double-width characters and
             // tab fillers.
             ++delta;
