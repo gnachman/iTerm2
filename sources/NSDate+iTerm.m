@@ -29,7 +29,10 @@
 }
 
 + (NSTimeInterval)it_timeSinceBoot {
-    const int64_t elapsed = mach_absolute_time();
+    return [self it_timeIntervalForAbsoluteTime:mach_absolute_time()];
+}
+
++ (NSTimeInterval)it_timeIntervalForAbsoluteTime:(uint64_t)elapsed {
     static dispatch_once_t onceToken;
     static mach_timebase_info_data_t sTimebaseInfo;
     dispatch_once(&onceToken, ^{
