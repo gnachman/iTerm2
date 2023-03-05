@@ -14102,6 +14102,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         if (![self haveResizedRecently]) {
             _lastOutputIgnoringOutputAfterResizing = [NSDate timeIntervalSinceReferenceDate];
         }
+        [[iTermIdleMonitor sharedInstance] didPerformActivity];
+
         _newOutput = YES;
 
         // Make sure the screen gets redrawn soonish

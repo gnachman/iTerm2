@@ -85,6 +85,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (ScreenCharArray * _Nonnull)wrappedLineAtIndex:(int)lineNum
                                            width:(int)width;
 
+- (ScreenCharArray * _Nonnull)screenCharArrayForLine:(int)lineNum
+                                               width:(int)width
+                                        continuation:(screen_char_t * _Nullable)continuation
+                                            paddedTo:(int)padding
+                                      eligibleForDWC:(BOOL)eligibleForDWC;
 
 - (ScreenCharArray * _Nonnull)rawLineAtWrappedLine:(int)lineNum width:(int)width;
 

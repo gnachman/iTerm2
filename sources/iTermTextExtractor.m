@@ -1923,6 +1923,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
             endx = MAX(0, MIN(endx, reducedEndX));
         }
         ScreenCharArray *sca = [_dataSource screenCharArrayForLine:y];
+
         const screen_char_t *theLine = sca.line;
         id<iTermExternalAttributeIndexReading> eaIndex = [_dataSource externalAttributeIndexForLine:y];
 

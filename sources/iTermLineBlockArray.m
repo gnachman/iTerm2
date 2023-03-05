@@ -156,6 +156,7 @@
     LineBlock *_tail;
     BOOL _headDirty;
     BOOL _tailDirty;
+
     // NOTE: Update -copyWithZone: if you add member variables.
 }
 
@@ -388,6 +389,8 @@
     ITAssertWithMessage(numberLeft >= 0, @"Invalid length in range %@", NSStringFromRange(range));
     for (NSInteger i = startIndex; i < _blocks.count; i++) {
         LineBlock *block = _blocks[i];
+        block.lastAccessTick = mach_absolute_time();
+
         // getNumLinesWithWrapWidth caches its result for the last-used width so
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
@@ -497,6 +500,8 @@
                                                      remainder:&r
                                                    blockOffset:blockOffsetPtr ? &y : NULL
                                                          index:&i];
+        result.lastAccessTick = mach_absolute_time();
+
         if (remainderPtr) {
             *remainderPtr = r;
         }
@@ -683,10 +688,12 @@
 #pragma mark - Low level method
 
 - (id)objectAtIndexedSubscript:(NSUInteger)index {
+    _blocks[index].lastAccessTick = mach_absolute_time();
     return _blocks[index];
 }
 
 - (void)addBlock:(LineBlock *)block {
+    block.lastAccessTick = mach_absolute_time();
     [self updateCacheIfNeeded];
     [block addObserver:self];
     [_blocks addObject:block];
@@ -738,14 +745,17 @@
 }
 
 - (LineBlock *)lastBlock {
+    _blocks.lastObject.lastAccessTick = mach_absolute_time();
     return _blocks.lastObject;
 }
 
 - (LineBlock *)firstBlock {
+    _blocks.firstObject.lastAccessTick = mach_absolute_time();
     return _blocks.firstObject;
 }
 
 - (void)updateCacheForBlock:(LineBlock *)block {
+    block.lastAccessTick = mach_absolute_time();
     if (_rawSpaceCache) {
         assert(_rawSpaceCache.count == _blocks.count);
         assert(_rawLinesCache.count == _blocks.count);
@@ -831,13 +841,13 @@
     theCopy->_tail = theCopy->_blocks.lastObject;
     theCopy->_tailDirty = _tailDirty;
     theCopy->_resizing = _resizing;
-
     return theCopy;
 }
 
 #pragma mark - iTermLineBlockObserver
 
 - (void)lineBlockDidChange:(LineBlock *)lineBlock {
+    lineBlock.lastAccessTick = mach_absolute_time();
     if (lineBlock == _head) {
         _headDirty = YES;
     } else if (lineBlock == _tail) {

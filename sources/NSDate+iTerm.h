@@ -14,5 +14,6 @@
 + (NSTimeInterval)it_timeSinceBoot;
 + (NSDate *)it_dateWithTimeSinceBoot:(NSTimeInterval)t;
 + (NSTimeInterval)durationOfBlock:(void (^ NS_NOESCAPE)(void))block;
++ (NSTimeInterval)it_timeIntervalForAbsoluteTime:(uint64_t)time;
 
 @end

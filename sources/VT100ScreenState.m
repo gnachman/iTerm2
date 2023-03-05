@@ -952,8 +952,9 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     if (line < numLinesInLineBuffer) {
         const BOOL eligibleForDWC = (line == numLinesInLineBuffer - 1 &&
                                      ScreenCharIsDWC_RIGHT([self.currentGrid screenCharsAtLineNumber:0][1]));
-        return [[self.linebuffer wrappedLineAtIndex:line width:self.width continuation:NULL] paddedToLength:self.width
-                                                                                             eligibleForDWC:eligibleForDWC];
+        return [self.linebuffer screenCharArrayForLine:line width:self.width continuation:NULL paddedTo:self.width eligibleForDWC:eligibleForDWC];
+//        return [[self.linebuffer wrappedLineAtIndex:line width:self.width continuation:NULL] paddedToLength:self.width
+//                                                                                             eligibleForDWC:eligibleForDWC];
     }
     return [self screenCharArrayAtScreenIndex:line - numLinesInLineBuffer];
 }

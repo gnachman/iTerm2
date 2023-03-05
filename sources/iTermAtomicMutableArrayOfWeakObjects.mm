@@ -100,5 +100,6 @@ static void iTermAtomicMutableArrayOfWeakObjectsLockUnlock(void) {
         return result;
     }
 }
+
 @end
 

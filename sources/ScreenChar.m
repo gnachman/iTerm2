@@ -339,7 +339,7 @@ NSString* ScreenCharArrayToString(const screen_char_t *screenChars,
     int o = 0;
     for (int i = start; i < end; ++i) {
         const unichar c = screenChars[i].code;
-        if (c >= ITERM2_PRIVATE_BEGIN && c <= ITERM2_PRIVATE_END) {
+        if (screenChars[i].image || (!screenChars[i].complexChar && c >= ITERM2_PRIVATE_BEGIN && c <= ITERM2_PRIVATE_END)) {
             // Skip private-use characters which signify things like double-width characters and
             // tab fillers.
             ++delta;

@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)removeObjectsPassingTest:(BOOL (^)(ObjectType anObject))block;
 - (void)removeAllObjects;
 - (void)addObject:(ObjectType)object;
+
 @end
 
 NS_ASSUME_NONNULL_END

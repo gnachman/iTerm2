@@ -36,9 +36,11 @@
 #import "iTermMalloc.h"
 #import "iTermOrderedDictionary.h"
 #import "LineBlock.h"
+#import "LineBlock+SwiftInterop.h"
 #import "LineBufferSorting.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
+#import "NSDate+iTerm.h"
 #import "NSSet+iTerm.h"
 #import "RegexKitLite.h"
 
@@ -91,6 +93,7 @@ static const NSInteger kUnicodeVersion = 9;
 // Append a block
 - (LineBlock *)_addBlockOfSize:(int)size {
     self.dirty = YES;
+    [_lineBlocks.lastBlock shrinkToFit];
     LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];
     block.mayHaveDoubleWidthCharacter = self.mayHaveDoubleWidthCharacter;
     [_lineBlocks addBlock:block];
@@ -579,6 +582,39 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return result;
 }
 
+- (ScreenCharArray * _Nonnull)screenCharArrayForLine:(int)lineNum
+                                               width:(int)width
+                                        continuation:(screen_char_t * _Nullable)continuationPtr
+                                            paddedTo:(int)padding
+                                      eligibleForDWC:(BOOL)eligibleForDWC {
+    int remainder = 0;
+    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
+    if (!block) {
+        ITAssertWithMessage(NO, @"Failed to find line %@ with width %@. Cache is: %@", @(lineNum), @(width),
+                            [[[[_lineBlocks dumpForCrashlog] dataUsingEncoding:NSUTF8StringEncoding] it_compressedData] it_hexEncoded]);
+        return nil;
+    }
+
+    int length, eol;
+    screen_char_t continuation;
+    ScreenCharArray *sca = [block screenCharArrayForWrappedLineWithWrapWidth:width
+                                                                    paddedTo:padding
+                                                              eligibleForDWC:eligibleForDWC
+                                                                     lineNum:&remainder
+                                                                  lineLength:&length
+                                                           includesEndOfLine:&eol
+                                                                continuation:&continuation];
+    if (continuationPtr) {
+        *continuationPtr = continuation;
+    }
+    if (!sca) {
+        NSLog(@"Couldn't find line %d", lineNum);
+        ITAssertWithMessage(NO, @"Tried to get non-existent line");
+        return nil;
+    }
+    return sca;
+}
+
 - (ScreenCharArray * _Nonnull)rawLineAtWrappedLine:(int)lineNum width:(int)width {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
@@ -763,13 +799,6 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         int last_line_length = [block getRawLineLength: ([block numEntries]-1)];
         const screen_char_t *lastRawLine = [block rawLine: ([block numEntries]-1)];
         int num_overflow_lines = [block numberOfFullLinesFromBuffer:lastRawLine length:last_line_length width:width];
-#if BETA
-        const int legacy_num_overflow_lines = iTermLineBlockNumberOfFullLinesImpl(lastRawLine,
-                                                                                  last_line_length,
-                                                                                  width,
-                                                                                  _mayHaveDoubleWidthCharacter);
-        assert(num_overflow_lines == legacy_num_overflow_lines);
-#endif
 
         int min_x = OffsetOfWrappedLine(lastRawLine,
                                         num_overflow_lines,

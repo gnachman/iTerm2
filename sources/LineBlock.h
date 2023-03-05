@@ -27,6 +27,8 @@ typedef struct {
 } LineBlockMetadata;
 
 @class LineBlock;
+@class iTermCharacterBufferContext;
+@class iTermCompressibleCharacterBuffer;
 
 @protocol iTermLineBlockObserver<NSObject>
 - (void)lineBlockDidChange:(LineBlock *)lineBlock;
@@ -34,7 +36,10 @@ typedef struct {
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
-@interface LineBlock : NSObject <NSCopying, iTermUniquelyIdentifiable>
+@interface LineBlock : NSObject <NSCopying, iTermUniquelyIdentifiable> {
+    iTermCompressibleCharacterBuffer *_characterBuffer;
+    ptrdiff_t _startOffset;
+}
 
 // Once this is set to true, it stays true. If double width characters are
 // possibly present then a slower algorithm is used to count the number of
@@ -47,7 +52,8 @@ typedef struct {
 // Block this was copied from.
 @property(nonatomic, weak, readonly) LineBlock *progenitor;
 @property(nonatomic, readonly) BOOL invalidated;
-
+@property(atomic) uint64_t lastAccessTick;
+@property(nonatomic, strong) iTermCharacterBufferContext *context;
 + (instancetype)blockWithDictionary:(NSDictionary *)dictionary;
 
 - (instancetype)initWithRawBufferSize:(int)size;
@@ -80,6 +86,15 @@ typedef struct {
                                         continuation:(screen_char_t *)continuationPtr
                                 isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
                                             metadata:(out iTermImmutableMetadata *)metadataPtr;
+
+// This avoids decompressing the whole buffer but it may make a copy.
+- (ScreenCharArray *)screenCharArrayForWrappedLineWithWrapWidth:(int)width
+                                                       paddedTo:(int)padding
+                                                 eligibleForDWC:(BOOL)eligibleForDWC
+                                                        lineNum:(int *)remainderPtr
+                                                     lineLength:(int *)lengthPtr
+                                              includesEndOfLine:(int *)eolPtr
+                                                   continuation:(screen_char_t *)continuationPtr;
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 
@@ -116,9 +131,6 @@ typedef struct {
 
 // Grow the buffer.
 - (void)changeBufferSize:(int)capacity;
-
-// Get the size of the raw buffer.
-- (int)rawBufferSize;
 
 // Return the number of raw (unwrapped) lines
 - (int)numRawLines;
@@ -195,13 +207,6 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine;
 - (int)numberOfFullLinesFromBuffer:(const screen_char_t *)buffer
                             length:(int)length
                              width:(int)width;
-#if BETA
-int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
-                                        int length,
-                                        int width,
-                                        BOOL mayHaveDoubleWidthCharacter);
-#endif  // BETA
-
 // Finds a where the nth line begins after wrapping and returns its offset from the start of the
 // buffer.
 //
@@ -245,5 +250,15 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (void)dropMirroringProgenitor:(LineBlock *)other;
 - (BOOL)isSynchronizedWithProgenitor;
 - (void)invalidate;
+
+// For tests only
+- (void)_findInRawLine:(int)entry
+                needle:(NSString*)needle
+               options:(FindOptions)options
+                  mode:(iTermFindMode)mode
+                  skip:(int)skip
+                length:(int)raw_line_length
+       multipleResults:(BOOL)multipleResults
+               results:(NSMutableArray *)results;
 
 @end
