@@ -183,7 +183,16 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
 }
 
 - (NSString *)debugDescription {
-    return ScreenCharArrayToStringDebug(_line, _length);
+    NSString *content = ScreenCharArrayToStringDebug(_line, _length);
+    switch (_eol) {
+        case EOL_HARD:
+            return [content stringByAppendingString:@" [hard eol]"];
+        case EOL_SOFT:
+            return [content stringByAppendingString:@" [soft eol]"];
+        case EOL_DWC:
+            return [content stringByAppendingString:@" [dwc eol]"];
+    }
+    return content;
 }
 
 - (id)copyWithZone:(NSZone *)zone {
