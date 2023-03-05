@@ -150,8 +150,9 @@ const int kMaxResultContextWords = 4;
     [wordSeparatorCharacterSet_ autorelease];
     wordSeparatorCharacterSet_ = [[iTermTextExtractor wordSeparatorCharacterSet] retain];
 
-    int x = [screen cursorX]-2;
+    int x = MAX(0, [screen cursorX] - 2);
     int y = [screen cursorY] + [screen numberOfLines] - [screen height] - 1;
+    y = MAX(0, y);
     const screen_char_t *sct = [screen screenCharArrayForLine:y].line;
     [context_ removeAllObjects];
     NSString* charBeforeCursor = ScreenCharToStr(&sct[x]);
