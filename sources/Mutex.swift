@@ -85,6 +85,12 @@ class MutableAtomicObject<T> {
             block(_value)
         }
     }
+
+    func mutableAccess(_ block: (inout T) -> Void) {
+        mutex.sync {
+            block(&_value)
+        }
+    }
 }
 
 // Provides atomic access to an object.
