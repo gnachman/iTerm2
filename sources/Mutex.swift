@@ -9,13 +9,26 @@
 import Foundation
 
 class Mutex {
-    private var unfairLock = os_unfair_lock_s()
+    // See http://www.russbishop.net/the-law for why pointers are used here.
+    private var unfairLock: UnsafeMutablePointer<os_unfair_lock>
+
+    init() {
+        unfairLock = UnsafeMutablePointer<os_unfair_lock>.allocate(capacity: 1)
+        unfairLock.initialize(to: os_unfair_lock())
+    }
+
+    deinit {
+        unfairLock.deallocate()
+    }
+
     private func lock() {
-        os_unfair_lock_lock(&unfairLock)
+        os_unfair_lock_lock(unfairLock)
     }
+
     private func unlock() {
-        os_unfair_lock_unlock(&unfairLock)
+        os_unfair_lock_unlock(unfairLock)
     }
+
     func sync<T>(_ closure: () throws -> T) rethrows -> T {
         lock()
         defer {
