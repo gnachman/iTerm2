@@ -11,7 +11,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-NSString *iTermFunctionSignatureFromNamespaceAndNameAndArguments(NSString * _Nullable namespace, NSString *name, NSArray<NSString *> *argumentNames);
+NSString *iTermFunctionSignatureFromNamespaceAndNameAndArguments(NSString * _Nullable namespace_, NSString *name, NSArray<NSString *> *argumentNames);
 
 typedef void (^iTermBuiltInFunctionCompletionBlock)(id _Nullable result, NSError * _Nullable error);
 typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull parameters, _Nonnull  iTermBuiltInFunctionCompletionBlock completion);
@@ -54,7 +54,7 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
 - (void)callWithArguments:(NSDictionary<NSString *, id> *)arguments
                completion:(iTermBuiltInFunctionCompletionBlock)block;
 
-- (BOOL)matchedBySignature:(NSString *)signature inNamespace:(NSString *)namespace;
+- (BOOL)matchedBySignature:(NSString *)signature inNamespace:(NSString *)namespace_;
 
 @end
 
@@ -68,14 +68,14 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
 - (void)restoreState:(id)savedState;
 
 - (void)registerFunction:(iTermBuiltInFunction *)function
-               namespace:(nullable NSString *)namespace;
+               namespace:(nullable NSString *)namespace_;
 
 - (BOOL)haveFunctionWithName:(NSString *)name
-                   namespace:(NSString *)namespace
+                   namespace:(NSString *)namespace_
                    arguments:(NSArray<NSString *> *)arguments;
 
 - (void)callFunctionWithName:(NSString *)name
-                   namespace:(NSString *)namespace
+                   namespace:(NSString *)namespace_
                   parameters:(NSDictionary<NSString *, id> *)parameters
                        scope:(iTermVariableScope *)scope
                   completion:(iTermBuiltInFunctionCompletionBlock)completion;
