@@ -444,10 +444,15 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
         if (self.owner != nil) {
             shouldFreeBuffers = NO;
             // I don't own my memory so I should not free it. Remove myself from the owner's client
-            // list to ensure its list of clients doesn't get too big.
-            [self.owner.clients removeObjectsPassingTest:^BOOL(LineBlock *block) {
-                return block == self || block == nil;
-            }];
+            // list to ensure its list of clients doesn't get too big. Do it asynchronously to avoid
+            // reentrant -[LineBlock dealloc] calls since iTermAtomicMutableArrayOfWeakObjects's
+            // methods are not reentrant.
+            iTermAtomicMutableArrayOfWeakObjects<LineBlock *> *siblings = self.owner.clients;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [siblings removeObjectsPassingTest:^BOOL(LineBlock * _Nonnull anObject) {
+                    return anObject == nil;
+                }];
+            });
         }
     }
 
