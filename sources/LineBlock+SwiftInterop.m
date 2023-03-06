@@ -18,6 +18,11 @@
     _characterBuffer = [[iTermCompressibleCharacterBuffer alloc] initWithUncompressedData:data];
 }
 
+- (BOOL)createCharacterBufferFromEncodedData:(NSData *)data {
+    _characterBuffer = [[iTermCompressibleCharacterBuffer alloc] initWithEncodedData:data];
+    return _characterBuffer != nil;
+}
+
 - (const screen_char_t *)rawBuffer {
     return _characterBuffer.pointer;
 }
@@ -44,6 +49,10 @@
 
 - (void)resizeCharacterBufferTo:(size_t)count {
     [_characterBuffer resize:count];
+}
+
+- (NSData *)encodedCharacterBufferWithMaxSize:(NSInteger)maxSize {
+    return [_characterBuffer encodedDataWithMaxSize:maxSize];
 }
 
 @end

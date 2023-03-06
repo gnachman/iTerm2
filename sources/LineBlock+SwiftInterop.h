@@ -18,15 +18,20 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)createCharacterBufferOfSize:(int)size;
 - (void)createCharacterBufferWithUncompressedData:(NSData *)data;
-- (BOOL)characterBufferIsEqualTo:(iTermCompressibleCharacterBuffer *)other;
+- (BOOL)createCharacterBufferFromEncodedData:(NSData *)data;
 - (const screen_char_t *)rawBuffer;
 - (screen_char_t *)mutableRawBuffer;
 - (const screen_char_t *)bufferStart;
 - (iTermCompressibleCharacterBuffer *)copyOfCharacterBuffer;
+- (NSData *)encodedCharacterBufferWithMaxSize:(NSInteger)maxSize;
+
+// This is slow! Don't use it except for dev.
+- (BOOL)characterBufferIsEqualTo:(iTermCompressibleCharacterBuffer *)other;
 
 // Get the size of the raw buffer.
 - (int)rawBufferSize;
 - (void)resizeCharacterBufferTo:(size_t)count;
+
 
 @end
 

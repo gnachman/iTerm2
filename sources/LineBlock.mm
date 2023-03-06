@@ -34,6 +34,7 @@ static BOOL gUseCachingNumberOfLines = NO;
 NSString *const kLineBlockRawBufferV1Key = @"Raw Buffer";  // v1 - uses legacy screen_char_t format.
 NSString *const kLineBlockRawBufferV2Key = @"Raw Buffer v2";  // v2 - used 0xf000-0xf003 for DWC_SKIP and friends.
 NSString *const kLineBlockRawBufferV3Key = @"Raw Buffer v3";  // v3 - uses 0x0001-0x0004 for DWC_SKIP and friends
+NSString *const kLineBlockRawBufferV4Key = @"Raw Buffer v4";  // v4 - Like v3 but could be compressed
 NSString *const kLineBlockBufferStartOffsetKey = @"Buffer Start Offset";
 NSString *const kLineBlockStartOffsetKey = @"Start Offset";
 NSString *const kLineBlockFirstEntryKey = @"First Entry";
@@ -350,8 +351,14 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         }
 
         NSData *data = nil;
+        BOOL needsData = YES;
         iTermExternalAttributeIndex *migrationIndex = nil;
-        if (dictionary[kLineBlockRawBufferV3Key]) {
+        if (dictionary[kLineBlockRawBufferV4Key]) {
+            if (![self createCharacterBufferFromEncodedData:dictionary[kLineBlockRawBufferV4Key]]) {
+                return nil;
+            }
+            needsData = NO;
+        } else if (dictionary[kLineBlockRawBufferV3Key]) {
             data = dictionary[kLineBlockRawBufferV3Key];
         } else if (dictionary[kLineBlockRawBufferV2Key]) {
             data = [dictionary[kLineBlockRawBufferV2Key] migrateV2ToV3];
@@ -360,10 +367,12 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             data = [dictionary[kLineBlockRawBufferV1Key] migrateV1ToV3:&migrationIndex];
             _generation = 1;
         }
-        if (!data) {
-            return nil;
+        if (needsData) {
+            if (!data) {
+                return nil;
+            }
+            [self createCharacterBufferWithUncompressedData:data];
         }
-        [self createCharacterBufferWithUncompressedData:data];
         [self setBufferStartOffset:[dictionary[kLineBlockBufferStartOffsetKey] intValue]];
         first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
         if (dictionary[kLineBlockGuid]) {
@@ -2273,9 +2282,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 }
 
 - (NSDictionary *)dictionary {
-    NSData *rawBufferData = [NSData dataWithBytes:self.rawBuffer
-                                           length:[self rawSpaceUsed] * sizeof(screen_char_t)];
-    return @{ kLineBlockRawBufferV3Key: rawBufferData,
+    return @{ kLineBlockRawBufferV4Key: [self encodedCharacterBufferWithMaxSize:[self rawSpaceUsed]] ?: [NSData data],
               kLineBlockBufferStartOffsetKey: @(self.bufferStartOffset),
               kLineBlockStartOffsetKey: @(self.bufferStartOffset),
               kLineBlockFirstEntryKey: @(first_entry),

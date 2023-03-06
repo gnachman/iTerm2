@@ -31,6 +31,31 @@ class UnsafeReallocatableMutableBuffer<T: Equatable>: Equatable {
         }
     }
 
+    convenience init(_ decoder: inout EfficientDecoder, placeholder: T) throws {
+        let count: Int = try decoder.getScalar()
+        let possiblyUndersizedArray: [T] = try decoder.getArray()
+        if possiblyUndersizedArray.count > count {
+            throw EfficientDecoderError()
+        }
+        let array = possiblyUndersizedArray + Array<T>(repeating: placeholder,
+                                                       count: count - possiblyUndersizedArray.count)
+        self.init(count: array.count)
+        let byteCount = array.count * MemoryLayout<T>.stride
+        _ = array.withUnsafeBytes { arrayUnsafeBytes in
+            arrayUnsafeBytes.baseAddress!.withMemoryRebound(to: T.self, capacity: array.count) { arrayPointer in
+                buffer.baseAddress!.withMemoryRebound(to: T.self, capacity: array.count) { destinationBytes in
+                    memcpy(destinationBytes, arrayPointer, byteCount)
+                }
+            }
+        }
+    }
+
+    func encode(_ encoder: inout EfficientEncoder, maxSize: Int) {
+        encoder.putScalar(count)
+        var array = Array(buffer)[0..<maxSize]
+        encoder.putArray(&array)
+    }
+
     deinit {
         let pointer = UnsafeMutableRawPointer(buffer.baseAddress)!
         Darwin.free(pointer)
@@ -82,9 +107,108 @@ extension screen_char_t: Equatable {
     }
 }
 
+class EfficientDecoderError: Error {
+}
+
+struct EfficientDecoder {
+    private let data: Data
+    private var offset = 0
+
+    var bytesRemaining: Int { data.count - offset }
+
+    init(_ data: Data) {
+        self.data = data
+    }
+
+    mutating func getScalar<T>() throws -> T {
+        let size = MemoryLayout<T>.stride
+        if data.count < size {
+            throw EfficientDecoderError()
+        }
+        defer {
+            offset += size
+        }
+        let result = data.withUnsafeBytes { pointer in
+            return pointer.baseAddress!.advanced(by: offset).assumingMemoryBound(to: T.self).pointee
+        }
+        return result
+    }
+
+    mutating func getScalar() throws -> Data {
+        let count: Int = try getScalar()
+        if count <= 0 {
+            throw EfficientDecoderError()
+        }
+        var data = Data(count: count)
+        data.withUnsafeMutableBytes { mutableRawBufferPointer in
+            self.data.subdata(in: offset..<(offset + count)).withUnsafeBytes { unsafeRawBufferPointer in
+                _ = memcpy(mutableRawBufferPointer.baseAddress!, unsafeRawBufferPointer.baseAddress!, count)
+            }
+        }
+        offset += count
+        return data
+    }
+
+    mutating func getArray<T>() throws -> [T] {
+        let count: Int32 = try getScalar()
+        let lengthInBytes = Int(count) * MemoryLayout<T>.stride
+        if offset < 0 {
+            throw EfficientDecoderError()
+        }
+        if offset + lengthInBytes > data.count {
+            throw EfficientDecoderError()
+        }
+        let subdata = data.subdata(in: offset..<(offset + lengthInBytes))
+        defer {
+            offset += lengthInBytes
+        }
+        return subdata.withUnsafeBytes {
+            (pointer: UnsafeRawBufferPointer) -> [T] in
+            let buffer = UnsafeBufferPointer<T>(start: pointer.baseAddress!.assumingMemoryBound(to: T.self),
+                                                count: Int(count))
+            return Array<T>(buffer)
+        }
+    }
+}
+
+struct EfficientEncoder {
+    private(set) var data = Data()
+
+    mutating func putScalar<T>(_ value: T) {
+        var temp = value
+        withUnsafeBytes(of: &temp) { pointer in
+            data.append(Data(pointer))
+        }
+    }
+
+    mutating func putScalar(_ value: Data) {
+        putScalar(value.count)
+        self.data.append(value)
+    }
+
+    mutating func putArray<T>(_ value: inout [T]) {
+        putScalar(Int32(value.count))
+        value.withUnsafeBufferPointer { temp in
+            data.append(temp)
+        }
+    }
+
+    mutating func putArray<T>(_ value: inout ArraySlice<T>) {
+        putScalar(Int32(value.count))
+        value.withUnsafeBufferPointer { temp in
+            data.append(temp)
+        }
+    }
+}
+
 fileprivate enum Buffer: Equatable {
     case uninitialized
     case uncompressed(UnsafeReallocatableMutableBuffer<screen_char_t>)
+
+    private enum EncoderKeys: UInt8 {
+        case uninitialized = 0
+        case uncompressed = 1
+    }
 
     func clone() -> Buffer {
         switch self {
@@ -103,6 +227,27 @@ fileprivate enum Buffer: Equatable {
             return lvalue == rvalue
         default:
             return false
+        }
+    }
+
+    func encode(_ encoder: inout EfficientEncoder, maxSize: Int) {
+        switch self {
+        case .uninitialized:
+            encoder.putScalar(EncoderKeys.uninitialized.rawValue)
+        case .uncompressed(let chars):
+            encoder.putScalar(EncoderKeys.uncompressed.rawValue)
+            chars.encode(&encoder, maxSize: maxSize)
+        }
+    }
+
+    init(_ decoder: inout EfficientDecoder) throws {
+        switch EncoderKeys(rawValue: try decoder.getScalar()) {
+        case .uninitialized:
+            self = .uninitialized
+        case .uncompressed:
+            self = .uncompressed(try UnsafeReallocatableMutableBuffer(&decoder, placeholder: screen_char_t()))
+        case .none:
+            throw EfficientDecoderError()
         }
     }
 
@@ -146,9 +291,28 @@ class CompressibleCharacterBuffer: NSObject {
         super.init()
     }
 
+    @objc(initWithEncodedData:)
+    init?(encoded data: Data) {
+        var decoder = EfficientDecoder(data)
+        do {
+            size = try decoder.getScalar()
+            buffer = try Buffer(&decoder)
+        } catch {
+            return nil
+        }
+    }
+    
     private init(from other: CompressibleCharacterBuffer) {
         self.size = other.size
         self.buffer = other.buffer.clone()
+    }
+
+    @objc(encodedDataWithMaxSize:)
+    func encodedData(maxSize: Int) -> Data {
+        var encoded = EfficientEncoder()
+        encoded.putScalar(size)
+        buffer.encode(&encoded, maxSize: maxSize)
+        return encoded.data
     }
 
     @objc
