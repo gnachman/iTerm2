@@ -105,10 +105,31 @@ fileprivate enum Buffer: Equatable {
             return false
         }
     }
+
+    var debugDescription: String {
+        switch self {
+        case .uninitialized:
+            return "[uninitialized]"
+        case .uncompressed(let buffer):
+            return buffer.debugDescription
+        }
+    }
+
+    var shortDebugDescription: String {
+        switch self {
+        case .uninitialized:
+            return "[uninitialized]"
+        case .uncompressed(let buffer):
+            return buffer.shortDebugDescription
+        }
+    }
 }
 
 @objc(iTermCompressibleCharacterBuffer)
 class CompressibleCharacterBuffer: NSObject {
+    override var debugDescription: String {
+        return "<\(type(of: self)): \(it_addressString) size=\(size) “\(buffer.shortDebugDescription)”>"
+    }
     private var buffer: Buffer = .uninitialized
     @objc private(set) var size: Int
 
