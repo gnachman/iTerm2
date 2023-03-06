@@ -31,7 +31,6 @@ NS_ASSUME_NONNULL_BEGIN
 // Get the size of the raw buffer.
 - (int)rawBufferSize;
 - (void)resizeCharacterBufferTo:(size_t)count;
-- (void)compress;
 
 @end
 

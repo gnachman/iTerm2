@@ -81,6 +81,13 @@ static _Atomic int gPerformingJoinedBlock;
 
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
     dispatch_queue_t queue = [iTermGCD mutationQueue];
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [iTermCharacterBufferContext ensureInstanceForQueue:queue];
+        [iTermCharacterBufferContext ensureInstanceForQueue:dispatch_get_main_queue()];
+    });
+
     self = [super initForMutationOnQueue:queue];
     if (self) {
         _queue = queue;

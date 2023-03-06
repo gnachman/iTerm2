@@ -395,13 +395,219 @@ fileprivate enum Buffer: Equatable {
     }
 }
 
+/// Lets you ask if some amount of time has passed.
+class DeadlineMonitor {
+    private let end: TimeInterval
+
+    private static var now: TimeInterval {
+        NSDate.it_timeInterval(forAbsoluteTime: mach_absolute_time())
+    }
+
+    init(duration: TimeInterval) {
+        end = Self.now + duration
+    }
+
+    /// Returns: whether the deadline remains unreached.
+    var pending: Bool {
+        return Self.now < end
+    }
+}
+
+// This manages a collection of buffers that need compression eventually. It tries to schedule work
+// when nothing else is going on and avoids hogging the CPU.
+class CharacterBufferCompressor {
+    // All methods run on this queue.
+    private let queue: DispatchQueue
+    private var scheduled = false
+    typealias BufferSet = Set<UniqueWeakBox<CompressibleCharacterBuffer>>
+    private var buffers = MutableAtomicObject(BufferSet())
+
+    init(_ queue: DispatchQueue) {
+        self.queue = queue
+        if #available(macOS 12.0, *) {
+            NotificationCenter.default.addObserver(forName: .NSProcessInfoPowerStateDidChange,
+                                                   object: nil,
+                                                   queue: nil) { [weak self] notif in
+                self?.queue.async {
+                    DLog("Low power mode disabled. Try to schedule decompression. queue=\(String(describing: self?.queue))")
+                    self?.scheduleIfNeeded(urgency: .low)
+                }
+            }
+        }
+    }
+
+    func insert(_ buffer: CompressibleCharacterBuffer) {
+        buffers.mutableAccess {
+            $0.insert(buffer.uniqueWeakBox)
+        }
+        scheduleIfNeeded(urgency: .low)
+    }
+
+    private enum Urgency {
+        case low
+        case medium
+        case high
+
+        // Delay before attempting compression.
+        var duration: TimeInterval {
+            switch self {
+                // Used when a buffer has just been used. We want the delay to be long since it's
+                // likely to be reused again soon.
+                case .low: return 20.0
+
+                // Used when the system is too busy to do compression. This is a balance between
+                // wasting CPU and waiting too long for a window where we could do work and missing
+                // it.
+                case .medium: return 1.0
+
+                // Used when we ran out of time compressing and had more to do. We don't want to
+                // wait too long because it'll take too long to compress lots of buffers. We don't
+                // to wait too little (we'll keep CPU utilization high) and burn a lot of cycles on
+                // scheduling overhead.
+                case .high: return 0.2
+            }
+        }
+    }
+
+    private func scheduleIfNeeded(urgency: Urgency) {
+        if scheduled {
+            return
+        }
+        if buffers.value.isEmpty {
+            return
+        }
+        if #available(macOS 12.0, *) {
+            if ProcessInfo.processInfo.isLowPowerModeEnabled {
+                return
+            }
+        }
+        DLog("Schedule compression in \(urgency.duration) sec")
+        scheduled = true
+        queue.asyncAfter(deadline: .now() + urgency.duration) { [weak self] in
+            self?.scheduled = false
+            self?.compress()
+        }
+    }
+
+    // How long a buffer must be idle before we'll compress it.
+    fileprivate static func ttl(_ size: Int) -> TimeInterval {
+        let baseTime = TimeInterval(1.25)
+        return baseTime * Double(size) / 1024.0
+    }
+
+    private func compress() {
+        let utilization = ProcessInfo.ownCPUUsage()
+        if utilization > 0.5 {
+            DLog("My cpu is \(utilization) so don't try to compress")
+            scheduleIfNeeded(urgency: .medium)
+            return
+        }
+        DLog("My cpu is \(utilization) so proceed")
+        var finishedInTime = false
+        buffers.mutate { buffers in
+            DLog("Try to compress \(buffers.prefix(16).compactMap { $0.value?.debugDescription }.joined(separator: " "))")
+            // residual holds the buffers we do not choose to compress.
+            var residual = buffers
+
+            // Avoid hogging the main thread. Since we are forced to run on a particular dispatch
+            // queue, we don't get to use QoS. Instead, limit the duration of this loop to a small
+            // fraction of the interval at which the timer that launches it runs.
+            let dutyCycle = 0.05
+            let deadlineMonitor = DeadlineMonitor(duration: Urgency.high.duration * dutyCycle)
+            var count = 0
+            for box in buffers where deadlineMonitor.pending {
+                guard let buffer = box.value else {
+                    residual.remove(box)
+                    continue
+                }
+                if buffer.idleTime > Self.ttl(buffer.size) {
+                    buffer.compress()
+                    residual.remove(box)
+                    count += 1
+                }
+            }
+            DLog("Compressed \(count) buffers")
+            finishedInTime = deadlineMonitor.pending
+            return residual
+        }
+        scheduleIfNeeded(urgency: finishedInTime ? .low : .high)
+    }
+}
+
 @objc(iTermCompressibleCharacterBuffer)
-class CompressibleCharacterBuffer: NSObject {
+class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
     override var debugDescription: String {
         return "<\(type(of: self)): \(it_addressString) size=\(size) “\(buffer.shortDebugDescription)”>"
     }
+
     private var buffer: Buffer = .uninitialized
     @objc private(set) var size: Int
+    private var lastAccess = mach_absolute_time()
+    lazy var uniqueWeakBox: UniqueWeakBox<CompressibleCharacterBuffer> = {
+        UniqueWeakBox(self)
+    }()
+
+    // There is one context per thread on which CompressibleCharacterBuffer is used. It is
+    // responsible for owning a CharacterBufferCompressor and providing CompressibleCharacterBuffer
+    // objects to it when it becomes safe to compress them. All knowledge of the interaction between
+    // dispatch queues and compressible buffers goes here.
+    @objc(iTermCharacterBufferContext)
+    class Context: NSObject {
+        private var buffers = Set<CompressibleCharacterBuffer>()
+        private static let key = DispatchSpecificKey<Context>()
+        private let queue: DispatchQueue
+        private var enqueued = false
+        private let compressor: CharacterBufferCompressor
+
+        static var instanceForCurrentQueue: Context {
+            // If this crashes, it's becuse you didn't initialize a Context for the current dispatch queue.
+            // Any queue where you plan to use CompressibleCharacterBuffer (and, ultimately, LineBuffer)
+            // must have a Context assigned.
+            DispatchQueue.getSpecific(key: key)!
+        }
+
+        @objc(ensureInstanceForQueue:) static func ensureInstance(forQueue queue: DispatchQueue) {
+            if queue.getSpecific(key: key) == nil {
+                let instance = Context(queue: queue)
+                queue.setSpecific(key: Self.key, value: instance)
+            }
+        }
+
+        private init(queue: DispatchQueue) {
+            self.queue = queue
+            compressor = CharacterBufferCompressor(queue)
+
+            super.init()
+        }
+
+        fileprivate func insert(_ buffer: CompressibleCharacterBuffer) {
+            dispatchPrecondition(condition: .onQueue(self.queue))
+
+            buffers.insert(buffer)
+            if !enqueued {
+                enqueue()
+            }
+        }
+
+        private func enqueue() {
+            enqueued = true
+            // Unsafe pointers to buffers are only valid until the next spin of the queue on which
+            // they are used (since they're essentially autoreleased). Therefore it should be safe
+            // to compress them using DispatchQueue.async.
+            queue.async {
+                self.enqueued = false
+                self.moveBuffersToCompressor()
+            }
+        }
+
+        func moveBuffersToCompressor() {
+            for buffer in buffers {
+                compressor.insert(buffer)
+            }
+            buffers.removeAll()
+        }
+    }
+
 
     @objc
     init(_ size: Int) {
@@ -442,6 +648,8 @@ class CompressibleCharacterBuffer: NSObject {
 
     @objc
     var mutablePointer: UnsafeMutablePointer<screen_char_t> {
+        Context.instanceForCurrentQueue.insert(self)
+        lastAccess = mach_absolute_time()
         switch buffer {
         case .uninitialized:
             return realize().buffer.baseAddress!
@@ -487,16 +695,20 @@ class CompressibleCharacterBuffer: NSObject {
         return lhs.buffer == rhs.buffer && lhs.size == rhs.size
     }
 
-    @objc
-    func compress(usedCount: Int) {
+    func compress() {
         switch buffer {
         case .uninitialized, .compressed:
             return
         case .uncompressed(let buffer):
-            let compressedBuffer = CompressedScreenCharBuffer(buffer, size: usedCount)
+            let compressedBuffer = CompressedScreenCharBuffer(buffer, size: size)
             self.buffer = .compressed(compressedBuffer)
             size = compressedBuffer.count
         }
+    }
+
+    @objc var idleTime: TimeInterval {
+        let now = NSDate.it_timeInterval(forAbsoluteTime: mach_absolute_time())
+        return now - NSDate.it_timeInterval(forAbsoluteTime: lastAccess)
     }
 
     private func realize() -> UnsafeReallocatableMutableBuffer<screen_char_t> {

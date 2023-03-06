@@ -32,6 +32,7 @@ extension ProcessInfo {
     private struct CPUUsageInfo {
         var usage = 0.0
         var time = UInt64(0)  // mach_absolute_time
+        var lastResult: Double?
     }
 
     private static var cpuUsageElapsedTime = MutableAtomicObject(CPUUsageInfo())
@@ -51,15 +52,30 @@ extension ProcessInfo {
         guard let timeUsed = cumulativeOwnTotalCPUUsage else {
             return 0
         }
-        let now = mach_absolute_time()
 
         var result = 0.0
         cpuUsageElapsedTime.mutate { info in
+            // Measure the time inside the mutex because concurrent calls could lead to time
+            // appearing to move backwards otherwise.
+            let now = mach_absolute_time()
             if info.time > 0 {
-                let elapsedTime = NSDate.it_timeInterval(forAbsoluteTime: now - info.time)
-                result = (timeUsed - info.usage) / elapsedTime
+                // Avoid recomputing too often because if we haven't sampled enough we'll get crazy
+                // results.
+                let nowSeconds = NSDate.it_timeInterval(forAbsoluteTime: now)
+                let lastSeconds = NSDate.it_timeInterval(forAbsoluteTime: info.time)
+                let rateLimit = 0.01
+                if nowSeconds > lastSeconds + rateLimit {
+                    let elapsedTime = nowSeconds - lastSeconds
+                    result = (timeUsed - info.usage) / elapsedTime
+                } else {
+                    // Asking too often
+                    if let lastResult = info.lastResult {
+                        result = lastResult
+                    }
+                    return info
+                }
             }
-            return CPUUsageInfo(usage: timeUsed, time: now)
+            return CPUUsageInfo(usage: timeUsed, time: now, lastResult: result)
         }
         return result
     }
