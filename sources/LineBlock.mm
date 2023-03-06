@@ -511,7 +511,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
         [theCopy setRawBuffer:self.mutableRawBuffer];
         [theCopy setBufferStartOffset:self.bufferStartOffset];
         theCopy->first_entry = first_entry;
-        theCopy->buffer_size = buffer_size;
+        theCopy->buffer_size = self.rawBufferSize;
         iTermAssignToConstPointer((void **)&theCopy->cumulative_line_lengths, (void *)cumulative_line_lengths);
         [self copyMetadataTo:theCopy];
         theCopy->cll_capacity = cll_capacity;
@@ -528,11 +528,11 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
 
         return theCopy;
     }
-    [theCopy setRawBuffer:(screen_char_t *)iTermMalloc(sizeof(screen_char_t) * buffer_size)];
-    memmove((void *)theCopy.mutableRawBuffer, self.rawBuffer, sizeof(screen_char_t) * buffer_size);
+    [theCopy setRawBuffer:(screen_char_t *)iTermMalloc(sizeof(screen_char_t) * self.rawBufferSize)];
+    memmove((void *)theCopy.mutableRawBuffer, self.rawBuffer, sizeof(screen_char_t) * self.rawBufferSize);
     [theCopy setBufferStartOffset:self.bufferStartOffset];
     theCopy->first_entry = first_entry;
-    theCopy->buffer_size = buffer_size;
+    theCopy->buffer_size = self.rawBufferSize;
     size_t cll_size = sizeof(int) * cll_capacity;
     iTermAssignToConstPointer((void **)&theCopy->cumulative_line_lengths, iTermMalloc(cll_size));
 
@@ -563,7 +563,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     if (first_entry != other->first_entry) {
         return NO;
     }
-    if (buffer_size != other->buffer_size) {
+    if (self.rawBufferSize != other.rawBufferSize) {
         return NO;
     }
     if (cll_entries != other->cll_entries) {
@@ -577,7 +577,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
             return NO;
         }
     }
-    return memcmp(self.rawBuffer, other.rawBuffer, sizeof(screen_char_t) * buffer_size) == 0;
+    return memcmp(self.rawBuffer, other.rawBuffer, sizeof(screen_char_t) * self.rawBufferSize) == 0;
 }
 
 - (int)rawSpaceUsed {
@@ -727,7 +727,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     int old_cached = cached_numlines;
     Boolean was_valid = cached_numlines_width != -1;
     cached_numlines_width = -1;
-    int new_cached = [self getNumLinesWithWrapWidth: width];
+    int new_cached = [self getNumLinesWithWrapWidth:width];
     if (was_valid && old_cached != new_cached) {
         NSLog(@"%s: cached_numlines updated to %d, but should be %d!", methodName, old_cached, new_cached);
     }
@@ -763,7 +763,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                     cert:(id<iTermLineBlockMutationCertificate>)cert {
     _numberOfFullLinesCache.clear();
     const int space_used = [self rawSpaceUsed];
-    const int free_space = buffer_size - space_used - start_offset;
+    const int free_space = self.rawBufferSize - space_used - start_offset;
     if (length > free_space) {
         return NO;
     }
@@ -2216,7 +2216,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
 
             if (bytes_to_consume_in_this_line < line_length &&
                 prev + bytes_to_consume_in_this_line + 1 < eol) {
-                assert(prev + bytes_to_consume_in_this_line + 1 < buffer_size);
+                assert(prev + bytes_to_consume_in_this_line + 1 < self.rawBufferSize);
                 if (width > 1 && ScreenCharIsDWC_RIGHT(self.rawBuffer[prev + bytes_to_consume_in_this_line + 1])) {
                     ++dwc_peek;
                 }
@@ -2276,7 +2276,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
               kLineBlockBufferStartOffsetKey: @(self.bufferStartOffset),
               kLineBlockStartOffsetKey: @(start_offset),
               kLineBlockFirstEntryKey: @(first_entry),
-              kLineBlockBufferSizeKey: @(buffer_size),
+              kLineBlockBufferSizeKey: @(self.rawBufferSize),
               kLineBlockCLLKey: [self cumulativeLineLengthsArray],
               kLineBlockIsPartialKey: @(is_partial),
               kLineBlockMetadataKey: [self metadataArray],
@@ -2377,7 +2377,7 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
 
         // Perform copy-on-write copying.
         const ptrdiff_t offset = self.bufferStartOffset;
-        [self setRawBuffer:(screen_char_t *)iTermMemdup(self.rawBuffer, buffer_size, sizeof(screen_char_t))];
+        [self setRawBuffer:(screen_char_t *)iTermMemdup(self.rawBuffer, self.rawBufferSize, sizeof(screen_char_t))];
         [self setBufferStartOffset:offset];
         iTermAssignToConstPointer((void **)&cumulative_line_lengths, iTermMemdup(self->cumulative_line_lengths, cll_capacity, sizeof(int)));
 
