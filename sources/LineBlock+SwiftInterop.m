@@ -17,6 +17,11 @@
     buffer_size = size;
 }
 
+- (void)createCharacterBufferWithUncompressedData:(NSData *)data {
+    [self setRawBuffer:(screen_char_t *)iTermMalloc(buffer_size * sizeof(screen_char_t))];
+    memmove((void *)self.mutableRawBuffer, data.bytes, data.length);
+}
+
 - (void)setRawBuffer:(screen_char_t *)replacement {
     raw_buffer = replacement;
 }

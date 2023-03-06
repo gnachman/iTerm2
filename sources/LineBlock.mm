@@ -364,8 +364,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
             return nil;
         }
         buffer_size = [dictionary[kLineBlockBufferSizeKey] intValue];
-        [self setRawBuffer:(screen_char_t *)iTermMalloc(buffer_size * sizeof(screen_char_t))];
-        memmove((void *)self.mutableRawBuffer, data.bytes, data.length);
+        [self createCharacterBufferWithUncompressedData:data];
         [self setBufferStartOffset:[dictionary[kLineBlockBufferStartOffsetKey] intValue]];
         first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
         if (dictionary[kLineBlockGuid]) {

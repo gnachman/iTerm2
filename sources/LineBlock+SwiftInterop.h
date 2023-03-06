@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface LineBlock (SwiftInterop)
 
 - (void)createCharacterBufferOfSize:(int)size;
+- (void)createCharacterBufferWithUncompressedData:(NSData *)data;
 - (void)setRawBuffer:(screen_char_t *)replacement;
 - (const screen_char_t *)rawBuffer;
 - (screen_char_t *)mutableRawBuffer;
