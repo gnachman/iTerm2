@@ -1259,7 +1259,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return count;
 }
 
-- (BOOL) hasCachedNumLinesForWidth:(int) width {
+- (BOOL)hasCachedNumLinesForWidth:(int)width {
     return cached_numlines_width == width;
 }
 
