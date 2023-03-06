@@ -309,6 +309,39 @@ struct CompressedScreenCharBuffer: Equatable, CustomDebugStringConvertible {
         }
         self.runs = runs
     }
+
+    // This is used to optimize lookups for consecutive indexes by remembering which run the last one was in.
+    private struct LookupCache {
+        /// Desired index (linear, 0 to count-1)
+        var i = 0
+        /// Corresponding run index. Is always valid.
+        var run = 0
+        /// Corresponding offset within that run. Is always valid.
+        var offset = 0
+    }
+
+    private var _lookupCache = LookupCache()
+
+    subscript(_ i: Int) -> screen_char_t {
+        mutating get {
+            if i < _lookupCache.i {
+                _lookupCache = LookupCache()
+            }
+            while _lookupCache.i <= i && _lookupCache.run < runs.count {
+                let offset = i - _lookupCache.offset
+                let run = runs[_lookupCache.run]
+                if run.codes.count > offset {
+                    var c = run.base
+                    c.code = run.codes[offset]
+                    return c
+                }
+                _lookupCache.offset += run.codes.count
+                _lookupCache.run += 1
+            }
+            fatalError("Index \(i) out of bounds with \(_lookupCache.i) entries")
+        }
+    }
+
 }
 
 fileprivate enum Buffer: Equatable {
@@ -728,6 +761,7 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
         return underlying
     }
 
+    @objc
     var isCompressed: Bool {
         switch buffer {
         case .compressed:
@@ -749,6 +783,30 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
             let decompressed = compressedBuffer.decompressed()
             buffer = .uncompressed(decompressed)
             return decompressed
+        }
+    }
+
+    /// Use this only for compressed buffers. It's faster than decompressing and then counting.
+    @objc
+    func numberOfFullLines(offset: Int,
+                           length: Int,
+                           width: Int) -> Int {
+        switch buffer {
+        case .uninitialized:
+            return 0
+        case .uncompressed:
+            fatalError("Not supported")
+        case .compressed(var buffer):
+            var fullLines = 0
+            var i = width
+            while i < length {
+                if ScreenCharIsDWC_RIGHT(buffer[i]) {
+                    i -= 1
+                }
+                fullLines += 1
+                i += width
+            }
+            return fullLines
         }
     }
 }

@@ -685,10 +685,10 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     auto it = insertResult.first;
     auto wasInserted = insertResult.second;
     if (wasInserted) {
-        result = iTermLineBlockNumberOfFullLinesImpl(self.rawBuffer + offset,
-                                                     length,
-                                                     width,
-                                                     _mayHaveDoubleWidthCharacter);
+        result = [self calculateNumberOfFullLinesWithOffset:offset
+                                                     length:length
+                                                      width:width
+                                                 mayHaveDWC:_mayHaveDoubleWidthCharacter];
         it->second = result;
     } else {
         result = it->second;
@@ -703,25 +703,6 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     return [self numberOfFullLinesFromOffset:buffer - self.rawBuffer
                                       length:length
                                        width:width];
-}
-
-extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
-                                                   int length,
-                                                   int width,
-                                                   BOOL mayHaveDoubleWidthCharacter) {
-    if (width > 1 && mayHaveDoubleWidthCharacter) {
-        int fullLines = 0;
-        for (int i = width; i < length; i += width) {
-            if (ScreenCharIsDWC_RIGHT(buffer[i])) {
-                --i;
-            }
-            ++fullLines;
-        }
-        return fullLines;
-    } else {
-        // Need to use max(0) because otherwise we get -1 for length=0 width=1.
-        return MAX(0, length - 1) / width;
-    }
 }
 
 #ifdef TEST_LINEBUFFER_SANITY
@@ -2224,7 +2205,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
             int dwc_peek = 0;
 
             // If the position is the left half of a double width char then include the right half in
-            // the following call to iTermLineBlockNumberOfFullLinesImpl.
+            // the following call to numberOfFullLinesFromOffset:length:width:.
 
             if (bytes_to_consume_in_this_line < line_length &&
                 prev + bytes_to_consume_in_this_line + 1 < eol) {

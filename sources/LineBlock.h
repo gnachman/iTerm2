@@ -197,13 +197,6 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine;
 - (int)numberOfFullLinesFromBuffer:(const screen_char_t *)buffer
                             length:(int)length
                              width:(int)width;
-#if BETA
-int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
-                                        int length,
-                                        int width,
-                                        BOOL mayHaveDoubleWidthCharacter);
-#endif  // BETA
-
 // Finds a where the nth line begins after wrapping and returns its offset from the start of the
 // buffer.
 //

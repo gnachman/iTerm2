@@ -31,6 +31,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Get the size of the raw buffer.
 - (int)rawBufferSize;
 - (void)resizeCharacterBufferTo:(size_t)count;
+- (int)calculateNumberOfFullLinesWithOffset:(int)offset
+                                     length:(int)length
+                                      width:(int)width
+                                 mayHaveDWC:(BOOL)mayHaveDWC;
 
 @end
 

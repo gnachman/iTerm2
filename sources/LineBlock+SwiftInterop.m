@@ -55,4 +55,35 @@
     return [_characterBuffer encodedDataWithMaxSize:maxSize];
 }
 
+- (int)calculateNumberOfFullLinesWithOffset:(int)offset
+                                     length:(int)length
+                                      width:(int)width
+                                 mayHaveDWC:(BOOL)mayHaveDWC {
+    if (width <= 1 || !mayHaveDWC) {
+        // Need to use max(0) because otherwise we get -1 for length=0 width=1.
+        return MAX(0, length - 1) / width;
+    }
+
+    if (_characterBuffer.isCompressed) {
+        return [_characterBuffer numberOfFullLinesWithOffset:offset
+                                                      length:length
+                                                       width:width];
+    } else {
+        return iTermLineBlockNumberOfFullLinesImpl(self.rawBuffer + offset, length, width);
+    }
+}
+
+int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
+                                        int length,
+                                        int width) {
+    int fullLines = 0;
+    for (int i = width; i < length; i += width) {
+        if (ScreenCharIsDWC_RIGHT(buffer[i])) {
+            --i;
+        }
+        ++fullLines;
+    }
+    return fullLines;
+}
+
 @end
