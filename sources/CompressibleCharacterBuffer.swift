@@ -620,6 +620,8 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
         buffer = .uncompressed(UnsafeReallocatableMutableBuffer(data))
 
         super.init()
+
+        Context.instanceForCurrentQueue.insert(self)
     }
 
     @objc(initWithEncodedData:)
@@ -667,6 +669,7 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
 
     @objc
     func resize(_ newSize: Int) {
+        Context.instanceForCurrentQueue.insert(self)
         let oldSize = size
         size = newSize
         switch buffer {
