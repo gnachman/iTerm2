@@ -537,7 +537,7 @@ class CharacterBufferCompressor {
 @objc(iTermCompressibleCharacterBuffer)
 class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
     override var debugDescription: String {
-        return "<\(type(of: self)): \(it_addressString) size=\(size) “\(buffer.shortDebugDescription)”>"
+        return "<\(type(of: self)): \(it_addressString) compressed=\(isCompressed) size=\(size) idle=\(idleTime) “\(buffer.shortDebugDescription)”>"
     }
 
     private var buffer: Buffer = .uninitialized
@@ -726,6 +726,15 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
         let underlying = UnsafeReallocatableMutableBuffer<screen_char_t>(count: size)
         buffer = .uncompressed(underlying)
         return underlying
+    }
+
+    var isCompressed: Bool {
+        switch buffer {
+        case .compressed:
+            return true
+        case .uninitialized, .uncompressed:
+            return false
+        }
     }
 
     private func decompress() -> UnsafeReallocatableMutableBuffer<screen_char_t> {
