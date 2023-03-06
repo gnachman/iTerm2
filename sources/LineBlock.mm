@@ -623,8 +623,7 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     return dest;
 }
 
-- (void)appendToDebugString:(NSMutableString *)s
-{
+- (void)appendToDebugString:(NSMutableString *)s {
     char temp[1000];
     int i;
     int prev;
@@ -722,8 +721,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
 }
 
 #ifdef TEST_LINEBUFFER_SANITY
-- (void) checkAndResetCachedNumlines: (char *) methodName width: (int) width
-{
+- (void) checkAndResetCachedNumlines:(char *)methodName width:(int)width {
     int old_cached = cached_numlines;
     Boolean was_valid = cached_numlines_width != -1;
     cached_numlines_width = -1;
@@ -822,7 +820,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
             metadata_[cll_entries - 1].double_width_characters = nil;
         }
 #ifdef TEST_LINEBUFFER_SANITY
-        [self checkAndResetCachedNumlines:@"appendLine partial case" width: width];
+        [self checkAndResetCachedNumlines:@"appendLine partial case" width:width];
 #endif
     } else {
         // add a new line
@@ -839,7 +837,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
             cached_numlines += marginalLines;
         }
 #ifdef TEST_LINEBUFFER_SANITY
-        [self checkAndResetCachedNumlines:"appendLine normal case" width: width];
+        [self checkAndResetCachedNumlines:"appendLine normal case" width:width];
 #endif
     }
     is_partial = partial;
@@ -1261,7 +1259,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return count;
 }
 
-- (BOOL) hasCachedNumLinesForWidth: (int) width {
+- (BOOL) hasCachedNumLinesForWidth:(int) width {
     return cached_numlines_width == width;
 }
 
@@ -1406,8 +1404,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return YES;
 }
 
-- (BOOL)isEmpty
-{
+- (BOOL)isEmpty {
     return cll_entries == first_entry;
 }
 
@@ -1418,18 +1415,15 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return (cumulative_line_lengths[cll_entries - 1] == self.bufferStartOffset);
 }
 
-- (int)numRawLines
-{
+- (int)numRawLines {
     return cll_entries - first_entry;
 }
 
-- (int)numEntries
-{
+- (int)numEntries {
     return cll_entries;
 }
 
-- (int)startOffset
-{
+- (int)startOffset {
     return self.bufferStartOffset;
 }
 
@@ -1441,8 +1435,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return [self getRawLineLength:index];
 }
 
-- (int)getRawLineLength:(int)linenum
-{
+- (int)getRawLineLength:(int)linenum {
     ITAssertWithMessage(linenum < cll_entries && linenum >= 0, @"Out of bounds");
     int prev;
     if (linenum == 0) {
@@ -1478,8 +1471,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     cached_numlines_width = -1;
 }
 
-- (BOOL)hasPartial
-{
+- (BOOL)hasPartial {
     return is_partial;
 }
 
@@ -1545,7 +1537,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             *charsDropped = self.bufferStartOffset - initialOffset;
 
 #ifdef TEST_LINEBUFFER_SANITY
-            [self checkAndResetCachedNumlines:"dropLines" width: width];
+            [self checkAndResetCachedNumlines:"dropLines" width:width];
 #endif
             iTermLineBlockDidChange(self);
             return orig_n;
@@ -1594,7 +1586,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
         metadata_[first_entry].number_of_wrapped_lines = -1;
     }
 #ifdef TEST_LINEBUFFER_SANITY
-    [self checkAndResetCachedNumlines:"dropLines" width: width];
+    [self checkAndResetCachedNumlines:"dropLines" width:width];
 #endif
     iTermLineBlockDidChange(self);
 }
@@ -1610,8 +1602,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return _progenitor == _owner;
 }
 
-- (int) _lineRawOffset: (int) anIndex
-{
+- (int) _lineRawOffset:(int) anIndex {
     if (anIndex == first_entry) {
         return self.bufferStartOffset;
     } else {
@@ -2095,8 +2086,7 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
     free(charHaystack);
 }
 
-- (int) _lineLength: (int) anIndex
-{
+- (int) _lineLength:(int)anIndex {
     int prev;
     if (anIndex == first_entry) {
         prev = self.bufferStartOffset;
@@ -2106,8 +2096,7 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
     return cumulative_line_lengths[anIndex] - prev;
 }
 
-- (int) _findEntryBeforeOffset: (int) offset
-{
+- (int) _findEntryBeforeOffset:(int)offset {
     if (offset < self.bufferStartOffset) {
         return -1;
     }
@@ -2136,7 +2125,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
     int limit;
     int dir;
     if (options & FindOptBackwards) {
-        entry = [self _findEntryBeforeOffset: offset];
+        entry = [self _findEntryBeforeOffset:offset];
         if (entry == -1) {
             // Maybe there were no lines or offset was <= self.bufferStartOffset.
             return;
@@ -2164,7 +2153,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
                      options:options
                         mode:mode
                         skip:skipped
-                      length:MIN(MAX_SEARCHABLE_LINE_LENGTH, [self _lineLength: entry])
+                      length:MIN(MAX_SEARCHABLE_LINE_LENGTH, [self _lineLength:entry])
              multipleResults:multipleResults
                      results:newResults];
         for (ResultRange* r in newResults) {
