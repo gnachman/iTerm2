@@ -92,6 +92,10 @@ static const NSInteger kUnicodeVersion = 9;
 // Append a block
 - (LineBlock *)_addBlockOfSize:(int)size {
     self.dirty = YES;
+    // Immediately shrink it so that it can compress down to the smallest
+    // possible size. The compression code has no way of knowing how big these
+    // buffers are.
+    [_lineBlocks.lastBlock shrinkToFit];
     LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];
     block.mayHaveDoubleWidthCharacter = self.mayHaveDoubleWidthCharacter;
     [_lineBlocks addBlock:block];
