@@ -541,6 +541,8 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
     }
 
     private var buffer: Buffer = .uninitialized
+    // The actual buffer space when uncompressed will be at least this amount.
+    // See resize() for details.
     @objc private(set) var size: Int
     private var lastAccess = mach_absolute_time()
     lazy var uniqueWeakBox: UniqueWeakBox<CompressibleCharacterBuffer> = {
@@ -672,6 +674,12 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
         Context.instanceForCurrentQueue.insert(self)
         let oldSize = size
         size = newSize
+        if newSize <= oldSize {
+            // If it's getting smaller don't do anything yet. Next time the buffer gets compressed and
+            // then decompressed it will actually shrink. This is done to avoid unnecessary reallocs
+            // since shrinkToFit is called on blocks that might grow right away.
+            return
+        }
         switch buffer {
         case .uninitialized, .compressed:
             break
