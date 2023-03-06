@@ -83,10 +83,13 @@ extension screen_char_t: Equatable {
 }
 
 fileprivate enum Buffer: Equatable {
+    case uninitialized
     case uncompressed(UnsafeReallocatableMutableBuffer<screen_char_t>)
 
     func clone() -> Buffer {
         switch self {
+        case .uninitialized:
+            return self
         case .uncompressed(let buffer):
             return .uncompressed(buffer.clone())
         }
@@ -94,6 +97,8 @@ fileprivate enum Buffer: Equatable {
 
     static func == (lhs: Buffer, rhs: Buffer) -> Bool {
         switch (lhs, rhs) {
+        case (.uninitialized, .uninitialized):
+            return true
         case let (.uncompressed(lvalue), .uncompressed(rvalue)):
             return lvalue == rvalue
         default:
@@ -104,13 +109,12 @@ fileprivate enum Buffer: Equatable {
 
 @objc(iTermCompressibleCharacterBuffer)
 class CompressibleCharacterBuffer: NSObject {
-    private var buffer: Buffer
+    private var buffer: Buffer = .uninitialized
     @objc private(set) var size: Int
 
     @objc
     init(_ size: Int) {
         self.size = size
-        buffer = .uncompressed(UnsafeReallocatableMutableBuffer(count: size))
     }
 
     @objc(initWithUncompressedData:)
@@ -129,6 +133,8 @@ class CompressibleCharacterBuffer: NSObject {
     @objc
     var mutablePointer: UnsafeMutablePointer<screen_char_t> {
         switch buffer {
+        case .uninitialized:
+            return realize().buffer.baseAddress!
         case .uncompressed(let buffer):
             return buffer.buffer.baseAddress!
         }
@@ -144,6 +150,8 @@ class CompressibleCharacterBuffer: NSObject {
         let oldSize = size
         size = newSize
         switch buffer {
+        case .uninitialized:
+            break
         case .uncompressed(let buffer):
             DLog("Resize \(buffer.shortDebugDescription) from \(oldSize) to \(newSize)")
             buffer.resize(to: newSize)
@@ -166,4 +174,11 @@ class CompressibleCharacterBuffer: NSObject {
     static func == (lhs: CompressibleCharacterBuffer, rhs: CompressibleCharacterBuffer) -> Bool {
         return lhs.buffer == rhs.buffer && lhs.size == rhs.size
     }
+
+    private func realize() -> UnsafeReallocatableMutableBuffer<screen_char_t> {
+        let underlying = UnsafeReallocatableMutableBuffer<screen_char_t>(count: size)
+        buffer = .uncompressed(underlying)
+        return underlying
+    }
+
 }
