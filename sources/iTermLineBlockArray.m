@@ -11,6 +11,7 @@
 #import "iTermCumulativeSumCache.h"
 #import "iTermTuple.h"
 #import "LineBlock.h"
+#import "LineBlock+SwiftInterop.h"
 #import "NSArray+iTerm.h"
 
 @interface iTermLineBlockArray()<iTermLineBlockObserver>
@@ -689,6 +690,8 @@
 - (void)addBlock:(LineBlock *)block {
     [self updateCacheIfNeeded];
     [block addObserver:self];
+    // This is temporary until a better compression system is in place.
+    [self.lastBlock compress];
     [_blocks addObject:block];
     if (_blocks.count == 1) {
         _head = block;

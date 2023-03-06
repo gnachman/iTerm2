@@ -201,19 +201,133 @@ struct EfficientEncoder {
     }
 }
 
+struct CompressedScreenCharBuffer: Equatable, CustomDebugStringConvertible {
+    var debugDescription: String {
+        return runs.map { run in
+            run.debugDescription
+        }.joined()
+    }
+
+    var shortDebugDescription: String {
+        let full = debugDescription
+        let maxLength = 16
+        return String(full.prefix(maxLength)) + (full.count > maxLength ? "…" : "")
+    }
+
+    struct Run: Equatable {
+        var base: screen_char_t
+        var codes: [unichar]
+        func expand(to destination: UnsafeMutablePointer<screen_char_t>,
+                    spaceRemaining: Int) {
+            for (i, code) in codes[0..<min(codes.count, spaceRemaining)].enumerated() {
+                var c = base
+                c.code = code
+                destination[i] = c
+            }
+        }
+
+        mutating func encode(_ encoder: inout EfficientEncoder) {
+            encoder.putScalar(base)
+            encoder.putArray(&codes)
+        }
+
+        init(_ efficientDecoder: inout EfficientDecoder) throws {
+            base = try efficientDecoder.getScalar()
+            codes = try efficientDecoder.getArray()
+        }
+
+        init(base: screen_char_t, codes: [unichar]) {
+            self.base = base
+            self.codes = codes
+        }
+
+        var debugDescription: String {
+            if base.image != 0 {
+                return Array(repeating: "🌆", count: codes.count).joined()
+            }
+            return codes.compactMap {
+                var temp = base
+                temp.code = $0
+                return ScreenCharToStr(&temp)
+            }.joined()
+        }
+    }
+
+    // Number of elements when decompressed.
+    let count: Int
+    let runs: [Run]
+
+    func decompressed() -> UnsafeReallocatableMutableBuffer<screen_char_t> {
+        let buffer = UnsafeReallocatableMutableBuffer<screen_char_t>(count: count)
+        var offset = 0
+        for run in runs {
+            precondition(count >= offset)
+            run.expand(to: buffer.buffer.baseAddress!.advanced(by: offset),
+                       spaceRemaining: count - offset)
+            offset += run.codes.count
+        }
+        return buffer
+    }
+
+    init(_ buffer: UnsafeReallocatableMutableBuffer<screen_char_t>, size: Int) {
+        var base: screen_char_t? = nil
+        var runs = [Run]()
+        for c in buffer.buffer[..<size] {
+            if let base,
+               ScreenCharacterAttributesEqual(base, c),
+               base.complexChar == c.complexChar {
+                // Add to an existing run
+                runs[runs.count - 1].codes.append(c.code)
+                continue
+            }
+            // Start a new run
+            runs.append(Run(base: c, codes: [c.code]))
+            base = c
+        }
+        self.runs = runs
+        count = size
+    }
+
+    static func == (lhs: CompressedScreenCharBuffer, rhs: CompressedScreenCharBuffer) -> Bool {
+        return lhs.count == rhs.count && lhs.runs == rhs.runs
+    }
+
+    func encode(_ encoder: inout EfficientEncoder) {
+        encoder.putScalar(count)
+        encoder.putScalar(runs.count)
+        for var run in runs {
+            run.encode(&encoder)
+        }
+    }
+
+    init(_ decoder: inout EfficientDecoder) throws {
+        count = try decoder.getScalar()
+        let numRuns: Int = try decoder.getScalar()
+        var runs = [Run]()
+        for _ in 0..<numRuns {
+            runs.append(try Run(&decoder))
+        }
+        self.runs = runs
+    }
+}
+
 fileprivate enum Buffer: Equatable {
     case uninitialized
     case uncompressed(UnsafeReallocatableMutableBuffer<screen_char_t>)
+    case compressed(CompressedScreenCharBuffer)
 
     private enum EncoderKeys: UInt8 {
         case uninitialized = 0
         case uncompressed = 1
+        case compressed = 2
     }
 
     func clone() -> Buffer {
         switch self {
         case .uninitialized:
             return self
+        case .compressed(let buffer):
+            return .compressed(buffer)
         case .uncompressed(let buffer):
             return .uncompressed(buffer.clone())
         }
@@ -224,6 +338,8 @@ fileprivate enum Buffer: Equatable {
         case (.uninitialized, .uninitialized):
             return true
         case let (.uncompressed(lvalue), .uncompressed(rvalue)):
+            return lvalue == rvalue
+        case let (.compressed(lvalue), .compressed(rvalue)):
             return lvalue == rvalue
         default:
             return false
@@ -237,6 +353,9 @@ fileprivate enum Buffer: Equatable {
         case .uncompressed(let chars):
             encoder.putScalar(EncoderKeys.uncompressed.rawValue)
             chars.encode(&encoder, maxSize: maxSize)
+        case .compressed(let compressed):
+            encoder.putScalar(EncoderKeys.compressed.rawValue)
+            compressed.encode(&encoder)
         }
     }
 
@@ -246,6 +365,8 @@ fileprivate enum Buffer: Equatable {
             self = .uninitialized
         case .uncompressed:
             self = .uncompressed(try UnsafeReallocatableMutableBuffer(&decoder, placeholder: screen_char_t()))
+        case .compressed:
+            self = .compressed(try CompressedScreenCharBuffer(&decoder))
         case .none:
             throw EfficientDecoderError()
         }
@@ -257,6 +378,8 @@ fileprivate enum Buffer: Equatable {
             return "[uninitialized]"
         case .uncompressed(let buffer):
             return buffer.debugDescription
+        case .compressed(let buffer):
+            return buffer.debugDescription
         }
     }
 
@@ -265,6 +388,8 @@ fileprivate enum Buffer: Equatable {
         case .uninitialized:
             return "[uninitialized]"
         case .uncompressed(let buffer):
+            return buffer.shortDebugDescription
+        case .compressed(let buffer):
             return buffer.shortDebugDescription
         }
     }
@@ -320,6 +445,8 @@ class CompressibleCharacterBuffer: NSObject {
         switch buffer {
         case .uninitialized:
             return realize().buffer.baseAddress!
+        case .compressed:
+            return decompress().buffer.baseAddress!
         case .uncompressed(let buffer):
             return buffer.buffer.baseAddress!
         }
@@ -335,7 +462,7 @@ class CompressibleCharacterBuffer: NSObject {
         let oldSize = size
         size = newSize
         switch buffer {
-        case .uninitialized:
+        case .uninitialized, .compressed:
             break
         case .uncompressed(let buffer):
             DLog("Resize \(buffer.shortDebugDescription) from \(oldSize) to \(newSize)")
@@ -360,10 +487,36 @@ class CompressibleCharacterBuffer: NSObject {
         return lhs.buffer == rhs.buffer && lhs.size == rhs.size
     }
 
+    @objc
+    func compress(usedCount: Int) {
+        switch buffer {
+        case .uninitialized, .compressed:
+            return
+        case .uncompressed(let buffer):
+            let compressedBuffer = CompressedScreenCharBuffer(buffer, size: usedCount)
+            self.buffer = .compressed(compressedBuffer)
+            size = compressedBuffer.count
+        }
+    }
+
     private func realize() -> UnsafeReallocatableMutableBuffer<screen_char_t> {
         let underlying = UnsafeReallocatableMutableBuffer<screen_char_t>(count: size)
         buffer = .uncompressed(underlying)
         return underlying
     }
 
+    private func decompress() -> UnsafeReallocatableMutableBuffer<screen_char_t> {
+        switch buffer {
+        case .uninitialized:
+            return realize()
+        case .uncompressed(let buffer):
+            return buffer
+        case .compressed(let compressedBuffer):
+            size = compressedBuffer.count
+            DLog("Decompress \(self.debugDescription) to size \(size)")
+            let decompressed = compressedBuffer.decompressed()
+            buffer = .uncompressed(decompressed)
+            return decompressed
+        }
+    }
 }

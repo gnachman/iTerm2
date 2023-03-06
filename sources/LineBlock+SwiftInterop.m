@@ -55,4 +55,8 @@
     return [_characterBuffer encodedDataWithMaxSize:maxSize];
 }
 
+- (void)compress {
+    [_characterBuffer compressWithUsedCount:[self rawSpaceUsed]];
+}
+
 @end
