@@ -580,12 +580,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return result;
 }
 
-- (ScreenCharArray * _Nonnull)rawLineAtWrappedLine:(int)lineNum width:(int)width {
-    int remainder = 0;
-    LineBlock *block = [_lineBlocks blockContainingLineNumber:lineNum width:width remainder:&remainder];
-    return [block rawLineAtWrappedLineOffset:remainder width:width];
-}
-
 - (NSArray<ScreenCharArray *> *)wrappedLinesFromIndex:(int)lineNum width:(int)width count:(int)count {
     if (count <= 0) {
         return @[];

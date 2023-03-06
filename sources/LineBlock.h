@@ -37,10 +37,9 @@ typedef struct {
 @interface LineBlock : NSObject <NSCopying, iTermUniquelyIdentifiable> {
     // TODO: Remove these
     screen_char_t *raw_buffer;
-    int start_offset;  // distance from raw_buffer to buffer_start
+    int start_offset;  // Index of the first non-dropped screen_char_t in raw_buffer.
     // The number of elements allocated for raw_buffer.
     int buffer_size;
-    screen_char_t *buffer_start;
 }
 
 // Once this is set to true, it stays true. If double width characters are
@@ -87,8 +86,6 @@ typedef struct {
                                         continuation:(screen_char_t *)continuationPtr
                                 isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
                                             metadata:(out iTermImmutableMetadata *)metadataPtr;
-
-- (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 
 // Get the number of lines in this block at a given screen width.
 - (int)getNumLinesWithWrapWidth:(int)width;

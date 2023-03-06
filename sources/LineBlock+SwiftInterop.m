@@ -13,7 +13,6 @@
 
 - (void)createCharacterBufferOfSize:(int)size {
     [self setRawBuffer:(screen_char_t *)iTermMalloc(sizeof(screen_char_t) * size)];
-    buffer_start = self.mutableRawBuffer;
     buffer_size = size;
 }
 

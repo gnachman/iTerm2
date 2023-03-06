@@ -86,8 +86,6 @@ NS_ASSUME_NONNULL_BEGIN
                                            width:(int)width;
 
 
-- (ScreenCharArray * _Nonnull)rawLineAtWrappedLine:(int)lineNum width:(int)width;
-
 // This is the fast way to get a bunch of lines at once.
 - (NSArray<ScreenCharArray *> * _Nonnull)wrappedLinesFromIndex:(int)lineNum
                                                          width:(int)width
