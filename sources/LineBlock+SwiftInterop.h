@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 // failed to compile in hard-to-fix ways.
 @interface LineBlock (SwiftInterop)
 
+- (void)createCharacterBufferOfSize:(int)size;
 - (void)setRawBuffer:(screen_char_t *)replacement;
 - (const screen_char_t *)rawBuffer;
 - (screen_char_t *)mutableRawBuffer;

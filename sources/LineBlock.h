@@ -40,6 +40,7 @@ typedef struct {
     int start_offset;  // distance from raw_buffer to buffer_start
     // The number of elements allocated for raw_buffer.
     int buffer_size;
+    screen_char_t *buffer_start;
 }
 
 // Once this is set to true, it stays true. If double width characters are

@@ -242,11 +242,6 @@ struct iTermNumFullLinesCacheKeyHasher {
 @public
     // The raw lines, end-to-end. There is no delimiter between each line.
 
-    // NOTE: The fields with commented-out const annotations *are* const but I removed them to see
-    // if I was hitting UB. See crash in 3.5.0beta5 1648809545.408710187.txt.
-
-    screen_char_t *buffer_start;
-
     int first_entry;  // first valid cumulative_line_length
 
 
@@ -305,9 +300,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 - (LineBlock *)initWithRawBufferSize:(int)size {
     self = [super init];
     if (self) {
-        [self setRawBuffer:(screen_char_t *)iTermMalloc(sizeof(screen_char_t) * size)];
-        buffer_start = self.mutableRawBuffer;
-        buffer_size = size;
+        [self createCharacterBufferOfSize:size];
         // Allocate enough space for a bunch of 80-character lines. It can grow if needed.
         cll_capacity = 1 + size/80;
         iTermAssignToConstPointer((void **)&cumulative_line_lengths, iTermMalloc(sizeof(int) * cll_capacity));

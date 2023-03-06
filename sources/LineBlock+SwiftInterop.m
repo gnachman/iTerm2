@@ -7,7 +7,15 @@
 
 #import "LineBlock+SwiftInterop.h"
 
+#import "iTermMalloc.h"
+
 @implementation LineBlock (SwiftInterop)
+
+- (void)createCharacterBufferOfSize:(int)size {
+    [self setRawBuffer:(screen_char_t *)iTermMalloc(sizeof(screen_char_t) * size)];
+    buffer_start = self.mutableRawBuffer;
+    buffer_size = size;
+}
 
 - (void)setRawBuffer:(screen_char_t *)replacement {
     raw_buffer = replacement;
