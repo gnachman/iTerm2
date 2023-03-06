@@ -366,8 +366,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         buffer_size = [dictionary[kLineBlockBufferSizeKey] intValue];
         [self setRawBuffer:(screen_char_t *)iTermMalloc(buffer_size * sizeof(screen_char_t))];
         memmove((void *)self.mutableRawBuffer, data.bytes, data.length);
-        buffer_start = self.mutableRawBuffer + [dictionary[kLineBlockBufferStartOffsetKey] intValue];
-        start_offset = [dictionary[kLineBlockStartOffsetKey] intValue];
+        [self setBufferStartOffset:[dictionary[kLineBlockBufferStartOffsetKey] intValue]];
         first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
         if (dictionary[kLineBlockGuid]) {
             _guid = [dictionary[kLineBlockGuid] copy];
@@ -466,6 +465,15 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     }
 }
 
+- (void)setBufferStartOffset:(ptrdiff_t)offset {
+    start_offset = offset;
+    buffer_start = self.mutableRawBuffer + offset;
+}
+
+- (int)bufferStartOffset {
+    return start_offset;
+}
+
 - (LineBlock *)copyWithZone:(NSZone *)zone {
     return [self copyDeep:YES];
 }
@@ -498,8 +506,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     LineBlock *theCopy = [[LineBlock alloc] init];
     if (!deep) {
         [theCopy setRawBuffer:self.mutableRawBuffer];
-        theCopy->buffer_start = buffer_start;
-        theCopy->start_offset = start_offset;
+        [theCopy setBufferStartOffset:self.bufferStartOffset];
         theCopy->first_entry = first_entry;
         theCopy->buffer_size = buffer_size;
         iTermAssignToConstPointer((void **)&theCopy->cumulative_line_lengths, (void *)cumulative_line_lengths);
@@ -521,8 +528,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     [theCopy setRawBuffer:(screen_char_t *)iTermMalloc(sizeof(screen_char_t) * buffer_size)];
     memmove((void *)theCopy.mutableRawBuffer, self.rawBuffer, sizeof(screen_char_t) * buffer_size);
     size_t bufferStartOffset = (buffer_start - self.rawBuffer);
-    theCopy->buffer_start = theCopy.mutableRawBuffer + bufferStartOffset;
-    theCopy->start_offset = start_offset;
+    [theCopy setBufferStartOffset:bufferStartOffset];
     theCopy->first_entry = first_entry;
     theCopy->buffer_size = buffer_size;
     size_t cll_size = sizeof(int) * cll_capacity;
@@ -1299,8 +1305,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     is_partial = NO;
     if (cll_entries == first_entry) {
         // Popped the last line. Reset everything.
-        buffer_start = self.mutableRawBuffer;
-        start_offset = 0;
+        [self setBufferStartOffset:0];
         first_entry = 0;
         cll_entries = 0;
     }
@@ -1408,8 +1413,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
     if (cll_entries == first_entry) {
         // Popped the last line. Reset everything.
-        buffer_start = self.mutableRawBuffer;
-        start_offset = 0;
+        [self setBufferStartOffset:0];
         first_entry = 0;
         cll_entries = 0;
     }
@@ -1548,8 +1552,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
             } else {
                 cached_numlines -= orig_n;
             }
-            buffer_start += prev + offset;
-            start_offset = buffer_start - self.rawBuffer;
+            [self setBufferStartOffset:self.bufferStartOffset + prev + offset];
             first_entry = i;
             metadata->number_of_wrapped_lines = 0;
             if (gEnableDoubleWidthCharacterLineCache) {
@@ -1571,8 +1574,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     // Consumed the whole buffer.
     cached_numlines_width = -1;
     cll_entries = 0;
-    buffer_start = self.mutableRawBuffer;
-    start_offset = 0;
+    [self setBufferStartOffset:0];
     first_entry = 0;
     *charsDropped = [self rawSpaceUsed];
     iTermLineBlockDidChange(self);
@@ -1591,8 +1593,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     }
 
     DLog(@"start_offset %@ -> %@", @(start_offset), @(other->start_offset));
-    start_offset = other->start_offset;
-    buffer_start = self.mutableRawBuffer + start_offset;
+    [self setBufferStartOffset:other.bufferStartOffset];
     cached_numlines_width = -1;
 
     while (first_entry < other->first_entry && first_entry < cll_capacity) {
@@ -2395,7 +2396,7 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
         // Perform copy-on-write copying.
         const ptrdiff_t offset = buffer_start - self.rawBuffer;
         [self setRawBuffer:(screen_char_t *)iTermMemdup(self.rawBuffer, buffer_size, sizeof(screen_char_t))];
-        buffer_start = self.mutableRawBuffer + offset;
+        [self setBufferStartOffset:offset];
         iTermAssignToConstPointer((void **)&cumulative_line_lengths, iTermMemdup(self->cumulative_line_lengths, cll_capacity, sizeof(int)));
 
         if (self.owner != nil) {
