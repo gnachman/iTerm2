@@ -245,7 +245,7 @@ struct iTermNumFullLinesCacheKeyHasher {
     int first_entry;  // first valid cumulative_line_length
 
 
-    // There will be as many entries in this array as there are lines in raw_buffer.
+    // There will be as many entries in this array as there are lines in _rawBuffer.
     // The ith value is the length of the ith line plus the value of
     // cumulative_line_lengths[i-1] for i>0 or 0 for i==0.
 //    const int * const cumulative_line_lengths;
@@ -268,7 +268,7 @@ struct iTermNumFullLinesCacheKeyHasher {
     // cached_numlines is correct.
     int cached_numlines_width;
 
-    // Keys are (offset from raw_buffer, length to examine, width).
+    // Keys are (offset from _rawBuffer, length to examine, width).
     std::unordered_map<iTermNumFullLinesCacheKey, int, iTermNumFullLinesCacheKeyHasher> _numberOfFullLinesCache;
 
     NSMutableArray<iTermWeakBox<id<iTermLineBlockObserver>> *> *_observers;
@@ -363,7 +363,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         if (!data) {
             return nil;
         }
-        buffer_size = [dictionary[kLineBlockBufferSizeKey] intValue];
+        _bufferSize = [dictionary[kLineBlockBufferSizeKey] intValue];
         [self createCharacterBufferWithUncompressedData:data];
         [self setBufferStartOffset:[dictionary[kLineBlockBufferStartOffsetKey] intValue]];
         first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
@@ -470,11 +470,11 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
 }
 
 - (void)setBufferStartOffset:(ptrdiff_t)offset {
-    start_offset = offset;
+    _startOffset = offset;
 }
 
 - (int)bufferStartOffset {
-    return start_offset;
+    return _startOffset;
 }
 
 - (LineBlock *)copyWithZone:(NSZone *)zone {
@@ -511,7 +511,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
         [theCopy setRawBuffer:self.mutableRawBuffer];
         [theCopy setBufferStartOffset:self.bufferStartOffset];
         theCopy->first_entry = first_entry;
-        theCopy->buffer_size = self.rawBufferSize;
+        theCopy->_bufferSize = self.rawBufferSize;
         iTermAssignToConstPointer((void **)&theCopy->cumulative_line_lengths, (void *)cumulative_line_lengths);
         [self copyMetadataTo:theCopy];
         theCopy->cll_capacity = cll_capacity;
@@ -532,7 +532,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     memmove((void *)theCopy.mutableRawBuffer, self.rawBuffer, sizeof(screen_char_t) * self.rawBufferSize);
     [theCopy setBufferStartOffset:self.bufferStartOffset];
     theCopy->first_entry = first_entry;
-    theCopy->buffer_size = self.rawBufferSize;
+    theCopy->_bufferSize = self.rawBufferSize;
     size_t cll_size = sizeof(int) * cll_capacity;
     iTermAssignToConstPointer((void **)&theCopy->cumulative_line_lengths, iTermMalloc(cll_size));
 
@@ -1467,7 +1467,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     ITAssertWithMessage(capacity >= [self rawSpaceUsed], @"Truncating used space");
     capacity = MAX(1, capacity);
     [cert setRawBufferCapacity:capacity];
-    buffer_size = capacity;
+    _bufferSize = capacity;
     cached_numlines_width = -1;
 }
 

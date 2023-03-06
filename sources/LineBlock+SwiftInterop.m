@@ -13,32 +13,32 @@
 
 - (void)createCharacterBufferOfSize:(int)size {
     [self setRawBuffer:(screen_char_t *)iTermMalloc(sizeof(screen_char_t) * size)];
-    buffer_size = size;
+    _bufferSize = size;
 }
 
 - (void)createCharacterBufferWithUncompressedData:(NSData *)data {
-    [self setRawBuffer:(screen_char_t *)iTermMalloc(buffer_size * sizeof(screen_char_t))];
+    [self setRawBuffer:(screen_char_t *)iTermMalloc(_bufferSize * sizeof(screen_char_t))];
     memmove((void *)self.mutableRawBuffer, data.bytes, data.length);
 }
 
 - (void)setRawBuffer:(screen_char_t *)replacement {
-    raw_buffer = replacement;
+    _rawBuffer = replacement;
 }
 
 - (const screen_char_t *)rawBuffer {
-    return raw_buffer;
+    return _rawBuffer;
 }
 
 - (screen_char_t *)mutableRawBuffer {
-    return raw_buffer;
+    return _rawBuffer;
 }
 
 - (const screen_char_t *)bufferStart {
-    return raw_buffer + start_offset;
+    return _rawBuffer + _startOffset;
 }
 
 - (int)rawBufferSize {
-    return buffer_size;
+    return _bufferSize;
 }
 
 @end

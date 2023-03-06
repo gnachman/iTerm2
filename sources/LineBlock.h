@@ -36,10 +36,10 @@ typedef struct {
 // in a buffer.
 @interface LineBlock : NSObject <NSCopying, iTermUniquelyIdentifiable> {
     // TODO: Remove these
-    screen_char_t *raw_buffer;
-    int start_offset;  // Index of the first non-dropped screen_char_t in raw_buffer.
-    // The number of elements allocated for raw_buffer.
-    int buffer_size;
+    screen_char_t *_rawBuffer;
+    int _startOffset;  // Index of the first non-dropped screen_char_t in _rawBuffer.
+    // The number of elements allocated for _rawBuffer.
+    int _bufferSize;
 }
 
 // Once this is set to true, it stays true. If double width characters are
