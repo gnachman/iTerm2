@@ -34,7 +34,13 @@ typedef struct {
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
-@interface LineBlock : NSObject <NSCopying, iTermUniquelyIdentifiable>
+@interface LineBlock : NSObject <NSCopying, iTermUniquelyIdentifiable> {
+    // TODO: Remove these
+    screen_char_t *raw_buffer;
+    int start_offset;  // distance from raw_buffer to buffer_start
+    // The number of elements allocated for raw_buffer.
+    int buffer_size;
+}
 
 // Once this is set to true, it stays true. If double width characters are
 // possibly present then a slower algorithm is used to count the number of
@@ -116,9 +122,6 @@ typedef struct {
 
 // Grow the buffer.
 - (void)changeBufferSize:(int)capacity;
-
-// Get the size of the raw buffer.
-- (int)rawBufferSize;
 
 // Return the number of raw (unwrapped) lines
 - (int)numRawLines;

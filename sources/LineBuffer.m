@@ -32,6 +32,7 @@
 #import "BackgroundThread.h"
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "LineBlock+SwiftInterop.h"
 #import "iTermLineBlockArray.h"
 #import "iTermMalloc.h"
 #import "iTermOrderedDictionary.h"
