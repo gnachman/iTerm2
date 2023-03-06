@@ -16,6 +16,10 @@
 
 @implementation SearchTests
 
+- (void)setUp {
+    [iTermCharacterBufferContext ensureInstanceForQueue:dispatch_get_main_queue()];
+}
+
 // `end` is inclusive.
 - (ResultRange *)rangeFrom:(int)start to:(int)end {
     ResultRange *rr = [[ResultRange alloc] init];
