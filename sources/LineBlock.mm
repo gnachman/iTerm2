@@ -245,7 +245,7 @@ struct iTermNumFullLinesCacheKeyHasher {
     int first_entry;  // first valid cumulative_line_length
 
 
-    // There will be as many entries in this array as there are lines in _rawBuffer.
+    // There will be as many entries in this array as there are lines in _characterBuffer.
     // The ith value is the length of the ith line plus the value of
     // cumulative_line_lengths[i-1] for i>0 or 0 for i==0.
 //    const int * const cumulative_line_lengths;
@@ -268,7 +268,7 @@ struct iTermNumFullLinesCacheKeyHasher {
     // cached_numlines is correct.
     int cached_numlines_width;
 
-    // Keys are (offset from _rawBuffer, length to examine, width).
+    // Keys are (offset from _characterBuffer.pointer, length to examine, width).
     std::unordered_map<iTermNumFullLinesCacheKey, int, iTermNumFullLinesCacheKeyHasher> _numberOfFullLinesCache;
 
     NSMutableArray<iTermWeakBox<id<iTermLineBlockObserver>> *> *_observers;
@@ -363,7 +363,6 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         if (!data) {
             return nil;
         }
-        _bufferSize = [dictionary[kLineBlockBufferSizeKey] intValue];
         [self createCharacterBufferWithUncompressedData:data];
         [self setBufferStartOffset:[dictionary[kLineBlockBufferStartOffsetKey] intValue]];
         first_entry = [dictionary[kLineBlockFirstEntryKey] intValue];
@@ -417,6 +416,7 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
         }
 
         cll_entries = cll_capacity;
+
         is_partial = [dictionary[kLineBlockIsPartialKey] boolValue];
         _mayHaveDoubleWidthCharacter = [dictionary[kLineBlockMayHaveDWCKey] boolValue];
     }
@@ -457,9 +457,6 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     }
 
     if (shouldFreeBuffers) {
-        if (self.rawBuffer) {
-            free((void *)self.rawBuffer);
-        }
         if (cumulative_line_lengths) {
             free((void *)cumulative_line_lengths);
         }
@@ -508,10 +505,9 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
 - (LineBlock *)copyDeep:(BOOL)deep {
     LineBlock *theCopy = [[LineBlock alloc] init];
     if (!deep) {
-        [theCopy setRawBuffer:self.mutableRawBuffer];
+        theCopy->_characterBuffer = _characterBuffer;
         [theCopy setBufferStartOffset:self.bufferStartOffset];
         theCopy->first_entry = first_entry;
-        theCopy->_bufferSize = self.rawBufferSize;
         iTermAssignToConstPointer((void **)&theCopy->cumulative_line_lengths, (void *)cumulative_line_lengths);
         [self copyMetadataTo:theCopy];
         theCopy->cll_capacity = cll_capacity;
@@ -528,11 +524,10 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
 
         return theCopy;
     }
-    [theCopy setRawBuffer:(screen_char_t *)iTermMalloc(sizeof(screen_char_t) * self.rawBufferSize)];
-    memmove((void *)theCopy.mutableRawBuffer, self.rawBuffer, sizeof(screen_char_t) * self.rawBufferSize);
+
+    theCopy->_characterBuffer = [self copyOfCharacterBuffer];
     [theCopy setBufferStartOffset:self.bufferStartOffset];
     theCopy->first_entry = first_entry;
-    theCopy->_bufferSize = self.rawBufferSize;
     size_t cll_size = sizeof(int) * cll_capacity;
     iTermAssignToConstPointer((void **)&theCopy->cumulative_line_lengths, iTermMalloc(cll_size));
 
@@ -577,7 +572,7 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
             return NO;
         }
     }
-    return memcmp(self.rawBuffer, other.rawBuffer, sizeof(screen_char_t) * self.rawBufferSize) == 0;
+    return [self characterBufferIsEqualTo:other->_characterBuffer];
 }
 
 - (int)rawSpaceUsed {
@@ -752,7 +747,7 @@ extern "C" int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     return number.boolValue;
 }
 
-- (BOOL)reallyAppendLine:(const screen_char_t*)buffer
+- (BOOL)reallyAppendLine:(const screen_char_t *)buffer
                   length:(int)length
                  partial:(BOOL)partial
                    width:(int)width
@@ -1218,6 +1213,26 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                 lineOffset:NULL];
 }
 
+- (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width {
+    int temp = lineNum;
+    const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&temp];
+    if (!location.found) {
+        return NULL;
+    }
+    const screen_char_t *buffer = self.bufferStart + location.prev;
+    const int length = location.length;
+    screen_char_t continuation = { 0 };
+    if (is_partial && location.index + 1 == cll_entries) {
+        continuation.code = EOL_SOFT;
+    } else {
+        continuation.code = EOL_HARD;
+    }
+    return [[ScreenCharArray alloc] initWithLine:buffer
+                                          length:length
+                                    continuation:continuation];
+}
+
+
 - (iTermImmutableMetadata)metadataForRawLineAtWrappedLineOffset:(int)lineNum width:(int)width {
     int temp = lineNum;
     const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&temp];
@@ -1467,7 +1482,6 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     ITAssertWithMessage(capacity >= [self rawSpaceUsed], @"Truncating used space");
     capacity = MAX(1, capacity);
     [cert setRawBufferCapacity:capacity];
-    _bufferSize = capacity;
     cached_numlines_width = -1;
 }
 
@@ -2366,7 +2380,7 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
 
         // Perform copy-on-write copying.
         const ptrdiff_t offset = self.bufferStartOffset;
-        [self setRawBuffer:(screen_char_t *)iTermMemdup(self.rawBuffer, self.rawBufferSize, sizeof(screen_char_t))];
+        _characterBuffer = [self copyOfCharacterBuffer];
         [self setBufferStartOffset:offset];
         iTermAssignToConstPointer((void **)&cumulative_line_lengths, iTermMemdup(self->cumulative_line_lengths, cll_capacity, sizeof(int)));
 
@@ -2486,12 +2500,12 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
 
 - (screen_char_t *)mutableRawBuffer {
     assert(_valid);
-    return (screen_char_t *)_lineBlock.mutableRawBuffer;
+    return _lineBlock.mutableRawBuffer;
 }
 
 - (void)setRawBufferCapacity:(size_t)count {
     assert(_valid);
-    [_lineBlock setRawBuffer:(screen_char_t *)iTermRealloc((void *)_lineBlock.mutableRawBuffer, count, sizeof(screen_char_t))];
+    [_lineBlock resizeCharacterBufferTo:count];
 }
 
 - (void)setCumulativeLineLengthsCapacity:(int)capacity {

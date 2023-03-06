@@ -7,6 +7,8 @@
 
 #import "LineBlock.h"
 
+@class iTermCompressibleCharacterBuffer;
+
 NS_ASSUME_NONNULL_BEGIN
 
 // This stupid file exists because Objective-C++ cannot coexist with *-Swift.h. I tried to make it
@@ -16,14 +18,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)createCharacterBufferOfSize:(int)size;
 - (void)createCharacterBufferWithUncompressedData:(NSData *)data;
-- (void)setRawBuffer:(screen_char_t *)replacement;
+- (BOOL)characterBufferIsEqualTo:(iTermCompressibleCharacterBuffer *)other;
 - (const screen_char_t *)rawBuffer;
 - (screen_char_t *)mutableRawBuffer;
 - (const screen_char_t *)bufferStart;
+- (iTermCompressibleCharacterBuffer *)copyOfCharacterBuffer;
 
 // Get the size of the raw buffer.
 - (int)rawBufferSize;
-
+- (void)resizeCharacterBufferTo:(size_t)count;
 
 @end
 

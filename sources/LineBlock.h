@@ -27,6 +27,7 @@ typedef struct {
 } LineBlockMetadata;
 
 @class LineBlock;
+@class iTermCompressibleCharacterBuffer;
 
 @protocol iTermLineBlockObserver<NSObject>
 - (void)lineBlockDidChange:(LineBlock *)lineBlock;
@@ -36,10 +37,8 @@ typedef struct {
 // in a buffer.
 @interface LineBlock : NSObject <NSCopying, iTermUniquelyIdentifiable> {
     // TODO: Remove these
-    screen_char_t *_rawBuffer;
+    iTermCompressibleCharacterBuffer *_characterBuffer;
     int _startOffset;  // Index of the first non-dropped screen_char_t in _rawBuffer.
-    // The number of elements allocated for _rawBuffer.
-    int _bufferSize;
 }
 
 // Once this is set to true, it stays true. If double width characters are
@@ -86,6 +85,8 @@ typedef struct {
                                         continuation:(screen_char_t *)continuationPtr
                                 isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
                                             metadata:(out iTermImmutableMetadata *)metadataPtr;
+
+- (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 
 // Get the number of lines in this block at a given screen width.
 - (int)getNumLinesWithWrapWidth:(int)width;

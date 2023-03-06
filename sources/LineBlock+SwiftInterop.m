@@ -6,39 +6,44 @@
 //
 
 #import "LineBlock+SwiftInterop.h"
-
-#import "iTermMalloc.h"
+#import "iTerm2SharedARC-Swift.h"
 
 @implementation LineBlock (SwiftInterop)
 
 - (void)createCharacterBufferOfSize:(int)size {
-    [self setRawBuffer:(screen_char_t *)iTermMalloc(sizeof(screen_char_t) * size)];
-    _bufferSize = size;
+    _characterBuffer = [[iTermCompressibleCharacterBuffer alloc] init:size];
 }
 
 - (void)createCharacterBufferWithUncompressedData:(NSData *)data {
-    [self setRawBuffer:(screen_char_t *)iTermMalloc(_bufferSize * sizeof(screen_char_t))];
-    memmove((void *)self.mutableRawBuffer, data.bytes, data.length);
-}
-
-- (void)setRawBuffer:(screen_char_t *)replacement {
-    _rawBuffer = replacement;
+    _characterBuffer = [[iTermCompressibleCharacterBuffer alloc] initWithUncompressedData:data];
 }
 
 - (const screen_char_t *)rawBuffer {
-    return _rawBuffer;
+    return _characterBuffer.pointer;
 }
 
 - (screen_char_t *)mutableRawBuffer {
-    return _rawBuffer;
+    return _characterBuffer.mutablePointer;
 }
 
 - (const screen_char_t *)bufferStart {
-    return _rawBuffer + _startOffset;
+    return _characterBuffer.pointer + _startOffset;
+}
+
+- (iTermCompressibleCharacterBuffer *)copyOfCharacterBuffer {
+    return [_characterBuffer clone];
+}
+
+- (BOOL)characterBufferIsEqualTo:(iTermCompressibleCharacterBuffer *)other {
+    return [_characterBuffer deepIsEqual:other];
 }
 
 - (int)rawBufferSize {
-    return _bufferSize;
+    return _characterBuffer.size;
+}
+
+- (void)resizeCharacterBufferTo:(size_t)count {
+    [_characterBuffer resize:count];
 }
 
 @end
