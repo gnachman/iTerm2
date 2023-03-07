@@ -87,7 +87,9 @@ typedef struct {
                                             metadata:(out iTermImmutableMetadata *)metadataPtr;
 
 - (ScreenCharArray *)screenCharArrayForWrappedLineWithWrapWidth:(int)width
-                                                        lineNum:(int)lineNum;
+                                                        lineNum:(int)lineNum
+                                                       paddedTo:(int)paddedSize
+                                                 eligibleForDWC:(BOOL)eligibleForDWC;
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width;
 

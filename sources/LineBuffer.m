@@ -547,7 +547,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 }
 
 - (ScreenCharArray *)screenCharArrayForLine:(int)line
-                                      width:(int)width {
+                                      width:(int)width
+                                   paddedTo:(int)paddedSize
+                             eligibleForDWC:(BOOL)eligibleForDWC {
     int remainder = 0;
     LineBlock *block = [_lineBlocks blockContainingLineNumber:line width:width remainder:&remainder];
     if (!block) {
@@ -555,7 +557,10 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                             [[[[_lineBlocks dumpForCrashlog] dataUsingEncoding:NSUTF8StringEncoding] it_compressedData] it_hexEncoded]);
         return nil;
     }
-    return [block screenCharArrayForWrappedLineWithWrapWidth:width lineNum:remainder];
+    return [block screenCharArrayForWrappedLineWithWrapWidth:width
+                                                     lineNum:remainder
+                                                    paddedTo:paddedSize
+                                              eligibleForDWC:eligibleForDWC];
 }
 
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum

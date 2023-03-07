@@ -1218,7 +1218,9 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 }
 
 - (ScreenCharArray *)screenCharArrayForWrappedLineWithWrapWidth:(int)width
-                                                        lineNum:(int)lineNum {
+                                                        lineNum:(int)lineNum
+                                                       paddedTo:(int)paddedSize
+                                                 eligibleForDWC:(BOOL)eligibleForDWC {
     int mutableLineNum = lineNum;
     const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&mutableLineNum];
     if (!location.found) {
@@ -1241,10 +1243,11 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                   isStartOfWrappedLine:NULL
                                               metadata:&metadata
                                             lineOffset:NULL];
-    return [[ScreenCharArray alloc] initWithLine:self.bufferStart + offset
-                                          length:length
-                                        metadata:metadata
-                                    continuation:continuation];
+    ScreenCharArray *sca = [[ScreenCharArray alloc] initWithLine:self.bufferStart + offset
+                                                          length:length
+                                                        metadata:metadata
+                                                    continuation:continuation];
+    return [sca paddedToLength:paddedSize eligibleForDWC:eligibleForDWC];
 }
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width {
