@@ -1217,6 +1217,36 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return self.bufferStart + offset;
 }
 
+- (ScreenCharArray *)screenCharArrayForWrappedLineWithWrapWidth:(int)width
+                                                        lineNum:(int)lineNum {
+    int mutableLineNum = lineNum;
+    const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&mutableLineNum];
+    if (!location.found) {
+        return NULL;
+    }
+    // We found the raw line that includes the wrapped line we're searching for.
+    // eat up *lineNum many width-sized wrapped lines from this start of the current full line
+    iTermImmutableMetadata metadata = iTermMetadataMakeImmutable(iTermMetadataDefault());
+    int length = 0;
+    screen_char_t continuation = { 0 };
+    int eol = 0;
+    const int offset = [self _wrappedLineWithWrapWidth:width
+                                              location:location
+                                           bufferStart:self.bufferStart
+                                               lineNum:&mutableLineNum
+                                            lineLength:&length
+                                     includesEndOfLine:&eol
+                                               yOffset:NULL
+                                          continuation:&continuation
+                                  isStartOfWrappedLine:NULL
+                                              metadata:&metadata
+                                            lineOffset:NULL];
+    return [[ScreenCharArray alloc] initWithLine:self.bufferStart + offset
+                                          length:length
+                                        metadata:metadata
+                                    continuation:continuation];
+}
+
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width {
     int temp = lineNum;
     const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&temp];
