@@ -1048,7 +1048,6 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 - (int)cacheAwareOffsetOfWrappedLineInBuffer:(LineBlockLocation)location
                            wrappedLineNumber:(int)lineNum
                                        width:(int)width {
-    int offset;
     if (gEnableDoubleWidthCharacterLineCache) {
         return [self offsetOfWrappedLineInBufferAtOffset:location.prev
                                        wrappedLineNumber:lineNum
