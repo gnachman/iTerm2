@@ -347,14 +347,9 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     if (_data != nil) {
         return;
     }
-    _data = [NSData dataWithBytes:_line length:(_length + 1) * sizeof(screen_char_t)];
+    _data = [NSData dataWithBytes:_line length:_length * sizeof(screen_char_t)];
     _line = _data.bytes;
-
-    // This shouldn't be necessary but old code used line[width] for the continuation mark and I
-    // doubt I'll ever know for sure if it has all been eliminated :(
-    const screen_char_t continuation = self.continuation;
-    screen_char_t *dest = (screen_char_t *)_data.bytes;
-    memmove(&dest[_length], &continuation, sizeof(continuation));
+    _shouldFreeOnRelease = NO;
 }
 
 @end
