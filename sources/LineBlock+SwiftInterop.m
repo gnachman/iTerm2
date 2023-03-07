@@ -110,4 +110,12 @@ int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                                               paddedToLength:paddedSize
                                               eligibleForDWC:eligibleForDWC];
 }
+
+- (NSString *)stringFromOffset:(int)offset
+                        length:(int)length
+                  backingStore:(unichar **)backingStorePtr
+                        deltas:(int **)deltasPtr {
+    return [_characterBuffer stringFromOffset:offset length:length backingStore:backingStorePtr deltas:deltasPtr];
+}
+
 @end

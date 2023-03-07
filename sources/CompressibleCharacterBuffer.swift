@@ -360,8 +360,69 @@ struct CompressedScreenCharBuffer: Equatable, CustomDebugStringConvertible {
             return sca
         }
     }
+
+    mutating func string(from offset: Int,
+                         length: Int,
+                         backingStore backingStorePtr: UnsafeMutablePointer<UnsafeMutablePointer<unichar>?>,
+                         deltas deltasPtr: UnsafeMutablePointer<UnsafeMutablePointer<Int32>?>) -> String? {
+        var capacity = length + Int(kMaxParts) + 1
+        var rawChars = iTermMalloc(MemoryLayout<unichar>.stride * capacity)
+        var chars = rawChars.assumingMemoryBound(to: unichar.self)
+
+        var rawDeltas = iTermMalloc(MemoryLayout<Int32>.stride * capacity)
+        var deltas = rawDeltas.assumingMemoryBound(to: Int32.self)
+
+        var o = 0
+        var delta = Int32(0)
+        for i in 0..<length {
+            var sct = self[i + offset]
+            if !sct.isRegularCharacter {
+                delta += 1
+                continue
+            }
+            if o + Int(kMaxParts) + 1 >= capacity {
+                capacity *= 2
+
+                rawChars = iTermRealloc(rawChars, capacity, MemoryLayout<unichar>.stride)
+                chars = rawChars.assumingMemoryBound(to: unichar.self)
+
+                rawDeltas = iTermRealloc(rawDeltas, capacity, MemoryLayout<Int32>.stride)
+                deltas = rawDeltas.assumingMemoryBound(to: Int32.self)
+            }
+
+            let len = Int(ExpandScreenChar(&sct, &chars[o]))
+            delta += 1
+            for j in 0..<len {
+                delta -= 1
+                deltas[o + j] = delta
+            }
+            o += len
+        }
+        deltas[o] = delta
+        backingStorePtr.pointee = chars
+        deltasPtr.pointee = deltas
+        return String(data: Data(bytesNoCopy: rawChars,
+                                 count: MemoryLayout<unichar>.stride * o,
+                                 deallocator: .none),
+                      encoding: .utf16LittleEndian)
+    }
 }
 
+extension screen_char_t {
+    var isRegularCharacter: Bool {
+        if image != 0 {
+            return false
+        }
+        if complexChar != 0 {
+            return true
+        }
+        let privateRange = unichar(ITERM2_PRIVATE_BEGIN)...unichar(ITERM2_PRIVATE_END)
+        if privateRange.contains(code) {
+            return false
+        }
+        return true
+    }
+}
 fileprivate enum Buffer: Equatable {
     case uninitialized
     case uncompressed(UnsafeReallocatableMutableBuffer<screen_char_t>)
@@ -881,6 +942,26 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
                                                   eligibleForDWC: eligibleForDWC)
 
             return sca
+        }
+    }
+
+    @objc(stringFromOffset:length:backingStore:deltas:)
+    func string(from offset: Int,
+                length: Int,
+                backingStore backingStorePtr: UnsafeMutablePointer<UnsafeMutablePointer<unichar>?>,
+                deltas deltasPtr: UnsafeMutablePointer<UnsafeMutablePointer<Int32>?>) -> String? {
+        switch buffer {
+        case .uninitialized:
+            _ = realize()
+            return string(from: offset, length: length, backingStore: backingStorePtr, deltas: deltasPtr)
+        case .uncompressed(let innerBuffer):
+            return ScreenCharArrayToString(innerBuffer.buffer.baseAddress!.advanced(by: offset),
+                                           0,
+                                           Int32(length),
+                                           backingStorePtr,
+                                           deltasPtr)
+        case .compressed(var innerBuffer):
+            return innerBuffer.string(from: offset, length: length, backingStore: backingStorePtr, deltas: deltasPtr)
         }
     }
 }

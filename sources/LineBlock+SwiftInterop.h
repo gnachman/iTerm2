@@ -43,6 +43,12 @@ NS_ASSUME_NONNULL_BEGIN
                                         continuation:(screen_char_t)continuation
                                       paddedToLength:(NSInteger)paddedSize
                                       eligibleForDWC:(BOOL)eligibleForDWC;
+
+- (NSString *)stringFromOffset:(int)offset
+                        length:(int)length
+                  backingStore:(unichar **)backingStorePtr
+                        deltas:(int **)deltasPtr;
+
 @end
 
 NS_ASSUME_NONNULL_END

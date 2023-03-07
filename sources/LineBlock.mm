@@ -1678,7 +1678,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return _progenitor == _owner;
 }
 
-- (int) _lineRawOffset:(int) anIndex {
+- (int)_lineRawOffset:(int) anIndex {
     if (anIndex == first_entry) {
         return self.bufferStartOffset;
     } else {
@@ -1754,7 +1754,6 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
 // Fills in *resultLength with the number of screen_char_t's the result spans.
 // Fills in *rangeOut with the range of haystack/charHaystack where the result was found.
 static int CoreSearch(NSString *needle,
-                      const screen_char_t *rawline,
                       int raw_line_length,
                       int start,
                       int end,
@@ -1976,7 +1975,6 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
                 length:(int)raw_line_length
        multipleResults:(BOOL)multipleResults
                results:(NSMutableArray *)results {
-    const screen_char_t *rawline = self.rawBuffer + [self _lineRawOffset:entry];
     if (skip > raw_line_length) {
         skip = raw_line_length;
     }
@@ -1984,17 +1982,17 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
         skip = 0;
     }
 
-    NSString *haystack;
     unichar *charHaystack;
     int *deltas;
-    haystack = ScreenCharArrayToString(rawline,
-                                       0,
-                                       raw_line_length,
-                                       &charHaystack,
-                                       &deltas);
+    const int rawOffset = [self _lineRawOffset:entry];
+    NSString *haystack = [self stringFromOffset:rawOffset
+                                         length:raw_line_length
+                                   backingStore:&charHaystack
+                                         deltas:&deltas];
 
 #ifdef DEBUG_SEARCH
-    SearchLog(@"Searching rawline %@", [self prettyRawLine:rawline length:raw_line_length]);
+    SearchLog(@"Searching rawline %@", [self prettyRawLine:self.rawBuffer + rawOffset
+                                                    length:raw_line_length]);
     SearchLog(@"Deltas: %@", [self prettyDeltas:deltas length:haystack.length]);
 #endif
 
@@ -2047,7 +2045,7 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
         const unsigned long long kMaxSaneStringLength = 1000000000LL;
         NSRange previousRange = NSMakeRange(NSNotFound, 0);
         do {
-            haystack = CharArrayToString(charHaystack, numUnichars);
+            haystack = [haystack substringToIndex:numUnichars];
             if ([haystack length] >= kMaxSaneStringLength) {
                 // There's a bug in OS 10.9.0 (and possibly other versions) where the string
                 // @"a⃑" reports a length of 0x7fffffffffffffff, which causes this loop to never
@@ -2055,8 +2053,8 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
                 break;
             }
             tempPosition = CoreSearch(needle,
-                                      rawline,
-                                      raw_line_length, 0,
+                                      raw_line_length,
+                                      0,
                                       limit,
                                       options,
                                       mode,
@@ -2101,7 +2099,6 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
             // tempPosition and tempResultLength are indexes into rawline
             // deltas is indexed by indexes into NSString.
             int tempPosition = CoreSearch(needle,
-                                          rawline,
                                           raw_line_length,
                                           skip,  // treated as index into rawline
                                           raw_line_length,
@@ -2133,7 +2130,6 @@ static int UTF16OffsetFromCellOffset(int cellOffset,  // search for utf-16 offse
                 if (skip < 0) {
                     skip = savedSkip;
                     int tempPosition = CoreSearch(needle,
-                                                  rawline,
                                                   raw_line_length,
                                                   skip,
                                                   raw_line_length,

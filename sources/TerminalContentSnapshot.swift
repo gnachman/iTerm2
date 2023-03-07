@@ -34,7 +34,6 @@ class TerminalContentSnapshot: NSObject, iTermTextDataSource {
     }
 
     func screenCharArray(forLine line: Int32) -> ScreenCharArray {
-        //return lineBuffer.screenCharArray(line: line, width: _width, paddedTo: _width, eligibleForDWC: false)
         return lineBuffer.screenCharArray(forLine: line, width: _width, paddedTo: _width, eligibleForDWC: false)
     }
 
