@@ -870,13 +870,8 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
                                    continuation: continuation,
                                    paddedToLength: paddedSize,
                                    eligibleForDWC: eligibleForDWC)
-        case .uncompressed(let innerBuffer):
-            let sca = ScreenCharArray(line: UnsafePointer(innerBuffer.buffer.baseAddress!),
-                                      length: Int32(length),
-                                      metadata: metadata,
-                                      continuation: continuation).padded(toLength: Int32(paddedSize), eligibleForDWC: eligibleForDWC)
-            sca.makeSafe()
-            return sca
+        case .uncompressed:
+            fatalError("Not supported")
         case .compressed(var innerBuffer):
             let sca = innerBuffer.screenCharArray(offset: offset,
                                                   length: length,
