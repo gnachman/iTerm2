@@ -908,7 +908,7 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
 }
 
 - (void)populateDoubleWidthCharacterCacheInMetadata:(LineBlockMetadata *)metadata
-                                             buffer:(const screen_char_t *)p
+                                     startingOffset:(int)startingOffset
                                              length:(int)length
                                               width:(int)width {
     assert(gEnableDoubleWidthCharacterLineCache);
@@ -920,11 +920,22 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     }
     int lines = 0;
     int i = 0;
+    const screen_char_t *p = self.bufferStartIfUncompressed;
+    if (p) {
+        p += startingOffset;
+    }
+
     while (i + width < length) {
         // Advance i to the start of the next line
         i += width;
         ++lines;
-        if (ScreenCharIsDWC_RIGHT(p[i])) {
+        screen_char_t c;
+        if (p) {
+            c = p[i];
+        } else {
+            c = [self characterAtIndex:i + _startOffset + startingOffset];
+        }
+        if (ScreenCharIsDWC_RIGHT(c)) {
             // Oops, the line starts with the second half of a double-width
             // character. Wrap the last character of the previous line on to
             // this line.
@@ -934,17 +945,21 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
     }
 }
 
-- (int)offsetOfWrappedLineInBuffer:(const screen_char_t *)p
-                 wrappedLineNumber:(int)n
-                      bufferLength:(int)length
-                             width:(int)width
-                          metadata:(LineBlockMetadata *)metadata {
+// startingOffset is relative to bufferStart.
+- (int)offsetOfWrappedLineInBufferAtOffset:(int)startingOffset
+                         wrappedLineNumber:(int)n
+                              bufferLength:(int)length
+                                     width:(int)width
+                                  metadata:(LineBlockMetadata *)metadata {
     assert(gEnableDoubleWidthCharacterLineCache);
     ITBetaAssert(n >= 0, @"Negative lines to offsetOfWrappedLineInBuffer");
     if (_mayHaveDoubleWidthCharacter) {
         if (!metadata->double_width_characters ||
             metadata->width_for_double_width_characters_cache != width) {
-            [self populateDoubleWidthCharacterCacheInMetadata:metadata buffer:p length:length width:width];
+            [self populateDoubleWidthCharacterCacheInMetadata:metadata
+                                               startingOffset:startingOffset
+                                                       length:length
+                                                        width:width];
         }
 
         __block int lines = 0;
@@ -1035,11 +1050,11 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                        width:(int)width {
     int offset;
     if (gEnableDoubleWidthCharacterLineCache) {
-        return [self offsetOfWrappedLineInBuffer:self.bufferStart + location.prev
-                                 wrappedLineNumber:lineNum
-                                      bufferLength:location.length
-                                             width:width
-                                          metadata:&metadata_[location.index]];
+        return [self offsetOfWrappedLineInBufferAtOffset:location.prev
+                                       wrappedLineNumber:lineNum
+                                            bufferLength:location.length
+                                                   width:width
+                                                metadata:&metadata_[location.index]];
     }
     return OffsetOfWrappedLine(self.bufferStart + location.prev,
                                lineNum,
