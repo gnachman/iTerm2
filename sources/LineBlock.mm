@@ -1000,6 +1000,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     int lineOffset = 0;
     [self _wrappedLineWithWrapWidth:width
                            location:location
+                        bufferStart:self.bufferStart
                             lineNum:&mutableLineNum
                          lineLength:&length
                   includesEndOfLine:&eof
@@ -1049,6 +1050,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
 
 - (const screen_char_t *)_wrappedLineWithWrapWidth:(int)width
                                           location:(LineBlockLocation)location
+                                       bufferStart:(const screen_char_t *)bufferStart
                                            lineNum:(int*)lineNum
                                         lineLength:(int*)lineLength
                                  includesEndOfLine:(int*)includesEndOfLine
@@ -1067,7 +1069,8 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     // assert(*lineLength >= 0);
     if (*lineLength > width) {
         // return an infix of the full line
-        if (width > 1 && ScreenCharIsDWC_RIGHT(self.bufferStart[location.prev + offset + width])) {
+        const screen_char_t c = bufferStart[location.prev + offset + width];
+        if (width > 1 && ScreenCharIsDWC_RIGHT(c)) {
             // Result would end with the first half of a double-width character
             *lineLength = width - 1;
             // assert(*lineLength >= 0);
@@ -1105,7 +1108,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     if (lineOffset) {
         *lineOffset = offset;
     }
-    return self.bufferStart + location.prev + offset;
+    return bufferStart + location.prev + offset;
 }
 
 - (LineBlockLocation)locationOfRawLineForWidth:(int)width
@@ -1200,6 +1203,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     // eat up *lineNum many width-sized wrapped lines from this start of the current full line
     return [self _wrappedLineWithWrapWidth:width
                                   location:location
+                               bufferStart:self.bufferStart
                                    lineNum:lineNum
                                 lineLength:lineLength
                          includesEndOfLine:includesEndOfLine
