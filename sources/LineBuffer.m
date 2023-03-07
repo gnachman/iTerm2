@@ -546,6 +546,18 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return [self dropExcessLinesWithWidth:width];
 }
 
+- (ScreenCharArray *)screenCharArrayForLine:(int)line
+                                      width:(int)width {
+    int remainder = 0;
+    LineBlock *block = [_lineBlocks blockContainingLineNumber:line width:width remainder:&remainder];
+    if (!block) {
+        ITAssertWithMessage(NO, @"Failed to find line %@ with width %@. Cache is: %@", @(line), @(width),
+                            [[[[_lineBlocks dumpForCrashlog] dataUsingEncoding:NSUTF8StringEncoding] it_compressedData] it_hexEncoded]);
+        return nil;
+    }
+    return [block screenCharArrayForWrappedLineWithWrapWidth:width lineNum:remainder];
+}
+
 - (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum
                                   width:(int)width {
     return [self wrappedLineAtIndex:lineNum width:width continuation:NULL];
