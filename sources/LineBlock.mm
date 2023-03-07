@@ -1029,6 +1029,24 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                     metadata:NULL];
 }
 
+- (int)cacheAwareOffsetOfWrappedLineInBuffer:(LineBlockLocation)location
+                           wrappedLineNumber:(int)lineNum
+                                       width:(int)width {
+    int offset;
+    if (gEnableDoubleWidthCharacterLineCache) {
+        return [self offsetOfWrappedLineInBuffer:self.bufferStart + location.prev
+                                 wrappedLineNumber:lineNum
+                                      bufferLength:location.length
+                                             width:width
+                                          metadata:&metadata_[location.index]];
+    }
+    return OffsetOfWrappedLine(self.bufferStart + location.prev,
+                               lineNum,
+                               location.length,
+                               width,
+                               _mayHaveDoubleWidthCharacter);
+}
+
 - (const screen_char_t *)_wrappedLineWithWrapWidth:(int)width
                                           location:(LineBlockLocation)location
                                            lineNum:(int*)lineNum
@@ -1039,20 +1057,9 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                               isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
                                           metadata:(out iTermImmutableMetadata *)metadataPtr
                                         lineOffset:(out int *)lineOffset {
-    int offset;
-    if (gEnableDoubleWidthCharacterLineCache) {
-        offset = [self offsetOfWrappedLineInBuffer:self.bufferStart + location.prev
-                                 wrappedLineNumber:*lineNum
-                                      bufferLength:location.length
-                                             width:width
-                                          metadata:&metadata_[location.index]];
-    } else {
-        offset = OffsetOfWrappedLine(self.bufferStart + location.prev,
-                                     *lineNum,
-                                     location.length,
-                                     width,
-                                     _mayHaveDoubleWidthCharacter);
-    }
+    int offset = [self cacheAwareOffsetOfWrappedLineInBuffer:location
+                                           wrappedLineNumber:*lineNum
+                                                       width:width];
 
     *lineNum = 0;
     // offset: the relevant part of the raw line begins at this offset into it
