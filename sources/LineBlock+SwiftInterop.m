@@ -86,4 +86,8 @@ int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     return fullLines;
 }
 
+- (screen_char_t)characterAtIndex:(NSInteger)i {
+    return [_characterBuffer characterAtIndex:i];
+}
+
 @end

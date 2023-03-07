@@ -1048,17 +1048,17 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                _mayHaveDoubleWidthCharacter);
 }
 
-- (const screen_char_t *)_wrappedLineWithWrapWidth:(int)width
-                                          location:(LineBlockLocation)location
-                                       bufferStart:(const screen_char_t *)bufferStart
-                                           lineNum:(int*)lineNum
-                                        lineLength:(int*)lineLength
-                                 includesEndOfLine:(int*)includesEndOfLine
-                                           yOffset:(int*)yOffsetPtr
-                                      continuation:(screen_char_t *)continuationPtr
-                              isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
-                                          metadata:(out iTermImmutableMetadata *)metadataPtr
-                                        lineOffset:(out int *)lineOffset {
+- (int)_wrappedLineWithWrapWidth:(int)width
+                        location:(LineBlockLocation)location
+                     bufferStart:(const screen_char_t *)bufferStart
+                         lineNum:(int*)lineNum
+                      lineLength:(int*)lineLength
+               includesEndOfLine:(int*)includesEndOfLine
+                         yOffset:(int*)yOffsetPtr
+                    continuation:(screen_char_t *)continuationPtr
+            isStartOfWrappedLine:(BOOL *)isStartOfWrappedLine
+                        metadata:(out iTermImmutableMetadata *)metadataPtr
+                      lineOffset:(out int *)lineOffset {
     int offset = [self cacheAwareOffsetOfWrappedLineInBuffer:location
                                            wrappedLineNumber:*lineNum
                                                        width:width];
@@ -1069,7 +1069,9 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     // assert(*lineLength >= 0);
     if (*lineLength > width) {
         // return an infix of the full line
-        const screen_char_t c = bufferStart[location.prev + offset + width];
+        const int i = location.prev + offset + width;
+        const screen_char_t c = bufferStart ? bufferStart[i] : [self characterAtIndex:i + _startOffset];
+
         if (width > 1 && ScreenCharIsDWC_RIGHT(c)) {
             // Result would end with the first half of a double-width character
             *lineLength = width - 1;
@@ -1108,7 +1110,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     if (lineOffset) {
         *lineOffset = offset;
     }
-    return bufferStart + location.prev + offset;
+    return location.prev + offset;
 }
 
 - (LineBlockLocation)locationOfRawLineForWidth:(int)width
@@ -1201,17 +1203,18 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     }
     // We found the raw line that includes the wrapped line we're searching for.
     // eat up *lineNum many width-sized wrapped lines from this start of the current full line
-    return [self _wrappedLineWithWrapWidth:width
-                                  location:location
-                               bufferStart:self.bufferStart
-                                   lineNum:lineNum
-                                lineLength:lineLength
-                         includesEndOfLine:includesEndOfLine
-                                   yOffset:yOffsetPtr
-                              continuation:continuationPtr
-                      isStartOfWrappedLine:isStartOfWrappedLine
-                                  metadata:metadataPtr
-                                lineOffset:NULL];
+    const int offset = [self _wrappedLineWithWrapWidth:width
+                                              location:location
+                                           bufferStart:self.bufferStart
+                                               lineNum:lineNum
+                                            lineLength:lineLength
+                                     includesEndOfLine:includesEndOfLine
+                                               yOffset:yOffsetPtr
+                                          continuation:continuationPtr
+                                  isStartOfWrappedLine:isStartOfWrappedLine
+                                              metadata:metadataPtr
+                                            lineOffset:NULL];
+    return self.bufferStart + offset;
 }
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width {

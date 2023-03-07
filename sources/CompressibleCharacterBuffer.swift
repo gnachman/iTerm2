@@ -426,6 +426,17 @@ fileprivate enum Buffer: Equatable {
             return buffer.shortDebugDescription
         }
     }
+
+    subscript(_ i: Int) -> screen_char_t {
+        switch self {
+        case .uninitialized:
+            return screen_char_t()
+        case .uncompressed(let innerBuffer):
+            return innerBuffer.buffer[i]
+        case .compressed(var innerBuffer):
+            return innerBuffer[i]
+        }
+    }
 }
 
 /// Lets you ask if some amount of time has passed.
@@ -808,5 +819,10 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
             }
             return fullLines
         }
+    }
+
+    @objc(characterAtIndex:)
+    func chraracter(at index: Int) -> screen_char_t {
+        return buffer[index]
     }
 }

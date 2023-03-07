@@ -35,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
                                      length:(int)length
                                       width:(int)width
                                  mayHaveDWC:(BOOL)mayHaveDWC;
+- (screen_char_t)characterAtIndex:(NSInteger)i;
 
 @end
 
