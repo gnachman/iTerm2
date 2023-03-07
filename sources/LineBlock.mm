@@ -1015,7 +1015,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     int lineOffset = 0;
     [self _wrappedLineWithWrapWidth:width
                            location:location
-                        bufferStart:self.bufferStart
+                        bufferStart:self.bufferStartIfUncompressed
                             lineNum:&mutableLineNum
                          lineLength:&length
                   includesEndOfLine:&eof
