@@ -1234,7 +1234,7 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     int eol = 0;
     const int offset = [self _wrappedLineWithWrapWidth:width
                                               location:location
-                                           bufferStart:self.bufferStart
+                                           bufferStart:self.bufferStartIfUncompressed
                                                lineNum:&mutableLineNum
                                             lineLength:&length
                                      includesEndOfLine:&eol

@@ -35,6 +35,13 @@
     return _characterBuffer.pointer + _startOffset;
 }
 
+- (const screen_char_t *)bufferStartIfUncompressed {
+    if (_characterBuffer.hasUncompressedBuffer) {
+        return self.bufferStart;
+    }
+    return nil;
+}
+
 - (iTermCompressibleCharacterBuffer *)copyOfCharacterBuffer {
     return [_characterBuffer clone];
 }

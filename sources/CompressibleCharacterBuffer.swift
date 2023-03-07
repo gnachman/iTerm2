@@ -782,6 +782,16 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
         }
     }
 
+    @objc
+    var hasUncompressedBuffer: Bool {
+        switch buffer {
+        case .uncompressed:
+            return true
+        case .compressed, .uninitialized:
+            return false
+        }
+    }
+
     private func decompress() -> UnsafeReallocatableMutableBuffer<screen_char_t> {
         switch buffer {
         case .uninitialized:
