@@ -1247,9 +1247,10 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     int length = 0;
     screen_char_t continuation = { 0 };
     int eol = 0;
+    const screen_char_t *maybeBufferStart = self.bufferStartIfUncompressed;
     const int offset = [self _wrappedLineWithWrapWidth:width
                                               location:location
-                                           bufferStart:self.bufferStartIfUncompressed
+                                           bufferStart:maybeBufferStart
                                                lineNum:&mutableLineNum
                                             lineLength:&length
                                      includesEndOfLine:&eol
@@ -1258,11 +1259,21 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
                                   isStartOfWrappedLine:NULL
                                               metadata:&metadata
                                             lineOffset:NULL];
-    ScreenCharArray *sca = [[ScreenCharArray alloc] initWithLine:self.bufferStart + offset
-                                                          length:length
-                                                        metadata:metadata
-                                                    continuation:continuation];
-    return [sca paddedToLength:paddedSize eligibleForDWC:eligibleForDWC];
+
+    ;
+    if (maybeBufferStart) {
+        ScreenCharArray *sca = [[ScreenCharArray alloc] initWithLine:maybeBufferStart + offset
+                                             length:length
+                                           metadata:metadata
+                                       continuation:continuation];
+        return [sca paddedToLength:paddedSize eligibleForDWC:eligibleForDWC];
+    }
+    return [self screenCharArrayStartingAtOffset:offset + _startOffset
+                                          length:length
+                                        metadata:metadata
+                                    continuation:continuation
+                                  paddedToLength:paddedSize
+                                  eligibleForDWC:eligibleForDWC];
 }
 
 - (ScreenCharArray *)rawLineAtWrappedLineOffset:(int)lineNum width:(int)width {

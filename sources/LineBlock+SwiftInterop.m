@@ -97,4 +97,17 @@ int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
     return [_characterBuffer characterAtIndex:i];
 }
 
+- (ScreenCharArray *)screenCharArrayStartingAtOffset:(NSInteger)offset
+                                              length:(NSInteger)length
+                                            metadata:(iTermImmutableMetadata)metadata
+                                        continuation:(screen_char_t)continuation
+                                      paddedToLength:(NSInteger)paddedSize
+                                      eligibleForDWC:(BOOL)eligibleForDWC {
+    return [_characterBuffer screenCharArrayStartingAtOffset:offset
+                                                      length:length
+                                                    metadata:metadata
+                                                continuation:continuation
+                                              paddedToLength:paddedSize
+                                              eligibleForDWC:eligibleForDWC];
+}
 @end

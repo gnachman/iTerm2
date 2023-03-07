@@ -37,7 +37,12 @@ NS_ASSUME_NONNULL_BEGIN
                                       width:(int)width
                                  mayHaveDWC:(BOOL)mayHaveDWC;
 - (screen_char_t)characterAtIndex:(NSInteger)i;
-
+- (ScreenCharArray *)screenCharArrayStartingAtOffset:(NSInteger)offset
+                                              length:(NSInteger)length
+                                            metadata:(iTermImmutableMetadata)metadata
+                                        continuation:(screen_char_t)continuation
+                                      paddedToLength:(NSInteger)paddedSize
+                                      eligibleForDWC:(BOOL)eligibleForDWC;
 @end
 
 NS_ASSUME_NONNULL_END

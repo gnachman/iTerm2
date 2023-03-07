@@ -342,6 +342,24 @@ struct CompressedScreenCharBuffer: Equatable, CustomDebugStringConvertible {
         }
     }
 
+    mutating func screenCharArray(offset: Int,
+                                  length: Int,
+                                  metadata: iTermImmutableMetadata,
+                                  continuation: screen_char_t,
+                                  paddedToLength paddedSize: Int,
+                                  eligibleForDWC: Bool) -> ScreenCharArray {
+        let range = offset..<(offset + length)
+        let chars = range.map { self[$0] }
+        return withExtendedLifetime(chars) {
+            let sca = ScreenCharArray(line: chars,
+                                      length: Int32(chars.count),
+                                      metadata: metadata,
+                                      continuation: continuation).padded(toLength: Int32(paddedSize),
+                                                                         eligibleForDWC: eligibleForDWC)
+            sca.makeSafe()
+            return sca
+        }
+    }
 }
 
 fileprivate enum Buffer: Equatable {
@@ -757,6 +775,7 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
         case .uncompressed(let buffer):
             let compressedBuffer = CompressedScreenCharBuffer(buffer, size: size)
             self.buffer = .compressed(compressedBuffer)
+            DLog("Compressed \(self.debugDescription)")
             size = compressedBuffer.count
         }
     }
@@ -799,10 +818,9 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
         case .uncompressed(let buffer):
             return buffer
         case .compressed(let compressedBuffer):
-            size = compressedBuffer.count
-            DLog("Decompress \(self.debugDescription) to size \(size)")
             let decompressed = compressedBuffer.decompressed()
             buffer = .uncompressed(decompressed)
+            DLog("Decompressed \(self.debugDescription)")
             return decompressed
         }
     }
@@ -834,5 +852,40 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
     @objc(characterAtIndex:)
     func chraracter(at index: Int) -> screen_char_t {
         return buffer[index]
+    }
+
+    @objc(screenCharArrayStartingAtOffset:length:metadata:continuation:paddedToLength:eligibleForDWC:)
+    func screenCharArray(offset: Int,
+                         length: Int,
+                         metadata: iTermImmutableMetadata,
+                         continuation: screen_char_t,
+                         paddedToLength paddedSize: Int,
+                         eligibleForDWC: Bool) -> ScreenCharArray {
+        switch buffer {
+        case .uninitialized:
+            _ = realize()
+            return screenCharArray(offset: offset,
+                                   length: length,
+                                   metadata: metadata,
+                                   continuation: continuation,
+                                   paddedToLength: paddedSize,
+                                   eligibleForDWC: eligibleForDWC)
+        case .uncompressed(let innerBuffer):
+            let sca = ScreenCharArray(line: UnsafePointer(innerBuffer.buffer.baseAddress!),
+                                      length: Int32(length),
+                                      metadata: metadata,
+                                      continuation: continuation).padded(toLength: Int32(paddedSize), eligibleForDWC: eligibleForDWC)
+            sca.makeSafe()
+            return sca
+        case .compressed(var innerBuffer):
+            let sca = innerBuffer.screenCharArray(offset: offset,
+                                                  length: length,
+                                                  metadata: metadata,
+                                                  continuation: continuation,
+                                                  paddedToLength: paddedSize,
+                                                  eligibleForDWC: eligibleForDWC)
+
+            return sca
+        }
     }
 }
