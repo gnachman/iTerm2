@@ -42,6 +42,13 @@
     return nil;
 }
 
+- (const screen_char_t *)rawBufferIfUncompressed {
+    if (_characterBuffer.hasUncompressedBuffer) {
+        return self.rawBuffer;
+    }
+    return nil;
+}
+
 - (iTermCompressibleCharacterBuffer *)copyOfCharacterBuffer {
     return [_characterBuffer clone];
 }

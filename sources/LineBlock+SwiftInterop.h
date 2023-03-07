@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (screen_char_t *)mutableRawBuffer;
 - (const screen_char_t *)bufferStart;
 - (const screen_char_t *)bufferStartIfUncompressed;
+- (const screen_char_t *)rawBufferIfUncompressed;
 - (iTermCompressibleCharacterBuffer *)copyOfCharacterBuffer;
 - (NSData *)encodedCharacterBufferWithMaxSize:(NSInteger)maxSize;
 

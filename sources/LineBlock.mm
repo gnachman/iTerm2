@@ -87,6 +87,14 @@ typedef struct {
     int length;
 } LineBlockLocation;
 
+static LineBlockLocation LineBlockMakeLocation(int offset, int length, int index) {
+    return (LineBlockLocation){
+        .prev = offset,
+        .length = length,
+        .index = index
+    };
+}
+
 const unichar kPrefixChar = REGEX_START;
 const unichar kSuffixChar = REGEX_END;
 
@@ -2255,6 +2263,7 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
     *x = 0;
     *y = 0;
     int prev = self.bufferStartOffset;
+    const screen_char_t *p = self.rawBufferIfUncompressed;
     for (i = first_entry; i < cll_entries; ++i) {
         int eol = cumulative_line_lengths[i];
         int line_length = eol - prev;
@@ -2278,7 +2287,14 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
             if (bytes_to_consume_in_this_line < line_length &&
                 prev + bytes_to_consume_in_this_line + 1 < eol) {
                 assert(prev + bytes_to_consume_in_this_line + 1 < self.rawBufferSize);
-                if (width > 1 && ScreenCharIsDWC_RIGHT(self.rawBuffer[prev + bytes_to_consume_in_this_line + 1])) {
+                screen_char_t c;
+                const int i = prev + bytes_to_consume_in_this_line + 1;
+                if (p) {
+                    c = p[i];
+                } else {
+                    c = [self characterAtIndex:i];
+                }
+                if (width > 1 && ScreenCharIsDWC_RIGHT(c)) {
                     ++dwc_peek;
                 }
             }
@@ -2288,11 +2304,9 @@ includesPartialLastLine:(BOOL *)includesPartialLastLine {
             *y += consume;
             if (consume > 0) {
                 // Offset from prev where the consume'th line begin.
-                int offset = OffsetOfWrappedLine(self.rawBuffer + prev,
-                                                 consume,
-                                                 line_length,
-                                                 width,
-                                                 _mayHaveDoubleWidthCharacter);
+                int offset = [self cacheAwareOffsetOfWrappedLineInBuffer:LineBlockMakeLocation(prev - _startOffset, line_length, i)
+                                                       wrappedLineNumber:consume
+                                                                   width:width];
                 // We know that position falls in this line. Set x to the number
                 // of chars after the beginning on the line. If there were only
                 // single-width chars the formula would be:
