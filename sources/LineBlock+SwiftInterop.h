@@ -6,6 +6,7 @@
 //
 
 #import "LineBlock.h"
+#import "LineBlock+Private.h"
 
 @class iTermCompressibleCharacterBuffer;
 

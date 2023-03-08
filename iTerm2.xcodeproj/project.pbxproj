@@ -1340,6 +1340,7 @@
 		A62CD06727E9124F00215E92 /* askpass.sh in Resources */ = {isa = PBXBuildFile; fileRef = A62CD06427E9124F00215E92 /* askpass.sh */; };
 		A62CD06A27E93F5B00215E92 /* iTermSwiftHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = A62CD06827E93F5B00215E92 /* iTermSwiftHelpers.h */; };
 		A62CD06B27E93F5B00215E92 /* iTermSwiftHelpers.m in Sources */ = {isa = PBXBuildFile; fileRef = A62CD06927E93F5B00215E92 /* iTermSwiftHelpers.m */; };
+		A62D149929B869320020609D /* LineBlock+Private.h in Headers */ = {isa = PBXBuildFile; fileRef = A62D149729B869320020609D /* LineBlock+Private.h */; };
 		A62D43922328C63B0038F565 /* NSWindow+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A686F3611D32CD8100F08ED7 /* NSWindow+iTerm.m */; };
 		A62DBB9920F47CFA008B63D1 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9520F47CF9008B63D1 /* GoBack.png */; };
 		A62DBB9A20F47CFA008B63D1 /* GoBack.png in Resources */ = {isa = PBXBuildFile; fileRef = A62DBB9520F47CF9008B63D1 /* GoBack.png */; };
@@ -1587,6 +1588,9 @@
 		A64BD0DB296FDBF4001F3F7E /* conductor.sh in Resources */ = {isa = PBXBuildFile; fileRef = A64BD0DA296FDBF4001F3F7E /* conductor.sh */; };
 		A64BD0DC296FDBF4001F3F7E /* conductor.sh in Resources */ = {isa = PBXBuildFile; fileRef = A64BD0DA296FDBF4001F3F7E /* conductor.sh */; };
 		A64BD0DD296FDBF4001F3F7E /* conductor.sh in Resources */ = {isa = PBXBuildFile; fileRef = A64BD0DA296FDBF4001F3F7E /* conductor.sh */; };
+		A64CA8AC29B525BA00DA4CBB /* LineBlock+SwiftInterop.h in Headers */ = {isa = PBXBuildFile; fileRef = A64CA8AA29B525BA00DA4CBB /* LineBlock+SwiftInterop.h */; };
+		A64CA8AD29B525BA00DA4CBB /* LineBlock+SwiftInterop.m in Sources */ = {isa = PBXBuildFile; fileRef = A64CA8AB29B525BA00DA4CBB /* LineBlock+SwiftInterop.m */; };
+		A64CA8AF29B5A38000DA4CBB /* CompressibleCharacterBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A64CA8AE29B5A38000DA4CBB /* CompressibleCharacterBuffer.swift */; };
 		A64D6A042495608500FC0CDE /* iTermAboutWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A663011619CFE450004AF81C /* iTermAboutWindowController.m */; };
 		A64DE9AA237A8555002E390C /* iTermFakeWindowTitleLabel.h in Headers */ = {isa = PBXBuildFile; fileRef = A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */; };
 		A64DE9AB237A8555002E390C /* iTermFakeWindowTitleLabel.m in Sources */ = {isa = PBXBuildFile; fileRef = A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */; };
@@ -2798,9 +2802,6 @@
 		A6A802EA226ED20800BC70DC /* iTermPrintGuard.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802E8226ED20800BC70DC /* iTermPrintGuard.m */; };
 		A6A802ED226EEAE900BC70DC /* PTYTask+MRR.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A802EB226EEAE900BC70DC /* PTYTask+MRR.h */; };
 		A6A802EE226EEAE900BC70DC /* PTYTask+MRR.m in Sources */ = {isa = PBXBuildFile; fileRef = A6A802EC226EEAE900BC70DC /* PTYTask+MRR.m */; };
-		A64CA8AF29B5A38000DA4CBB /* CompressibleCharacterBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A64CA8AE29B5A38000DA4CBB /* CompressibleCharacterBuffer.swift */; };
-		A64CA8AC29B525BA00DA4CBB /* LineBlock+SwiftInterop.h in Headers */ = {isa = PBXBuildFile; fileRef = A64CA8AA29B525BA00DA4CBB /* LineBlock+SwiftInterop.h */; };
-		A64CA8AD29B525BA00DA4CBB /* LineBlock+SwiftInterop.m in Sources */ = {isa = PBXBuildFile; fileRef = A64CA8AB29B525BA00DA4CBB /* LineBlock+SwiftInterop.m */; };
 		A6A9838C27E5A83C003319D1 /* PasswordManagerDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9838B27E5A83C003319D1 /* PasswordManagerDataSource.swift */; };
 		A6A9838D27E5B3E5003319D1 /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = DDF0FD64062916F70080EF74 /* iTermApplication.m */; };
 		A6A9838F27E5C3DA003319D1 /* KeychainPasswordDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A9838E27E5C3DA003319D1 /* KeychainPasswordDataSource.swift */; };
@@ -5585,6 +5586,7 @@
 		A62CD06427E9124F00215E92 /* askpass.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = askpass.sh; path = sources/askpass.sh; sourceTree = "<group>"; };
 		A62CD06827E93F5B00215E92 /* iTermSwiftHelpers.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermSwiftHelpers.h; sourceTree = "<group>"; };
 		A62CD06927E93F5B00215E92 /* iTermSwiftHelpers.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermSwiftHelpers.m; sourceTree = "<group>"; };
+		A62D149729B869320020609D /* LineBlock+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "LineBlock+Private.h"; sourceTree = "<group>"; };
 		A62DBB9520F47CF9008B63D1 /* GoBack.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = GoBack.png; path = images/GoBack.png; sourceTree = "<group>"; };
 		A62DBB9620F47CF9008B63D1 /* GoForward.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = GoForward.png; path = images/GoForward.png; sourceTree = "<group>"; };
 		A62DBB9720F47CFA008B63D1 /* GoForward@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "GoForward@2x.png"; path = "images/GoForward@2x.png"; sourceTree = "<group>"; };
@@ -5829,6 +5831,9 @@
 		A64BD0D12964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAtomicMutableArrayOfWeakObjects.h; sourceTree = "<group>"; };
 		A64BD0D22964E3B8001F3F7E /* iTermAtomicMutableArrayOfWeakObjects.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = iTermAtomicMutableArrayOfWeakObjects.mm; sourceTree = "<group>"; };
 		A64BD0DA296FDBF4001F3F7E /* conductor.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; name = conductor.sh; path = "submodules/iTerm2-shell-integration/ssh-helpers/conductor.sh"; sourceTree = "<group>"; };
+		A64CA8AA29B525BA00DA4CBB /* LineBlock+SwiftInterop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "LineBlock+SwiftInterop.h"; sourceTree = "<group>"; };
+		A64CA8AB29B525BA00DA4CBB /* LineBlock+SwiftInterop.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "LineBlock+SwiftInterop.m"; sourceTree = "<group>"; };
+		A64CA8AE29B5A38000DA4CBB /* CompressibleCharacterBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompressibleCharacterBuffer.swift; sourceTree = "<group>"; };
 		A64DE9A8237A8555002E390C /* iTermFakeWindowTitleLabel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFakeWindowTitleLabel.h; sourceTree = "<group>"; };
 		A64DE9A9237A8555002E390C /* iTermFakeWindowTitleLabel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermFakeWindowTitleLabel.m; sourceTree = "<group>"; };
 		A64FCD56238DE785001D8199 /* iTermFileDescriptorServerShared.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermFileDescriptorServerShared.h; sourceTree = "<group>"; };
@@ -6691,9 +6696,6 @@
 		A6A802E8226ED20800BC70DC /* iTermPrintGuard.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermPrintGuard.m; sourceTree = "<group>"; };
 		A6A802EB226EEAE900BC70DC /* PTYTask+MRR.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTask+MRR.h"; sourceTree = "<group>"; };
 		A6A802EC226EEAE900BC70DC /* PTYTask+MRR.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "PTYTask+MRR.m"; sourceTree = "<group>"; };
-		A64CA8AE29B5A38000DA4CBB /* CompressibleCharacterBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompressibleCharacterBuffer.swift; sourceTree = "<group>"; };
-		A64CA8AA29B525BA00DA4CBB /* LineBlock+SwiftInterop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "LineBlock+SwiftInterop.h"; sourceTree = "<group>"; };
-		A64CA8AB29B525BA00DA4CBB /* LineBlock+SwiftInterop.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "LineBlock+SwiftInterop.m"; sourceTree = "<group>"; };
 		A6A9838B27E5A83C003319D1 /* PasswordManagerDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordManagerDataSource.swift; sourceTree = "<group>"; };
 		A6A9838E27E5C3DA003319D1 /* KeychainPasswordDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainPasswordDataSource.swift; sourceTree = "<group>"; };
 		A6A9839027E5C427003319D1 /* PasswordManagerDataSourceProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordManagerDataSourceProvider.swift; sourceTree = "<group>"; };
@@ -9625,6 +9627,7 @@
 				A64CA8AE29B5A38000DA4CBB /* CompressibleCharacterBuffer.swift */,
 				A64CA8AA29B525BA00DA4CBB /* LineBlock+SwiftInterop.h */,
 				A64CA8AB29B525BA00DA4CBB /* LineBlock+SwiftInterop.m */,
+				A62D149729B869320020609D /* LineBlock+Private.h */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -12419,6 +12422,7 @@
 				A653F6B824D291D00062377E /* iTermOrderedDictionary.h in Headers */,
 				A653F68224CF4EC70062377E /* FMDB.h in Headers */,
 				A667192A1DCE36C3000CE608 /* iTermRecentDirectoryMO+Additions.h in Headers */,
+				A62D149929B869320020609D /* LineBlock+Private.h in Headers */,
 				A667192B1DCE36C3000CE608 /* iTermRoundedCornerScrollView.h in Headers */,
 				A666D5EC221A1D9D00D6184A /* iTermVariableScope+Tab.h in Headers */,
 				A667C24C27725341006B4DEF /* VT100ScreenConfiguration.h in Headers */,
