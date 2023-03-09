@@ -42,6 +42,7 @@ iTermTriggerScopeProvider> {
     PTYTriggerEvaluator *_triggerEvaluator;
     dispatch_group_t _tmuxGroup;
     NSArray<NSString *> *_sshIntegrationFlags;
+    _Atomic int _pendingReportCount;
 }
 
 @property (atomic) BOOL hadCommand;
@@ -70,5 +71,8 @@ iTermTriggerScopeProvider> {
 
 // Runs even if there is no delegate yet.
 - (void)addNoDelegateSideEffect:(void (^)(void))sideEffect;
+
+- (void)willSendReport;
+- (void)didSendReport:(id<VT100ScreenDelegate>)delegate;
 
 @end

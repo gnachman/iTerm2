@@ -1660,6 +1660,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _animatedLines;
 }
 
+- (BOOL)sendingIsBlocked {
+    return _mutableState.sendingIsBlocked;
+}
+
 #pragma mark - VT100ScreenSideEffectPerforming
 
 // THis is accessed by both main and mutation queues and it must be atomic.

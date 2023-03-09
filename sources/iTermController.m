@@ -1476,7 +1476,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
             session.shortLivedSingleUse = YES;
             session.isSingleUseSession = YES;
             if (data) {
-                [session writeLatin1EncodedData:data broadcastAllowed:NO];
+                [session writeLatin1EncodedData:data broadcastAllowed:NO reporting:NO];
             }
             makeSessionCompletion(session);
         }

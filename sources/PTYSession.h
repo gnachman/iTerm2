@@ -709,9 +709,10 @@ backgroundColor:(NSColor *)backgroundColor;
 // NO for `forceEncoding` and the terminal's encoding will be used instead of `optionalEncoding`.
 - (void)writeTaskNoBroadcast:(NSString *)string
                     encoding:(NSStringEncoding)optionalEncoding
-               forceEncoding:(BOOL)forceEncoding;
+               forceEncoding:(BOOL)forceEncoding
+                   reporting:(BOOL)reporting;
 
-- (void)writeLatin1EncodedData:(NSData *)data broadcastAllowed:(BOOL)broadcast;
+- (void)writeLatin1EncodedData:(NSData *)data broadcastAllowed:(BOOL)broadcast reporting:(BOOL)reporting;
 
 - (void)updateViewBackgroundImage;
 - (void)invalidateBlend;

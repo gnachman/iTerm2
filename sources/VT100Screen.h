@@ -114,6 +114,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Where the next tail-find needs to begin.
 @property (nonatomic) long long savedFindContextAbsPos;
 @property (nonatomic, strong) FindContext *findContext;
+@property (nonatomic, readonly) BOOL sendingIsBlocked;
 
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.

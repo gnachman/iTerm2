@@ -614,6 +614,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     // If true the session was just created and an offscreen mark alert would be annoying.
     BOOL _temporarilySuspendOffscreenMarkAlerts;
+    NSMutableArray<NSData *> *_dataQueue;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1021,6 +1022,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_aiterm release];
     [_commandQueue release];
     [_pendingJumps release];
+    [_dataQueue release];
 
     [super dealloc];
 }
@@ -1547,7 +1549,7 @@ ITERM_WEAKLY_REFERENCEABLE
             terminal.reportFocus = [iTermAdvancedSettingsModel focusReportingEnabled];
         }];
     }
-    
+
     NSDictionary *state = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_STATE];
     if (state) {
         // For tmux tabs, get the size from the arrangement instead of the containing view because
@@ -2667,8 +2669,8 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)injectShellIntegrationWithEnvironment:(NSDictionary<NSString *, NSString *> *)env
                                          args:(NSArray<NSString *> *)argv
-                            completion:(void (^)(NSDictionary<NSString *, NSString *> *,
-                                                 NSArray<NSString *> *))completion {
+                                   completion:(void (^)(NSDictionary<NSString *, NSString *> *,
+                                                        NSArray<NSString *> *))completion {
     if (![iTermProfilePreferences boolForKey:KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY inProfile:self.profile]) {
         completion(env, argv);
         return;
@@ -3057,12 +3059,13 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)writeTaskImpl:(NSString *)string
              encoding:(NSStringEncoding)optionalEncoding
         forceEncoding:(BOOL)forceEncoding
-         canBroadcast:(BOOL)canBroadcast {
+         canBroadcast:(BOOL)canBroadcast
+            reporting:(BOOL)reporting {
     const NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
     if (gDebugLogging) {
         NSArray *stack = [NSThread callStackSymbols];
-        DLog(@"writeTaskImpl session=%@ encoding=%@ forceEncoding=%@ canBroadcast=%@: called from %@",
-             self, @(encoding), @(forceEncoding), @(canBroadcast), stack);
+        DLog(@"writeTaskImpl session=%@ encoding=%@ forceEncoding=%@ canBroadcast=%@ reporting=%@: called from %@",
+             self, @(encoding), @(forceEncoding), @(canBroadcast), @(reporting), stack);
         DLog(@"writeTaskImpl string=%@", string);
     }
     if (string.length == 0) {
@@ -3101,7 +3104,16 @@ ITERM_WEAKLY_REFERENCEABLE
             [_sshWriteQueue appendData:data];
             return;
         }
-        [self writeData:data];
+        if (_screen.sendingIsBlocked && !reporting) {
+            DLog(@"Defer write of %@", [data stringWithEncoding:NSUTF8StringEncoding]);
+            if (!_dataQueue) {
+                _dataQueue = [[NSMutableArray alloc] init];
+            }
+            [_dataQueue addObject:data];
+        } else {
+            DLog(@"Write immediately: %@", [data stringWithEncoding:NSUTF8StringEncoding]);
+            [self writeData:data];
+        }
     }
 }
 
@@ -3154,12 +3166,13 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)writeTaskNoBroadcast:(NSString *)string {
-    [self writeTaskNoBroadcast:string encoding:_screen.terminalEncoding forceEncoding:NO];
+    [self writeTaskNoBroadcast:string encoding:_screen.terminalEncoding forceEncoding:NO reporting:NO];
 }
 
 - (void)writeTaskNoBroadcast:(NSString *)string
                     encoding:(NSStringEncoding)encoding
-               forceEncoding:(BOOL)forceEncoding {
+               forceEncoding:(BOOL)forceEncoding
+                   reporting:(BOOL)reporting {
     if (_conductor.handlesKeystrokes) {
         [_conductor sendKeys:[string dataUsingEncoding:encoding]];
         return;
@@ -3170,7 +3183,7 @@ ITERM_WEAKLY_REFERENCEABLE
                                toWindowPane:self.tmuxPane];
         return;
     }
-    [self writeTaskImpl:string encoding:encoding forceEncoding:forceEncoding canBroadcast:NO];
+    [self writeTaskImpl:string encoding:encoding forceEncoding:forceEncoding canBroadcast:NO reporting:reporting];
 }
 
 - (void)performTmuxCommand:(NSString *)command {
@@ -3238,7 +3251,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
-- (void)writeLatin1EncodedData:(NSData *)data broadcastAllowed:(BOOL)broadcast {
+- (void)writeLatin1EncodedData:(NSData *)data broadcastAllowed:(BOOL)broadcast reporting:(BOOL)reporting {
     // `data` contains raw bytes we want to pass through. I believe Latin-1 is the only encoding that
     // won't perform any transformation when converting from data to string. This is needed because
     // sometimes the user wants to send particular bytes regardless of the encoding (e.g., the
@@ -3246,18 +3259,18 @@ ITERM_WEAKLY_REFERENCEABLE
     // This won't work for non-UTF-8 data with tmux.
     NSString *string = [[[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding] autorelease];
     if (broadcast) {
-        [self writeTask:string encoding:NSISOLatin1StringEncoding forceEncoding:YES];
+        [self writeTask:string encoding:NSISOLatin1StringEncoding forceEncoding:YES reporting:reporting];
     } else {
-        [self writeTaskNoBroadcast:string encoding:NSISOLatin1StringEncoding forceEncoding:YES];
+        [self writeTaskNoBroadcast:string encoding:NSISOLatin1StringEncoding forceEncoding:YES reporting:reporting];
     }
 }
 
 - (void)writeStringWithLatin1Encoding:(NSString *)string {
-    [self writeTask:string encoding:NSISOLatin1StringEncoding forceEncoding:YES];
+    [self writeTask:string encoding:NSISOLatin1StringEncoding forceEncoding:YES reporting:NO];
 }
 
 - (void)writeTask:(NSString *)string {
-    [self writeTask:string encoding:_screen.terminalEncoding forceEncoding:NO];
+    [self writeTask:string encoding:_screen.terminalEncoding forceEncoding:NO reporting:NO];
 }
 
 // If forceEncoding is YES then optionalEncoding will be used regardless of the session's preferred
@@ -3266,7 +3279,8 @@ ITERM_WEAKLY_REFERENCEABLE
 // different encodings.
 - (void)writeTask:(NSString *)string
          encoding:(NSStringEncoding)optionalEncoding
-    forceEncoding:(BOOL)forceEncoding {
+    forceEncoding:(BOOL)forceEncoding
+        reporting:(BOOL)reporting {
     NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
     if (self.tmuxMode == TMUX_CLIENT || _conductor.handlesKeystrokes) {
         [self setBell:NO];
@@ -3293,7 +3307,7 @@ ITERM_WEAKLY_REFERENCEABLE
         return;
     }
     self.currentMarkOrNotePosition = nil;
-    [self writeTaskImpl:string encoding:encoding forceEncoding:forceEncoding canBroadcast:YES];
+    [self writeTaskImpl:string encoding:encoding forceEncoding:forceEncoding canBroadcast:YES reporting:reporting];
 }
 
 // This is run in PTYTask's thread. It parses the input here and then queues an async task to run
@@ -3749,27 +3763,27 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)moveUp:(id)sender {
-    [self writeLatin1EncodedData:[_screen.terminalOutput keyArrowUp:0] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[_screen.terminalOutput keyArrowUp:0] broadcastAllowed:YES reporting:NO];
 }
 
 - (void)moveDown:(id)sender {
-    [self writeLatin1EncodedData:[_screen.terminalOutput keyArrowDown:0] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[_screen.terminalOutput keyArrowDown:0] broadcastAllowed:YES reporting:NO];
 }
 
 - (void)moveLeft:(id)sender {
-    [self writeLatin1EncodedData:[_screen.terminalOutput keyArrowLeft:0] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[_screen.terminalOutput keyArrowLeft:0] broadcastAllowed:YES reporting:NO];
 }
 
 - (void)moveRight:(id)sender {
-    [self writeLatin1EncodedData:[_screen.terminalOutput keyArrowRight:0] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[_screen.terminalOutput keyArrowRight:0] broadcastAllowed:YES reporting:NO];
 }
 
 - (void)pageUp:(id)sender {
-    [self writeLatin1EncodedData:[_screen.terminalOutput keyPageUp:0] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[_screen.terminalOutput keyPageUp:0] broadcastAllowed:YES reporting:NO];
 }
 
 - (void)pageDown:(id)sender {
-    [self writeLatin1EncodedData:[_screen.terminalOutput keyPageDown:0] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[_screen.terminalOutput keyPageDown:0] broadcastAllowed:YES reporting:NO];
 }
 
 + (NSString*)pasteboardString {
@@ -3822,13 +3836,13 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)deleteBackward:(id)sender {
     unsigned char p = 0x08; // Ctrl+H
 
-    [self writeLatin1EncodedData:[NSData dataWithBytes:&p length:1] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[NSData dataWithBytes:&p length:1] broadcastAllowed:YES reporting:NO];
 }
 
 - (void)deleteForward:(id)sender {
     unsigned char p = 0x7F; // DEL
 
-    [self writeLatin1EncodedData:[NSData dataWithBytes:&p length:1] broadcastAllowed:YES];
+    [self writeLatin1EncodedData:[NSData dataWithBytes:&p length:1] broadcastAllowed:YES reporting:NO];
 }
 
 - (PTYScroller *)textViewVerticalScroller {
@@ -5616,8 +5630,7 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
 
     if (![self isTmuxGateway] && now >= _lastInput + _antiIdlePeriod - kAntiIdleGracePeriod) {
         // This feature is hopeless for tmux gateways. Issue 5231.
-        [self writeLatin1EncodedData:[NSData dataWithBytes:&_antiIdleCode length:1]
-                    broadcastAllowed:NO];
+        [self writeLatin1EncodedData:[NSData dataWithBytes:&_antiIdleCode length:1] broadcastAllowed:NO reporting:NO];
         _lastInput = now;
     }
 }
@@ -5701,7 +5714,7 @@ verticalSpacing:(CGFloat)verticalSpacing {
         self.upload = nil;
         char controlC[1] = { VT100CC_ETX };
         NSData *data = [NSData dataWithBytes:controlC length:sizeof(controlC)];
-        [self writeLatin1EncodedData:data broadcastAllowed:NO];
+        [self writeLatin1EncodedData:data broadcastAllowed:NO reporting:NO];
     }
 }
 
@@ -7014,7 +7027,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         DLog(@"Will report focus");
         _reportingFocus = YES;
         self.lastFocusReportDate = [NSDate date];
-        [self writeLatin1EncodedData:[_screen.terminalOutput reportFocusGained:focused] broadcastAllowed:NO];
+        // This is not considered reporting because it's not in response to a remote request.
+        [self writeLatin1EncodedData:[_screen.terminalOutput reportFocusGained:focused] broadcastAllowed:NO reporting:NO];
         _reportingFocus = NO;
     }
     if (focused && [self isTmuxClient]) {
@@ -7873,7 +7887,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // Running tmux inside an ssh client takes this path
         [_conductor sendKeys:[string dataUsingEncoding:NSUTF8StringEncoding]];
     } else {
-        [self writeTaskImpl:string encoding:NSUTF8StringEncoding forceEncoding:YES canBroadcast:NO];
+        [self writeTaskImpl:string encoding:NSUTF8StringEncoding forceEncoding:YES canBroadcast:NO reporting:NO];
     }
 }
 
@@ -9217,7 +9231,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     NSData *const dataToSend = [_keyMapper keyMapperDataForPostCocoaEvent:event];
     DLog(@"dataToSend=%@", dataToSend);
     if (dataToSend) {
-        [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES];
+        [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES reporting:NO];
     }
 }
 
@@ -9228,7 +9242,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_screen.terminalReportKeyUp) {
         NSData *const dataToSend = [_keyMapper keyMapperDataForKeyUp:event];
         if (dataToSend) {
-            [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES];
+            [self writeLatin1EncodedData:dataToSend broadcastAllowed:YES reporting:NO];
         }
     }
 }
@@ -10042,7 +10056,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                           withModifiers:modifiers
                                                                                      at:coord
                                                                                   point:point]
-                                    broadcastAllowed:NO];
+                                    broadcastAllowed:NO
+                                           reporting:NO];
                     }
                     return YES;
 
@@ -10093,7 +10108,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                             withModifiers:modifiers
                                                                                        at:coord
                                                                                     point:point]
-                                    broadcastAllowed:NO];
+                                    broadcastAllowed:NO
+                                           reporting:NO];
                         return YES;
 
                     case MOUSE_REPORTING_NONE:
@@ -10127,7 +10143,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                    withModifiers:modifiers
                                                                               at:coord
                                                                            point:point]
-                            broadcastAllowed:NO];
+                            broadcastAllowed:NO
+                                   reporting:NO];
                 return YES;
             }
             break;
@@ -10168,7 +10185,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                            withModifiers:modifiers
                                                                                       at:coord
                                                                                    point:point]
-                                    broadcastAllowed:NO];
+                                    broadcastAllowed:NO
+                                           reporting:NO];
                         // Fall through
                     case MOUSE_REPORTING_NORMAL:
                         DLog(@"normal - do not report drag");
@@ -10217,7 +10235,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                                           withModifiers:modifiers
                                                                                      at:coord
                                                                                   point:point]
-                                    broadcastAllowed:NO];
+                                    broadcastAllowed:NO
+                                           reporting:NO];
                     }
                     return YES;
 
@@ -11004,7 +11023,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     if ([codes length]) {
         [self writeLatin1EncodedData:[self dataForHexCodes:codes]
-                    broadcastAllowed:YES];
+                    broadcastAllowed:YES
+                           reporting:NO];
     }
 }
 
@@ -11690,7 +11710,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [[_delegate parentWindow] windowIsMiniaturized];
 }
 
-- (void)screenWriteDataToTask:(NSData *)data {
+- (void)screenSendReportData:(NSData *)data {
     if (_shell == nil) {
         return;
     }
@@ -11698,7 +11718,15 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         // Prevent joining threads when writing the tmux message. Also, this doesn't make sense to do.
         return;
     }
-    [self writeLatin1EncodedData:data broadcastAllowed:NO];
+    [self writeLatin1EncodedData:data broadcastAllowed:NO reporting:YES];
+}
+
+- (void)screenDidSendAllPendingReports {
+    for (NSData *data in _dataQueue) {
+        DLog(@"Send deferred write of %@", [data stringWithEncoding:NSUTF8StringEncoding]);
+        [self writeData:data];
+    }
+    [_dataQueue removeAllObjects];
 }
 
 - (NSRect)screenWindowFrame {
@@ -12194,7 +12222,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [NSApp activateIgnoringOtherApps:YES];
     [panel beginSheetModalForWindow:_textview.window completionHandler:^(NSInteger result) {
         if (result == NSModalResponseOK) {
-            [self writeTaskNoBroadcast:@"ok\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
+            [self writeTaskNoBroadcast:@"ok\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES reporting:NO];
             NSFileManager *fileManager = [NSFileManager defaultManager];
             // Get the directories for all the URLs. If a URL was a file, convert it to the containing directory, otherwise leave it alone.
             __block BOOL anyFiles = NO;
@@ -12275,7 +12303,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 }
             }];
         } else {
-            [self writeTaskNoBroadcast:@"abort\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
+            [self writeTaskNoBroadcast:@"abort\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES reporting:NO];
         }
     }];
 }
@@ -12716,7 +12744,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     NSData *data = [_screen.terminalOutput reportVariableNamed:name
                                                          value:value];
-    [self screenWriteDataToTask:data];
+    [self screenSendReportData:data];
 }
 
 - (void)screenReportCapabilities {
@@ -12748,7 +12776,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                 YES,                                // sixel
                                 YES);                               // file
     NSData *data = [_screen.terminalOutput reportCapabilities:capabilities];
-    [self screenWriteDataToTask:data];
+    [self screenSendReportData:data];
 }
 
 - (VT100GridRange)screenRangeOfVisibleLines {
@@ -14073,9 +14101,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                      viewIndex:[self screenViewIndex]];
     } else {
         NSString *description = [NSString stringWithFormat:@"Session %@ #%d: %@",
-                                                           [[self name] removingHTMLFromTabTitleIfNeeded],
-                                                           [_delegate tabNumber],
-                                                           message];
+                                 [[self name] removingHTMLFromTabTitleIfNeeded],
+                                 [_delegate tabNumber],
+                                 message];
         [controller notify:@"Alert"
            withDescription:description
                windowIndex:[self screenWindowIndex]
@@ -14280,7 +14308,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                    varsToSend:@{}
                                    clientVars:@{}
                              initialDirectory:nil
-                  shouldInjectShellIntegration:NO
+                 shouldInjectShellIntegration:NO
                                        parent:previousConductor];
     [self updateVariablesFromConductor];
     _conductor.delegate = self;
@@ -15392,7 +15420,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (self.tmuxMode == TMUX_GATEWAY) {
         return;
     }
-    [self writeLatin1EncodedData:data broadcastAllowed:NO];
+    [self writeLatin1EncodedData:data broadcastAllowed:NO reporting:NO];
 }
 
 - (void)echoProbeDidFail:(iTermEchoProbe *)echoProbe {
@@ -17068,7 +17096,7 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 - (void)pasteboardReporter:(iTermPasteboardReporter *)sender reportPasteboard:(NSString *)pasteboard {
     NSData *data = [_screen.terminalOutput reportPasteboard:pasteboard
                                                    contents:[NSString stringFromPasteboard]];
-    [self screenWriteDataToTask:data];
+    [self screenSendReportData:data];
     [_view showUnobtrusiveMessage:[NSString stringWithFormat:@"Clipboard contents reported"]
                          duration:3];
 }

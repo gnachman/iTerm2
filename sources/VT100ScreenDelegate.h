@@ -147,7 +147,8 @@
 - (BOOL)screenWindowIsMiniaturized;
 
 // Send input to the task.
-- (void)screenWriteDataToTask:(NSData * _Nonnull)data;
+- (void)screenSendReportData:(NSData * _Nonnull)data;
+- (void)screenDidSendAllPendingReports;
 
 // Returns the visible frame of the display the screen's window is in.
 - (NSRect)screenWindowScreenFrame;

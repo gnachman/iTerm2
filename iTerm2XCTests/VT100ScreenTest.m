@@ -654,7 +654,7 @@ NSLog(@"Known bug: %s should be true, but %s is.", #expressionThatShouldBeTrue, 
     pasted_ = YES;
 }
 
-- (void)screenWriteDataToTask:(NSData *)data {
+- (void)screenSendReportData:(NSData *)data {
     [write_ appendData:data];
 }
 

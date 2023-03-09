@@ -5006,6 +5006,26 @@ launchCoprocessWithCommand:(NSString *)command
     }
 }
 
+- (void)willSendReport {
+    const int newCount = ++_pendingReportCount;
+    DLog(@"_pendingReportCount += 1 -> %@", @(newCount));
+}
+
+- (void)didSendReport:(id<VT100ScreenDelegate>)delegate {
+    const int newCount = --_pendingReportCount;
+    DLog(@"_pendingReportCount -= 1 -> %@", @(newCount));
+    if (newCount == 0) {
+        [delegate screenDidSendAllPendingReports];
+    }
+}
+
+// Main queue
+- (BOOL)sendingIsBlocked {
+    const BOOL result = _pendingReportCount > 0;
+    DLog(@"Block sending");
+    return result;
+}
+
 #pragma mark - iTermLineBufferDelegate
 
 - (void)lineBufferDidDropLines:(LineBuffer *)lineBuffer {

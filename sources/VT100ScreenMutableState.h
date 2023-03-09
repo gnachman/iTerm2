@@ -312,6 +312,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 - (void)scheduleTokenExecution;
 - (void)injectData:(NSData *)data;
 
+// This will be true while there's a request for a report that hasn't been responded to yet.
+@property (atomic, readonly) BOOL sendingIsBlocked;
+
 #pragma mark - Triggers
 
 - (void)performPeriodicTriggerCheck;

@@ -195,9 +195,12 @@
 
 - (void)terminalReportVariableNamed:(NSString *)variable {
     DLog(@"begin %@", variable);
+    [self willSendReport];
+    __weak __typeof(self) weakSelf = self;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenReportVariableNamed:variable];
+        [weakSelf didSendReport:delegate];
     }];
 }
 
@@ -205,9 +208,12 @@
     DLog(@"begin %@", report);
     if (!self.config.isTmuxClient && report) {
         DLog(@"report %@", [report stringWithEncoding:NSUTF8StringEncoding]);
+        [self willSendReport];
+        __weak __typeof(self) weakSelf = self;
         [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
             DLog(@"begin side-effect");
-            [delegate screenWriteDataToTask:report];
+            [delegate screenSendReportData:report];
+            [weakSelf didSendReport:delegate];
         }];
     }
 }
@@ -602,11 +608,14 @@
 
 - (void)terminalReportPasteboard:(NSString *)pasteboard {
     DLog(@"begin");
+    [self willSendReport];
+    __weak __typeof(self) weakSelf = self;
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         DLog(@"running");
         [delegate screenReportPasteboard:pasteboard completion:^{
             DLog(@"unpausing");
             [unpauser unpause];
+            [weakSelf didSendReport:delegate];
         }];
     }];
 }
@@ -2422,9 +2431,12 @@
 
 - (void)terminalSendCapabilitiesReport {
     DLog(@"begin");
+    [self willSendReport];
+    __weak __typeof(self) weakSelf = self;
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         DLog(@"begin side-effect");
         [delegate screenReportCapabilities];
+        [weakSelf didSendReport:delegate];
     }];
 }
 
