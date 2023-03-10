@@ -445,22 +445,17 @@ async def handle_login(identifier, args):
     log(f'cwd={cwd} args={args}')
     cwd = os.path.expandvars(os.path.expanduser(cwd))
     had_args = len(args) > 0
-    guessed = guess_login_shell()
     if args:
-        login_shell = args[0]
-        del args[0]
-        argv0 = login_shell
-    else:
-        login_shell = guessed
-    if login_shell == guessed:
-        _, shell_name = os.path.split(login_shell)
-        argv0 = "-" + shell_name
+        args = ["-c", " ".join(args)]
+        log(f'Update args to {args}')
+    login_shell = guess_login_shell()
+    _, shell_name = os.path.split(login_shell)
+    argv0 = "-" + shell_name
 
-    log(f'Login shell is {login_shell}. Guessed shell is {guessed}. argv0 is {argv0}')
     return await run_login_shell(identifier, login_shell, [argv0] + args, cwd, os.environ)
 
 async def run_login_shell(identifier, login_shell, argv, directory, environment):
-    log(f'run_login_shell: dir={directory} command={login_shell} {argv}')
+    log(f'run_login_shell: dir={directory} command={login_shell} argv={argv}')
     try:
         proc = await Process.run_tty(
             login_shell,
