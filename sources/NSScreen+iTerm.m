@@ -13,6 +13,7 @@
 #import "NSDate+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "iTermTuple.h"
+#import "iTerm2SharedARC-Swift.h"
 
 static char iTermNSScreenSupportsHighFrameRatesCacheKey;
 
@@ -375,14 +376,8 @@ static CGFloat iTermAreaOfIntersection(NSRect r1, NSRect r2) {
         return @(window.windowNumber);
     }]];
     NSArray<NSDictionary *> *allInfos = [NSScreen it_allWindowInfoDictionaries];
-    return [allInfos anyWithBlock:^BOOL(NSDictionary *windowInfo) {
-        const CGRect windowFrame = [NSScreen windowBoundsRectFromWindowInfoDictionary:windowInfo];
+    NSArray<NSDictionary *> *relevantInfos = [allInfos filteredArrayUsingBlock:^BOOL(NSDictionary *windowInfo) {
         DLog(@"Consider %@", windowInfo);
-        if (!NSEqualRects(windowFrame, screenFrame)) {
-            DLog(@"Reject: window frame %@ != screen frame %@",
-                 NSStringFromRect(windowFrame), NSStringFromRect(screenFrame));
-            return NO;
-        }
         if ([windowInfo[(__bridge NSString *)kCGWindowAlpha] doubleValue] <= 0) {
             DLog(@"Reject: Nonpositive alpha");
             return NO;
@@ -397,9 +392,36 @@ static CGFloat iTermAreaOfIntersection(NSRect r1, NSRect r2) {
             // Is my own window.
             return NO;
         }
-        DLog(@"Accept: this is another app's fullscreen window");
+        if ([windowInfo[(__bridge  NSString *)kCGWindowOwnerName] isEqual:@"Window Server"] &&
+            [windowInfo[(__bridge  NSString *)kCGWindowName] isEqual:@"Menubar"]) {
+            DLog(@"Accept: is menu bar");
+            return YES;
+        }
+        if ([windowInfo[(__bridge NSString *)kCGWindowLayer] doubleValue] > 0) {
+            DLog(@"Reject: Higher layer");
+            return NO;
+        }
+        const CGRect windowFrame = [NSScreen windowBoundsRectFromWindowInfoDictionary:windowInfo];
+        if (!NSIntersectsRect(windowFrame, screenFrame)) {
+            DLog(@"Reject: Not on this screen");
+            return NO;
+        }
         return YES;
     }];
+    return [self windowInfos:relevantInfos framesTileScreenFrame:screenFrame];
+}
+
+- (BOOL)windowInfos:(NSArray<NSDictionary *> *)infos framesTileScreenFrame:(NSRect)screenFrame {
+    iTermTilingChecker *checker = [[iTermTilingChecker alloc] init];
+    for (NSDictionary *windowInfo in infos) {
+        const CGRect windowFrame = [NSScreen windowBoundsRectFromWindowInfoDictionary:windowInfo];
+        [checker addRect:windowFrame];
+    }
+    // For some reason there's a 1 pixel margin on the left that goes unused (at least in Ventura)
+    // This is a terrible hack but I can't find any other way to determine if you're on a desktop
+    // for some other app's fullscren window and this tiling BS is needed for split screen FS windows.
+    [checker addRect:NSMakeRect(screenFrame.origin.x, screenFrame.origin.y, 1, screenFrame.size.height)];
+    return [checker tilesFrame:screenFrame];
 }
 
 - (NSNumber *)it_cachedSupportsHighFrameRates {

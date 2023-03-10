@@ -2874,6 +2874,7 @@
 		A6B41406211A579300D28207 /* iTermStoplightHotbox.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B41404211A579300D28207 /* iTermStoplightHotbox.m */; };
 		A6B41409211A5AEA00D28207 /* iTermStandardWindowButtonsView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B41407211A5AEA00D28207 /* iTermStandardWindowButtonsView.h */; };
 		A6B4140A211A5AEA00D28207 /* iTermStandardWindowButtonsView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B41408211A5AEA00D28207 /* iTermStandardWindowButtonsView.m */; };
+		A6B50E8329BBAE9C000D243D /* TilingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B50E8229BBAE9C000D243D /* TilingChecker.swift */; };
 		A6B5134A18E779BB00D249A5 /* iTermPasteHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */; };
 		A6B540FA224838A100D3AD14 /* NSColor+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B540F8224838A100D3AD14 /* NSColor+PSM.h */; };
 		A6B540FB224838A100D3AD14 /* NSColor+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B540F9224838A100D3AD14 /* NSColor+PSM.m */; };
@@ -6758,6 +6759,7 @@
 		A6B41404211A579300D28207 /* iTermStoplightHotbox.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStoplightHotbox.m; sourceTree = "<group>"; };
 		A6B41407211A5AEA00D28207 /* iTermStandardWindowButtonsView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStandardWindowButtonsView.h; sourceTree = "<group>"; };
 		A6B41408211A5AEA00D28207 /* iTermStandardWindowButtonsView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStandardWindowButtonsView.m; sourceTree = "<group>"; };
+		A6B50E8229BBAE9C000D243D /* TilingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TilingChecker.swift; sourceTree = "<group>"; };
 		A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteHelper.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteHelper.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6B540F8224838A100D3AD14 /* NSColor+PSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSColor+PSM.h"; sourceTree = "<group>"; };
@@ -10633,6 +10635,7 @@
 				A63EB05A284DCAF300B2AB89 /* WeakBox.swift */,
 				A6D1C41F286192F600B68526 /* TextClipDrawing.swift */,
 				A6DBC9D9286399C6002911BE /* ContentNavigationShortcut.swift */,
+				A6B50E8229BBAE9C000D243D /* TilingChecker.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -15557,6 +15560,7 @@
 				A60C034F20881E5F00FE2F1F /* iTermAPIHelper.m in Sources */,
 				5300984D2259365B00A69348 /* iTermHapticActuator.m in Sources */,
 				A630117220E60DBF008114B7 /* iTermStatusBarView.m in Sources */,
+				A6B50E8329BBAE9C000D243D /* TilingChecker.swift in Sources */,
 				533BDAC320DB5CE100E26F0A /* NSObject+iTerm.m in Sources */,
 				A653F69124D00B9E0062377E /* iTermGraphTableTransformer.m in Sources */,
 				A6AFD69524497410007D0660 /* iTermFileDescriptorMultiClientState.m in Sources */,
