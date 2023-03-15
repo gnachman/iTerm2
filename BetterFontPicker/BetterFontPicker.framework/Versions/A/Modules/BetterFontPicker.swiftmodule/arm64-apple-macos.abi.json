@@ -3575,6 +3575,28 @@
           },
           {
             "kind": "Function",
+            "name": "removeOptionsButton",
+            "printedName": "removeOptionsButton()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@BetterFontPicker@objc(cs)BFPCompositeView(im)removeOptionsButton",
+            "mangledName": "$s16BetterFontPicker0bC13CompositeViewC19removeOptionsButtonyyF",
+            "moduleName": "BetterFontPicker",
+            "declAttributes": [
+              "Custom",
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
             "name": "addHorizontalSpacingAccessory",
             "printedName": "addHorizontalSpacingAccessory(_:)",
             "children": [
@@ -5419,14 +5441,14 @@
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
       "kind": "IntegerLiteral",
-      "offset": 1285,
+      "offset": 1321,
       "length": 10,
       "value": "1"
     },
     {
       "filePath": "\/Users\/gnachman\/git\/iterm2-alt2\/BetterFontPicker\/BetterFontPicker\/FontPickerCompositeView.swift",
       "kind": "IntegerLiteral",
-      "offset": 1285,
+      "offset": 1321,
       "length": 10,
       "value": "1"
     },

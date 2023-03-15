@@ -290,8 +290,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         _contextMenuHelper = [[iTermTextViewContextMenuHelper alloc] initWithURLActionHelper:_urlActionHelper];
         _urlActionHelper.smartSelectionActionTarget = _contextMenuHelper;
 
-        _primaryFont = [[PTYFontInfo alloc] init];
-        _secondaryFont = [[PTYFontInfo alloc] init];
+        _fontTable = [[iTermFontTable alloc] init];
 
         DLog(@"Begin tracking touches in view %@", self);
         self.allowedTouchTypes = NSTouchTypeMaskIndirect;
@@ -355,8 +354,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_colorMap release];
 
-    [_primaryFont release];
-    [_secondaryFont release];
+    [_fontTable release];
 
     [_markedTextAttributes release];
 
@@ -1438,8 +1436,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _drawingHelper.underlineOffset = [self minimumUnderlineOffset];
     _drawingHelper.boldAllowed = _useBoldFont;
     _drawingHelper.unicodeVersion = [_delegate textViewUnicodeVersion];
-    _drawingHelper.asciiLigatures = _primaryFont.hasDefaultLigatures || _asciiLigatures;
-    _drawingHelper.nonAsciiLigatures = _secondaryFont.hasDefaultLigatures || _nonAsciiLigatures;
+    _drawingHelper.asciiLigatures = _fontTable.anyASCIIDefaultLigatures || _asciiLigatures;
+    _drawingHelper.nonAsciiLigatures = _fontTable.anyNonASCIIDefaultLigatures || _nonAsciiLigatures;
     _drawingHelper.copyMode = _delegate.textViewCopyMode;
     _drawingHelper.copyModeSelecting = _delegate.textViewCopyModeSelecting;
     _drawingHelper.copyModeCursorCoord = _delegate.textViewCopyModeCursorCoord;
@@ -1466,7 +1464,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
     CGFloat rightMargin = 0;
     if (self.showTimestamps) {
-        [_drawingHelper createTimestampDrawingHelperWithFont:self.font];
+        [_drawingHelper createTimestampDrawingHelperWithFont:_fontTable.asciiFont.font];
         rightMargin = _drawingHelper.timestampDrawHelper.maximumWidth + 8;
     }
     _drawingHelper.indicatorFrame = [self configureIndicatorsHelperWithRightMargin:rightMargin];
@@ -1491,7 +1489,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     NSDictionary *theAttributes =
         @{ NSBackgroundColorAttributeName: [self defaultBackgroundColor] ?: [NSColor blackColor],
            NSForegroundColorAttributeName: [self defaultTextColor] ?: [NSColor whiteColor],
-           NSFontAttributeName: self.nonAsciiFont ?: [NSFont systemFontOfSize:12],
+           NSFontAttributeName: _fontTable.defaultNonASCIIFont.font ?: [NSFont systemFontOfSize:12],
            NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle | NSUnderlineByWord) };
 
     [self setMarkedTextAttributes:theAttributes];
@@ -1787,32 +1785,14 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _markedTextAttributes = [attr retain];
 }
 
-- (NSFont *)font {
-    return _primaryFont.font;
-}
-
-- (NSFont *)nonAsciiFont {
-    return _useNonAsciiFont ? _secondaryFont.font : _primaryFont.font;
-}
-
-- (NSFont *)nonAsciiFontEvenIfNotUsed {
-    return _secondaryFont.font;
-}
-
-- (void)setFont:(NSFont*)proposedASCIIFont
-    nonAsciiFont:(NSFont *)proposedNonASCIIFont
-    horizontalSpacing:(CGFloat)horizontalSpacing
-    verticalSpacing:(CGFloat)verticalSpacing {
-    if (_primaryFont.font != nil) {
+- (void)setFontTable:(iTermFontTable *)fontTable
+   horizontalSpacing:(CGFloat)horizontalSpacing
+     verticalSpacing:(CGFloat)verticalSpacing {
+    if (_fontTable != nil) {
         [[NSNotificationCenter defaultCenter] postNotificationName:PTYTextViewWillChangeFontNotification object:self];
     }
 
-    NSFont *asciiFont = proposedASCIIFont;
-    if (!asciiFont) {
-        asciiFont = [NSFont userFixedPitchFontOfSize:0.0];
-        ITAssertWithMessage(asciiFont != nil, @"Failed to get system fixed pitch font");
-    }
-    NSSize sz = [PTYTextView charSizeForFont:asciiFont
+    NSSize sz = [PTYTextView charSizeForFont:fontTable.fontForCharacterSizeCalculations
                            horizontalSpacing:1.0
                              verticalSpacing:1.0];
 
@@ -1823,16 +1803,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     self.charWidth = ceil(_charWidthWithoutSpacing * horizontalSpacing);
     self.lineHeight = ceil(_charHeightWithoutSpacing * verticalSpacing);
 
-    _primaryFont.font = asciiFont;
-    _primaryFont.boldVersion = [_primaryFont computedBoldVersion];
-    _primaryFont.italicVersion = [_primaryFont computedItalicVersion];
-    _primaryFont.boldItalicVersion = [_primaryFont computedBoldItalicVersion];
-
-    NSFont *nonAsciiFont = proposedNonASCIIFont ?: asciiFont;
-    _secondaryFont.font = nonAsciiFont;
-    _secondaryFont.boldVersion = [_secondaryFont computedBoldVersion];
-    _secondaryFont.italicVersion = [_secondaryFont computedItalicVersion];
-    _secondaryFont.boldItalicVersion = [_secondaryFont computedBoldItalicVersion];
+    [_fontTable autorelease];
+    _fontTable = [fontTable retain];
 
     [self updateMarkedTextAttributes];
 
@@ -1904,11 +1876,11 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (CGFloat)minimumBaselineOffset {
-    return _primaryFont.baselineOffset;
+    return _fontTable.baselineOffset;
 }
 
 - (CGFloat)minimumUnderlineOffset {
-    return _primaryFont.underlineOffset;
+    return _fontTable.underlineOffset;
 }
 
 - (void)setTransparency:(double)fVal {
@@ -3803,7 +3775,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         NSDictionary *attributes =
             @{ NSBackgroundColorAttributeName: [NSColor textBackgroundColor],
                NSForegroundColorAttributeName: [NSColor textColor],
-               NSFontAttributeName: self.font ?: [NSFont userFixedPitchFontOfSize:0] };
+               NSFontAttributeName: _fontTable.asciiFont.font ?: [NSFont userFixedPitchFontOfSize:0] };
         attributedString = [[[NSAttributedString alloc] initWithString:content
                                                             attributes:attributes] autorelease];
     }
@@ -4420,14 +4392,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                       isComplex:(BOOL)isComplex
                      renderBold:(BOOL *)renderBold
                    renderItalic:(BOOL *)renderItalic {
-    return [PTYFontInfo fontForAsciiCharacter:(!isComplex && (ch < 128))
-                                    asciiFont:_primaryFont
-                                 nonAsciiFont:_secondaryFont
-                                  useBoldFont:_useBoldFont
-                                useItalicFont:_useItalicFont
-                             usesNonAsciiFont:_useNonAsciiFont
-                                   renderBold:renderBold
-                                 renderItalic:renderItalic];
+    return [_fontTable fontForCharacter:isComplex ? [CharToStr(ch, isComplex) longCharacterAtIndex:0] : ch
+                            useBoldFont:_useBoldFont
+                          useItalicFont:_useItalicFont
+                             renderBold:renderBold
+                           renderItalic:renderItalic];
 }
 
 #pragma mark - Miscellaneous Notifications

@@ -21,6 +21,7 @@
 #import "iTermObject.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermPreferences.h"
+#import "iTermProfilePreferences.h"
 #import "iTermPromise.h"
 #import "iTermRateLimitedUpdate.h"
 #import "iTermSelection.h"

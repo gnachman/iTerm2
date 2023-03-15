@@ -26,14 +26,14 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @protocol IntervalTreeImmutableObject<NSObject>
-@property(nonatomic, readonly) IntervalTreeEntry *entry;
+@property(nullable, nonatomic, weak, readonly) IntervalTreeEntry *entry;
 
 // Serialized value.
 - (NSDictionary *)dictionaryValue;
 
 // A parallel object whose state will be eventually consistent with this one.
 - (id<IntervalTreeObject>)doppelganger;
-- (id<IntervalTreeObject>)progenitor;
+- (id<IntervalTreeObject> _Nullable)progenitor;
 @end
 
 @protocol IntervalTreeObject <IntervalTreeImmutableObject, NSObject>

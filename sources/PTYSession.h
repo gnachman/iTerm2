@@ -181,10 +181,9 @@ typedef enum {
 - (void)unmaximize;
 
 // Tmux window number (a tmux window is like a tab).
-- (void)setTmuxFont:(NSFont *)font
-       nonAsciiFont:(NSFont *)nonAsciiFont
-           hSpacing:(double)horizontalSpacing
-           vSpacing:(double)verticalSpacing;
+- (void)setTmuxFontTable:(iTermFontTable *)fontTable
+                hSpacing:(double)horizontalSpacing
+                vSpacing:(double)verticalSpacing;
 
 // The tmux window title changed.
 - (void)sessionDidChangeTmuxWindowNameTo:(NSString *)newName;
@@ -773,10 +772,9 @@ backgroundColor:(NSColor *)backgroundColor;
 - (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Profile*)aDict;
 
 - (void)changeFontSizeDirection:(int)dir;
-- (void)setFont:(NSFont*)font
-    nonAsciiFont:(NSFont*)nonAsciiFont
-    horizontalSpacing:(CGFloat)horizontalSpacing
-    verticalSpacing:(CGFloat)verticalSpacing;
+- (void)setFontTable:(iTermFontTable *)fontTable
+   horizontalSpacing:(CGFloat)horizontalSpacing
+     verticalSpacing:(CGFloat)verticalSpacing;
 
 // Assigns a new GUID to the session so that changes to the bookmark will not
 // affect it. Returns the GUID of a divorced bookmark. Does nothing if already

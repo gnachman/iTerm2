@@ -25,8 +25,8 @@ struct OffscreenCommandLine {
         let (red, green, blue) = (UInt32(color.redComponent * 255),
                                   UInt32(color.greenComponent * 255),
                                   UInt32(color.blueComponent * 255))
-        var mutableData = characters.mutableLineData()
-        var bufferPointer = UnsafeMutableBufferPointer<screen_char_t>(start: mutableData.mutableBytes.assumingMemoryBound(to: screen_char_t.self),
+        let mutableData = characters.mutableLineData()
+        let bufferPointer = UnsafeMutableBufferPointer<screen_char_t>(start: mutableData.mutableBytes.assumingMemoryBound(to: screen_char_t.self),
                                                                       count: Int(characters.length))
         for i in 0..<characters.length {
             bufferPointer[Int(i)].backgroundColorMode = UInt32(ColorMode24bit.rawValue)
@@ -61,7 +61,7 @@ struct OffscreenCommandLine {
          date: Date){
         var continuation = screen_char_t()
         continuation.code = unichar(EOL_HARD)
-        var temp = ScreenCharArray(data: characters.mutableLineData() as Data,
+        let temp = ScreenCharArray(data: characters.mutableLineData() as Data,
                                    metadata: iTermMetadataMakeImmutable(iTermMetadataDefault()),
                                    continuation: continuation)
         state = OffscreenCommandLine(characters: temp,

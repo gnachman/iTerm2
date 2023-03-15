@@ -18,8 +18,7 @@ class CharacterAttributesProvider: NSObject {
     private let useNonAsciiFont: Bool
     private let copyBackgroundColor: Bool  // Advanced pref
     private let excludeBackgroundColorsFromCopiedStyle: Bool  // Advanced pref
-    private let asciiFont: PTYFontInfo
-    private let nonAsciiFont: PTYFontInfo?
+    private let fontTable: FontTable
 
     private lazy var paragraphStyle: NSParagraphStyle = {
         let style = NSMutableParagraphStyle()
@@ -36,8 +35,7 @@ class CharacterAttributesProvider: NSObject {
          useNonAsciiFont: Bool,
          copyBackgroundColor: Bool,
          excludeBackgroundColorsFromCopiedStyle: Bool,
-         asciiFont: PTYFontInfo,
-         nonAsciiFont: PTYFontInfo?) {
+         fontTable: FontTable) {
         self.colorMap = colorMap
         self.useCustomBoldColor = useCustomBoldColor
         self.brightenBold = brightenBold
@@ -46,8 +44,7 @@ class CharacterAttributesProvider: NSObject {
         self.useNonAsciiFont = useNonAsciiFont
         self.copyBackgroundColor = copyBackgroundColor
         self.excludeBackgroundColorsFromCopiedStyle = excludeBackgroundColorsFromCopiedStyle
-        self.asciiFont = asciiFont
-        self.nonAsciiFont = nonAsciiFont
+        self.fontTable = fontTable
     }
 
     func attributes(_ c: screen_char_t, externalAttributes: iTermExternalAttribute) -> [AnyHashable: Any] {
@@ -78,12 +75,9 @@ class CharacterAttributesProvider: NSObject {
         }
         let underlineStyle: NSUnderlineStyle = (externalAttributes.urlCode != 0 || c.underline != 0) ? [.single, .byWord] : []
         var isItalic = ObjCBool(c.italic != 0)
-        let fontInfo = PTYFontInfo.font(forAsciiCharacter: c.complexChar != 0 && c.code < 128,
-                                        asciiFont: asciiFont,
-                                        nonAsciiFont: nonAsciiFont,
+        let fontInfo = fontTable.fontForCharacter(c.baseCharacter,
                                         useBoldFont: useBoldFont,
                                         useItalicFont: useItalicFont,
-                                        usesNonAsciiFont: useNonAsciiFont,
                                         renderBold: &isBold,
                                         renderItalic: &isItalic)
         if !copyBackgroundColor &&

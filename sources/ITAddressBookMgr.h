@@ -141,6 +141,7 @@
 #define KEY_SPACE                  @"Space"  // integer, iTermProfileSpaceSetting
 #define KEY_NORMAL_FONT            @"Normal Font"
 #define KEY_NON_ASCII_FONT         @"Non Ascii Font"
+#define KEY_FONT_CONFIG            @"Special Font Config"
 #define KEY_HORIZONTAL_SPACING     @"Horizontal Spacing"
 #define KEY_VERTICAL_SPACING       @"Vertical Spacing"
 #define KEY_BLINKING_CURSOR        @"Blinking Cursor"

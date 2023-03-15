@@ -356,8 +356,7 @@ typedef struct {
 
 - (iTermCharacterSourceDescriptor *)characterSourceDescriptorForASCIIWithGlyphSize:(CGSize)glyphSize
                                                                        asciiOffset:(CGSize)asciiOffset {
-    return [iTermCharacterSourceDescriptor characterSourceDescriptorWithAsciiFont:_configuration->_asciiFont
-                                                                     nonAsciiFont:_configuration->_nonAsciiFont
+    return [iTermCharacterSourceDescriptor characterSourceDescriptorWithFontTable:_configuration->_fontTable
                                                                       asciiOffset:asciiOffset
                                                                         glyphSize:glyphSize
                                                                          cellSize:_configuration->_cellSize
@@ -1147,9 +1146,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 }
 
 - (id)metalASCIICreationIdentifierWithOffset:(CGSize)asciiOffset {
-    return @{ @"font": _configuration->_asciiFont.font ?: [NSNull null],
-              @"boldFont": _configuration->_asciiFont.boldVersion ?: [NSNull null],
-              @"boldItalicFont": _configuration->_asciiFont.boldItalicVersion ?: [NSNull null],
+    return @{ @"font": _configuration->_fontTable.uniqueIdentifier ?: [NSNull null],
               @"useBold": @(_configuration->_useBoldFont),
               @"useItalic": @(_configuration->_useItalicFont),
               @"asciiAntialiased": @(_configuration->_asciiAntialias),
@@ -1168,8 +1165,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 
     const int radius = iTermTextureMapMaxCharacterParts / 2;
     iTermCharacterSourceDescriptor *descriptor =
-    [iTermCharacterSourceDescriptor characterSourceDescriptorWithAsciiFont:_configuration->_asciiFont
-                                                              nonAsciiFont:_configuration->_nonAsciiFont
+    [iTermCharacterSourceDescriptor characterSourceDescriptorWithFontTable:_configuration->_fontTable
                                                                asciiOffset:asciiOffset
                                                                  glyphSize:size
                                                                   cellSize:_configuration->_cellSize

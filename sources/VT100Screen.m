@@ -849,7 +849,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (long long)lineNumberOfMarkBeforeAbsLine:(long long)absLine {
-    id<VT100ScreenMarkReading> mark = [self screenMarkAtOrBeforeAbsLine:absLine];
+#warning TODO: Test this
+    id<VT100ScreenMarkReading> mark = [self screenMarkBeforeAbsLine:absLine];
     if (!mark) {
         return -1;
     }

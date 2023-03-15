@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "FutureMethods.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermFontPanel.h"
 #import "iTermSizeRememberingView.h"
 #import "iTermWarning.h"
@@ -65,6 +66,8 @@
 
     CGFloat _heightWithNonAsciiControls;
     CGFloat _heightWithoutNonAsciiControls;
+
+    SpecialExceptionsWindowController *_specialExceptionsWindowController;
 }
 
 - (void)dealloc {
@@ -320,7 +323,7 @@
 }
 
 - (NSArray *)keysForBulkCopy {
-    NSArray *keys = @[ KEY_NORMAL_FONT, KEY_NON_ASCII_FONT ];
+    NSArray *keys = @[ KEY_NORMAL_FONT, KEY_NON_ASCII_FONT, KEY_FONT_CONFIG ];
     return [[super keysForBulkCopy] arrayByAddingObjectsFromArray:keys];
 }
 
@@ -421,6 +424,20 @@
     alert.informativeText = @"This change will affect all profiles. You must restart iTerm2 for this change to take effect.";
     [alert runModal];
     [self updateWarnings];
+}
+
+- (IBAction)manageSpecialExceptions:(id)sender {
+    _specialExceptionsWindowController = [SpecialExceptionsWindowController createWithConfigString:[self stringForKey:KEY_FONT_CONFIG]];
+    __weak __typeof(self) weakSelf = self;
+    [self.view.window beginSheet:_specialExceptionsWindowController.window completionHandler:^(NSModalResponse returnCode) {
+        if (returnCode == NSModalResponseOK) {
+            [weakSelf loadConfigFromSpecialExceptionsWindowController];
+        }
+    }];
+}
+
+- (void)loadConfigFromSpecialExceptionsWindowController {
+    [self setString:_specialExceptionsWindowController.configString forKey:KEY_FONT_CONFIG];
 }
 
 #pragma mark - Notifications

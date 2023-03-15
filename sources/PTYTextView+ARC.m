@@ -709,8 +709,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                                useNonAsciiFont:self.useNonAsciiFont
                                            copyBackgroundColor:[iTermAdvancedSettingsModel copyBackgroundColor]
                         excludeBackgroundColorsFromCopiedStyle:[iTermAdvancedSettingsModel excludeBackgroundColorsFromCopiedStyle]
-                                                     asciiFont:self.primaryFont
-                                                  nonAsciiFont:self.secondaryFont];
+                                                     fontTable:self.fontTable];
 
     iTermAttributedStringSelectionExtractor *extractor =
     [[iTermAttributedStringSelectionExtractor alloc] initWithSelection:selection
@@ -878,7 +877,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     NSColor *textColor = [self.colorMap processedTextColorForTextColor:[self.colorMap colorForKey:kColorMapSelectedText]
                                                    overBackgroundColor:backgroundColor
                                                 disableMinimumContrast:NO];
-    NSFont *font = self.primaryFont.font;
+    NSFont *font = self.fontTable.asciiFont.font;
     NSDictionary *attributes = @{ NSForegroundColorAttributeName: textColor,
                                   NSBackgroundColorAttributeName: backgroundColor,
                                   NSFontAttributeName: font };

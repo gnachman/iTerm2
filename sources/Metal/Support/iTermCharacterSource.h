@@ -8,11 +8,11 @@
 #import <Foundation/Foundation.h>
 
 @class iTermCharacterBitmap;
+@class iTermFontTable;
 @class PTYFontInfo;
 
 @interface iTermCharacterSourceDescriptor : NSObject
-@property (nonatomic, readonly, strong) PTYFontInfo *asciiFontInfo;
-@property (nonatomic, readonly, strong) PTYFontInfo *nonAsciiFontInfo;
+@property (nonatomic, readonly, strong) iTermFontTable *fontTable;
 @property (nonatomic, readonly) CGSize asciiOffset;
 @property (nonatomic, readonly) CGSize glyphSize;
 @property (nonatomic, readonly) CGSize cellSize;
@@ -25,8 +25,7 @@
 @property (nonatomic, readonly) BOOL asciiAntiAliased;
 @property (nonatomic, readonly) BOOL nonAsciiAntiAliased;
 
-+ (instancetype)characterSourceDescriptorWithAsciiFont:(PTYFontInfo *)asciiFontInfo
-                                          nonAsciiFont:(PTYFontInfo *)nonAsciiFontInfo
++ (instancetype)characterSourceDescriptorWithFontTable:(iTermFontTable *)fontTable
                                            asciiOffset:(CGSize)asciiOffset
                                              glyphSize:(CGSize)glyphSize
                                               cellSize:(CGSize)cellSize
@@ -59,8 +58,7 @@
 // returns the frame that contains all characters in the range. This is useful
 // for finding the bounding box of all ASCII glyphs.
 + (NSRect)boundingRectForCharactersInRange:(NSRange)range
-                             asciiFontInfo:(PTYFontInfo *)asciiFontInfo
-                          nonAsciiFontInfo:(PTYFontInfo *)nonAsciiFontInfo
+                                 fontTable:(iTermFontTable *)fontTable
                                      scale:(CGFloat)scale
                                useBoldFont:(BOOL)useBoldFont
                              useItalicFont:(BOOL)useItalicFont

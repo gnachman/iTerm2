@@ -14,6 +14,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @class iTermColorMap;
+@class iTermFontTable;
 @protocol iTermMetalPerFrameStateDelegate;
 @class iTermTextDrawingHelper;
 @class NSColor;
@@ -38,8 +39,7 @@ NS_ASSUME_NONNULL_BEGIN
     NSColorSpace *_colorSpace;
 
     // Text
-    PTYFontInfo *_asciiFont;
-    PTYFontInfo *_nonAsciiFont;
+    iTermFontTable *_fontTable;
     BOOL _useNonAsciiFont;
     BOOL _asciiAntialias;
     BOOL _nonasciiAntialias;

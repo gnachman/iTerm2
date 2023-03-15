@@ -122,7 +122,7 @@ NS_ASSUME_NONNULL_BEGIN
 // When owner is nonnil or clients is not empty, a copy must be made before mutation.
 // Use -modifyWithBlock: to get a iTermLineBlockMutationCertificate which allows mutation safely because
 // you can't get a certificate without copying (if needed).
-@property(nonatomic) LineBlock *owner;  // nil if I am an owner. This is the line block that is responsible for freeing malloced data.
+@property(nonatomic, nullable) LineBlock *owner;  // nil if I am an owner. This is the line block that is responsible for freeing malloced data.
 @property(nonatomic) iTermAtomicMutableArrayOfWeakObjects<LineBlock *> *clients;  // Copy-on write instances that still exist and have me as the owner.
 @end
 

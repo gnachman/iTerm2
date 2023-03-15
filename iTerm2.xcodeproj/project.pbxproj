@@ -1547,6 +1547,12 @@
 		A63F409F183F3AF5003A6A6D /* VT100LineInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F409D183F3AF5003A6A6D /* VT100LineInfo.h */; };
 		A63F40A4183F3B78003A6A6D /* LineBlock.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F40A2183F3B78003A6A6D /* LineBlock.h */; };
 		A63F40A9183F3CED003A6A6D /* LineBufferHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */; };
+		A640486E29BFCB6C0063C34A /* SpecialExceptionsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A640486D29BFCB640063C34A /* SpecialExceptionsWindowController.xib */; };
+		A640486F29BFCB6D0063C34A /* SpecialExceptionsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A640486D29BFCB640063C34A /* SpecialExceptionsWindowController.xib */; };
+		A640487029BFCB6D0063C34A /* SpecialExceptionsWindowController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A640486D29BFCB640063C34A /* SpecialExceptionsWindowController.xib */; };
+		A640487229BFCBCB0063C34A /* SpecialExceptionsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A640487129BFCBCB0063C34A /* SpecialExceptionsWindowController.swift */; };
+		A640487329C0F8AA0063C34A /* BetterFontPicker.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A6661309225CFF5A00840E89 /* BetterFontPicker.framework */; };
+		A640487529C147A10063C34A /* CRUD.swift in Sources */ = {isa = PBXBuildFile; fileRef = A640487429C147A10063C34A /* CRUD.swift */; };
 		A6435116233B195D00828AF6 /* iTermApplescriptPythonCommands.h in Headers */ = {isa = PBXBuildFile; fileRef = A6435114233B195D00828AF6 /* iTermApplescriptPythonCommands.h */; };
 		A6435117233B195D00828AF6 /* iTermApplescriptPythonCommands.m in Sources */ = {isa = PBXBuildFile; fileRef = A6435115233B195D00828AF6 /* iTermApplescriptPythonCommands.m */; };
 		A64511C32380673300EB6ADF /* iTermMonoServerJobManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A64511C12380673300EB6ADF /* iTermMonoServerJobManager.h */; };
@@ -2875,6 +2881,7 @@
 		A6B41409211A5AEA00D28207 /* iTermStandardWindowButtonsView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B41407211A5AEA00D28207 /* iTermStandardWindowButtonsView.h */; };
 		A6B4140A211A5AEA00D28207 /* iTermStandardWindowButtonsView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B41408211A5AEA00D28207 /* iTermStandardWindowButtonsView.m */; };
 		A6B50E8329BBAE9C000D243D /* TilingChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B50E8229BBAE9C000D243D /* TilingChecker.swift */; };
+		A6B50EBA29BE42B1000D243D /* FontTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B50EB929BE42B1000D243D /* FontTable.swift */; };
 		A6B5134A18E779BB00D249A5 /* iTermPasteHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */; };
 		A6B540FA224838A100D3AD14 /* NSColor+PSM.h in Headers */ = {isa = PBXBuildFile; fileRef = A6B540F8224838A100D3AD14 /* NSColor+PSM.h */; };
 		A6B540FB224838A100D3AD14 /* NSColor+PSM.m in Sources */ = {isa = PBXBuildFile; fileRef = A6B540F9224838A100D3AD14 /* NSColor+PSM.m */; };
@@ -5784,6 +5791,9 @@
 		A63F40A3183F3B78003A6A6D /* LineBlock.mm */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = LineBlock.mm; sourceTree = "<group>"; tabWidth = 4; };
 		A63F40A7183F3CED003A6A6D /* LineBufferHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferHelpers.h; sourceTree = "<group>"; tabWidth = 4; };
 		A63F40A8183F3CED003A6A6D /* LineBufferHelpers.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferHelpers.m; sourceTree = "<group>"; tabWidth = 4; };
+		A640486D29BFCB640063C34A /* SpecialExceptionsWindowController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SpecialExceptionsWindowController.xib; sourceTree = "<group>"; };
+		A640487129BFCBCB0063C34A /* SpecialExceptionsWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpecialExceptionsWindowController.swift; sourceTree = "<group>"; };
+		A640487429C147A10063C34A /* CRUD.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CRUD.swift; sourceTree = "<group>"; };
 		A64203171DCF7DEE0074DC6C /* api.proto */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = text; name = api.proto; path = proto/api.proto; sourceTree = SOURCE_ROOT; };
 		A6435114233B195D00828AF6 /* iTermApplescriptPythonCommands.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermApplescriptPythonCommands.h; sourceTree = "<group>"; };
 		A6435115233B195D00828AF6 /* iTermApplescriptPythonCommands.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermApplescriptPythonCommands.m; sourceTree = "<group>"; };
@@ -6760,6 +6770,7 @@
 		A6B41407211A5AEA00D28207 /* iTermStandardWindowButtonsView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermStandardWindowButtonsView.h; sourceTree = "<group>"; };
 		A6B41408211A5AEA00D28207 /* iTermStandardWindowButtonsView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermStandardWindowButtonsView.m; sourceTree = "<group>"; };
 		A6B50E8229BBAE9C000D243D /* TilingChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TilingChecker.swift; sourceTree = "<group>"; };
+		A6B50EB929BE42B1000D243D /* FontTable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontTable.swift; sourceTree = "<group>"; };
 		A6B5134818E779BB00D249A5 /* iTermPasteHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermPasteHelper.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteHelper.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6B540F8224838A100D3AD14 /* NSColor+PSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSColor+PSM.h"; sourceTree = "<group>"; };
@@ -7548,6 +7559,7 @@
 				A6C764161B45C77100E3C992 /* libSSKeychain.a in Frameworks */,
 				A6C760451B45C4CF00E3C992 /* Cocoa.framework in Frameworks */,
 				A6C764171B45C7B200E3C992 /* NMSSH.framework in Frameworks */,
+				A640487329C0F8AA0063C34A /* BetterFontPicker.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -8427,6 +8439,9 @@
 				A682273D280355A8005DF0B4 /* KeyActionSequenceTableViewController.swift */,
 				A6EC8088282A28C600493544 /* SSHConfigurationWindow.xib */,
 				A6EC808C282A28F500493544 /* SSHConfigurationWindowController.swift */,
+				A640486D29BFCB640063C34A /* SpecialExceptionsWindowController.xib */,
+				A640487129BFCBCB0063C34A /* SpecialExceptionsWindowController.swift */,
+				A640487429C147A10063C34A /* CRUD.swift */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -10636,6 +10651,7 @@
 				A6D1C41F286192F600B68526 /* TextClipDrawing.swift */,
 				A6DBC9D9286399C6002911BE /* ContentNavigationShortcut.swift */,
 				A6B50E8229BBAE9C000D243D /* TilingChecker.swift */,
+				A6B50EB929BE42B1000D243D /* FontTable.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -13534,6 +13550,7 @@
 				A67F6186214395A70093940A /* graphic_npm@2x.png in Resources */,
 				A66F52DB2106F6F100571168 /* gitup@2x.png in Resources */,
 				A686A1191C86A6DE0024C2DE /* NewOutputForDarkTheme.png in Resources */,
+				A640487029BFCB6D0063C34A /* SpecialExceptionsWindowController.xib in Resources */,
 				A65E6F542547F1D5008A4866 /* WindowCornerFull_Square@2x.png in Resources */,
 				A67D0D821A2EE12A003A8B35 /* PreferencePanel.xib in Resources */,
 				A67D0D611A2EE12A003A8B35 /* iTermKeyMapping.xib in Resources */,
@@ -13795,6 +13812,7 @@
 				53FF980C20918D23008688D7 /* template_basic_simple.py in Resources */,
 				A67A508B26CCD3E300281693 /* xterm-256color in Resources */,
 				A69F1BC028E65A4F0054204E /* uniE0B0_Powerline_normal-left.eps in Resources */,
+				A640486F29BFCB6D0063C34A /* SpecialExceptionsWindowController.xib in Resources */,
 				A6F31A31295BC41700C1A51E /* uniE0C8_PowerlineExtraSymbols.pdf in Resources */,
 				A6F31A37295BC41700C1A51E /* uniE0C6_PowerlineExtraSymbols.pdf in Resources */,
 				A67F61CB214395C60093940A /* graphic_shell.png in Resources */,
@@ -14410,6 +14428,7 @@
 				A69F1BAD28E65A4F0054204E /* uniE0CF_lego_separator_thin.eps in Resources */,
 				1D48B28C165F3669000046EE /* TabClose_Front_Pressed.png in Resources */,
 				A67F619B214395B70093940A /* graphic_php@2x.png in Resources */,
+				A640486E29BFCB6C0063C34A /* SpecialExceptionsWindowController.xib in Resources */,
 				A66F52CA2106F6F100571168 /* gitup.png in Resources */,
 				A6A3D190281663EE00C0C9E0 /* extensions.json in Resources */,
 				5308BF90228283CE004BECAC /* StatusBarIconBattery@2x.png in Resources */,
@@ -15300,6 +15319,7 @@
 				A6AFD68524496EC2007D0660 /* iTermMultiServerMessage.m in Sources */,
 				A6ED047627A357BE00E41D13 /* MarkCache.swift in Sources */,
 				A655E6962066C78700DC21B9 /* iTermScrollAccumulator.m in Sources */,
+				A640487529C147A10063C34A /* CRUD.swift in Sources */,
 				A648DAC72427E8E900C2FF02 /* iTermSearchQueryDidChangeNotification.m in Sources */,
 				A667C23B276BD931006B4DEF /* VT100StateTransition.m in Sources */,
 				A61A85AA24F23C9B00B03880 /* iTermGlobalSearchOutlineView.m in Sources */,
@@ -15467,6 +15487,7 @@
 				A6566754219EA582005FE60E /* NSNull+iTerm.m in Sources */,
 				A629C706221016AA00E7D4AE /* iTermMoveTabToWindowBuiltInFunction.m in Sources */,
 				A601F8902328B3E800EEE4DC /* iTermWeakReference.m in Sources */,
+				A640487229BFCBCB0063C34A /* SpecialExceptionsWindowController.swift in Sources */,
 				A6D10E3927F7C2BC0026DB56 /* StringProtocol+MultiCursor.swift in Sources */,
 				534B6C6923DC20120031FED2 /* PasteEvent.m in Sources */,
 				A67A500726C73EDA00281693 /* VT100Terminal.m in Sources */,
@@ -15761,6 +15782,7 @@
 				535EA4FD20D0EBD300FC81E0 /* iTermSwiftyStringRecognizer.m in Sources */,
 				534B6C6823DC165D0031FED2 /* PasteContext.m in Sources */,
 				A629F5B323AFF70B00C2F16B /* iTermShellIntegrationFinishedViewController.m in Sources */,
+				A6B50EBA29BE42B1000D243D /* FontTable.swift in Sources */,
 				A6CDC329263D244600616155 /* NSScreen+iTerm.m in Sources */,
 				53E9DFEA220D55E40070C9C0 /* iTermUserNotificationTrigger.m in Sources */,
 				A64816602290773A008E7E0C /* iTermReflection.m in Sources */,
@@ -17140,7 +17162,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				OTHER_CODE_SIGN_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -18330,6 +18352,7 @@
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -18564,7 +18587,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
-				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				OTHER_CODE_SIGN_FLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
@@ -19062,7 +19085,7 @@
 					"-DITERM_XPC=1",
 					"-Wno-documentation-deprecated-sync",
 				);
-				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = (
 					"-liconv",
 					"-lz",
@@ -19398,7 +19421,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				OTHER_CODE_SIGN_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTermFileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -19679,6 +19702,7 @@
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -19750,6 +19774,7 @@
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -19810,6 +19835,7 @@
 					"$(PROJECT_DIR)/ColorPicker",
 					"$(PROJECT_DIR)/ThirdParty",
 					"$(PROJECT_DIR)/SearchableComboListView",
+					"$(PROJECT_DIR)/BetterFontPicker",
 				);
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
