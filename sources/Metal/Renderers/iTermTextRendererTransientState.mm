@@ -628,5 +628,9 @@ static inline BOOL GlyphKeyCanTakeASCIIFastPath(const iTermMetalGlyphKey &glyphK
     return _modelData;
 }
 
+- (void)expireNonASCIIGlyphs {
+    _texturePageCollectionSharedPointer.object->remove_all();
+}
+
 @end
 

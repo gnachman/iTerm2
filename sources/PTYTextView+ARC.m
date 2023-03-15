@@ -464,7 +464,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                        attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
         return [self charAttributes:theChar
                  externalAttributes:ea];
-                                       }
+    }
                                               nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
                                                      pad:NO
                                       includeLastNewline:NO
@@ -519,7 +519,8 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 #pragma mark - Copy to Pasteboard
 
 // Returns a dictionary to pass to NSAttributedString.
-- (NSDictionary *)charAttributes:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
+- (NSDictionary *)charAttributes:(screen_char_t)c
+              externalAttributes:(iTermExternalAttribute *)ea {
     BOOL isBold = c.bold;
     BOOL isFaint = c.faint;
     NSColor *fgColor;
@@ -546,10 +547,12 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     int underlineStyle = (ea.urlCode || c.underline) ? (NSUnderlineStyleSingle | NSUnderlineByWord) : 0;
 
     BOOL isItalic = c.italic;
+    UTF32Char remapped = 0;
     PTYFontInfo *fontInfo = [self getFontForChar:c.code
                                        isComplex:c.complexChar
                                       renderBold:&isBold
-                                    renderItalic:&isItalic];
+                                    renderItalic:&isItalic
+                                        remapped:&remapped];
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.lineBreakMode = NSLineBreakByCharWrapping;
 
@@ -586,6 +589,10 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                isBackground:NO];
         attributes = [attributes dictionaryBySettingObject:color
                                                     forKey:NSUnderlineColorAttributeName];
+    }
+    if (remapped) {
+        attributes = [attributes dictionaryBySettingObject:@(remapped)
+                                                    forKey:iTermReplacementBaseCharacterAttributeName];
     }
     if ([iTermAdvancedSettingsModel excludeBackgroundColorsFromCopiedStyle]) {
         attributes = [attributes dictionaryByRemovingObjectForKey:NSBackgroundColorAttributeName];
@@ -709,8 +716,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                                                useNonAsciiFont:self.useNonAsciiFont
                                            copyBackgroundColor:[iTermAdvancedSettingsModel copyBackgroundColor]
                         excludeBackgroundColorsFromCopiedStyle:[iTermAdvancedSettingsModel excludeBackgroundColorsFromCopiedStyle]
-                                                     asciiFont:self.primaryFont
-                                                  nonAsciiFont:self.secondaryFont];
+                                                     fontTable:self.fontTable];
 
     iTermAttributedStringSelectionExtractor *extractor =
     [[iTermAttributedStringSelectionExtractor alloc] initWithSelection:selection
@@ -878,7 +884,7 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     NSColor *textColor = [self.colorMap processedTextColorForTextColor:[self.colorMap colorForKey:kColorMapSelectedText]
                                                    overBackgroundColor:backgroundColor
                                                 disableMinimumContrast:NO];
-    NSFont *font = self.primaryFont.font;
+    NSFont *font = self.fontTable.asciiFont.font;
     NSDictionary *attributes = @{ NSForegroundColorAttributeName: textColor,
                                   NSBackgroundColorAttributeName: backgroundColor,
                                   NSFontAttributeName: font };

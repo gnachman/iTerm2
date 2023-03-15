@@ -29,6 +29,7 @@
 @class iTermExpect;
 @class iTermFindCursorView;
 @class iTermFindOnPageHelper;
+@class iTermFontTable;
 @class iTermImageWrapper;
 @class iTermQuickLookController;
 @class iTermSelection;
@@ -366,15 +367,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 // Returns the entire content of the view as a string.
 @property(nonatomic, readonly) NSString *content;
 
-// Regular and non-ascii fonts.
-@property(nonatomic, readonly) NSFont *font;
-@property(nonatomic, readonly) NSFont *nonAsciiFont;
-
-@property(nonatomic, readonly) PTYFontInfo *primaryFont;
-@property(nonatomic, readonly) PTYFontInfo *secondaryFont;  // non-ascii font, only used if self.useNonAsciiFont is set.
-
-// Returns the non-ascii font, even if it's not being used.
-@property(nonatomic, readonly) NSFont *nonAsciiFontEvenIfNotUsed;
+@property(nonatomic, readonly) iTermFontTable *fontTable;
 
 // Size of a character.
 @property(nonatomic, readonly) double lineHeight;
@@ -525,10 +518,9 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 - (void)setSemanticHistoryPrefs:(NSDictionary *)prefs;
 
 // Various accessors (TODO: convert as many as possible into properties)
-- (void)setFont:(NSFont*)aFont
-    nonAsciiFont:(NSFont *)nonAsciiFont
-    horizontalSpacing:(CGFloat)horizontalSpacing
-    verticalSpacing:(CGFloat)verticalSpacing;
+- (void)setFontTable:(iTermFontTable *)fontTable
+   horizontalSpacing:(CGFloat)horizontalSpacing
+     verticalSpacing:(CGFloat)verticalSpacing;
 - (NSRect)scrollViewContentSize;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
 
@@ -632,10 +624,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
                          suffix:(NSString *)suffix
                      completion:(void (^)(BOOL ok))completion;
 
-- (PTYFontInfo*)getFontForChar:(UniChar)ch
-                     isComplex:(BOOL)isComplex
-                    renderBold:(BOOL*)renderBold
-                  renderItalic:(BOOL*)renderItalic;
+- (PTYFontInfo *)getFontForChar:(UniChar)ch
+                      isComplex:(BOOL)isComplex
+                     renderBold:(BOOL *)renderBold
+                   renderItalic:(BOOL *)renderItalic
+                       remapped:(UTF32Char *)ch;
 
 - (NSColor*)colorForCode:(int)theIndex
                    green:(int)green

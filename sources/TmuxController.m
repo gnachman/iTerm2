@@ -8,6 +8,7 @@
 #import "TmuxController.h"
 #import "DebugLogging.h"
 #import "EquivalenceClassSet.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
@@ -226,11 +227,19 @@ static NSString *const kAggressiveResize = @"aggressive-resize";
 @synthesize sessionId = sessionId_;
 @synthesize detached = detached_;
 
+static NSDictionary *iTermTmuxControllerMakeFontOverrides(iTermFontTable *fontTable,
+                                                          CGFloat hs,
+                                                          CGFloat vs) {
+    return @{ KEY_NORMAL_FONT: fontTable.asciiFont.font.stringValue,
+              KEY_NON_ASCII_FONT: fontTable.defaultNonASCIIFont.font.stringValue,
+              KEY_FONT_CONFIG: fontTable.configString ?: [NSNull null],
+              KEY_HORIZONTAL_SPACING: @(hs),
+              KEY_VERTICAL_SPACING: @(vs) };
+}
 static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile *profile) {
-    return @{ KEY_NORMAL_FONT: [iTermProfilePreferences stringForKey:KEY_NORMAL_FONT inProfile:profile],
-              KEY_NON_ASCII_FONT: [iTermProfilePreferences stringForKey:KEY_NON_ASCII_FONT inProfile:profile],
-              KEY_HORIZONTAL_SPACING: [iTermProfilePreferences objectForKey:KEY_HORIZONTAL_SPACING inProfile:profile],
-              KEY_VERTICAL_SPACING: [iTermProfilePreferences objectForKey:KEY_VERTICAL_SPACING inProfile:profile] };
+    return iTermTmuxControllerMakeFontOverrides([iTermFontTable fontTableForProfile:profile],
+                                                [iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING inProfile:profile],
+                                                [iTermProfilePreferences floatForKey:KEY_VERTICAL_SPACING inProfile:profile]);
 }
 
 - (instancetype)initWithGateway:(TmuxGateway *)gateway
@@ -2693,15 +2702,11 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommandList:commands];
 }
 
-- (void)setTmuxFont:(NSFont *)font
-       nonAsciiFont:(NSFont *)nonAsciiFont
-           hSpacing:(CGFloat)hs
-           vSpacing:(CGFloat)vs
-             window:(int)window {
-    NSDictionary *dict = @{ KEY_NORMAL_FONT: [font stringValue],
-                            KEY_NON_ASCII_FONT: [nonAsciiFont stringValue],
-                            KEY_HORIZONTAL_SPACING: @(hs),
-                            KEY_VERTICAL_SPACING: @(vs) };
+- (void)setTmuxFontTable:(iTermFontTable *)fontTable
+                hSpacing:(CGFloat)hs
+                vSpacing:(CGFloat)vs
+                  window:(int)window {
+    NSDictionary *dict = iTermTmuxControllerMakeFontOverrides(fontTable, hs, vs);
     if (_variableWindowSize) {
         _windowStates[@(window)].fontOverrides = dict;
         return;

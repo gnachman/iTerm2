@@ -1987,10 +1987,9 @@ ITERM_WEAKLY_REFERENCEABLE
     _view.searchResultsMinimapViewDelegate = _textview.findOnPageHelper;
     _metalGlue.textView = _textview;
     [_textview setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
-    [_textview setFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NORMAL_FONT]]
-          nonAsciiFont:[ITAddressBookMgr fontWithDesc:[_profile objectForKey:KEY_NON_ASCII_FONT]]
-     horizontalSpacing:[iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:_profile]
-       verticalSpacing:[iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:_profile]];
+    [_textview setFontTable:[iTermFontTable fontTableForProfile:_profile]
+          horizontalSpacing:[iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:_profile]
+            verticalSpacing:[iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:_profile]];
     [self setTransparency:[[_profile objectForKey:KEY_TRANSPARENCY] floatValue]];
     [self setTransparencyAffectsOnlyDefaultBackgroundColor:[[_profile objectForKey:KEY_TRANSPARENCY_AFFECTS_ONLY_DEFAULT_BACKGROUND_COLOR] boolValue]];
 
@@ -4432,10 +4431,9 @@ ITERM_WEAKLY_REFERENCEABLE
     // forces the badge to update
     _textview.badgeLabel = @"";
     [self updateBadgeLabel];
-    [self setFont:[ITAddressBookMgr fontWithDesc:aDict[KEY_NORMAL_FONT]]
-     nonAsciiFont:[ITAddressBookMgr fontWithDesc:aDict[KEY_NON_ASCII_FONT]]
-horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING inProfile:aDict]
-  verticalSpacing:[iTermProfilePreferences floatForKey:KEY_VERTICAL_SPACING inProfile:aDict]];
+    [self setFontTable:[iTermFontTable fontTableForProfile:aDict]
+     horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING inProfile:aDict]
+       verticalSpacing:[iTermProfilePreferences floatForKey:KEY_VERTICAL_SPACING inProfile:aDict]];
 
     NSDictionary *shortcutDictionary = [iTermProfilePreferences objectForKey:KEY_SESSION_HOTKEY inProfile:aDict];
     iTermShortcut *shortcut = [iTermShortcut shortcutWithDictionary:shortcutDictionary];
@@ -5667,16 +5665,15 @@ horizontalSpacing:[iTermProfilePreferences floatForKey:KEY_HORIZONTAL_SPACING in
     return [font it_fontByAddingToPointSize:dir];
 }
 
-- (void)setFont:(NSFont *)font
-   nonAsciiFont:(NSFont *)nonAsciiFont
-horizontalSpacing:(CGFloat)horizontalSpacing
-verticalSpacing:(CGFloat)verticalSpacing {
-    DLog(@"setFont:%@ nonAsciiFont:%@", font, nonAsciiFont);
+- (void)setFontTable:(iTermFontTable *)newFontTable
+   horizontalSpacing:(CGFloat)horizontalSpacing
+     verticalSpacing:(CGFloat)verticalSpacing {
+    DLog(@"setFontTable:%@ horizontalSpacing:%@ verticalSpacing:%@",
+         newFontTable, @(horizontalSpacing), @(verticalSpacing));
     NSWindow *window = [[_delegate realParentWindow] window];
     DLog(@"Before:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
-    if ([_textview.font isEqualTo:font] &&
-        [_textview.nonAsciiFontEvenIfNotUsed isEqualTo:nonAsciiFont] &&
+    if ([_textview.fontTable isEqual:newFontTable] &&
         [_textview horizontalSpacing] == horizontalSpacing &&
         [_textview verticalSpacing] == verticalSpacing) {
         // There's an unfortunate problem that this is a band-aid over.
@@ -5689,10 +5686,9 @@ verticalSpacing:(CGFloat)verticalSpacing {
         return;
     }
     DLog(@"Line height was %f", [_textview lineHeight]);
-    [_textview setFont:font
-          nonAsciiFont:nonAsciiFont
-     horizontalSpacing:horizontalSpacing
-       verticalSpacing:verticalSpacing];
+    [_textview setFontTable:newFontTable
+          horizontalSpacing:horizontalSpacing
+            verticalSpacing:verticalSpacing];
     DLog(@"Line height is now %f", [_textview lineHeight]);
     [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled];
     DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
@@ -5847,18 +5843,16 @@ verticalSpacing:(CGFloat)verticalSpacing {
 - (void)synchronizeTmuxFonts:(NSNotification *)notification {
     if (!_exited && [self isTmuxClient]) {
         NSArray *args = [notification object];
-        NSFont *font = args[0];
-        NSFont *nonAsciiFont = args[1];
-        NSNumber *hSpacing = args[2];
-        NSNumber *vSpacing = args[3];
-        TmuxController *controller = args[4];
-        NSNumber *tmuxWindow = args[5];
+        iTermFontTable *fontTable = args[0];
+        NSNumber *hSpacing = args[1];
+        NSNumber *vSpacing = args[2];
+        TmuxController *controller = args[3];
+        NSNumber *tmuxWindow = args[4];
         if (controller == _tmuxController &&
             (!controller.variableWindowSize || tmuxWindow.intValue == self.delegate.tmuxWindow)) {
-            [_textview setFont:font
-                  nonAsciiFont:nonAsciiFont
-             horizontalSpacing:[hSpacing doubleValue]
-               verticalSpacing:[vSpacing doubleValue]];
+            [_textview setFontTable:fontTable
+                  horizontalSpacing:[hSpacing doubleValue]
+                    verticalSpacing:[vSpacing doubleValue]];
         }
     }
 }
@@ -5869,15 +5863,13 @@ verticalSpacing:(CGFloat)verticalSpacing {
     if (!fontChangeNotificationInProgress) {
         fontChangeNotificationInProgress = YES;
         [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxFontChanged
-                                                            object:@[ _textview.font,
-                                                                      _textview.nonAsciiFontEvenIfNotUsed,
+                                                            object:@[ _textview.fontTable,
                                                                       @(_textview.horizontalSpacing),
                                                                       @(_textview.verticalSpacing),
                                                                       _tmuxController ?: [NSNull null],
                                                                       @(self.delegate.tmuxWindow)]];
         fontChangeNotificationInProgress = NO;
-        [_delegate setTmuxFont:_textview.font
-                  nonAsciiFont:_textview.nonAsciiFontEvenIfNotUsed
+        [_delegate setTmuxFontTable:_textview.fontTable
                       hSpacing:_textview.horizontalSpacing
                       vSpacing:_textview.verticalSpacing];
         [[NSNotificationCenter defaultCenter] postNotificationName:kPTYSessionTmuxFontDidChange
@@ -5887,35 +5879,40 @@ verticalSpacing:(CGFloat)verticalSpacing {
 
 - (void)changeFontSizeDirection:(int)dir {
     DLog(@"changeFontSizeDirection:%d", dir);
-    NSFont* font;
-    NSFont* nonAsciiFont;
     CGFloat hs;
     CGFloat vs;
+    iTermFontTable *newFontTable;
+    NSString *fontConfig;
     if (dir) {
         // Grow or shrink
         DLog(@"grow/shrink");
-        font = [self fontWithRelativeSize:dir from:_textview.font];
-        nonAsciiFont = [self fontWithRelativeSize:dir from:_textview.nonAsciiFontEvenIfNotUsed];
+        newFontTable = [_textview.fontTable fontTableGrownBy:dir];
         hs = [_textview horizontalSpacing];
         vs = [_textview verticalSpacing];
+        fontConfig = newFontTable.configString;
     } else {
         // Restore original font size.
         NSDictionary *abEntry = [self originalProfile];
         NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
-        font = [ITAddressBookMgr fontWithDesc:fontDesc];
-        nonAsciiFont = [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]];
+        fontConfig = abEntry[KEY_FONT_CONFIG];
+        newFontTable = [[iTermFontTable alloc] initWithDefaultFont:[PTYFontInfo fontInfoWithFont:[ITAddressBookMgr fontWithDesc:fontDesc]]
+                                                      nonAsciiFont:[PTYFontInfo fontInfoWithFont:[ITAddressBookMgr fontWithDesc:abEntry[KEY_NON_ASCII_FONT]]]
+                                                      configString:fontConfig];
         hs = [iTermProfilePreferences doubleForKey:KEY_HORIZONTAL_SPACING inProfile:abEntry];
         vs = [iTermProfilePreferences doubleForKey:KEY_VERTICAL_SPACING inProfile:abEntry];
     }
-    [self setFont:font nonAsciiFont:nonAsciiFont horizontalSpacing:hs verticalSpacing:vs];
+    [self setFontTable:newFontTable horizontalSpacing:hs verticalSpacing:vs];
 
     if (dir || self.isDivorced) {
         // Move this bookmark into the sessions model.
         NSString* guid = [self divorceAddressBookEntryFromPreferences];
 
-        [self setSessionSpecificProfileValues:@{ KEY_NORMAL_FONT: [font stringValue],
-                                                 KEY_NON_ASCII_FONT: [nonAsciiFont stringValue] }];
         // Set the font in the bookmark dictionary
+        [self setSessionSpecificProfileValues:@{
+                              KEY_NORMAL_FONT: [newFontTable.asciiFont.font stringValue],
+                           KEY_NON_ASCII_FONT: [newFontTable.defaultNonASCIIFont.font stringValue] ?: [NSNull null],
+                              KEY_FONT_CONFIG: fontConfig ?: [NSNull null]
+        }];
 
         // Update the model's copy of the bookmark.
         [[ProfileModel sessionsInstance] setBookmark:[self profile] withGuid:guid];
@@ -6814,8 +6811,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     CGSize glyphSize;
     const CGFloat scale = _view.window.backingScaleFactor ?: 1;
     NSRect rect = [iTermCharacterSource boundingRectForCharactersInRange:NSMakeRange(32, 127-32)
-                                                           asciiFontInfo:_textview.primaryFont
-                                                        nonAsciiFontInfo:_textview.secondaryFont
+                                                               fontTable:_textview.fontTable
                                                                    scale:scale
                                                              useBoldFont:_textview.useBoldFont
                                                            useItalicFont:_textview.useItalicFont
@@ -9565,6 +9561,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
     [_view updateScrollViewFrame];
     [self updateMetalDriver];
+    [_view.driver expireNonASCIIGlyphs];
 }
 
 - (BOOL)textViewHasBackgroundImage {
@@ -15553,7 +15550,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (NSFont *)statusBarTerminalFont {
-    return _textview.font;
+    return _textview.fontTable.asciiFont.font;
 }
 
 - (NSColor *)statusBarTerminalBackgroundColor {
@@ -16249,8 +16246,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
 
-    [loggingHelper logWithoutTimestamp:[NSData styleSheetWithFontFamily:self.textview.font.familyName
-                                                               fontSize:self.textview.font.pointSize
+    [loggingHelper logWithoutTimestamp:[NSData styleSheetWithFontFamily:self.textview.fontTable.asciiFont.font.familyName
+                                                               fontSize:self.textview.fontTable.asciiFont.font.pointSize
                                                         backgroundColor:[_screen.colorMap colorForKey:kColorMapBackground]
                                                               textColor:[_screen.colorMap colorForKey:kColorMapForeground]]];
 }
@@ -16503,7 +16500,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (NSFont *)composerManagerFont:(iTermComposerManager *)composerManager {
-    return self.textview.font;
+    return self.textview.fontTable.asciiFont.font;
 }
 
 #pragma mark - iTermIntervalTreeObserver

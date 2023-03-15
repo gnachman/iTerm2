@@ -2355,6 +2355,41 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return dict;
 }
 
+- (UTF32Char)longCharacterAtIndex:(NSInteger)i {
+    if (self.length == 0) {
+        return 0;
+    }
+    const UniChar c1 = [self characterAtIndex:0];
+    if (!IsHighSurrogate(c1)) {
+        return c1;
+    }
+    if (self.length < 2) {
+        return 0;
+    }
+    const UniChar c2 = [self characterAtIndex:1];
+    if (!IsLowSurrogate(c2)) {
+        return 0;
+    }
+    return CFStringGetLongCharacterForSurrogatePair(c1, c2);
+}
+
+- (NSString *)stringByReplacingBaseCharacterWith:(UTF32Char)base {
+    NSString *baseString = [NSString stringWithLongCharacter:base];
+    const NSUInteger length = self.length;
+    if (length == 0) {
+        return baseString;
+    }
+    if (IsHighSurrogate([self characterAtIndex:0])) {
+        if (length == 1) {
+            return baseString;
+        }
+        if (IsLowSurrogate([self characterAtIndex:1])) {
+            return [baseString stringByAppendingString:[self substringFromIndex:2]];
+        }
+    }
+    return [baseString stringByAppendingString:[self substringFromIndex:1]];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

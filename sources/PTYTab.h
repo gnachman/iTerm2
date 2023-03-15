@@ -239,10 +239,9 @@ extern NSString *const PTYTabVariableTitleOverride;
 - (BOOL)updatedTmuxLayoutRequiresAdjustment;
 - (TmuxController *)tmuxController;
 
-- (void)setTmuxFont:(NSFont *)font
-       nonAsciiFont:(NSFont *)nonAsciiFont
-           hSpacing:(double)hs
-           vSpacing:(double)vs;
+- (void)setTmuxFontTable:(iTermFontTable *)fontTable
+                hSpacing:(double)hs
+                vSpacing:(double)vs;
 
 - (void)moveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally;
 - (BOOL)canMoveCurrentSessionDividerBy:(int)direction horizontally:(BOOL)horizontally;

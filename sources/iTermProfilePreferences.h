@@ -10,6 +10,8 @@
 #import "PreferenceInfo.h"
 #import "ProfileModel.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 // Values for KEY_CUSTOM_DIRECTORY
 extern NSString *const kProfilePreferenceInitialDirectoryCustomValue;
 extern NSString *const kProfilePreferenceInitialDirectoryHomeValue;
@@ -20,7 +22,7 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 
 + (NSArray<NSString *> *)allKeys;
 + (BOOL)valueIsLegal:(id)value forKey:(NSString *)key;
-+ (id)defaultObjectForKey:(NSString *)key;
++ (id _Nullable)defaultObjectForKey:(NSString *)key;
 
 // Sets a bunch of values at once (just one notification posted).
 + (void)setObjectsFromDictionary:(NSDictionary *)dictionary
@@ -86,15 +88,17 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 + (BOOL)defaultValueForKey:(NSString *)key isCompatibleWithType:(PreferenceInfoType)type;
 
 // Returns nil if the value is nil, the key is bogus, or it could not be json encoded for some reason.
-+ (NSString *)jsonEncodedValueForKey:(NSString *)key inProfile:(Profile *)profile;
++ (NSString * _Nullable)jsonEncodedValueForKey:(NSString *)key inProfile:(Profile *)profile;
 + (NSArray<NSString *> *)nonDeprecatedKeys;
 
-+ (id)objectForColorKey:(NSString *)key
-                   dark:(BOOL)dark
-                profile:(Profile *)profile;
-+ (NSColor *)colorForKey:(NSString *)key
-                    dark:(BOOL)dark
-                 profile:(Profile *)profile;
++ (NSFont * _Nullable)fontForKey:(NSString *)key
+                       inProfile:(Profile *)profile;
++ (id _Nullable)objectForColorKey:(NSString *)key
+                             dark:(BOOL)dark
+                          profile:(Profile *)profile;
++ (NSColor * _Nullable)colorForKey:(NSString *)key
+                              dark:(BOOL)dark
+                           profile:(Profile *)profile;
 + (BOOL)boolForColorKey:(NSString *)baseKey
                    dark:(BOOL)dark
                 profile:(Profile *)profile;
@@ -108,4 +112,6 @@ extern NSString *const kProfilePreferenceInitialDirectoryAdvancedValue;
 @end
 
 NSString *iTermAmendedColorKey(NSString *baseKey, Profile *profile, BOOL dark);
+
+NS_ASSUME_NONNULL_END
 

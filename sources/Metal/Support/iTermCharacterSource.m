@@ -9,6 +9,7 @@
 
 #import "DebugLogging.h"
 #import "FutureMethods.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermBoxDrawingBezierCurveFactory.h"
 #import "iTermCharacterBitmap.h"
 #import "iTermCharacterParts.h"
@@ -33,8 +34,7 @@ static const CGFloat iTermCharacterSourceAntialiasedNonretinaFakeBoldShiftPoints
 static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 @interface iTermCharacterSourceDescriptor()
-@property (nonatomic, readwrite, strong) PTYFontInfo *asciiFontInfo;
-@property (nonatomic, readwrite, strong) PTYFontInfo *nonAsciiFontInfo;
+@property (nonatomic, readwrite, strong) iTermFontTable *fontTable;
 @property (nonatomic, readwrite) CGSize asciiOffset;
 @property (nonatomic, readwrite) CGSize glyphSize;
 @property (nonatomic, readwrite) CGSize cellSize;
@@ -51,8 +51,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
 @implementation iTermCharacterSourceDescriptor
 
-+ (instancetype)characterSourceDescriptorWithAsciiFont:(PTYFontInfo *)asciiFontInfo
-                                          nonAsciiFont:(PTYFontInfo *)nonAsciiFontInfo
++ (instancetype)characterSourceDescriptorWithFontTable:(iTermFontTable *)fontTable
                                            asciiOffset:(CGSize)asciiOffset
                                              glyphSize:(CGSize)glyphSize
                                               cellSize:(CGSize)cellSize
@@ -65,8 +64,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
                                    nonAsciiAntiAliased:(BOOL)nonAsciiAntiAliased {
     iTermCharacterSourceDescriptor *descriptor = [[iTermCharacterSourceDescriptor alloc] init];
     
-    descriptor.asciiFontInfo = asciiFontInfo;
-    descriptor.nonAsciiFontInfo = nonAsciiFontInfo;
+    descriptor.fontTable = fontTable;
     descriptor.asciiOffset = asciiOffset;
     descriptor.glyphSize = glyphSize;
     descriptor.cellSize = cellSize;
@@ -91,14 +89,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (NSDictionary *)dictionaryValue {
-    return @{ @"asciiRegularFont": _asciiFontInfo.font ?: [NSNull null],
-              @"asciiBoldFont": _asciiFontInfo.boldVersion.font ?: [NSNull null],
-              @"asciiItalicFont": _asciiFontInfo.italicVersion.font ?: [NSNull null],
-              @"asciiBoldItalicFont": _asciiFontInfo.boldItalicVersion.font ?: [NSNull null],
-              @"nonAsciiRegularFont": _nonAsciiFontInfo.font ?: [NSNull null],
-              @"nonAsciiBoldFont": _nonAsciiFontInfo.boldVersion.font ?: [NSNull null],
-              @"nonAsciiItalicFont": _nonAsciiFontInfo.italicVersion.font ?: [NSNull null],
-              @"nonAsciiBoldItalicFont": _nonAsciiFontInfo.boldItalicVersion.font ?: [NSNull null],
+    return @{ @"fontTable": _fontTable ?: [NSNull null],
               @"asciiOffset": NSStringFromSize(_asciiOffset),
               @"glyphSize": @(_glyphSize),
               @"cellSize": @(_cellSize),
@@ -112,23 +103,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 - (CGFloat)baselineOffset {
-    return _asciiFontInfo.baselineOffset;
-}
-
-- (NSFont *)fontForASCII:(BOOL)isAscii
-               attributes:(iTermCharacterSourceAttributes *)attributes
-               renderBold:(BOOL *)renderBold
-             renderItalic:(BOOL *)renderItalic {
-    *renderBold = attributes.bold;
-    *renderItalic = attributes.italic;
-    return [PTYFontInfo fontForAsciiCharacter:isAscii
-                                    asciiFont:_asciiFontInfo
-                                 nonAsciiFont:_nonAsciiFontInfo
-                                  useBoldFont:self.useBoldFont
-                                useItalicFont:self.useItalicFont
-                             usesNonAsciiFont:self.useNonAsciiFont
-                                   renderBold:renderBold
-                                 renderItalic:renderItalic].font;
+    return _fontTable.baselineOffset;
 }
 
 @end
@@ -161,6 +136,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     BOOL _fakeBold;
     BOOL _fakeItalic;
     NSFont *_font;
+
     // Large enough to hold glyphSize * maxParts in both horizontal and vertical direction.
     CGSize _size;
     BOOL _boxDrawing;
@@ -193,8 +169,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 }
 
 + (NSRect)boundingRectForCharactersInRange:(NSRange)range
-                             asciiFontInfo:(PTYFontInfo *)asciiFontInfo
-                          nonAsciiFontInfo:(PTYFontInfo *)nonAsciiFontInfo
+                                 fontTable:(iTermFontTable *)fontTable
                                      scale:(CGFloat)scale
                                useBoldFont:(BOOL)useBoldFont
                              useItalicFont:(BOOL)useItalicFont
@@ -205,20 +180,22 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     dispatch_once(&onceToken, ^{
         cache = [NSMutableDictionary dictionary];
     });
-    if (!asciiFontInfo) {
+    if (!fontTable) {
         return NSMakeRect(0, 0, 1, 1);
     }
     CGFloat pointSize;
-    if (useNonAsciiFont && nonAsciiFontInfo) {
-        pointSize = MAX(asciiFontInfo.font.pointSize, nonAsciiFontInfo.font.pointSize);
+    if (useNonAsciiFont) {
+        pointSize = MAX(fontTable.asciiFont.font.pointSize,
+                        fontTable.defaultNonASCIIFont.font.pointSize);
     } else {
-        pointSize = asciiFontInfo.font.pointSize;
+        pointSize = fontTable.asciiFont.font.pointSize;
     }
     NSArray *key = @[ NSStringFromRange(range),
-                      asciiFontInfo.font.fontName ?: @"",
-                      nonAsciiFontInfo.font.fontName ?: @"",
+                      fontTable.asciiFont.font.fontName ?: @"",
+                      fontTable.defaultNonASCIIFont.font.fontName ?: @"",
+                      fontTable.configHash,
                       @(pointSize),
-                      @(asciiFontInfo.baselineOffset),
+                      @(fontTable.baselineOffset),
                       @(scale),
                       @(useBoldFont),
                       @(useItalicFont),
@@ -229,8 +206,7 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
     
     const CGSize bigSize = CGSizeMake(round(pointSize * 10),
                                       round(pointSize * 10));
-    iTermCharacterSourceDescriptor *descriptor = [iTermCharacterSourceDescriptor characterSourceDescriptorWithAsciiFont:asciiFontInfo
-                                                                                                           nonAsciiFont:nonAsciiFontInfo
+    iTermCharacterSourceDescriptor *descriptor = [iTermCharacterSourceDescriptor characterSourceDescriptorWithFontTable:fontTable
                                                                                                             asciiOffset:CGSizeZero
                                                                                                          glyphSize:bigSize
                                                                                                           cellSize:bigSize
@@ -285,13 +261,26 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
 
     self = [super init];
     if (self) {
+        _fakeBold = attributes.bold;
+        _fakeItalic = attributes.italic;
+        UTF32Char remapped = 0;
+        _font = [descriptor.fontTable fontForCharacter:[string longCharacterAtIndex:0]
+                                           useBoldFont:descriptor.useBoldFont
+                                         useItalicFont:descriptor.useItalicFont
+                                            renderBold:&_fakeBold
+                                          renderItalic:&_fakeItalic
+                                              remapped: &remapped].font;
+        if (remapped) {
+            string = [string stringByReplacingBaseCharacterWith:remapped];
+        }
+
         _string = [string copy];
         _descriptor = descriptor;
         _isAscii = (string.length == 1 && [string characterAtIndex:0] < 128);
         _antialiased = _isAscii ? descriptor.asciiAntiAliased : descriptor.nonAsciiAntiAliased;
-        _font = [descriptor fontForASCII:_isAscii attributes:attributes renderBold:&_fakeBold renderItalic:&_fakeItalic];
         DLog(@"%p initialize with descriptor %@, isAscii=%@", self, descriptor, @(_isAscii));
-        ITAssertWithMessage(_font, @"Nil font for string=%@ attributes=%@", string, attributes);
+
+        ITAssertWithMessage(descriptor.fontTable, @"Nil font table for string=%@ attributes=%@", string, attributes);
         _attributes = attributes;
         _radius = radius;
         _size = CGSizeMake(ceil(descriptor.glyphSize.width) * self.maxParts,

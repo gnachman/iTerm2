@@ -2318,7 +2318,8 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
                          colorRun:(iTermBackgroundColorRun *)colorRun
                          drawable:(BOOL)drawable
                  textColorContext:(iTermTextColorContext *)textColorContext
-                       attributes:(iTermCharacterAttributes *)attributes {
+                       attributes:(iTermCharacterAttributes *)attributes
+                         remapped:(UTF32Char *)remapped {
     attributes->initialized = YES;
     attributes->shouldAntiAlias = iTermTextDrawingHelperShouldAntiAlias(c,
                                                                         _useNonAsciiFont,
@@ -2350,7 +2351,8 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
     PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:code
                                                       isComplex:isComplex
                                                      renderBold:&attributes->fakeBold
-                                                   renderItalic:&attributes->fakeItalic];
+                                                   renderItalic:&attributes->fakeItalic
+                                                       remapped:remapped];
 
     attributes->font = fontInfo.font;
     attributes->ligatureLevel = fontInfo.ligatureLevel;
@@ -2500,7 +2502,9 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     if (!ScreenCharacterAttributesEqual(*c, *pc)) {
         return NO;
     }
-
+    if ([_fontTable haveSpecialExceptionFor:*c orCharacter:*pc]) {
+        return NO;
+    }
     if (ea1 == nil && ea2 == nil) {
         // fast path
         return YES;
@@ -2574,7 +2578,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                 lastWasNull = NO;
             }
         }
-        const unichar code = c.code;
+        unichar code = c.code;
         BOOL isComplex = c.complexChar;
 
         NSString *charAsString;
@@ -2659,6 +2663,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
         }
         previousDrawable = drawable;
 
+        UTF32Char remapped = 0;
         [self getAttributesForCharacter:&c
                      externalAttributes:ea
                                 atIndex:i
@@ -2667,9 +2672,18 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                colorRun:colorRun
                                drawable:drawable
                        textColorContext:&textColorContext
-                             attributes:&characterAttributes];
+                             attributes:&characterAttributes
+                               remapped:&remapped];
         prevEa = ea;
-
+        if (!c.image && remapped) {
+            if (c.complexChar) {
+                charAsString = [charAsString stringByReplacingBaseCharacterWith:remapped];
+            } else if (remapped <= 0xffff) {
+                code = remapped;
+            } else {
+                charAsString = [NSString stringWithLongCharacter:remapped];
+            }
+        }
         iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_ATTRS_FOR_CHAR]);
 
         iTermPreciseTimerStatsStartTimer(&_stats[TIMER_SHOULD_SEGMENT]);
@@ -3153,10 +3167,12 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
             // Draw an underline.
             BOOL unusedBold = NO;
             BOOL unusedItalic = NO;
+            UTF32Char ignore = 0;
             PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:128
                                                               isComplex:NO
                                                              renderBold:&unusedBold
-                                                           renderItalic:&unusedItalic];
+                                                           renderItalic:&unusedItalic
+                                                               remapped:&ignore];
             NSRect rect = NSMakeRect(x,
                                      y - round((_cellSize.height - _cellSizeWithoutSpacing.height) / 2.0),
                                      charsInLine * _cellSize.width,
@@ -3652,10 +3668,12 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     _preferSpeedToFullLigatureSupport = [iTermAdvancedSettingsModel preferSpeedToFullLigatureSupport];
 
     BOOL ignore1 = NO, ignore2 = NO;
+    UTF32Char ignore3;
     PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:'a'
                                                       isComplex:NO
                                                      renderBold:&ignore1
-                                                   renderItalic:&ignore2];
+                                                   renderItalic:&ignore2
+                                                       remapped:&ignore3];
     _asciiLigaturesAvailable = (fontInfo.ligatureLevel > 0 || fontInfo.hasDefaultLigatures) && _asciiLigatures;
 }
 

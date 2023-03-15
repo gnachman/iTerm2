@@ -9,7 +9,10 @@
 #import <Cocoa/Cocoa.h>
 
 #include "NSImage+iTerm.h"
+#import "NSStringITerm.h"
 #import "NSMutableAttributedString+iTerm.h"
+
+NSAttributedStringKey iTermReplacementBaseCharacterAttributeName = @"iTermReplacementBaseCharacterAttributeName";
 
 @implementation NSMutableAttributedString (iTerm)
 
@@ -25,6 +28,10 @@
 }
 
 - (void)iterm_appendString:(NSString *)string withAttributes:(NSDictionary *)attributes {
+    NSNumber *base = attributes[iTermReplacementBaseCharacterAttributeName];
+    if (base) {
+        string = [string stringByReplacingBaseCharacterWith:base.unsignedIntegerValue];
+    }
     [self appendAttributedString:[[NSAttributedString alloc] initWithString:string
                                                                  attributes:attributes]];
 }

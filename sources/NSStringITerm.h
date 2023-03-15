@@ -347,6 +347,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (NSString *)it_stringByAppendingCharacter:(unichar)theChar;
 - (NSDictionary<NSString *, NSString *> *)it_keyValuePairsSeparatedBy:(NSString *)separator;
 
+- (UTF32Char)longCharacterAtIndex:(NSInteger)i;
+- (NSString *)stringByReplacingBaseCharacterWith:(UTF32Char)base;
+
 @end
 
 @interface NSMutableString (iTerm)

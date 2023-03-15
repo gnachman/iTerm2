@@ -12,6 +12,7 @@
 #import "TmuxGateway.h"
 #import "WindowControllerInterface.h"
 
+@class iTermFontTable;
 @class iTermVariableScope;
 @class PTYSession;
 @class PTYTab;
@@ -237,11 +238,10 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 
 - (void)clearHistoryForWindowPane:(int)windowPane;
 
-- (void)setTmuxFont:(NSFont *)font
-       nonAsciiFont:(NSFont *)nonAsciiFont
-           hSpacing:(CGFloat)hs
-           vSpacing:(CGFloat)vs
-             window:(int)window;
+- (void)setTmuxFontTable:(iTermFontTable *)fontTable
+                hSpacing:(CGFloat)hs
+                vSpacing:(CGFloat)vs
+                  window:(int)window;
 - (BOOL)windowIsHidden:(int)windowId;
 - (void)setLayoutInWindowPane:(int)windowPane toLayoutNamed:(NSString *)name;
 - (void)setLayoutInWindow:(int)window toLayout:(NSString *)layout;

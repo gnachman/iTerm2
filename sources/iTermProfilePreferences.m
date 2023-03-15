@@ -155,7 +155,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     return @[ KEY_GUID, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES, KEY_SEMANTIC_HISTORY, KEY_BOUND_HOSTS,
               KEY_ORIGINAL_GUID, KEY_AWDS_WIN_OPTION, KEY_AWDS_WIN_DIRECTORY, KEY_AWDS_TAB_OPTION,
               KEY_AWDS_TAB_DIRECTORY, KEY_AWDS_PANE_OPTION, KEY_AWDS_PANE_DIRECTORY,
-              KEY_NORMAL_FONT, KEY_NON_ASCII_FONT, KEY_BACKGROUND_IMAGE_LOCATION, KEY_KEYBOARD_MAP,
+              KEY_NORMAL_FONT, KEY_NON_ASCII_FONT, KEY_FONT_CONFIG, KEY_BACKGROUND_IMAGE_LOCATION, KEY_KEYBOARD_MAP,
               KEY_TOUCHBAR_MAP, KEY_DYNAMIC_PROFILE_PARENT_NAME, KEY_DYNAMIC_PROFILE_PARENT_GUID,
               KEY_DYNAMIC_PROFILE_FILENAME ];
 }
@@ -185,7 +185,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
     dispatch_once(&onceToken, ^{
         result = [NSMutableDictionary dictionary];
         NSArray *string = @[ KEY_NAME, KEY_BADGE_FORMAT, KEY_ANSWERBACK_STRING, KEY_NORMAL_FONT,
-                             KEY_NON_ASCII_FONT, KEY_AWDS_TAB_OPTION, KEY_AWDS_PANE_OPTION, KEY_AWDS_WIN_OPTION,
+                             KEY_NON_ASCII_FONT, KEY_FONT_CONFIG, KEY_AWDS_TAB_OPTION, KEY_AWDS_PANE_OPTION, KEY_AWDS_WIN_OPTION,
                              KEY_SHORTCUT, KEY_ICON_PATH, KEY_CUSTOM_COMMAND, KEY_COMMAND_LINE,
                              KEY_INITIAL_TEXT, KEY_CUSTOM_DIRECTORY, KEY_WORKING_DIRECTORY,
                              KEY_CUSTOM_WINDOW_TITLE, KEY_CUSTOM_TAB_TITLE,
@@ -221,6 +221,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_USE_TAB_COLOR COLORS_DARK_MODE_SUFFIX,
                              KEY_USE_TAB_COLOR,
 
+                             KEY_USE_SELECTED_TEXT_COLOR COLORS_LIGHT_MODE_SUFFIX,
+                             KEY_USE_SELECTED_TEXT_COLOR COLORS_DARK_MODE_SUFFIX,
                              KEY_USE_SELECTED_TEXT_COLOR,
 
                              KEY_USE_UNDERLINE_COLOR COLORS_LIGHT_MODE_SUFFIX,
@@ -464,6 +466,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_USE_TAB_COLOR COLORS_DARK_MODE_SUFFIX: @NO,
 
                   KEY_USE_SELECTED_TEXT_COLOR: @YES,
+                  KEY_USE_SELECTED_TEXT_COLOR COLORS_LIGHT_MODE_SUFFIX: @YES,
+                  KEY_USE_SELECTED_TEXT_COLOR COLORS_DARK_MODE_SUFFIX: @YES,
 
                   KEY_UNDERLINE_COLOR: [NSNull null],
                   KEY_UNDERLINE_COLOR COLORS_LIGHT_MODE_SUFFIX: [NSNull null],
@@ -641,6 +645,11 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
 
 + (NSArray<NSString *> *)nonDeprecatedKeys {
     return [[iTermProfilePreferences validationBlocks] allKeys];
+}
+
++ (NSFont *)fontForKey:(NSString *)key
+             inProfile:(Profile *)profile {
+    return [ITAddressBookMgr fontWithDesc:[self objectForKey:key inProfile:profile]];
 }
 
 + (id)objectForColorKey:(NSString *)baseKey

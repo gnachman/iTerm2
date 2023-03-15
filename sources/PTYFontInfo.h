@@ -8,15 +8,17 @@
 
 #import <Cocoa/Cocoa.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 // A collection of data about a font.
 @interface PTYFontInfo : NSObject
 
 @property(nonatomic, retain) NSFont *font;
 @property(nonatomic, readonly) CGFloat baselineOffset;
 @property(nonatomic, readonly) CGFloat underlineOffset;
-@property(nonatomic, retain) PTYFontInfo *boldVersion;
-@property(nonatomic, retain) PTYFontInfo *italicVersion;
-@property(nonatomic, retain) PTYFontInfo *boldItalicVersion;
+@property(nonatomic, strong, nullable) PTYFontInfo *boldVersion;
+@property(nonatomic, strong, nullable) PTYFontInfo *italicVersion;
+@property(nonatomic, strong, nullable) PTYFontInfo *boldItalicVersion;
 @property(nonatomic, readonly) NSInteger ligatureLevel;
 @property(nonatomic, readonly) BOOL hasDefaultLigatures;
 
@@ -26,7 +28,7 @@
 // resulting value is whether it should be rendered as fake bold/italic.
 + (PTYFontInfo *)fontForAsciiCharacter:(BOOL)isAscii
                              asciiFont:(PTYFontInfo *)asciiFont
-                          nonAsciiFont:(PTYFontInfo *)nonAsciiFont
+                          nonAsciiFont:(PTYFontInfo * _Nullable)nonAsciiFont
                            useBoldFont:(BOOL)useBoldFont
                          useItalicFont:(BOOL)useItalicFont
                       usesNonAsciiFont:(BOOL)useNonAsciiFont
@@ -35,16 +37,16 @@
 
 // Returns a new autoreleased PTYFontInfo with a bold version of this font (or
 // nil if none is available).
-- (PTYFontInfo *)computedBoldVersion;
+- (PTYFontInfo * _Nullable)computedBoldVersion;
 
 // Returns a new autoreleased PTYFontInfo with a bold version of this font (or
 // nil if none is available).
-- (PTYFontInfo *)computedItalicVersion;
+- (PTYFontInfo * _Nullable)computedItalicVersion;
 
 
 // Returns a new autoreleased PTYFontInfo with a bold and italic version of this font (or nil if none
 // is available).
-- (PTYFontInfo *)computedBoldItalicVersion;
+- (PTYFontInfo * _Nullable)computedBoldItalicVersion;
 
 @end
 
@@ -55,3 +57,5 @@
 @property (nonatomic, readonly) NSInteger it_ligatureLevel;
 
 @end
+
+NS_ASSUME_NONNULL_END

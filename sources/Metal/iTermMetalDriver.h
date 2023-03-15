@@ -169,6 +169,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth;
 // enableSetNeedsDisplay should be NO.
 // The arg to completion is YES on success and NO if the draw was aborted for lack of resources.
 - (void)drawAsynchronouslyInView:(MTKView *)view completion:(void (^)(BOOL))completion;
+- (void)expireNonASCIIGlyphs;
 
 @end
 

@@ -3638,15 +3638,13 @@ typedef struct {
     [self updateTabTitle];
 }
 
-- (void)setTmuxFont:(NSFont *)font
-       nonAsciiFont:(NSFont *)nonAsciiFont
-           hSpacing:(double)hs
-           vSpacing:(double)vs {
-    [self.tmuxController setTmuxFont:font
-                        nonAsciiFont:nonAsciiFont
-                            hSpacing:hs
-                            vSpacing:vs
-                              window:self.tmuxWindow];
+- (void)setTmuxFontTable:(iTermFontTable *)fontTable
+                hSpacing:(double)hs
+                vSpacing:(double)vs {
+    [self.tmuxController setTmuxFontTable:fontTable
+                                 hSpacing:hs
+                                 vSpacing:vs
+                                   window:self.tmuxWindow];
 }
 
 + (void)setSizesInTmuxParseTree:(NSMutableDictionary *)parseTree

@@ -19,13 +19,13 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     @objc public weak var delegate: FontPickerCompositeViewDelegate?
     private var accessories: [NSView] = []
     @objc public let affordance = Affordance()
-    private let optionsButtonController = OptionsButtonController()
+    private var optionsButtonController: OptionsButtonController? = OptionsButtonController()
     var memberPicker: FontFamilyMemberPickerView? = FontFamilyMemberPickerView()
     var sizePicker: SizePickerView? = SizePickerView()
     @objc private(set) public var horizontalSpacing: SizePickerView? = nil
     @objc private(set) public var verticalSpacing: SizePickerView? = nil
     @objc var options: Set<Int> {
-        return optionsButtonController.options
+        return optionsButtonController?.options ?? Set()
     }
 
     @objc(BFPCompositeViewMode)
@@ -55,7 +55,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
                 memberPicker?.set(member: font.fontName)
                 sizePicker?.size = Double(font.pointSize)
                 updateOptionsMenu()
-                optionsButtonController.set(font: font)
+                optionsButtonController?.set(font: font)
             }
             delegate = temp
         }
@@ -133,6 +133,18 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
             memberPicker.removeFromSuperview()
             self.memberPicker?.delegate = nil
             self.memberPicker = nil
+            layoutSubviews()
+        }
+    }
+
+    @objc public func removeOptionsButton() {
+        optionsButtonController = nil
+    }
+
+    private func temporarilyRemoveOptionsButton() {
+        if let i = indexOfOptionsButton {
+            accessories.remove(at: i)
+            optionsButtonController?.delegate = nil
             layoutSubviews()
         }
     }
@@ -254,7 +266,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
 
     private var indexOfOptionsButton: Int? {
         return accessories.firstIndex { view in
-            (view as? AccessoryWrapper)?.subviews.first === optionsButtonController.optionsButton
+            (view as? AccessoryWrapper)?.subviews.first === optionsButtonController?.optionsButton
         }
     }
 
@@ -263,10 +275,10 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
     }
 
     private func updateOptionsMenu() {
-        guard let optionsButton = optionsButtonController.optionsButton else {
+        guard let optionsButton = optionsButtonController?.optionsButton else {
             return
         }
-        if optionsButtonController.set(familyName: affordance.familyName) {
+        if let optionsButtonController, optionsButtonController.set(familyName: affordance.familyName) {
             if !haveAddedOptionsButton {
                 optionsButton.sizeToFit()
                 optionsButtonController.delegate = self
@@ -275,11 +287,7 @@ public class FontPickerCompositeView: NSView, AffordanceDelegate, FontFamilyMemb
             }
             return
         }
-        if let i = indexOfOptionsButton {
-            accessories.remove(at: i)
-            optionsButtonController.delegate = nil
-            layoutSubviews()
-        }
+        temporarilyRemoveOptionsButton()
     }
 
     public func fontFamilyMemberPickerView(_ fontFamilyMemberPickerView: FontFamilyMemberPickerView,

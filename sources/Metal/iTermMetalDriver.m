@@ -149,6 +149,9 @@ typedef struct {
     int _dropped;
     int _total;
 
+    // Private queue access only
+    BOOL _expireNonASCIIGlyphs;
+
     // @synchronized(self)
     NSMutableArray *_currentFrames;
     NSTimeInterval _startTime;
@@ -414,6 +417,14 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     dispatch_group_notify(context.group, dispatch_get_main_queue(), ^{
         DLog(@"Asynchronous draw of %@ completed count=%d", view, thisCount);
         completion(!context.aborted);
+    });
+}
+
+- (void)expireNonASCIIGlyphs {
+    DLog(@"On main queue.\n%@", [NSThread callStackSymbols]);
+    dispatch_async(_queue, ^{
+        DLog(@"On queue: Set _expireNonASCIIGlyphs <- YES");
+        self->_expireNonASCIIGlyphs = YES;
     });
 }
 
@@ -1180,6 +1191,11 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     // Update the text renderer's transient state with current glyphs and colors.
     CGFloat scale = frameData.scale;
     iTermTextRendererTransientState *textState = [frameData transientStateForRenderer:_textRenderer];
+    if (_expireNonASCIIGlyphs) {
+        DLog(@"Will expire non-ascii glyphs. Set _expireNonASCIIGlyphs <- NO");
+        _expireNonASCIIGlyphs = NO;
+        [textState expireNonASCIIGlyphs];
+    }
 
     // Set the background texture if one is available.
     textState.backgroundTexture = frameData.intermediateRenderPassDescriptor.colorAttachments[0].texture;

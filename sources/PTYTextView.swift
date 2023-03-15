@@ -100,7 +100,7 @@ extension PTYTextView: ExternalSearchResultsController {
         let config = PortholeConfig(text: text,
                                     colorMap: colorMap,
                                     baseDirectory: baseDirectory,
-                                    font: font,
+                                    font: self.fontTable.asciiFont.font,
                                     type: type,
                                     filename: filename,
                                     useSelectedTextColor: delegate?.textViewShouldUseSelectedTextColor() ?? true)
@@ -161,7 +161,7 @@ extension PTYTextView: ExternalSearchResultsController {
         guard let porthole = PortholeRegistry.instance.get(mark.uniqueIdentifier,
                                                            colorMap: colorMap,
                                                            useSelectedTextColor: delegate?.textViewShouldUseSelectedTextColor() ?? true,
-                                                           font: font) as? Porthole else {
+                                                           font: self.fontTable.asciiFont.font) as? Porthole else {
             return nil
         }
         return configuredPorthole(porthole)

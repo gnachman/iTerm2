@@ -34,6 +34,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                 creation:(NSDictionary<NSNumber *, iTermCharacterBitmap *> *(NS_NOESCAPE ^)(int x, BOOL *emoji))creation;
 - (void)willDraw;
 - (void)didComplete;
+- (void)expireNonASCIIGlyphs;
 
 @end
 

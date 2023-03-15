@@ -107,6 +107,15 @@ namespace iTerm2 {
             }
         }
 
+        void remove_all() {
+            std::vector<TexturePage *> pages;
+            std::copy(_allPages.begin(), _allPages.end(), std::back_inserter(pages));
+            for (int i = 0; i < pages.size(); i++) {
+                TexturePage *pageToPrune = pages[i];
+                internal_prune(pageToPrune);
+            }
+        }
+
     private:
         const GlyphEntry *internal_add(int part, const GlyphKey &key, iTermCharacterBitmap *image, bool is_emoji, iTermMetalBufferPoolContext *context) {
             if (!_openPage) {

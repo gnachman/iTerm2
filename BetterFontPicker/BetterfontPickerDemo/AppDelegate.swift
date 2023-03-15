@@ -15,6 +15,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @IBOutlet weak var affordance: Affordance!
     @IBOutlet weak var memberPicker: FontFamilyMemberPickerView?
     let compositeView = FontPickerCompositeView(font: NSFont.systemFont(ofSize: NSFont.systemFontSize))
+    let stripped = FontPickerCompositeView(font: NSFont.systemFont(ofSize: 12))
 
     override func awakeFromNib() {
 //        fontPickerPanel.contentView?.addSubview(vc.view)
@@ -28,6 +29,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         compositeView.removeMemberPicker()
         compositeView.mode = .fixedPitch
         compositeView.frame = NSRect(x: 0, y: 0, width: 550, height: 27)
+
+        stripped.mode = .fixedPitch
+        stripped.removeMemberPicker()
+        stripped.removeOptionsButton()
+        stripped.removeSizePicker()
+        stripped.frame = NSRect(x: 0, y: 50, width: 200, height: 27)
+        window.contentView?.addSubview(stripped)
     }
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Insert code here to initialize your application

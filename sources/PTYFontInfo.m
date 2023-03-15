@@ -11,6 +11,7 @@
 #import "DebugLogging.h"
 #import "FontSizeEstimator.h"
 #import "iTermAdvancedSettingsModel.h"
+#import "NSObject+iTerm.h"
 
 @implementation NSFont(PTYFontInfo)
 
@@ -263,6 +264,15 @@
 - (PTYFontInfo *)computedBoldItalicVersion {
     PTYFontInfo *temp = [self computedBoldVersion];
     return [temp computedItalicVersion];
+}
+
+- (BOOL)isEqual:(id)object {
+    PTYFontInfo *other = [PTYFontInfo castFrom:object];
+    if (!other) {
+        return NO;
+    }
+
+    return [self.font isEqual:other.font];
 }
 
 @end

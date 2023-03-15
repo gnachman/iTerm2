@@ -7,6 +7,7 @@
 
 #import "iTermAdjustFontSizeHelper.h"
 
+#import "iTerm2SharedARC-Swift.h"
 #import "ITAddressBookMgr.h"
 #import "NSFont+iTerm.h"
 #import "PTYSession.h"
@@ -94,14 +95,10 @@
     for (NSString *guid in guids) {
         MutableProfile *profile = [[[ProfileModel sharedInstance] bookmarkWithGuid:guid] mutableCopy];
         if (profile) {
-            NSString *fontDesc = profile[KEY_NORMAL_FONT];
-            NSFont *font = [[ITAddressBookMgr fontWithDesc:fontDesc] it_fontByAddingToPointSize:delta];
-            profile[KEY_NORMAL_FONT] = font.stringValue;
-            
-            fontDesc = profile[KEY_NON_ASCII_FONT];
-            font = [[ITAddressBookMgr fontWithDesc:fontDesc] it_fontByAddingToPointSize:delta];
-            profile[KEY_NON_ASCII_FONT] = font.stringValue;
-            
+            iTermFontTable *fontTable = [[iTermFontTable fontTableForProfile:profile] fontTableGrownBy:delta];
+            profile[KEY_NORMAL_FONT] = fontTable.asciiFont.font.stringValue;
+            profile[KEY_NON_ASCII_FONT] = fontTable.defaultNonASCIIFont.font.stringValue;
+            profile[KEY_FONT_CONFIG] = fontTable.configString;
             [[ProfileModel sharedInstance] setBookmark:profile withGuid:guid];
         }
     }

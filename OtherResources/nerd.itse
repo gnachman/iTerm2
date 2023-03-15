@@ -1,0 +1,28 @@
+{
+    "entries": [
+      { "fontName": "Nerd Font File Types Regular",                            "start": 58618, "count": 177, "destination": 58874 },
+      { "fontName": "icomoon",                                   "start": 58880, "count": 198, "destination": 59136 },
+        { "fontName": "PowerlineSymbols",         "start": 57504, "count": 3 },
+        { "fontName": "PowerlineSymbols",         "start": 57520, "count": 4 },
+        { "fontName": "PowerlineExtraSymbols",                      "start": 57507, "count": 1 },
+        { "fontName": "PowerlineExtraSymbols",                      "start": 57524, "count": 21 },
+        { "fontName": "PowerlineExtraSymbols",                      "start": 57546, "count": 1 },
+        { "fontName": "PowerlineExtraSymbols",                      "start": 57548, "count": 8 },
+        { "fontName": "Pomicons",                                   "start": 57344, "count": 11 },
+        { "fontName": "FontAwesome",                   "start": 61440, "count": 736 },
+        { "fontName": "font-awesome-extension",                     "start": 57344, "count": 170, "destination": 57856 },
+        { "fontName": "UnicodeIECsymbol",                    "start": 9211, "count": 4 },
+        { "fontName": "UnicodeIECsymbol",                    "start": 11096, "count": 1 },
+        { "fontName": "Material Design Icons",                "start": 61441, "count": 2118, "destination": 62720 },
+        { "fontName": "Material Design Icons Desktop",  "start": 983041,"count": 6896 },
+        { "fontName": "Weather Icons Regular", "start": 61440, "count": 236, "destination": 58112 },
+        { "fontName": "font-logos",                                 "start": 62208, "count": 48 },
+        { "fontName": "Octicons",                                   "start": 61440, "count": 168, "destination": 62464 },
+        { "fontName": "Octicons",                                   "start": 61609, "count": 86, "destination": 62634 },
+        { "fontName": "Octicons",                                   "start": 9829, "count": 1 },
+        { "fontName": "Octicons",                                   "start": 9889, "count": 1 },
+        { "fontName": "Octicons",                                   "start": 62076, "count": 1, "destination": 62633 },
+        { "fontName": "codicon",                           "start": 60000, "count": 396 }
+    ],
+    "version": 1
+}

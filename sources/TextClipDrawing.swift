@@ -314,11 +314,13 @@ extension TextClipDrawing: iTermTextDrawingHelperDelegate {
     func drawingHelperFont(forChar ch: UniChar,
                            isComplex: Bool,
                            renderBold: UnsafeMutablePointer<ObjCBool>,
-                           renderItalic: UnsafeMutablePointer<ObjCBool>) -> PTYFontInfo {
+                           renderItalic: UnsafeMutablePointer<ObjCBool>,
+                           remapped: UnsafeMutablePointer<UTF32Char>) -> PTYFontInfo {
         return originalDelegate.drawingHelperFont(forChar: ch,
                                                   isComplex: isComplex,
                                                   renderBold: renderBold,
-                                                  renderItalic: renderItalic)
+                                                  renderItalic: renderItalic,
+                                                  remapped: remapped)
     }
 
     func drawingHelperMatches(onLine line: Int32) -> Data? {

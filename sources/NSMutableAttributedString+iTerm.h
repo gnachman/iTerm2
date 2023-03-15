@@ -10,6 +10,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSAttributedStringKey iTermReplacementBaseCharacterAttributeName;
+
 @interface NSMutableAttributedString (iTerm)
 
 - (void)iterm_appendString:(NSString *)string;
