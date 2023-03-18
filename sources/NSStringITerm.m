@@ -2355,7 +2355,7 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return dict;
 }
 
-- (UniChar)longCharacterAtIndex:(NSInteger)i {
+- (UTF32Char)longCharacterAtIndex:(NSInteger)i {
     if (self.length == 0) {
         return 0;
     }

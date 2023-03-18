@@ -299,12 +299,12 @@ extension NSString {
 }
 
 extension screen_char_t {
-    var baseCharacter: UniChar {
+    var baseCharacter: UTF32Char {
         if image != 0 {
             return 0
         }
         if complexChar == 0 {
-            return code
+            return UTF32Char(code)
         }
         guard let string = ComplexCharRegistry.instance.charToString(self) else {
             return 0

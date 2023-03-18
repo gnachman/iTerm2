@@ -3238,6 +3238,10 @@
 		A6D22A441BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D22A451BC8BE6B004084E0 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = A6D22A411BC8BE6B004084E0 /* Model.xcdatamodeld */; };
 		A6D24D3D26BC5FA600CCE211 /* SwiftDebugLogging.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */; };
+		A6D3205529C29EE30088BBE1 /* NerdFontInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D3205429C29EE30088BBE1 /* NerdFontInstaller.swift */; };
+		A6D3205729C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
+		A6D3205829C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
+		A6D3205929C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
 		A6D463E6240447AF005D073D /* iTermBackgroundColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */; };
 		A6D463E7240447AF005D073D /* iTermBackgroundColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D463E5240447AF005D073D /* iTermBackgroundColorView.m */; };
 		A6D463EA2404482D005D073D /* iTermAlphaBlendingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D463E82404482D005D073D /* iTermAlphaBlendingHelper.h */; };
@@ -6952,6 +6956,8 @@
 		A6D22B431BC9D368004084E0 /* iTermShellHistoryTest.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermShellHistoryTest.m; sourceTree = "<group>"; };
 		A6D24D3A26BB12F700CCE211 /* CPUGovernor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CPUGovernor.swift; sourceTree = "<group>"; };
 		A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDebugLogging.swift; sourceTree = "<group>"; };
+		A6D3205429C29EE30088BBE1 /* NerdFontInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NerdFontInstaller.swift; sourceTree = "<group>"; };
+		A6D3205629C492410088BBE1 /* nerd.itse */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = nerd.itse; path = OtherResources/nerd.itse; sourceTree = "<group>"; };
 		A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundColorView.h; sourceTree = "<group>"; };
 		A6D463E5240447AF005D073D /* iTermBackgroundColorView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundColorView.m; sourceTree = "<group>"; };
 		A6D463E82404482D005D073D /* iTermAlphaBlendingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAlphaBlendingHelper.h; sourceTree = "<group>"; };
@@ -8099,6 +8105,7 @@
 		1D03D42719144C3B0049EB8F /* Other Assets */ = {
 			isa = PBXGroup;
 			children = (
+				A6D3205629C492410088BBE1 /* nerd.itse */,
 				A64BD0DA296FDBF4001F3F7E /* conductor.sh */,
 				A65DF4A82849F2AA00AA29AB /* iterm2-shell-integration-loader.fish */,
 				A65DF4A02849601A00AA29AB /* .zshenv */,
@@ -8442,6 +8449,7 @@
 				A640486D29BFCB640063C34A /* SpecialExceptionsWindowController.xib */,
 				A640487129BFCBCB0063C34A /* SpecialExceptionsWindowController.swift */,
 				A640487429C147A10063C34A /* CRUD.swift */,
+				A6D3205429C29EE30088BBE1 /* NerdFontInstaller.swift */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -13296,6 +13304,7 @@
 				A6E16C6124A85D5F00C6DB06 /* BigSurAddTab@2x.png in Resources */,
 				A6F7A715213CB143004DE961 /* StatusBarIconClock@2x.png in Resources */,
 				A635029A229B5F620042B779 /* YosemiteAddTab.png in Resources */,
+				A6D3205929C492410088BBE1 /* nerd.itse in Resources */,
 				A6E7AEBA214394F600DE9F3B /* graphic_ethereum.png in Resources */,
 				A67F61EF214395D50093940A /* graphic_vim@2x.png in Resources */,
 				1D6ED97719AEA20D005A7799 /* config.png in Resources */,
@@ -13997,6 +14006,7 @@
 				A6F7A70B213CB143004DE961 /* StatusBarIconNetwork.png in Resources */,
 				1DC2AF5219521CFF005769D5 /* QuestionMarkSign.png in Resources */,
 				A63493EC23F0A3EF0047C31B /* UKCrashReporter.xib in Resources */,
+				A6D3205829C492410088BBE1 /* nerd.itse in Resources */,
 				A6A64E6D2508C5B50040490B /* OpenQuicklySnippetIcon@2x.png in Resources */,
 				A6A64E652508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
 				A63821F0229E50CD005D74BE /* Warning@2x.png in Resources */,
@@ -14272,6 +14282,7 @@
 				530098532259AAEF00A69348 /* keyclick.m4a in Resources */,
 				5376CB3C220D2E4300FE7476 /* git.sb in Resources */,
 				A66DB80F1C8E182B00233E88 /* Info@2x.png in Resources */,
+				A6D3205729C492410088BBE1 /* nerd.itse in Resources */,
 				A67F61EA214395D50093940A /* graphic_yarn@2x.png in Resources */,
 				53FF9818209247E2008688D7 /* iTermScriptTemplatePickerWindowController.xib in Resources */,
 				A67F617E214395A70093940A /* graphic_perl.png in Resources */,
@@ -15715,6 +15726,7 @@
 				A6EC8099282EBFC900493544 /* NSDictionary+Conductor.swift in Sources */,
 				A60C03682089897400FE2F1F /* iTermScriptConsole.m in Sources */,
 				A66719601DCE3772000CE608 /* iTermAPIServer.m in Sources */,
+				A6D3205529C29EE30088BBE1 /* NerdFontInstaller.swift in Sources */,
 				5308BF8A22828268004BECAC /* iTermStatusBarBatteryComponent.m in Sources */,
 				537BFDCA20FFB2590098C91F /* iTermProcessCache.m in Sources */,
 				A6F9EF3820850C41005530F7 /* iTermCompetentTableRowView.m in Sources */,

@@ -17,6 +17,7 @@
 
 @class iTermColorMap;
 @class iTermExternalAttributeIndex;
+@class iTermFontTable;
 @protocol iTermExternalAttributeIndexReading;
 @class iTermFindOnPageHelper;
 @class iTermOffscreenCommandLine;
@@ -266,6 +267,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 @property (nonatomic, readonly) NSColor *offscreenCommandLineBackgroundColor;
 @property (nonatomic, readonly) NSColor *offscreenCommandLineOutlineColor;
 @property (nonatomic) BOOL useSelectedTextColor;
+@property (nonatomic, strong) iTermFontTable *fontTable;
 
 + (NSRect)offscreenCommandLineFrameForVisibleRect:(NSRect)visibleRect
                                          cellSize:(NSSize)cellSize

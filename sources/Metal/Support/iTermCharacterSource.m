@@ -266,15 +266,18 @@ static const CGFloat iTermCharacterSourceAliasedFakeBoldShiftPoints = 1;
         _isAscii = (string.length == 1 && [string characterAtIndex:0] < 128);
         _antialiased = _isAscii ? descriptor.asciiAntiAliased : descriptor.nonAsciiAntiAliased;
         DLog(@"%p initialize with descriptor %@, isAscii=%@", self, descriptor, @(_isAscii));
-        const UniChar c = [string longCharacterAtIndex:0];
+        const UTF32Char c = [string longCharacterAtIndex:0];
         _fakeBold = attributes.bold;
         _fakeItalic = attributes.italic;
+        UTF32Char remapped = 0;
         _font = [descriptor.fontTable fontForCharacter:c
                                            useBoldFont:descriptor.useBoldFont
                                          useItalicFont:descriptor.useItalicFont
                                             renderBold:&_fakeBold
-                                          renderItalic:&_fakeItalic].font;
-
+                                          renderItalic:&_fakeItalic
+                                              remapped: &remapped].font;
+        // TODO: Use remapped
+        
         ITAssertWithMessage(descriptor.fontTable, @"Nil font table for string=%@ attributes=%@", string, attributes);
         _attributes = attributes;
         _radius = radius;

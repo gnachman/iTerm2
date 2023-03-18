@@ -311,14 +311,17 @@ extension TextClipDrawing: iTermTextDrawingHelperDelegate {
         return isBackground ? NSColor(red: 1, green: 1, blue: 0, alpha: 1) : NSColor(red: 0, green: 0, blue: 0, alpha: 1)
     }
 
+    // TODO: Does anyone call this?
     func drawingHelperFont(forChar ch: UniChar,
                            isComplex: Bool,
                            renderBold: UnsafeMutablePointer<ObjCBool>,
-                           renderItalic: UnsafeMutablePointer<ObjCBool>) -> PTYFontInfo {
+                           renderItalic: UnsafeMutablePointer<ObjCBool>,
+                           remapped: UnsafeMutablePointer<UTF32Char>) -> PTYFontInfo {
         return originalDelegate.drawingHelperFont(forChar: ch,
                                                   isComplex: isComplex,
                                                   renderBold: renderBold,
-                                                  renderItalic: renderItalic)
+                                                  renderItalic: renderItalic,
+                                                  remapped: remapped)
     }
 
     func drawingHelperMatches(onLine line: Int32) -> Data? {

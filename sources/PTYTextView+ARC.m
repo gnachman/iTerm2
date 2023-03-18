@@ -462,8 +462,11 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
                 maximumLength:kReasonableMaximumWordLength];
     NSAttributedString *word = [extractor contentInRange:range
                                        attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
+        UTF32Char remapped = 0;
+        // TODO: Use remapped
         return [self charAttributes:theChar
-                 externalAttributes:ea];
+                 externalAttributes:ea
+                           remapped:&remapped];
                                        }
                                               nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
                                                      pad:NO
@@ -519,7 +522,9 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
 #pragma mark - Copy to Pasteboard
 
 // Returns a dictionary to pass to NSAttributedString.
-- (NSDictionary *)charAttributes:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea {
+- (NSDictionary *)charAttributes:(screen_char_t)c
+              externalAttributes:(iTermExternalAttribute *)ea
+                        remapped:(UTF32Char *)remapped {
     BOOL isBold = c.bold;
     BOOL isFaint = c.faint;
     NSColor *fgColor;
@@ -549,7 +554,8 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     PTYFontInfo *fontInfo = [self getFontForChar:c.code
                                        isComplex:c.complexChar
                                       renderBold:&isBold
-                                    renderItalic:&isItalic];
+                                    renderItalic:&isItalic
+                                        remapped:remapped];
     NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
     paragraphStyle.lineBreakMode = NSLineBreakByCharWrapping;
 

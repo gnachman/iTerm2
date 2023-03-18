@@ -20,6 +20,9 @@ class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFie
     @IBOutlet weak var ok: NSButton!
     @IBOutlet weak var compositeView: BetterFontPicker.FontPickerCompositeView!
     @IBOutlet weak var preview: NSTextView!
+    @IBOutlet weak var hasDestination: NSButton!
+    @IBOutlet weak var destination: NSTextField!
+
     private var affordance: Affordance { compositeView.affordance }
     weak var delegate: SpecialExceptionEntryEditorWindowControllerDelegate?
     var disallowedIndexes = IndexSet()
@@ -38,6 +41,7 @@ class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFie
         compositeView.removeMemberPicker()
         compositeView.removeOptionsButton()
         compositeView.affordance.delegate = self
+        preview.textColor = .textColor
         if let entry {
             copyEntryToControls()
             affordance.familyName = entry.fontName
@@ -45,11 +49,24 @@ class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFie
         updateEnabled()
     }
 
+    private func destinationIsValid(range: ClosedRange<Int>) -> Bool {
+        guard hasDestination.state == .on else {
+            return true
+        }
+        guard let d = parseUnicode(Substring(destination.stringValue)) else {
+            return false
+        }
+        guard d >= 0 && d + range.count < FontTable.unicodeLimit else {
+            return false
+        }
+        return true
+    }
+
     private var shouldEnableOK: Bool {
         guard let delegate else {
             return false
         }
-        guard let range = validRange else {
+        guard let range = validDestinationRange else {
             return false
         }
         if affordance.familyName == nil {
@@ -60,9 +77,11 @@ class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFie
 
     private func updateEnabled() {
         ok.isEnabled = shouldEnableOK
+        destination.isEnabled = hasDestination.state == .on
     }
 
     private func updatePreview() {
+        preview.textColor = .textColor
         switch checkedRange {
         case .ascii:
             preview.string = "Start must be at least U+80. ASCII doesn’t support special exceptions."
@@ -74,16 +93,21 @@ class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFie
             preview.string = "End is higher than U+110000, the maximum Unicode code point."
         case .taken:
             preview.string = "Range includes an already-assigned code point."
-        case let .valid(range):
+        case .invalidDestination:
+            preview.string = "Invalid destination"
+        case let .valid(source: sourceRange, destination: _):
             guard let familyName = affordance.familyName,
                   let font = NSFont(name: familyName, size: NSFont.systemFontSize) else {
                 preview.string = "No font selected."
                 return
             }
-
+            if (!destinationIsValid(range: sourceRange)) {
+                preview.string = "Invalid destination."
+                return
+            }
             let disallowed = IndexSet([9, 10, 13, 0xad, 0x200e, 0x200f, 0x200b, 0x200c])
             let combined = NSMutableAttributedString()
-            for i in range {
+            for i in sourceRange {
                 if combined.length >= 1024 * 10 {
                     combined.append(NSAttributedString(string: " [truncated]",
                                                        attributes: [.font: NSFont.systemFont(ofSize: NSFont.systemFontSize)]))
@@ -109,15 +133,23 @@ class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFie
         start.stringValue = Self.formatUnicode(entry.start)
         end.stringValue = Self.formatUnicode(entry.start + entry.count - 1)
         compositeView.affordance.familyName = entry.fontName
+        if let d = entry.destination {
+            hasDestination.state = .on
+            destination.stringValue = Self.formatUnicode(d)
+        } else {
+            hasDestination.state = .off
+            destination.stringValue = ""
+        }
     }
 
     @discardableResult
     private func copyControlsToEntryIfValid() -> Bool {
-        guard let familyName = affordance.familyName, let range = validRange else {
+        guard let familyName = affordance.familyName, let range = validSourceRange else {
             return false
         }
         entry = FontTable.Entry(start: range.lowerBound,
                                 count: range.count,
+                                destination: hasDestination.state == .on ? parseUnicode(Substring(destination.stringValue)) : nil,
                                 fontName: familyName)
         return true
     }
@@ -151,31 +183,65 @@ class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFie
         case inverted
         case limitTooLarge
         case taken
-        case valid(ClosedRange<Int>)
-    }
-    private var checkedRange: CheckedRange {
-        guard let start = parseUnicode(Substring(start.stringValue)),
-              let end = parseUnicode(Substring(end.stringValue)) else {
-            return .incomplete
-        }
-        guard start >= 128 else {
-            return .ascii
-        }
-        guard start <= end else {
-            return .inverted
-        }
-        guard end < FontTable.unicodeLimit else {
-            return .limitTooLarge
-        }
-        if disallowedIndexes.intersects(integersIn: start...end) {
-            return .taken
-        }
-        return .valid(start...end)
+        case invalidDestination
+        case valid(source: ClosedRange<Int>, destination: ClosedRange<Int>)
     }
 
-    private var validRange: ClosedRange<Int>? {
+    // Start of range we remap *to*
+    private var beginning: Int? {
+        if hasDestination.state == .on {
+            return parseUnicode(Substring(destination.stringValue))
+        }
+        return parseUnicode(Substring(start.stringValue))
+    }
+
+    private var count: Int? {
+        if let start = parseUnicode(Substring(start.stringValue)),
+           let end = parseUnicode(Substring(end.stringValue)) {
+            return end - start + 1
+        }
+        return nil
+    }
+
+    private var checkedRange: CheckedRange {
+        if hasDestination.state == .on &&
+            parseUnicode(Substring(destination.stringValue)) == nil {
+            return .invalidDestination
+        }
+        guard let sourceStart = parseUnicode(Substring(start.stringValue)),
+              let destStart = beginning,
+              let count else {
+            return .incomplete
+        }
+        let destEnd = destStart + count - 1
+        guard destStart >= 128 else {
+            return .ascii
+        }
+        guard count > 0 else {
+            return .inverted
+        }
+        guard destStart + count <= FontTable.unicodeLimit else {
+            return .limitTooLarge
+        }
+        if disallowedIndexes.intersects(integersIn: destStart...destEnd) {
+            return .taken
+        }
+        return .valid(source: sourceStart...(sourceStart + count - 1),
+                      destination: destStart...destEnd)
+    }
+
+    private var validSourceRange: ClosedRange<Int>? {
         switch checkedRange {
-        case .valid(let value):
+        case .valid(source: let value, _):
+            return value
+        default:
+            return nil
+        }
+    }
+
+    private var validDestinationRange: ClosedRange<Int>? {
+        switch checkedRange {
+        case .valid(_, destination: let value):
             return value
         default:
             return nil
@@ -183,6 +249,12 @@ class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFie
     }
 
     // MARK: - Actions
+
+    @IBAction
+    func haveDestinationDidChange(_ sender: AnyObject) {
+        updateEnabled()
+        updatePreview()
+    }
 
     @IBAction
     func ok(_ sender: AnyObject) {
@@ -228,13 +300,28 @@ class SpecialExceptionEntryEditorWindowController: NSWindowController, NSTextFie
     }
 }
 
+class SpecialExceptionsWindow: NSPanel {
+    override var acceptsFirstResponder: Bool {
+        true
+    }
+    override var canBecomeKey: Bool {
+        true
+    }
+    override var canBecomeMain: Bool {
+        true
+    }
+}
+
 @objc
-class SpecialExceptionsWindowController: NSWindowController {
-    @IBOutlet weak var tableView: NSTableView!
+final class SpecialExceptionsWindowController: NSWindowController {
+    @IBOutlet weak var tableView: CompetentTableView!
     @IBOutlet weak var addRemove: NSSegmentedControl!
     @IBOutlet weak var editorWindowController: SpecialExceptionEntryEditorWindowController!
+    @IBOutlet weak var installNerdBundleButton: NSButton!
+    @IBOutlet weak var progressIndicator: NSProgressIndicator!
+
     private(set) var config: FontTable.Config!
-    private(set) var crud: CRUDTableViewController!
+    private(set) var crud: CRUDTableViewController<SpecialExceptionsWindowController>!
     @objc var configString: String { config.stringValue }
     private var rowBeingEdited = -1
 
@@ -253,6 +340,15 @@ class SpecialExceptionsWindowController: NSWindowController {
                                                                     CRUDColumn(type: .string)],
                                                           dataProvider: self))
         crud.delegate = self
+        updateEnabled()
+    }
+
+    private var nerdBundleInstalled: Bool {
+        return config == NerdFontInstaller.config
+    }
+
+    private func updateEnabled() {
+        installNerdBundleButton.isEnabled = !nerdBundleInstalled
     }
 
     // MARK: - Actions
@@ -301,13 +397,17 @@ class SpecialExceptionsWindowController: NSWindowController {
         guard panel.runModal() == .OK, let url = panel.url else {
             return
         }
-        let content: String
         do {
-            content = try String(contentsOf: url)
+            let content = try String(contentsOf: url)
+            importString(content)
+            updateEnabled()
         } catch {
             showError(error.localizedDescription)
             return
         }
+    }
+
+    private func importString(_ content: String) {
         guard let newConfig = FontTable.Config(string: content) else {
             showError("This file is not well formed. Is it from a newer version of iTerm2?")
             return
@@ -321,8 +421,9 @@ class SpecialExceptionsWindowController: NSWindowController {
             showError("You must install the following fonts to use the exceptions in this file:\n\n\(missing.joined(separator: "\n"))")
             return
         }
-        config = newConfig
-        crud.reload()
+        crud.undoable {
+            config = newConfig
+        }
     }
 
     private func showError(_ message: String) {
@@ -343,6 +444,37 @@ class SpecialExceptionsWindowController: NSWindowController {
             return nil
         }
     }
+
+    @IBAction func installNerdFontBundle(_ sender: Any) {
+        if !config.entries.isEmpty {
+            let selection = iTermWarning.show(withTitle: "This will replace existing special exceptions. Continue?",
+                                              actions: ["OK", "Cancel"],
+                                              accessory: nil,
+                                              identifier: "SpecialExceptionsInstallNerdBundleConfirmation",
+                                              silenceable: .kiTermWarningTypePersistent,
+                                              heading: "Confirm",
+                                              window: window)
+            if selection == .kiTermWarningSelection1 {
+                return
+            }
+        }
+        installNerdBundleButton.isHidden = true
+        progressIndicator.isHidden = false
+        progressIndicator.startAnimation(nil)
+        NerdFontInstaller.start(window: window) { [weak self] error in
+            defer {
+                self?.updateEnabled()
+            }
+            if let error {
+                self?.showError(error.localizedDescription)
+            } else {
+                self?.importString(NerdFontInstaller.configString)
+            }
+            self?.installNerdBundleButton.isHidden = false
+            self?.progressIndicator.stopAnimation(nil)
+            self?.progressIndicator.isHidden = true
+        }
+    }
 }
 
 extension SpecialExceptionsWindowController: SpecialExceptionEntryEditorWindowControllerDelegate {
@@ -359,18 +491,31 @@ extension SpecialExceptionsWindowController: SpecialExceptionEntryEditorWindowCo
 
 extension FontTable.Entry {
     var closedRange: ClosedRange<Int> {
-        return start...(start + count - 1)
+        let beginning = destination ?? start
+        return beginning...(beginning + count - 1)
     }
 }
 
 extension SpecialExceptionsWindowController: CRUDTableViewControllerDelegate {
-    func crudTableSelectionDidChange(_ sender: CRUDTableViewController, selectedRows: IndexSet) {
+    var crudState: FontTable.Config {
+        get {
+            return config
+        }
+        set {
+            config = newValue
+        }
     }
 
-    func crudTextFieldDidChange(_ sender: CRUDTableViewController,
+    func crudTableSelectionDidChange(_ sender: CRUDTableViewController<SpecialExceptionsWindowController>, selectedRows: IndexSet) {
+    }
+
+    func crudTextFieldDidChange(_ sender: CRUDTableViewController<SpecialExceptionsWindowController>,
                                 row: Int,
                                 column: Int,
                                 newValue: String) {
+        defer {
+            updateEnabled()
+        }
         switch column {
         case 0:
             if let i = Int(newValue) {
@@ -396,7 +541,7 @@ extension SpecialExceptionsWindowController: CRUDTableViewControllerDelegate {
         return result
     }
 
-    func crudDoubleClick(_ sender: CRUDTableViewController, row: Int, column: Int) {
+    func crudDoubleClick(_ sender: CRUDTableViewController<SpecialExceptionsWindowController>, row: Int, column: Int) {
         rowBeingEdited = row
         editorWindowController.delegate = self
         var disallowedIndexes = assignedIndexes
@@ -421,6 +566,7 @@ extension SpecialExceptionsWindowController: CRUDTableViewControllerDelegate {
         rowBeingEdited = -1
         config.entries[row] = editorWindowController!.entry!
         crud.reload(row: row)
+        updateEnabled()
     }
 }
 
@@ -431,9 +577,9 @@ extension SpecialExceptionsWindowController: CRUDDataProvider {
         func format(column: Int) -> CRUDFormatted {
             switch column {
             case 0:
-                return .string(SpecialExceptionEntryEditorWindowController.formatUnicode(entry.start))
+                return .string(SpecialExceptionEntryEditorWindowController.formatUnicode(entry.closedRange.lowerBound))
             case 1:
-                return .string(SpecialExceptionEntryEditorWindowController.formatUnicode(entry.start + entry.count - 1))
+                return .string(SpecialExceptionEntryEditorWindowController.formatUnicode(entry.closedRange.upperBound))
             case 2:
                 return .string(entry.fontName)
             default:
@@ -455,6 +601,7 @@ extension SpecialExceptionsWindowController: CRUDDataProvider {
 
     func delete(_ indexes: IndexSet) {
         config.entries.remove(at: indexes)
+        updateEnabled()
     }
 
     func makeNew(completion: @escaping (Int) -> ()) {
@@ -472,8 +619,11 @@ extension SpecialExceptionsWindowController: CRUDDataProvider {
     private func acceptAdd(completion: (Int) -> ()) {
         let entry = editorWindowController!.entry!
         let row = config.entries.insertionIndex { $0.start < entry.start }
-        config.entries.insert(entry, at: row)
+        crud.undoable {
+            config.entries.insert(entry, at: row)
+        }
         completion(row)
+        updateEnabled()
     }
 }
 

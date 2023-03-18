@@ -627,7 +627,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (PTYFontInfo *)getFontForChar:(UniChar)ch
                       isComplex:(BOOL)isComplex
                      renderBold:(BOOL *)renderBold
-                   renderItalic:(BOOL *)renderItalic;
+                   renderItalic:(BOOL *)renderItalic
+                       remapped:(UTF32Char *)ch;
 
 - (NSColor*)colorForCode:(int)theIndex
                    green:(int)green

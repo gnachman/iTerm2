@@ -75,11 +75,14 @@ class CharacterAttributesProvider: NSObject {
         }
         let underlineStyle: NSUnderlineStyle = (externalAttributes.urlCode != 0 || c.underline != 0) ? [.single, .byWord] : []
         var isItalic = ObjCBool(c.italic != 0)
+        // TODO: Use remapped
+        var remapped = UTF32Char(0)
         let fontInfo = fontTable.fontForCharacter(c.baseCharacter,
-                                        useBoldFont: useBoldFont,
-                                        useItalicFont: useItalicFont,
-                                        renderBold: &isBold,
-                                        renderItalic: &isItalic)
+                                                  useBoldFont: useBoldFont,
+                                                  useItalicFont: useItalicFont,
+                                                  renderBold: &isBold,
+                                                  renderItalic: &isItalic,
+                                                  remapped: &remapped)
         if !copyBackgroundColor &&
             c.backgroundColorMode == ColorModeAlternate.rawValue &&
             c.backgroundColor == ALTSEM_DEFAULT {

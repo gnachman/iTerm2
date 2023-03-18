@@ -37,27 +37,64 @@ struct CRUDSchema {
 }
 
 protocol CRUDTableViewControllerDelegate: AnyObject {
-    func crudTableSelectionDidChange(_ sender: CRUDTableViewController,
+    associatedtype CRUDState
+    
+    func crudTableSelectionDidChange(_ sender: CRUDTableViewController<Self>,
                                      selectedRows: IndexSet)
 
-    func crudTextFieldDidChange(_ sender: CRUDTableViewController,
+    func crudTextFieldDidChange(_ sender: CRUDTableViewController<Self>,
                                 row: Int,
                                 column: Int,
                                 newValue: String)
 
-    func crudDoubleClick(_ sender: CRUDTableViewController,
+    func crudDoubleClick(_ sender: CRUDTableViewController<Self>,
                          row: Int,
                          column: Int)
+
+    var crudState: CRUDState { get set }
+}
+
+protocol CompetentTableViewDelegate: NSTableViewDelegate {
+    func competentTableViewDeleteSelectedRows(_ sender: CompetentTableView)
 }
 
 @objc
-class CRUDTableViewController: NSObject, NSTableViewDelegate, NSTableViewDataSource {
+class CompetentTableView: NSTableView {
+    override func keyDown(with event: NSEvent) {
+        interpretKeyEvents([event])
+    }
+
+    @objc
+    override func selectAll(_ sender: Any?) {
+        guard let dataSource else {
+            return
+        }
+        guard let count = dataSource.numberOfRows?(in: self), count > 0 else {
+            return
+        }
+        self.selectRowIndexes(IndexSet(0..<count), byExtendingSelection: false)
+    }
+
+    @objc
+    override func deleteBackward(_ sender: Any?) {
+        guard let delegate = delegate else {
+            return
+        }
+        guard let specializedDelegate = delegate as? CompetentTableViewDelegate else {
+            return
+        }
+        specializedDelegate.competentTableViewDeleteSelectedRows(self)
+    }
+}
+
+
+class CRUDTableViewController<Delegate: CRUDTableViewControllerDelegate>: NSObject, CompetentTableViewDelegate, NSTableViewDataSource {
     private let tableView: NSTableView
     private let addRemove: NSSegmentedControl
     private let schema: CRUDSchema
-    weak var delegate: CRUDTableViewControllerDelegate?
+    weak var delegate: Delegate?
 
-    init(tableView: NSTableView, addRemove: NSSegmentedControl, schema: CRUDSchema) {
+    init(tableView: CompetentTableView, addRemove: NSSegmentedControl, schema: CRUDSchema) {
         self.tableView = tableView
         self.addRemove = addRemove
         self.schema = schema
@@ -84,6 +121,49 @@ class CRUDTableViewController: NSObject, NSTableViewDelegate, NSTableViewDataSou
                              columnIndexes: IndexSet(0..<schema.columns.count))
     }
 
+    private var inUndoable = false
+    private struct FullState {
+        var crudState: Delegate.CRUDState?
+        var visibleRect: NSRect
+        var selectedRows: IndexSet
+    }
+
+    func undoable<T>(_ closure: () throws -> (T)) rethrows -> T {
+        if inUndoable {
+            return try closure()
+        }
+
+        precondition(!inUndoable)
+        inUndoable = true
+        defer {
+            inUndoable = false
+        }
+        let undoManager = tableView.undoManager
+        let savedState = delegate?.crudState
+        let fullState = FullState(crudState: delegate?.crudState,
+                                  visibleRect: tableView.visibleRect,
+                                  selectedRows: tableView.selectedRowIndexes)
+        undoManager?.beginUndoGrouping()
+        undoManager?.registerUndo(withTarget: self, handler: { [weak self] crud in
+            if let savedState = fullState.crudState {
+                self?.undoable {
+                    crud.delegate?.crudState = savedState
+                }
+            }
+            print("\(self!.tableView.visibleRect) -> \(fullState.visibleRect)")
+            self?.tableView.reloadData()
+            self?.tableView.selectRowIndexes(fullState.selectedRows, byExtendingSelection: false)
+            self?.tableView.scrollToVisible(fullState.visibleRect)
+        })
+        defer {
+            if savedState != nil {
+                undoManager?.endUndoGrouping()
+            }
+        }
+        let result = try closure()
+        return result
+    }
+
     // MARK: - Private
 
     private func updateEnabled() {
@@ -99,7 +179,25 @@ class CRUDTableViewController: NSObject, NSTableViewDelegate, NSTableViewDataSou
 
     private func removeSelected() {
         let indexes = tableView.selectedRowIndexes
-        schema.dataProvider.delete(indexes)
+        guard let firstIndex = indexes.min(), let lastIndex = indexes.max() else {
+            return
+        }
+        let selectedRange = NSRange(firstIndex...lastIndex)
+        if let visibleRows = tableView.rows(in: tableView.visibleRect).intersection(selectedRange),
+           visibleRows.length > 0,
+           let window = tableView.window {
+            let rectInWindowCoords1 = tableView.convert(tableView.frameOfCell(atColumn: 0, row: visibleRows.lowerBound),
+                                                       to: nil)
+            let rectInWindowCoords2 = tableView.convert(tableView.frameOfCell(atColumn: 0, row: visibleRows.upperBound - 1),
+                                                       to: nil)
+            let rectInWindowCoords = rectInWindowCoords1.union(rectInWindowCoords2)
+            let rect = window.convertToScreen(rectInWindowCoords)
+            NSAnimationEffect.poof.show(centeredAt: NSPoint(x: rect.minX + tableView.bounds.width / 2.0, y: rect.midY),
+                                        size: NSSize.zero)
+        }
+        undoable {
+            schema.dataProvider.delete(indexes)
+        }
         tableView.removeRows(at: indexes, withAnimation: .slideUp)
     }
 
@@ -115,6 +213,13 @@ class CRUDTableViewController: NSObject, NSTableViewDelegate, NSTableViewDataSou
         default:
             break
         }
+    }
+
+    func competentTableViewDeleteSelectedRows(_ sender: CompetentTableView) {
+        if sender.selectedRowIndexes.isEmpty {
+            return
+        }
+        removeSelected()
     }
 
     @objc

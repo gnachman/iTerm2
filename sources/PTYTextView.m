@@ -1453,6 +1453,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _drawingHelper.colorMap = _colorMap;
     _drawingHelper.softAlternateScreenMode = self.dataSource.terminalSoftAlternateScreenMode;
     _drawingHelper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
+    _drawingHelper.fontTable = self.fontTable;
 
     const VT100GridRange range = [self rangeOfVisibleLines];
     if ([_delegate textViewShouldShowOffscreenCommandLine]) {
@@ -2900,7 +2901,9 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     NSDictionary *(^attributeProvider)(screen_char_t, iTermExternalAttribute *) = nil;
     if (attributes) {
         attributeProvider =^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-            return [self charAttributes:theChar externalAttributes:ea];
+            UTF32Char remapped = 0;
+            // TODO: Use remapped
+            return [self charAttributes:theChar externalAttributes:ea remapped:&remapped];
         };
     }
     return [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
@@ -3724,8 +3727,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                                                      lineOffset + numLines - 1);
             [self printContent:[extractor contentInRange:VT100GridWindowedRangeMake(coordRange, 0, 0)
                                        attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-                                           return [self charAttributes:theChar externalAttributes:ea];
-                                       }
+                UTF32Char remapped;
+                // TODO: Use remapped
+                return [self charAttributes:theChar externalAttributes:ea remapped:&remapped];
+            }
                                               nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                                      pad:NO
                                       includeLastNewline:YES
@@ -4391,12 +4396,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (PTYFontInfo *)getFontForChar:(UniChar)ch
                       isComplex:(BOOL)isComplex
                      renderBold:(BOOL *)renderBold
-                   renderItalic:(BOOL *)renderItalic {
+                   renderItalic:(BOOL *)renderItalic
+                       remapped:(UTF32Char *)remapped {
     return [_fontTable fontForCharacter:isComplex ? [CharToStr(ch, isComplex) longCharacterAtIndex:0] : ch
                             useBoldFont:_useBoldFont
                           useItalicFont:_useItalicFont
                              renderBold:renderBold
-                           renderItalic:renderItalic];
+                           renderItalic:renderItalic
+                               remapped:remapped];
 }
 
 #pragma mark - Miscellaneous Notifications
@@ -4753,11 +4760,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (PTYFontInfo *)drawingHelperFontForChar:(UniChar)ch
                                 isComplex:(BOOL)isComplex
                                renderBold:(BOOL *)renderBold
-                             renderItalic:(BOOL *)renderItalic {
+                             renderItalic:(BOOL *)renderItalic
+                                 remapped:(UTF32Char *)remapped {
     return [self getFontForChar:ch
                       isComplex:isComplex
                      renderBold:renderBold
-                   renderItalic:renderItalic];
+                   renderItalic:renderItalic
+                       remapped:remapped];
 }
 
 - (NSData *)drawingHelperMatchesOnLine:(int)line {

@@ -51,7 +51,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (PTYFontInfo *)drawingHelperFontForChar:(UniChar)ch
                                 isComplex:(BOOL)isComplex
                                renderBold:(BOOL *)renderBold
-                             renderItalic:(BOOL *)renderItalic;
+                             renderItalic:(BOOL *)renderItalic
+                                 remapped:(UTF32Char *)ch;
 
 - (NSData * _Nullable)drawingHelperMatchesOnLine:(int)line;
 

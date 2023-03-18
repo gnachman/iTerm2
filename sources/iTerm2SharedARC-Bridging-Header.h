@@ -8,6 +8,7 @@
 #import "iTermApplication.h"
 #import "iTermBuiltInFunctions.h"
 #import "iTermColorMap.h"
+#import "iTermCommandRunner.h"
 #import "iTermController.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermGCD.h"
