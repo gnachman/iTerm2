@@ -436,7 +436,7 @@ enum {
 
     info = [self defineControl:_customScriptsFolder
                            key:kPreferenceKeyCustomScriptsFolder
-                   relatedView:_useCustomScriptsFolder
+                   relatedView:nil
                           type:kPreferenceInfoTypeStringTextField];
     info.shouldBeEnabled = ^BOOL() {
         return [iTermPreferences boolForKey:kPreferenceKeyUseCustomScriptsFolder];
