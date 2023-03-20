@@ -29,11 +29,14 @@
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAutoMasterParser.h"
 #import "iTermOpenDirectory.h"
+#import "iTermPreferences.h"
 #import "iTermSlowOperationGateway.h"
 #import "iTermWarning.h"
 #import "RegexKitLite.h"
 #include <sys/param.h>
 #include <sys/mount.h>
+
+NSNotificationName iTermScriptsFolderDidChange = @"iTermScriptsFolderDidChange";
 
 enum
 {
@@ -206,17 +209,36 @@ NSString * const DirectoryLocationDomain = @"DirectoryLocationDomain";
     return [[self applicationSupportDirectory] stringByAppendingPathComponent:@"version.txt"];
 }
 
+- (BOOL)customScriptsFolderIsValid:(NSString *)unexpanded {
+    NSString *candidate = [unexpanded stringByExpandingTildeInPath];
+    BOOL dir = NO;
+    return (candidate &&
+            ![candidate containsString:@" "] &&
+            [self fileExistsAtPath:candidate isDirectory:&dir] && dir);
+}
+
+- (NSString *)customScriptsFolder {
+    if (![iTermPreferences boolForKey:kPreferenceKeyUseCustomScriptsFolder]) {
+        return nil;
+    }
+    NSString *candidate = [iTermPreferences stringForKey:kPreferenceKeyCustomScriptsFolder];
+    if (![self customScriptsFolderIsValid:candidate]) {
+        return nil;
+    }
+    return [candidate stringByExpandingTildeInPath];
+}
+
 - (NSString *)scriptsPath {
-    return [[self applicationSupportDirectory] stringByAppendingPathComponent:@"Scripts"];
+    return self.customScriptsFolder ?: [[self applicationSupportDirectory] stringByAppendingPathComponent:@"Scripts"];
 }
 
 - (NSString *)scriptsPathWithoutSpaces {
-    NSString *modernPath = [[self spacelessAppSupportWithoutCreatingLink] stringByAppendingPathComponent:@"Scripts"];
+    NSString *modernPath = self.customScriptsFolder ?: [[self spacelessAppSupportWithoutCreatingLink] stringByAppendingPathComponent:@"Scripts"];
     return modernPath;
 }
 
 - (NSString *)scriptsPathWithoutSpacesCreatingLink {
-    NSString *modernPath = [[self spacelessAppSupportCreatingLink] stringByAppendingPathComponent:@"Scripts"];
+    NSString *modernPath = self.customScriptsFolder ?: [[self spacelessAppSupportCreatingLink] stringByAppendingPathComponent:@"Scripts"];
     return modernPath;
 }
 

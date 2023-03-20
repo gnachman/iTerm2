@@ -86,6 +86,7 @@ extern NSString *const kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdate
 extern NSString *const kPreferenceKeyCheckForUpdatesAutomatically;
 extern NSString *const kPreferenceKeyCheckForTestReleases;
 extern NSString *const kPreferenceKeyLoadPrefsFromCustomFolder;
+extern NSString *const kPreferenceKeyUseCustomScriptsFolder;  // Bool
 extern NSString *const kPreferenceKeyOpenAIAPIKey;
 extern NSString *const kPreferenceKeyAIPrompt;
 
@@ -94,6 +95,7 @@ extern NSString *const kPreferenceKeyAIPrompt;
 extern NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection;  // iTermPreferenceSavePrefsMode
 extern NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection;
 extern NSString *const kPreferenceKeyCustomFolder;  // Path/URL to location with prefs. Path may have ~ in it.
+extern NSString *const kPreferenceKeyCustomScriptsFolder;  // Path to scripts folder
 extern NSString *const kPreferenceKeySelectionCopiesText;
 extern NSString *const kPreferenceKeyCopyLastNewline;
 extern NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal;

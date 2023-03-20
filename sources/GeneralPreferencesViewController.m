@@ -96,6 +96,11 @@ enum {
     IBOutlet NSPopUpButton *_saveChanges;  // Save settings to folder when
     IBOutlet NSTextField *_saveChangesLabel;
 
+    IBOutlet NSButton *_useCustomScriptsFolder;
+    IBOutlet NSTextField *_customScriptsFolder;
+    IBOutlet NSImageView *_customScriptsFolderWarning;
+    IBOutlet NSButton *_browseCustomScriptsFolder;
+
     // Copy to clipboard on selection
     IBOutlet NSButton *_selectionCopiesText;
 
@@ -162,6 +167,8 @@ enum {
     IBOutlet NSTextField *_aiPrompt;
     IBOutlet NSTextField *_aiPromptLabel;
     IBOutlet NSImageView *_aiPromptWarning;  // Image shown when prompt lacks \(ai.prompt)
+
+    BOOL _customScriptsFolderDidChange;
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -416,6 +423,36 @@ enum {
                    type:kPreferenceInfoTypeCheckbox];
 
     // ---------------------------------------------------------------------------------------------
+    info = [self defineControl:_useCustomScriptsFolder
+                           key:kPreferenceKeyUseCustomScriptsFolder
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.onChange = ^() {
+        [self useCustomScriptsFolderDidChange];
+        [weakSelf customScriptsFolderDidChange];
+        [weakSelf postCustomScriptsFolderDidChangeNotificationIfNeeded];
+    };
+    info.observer = ^() { [self updateCustomScriptsFolderViews]; };
+
+    info = [self defineControl:_customScriptsFolder
+                           key:kPreferenceKeyCustomScriptsFolder
+                   relatedView:_useCustomScriptsFolder
+                          type:kPreferenceInfoTypeStringTextField];
+    info.shouldBeEnabled = ^BOOL() {
+        return [iTermPreferences boolForKey:kPreferenceKeyUseCustomScriptsFolder];
+    };
+    info.onChange = ^() {
+        [self updateCustomScriptsFolderViews];
+        [weakSelf customScriptsFolderDidChange];
+    };
+    info.controlTextDidEndEditing = ^(NSNotification *notif) {
+        // Post here instead of onChange since a patial path, like "/", would kick off a very slow
+        // recursive search for scripts.
+        [weakSelf postCustomScriptsFolderDidChangeNotificationIfNeeded];
+    };
+    [self updateCustomScriptsFolderViews];
+
+    // ---------------------------------------------------------------------------------------------
     info = [self defineControl:_loadPrefsFromCustomFolder
                            key:kPreferenceKeyLoadPrefsFromCustomFolder
                    relatedView:nil
@@ -601,6 +638,25 @@ enum {
     [self updateValueForInfo:allowSendingClipboardInfo];
 }
 
+- (void)customScriptsFolderDidChange {
+    _customScriptsFolderDidChange = YES;
+}
+
+- (void)postCustomScriptsFolderDidChangeNotificationIfNeeded {
+    if (_customScriptsFolderDidChange) {
+        _customScriptsFolderDidChange = NO;
+        [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptsFolderDidChange object:nil];
+    }
+}
+
+- (void)windowWillClose {
+    [self postCustomScriptsFolderDidChangeNotificationIfNeeded];
+}
+
+- (void)willDeselectTab {
+    [self postCustomScriptsFolderDidChangeNotificationIfNeeded];
+}
+
 - (void)updateAIPromptWarning {
     if ([[self stringForKey:kPreferenceKeyAIPrompt] containsString:@"\\(ai.prompt)"]) {
         _aiPromptWarning.alphaValue = 0.0;
@@ -752,6 +808,23 @@ enum {
 
 #pragma mark - Remote Prefs
 
+- (void)updateCustomScriptsFolderViews {
+    BOOL haveCustomFolder = [iTermPreferences boolForKey:kPreferenceKeyUseCustomScriptsFolder];
+    _browseCustomScriptsFolder.enabled = haveCustomFolder;
+    _customScriptsFolder.enabled = haveCustomFolder;
+    if (haveCustomFolder) {
+        _customScriptsFolderWarning.alphaValue = 1;
+    } else {
+        if (_customScriptsFolder.stringValue.length > 0) {
+            _customScriptsFolderWarning.alphaValue = 0.5;
+        } else {
+            _customScriptsFolderWarning.alphaValue = 0;
+        }
+    }
+    const BOOL locationIsValid = [[NSFileManager defaultManager] customScriptsFolderIsValid:_customScriptsFolder.stringValue];
+    _customScriptsFolderWarning.image = locationIsValid ? [NSImage it_imageNamed:@"CheckMark" forClass:self.class] : [NSImage it_imageNamed:@"WarningSign" forClass:self.class];
+}
+
 - (void)updateRemotePrefsViews {
     BOOL shouldLoadRemotePrefs =
         [iTermPreferences boolForKey:kPreferenceKeyLoadPrefsFromCustomFolder];
@@ -776,6 +849,21 @@ enum {
     [_saveChanges setEnabled:isValidFile];
     [_saveChangesLabel setLabelEnabled:isValidFile];
     [_pushToCustomFolder setEnabled:isValidFile];
+}
+
+- (void)useCustomScriptsFolderDidChange {
+    const BOOL newValue = [iTermPreferences boolForKey:kPreferenceKeyUseCustomScriptsFolder];
+    [self updateCustomScriptsFolderViews];
+    if (newValue) {
+        // Just turned it on
+        if ([[_customScriptsFolder stringValue] length] == 0) {
+            // Filed was initially empty so browse for a dir.
+            if ([self chooseCustomScriptsFolder]) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:iTermScriptsFolderDidChange object:nil];
+            }
+        }
+    }
+    [self updateCustomScriptsFolderViews];
 }
 
 - (void)loadPrefsFromCustomFolderDidChange {
@@ -805,6 +893,21 @@ enum {
 - (BOOL)pasteboardHasGitlabURL {
     NSString *pasteboardString = [NSString stringFromPasteboard];
     return [pasteboardString isMatchedByRegex:@"^https://gitlab.com/gnachman/iterm2/uploads/[a-f0-9]*/com.googlecode.iterm2.plist$"];
+}
+
+- (BOOL)chooseCustomScriptsFolder {
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+
+    if ([panel runModal] == NSModalResponseOK && panel.directoryURL.path) {
+        [_customScriptsFolder setStringValue:panel.directoryURL.path];
+        [self settingChanged:_customScriptsFolder];
+        return YES;
+    }  else {
+        return NO;
+    }
 }
 
 - (BOOL)choosePrefsCustomFolder {

@@ -158,6 +158,9 @@ extern NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey;
 // The prefs panel this view controller belongs to will close. This implementation does nothing.
 - (void)windowWillClose;
 
+// The prefs panel calls this before another tab gets selected.
+- (void)willDeselectTab;
+
 - (void)resizeWindowForCurrentTabAnimated:(BOOL)animated;
 
 // Override this if you have a tab view.

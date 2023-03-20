@@ -2676,6 +2676,7 @@
 		A6A13AB118C33ED300B241ED /* VT100CSIParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AAF18C33ED300B241ED /* VT100CSIParser.h */; };
 		A6A13AB618C33FC500B241ED /* VT100Parser.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AB418C33FC500B241ED /* VT100Parser.h */; };
 		A6A13ABB18C34F6400B241ED /* VT100XtermParser.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A13AB918C34F6400B241ED /* VT100XtermParser.h */; };
+		A6A1BCC029C8F70200646E9F /* ClockWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6A1BCBF29C8F70200646E9F /* ClockWatcher.swift */; };
 		A6A2697E18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2697C18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.h */; };
 		A6A2698318FE48B200437DA9 /* NSFont+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698118FE48B200437DA9 /* NSFont+iTerm.h */; };
 		A6A2698818FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6A2698618FF70C600437DA9 /* ProfilesWindowPreferencesViewController.h */; };
@@ -6636,6 +6637,7 @@
 		A6A13AB518C33FC500B241ED /* VT100Parser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Parser.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13AB918C34F6400B241ED /* VT100XtermParser.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = VT100XtermParser.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A13ABA18C34F6400B241ED /* VT100XtermParser.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = VT100XtermParser.m; sourceTree = "<group>"; tabWidth = 4; };
+		A6A1BCBF29C8F70200646E9F /* ClockWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockWatcher.swift; sourceTree = "<group>"; };
 		A6A2697C18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesTextPreferencesViewController.h; sourceTree = "<group>"; tabWidth = 4; };
 		A6A2697D18FE2BDE00437DA9 /* ProfilesTextPreferencesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = ProfilesTextPreferencesViewController.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6A2698118FE48B200437DA9 /* NSFont+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = "NSFont+iTerm.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -10660,6 +10662,7 @@
 				A6DBC9D9286399C6002911BE /* ContentNavigationShortcut.swift */,
 				A6B50E8229BBAE9C000D243D /* TilingChecker.swift */,
 				A6B50EB929BE42B1000D243D /* FontTable.swift */,
+				A6A1BCBF29C8F70200646E9F /* ClockWatcher.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -15717,6 +15720,7 @@
 				530AB8B520B2098000D2AA08 /* iTermVariables.m in Sources */,
 				A648DABA2427E73E00C2FF02 /* iTermFlagsChangedNotification.m in Sources */,
 				A6D20C67287CC51F0007F479 /* iTermProcessInfo.swift in Sources */,
+				A6A1BCC029C8F70200646E9F /* ClockWatcher.swift in Sources */,
 				A6905561241E98CB0020EA6A /* iTermFileDescriptorMultiClientChild.m in Sources */,
 				A65DF49B28491E5300AA29AB /* ShellIntegrationInjection.swift in Sources */,
 				A631FC9220EDDBC600EB824F /* iTermFindDriver.m in Sources */,

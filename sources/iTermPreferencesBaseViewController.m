@@ -756,6 +756,10 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     // Documented as doing nothing.
 }
 
+- (void)willDeselectTab {
+    // Documented as doing nothing.
+}
+
 - (void)commitControls {
     for (id control in _keyMap) {
         PreferenceInfo *info = [_keyMap objectForKey:control];

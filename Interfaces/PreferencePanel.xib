@@ -126,7 +126,7 @@
             <windowStyleMask key="styleMask" titled="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="196" y="132" width="451" height="246"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1728" height="1079"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="875"/>
             <view key="contentView" id="6180">
                 <rect key="frame" x="0.0" y="0.0" width="451" height="246"/>
                 <autoresizingMask key="autoresizingMask"/>
@@ -381,7 +381,7 @@ Gw
         <window title="Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="1923" userLabel="Main Preferences Window" customClass="iTermPrefsPanel">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES"/>
             <rect key="contentRect" x="269" y="110" width="924" height="463"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1728" height="1079"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="875"/>
             <view key="contentView" id="1924">
                 <rect key="frame" x="0.0" y="0.0" width="924" height="463"/>
                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -684,7 +684,7 @@ Gw
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="156" width="805" height="358"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1728" height="1079"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="875"/>
             <value key="minSize" type="size" width="805" height="358"/>
             <view key="contentView" id="5911">
                 <rect key="frame" x="0.0" y="0.0" width="805" height="358"/>
@@ -872,7 +872,7 @@ DQ
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES" utility="YES" documentModal="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="162" y="229" width="625" height="303"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1728" height="1079"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="875"/>
             <value key="minSize" type="size" width="575" height="100"/>
             <view key="contentView" id="6275">
                 <rect key="frame" x="0.0" y="0.0" width="625" height="303"/>
@@ -1078,10 +1078,13 @@ DQ
                 <outlet property="_apiPermission" destination="kIb-n8-d33" id="uni-VJ-Bxf"/>
                 <outlet property="_autoHideTmuxClientSession" destination="6366" id="V9B-um-JRL"/>
                 <outlet property="_browseCustomFolder" destination="5618" id="0Ty-gp-K5Q"/>
+                <outlet property="_browseCustomScriptsFolder" destination="dQq-rp-4ax" id="Bhz-HC-MBu"/>
                 <outlet property="_checkTestRelease" destination="5049" id="mCk-NA-PO2"/>
                 <outlet property="_checkUpdate" destination="5048" id="Oi0-3Y-fu1"/>
                 <outlet property="_confirmClosingMultipleSessions" destination="1996" id="1wi-R8-LGb"/>
                 <outlet property="_copyLastNewline" destination="5747" id="y4f-IT-rUT"/>
+                <outlet property="_customScriptsFolder" destination="llA-8R-abf" id="38A-bU-e4J"/>
+                <outlet property="_customScriptsFolderWarning" destination="I3s-Lg-hNk" id="fZi-iM-iXg"/>
                 <outlet property="_disableConfirmationOnShutdown" destination="OZb-Kv-fKa" id="u0v-RR-67h"/>
                 <outlet property="_doubleClickPerformsSmartSelection" destination="wgv-Ah-fFr" id="OZU-W2-nQN"/>
                 <outlet property="_enableAPI" destination="hxX-te-qT5" id="37I-pK-Hmx"/>
@@ -1122,6 +1125,7 @@ DQ
                 <outlet property="_tmuxWarnBeforePausing" destination="QSK-Li-EpK" id="R4e-84-nAB"/>
                 <outlet property="_tripleClickSelectsFullLines" destination="GD3-XJ-mYL" id="3nb-ii-SgM"/>
                 <outlet property="_unpauseTmuxAutomatically" destination="Xpa-up-i7z" id="P3K-mQ-k3Y"/>
+                <outlet property="_useCustomScriptsFolder" destination="dDY-rB-g7q" id="ywW-pn-co0"/>
                 <outlet property="_useTmuxProfile" destination="gLU-0J-chc" id="IzY-fx-eIB"/>
                 <outlet property="_useTmuxStatusBar" destination="oHn-bB-rYM" id="GMi-WL-nVq"/>
                 <outlet property="_warningButton" destination="d3j-d3-YO1" id="jOB-06-3Ri"/>
@@ -5045,11 +5049,11 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hVu-mt-KS9">
-                                        <rect key="frame" x="172" y="289" width="508" height="179"/>
+                                        <rect key="frame" x="111" y="259" width="569" height="209"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5054">
-                                                <rect key="frame" x="268" y="140" width="97" height="16"/>
+                                                <rect key="frame" x="287" y="170" width="97" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="MB per session" id="5060">
                                                     <font key="font" metaFont="system"/>
@@ -5058,7 +5062,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5055">
-                                                <rect key="frame" x="217" y="137" width="46" height="21"/>
+                                                <rect key="frame" x="236" y="167" width="46" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="5058">
                                                     <font key="font" metaFont="system"/>
@@ -5072,7 +5076,7 @@ DQ
                                                 </connections>
                                             </textField>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Xrd-YE-9w7">
-                                                <rect key="frame" x="179" y="46" width="216" height="21"/>
+                                                <rect key="frame" x="198" y="46" width="216" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">Go register for an account with openai and create an API key. Place the secret here. It probably will cost you money to use AI features.</string>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="euY-7d-vSJ">
@@ -5087,7 +5091,7 @@ DQ
                                                 </connections>
                                             </textField>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="uwy-pf-9Wz" userLabel="AI Prompt text field">
-                                                <rect key="frame" x="179" y="20" width="216" height="21"/>
+                                                <rect key="frame" x="198" y="20" width="216" height="21"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">When you query the AI service, the prompt iTerm2 sends it is built by replacing \(ai.prompt) in this value with the text you entered. It is an interpolated string in the session context.</string>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" continuous="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" placeholderString="Interpolated string" drawsBackground="YES" id="2G3-pu-wrn">
@@ -5102,7 +5106,7 @@ DQ
                                                 </connections>
                                             </textField>
                                             <button toolTip="When enabled, terminals are rendered using the GPU. This improves performance." fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="YoO-mR-uX5">
-                                                <rect key="frame" x="59" y="72" width="116" height="18"/>
+                                                <rect key="frame" x="78" y="72" width="116" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="GPU rendering" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="cDA-tx-zuo">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5114,7 +5118,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5056">
-                                                <rect key="frame" x="77" y="113" width="304" height="18"/>
+                                                <rect key="frame" x="96" y="143" width="304" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Save copy/paste and command history to disk" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="5057">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5126,7 +5130,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="hxX-te-qT5">
-                                                <rect key="frame" x="38" y="93" width="137" height="18"/>
+                                                <rect key="frame" x="57" y="123" width="137" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Enable Python API" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="Enu-TA-VzR">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -5138,7 +5142,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5053">
-                                                <rect key="frame" x="89" y="140" width="126" height="16"/>
+                                                <rect key="frame" x="108" y="170" width="126" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Instant Replay uses " id="5061">
                                                     <font key="font" metaFont="system"/>
@@ -5147,7 +5151,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="kIb-n8-d33">
-                                                <rect key="frame" x="175" y="90" width="224" height="22"/>
+                                                <rect key="frame" x="194" y="120" width="224" height="22"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="push" title="Require “Automation” permission" bezelStyle="rounded" alignment="left" controlSize="small" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="A1J-wd-hbr" id="A9A-re-7GZ">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -5164,7 +5168,7 @@ DQ
                                                 </connections>
                                             </popUpButton>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2nT-Ny-kwd">
-                                                <rect key="frame" x="173" y="65" width="228" height="28"/>
+                                                <rect key="frame" x="192" y="65" width="228" height="28"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Advanced GPU Settings…" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="tof-yo-OcS">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5175,7 +5179,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="oUZ-km-gJb">
-                                                <rect key="frame" x="402" y="91" width="21" height="22"/>
+                                                <rect key="frame" x="421" y="121" width="21" height="22"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="PzG-2P-IYF">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5186,7 +5190,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RYR-Tl-aPi">
-                                                <rect key="frame" x="74" y="49" width="103" height="16"/>
+                                                <rect key="frame" x="93" y="49" width="103" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="OpenAI API Key:" id="b2B-Hj-edT">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5195,7 +5199,7 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="EDh-lZ-wQE">
-                                                <rect key="frame" x="109" y="23" width="68" height="16"/>
+                                                <rect key="frame" x="128" y="23" width="68" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" lineBreakMode="clipping" title="AI Prompt:" id="Q2U-W0-BJ7">
                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -5204,13 +5208,13 @@ DQ
                                                 </textFieldCell>
                                             </textField>
                                             <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LsQ-19-iaj">
-                                                <rect key="frame" x="397" y="23" width="16" height="16"/>
+                                                <rect key="frame" x="416" y="23" width="16" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <string key="toolTip">The prompt must contain the substring \(ai.prompt). The query you enter will replace it when speaking to the AI. For example: “Write a unix command to \(ai.prompt).</string>
                                                 <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="E8m-Gx-WjK"/>
                                             </imageView>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qEC-1B-FMn">
-                                                <rect key="frame" x="415" y="15" width="58" height="27"/>
+                                                <rect key="frame" x="434" y="15" width="58" height="27"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="push" title="Reset" bezelStyle="rounded" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="3bd-rH-r3u">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5221,7 +5225,7 @@ DQ
                                                 </connections>
                                             </button>
                                             <button horizontalHuggingPriority="750" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="lIb-Jy-R1v">
-                                                <rect key="frame" x="474" y="20" width="18" height="19"/>
+                                                <rect key="frame" x="493" y="20" width="18" height="19"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="help" bezelStyle="helpButton" alignment="center" controlSize="small" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="fWO-HA-eH0">
                                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -5229,6 +5233,45 @@ DQ
                                                 </buttonCell>
                                                 <connections>
                                                     <action selector="aiPromptHelp:" target="9Se-ld-UJa" id="mKR-O9-4Wg"/>
+                                                </connections>
+                                            </button>
+                                            <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="llA-8R-abf">
+                                                <rect key="frame" x="256" y="97" width="203" height="21"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="o9N-bf-pX4" userLabel="iTermStatusIndicatingTextFieldCell" customClass="iTermStatusIndicatingTextFieldCell">
+                                                    <font key="font" metaFont="system"/>
+                                                    <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                                <connections>
+                                                    <outlet property="delegate" destination="9Se-ld-UJa" id="3z3-HS-3zy"/>
+                                                </connections>
+                                            </textField>
+                                            <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="I3s-Lg-hNk">
+                                                <rect key="frame" x="441" y="99" width="16" height="16"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="proportionallyDown" image="WarningSign" id="jWh-HP-krB"/>
+                                            </imageView>
+                                            <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dDY-rB-g7q">
+                                                <rect key="frame" x="18" y="99" width="237" height="18"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="check" title="Custom Python API Scripts Folder" bezelStyle="regularSquare" imagePosition="left" alignment="left" state="on" inset="2" id="BLe-VU-xVS">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="settingChanged:" target="9Se-ld-UJa" id="dpD-ms-IXE"/>
+                                                </connections>
+                                            </button>
+                                            <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="dQq-rp-4ax">
+                                                <rect key="frame" x="460" y="90" width="96" height="32"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                                <buttonCell key="cell" type="push" title="Browse" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="maq-kg-hPh">
+                                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="browseCustomFolder:" target="9Se-ld-UJa" id="NSL-HJ-4xG"/>
                                                 </connections>
                                             </button>
                                         </subviews>
@@ -5519,7 +5562,7 @@ DQ
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="pnz-ME-DBf" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="28" y="354" width="701" height="114"/>
+                                        <rect key="frame" x="27" y="354" width="701" height="114"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5616">
@@ -7618,7 +7661,7 @@ DQ
         <window title="Filter Alerts" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" restorable="NO" hidesOnDeactivate="YES" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="u39-OD-7hu" customClass="NSPanel">
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="120" y="138" width="406" height="145"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1728" height="1079"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="875"/>
             <view key="contentView" id="dXn-d7-O8o">
                 <rect key="frame" x="0.0" y="0.0" width="406" height="145"/>
                 <autoresizingMask key="autoresizingMask"/>

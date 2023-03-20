@@ -41,6 +41,7 @@ NSString *const kPreferenceKeyNotifyOnlyForCriticalShellIntegrationUpdates = @"N
 NSString *const kPreferenceKeyCheckForUpdatesAutomatically = @"SUEnableAutomaticChecks";  // Key defined by Sparkle
 NSString *const kPreferenceKeyCheckForTestReleases = @"CheckTestRelease";
 NSString *const kPreferenceKeyLoadPrefsFromCustomFolder = @"LoadPrefsFromCustomFolder";
+NSString *const kPreferenceKeyUseCustomScriptsFolder = @"UseCustomScriptsFolder";
 
 // This pref was originally a suppressable warning plus a user default, which is why it's in two
 // parts.
@@ -54,6 +55,7 @@ NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection = 
 NSString *const iTermMetalSettingsDidChangeNotification = @"iTermMetalSettingsDidChangeNotification";
 
 NSString *const kPreferenceKeyCustomFolder = @"PrefsCustomFolder";
+NSString *const kPreferenceKeyCustomScriptsFolder = @"CustomScriptsFolder";  // String
 NSString *const kPreferenceKeySelectionCopiesText = @"CopySelection";
 NSString *const kPreferenceKeyCopyLastNewline = @"CopyLastNewline";
 NSString *const kPreferenceKeyAllowClipboardAccessFromTerminal = @"AllowClipboardAccess";
@@ -350,9 +352,11 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyCheckForUpdatesAutomatically: @YES,
                   kPreferenceKeyCheckForTestReleases: @NO,
                   kPreferenceKeyLoadPrefsFromCustomFolder: @NO,
+                  kPreferenceKeyUseCustomScriptsFolder: @NO,
                   kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection: @NO,
                   kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection: @0,
                   kPreferenceKeyCustomFolder: [NSNull null],
+                  kPreferenceKeyCustomScriptsFolder: [NSNull null],
                   kPreferenceKeySelectionCopiesText: @YES,
                   kPreferenceKeyCopyLastNewline: @NO,
                   kPreferenceKeyAllowClipboardAccessFromTerminal: @NO,
@@ -538,6 +542,7 @@ static NSString *sPreviousVersion;
     if (!dict) {
         dict = @{ kPreferenceKeyOpenArrangementAtStartup: BLOCK(computedOpenArrangementAtStartup),
                   kPreferenceKeyCustomFolder: BLOCK(computedCustomFolder),
+                  kPreferenceKeyCustomScriptsFolder: BLOCK(computedCustomScriptsFolder),
                   kPreferenceKeyCharactersConsideredPartOfAWordForSelection: BLOCK(computedWordChars),
                   kPreferenceKeyTabStyle: BLOCK(computedTabStyle),
                   kPreferenceKeyUseMetal: BLOCK(computedUseMetal),
@@ -716,6 +721,11 @@ static NSString *sPreviousVersion;
 + (NSString *)computedCustomFolder {
     NSString *prefsCustomFolder = [self uncomputedObjectForKey:kPreferenceKeyCustomFolder];
     return prefsCustomFolder ?: @"";
+}
+
++ (NSString *)computedCustomScriptsFolder {
+    NSString *folder = [self uncomputedObjectForKey:kPreferenceKeyCustomScriptsFolder];
+    return folder ?: @"";
 }
 
 // Text fields don't like nil strings.

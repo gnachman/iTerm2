@@ -26,6 +26,8 @@
 
 @interface NSFileManager (iTerm)
 
+extern NSNotificationName iTermScriptsFolderDidChange;
+
 + (NSString *)pathToSaveFileInFolder:(NSString *)destinationDirectory preferredName:(NSString *)preferredName;
 
 - (NSString *)legacyApplicationSupportDirectory;
@@ -53,6 +55,7 @@
 // Directory where scripts live. These are loaded and added to a menu or auto-run at startup.
 - (NSString *)scriptsPath;
 - (NSString *)scriptsPathWithoutSpaces;
+- (BOOL)customScriptsFolderIsValid:(NSString *)candidate;
 
 // Path to special auto-launch script that is run at startup.
 - (NSString *)legacyAutolaunchScriptPath;  // applescript

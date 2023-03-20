@@ -934,6 +934,10 @@ andEditComponentWithIdentifier:(NSString *)identifier
     [_profilesViewController invalidateSavedSize];
 }
 
+- (void)tabView:(NSTabView *)tabView willSelectTabViewItem:(NSTabViewItem *)tabViewItem {
+    [[self viewControllerForTabViewItem:[tabView selectedTabViewItem]] willDeselectTab];
+}
+
 - (void)resizeWindowForTabViewItem:(NSTabViewItem *)tabViewItem animated:(BOOL)animated {
     iTermPreferencesBaseViewController *viewController = [self viewControllerForTabViewItem:tabViewItem];
     if (viewController.tabView != nil) {
