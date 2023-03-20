@@ -5564,8 +5564,7 @@ allowDragBeforeMouseDown:(BOOL)allowDragBeforeMouseDown
             data = downOrLeft ? [_dataSource.terminalOutput keyArrowDown:flags] :
             [_dataSource.terminalOutput keyArrowUp:flags];
         } else {
-            data = downOrLeft ? [_dataSource.terminalOutput keyArrowLeft:flags] :
-            [_dataSource.terminalOutput keyArrowRight:flags];
+            data = downOrLeft ? [_dataSource.terminalOutput keyArrowRight:flags] : [_dataSource.terminalOutput keyArrowLeft:flags];
         }
         return [[[NSString alloc] initWithData:data encoding:NSISOLatin1StringEncoding] autorelease];
     } else {

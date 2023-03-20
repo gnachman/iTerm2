@@ -1283,9 +1283,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         case NSEventTypeScrollWheel:
             if (fabs(event.scrollingDeltaX) > fabs(event.scrollingDeltaY)) {
                 if ([event scrollingDeltaX] > 0) {
-                    return MOUSE_BUTTON_SCROLLRIGHT;
-                } else {
                     return MOUSE_BUTTON_SCROLLLEFT;
+                } else {
+                    return MOUSE_BUTTON_SCROLLRIGHT;
                 }
             } else {
                 if ([event scrollingDeltaY] > 0) {
