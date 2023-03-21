@@ -12,6 +12,7 @@
 #import "iTermScriptInspector.h"
 #import "iTermAPIScriptLauncher.h"
 #import "iTermWebSocketConnection.h"
+#import "DebugLogging.h"
 #import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
@@ -445,6 +446,7 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
 
 - (void)connectionAccepted:(NSNotification *)notification {
     NSString *key = notification.object;
+    DLog(@"Connection accepted with key %@", key);
     iTermScriptHistoryEntry *entry = nil;
     if (key) {
         entry = [[iTermScriptHistory sharedInstance] entryWithIdentifier:key];
@@ -465,11 +467,14 @@ typedef NS_ENUM(NSInteger, iTermScriptFilterControlTag) {
                                                    identifier:key
                                                      relaunch:nil];
         entry.pids = notification.userInfo[@"pids"];
+        DLog(@"Add history entry");
         [[iTermScriptHistory sharedInstance] addHistoryEntry:entry];
     }
     entry.websocketConnection = notification.userInfo[@"websocket"];
+    DLog(@"Adding output");
     [entry addOutput:[NSString stringWithFormat:@"Connection accepted: %@\n", notification.userInfo[@"reason"]]
           completion:^{}];
+    DLog(@"Done");
 }
 
 - (void)connectionClosed:(NSNotification *)notification {

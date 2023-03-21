@@ -201,6 +201,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
 - (void)postAPINotification:(ITMNotification *)notification toConnectionKey:(NSString *)connectionKey {
     dispatch_async(_queue, ^{
+        DLog(@"Private queue: posting API notification - begin");
         iTermWebSocketConnection *webSocketConnection = self->_connections[connectionKey];
         if (webSocketConnection) {
             ITMServerOriginatedMessage *response = [[ITMServerOriginatedMessage alloc] init];
@@ -209,6 +210,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                 [self sendResponse:response onConnection:webSocketConnection];
             });
         }
+        DLog(@"Private queue: posting API notification - done");
     });
 }
 
@@ -217,16 +219,19 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     [_unixSocket close];
     _unixSocket = nil;
     dispatch_sync(_queue, ^{
+        DLog(@"Private queue: stop - begin");
         [self->_pendingConnections enumerateObjectsUsingBlock:^(iTermHTTPConnection * _Nonnull connection, NSUInteger idx, BOOL * _Nonnull stop) {
             [connection threadSafeClose];
         }];
         [self->_pendingConnections removeAllObjects];
         [self queueStop];
+        DLog(@"Private queue: stop - done");
     });
 }
 
 // _queue
 - (void)queueStop {
+    DLog(@"queueStop");
     [_connections enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, iTermWebSocketConnection * _Nonnull conn, BOOL * _Nonnull stop) {
         [conn abortWithCompletion:^{}];
     }];
@@ -236,7 +241,9 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (NSString *)websocketKeyForConnectionKey:(NSString *)connectionKey {
     __block NSString *result = nil;
     dispatch_sync(_queue, ^{
+        DLog(@"Private queue: get result - begin");
         result = self->_connections[connectionKey].key;
+        DLog(@"Private queue: get result - done");
     });
     return result;
 
@@ -249,11 +256,13 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
     DLog(@"Accepted connection");
     dispatch_queue_t queue = _queue;
     dispatch_async(queue, ^{
+        DLog(@"Private queue: accept - begin");
         iTermHTTPConnection *connection = [[iTermHTTPConnection alloc] initWithFileDescriptor:fd
                                                                                 clientAddress:address
                                                                                          euid:euid];
         [self->_pendingConnections addObject:connection];
         [self reallyDidAcceptConnection:connection retries:retries];
+        DLog(@"Private queue: accept - done");
     });
 }
 
@@ -289,9 +298,12 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 - (void)startRequestOnConnection:(iTermHTTPConnection *)connection pids:(NSArray<NSNumber *> *)pids completion:(void (^)(BOOL, NSString *))completion {
     DLog(@"startRequest for pids %@", pids);
     dispatch_async(connection.queue, ^{
+        DLog(@"On connection queue now");
         NSURLRequest *request = [connection readRequest];
         dispatch_async(self->_queue, ^{
+            DLog(@"Private queue: really start request - begin");
             [self reallyStartRequestOnConnection:connection pids:pids request:request completion:completion];
+            DLog(@"Private queue: really start request - done");
         });
     });
 }
@@ -333,17 +345,21 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                                                                                                     connection:connection
                                                                                                         reason:&authReason];
     if (webSocketConnection) {
+        DLog(@"Popping off to the main queue");
         dispatch_async(dispatch_get_main_queue(), ^{
+            DLog(@"On the main queue now");
             NSString *reason = nil;
             NSString *displayName = nil;
             const BOOL disableAuthUI = request.allHTTPHeaderFields[@"x-iterm2-disable-auth-ui"] != nil;
             assert(connection.clientAddress.addressFamily == AF_UNIX);
+            DLog(@"Request authorization from delegate");
             const BOOL ok = [self.delegate apiServerAuthorizeProcesses:pids
                                                          preauthorized:webSocketConnection.preauthorized
                                                          disableAuthUI:disableAuthUI
                                                           advisoryName:webSocketConnection.advisoryName
                                                                 reason:&reason
                                                            displayName:&displayName];
+            DLog(@"ok=%@ reason=%@", @(ok), reason);
             if (ok) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:iTermAPIServerConnectionAccepted
                                                                     object:webSocketConnection.key
@@ -351,17 +367,21 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                                                                               @"job": displayName ?: [NSNull null],
                                                                               @"pids": pids,
                                                                               @"websocket": webSocketConnection }];
+                DLog(@"Popping off to the private queue");
                 dispatch_async(self->_queue, ^{
-                    DLog(@"Upgrading request to websocket");
+                    DLog(@"Private queue: upgrading request to websocket - begin");
                     webSocketConnection.displayName = displayName;
                     webSocketConnection.delegate = self;
                     webSocketConnection.delegateQueue = self->_queue;
                     self->_connections[webSocketConnection.guid] = webSocketConnection;
                     [webSocketConnection handleRequest:request completion:^{
                         dispatch_async(self->_queue, ^{
+                            DLog(@"Private queue: run completion block - begin");
                             completion(YES, nil);
+                            DLog(@"Private queue: run completion block - done");
                         });
                     }];
+                    DLog(@"Private queue: upgrading request to websocket - done");
                 });
             } else {
                 if (disableAuthUI) {
@@ -381,7 +401,9 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                     [connection unauthorized];
                 });
                 dispatch_async(self->_queue, ^{
+                    DLog(@"Private queue: run completion block 2 - begin");
                     completion(NO, reason);
+                    DLog(@"Private queue: run completion block 2 - done");
                 });
             }
         });
@@ -446,9 +468,11 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
         // thread doesn't do anything after that response is sent.
         dispatch_async(dispatch_get_main_queue(), ^{
             dispatch_async(self->_queue, ^{
+                DLog(@"Private queue: send response - begin");
                 response.transactionResponse = [[ITMTransactionResponse alloc] init];
                 response.transactionResponse.status = ITMTransactionResponse_Status_Ok;
                 [weakSelf sendResponse:response onConnection:webSocketConnection];
+                DLog(@"Private queue: send response - done");
             });
             [weakSelf drainTransaction:transaction];
         });
@@ -479,7 +503,9 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             response.transactionResponse = [[ITMTransactionResponse alloc] init];
             response.transactionResponse.status = ITMTransactionResponse_Status_Ok;
             dispatch_async(_queue, ^{
+                DLog(@"Private queue: send response 2 - begin");
                 [self sendResponse:response onConnection:transactionRequest.connection];
+                DLog(@"Private queue: send response 2 - done");
             });
             break;
         }
@@ -1184,7 +1210,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
 
 // _queue
 - (void)webSocketConnectionDidTerminate:(iTermWebSocketConnection *)webSocketConnection {
-    DLog(@"Connection terminated");
+    DLog(@"Private queue: Connection terminated - begin");
     [self->_connections removeObjectForKey:webSocketConnection.guid];
     dispatch_async(self->_executionQueue, ^{
         if (self.transaction.connection == webSocketConnection) {
@@ -1200,10 +1226,12 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
                                                                 object:webSocketConnection.key];
         });
     });
+    DLog(@"Private queue: Connection terminated - done");
 }
 
 // _queue
 - (void)webSocketConnection:(iTermWebSocketConnection *)webSocketConnection didReadFrame:(iTermWebSocketFrame *)frame {
+    DLog(@"Private queue: didReadFrame - begin");
     if (frame.opcode == iTermWebSocketOpcodeBinary) {
         ITMClientOriginatedMessage *request = [ITMClientOriginatedMessage parseFromData:frame.payload error:nil];
         DLog(@"Dispatch %@", request);
@@ -1215,7 +1243,7 @@ NSString *const iTermAPIServerConnectionClosed = @"iTermAPIServerConnectionClose
             });
         }
     }
-    DLog(@"Got a frame: %@", frame);
+    DLog(@"Private queue: didReadFrame - done");
 }
 
 @end
