@@ -31,6 +31,7 @@ class InjectTrigger: Trigger {
         let scopeProvider = session.triggerSessionVariableScopeProvider(self)
         let scheduler = scopeProvider.triggerCallbackScheduler()
         paramWithBackreferencesReplaced(withValues: strings,
+                                        absLine: lineNumber,
                                         scope: scopeProvider,
                                         useInterpolation: useInterpolation).then { message in
             if let data = (message as String).data(using: .utf8) {

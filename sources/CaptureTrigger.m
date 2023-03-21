@@ -52,6 +52,7 @@
     output.line = stringLine.stringValue;
     const BOOL interpolate = [aSession triggerSessionShouldUseInterpolatedStrings:self];
     output.promisedCommand = [self paramWithBackreferencesReplacedWithValues:stringArray
+                                                                     absLine:lineNumber
                                                                        scope:[aSession triggerSessionVariableScopeProvider:self]
                                                             useInterpolation:interpolate];
     output.values = stringArray;

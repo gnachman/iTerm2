@@ -271,6 +271,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
 }
 
 - (iTermPromise<NSString *> *)paramWithBackreferencesReplacedWithValues:(NSArray *)stringArray
+                                                                absLine:(long long)absLine
                                                                   scope:(id<iTermTriggerScopeProvider>)scopeProvider
                                                        useInterpolation:(BOOL)useInterpolation {
     NSString *p = [NSString castFrom:self.param] ?: @"";
@@ -280,6 +281,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
                 assert([NSThread isMainThread]);
                 [self evaluateSwiftyStringParameter:p
                                      backreferences:stringArray
+                                            absLine:absLine
                                               scope:scope
                                               owner:object
                                          completion:^(NSString *value) {
@@ -321,6 +323,7 @@ NSString * const kTriggerDisabledKey = @"disabled";
 
 - (void)evaluateSwiftyStringParameter:(NSString *)expression
                        backreferences:(NSArray<NSString *> *)backreferences
+                              absLine:(long long)absLine
                                 scope:(iTermVariableScope *)scope
                                 owner:(id<iTermObject>)owner
                            completion:(void (^)(NSString *))completion {
@@ -330,10 +333,10 @@ NSString * const kTriggerDisabledKey = @"disabled";
         _evaluator.expression = expression;
     }
     __weak __typeof(self) weakSelf = self;
-    [_evaluator evaluateWithBackreferences:backreferences
-                                     scope:scope
-                                     owner:owner
-                                completion:^(NSString * _Nullable value, NSError * _Nullable error) {
+    [_evaluator evaluateWithAdditionalContext:@{ @"matches": backreferences, @"line": @(absLine) }
+                                        scope:scope
+                                        owner:owner
+                                   completion:^(NSString * _Nullable value, NSError * _Nullable error) {
         if (error) {
             [weakSelf evaluationDidFailWithError:error];
             completion(nil);

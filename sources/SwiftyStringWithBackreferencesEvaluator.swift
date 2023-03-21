@@ -18,13 +18,13 @@ class SwiftyStringWithBackreferencesEvaluator: NSObject {
         self.expression = expression
     }
 
-    @objc func evaluate(backreferences: [String],
+    @objc func evaluate(additionalContext: [String: AnyObject],
                         scope: iTermVariableScope,
                         owner: iTermObject,
                         completion: @escaping (String?, NSError?) -> ()) {
         let myScope = amendedScope(scope,
                                    owner: owner,
-                                   addingBackreferences: backreferences)
+                                   values: additionalContext)
         if cachedSwiftyString?.swiftyString != expression {
             cachedSwiftyString = iTermSwiftyString(string: expression,
                                                    scope: myScope,
@@ -42,11 +42,13 @@ class SwiftyStringWithBackreferencesEvaluator: NSObject {
 
     private func amendedScope(_ scope: iTermVariableScope,
                               owner: iTermObject,
-                              addingBackreferences backreferences: [String]) -> iTermVariableScope {
+                              values: [String: AnyObject]) -> iTermVariableScope {
         let matchesFrame = iTermVariables(context: [], owner: owner)
         let myScope: iTermVariableScope = scope.copy() as! iTermVariableScope
         myScope.add(matchesFrame, toScopeNamed: nil)
-        myScope.setValue(backreferences, forVariableNamed:"matches")
+        for (key, value) in values {
+            myScope.setValue(value, forVariableNamed: key)
+        }
         return myScope
     }
 }

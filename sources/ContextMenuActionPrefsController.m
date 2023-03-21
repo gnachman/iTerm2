@@ -102,11 +102,11 @@ NSString *iTermSmartSelectionActionContextKeyRemoteHost = @"remoteHost";
         NSArray *encodedCaptures = [components mapWithBlock:^id(id anObject) {
             return [self parameterValue:anObject encodedForAction:action];
         }];
-        [evaluator evaluateWithBackreferences:encodedCaptures
-                                        scope:scope
-                                        owner:owner
-                                   completion:^(NSString * _Nullable value,
-                                            NSError * _Nullable error) {
+        [evaluator evaluateWithAdditionalContext:@{ @"matches": encodedCaptures }
+                                           scope:scope
+                                           owner:owner
+                                      completion:^(NSString * _Nullable value,
+                                                   NSError * _Nullable error) {
             DLog(@"value=%@, error=%@", value, error);
             completion(value);
         }];

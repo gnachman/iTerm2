@@ -79,6 +79,7 @@ class SetUserVariableTrigger: Trigger {
         let scopeProvider = session.triggerSessionVariableScopeProvider(self)
         let scheduler = scopeProvider.triggerCallbackScheduler()
         paramWithBackreferencesReplaced(withValues: strings,
+                                        absLine: lineNumber,
                                         scope: scopeProvider,
                                         useInterpolation: useInterpolation).then { [weak self] message in
             if let self = self, let (name, value) = self.variableNameAndValue(message as String) {

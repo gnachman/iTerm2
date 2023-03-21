@@ -146,6 +146,7 @@ extern NSString * const kTriggerDisabledKey;
                byAddingBackreferences:(NSArray<NSString *> *)backreferences;
 
 - (iTermPromise<NSString *> *)paramWithBackreferencesReplacedWithValues:(NSArray<NSString *> *)strings
+                                                                absLine:(long long)absLine
                                                                   scope:(id<iTermTriggerScopeProvider>)scope
                                                        useInterpolation:(BOOL)useInterpolation;
 

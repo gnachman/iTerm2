@@ -51,6 +51,7 @@
     id<iTermTriggerScopeProvider> scopeProvider = [aSession triggerSessionVariableScopeProvider:self];
     id<iTermTriggerCallbackScheduler> scheduler = [scopeProvider triggerCallbackScheduler];
     [[self paramWithBackreferencesReplacedWithValues:stringArray
+                                             absLine:lineNumber
                                                scope:scopeProvider
                                     useInterpolation:useInterpolation] then:^(NSString * _Nonnull urlString) {
         [scheduler scheduleTriggerCallback:^{
