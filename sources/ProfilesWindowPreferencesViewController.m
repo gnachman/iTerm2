@@ -346,6 +346,7 @@ CGFloat iTermMaxBlurRadius(void) {
     void (^completion)(NSInteger) = ^(NSInteger result) {
         if (result == NSModalResponseOK) {
             NSURL *url = [[panel URLs] objectAtIndex:0];
+            [self checkImage:url.path];
             [self loadBackgroundImageWithFilename:[url path]];
             [self setString:self.backgroundImageFilename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
         } else {
@@ -364,6 +365,7 @@ CGFloat iTermMaxBlurRadius(void) {
 }
 
 - (void)imageWellDidPerformDropOperation:(iTermImageWell *)imageWell filename:(NSString *)filename {
+    [self checkImage:filename];
     [self loadBackgroundImageWithFilename:filename];
     [self setString:filename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
 }
@@ -382,6 +384,42 @@ CGFloat iTermMaxBlurRadius(void) {
         [_useBackgroundImage setState:NSControlStateValueOff];
         self.backgroundImageFilename = nil;
     }
+}
+
+- (BOOL)checkImage:(NSString *)filename {
+    NSError *error = nil;
+    NSData *data = [NSData dataWithContentsOfFile:filename options:0 error:&error];
+    if (!data) {
+        [iTermWarning showWarningWithTitle:error.localizedDescription
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"BackgroundImageUnreadable"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Problem Loading Image"
+                                    window:self.view.window];
+        return NO;
+    }
+    if (data.length == 0) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The image “%@” could not be loaded because the file is empty.", filename.lastPathComponent]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"BackgroundImageUnreadable"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Problem Loading Image"
+                                    window:self.view.window];
+        return NO;
+    }
+    if (![[NSImage alloc] initWithData:data]) {
+        [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"The image “%@” could not be loaded because it is corrupt or not a supported format.", filename.lastPathComponent]
+                                   actions:@[ @"OK" ]
+                                 accessory:nil
+                                identifier:@"BackgroundImageUnreadable"
+                               silenceable:kiTermWarningTypePersistent
+                                   heading:@"Problem Loading Image"
+                                    window:self.view.window];
+        return NO;
+    }
+    return YES;
 }
 
 #pragma mark - Screen

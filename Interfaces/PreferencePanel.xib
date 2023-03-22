@@ -6595,11 +6595,11 @@ DQ
                         </tabViewItem>
                         <tabViewItem label="Hotkey" identifier="" id="JRd-u6-ZZG">
                             <view key="view" id="Haq-Qq-ATI">
-                                <rect key="frame" x="10" y="33" width="899" height="384"/>
+                                <rect key="frame" x="10" y="33" width="899" height="416"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9Jn-yB-pZS" customClass="iTermPreferencesInnerTabContainerView">
-                                        <rect key="frame" x="156" y="280" width="587" height="101"/>
+                                        <rect key="frame" x="156" y="312" width="587" height="101"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMinY="YES"/>
                                         <subviews>
                                             <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="yqL-PV-QBa">
@@ -6999,7 +6999,7 @@ DQ
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <clipView key="contentView" id="N1C-ir-dI5">
                         <rect key="frame" x="1" y="1" width="238" height="377"/>
-                        <autoresizingMask key="autoresizingMask"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnResizing="NO" autosaveColumns="NO" typeSelect="NO" id="5562">
                                 <rect key="frame" x="0.0" y="0.0" width="238" height="377"/>
