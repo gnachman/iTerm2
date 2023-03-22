@@ -1180,7 +1180,7 @@ DQ
                                                 <action selector="installPythonRuntime:" target="201" id="uxc-3n-hZc"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Install Already-Downloaded Python Runtime" alternate="YES" identifier="Install Python Runtime" id="t3w-Wj-vG8">
+                                        <menuItem title="Install Already-Downloaded Python Runtime" alternate="YES" identifier="Install Already-Downloaded Python Runtime" id="t3w-Wj-vG8">
                                             <modifierMask key="keyEquivalentModifierMask" option="YES"/>
                                             <connections>
                                                 <action selector="installAlreadyDownloadedPythonRuntime:" target="201" id="3fX-lc-mur"/>
