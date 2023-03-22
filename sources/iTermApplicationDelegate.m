@@ -1062,6 +1062,7 @@ void TurnOnDebugLoggingAutomatically(void) {
 }
 
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
+    DLog(@"Begin");
     [iTermMenuBarObserver sharedInstance];
     // Cleanly crash on uncaught exceptions, such as during actions.
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{ @"NSApplicationCrashOnExceptions": @YES }];
@@ -1075,15 +1076,22 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     _globalScopeController = [[iTermGlobalScopeController alloc] init];
 
+    DLog(@"registerBuiltInFunctions");
     [PTYSession registerBuiltInFunctions];
+    DLog(@"registerBuiltInFunctions");
     [PTYTab registerBuiltInFunctions];
+    DLog(@"registerStandardFunctions");
     [iTermBuiltInFunctions registerStandardFunctions];
-    
+
+    DLog(@"migrateApplicationSupportDirectoryIfNeeded");
     [iTermMigrationHelper migrateApplicationSupportDirectoryIfNeeded];
+    DLog(@"buildScriptMenu");
     [self buildScriptMenu:nil];
 
     // Fix up various user defaults settings.
+    DLog(@"initializeUserDefaults");
     [iTermPreferences initializeUserDefaults];
+    DLog(@"performMigrations");
     [iTermUserDefaults performMigrations];
 
     // Enable restoring windows to their original Spaces if needed.
@@ -1099,21 +1107,28 @@ void TurnOnDebugLoggingAutomatically(void) {
     }
 
     // This sets up bonjour and migrates bookmarks if needed.
+    DLog(@"Make ITAddressBookMgr");
     [ITAddressBookMgr sharedInstance];
 
     // Bookmarks must be loaded for this to work since it needs to know if the hotkey's profile
     // exists.
+    DLog(@"updateProcessType");
     [self updateProcessType];
 
+    DLog(@"iTermToolbeltView populateMenu");
     [iTermToolbeltView populateMenu:toolbeltMenu];
 
     // Start tracking windows entering/exiting full screen.
+    DLog(@"Make iTermFullScreenWindowManager");
     [iTermFullScreenWindowManager sharedInstance];
 
+    DLog(@"complainIfNightlyBuildIsTooOld");
     [self complainIfNightlyBuildIsTooOld];
 
     // Set the Appcast URL and when it changes update it.
+    DLog(@"refreshSoftwareUpdateUserDefaults");
     [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
+    DLog(@"Add observers");
     [iTermPreferences addObserverForKey:kPreferenceKeyCheckForTestReleases
                                   block:^(id before, id after) {
                                       [[iTermController sharedInstance] refreshSoftwareUpdateUserDefaults];
@@ -1125,10 +1140,12 @@ void TurnOnDebugLoggingAutomatically(void) {
 
     if ([iTermPreferences boolForKey:kPreferenceKeyOpenArrangementAtStartup] ||
         [iTermPreferences boolForKey:kPreferenceKeyOpenNoWindowsAtStartup]) {
+        DLog(@"disableInitialUntitledWindow");
         [_untitledWindowStateMachine disableInitialUntitledWindow];
     }
 
     NSError *error = nil;
+    DLog(@"Start iTermSecretServer");
     [[iTermSecretServer instance] listenAndReturnError:&error];
     if (error) {
         DLog(@"Secret server failed to start: %@", error);
