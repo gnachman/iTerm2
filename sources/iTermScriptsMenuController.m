@@ -214,7 +214,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermScriptItem *root = [[iTermScriptItem alloc] initFolderWithPath:path parent:nil];
     [self populateScriptItem:root
                 originalRoot:path
-                clockWatcher:[[iTermClockWatcher alloc] initWithMaxTime:3.0]];
+                clockWatcher:[[iTermClockWatcher alloc] initWithMaxTime:8.0]];
     return root.children;
 }
 
