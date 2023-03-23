@@ -7,6 +7,8 @@
 //
 
 #import <XCTest/XCTest.h>
+
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermFakeUserDefaults.h"
 #import "iTermMalloc.h"
@@ -263,7 +265,7 @@ static const NSInteger kUnicodeVersion = 9;
     // Extract the whole range but truncate it 3 bytes at the head.
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
     VT100GridWindowedRange range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 3, _lines.count), 0, 0);
-    NSMutableArray *coords = [NSMutableArray array];
+    iTermGridCoordArray *coords = [[iTermGridCoordArray alloc] init];
     NSString *actual = [extractor contentInRange:range
                                attributeProvider:nil
                                       nullPolicy:kiTermTextExtractorNullPolicyFromLastToEnd
@@ -298,7 +300,7 @@ static const NSInteger kUnicodeVersion = 9;
     // Extract the whole range but truncate it 3 bytes at the head.
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];
     VT100GridWindowedRange range = VT100GridWindowedRangeMake(VT100GridCoordRangeMake(0, 0, 3, _lines.count), 0, 0);
-    NSMutableArray *coords = [NSMutableArray array];
+    iTermGridCoordArray *coords = [[iTermGridCoordArray alloc] init];
     NSString *actual = [extractor contentInRange:range
                                attributeProvider:nil
                                       nullPolicy:kiTermTextExtractorNullPolicyFromLastToEnd
@@ -452,11 +454,10 @@ static const NSInteger kUnicodeVersion = 9;
                                 continuationChars:[NSMutableIndexSet indexSet]
                               convertNullsToSpace:NO];
     XCTAssertEqualObjects(prefix.string, @"\u2716\ufe0e htt");
-    XCTAssertEqual(prefix.coords.count, prefix.string.length);
+    XCTAssertEqual(prefix.gridCoords.count, prefix.string.length);
     int expected[] = { 0, 0, 1, 2, 3, 4 };
     for (int i = 0; i < sizeof(expected) / sizeof(*expected); i++) {
-        NSValue *value = prefix.coords[i];
-        VT100GridCoord coord = [value gridCoordValue];
+        VT100GridCoord coord = [prefix.gridCoords coordAt:i];
         XCTAssertEqual(expected[i], coord.x);
         XCTAssertEqual(0, coord.y);
     }
@@ -501,7 +502,7 @@ static const NSInteger kUnicodeVersion = 9;
 
 - (void)testRangeForWrappedLine_EOL_DWC {
     [self appendWrappedLine:@"asdf" width:30 eol:EOL_HARD];
-    [self appendWrappedLine:[NSString stringWithFormat:@"111111111111111111111111111中%C%C", DWC_RIGHT, DWC_SKIP] width:30 eol:EOL_DWC];
+    [self appendWrappedLine:[NSString stringWithFormat:@"111111111111111111111111111中%C%C", (unichar)DWC_RIGHT, (unichar)DWC_SKIP] width:30 eol:EOL_DWC];
     [self appendWrappedLine:@"文" width:30 eol:EOL_HARD];
 
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:self];

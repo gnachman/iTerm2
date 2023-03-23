@@ -8,13 +8,15 @@
 #import <Foundation/Foundation.h>
 #import "VT100GridTypes.h"
 
+@class iTermGridCoordArray;
+
 NS_ASSUME_NONNULL_BEGIN
 
 // A string with an array of coords that is 1:1 with the UTF-16 codepoints in `string` giving their
 // locations in history.
 @interface iTermLocatedString : NSObject
 @property (nonatomic, readonly) NSString *string;
-@property (nonatomic, readonly) NSArray<NSValue *> *coords;
+@property (nonatomic, readonly) iTermGridCoordArray *gridCoords;
 @property (nonatomic, readonly) NSInteger length;
 
 - (void)appendString:(NSString *)string at:(VT100GridCoord)coord;

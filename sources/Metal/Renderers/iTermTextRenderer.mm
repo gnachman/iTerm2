@@ -298,13 +298,13 @@ static BOOL gMonochromeText;
 
     const iTermVertex vertices[] = {
         // Pixel Positions, Texture Coordinates
-        { { vw,  0 }, { w, 0 } },
-        { { 0,   0 }, { 0, 0 } },
-        { { 0,  vh }, { 0, h } },
+        { { vw,  0 + _verticalOffset }, { w, 0 } },
+        { { 0,   0 + _verticalOffset }, { 0, 0 } },
+        { { 0,  vh + _verticalOffset }, { 0, h } },
 
-        { { vw,  0 }, { w, 0 } },
-        { { 0,  vh }, { 0, h } },
-        { { vw, vh }, { w, h } },
+        { { vw,  0 + _verticalOffset }, { w, 0 } },
+        { { 0,  vh + _verticalOffset }, { 0, h } },
+        { { vw, vh + _verticalOffset }, { w, h } },
     };
     entry.quad = [_verticesPool requestBufferFromContext:poolContext
                                                withBytes:vertices
@@ -575,4 +575,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
     }
 }
 
+@end
+
+@implementation iTermOffscreenCommandLineTextRenderer
 @end

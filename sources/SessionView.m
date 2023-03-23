@@ -922,6 +922,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldBoundsSize {
     [self updateLayout];
+    [self updateTrackingAreas];
 }
 
 - (NSRect)frameForLegacyScroller {
@@ -1171,14 +1172,29 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
                                                                       owner:self
                                                                    userInfo:nil];
         [self addTrackingArea:trackingArea];
+
+        // Tracking area for offscreen command line
+        NSRect frame = [self offscreenCommandLineFrame];
+        DLog(@"Add OCL tracking area %@", NSStringFromRect(frame));
+        trackingArea = [[NSTrackingArea alloc] initWithRect:frame
+                                                    options:(NSTrackingActiveInActiveApp | NSTrackingMouseEnteredAndExited)
+                                                      owner:self
+                                                   userInfo:nil];
+        [self addTrackingArea:trackingArea];
     }
 }
 
+- (NSRect)offscreenCommandLineFrame {
+    return [self.delegate sessionViewOffscreenCommandLineFrameForView:self];
+}
+
 - (void)mouseEntered:(NSEvent *)theEvent {
+    DLog(@"enter %@", theEvent.trackingArea);
     [_delegate sessionViewMouseEntered:theEvent];
 }
 
 - (void)mouseExited:(NSEvent *)theEvent {
+    DLog(@"exit %@", theEvent.trackingArea);
     [_delegate sessionViewMouseExited:theEvent];
 }
 

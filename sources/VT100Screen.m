@@ -602,9 +602,34 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     NSDate *date = nil;
     const NSTimeInterval timestamp = [_state metadataOnLine:commandLineNumber].timestamp;
     if (timestamp) {
-        date = [NSDate dateWithTimeIntervalSince1970:timestamp];
+        date = [NSDate dateWithTimeIntervalSinceReferenceDate:timestamp];
     }
-    return [[[iTermOffscreenCommandLine alloc] initWithCharacters:sca absoluteLineNumber:absLine date:date] autorelease];
+    return [[[iTermOffscreenCommandLine alloc] initWithCharacters:sca
+                                               absoluteLineNumber:absLine
+                                                             date:date
+                                                             mark:mark] autorelease];
+}
+
+- (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range {
+    VT100GridRange historyRange;
+    VT100GridRange screenRange;
+
+    const NSInteger numberOfScrollbackLines = self.numberOfScrollbackLines;
+    if (range.location < numberOfScrollbackLines) {
+        historyRange.location = range.location;
+        historyRange.length = numberOfScrollbackLines - range.location;
+
+        screenRange.location = 0;
+        screenRange.length = range.length - historyRange.length;
+    } else {
+        historyRange = VT100GridRangeMake(0, 0);
+
+        screenRange.location = range.location - numberOfScrollbackLines;
+        screenRange.length = range.length;
+    }
+
+    return ([_state.linebuffer numberOfCellsUsedInWrappedLineRange:historyRange width:self.width] +
+            [self.currentGrid numberOfCellsUsedInRange:screenRange]);
 }
 
 - (NSArray *)charactersWithNotesOnLine:(int)line {

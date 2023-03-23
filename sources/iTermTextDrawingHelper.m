@@ -51,6 +51,7 @@
 #define MEDIAN(min_, mid_, max_) MAX(MIN(mid_, max_), min_)
 
 static const int kBadgeMargin = 4;
+const CGFloat iTermOffscreenCommandLineVerticalPadding = 8.0;
 
 extern void CGContextSetFontSmoothingStyle(CGContextRef, int);
 extern int CGContextGetFontSmoothingStyle(CGContextRef);
@@ -365,7 +366,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     // Configure graphics
     [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositingOperationCopy];
 
-    iTermTextExtractor *extractor = [self.delegate drawingHelperTextExtractor];
     _blinkingFound = NO;
 
     NSMutableArray<iTermBackgroundColorRunsInLine *> *backgroundRunArrays = [NSMutableArray array];
@@ -400,12 +400,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         NSIndexSet *selectedIndexes =
             [_selection selectedIndexesIncludingTabFillersInAbsoluteLine:line + _totalScrollbackOverflow];
 
-        if (_offscreenCommandLine && first) {
-            // Replace this line with the offscreen command line.
-            matches = nil;
-            theLine = _offscreenCommandLine.characters.line;
-            selectedIndexes = nil;
-        }
         iTermBackgroundColorRunsInLine *runsInLine =
             [iTermBackgroundColorRunsInLine backgroundRunsInLine:theLine
                                                       lineLength:_gridSize.width
@@ -414,9 +408,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                      withinRange:charRange
                                                          matches:matches
                                                         anyBlink:&_blinkingFound
-                                                   textExtractor:extractor
-                                                               y:y
-                                                            line:line];
+                                                               y:y];
         [backgroundRunArrays addObject:runsInLine];
         iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS]);
     }
@@ -459,7 +451,6 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                   virtualOffset:virtualOffset];
 
     CGContextRef ctx = [[NSGraphicsContext currentContext] CGContext];
-    [self drawOffscreenCommandLineDecorationsInContext:ctx virtualOffset:virtualOffset];
 
     const BOOL drawCursorBeforeText = (_cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL);
     iTermCursor *cursor = nil;
@@ -470,10 +461,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     // Now iterate over the lines and paint the characters.
     if ([self textAppearanceDependsOnBackgroundColor]) {
         [self drawForegroundForBackgroundRunArrays:backgroundRunArrays
+                          drawOffscreenCommandLine:NO
                                                ctx:ctx
                                      virtualOffset:virtualOffset];
     } else {
         [self drawUnprocessedForegroundForBackgroundRunArrays:backgroundRunArrays
+                                     drawOffscreenCommandLine:NO
                                                           ctx:ctx
                                                 virtualOffset:virtualOffset];
     }
@@ -993,6 +986,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 - (void)createTimestampDrawingHelperWithFont:(NSFont *)font {
     [self updateCachedMetrics];
+    CGFloat obscured = 0;
+    if (_offscreenCommandLine) {
+        obscured = _cellSize.height + iTermOffscreenCommandLineVerticalPadding * 2;
+    }
     _timestampDrawHelper =
         [[iTermTimestampDrawHelper alloc] initWithBackgroundColor:[self defaultBackgroundColor]
                                                         textColor:[_colorMap colorForKey:kColorMapForeground]
@@ -1000,7 +997,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                useTestingTimezone:self.useTestingTimezone
                                                         rowHeight:_cellSize.height
                                                            retina:self.isRetina
-                                                             font:font];
+                                                             font:font
+                                                         obscured:obscured];
     for (int y = _scrollViewDocumentVisibleRect.origin.y / _cellSize.height;
          y < NSMaxY(_scrollViewDocumentVisibleRect) / _cellSize.height && y < _numberOfLines;
          y++) {
@@ -1156,6 +1154,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 // Draw assuming no foreground color processing. Keeps glyphs together in a single background color run across different background colors.
 - (void)drawUnprocessedForegroundForBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
+                               drawOffscreenCommandLine:(BOOL)drawOffscreenCommandLine
                                                     ctx:(CGContextRef)ctx
                                           virtualOffset:(CGFloat)virtualOffset {
     // Combine runs on each line, except those with different values of
@@ -1194,24 +1193,37 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         return fakeRuns;
     }];
     [self drawForegroundForBackgroundRunArrays:fakeRunArrays
+                      drawOffscreenCommandLine:drawOffscreenCommandLine
                                            ctx:ctx
                                  virtualOffset:virtualOffset];
 }
 
 // Draws
 - (void)drawForegroundForBackgroundRunArrays:(NSArray<iTermBackgroundColorRunsInLine *> *)backgroundRunArrays
+                    drawOffscreenCommandLine:(BOOL)drawOffscreenCommandLine
                                          ctx:(CGContextRef)ctx
                                virtualOffset:(CGFloat)virtualOffset {
     iTermBackgroundColorRunsInLine *representativeRunArray = nil;
     NSInteger count = 0;
+    const int firstLine = [self rangeOfVisibleRows].location;
+    const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     for (iTermBackgroundColorRunsInLine *runArray in backgroundRunArrays) {
         if (count == 0) {
             representativeRunArray = runArray;
             count = runArray.numberOfEquivalentRows;
         }
         count--;
+        const BOOL isOffscreenCommandLine = (_offscreenCommandLine && runArray.line == firstLine);
+        CGFloat y = runArray.y;
+        if (isOffscreenCommandLine && !drawOffscreenCommandLine) {
+            continue;
+        } else if (!isOffscreenCommandLine && drawOffscreenCommandLine) {
+            continue;
+        } else if (isOffscreenCommandLine && drawOffscreenCommandLine) {
+            y -= vmargin + 1;
+        }
         [self drawForegroundForLineNumber:runArray.line
-                                        y:runArray.y
+                                        y:y
                            backgroundRuns:representativeRunArray.array
                                   context:ctx
                             virtualOffset:virtualOffset];
@@ -1313,8 +1325,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_STAT_CONSTRUCTION]);
 
     iTermPreciseTimerStatsStartTimer(&_stats[TIMER_STAT_DRAW]);
+    NSPoint adjustedPoint = initialPoint;
+    if (_offscreenCommandLine && row == [self rangeOfVisibleRows].location) {
+        adjustedPoint.y += iTermOffscreenCommandLineVerticalPadding;
+    }
     [self drawMultipartAttributedString:attributedStrings
-                                atPoint:initialPoint
+                                atPoint:adjustedPoint
                                  origin:VT100GridCoordMake(indexRange.location, row)
                               positions:&positions
                               inContext:ctx
@@ -3030,10 +3046,11 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
                                          cellSize:(NSSize)cellSize
                                          gridSize:(VT100GridSize)gridSize {
     const CGFloat hmargin = [iTermPreferences intForKey:kPreferenceKeySideMargins];
+    const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
     NSRect rect = NSMakeRect(hmargin,
-                             visibleRect.origin.y,
+                             visibleRect.origin.y - vmargin - 1,
                              cellSize.width * gridSize.width,
-                             cellSize.height);
+                             cellSize.height + iTermOffscreenCommandLineVerticalPadding * 2);
     return rect;
 }
 
@@ -3059,6 +3076,39 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
         return nil;
     }
     return [[self defaultTextColor] it_colorByDimmingByAmount:0.95];
+}
+
+- (void)drawOffscreenCommandLineWithVirtualOffset:(CGFloat)virtualOffset {
+    if (!_offscreenCommandLine) {
+        return;
+    }
+    CGContextRef ctx = [[NSGraphicsContext currentContext] CGContext];
+    [self drawOffscreenCommandLineDecorationsInContext:ctx
+                                         virtualOffset:virtualOffset];
+
+    BOOL blink = NO;
+    const int row = [self rangeOfVisibleRows].location;
+    iTermBackgroundColorRunsInLine *backgroundRuns =
+    [iTermBackgroundColorRunsInLine backgroundRunsInLine:_offscreenCommandLine.characters.line
+                                              lineLength:_gridSize.width
+                                                     row:row
+                                         selectedIndexes:[NSIndexSet indexSet]
+                                             withinRange:NSMakeRange(0, _gridSize.width)
+                                                 matches:nil
+                                                anyBlink:&blink
+                                                       y:row * _cellSize.height];
+    
+    if ([self textAppearanceDependsOnBackgroundColor]) {
+        [self drawForegroundForBackgroundRunArrays:@[backgroundRuns]
+                          drawOffscreenCommandLine:YES
+                                               ctx:ctx
+                                     virtualOffset:virtualOffset];
+    } else {
+        [self drawUnprocessedForegroundForBackgroundRunArrays:@[backgroundRuns]
+                                     drawOffscreenCommandLine:YES
+                                                          ctx:ctx
+                                                virtualOffset:virtualOffset];
+    }
 }
 
 - (void)drawOffscreenCommandLineDecorationsInContext:(CGContextRef)ctx

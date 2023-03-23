@@ -621,6 +621,34 @@ static char* formatsct(const screen_char_t* src, int len, char* dest) {
                                        width:width];
 }
 
+- (NSInteger)sizeFromLine:(int)lineNum width:(int)width {
+    int mutableLineNum = lineNum;
+    const LineBlockLocation location = [self locationOfRawLineForWidth:width lineNum:&mutableLineNum];
+    if (!location.found) {
+        return 0;
+    }
+    // We found the raw line that includes the wrapped line we're searching for.
+    // eat up *lineNum many width-sized wrapped lines from this start of the current full line
+    iTermImmutableMetadata metadata = iTermMetadataMakeImmutable(iTermMetadataDefault());
+    int length = 0;
+    screen_char_t continuation = { 0 };
+    int eol = 0;
+    const int offset = [self _wrappedLineWithWrapWidth:width
+                                              location:location
+                                           bufferStart:nil
+                                               lineNum:&mutableLineNum
+                                            lineLength:&length
+                                     includesEndOfLine:&eol
+                                               yOffset:NULL
+                                          continuation:&continuation
+                                  isStartOfWrappedLine:NULL
+                                              metadata:&metadata
+                                            lineOffset:NULL];
+
+    return [self rawSpaceUsed] - offset;
+}
+
+
 #ifdef TEST_LINEBUFFER_SANITY
 - (void) checkAndResetCachedNumlines:(char *)methodName width:(int)width {
     int old_cached = cached_numlines;

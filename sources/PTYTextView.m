@@ -1305,7 +1305,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         [_indicatorsHelper drawInFrame:NSRectSubtractingVirtualOffset(_drawingHelper.indicatorFrame, MAX(0, virtualOffset))];
         [NSGraphicsContext restoreGraphicsState];
         [_drawingHelper drawTimestampsWithVirtualOffset:virtualOffset];
-
+        [_drawingHelper drawOffscreenCommandLineWithVirtualOffset:virtualOffset];
+        
         // Not sure why this is needed, but for some reason this view draws over its subviews.
         for (NSView *subview in [self subviews]) {
             [subview setNeedsDisplay:YES];
@@ -1637,6 +1638,14 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 #pragma mark - Geometry
+
+- (NSRect)offscreenCommandLineFrameForView:(NSView *)view {
+    NSRect base = [iTermTextDrawingHelper offscreenCommandLineFrameForVisibleRect:self.enclosingScrollView.documentVisibleRect
+                                                                         cellSize:NSMakeSize(self.charWidth, self.lineHeight)
+                                                                         gridSize:VT100GridSizeMake(self.dataSource.width,
+                                                                                                    self.dataSource.height)];
+    return [self convertRect:base toView:view];
+}
 
 - (NSRect)scrollViewContentSize {
     NSRect r = NSMakeRect(0, 0, 0, 0);
@@ -3275,8 +3284,32 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                       ignoringNewlines:ignoringNewlines];
 }
 
+- (BOOL)showCommandInfoForEvent:(NSEvent *)event {
+    iTermOffscreenCommandLine *offscreenCommandLine = [self offscreenCommandLineForClickAt:event.locationInWindow];
+    if (offscreenCommandLine) {
+        [self presentCommandInfoForOffscreenCommandLine:offscreenCommandLine event:event];
+        return YES;
+    }
+    id<VT100ScreenMarkReading> mark = [_contextMenuHelper markForClick:event];
+    if (mark.startDate != nil) {
+        const VT100GridCoord coord = [self coordForPointInWindow:event.locationInWindow];
+        const long long overflow = [self.dataSource totalScrollbackOverflow];
+        NSDate *date = [self.dataSource timestampForLine:coord.y];
+        [self presentCommandInfoForMark:mark
+                     absoluteLineNumber:VT100GridAbsCoordFromCoord(coord, overflow).y
+                                   date:date
+                                  event:event];
+        return YES;
+    }
+    return NO;
+}
+
 // Called for a right click that isn't control+click (e.g., two fingers on trackpad).
 - (void)openContextMenuWithEvent:(NSEvent *)event {
+    if ([self showCommandInfoForEvent:event]) {
+        return;
+    }
+
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     [_contextMenuHelper openContextMenuAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
                                     event:event];
@@ -4713,10 +4746,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {
     return [_dataSource screenCharArrayAtScreenIndex:line].line;
-}
-
-- (iTermTextExtractor *)drawingHelperTextExtractor {
-    return [[[iTermTextExtractor alloc] initWithDataSource:_dataSource] autorelease];
 }
 
 - (NSArray *)drawingHelperCharactersWithNotesOnLine:(int)line {

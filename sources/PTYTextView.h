@@ -277,6 +277,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (void)textViewUpdateTrackingAreas;
 - (BOOL)textViewShouldShowOffscreenCommandLine;
 - (BOOL)textViewShouldUseSelectedTextColor;
+- (void)textViewOpenComposer:(NSString *)string;
 @end
 
 @interface iTermHighlightedRow : NSObject
@@ -522,6 +523,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
    horizontalSpacing:(CGFloat)horizontalSpacing
      verticalSpacing:(CGFloat)verticalSpacing;
 - (NSRect)scrollViewContentSize;
+- (NSRect)offscreenCommandLineFrameForView:(NSView *)view;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
 
 // Update the scroller color for light or dark backgrounds.

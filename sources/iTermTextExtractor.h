@@ -14,6 +14,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermProgress;
+
 typedef NS_ENUM(NSInteger, iTermTextExtractorClass) {
     // Any kind of white space.
     kTextExtractorClassWhitespace,
@@ -49,6 +51,7 @@ extern const NSInteger kLongMaximumWordLength;
 @property(nonatomic, readonly) BOOL hasLogicalWindow;
 @property(nullable, nonatomic, weak, readonly) id<iTermTextDataSource> dataSource;
 @property(atomic) BOOL stopAsSoonAsPossible;
+@property(nonatomic, strong) iTermProgress *progress;
 
 // Characters that divide words.
 + (NSCharacterSet *)wordSeparatorCharacterSet;
@@ -153,7 +156,7 @@ extern const NSInteger kLongMaximumWordLength;
               cappedAtSize:(int)maxBytes
         truncateTail:(BOOL)truncateTail
    continuationChars:(NSMutableIndexSet * _Nullable)continuationChars
-              coords:(NSMutableArray * _Nullable)coords;
+              coords:(iTermGridCoordArray * _Nullable)coords;
 
 // Returns an iTermLocated[Attributed]String
 - (id)locatedStringInRange:(VT100GridWindowedRange)range

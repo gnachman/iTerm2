@@ -5695,6 +5695,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled];
     DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
+
+    [_view updateTrackingAreas];
 }
 
 - (void)terminalFileShouldStop:(NSNotification *)notification {
@@ -14531,11 +14533,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)sessionViewMouseEntered:(NSEvent *)event {
     [_textview mouseEntered:event];
     [_textview setNeedsDisplay:YES];
+    [_textview updateCursor:event];
 }
 
 - (void)sessionViewMouseExited:(NSEvent *)event {
     [_textview mouseExited:event];
     [_textview setNeedsDisplay:YES];
+    [_textview updateCursor:event];
 }
 
 - (void)sessionViewMouseMoved:(NSEvent *)event {
@@ -14829,6 +14833,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return _statusBarViewController;
 }
 
+- (void)textViewOpenComposer:(NSString *)string {
+    [self setComposerString:string];
+    [self.composerManager reveal];
+}
+
 #pragma mark - iTermHotkeyNavigableSession
 
 - (void)sessionHotkeyDidNavigateToSession:(iTermShortcut *)shortcut {
@@ -15012,6 +15021,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (BOOL)sessionViewCaresAboutMouseMovement {
     return [_textview wantsMouseMovementEvents];
+}
+
+- (NSRect)sessionViewOffscreenCommandLineFrameForView:(NSView *)view {
+    return [_textview offscreenCommandLineFrameForView:view];
 }
 
 #pragma mark - iTermCoprocessDelegate

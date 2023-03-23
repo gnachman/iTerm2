@@ -6,20 +6,19 @@
 //
 
 #import "iTermLocatedString.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
 
 @implementation iTermLocatedString {
     NSMutableString *_string;
-@protected
-    NSMutableArray<NSValue *> *_coords;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
         _string = [NSMutableString string];
-        _coords = [NSMutableArray array];
+        _gridCoords = [[iTermGridCoordArray alloc] init];
     }
     return self;
 }
@@ -31,15 +30,12 @@
 
 - (void)appendCoordsForString:(NSString *)string at:(VT100GridCoord)coord {
     const NSInteger length = string.length;
-    NSValue *value = [NSValue valueWithGridCoord:coord];
-    for (NSInteger i = 0; i < length; i++) {
-        [_coords addObject:value];
-    }
+    [_gridCoords appendWithCoord:coord repeating:length];
 }
 
 - (void)erase {
     _string = [NSMutableString string];
-    _coords = [NSMutableArray array];
+    [_gridCoords removeAll];
 }
 
 - (NSInteger)length {
@@ -50,21 +46,19 @@
     const NSRange range = NSMakeRange(0, count);
     [_string replaceCharactersInRange:range withString:@""];
     // TODO: Remove leading low surrogate
-    [_coords removeObjectsInRange:range];
+    [_gridCoords removeFirst:count];
 }
 
 - (void)trimTrailingWhitespace {
     const NSInteger lengthBeforeTrimming = _string.length;
     [_string trimTrailingWhitespace];
-    [_coords removeObjectsInRange:NSMakeRange(_string.length,
-                                              lengthBeforeTrimming - _string.length)];
+    [_gridCoords removeLast:lengthBeforeTrimming - _string.length];
 }
 
 - (void)removeOcurrencesOfString:(NSString *)string {
-    NSArray *empty = @[];
     [_string reverseEnumerateSubstringsEqualTo:string block:^(NSRange range) {
         [_string replaceCharactersInRange:range withString:@""];
-        [_coords replaceObjectsInRange:range withObjectsFromArray:empty];
+        [_gridCoords removeRange:range];
     }];
 }
 
@@ -112,21 +106,19 @@
     const NSRange range = NSMakeRange(0, count);
     [_attributedString replaceCharactersInRange:range withString:@""];
     // TODO: Remove leading low surrogate
-    [_coords removeObjectsInRange:range];
+    [self.gridCoords removeRange:range];
 }
 
 - (void)trimTrailingWhitespace {
     const NSInteger lengthBeforeTrimming = _attributedString.length;
     [_attributedString trimTrailingWhitespace];
-    [_coords removeObjectsInRange:NSMakeRange(_attributedString.length,
-                                              lengthBeforeTrimming - _attributedString.length)];
+    [self.gridCoords removeLast:lengthBeforeTrimming - _attributedString.length];
 }
 
 - (void)removeOcurrencesOfString:(NSString *)string {
-    NSArray *empty = @[];
     [_attributedString.string reverseEnumerateSubstringsEqualTo:string block:^(NSRange range) {
         [_attributedString replaceCharactersInRange:range withString:@""];
-        [_coords replaceObjectsInRange:range withObjectsFromArray:empty];
+        [self.gridCoords removeRange:range];
     }];
 }
 

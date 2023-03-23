@@ -14,6 +14,7 @@
 #import "SmartSelectionController.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIHelper.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
@@ -91,24 +92,29 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     _validationClickPoint = VT100GridCoordMake(-1, -1);
 }
 
+- (id<VT100ScreenMarkReading>)markForClick:(NSEvent *)event {
+    NSPoint locationInWindow = [event locationInWindow];
+    if (locationInWindow.x >= [iTermPreferences intForKey:kPreferenceKeySideMargins]) {
+        return nil;
+    }
+    iTermOffscreenCommandLine *offscreenCommandLine =
+        [self.delegate contextMenu:self offscreenCommandLineForClickAt:event.locationInWindow];
+    if (offscreenCommandLine) {
+        return nil;
+    }
+    const NSPoint clickPoint = [self.delegate contextMenu:self
+                                               clickPoint:event
+                                 allowRightMarginOverflow:NO];
+    const int y = clickPoint.y;
+    return [self.delegate contextMenu:self markOnLine:y];
+}
+
 - (NSMenu *)contextMenuWithEvent:(NSEvent *)event {
     const NSPoint clickPoint = [self.delegate contextMenu:self
                                                clickPoint:event
                                  allowRightMarginOverflow:NO];
     const int x = clickPoint.x;
     const int y = clickPoint.y;
-    NSMenu *markMenu = nil;
-    id<VT100ScreenMarkReading> mark = [self.delegate contextMenu:self markOnLine:y];
-    DLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark command]);
-    if (mark && mark.command.length) {
-        NSString *workingDirectory= [self.delegate contextMenu:self
-                                        workingDirectoryOnLine:y];
-        markMenu = [self menuForMark:mark directory:workingDirectory];
-        NSPoint locationInWindow = [event locationInWindow];
-        if (locationInWindow.x < [iTermPreferences intForKey:kPreferenceKeySideMargins]) {
-            return markMenu;
-        }
-    }
 
     const VT100GridCoord coord = VT100GridCoordMake(x, y);
     id<iTermImageInfoReading> imageInfo = [self.delegate contextMenu:self imageInfoAtCoord:coord];
@@ -137,11 +143,15 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         _savedSelectedText = [[self.delegate contextMenuSelectedText:self capped:0] copy];
     }
     NSMenu *contextMenu = [self menuAtCoord:coord];
-    if (markMenu) {
+
+    id<VT100ScreenMarkReading> mark = [self.delegate contextMenu:self markOnLine:y];
+    DLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark command]);
+    if (mark && mark.command.length) {
         NSMenuItem *markItem = [[NSMenuItem alloc] initWithTitle:@"Command Info"
-                                                          action:nil
+                                                          action:@selector(revealCommandInfo:)
                                                    keyEquivalent:@""];
-        markItem.submenu = markMenu;
+        markItem.target = self;
+        markItem.representedObject = mark;
         [contextMenu insertItem:markItem atIndex:0];
         [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:1];
     }
@@ -182,7 +192,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(inspectImage:) ||
         [item action] == @selector(apiMenuItem:) ||
         [item action] == @selector(copyLinkAddress:) ||
-        [item action] == @selector(copyString:)) {
+        [item action] == @selector(copyString:) ||
+        [item action] == @selector(revealCommandInfo:)) {
         return YES;
     }
     if ([item action] == @selector(stopCoprocess:)) {
@@ -789,6 +800,16 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
 #pragma mark - Context Menu Actions
 
+- (void)revealCommandInfo:(id)sender {
+    id<VT100ScreenMarkReading> mark = [sender representedObject];
+    DLog(@"Reveal command info %@", mark);
+    if (!mark || ![mark conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
+        DLog(@"Bogus");
+        return;
+    }
+    [_delegate contextMenu:self showCommandInfoForMark:mark];
+}
+
 - (void)contextMenuActionOpenFile:(id)sender {
     DLog(@"Open file: '%@'", [sender representedObject]);
     NSDictionary *dict = [sender representedObject];
@@ -1019,6 +1040,10 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
 - (void)selectCommandOutput:(id)sender {
     id<VT100ScreenMarkReading> mark = [sender representedObject];
+    [self selectOutputOfCommandMark:mark];
+}
+
+- (void)selectOutputOfCommandMark:(id<VT100ScreenMarkReading>)mark {
     VT100GridCoordRange range = [self.delegate contextMenu:self rangeOfOutputForCommandMark:mark];
     if (range.start.x == -1) {
         DLog(@"Beep: can't select output");
@@ -1177,7 +1202,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     numberFormatter.numberStyle = NSNumberFormatterDecimalStyle;
 
     NSString *humanReadableSize = [NSString stringWithHumanReadableSize:value];
-    if (humanReadableSize) {
+    if (value >= 1024) {
         humanReadableSize = [NSString stringWithFormat:@" (%@)", humanReadableSize];
     } else {
         humanReadableSize = @"";
@@ -1284,32 +1309,6 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     } else {
         return nil;
     }
-}
-
-+ (instancetype)stringWithHumanReadableSize:(unsigned long long)value {
-    if (value < 1024) {
-        return nil;
-    }
-    unsigned long long num = value;
-    int pow = 0;
-    BOOL exact = YES;
-    while (num >= 1024 * 1024) {
-        pow++;
-        if (num % 1024 != 0) {
-            exact = NO;
-        }
-        num /= 1024;
-    }
-    // Show 2 fraction digits, always rounding downwards. Printf rounds floats to the nearest
-    // representable value, so do the calculation with integers until we get 100-fold the desired
-    // value, and then switch to float.
-    if (100 * num % 1024 != 0) {
-        exact = NO;
-    }
-    num = 100 * num / 1024;
-    NSArray *iecPrefixes = @[ @"Ki", @"Mi", @"Gi", @"Ti", @"Pi", @"Ei" ];
-    return [NSString stringWithFormat:@"%@%.2f %@",
-               exact ? @"" :@ "≈", (double)num / 100, iecPrefixes[pow]];
 }
 
 - (NSString *)utf8Help {

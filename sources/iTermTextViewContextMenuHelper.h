@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol VT100RemoteHostReading;
 @protocol VT100ScreenMarkReading;
 @protocol iTermImageInfoReading;
+@class iTermOffscreenCommandLine;
 @class iTermSelection;
 @class iTermTextExtractor;
 @class iTermTextViewContextMenuHelper;
@@ -43,6 +44,9 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
 
 - (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                                markOnLine:(int)line;
+
+- (iTermOffscreenCommandLine *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+            offscreenCommandLineForClickAt:(NSPoint)windowPoint;
 
 - (NSString *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
    workingDirectoryOnLine:(int)line;
@@ -137,6 +141,8 @@ runCommandInBackground:(NSString *)command;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu addTrigger:(NSString *)text;
 - (id<iTermObject>)contextMenuOwner:(iTermTextViewContextMenuHelper *)contextMenu;
 - (BOOL)contextMenuSmartSelectionActionsShouldUseInterpolatedStrings:(iTermTextViewContextMenuHelper *)contextMenu;
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu showCommandInfoForMark:(id<VT100ScreenMarkReading>)mark;
+
 @end
 
 @interface iTermTextViewContextMenuHelper : NSObject<NSMenuDelegate>
@@ -160,6 +166,8 @@ runCommandInBackground:(NSString *)command;
 - (NSMenu * _Nullable)menuForEvent:(NSEvent *)theEvent;
 - (NSMenu *)titleBarMenu;
 - (void)openContextMenuAt:(VT100GridCoord)clickPoint event:(NSEvent *)event;
+- (id<VT100ScreenMarkReading>)markForClick:(NSEvent *)event;
+- (void)selectOutputOfCommandMark:(id<VT100ScreenMarkReading>)mark;
 
 @end
 

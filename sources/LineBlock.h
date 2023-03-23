@@ -245,6 +245,7 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (void)dropMirroringProgenitor:(LineBlock *)other;
 - (BOOL)isSynchronizedWithProgenitor;
 - (void)invalidate;
+- (NSInteger)sizeFromLine:(int)lineNum width:(int)width;
 
 // Returns NO if you need to try again later.
 - (BOOL)compressIfNeeded;

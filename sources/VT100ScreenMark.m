@@ -12,6 +12,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "iTermPromise.h"
 
 static NSString *const kScreenMarkIsPrompt = @"Is Prompt";
 static NSString *const kMarkGuidKey = @"Guid";
@@ -28,6 +29,8 @@ static NSString *const kMarkOutputStart = @"Output Start";
 
 @implementation VT100ScreenMark {
     NSMutableArray<CapturedOutput *> *_capturedOutput;
+    iTermPromise<NSNumber *> *_returnCodePromise;
+    id<iTermPromiseSeal> _codeSeal;
 }
 
 @synthesize isPrompt = _isPrompt;
@@ -249,6 +252,8 @@ static NSString *const kMarkOutputStart = @"Output Start";
 - (void)setCode:(int)code {
     _code = code;
     _hasCode = YES;
+    [_codeSeal fulfill:@(code)];
+    _codeSeal = nil;
 }
 
 - (void)incrementClearCount {
@@ -259,5 +264,13 @@ static NSString *const kMarkOutputStart = @"Output Start";
     return (id<VT100ScreenMarkReading>)[super doppelganger];
 }
 
+- (iTermPromise<NSNumber *> *)returnCodePromise {
+    if (!_returnCodePromise) {
+        _returnCodePromise = [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
+            _codeSeal = seal;
+        }];
+    }
+    return _returnCodePromise;
+}
 @end
 

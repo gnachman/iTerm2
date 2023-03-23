@@ -286,10 +286,6 @@ extension TextClipDrawing: iTermTextDrawingHelperDelegate {
         return drawingHelperLine(at: line + numHistoryLines)
     }
 
-    func drawingHelperTextExtractor() -> iTermTextExtractor? {
-        return nil
-    }
-
     func drawingHelperCharactersWithNotes(onLine line: Int32) -> [Any]? {
         return nil
     }

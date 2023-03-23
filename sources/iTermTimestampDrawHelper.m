@@ -29,7 +29,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
     BOOL _useTestingTimezone;
     CGFloat _rowHeight;
     BOOL _isRetina;
-
+    CGFloat _obscured;
     NSMutableArray<iTermTimestampRow *> *_rows;
 }
 
@@ -39,7 +39,8 @@ const CGFloat iTermTimestampGradientWidth = 20;
                      useTestingTimezone:(BOOL)useTestingTimezone
                               rowHeight:(CGFloat)rowHeight
                                  retina:(BOOL)isRetina
-                                   font:(NSFont *)font {
+                                   font:(NSFont *)font
+                               obscured:(CGFloat)obscured {
     self = [super init];
     if (self) {
         _bgColor = backgroundColor;
@@ -50,6 +51,7 @@ const CGFloat iTermTimestampGradientWidth = 20;
         _isRetina = isRetina;
         _rows = [NSMutableArray array];
         _font = font;
+        _obscured = obscured;
     }
     return self;
 }
@@ -111,6 +113,9 @@ const CGFloat iTermTimestampGradientWidth = 20;
         return NO;
     }
     if (_rows[index - 1].string.length == 0) {
+        return NO;
+    }
+    if (_obscured > 0 && _rowHeight * index <= _obscured) {
         return NO;
     }
     return [_rows[index - 1].string isEqual:_rows[index].string];

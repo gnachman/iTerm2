@@ -61,7 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-@interface iTermRenegablePromise<T>: iTermPromise
+@interface iTermRenegablePromise<T>: iTermPromise<T>
 @property (nonatomic, readonly, copy) void (^renegeBlock)(void);
 
 + (instancetype)promise:(void (^ NS_NOESCAPE)(id<iTermPromiseSeal> seal))block NS_UNAVAILABLE;

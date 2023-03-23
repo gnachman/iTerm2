@@ -1811,4 +1811,40 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     }
 }
 
+- (NSInteger)numberOfCellsUsedInWrappedLineRange:(VT100GridRange)wrappedLineRange
+                                           width:(int)width {
+    if (wrappedLineRange.length <= 0) {
+        return 0;
+    }
+    const int y1 = wrappedLineRange.location;
+    const int y2 = VT100GridRangeMax(wrappedLineRange);
+    
+    int startLine = y1;
+    const NSInteger firstBlockIndex = [_lineBlocks indexOfBlockContainingLineNumber:y1
+                                                                              width:width
+                                                                          remainder:&startLine];
+    if (firstBlockIndex == NSNotFound) {
+        return 0;
+    }
+
+    int lastLine = y2;
+    const NSInteger lastBlockIndex = [_lineBlocks indexOfBlockContainingLineNumber:y2
+                                                                             width:width
+                                                                         remainder:&lastLine];
+    if (lastBlockIndex == NSNotFound) {
+        return 0;
+    }
+
+    NSInteger sum = 0;
+    for (NSInteger i = firstBlockIndex; i <= lastBlockIndex; i++) {
+        NSInteger size = [_lineBlocks[i] sizeFromLine:startLine width:width];
+        startLine = 0;
+        if (i == lastBlockIndex) {
+            size -= [_lineBlocks[i] sizeFromLine:lastLine width:width];
+        }
+        sum += size;
+    }
+    return sum;
+}
+
 @end

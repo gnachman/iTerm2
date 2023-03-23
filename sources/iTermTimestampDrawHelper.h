@@ -28,7 +28,8 @@ extern const CGFloat iTermTimestampGradientWidth;
                      useTestingTimezone:(BOOL)useTestingTimezone
                               rowHeight:(CGFloat)rowHeight
                                  retina:(BOOL)isRetina
-                                   font:(NSFont *)font;
+                                   font:(NSFont *)font
+                               obscured:(CGFloat)obscured;
 
 - (void)setDate:(NSDate *)timestamp forLine:(int)line;
 

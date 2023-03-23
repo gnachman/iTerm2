@@ -176,6 +176,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (unsigned int)numberOfUnwrappedLines;
 - (BOOL)isEqual:(LineBuffer *)other;
+- (NSInteger)numberOfCellsUsedInWrappedLineRange:(VT100GridRange)wrappedLineRange width:(int)width;
 
 @end
 

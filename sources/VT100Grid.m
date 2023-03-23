@@ -183,6 +183,18 @@ static NSString *const kGridSizeKey = @"Size";
     return [[lines_ objectAtIndex:(screenTop_ + lineNumber) % size_.height] mutableBytes];
 }
 
+- (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range {
+    __block NSInteger sum = 0;
+
+    [self enumerateCellsInRect:VT100GridRectMake(0, range.location, self.size.width, range.length) block:^(VT100GridCoord coord, screen_char_t c, iTermExternalAttribute *ea, BOOL *stop) {
+        if (c.complexChar || c.code || c.image) {
+            sum += 1;
+        }
+    }];
+
+    return sum;
+}
+
 static int VT100GridIndex(int screenTop, int lineNumber, int height) {
     if (lineNumber >= 0 && lineNumber < height) {
         return (screenTop + lineNumber) % height;
