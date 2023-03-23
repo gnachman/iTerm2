@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol VT100RemoteHostReading;
 @protocol VT100ScreenMarkReading;
 @protocol iTermImageInfoReading;
+@class iTermOffscreenCommandLine;
 @class iTermSelection;
 @class iTermTextExtractor;
 @class iTermTextViewContextMenuHelper;
@@ -43,6 +44,9 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow;
 
 - (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                                markOnLine:(int)line;
+
+- (iTermOffscreenCommandLine *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+            offscreenCommandLineForClickAt:(NSPoint)windowPoint;
 
 - (NSString *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
    workingDirectoryOnLine:(int)line;

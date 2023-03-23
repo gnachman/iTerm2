@@ -604,7 +604,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (timestamp) {
         date = [NSDate dateWithTimeIntervalSince1970:timestamp];
     }
-    return [[[iTermOffscreenCommandLine alloc] initWithCharacters:sca absoluteLineNumber:absLine date:date] autorelease];
+    return [[[iTermOffscreenCommandLine alloc] initWithCharacters:sca
+                                               absoluteLineNumber:absLine
+                                                             date:date
+                                                             mark:mark] autorelease];
 }
 
 - (NSArray *)charactersWithNotesOnLine:(int)line {

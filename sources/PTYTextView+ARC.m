@@ -1015,6 +1015,23 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
     return [self selectedTextCappedAtSize:maxBytes];
 }
 
+- (iTermOffscreenCommandLine *)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+            offscreenCommandLineForClickAt:(NSPoint)windowPoint {
+    iTermOffscreenCommandLine *offscreenCommandLine = self.drawingHelper.offscreenCommandLine;
+    if (offscreenCommandLine) {
+        NSRect rect =
+        [iTermTextDrawingHelper offscreenCommandLineFrameForVisibleRect:[self adjustedDocumentVisibleRect]
+                                                               cellSize:NSMakeSize(self.charWidth, self.lineHeight)
+                                                               gridSize:VT100GridSizeMake(self.dataSource.width,
+                                                                                          self.dataSource.height)];
+        const NSPoint viewPoint = [self convertPoint:windowPoint fromView:nil];
+        if (NSPointInRect(viewPoint, rect)) {
+            return offscreenCommandLine;
+        }
+    }
+    return nil;
+}
+
 - (id<VT100ScreenMarkReading>)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                                markOnLine:(int)line {
     return [self.dataSource markOnLine:line];

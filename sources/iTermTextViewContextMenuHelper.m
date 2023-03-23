@@ -14,6 +14,7 @@
 #import "SmartSelectionController.h"
 #import "VT100RemoteHost.h"
 #import "VT100ScreenMark.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAPIHelper.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
@@ -98,6 +99,17 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     const int x = clickPoint.x;
     const int y = clickPoint.y;
     NSMenu *markMenu = nil;
+    iTermOffscreenCommandLine *offscreenCommandLine =
+        [self.delegate contextMenu:self offscreenCommandLineForClickAt:event.locationInWindow];
+    if (offscreenCommandLine) {
+        NSString *workingDirectory= [self.delegate contextMenu:self
+                                        workingDirectoryOnLine:y];
+        markMenu = [self menuForMark:offscreenCommandLine.mark directory:workingDirectory];
+        if (markMenu) {
+            return markMenu;
+        }
+    }
+
     id<VT100ScreenMarkReading> mark = [self.delegate contextMenu:self markOnLine:y];
     DLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark command]);
     if (mark && mark.command.length) {
