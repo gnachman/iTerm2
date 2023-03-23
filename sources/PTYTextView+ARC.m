@@ -361,6 +361,8 @@ static const NSUInteger kRectangularSelectionModifierMask = (kRectangularSelecti
     } else if ([_mouseHandler mouseReportingAllowedForEvent:event] &&
                [_mouseHandler terminalWantsMouseReports]) {
         changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeamWithCircle]];
+    } else if ([self contextMenu:_contextMenuHelper offscreenCommandLineForClickAt:event.locationInWindow]) {
+        changed = [self setCursor:[NSCursor arrowCursor]];
     } else {
         changed = [self setCursor:[iTermMouseCursor mouseCursorOfType:iTermMouseCursorTypeIBeam]];
     }
@@ -1026,8 +1028,10 @@ allowRightMarginOverflow:(BOOL)allowRightMarginOverflow {
                                                                                           self.dataSource.height)];
         const NSPoint viewPoint = [self convertPoint:windowPoint fromView:nil];
         if (NSPointInRect(viewPoint, rect)) {
+            DLog(@"Cursor in OCL");
             return offscreenCommandLine;
         }
+        DLog(@"Cursor not in OCL at windowPoint %@, viewPoint %@", NSStringFromPoint(windowPoint), NSStringFromPoint(viewPoint));
     }
     return nil;
 }

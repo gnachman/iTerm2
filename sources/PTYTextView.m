@@ -1639,6 +1639,14 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 #pragma mark - Geometry
 
+- (NSRect)offscreenCommandLineFrameForView:(NSView *)view {
+    NSRect base = [iTermTextDrawingHelper offscreenCommandLineFrameForVisibleRect:self.enclosingScrollView.documentVisibleRect
+                                                                         cellSize:NSMakeSize(self.charWidth, self.lineHeight)
+                                                                         gridSize:VT100GridSizeMake(self.dataSource.width,
+                                                                                                    self.dataSource.height)];
+    return [self convertRect:base toView:view];
+}
+
 - (NSRect)scrollViewContentSize {
     NSRect r = NSMakeRect(0, 0, 0, 0);
     r.size = [[self enclosingScrollView] contentSize];

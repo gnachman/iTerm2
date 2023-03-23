@@ -148,6 +148,8 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (void)sessionViewDidChangeEffectiveAppearance;
 - (BOOL)sessionViewCaresAboutMouseMovement;
 
+- (NSRect)sessionViewOffscreenCommandLineFrameForView:(NSView *)view;
+
 @end
 
 typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {

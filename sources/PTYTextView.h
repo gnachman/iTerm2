@@ -522,6 +522,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
    horizontalSpacing:(CGFloat)horizontalSpacing
      verticalSpacing:(CGFloat)verticalSpacing;
 - (NSRect)scrollViewContentSize;
+- (NSRect)offscreenCommandLineFrameForView:(NSView *)view;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
 
 // Update the scroller color for light or dark backgrounds.

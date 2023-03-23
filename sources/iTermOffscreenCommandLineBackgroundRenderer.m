@@ -73,7 +73,7 @@ static const int iTermOffscreenCommandLineBackgroundRendererNumQuads = 2;
     const CGFloat padding = iTermOffscreenCommandLineVerticalPadding * scale;
 
     const CGRect fieldQuad = CGRectMake(scale,
-                                        viewportHeight - tState.rowHeight - padding * 2 + scale,
+                                        viewportHeight - tState.rowHeight - padding * 2 + scale - tState.configuration.extraMargins.top,
                                         viewportWidth - scale * 2,
                                         padding * 2 + tState.rowHeight - scale);
     const CGRect lowerLineQuad = CGRectMake(scale,
