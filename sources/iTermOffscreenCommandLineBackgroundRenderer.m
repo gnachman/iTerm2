@@ -7,8 +7,9 @@
 
 #import "iTermOffscreenCommandLineBackgroundRenderer.h"
 #import "iTermPreferences.h"
+#import "iTermTextDrawingHelper.h"
 
-static const int iTermOffscreenCommandLineBackgroundRendererNumQuads = 3;
+static const int iTermOffscreenCommandLineBackgroundRendererNumQuads = 2;
 
 @interface iTermOffscreenCommandLineBackgroundRendererTransientState()
 @property (nonatomic) vector_float4 outlineColor;
@@ -69,18 +70,14 @@ static const int iTermOffscreenCommandLineBackgroundRendererNumQuads = 3;
     const CGFloat viewportHeight = tState.configuration.viewportSize.y;
     const CGFloat viewportWidth = tState.configuration.viewportSize.x;
     const CGFloat scale = tState.configuration.scale;
-    const CGFloat topMargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const CGFloat padding = iTermOffscreenCommandLineVerticalPadding * scale;
 
     const CGRect fieldQuad = CGRectMake(scale,
-                                        viewportHeight - topMargin * scale - tState.rowHeight + scale,
+                                        viewportHeight - tState.rowHeight - padding * 2 + scale,
                                         viewportWidth - scale * 2,
-                                        tState.rowHeight - scale * 2);
-    const CGRect upperLineQuad = CGRectMake(scale,
-                                            viewportHeight - topMargin * scale - scale,
-                                            viewportWidth - scale * 2,
-                                            scale);
+                                        padding * 2 + tState.rowHeight - scale);
     const CGRect lowerLineQuad = CGRectMake(scale,
-                                            viewportHeight - topMargin * scale - tState.rowHeight,
+                                            NSMinY(fieldQuad),
                                             viewportWidth - scale * 2,
                                             scale);
 
@@ -93,15 +90,6 @@ static const int iTermOffscreenCommandLineBackgroundRendererNumQuads = 3;
         { { CGRectGetMaxX(fieldQuad), CGRectGetMinY(fieldQuad) }, { 1, 0 } },
         { { CGRectGetMinX(fieldQuad), CGRectGetMaxY(fieldQuad) }, { 0, 1 } },
         { { CGRectGetMaxX(fieldQuad), CGRectGetMaxY(fieldQuad) }, { 1, 1 } },
-
-        // Upper line
-        { { CGRectGetMaxX(upperLineQuad), CGRectGetMinY(upperLineQuad) }, { 1, 0 } },
-        { { CGRectGetMinX(upperLineQuad), CGRectGetMinY(upperLineQuad) }, { 0, 0 } },
-        { { CGRectGetMinX(upperLineQuad), CGRectGetMaxY(upperLineQuad) }, { 0, 1 } },
-
-        { { CGRectGetMaxX(upperLineQuad), CGRectGetMinY(upperLineQuad) }, { 1, 0 } },
-        { { CGRectGetMinX(upperLineQuad), CGRectGetMaxY(upperLineQuad) }, { 0, 1 } },
-        { { CGRectGetMaxX(upperLineQuad), CGRectGetMaxY(upperLineQuad) }, { 1, 1 } },
 
         // Lower line
         { { CGRectGetMaxX(lowerLineQuad), CGRectGetMinY(lowerLineQuad) }, { 1, 0 } },
@@ -116,7 +104,6 @@ static const int iTermOffscreenCommandLineBackgroundRendererNumQuads = 3;
 
     vector_float4 colors[iTermOffscreenCommandLineBackgroundRendererNumQuads] = {
         tState.backgroundColor,
-        tState.outlineColor,
         tState.outlineColor
     };
     assert(sizeof(colors) / sizeof(*colors) == iTermOffscreenCommandLineBackgroundRendererNumQuads);

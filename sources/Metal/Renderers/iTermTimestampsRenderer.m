@@ -86,7 +86,8 @@
                                                              useTestingTimezone:NO
                                                                       rowHeight:rowHeight
                                                                          retina:self.configuration.scale > 1
-                                                                           font:self.font];
+                                                                           font:self.font
+                                                                       obscured:self.obscured];
         [_timestamps enumerateObjectsUsingBlock:^(NSDate * _Nonnull date, NSUInteger idx, BOOL * _Nonnull stop) {
             [self->_drawHelper setDate:date forLine:idx];
         }];

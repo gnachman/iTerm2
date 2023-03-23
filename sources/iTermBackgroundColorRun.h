@@ -61,9 +61,7 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
                          withinRange:(NSRange)charRange
                              matches:(NSData *)matches
                             anyBlink:(BOOL *)anyBlinkPtr
-                       textExtractor:(iTermTextExtractor *)extractor
-                                   y:(CGFloat)y  // Value for self.y
-                                line:(int)line;  // Value for self.line
+                                   y:(CGFloat)y;  // Value for self.y
 
 @end
 

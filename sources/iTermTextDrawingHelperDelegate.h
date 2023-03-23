@@ -32,8 +32,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (const screen_char_t *)drawingHelperLineAtIndex:(int)line;
 - (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line;
 
-- (iTermTextExtractor * _Nullable)drawingHelperTextExtractor;
-
 - (NSArray * _Nullable)drawingHelperCharactersWithNotesOnLine:(int)line;
 
 - (void)drawingHelperUpdateFindCursorView;

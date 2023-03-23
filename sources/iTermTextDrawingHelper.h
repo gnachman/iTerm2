@@ -28,6 +28,7 @@
 @protocol VT100ScreenMarkReading;
 
 BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
+extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 
 @interface iTermTextDrawingHelper : NSObject
 
@@ -313,6 +314,7 @@ BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 
 // Draw timestamps.
 - (void)drawTimestampsWithVirtualOffset:(CGFloat)virtualOffset;
+- (void)drawOffscreenCommandLineWithVirtualOffset:(CGFloat)virtualOffset;
 
 - (VT100GridCoordRange)coordRangeForRect:(NSRect)rect;
 

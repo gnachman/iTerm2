@@ -1305,7 +1305,8 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         [_indicatorsHelper drawInFrame:NSRectSubtractingVirtualOffset(_drawingHelper.indicatorFrame, MAX(0, virtualOffset))];
         [NSGraphicsContext restoreGraphicsState];
         [_drawingHelper drawTimestampsWithVirtualOffset:virtualOffset];
-
+        [_drawingHelper drawOffscreenCommandLineWithVirtualOffset:virtualOffset];
+        
         // Not sure why this is needed, but for some reason this view draws over its subviews.
         for (NSView *subview in [self subviews]) {
             [subview setNeedsDisplay:YES];
@@ -4713,10 +4714,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (const screen_char_t *)drawingHelperLineAtScreenIndex:(int)line {
     return [_dataSource screenCharArrayAtScreenIndex:line].line;
-}
-
-- (iTermTextExtractor *)drawingHelperTextExtractor {
-    return [[[iTermTextExtractor alloc] initWithDataSource:_dataSource] autorelease];
 }
 
 - (NSArray *)drawingHelperCharactersWithNotesOnLine:(int)line {
