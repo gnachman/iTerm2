@@ -25,7 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (const screen_char_t *)bufferStart;
 - (const screen_char_t *)bufferStartIfUncompressed;
 - (const screen_char_t *)rawBufferIfUncompressed;
-- (iTermCompressibleCharacterBuffer *)copyOfCharacterBuffer;
+- (iTermCompressibleCharacterBuffer *)copyOfCharacterBuffer:(BOOL)keepCompressed;
 - (NSData *)encodedCharacterBufferWithMaxSize:(NSInteger)maxSize;
 
 // This is slow! Don't use it except for dev.
@@ -50,6 +50,13 @@ NS_ASSUME_NONNULL_BEGIN
                         length:(int)length
                   backingStore:(unichar **)backingStorePtr
                         deltas:(int **)deltasPtr;
+// Is uncompressed and does not also have a compressed representation?
+- (BOOL)isOnlyUncompressed;
+- (BOOL)hasBeenIdleLongEnoughToCompress;
+- (void)reallyCompress;
+- (void)purgeDecompressed;
+- (NSString *)compressionDebugDescription;
+- (NSString *)characterBufferDescription;
 
 @end
 

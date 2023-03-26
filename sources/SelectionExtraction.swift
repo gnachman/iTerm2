@@ -259,7 +259,6 @@ class AttributedStringSelectionExtractor: SelectionExtractor {
 class SelectionPromise: NSObject {
     private static let queue: DispatchQueue = {
         let queue = DispatchQueue(label: "com.iterm2.selection")
-        CompressibleCharacterBuffer.Context.ensureInstance(forQueue: queue)
         return queue
     }()
 

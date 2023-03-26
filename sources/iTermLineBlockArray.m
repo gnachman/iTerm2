@@ -681,6 +681,27 @@
     return [[_numLinesCaches numLinesCacheForWidth:width] sumOfValuesInRange:NSMakeRange(0, limit)];
 }
 
+- (void)findUncompressedBlocks {
+    if (_blocks.count == 0) {
+        return;
+    }
+    for (NSInteger i = 0; i < _blocks.count; i++) {
+        if (!_blocks[i].isOnlyUncompressed) {
+            break;
+        }
+        _lastUncompressedHeadBlock = @(_blocks[i].absoluteBlockNumber);
+    }
+    if (_lastUncompressedHeadBlock.longLongValue == self.lastBlock.absoluteBlockNumber) {
+        return;
+    }
+    for (NSInteger i = _blocks.count - 1; i >= 0; i--) {
+        if (!_blocks[i].isOnlyUncompressed) {
+            break;
+        }
+        _firstUncompressedTailBlock = @(_blocks[i].absoluteBlockNumber);
+    }
+}
+
 #pragma mark - Low level method
 
 - (id)objectAtIndexedSubscript:(NSUInteger)index {
@@ -841,9 +862,19 @@
 - (void)lineBlockDidChange:(LineBlock *)lineBlock {
     if (lineBlock == _head) {
         _headDirty = YES;
+        if (!_lastUncompressedHeadBlock || lineBlock.absoluteBlockNumber > _lastUncompressedHeadBlock.longLongValue) {
+            _lastUncompressedHeadBlock = @(lineBlock.absoluteBlockNumber);
+        }
     } else if (lineBlock == _tail) {
         _tailDirty = YES;
+        if (!_firstUncompressedTailBlock || lineBlock.absoluteBlockNumber < _firstUncompressedTailBlock.longLongValue) {
+            _firstUncompressedTailBlock = @(lineBlock.absoluteBlockNumber);
+        }
     }
+}
+
+- (void)lineBlockDidDecompress:(LineBlock *)lineBlock {
+    _needsPurge = YES;
 }
 
 @end

@@ -63,13 +63,17 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
 
 // This keeps a raw pointer to data.bytes so don't modify data's length after this.
 - (instancetype)initWithData:(NSData *)data
+       includingContinuation:(BOOL)includingContinuation
                     metadata:(iTermImmutableMetadata)metadata
                 continuation:(screen_char_t)continuation {
     self = [super init];
     if (self) {
         _line = data.bytes;
         _length = data.length / sizeof(screen_char_t);
-        assert(_length * sizeof(screen_char_t) == data.length);
+        if (includingContinuation) {
+            _length -= 1;
+        }
+        assert((includingContinuation ? (_length + 1) : _length) * sizeof(screen_char_t) == data.length);
         _data = data;
         _metadata = metadata;
         iTermImmutableMetadataRetain(metadata);
@@ -77,6 +81,12 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
         _eol = continuation.code;
     }
     return self;
+}
+
+- (instancetype)initWithData:(NSData *)data
+                    metadata:(iTermImmutableMetadata)metadata
+                continuation:(screen_char_t)continuation {
+    return [self initWithData:data includingContinuation:NO metadata:metadata continuation:continuation];
 }
 
 - (instancetype)initWithCopyOfLine:(const screen_char_t *)line
@@ -278,9 +288,9 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     if (self.length == length) {
         return self;
     }
-    NSMutableData *data = [NSMutableData dataWithLength:sizeof(screen_char_t) * MAX(self.length, length)];
+    NSMutableData *data = [NSMutableData dataWithLength:sizeof(screen_char_t) * (length + 1)];
     screen_char_t *buffer = (screen_char_t *)data.mutableBytes;
-    memmove(buffer, self.line, self.length * sizeof(screen_char_t));
+    memmove(buffer, self.line, MIN(length, self.length) * sizeof(screen_char_t));
 
     unichar eol = self.eol;
     if (eol == EOL_SOFT &&
@@ -298,8 +308,11 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     }
     screen_char_t continuation = self.continuation;
     continuation.code = eol;
-
-    return [[ScreenCharArray alloc] initWithData:data metadata:self.metadata continuation:continuation];
+    memmove(&buffer[length], &continuation, sizeof(screen_char_t));
+    return [[ScreenCharArray alloc] initWithData:data
+                           includingContinuation:YES
+                                        metadata:self.metadata
+                                    continuation:continuation];
 }
 
 - (ScreenCharArray *)copyByZeroingRange:(NSRange)range {
@@ -347,7 +360,12 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     if (_data != nil) {
         return;
     }
-    _data = [NSData dataWithBytes:_line length:_length * sizeof(screen_char_t)];
+    NSMutableData *mutableData = [[NSMutableData alloc] initWithLength:(_length + 1) * sizeof(screen_char_t)];
+    screen_char_t *screenChars = (screen_char_t *)mutableData.mutableBytes;
+    memmove((void *)screenChars, _line, _length * sizeof(screen_char_t));
+    _data = mutableData;
+    const screen_char_t eol = self.continuation;
+    memmove(&screenChars[_length], &eol, sizeof(eol));
     _line = _data.bytes;
     _shouldFreeOnRelease = NO;
 }

@@ -72,6 +72,7 @@ NSString *const kLineBlockGuid = @"GUID";
 - (screen_char_t *)mutableRawBuffer;
 - (void)setRawBufferCapacity:(size_t)count;
 - (void)invalidate;
+- (void)compress;
 @end
 
 // ONLY -validMutationCertificate should create this!
@@ -172,7 +173,6 @@ struct iTermNumFullLinesCacheKeyHasher {
     // Keys are (offset from _characterBuffer.pointer, length to examine, width).
     std::unordered_map<iTermNumFullLinesCacheKey, int, iTermNumFullLinesCacheKeyHasher> _numberOfFullLinesCache;
 
-    NSMutableArray<iTermWeakBox<id<iTermLineBlockObserver>> *> *_observers;
     NSString *_guid;
 
     NSObject *_cachedMutationCert;  // DON'T USE DIRECTLY THIS UNLESS YOU LOVE PAIN. Only -validMutationCertificate should touch it.
@@ -198,9 +198,10 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
 //}
 #define iTermAssignToConstPointer(dest, address) (*(dest) = (address))
 
-- (LineBlock *)initWithRawBufferSize:(int)size {
+- (LineBlock *)initWithRawBufferSize:(int)size absoluteBlockNumber:(long long)absoluteBlockNumber {
     self = [super init];
     if (self) {
+        _absoluteBlockNumber = absoluteBlockNumber;
         [self createCharacterBufferOfSize:size];
         // Allocate enough space for a bunch of 80-character lines. It can grow if needed.
         cll_capacity = 1 + size/80;
@@ -229,13 +230,16 @@ NS_INLINE void iTermLineBlockDidChange(__unsafe_unretained LineBlock *lineBlock)
     self.clients = [iTermAtomicMutableArrayOfWeakObjects array];
 }
 
-+ (instancetype)blockWithDictionary:(NSDictionary *)dictionary {
-    return [[self alloc] initWithDictionary:dictionary];
++ (instancetype)blockWithDictionary:(NSDictionary *)dictionary
+                absoluteBlockNumber:(long long)absoluteBlockNumber {
+    return [[self alloc] initWithDictionary:dictionary absoluteBlockNumber:absoluteBlockNumber];
 }
 
-- (instancetype)initWithDictionary:(NSDictionary *)dictionary {
+- (instancetype)initWithDictionary:(NSDictionary *)dictionary
+               absoluteBlockNumber:(long long)absoluteBlockNumber {
     self = [super init];
     if (self) {
+        _absoluteBlockNumber = absoluteBlockNumber;
         NSArray *requiredKeys = @[ kLineBlockBufferStartOffsetKey,
                                    kLineBlockStartOffsetKey,
                                    kLineBlockFirstEntryKey,
@@ -347,22 +351,24 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     free(metadata);
 }
 
+// NOTE: You must not acquire a lock in dealloc. Assume it is reentrant.
 - (void)dealloc {
     BOOL shouldFreeBuffers = YES;
-    @synchronized([LineBlock class]) {
-        if (self.owner != nil) {
-            shouldFreeBuffers = NO;
-            // I don't own my memory so I should not free it. Remove myself from the owner's client
-            // list to ensure its list of clients doesn't get too big. Do it asynchronously to avoid
-            // reentrant -[LineBlock dealloc] calls since iTermAtomicMutableArrayOfWeakObjects's
-            // methods are not reentrant.
-            iTermAtomicMutableArrayOfWeakObjects<LineBlock *> *siblings = self.owner.clients;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [siblings removeObjectsPassingTest:^BOOL(LineBlock * _Nonnull anObject) {
-                    return anObject == nil;
-                }];
-            });
-        }
+
+    // It's safe to access owner without a lock. No other object has a valid reference to this
+    // object. Therefore, it's impossible for `self.owner` to change after `dealloc` begins.
+    __weak LineBlock *owner = self.owner;
+    if (owner != nil) {
+        // I don't own my memory so I should not free it.
+        shouldFreeBuffers = NO;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            @synchronized([LineBlock class]) {
+                // Remove myself from the owner's client list to ensure its list of clients doesn't
+                // get too big. Do it asynchronously to avoid reentrant -[LineBlock dealloc] calls
+                // since iTermAtomicMutableArrayOfWeakObjects's methods are not reentrant.
+                [owner.clients prune];
+            }
+        });
     }
 
     if (shouldFreeBuffers) {
@@ -375,6 +381,14 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     }
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"<%@: %p abs=%@ %@>",
+            NSStringFromClass([self class]),
+            self,
+            @(_absoluteBlockNumber),
+            [self characterBufferDescription]];
+}
+
 - (void)setBufferStartOffset:(ptrdiff_t)offset {
     _startOffset = offset;
 }
@@ -383,8 +397,8 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     return _startOffset;
 }
 
-- (LineBlock *)copyWithZone:(NSZone *)zone {
-    return [self copyDeep:YES];
+- (instancetype)copyWithAbsoluteBlockNumber:(long long)absoluteBlockNumber {
+    return [self copyDeep:YES absoluteBlockNumber:absoluteBlockNumber];
 }
 
 - (void)copyMetadataTo:(LineBlock *)theCopy {
@@ -411,9 +425,10 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
     }
 }
 
-- (LineBlock *)copyDeep:(BOOL)deep {
+- (LineBlock *)copyDeep:(BOOL)deep absoluteBlockNumber:(long long)absoluteBlockNumber {
     LineBlock *theCopy = [[LineBlock alloc] init];
     if (!deep) {
+        theCopy->_absoluteBlockNumber = absoluteBlockNumber;
         theCopy->_characterBuffer = _characterBuffer;
         [theCopy setBufferStartOffset:self.bufferStartOffset];
         theCopy->first_entry = first_entry;
@@ -434,7 +449,8 @@ static void iTermLineBlockFreeMetadata(LineBlockMetadata *metadata, int count) {
         return theCopy;
     }
 
-    theCopy->_characterBuffer = [self copyOfCharacterBuffer];
+    theCopy->_characterBuffer = [self copyOfCharacterBuffer:YES];
+    theCopy->_absoluteBlockNumber = absoluteBlockNumber;
     [theCopy setBufferStartOffset:self.bufferStartOffset];
     theCopy->first_entry = first_entry;
     size_t cll_size = sizeof(int) * cll_capacity;
@@ -1531,9 +1547,11 @@ int OffsetOfWrappedLine(const screen_char_t* p, int n, int length, int width, BO
     return orig_n - n;
 }
 
+// self and other will have a common ancestor by following `owner`. It may be like:
+//
+//                 [mutation thread instance] <-owner- [main thread instance] <-owner- [search instance]
 - (void)dropMirroringProgenitor:(LineBlock *)other {
     assert(_progenitor == other);
-    assert(self.owner == nil || self.owner == other);
     assert(cll_capacity <= other->cll_capacity);
 
     if (self.bufferStartOffset == other.bufferStartOffset &&
@@ -2320,14 +2338,14 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
 - (id)modifyWithBlock:(id (^)(id<iTermLineBlockMutationCertificate>))block {
     // Synchronize for the duration of the mutation because -cowCopy will invalidate and nil out the certificate.
     @synchronized([LineBlock class]) {
-        return block([self validMutationCertificate]);
+        return block([self validMutationCertificate:NO]);
     }
 }
 
 // On exit, these postconditions are guaranteed:
 // self.owner==nil
 // self.clients.arrayByStrongifyingWeakBoxes.count==0.
-- (id<iTermLineBlockMutationCertificate>)validMutationCertificate {
+- (id<iTermLineBlockMutationCertificate>)validMutationCertificate:(BOOL)willCompress {
     @synchronized([LineBlock class]) {
         if (!_cachedMutationCert) {
             _cachedMutationCert = [[iTermLineBlockMutator alloc] initWithLineBlock:self];
@@ -2337,12 +2355,16 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
         NSArray<LineBlock *> *myClients = self.clients.strongObjects;
         if (self.owner == nil && !myClients.count) {
             // I have neither an owner nor clients, so copy-on-write is unneeded.
+            if (!willCompress) {
+                [self purgeDecompressed];
+            }
+            [self.clients prune];
             return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
         }
 
         // Perform copy-on-write copying.
         const ptrdiff_t offset = self.bufferStartOffset;
-        _characterBuffer = [self copyOfCharacterBuffer];
+        _characterBuffer = [self copyOfCharacterBuffer:willCompress];
         [self setBufferStartOffset:offset];
         iTermAssignToConstPointer((void **)&cumulative_line_lengths, iTermMemdup(self->cumulative_line_lengths, cll_capacity, sizeof(int)));
 
@@ -2359,6 +2381,9 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
             // I have no clients.
             // Nothing else to do since my owner pointer was already nilled out.
             [self.clients removeAllObjects];
+            if (!willCompress) {
+                [self purgeDecompressed];
+            }
             return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
         }
 
@@ -2381,6 +2406,10 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
 
         // All clients were transferred and now I should have none.
         [self.clients removeAllObjects];
+
+        if (!willCompress) {
+            [self purgeDecompressed];
+        }
         return (id<iTermLineBlockMutationCertificate>)_cachedMutationCert;
     }
 }
@@ -2388,7 +2417,7 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
 - (LineBlock *)cowCopy {
     @synchronized([LineBlock class]) {
         // Make a shallow copy, sharing memory with me (and I may even be a shallow copy of some other LineBlock).
-        LineBlock *copy = [self copyDeep:NO];
+        LineBlock *copy = [self copyDeep:NO absoluteBlockNumber:_absoluteBlockNumber];
 
         // Walk owner pointers up to the root.
         LineBlock *owner = self;
@@ -2424,6 +2453,25 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
     // The purpose of invalidation is to make syncing do the right thing when the progenitor block
     // is removed from the line buffer.
     _invalidated = YES;
+}
+
+// Returns NO if you need to try again later.
+- (BOOL)compressIfNeeded {
+    if (![self isOnlyUncompressed]) {
+        return YES;
+    }
+    if (![self hasBeenIdleLongEnoughToCompress]) {
+        return NO;
+    }
+    @synchronized([LineBlock class]) {
+        id<iTermLineBlockMutationCertificate> cert = [self validMutationCertificate:YES];
+        [cert compress];
+    }
+    return YES;
+}
+
+- (void)dumpCompression {
+    NSLog(@"LineBlock %p: abs=%@ clients=%@ %@", self, @(_absoluteBlockNumber), @(self.clients.count), [self compressionDebugDescription]);
 }
 
 #pragma mark - iTermUniquelyIdentifiable
@@ -2474,6 +2522,11 @@ static void *iTermMemdup(const void *data, size_t count, size_t size) {
     assert(_valid);
     iTermAssignToConstPointer((void **)&_lineBlock->cumulative_line_lengths,
                               iTermRealloc((void *)_lineBlock->cumulative_line_lengths, capacity, sizeof(int)));
+}
+
+- (void)compress {
+    assert(_valid);
+    [_lineBlock reallyCompress];
 }
 
 @end

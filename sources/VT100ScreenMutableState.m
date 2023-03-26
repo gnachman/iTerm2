@@ -82,12 +82,6 @@ static _Atomic int gPerformingJoinedBlock;
 - (instancetype)initWithSideEffectPerformer:(id<VT100ScreenSideEffectPerforming>)performer {
     dispatch_queue_t queue = [iTermGCD mutationQueue];
 
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        [iTermCharacterBufferContext ensureInstanceForQueue:queue];
-        [iTermCharacterBufferContext ensureInstanceForQueue:dispatch_get_main_queue()];
-    });
-
     self = [super initForMutationOnQueue:queue];
     if (self) {
         _queue = queue;
@@ -3573,6 +3567,33 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // one of the side effects adds a joined block.
     _runSideEffectAfterTopJoinFinishes = YES;
     [self removeInaccessibleIntervalTreeObjects];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(_queue, ^{
+        [weakSelf compressAndRescheduleIfNeeded];
+    });
+}
+
+- (void)compressAndRescheduleIfNeeded {
+    if ([self.linebuffer compress]) {
+        return;
+    }
+
+    if (_compressionScheduled) {
+        return;
+    }
+    _compressionScheduled = YES;
+    __weak __typeof(self) weakSelf = self;
+    // This mechanism ensures we don't use too much CPU time on compression. We do compression about
+    // every 100ms and LineBlock limits the amount of time it spends doing compression to about
+    // 10ms.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), _queue, ^{
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        strongSelf->_compressionScheduled = NO;
+        [strongSelf compressAndRescheduleIfNeeded];
+    });
 }
 
 - (void)updateExpectFrom:(iTermExpect *)source {

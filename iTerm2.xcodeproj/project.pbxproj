@@ -2546,6 +2546,8 @@
 		A6936B561D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B541D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m */; };
 		A6936B591D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A6936B571D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h */; };
 		A6936B5A1D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m in Sources */ = {isa = PBXBuildFile; fileRef = A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */; };
+		A693C0BD29D0B15900AED4E4 /* DeadlineMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A693C0BC29D0B15900AED4E4 /* DeadlineMonitor.swift */; };
+		A693C0BF29D0B1F100AED4E4 /* MemoryAddressHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */; };
 		A69412E528555C5F0086F068 /* FileProviderServicing.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412E428555C5F0086F068 /* FileProviderServicing.swift */; };
 		A69412F728555D3D0086F068 /* ItemCreator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412E628555D390086F068 /* ItemCreator.swift */; };
 		A69412F828555D3D0086F068 /* SyncCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A69412E728555D390086F068 /* SyncCache.swift */; };
@@ -6534,6 +6536,8 @@
 		A6936B541D2F5CE600521B04 /* iTermAdditionalHotKeyTableCellView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermAdditionalHotKeyTableCellView.m; sourceTree = "<group>"; };
 		A6936B571D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermHotkeyPreferencesModel.h; sourceTree = "<group>"; };
 		A6936B581D2F5D1A00521B04 /* iTermHotkeyPreferencesModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermHotkeyPreferencesModel.m; sourceTree = "<group>"; };
+		A693C0BC29D0B15900AED4E4 /* DeadlineMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeadlineMonitor.swift; sourceTree = "<group>"; };
+		A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemoryAddressHelper.swift; sourceTree = "<group>"; };
 		A69412E428555C5F0086F068 /* FileProviderServicing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileProviderServicing.swift; sourceTree = "<group>"; };
 		A69412E628555D390086F068 /* ItemCreator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ItemCreator.swift; sourceTree = "<group>"; };
 		A69412E728555D390086F068 /* SyncCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SyncCache.swift; sourceTree = "<group>"; };
@@ -10673,6 +10677,8 @@
 				A6B50E8229BBAE9C000D243D /* TilingChecker.swift */,
 				A6B50EB929BE42B1000D243D /* FontTable.swift */,
 				A6A1BCBF29C8F70200646E9F /* ClockWatcher.swift */,
+				A693C0BC29D0B15900AED4E4 /* DeadlineMonitor.swift */,
+				A693C0BE29D0B1F100AED4E4 /* MemoryAddressHelper.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -15477,6 +15483,7 @@
 				A60D223025A11039004AC979 /* VT100RemoteHost.m in Sources */,
 				A6EC8075281F7D5A00493544 /* iTermFindOnPageHelper.m in Sources */,
 				A629F5AB23AFF5EC00C2F16B /* iTermShellIntegrationDownloadAndRunViewController.m in Sources */,
+				A693C0BD29D0B15900AED4E4 /* DeadlineMonitor.swift in Sources */,
 				A631FC8E20EDDAEA00EB824F /* iTermSearchFieldCell.m in Sources */,
 				A67F5DE723947A2700D18028 /* iTermMultiServerConnection.m in Sources */,
 				A623D9551F8B04890011F8C3 /* iTermMetalGlue.m in Sources */,
@@ -15862,6 +15869,7 @@
 				A695CA80213DAA8500486440 /* NSHost+iTerm.m in Sources */,
 				A621F10C26F650DF001DD3A6 /* ScreenCharArray.m in Sources */,
 				A653F6B924D291D00062377E /* iTermOrderedDictionary.m in Sources */,
+				A693C0BF29D0B1F100AED4E4 /* MemoryAddressHelper.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

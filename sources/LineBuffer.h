@@ -174,7 +174,6 @@ NS_ASSUME_NONNULL_BEGIN
 // Tests only!
 - (LineBlock * _Nonnull)testOnlyBlockAtIndex:(int)i;
 
-- (ScreenCharArray * _Nullable)unwrappedLineAtIndex:(int)i;
 - (unsigned int)numberOfUnwrappedLines;
 - (BOOL)isEqual:(LineBuffer *)other;
 
@@ -272,6 +271,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)performBlockWithTemporaryChanges:(void (^ NS_NOESCAPE)(void))block;
 
 - (void)clear;
+
+// Returns YES if all blocks have been compressed.
+- (BOOL)compress;
 
 @end
 

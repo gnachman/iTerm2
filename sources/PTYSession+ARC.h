@@ -6,6 +6,7 @@
 //
 
 #import "PTYSession.h"
+#import "iTermMetadata.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -35,6 +36,14 @@ NS_ASSUME_NONNULL_BEGIN
                       metadata:(iTermImmutableMetadata)metadata;
 - (void)maybeTurnOffPasteBracketing;
 
+
+@end
+
+@interface PTYSessionPublishRequest: NSObject
+@property (readonly, nonatomic, strong) ScreenCharArray *array;
+@property (readonly, nonatomic) iTermImmutableMetadata metadata;
+
++ (instancetype)requestWithArray:(ScreenCharArray *)sca metadata:(iTermImmutableMetadata)metadata;
 
 @end
 

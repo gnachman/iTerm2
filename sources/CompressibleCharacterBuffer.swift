@@ -423,10 +423,26 @@ extension screen_char_t {
         return true
     }
 }
+
+// Buffer transisions as follows:
+//
+// uncompressed --1--> compressed
+//           ^         |     ^
+//           |         3     |
+//           2         |     1
+//           |         V     |
+//          superposition ---'
+//
+// 1. Occurs periodically. Requires that the buffer not have multiple users.
+// 2. This is best done at merge time. Requires that the buffer not have multiple concurrent users.
+// 3. Can happen at any time.
+
 fileprivate enum Buffer: Equatable {
     case uninitialized
     case uncompressed(UnsafeReallocatableMutableBuffer<screen_char_t>)
     case compressed(CompressedScreenCharBuffer)
+    // This exists so that the compressed/uncompressed buffer that existed before, which may be used by other threads, remains valid.
+    case superposition(CompressedScreenCharBuffer, UnsafeReallocatableMutableBuffer<screen_char_t>)
 
     private enum EncoderKeys: UInt8 {
         case uninitialized = 0
@@ -442,6 +458,8 @@ fileprivate enum Buffer: Equatable {
             return .compressed(buffer)
         case .uncompressed(let buffer):
             return .uncompressed(buffer.clone())
+        case .superposition(let compressed, _):
+            return .compressed(compressed)
         }
     }
 
@@ -452,6 +470,14 @@ fileprivate enum Buffer: Equatable {
         case let (.uncompressed(lvalue), .uncompressed(rvalue)):
             return lvalue == rvalue
         case let (.compressed(lvalue), .compressed(rvalue)):
+            return lvalue == rvalue
+        case let (.superposition(lvalue, _), .superposition(rvalue, _)):
+            return lvalue == rvalue
+        case let (.superposition(lvalue, _), .compressed(rvalue)),
+            let (.compressed(lvalue), .superposition(rvalue, _)):
+            return lvalue == rvalue
+        case let (.superposition(_, lvalue), .uncompressed(rvalue)),
+            let (.uncompressed(lvalue), .superposition(_, rvalue)):
             return lvalue == rvalue
         default:
             return false
@@ -465,7 +491,7 @@ fileprivate enum Buffer: Equatable {
         case .uncompressed(let chars):
             encoder.putScalar(EncoderKeys.uncompressed.rawValue)
             chars.encode(&encoder, maxSize: maxSize)
-        case .compressed(let compressed):
+        case .compressed(let compressed), .superposition(let compressed, _):
             encoder.putScalar(EncoderKeys.compressed.rawValue)
             compressed.encode(&encoder)
         }
@@ -490,7 +516,7 @@ fileprivate enum Buffer: Equatable {
             return "[uninitialized]"
         case .uncompressed(let buffer):
             return buffer.debugDescription
-        case .compressed(let buffer):
+        case .compressed(let buffer), .superposition(let buffer, _):
             return buffer.debugDescription
         }
     }
@@ -501,7 +527,7 @@ fileprivate enum Buffer: Equatable {
             return "[uninitialized]"
         case .uncompressed(let buffer):
             return buffer.shortDebugDescription
-        case .compressed(let buffer):
+        case .compressed(let buffer), .superposition(let buffer, _):
             return buffer.shortDebugDescription
         }
     }
@@ -512,279 +538,195 @@ fileprivate enum Buffer: Equatable {
             return screen_char_t()
         case .uncompressed(let innerBuffer):
             return innerBuffer.buffer[i]
-        case .compressed(var innerBuffer):
+        case .compressed(var innerBuffer), .superposition(var innerBuffer, _):
             return innerBuffer[i]
         }
-    }
-}
-
-/// Lets you ask if some amount of time has passed.
-class DeadlineMonitor {
-    private let end: TimeInterval
-
-    private static var now: TimeInterval {
-        NSDate.it_timeInterval(forAbsoluteTime: mach_absolute_time())
-    }
-
-    init(duration: TimeInterval) {
-        end = Self.now + duration
-    }
-
-    /// Returns: whether the deadline remains unreached.
-    var pending: Bool {
-        return Self.now < end
-    }
-}
-
-// This manages a collection of buffers that need compression eventually. It tries to schedule work
-// when nothing else is going on and avoids hogging the CPU.
-class CharacterBufferCompressor {
-    // All methods run on this queue.
-    private let queue: DispatchQueue
-    private var scheduled = false
-    typealias BufferSet = Set<UniqueWeakBox<CompressibleCharacterBuffer>>
-    private var buffers = MutableAtomicObject(BufferSet())
-
-    init(_ queue: DispatchQueue) {
-        self.queue = queue
-        if #available(macOS 12.0, *) {
-            NotificationCenter.default.addObserver(forName: .NSProcessInfoPowerStateDidChange,
-                                                   object: nil,
-                                                   queue: nil) { [weak self] notif in
-                self?.queue.async {
-                    DLog("Low power mode disabled. Try to schedule decompression. queue=\(String(describing: self?.queue))")
-                    self?.scheduleIfNeeded(urgency: .low)
-                }
-            }
-        }
-    }
-
-    func insert(_ buffer: CompressibleCharacterBuffer) {
-        buffers.mutableAccess {
-            $0.insert(buffer.uniqueWeakBox)
-        }
-        scheduleIfNeeded(urgency: .low)
-    }
-
-    private enum Urgency {
-        case low
-        case medium
-        case high
-
-        // Delay before attempting compression.
-        var duration: TimeInterval {
-            switch self {
-                // Used when a buffer has just been used. We want the delay to be long since it's
-                // likely to be reused again soon.
-                case .low: return 20.0
-
-                // Used when the system is too busy to do compression. This is a balance between
-                // wasting CPU and waiting too long for a window where we could do work and missing
-                // it.
-                case .medium: return 1.0
-
-                // Used when we ran out of time compressing and had more to do. We don't want to
-                // wait too long because it'll take too long to compress lots of buffers. We don't
-                // to wait too little (we'll keep CPU utilization high) and burn a lot of cycles on
-                // scheduling overhead.
-                case .high: return 0.2
-            }
-        }
-    }
-
-    private func scheduleIfNeeded(urgency: Urgency) {
-        if scheduled {
-            return
-        }
-        if buffers.value.isEmpty {
-            return
-        }
-        if #available(macOS 12.0, *) {
-            if ProcessInfo.processInfo.isLowPowerModeEnabled {
-                return
-            }
-        }
-        DLog("Schedule compression in \(urgency.duration) sec")
-        scheduled = true
-        queue.asyncAfter(deadline: .now() + urgency.duration) { [weak self] in
-            self?.scheduled = false
-            self?.compress()
-        }
-    }
-
-    // How long a buffer must be idle before we'll compress it.
-    fileprivate static func ttl(_ size: Int) -> TimeInterval {
-        let baseTime = TimeInterval(1.25)
-        return baseTime * Double(size) / 1024.0
-    }
-
-    private func compress() {
-        let utilization = ProcessInfo.ownCPUUsage()
-        if utilization > 0.5 {
-            DLog("My cpu is \(utilization) so don't try to compress")
-            scheduleIfNeeded(urgency: .medium)
-            return
-        }
-        DLog("My cpu is \(utilization) so proceed")
-        var finishedInTime = false
-        buffers.mutate { buffers in
-            DLog("Try to compress \(buffers.prefix(16).compactMap { $0.value?.debugDescription }.joined(separator: " "))")
-            // residual holds the buffers we do not choose to compress.
-            var residual = buffers
-
-            // Avoid hogging the main thread. Since we are forced to run on a particular dispatch
-            // queue, we don't get to use QoS. Instead, limit the duration of this loop to a small
-            // fraction of the interval at which the timer that launches it runs.
-            let dutyCycle = 0.05
-            let deadlineMonitor = DeadlineMonitor(duration: Urgency.high.duration * dutyCycle)
-            var count = 0
-            for box in buffers where deadlineMonitor.pending {
-                guard let buffer = box.value else {
-                    residual.remove(box)
-                    continue
-                }
-                if buffer.idleTime > Self.ttl(buffer.size) {
-                    buffer.compress()
-                    residual.remove(box)
-                    count += 1
-                }
-            }
-            DLog("Compressed \(count) buffers")
-            finishedInTime = deadlineMonitor.pending
-            return residual
-        }
-        scheduleIfNeeded(urgency: finishedInTime ? .low : .high)
     }
 }
 
 @objc(iTermCompressibleCharacterBuffer)
 class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
     override var debugDescription: String {
-        return "<\(type(of: self)): \(it_addressString) compressed=\(isCompressed) size=\(size) idle=\(idleTime) “\(buffer.shortDebugDescription)”>"
+        "<\(type(of: self)): \(it_addressString) compressed=\(isCompressed) size=\(size) idle=\(idleTime) “\(shortDebugDescription)”>"
     }
 
-    private var buffer: Buffer = .uninitialized
-    // The actual buffer space when uncompressed will be at least this amount.
-    // See resize() for details.
-    @objc private(set) var size: Int
+    private struct State: Equatable {
+        var buffer: Buffer = .uninitialized
+        // The actual buffer space when uncompressed will be at least this amount.
+        // See resize() for details.
+        var size: Int = 0
+
+        mutating func realize() -> UnsafeReallocatableMutableBuffer<screen_char_t> {
+            let underlying = UnsafeReallocatableMutableBuffer<screen_char_t>(count: size)
+            buffer = .uncompressed(underlying)
+            return underlying
+        }
+
+        mutating func decompress() -> UnsafeReallocatableMutableBuffer<screen_char_t> {
+            switch buffer {
+            case .uninitialized:
+                return realize()
+            case .uncompressed(let buffer), .superposition(_, let buffer):
+                return buffer
+            case .compressed(let compressedBuffer):
+                let decompressed = compressedBuffer.decompressed()
+                buffer = .superposition(compressedBuffer, decompressed)
+                DLog("%@", "compressed -> superposition: \(buffer.debugDescription)")
+                return decompressed
+            }
+        }
+
+        mutating func resize(_ newSize: Int) {
+            let oldSize = size
+            size = newSize
+            if newSize <= oldSize {
+                // If it's getting smaller don't do anything yet. Next time the buffer gets compressed and
+                // then decompressed it will actually shrink. This is done to avoid unnecessary reallocs
+                // since shrinkToFit is called on blocks that might grow right away.
+                return
+            }
+            switch buffer {
+            case .uninitialized, .compressed:
+                break
+            case .uncompressed(let buffer):
+                DLog("Resize \(buffer.shortDebugDescription) from \(oldSize) to \(newSize)")
+                buffer.resize(to: newSize)
+            case .superposition:
+                // You must have acquired a mutation certificate to resize which guarantees no
+                // superposition.
+                fatalError()
+            }
+        }
+
+        mutating func exitSuperpositionIfNeeded(toCompressed: Bool) {
+            switch buffer {
+            case .superposition(let compressed, let uncompressed):
+                if toCompressed {
+                    buffer = .compressed(compressed)
+                    DLog("%@", "superposition -> compressed: \(buffer.debugDescription)")
+                } else {
+                    buffer = .uncompressed(uncompressed)
+                    DLog("%@", "superposition -> uncompressed: \(buffer.debugDescription)")
+                }
+            default:
+                break
+            }
+        }
+
+        mutating func compress() -> Bool {
+            switch buffer {
+            case .uninitialized, .compressed:
+                return false
+            case .superposition:
+                // Compression requires a mutation certificate so it's safe to exit superposition.
+                exitSuperpositionIfNeeded(toCompressed: true)
+                return false
+            case .uncompressed(let buffer):
+                let compressedBuffer = CompressedScreenCharBuffer(buffer, size: size)
+                self.buffer = .compressed(compressedBuffer)
+                DLog("%@", "uncompressed -> compressed \(buffer.debugDescription)")
+                size = compressedBuffer.count
+                return true
+            }
+        }
+
+    }
+
+    // Don't access this directly. Go through read() and write() instead.
+    private var _state = State()
+    private let lock = Mutex()
+    @objc var size: Int {
+        read { state in
+            state.size
+        }
+    }
+
+    private func read<T>(_ closure: (State) throws -> (T)) rethrows -> T {
+        return try lock.sync {
+            return try closure(_state)
+        }
+    }
+
+    private func write<T>(_ closure: (inout State) throws -> (T)) rethrows -> T {
+        return try lock.sync {
+            return try closure(&_state)
+        }
+    }
+
     private var lastAccess = mach_absolute_time()
     lazy var uniqueWeakBox: UniqueWeakBox<CompressibleCharacterBuffer> = {
         UniqueWeakBox(self)
     }()
 
-    // There is one context per thread on which CompressibleCharacterBuffer is used. It is
-    // responsible for owning a CharacterBufferCompressor and providing CompressibleCharacterBuffer
-    // objects to it when it becomes safe to compress them. All knowledge of the interaction between
-    // dispatch queues and compressible buffers goes here.
-    @objc(iTermCharacterBufferContext)
-    class Context: NSObject {
-        private var buffers = Set<CompressibleCharacterBuffer>()
-        private static let key = DispatchSpecificKey<Context>()
-        private let queue: DispatchQueue
-        private var enqueued = false
-        private let compressor: CharacterBufferCompressor
-
-        static var instanceForCurrentQueue: Context {
-            // If this crashes, it's becuse you didn't initialize a Context for the current dispatch queue.
-            // Any queue where you plan to use CompressibleCharacterBuffer (and, ultimately, LineBuffer)
-            // must have a Context assigned.
-            DispatchQueue.getSpecific(key: key)!
-        }
-
-        @objc(ensureInstanceForQueue:) static func ensureInstance(forQueue queue: DispatchQueue) {
-            if queue.getSpecific(key: key) == nil {
-                let instance = Context(queue: queue)
-                queue.setSpecific(key: Self.key, value: instance)
-            }
-        }
-
-        private init(queue: DispatchQueue) {
-            self.queue = queue
-            compressor = CharacterBufferCompressor(queue)
-
-            super.init()
-        }
-
-        fileprivate func insert(_ buffer: CompressibleCharacterBuffer) {
-            dispatchPrecondition(condition: .onQueue(self.queue))
-
-            buffers.insert(buffer)
-            if !enqueued {
-                enqueue()
-            }
-        }
-
-        private func enqueue() {
-            enqueued = true
-            // Unsafe pointers to buffers are only valid until the next spin of the queue on which
-            // they are used (since they're essentially autoreleased). Therefore it should be safe
-            // to compress them using DispatchQueue.async.
-            queue.async {
-                self.enqueued = false
-                self.moveBuffersToCompressor()
-            }
-        }
-
-        func moveBuffersToCompressor() {
-            for buffer in buffers {
-                compressor.insert(buffer)
-            }
-            buffers.removeAll()
-        }
-    }
-
-
     @objc
     init(_ size: Int) {
-        self.size = size
+        super.init()
+
+        write { state in
+            state.size = size
+        }
     }
 
     @objc(initWithUncompressedData:)
     init?(uncompressed data: Data) {
-        size = data.count / MemoryLayout<screen_char_t>.stride
-        buffer = .uncompressed(UnsafeReallocatableMutableBuffer(data))
-
         super.init()
 
-        Context.instanceForCurrentQueue.insert(self)
+        write { state in
+            state.size = data.count / MemoryLayout<screen_char_t>.stride
+            state.buffer = .uncompressed(UnsafeReallocatableMutableBuffer(data))
+        }
     }
 
     @objc(initWithEncodedData:)
     init?(encoded data: Data) {
+        super.init()
+
         var decoder = EfficientDecoder(data)
         do {
-            size = try decoder.getScalar()
-            buffer = try Buffer(&decoder)
+            try write { state in
+                state.size = try decoder.getScalar()
+                state.buffer = try Buffer(&decoder)
+            }
         } catch {
             return nil
         }
     }
     
     private init(from other: CompressibleCharacterBuffer) {
-        self.size = other.size
-        self.buffer = other.buffer.clone()
+        super.init()
+
+        write { state in
+            other.read { otherState in
+                state.size = otherState.size
+                state.buffer = otherState.buffer.clone()
+            }
+        }
     }
 
     @objc(encodedDataWithMaxSize:)
     func encodedData(maxSize: Int) -> Data {
         var encoded = EfficientEncoder()
-        encoded.putScalar(size)
-        buffer.encode(&encoded, maxSize: maxSize)
+        read { state in
+            encoded.putScalar(state.size)
+            state.buffer.encode(&encoded, maxSize: maxSize)
+        }
         return encoded.data
     }
 
     @objc
     var mutablePointer: UnsafeMutablePointer<screen_char_t> {
-        Context.instanceForCurrentQueue.insert(self)
         lastAccess = mach_absolute_time()
-        switch buffer {
-        case .uninitialized:
-            return realize().buffer.baseAddress!
-        case .compressed:
-            return decompress().buffer.baseAddress!
-        case .uncompressed(let buffer):
-            return buffer.buffer.baseAddress!
+        let result = write { state in
+            switch state.buffer {
+            case .uninitialized:
+                return state.realize().buffer.baseAddress!
+            case .compressed:
+                return state.decompress().buffer.baseAddress!
+            case .uncompressed(let buffer), .superposition(_, let buffer):
+                return buffer.buffer.baseAddress!
+            }
         }
+        return result
     }
 
     @objc
@@ -794,27 +736,18 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
 
     @objc
     func resize(_ newSize: Int) {
-        Context.instanceForCurrentQueue.insert(self)
-        let oldSize = size
-        size = newSize
-        if newSize <= oldSize {
-            // If it's getting smaller don't do anything yet. Next time the buffer gets compressed and
-            // then decompressed it will actually shrink. This is done to avoid unnecessary reallocs
-            // since shrinkToFit is called on blocks that might grow right away.
-            return
-        }
-        switch buffer {
-        case .uninitialized, .compressed:
-            break
-        case .uncompressed(let buffer):
-            DLog("Resize \(buffer.shortDebugDescription) from \(oldSize) to \(newSize)")
-            buffer.resize(to: newSize)
+        write { state in
+            state.resize(newSize)
         }
     }
 
-    @objc
-    func clone() -> CompressibleCharacterBuffer {
-        return CompressibleCharacterBuffer(from: self)
+    @objc(cloneCompressed:)
+    func clone(compressed: Bool) -> CompressibleCharacterBuffer {
+        let newInstance = CompressibleCharacterBuffer(from: self)
+        newInstance.write { newState in
+            newState.exitSuperpositionIfNeeded(toCompressed: compressed)
+        }
+        return newInstance
     }
 
     @objc
@@ -826,18 +759,17 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
     }
 
     static func == (lhs: CompressibleCharacterBuffer, rhs: CompressibleCharacterBuffer) -> Bool {
-        return lhs.buffer == rhs.buffer && lhs.size == rhs.size
+        earlierInMemory(lhs, rhs).read { lstate in
+            laterInMemory(lhs, rhs).read { rstate in
+                return lstate == rstate
+            }
+        }
     }
 
-    func compress() {
-        switch buffer {
-        case .uninitialized, .compressed:
-            return
-        case .uncompressed(let buffer):
-            let compressedBuffer = CompressedScreenCharBuffer(buffer, size: size)
-            self.buffer = .compressed(compressedBuffer)
-            DLog("Compressed \(self.debugDescription)")
-            size = compressedBuffer.count
+    @objc
+    func compress() -> Bool {
+        write { state in
+            state.compress()
         }
     }
 
@@ -846,43 +778,45 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
         return now - NSDate.it_timeInterval(forAbsoluteTime: lastAccess)
     }
 
-    private func realize() -> UnsafeReallocatableMutableBuffer<screen_char_t> {
-        let underlying = UnsafeReallocatableMutableBuffer<screen_char_t>(count: size)
-        buffer = .uncompressed(underlying)
-        return underlying
-    }
-
     @objc
     var isCompressed: Bool {
-        switch buffer {
-        case .compressed:
-            return true
-        case .uninitialized, .uncompressed:
-            return false
+        read { state in
+            switch state.buffer {
+            case .compressed, .superposition:
+                return true
+            case .uninitialized, .uncompressed:
+                return false
+            }
+        }
+    }
+
+    var shortDebugDescription: String {
+        read {
+            $0.buffer.shortDebugDescription
         }
     }
 
     @objc
     var hasUncompressedBuffer: Bool {
-        switch buffer {
-        case .uncompressed:
-            return true
-        case .compressed, .uninitialized:
-            return false
+        read { state in
+            switch state.buffer {
+            case .uncompressed, .superposition:
+                return true
+            case .compressed, .uninitialized:
+                return false
+            }
         }
     }
 
-    private func decompress() -> UnsafeReallocatableMutableBuffer<screen_char_t> {
-        switch buffer {
-        case .uninitialized:
-            return realize()
-        case .uncompressed(let buffer):
-            return buffer
-        case .compressed(let compressedBuffer):
-            let decompressed = compressedBuffer.decompressed()
-            buffer = .uncompressed(decompressed)
-            DLog("Decompressed \(self.debugDescription)")
-            return decompressed
+    @objc
+    var isInSuperposition: Bool {
+        read { state in
+            switch state.buffer {
+            case .superposition:
+                return true
+            default:
+                return false
+            }
         }
     }
 
@@ -891,28 +825,32 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
     func numberOfFullLines(offset: Int,
                            length: Int,
                            width: Int) -> Int {
-        switch buffer {
-        case .uninitialized:
-            return 0
-        case .uncompressed:
-            fatalError("Not supported")
-        case .compressed(var buffer):
-            var fullLines = 0
-            var i = width
-            while i < length {
-                if ScreenCharIsDWC_RIGHT(buffer[i]) {
-                    i -= 1
+        read { state in
+            switch state.buffer {
+            case .uninitialized:
+                return 0
+            case .uncompressed:
+                fatalError("Not supported")
+            case .compressed(var buffer), .superposition(var buffer, _):
+                var fullLines = 0
+                var i = width
+                while i < length {
+                    if ScreenCharIsDWC_RIGHT(buffer[i]) {
+                        i -= 1
+                    }
+                    fullLines += 1
+                    i += width
                 }
-                fullLines += 1
-                i += width
+                return fullLines
             }
-            return fullLines
         }
     }
 
     @objc(characterAtIndex:)
     func chraracter(at index: Int) -> screen_char_t {
-        return buffer[index]
+        read {
+            $0.buffer[index]
+        }
     }
 
     @objc(screenCharArrayStartingAtOffset:length:metadata:continuation:paddedToLength:eligibleForDWC:)
@@ -922,26 +860,20 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
                          continuation: screen_char_t,
                          paddedToLength paddedSize: Int,
                          eligibleForDWC: Bool) -> ScreenCharArray {
-        switch buffer {
-        case .uninitialized:
-            _ = realize()
-            return screenCharArray(offset: offset,
-                                   length: length,
-                                   metadata: metadata,
-                                   continuation: continuation,
-                                   paddedToLength: paddedSize,
-                                   eligibleForDWC: eligibleForDWC)
-        case .uncompressed:
-            fatalError("Not supported")
-        case .compressed(var innerBuffer):
-            let sca = innerBuffer.screenCharArray(offset: offset,
-                                                  length: length,
-                                                  metadata: metadata,
-                                                  continuation: continuation,
-                                                  paddedToLength: paddedSize,
-                                                  eligibleForDWC: eligibleForDWC)
+        read { state in
+            switch state.buffer {
+            case .uninitialized, .uncompressed:
+                fatalError("Not supported")
+            case .compressed(var innerBuffer), .superposition(var innerBuffer, _):
+                let sca = innerBuffer.screenCharArray(offset: offset,
+                                                      length: length,
+                                                      metadata: metadata,
+                                                      continuation: continuation,
+                                                      paddedToLength: paddedSize,
+                                                      eligibleForDWC: eligibleForDWC)
 
-            return sca
+                return sca
+            }
         }
     }
 
@@ -950,18 +882,46 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
                 length: Int,
                 backingStore backingStorePtr: UnsafeMutablePointer<UnsafeMutablePointer<unichar>?>,
                 deltas deltasPtr: UnsafeMutablePointer<UnsafeMutablePointer<Int32>?>) -> String? {
-        switch buffer {
-        case .uninitialized:
-            _ = realize()
-            return string(from: offset, length: length, backingStore: backingStorePtr, deltas: deltasPtr)
-        case .uncompressed(let innerBuffer):
-            return ScreenCharArrayToString(innerBuffer.buffer.baseAddress!.advanced(by: offset),
-                                           0,
-                                           Int32(length),
-                                           backingStorePtr,
-                                           deltasPtr)
-        case .compressed(var innerBuffer):
-            return innerBuffer.string(from: offset, length: length, backingStore: backingStorePtr, deltas: deltasPtr)
+        read { state in
+            switch state.buffer {
+            case .uninitialized:
+                fatalError()
+            case .uncompressed(let innerBuffer):
+                return ScreenCharArrayToString(innerBuffer.buffer.baseAddress!.advanced(by: offset),
+                                               0,
+                                               Int32(length),
+                                               backingStorePtr,
+                                               deltasPtr)
+            case .compressed(var innerBuffer), .superposition(var innerBuffer, _):
+                return innerBuffer.string(from: offset,
+                                          length: length,
+                                          backingStore: backingStorePtr,
+                                          deltas: deltasPtr)
+            }
         }
+    }
+
+    @objc
+    func purgeDecompressed() {
+        write { state in
+            state.exitSuperpositionIfNeeded(toCompressed: false)
+        }
+    }
+
+    @objc
+    var compressionDebugDescription: String {
+        let modeString = read { state in
+            switch state.buffer {
+            case .superposition:
+                return "superposition"
+            case .compressed:
+                return "compressed"
+            case .uncompressed:
+                return "uncompressed"
+            case .uninitialized:
+                return "uninitialized"
+            }
+        }
+        return "mode=\(modeString) idle=\(idleTime)"
     }
 }

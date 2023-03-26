@@ -31,11 +31,12 @@ typedef struct {
 
 @protocol iTermLineBlockObserver<NSObject>
 - (void)lineBlockDidChange:(LineBlock *)lineBlock;
+- (void)lineBlockDidDecompress:(LineBlock *)lineBlock;
 @end
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
-@interface LineBlock : NSObject <NSCopying, iTermUniquelyIdentifiable>
+@interface LineBlock : NSObject <iTermUniquelyIdentifiable>
 
 // Once this is set to true, it stays true. If double width characters are
 // possibly present then a slower algorithm is used to count the number of
@@ -48,10 +49,13 @@ typedef struct {
 // Block this was copied from.
 @property(nonatomic, weak, readonly) LineBlock *progenitor;
 @property(nonatomic, readonly) BOOL invalidated;
+@property(nonatomic, readonly) long long absoluteBlockNumber;
 
-+ (instancetype)blockWithDictionary:(NSDictionary *)dictionary;
++ (instancetype)blockWithDictionary:(NSDictionary *)dictionary
+                absoluteBlockNumber:(long long)absoluteBlockNumber;
 
-- (instancetype)initWithRawBufferSize:(int)size;
+- (instancetype)initWithRawBufferSize:(int)size
+                  absoluteBlockNumber:(long long)absoluteBlockNumber;
 
 // Try to append a line to the end of the buffer. Returns false if it does not fit. If length > buffer_size it will never succeed.
 // Callers should split such lines into multiple pieces.
@@ -241,5 +245,14 @@ void EnableDoubleWidthCharacterLineCache(void);
 - (void)dropMirroringProgenitor:(LineBlock *)other;
 - (BOOL)isSynchronizedWithProgenitor;
 - (void)invalidate;
+
+// Returns NO if you need to try again later.
+- (BOOL)compressIfNeeded;
+- (void)dumpCompression;
+
+- (id)copy NS_UNAVAILABLE;
+- (id)copyWithZone:(NSZone *)zone NS_UNAVAILABLE;
+
+- (instancetype)copyWithAbsoluteBlockNumber:(long long)absoluteBlockNumber;
 
 @end

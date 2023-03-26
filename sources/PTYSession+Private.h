@@ -35,6 +35,8 @@
 #import "iTermUpdateCadenceController.h"
 #import "iTermWorkingDirectoryPoller.h"
 
+@class PTYSessionPublishRequest;
+
 @interface PTYSession () <
 iTermAutomaticProfileSwitcherDelegate,
 iTermBackgroundDrawingHelperDelegate,
@@ -68,6 +70,9 @@ iTermWorkingDirectoryPollerDelegate,
 TriggerDelegate> {
     // Changes are made in the main thread to this and it periodically copied to the mutation thread.
     iTermExpect *_expect;
+
+    BOOL _havePendingPublish;
+    NSMutableArray<PTYSessionPublishRequest *> *_pendingPublishRequests;
 }
 
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;

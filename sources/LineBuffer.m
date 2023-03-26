@@ -33,6 +33,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "LineBlock+SwiftInterop.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermLineBlockArray.h"
 #import "iTermMalloc.h"
 #import "iTermOrderedDictionary.h"
@@ -57,6 +58,24 @@ static NSString *const kLineBufferBlockWrapperKey = @"Block Wrapper";
 
 static const int kLineBufferVersion = 1;
 static const NSInteger kUnicodeVersion = 9;
+
+// The way in which LineBuffer objects are shared is kinda complicated. Each LineBuffer is meant
+// to be used by one dispatch queue. Each LineBuffer has its own private LineBlockArray. Each
+// LineBlockArray has its own unique LineBlock objects. LineBlocks have pointers to CharacterBuffer
+// objects, which *are* shared across dispatch queues. This is done to avoid copying big chunks of
+// memory when making a copy. LineBlocks use a copy-on-write scheme for CharacterBuffers. Here is
+// an object graph where the second block was modified in one of the line buffers after copying.
+//
+// [LineBuffer]               .----[clients: [Index 0]]------------.          [LineBuffer]
+//      |                    |                                     |               |
+//      V                    |    .----------owner---------------, |               V
+// [LineBlockArray]          |    V                              | V          [LineBlockArray]
+// [Index 0       ] --> [LineBlock] --> [CharacterBuffer] <-- [LineBlock] <-- [Index 0       ]
+// [Index 1       ] --> [LineBlock]                           [LineBlock] <-- [Index 1       ]
+//                           |                                     |
+//                           V                                     V
+//                    [CharacterBuffer]                     [CharacterBuffer]
+//
 
 @implementation LineBuffer {
     // An array of LineBlock*s.
@@ -96,7 +115,7 @@ static const NSInteger kUnicodeVersion = 9;
     // possible size. The compression code has no way of knowing how big these
     // buffers are.
     [_lineBlocks.lastBlock shrinkToFit];
-    LineBlock* block = [[LineBlock alloc] initWithRawBufferSize: size];
+    LineBlock* block = [[LineBlock alloc] initWithRawBufferSize:size absoluteBlockNumber:num_dropped_blocks + _lineBlocks.count];
     block.mayHaveDoubleWidthCharacter = self.mayHaveDoubleWidthCharacter;
     [_lineBlocks addBlock:block];
     return block;
@@ -152,12 +171,14 @@ static const NSInteger kUnicodeVersion = 9;
             if (maybeWrapper[kLineBufferBlockWrapperKey]) {
                 blockDictionary = maybeWrapper[kLineBufferBlockWrapperKey];
             }
-            LineBlock *block = [LineBlock blockWithDictionary:blockDictionary];
+            LineBlock *block = [LineBlock blockWithDictionary:blockDictionary
+                                          absoluteBlockNumber:num_dropped_blocks + _lineBlocks.count];
             if (!block) {
                 return [[LineBuffer alloc] init];
             }
             [_lineBlocks addBlock:block];
         }
+        [_lineBlocks findUncompressedBlocks];
     }
     return self;
 }
@@ -262,6 +283,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         VLog(@"Block %d:\n", i);
         [_lineBlocks[i] dump:rawOffset toDebugLog:NO];
         rawOffset += [_lineBlocks[i] rawSpaceUsed];
+    }
+}
+
+- (void)dumpCompression {
+    for (LineBlock *block in _lineBlocks.blocks) {
+        [block dumpCompression];
     }
 }
 
@@ -410,24 +437,24 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // moving out of the last block into the new block)
         if (prefix) {
             BOOL ok __attribute__((unused)) =
-                [block appendLine:prefix
-                           length:prefix_len
-                          partial:YES
-                            width:width
-                         metadata:prefixMetadata
-                     continuation:continuation];
+            [block appendLine:prefix
+                       length:prefix_len
+                      partial:YES
+                        width:width
+                     metadata:prefixMetadata
+                 continuation:continuation];
             ITAssertWithMessage(ok, @"append can't fail here");
             free(prefix);
         }
         // Finally, append this line to the new block. We know it'll fit because we made
         // enough room for it.
         BOOL ok __attribute__((unused)) =
-            [block appendLine:buffer
-                       length:length
-                      partial:partial
-                        width:width
-                     metadata:metadataObj
-                 continuation:continuation];
+        [block appendLine:buffer
+                   length:length
+                  partial:partial
+                    width:width
+                 metadata:metadataObj
+             continuation:continuation];
         ITAssertWithMessage(ok, @"append can't fail here");
     } else if (num_wrapped_lines_width == width) {
         // Straightforward addition of a line to an existing block. Update the
@@ -535,7 +562,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         [_lineBlocks removeLastBlock];
     }
     for (LineBlock *block in other->_lineBlocks.blocks) {
-        [_lineBlocks addBlock:[block copy]];
+        [_lineBlocks addBlock:[block copyWithAbsoluteBlockNumber:num_dropped_blocks + _lineBlocks.count]];
     }
     if (cursor) {
         cursor_rawline = other->cursor_rawline + offset;
@@ -646,7 +673,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                                                 length:length
                                                           continuation:continuation];
         block(count++, array, metadata, stop);
-     }];
+    }];
 }
 
 - (int)numLinesWithWidth:(int)width {
@@ -730,11 +757,11 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     const screen_char_t *temp;
     screen_char_t continuation;
     BOOL ok __attribute__((unused)) =
-        [block popLastLineInto:&temp
-                    withLength:&length
-                     upToWidth:width
-                      metadata:metadataPtr
-                  continuation:&continuation];
+    [block popLastLineInto:&temp
+                withLength:&length
+                 upToWidth:width
+                  metadata:metadataPtr
+              continuation:&continuation];
     if (continuationPtr) {
         *continuationPtr = continuation;
     }
@@ -1073,7 +1100,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
         return nil;
     }
     VLog(@"positionForCoord: The resulting coord is %@ (want %@)", VT100GridCoordDescription(resultingCoord),
-          VT100GridCoordDescription(coord));
+         VT100GridCoordDescription(coord));
 
     const int residual = coord.y - resultingCoord.y;
     VLog(@"positionForCoord: residual is %@", @(residual));
@@ -1143,7 +1170,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     int p;
     int yoffset;
     VLog(@"coordinateForPosition: find block with position %@, yoffset=%@",
-          @(position.absolutePosition - droppedChars), @(position.yOffset));
+         @(position.absolutePosition - droppedChars), @(position.yOffset));
     LineBlock *block = [_lineBlocks blockContainingPosition:position.absolutePosition - droppedChars
                                                     yOffset:position.yOffset
                                                       width:width
@@ -1320,7 +1347,7 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
                                           block:^BOOL(id<iTermEncoderAdapter>  _Nonnull encoder) {
             assert(!truncated);
             DLog(@"Really encode block %p with guid %@", block, block.stringUniqueIdentifier);
-            [encoder mergeDictionary:block.dictionary]; 
+            [encoder mergeDictionary:block.dictionary];
             // This caps the amount of data at a reasonable but arbitrary size.
             numLines += [block getNumLinesWithWrapWidth:80];
             if (numLines >= maxLines) {
@@ -1526,32 +1553,6 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     return _lineBlocks[i];
 }
 
-- (ScreenCharArray *)unwrappedLineAtIndex:(int)desiredIndex {
-    int i = desiredIndex;
-    for (LineBlock *block in _lineBlocks.blocks) {
-        const int count = block.numRawLines;
-        if (count < i) {
-            i -= count;
-            continue;
-        }
-        const int dropped = block.numEntries - block.numRawLines;
-        const screen_char_t *line = [block rawLine:i + dropped];
-        const int length = [block getRawLineLength:i + dropped];
-        int eol = EOL_HARD;
-        if (i + 1 == count && [block hasPartial]) {
-            eol = EOL_SOFT;
-        }
-        LineBlockMetadata metadata = [block internalMetadataForLine:i + dropped];
-        screen_char_t continuation = metadata.continuation;
-        continuation.code = eol;
-        return [[ScreenCharArray alloc] initWithLine:line
-                                              length:length
-                                            metadata:iTermMetadataMakeImmutable(metadata.lineMetadata)
-                                        continuation:continuation];
-    }
-    return nil;
-}
-
 - (unsigned int)numberOfUnwrappedLines {
     unsigned int sum = 0;
     for (LineBlock *block in _lineBlocks.blocks) {
@@ -1585,6 +1586,9 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     NSString *stage2 = nil;
     NSString *stage3 = nil;
     NSString *stage4 = nil;
+
+    [self purgeDecompressedIfNeeded];
+    [source purgeDecompressedIfNeeded];
 
     if (gDebugLogging) {
         DLog(@"merge");
@@ -1692,6 +1696,119 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
     }
 
     return [_lineBlocks isEqual:other->_lineBlocks];
+}
+
+// We compress blocks at the head or tail. The idea is that you may have a
+// sequence of decompressed blocks at the ends but they are rare in the middle.
+// This makes it easy to stop trying to compress when there is nothing left to
+// do because we only need to examine a hopefully small subset of all blocks.
+- (BOOL)compress {
+    if ([NSProcessInfo ownCPUUsage] >= 0.5) {
+        return NO;
+    }
+
+    iTermDeadlineMonitor *monitor = [[iTermDeadlineMonitor alloc] initWithDuration:0.01];
+    const NSUInteger count = _lineBlocks.count;
+    if (count < 2) {
+        return YES;
+    }
+
+    if (_lineBlocks.lastUncompressedHeadBlock == nil &&
+        _lineBlocks.firstUncompressedTailBlock == nil) {
+        return YES;
+    }
+
+    BOOL didWork = NO;
+
+    if (_lineBlocks.lastUncompressedHeadBlock) {
+        const long long abs = _lineBlocks.lastUncompressedHeadBlock.longLongValue;
+        DLog(@"Compressible head blocks in %@…%@", @(num_dropped_blocks), @(abs));
+        _lineBlocks.lastUncompressedHeadBlock = [self compressStartingAt:[self safeAbsoluteBlockNumber:abs]
+                                                                  stride:-1
+                                                                   limit:num_dropped_blocks - 1
+                                                                 monitor:monitor
+                                                                 didWork:&didWork];
+    }
+    if (_lineBlocks.firstUncompressedTailBlock) {
+        const long long abs = _lineBlocks.firstUncompressedTailBlock.longLongValue;
+        DLog(@"Compressible tail blocks in %@…%@", @(abs), @(num_dropped_blocks + _lineBlocks.count - 1));
+        _lineBlocks.firstUncompressedTailBlock = [self compressStartingAt:[self safeAbsoluteBlockNumber:abs]
+                                                                   stride:1
+                                                                    limit:num_dropped_blocks + _lineBlocks.count
+                                                                  monitor:monitor
+                                                                  didWork:&didWork];
+    }
+
+    // Return NO to be rescheduled again soon.
+    if (!monitor.pending) {
+        // If we ran out of time try to keep going right away.
+        return NO;
+    }
+    // There was time left.
+    if (!didWork) {
+        // If we did nothing at all then we're just waiting for idle time to pass and we don't want
+        // to run again right away.
+        return YES;
+    }
+    // We worked and had time left. It is safe to infer that we finished everything.
+    return NO;
+}
+
+- (long long)safeAbsoluteBlockNumber:(long long)unsafe {
+    assert(_lineBlocks.count > 0);
+
+    if (unsafe < num_dropped_blocks) {
+        return num_dropped_blocks;
+    }
+    const long long limit = num_dropped_blocks + _lineBlocks.count;
+    if (unsafe >= limit) {
+        return limit - 1;
+    }
+    return unsafe;
+}
+
+// `limit` is the first absolute block number *not* to compress and it may be out of bounds.
+- (NSNumber *)compressStartingAt:(long long)start
+                          stride:(int)stride
+                           limit:(long long)limit
+                         monitor:(iTermDeadlineMonitor *)monitor
+                         didWork:(out BOOL *)didWork {
+    if (stride > 0) {
+        assert(limit > start);
+    } else {
+        assert(limit < start);
+    }
+    long long i = start;
+    while (monitor.pending && i != limit) {
+        LineBlock *block = _lineBlocks.blocks[i - num_dropped_blocks];
+        const BOOL neededCompression = block.isOnlyUncompressed;
+        const BOOL considerFinished = [block compressIfNeeded];
+        if (!considerFinished) {
+            DLog(@"Try again later for %@/%@", @(i), @(num_dropped_blocks + _lineBlocks.count - 1));
+            break;
+        }
+        if (neededCompression) {
+            DLog(@"Compressed %@/%@", @(i), @(num_dropped_blocks + _lineBlocks.count - 1));
+        } else {
+            DLog(@"Skipping already-compressed block %@/%@", @(i), @(num_dropped_blocks + _lineBlocks.count - 1));
+        }
+        *didWork = YES;
+        i += stride;
+    }
+    if (i == limit) {
+        return nil;
+    }
+    return @(i);
+}
+
+- (void)purgeDecompressedIfNeeded {
+    if (!_lineBlocks.needsPurge) {
+        return;
+    }
+    _lineBlocks.needsPurge = NO;
+    for (LineBlock *block in _lineBlocks.blocks) {
+        [block purgeDecompressed];
+    }
 }
 
 @end

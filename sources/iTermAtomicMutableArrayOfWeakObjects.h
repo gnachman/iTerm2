@@ -14,9 +14,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (atomic, readonly) NSUInteger count;
 
 + (instancetype)array;
-- (void)removeObjectsPassingTest:(BOOL (^)(ObjectType anObject))block;
+// The argument will be nil if the object was already deallocated.
+- (void)removeObjectsPassingTest:(BOOL (^)(ObjectType _Nullable anObject))block;
 - (void)removeAllObjects;
 - (void)addObject:(ObjectType)object;
+- (void)prune;
 @end
 
 NS_ASSUME_NONNULL_END

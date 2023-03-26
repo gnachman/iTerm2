@@ -765,6 +765,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         _graphicSource = [[iTermGraphicSource alloc] init];
         _commandQueue = [[NSMutableArray alloc] init];
         _alertOnMarksinOffscreenSessions = [iTermPreferences boolForKey:kPreferenceKeyAlertOnMarksInOffscreenSessions];
+        _pendingPublishRequests = [[NSMutableArray alloc] init];
 
         // This is a placeholder. When the profile is set it will get updated.
         iTermStandardKeyMapper *standardKeyMapper = [[iTermStandardKeyMapper alloc] init];
@@ -1023,6 +1024,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_commandQueue release];
     [_pendingJumps release];
     [_dataQueue release];
+    [_pendingPublishRequests release];
 
     [super dealloc];
 }
@@ -1458,7 +1460,7 @@ ITERM_WEAKLY_REFERENCEABLE
             [overrides enumerateKeysAndObjectsUsingBlock:^(NSString * _Nonnull key, NSString * _Nonnull obj, BOOL * _Nonnull stop) {
                 temp[key] = obj;
             }];
-            theBookmark = temp;
+            theBookmark = [temp dictionaryByRemovingNullValues];
         }
     }
 

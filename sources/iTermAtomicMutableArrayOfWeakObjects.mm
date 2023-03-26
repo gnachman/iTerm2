@@ -100,5 +100,12 @@ static void iTermAtomicMutableArrayOfWeakObjectsLockUnlock(void) {
         return result;
     }
 }
+
+- (void)prune {
+    [self removeObjectsPassingTest:^BOOL(id anObject) {
+        return anObject == nil;
+    }];
+}
+
 @end
 

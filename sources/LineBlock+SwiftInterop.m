@@ -7,8 +7,16 @@
 
 #import "LineBlock+SwiftInterop.h"
 #import "iTerm2SharedARC-Swift.h"
+#import "iTermAtomicMutableArrayOfWeakObjects.h"
+#import "iTermWeakBox.h"
 
 @implementation LineBlock (SwiftInterop)
+
+static void iTermLineBlockDidEnterSuperposition(__unsafe_unretained LineBlock *lineBlock) {
+    for (iTermWeakBox<id<iTermLineBlockObserver>> *box in lineBlock->_observers) {
+        [box.object lineBlockDidDecompress:lineBlock];
+    }
+}
 
 - (void)createCharacterBufferOfSize:(int)size {
     _characterBuffer = [[iTermCompressibleCharacterBuffer alloc] init:size];
@@ -24,15 +32,30 @@
 }
 
 - (const screen_char_t *)rawBuffer {
-    return _characterBuffer.pointer;
+    const BOOL wasInSuperposition = _characterBuffer.isInSuperposition;
+    const screen_char_t *result = _characterBuffer.pointer;
+    if (!wasInSuperposition && _characterBuffer.isInSuperposition) {
+        iTermLineBlockDidEnterSuperposition(self);
+    }
+    return result;
 }
 
 - (screen_char_t *)mutableRawBuffer {
-    return _characterBuffer.mutablePointer;
+    const BOOL wasInSuperposition = _characterBuffer.isInSuperposition;
+    screen_char_t *result = _characterBuffer.mutablePointer;
+    if (!wasInSuperposition && _characterBuffer.isInSuperposition) {
+        iTermLineBlockDidEnterSuperposition(self);
+    }
+    return result;
 }
 
 - (const screen_char_t *)bufferStart {
-    return _characterBuffer.pointer + _startOffset;
+    const BOOL wasInSuperposition = _characterBuffer.isInSuperposition;
+    const screen_char_t *result = _characterBuffer.pointer + _startOffset;
+    if (!wasInSuperposition && _characterBuffer.isInSuperposition) {
+        iTermLineBlockDidEnterSuperposition(self);
+    }
+    return result;
 }
 
 - (const screen_char_t *)bufferStartIfUncompressed {
@@ -49,8 +72,8 @@
     return nil;
 }
 
-- (iTermCompressibleCharacterBuffer *)copyOfCharacterBuffer {
-    return [_characterBuffer clone];
+- (iTermCompressibleCharacterBuffer *)copyOfCharacterBuffer:(BOOL)keepCompressed {
+    return [_characterBuffer cloneCompressed:keepCompressed];
 }
 
 - (BOOL)characterBufferIsEqualTo:(iTermCompressibleCharacterBuffer *)other {
@@ -123,6 +146,38 @@ int iTermLineBlockNumberOfFullLinesImpl(const screen_char_t *buffer,
                   backingStore:(unichar **)backingStorePtr
                         deltas:(int **)deltasPtr {
     return [_characterBuffer stringFromOffset:offset length:length backingStore:backingStorePtr deltas:deltasPtr];
+}
+
+- (BOOL)isOnlyUncompressed {
+    return !_characterBuffer.isCompressed && _characterBuffer.hasUncompressedBuffer;
+}
+
+- (BOOL)hasBeenIdleLongEnoughToCompress {
+    const NSTimeInterval ttl = 1.25 * MAX(1.0, _characterBuffer.size / 1024.0);
+
+    return _characterBuffer.idleTime > ttl;
+}
+
+- (void)reallyCompress {
+    assert(self.clients.strongObjects.count == 0);
+    assert(self.owner == nil);
+    if ([_characterBuffer compress]) {
+        // Bump the generation so we write it back to db compressed. This is important because then
+        // when state is restored we don't need to re-do the work of compressing it.
+        self.generation += 1;
+    }
+}
+
+- (void)purgeDecompressed {
+    [_characterBuffer purgeDecompressed];
+}
+
+- (NSString *)compressionDebugDescription {
+    return _characterBuffer.compressionDebugDescription;
+}
+
+- (NSString *)characterBufferDescription {
+    return _characterBuffer.debugDescription;
 }
 
 @end

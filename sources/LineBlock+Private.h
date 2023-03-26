@@ -7,14 +7,17 @@
 
 #import "LineBlock.h"
 
-@class iTermCompressibleCharacterBuffer;
 @class iTermAtomicMutableArrayOfWeakObjects<T>;
+@class iTermCompressibleCharacterBuffer;
+@protocol iTermLineBlockObserver;
+@class iTermWeakBox<T>;
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface LineBlock() {
     iTermCompressibleCharacterBuffer *_characterBuffer;
     int _startOffset;  // Index of the first non-dropped screen_char_t in _rawBuffer.
+    NSMutableArray<iTermWeakBox<id<iTermLineBlockObserver>> *> *_observers;
 }
 
 // These are synchronized on [LineBlock class]. Sample graph:
@@ -124,6 +127,7 @@ NS_ASSUME_NONNULL_BEGIN
 // you can't get a certificate without copying (if needed).
 @property(nonatomic, nullable) LineBlock *owner;  // nil if I am an owner. This is the line block that is responsible for freeing malloced data.
 @property(nonatomic) iTermAtomicMutableArrayOfWeakObjects<LineBlock *> *clients;  // Copy-on write instances that still exist and have me as the owner.
+@property(nonatomic, readwrite) NSInteger generation;
 @end
 
 NS_ASSUME_NONNULL_END

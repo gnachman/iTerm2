@@ -43,6 +43,7 @@ iTermTriggerScopeProvider> {
     dispatch_group_t _tmuxGroup;
     NSArray<NSString *> *_sshIntegrationFlags;
     _Atomic int _pendingReportCount;
+    BOOL _compressionScheduled;
 }
 
 @property (atomic) BOOL hadCommand;
