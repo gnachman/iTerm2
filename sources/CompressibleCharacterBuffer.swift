@@ -571,7 +571,7 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
             case .compressed(let compressedBuffer):
                 let decompressed = compressedBuffer.decompressed()
                 buffer = .superposition(compressedBuffer, decompressed)
-                DLog("%@", "compressed -> superposition: \(buffer.debugDescription)")
+                DLog("compressed -> superposition: \(buffer.debugDescription)")
                 return decompressed
             }
         }
@@ -603,10 +603,10 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
             case .superposition(let compressed, let uncompressed):
                 if toCompressed {
                     buffer = .compressed(compressed)
-                    DLog("%@", "superposition -> compressed: \(buffer.debugDescription)")
+                    DLog("superposition -> compressed: \(buffer.debugDescription)")
                 } else {
                     buffer = .uncompressed(uncompressed)
-                    DLog("%@", "superposition -> uncompressed: \(buffer.debugDescription)")
+                    DLog("superposition -> uncompressed: \(buffer.debugDescription)")
                 }
             default:
                 break
@@ -624,7 +624,7 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
             case .uncompressed(let buffer):
                 let compressedBuffer = CompressedScreenCharBuffer(buffer, size: size)
                 self.buffer = .compressed(compressedBuffer)
-                DLog("%@", "uncompressed -> compressed \(buffer.debugDescription)")
+                DLog("uncompressed -> compressed \(buffer.debugDescription)")
                 size = compressedBuffer.count
                 return true
             }
