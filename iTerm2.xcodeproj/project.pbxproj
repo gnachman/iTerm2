@@ -2503,6 +2503,11 @@
 		A68A3119186E2F54007F550F /* PopupModel.h in Headers */ = {isa = PBXBuildFile; fileRef = A68A3117186E2F54007F550F /* PopupModel.h */; };
 		A68AC8F31F05C0860023A216 /* NSBundle+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = A68AC8F11F05C0860023A216 /* NSBundle+iTerm.h */; };
 		A68AC8F41F05C0860023A216 /* NSBundle+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A68AC8F21F05C0860023A216 /* NSBundle+iTerm.m */; };
+		A68ADA0629CCBE420008E092 /* CommandInfoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68ADA0429CCBE420008E092 /* CommandInfoViewController.swift */; };
+		A68ADA0729CCBE4B0008E092 /* CommandInfoViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A68ADA0529CCBE420008E092 /* CommandInfoViewController.xib */; };
+		A68ADA0829CCBE4C0008E092 /* CommandInfoViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A68ADA0529CCBE420008E092 /* CommandInfoViewController.xib */; };
+		A68ADA0929CCBE4C0008E092 /* CommandInfoViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = A68ADA0529CCBE420008E092 /* CommandInfoViewController.xib */; };
+		A68ADA0B29D397400008E092 /* Progress.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68ADA0A29D397400008E092 /* Progress.swift */; };
 		A68BADFB1E0DD52F00E4BB7B /* Touch Bar Function Keys.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BADF91E0DD52F00E4BB7B /* Touch Bar Function Keys.png */; };
 		A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A68BADFA1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png */; };
 		A68E332B1DE6AFC6003F1D8E /* iTermTouchBarButton.h in Headers */ = {isa = PBXBuildFile; fileRef = A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */; };
@@ -6491,6 +6496,9 @@
 		A68AC8F11F05C0860023A216 /* NSBundle+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSBundle+iTerm.h"; sourceTree = "<group>"; };
 		A68AC8F21F05C0860023A216 /* NSBundle+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSBundle+iTerm.m"; sourceTree = "<group>"; };
 		A68AC8F51F0823100023A216 /* iTermFindOnPageHelperTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFindOnPageHelperTest.m; sourceTree = "<group>"; };
+		A68ADA0429CCBE420008E092 /* CommandInfoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandInfoViewController.swift; sourceTree = "<group>"; };
+		A68ADA0529CCBE420008E092 /* CommandInfoViewController.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CommandInfoViewController.xib; sourceTree = "<group>"; };
+		A68ADA0A29D397400008E092 /* Progress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Progress.swift; sourceTree = "<group>"; };
 		A68BADF91E0DD52F00E4BB7B /* Touch Bar Function Keys.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Touch Bar Function Keys.png"; path = "images/Touch Bar Function Keys.png"; sourceTree = "<group>"; };
 		A68BADFA1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Touch Bar Function Keys@2x.png"; path = "images/Touch Bar Function Keys@2x.png"; sourceTree = "<group>"; };
 		A68E33291DE6AFC6003F1D8E /* iTermTouchBarButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermTouchBarButton.h; sourceTree = "<group>"; };
@@ -10673,6 +10681,7 @@
 				A6B50E8229BBAE9C000D243D /* TilingChecker.swift */,
 				A6B50EB929BE42B1000D243D /* FontTable.swift */,
 				A6A1BCBF29C8F70200646E9F /* ClockWatcher.swift */,
+				A68ADA0A29D397400008E092 /* Progress.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -10808,6 +10817,8 @@
 				A678FE7727F109BD00BEF8FA /* DismissableLinkViewController.swift */,
 				A62C57FE2926F67E004793E9 /* iTermLocalePrompt.swift */,
 				A6A30ECD2950D29D0050F01A /* iTermPleaseWaitWindow.swift */,
+				A68ADA0429CCBE420008E092 /* CommandInfoViewController.swift */,
+				A68ADA0529CCBE420008E092 /* CommandInfoViewController.xib */,
 			);
 			name = "Misc View Controllers";
 			sourceTree = "<group>";
@@ -13206,8 +13217,6 @@
 					1DFA7C661923E83500DF1410 = {
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
-					759637992593AE0700E278CC = {
-						CreatedOnToolsVersion = 12.3;
 						DevelopmentTeam = H7V7XYVQ7D;
 						LastSwiftMigration = 1410;
 						ProvisioningStyle = Automatic;
@@ -13252,6 +13261,8 @@
 						DevelopmentTeam = H7V7XYVQ7D;
 						ProvisioningStyle = Automatic;
 					};
+					A6C7603F1B45C4CF00E3C992 = {
+						DevelopmentTeam = H7V7XYVQ7D;
 					A6C7603F1B45C4CF00E3C992 = {
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
@@ -13367,6 +13378,7 @@
 				A686C19A1ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A6A30ED32950EA540050F01A /* aiterm@2x.png in Resources */,
 				A6EC8048281B391900493544 /* TextViewPortholeRenderer-dark.css in Resources */,
+				A68ADA0929CCBE4C0008E092 /* CommandInfoViewController.xib in Resources */,
 				A69F1BBE28E65A4F0054204E /* uniE0B5_right-half-circle-thin.eps in Resources */,
 				A67D0D461A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
 				A67F6163214395990093940A /* graphic_mysql@2x.png in Resources */,
@@ -14070,6 +14082,7 @@
 				A6038321294D062A00FE11C2 /* iTermCopyModeKeyBindings.dict in Resources */,
 				A67F6191214395A70093940A /* graphic_npm.png in Resources */,
 				A67F619C214395B70093940A /* graphic_php@2x.png in Resources */,
+				A68ADA0829CCBE4C0008E092 /* CommandInfoViewController.xib in Resources */,
 				A6F2F219250757FE00FC227F /* PrefsShortcuts@2x.png in Resources */,
 				A65DF4A22849601A00AA29AB /* .zshenv in Resources */,
 				A66F52C82106F6F100571168 /* gitdirty.png in Resources */,
@@ -14553,6 +14566,7 @@
 				53BBA0F8214236AC0074D061 /* iterm2_git_poll.sh in Resources */,
 				A6F7A707213CB143004DE961 /* StatusBarIconUser.png in Resources */,
 				A6F7A728213CB143004DE961 /* StatusBarIconComposer.png in Resources */,
+				A68ADA0729CCBE4B0008E092 /* CommandInfoViewController.xib in Resources */,
 				A6A64E642508BE650040490B /* StatusBarIconSnippet@2x.png in Resources */,
 				A6E7AE67214394CA00DE9F3B /* graphic_bullhorn@2x.png in Resources */,
 				9DB3D6ED176CC47E0071CCF8 /* PrefsMouse@2x.png in Resources */,
@@ -15262,6 +15276,7 @@
 				A69D6AE527B649B5006E3991 /* RunLengthEncoder.swift in Sources */,
 				A67F62022143A1650093940A /* iTermGraphicSource.m in Sources */,
 				A605943F2583305E00CACEE6 /* iTermSharedImageStore.m in Sources */,
+				A68ADA0629CCBE420008E092 /* CommandInfoViewController.swift in Sources */,
 				A608A5812797811D003525F7 /* iTermCapturedOutputMark.m in Sources */,
 				A666D5F1221A1EF100D6184A /* iTermVariableScope+Window.m in Sources */,
 				A60E045626DC978000DD162B /* FilterTextField.swift in Sources */,
@@ -15784,6 +15799,7 @@
 				A6D10E3A27F7C2BC0026DB56 /* NSPoint+MultiCursor.swift in Sources */,
 				A63EB055284D85F100B2AB89 /* SSHFileGateway.swift in Sources */,
 				A67DAF14299C506000AD331A /* iTermOffscreenCommandLineBackgroundRenderer.m in Sources */,
+				A68ADA0B29D397400008E092 /* Progress.swift in Sources */,
 				A6644BE325CDCCD600419355 /* iTermLegacyView.m in Sources */,
 				535B3BBA2228DC5500D6D410 /* iTermAlertBuiltInFunction.m in Sources */,
 				530AB8A420B12B9500D2AA08 /* iTermFunctionCallTextFieldDelegate.m in Sources */,

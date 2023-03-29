@@ -102,8 +102,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     iTermOffscreenCommandLine *offscreenCommandLine =
         [self.delegate contextMenu:self offscreenCommandLineForClickAt:event.locationInWindow];
     if (offscreenCommandLine) {
-        NSString *workingDirectory= [self.delegate contextMenu:self
-                                        workingDirectoryOnLine:y];
+        NSString *workingDirectory = [self.delegate contextMenu:self
+                                         workingDirectoryOnLine:y];
         markMenu = [self menuForMark:offscreenCommandLine.mark directory:workingDirectory];
         if (markMenu) {
             return markMenu;
@@ -1189,7 +1189,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     numberFormatter.numberStyle = NSNumberFormatterDecimalStyle;
 
     NSString *humanReadableSize = [NSString stringWithHumanReadableSize:value];
-    if (humanReadableSize) {
+    if (value >= 1024) {
         humanReadableSize = [NSString stringWithFormat:@" (%@)", humanReadableSize];
     } else {
         humanReadableSize = @"";
@@ -1296,32 +1296,6 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     } else {
         return nil;
     }
-}
-
-+ (instancetype)stringWithHumanReadableSize:(unsigned long long)value {
-    if (value < 1024) {
-        return nil;
-    }
-    unsigned long long num = value;
-    int pow = 0;
-    BOOL exact = YES;
-    while (num >= 1024 * 1024) {
-        pow++;
-        if (num % 1024 != 0) {
-            exact = NO;
-        }
-        num /= 1024;
-    }
-    // Show 2 fraction digits, always rounding downwards. Printf rounds floats to the nearest
-    // representable value, so do the calculation with integers until we get 100-fold the desired
-    // value, and then switch to float.
-    if (100 * num % 1024 != 0) {
-        exact = NO;
-    }
-    num = 100 * num / 1024;
-    NSArray *iecPrefixes = @[ @"Ki", @"Mi", @"Gi", @"Ti", @"Pi", @"Ei" ];
-    return [NSString stringWithFormat:@"%@%.2f %@",
-               exact ? @"" :@ "≈", (double)num / 100, iecPrefixes[pow]];
 }
 
 - (NSString *)utf8Help {

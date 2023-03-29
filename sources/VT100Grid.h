@@ -126,6 +126,9 @@
 // the cost of syncing.
 - (void)markAllCharsDirty:(BOOL)dirty updateTimestamps:(BOOL)updateTimestamps;
 
+// How many used cells exist in the range of lines?
+- (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range;
+
 @end
 
 @interface VT100Grid : NSObject<VT100GridReading>
@@ -346,6 +349,8 @@
                                           iTermExternalAttribute **eaOut,
                                           VT100GridCoord coord,
                                           BOOL *stop))block;
+
+
 #pragma mark - Testing use only
 
 - (VT100LineInfo *)lineInfoAtLineNumber:(int)lineNumber;

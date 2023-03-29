@@ -80,15 +80,17 @@ class MutableAtomicObject<T> {
         }
     }
 
-    func access(_ block: (T) -> Void) {
-        mutex.sync {
-            block(_value)
+    @discardableResult
+    func access<Result>(_ block: (T) -> Result) -> Result {
+        return mutex.sync {
+            return block(_value)
         }
     }
 
-    func mutableAccess(_ block: (inout T) -> Void) {
-        mutex.sync {
-            block(&_value)
+    @discardableResult
+    func mutableAccess<Result>(_ block: (inout T) -> Result) -> Result {
+        return mutex.sync {
+            return block(&_value)
         }
     }
 }

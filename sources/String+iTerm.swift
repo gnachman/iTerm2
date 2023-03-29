@@ -124,6 +124,37 @@ extension String {
     }
 }
 
+@objc
+extension NSString {
+    @objc(stringWithHumanReadableSize:)
+    static func stringWithHumanReadableSize(_ value: UInt64) -> String {
+        if value < 1024 {
+            return String(value) + " bytes"
+        }
+        var num = value
+        var pow = 0
+        var exact = true
+        while num >= 1024 * 1024 {
+            pow += 1
+            if num % 1024 != 0 {
+                exact = false
+            }
+            num /= 1024
+        }
+        // Show 2 fraction digits, always rounding downwards. Printf rounds floats to the nearest
+        // representable value, so do the calculation with integers until we get 100-fold the desired
+        // value, and then switch to float.
+        if 100 * num % 1024 != 0 {
+            exact = false
+        }
+        num = 100 * num / 1024
+        let iecPrefixes = [ "Ki", "Mi", "Gi", "Ti", "Pi", "Ei" ]
+        let formatted = String(format: "%.2f", Double(num) / 100.0)
+        return "\(exact ? "" : "≈")\(formatted) \(iecPrefixes[pow])"
+    }
+
+}
+
 extension Substring {
     func split(onFirst separator: String) -> (Substring, Substring)? {
         guard let range = range(of: separator) else {
@@ -132,5 +163,6 @@ extension Substring {
         return (self[..<range.lowerBound], self[range.upperBound...])
     }
 }
+
 
 

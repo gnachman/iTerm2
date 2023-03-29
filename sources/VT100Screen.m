@@ -610,6 +610,28 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                                                              mark:mark] autorelease];
 }
 
+- (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range {
+    VT100GridRange historyRange;
+    VT100GridRange screenRange;
+
+    const NSInteger numberOfScrollbackLines = self.numberOfScrollbackLines;
+    if (range.location < numberOfScrollbackLines) {
+        historyRange.location = range.location;
+        historyRange.length = numberOfScrollbackLines - range.location;
+
+        screenRange.location = 0;
+        screenRange.length = range.length - historyRange.length;
+    } else {
+        historyRange = VT100GridRangeMake(0, 0);
+
+        screenRange.location = range.location - numberOfScrollbackLines;
+        screenRange.length = range.length;
+    }
+
+    return ([_state.linebuffer numberOfCellsUsedInWrappedLineRange:historyRange width:self.width] +
+            [self.currentGrid numberOfCellsUsedInRange:screenRange]);
+}
+
 - (NSArray *)charactersWithNotesOnLine:(int)line {
     NSMutableArray *result = [NSMutableArray array];
     Interval *interval = [_state intervalForGridCoordRange:VT100GridCoordRangeMake(0,

@@ -3286,6 +3286,12 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 // Called for a right click that isn't control+click (e.g., two fingers on trackpad).
 - (void)openContextMenuWithEvent:(NSEvent *)event {
+    iTermOffscreenCommandLine *offscreenCommandLine = [self offscreenCommandLineForClickAt:event.locationInWindow];
+    if (offscreenCommandLine) {
+        [self presentCommandInfoForOffscreenCommandLine:offscreenCommandLine event:event];
+        return;
+    }
+
     NSPoint clickPoint = [self clickPoint:event allowRightMarginOverflow:NO];
     [_contextMenuHelper openContextMenuAt:VT100GridCoordMake(clickPoint.x, clickPoint.y)
                                     event:event];

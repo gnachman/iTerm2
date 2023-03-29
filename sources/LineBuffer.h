@@ -177,6 +177,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (ScreenCharArray * _Nullable)unwrappedLineAtIndex:(int)i;
 - (unsigned int)numberOfUnwrappedLines;
 - (BOOL)isEqual:(LineBuffer *)other;
+- (NSInteger)numberOfCellsUsedInWrappedLineRange:(VT100GridRange)wrappedLineRange width:(int)width;
 
 @end
 

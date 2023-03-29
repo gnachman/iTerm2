@@ -148,5 +148,6 @@
 
 - (VT100GridCoordRange)coordRangeOfPorthole:(id<Porthole>)porthole;
 - (iTermOffscreenCommandLine *)offscreenCommandLineBefore:(int)line;
+- (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range;
 
 @end

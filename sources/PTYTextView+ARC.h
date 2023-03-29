@@ -63,6 +63,12 @@ iTermURLActionHelperDelegate>
 
 - (NSMenu *)menuForEvent:(NSEvent *)event;
 
+#pragma mark - Offscreen Command Line
+
+- (iTermOffscreenCommandLine *)offscreenCommandLineForClickAt:(NSPoint)windowPoint;
+- (void)presentCommandInfoForOffscreenCommandLine:(iTermOffscreenCommandLine *)offscreenCommandLine
+                                            event:(NSEvent *)event;
+
 #pragma mark - Mouse Cursor
 
 // Returns whether any change was made.
