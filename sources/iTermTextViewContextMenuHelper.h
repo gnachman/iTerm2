@@ -164,6 +164,7 @@ runCommandInBackground:(NSString *)command;
 - (NSMenu * _Nullable)menuForEvent:(NSEvent *)theEvent;
 - (NSMenu *)titleBarMenu;
 - (void)openContextMenuAt:(VT100GridCoord)clickPoint event:(NSEvent *)event;
+- (id<VT100ScreenMarkReading>)markForClick:(NSEvent *)event;
 
 @end
 

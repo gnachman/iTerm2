@@ -92,6 +92,23 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
     _validationClickPoint = VT100GridCoordMake(-1, -1);
 }
 
+- (id<VT100ScreenMarkReading>)markForClick:(NSEvent *)event {
+    NSPoint locationInWindow = [event locationInWindow];
+    if (locationInWindow.x >= [iTermPreferences intForKey:kPreferenceKeySideMargins]) {
+        return nil;
+    }
+    iTermOffscreenCommandLine *offscreenCommandLine =
+        [self.delegate contextMenu:self offscreenCommandLineForClickAt:event.locationInWindow];
+    if (offscreenCommandLine) {
+        return nil;
+    }
+    const NSPoint clickPoint = [self.delegate contextMenu:self
+                                               clickPoint:event
+                                 allowRightMarginOverflow:NO];
+    const int y = clickPoint.y;
+    return [self.delegate contextMenu:self markOnLine:y];
+}
+
 - (NSMenu *)contextMenuWithEvent:(NSEvent *)event {
     const NSPoint clickPoint = [self.delegate contextMenu:self
                                                clickPoint:event

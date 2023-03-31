@@ -10,6 +10,7 @@
 
 #import "ContextMenuActionPrefsController.h"
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermCancelable.h"
 #import "iTermLocatedString.h"
@@ -359,22 +360,22 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
     URLAction *action = [URLAction urlActionToOpenExistingFile:filename];
     VT100GridWindowedRange range;
 
-    if (locatedPrefix.coords.count > 0 && prefixChars > 0) {
-        NSInteger i = MAX(0, (NSInteger)locatedPrefix.coords.count - prefixChars);
-        range.coordRange.start = [locatedPrefix.coords[i] gridCoordValue];
+    if (locatedPrefix.gridCoords.count > 0 && prefixChars > 0) {
+        NSInteger i = MAX(0, (NSInteger)locatedPrefix.gridCoords.count - prefixChars);
+        range.coordRange.start = [locatedPrefix.gridCoords coordAt:i];
     } else {
         // Everything is coming from the suffix (e.g., when mouse is on first char of filename)
-        range.coordRange.start = [locatedSuffix.coords[0] gridCoordValue];
+        range.coordRange.start = [locatedSuffix.gridCoords  coordAt:0];
     }
     VT100GridCoord lastCoord;
     // Ensure we don't run off the end of suffixCoords if something unexpected happens.
     // Subtract 1 because the 0th index into suffixCoords corresponds to 1 suffix char being used, etc.
-    NSInteger i = MIN((NSInteger)locatedSuffix.coords.count - 1, suffixChars - 1);
+    NSInteger i = MIN((NSInteger)locatedSuffix.gridCoords.count - 1, suffixChars - 1);
     if (i >= 0) {
-        lastCoord = [locatedSuffix.coords[i] gridCoordValue];
+        lastCoord = [locatedSuffix.gridCoords coordAt:i];
     } else {
         // This shouldn't happen, but better safe than sorry
-        lastCoord = [[locatedPrefix.coords lastObject] gridCoordValue];
+        lastCoord = [locatedPrefix.gridCoords last];
     }
     range.coordRange.end = [self.extractor successorOfCoord:lastCoord];
     range.columnWindow = self.extractor.logicalWindow;
@@ -590,34 +591,34 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         VT100GridWindowedRange range;
         NSInteger j = self.locatedPrefix.string.length - prefixChars;
         DLog(@"j=%@-%@=%@", @(self.locatedPrefix.string.length), @(prefixChars), @(j));
-        if (j < self.locatedPrefix.coords.count) {
-            DLog(@"j=%@ < self.locatedPrefix.coords.count=%@", @(j), @(self.locatedPrefix.coords.count));
-            range.coordRange.start = [self.locatedPrefix.coords[j] gridCoordValue];
+        if (j < self.locatedPrefix.gridCoords.count) {
+            DLog(@"j=%@ < self.locatedPrefix.gridCoords.count=%@", @(j), @(self.locatedPrefix.gridCoords.count));
+            range.coordRange.start = [self.locatedPrefix.gridCoords coordAt:j];
             DLog(@"range.coordRange.start=%@", VT100GridCoordDescription(range.coordRange.start));
-        } else if (j == self.locatedPrefix.coords.count && j > 0) {
-            DLog(@"j=%@ == self.locatedPrefix.coords.count && j > 0", @(j));
-            range.coordRange.start = [self.extractor successorOfCoord:[self.locatedPrefix.coords[j - 1] gridCoordValue]];
+        } else if (j == self.locatedPrefix.gridCoords.count && j > 0) {
+            DLog(@"j=%@ == self.locatedPrefix.gridCoords.count && j > 0", @(j));
+            range.coordRange.start = [self.extractor successorOfCoord:[self.locatedPrefix.gridCoords coordAt:j - 1]];
             DLog(@"range.coordRange.start=%@ which is successor of last prefix coord %@",
                  VT100GridCoordDescription(range.coordRange.start),
-                 VT100GridCoordDescription([self.locatedPrefix.coords[j - 1] gridCoordValue]));
+                 VT100GridCoordDescription([self.locatedPrefix.gridCoords coordAt:j - 1]));
         } else {
-            DLog(@"prefixCoordscount=%@ j=%@", @(self.locatedPrefix.coords.count), @(j));
+            DLog(@"prefixCoordscount=%@ j=%@", @(self.locatedPrefix.gridCoords.count), @(j));
             return nil;
         }
         NSInteger i = stringRange.length - prefixChars;
         DLog(@"i=%@-%@=%@", @(stringRange.length), @(prefixChars), @(i));
-        if (i < self.locatedSuffix.coords.count) {
-            DLog(@"i < suffixCoords.count=%@", @(self.locatedSuffix.coords.count));
-            range.coordRange.end = [self.locatedSuffix.coords[i] gridCoordValue];
-            DLog(@"range.coordRange.end=%@", VT100GridCoordDescription([self.locatedSuffix.coords[i] gridCoordValue]));
-        } else if (i > 0 && i == self.locatedSuffix.coords.count) {
+        if (i < self.locatedSuffix.gridCoords.count) {
+            DLog(@"i < suffixCoords.count=%@", @(self.locatedSuffix.gridCoords.count));
+            range.coordRange.end = [self.locatedSuffix.gridCoords coordAt:i];
+            DLog(@"range.coordRange.end=%@", VT100GridCoordDescription([self.locatedSuffix.gridCoords coordAt:i]));
+        } else if (i > 0 && i == self.locatedSuffix.gridCoords.count) {
             DLog(@"i == suffixCoords.count");
-            range.coordRange.end = [self.extractor successorOfCoord:[self.locatedSuffix.coords[i - 1] gridCoordValue]];
+            range.coordRange.end = [self.extractor successorOfCoord:[self.locatedSuffix.gridCoords coordAt:i - 1]];
             DLog(@"range.coordRange.end=%@, successor of %@",
                  VT100GridCoordDescription(range.coordRange.end),
-                 VT100GridCoordDescription([self.locatedSuffix.coords[i - 1] gridCoordValue]));
+                 VT100GridCoordDescription([self.locatedSuffix.gridCoords coordAt:i - 1]));
         } else {
-            DLog(@"i=%@ suffixcoords.count=%@", @(i), @(self.locatedSuffix.coords.count));
+            DLog(@"i=%@ suffixcoords.count=%@", @(i), @(self.locatedSuffix.gridCoords.count));
             return nil;
         }
         range.columnWindow = self.extractor.logicalWindow;

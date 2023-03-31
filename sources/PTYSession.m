@@ -14831,6 +14831,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return _statusBarViewController;
 }
 
+- (void)textViewOpenComposer:(NSString *)string {
+    [self setComposerString:string];
+    [self.composerManager reveal];
+}
+
 #pragma mark - iTermHotkeyNavigableSession
 
 - (void)sessionHotkeyDidNavigateToSession:(iTermShortcut *)shortcut {

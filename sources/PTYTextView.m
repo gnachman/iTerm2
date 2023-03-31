@@ -3284,11 +3284,29 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                       ignoringNewlines:ignoringNewlines];
 }
 
-// Called for a right click that isn't control+click (e.g., two fingers on trackpad).
-- (void)openContextMenuWithEvent:(NSEvent *)event {
+- (BOOL)showCommandInfoForEvent:(NSEvent *)event {
     iTermOffscreenCommandLine *offscreenCommandLine = [self offscreenCommandLineForClickAt:event.locationInWindow];
     if (offscreenCommandLine) {
         [self presentCommandInfoForOffscreenCommandLine:offscreenCommandLine event:event];
+        return YES;
+    }
+    id<VT100ScreenMarkReading> mark = [_contextMenuHelper markForClick:event];
+    if (mark.startDate != nil) {
+        const VT100GridCoord coord = [self coordForPointInWindow:event.locationInWindow];
+        const long long overflow = [self.dataSource totalScrollbackOverflow];
+        NSDate *date = [self.dataSource timestampForLine:coord.y];
+        [self presentCommandInfoForMark:mark
+                     absoluteLineNumber:VT100GridAbsCoordFromCoord(coord, overflow).y
+                                   date:date
+                                  event:event];
+        return YES;
+    }
+    return NO;
+}
+
+// Called for a right click that isn't control+click (e.g., two fingers on trackpad).
+- (void)openContextMenuWithEvent:(NSEvent *)event {
+    if ([self showCommandInfoForEvent:event]) {
         return;
     }
 

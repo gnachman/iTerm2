@@ -156,7 +156,7 @@ extern const NSInteger kLongMaximumWordLength;
               cappedAtSize:(int)maxBytes
         truncateTail:(BOOL)truncateTail
    continuationChars:(NSMutableIndexSet * _Nullable)continuationChars
-              coords:(NSMutableArray * _Nullable)coords;
+              coords:(iTermGridCoordArray * _Nullable)coords;
 
 // Returns an iTermLocated[Attributed]String
 - (id)locatedStringInRange:(VT100GridWindowedRange)range

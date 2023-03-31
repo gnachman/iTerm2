@@ -10,6 +10,7 @@ import Cocoa
 @objc(iTermCommandInfoViewControllerDelegate)
 protocol CommandInfoViewControllerDelegate: AnyObject {
     @objc func commandInfoSend(_ string: String)
+    @objc func commandInfoOpenInCompose(_ string: String)
 }
 
 @objc(iTermCommandInfoViewController)
@@ -26,16 +27,24 @@ class CommandInfoViewController: NSViewController {
     @IBOutlet weak var copyDirectory: NSButton!
     @IBOutlet weak var copyOutput: NSButton!
     @IBOutlet weak var progressIndicator: NSProgressIndicator!
+    @IBOutlet weak var startedAtStackView: NSStackView!
+    @IBOutlet weak var startedAt: NSTextField!
+    @IBOutlet weak var stackView: NSStackView!
 
     weak var delegate: CommandInfoViewControllerDelegate?
 
     private let _command: String
     private let _directory: String?
-    private let _returnCode: Int?
-    private let _runningTime: TimeInterval
+    private let _returnCode: iTermPromise<NSNumber>
+    private let _runningTime: TimeInterval?
     private let _size: Int
     private let _outputPromise: iTermRenegablePromise<NSString>
     private let _outputProgress: Progress
+    private let _startDate: Date?
+    private weak var enclosingPopover: NSPopover?
+    private var timer: Timer?
+    private var runtimeConstraint: NSLayoutConstraint?
+    private var _mark: VT100ScreenMarkReading
 
     @objc(presentOffscreenCommandLine:directory:outputSize:outputPromise:outputProgress:inView:at:delegate:)
     static func present(offscreenCommandLine: iTermOffscreenCommandLine,
@@ -46,29 +55,56 @@ class CommandInfoViewController: NSViewController {
                         inView view: NSView,
                         at p: NSPoint,
                         delegate: CommandInfoViewControllerDelegate?) {
-        let mark = offscreenCommandLine.mark
-        let runningTime: TimeInterval
-        let code: Int?
-        if let endDate = mark.endDate {
-            runningTime = endDate.timeIntervalSince(mark.startDate)
-            code = Int(mark.code)
+        present(mark: offscreenCommandLine.mark,
+                date: offscreenCommandLine.date,
+                directory: directory,
+                outputSize: outputSize,
+                outputPromise: outputPromise,
+                outputProgress: outputProgress,
+                inView: view,
+                at: p,
+                delegate: delegate)
+    }
+
+    @objc(presentMark:date:directory:outputSize:outputPromise:outputProgress:inView:at:delegate:)
+    static func present(mark: VT100ScreenMarkReading,
+                        date: Date?,
+                        directory: String?,
+                        outputSize: Int,
+                        outputPromise: iTermRenegablePromise<NSString>,
+                        outputProgress: Progress,
+                        inView view: NSView,
+                        at p: NSPoint,
+                        delegate: CommandInfoViewControllerDelegate?) {
+        let mark = mark
+        let runningTime: TimeInterval?
+        let codePromise: iTermPromise<NSNumber>
+        if let endDate = mark.endDate, let startDate = mark.startDate {
+            runningTime = endDate.timeIntervalSince(startDate)
+            codePromise = iTermPromise(value: NSNumber(value: Int(mark.code)))
+        } else if let startDate = mark.startDate {
+            runningTime = -startDate.timeIntervalSinceNow
+            codePromise = mark.returnCodePromise;
         } else {
-            runningTime = -mark.startDate.timeIntervalSinceNow
-            code = nil
+            runningTime = nil
+            codePromise = mark.returnCodePromise
         }
 
         let viewController = CommandInfoViewController(
-            command: offscreenCommandLine.mark.command,
+            mark: mark,
+            command: mark.command,
             directory: directory,
-            returnCode: code,
+            returnCode: codePromise,
             runningTime: runningTime,
             size: outputSize,
             outputPromise: outputPromise,
-            outputProgress: outputProgress)
+            outputProgress: outputProgress,
+            startDate: date)
         viewController.delegate = delegate
         viewController.loadView()
         viewController.sizeToFit()
         let popover = NSPopover()
+        viewController.enclosingPopover = popover
         popover.contentViewController = viewController
         popover.behavior = .transient
         popover.show(relativeTo: NSRect(origin: p, size: NSSize(width: 1.0, height: 1.0)),
@@ -76,13 +112,16 @@ class CommandInfoViewController: NSViewController {
                      preferredEdge: .minY)
     }
 
-    init(command: String,
+    init(mark: VT100ScreenMarkReading,
+         command: String,
          directory: String?,
-         returnCode: Int?,
-         runningTime: TimeInterval,
+         returnCode: iTermPromise<NSNumber>,
+         runningTime: TimeInterval?,
          size: Int,
          outputPromise: iTermRenegablePromise<NSString>,
-         outputProgress: Progress) {
+         outputProgress: Progress,
+         startDate: Date?) {
+        _mark = mark
         _command = command
         _directory = directory
         _returnCode = returnCode
@@ -90,6 +129,7 @@ class CommandInfoViewController: NSViewController {
         _size = size
         _outputPromise = outputPromise
         _outputProgress = outputProgress
+        _startDate = startDate
 
         super.init(nibName: NSNib.Name("CommandInfoViewController"),
                    bundle: Bundle(for: CommandInfoViewController.self))
@@ -101,6 +141,50 @@ class CommandInfoViewController: NSViewController {
 
     deinit {
         _outputPromise.renege()
+        timer?.invalidate()
+    }
+
+    private func timerDidFire() {
+        updateRunningTime()
+        if _returnCode.hasValue {
+            timer?.invalidate()
+            timer = nil
+            return
+        }
+        if let runtimeConstraint {
+            runtimeConstraint.constant = max(runtimeConstraint.constant,
+                                             runningTime.intrinsicContentSize.width)
+        } else {
+            runtimeConstraint = NSLayoutConstraint(item: runningTime!,
+                                                   attribute: .width,
+                                                   relatedBy: .greaterThanOrEqual,
+                                                   toItem: nil,
+                                                   attribute: .notAnAttribute,
+                                                   multiplier: 1,
+                                                   constant: runningTime.intrinsicContentSize.width)
+            runningTime.addConstraint(runtimeConstraint!)
+        }
+    }
+
+    private func commandDidFinish(returnCode code: Int) {
+        returnCode.stringValue = String(code)
+        if code != 0 {
+            returnCode.textColor = .red
+            returnCode.stringValue += " 🛑"
+        } else {
+            returnCode.stringValue += " ✅"
+        }
+    }
+
+    private func updateRunningTime() {
+        guard let _startDate else {
+            return
+        }
+        if let endDate = _mark.endDate, let startDate = _mark.startDate {
+            runningTime.stringValue = endDate.timeIntervalSince(startDate).formattedHMS
+        } else {
+            runningTime.stringValue = (-_startDate.timeIntervalSinceNow).formattedHMS
+        }
     }
 
     override func awakeFromNib() {
@@ -109,8 +193,24 @@ class CommandInfoViewController: NSViewController {
         directory.stringValue = _directory ?? ""
         sendDirectory.isEnabled = (_directory != nil)
         copyDirectory.isEnabled = (_directory != nil)
-        returnCode.stringValue = _returnCode.map { String($0) } ?? ""
-        runningTime.stringValue = _runningTime.formattedHMS
+        if let codeNumber = _returnCode.maybeValue {
+            commandDidFinish(returnCode: codeNumber.intValue)
+        } else {
+            returnCode.stringValue = "Still Running"
+            if _startDate != nil {
+                timer = Timer.scheduledTimer(withTimeInterval: 0.017, repeats: true) { [weak self] timer in
+                    self?.timerDidFire()
+                }
+            }
+            _returnCode.then { [weak self] number in
+                self?.commandDidFinish(returnCode: number.intValue)
+            }
+        }
+        if let _runningTime {
+            runningTime.stringValue = String(_runningTime.formattedHMS)
+        } else {
+            runningTime.stringValue = "Unknown"
+        }
         output.stringValue = NSString.stringWithHumanReadableSize(UInt64(_size)) as String
         copyOutput.isEnabled = false
         progressIndicator.isHidden = false
@@ -122,6 +222,19 @@ class CommandInfoViewController: NSViewController {
                 self?.outputDidBecomeAvailable()
             }
         }
+        if let _startDate {
+            startedAt.stringValue = "Started at " + formattedDate(_startDate)
+        } else {
+            startedAtStackView.isHidden = true
+            stackView.removeArrangedSubview(startedAtStackView)
+            startedAtStackView.removeFromSuperview()
+        }
+    }
+
+    private func formattedDate(_ date: Date) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "h:mm:ss 'on' MMM d, yyyy"
+        return dateFormatter.string(from: date)
     }
 
     private func updateOutputProgress(_ progress: Double) {
@@ -174,6 +287,16 @@ class CommandInfoViewController: NSViewController {
         _outputPromise.wait().whenFirst { string in
             self.copyString(string as String)
         }
+    }
+
+    @IBAction func openInComposer(_ sender: Any) {
+        var lines = [String]()
+        if let _directory {
+            lines.append("cd " + (_directory as NSString).withEscapedShellCharacters(includingNewlines: true))
+        }
+        lines.append(_command)
+        delegate?.commandInfoOpenInCompose(lines.joined(separator: "\n"))
+        enclosingPopover?.close()
     }
 
     private func copyString(_ string: String) {

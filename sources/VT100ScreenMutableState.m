@@ -3666,7 +3666,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     }
     [self loadConfigIfNeededFromDelegate:delegate];
 
-    const NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+    const NSTimeInterval now = [[NSDate date] timeIntervalSinceReferenceDate];
     self.primaryGrid.currentDate = now;
     self.altGrid.currentDate = now;
 
@@ -4927,7 +4927,7 @@ launchCoprocessWithCommand:(NSString *)command
 #pragma mark - iTermTokenExecutorDelegate
 
 - (BOOL)tokenExecutorShouldQueueTokens {
-    const NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+    const NSTimeInterval now = [[NSDate date] timeIntervalSinceReferenceDate];
     self.primaryGrid.currentDate = now;
     self.altGrid.currentDate = now;
 

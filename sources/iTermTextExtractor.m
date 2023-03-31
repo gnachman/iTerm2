@@ -1418,7 +1418,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         cappedAtSize:(int)maxBytes
         truncateTail:(BOOL)truncateTail
    continuationChars:(NSMutableIndexSet *)continuationChars
-              coords:(NSMutableArray *)coordsOut {
+              coords:(iTermGridCoordArray *)coordsOut {
     __kindof iTermLocatedString *locatedString =
     [self locatedStringInRange:windowedRange
              attributeProvider:attributeProvider
@@ -1429,7 +1429,7 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
                   cappedAtSize:maxBytes
                   truncateTail:truncateTail
              continuationChars:continuationChars];
-    [coordsOut addObjectsFromArray:locatedString.coords];
+    [coordsOut appendContentsOfArray:locatedString.gridCoords];
     return attributeProvider ? ((iTermLocatedAttributedString *)locatedString).attributedString : locatedString.string;
 }
 

@@ -338,6 +338,14 @@ iTermCommandInfoViewControllerDelegate>
 #pragma mark - Context Menu
 
 - (NSMenu *)menuForEvent:(NSEvent *)event {
+    iTermOffscreenCommandLine *offscreenCommandLine = [self offscreenCommandLineForClickAt:event.locationInWindow];
+    if (offscreenCommandLine) {
+        return nil;
+    }
+    if ([_contextMenuHelper markForClick:event]) {
+        return nil;
+    }
+
     return [_contextMenuHelper menuForEvent:event];
 }
 
@@ -363,9 +371,19 @@ iTermCommandInfoViewControllerDelegate>
 
 - (void)presentCommandInfoForOffscreenCommandLine:(iTermOffscreenCommandLine *)offscreenCommandLine
                                             event:(NSEvent *)event {
+    [self presentCommandInfoForMark:offscreenCommandLine.mark
+                 absoluteLineNumber:offscreenCommandLine.absoluteLineNumber
+                               date:offscreenCommandLine.date
+                              event:event];
+}
+
+- (void)presentCommandInfoForMark:(id<VT100ScreenMarkReading>)mark
+               absoluteLineNumber:(long long)absoluteLineNumber
+                             date:(NSDate *)date
+                            event:(NSEvent *)event {
     long long overflow = self.dataSource.totalScrollbackOverflow;
-    const int line = offscreenCommandLine.absoluteLineNumber - overflow;
-    const VT100GridCoordRange coordRange = [self.dataSource textViewRangeOfOutputForCommandMark:offscreenCommandLine.mark];
+    const int line = absoluteLineNumber - overflow;
+    const VT100GridCoordRange coordRange = [self.dataSource textViewRangeOfOutputForCommandMark:mark];
     const VT100GridRange lineRange = VT100GridRangeMake(coordRange.start.y, coordRange.end.y - coordRange.start.y + 1);
     NSString *directory = [self.dataSource workingDirectoryOnLine:line];
     const NSPoint point = [self convertPoint:event.locationInWindow
@@ -379,18 +397,19 @@ iTermCommandInfoViewControllerDelegate>
     [selection moveSelectionEndpointTo:VT100GridAbsCoordMake(0, coordRange.end.y + overflow - 1)];
     [selection endLiveSelection];
     iTermProgress *outputProgress = [[iTermProgress alloc] init];
-    iTermPromise<NSString *> *outputPromise = [self promisedStringForSelectedTextCappedAtSize:INT_MAX
-                                                                            minimumLineNumber:0
-                                                                                    selection:selection
-                                                                                     progress:outputProgress];
-    [iTermCommandInfoViewController presentOffscreenCommandLine:offscreenCommandLine
-                                                      directory:directory
-                                                     outputSize:[self.dataSource numberOfCellsUsedInRange:lineRange]
-                                                  outputPromise:outputPromise
-                                                 outputProgress:outputProgress
-                                                         inView:self
-                                                             at:point
-                                                       delegate:self];
+    iTermRenegablePromise<NSString *> *outputPromise = [self promisedStringForSelectedTextCappedAtSize:INT_MAX
+                                                                                     minimumLineNumber:0
+                                                                                             selection:selection
+                                                                                              progress:outputProgress];
+    [iTermCommandInfoViewController presentMark:mark
+                                           date:date
+                                      directory:directory
+                                     outputSize:[self.dataSource numberOfCellsUsedInRange:lineRange]
+                                  outputPromise:outputPromise
+                                 outputProgress:outputProgress
+                                         inView:self
+                                             at:point
+                                       delegate:self];
 }
 
 #pragma mark - Mouse Cursor
@@ -1674,6 +1693,10 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
 
 - (void)commandInfoSend:(NSString *)string {
     [self.delegate sendText:string escaping:iTermSendTextEscapingNone];
+}
+
+- (void)commandInfoOpenInCompose:(NSString *)string {
+    [self.delegate textViewOpenComposer:string];
 }
 
 @end

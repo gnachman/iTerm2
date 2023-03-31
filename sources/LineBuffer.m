@@ -1696,6 +1696,9 @@ NS_INLINE int TotalNumberOfRawLines(LineBuffer *self) {
 
 - (NSInteger)numberOfCellsUsedInWrappedLineRange:(VT100GridRange)wrappedLineRange
                                            width:(int)width {
+    if (wrappedLineRange.length <= 0) {
+        return 0;
+    }
     const int y1 = wrappedLineRange.location;
     const int y2 = VT100GridRangeMax(wrappedLineRange);
     

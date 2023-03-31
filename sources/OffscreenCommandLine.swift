@@ -14,7 +14,7 @@ fileprivate func clamp<T: Comparable>(_ value: T, min minValue: T, max maxValue:
 struct OffscreenCommandLine {
     var characters: ScreenCharArray
     var absoluteLineNumber: Int64
-    var date: Date
+    var date: Date?
     private var color: NSColor? = nil
     var mark: VT100ScreenMarkReading
 
@@ -42,7 +42,7 @@ struct OffscreenCommandLine {
 
     init(characters: ScreenCharArray,
          absoluteLineNumber: Int64,
-         date: Date,
+         date: Date?,
          mark: VT100ScreenMarkReading) {
         self.characters = characters
         self.absoluteLineNumber = absoluteLineNumber
@@ -56,13 +56,13 @@ struct OffscreenCommandLine {
     private var state: OffscreenCommandLine
     @objc var characters: ScreenCharArray { state.characters }
     @objc var absoluteLineNumber: Int64 { state.absoluteLineNumber }
-    @objc var date: Date { state.date }
+    @objc var date: Date? { state.date }
     @objc var mark: VT100ScreenMarkReading { state.mark }
 
     @objc
     init(characters: ScreenCharArray,
          absoluteLineNumber: Int64,
-         date: Date,
+         date: Date?,
          mark: VT100ScreenMarkReading) {
         var continuation = screen_char_t()
         continuation.code = unichar(EOL_HARD)
