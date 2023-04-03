@@ -188,6 +188,7 @@ typedef struct {
     VT100TerminalSGRStackEntry _sgrStack[VT100TerminalMaxSGRStackEntries];
     int _sgrStackSize;
     BOOL _isScreenLike;
+    BOOL _receivingMultipartFile;
 }
 
 @synthesize receivingFile = receivingFile_;
@@ -1962,6 +1963,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             [_delegate terminalDidFinishReceivingFile];
             receivingFile_ = NO;
             return;
+        } else if (_receivingMultipartFile) {
+            DLog(@"Receiving multipart file so allow %@ to proceed as usual", token);
         } else {
             DLog(@"Unexpected field receipt end");
             [_delegate terminalFileReceiptEndedUnexpectedly];
@@ -3994,7 +3997,8 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         if ([_delegate terminalIsTrusted]) {
             [_delegate terminalSetPasteboard:value];
         }
-    } else if ([key isEqualToString:@"File"]) {
+    } else if ([key isEqualToString:@"File"] || [key isEqualToString:@"MultipartFile"]) {
+        _receivingMultipartFile = [key isEqualToString:@"MultipartFile"];
         if ([_delegate terminalIsTrusted]) {
             [self executeFileCommandWithValue:value];
         } else {
@@ -4002,6 +4006,13 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             receivingFile_ = YES;
             [_delegate terminalAppendString:[NSString stringWithLongCharacter:0x1F6AB]];
         }
+    } else if ([key isEqualToString:@"FilePart"]) {
+        if ([_delegate terminalIsTrusted]) {
+            [_delegate terminalDidReceiveBase64FileData:value];
+        }
+    } else if ([key isEqualToString:@"FileEnd"]) {
+        [_delegate terminalDidFinishReceivingFile];
+        receivingFile_ = NO;
     } else if ([key isEqualToString:@"Copy"]) {
         if ([_delegate terminalIsTrusted]) {
             NSArray<NSString *> *parts = [value componentsSeparatedByString:@";"];

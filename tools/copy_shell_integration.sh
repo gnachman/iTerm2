@@ -31,7 +31,6 @@ cp $SUBMODULE/shell_integration/zsh  Resources/shell_integration/iterm2_shell_in
 DEST=$PWD/Resources/utilities
 
 pushd $SUBMODULE/utilities
-rm it2ssh
 files=$(find . -type f)
 tar cvfz $DEST/utilities.tgz *
 echo * > $DEST/utilities-manifest.txt
