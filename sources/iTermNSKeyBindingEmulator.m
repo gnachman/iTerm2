@@ -91,6 +91,7 @@ static struct {
     _root = [iTermNSKeyBindingEmulator keyBindingsDictionaryForFile:bindPath
                                            pointlessFirstKeystrokes:temp
                                                      allowedActions:allowedActions];
+    _currentDict = _root;
     _pointlessFirstKeystrokes = temp;
 }
 
@@ -349,7 +350,6 @@ static struct {
     self = [super init];
     if (self) {
         _savedEvents = [[NSMutableArray alloc] init];
-        _currentDict = _root;
     }
     return self;
 }
