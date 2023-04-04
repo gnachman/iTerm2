@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (long long)totalScrollbackOverflow;
 - (id<iTermExternalAttributeIndexReading> _Nullable)externalAttributeIndexForLine:(int)y;
 - (id _Nullable)fetchLine:(int)line block:(id _Nullable (^ NS_NOESCAPE)(ScreenCharArray *sct))block;
+- (NSDate * _Nullable)dateForLine:(int)line;
 
 @end
 

@@ -980,6 +980,22 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return self.cumulativeScrollbackOverflow;
 }
 
+- (NSDate *)dateForLine:(int)line {
+    const NSInteger numLinesInLineBuffer = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
+    if (line < numLinesInLineBuffer) {
+        const NSTimeInterval timestamp = [self.linebuffer metadataForLineNumber:line width:self.currentGrid.size.width].timestamp;
+        if (!timestamp) {
+            return nil;
+        }
+        return [NSDate dateWithTimeIntervalSinceReferenceDate:timestamp];
+    }
+    const NSTimeInterval timestamp = [self.currentGrid timestampForLine:line - numLinesInLineBuffer];
+    if (!timestamp) {
+        return nil;
+    }
+    return [NSDate dateWithTimeIntervalSinceReferenceDate:timestamp];
+}
+
 #pragma mark - VT100GridDelgate
 
 // This is here to enable copying of the temporary double buffer.

@@ -407,6 +407,7 @@ iTermCommandInfoViewControllerDelegate>
     iTermProgress *outputProgress = [[iTermProgress alloc] init];
     iTermRenegablePromise<NSString *> *outputPromise = [self promisedStringForSelectedTextCappedAtSize:INT_MAX
                                                                                      minimumLineNumber:0
+                                                                                            timestamps:NO
                                                                                              selection:selection
                                                                                               progress:outputProgress];
     [iTermCommandInfoViewController presentMark:mark
@@ -726,6 +727,7 @@ iTermCommandInfoViewControllerDelegate>
 
     iTermRenegablePromise<NSString *> *promise = [self promisedStringForSelectedTextCappedAtSize:maxSize
                                                                                minimumLineNumber:0
+                                                                                      timestamps:NO
                                                                                        selection:selection
                                                                                         progress:nil];
     if (promise) {
@@ -764,6 +766,7 @@ iTermCommandInfoViewControllerDelegate>
 
 - (iTermRenegablePromise<NSString *> *)promisedStringForSelectedTextCappedAtSize:(int)maxBytes
                                                                minimumLineNumber:(int)minimumLineNumber
+                                                                      timestamps:(BOOL)timestamps
                                                                        selection:(iTermSelection *)selection
                                                                         progress:(iTermProgress *)outputProgress {
     iTermStringSelectionExtractor *extractor =
@@ -773,12 +776,14 @@ iTermCommandInfoViewControllerDelegate>
                                                     maxBytes:maxBytes
                                            minimumLineNumber:minimumLineNumber];
     extractor.progress = outputProgress;
+    extractor.addTimestamps = timestamps;
     return [iTermSelectionPromise string:extractor
                               allowEmpty:![iTermAdvancedSettingsModel disallowCopyEmptyString]];
 }
 
 - (iTermRenegablePromise<NSString *> *)promisedSGRStringForSelectedTextCappedAtSize:(int)maxBytes
                                                                   minimumLineNumber:(int)minimumLineNumber
+                                                                         timestamps:(BOOL)timestamps
                                                                           selection:(iTermSelection *)selection {
     iTermSGRSelectionExtractor *extractor =
     [[iTermSGRSelectionExtractor alloc] initWithSelection:selection
@@ -786,12 +791,14 @@ iTermCommandInfoViewControllerDelegate>
                                                   options:[self commonSelectionOptions]
                                                  maxBytes:maxBytes
                                         minimumLineNumber:minimumLineNumber];
+    extractor.addTimestamps = timestamps;
     return [iTermSelectionPromise string:extractor
                               allowEmpty:![iTermAdvancedSettingsModel disallowCopyEmptyString]];
 }
 
 - (iTermRenegablePromise<NSAttributedString *> *)promisedAttributedStringForSelectedTextCappedAtSize:(int)maxBytes
                                                                                    minimumLineNumber:(int)minimumLineNumber
+                                                                                          timestamps:(BOOL)timestamps
                                                                                            selection:(iTermSelection *)selection {
     iTermCharacterAttributesProvider *provider =
     [[iTermCharacterAttributesProvider alloc] initWithColorMap:self.colorMap
@@ -810,7 +817,7 @@ iTermCommandInfoViewControllerDelegate>
                                                                options:[self commonSelectionOptions]
                                                               maxBytes:maxBytes
                                                      minimumLineNumber:minimumLineNumber];
-
+    extractor.addTimestamps = timestamps;
     return [iTermSelectionPromise attributedString:extractor
                        characterAttributesProvider:provider
                                         allowEmpty:![iTermAdvancedSettingsModel disallowCopyEmptyString]];
@@ -826,6 +833,7 @@ iTermCommandInfoViewControllerDelegate>
         case iTermCopyTextStyleAttributed:
             promise = [self promisedAttributedStringForSelectedTextCappedAtSize:maxBytes
                                                               minimumLineNumber:minimumLineNumber
+                                                                     timestamps:NO
                                                                       selection:selection];
             type = NSPasteboardTypeRTF;
             break;
@@ -833,6 +841,7 @@ iTermCommandInfoViewControllerDelegate>
         case iTermCopyTextStylePlainText:
             promise = [self promisedStringForSelectedTextCappedAtSize:maxBytes
                                                     minimumLineNumber:minimumLineNumber
+                                                           timestamps:NO
                                                             selection:selection
                                                              progress:nil];
             type = NSPasteboardTypeString;
@@ -841,6 +850,7 @@ iTermCommandInfoViewControllerDelegate>
         case iTermCopyTextStyleWithControlSequences:
             promise = [self promisedSGRStringForSelectedTextCappedAtSize:maxBytes
                                                        minimumLineNumber:minimumLineNumber
+                                                              timestamps:NO
                                                                selection:selection];
             type = NSPasteboardTypeString;
             break;
@@ -853,6 +863,7 @@ iTermCommandInfoViewControllerDelegate>
 - (id)selectedTextWithStyle:(iTermCopyTextStyle)style
                cappedAtSize:(int)maxBytes
           minimumLineNumber:(int)minimumLineNumber
+                 timestamps:(BOOL)timestamps
                   selection:(iTermSelection *)selection {
     if (@available(macOS 11.0, *)) {
         [[iTermAsyncSelectionProvider currentProvider] cancel];
@@ -861,17 +872,20 @@ iTermCommandInfoViewControllerDelegate>
         case iTermCopyTextStyleAttributed:
             return [[self promisedAttributedStringForSelectedTextCappedAtSize:maxBytes
                                                             minimumLineNumber:minimumLineNumber
+                                                                   timestamps:timestamps
                                                                     selection:selection] wait].maybeFirst;
 
         case iTermCopyTextStylePlainText:
             return [[self promisedStringForSelectedTextCappedAtSize:maxBytes
                                                   minimumLineNumber:minimumLineNumber
+                                                         timestamps:timestamps
                                                           selection:selection
                                                            progress:nil] wait].maybeFirst;
 
         case iTermCopyTextStyleWithControlSequences:
             return [[self promisedSGRStringForSelectedTextCappedAtSize:maxBytes
                                                      minimumLineNumber:minimumLineNumber
+                                                            timestamps:timestamps
                                                              selection:selection] wait].maybeFirst;
     }
 }
@@ -881,6 +895,7 @@ iTermCommandInfoViewControllerDelegate>
     return [self selectedTextWithStyle:iTermCopyTextStylePlainText
                           cappedAtSize:maxBytes
                      minimumLineNumber:minimumLineNumber
+                            timestamps:NO
                              selection:self.selection];
 }
 
@@ -892,6 +907,7 @@ iTermCommandInfoViewControllerDelegate>
     return [self selectedTextWithStyle:iTermCopyTextStyleAttributed
                           cappedAtSize:0
                      minimumLineNumber:0
+                            timestamps:NO
                              selection:selection];
 }
 

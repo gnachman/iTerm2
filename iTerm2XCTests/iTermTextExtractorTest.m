@@ -628,6 +628,10 @@ static const NSInteger kUnicodeVersion = 9;
 
 #pragma mark - iTermTextDataSource
 
+- (NSDate *)dateForLine:(int)line {
+    return [NSDate date];
+}
+
 - (int)lengthOfLineAtIndex:(int)theIndex withBuffer:(screen_char_t *)buffer {
     if ([_lines[0] isKindOfClass:[NSData class]]) {
         NSData *data = _lines[0];

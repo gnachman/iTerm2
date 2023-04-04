@@ -112,6 +112,7 @@ iTermURLActionHelperDelegate>
 - (id)selectedTextWithStyle:(iTermCopyTextStyle)style
                cappedAtSize:(int)maxBytes
           minimumLineNumber:(int)minimumLineNumber
+                 timestamps:(BOOL)timestamps
                   selection:(iTermSelection *)selection;
 
 - (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad;

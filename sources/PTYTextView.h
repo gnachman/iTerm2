@@ -687,7 +687,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 // Turns on the flicker fixer (if enabled) while drawing.
 - (void)performBlockWithFlickerFixerGrid:(void (NS_NOESCAPE ^)(void))block;
 
-- (id)contentWithAttributes:(BOOL)attributes;
+- (id)contentWithAttributes:(BOOL)attributes timestamps:(BOOL)timestamps;
 - (void)setUseBoldColor:(BOOL)flag brighten:(BOOL)brighten;
 
 - (void)drawRect:(NSRect)rect inView:(NSView *)view;

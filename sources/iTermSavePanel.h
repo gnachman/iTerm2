@@ -14,7 +14,8 @@ typedef NS_OPTIONS(NSInteger, iTermSavePanelOptions) {
     // If this option is not set, the user will only be asked about replacing.
     kSavePanelOptionAppendOrReplace = (1 << 0),
     kSavePanelOptionFileFormatAccessory = (1 << 1),
-    kSavePanelOptionLogPlainTextAccessory = (1 << 2)
+    kSavePanelOptionLogPlainTextAccessory = (1 << 2),
+    kSavePanelOptionIncludeTimestampsAccessory= (1 << 3)
 };
 
 typedef NS_ENUM(NSInteger, iTermSavePanelReplaceOrAppend) {
@@ -31,6 +32,7 @@ typedef NS_ENUM(NSInteger, iTermSavePanelReplaceOrAppend) {
 // Path the user selected.
 @property(nonatomic, readonly) NSString *path;
 @property (nonatomic, readonly) iTermLoggingStyle loggingStyle;
+@property(nonatomic, readonly) BOOL timestamps;
 
 + (void)asyncShowWithOptions:(NSInteger)options
                   identifier:(NSString *)identifier

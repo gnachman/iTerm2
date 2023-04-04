@@ -13,6 +13,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, strong) IBOutlet NSPopUpButton *popupButton;
 @property (nonatomic, copy) void (^onChange)(NSInteger);
+@property (nonatomic) BOOL showTimestamps;
+@property (nonatomic) BOOL showFileFormat;
+@property (nonatomic, readonly) BOOL timestampsEnabled;
 
 - (void)popupButtonDidChange:(id)sender;
 

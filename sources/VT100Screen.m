@@ -280,6 +280,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state screenCharArrayForLine:line];
 }
 
+- (NSDate *)dateForLine:(int)line {
+    return [_state dateForLine:line];
+}
+
 - (ScreenCharArray *)screenCharArrayAtScreenIndex:(int)index {
     return [_state screenCharArrayAtScreenIndex:index];
 }

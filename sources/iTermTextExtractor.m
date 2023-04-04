@@ -1474,8 +1474,13 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     __block BOOL lineContainsNonImage = NO;
     __block BOOL lineContainsImage = NO;
     __block BOOL copiedImage = NO;
+    __block BOOL needsTimestamps = self.addTimestamps;
     [self enumerateCharsInRange:windowedRange
                       charBlock:^BOOL(const screen_char_t *currentLine, screen_char_t theChar, iTermExternalAttribute *ea, VT100GridCoord coord) {
+        if (needsTimestamps) {
+            appendString([self formattedTimestampForLine:coord.y], (screen_char_t) { .code = 0, .complexChar = 0, .image = 0}, nil, coord);
+            needsTimestamps = NO;
+        }
         if (theChar.image) {
             lineContainsImage = YES;
         } else {
@@ -1543,6 +1548,14 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
         return NO;
     }
                        eolBlock:^BOOL(unichar code, int numPrecedingNulls, int line) {
+        if (needsTimestamps) {
+            VT100GridCoord coord = VT100GridCoordMake(0, line);
+            appendString([self formattedTimestampForLine:coord.y],
+                         [self defaultChar],
+                         nil,
+                         coord);
+        }
+        needsTimestamps = self.addTimestamps;
         self.progress.fraction = (double)(line - windowedRange.coordRange.start.y) / (double)(windowedRange.coordRange.end.y - windowedRange.coordRange.start.y + 1);
         BOOL ignore = (!copiedImage && !lineContainsNonImage && lineContainsImage);
         copiedImage = lineContainsNonImage = lineContainsImage = NO;
@@ -1698,6 +1711,27 @@ trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
     }
 
     return trimmedRange;
+}
+
+- (NSString *)formattedTimestampForLine:(int)line {
+    NSDate *date = [self.dataSource dateForLine:line];
+    static NSString *format;
+    static dispatch_once_t onceToken;
+    static NSDateFormatter *formatter;
+    dispatch_once(&onceToken, ^{
+        format = [NSDateFormatter dateFormatFromTemplate:@"yyyy-MM-dd HH:mm:ss"
+                                                    options:0
+                                                     locale:[NSLocale currentLocale]];
+        formatter = [[NSDateFormatter alloc] init];
+        formatter.dateFormat = format;
+    });
+    NSString *content;
+    if (date) {
+        content = [formatter stringFromDate:date];
+    } else {
+        content = [[formatter stringFromDate:[NSDate date]] stringByReplacingOccurrencesOfRegex:@"." withString:@" "];
+    }
+    return [NSString stringWithFormat:@"[%@] ", content];
 }
 
 - (BOOL)haveDoubleWidthExtensionAt:(VT100GridCoord)coord {

@@ -54,4 +54,12 @@ class TerminalContentSnapshot: NSObject, iTermTextDataSource {
         let line = lineBuffer.wrappedLine(at: line, width: _width)
         return block(line)
     }
+
+    func date(forLine line: Int32) -> Date? {
+        let timestamp = lineBuffer.metadata(forLineNumber: line, width: _width).timestamp
+        if timestamp == 0 {
+            return nil
+        }
+        return Date(timeIntervalSinceReferenceDate: timestamp)
+    }
 }

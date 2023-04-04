@@ -2536,6 +2536,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return [self selectedTextWithStyle:iTermCopyTextStylePlainText
                           cappedAtSize:maxBytes
                      minimumLineNumber:0
+                            timestamps:NO
                              selection:selection];
 }
 
@@ -2792,6 +2793,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     NSString *copyString = [self selectedTextWithStyle:iTermCopyTextStyleWithControlSequences
                                           cappedAtSize:-1
                                      minimumLineNumber:0
+                                            timestamps:NO
                                              selection:self.selection];
 
     if ([iTermAdvancedSettingsModel disallowCopyEmptyString] && copyString.length == 0) {
@@ -2894,15 +2896,16 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 #pragma mark - Content
 
 - (NSAttributedString *)attributedContent {
-    return [self contentWithAttributes:YES];
+    return [self contentWithAttributes:YES timestamps:NO];
 }
 
 - (NSString *)content {
-    return [self contentWithAttributes:NO];
+    return [self contentWithAttributes:NO timestamps:NO];
 }
 
-- (id)contentWithAttributes:(BOOL)attributes {
+- (id)contentWithAttributes:(BOOL)attributes timestamps:(BOOL)timestamps {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
+    extractor.addTimestamps = timestamps;
     VT100GridCoordRange theRange = VT100GridCoordRangeMake(0,
                                                            0,
                                                            [_dataSource width],
@@ -2927,18 +2930,14 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 
 // Save method
 - (void)saveDocumentAs:(id)sender {
-    // We get our content of the textview or selection, if any
-    NSString *aString = [self selectedText];
-    if (!aString) {
-        aString = [self content];
-    }
-
-    NSData *aData = [aString dataUsingEncoding:[_delegate textViewEncoding]
-                          allowLossyConversion:YES];
-
-    // initialize a save panel
     NSSavePanel *aSavePanel = [NSSavePanel savePanel];
-    [aSavePanel setAccessoryView:nil];
+    NSButton *timestampsButton = [[[NSButton alloc] init] autorelease];
+    [timestampsButton setButtonType:NSButtonTypeSwitch];
+    timestampsButton.title = @"Include timestamps";
+    NSString *userDefaultsKey = @"NoSyncSaveWithTimestamps";
+    timestampsButton.state = [[NSUserDefaults standardUserDefaults] boolForKey:userDefaultsKey] ? NSControlStateValueOn : NSControlStateValueOff;
+    [timestampsButton sizeToFit];
+    [aSavePanel setAccessoryView:timestampsButton];
 
     NSString *path = @"";
     NSArray *searchPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,
@@ -2963,11 +2962,32 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         if (result != NSModalResponseOK) {
             return;
         }
-        if (![aData writeToFile:aSavePanel.URL.path atomically:YES]) {
+        const BOOL wantTimestamps = timestampsButton.state == NSControlStateValueOn;
+        [[NSUserDefaults standardUserDefaults] setBool:wantTimestamps forKey:userDefaultsKey];
+        if (![[self dataToSaveWithTimestamps:wantTimestamps] writeToFile:aSavePanel.URL.path atomically:YES]) {
             DLog(@"Beep: can't write to %@", aSavePanel.URL);
             NSBeep();
         }
     }];
+}
+
+- (NSData *)dataToSaveWithTimestamps:(BOOL)timestamps {
+    if (!timestamps) {
+        NSString *string = [self selectedText];
+        if (!string) {
+            string = [self content];
+        }
+
+        return [string dataUsingEncoding:[_delegate textViewEncoding]
+                     allowLossyConversion:YES];
+    }
+
+    return [[self selectedTextWithStyle:iTermCopyTextStylePlainText
+                           cappedAtSize:0
+                      minimumLineNumber:0
+                             timestamps:YES
+                              selection:self.selection] dataUsingEncoding:[_delegate textViewEncoding]
+            allowLossyConversion:YES];
 }
 
 #pragma mark - Miscellaneous Actions
@@ -5062,6 +5082,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     return [self selectedTextWithStyle:iTermCopyTextStylePlainText
                           cappedAtSize:0
                      minimumLineNumber:[self accessibilityHelperLineNumberForAccessibilityLineNumber:0]
+                            timestamps:NO
                              selection:self.selection];
 }
 

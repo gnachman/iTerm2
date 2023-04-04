@@ -101,6 +101,7 @@ class SelectionExtractor: NSObject {
         return _canceled.value
     }
     @objc var progress: Progress?
+    @objc var addTimestamps = false
 
     // Does not include selected text on lines before |minimumLineNumber|.
     // Returns an NSAttributedString* if style is iTermCopyTextStyleAttributed, or an NSString* if not.
@@ -184,6 +185,7 @@ class SelectionExtractor: NSObject {
                     extractor.progress = progress
                 }
                 atomicExtractor.set(extractor)
+                extractor.addTimestamps = addTimestamps
                 let content = extractor.content(in: range,
                                                 attributeProvider: attributeProvider,
                                                 nullPolicy: .kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal,

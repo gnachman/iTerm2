@@ -10119,7 +10119,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                                    [timeFormatter stringFromDate:now]];
 
     __weak __typeof(self) weakSelf = self;
-    [iTermSavePanel asyncShowWithOptions:kSavePanelOptionFileFormatAccessory
+    [iTermSavePanel asyncShowWithOptions:kSavePanelOptionFileFormatAccessory | kSavePanelOptionIncludeTimestampsAccessory
                               identifier:@"SaveContents"
                         initialDirectory:NSHomeDirectory()
                          defaultFilename:suggestedFilename
@@ -10134,13 +10134,18 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         NSURL *url = [NSURL fileURLWithPath:savePanel.path];
         if (url) {
             if ([[url pathExtension] isEqualToString:@"rtf"]) {
-                NSAttributedString *attributedString = [self.currentSession.textview contentWithAttributes:YES];
+                NSAttributedString *attributedString = [self.currentSession.textview contentWithAttributes:YES
+                                                                                                timestamps:savePanel.timestamps];
                 NSData *data = [attributedString dataFromRange:NSMakeRange(0, attributedString.length)
                                             documentAttributes:@{NSDocumentTypeDocumentAttribute: NSRTFTextDocumentType}
                                                          error:NULL];
                 [data writeToFile:url.path atomically:YES];
             } else {
-                [[self.currentSession.textview content] writeToFile:url.path atomically:NO encoding:NSUTF8StringEncoding error:nil];
+                id content = [self.currentSession.textview contentWithAttributes:NO timestamps:savePanel.timestamps];
+                [content writeToFile:url.path
+                          atomically:NO
+                            encoding:NSUTF8StringEncoding
+                               error:nil];
             }
         }
     }

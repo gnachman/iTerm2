@@ -12,6 +12,7 @@
 #import "iTermWarning.h"
 #import "NSStringITerm.h"
 #import "NSFileManager+iTerm.h"
+#import "NSObject+iTerm.h"
 
 static NSString *const kInitialDirectoryKey = @"Initial Directory";
 static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggingStyle";
@@ -52,8 +53,11 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
     return [lowercaseDescription stringByReplacingCharactersInRange:range withString:[extension uppercaseString]];
 }
 
-+ (iTermSavePanelFileFormatAccessory *)newFileFormatAccessoryViewControllerFileWithFileTypes:(NSArray<NSString *> *)fileTypes {
++ (iTermSavePanelFileFormatAccessory *)newFileFormatAccessoryViewControllerFileWithFileTypes:(NSArray<NSString *> *)fileTypes
+                                                                                     options:(iTermSavePanelOptions)options {
     iTermSavePanelFileFormatAccessory *accessory = [[iTermSavePanelFileFormatAccessory alloc] initWithNibName:@"iTermSavePanelFileFormatAccessory" bundle:[NSBundle bundleForClass:self]];
+    accessory.showFileFormat = !!(options & kSavePanelOptionFileFormatAccessory);
+    accessory.showTimestamps = !!(options & kSavePanelOptionIncludeTimestampsAccessory);
     [accessory view];
     NSInteger i = 0;
     for (NSString *fileType in fileTypes) {
@@ -89,8 +93,9 @@ static NSString *const iTermSavePanelLoggingStyleUserDefaultsKey = @"NoSyncLoggi
     }
     iTermSavePanelFileFormatAccessory *accessoryViewController = nil;
     NSPopUpButton *button = nil;
-    if (options & kSavePanelOptionFileFormatAccessory) {
-        accessoryViewController = [self newFileFormatAccessoryViewControllerFileWithFileTypes:allowedFileTypes];
+    if (options & (kSavePanelOptionFileFormatAccessory | kSavePanelOptionIncludeTimestampsAccessory)) {
+        accessoryViewController = [self newFileFormatAccessoryViewControllerFileWithFileTypes:allowedFileTypes
+                                                                                      options:options];
         delegate.accessoryViewController = accessoryViewController;
         savePanel.accessoryView = accessoryViewController.view;
     } else if (options & kSavePanelOptionLogPlainTextAccessory) {
@@ -390,6 +395,11 @@ typedef NS_ENUM(NSUInteger, iTermSavePanelAction) {
             break;
     }
     return NO;
+}
+
+- (BOOL)timestamps {
+    iTermSavePanelFileFormatAccessory *accessoryViewController = [iTermSavePanelFileFormatAccessory castFrom:self.accessoryViewController];
+    return accessoryViewController.timestampsEnabled;
 }
 
 @end

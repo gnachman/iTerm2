@@ -52,6 +52,7 @@ extern const NSInteger kLongMaximumWordLength;
 @property(nullable, nonatomic, weak, readonly) id<iTermTextDataSource> dataSource;
 @property(atomic) BOOL stopAsSoonAsPossible;
 @property(nonatomic, strong) iTermProgress *progress;
+@property(nonatomic) BOOL addTimestamps;
 
 // Characters that divide words.
 + (NSCharacterSet *)wordSeparatorCharacterSet;
