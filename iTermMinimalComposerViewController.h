@@ -26,6 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSRect)minimalComposer:(iTermMinimalComposerViewController *)composer
            frameForHeight:(CGFloat)desiredHeight;
 - (CGFloat)minimalComposerMaximumHeight:(iTermMinimalComposerViewController *)composer;
+- (void)minimalComposer:(iTermMinimalComposerViewController *)composer
+       frameDidChangeTo:(NSRect)newFrame;
 
 @end
 

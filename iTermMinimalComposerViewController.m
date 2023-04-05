@@ -77,6 +77,7 @@ workingDirectory:(NSString *)pwd
     self.view.frame = [self frameForHeight:MAX(MIN(self.maxHeight, _desiredHeight), self.minHeight)];
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
     self.view.animator.alphaValue = 1;
+    [self.delegate minimalComposer:self frameDidChangeTo:self.view.frame];
 }
 
 - (void)makeFirstResponder {

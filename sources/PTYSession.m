@@ -16444,6 +16444,25 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return _view;
 }
 
+- (void)composerManager:(iTermComposerManager *)composerManager minimalFrameDidChangeTo:(NSRect)newFrame {
+//    _view.composerHeight = NSMaxY(newFrame);
+}
+
+- (NSRect)composerManager:(iTermComposerManager *)composerManager
+    frameForDesiredHeight:(CGFloat)desiredHeight
+            previousFrame:(NSRect)previousFrame {
+    NSRect newFrame = previousFrame;
+    newFrame.origin.y = _view.frame.size.height;
+
+    newFrame.origin.y += newFrame.size.height;
+    const CGFloat maxWidth = _view.bounds.size.width - newFrame.origin.x - 19;
+    newFrame = NSMakeRect(newFrame.origin.x,
+                          _view.frame.size.height - desiredHeight,
+                          MAX(217, maxWidth),
+                          desiredHeight);
+    return newFrame;
+}
+
 - (void)composerManagerDidRemoveTemporaryStatusBarComponent:(iTermComposerManager *)composerManager {
     [_pasteHelper temporaryRightStatusBarComponentDidBecomeAvailable];
     [_textview.window makeFirstResponder:_textview];
