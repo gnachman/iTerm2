@@ -27,6 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermsStatusBarComposerViewController : NSViewController
 @property (nonatomic, weak) id<iTermsStatusBarComposerViewControllerDelegate> delegate;
 @property (nonatomic, copy) NSString *stringValue;
+@property (nonatomic, readonly) NSRect cursorFrameInScreenCoordinates;
 
 - (void)setTintColor:(NSColor *)tintColor;
 
@@ -34,6 +35,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)makeFirstResponder;
 - (void)setHost:(id<VT100RemoteHostReading>)host;
 - (void)deselect;
+- (void)insertText:(NSString *)text;
 
 @end
 

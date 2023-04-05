@@ -11,6 +11,7 @@
 #import "iTermKeyboardHandler.h"
 #import "iTermLogicalMovementHelper.h"
 #import "iTermObject.h"
+#import "iTermPopupWindowController.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermTextDrawingHelper.h"
 #import "LineBuffer.h"
@@ -201,6 +202,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 // The background color in the color map changed.
 - (void)textViewBackgroundColorDidChangeFrom:(NSColor *)before to:(NSColor *)after;
 - (void)textViewForegroundColorDidChangeFrom:(NSColor *)before to:(NSColor *)after;
+- (void)textViewCursorColorDidChangeFrom:(NSColor *)before to:(NSColor *)after;
 - (void)textViewTransparencyDidChange;
 - (void)textViewProcessedBackgroundColorDidChange;
 
@@ -278,6 +280,9 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewShouldShowOffscreenCommandLine;
 - (BOOL)textViewShouldUseSelectedTextColor;
 - (void)textViewOpenComposer:(NSString *)string;
+- (BOOL)textViewIsAutoComposerOpen;
+- (VT100GridRange)textViewLinesToSuppressDrawing;
+- (NSRect)textViewCursorFrameInScreenCoords;
 @end
 
 @interface iTermHighlightedRow : NSObject
@@ -695,6 +700,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
 - (NSRect)rectForCoord:(VT100GridCoord)coord;
 - (void)updateSubviewFrames;
+- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider;
 
 #pragma mark - Testing only
 

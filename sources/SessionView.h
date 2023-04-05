@@ -149,6 +149,7 @@ extern NSString *const SessionViewWasSelectedForInspectionNotification;
 - (BOOL)sessionViewCaresAboutMouseMovement;
 
 - (NSRect)sessionViewOffscreenCommandLineFrameForView:(NSView *)view;
+- (void)sessionViewUpdateComposerFrame;
 
 @end
 
@@ -187,6 +188,8 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly) BOOL statusBarIsInPaneTitleBar;
 @property(nonatomic, readonly) double adjustedDimmingAmount;
 @property(nonatomic, readonly) iTermLegacyView *legacyView;
+
+@property(nonatomic) CGFloat composerHeight;
 
 // For macOS 10.14+ when subpixel AA is OFF, this draws the default background color. When there's
 // a background image it will be translucent to effect blending. When subpixel AA is ON or the OS

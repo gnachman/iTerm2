@@ -43,6 +43,10 @@
     }
 }
 
+- (NSString *)shortDebugDescription {
+    return [NSString stringWithFormat:@"[Mark %@]", NSStringFromClass(self.class)];
+}
+
 - (id<iTermMark>)progenitor {
     @synchronized ([iTermMark class]) {
         return _progenitor;

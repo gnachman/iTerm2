@@ -225,7 +225,7 @@
                         DLog(@"%@: Emit subtoken %@ with info %@", self, token, SSHInfoDescription(token.sshInfo));
                     }
                     DLog(@"%@: done reparsing SSH output at depth %@", self, @(self.depth));
-                    if (pid == SSH_OUTPUT_AUTOPOLL_PID) {
+                    if (pid == SSH_OUTPUT_AUTOPOLL_PID|| pid == SSH_OUTPUT_NOTIF_PID) {
                         // No need to keep this around, especially since it may carry some state we don't want.
                         [_sshParsers removeObjectForKey:@(pid)];
                     }

@@ -94,6 +94,11 @@ typedef struct {
 } iTermMarkPIU;
 
 typedef struct {
+    float y;
+    vector_float4 color;
+} iTermLineStyleMarkPIU;
+
+typedef struct {
     // Offset from vertex
     vector_float2 offset;
 

@@ -420,4 +420,9 @@
 // Indicates if the ACH window is shown and visible for |session|.
 - (BOOL)autoCommandHistoryIsOpenForSession:(PTYSession *)session;
 
+- (void)openCommandHistory:(id)sender;
+- (void)openCommandHistoryWithPrefix:(NSString *)prefix sortChronologically:(BOOL)sortChronologically;
+- (void)nextMark:(id)sender;
+- (void)previousMark:(id)sender;
+
 @end

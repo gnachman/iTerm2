@@ -67,6 +67,7 @@ static const NSInteger VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLin
     BOOL _screenNeedsUpdate;
     BOOL _alertOnNextMark;
     BOOL _runSideEffectAfterTopJoinFinishes;
+    NSMutableArray<void (^)(void)> *_postTriggerActions;
 }
 
 static _Atomic int gPerformingJoinedBlock;
@@ -106,6 +107,7 @@ static _Atomic int gPerformingJoinedBlock;
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _previousCommandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
         _triggerEvaluator = [[PTYTriggerEvaluator alloc] initWithQueue:queue];
+        _postTriggerActions = [NSMutableArray array];
         _triggerEvaluator.delegate = self;
         _triggerEvaluator.dataSource = self;
         const int defaultWidth = 80;
@@ -125,6 +127,8 @@ static _Atomic int gPerformingJoinedBlock;
         self.unconditionalTemporaryDoubleBuffer.delegate = self;
         _sanitizingAdapter = (VT100ScreenState *)[[VT100ScreenStateSanitizingAdapter alloc] initWithSource:self];
         self.linebuffer.delegate = self;
+        _promptStateMachine = [[iTermPromptStateMachine alloc] init];
+        _promptStateMachine.delegate = self;
     }
     return self;
 }
@@ -353,6 +357,9 @@ static _Atomic int gPerformingJoinedBlock;
 - (void)setConfig:(VT100MutableScreenConfiguration *)config {
     DLog(@"%@ begin %@", self, config);
     assert(VT100ScreenMutableState.performingJoinedBlock);
+    if (config.desiredComposerRows.intValue != self.config.desiredComposerRows.intValue) {
+        DLog(@"desiredComposerRows <- %@", config.desiredComposerRows);
+    }
     [super setConfig:config];
     NSSet<NSString *> *dirty = [config dirtyKeyPaths];
     if ([dirty containsObject:@"triggerProfileDicts"]) {
@@ -392,8 +399,32 @@ static _Atomic int gPerformingJoinedBlock;
             [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:self.currentGrid.size.width]];
         }
     }
+    if (config.useLineStyleMarks) {
+        [self movePromptUnderComposerIfNeeded];
+    }
     _terminal.stringForKeypress = config.stringForKeypress;
     _alertOnNextMark = config.alertOnNextMark;
+    if ([dirty containsObject:@"desiredComposerRows"]) {
+        [_promptStateMachine revealOrDismissComposerAgain];
+    }
+}
+
+- (void)movePromptUnderComposerIfNeeded {
+    if (self.terminal.softAlternateScreenMode) {
+        return;
+    }
+    const int minimumNumberOfRowsToKeepBeforeComposer = 1;
+    if (self.config.desiredComposerRows && self.height > minimumNumberOfRowsToKeepBeforeComposer) {
+        int end = MAX(minimumNumberOfRowsToKeepBeforeComposer,
+                      self.height - self.config.desiredComposerRows.intValue);
+        if (end >= self.height) {
+            end = self.height - 2;
+        }
+        if (end < 1) {
+            end = 1;
+        }
+        [self ensureContentEndsAt:end];
+    }
 }
 
 - (void)setExited:(BOOL)exited {
@@ -576,23 +607,32 @@ static _Atomic int gPerformingJoinedBlock;
     const BOOL enabled = self.terminal.softAlternateScreenMode;
     const BOOL showing = self.currentGrid == self.altGrid;;
     _triggerEvaluator.triggersSlownessDetector.enabled = enabled;
-
+    [_promptStateMachine setAllowed:!enabled];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSoftAlternateScreenModeDidChangeTo:enabled showingAltScreen:showing];
     }];
+}
+
+- (void)performBlockWithoutTriggers:(void (^)(void))block {
+    assert(!_triggerEvaluator.disableExecution);
+    _triggerEvaluator.disableExecution = YES;
+    block();
+    _triggerEvaluator.disableExecution = NO;
 }
 
 - (void)appendScreenChars:(const screen_char_t *)line
                    length:(int)length
    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
              continuation:(screen_char_t)continuation {
-    [self appendScreenCharArrayAtCursor:line
-                                 length:length
-                 externalAttributeIndex:externalAttributeIndex];
-    if (continuation.code == EOL_HARD) {
-        [self carriageReturn];
-        [self appendLineFeed];
-    }
+    [self performBlockWithoutTriggers:^{
+        [self appendScreenCharArrayAtCursor:line
+                                     length:length
+                     externalAttributeIndex:externalAttributeIndex];
+        if (continuation.code == EOL_HARD) {
+            [self carriageReturn];
+            [self appendLineFeed];
+        }
+    }];
 }
 
 - (void)appendStringAtCursor:(NSString *)string {
@@ -919,6 +959,44 @@ static _Atomic int gPerformingJoinedBlock;
 - (void)advanceCursorPastLastColumn {
     if (self.currentGrid.cursorX == self.width - 1) {
         self.currentGrid.cursorX = self.width;
+    }
+}
+
+- (void)ensureContentEndsAt:(int)line {
+    if (line < 0 || line >= self.height || self.terminalSoftAlternateScreenMode) {
+        return;
+    }
+    const int delta = self.currentGrid.cursor.y - line;
+    if (delta == 0) {
+        return;
+    }
+    DLog(@"delta=%@", @(delta));
+    const int cursorX = self.currentGrid.cursor.x;
+    if (delta > 0) {
+        for (int i = 0; i < delta && self.currentGrid.cursor.y > 0; i++) {
+          DLog(@"Scroll up");
+            [self incrementOverflowBy:
+             [self.currentGrid scrollWholeScreenUpIntoLineBuffer:self.linebuffer unlimitedScrollback:self.unlimitedScrollback]];
+            [self.currentGrid setCursor:VT100GridCoordMake(cursorX, self.currentGrid.cursor.y - 1)];
+        }
+    } else if (self.currentGrid.cursor.y - delta < self.height){
+        const int count = [self.currentGrid scrollWholeScreenDownByLines:-delta poppingFromLineBuffer:self.linebuffer];
+        DLog(@"Scrolled down by %@", @ (count));
+        if (count < -delta) {
+            // Line buffer became empty
+            const int marginalDelta = -delta - count;
+            DLog( @"Scroll down by yet more: %@", @(marginalDelta));
+            [self.currentGrid scrollRect:VT100GridRectMake(0, 0, self.width, self.height)
+                                  downBy:marginalDelta
+                               softBreak:NO];
+        }
+        [self shiftIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
+                                                                      0,
+                                                                      self.numberOfScrollbackLines + self.height + delta,
+                                                                      self.height)
+                                startingAfter:-1
+                                  downByLines:-delta];
+        [self.currentGrid setCursor:VT100GridCoordMake(cursorX, self.currentGrid.cursor.y - delta)];
     }
 }
 
@@ -1319,11 +1397,19 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)clearBufferWithoutTriggersSavingPrompt:(BOOL)savePrompt {
+    [self performBlockWithoutTriggers:^{
+        [self clearBufferSavingPrompt:savePrompt];
+    }];
+}
+
 - (void)clearBufferSavingPrompt:(BOOL)savePrompt {
     // Cancel out the current command if shell integration is in use and we are
     // at the shell prompt.
     DLog(@"clear buffer saving prompt");
     const int linesToSave = savePrompt ? [self numberOfLinesToPreserveWhenClearingScreen] : 0;
+    id<VT100ScreenMarkReading> mark = [self lastPromptMark];
+    const BOOL detectedByTrigger = mark.promptDetectedByTrigger;
     // NOTE: This is in screen coords (y=0 is the top)
     VT100GridCoord newCommandStart = VT100GridCoordMake(-1, -1);
     if (self.commandStartCoord.x >= 0) {
@@ -1356,7 +1442,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     if (savePrompt && newCommandStart.x >= 0) {
         // Create a new mark and inform the delegate that there's new command start coord.
-        [self setPromptStartLine:self.numberOfScrollbackLines];
+        [self setPromptStartLine:self.numberOfScrollbackLines detectedByTrigger:detectedByTrigger];
         [self commandDidStartAtScreenCoord:newCommandStart];
     }
     [self.terminal resetSavedCursorPositions];
@@ -1400,6 +1486,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)clearFromAbsoluteLineToEnd:(long long)unsafeAbsLine {
+    [self performBlockWithoutTriggers:^{
+        [self reallyClearFromAbsoluteLineToEnd:unsafeAbsLine];
+    }];
+}
+
+- (void)reallyClearFromAbsoluteLineToEnd:(long long)unsafeAbsLine {
     const VT100GridCoord cursorCoord = VT100GridCoordMake(self.currentGrid.cursor.x,
                                                           self.currentGrid.cursor.y + self.numberOfScrollbackLines);
     const long long totalScrollbackOverflow = self.cumulativeScrollbackOverflow;
@@ -1535,6 +1627,55 @@ void VT100ScreenEraseCell(screen_char_t *sct,
          @(numberOfLinesAppended), @(numberOfLinesToPop), @(numberOfLinesRemoved), @(adjustment), @(y));
     self.currentGrid.cursorY = y;
     DLog(@"Cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
+}
+
+// Move everything above the prompt mark into history.
+- (void)clearForComposer {
+    if (!_promptStateMachine.isEnteringCommand) {
+        return;
+    }
+    if (self.terminal.softAlternateScreenMode) {
+        return;
+    }
+    if (self.config.desiredComposerRows <= 0) {
+        return;
+    }
+    id<VT100ScreenMarkReading> mark = [self lastPromptMark];
+    Interval *interval = mark.entry.interval;
+    if (!interval) {
+        return;
+    }
+    const VT100GridAbsCoordRange absRange = [self absCoordRangeForInterval:interval];
+    if (absRange.end.y <= self.numberOfScrollbackLines + self.totalScrollbackOverflow) {
+        // Mark begins above screen.
+        return;
+    }
+
+    // Move the prompt mark to the top of the grid.
+    const int count = absRange.end.y - self.numberOfScrollbackLines - self.totalScrollbackOverflow - 1;
+    for (int i = 0; i < count; i++) {
+        [self incrementOverflowBy:
+         [self.currentGrid scrollWholeScreenUpIntoLineBuffer:self.linebuffer
+                                         unlimitedScrollback:self.unlimitedScrollback]];
+    }
+
+    // Add a bunch of blank lines to history so that it can then be moved down.
+    // Note that this causes the interval tree objects to be misaligned.
+    for (int i = 0; i < count; i++) {
+        [self.linebuffer appendScreenCharArray:[ScreenCharArray emptyLineOfLength:self.width] width:self.width];
+    }
+
+    // Move the interval tree objects to be next to the prompt again.
+    [self shiftIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
+                                                                  self.numberOfScrollbackLines - count,
+                                                                  self.width,
+                                                                  self.numberOfScrollbackLines)
+                            startingAfter:self.numberOfScrollbackLines - count - 1
+                              downByLines:count];
+     // Move content down so prompt ends at the bottom of the screen. This is based on the cursor's
+    // position.
+    self.currentGrid.cursorY -= count;
+    [self movePromptUnderComposerIfNeeded];
 }
 
 - (void)setUseColumnScrollRegion:(BOOL)mode {
@@ -2212,6 +2353,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return marksToMove;
 }
 
+// FTCS C
 - (void)commandDidEndWithRange:(VT100GridCoordRange)range {
     NSString *command = [self commandInRange:range];
     DLog(@"FinalTerm: Command <<%@>> ended with range %@",
@@ -2246,12 +2388,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     mark = [mark doppelganger];
     // Pause because delegate will change variables.
+    __weak __typeof(self) weakSelf = self;
+    DLog(@"commandDidEndWithRange: add paused side effect");
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        DLog(@"commandDidEndWithRange: side effect calling screenDidExecuteCommand");
         [delegate screenDidExecuteCommand:command
                                     range:range
                                    onHost:remoteHost
                               inDirectory:workingDirectory
                                      mark:mark];
+        DLog(@"commandDidEndWithRange: unpause");
         [unpauser unpause];
     }];
 }
@@ -2274,6 +2424,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 #pragma mark - Shell Integration
+
+- (NSDictionary *)promptStateDictionary {
+    return _promptStateMachine.dictionaryValue;
+}
 
 - (void)assignCurrentCommandEndDate {
     id<VT100ScreenMarkReading> screenMark = self.lastCommandMark;
@@ -2310,32 +2464,58 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.shouldExpectPromptMarks = YES;
 }
 
-- (void)setPromptStartLine:(int)line {
+- (VT100ScreenMark *)setPromptStartLine:(int)line detectedByTrigger:(BOOL)detectedByTrigger {
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
     // Reset this in case it's taking the "real" shell integration path.
     self.fakePromptDetectedAbsLine = -1;
     const long long lastPromptLine = (long long)line + self.cumulativeScrollbackOverflow;
     self.lastPromptLine = lastPromptLine;
     [self assignCurrentCommandEndDate];
-    id<VT100ScreenMarkReading> mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
+    VT100ScreenMark *mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
     if (mark) {
         const VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
+        const BOOL lineStyle = self.config.useLineStyleMarks;
         [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
             VT100ScreenMark *mark = (VT100ScreenMark *)obj;
             [mark setIsPrompt:YES];
             mark.promptRange = promptRange;
+            mark.promptDetectedByTrigger = detectedByTrigger;
+            mark.lineStyle = lineStyle;
         }];
     }
     [self didUpdatePromptLocation];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidStartAtLine:line];
     }];
+    return mark;
 }
 
-- (void)promptDidStartAt:(VT100GridAbsCoord)coord {
+- (VT100ScreenMark *)promptDidStartAt:(VT100GridAbsCoord)initialCoord
+                         wasInCommand:(BOOL)wasInCommand
+                    detectedByTrigger:(BOOL)detectedByTrigger {
     DLog(@"FinalTerm: promptDidStartAt");
-    if (coord.x > 0 && self.config.shouldPlacePromptAtFirstColumn) {
+    VT100GridAbsCoord coord = initialCoord;
+    if (initialCoord.x > 0 && self.config.shouldPlacePromptAtFirstColumn) {
         [self appendCarriageReturnLineFeed];
+        coord.x = 0;
+        coord.y += 1;
+    }
+    if (self.config.useLineStyleMarks) {
+        if (!wasInCommand) {
+            // The shell may opt to redraw the prompt & command before running it, meaning you
+            // get final term codes: ABABCD. Don't want to add a new linefeed if we don't need
+            // to.
+            if (![self.currentGrid lineIsEmpty:self.currentGrid.cursor.y]) {
+                [self appendCarriageReturnLineFeed];
+                coord.x = 0;
+                coord.y += 1;
+            }
+
+            // Make room for the horizontal line above the line with the mark.
+            [self appendCarriageReturnLineFeed];
+            coord.x = 0;
+            coord.y += 1;
+        }
     }
     self.shellIntegrationInstalled = YES;
 
@@ -2350,10 +2530,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     // FinalTerm uses this to define the start of a collapsible region. That would be a nightmare
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
-    [self setPromptStartLine:self.numberOfScrollbackLines + self.cursorY - 1];
+    VT100ScreenMark *mark = [self setPromptStartLine:self.numberOfScrollbackLines + self.cursorY - 1
+                                   detectedByTrigger:detectedByTrigger];
     if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
         [self.terminal resetGraphicRendition];
     }
+    return mark;
 }
 
 - (void)commandRangeDidChange {
@@ -2652,7 +2834,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self commandRangeDidChange];
 }
 
-
 - (void)saveCursorLine {
     const int scrollbackLines = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
     [self addMarkOnLine:scrollbackLines + self.currentGrid.cursor.y
@@ -2663,6 +2844,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
     id<VT100ScreenMarkReading> mark = self.lastCommandMark;
     id<VT100ScreenMarkReading> doppelganger = mark.doppelganger;
+    DLog(@"Set return code for mark %@ to %@", mark, @(returnCode));
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
         const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
@@ -2899,7 +3081,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         if (!strongSelf) {
             return;
         }
-        [strongSelf setPromptStartLine:strongSelf.numberOfScrollbackLines + strongSelf.cursorY - 1];
+        // Note that the prompt must precede the OSC 7 code in order to be moved into the composer properly.
+        const long long y = self.cumulativeScrollbackOverflow + strongSelf.numberOfScrollbackLines + strongSelf.cursorY - 1;
+        const VT100GridAbsCoordRange range =
+        VT100GridAbsCoordRangeMake(0,
+                                   y,
+                                   strongSelf.currentGrid.cursor.x,
+                                   y);
+        [strongSelf handleTriggerDetectedPromptAt:range];
     }];
 }
 
@@ -2932,20 +3121,53 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 // End of command prompt, will start accepting command to run as the user types at the prompt.
 - (void)commandDidStart {
+    VT100GridCoord coord = self.currentGrid.cursor;
+    [self promptEndedAndCommandStartedAt:coord];
+}
+
+- (void)didSendCommand {
+    DLog(@"didSendCommand (trigger-detected prompt path)");
+    [self commandDidEnd];
+}
+
+// FTCS B
+- (void)promptEndedAndCommandStartedAt:(VT100GridCoord)commandStartLocation {
     DLog(@"FinalTerm: terminalCommandDidStart");
-    self.currentPromptRange = VT100GridAbsCoordRangeMake(self.currentPromptRange.start.x,
-                                                         self.currentPromptRange.start.y,
-                                                         self.currentGrid.cursor.x,
-                                                         self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
-    [self commandDidStartAtScreenCoord:self.currentGrid.cursor];
-    const int line = self.numberOfScrollbackLines + self.cursorY - 1;
-    id<VT100ScreenMarkReading> mark = [[self updatePromptMarkRangesForPromptEndingOnLine:line] doppelganger];
+
+    VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(self.currentPromptRange.start.x,
+                                                                    self.currentPromptRange.start.y,
+                                                                    commandStartLocation.x,
+                                                                    commandStartLocation.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
+    NSArray<ScreenCharArray *> *promptText = [[self contentInRange:promptRange] filteredArrayUsingBlock:^BOOL(ScreenCharArray *sca) {
+        return [[sca.stringValue stringByTrimmingTrailingWhitespace] length] > 0;
+    }];
+    self.currentPromptRange = promptRange;
+    [self commandDidStartAtScreenCoord:commandStartLocation];
+    const int line = self.numberOfScrollbackLines + commandStartLocation.y;
+    id<VT100ScreenMarkReading> mark = [[self updatePromptMarkRangesForPromptEndingOnLine:line
+                                                                              promptText:promptText] doppelganger];
+    [_promptStateMachine didCapturePrompt:promptText];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidEndWithMark:mark];
     }];
 }
 
-- (id<VT100ScreenMarkReading>)updatePromptMarkRangesForPromptEndingOnLine:(int)line {
+- (NSArray<ScreenCharArray *> *)contentInRange:(VT100GridAbsCoordRange)range {
+    NSMutableArray<ScreenCharArray *> *result = [NSMutableArray array];
+    const long long offset = self.cumulativeScrollbackOverflow;
+    for (long long y = range.start.y; y <= range.end.y; y++) {
+        if (y < offset) {
+            continue;
+        }
+        ScreenCharArray *sca = [self screenCharArrayForLine:y - offset];
+        [sca makeSafe];
+        [result addObject:sca];
+    }
+    return result;
+}
+
+- (id<VT100ScreenMarkReading>)updatePromptMarkRangesForPromptEndingOnLine:(int)line
+                                                               promptText:(NSArray<ScreenCharArray *> *)promptText {
     id<VT100ScreenMarkReading> mark = [self lastPromptMark];
     if (!mark) {
         return nil;
@@ -2960,6 +3182,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                       x,
                                                       y);
         mark.commandRange = VT100GridAbsCoordRangeMake(x, y, x, y);
+        mark.promptText = promptText;
     }];
     return mark;
 }
@@ -2982,6 +3205,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         return YES;
     }
     return NO;
+}
+
+- (void)composerWillSendCommand {
+    [_promptStateMachine willSendCommand];
 }
 
 - (void)didInferEndOfCommand {
@@ -3169,6 +3396,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (VT100GridAbsCoordRange)replaceRange:(VT100GridAbsCoordRange)absRange
                              withLines:(NSArray<ScreenCharArray *> *)replacementLines {
+    __block VT100GridAbsCoordRange result;
+    [self performBlockWithoutTriggers:^{
+        result = [self reallyReplaceRange:absRange withLines:replacementLines];
+    }];
+    return result;
+}
+
+- (VT100GridAbsCoordRange)reallyReplaceRange:(VT100GridAbsCoordRange)absRange
+                                   withLines:(NSArray<ScreenCharArray *> *)replacementLines {
     VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, self.cumulativeScrollbackOverflow);
     if (range.start.y < 0) {
         // Already scrolled into the dustbin.
@@ -3289,8 +3525,26 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                             replacementRange.start.y,
                             gridSize.width,
                             originalNumLines);
+    [self shiftIntervalTreeObjectsInRange:rangeFromPortholeToEnd
+                            startingAfter:range.end.y
+                              downByLines:deltaLines];
+
+    [self.linebuffer setMaxLines:savedMaxLines];
+    if (!self.config.unlimitedScrollback) {
+        [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:gridSize.width]];
+    }
+
+    return resultingRange;
+}
+
+// If an object starts on or before the line `startingAfter` then its start stays put but its end
+// moves (the end always moves). This is useful when inserting lines into the middle of an interval.
+// If you just want to shift everything in inputRange down, use a startingAfter of -1.
+- (void)shiftIntervalTreeObjectsInRange:(VT100GridCoordRange)inputRange
+                          startingAfter:(int)startingAfter
+                            downByLines:(int)deltaLines {
     Interval *intervalToMove =
-    [self intervalForGridCoordRange:rangeFromPortholeToEnd];
+    [self intervalForGridCoordRange:inputRange];
 
     NSArray<id<IntervalTreeImmutableObject>> *objects =
     [self.intervalTree objectsInInterval:intervalToMove];
@@ -3298,7 +3552,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.mutableIntervalTree bulkMoveObjects:objects
                                         block:^Interval*(id<IntervalTreeObject> object) {
         VT100GridCoordRange itoRange = [self coordRangeForInterval:object.entry.interval];
-        if (itoRange.start.y > range.end.y) {
+        if (itoRange.start.y > startingAfter) {
             itoRange.start.y += deltaLines;
         }
         itoRange.end.y += deltaLines;
@@ -3311,13 +3565,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [observer intervalTreeDidMoveObjects:doppelgangers];
     }];
     [self reloadMarkCache];
-
-    [self.linebuffer setMaxLines:savedMaxLines];
-    if (!self.config.unlimitedScrollback) {
-        [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:gridSize.width]];
-    }
-
-    return resultingRange;
 }
 
 #pragma mark - URLs
@@ -3461,21 +3708,56 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Triggers
 
+- (void)evaluateTriggers:(void (^ NS_NOESCAPE)(PTYTriggerEvaluator *triggerEvaluator))block {
+    block(_triggerEvaluator);
+    if (_tokenExecutor.isExecutingToken) {
+        return;
+    }
+    [self executePostTriggerActions];
+}
+
+- (void)executePostTriggerActions {
+    if (_postTriggerActions.count == 0) {
+        return;
+    }
+    NSArray<void (^)(void)> *actions = [_postTriggerActions copy];
+    [_postTriggerActions removeAllObjects];
+    for (void (^block)(void) in actions) {
+        block();
+    }
+}
+
 - (void)performPeriodicTriggerCheck {
     DLog(@"begin");
-    [_triggerEvaluator checkPartialLineTriggers];
-    [_triggerEvaluator checkIdempotentTriggersIfAllowed];
+    [self evaluateTriggers:^(PTYTriggerEvaluator *triggerEvaluator) {
+        [triggerEvaluator checkPartialLineTriggers];
+        [triggerEvaluator checkIdempotentTriggersIfAllowed];
+    }];
 }
 
 - (void)clearTriggerLine {
-    [_triggerEvaluator clearTriggerLine];
+    [self evaluateTriggers:^(PTYTriggerEvaluator *triggerEvaluator) {
+        [triggerEvaluator clearTriggerLine];
+    }];
 }
 
 - (void)appendStringToTriggerLine:(NSString *)string {
-    [_triggerEvaluator appendStringToTriggerLine:string];
+    [self evaluateTriggers:^(PTYTriggerEvaluator *triggerEvaluator) {
+        [triggerEvaluator appendStringToTriggerLine:string];
+    }];
 }
 
 - (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData {
+    __block BOOL result = NO;
+    [self evaluateTriggers:^(PTYTriggerEvaluator *triggerEvaluator) {
+        result = [self reallyAppendAsciiDataToTriggerLine:asciiData
+                                         triggerEvaluator:(PTYTriggerEvaluator *)triggerEvaluator];
+    }];
+    return result;
+}
+
+- (BOOL)reallyAppendAsciiDataToTriggerLine:(AsciiData *)asciiData
+                          triggerEvaluator:(PTYTriggerEvaluator *)triggerEvaluator {
     if (!_triggerEvaluator.haveTriggersOrExpectations && !self.config.loggingEnabled) {
         // Avoid making the string, which could be slow.
         return YES;
@@ -3499,7 +3781,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)forceCheckTriggers {
     DLog(@"begin");
-    [_triggerEvaluator forceCheck];
+    [self evaluateTriggers:^(PTYTriggerEvaluator *triggerEvaluator) {
+        [triggerEvaluator forceCheck];
+    }];
 }
 
 #pragma mark - Color
@@ -3810,6 +4094,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     if (screenState) {
         self.protectedMode = [screenState[kScreenStateProtectedMode] unsignedIntegerValue];
+        [_promptStateMachine loadPromptStateDictionary:screenState[kScreenStatePromptStateKey]];
         [self.tabStops removeAllObjects];
         [self.tabStops addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
         DLog(@"Restored tabstops: %@", self.tabStops);
@@ -3887,6 +4172,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)appendBannerMessage:(NSString *)message {
+    [self performBlockWithoutTriggers:^{
+        [self reallyAppendBannerMessage:message];
+    }];
+}
+
+- (void)reallyAppendBannerMessage:(NSString *)message {
     // Save graphic rendition. Set to system message color.
     const VT100GraphicRendition saved = self.terminal.graphicRendition;
 
@@ -4042,7 +4333,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)markDidBecomeCommandMark:(id<VT100ScreenMarkReading>)mark {
     [self assertOnMutationThread];
+    DLog(@"mark %@ became command mark", mark);
     if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
+        DLog(@"Set last command mark to %@", mark);
         self.lastCommandMark = mark;
     }
 }
@@ -4101,7 +4394,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // screen contents around on resize. So we take the history from tmux, append it to a temporary
     // line buffer, grab each wrapped line and trim spaces from it, and then append those modified
     // line (excluding empty ones at the end) to the real line buffer.
-    [self clearBufferSavingPrompt:YES];
+    [self clearBufferWithoutTriggersSavingPrompt:YES];
     LineBuffer *temp = [[LineBuffer alloc] init];
     temp.mayHaveDoubleWidthCharacter = YES;
     self.linebuffer.mayHaveDoubleWidthCharacter = YES;
@@ -4622,19 +4915,79 @@ launchCoprocessWithCommand:(NSString *)command
     }];
 }
 
-- (void)triggerSession:(Trigger *)trigger didDetectPromptAt:(VT100GridAbsCoordRange)range {
-    DLog(@"Trigger detected prompt at %@", VT100GridAbsCoordRangeDescription(range));
-
+- (void)handleTriggerDetectedPromptAt:(VT100GridAbsCoordRange)range {
+    DLog(@"handleTriggerDetectedPromptAt: %@", VT100GridAbsCoordRangeDescription(range));
     if (self.fakePromptDetectedAbsLine == -2) {
         // Infer the end of the preceding command. Set a return status of 0 since we don't know what it was.
         [self setReturnCodeOfLastCommand:0];
     }
+
+
+    // Insert an empty line above the prompt.
+    if (range.start.y == self.numberOfLines + self.cumulativeScrollbackOverflow - 1) {
+        // Make room at the bottom of the grid.
+        [self incrementOverflowBy:
+         [self.currentGrid scrollWholeScreenUpIntoLineBuffer:self.linebuffer
+                                         unlimitedScrollback:self.unlimitedScrollback]];
+    } else {
+        // The prompt will be one line lower so move the cursor to stay with it.
+        [self.currentGrid moveCursorDown:1];
+    }
+    // Move the prompt and anything below it down by 1
+    const int scrollbackLines = self.numberOfScrollbackLines;
+    const int gridRow = range.start.y - scrollbackLines - self.cumulativeScrollbackOverflow;
+    [self.currentGrid scrollRect:VT100GridRectMake(0,
+                                                   gridRow,
+                                                   self.width,
+                                                   self.height - gridRow)
+                          downBy:1
+                       softBreak:NO];
+    range.start.y += 1;
+    range.end.y += 1;
+
     // Use 0 here to avoid the screen inserting a newline.
     range.start.x = 0;
-    [self promptDidStartAt:range.start];
+
+    // Simulate FinalTerm A:
+    // We pass YES for wasInCommand to avoid getting an extra newline added at the cursor.
+    VT100ScreenMark *mark = [self promptDidStartAt:range.start wasInCommand:YES detectedByTrigger:YES];
+    mark.promptDetectedByTrigger = YES;
     self.fakePromptDetectedAbsLine = range.start.y;
 
-    [self setCoordinateOfCommandStart:range.end];
+    BOOL ok = NO;
+    VT100GridCoord coord = VT100GridCoordFromAbsCoord(range.end, self.cumulativeScrollbackOverflow, &ok);
+    coord.y -= self.numberOfScrollbackLines;
+    if (ok) {
+        // Simulate FinalTerm B:
+        [self promptEndedAndCommandStartedAt:coord];
+    } else {
+        DLog(@"Range end is invalid %@, overflow=%@", VT100GridAbsCoordRangeDescription(range),
+             @(self.cumulativeScrollbackOverflow));
+    }
+}
+
+- (void)triggerSession:(Trigger *)trigger didDetectPromptAt:(VT100GridAbsCoordRange)range {
+    DLog(@"Trigger detected prompt at %@", VT100GridAbsCoordRangeDescription(range));
+
+    id<VT100ScreenMarkReading> lastPromptMark = [self lastPromptMark];
+    if (lastPromptMark) {
+        const VT100GridAbsCoordRange existingRange = [self absCoordRangeForInterval:lastPromptMark.entry.interval];
+        if (existingRange.start.y == range.start.y) {
+            DLog(@"There's already a prompt at this line. Ignore. existing=%@ proposed=%@",
+                 VT100GridAbsCoordRangeDescription(existingRange),
+                 VT100GridAbsCoordRangeDescription(range));
+            return;
+        }
+    }
+    // We can't mutate the session at this point. Wait until trigger processing is done and the
+    // current token (if any) is executed and then do the prompt handling.
+    __weak __typeof(self) weakSelf = self;
+    [_postTriggerActions addObject:[^{
+        [weakSelf handleTriggerDetectedPromptAt:range];
+    } copy]];
+    if (_tokenExecutor.isExecutingToken) {
+        self.terminal.wantsDidExecuteCallback = YES;
+    }
 }
 
 - (void)triggerSession:(Trigger *)trigger
@@ -5053,6 +5406,34 @@ launchCoprocessWithCommand:(NSString *)command
     if (lineBuffer == self.linebuffer) {
         [_tokenExecutor setSideEffectFlagWithValue:VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLines];
     }
+}
+
+#pragma mark - iTermPromptStateMachineDelegate
+
+- (void)promptStateMachineRevealComposerWithPrompt:(NSArray<ScreenCharArray *> *)prompt {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenRevealComposerWithPrompt:prompt];
+        [unpauser unpause];
+    }];
+}
+
+- (void)promptStateMachineDismissComposer {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenDismissComposer];
+        [unpauser unpause];
+    }];
+}
+
+- (NSArray<ScreenCharArray *> *)promptStateMachineLastPrompt {
+    id<VT100ScreenMarkReading> mark = [self lastPromptMark];
+    return mark.promptText;
+}
+
+- (void)promptStateMachineAppendCommandToComposer:(NSString *)command {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenAppendStringToComposer:command];
+        [unpauser unpause];
+    }];
 }
 
 @end

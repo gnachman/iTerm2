@@ -8,6 +8,7 @@
 
 #import "NSTextField+iTerm.h"
 
+#import "NSArray+iTerm.h"
 #import "NSStringITerm.h"
 #import "RegexKitLite.h"
 
@@ -105,6 +106,43 @@
     [superview addSubview:link];
 
     return link;
+}
+
+- (NSRect)popupWindowHostingInsertionPointFrameInScreenCoordinates {
+    // Get the field editor for the text field
+    NSTextView *fieldEditor = (NSTextView *)[self.window fieldEditor:YES forObject:self];
+
+    // Get the glyph range for the insertion point
+    NSRange glyphRange = [fieldEditor.layoutManager glyphRangeForCharacterRange:fieldEditor.selectedRange
+                                                           actualCharacterRange:nil];
+
+    // Get the bounding rect for the glyph range
+    NSRect boundingRect = [fieldEditor.layoutManager boundingRectForGlyphRange:glyphRange
+                                                               inTextContainer:fieldEditor.textContainer];
+
+    // Convert the rect to window coordinates
+    NSRect windowRect = [fieldEditor convertRect:boundingRect toView:nil];
+
+    // Convert the rect to screen coordinates
+    NSRect screenRect = [self.window convertRectToScreen:windowRect];
+
+    return screenRect;
+}
+
+- (NSArray<NSString *> *)wordsBeforeInsertionPoint:(NSInteger)count {
+    NSString *text = self.stringValue ?: @"";
+    NSArray<NSString *> *words = [[text lastWords:count] reversed];
+    if ([text endsWithWhitespace]) {
+        return [words arrayByAddingObject:@""];
+    }
+    return words;
+}
+
+- (void)popupWindowHostingInsertText:(NSString *)string {
+    [self insertText:string];
+}
+
+- (void)popupWindowHostSetPreview:(NSString *)string {
 }
 
 @end

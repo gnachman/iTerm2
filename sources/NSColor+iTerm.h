@@ -134,6 +134,8 @@ CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b);
 @property (nonatomic, readonly) NSColorSpace * _Nullable it_colorSpace;
 
 - (BOOL)isApproximatelyEqualToColor:(NSColor *)other epsilon:(double)e;
+- (NSColor *)blendedWithColor:(NSColor *)color weight:(CGFloat)weight;
+@property (nonatomic, readonly) vector_float4 vector;
 
 @end
 

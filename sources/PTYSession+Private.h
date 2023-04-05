@@ -36,6 +36,7 @@
 #import "iTermWorkingDirectoryPoller.h"
 
 @class PTYSessionPublishRequest;
+@class iTermComposerManager;
 
 @interface PTYSession () <
 iTermAutomaticProfileSwitcherDelegate,
@@ -73,6 +74,7 @@ TriggerDelegate> {
 
     BOOL _havePendingPublish;
     NSMutableArray<PTYSessionPublishRequest *> *_pendingPublishRequests;
+    iTermComposerManager *_composerManager;
 }
 
 @property(nonatomic, retain) Interval *currentMarkOrNotePosition;
@@ -114,5 +116,6 @@ TriggerDelegate> {
                identifier:(NSString *)identifier;
 - (void)removeAnnouncementWithIdentifier:(NSString *)identifier;
 - (void)dismissAnnouncementWithIdentifier:(NSString *)identifier;
+- (BOOL)haveAutoComposer;
 
 @end

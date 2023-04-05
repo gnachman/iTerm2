@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class CapturedOutput;
 @protocol CapturedOutputReading;
+@class ScreenCharArray;
 @protocol VT100ScreenMarkReading;
 @class iTermPromise<T>;
 
@@ -46,9 +47,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong, readonly, nullable) NSString *sessionGuid;
 
 @property(nonatomic, readonly) VT100GridAbsCoordRange promptRange;
+@property(nonatomic, copy, readonly, nullable) NSArray<ScreenCharArray *> *promptText;
 @property(nonatomic, readonly) VT100GridAbsCoordRange commandRange;
 @property(nonatomic, readonly) VT100GridAbsCoord outputStart;
 @property(nonatomic, readonly) iTermPromise<NSNumber *> *returnCodePromise;
+@property(nonatomic, readonly) BOOL promptDetectedByTrigger;
+@property(nonatomic, readonly) BOOL lineStyle;
 
 - (id<VT100ScreenMarkReading>)progenitor;
 - (id<VT100ScreenMarkReading>)doppelganger;
@@ -79,8 +83,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong, readwrite) NSString *sessionGuid;
 
 @property(nonatomic, readwrite) VT100GridAbsCoordRange promptRange;
+@property(nonatomic, copy, nullable) NSArray<ScreenCharArray *> *promptText;
 @property(nonatomic, readwrite) VT100GridAbsCoordRange commandRange;
 @property(nonatomic, readwrite) VT100GridAbsCoord outputStart;
+@property(nonatomic) BOOL promptDetectedByTrigger;
+@property(nonatomic) BOOL lineStyle;
 
 // Returns a reference to an existing mark with the given GUID.
 + (id<VT100ScreenMarkReading>)markWithGuid:(NSString *)guid

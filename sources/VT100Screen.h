@@ -116,6 +116,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic, strong) FindContext *findContext;
 @property (nonatomic, readonly) BOOL sendingIsBlocked;
 
+@property (nonatomic, readonly) BOOL isAtCommandPrompt;
+
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.
 - (BOOL)allCharacterSetPropertiesHaveDefaultValues;

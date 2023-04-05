@@ -951,6 +951,9 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         if (self.showBottomStatusBar) {
             [self updateBottomStatusBarFrame];
         }
+        if (self.composerHeight > 0) {
+            [self.delegate sessionViewUpdateComposerFrame];
+        }
     } else {
         DLog(@"Keep everything top aligned.");
         // Don't resize anything but do keep it all top-aligned.
@@ -1698,6 +1701,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         size.height -= iTermGetStatusBarHeight();
         DLog(@"maximumPossibleScrollViewContentSize: sub bottom status bar height. size=%@", NSStringFromSize(size));
     }
+    DLog(@"maximumPossibleScrollViewContentSize: size=%@", NSStringFromSize(size));
     Class verticalScrollerClass = [[[self scrollview] verticalScroller] class];
     if (![[self scrollview] hasVerticalScroller]) {
         verticalScrollerClass = nil;
@@ -1751,16 +1755,16 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)updateScrollViewFrame {
     DLog(@"update scrollview frame");
     CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
-    CGFloat bottomStatusBarHeight = _showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
+    CGFloat reservedSpaceOnBottom = _showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
     NSSize proposedSize = NSMakeSize(self.frame.size.width,
-                                     self.frame.size.height - titleHeight - bottomStatusBarHeight);
+                                     self.frame.size.height - titleHeight - reservedSpaceOnBottom);
     NSSize size = [_delegate sessionViewScrollViewWillResize:proposedSize];
     NSRect rect = NSMakeRect(0,
-                             bottomStatusBarHeight + proposedSize.height - size.height,
+                             reservedSpaceOnBottom + proposedSize.height - size.height,
                              size.width,
                              size.height);
     DLog(@"titleHeight=%@ bottomStatusBarHeight=%@ proposedSize=%@ size=%@ rect=%@",
-         @(titleHeight), @(bottomStatusBarHeight), NSStringFromSize(proposedSize), NSStringFromSize(size),
+         @(titleHeight), @(reservedSpaceOnBottom), NSStringFromSize(proposedSize), NSStringFromSize(size),
          NSStringFromRect(rect));
     [self scrollview].frame = rect;
     DLog(@"Scrollview frame is now %@", NSStringFromRect(self.scrollview.frame));

@@ -11,8 +11,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@class iTermStatusBarLargeComposerViewController;
 @class TmuxController;
 @protocol VT100RemoteHostReading;
+
+@protocol iTermStatusBarLargeComposerViewControllerDelegate<NSObject>
+- (void)largeComposerViewControllerTextDidChange:(iTermStatusBarLargeComposerViewController *)controller;
+@end
 
 @interface iTermStatusBarLargeComposerViewController : NSViewController
 @property (nonatomic, strong) IBOutlet iTermComposerTextView *textView;
@@ -20,6 +25,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong, nullable) NSString *workingDirectory;
 @property (nonatomic, copy) iTermVariableScope *scope;
 @property (nonatomic, weak, nullable) TmuxController *tmuxController;
+@property (nonatomic) BOOL hideAccessories;
+@property (nonatomic, weak) IBOutlet id<iTermStatusBarLargeComposerViewControllerDelegate> delegate;
 
 @end
 

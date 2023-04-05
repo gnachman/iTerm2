@@ -63,6 +63,7 @@ extern NSString *const PTYSessionSlownessEventExecute;
 @property (atomic, readonly) BOOL evaluating;
 @property (nonatomic, readonly) BOOL haveTriggersOrExpectations;
 @property (nonatomic, strong, readonly) dispatch_queue_t queue;
+@property (nonatomic) BOOL disableExecution;
 
 - (instancetype)initWithQueue:(dispatch_queue_t)queue NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;

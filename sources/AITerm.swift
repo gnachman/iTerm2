@@ -229,8 +229,16 @@ class AITermController {
         }
     }
 
+    private func url(forModel model: String) -> URL? {
+        if model.hasPrefix("gpt-") {
+            return URL(string: "https://api.openai.com/v1/chat/completions")
+        }
+        return URL(string: "https://api.openai.com/v1/completions")
+    }
+
     private func makeAPICall(query: String, registration: Registration) {
-        guard let url = URL(string: "https://api.openai.com/v1/completions") else {
+        let model = iTermAdvancedSettingsModel.aiModel()!
+        guard let url = url(forModel: model) else {
             handle(event: .error(reason: "Invalid URL"))
             return
         }
@@ -243,7 +251,7 @@ class AITermController {
         }
 
         struct Body: Codable {
-            var model = iTermAdvancedSettingsModel.aiModel()  // "text-davinci-003"
+            var model: String  // "text-davinci-003"
             var prompt: String
             var max_tokens: Int
             var temperature = 0
@@ -251,7 +259,8 @@ class AITermController {
 
         // Tokens are about 4 letters each. Allow enough tokens to include both the query and an
         // answer the same length as the query.
-        let body = Body(prompt: query,
+        let body = Body(model: model,
+                        prompt: query,
                         max_tokens: max(Int(iTermAdvancedSettingsModel.aiMaxTokens()),
                                         query.count / 2))
         let bodyEncoder = JSONEncoder()

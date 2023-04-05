@@ -23,6 +23,7 @@
 - (NSRect)popupScreenVisibleFrame;
 - (VT100Screen *)popupVT100Screen;
 - (id<iTermPopupWindowPresenter>)popupPresenter;
+- (void)popupPreview:(NSString *)text;
 - (void)popupInsertText:(NSString *)text;
 - (void)popupKeyDown:(NSEvent *)event;
 // Return YES if the delegate handles it, NO if Popup should handle it.
@@ -30,7 +31,16 @@
 - (void)popupWillClose:(iTermPopupWindowController *)popup;
 - (BOOL)popupWindowIsInFloatingHotkeyWindow;
 - (void)popupIsSearching:(BOOL)searching;
+- (BOOL)popupShouldTakePrefixFromScreen;
+// If the cursor is preceded by whitespace the last word will be empty. Words go in reverse order.
+- (NSArray<NSString *> *)popupWordsBeforeInsertionPoint:(int)count;
+@end
 
+@protocol iTermPopupWindowHosting
+- (NSRect)popupWindowHostingInsertionPointFrameInScreenCoordinates;
+- (NSArray<NSString *> *)wordsBeforeInsertionPoint:(NSInteger)count;
+- (void)popupWindowHostingInsertText:(NSString *)string;
+- (void)popupWindowHostSetPreview:(NSString *)string;
 @end
 
 @interface iTermPopupWindowController : NSWindowController
@@ -92,5 +102,6 @@
                                             inEntry:(PopupEntry *)entry
                                      baseAttributes:(NSDictionary *)baseAttributes;
 - (BOOL)passKeyEventToDelegateForSelector:(SEL)selector string:(NSString *)string;
+- (void)previewCurrentRow;
 
 @end

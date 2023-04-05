@@ -735,6 +735,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
                                    freeOnRelease:YES];
 }
 
+- (void)removeTrailingEmptyBlocks {
+    while (_lineBlocks.count && _lineBlocks.lastBlock.isEmpty) {
+        [_lineBlocks removeLastBlock];
+        num_wrapped_lines_width = -1;
+    }
+}
+
 - (BOOL)popAndCopyLastLineInto:(screen_char_t*)ptr
                          width:(int)width
              includesEndOfLine:(int*)includesEndOfLine
@@ -743,6 +750,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if ([self numLinesWithWidth:width] == 0) {
         return NO;
     }
+    [self removeTrailingEmptyBlocks];
     self.dirty = YES;
     num_wrapped_lines_width = -1;
 

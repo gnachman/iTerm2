@@ -93,6 +93,10 @@
                                    foreground:(screen_char_t)fg
                                    background:(screen_char_t)bg;
 
+- (void)screenRevealComposerWithPrompt:(NSArray<ScreenCharArray *> * _Nonnull)prompt;
+- (void)screenDismissComposer;
+- (void)screenAppendStringToComposer:(NSString * _Nonnull)string;
+
 // Change the cursor's appearance.
 - (void)screenSetCursorBlinking:(BOOL)blink;
 - (BOOL)screenCursorIsBlinking;
@@ -422,5 +426,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenFramerRecoveryDidFinish;
 - (void)screenDidResynchronizeSSH;
 - (void)screenEnsureDefaultMode;
+- (void)screenWillSynchronize;
+- (void)screenDidSynchronize;
 
 @end

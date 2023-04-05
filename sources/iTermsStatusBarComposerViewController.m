@@ -87,7 +87,20 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
     _comboBox.stringValue = stringValue;
 }
 
+- (void)insertText:(NSString *)text {
+    [_comboBox insertText:text];
+}
+
 - (void)setHost:(id<VT100RemoteHostReading>)host {
+}
+
+- (NSRect)cursorFrameInScreenCoordinates {
+    NSTextView *const textEditor = [_comboBox.currentEditor isKindOfClass:[NSTextView class]] ? (NSTextView *)_comboBox.currentEditor : nil;
+    if (!textEditor) {
+        DLog(@"No text editor for %@", _comboBox);
+        return NSZeroRect;
+    }
+    return textEditor.cursorFrameInScreenCoordinates;
 }
 
 #pragma mark - Private

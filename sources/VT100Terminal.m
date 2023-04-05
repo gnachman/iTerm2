@@ -1934,10 +1934,15 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         DLog(@"Not unwrapping. token info=%@", SSHInfoDescription(token.sshInfo));
     }
     [self reallyExecuteToken:token];
+    if (_wantsDidExecuteCallback) {
+        _wantsDidExecuteCallback = NO;
+        [_delegate terminalDidExecuteToken:token];
+    }
     _lastToken = token;
 }
 
 - (void)reallyExecuteToken:(VT100Token *)token {
+    [_delegate terminalWillExecuteToken:token];
     // Handle tmux stuff, which completely bypasses all other normal execution steps.
     if (token->type == DCS_TMUX_HOOK) {
         [_delegate terminalStartTmuxModeWithDCSIdentifier:token.string];
@@ -4312,9 +4317,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             // Sequence marking the start of the command prompt (FTCS_PROMPT_START)
             self.softAlternateScreenMode = NO;  // We can reasonably assume alternate screen mode has ended if there's a prompt. Could be ssh dying, etc.
             self.dirty = YES;
+            const BOOL wasInCommand = inCommand_;
             inCommand_ = NO;  // Issue 7954
             self.alternateScrollMode = NO;  // Avoid leaving it on when ssh dies.
-            [_delegate terminalPromptDidStart];
+            [_delegate terminalPromptDidStart:wasInCommand];
             break;
 
         case 'B':

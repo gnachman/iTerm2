@@ -107,8 +107,16 @@
     return [[self viewController] stringValue];
 }
 
+- (void)insertText:(NSString *)text {
+    [self.viewController insertText:text];
+}
+
 - (void)setStringValue:(NSString *)stringValue {
     [[self viewController] setStringValue:stringValue];
+}
+
+- (NSRect)cursorFrameInScreenCoordinates {
+    return [[self viewController] cursorFrameInScreenCoordinates];
 }
 
 #pragma mark - iTermStatusBarComponent

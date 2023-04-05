@@ -56,7 +56,7 @@ class TextClipDrawing: NSObject {
             hasBackgroundImage = helper.hasBackgroundImage
             cursorGuideColor = helper.cursorGuideColor
             cursorCoord = helper.cursorCoord
-            cursorVisible = helper.cursorVisible
+            cursorVisible = helper.isCursorVisible
             reverseVideo = helper.reverseVideo
             textViewIsActiveSession = helper.textViewIsActiveSession
             isInKeyWindow = helper.isInKeyWindow
@@ -80,7 +80,7 @@ class TextClipDrawing: NSObject {
             helper.hasBackgroundImage = hasBackgroundImage
             helper.cursorGuideColor = cursorGuideColor
             helper.cursorCoord = cursorCoord
-            helper.cursorVisible = cursorVisible
+            helper.isCursorVisible = cursorVisible
             helper.reverseVideo = reverseVideo
             helper.textViewIsActiveSession = textViewIsActiveSession
             helper.isInKeyWindow = isInKeyWindow
@@ -162,7 +162,7 @@ class TextClipDrawing: NSObject {
         drawingHelper.hasBackgroundImage = false
         drawingHelper.cursorGuideColor = nil
         drawingHelper.cursorCoord = VT100GridCoord(x: 0, y: 0)
-        drawingHelper.cursorVisible = false
+        drawingHelper.isCursorVisible = false
         drawingHelper.reverseVideo = false
         drawingHelper.textViewIsActiveSession = true
         drawingHelper.isInKeyWindow = true

@@ -149,12 +149,6 @@ typedef struct iTermTextColorContext {
     NSColor *previousForegroundColor;
 } iTermTextColorContext;
 
-typedef NS_ENUM(NSUInteger, iTermMarkIndicatorType) {
-    iTermMarkIndicatorTypeSuccess,
-    iTermMarkIndicatorTypeError,
-    iTermMarkIndicatorTypeOther
-};
-
 static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL hasBackgroundImage,
                                                                          BOOL enableBlending,
                                                                          BOOL reverseVideo,
@@ -400,7 +394,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         NSIndexSet *selectedIndexes =
             [_selection selectedIndexesIncludingTabFillersInAbsoluteLine:line + _totalScrollbackOverflow];
 
-        iTermBackgroundColorRunsInLine *runsInLine =
+        if ([self canDrawLine:line]) {
+            iTermBackgroundColorRunsInLine *runsInLine =
             [iTermBackgroundColorRunsInLine backgroundRunsInLine:theLine
                                                       lineLength:_gridSize.width
                                                              row:line
@@ -409,7 +404,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                          matches:matches
                                                         anyBlink:&_blinkingFound
                                                                y:y];
-        [backgroundRunArrays addObject:runsInLine];
+            [backgroundRunArrays addObject:runsInLine];
+        } else {
+            [backgroundRunArrays addObject:[iTermBackgroundColorRunsInLine defaultRunOfLength:_gridSize.width row:line y:y]];
+        }
         iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS]);
     }
 
@@ -794,7 +792,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (void)drawCursorGuideForColumns:(NSRange)range
                                 y:(CGFloat)yOrigin
                     virtualOffset:(CGFloat)virtualOffset {
-    if (!_cursorVisible) {
+    if (!_isCursorVisible) {
         return;
     }
     [_cursorGuideColor set];
@@ -918,7 +916,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return img;
 }
 
-- (iTermMarkIndicatorType)markIndicatorTypeForMark:(id<VT100ScreenMarkReading>)mark {
++ (iTermMarkIndicatorType)markIndicatorTypeForMark:(id<VT100ScreenMarkReading>)mark {
     if (mark.code == 0) {
         return iTermMarkIndicatorTypeSuccess;
     }
@@ -930,8 +928,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return iTermMarkIndicatorTypeError;
 }
 
-- (NSColor *)colorForMark:(id<VT100ScreenMarkReading>)mark {
-    switch ([self markIndicatorTypeForMark:mark]) {
++ (NSColor *)colorForMark:(id<VT100ScreenMarkReading>)mark {
+    return [self colorForMarkType:[iTermTextDrawingHelper markIndicatorTypeForMark:mark]];
+}
+
++ (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type {
+    switch (type) {
         case iTermMarkIndicatorTypeSuccess:
             return [iTermTextDrawingHelper successMarkColor];
         case iTermMarkIndicatorTypeOther:
@@ -941,31 +943,63 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     }
 }
 
+- (BOOL)canDrawLine:(int)line {
+    return (line < _linesToSuppress.location ||
+            line >= _linesToSuppress.location + _linesToSuppress.length);
+}
+
 - (void)drawMarkIfNeededOnLine:(int)line
                 leftMarginRect:(NSRect)leftMargin
                  virtualOffset:(CGFloat)virtualOffset {
+    if (![self canDrawLine:line]) {
+        return;
+    }
     id<VT100ScreenMarkReading> mark = [self.delegate drawingHelperMarkOnLine:line];
     if (mark != nil && self.drawMarkIndicators) {
-        NSRect insetLeftMargin = leftMargin;
-        insetLeftMargin.origin.x += 1;
-        insetLeftMargin.size.width -= 1;
-        NSRect rect = [iTermTextDrawingHelper frameForMarkContainedInRect:insetLeftMargin
-                                                                 cellSize:_cellSize
-                                                   cellSizeWithoutSpacing:_cellSizeWithoutSpacing
-                                                                    scale:1];
-        const iTermMarkIndicatorType type = [self markIndicatorTypeForMark:mark];
-        NSImage *image = _cachedMarks[@(type)];
-        if (!image || !NSEqualSizes(image.size, rect.size)) {
-            image = [iTermTextDrawingHelper newImageWithMarkOfColor:[self colorForMark:mark]
-                                                               size:rect.size];
-            _cachedMarks[@(type)] = image;
+        if (mark.lineStyle) {
+            NSColor *bgColor = [self defaultBackgroundColor];
+            NSColor *merged = [iTermTextDrawingHelper colorForLineStyleMark:[iTermTextDrawingHelper markIndicatorTypeForMark:mark]
+                                                            backgroundColor:bgColor];
+            [merged set];
+            NSRect rect;
+            rect.origin.x = 0;
+            rect.size.width = _visibleRect.size.width;
+            rect.size.height = 1;
+            const CGFloat y = (((CGFloat)line) - 0.5) * _cellSize.height;
+            rect.origin.y = round(y);
+            iTermRectFill(rect, virtualOffset);
+        } else {
+            NSRect insetLeftMargin = leftMargin;
+            insetLeftMargin.origin.x += 1;
+            insetLeftMargin.size.width -= 1;
+            NSRect rect = [iTermTextDrawingHelper frameForMarkContainedInRect:insetLeftMargin
+                                                                     cellSize:_cellSize
+                                                       cellSizeWithoutSpacing:_cellSizeWithoutSpacing
+                                                                        scale:1];
+            const iTermMarkIndicatorType type = [iTermTextDrawingHelper markIndicatorTypeForMark:mark];
+            NSImage *image = _cachedMarks[@(type)];
+            if (!image || !NSEqualSizes(image.size, rect.size)) {
+                NSColor *markColor = [iTermTextDrawingHelper colorForMark:mark];
+                image = [iTermTextDrawingHelper newImageWithMarkOfColor:markColor
+                                                                   size:rect.size];
+                _cachedMarks[@(type)] = image;
+            }
+            [image it_drawInRect:rect virtualOffset:virtualOffset];
         }
-        [image it_drawInRect:rect virtualOffset:virtualOffset];
     }
+}
+
++ (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor {
+    NSColor *markColor = [iTermTextDrawingHelper colorForMarkType:type];
+    NSColor *merged = [bgColor blendedWithColor:markColor weight:0.5];
+    return merged;
 }
 
 - (void)drawNoteRangesOnLine:(int)line
                virtualOffset:(CGFloat)virtualOffset {
+    if (![self canDrawLine:line]) {
+        return;
+    }
     NSArray *noteRanges = [self.delegate drawingHelperCharactersWithNotesOnLine:line];
     if (noteRanges.count) {
         for (NSValue *value in noteRanges) {
@@ -1235,6 +1269,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                      backgroundRuns:(NSArray<iTermBoxedBackgroundColorRun *> *)backgroundRuns
                             context:(CGContextRef)ctx
                       virtualOffset:(CGFloat)virtualOffset {
+    if (![self canDrawLine:line]) {
+        return;
+    }
     [self drawCharactersForLine:line
                             atY:y
                  backgroundRuns:backgroundRuns
@@ -3566,16 +3603,16 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     // own cursor. Also, it must be not blinked-out, and it must be within the expected bounds of
     // the screen (which is just a sanity check, really).
     BOOL result = (![self hasMarkedText] &&
-                   _cursorVisible &&
+                   _isCursorVisible &&
                    shouldShowCursor &&
                    column <= width &&
                    column >= 0 &&
                    row >= 0 &&
                    row < height &&
                    !copyMode);
-    DLog(@"shouldDrawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, column=%d, row=%d"
+    DLog(@"shouldDrawCursor: hasMarkedText=%d, isCursorVisible=%d, showCursor=%d, column=%d, row=%d"
          @"width=%d, height=%d, copyMode=%@. Result=%@",
-         (int)[self hasMarkedText], (int)_cursorVisible, (int)shouldShowCursor, column, row,
+         (int)[self hasMarkedText], (int)_isCursorVisible, (int)shouldShowCursor, column, row,
          width, height, @(copyMode), @(result));
     return result;
 }

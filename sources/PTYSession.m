@@ -571,7 +571,6 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     iTermProcessInfo *_lastProcessInfo;
     iTermLoggingHelper *_logging;
     iTermNaggingController *_naggingController;
-    iTermComposerManager *_composerManager;
     BOOL _tmuxTTLHasThresholds;
     NSTimeInterval _tmuxTTLLowerThreshold;
     NSTimeInterval _tmuxTTLUpperThreshold;
@@ -615,6 +614,11 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     // If true the session was just created and an offscreen mark alert would be annoying.
     BOOL _temporarilySuspendOffscreenMarkAlerts;
     NSMutableArray<NSData *> *_dataQueue;
+
+    BOOL _promptStateAllowsAutoComposer;
+    NSArray<ScreenCharArray *> *_desiredComposerPrompt;
+
+    iTermLocalFileChecker *_localFileChecker;
 }
 
 @synthesize isDivorced = _divorced;
@@ -855,6 +859,10 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
                                                  selector:@selector(windowDidMiniaturize:)
                                                      name:@"iTermWindowWillMiniaturize"
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(autoComposerDidChange:)
+                                                     name:iTermAutoComposerDidChangeNotification
+                                                   object:nil];
         [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:self
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
@@ -1025,6 +1033,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pendingJumps release];
     [_dataQueue release];
     [_pendingPublishRequests release];
+    [_desiredComposerPrompt release];
+    [_localFileChecker release];
 
     [super dealloc];
 }
@@ -1047,6 +1057,12 @@ ITERM_WEAKLY_REFERENCEABLE
         if ([self.variablesScope valueForVariableName:iTermVariableKeySessionHostname] == nil) {
             [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionHostname];
         }
+    }
+    if (_desiredComposerPrompt) {
+        DLog(@"Delayed reveal of prompt");
+        NSArray<ScreenCharArray *> *prompt = [_desiredComposerPrompt autorelease];
+        _desiredComposerPrompt = nil;
+        [self screenRevealComposerWithPrompt:prompt];
     }
 }
 
@@ -5081,7 +5097,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)clearBuffer {
     _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState clearBufferSavingPrompt:YES];
+        [mutableState clearBufferWithoutTriggersSavingPrompt:YES];
         if (self.isTmuxClient) {
             [_tmuxController clearHistoryForWindowPane:self.tmuxPane];
         }
@@ -5497,7 +5513,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self stopTailFind];
     }
 
-    const BOOL passwordInput = _shell.passwordInput;
+    const BOOL passwordInput = _shell.passwordInput || _conductor.atPasswordPrompt;
     DLog(@"passwordInput=%@", @(passwordInput));
     if (passwordInput != _passwordInput) {
         _passwordInput = passwordInput;
@@ -5506,7 +5522,6 @@ ITERM_WEAKLY_REFERENCEABLE
             [self didBeginPasswordInput];
         }
     }
-
     _timerRunning = NO;
 }
 
@@ -5693,10 +5708,77 @@ ITERM_WEAKLY_REFERENCEABLE
             verticalSpacing:verticalSpacing];
     DLog(@"Line height is now %f", [_textview lineHeight]);
     [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled];
+    [_composerManager updateFont];
     DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
 
     [_view updateTrackingAreas];
+}
+
+- (BOOL)shouldShowAutoComposer {
+    if (![iTermPreferences boolForKey:kPreferenceAutoComposer]) {
+        DLog(@"wantAutoComposer: Disabled by setting");
+        return NO;
+    }
+    return _promptStateAllowsAutoComposer;
+}
+
+- (void)dismissComposerIfEmpty {
+    DLog(@"dismissComposerIfEmpty called on %@", [NSThread currentThread]);
+    if (self.composerManager.isEmpty) {
+        DLog(@"dismissComposerifEmpty calling dismissAnimated");
+        [self.composerManager dismissAnimated:NO];
+    }
+    DLog(@"dismissComposerIfEmpty returning");
+}
+
+- (void)autoComposerDidChange:(NSNotification *)notification {
+    [self sync];
+}
+
+static NSString *const PTYSessionComposerPrefixUserDataKeyPrompt = @"prompt";
+static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"detected by trigger";
+
+- (void)revealAutoComposerWithPrompt:(NSArray<ScreenCharArray *> *)promptText {
+    assert(_initializationFinished);
+    DLog(@"Reveal auto composer. isAutoComposer <- YES");
+    self.composerManager.isAutoComposer = YES;
+    NSMutableAttributedString *prompt = [self attributedStringForScreenChars:promptText];
+    const CGFloat kern = [NSMutableAttributedString kernForString:@"W"
+                                                      toHaveWidth:_textview.charWidth
+                                                         withFont:_textview.fontTable.asciiFont.font];
+    [prompt addAttributes:@{ NSKernAttributeName: @(kern) }
+                    range:NSMakeRange(0, prompt.length)];
+    [self.composerManager reveal];
+    NSDictionary *userData = nil;
+    DLog(@"revealing auto composer");
+    if (_screen.lastPromptMark.promptText) {
+        DLog(@"Set prefix to %@", prompt.string);
+        userData = @{
+            PTYSessionComposerPrefixUserDataKeyPrompt: [[_screen.lastPromptMark.promptText copy] autorelease],
+            PTYSessionComposerPrefixUserDataKeyDetectedByTrigger: @(_screen.lastPromptMark.promptDetectedByTrigger)
+        };
+    }
+    [self.composerManager setPrefix:prompt
+                           userData:userData];
+}
+
+- (NSMutableAttributedString *)attributedStringForScreenChars:(NSArray<ScreenCharArray *> *)promptText {
+    NSDictionary *defaultAttributes = [_textview attributeProvider]((screen_char_t){}, nil);
+    NSAttributedString *space = [NSAttributedString attributedStringWithString:@" "
+                                                                      attributes:defaultAttributes];
+
+    NSAttributedString *newline = [NSAttributedString attributedStringWithString:@"\n"
+                                                                      attributes:defaultAttributes];
+
+    NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
+    NSAttributedString *body = [[promptText mapWithBlock:^id _Nullable(ScreenCharArray *sca) {
+        return [sca attributedStringValueWithAttributeProvider:_textview.attributeProvider];
+    }] attributedComponentsJoinedByAttributedString:newline];
+    [result appendAttributedString:body];
+    [result trimTrailingWhitespace];
+    [result appendAttributedString:space];
+    return result;
 }
 
 - (void)terminalFileShouldStop:(NSNotification *)notification {
@@ -6189,7 +6271,7 @@ DLog(args); \
     if (self.currentCommand.length > 0) {
         [self setComposerString:self.currentCommand];
     }
-    [self.composerManager reveal];
+    [self.composerManager toggle];
 }
 
 - (void)setComposerString:(NSString *)string {
@@ -6198,6 +6280,10 @@ DLog(args); \
 }
 
 - (BOOL)closeComposer {
+    if (_composerManager.isAutoComposer) {
+        // We don't want cmd-W to close the auto composer because it'll just open back up immediately.
+        return NO;
+    }
     return [_composerManager dismiss];
 }
 
@@ -6322,7 +6408,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (replacingFilter) {
         DLog(@"Clear buffer because there is a pre-existing filter");
         [self.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-            [mutableState clearBufferSavingPrompt:NO];
+            [mutableState clearBufferWithoutTriggersSavingPrompt:NO];
         }];
     }
     [_asyncFilter start];
@@ -6996,7 +7082,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"delta=%@ count %@->%@\n%@", @(delta), @(_disableFocusReporting), @(_disableFocusReporting + delta), self);
     _disableFocusReporting += delta;
     if (_disableFocusReporting == 0) {
-        [self setFocused:[self textViewIsFirstResponder]];
+        [self setFocused:[self textViewOrComposerIsFirstResponder]];
     }
 }
 
@@ -9953,10 +10039,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate setActiveSession:self];
     [_view setNeedsDisplay:YES];
     [_view.findDriver owningViewDidBecomeFirstResponder];
+    if (!self.copyMode && self.haveAutoComposer) {
+        [_composerManager makeDropDownComposerFirstResponder];
+    }
 }
 
 - (void)textViewDidResignFirstResponder {
     [_view setNeedsDisplay:YES];
+    self.copyMode = false;
 }
 
 - (void)setReportingMouseDownForEventType:(NSEventType)eventType {
@@ -10405,6 +10495,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)textViewBackgroundColorDidChangeFrom:(NSColor *)before to:(NSColor *)after {
     DLog(@"%@", [NSThread callStackSymbols]);
     [self backgroundColorDidChangeJigglingIfNeeded:before.isDark != after.isDark];
+    [self updateAutoComposerSeparatorVisibility];
 }
 
 - (void)textViewTransparencyDidChange {
@@ -10427,6 +10518,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_profileInitialized && before.isDark != after.isDark) {
         self.needsJiggle = YES;
     }
+    [_composerManager updateFont];
+}
+
+- (void)textViewCursorColorDidChangeFrom:(NSColor *)before to:(NSColor *)after {
+    [_composerManager updateFont];
 }
 
 - (void)setNeedsJiggle:(BOOL)needsJiggle {
@@ -11458,6 +11554,39 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)screenRevealComposerWithPrompt:(NSArray<ScreenCharArray *> *)prompt {
+    _promptStateAllowsAutoComposer = YES;
+    if ([iTermPreferences boolForKey:kPreferenceAutoComposer]) {
+        if (_initializationFinished) {
+            if (![self haveAutoComposer]) {
+                [_composerManager reset];
+                [self revealAutoComposerWithPrompt:prompt];
+            }
+        } else {
+            _desiredComposerPrompt = [prompt copy];
+        }
+    }
+}
+
+- (void)screenDismissComposer {
+    _promptStateAllowsAutoComposer = NO;
+    if (_initializationFinished) {
+        [self.composerManager dismissAnimated:NO];
+    } else {
+        [_desiredComposerPrompt release];
+        _desiredComposerPrompt = nil;
+    }
+    [_textview setNeedsDisplay:YES];
+}
+
+- (void)screenAppendStringToComposer:(NSString *)string {
+    if (self.haveAutoComposer) {
+        DLog(@"Append to composer: %@", string);
+        [_composerManager insertText:string];
+        _composerManager.haveShellProvidedText = YES;
+    }
+}
+
 - (void)screenSetCursorType:(ITermCursorType)newType {
     ITermCursorType type = newType;
     if (type == CURSOR_DEFAULT) {
@@ -11988,6 +12117,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading>)mark {
+    _composerManager.haveShellProvidedText = NO;
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         if (obj.argumentsOneOfCase == ITMNotificationRequest_Arguments_OneOfCase_GPBUnsetOneOfCase ||
             [obj.promptMonitorRequest.modesArray it_contains:ITMPromptMonitorMode_Prompt]) {
@@ -12003,6 +12133,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                  toConnectionKey:key];
         }
     }];
+    __weak __typeof(self) weakSelf = self;
+    // Can't just do it here because it may trigger a resize and this runs as a side-effect.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf updateAutoComposerFrame];
+    });
+}
+
+- (void)updateAutoComposerFrame {
+    if (_composerManager.dropDownComposerViewIsVisible && _composerManager.isAutoComposer) {
+        [_composerManager updateFrame];
+    }
 }
 
 // Save the current scroll position
@@ -12890,6 +13031,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                  toConnectionKey:key];
         }
     }];
+
+    [_composerManager reset];
 }
 
 - (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading>)maybeMark {
@@ -13055,6 +13198,22 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         dirty = YES;
         _profileDidChange = NO;
     }
+
+    NSNumber *desiredComposerRows = nil;
+    if ([iTermPreferences boolForKey:kPreferenceAutoComposer] && _promptStateAllowsAutoComposer) {
+        const int desiredRows = MAX(1, _composerManager.desiredHeight / _textview.lineHeight);
+        desiredComposerRows = @(desiredRows);
+    }
+    if (![NSObject object:desiredComposerRows isEqualToObject:_config.desiredComposerRows]) {
+        _config.desiredComposerRows = desiredComposerRows;
+        dirty = YES;
+    }
+    const BOOL useLineStyleMarks = [iTermPreferences boolForKey:kPreferenceAutoComposer];
+    if (useLineStyleMarks != _config.useLineStyleMarks) {
+        _config.useLineStyleMarks = useLineStyleMarks;
+        dirty = YES;
+    }
+
     if (dirty) {
         _config.isDirty = dirty;
     }
@@ -13411,6 +13570,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     DLog(@"lastLocalDirectory goes %@ -> %@ for %@\n%@", _lastLocalDirectory, lastLocalDirectory, self, [NSThread callStackSymbols]);
     [_lastLocalDirectory autorelease];
     _lastLocalDirectory = [lastLocalDirectory copy];
+    if (lastLocalDirectory) {
+        _localFileChecker.workingDirectory = lastLocalDirectory;
+    }
 }
 
 - (void)setLastLocalDirectoryWasPushed:(BOOL)lastLocalDirectoryWasPushed {
@@ -13880,6 +14042,16 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 #pragma mark - PopupDelegate
+
+- (BOOL)popupShouldTakePrefixFromScreen {
+    return _textview.window.firstResponder == _textview;
+}
+
+// If the cursor is preceded by whitespace the last word will be empty. Words go in reverse order.
+- (NSArray<NSString *> *)popupWordsBeforeInsertionPoint:(int)count {
+    id<iTermPopupWindowHosting> host = [self popupHost];
+    return [host wordsBeforeInsertionPoint:count] ?: @[@""];
+}
 
 - (void)popupIsSearching:(BOOL)searching {
     _textview.showSearchingCursor = searching;
@@ -14370,7 +14542,24 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)popupInsertText:(NSString *)string {
+    id<iTermPopupWindowHosting> host = [self popupHost];
+    if (host) {
+        [host popupWindowHostingInsertText:string];
+        return;
+    }
+    if (_composerManager.dropDownComposerViewIsVisible) {
+        [_composerManager insertText:string];
+        return;
+    }
     [self insertText:string];
+}
+
+- (void)popupPreview:(NSString *)text {
+    id<iTermPopupWindowHosting> host = [self popupHost];
+    if (host) {
+        [host popupWindowHostSetPreview:[[text firstNonEmptyLine] truncatedToLength:_screen.width ellipsis:@"…"]];
+        return;
+    }
 }
 
 - (void)popupKeyDown:(NSEvent *)event {
@@ -14617,8 +14806,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [_screen.colorMap colorForKey:kColorMapBackground];
 }
 
-- (BOOL)textViewIsFirstResponder {
-    return (_textview.window.firstResponder == _textview &&
+- (BOOL)textViewOrComposerIsFirstResponder {
+    return ((_textview.window.firstResponder == _textview ||
+             [_composerManager dropDownComposerIsFirstResponder]) &&
             [NSApp isActive] &&
             _textview.window.isKeyWindow);
 }
@@ -14714,6 +14904,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (BOOL)textViewShouldShowOffscreenCommandLine {
+    if (_screen.height < 5) {
+        return NO;
+    }
     return [iTermProfilePreferences boolForKey:KEY_SHOW_OFFSCREEN_COMMANDLINE inProfile:self.profile];
 }
 
@@ -14738,11 +14931,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
     [self setComposerString:choices[0]];
-    [self.composerManager reveal];
+    [self.composerManager toggle];
 }
 
 - (BOOL)sessionViewTerminalIsFirstResponder {
-    return [self textViewIsFirstResponder];
+    return [self textViewOrComposerIsFirstResponder];
 }
 
 - (BOOL)sessionViewShouldDimOnlyText {
@@ -14835,7 +15028,38 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)textViewOpenComposer:(NSString *)string {
     [self setComposerString:string];
-    [self.composerManager reveal];
+    [self.composerManager toggle];
+}
+
+- (BOOL)textViewIsAutoComposerOpen {
+    return [_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer && !_composerManager.temporarilyHidden;
+}
+
+- (VT100GridRange)textViewLinesToSuppressDrawing {
+    if ([_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer && !_composerManager.temporarilyHidden) {
+        const NSRect rect = _composerManager.dropDownFrame;
+        const NSRect textViewRect = [_textview convertRect:rect fromView:_view];
+        const VT100GridCoord topLeft = [_textview coordForPoint:textViewRect.origin allowRightMarginOverflow:NO];
+        const VT100GridCoord bottomRight = [_textview coordForPoint:NSMakePoint(NSMaxX(textViewRect) - 1,
+                                                                                NSMaxY(textViewRect) - 1)
+                                           allowRightMarginOverflow:NO];
+        return VT100GridRangeMake(topLeft.y, bottomRight.y - topLeft.y + 1);
+    }
+    return VT100GridRangeMake(0, 0);
+}
+
+- (NSRect)textViewCursorFrameInScreenCoords {
+    const int cx = [self.screen cursorX] - 1;
+    const int cy = [self.screen cursorY];
+    const CGFloat charWidth = [self.textview charWidth];
+    const CGFloat lineHeight = [self.textview lineHeight];
+    NSPoint p = NSMakePoint([iTermPreferences doubleForKey:kPreferenceKeySideMargins] + cx * charWidth,
+                            ([self.screen numberOfLines] - [self.screen height] + cy) * lineHeight);
+    const NSPoint origin = [self.textview.window pointToScreenCoords:[self.textview convertPoint:p toView:nil]];
+    return NSMakeRect(origin.x,
+                      origin.y,
+                      charWidth,
+                      lineHeight);
 }
 
 #pragma mark - iTermHotkeyNavigableSession
@@ -14992,6 +15216,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)sessionViewUserScrollDidChange:(BOOL)userScroll {
     [self.delegate sessionUpdateMetalAllowed];
+    [self updateAutoComposerSeparatorVisibility];
 }
 
 - (void)sessionViewDidChangeHoverURLVisible:(BOOL)visible {
@@ -15027,6 +15252,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [_textview offscreenCommandLineFrameForView:view];
 }
 
+- (void)sessionViewUpdateComposerFrame {
+    [[self composerManager] layout];
+}
 #pragma mark - iTermCoprocessDelegate
 
 - (void)coprocess:(Coprocess *)coprocess didTerminateWithErrorOutput:(NSString *)errors {
@@ -15950,7 +16178,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)copyModeHandlerDidChangeEnabledState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
     [_textview setNeedsDisplay:YES];
     const BOOL enabled = handler.enabled;
-    if (!enabled) {
+    if (enabled) {
+        [_textview.window makeFirstResponder:_textview];
+    } else {
+        if (self.haveAutoComposer) {
+            [_composerManager makeDropDownComposerFirstResponder];
+        }
+
         if (_textview.selection.live) {
             [_textview.selection endLiveSelection];
         }
@@ -15958,6 +16192,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             [mutableState scheduleTokenExecution];
         }];
     }
+    [_composerManager setTemporarilyHidden:handler.enabled];
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.copyMode = enabled;
     }];
@@ -16444,6 +16679,93 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return _view;
 }
 
+- (void)composerManager:(iTermComposerManager *)composerManager minimalFrameDidChangeTo:(NSRect)newFrame {
+    [_textview setNeedsDisplay:YES];
+    DLog(@"Composer frame changed to %@", NSStringFromRect(newFrame));
+}
+
+- (NSRect)composerManager:(iTermComposerManager *)composerManager
+    frameForDesiredHeight:(CGFloat)desiredHeight
+            previousFrame:(NSRect)previousFrame {
+    NSRect newFrame = previousFrame;
+    newFrame.origin.y = _view.frame.size.height;
+
+    newFrame.origin.y += newFrame.size.height;
+    const CGFloat maxWidth = _view.bounds.size.width - newFrame.origin.x * 2;
+    const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const NSSize paneSize = self.view.frame.size;
+    CGFloat y = 0;
+    CGFloat width = 0;
+    CGFloat height = 0;
+
+    if (composerManager.isAutoComposer) {
+        // Place at bottom, but leave excess space below it so it abuts the terminal view.
+        width = maxWidth;
+        int lineAbove = _screen.currentGrid.cursor.y + 1;
+        id<VT100ScreenMarkReading> mark = _screen.lastPromptMark;
+        if (mark.promptRange.start.y >= 0) {
+            lineAbove = mark.promptRange.start.y - _screen.totalScrollbackOverflow - _screen.numberOfScrollbackLines;
+            lineAbove = MAX(1, lineAbove);
+        }
+        const int actualLinesAboveComposer = MAX(1, _screen.height - lineAbove);
+        const CGFloat lineHeight = _textview.lineHeight;
+        const int desiredLines = ceil(desiredHeight / lineHeight);
+        const int linesOfHeight = MIN(actualLinesAboveComposer, desiredLines);
+        const int gridOffsetInRows = _screen.height - linesOfHeight;
+        const CGFloat titleBarHeight = (_view.showTitle ? SessionView.titleHeight : 0);
+        height = (linesOfHeight + 0.5) * lineHeight;
+        const CGFloat gridOffsetInPoints = gridOffsetInRows * lineHeight;
+        const CGFloat top = vmargin + titleBarHeight + gridOffsetInPoints;
+        y = MAX(0, paneSize.height - top - height);
+
+        DLog(@"width=%@ actualLinesFree=%@ gridOffsetInRows=%@ lineHeight=%@ titleBarHeight=%@ height=%@ gridOffsetInPoints=%@ top=%@ y=%@",
+             @(width), @(actualLinesAboveComposer), @(gridOffsetInRows), @(lineHeight), @(titleBarHeight), @(height), @(gridOffsetInPoints), @(top), @(y));
+    } else {
+        // Place at top. Includes decoration so a minimum width must be enforced.
+
+        y = paneSize.height - desiredHeight;
+        width = MAX(217, maxWidth);
+        height = desiredHeight;
+    }
+    newFrame = NSMakeRect(newFrame.origin.x,
+                          y,
+                          width,
+                          height);
+    return newFrame;
+}
+
+- (void)composerManager:(iTermComposerManager *)composerManager desiredHeightDidChange:(CGFloat)desiredHeight {
+    DLog(@"Desired height changed to %@", @(desiredHeight));
+    [self sync];
+}
+
+- (BOOL)haveAutoComposer {
+    return _composerManager.dropDownComposerViewIsVisible && _composerManager.isAutoComposer;
+}
+
+- (void)screenWillSynchronize {
+}
+
+- (void)screenDidSynchronize {
+    [self updateAutoComposerFrame];
+}
+
+- (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager {
+    return _textview.lineHeight;
+}
+
+- (void)composerManagerClear:(iTermComposerManager *)composerManager {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState clearForComposer];
+    }];
+}
+
+- (void)composerManagerOpenHistory:(iTermComposerManager *)composerManager
+                            prefix:(nonnull NSString *)prefix
+                         forSearch:(BOOL)forSearch {
+    [[_delegate realParentWindow] openCommandHistoryWithPrefix:prefix sortChronologically:!forSearch];
+}
+
 - (void)composerManagerDidRemoveTemporaryStatusBarComponent:(iTermComposerManager *)composerManager {
     [_pasteHelper temporaryRightStatusBarComponentDidBecomeAvailable];
     [_textview.window makeFirstResponder:_textview];
@@ -16463,6 +16785,29 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self sendCommand:command];
 }
 
+- (id<iTermSyntaxHighlighting>)composerManager:(iTermComposerManager *)composerManager
+          syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString {
+    return [[[iTermSyntaxHighlighter alloc] init:attributedString
+                                        colorMap:_screen.colorMap
+                                        fontTable:_textview.fontTable
+                                     fileChecker:[self fileChecker]] autorelease];
+}
+
+- (iTermFileChecker *)fileChecker {
+    if (@available(macOS 11, *)) {
+        if (_conductor.canCheckFiles) {
+            return _conductor.fileChecker;
+        }
+    }
+    if (!_localFileChecker) {
+        _localFileChecker = [[iTermLocalFileChecker alloc] init];
+        if (self.lastLocalDirectory) {
+            _localFileChecker.workingDirectory = self.lastLocalDirectory;
+        }
+    }
+    return _localFileChecker;
+}
+
 - (void)sendCommand:(NSString *)command {
     if (_screen.commandRange.start.x < 0) {
         id<VT100RemoteHostReading> host = [self currentHost] ?: [VT100RemoteHost localhost];
@@ -16471,7 +16816,34 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                      inDirectory:[_screen workingDirectoryOnLine:_screen.commandRange.start.y]
                                                         withMark:nil];
     }
+    __weak __typeof(self) weakSelf = self;
+    if ([self haveAutoComposer]) {
+        if (_composerManager.haveShellProvidedText) {
+            // Send ^U first to erase what's already there.
+            // TODO: This may wreak havoc if the shell decides to redraw itself.
+            command = [[NSString stringWithLongCharacter:'U' - '@'] stringByAppendingString:command];
+        }
+        const BOOL detectedByTrigger = [_composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyDetectedByTrigger] boolValue];
+        [_composerManager setPrefix:nil userData:nil];
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            DLog(@"willSendCommand:%@", command);
+            [mutableState composerWillSendCommand];
+            if (detectedByTrigger) {
+                [mutableState didSendCommand];
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf reallySendCommand:command];
+            });
+        }];
+        return;
+    }
+    [self reallySendCommand:command];
+}
+
+- (void)reallySendCommand:(NSString *)command {
+    DLog(@"reallySendCommand: %@", command);
     [self writeTask:command];
+    [_screen userDidPressReturn];
 }
 
 - (void)composerManager:(iTermComposerManager *)composerManager
@@ -16479,8 +16851,59 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self openAdvancedPasteWithText:command escaping:iTermSendTextEscapingNone];
 }
 
-- (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager {
+- (void)composerManager:(iTermComposerManager *)composerManager
+            sendControl:(NSString *)control {
+    [self writeTask:control];
+}
+
+- (BOOL)composerManager:(iTermComposerManager *)composerManager wantsKeyEquivalent:(NSEvent *)event {
+    const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                       NSEventModifierFlagCommand |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagControl);
+    const NSEventModifierFlags cmdShift = (NSEventModifierFlagCommand | NSEventModifierFlagShift);
+    if ((event.modifierFlags & mask) == cmdShift) {
+        // Shortcut for mark navigation.
+        if (event.keyCode == kVK_UpArrow) {
+            [[self.delegate realParentWindow] previousMark:nil];
+            return YES;
+        } else if (event.keyCode == kVK_DownArrow) {
+            [[self.delegate realParentWindow] nextMark:nil];
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)composerManager:(iTermComposerManager *)composerManager performFindPanelAction:(id)sender {
+    [_textview performFindPanelAction:sender];
+}
+
+- (void)composerManagerWillDismissMinimalView:(iTermComposerManager *)composerManager {
     [_textview.window makeFirstResponder:_textview];
+    _composerManager.isSeparatorVisible = NO;
+}
+
+- (void)composerManagerDidDisplayMinimalView:(iTermComposerManager *)composerManager {
+    [self updateAutoComposerSeparatorVisibility];
+}
+
+- (void)updateAutoComposerSeparatorVisibility {
+    _composerManager.isSeparatorVisible = [self shouldShowAutoComposerSeparator];
+    _composerManager.separatorColor = [iTermTextDrawingHelper colorForLineStyleMark:iTermMarkIndicatorTypeSuccess
+                                                                    backgroundColor:[_screen.colorMap colorForKey:kColorMapBackground]];
+}
+
+- (BOOL)shouldShowAutoComposerSeparator {
+    return self.haveAutoComposer;
+}
+
+- (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager {
+    _view.composerHeight = 0;
+    [_localFileChecker reset];
+    if (@available(macOS 11, *)) {
+        [_conductor.fileChecker reset];
+    }
 }
 
 - (NSAppearance *)composerManagerAppearance:(iTermComposerManager *)composerManager {
@@ -16495,7 +16918,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [self currentHost];
 }
 
-- (NSString *_Nullable)composerManagerWorkingDirectory:(iTermComposerManager *)composerManager {
+- (NSString * _Nullable)composerManagerWorkingDirectory:(iTermComposerManager *)composerManager {
     return [self.variablesScope path];
 }
 
@@ -16516,6 +16939,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (NSFont *)composerManagerFont:(iTermComposerManager *)composerManager {
     return self.textview.fontTable.asciiFont.font;
+}
+
+- (NSColor *)composerManagerTextColor:(iTermComposerManager *)composerManager {
+    return [self.textview.colorMap colorForKey:kColorMapForeground];
+}
+
+- (NSColor *)composerManagerCursorColor:(iTermComposerManager *)composerManager {
+    return [self.textview.colorMap colorForKey:kColorMapCursor];
 }
 
 #pragma mark - iTermIntervalTreeObserver

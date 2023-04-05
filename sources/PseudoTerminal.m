@@ -7743,18 +7743,23 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 }
 
 - (IBAction)openCommandHistory:(id)sender {
+    if (![[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
+        [iTermShellHistoryController showInformationalMessage];
+        return;
+    }
+    [self openCommandHistoryWithPrefix:[[self currentSession] currentCommand] sortChronologically:NO];
+}
+
+- (void)openCommandHistoryWithPrefix:(NSString *)prefix sortChronologically:(BOOL)sortChronologically {
     if (!commandHistoryPopup) {
         commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:NO];
     }
-    if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
-        [self openPopupWindow:commandHistoryPopup];
-        [commandHistoryPopup loadCommands:[commandHistoryPopup commandsForHost:[[self currentSession] currentHost]
-                                                                partialCommand:[[self currentSession] currentCommand]
-                                                                        expand:YES]
-                           partialCommand:[[self currentSession] currentCommand]];
-    } else {
-        [iTermShellHistoryController showInformationalMessage];
-    }
+    [self openPopupWindow:commandHistoryPopup];
+    [commandHistoryPopup loadCommands:[commandHistoryPopup commandsForHost:[[self currentSession] currentHost]
+                                                            partialCommand:prefix
+                                                                    expand:YES]
+                       partialCommand:prefix
+                  sortChronologically:sortChronologically];
 }
 
 - (IBAction)openDirectories:(id)sender {
@@ -7832,7 +7837,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
         DLog(@"ACH load commands");
         [commandHistoryPopup loadCommands:commands
-                           partialCommand:prefix];
+                           partialCommand:prefix
+                      sortChronologically:NO];
     }
     if (_autocompleteCandidateListItem && session == self.currentSession) {
         iTermShellHistoryController *history = [iTermShellHistoryController sharedInstance];
@@ -10249,6 +10255,15 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         } else {
             [item setState:NSControlStateValueOff];
         }
+    } else if ([item action] == @selector(toggleAutoComposer:)) {
+        result = [[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed];
+        if (result) {
+            if ([item respondsToSelector:@selector(setState:)]) {
+                [item setState:[iTermPreferences boolForKey:kPreferenceAutoComposer] ? NSControlStateValueOn : NSControlStateValueOff];
+            }
+        } else {
+            [item setState:NSControlStateValueOff];
+        }
     } else if ([item action] == @selector(toggleAlertOnNextMark:)) {
         PTYSession *currentSession = [self currentSession];
         if ([item respondsToSelector:@selector(setState:)]) {
@@ -10379,10 +10394,16 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                                      resetRowsCols:[sender isAlternate]];
 }
 
-- (IBAction)toggleAutoCommandHistory:(id)sender
-{
+- (IBAction)toggleAutoCommandHistory:(id)sender {
     [iTermPreferences setBool:![iTermPreferences boolForKey:kPreferenceAutoCommandHistory]
                        forKey:kPreferenceAutoCommandHistory];
+}
+
+- (IBAction)toggleAutoComposer:(id)sender {
+    [iTermPreferences setBool:![iTermPreferences boolForKey:kPreferenceAutoComposer]
+                       forKey:kPreferenceAutoComposer];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAutoComposerDidChangeNotification
+                                                        object:nil];
 }
 
 // Turn on/off sending of input to all sessions. This causes a bunch of UI

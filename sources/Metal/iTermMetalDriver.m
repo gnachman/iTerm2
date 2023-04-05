@@ -20,6 +20,7 @@
 #import "iTermHistogram.h"
 #import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
+#import "iTermLineStyleMarkRenderer.h"
 #import "iTermMarginRenderer.h"
 #import "iTermMetalDebugInfo.h"
 #import "iTermMetalFrameData.h"
@@ -111,7 +112,8 @@ typedef struct {
     iTermOffscreenCommandLineBackgroundRenderer *_offscreenCommandLineBackgroundRenderer;
     iTermTextRenderer *_textRenderer;
     iTermOffscreenCommandLineTextRenderer *_offscreenCommandLineTextRenderer;
-    iTermMarkRenderer *_markRenderer;
+    iTermMarkRenderer *_arrowStyleMarkRenderer;
+    iTermLineStyleMarkRenderer *_lineStyleMarkRenderer;
     iTermBadgeRenderer *_badgeRenderer;
     iTermFullScreenFlashRenderer *_flashRenderer;
     iTermTimestampsRenderer *_timestampsRenderer;
@@ -192,7 +194,8 @@ typedef struct {
         _offscreenCommandLineTextRenderer = [[iTermOffscreenCommandLineTextRenderer alloc] initWithDevice:device];
         _backgroundColorRenderer = [[iTermBackgroundColorRenderer alloc] initWithDevice:device];
         _offscreenCommandLineBackgroundRenderer = [[iTermOffscreenCommandLineBackgroundRenderer alloc] initWithDevice:device];
-        _markRenderer = [[iTermMarkRenderer alloc] initWithDevice:device];
+        _arrowStyleMarkRenderer = [[iTermMarkRenderer alloc] initWithDevice:device];
+        _lineStyleMarkRenderer = [[iTermLineStyleMarkRenderer alloc] initWithDevice:device];
         _badgeRenderer = [[iTermBadgeRenderer alloc] initWithDevice:device];
         _flashRenderer = [[iTermFullScreenFlashRenderer alloc] initWithDevice:device];
         _timestampsRenderer = [[iTermTimestampsRenderer alloc] initWithDevice:device];
@@ -683,6 +686,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
         int drawableGlyphs = 0;
         int rles = 0;
         iTermMarkStyle markStyle;
+        BOOL lineStyleMark = NO;
         NSDate *date;
         [frameData.perFrameState metalGetGlyphKeys:glyphKeys
                                         attributes:rowData.attributesData.mutableBytes
@@ -690,6 +694,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                                         background:rowData.backgroundColorRLEData.mutableBytes
                                           rleCount:&rles
                                          markStyle:&markStyle
+                                     lineStyleMark:&lineStyleMark
                                                row:y
                                              width:columns
                                     drawableGlyphs:&drawableGlyphs
@@ -703,6 +708,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                                  @(drawableGlyphs),
                                  @(rowData.keysData.length / sizeof(iTermMetalGlyphKey)));
         rowData.markStyle = markStyle;
+        rowData.lineStyleMark = lineStyleMark;
         [rowData.keysData checkForOverrun];
         [rowData.attributesData checkForOverrun];
         [rowData.backgroundColorRLEData checkForOverrun];
@@ -921,10 +927,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                       stat:iTermMetalFrameDataStatPqEnqueueDrawImage];
 
     [self drawCursorAfterTextWithFrameData:frameData];
-
-    [self drawCellRenderer:_markRenderer
-                 frameData:frameData
-                      stat:iTermMetalFrameDataStatPqEnqueueDrawMarks];
 
     [self drawRenderer:_indicatorRenderer
              frameData:frameData
@@ -1386,10 +1388,33 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 }
 
 - (void)populateMarkRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
-    iTermMarkRendererTransientState *tState = [frameData transientStateForRenderer:_markRenderer];
+    [self populateArrowStyleMarkRendererTransientStateWithFrameData:frameData];
+    [self populateLineStyleMarkRendererTransientStateWithFrameData:frameData];
+}
+
+- (void)populateArrowStyleMarkRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    iTermMarkRendererTransientState *tState = [frameData transientStateForRenderer:_arrowStyleMarkRenderer];
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
-        [tState setMarkStyle:rowData.markStyle row:idx];
+        if (VT100GridRangeContains(frameData.perFrameState.linesToSuppressDrawing, rowData.y)) {
+            return;
+        }
+        if (!rowData.lineStyleMark) {
+            [tState setMarkStyle:rowData.markStyle row:idx];
+        }
     }];
+}
+
+- (void)populateLineStyleMarkRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    iTermLineStyleMarkRendererTransientState *tState = [frameData transientStateForRenderer:_lineStyleMarkRenderer];
+    [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (VT100GridRangeContains(frameData.perFrameState.linesToSuppressDrawing, rowData.y)) {
+            return;
+        }
+        if (rowData.lineStyleMark) {
+            [tState setMarkStyle:rowData.markStyle row:idx];
+        }
+    }];
+    tState.colors = frameData.perFrameState.lineStyleMarkColors;
 }
 
 - (void)populateHighlightRowRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1405,7 +1430,12 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     iTermMetalCursorInfo *cursorInfo = frameData.perFrameState.metalDriverCursorInfo;
     if (cursorInfo.coord.y >= 0 &&
         cursorInfo.coord.y < frameData.gridSize.height) {
-        [tState setRow:frameData.perFrameState.metalDriverCursorInfo.coord.y];
+        const int row = frameData.perFrameState.metalDriverCursorInfo.coord.y;
+        if (VT100GridRangeContains(frameData.perFrameState.linesToSuppressDrawing, row)) {
+            [tState setRow:-1];
+        } else {
+            [tState setRow:row];
+        }
     } else {
         [tState setRow:-1];
     }
@@ -1716,6 +1746,14 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor];
 
+    [self drawCellRenderer:_lineStyleMarkRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawMarks];
+
+    [self drawCellRenderer:_arrowStyleMarkRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawMarks];
+
     [self drawRenderer:_badgeRenderer
              frameData:frameData
                   stat:iTermMetalFrameDataStatPqEnqueueBadge];
@@ -1991,7 +2029,8 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
               _offscreenCommandLineTextRenderer,
               _backgroundColorRenderer,
               _broadcastStripesRenderer,
-              _markRenderer,
+              _arrowStyleMarkRenderer,
+              _lineStyleMarkRenderer,
               _cursorGuideRenderer,
               _highlightRowRenderer,
               _imageRenderer,

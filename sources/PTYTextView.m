@@ -177,6 +177,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     iTermRateLimitedUpdate *_shadowRateLimit;
     NSMutableArray<PTYNoteViewController *> *_notes;
     iTermScrollAccumulator *_horizontalScrollAccumulator;
+    BOOL _cursorVisible;
 }
 
 
@@ -255,7 +256,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         _drawingHelper.delegate = self;
 
         [self updateMarkedTextAttributes];
-        _drawingHelper.cursorVisible = YES;
+        _cursorVisible = YES;
         _selection = [[iTermSelection alloc] init];
         _selection.delegate = self;
         _oldSelection = [_selection copy];
@@ -1355,10 +1356,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     [_dataSource performBlockWithSavedGrid:^(id<PTYTextViewSynchronousUpdateStateReading>  _Nullable savedState) {
         if (savedState) {
             originalState = [self syncUpdateState];
-            DLog(@"PTYTextView.performBlockWithFlickerFixerGrid: set cusrorVisible=%@", _drawingHelper.cursorVisible ? @"true": @"false");
+            DLog(@"PTYTextView.performBlockWithFlickerFixerGrid: set cusrorVisible=%@", _cursorVisible ? @"true": @"false");
             [self loadSyncUpdateState:savedState];
         } else {
-            DLog(@"PTYTextView.performBlockWithFlickerFixerGrid: (no saved grid) cusrorVisible=%@", _drawingHelper.cursorVisible ? @"true": @"false");
+            DLog(@"PTYTextView.performBlockWithFlickerFixerGrid: (no saved grid) cusrorVisible=%@", _cursorVisible ? @"true": @"false");
         }
 
         block();
@@ -1369,7 +1370,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (void)loadSyncUpdateState:(id<PTYTextViewSynchronousUpdateStateReading>)savedState {
-    _drawingHelper.cursorVisible = savedState.cursorVisible;
+    _cursorVisible = savedState.cursorVisible;
     _drawingHelper.colorMap = savedState.colorMap;
     [_colorMap autorelease];
     _colorMap = [savedState.colorMap retain];
@@ -1378,7 +1379,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (PTYTextViewSynchronousUpdateState *)syncUpdateState {
     PTYTextViewSynchronousUpdateState *originalState = [[[PTYTextViewSynchronousUpdateState alloc] init] autorelease];
     originalState.colorMap = _colorMap;
-    originalState.cursorVisible = _drawingHelper.cursorVisible;
+    originalState.cursorVisible = _cursorVisible;
     return originalState;
 }
 
@@ -1455,7 +1456,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _drawingHelper.softAlternateScreenMode = self.dataSource.terminalSoftAlternateScreenMode;
     _drawingHelper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
     _drawingHelper.fontTable = self.fontTable;
-
+    const BOOL autoComposerOpen = [self.delegate textViewIsAutoComposerOpen];
+    _drawingHelper.isCursorVisible = _cursorVisible && !autoComposerOpen;
+    _drawingHelper.linesToSuppress = self.delegate.textViewLinesToSuppressDrawing;
+    
     const VT100GridRange range = [self rangeOfVisibleLines];
     if ([_delegate textViewShouldShowOffscreenCommandLine]) {
         _drawingHelper.offscreenCommandLine = [self.dataSource offscreenCommandLineBefore:range.location];
@@ -1878,11 +1882,11 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (void)setCursorVisible:(BOOL)cursorVisible {
     DLog(@"setCursorVisible:%@", cursorVisible ? @"true" : @"false");
     [self markCursorDirty];
-    _drawingHelper.cursorVisible = cursorVisible;
+    _cursorVisible = cursorVisible;
 }
 
 - (BOOL)cursorVisible {
-    return _drawingHelper.cursorVisible;
+    return _cursorVisible;
 }
 
 - (CGFloat)minimumBaselineOffset {
@@ -2903,6 +2907,12 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return [self contentWithAttributes:NO timestamps:NO];
 }
 
+- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider {
+    return [[^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
+        return [self charAttributes:theChar externalAttributes:ea];
+    } copy] autorelease];
+}
+
 - (id)contentWithAttributes:(BOOL)attributes timestamps:(BOOL)timestamps {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     extractor.addTimestamps = timestamps;
@@ -2912,9 +2922,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                                            [_dataSource numberOfLines] - 1);
     NSDictionary *(^attributeProvider)(screen_char_t, iTermExternalAttribute *) = nil;
     if (attributes) {
-        attributeProvider =^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-            return [self charAttributes:theChar externalAttributes:ea];
-        };
+        attributeProvider = [self attributeProvider];
     }
     return [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
                    attributeProvider:attributeProvider
@@ -4386,7 +4394,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)beginFindCursor:(BOOL)hold forceFireworks:(BOOL)forceFireworks {
-    _drawingHelper.cursorVisible = YES;
+    _cursorVisible = YES;
     [self setNeedsDisplayInRect:self.cursorFrame];
     if (!_findCursorView) {
         [self createFindCursorWindowWithFireworks:forceFireworks];
@@ -4648,6 +4656,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else if (theKey == kColorMapForeground) {
         [self recomputeBadgeLabel];
         [_delegate textViewForegroundColorDidChangeFrom:before to:after];
+    } else if (theKey == kColorMapCursor) {
+        [_delegate textViewCursorColorDidChangeFrom:before to:after];
     } else if (theKey == kColorMapSelection) {
         _drawingHelper.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
                                                                               towardsGrayLevel:0.5];

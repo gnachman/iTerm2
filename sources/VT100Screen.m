@@ -141,7 +141,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (NSSize)viewSize {
     NSSize cellSize = [delegate_ screenCellSize];
-    VT100GridSize gridSize = _state.currentGrid.size;
+    VT100GridSize gridSize = self.size;
     return NSMakeSize(cellSize.width * gridSize.width, cellSize.height * gridSize.height);
 }
 
@@ -580,6 +580,17 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return [_state coordRangeForInterval:mark.entry.interval];
 }
 
+- (BOOL)isAtCommandPrompt {
+    id<VT100ScreenMarkReading> mark = [self screenMarkBeforeAbsLine:self.numberOfLines + _state.totalScrollbackOverflow + 1];
+    if (!mark) {
+        DLog(@"No preceding mark");
+        return NO;
+    }
+    const VT100GridAbsCoordRange zero = VT100GridAbsCoordRangeMake(0, 0, 0, 0);
+    const BOOL runningCommand = VT100GridAbsCoordRangeEquals(_state.currentPromptRange, zero);
+    return !runningCommand;
+}
+
 - (iTermOffscreenCommandLine *)offscreenCommandLineBefore:(int)line {
     if (line >= _state.numberOfScrollbackLines && _state.terminalSoftAlternateScreenMode) {
         return nil;
@@ -599,6 +610,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         return nil;
     }
     if (absLine - _state.totalScrollbackOverflow == line) {
+        return nil;
+    }
+    if (VT100GridCoordRangeHeight([self rangeOfOutputForCommandMark:mark]) <= 3) {
+        // The UI will cover up the command output so it's counterproductive to show it.
         return nil;
     }
     const int commandLineNumber = absLine - _state.totalScrollbackOverflow;
@@ -976,6 +991,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
+    return [self rangeOfOutputForCommandMark:mark];
+}
+
+- (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
     NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumeratorAt:mark.entry.interval.limit];
     NSArray *objects;
     do {
@@ -1151,6 +1170,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                kScreenStatePrimaryGridStateKey: _state.primaryGrid.dictionaryValue ?: @{},
                kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
                kScreenStateProtectedMode: @(_state.protectedMode),
+               kScreenStatePromptStateKey: _state.promptStateDictionary,
             };
             dict = [dict dictionaryByRemovingNullValues];
             [encoder mergeDictionary:dict];
@@ -1264,6 +1284,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         };
     }
     DLog(@"Begin %@", self);
+    [self.delegate screenWillSynchronize];
     [mutableState willSynchronize];
     switch (checkTriggers) {
         case VT100ScreenTriggerCheckTypeNone:
@@ -1316,6 +1337,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         }
     }
     _wantsSearchBuffer = NO;
+    [self.delegate screenDidSynchronize];
     [mutableState didSynchronize:resetOverflow];
     DLog(@"%@: End overflow=%@ haveScrolled=%@", self, @(overflow), @(_state.currentGrid.haveScrolled));
     return (VT100SyncResult) {
@@ -1413,7 +1435,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)clearBuffer {
     [self.delegate screenEnsureDefaultMode];
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState clearBufferSavingPrompt:YES];
+        [mutableState clearBufferWithoutTriggersSavingPrompt:YES];
     }];
 }
 

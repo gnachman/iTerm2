@@ -385,6 +385,18 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
     return numberOfLinesUsed;
 }
 
+- (BOOL)lineIsEmpty:(int)n {
+    const screen_char_t *line = [self screenCharsAtLineNumber:n];
+    for (int i = 0; i < size_.width; i++) {
+        if (line[i].complexChar ||
+            line[i].image ||
+            line[i].code) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 - (int)numberOfLinesUsed {
     return MAX(MIN(size_.height, cursor_.y + 1), [self numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:NO]);
 }
@@ -1355,6 +1367,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }
 }
 
+// NOTE: `rect` is *not* inclusive of rect.end.y, unlike most uses of VT100GridRect.
 - (void)scrollRect:(VT100GridRect)rect downBy:(int)distance softBreak:(BOOL)softBreak {
     DLog(@"scrollRect:%d,%d %dx%d downBy:%d",
              rect.origin.x, rect.origin.y, rect.size.width, rect.size.height, distance);
@@ -1605,6 +1618,45 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     return VT100GridRunMake(adjustedLocation % size_.width,
                             adjustedLocation / size_.width,
                             adjustedLength);
+}
+
+- (int)scrollWholeScreenDownByLines:(int)count poppingFromLineBuffer:(LineBuffer *)lineBuffer {
+    int result = 0;
+    for (int i = 0; i < count; i++) {
+        if ([self scrollWholeScreenDownPoppingFromLineBuffer:lineBuffer]) {
+            result += 1;
+        } else {
+            break;
+        }
+    }
+    return result;
+}
+
+- (BOOL)scrollWholeScreenDownPoppingFromLineBuffer:(LineBuffer *)lineBuffer {
+    const int width = self.size.width;
+    if ([lineBuffer numLinesWithWidth:width] == 0 || width < 1) {
+        return NO;
+    }
+    [self scrollRect:VT100GridRectMake(0, 0, width, self.size.height)
+              downBy:1
+           softBreak:NO];
+    screen_char_t *line = [self screenCharsAtLineNumber:0];
+    int eol = 0;
+    iTermImmutableMetadata metadata;
+    screen_char_t continuation;
+    const BOOL ok = [lineBuffer popAndCopyLastLineInto:line
+                                                 width:width
+                                     includesEndOfLine:&eol
+                                              metadata:&metadata
+                                          continuation:&continuation];
+    assert(ok);
+    [[self lineInfoAtLineNumber:0] setMetadataFromImmutable:metadata];
+    line[width] = continuation;
+    line[width].code = eol;
+    if (eol == EOL_DWC) {
+        ScreenCharSetDWC_SKIP(&line[width - 1]);
+    }
+    return YES;
 }
 
 - (BOOL)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer

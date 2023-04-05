@@ -32,6 +32,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)checkIfDirectoryExists:(NSString *)directory
                     completion:(void (^)(BOOL))completion;
 
+// NOTE: the completion block won't be called if it times out.
+- (void)statFile:(NSString *)path
+      completion:(void (^)(struct stat, int))completion;
+
 - (void)asyncGetInfoForProcess:(int)pid
                         flavor:(int)flavor
                            arg:(uint64_t)arg

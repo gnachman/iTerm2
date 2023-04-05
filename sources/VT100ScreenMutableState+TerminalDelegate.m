@@ -18,12 +18,23 @@
 
 @implementation VT100ScreenMutableState (TerminalDelegate)
 
+- (BOOL)enteringCommand {
+    // Are we after terminalCommandDidStart but before terminalCommandDidEnd?
+    return VT100GridAbsCoordRangeLength(self.currentPromptRange, self.width) > 0 && self.commandStartCoord.x != -1;
+}
+
+- (void)appendStringToComposer:(NSString *)string {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenAppendStringToComposer:string];
+        [unpauser unpause];
+    }];
+}
+
 - (void)terminalAppendString:(NSString *)string {
     DLog(@"begin %@", string);
     if (self.collectInputForPrinting) {
         [self.printBuffer appendString:string];
     } else {
-        // else display string on screen
         [self appendStringAtCursor:string];
     }
     [self appendStringToTriggerLine:string];
@@ -43,9 +54,7 @@
 - (void)terminalAppendAsciiData:(AsciiData *)asciiData {
     DLog(@"begin");
     if (self.collectInputForPrinting) {
-        NSString *string = [[NSString alloc] initWithBytes:asciiData->buffer
-                                                    length:asciiData->length
-                                                  encoding:NSASCIIStringEncoding];
+        NSString *string = iTermCreateStringFromAsciiData(asciiData);
         [self terminalAppendString:string];
         return;
     }
@@ -116,7 +125,10 @@
         DLog(@"Ignore linefeed/formfeed/index because cursor outside left-right margin.");
         return;
     }
-
+    if (_promptStateMachine.isEchoingBackCommand && self.lastPromptMark.promptDetectedByTrigger) {
+        [_promptStateMachine triggerDetectedCommandDidBeginExecution];
+        [self commandDidEnd];
+    }
     if (self.collectInputForPrinting) {
         [self.printBuffer appendString:@"\n"];
     } else {
@@ -430,7 +442,9 @@
          VT100GridCoordDescription(newCursorCoord));;
     if (didResize && !preserveScreen) {
         DLog(@"erase screen");
-        [self eraseInDisplayBeforeCursor:YES afterCursor:YES decProtect:NO];  // erase the screen
+        [self performBlockWithoutTriggers:^{
+            [self eraseInDisplayBeforeCursor:YES afterCursor:YES decProtect:NO];  // erase the screen
+        }];
         self.currentGrid.cursorX = 0;
         self.currentGrid.cursorY = 0;
     }
@@ -1526,10 +1540,12 @@
     }];
 }
 
-- (void)terminalPromptDidStart {
+- (void)terminalPromptDidStart:(BOOL)wasInCommand {
     DLog(@"begin");
     [self promptDidStartAt:VT100GridAbsCoordMake(self.currentGrid.cursor.x,
-                                                 self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)];
+                                                 self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)
+              wasInCommand:wasInCommand
+         detectedByTrigger:NO];
 }
 
 - (NSArray<NSNumber *> *)terminalTabStops {
@@ -2666,6 +2682,14 @@
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenDidResynchronizeSSH];
     }];
+}
+
+- (void)terminalDidExecuteToken:(VT100Token *)token {
+    [self executePostTriggerActions];
+}
+
+- (void)terminalWillExecuteToken:(VT100Token *)token {
+    [_promptStateMachine handleToken:token withEncoding:self.terminal.encoding];
 }
 
 @end

@@ -14,6 +14,15 @@ protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerTextViewSend:) func composerTextViewSend(string: String)
     @objc(composerTextViewEnqueue:) func composerTextViewEnqueue(string: String)
     @objc(composerTextViewSendToAdvancedPaste:) func composerTextViewSendToAdvancedPaste(content: String)
+    @objc(composerTextViewSendControl:) func composerTextViewSendControl(_ control: String)
+    @objc(composerTextViewOpenHistoryWithPrefix:forSearch:) func composerTextViewOpenHistory(prefix: String,
+                                                                                             forSearch: Bool)
+    @objc(composerTextViewWantsKeyEquivalent:) func composerTextViewWantsKeyEquivalent(_ event: NSEvent) -> Bool
+    @objc(composerTextViewPerformFindPanelAction:) func composerTextViewPerformFindPanelAction(_ sender: Any?)
+    @objc(composerTextViewClear) func composerTextViewClear()
+
+    @objc(composerSyntaxHighlighterForAttributedString:)
+    func composerSyntaxHighlighter(textStorage: NSMutableAttributedString) -> SyntaxHighlighting
 
     // Optional
     @objc(composerTextViewDidResignFirstResponder) optional func composerTextViewDidResignFirstResponder()
@@ -23,6 +32,15 @@ protocol ComposerTextViewDelegate: AnyObject {
 class ComposerTextView: MultiCursorTextView {
     @IBOutlet weak var composerDelegate: ComposerTextViewDelegate?
     @objc private(set) var isSettingSuggestion = false
+    @objc private(set) var isDoingSyntaxHighlighting = false
+    private let syntaxHighlightingRateLimit = iTermRateLimitedUpdate(name: "Syntax Highlighting Rate Limit",
+                                                                     minimumInterval: 0.05)
+
+    // autoMode will be true for auto-composer, in which case it tries to blend in to the terminal
+    // by not requiring shift+enter to send, handling certain control characters like a terminal,
+    // etc.
+    @objc var autoMode = false
+
     private var _suggestion: String?
     private var linkRange: NSRange? = nil
     @objc var suggestion: String? {
@@ -52,6 +70,117 @@ class ComposerTextView: MultiCursorTextView {
         usesFindBar = true
     }
 
+    @objc
+    var prefix: NSMutableAttributedString? {
+        willSet {
+            suggestion = nil
+        }
+        didSet {
+            if let prefix {
+                prefix.addAttribute(.promptKey, value: true, range: prefix.wholeRange)
+            }
+            updatePrefix()
+        }
+    }
+
+    @objc
+    var stringExcludingPrefix: String {
+        get {
+            return String(string.dropFirst(prefix?.string.count ?? 0))
+        }
+        set {
+            string = newValue
+            updatePrefix()
+        }
+    }
+
+    @objc
+    var selectedRangeExcludingPrefix: NSRange {
+        let range = selectedRange()
+        if range.location == NSNotFound {
+            return range
+        }
+        guard let prefixLength = prefix?.string.count else {
+            return range
+        }
+        return range.shiftedDown(by: prefixLength)
+    }
+
+    var rangeExcludingPrefixAndSuggestion: Range<Int> {
+        let lowerBound = prefix?.string.count ?? 0
+        if suggestionRange.length > 0 {
+            return lowerBound..<suggestionRange.lowerBound
+        } else {
+            return lowerBound..<string.count
+        }
+    }
+
+    private func updatePrefix() {
+        guard let textStorage else {
+            return
+        }
+        var done = false
+        var actions = [() -> ()]()
+        textStorage.enumerateAttribute(.promptKey,
+                                       in: textStorage.wholeRange,
+                                       options: [.reverse],
+                                       using: { value, range, _ in
+            if value != nil {
+                done = true
+                if let prefix {
+                    actions.append({
+                        textStorage.replaceCharacters(in: range, with: prefix)
+                    })
+                } else {
+                    actions.append({
+                        textStorage.deleteCharacters(in: range)
+                    })
+                }
+            }
+        })
+        if !done, let prefix {
+            actions.append({
+                textStorage.insert(prefix, at: 0)
+            })
+        }
+        for action in actions {
+            action()
+        }
+    }
+
+    @objc
+    var prefixColor: NSColor? {
+        didSet {
+            updatePrefix()
+        }
+    }
+
+    @objc
+    override var textColor: NSColor? {
+        didSet {
+            guard let mutableAttributedString = self.textStorage else {
+                return
+            }
+            let suggestionKey = NSAttributedString.Key.suggestionKey
+
+            mutableAttributedString.enumerateAttribute(suggestionKey,
+                                                       in: NSRange(location: 0,
+                                                                   length: mutableAttributedString.length),
+                                                       options: []) { value, range, _ in
+                let newColor = value != nil ? suggestionTextColor : justTextColor
+                mutableAttributedString.addAttribute(.foregroundColor, value: newColor, range: range)
+            }
+        }
+    }
+
+    private var justTextColor: NSColor {
+        return textColor ?? .textColor
+    }
+
+    private var suggestionTextColor: NSColor {
+        return justTextColor.withAlphaComponent(0.5)
+    }
+
     @objc var hasSuggestion: Bool {
         return suggestion != nil
     }
@@ -61,6 +190,7 @@ class ComposerTextView: MultiCursorTextView {
         setSelectedRange(NSRange(location: suggestionRange.upperBound, length: 0))
         _suggestion = nil
         suggestionRange = NSRange(location: NSNotFound, length: 0)
+        doSyntaxHighlighting()
     }
 
     @objc var firstSelectionIsNontrivial: Bool {
@@ -82,8 +212,11 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     override func viewDidMoveToWindow() {
+        guard let textStorage else {
+            return
+        }
         if window == nil {
-            undoManager?.removeAllActions(withTarget: textStorage!)
+            undoManager?.removeAllActions(withTarget: textStorage)
         }
     }
 
@@ -92,10 +225,131 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     override func performFindPanelAction(_ sender: Any?) {
+        if autoMode {
+            composerDelegate?.composerTextViewPerformFindPanelAction(sender)
+            return
+        }
         if let tag = (sender as? NSMenuItem)?.tag, tag == NSFindPanelAction.selectAll.rawValue {
             window?.makeFirstResponder(self)
         }
         super.performFindPanelAction(sender)
+    }
+
+    private struct Action {
+        var modifiers: NSEvent.ModifierFlags
+        var characters: String
+        // Return true if you handled it and don't want super.keyDown(with:) called.
+        var closure: (ComposerTextView, NSEvent) -> (Bool)
+    }
+
+    private let standardActions = [
+        Action(modifiers: [.shift], characters: "\r", closure: { textView, _ in
+            textView.sendAction()
+            return true
+        }),
+        Action(modifiers: [.shift, .option], characters: "\r", closure: { textView, _ in
+            textView.sendEachAction()
+            return true
+        }),
+        Action(modifiers: [.option], characters: "\r", closure: { textView, _ in
+            textView.enqueueEachAction()
+            return true
+        })
+    ]
+
+    private var isEmpty: Bool {
+        let proposed = [NSRange(location: 0, length: textStorage?.length ?? 0)]
+        let valid = self.valid(ranges: proposed)
+        return valid.anySatisfies { range in
+            range.length > 0
+        }
+    }
+
+    private let autoModeActions = [
+        Action(modifiers: [], characters: "\r", closure: { textView, _ in
+            textView.sendAction()
+            return true
+        }),
+        Action(modifiers: [.shift, .option], characters: "\r", closure: { textView, _ in
+            textView.sendEachAction()
+            return true
+        }),
+        Action(modifiers: [.option], characters: "\r", closure: { textView, _ in
+            textView.enqueueEachAction()
+            return true
+        }),
+        // C-c
+        Action(modifiers: [.control], characters: "\u{3}", closure: { textView, event in
+            textView.sendKeystroke(event)
+            return true
+        }),
+        // C-d
+        Action(modifiers: [.control], characters: "\u{4}", closure: { textView, event in
+            guard !textView.isEmpty else {
+                // If you press C-d with text present it should do whatever C-D is bound to (normally
+                // delete forward).
+                return false
+            }
+
+            // If the textview is empty then send C-d to the shell, probably killing the session.
+            textView.sendKeystroke(event)
+            return true
+        }),
+        // C-l
+        Action(modifiers: [.control], characters: "\u{c}", closure: { textView, event in
+            textView.composerDelegate?.composerTextViewClear()
+            return true
+        }),
+        // C-r
+        Action(modifiers: [.control], characters: "\u{12}", closure: { textView, event in
+            textView.selectAll(nil)
+            textView.composerDelegate?.composerTextViewOpenHistory(prefix: "", forSearch: true)
+            return true
+        }),
+        // C-u
+        Action(modifiers: [.control], characters: "\u{15}", closure: { textView, event in
+            textView.selectAll(nil)
+            textView.delete(nil)
+            return true
+        })
+    ]
+
+    private var actionsForCurrentMode: [Action] {
+        return autoMode ? autoModeActions : standardActions
+    }
+
+    private func sendAction() {
+        suggestion = nil
+        composerDelegate?.composerTextViewDidFinish(cancel: false)
+    }
+
+    private func sendEachAction() {
+        suggestion = nil
+        for command in take() {
+            composerDelegate?.composerTextViewSend(string: command)
+        }
+    }
+
+    private func enqueueEachAction() {
+        suggestion = nil
+        for command in take() {
+            composerDelegate?.composerTextViewEnqueue(string: command)
+        }
+    }
+
+    private func sendKeystroke(_ event: NSEvent) {
+        if let characters = event.characters {
+            composerDelegate?.composerTextViewSendControl(characters)
+        }
+    }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if let composerDelegate,
+           composerDelegate.composerTextViewWantsKeyEquivalent(event) {
+            return true
+        }
+        // Allow NSTextView to handle it.
+        return super.performKeyEquivalent(with: event)
     }
 
     override func keyDown(with event: NSEvent) {
@@ -106,53 +360,76 @@ class ComposerTextView: MultiCursorTextView {
             return
         }
 
-        let enter = event.characters == "\r"
-        if enter {
-            let flags = event.it_modifierFlags
-            let mask: NSEvent.ModifierFlags = [.command, .option, .shift, .control]
-            let justShift = flags.intersection(mask) == [.shift]
-            if justShift {
-                suggestion = nil
-                composerDelegate?.composerTextViewDidFinish(cancel: false)
-                return
-            }
-            let justShiftOption = flags.intersection(mask) == [.shift, .option]
-            if justShiftOption {
-                suggestion = nil
-                for command in take() {
-                    composerDelegate?.composerTextViewSend(string: command)
-                }
-                return
-            }
-            let justOption = flags.intersection(mask) == [.option]
-            if justOption {
-                suggestion = nil
-                for command in take() {
-                    composerDelegate?.composerTextViewEnqueue(string: command)
-                }
-            }
+        let mask: NSEvent.ModifierFlags = [.command, .option, .shift, .control]
+        let maskedModifiers = event.it_modifierFlags.intersection(mask)
+
+        let action = actionsForCurrentMode.first { action in
+            action.characters == event.characters && action.modifiers == maskedModifiers
+        }
+        if let action, action.closure(self, event) {
+            return
         }
         super.keyDown(with: event)
     }
 
+    private var canMoveUp: Bool {
+        return glyphRangeAbove(glyphRange: selectedRange()) != nil
+    }
+
+    private var canMoveDown: Bool {
+        return glyphRangeBelow(glyphRange: selectedRange()) != nil
+    }
+
+    override func moveUp(_ sender: Any?) {
+        if cursorAtEndExcludingSuggestion && !canMoveUp && multiCursorSelectedRanges.count <= 1 {
+            suggestion = nil
+            composerDelegate?.composerTextViewOpenHistory(prefix: stringExcludingPrefix, forSearch: false)
+        } else {
+            super.moveUp(sender)
+        }
+    }
+
+    override func moveDown(_ sender: Any?) {
+        if cursorAtEndExcludingSuggestion && !canMoveDown && multiCursorSelectedRanges.count <= 1 {
+            suggestion = nil
+            composerDelegate?.composerTextViewOpenHistory(prefix: stringExcludingPrefix, forSearch: false)
+        } else {
+            super.moveDown(sender)
+        }
+    }
+
+    private func withoutPrefix<T>(_ closure: () throws -> (T)) rethrows -> T {
+        let saved = prefix
+        prefix = nil
+        defer {
+            prefix = saved
+        }
+        return try closure()
+    }
+
     private func take() -> [String] {
-        return Array(multiCursorSelectedRanges.reversed().compactMap {
-            take(range: $0)
-        }.reversed())
+        withoutPrefix {
+            return Array(multiCursorSelectedRanges.reversed().compactMap {
+                take(range: $0)
+            }.reversed())
+        }
     }
 
     // Extracts the command intersecting `range`, removes it from the textview, and returns it.
     // Returns nil if the range is invalid.
     // range: A glyph range.
     private func take(range: NSRange) -> String? {
-        let string = textStorage!.string as NSString
+        guard let layoutManager, let textStorage else {
+            return nil
+        }
+        let string = textStorage.string as NSString
         let stringToTake: String
         var rangeToTake: NSRange
         if range.length > 0 {
             stringToTake = string.substring(with: range)
             rangeToTake = range
         } else {
-            let characterIndex = layoutManager!.characterRange(forGlyphRange: range,
+            let characterIndex = layoutManager.characterRange(forGlyphRange: range,
                                                                actualGlyphRange: nil)
             guard let tuple = characterRangeOfCommand(
                 atCharacterIndex: characterIndex.location) else {
@@ -219,26 +496,30 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     private func removeLink() {
+        guard let textStorage else {
+            return
+        }
         if let range = linkRange {
             NSCursor.pop()
             let safeRange = range.intersection(NSRange(location: 0,
-                                                       length: (textStorage!.string as NSString).length))
+                                                       length: (textStorage.string as NSString).length))
             if let safeRange = safeRange, safeRange.length > 0 {
-                textStorage?.removeAttribute(.link, range: safeRange)
+                textStorage.removeAttribute(.link, range: safeRange)
             }
             linkRange = nil
         }
     }
 
-    private let suggestionAttribute =  NSAttributedString.Key("iTerm2 Suggestion")
-
     private func characterRangeOfCommand(at point: NSPoint) -> (NSRange, String)? {
-        let characterIndex = layoutManager!.characterIndex(
+        guard let layoutManager, let textContainer else {
+            return nil
+        }
+        let characterIndex = layoutManager.characterIndex(
             for: point,
-            in: textContainer!,
+            in: textContainer,
             fractionOfDistanceBetweenInsertionPoints: nil)
-        let glyphIndex = layoutManager!.glyphIndexForCharacter(at: characterIndex)
-        let boundingRect = layoutManager!.lineFragmentUsedRect(forGlyphAt: glyphIndex, effectiveRange: nil)
+        let glyphIndex = layoutManager.glyphIndexForCharacter(at: characterIndex)
+        let boundingRect = layoutManager.lineFragmentUsedRect(forGlyphAt: glyphIndex, effectiveRange: nil)
         if !boundingRect.contains(point) {
             return nil
         }
@@ -246,6 +527,23 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     private func characterRangeOfCommand(atCharacterIndex unsafeIndex: Int) -> (NSRange, String)? {
+        guard let textStorage else {
+            return nil
+        }
+        if let prefixLength = prefix?.string.count, prefixLength > 0 {
+            if unsafeIndex > prefixLength {
+                return nil
+            }
+            if let (_range, string) = withoutPrefix({
+                return characterRangeOfCommand(atCharacterIndex: unsafeIndex - prefixLength)
+            }) {
+                var range = _range
+                range.location += prefixLength
+                return (range, string)
+            } else {
+                return nil
+            }
+        }
         var characterIndex = unsafeIndex
 
         // This dense chunk of code finds the range of the command under the cursor, chasing down
@@ -255,7 +553,7 @@ class ComposerTextView: MultiCursorTextView {
         var characterIndexesToDrop = Set<Int>()
         // Search forwards
         while true {
-            let string = (textStorage!.string as NSString)
+            let string = (textStorage.string as NSString)
             let paragraphRange = string.paragraphRange(for: NSRange(location: characterIndex, length: 0))
             if paragraphRange.location == NSNotFound || paragraphRange.length == 0 {
                 return nil
@@ -286,7 +584,7 @@ class ComposerTextView: MultiCursorTextView {
         if let suffixRange = spanningRange, suffixRange.location > 0 {
             characterIndex = max(0, suffixRange.location - 1)
             while spanningRange!.location > 0 {
-                let string = (textStorage!.string as NSString)
+                let string = (textStorage.string as NSString)
                 let paragraphRange = string.paragraphRange(for: NSRange(location: characterIndex, length: 0))
                 if paragraphRange.location == NSNotFound || paragraphRange.length == 0 {
                     return nil
@@ -313,8 +611,8 @@ class ComposerTextView: MultiCursorTextView {
         }
 
         var rangeExcludingSuggestion = NSRange(location: spanningRange.location, length: 0)
-        textStorage!.enumerateAttributes(in: spanningRange) { attributes, range, stop in
-            if attributes[suggestionAttribute] != nil {
+        textStorage.enumerateAttributes(in: spanningRange) { attributes, range, stop in
+            if attributes[NSAttributedString.Key.suggestionKey] != nil {
                 // Reached the start of the suggestion.
                 stop.pointee = ObjCBool(true)
                 return
@@ -323,7 +621,7 @@ class ComposerTextView: MultiCursorTextView {
                                                to: range.upperBound)
         }
         // Remove line continuation backslashes.
-        let temp = ((textStorage!.string as NSString).substring(with: rangeExcludingSuggestion) as NSString).mutableCopy() as! NSMutableString
+        let temp = ((textStorage.string as NSString).substring(with: rangeExcludingSuggestion) as NSString).mutableCopy() as! NSMutableString
         for index in characterIndexesToDrop.sorted().reversed() {
             temp.replaceCharacters(in: NSRange(location: index, length: 1), with: " ")
         }
@@ -332,8 +630,8 @@ class ComposerTextView: MultiCursorTextView {
 
     private func attributedString(for suggestion: String) -> NSAttributedString {
         var attributes = self.typingAttributes
-        attributes[.foregroundColor] = NSColor(white: 0.5, alpha: 1.0)
-        attributes[suggestionAttribute] = true
+        attributes[.foregroundColor] = suggestionTextColor
+        attributes[NSAttributedString.Key.suggestionKey] = true
         return NSAttributedString(string: suggestion, attributes: attributes)
     }
 
@@ -341,12 +639,45 @@ class ComposerTextView: MultiCursorTextView {
         return NSAttributedString(string: suggestion, attributes: typingAttributes)
     }
 
+    private var cursorAtEnd: Bool {
+        guard let textStorage else {
+            return false
+        }
+        let endLocation = textStorage.string.count
+        return multiCursorSelectedRanges.anySatisfies { range in
+            range.location == endLocation
+        }
+    }
+
+    private var cursorAtEndExcludingSuggestion: Bool {
+        guard let saved = suggestion else {
+            return cursorAtEnd
+        }
+        suggestion = nil
+        defer {
+            suggestion = saved
+        }
+        return cursorAtEnd
+    }
+
     private func reallySetSuggestion(_ suggestion: String?) {
+        guard let textStorage else {
+            return
+        }
+        if !cursorAtEnd, let suggestion, suggestion.contains(" ") {
+            let truncated = suggestion.substringUpToFirstSpace
+            if truncated.isEmpty {
+                reallySetSuggestion(nil)
+            } else {
+                reallySetSuggestion(String(truncated))
+            }
+            return
+        }
         if let suggestion = suggestion {
             if hasSuggestion {
                 // Replace existing suggestion with a different one.
-                textStorage?.replaceCharacters(in: suggestionRange,
-                                               with: attributedString(for: suggestion))
+                textStorage.replaceCharacters(in: suggestionRange,
+                                              with: attributedString(for: suggestion))
                 _suggestion = suggestion
                 suggestionRange = NSRange(location: suggestionRange.location,
                                           length: (suggestion as NSString).length);
@@ -356,8 +687,8 @@ class ComposerTextView: MultiCursorTextView {
 
             // Didn't have suggestion before but will have one now
             let location = selectedRange().upperBound
-            textStorage!.replaceCharacters(in: NSRange(location: location, length: 0),
-                                           with: attributedString(for: suggestion))
+            textStorage.replaceCharacters(in: NSRange(location: location, length: 0),
+                                          with: attributedString(for: suggestion))
             _suggestion = suggestion
             suggestionRange = NSRange(location: location, length: (suggestion as NSString).length)
             setSelectedRange(NSRange(location: suggestionRange.location, length: 0))
@@ -372,10 +703,10 @@ class ComposerTextView: MultiCursorTextView {
         // 1. Find the ranges of suggestion-looking text by examining the color.
         let temp = self.attributedString()
         var rangesToRemove = [NSRange]()
-        temp.enumerateAttribute(.foregroundColor,
+        temp.enumerateAttribute(NSAttributedString.Key.suggestionKey,
                                 in: NSRange(location: 0, length: temp.length),
-                                options: [.reverse]) { color, range, _ in
-            if color as? NSColor != NSColor.textColor {
+                                options: [.reverse]) { value, range, _ in
+            if value != nil {
                 rangesToRemove.append(range)
             }
         }
@@ -384,13 +715,76 @@ class ComposerTextView: MultiCursorTextView {
         var selectedRange = self.selectedRange()
         for range in rangesToRemove {
             selectedRange = selectedRange.minus(range)
-            textStorage?.deleteCharacters(in: range)
+            textStorage.deleteCharacters(in: range)
         }
 
         // 3. Position the cursor and clean up internal state.
         self.selectedRange = selectedRange
         _suggestion = nil
         suggestionRange = NSRange(location: NSNotFound, length: 0)
+    }
+
+    @objc
+    func doSyntaxHighlighting() {
+        syntaxHighlightingRateLimit.performRateLimitedBlock { [weak self] in
+            self?.reallyDoSyntaxHighlighting()
+        }
+    }
+
+    private func reallyDoSyntaxHighlighting() {
+        guard let textStorage else {
+            return
+        }
+        isDoingSyntaxHighlighting = true
+        composerDelegate?.composerSyntaxHighlighter(
+            textStorage: textStorage).highlight(
+                range: NSRange(rangeExcludingPrefixAndSuggestion))
+        isDoingSyntaxHighlighting = false
+    }
+
+    private var prefixLength: Int {
+        return prefix?.string.utf16.count ?? 0
+    }
+
+    private var prefixRange: NSRange {
+        NSRange(location: 0, length: prefixLength)
+    }
+
+    override func valid(ranges: [NSRange]) -> [NSRange] {
+        // Ensure no part of the prefix is selected
+        var modifiedRanges = ranges.compactMap { charRange -> NSRange? in
+            if charRange.location > prefixLength {
+                return charRange
+            }
+            let end = charRange.location + charRange.length
+            if end < prefixLength {
+                return nil
+            }
+            return NSRange(prefixLength..<end)
+        }
+        if modifiedRanges.isEmpty && !ranges.isEmpty {
+            // If there are none then it must have removed all of them for being in the prefix.
+            modifiedRanges = [NSRange(from: prefixLength, to: prefixLength)]
+        }
+        return modifiedRanges
+    }
+
+    override func setSelectedRanges(_ ranges: [NSValue],
+                                    affinity: NSSelectionAffinity,
+                                    stillSelecting stillSelectingFlag: Bool) {
+
+        // Ensure no part of the prefix is selected
+        let modifiedRanges = valid(ranges: ranges.map { $0.rangeValue }).map { NSValue(range: $0) }
+        super.setSelectedRanges(modifiedRanges,
+                                affinity: affinity,
+                                stillSelecting: stillSelectingFlag)
+    }
+
+    override func shouldChangeText(in affectedCharRange: NSRange, replacementString: String?) -> Bool {
+        if let affected = Range(affectedCharRange), let prefixRange = Range(self.prefixRange), affected.overlaps(prefixRange) {
+            return false
+        }
+        return super.shouldChangeText(in: affectedCharRange, replacementString: replacementString)
     }
 }
 
@@ -429,5 +823,28 @@ extension NSRange {
         // Remove starting in middle of lhs.
         return NSRange(location: location, length: length - inter.length);
     }
+}
+
+
+extension NSEvent.ModifierFlags: Hashable {
+
+}
+
+extension String {
+    var substringUpToFirstSpace: Substring {
+        guard let index = self.firstIndex(of: " ") else {
+            return Substring(self)
+        }
+        return self[..<index]
+    }
+}
+
+extension NSAttributedString.Key {
+    static let suggestionKey = NSAttributedString.Key(rawValue: "com.googlecode.iterm2.ComposerTextView.suggestionKey")
+    static let promptKey = NSAttributedString.Key(rawValue: "com.googlecode.iterm2.ComposerTextView.promptKey")
+}
+
+extension NSAttributedString {
+    var wholeRange: NSRange { NSRange(location: 0, length: length) }
 }
 

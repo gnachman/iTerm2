@@ -241,11 +241,20 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
 
     private func parseFramerOutput(_ string: String, into token: VT100Token) -> VT100DCSParserHookResult {
         if let builder = SSHOutputTokenBuilder(string) {
+            if builder.flavor == .notif {
+                if builder.populate(token) {
+                    state = .ground
+                    return .canReadAgain
+                } else {
+                    DLog("Failed to build notif \(builder)")
+                    return .unhook
+                }
+            }
             DLog("create builder with identifier \(builder.identifier)")
             state = .output(builder: builder)
             return .canReadAgain
         }
-        DLog("Malformed %output/%autopoll, unhook")
+        DLog("Malformed %output/%autopoll/%notif, unhook")
         return .unhook
     }
 
@@ -268,7 +277,7 @@ class VT100ConductorParser: NSObject, VT100DCSParserHook {
         if string.hasPrefix("begin ") {
             return parseFramerBegin(string, into: token)
         }
-        if string.hasPrefix("%output ") || string.hasPrefix("%autopoll ") {
+        if string.hasPrefix("%output ") || string.hasPrefix("%autopoll ") || string.hasPrefix("%notif ") {
             return parseFramerOutput(string, into: token)
         }
         if string.hasPrefix("%terminate ") {
@@ -455,17 +464,23 @@ private class SSHOutputTokenBuilder {
     let channel: Int8
     let identifier: String
     let depth: Int
+    let string: String
+    let flavor: Flavor
+
     enum Flavor: String {
         case output = "%output"
         case autopoll = "%autopoll"
+        case notif = "%notif"
     }
     @objc private(set) var rawData = Data()
 
     init?(_ string: String) {
+        self.string = string
         let parts = string.components(separatedBy: " ")
         guard let flavor = Flavor(rawValue: parts[0]) else {
             return nil
         }
+        self.flavor = flavor
         switch flavor {
         case .output:
             guard parts.count >= 5,
@@ -484,6 +499,13 @@ private class SSHOutputTokenBuilder {
             self.pid = SSH_OUTPUT_AUTOPOLL_PID
             self.channel = 1
             self.depth = 0
+        case .notif:
+            guard parts.count >= 2 else {
+                return nil
+            }
+            self.pid = SSH_OUTPUT_NOTIF_PID
+            self.channel = 1
+            self.depth = 0
         }
         self.identifier = parts[1]
     }
@@ -495,6 +517,8 @@ private class SSHOutputTokenBuilder {
     private var decoded: Data? {
         if pid == SSH_OUTPUT_AUTOPOLL_PID {
             return ((String(data: rawData, encoding: .utf8) ?? "") + "\nEOF\n").data(using: .utf8)
+        } else if pid == SSH_OUTPUT_NOTIF_PID {
+            return string.data(using: .utf8)
         } else {
             return rawData
         }

@@ -831,10 +831,15 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         }
         [realParentWindow_ setDimmingForSessions];
     }
+    // TODO: It's dangerous to call refresh here because it causes side effects to run.
+    // I need to audit every call to refresh and remove them all if possible.
+    // I don't know why this one is here. It has been here since the beginning of time.
+    /*
     for (PTYSession *aSession in [self sessions]) {
         [[aSession textview] refresh];
         [[aSession textview] setNeedsDisplay:YES];
     }
+     */
     [self updateLabelAttributes];
     [self.variablesScope setValue:activeSession_.variables forVariableNamed:iTermVariableKeyTabCurrentSession];
     [[NSNotificationCenter defaultCenter] postNotificationName:iTermSessionBecameKey
@@ -3443,10 +3448,10 @@ typedef struct {
 } iTermSizeRange;
 
 + (iTermSizeRange)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
-                                 showTitles:(BOOL)showTitles
-                        showBottomStatusBar:(BOOL)showBottomStatusBar
-                                   bookmark:(Profile *)profile
-                                 inTerminal:(NSWindowController<iTermWindowController> *)term {
+                                         showTitles:(BOOL)showTitles
+                                showBottomStatusBar:(BOOL)showBottomStatusBar
+                                           bookmark:(Profile *)profile
+                                         inTerminal:(NSWindowController<iTermWindowController> *)term {
     CGFloat splitterSize = 1;  // hack: should use -[NSSplitView dividerThickness], but don't have an instance yet.
     iTermSizeRange totalSize = { NSZeroSize, NSZeroSize };
 
@@ -4082,7 +4087,7 @@ typedef struct {
 
         NSArray<NSNumber *> *decorationSizes =
         [sessionViewsInSlice mapWithBlock:^id(SessionView *sessionView) {
-            DLog(@"%@ showTitle=%@ showBototmStatusBar=%@",
+            DLog(@"%@ showTitle=%@ showBottomStatusBar=%@ ",
                  sessionView, @(sessionView.showTitle), @(sessionView.showBottomStatusBar));
             const CGFloat titleBarHeight = sessionView.showTitle ? SessionView.titleHeight : 0;
             // NOTE: At the time of writing tmux tabs can’t have per-pane status bars. Should that ever
@@ -6619,6 +6624,7 @@ typedef struct {
 - (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session {
     if (session == self.activeSession) {
         [self.delegate tabActiveSessionDidUpdatePreferencesFromProfile:self];
+        [self updatePaneTitles];
     }
 }
 

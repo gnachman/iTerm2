@@ -35,6 +35,10 @@ static NSString *const PTYAnnotationDictionaryKeyText = @"Text";
     return self;
 }
 
+- (NSString *)shortDebugDescription {
+    return [NSString stringWithFormat:@"[Annotation %@]", _stringValue];
+}
+
 - (NSString *)description {
     return [NSString stringWithFormat:@"<%@: %p string=%@ %@>",
             NSStringFromClass([self class]),

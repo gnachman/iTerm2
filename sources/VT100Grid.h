@@ -129,6 +129,8 @@
 // How many used cells exist in the range of lines?
 - (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range;
 
+- (BOOL)lineIsEmpty:(int)n;
+
 @end
 
 @interface VT100Grid : NSObject<VT100GridReading>
@@ -287,6 +289,10 @@
 - (void)setContentsFromDVRFrame:(const screen_char_t*)s
                   metadataArray:(iTermMetadata *)sourceMetadataArray
                            info:(DVRFrameInfo)info;
+
+// Scroll backwards, pulling content from history back in to the grid. The lowest lines of the grid
+// will be lost.
+- (int)scrollWholeScreenDownByLines:(int)count poppingFromLineBuffer:(LineBuffer *)lineBuffer;
 
 // Returns a grid-owned empty line.
 - (NSMutableData *)defaultLineOfWidth:(int)width;

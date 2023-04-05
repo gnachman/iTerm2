@@ -31,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
         _screenCharLine = [ScreenCharArray emptyLineOfLength:source->_screenCharLine.length];
         _selectedIndexSet = [NSIndexSet indexSet];
         _markStyle = @(iTermMarkStyleNone);
+        _lineStyleMark = NO;
     }
     return self;
 }
@@ -64,7 +65,8 @@ NS_ASSUME_NONNULL_BEGIN
         _markStyle = @([self markStyleForLine:i
                                       enabled:drawingHelper.drawMarkIndicators
                                      textView:textView
-                          allowOtherMarkStyle:allowOtherMarkStyle]);
+                          allowOtherMarkStyle:allowOtherMarkStyle
+                                lineStyleMark:&_lineStyleMark]);
     }
     return self;
 }
@@ -72,7 +74,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (iTermMarkStyle)markStyleForLine:(int)i
                            enabled:(BOOL)enabled
                           textView:(PTYTextView *)textView
-               allowOtherMarkStyle:(BOOL)allowOtherMarkStyle {
+               allowOtherMarkStyle:(BOOL)allowOtherMarkStyle
+                     lineStyleMark:(out BOOL *)lineStyleMark {
     if (!enabled) {
         return iTermMarkStyleNone;
     }
@@ -81,6 +84,7 @@ NS_ASSUME_NONNULL_BEGIN
     if (!mark) {
         return iTermMarkStyleNone;
     }
+    *lineStyleMark = mark.lineStyle;
     if (mark.code == 0) {
         return iTermMarkStyleSuccess;
     }

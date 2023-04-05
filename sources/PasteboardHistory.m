@@ -313,15 +313,33 @@
         return [super tableView:aTableView objectValueForTableColumn:aTableColumn row:rowIndex];
     }
 }
+- (NSString *)insertableString {
+    if ([table_ selectedRow] < 0) {
+        return nil;
+    }
+    PasteboardEntry *entry = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];
+    return [entry mainValue];
+}
 
 - (void)rowSelected:(id)sender {
-    if ([table_ selectedRow] >= 0) {
-        PasteboardEntry *entry = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];
-        NSPasteboard *thePasteboard = [NSPasteboard generalPasteboard];
-        [thePasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
-        [thePasteboard setString:[entry mainValue] forType:NSPasteboardTypeString];
-        [[[iTermController sharedInstance] frontTextView] paste:nil];
-        [super rowSelected:sender];
+    NSString *string = [self insertableString];
+    if (!string) {
+        return;
+    }
+    NSPasteboard *thePasteboard = [NSPasteboard generalPasteboard];
+    [thePasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+    [thePasteboard setString:string forType:NSPasteboardTypeString];
+    NSResponder *responder = [[[[iTermController sharedInstance] frontTextView] window] firstResponder];
+    if ([responder respondsToSelector:@selector(paste:)]) {
+        [responder it_performNonObjectReturningSelector:@selector(paste:) withObject:nil];
+    }
+    [super rowSelected:sender];
+}
+
+- (void)previewCurrentRow {
+    NSString *string = [self insertableString];
+    if (string) {
+        [self.delegate popupPreview:string];
     }
 }
 

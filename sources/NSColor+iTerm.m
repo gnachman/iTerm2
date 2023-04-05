@@ -647,6 +647,58 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
     return YES;
 }
 
+- (NSColor *)blendedWithColor:(NSColor *)color weight:(CGFloat)weight {
+    // Convert colors to LAB color space for perceptual blending
+    CGFloat whitePoint[3] = {0.95047, 1.0, 1.08883}; // D50 white point
+    CGFloat blackPoint[3] = {0.0, 0.0, 0.0};
+    CGFloat range[4] = {-128.0, 127.0, -128.0, 127.0};
+    CGColorSpaceRef labColorSpace = CGColorSpaceCreateLab(whitePoint, blackPoint, range);
+
+    if (!labColorSpace) {
+        return self;
+    }
+
+    NSColorSpace *nslab = [[[NSColorSpace alloc] initWithCGColorSpace:labColorSpace] autorelease];
+    CIColor *ciColor1 = [[[CIColor alloc] initWithColor:[self colorUsingColorSpace:nslab]] autorelease];
+    CIColor *ciColor2 = [[[CIColor alloc] initWithColor:[color colorUsingColorSpace:nslab]] autorelease];
+    CIColor *ciBlendedColor;
+
+    // Get LAB components of each color
+    const CGFloat l1 = ciColor1.components[0];
+    const CGFloat a1 = ciColor1.components[1];
+    const CGFloat b1 = ciColor1.components[2];
+
+    const CGFloat l2 = ciColor2.components[0];
+    const CGFloat a2 = ciColor2.components[1];
+    const CGFloat b2 = ciColor2.components[2];
+
+    // Blend the colors by weighting their LAB components
+    CGFloat blendedL = (1 - weight) * l1 + weight * l2;
+    CGFloat blendedA = (1 - weight) * a1 + weight * a2;
+    CGFloat blendedB = (1 - weight) * b1 + weight * b2;
+
+    // Create a new CIColor object in LAB color space
+    CGFloat components[4] = {blendedL, blendedA, blendedB, 1.0};
+    CGColorRef cgColor = CGColorCreate(labColorSpace, components);
+    if (!cgColor) {
+        CGColorSpaceRelease(labColorSpace);
+        return self;
+    }
+    ciBlendedColor = [[[CIColor alloc] initWithColor:[NSColor colorWithCGColor:cgColor]] autorelease];
+
+    CGColorSpaceRelease(labColorSpace);
+
+    // Convert the blended LAB color to NSColor object for display
+    return [[NSColor colorWithCIColor:ciBlendedColor] colorUsingColorSpace:self.colorSpace];
+}
+
+- (vector_float4)vector {
+    return simd_make_float4(self.redComponent,
+                            self.greenComponent,
+                            self.blueComponent,
+                            self.alphaComponent);
+}
+
 @end
 
 @implementation NSColorSpace(iTerm)

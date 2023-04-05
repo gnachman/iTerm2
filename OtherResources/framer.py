@@ -32,6 +32,7 @@ REGISTERED=[]
 LASTPS={}
 AUTOPOLL = 0
 AUTOPOLL_TASK = None
+TTY_TASK = None
 RECOVERY_STATE={}
 # 0: Not blocking on stdin
 # 1: Blocking on stdin
@@ -167,6 +168,8 @@ class Process:
         self.__return_code = None
         self.__master = master
         self.__descr = descr
+        self.echo = True
+        self.icanon = True
         self.login = False
 
     @property
@@ -287,6 +290,37 @@ async def autopoll(delay):
         raise
     except Exception as e:
         log(f'autopoll threw {e}: {traceback.format_exc()}')
+
+def get_echo_icanon(tty):
+    try:
+        attrs = termios.tcgetattr(tty)
+        return (bool(attrs[3] & termios.ECHO), bool(attrs[3] & termios.ICANON))
+    except Exception as e:
+        log(f'get_echo_icanon threw {e}: {traceback.format_exc()}')
+        return (False, False)
+
+async def watch_tty(proc, delay):
+    try:
+        while True:
+            poll_tty(proc)
+            time.sleep(delay)
+    except asyncio.CancelledError:
+        log('watch_tty canceled')
+        raise
+    except Exception as e:
+        log(f'watch_tty threw {e}: {traceback.format_exc()}')
+
+def poll_tty(proc):
+    log("Check TTY")
+    new_echo, new_icanon = get_echo_icanon(proc.master)
+    if new_echo != proc.echo or new_icanon != proc.icanon:
+        log(f'echo: {proc.echo}->{new_echo}, icanon: {proc.icanon}->{new_icanon}')
+        parts = [
+            ('+' if new_echo else '-') + 'echo',
+            ('+' if new_icanon else '-') + 'icanon']
+        print_tty(" ".join(parts))
+    proc.echo = new_echo
+    proc.icanon = new_icanon
 
 async def poll():
     env = dict(os.environ)
@@ -487,11 +521,16 @@ async def handle_run(identifier, args):
         send_esc(proc.pid)
         end(identifier, 0)
         await proc.handle_read(make_monitor_process(proc, False))
+
+        start_tty_task(identifier, proc)
     except Exception as e:
         log(f'handle_run: {e}')
         begin(identifier)
         end(identifier, 1)
     return False
+
+def start_tty_task(identifier, proc):
+    proc.tty_task = asyncio.create_task(watch_tty(proc.master, 1))
 
 def reset():
     global REGISTERED
@@ -842,7 +881,6 @@ async def handle_autopoll(identifier, args):
         return
     AUTOPOLL_TASK = asyncio.create_task(autopoll(1.0))
 
-
 async def handle_poll(identifier, args):
     log(f'handle_poll({identifier}, {args})')
     output = await poll()
@@ -928,6 +966,7 @@ def make_monitor_process(proc, islogin):
             COMPLETED.append(proc.pid)
             return cleanup()
         print_output(makeid(), proc.pid, channel, islogin, value)
+        poll_tty(proc)
         return None
     return monitor_process
 
@@ -938,6 +977,9 @@ def print_output(identifier, pid, channel, islogin, data):
         send_esc(f'%output {identifier} {pid} {channel} {DEPTH}')
     send(data)
     send_esc(f'%end {identifier}')
+
+def print_tty(message):
+    send_esc(f'%notif tty {message}')
 
 ## Infra
 

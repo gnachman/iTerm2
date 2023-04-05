@@ -4,6 +4,7 @@
 #import "iTermCursor.h"
 #import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
+#import "iTermLineStyleMarkRenderer.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalDebugInfo.h"
 #import "iTermMetalGlyphKey.h"
@@ -55,6 +56,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) CGSize cellSizeWithoutSpacing;
 @property (nonatomic, readonly) vector_float4 defaultBackgroundColor;
 @property (nonatomic, readonly) vector_float4 processedDefaultBackgroundColor;
+@property (nonatomic, readonly) iTermLineStyleMarkColors lineStyleMarkColors;
 @property (nonatomic, readonly) NSImage *badgeImage;
 @property (nonatomic, readonly) CGRect badgeSourceRect;
 @property (nonatomic, readonly) CGRect badgeDestinationRect;
@@ -79,6 +81,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) BOOL haveOffscreenCommandLine;
 @property (nonatomic, readonly) vector_float4 offscreenCommandLineOutlineColor;
 @property (nonatomic, readonly) vector_float4 offscreenCommandLineBackgroundColor;
+@property (nonatomic, readonly) VT100GridRange linesToSuppressDrawing;
 
 // Initialize sketchPtr to 0. The number of set bits estimates the unique number of color combinations.
 - (void)metalGetGlyphKeys:(iTermMetalGlyphKey *)glyphKeys
@@ -87,6 +90,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
                background:(iTermMetalBackgroundColorRLE *)backgrounds
                  rleCount:(int *)rleCount
                 markStyle:(out iTermMarkStyle *)markStylePtr
+            lineStyleMark:(out BOOL *)lineStyleMarkPtr
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr

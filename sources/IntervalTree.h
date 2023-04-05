@@ -27,6 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol IntervalTreeImmutableObject<NSObject>
 @property(nullable, nonatomic, weak, readonly) IntervalTreeEntry *entry;
+@property(nonatomic, readonly) NSString *shortDebugDescription;
 
 // Serialized value.
 - (NSDictionary *)dictionaryValue;

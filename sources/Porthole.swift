@@ -19,6 +19,10 @@ class PortholeMark: iTermMark, PortholeMarkReading {
 
     private let uniqueIdentifierKey = "PortholeUniqueIdentifier"
 
+    override var shortDebugDescription: String {
+        return "[Porthole]"
+    }
+
     override var description: String {
         return "<PortholeMark: \(it_addressString) id=\(uniqueIdentifier) \(isDoppelganger ? "IsDop" : "NotDop")>"
     }

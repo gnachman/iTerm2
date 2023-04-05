@@ -10,6 +10,7 @@
 
 #import "iTermCommandHistoryEntryMO+Additions.h"
 #import "iTermShellHistoryController.h"
+#import "NSArray+iTerm.h"
 #import "NSDateFormatterExtras.h"
 #import "PopupModel.h"
 
@@ -59,10 +60,12 @@
     }
 }
 
-- (void)loadCommands:(NSArray *)commands partialCommand:(NSString *)partialCommand {
+- (void)loadCommands:(NSArray *)commands
+      partialCommand:(NSString *)partialCommand
+ sortChronologically:(BOOL)sortChronologically {
     [[self unfilteredModel] removeAllObjects];
     _partialCommandLength = partialCommand.length;
-    for (id obj in commands) {
+    NSArray<CommandHistoryPopupEntry *> *popupEntries = [commands mapWithBlock:^id _Nullable(id obj) {
         CommandHistoryPopupEntry *popupEntry = [[[CommandHistoryPopupEntry alloc] init] autorelease];
         if ([obj isKindOfClass:[iTermCommandHistoryCommandUseMO class]]) {
             iTermCommandHistoryCommandUseMO *commandUse = obj;
@@ -74,6 +77,14 @@
             popupEntry.date = [NSDate dateWithTimeIntervalSinceReferenceDate:entry.timeOfLastUse.doubleValue];
         }
         [popupEntry setMainValue:popupEntry.command];
+        return popupEntry;
+    }];
+    if (sortChronologically) {
+        popupEntries = [popupEntries sortedArrayUsingComparator:^NSComparisonResult(CommandHistoryPopupEntry *lhs, CommandHistoryPopupEntry *rhs) {
+            return [rhs.date compare:lhs.date];
+        }];
+    }
+    for (CommandHistoryPopupEntry *popupEntry in popupEntries) {
         [[self unfilteredModel] addObject:popupEntry];
     }
     [self reloadData:YES];
@@ -93,12 +104,17 @@
     }
 }
 
+- (NSString *)insertableString {
+    CommandHistoryPopupEntry *entry = [[self model] objectAtIndex:[self convertIndex:[_tableView selectedRow]]];
+    NSString *const string = [entry.command substringFromIndex:_partialCommandLength];
+    return string;
+}
+
 - (void)rowSelected:(id)sender {
     if ([_tableView selectedRow] >= 0) {
+        NSString *const string = [self insertableString];
         const NSEventModifierFlags flags = [[NSApp currentEvent] modifierFlags];
-        CommandHistoryPopupEntry *entry = [[self model] objectAtIndex:[self convertIndex:[_tableView selectedRow]]];
         const NSEventModifierFlags mask = NSEventModifierFlagShift | NSEventModifierFlagOption;
-        NSString *const string = [entry.command substringFromIndex:_partialCommandLength];
         if (!_autocomplete || (flags & mask) == NSEventModifierFlagShift) {
             [self.delegate popupInsertText:string];
             [super rowSelected:sender];
@@ -111,6 +127,12 @@
     }
     [self.delegate popupInsertText:@"\n"];
     [super rowSelected:sender];
+}
+
+- (void)previewCurrentRow {
+    if ([_tableView selectedRow] >= 0) {
+        [self.delegate popupPreview:[self insertableString]];
+    }
 }
 
 // Called for option+return

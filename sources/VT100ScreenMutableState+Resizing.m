@@ -6,6 +6,7 @@
 //
 
 #import "VT100ScreenMutableState+Resizing.h"
+#import "VT100ScreenState+Private.h"
 
 #import "DebugLogging.h"
 #import "NSArray+iTerm.h"
@@ -99,8 +100,6 @@
     DLog(@"Cursor at %d,%d", self.currentGrid.cursorX, self.currentGrid.cursorY);
     if (self.commandStartCoord.x != -1) {
         [self didUpdatePromptLocation];
-        [self commandDidEndWithRange:self.commandRange];
-        [self invalidateCommandStartCoordWithoutSideEffects];
     }
     self.lastCommandMark = nil;
 
@@ -1151,10 +1150,23 @@ static void SwapInt(int *a, int *b) {
                            newTop:newTop
                          delegate:delegate];
     [altScreenLineBuffer endResizing];
+    self.commandStartCoord = [self startCoordOfCurrentCommand];
     [self sanityCheckIntervalsFrom:oldSize note:@"post-hoc"];
     DLog(@"After:\n%@", [self.currentGrid compactLineDumpWithContinuationMarks]);
     DLog(@"Cursor at %d,%d", self.currentGrid.cursorX, self.currentGrid.cursorY);
 }
 
+- (VT100GridAbsCoord)startCoordOfCurrentCommand {
+    id<VT100ScreenMarkReading> lastScreenMark = [self lastPromptMark];
+    if (!lastScreenMark || lastScreenMark.command != nil) {
+        return VT100GridAbsCoordMake(-1, -1);
+    }
+    const VT100GridAbsCoordRange markRange = [self absCoordRangeForInterval:lastScreenMark.entry.interval];
+    long long dx = markRange.start.x - lastScreenMark.promptRange.start.x;
+    long long dy = markRange.start.y - lastScreenMark.promptRange.start.y;
+
+    return VT100GridAbsCoordMake(lastScreenMark.commandRange.start.x + dx,
+                                 lastScreenMark.commandRange.start.y + dy);
+}
 
 @end

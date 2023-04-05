@@ -68,6 +68,10 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
     return [localHostName isEqualToString:self.hostname];
 }
 
+- (BOOL)isRemoteHost {
+    return !self.isLocalhost;
+}
+
 #pragma mark - IntervalTreeObject
 
 - (NSDictionary *)dictionaryValue {
@@ -80,6 +84,10 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
 - (instancetype)copyOfIntervalTreeObject {
     VT100RemoteHost *copy = [[VT100RemoteHost alloc] initWithUsername:self.username hostname:self.hostname];
     return copy;
+}
+
+- (NSString *)shortDebugDescription {
+    return [NSString stringWithFormat:@"[RemoteHost %@@%@]", _username, _hostname];
 }
 
 - (id<IntervalTreeObject>)doppelganger {

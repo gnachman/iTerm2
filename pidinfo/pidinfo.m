@@ -211,6 +211,24 @@ static int MakeNonBlocking(int fd) {
     }];
 }
 
+- (void)statFile:(NSString *)path
+       withReply:(void (^)(struct stat statbuf, int error))reply {
+    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
+        struct stat buf = { 0 };
+        if (!shouldPerform) {
+            reply(buf, -1);
+            return;
+        }
+        const int rc = stat(path.UTF8String, &buf);
+        const int error = (rc == 0) ? 0 : errno;
+        
+        if (!completion()) {
+            return;
+        }
+        reply(buf, error);
+    }];
+}
+
 // Usage:
 // [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^completion)(void)) {
 //   if (!shouldPerform) {
@@ -414,6 +432,10 @@ static double TimespecToSeconds(struct timespec* ts) {
         if (!shouldPerform) {
             reply(nil);
             syslog(LOG_WARNING, "pidinfo wedged while searching for completions");
+            return;
+        }
+        if (prefix.length == 0) {
+            reply(@[]);
             return;
         }
         NSMutableArray<NSString *> *combined = [NSMutableArray array];

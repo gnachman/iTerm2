@@ -117,6 +117,8 @@ typedef struct {
     NSTimeInterval _startTime;
     NSEdgeInsets _extraMargins;
     BOOL _haveOffscreenCommandLine;
+
+    VT100GridRange _linesToSuppressDrawing;
 }
 @end
 
@@ -194,6 +196,9 @@ typedef struct {
     _relativeFrame = textView.delegate.textViewRelativeFrame;
     _containerRect = textView.delegate.textViewContainerRect;
     _extraMargins = textView.delegate.textViewExtraMargins;
+
+    _linesToSuppressDrawing = textView.drawingHelper.linesToSuppress;
+    _linesToSuppressDrawing.location -= _visibleRange.start.y;
 }
 
 - (void)loadLinesWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -238,7 +243,7 @@ typedef struct {
 
 - (void)loadCursorInfoWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                                textView:(PTYTextView *)textView {
-    _cursorVisible = drawingHelper.cursorVisible;
+    _cursorVisible = drawingHelper.isCursorVisible;
     const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
     _cursorInfo = [[iTermMetalCursorInfo alloc] init];
     _cursorInfo.password = drawingHelper.passwordInput;
@@ -411,6 +416,10 @@ typedef struct {
                             (float)_configuration->_offscreenCommandLineBackgroundColor.greenComponent * a,
                             (float)_configuration->_offscreenCommandLineBackgroundColor.blueComponent * a,
                             a);
+}
+
+- (VT100GridRange)linesToSuppressDrawing {
+    return _linesToSuppressDrawing;
 }
 
 // Populate _rowToAnnotationRanges.
@@ -675,6 +684,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                             alpha);
 }
 
+- (iTermLineStyleMarkColors)lineStyleMarkColors {
+    return _configuration->_lineStyleMarkColors;
+}
+
 // Private queue
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo {
     return _cursorInfo;
@@ -695,6 +708,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                background:(iTermMetalBackgroundColorRLE *)backgroundRLE
                  rleCount:(int *)rleCount
                 markStyle:(out iTermMarkStyle *)markStylePtr
+            lineStyleMark:(out nonnull BOOL *)lineStyleMarkPtr
                       row:(int)row
                     width:(int)width
            drawableGlyphs:(int *)drawableGlyphsPtr
@@ -703,20 +717,27 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     if (_configuration->_timestampsEnabled) {
         *datePtr = _rows[row]->_date;
     }
-    const ScreenCharArray *lineData = [_rows[row]->_screenCharLine paddedToAtLeastLength:width];
+    ScreenCharArray *lineData = [_rows[row]->_screenCharLine paddedToAtLeastLength:width];
+    NSData *findMatches = _rows[row]->_matches;
+    NSIndexSet *selectedIndexes = _rows[row]->_selectedIndexSet;
+    NSRange underlinedRange = _rows[row]->_underlinedRange;
+    NSIndexSet *annotatedIndexes = _rowToAnnotationRanges[@(row)];
+    if (VT100GridRangeContains(_linesToSuppressDrawing, row)) {
+        lineData = [ScreenCharArray emptyLineOfLength:width];
+        findMatches = nil;
+        selectedIndexes = nil;
+        underlinedRange = NSMakeRange(NSNotFound, 0);
+        annotatedIndexes = nil;
+    }
     const screen_char_t *const line = (const screen_char_t *const)lineData.line;
     iTermExternalAttributeIndex *eaIndex = _rows[row]->_eaIndex;
-    NSIndexSet *selectedIndexes = _rows[row]->_selectedIndexSet;
-    NSData *findMatches = _rows[row]->_matches;
     iTermTextColorKey keys[2];
     iTermTextColorKey *currentColorKey = &keys[0];
     iTermTextColorKey *previousColorKey = &keys[1];
     iTermBackgroundColorKey lastBackgroundKey;
-    NSRange underlinedRange = _rows[row]->_underlinedRange;
     int rles = 0;
     int previousImageCode = -1;
     VT100GridCoord previousImageCoord;
-    NSIndexSet *annotatedIndexes = _rowToAnnotationRanges[@(row)];
     vector_float4 lastUnprocessedBackgroundColor = simd_make_float4(0, 0, 0, 0);
     BOOL lastSelected = NO;
     const BOOL underlineHyperlinks = [iTermAdvancedSettingsModel underlineHyperlinks];
@@ -724,6 +745,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
     memset(&caches, 0, sizeof(caches));
 
     *markStylePtr = [_rows[row]->_markStyle intValue];
+    *lineStyleMarkPtr = _rows[row]->_lineStyleMark;
     int lastDrawableGlyph = -1;
     for (int x = 0; x < width; x++) {
         BOOL selected = [selectedIndexes containsIndex:x];

@@ -2390,6 +2390,82 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return [baseString stringByAppendingString:[self substringFromIndex:1]];
 }
 
+- (BOOL)beginsWithWhitespace {
+    if (self.length == 0) {
+        return NO;
+    }
+    return [[NSCharacterSet whitespaceAndNewlineCharacterSet] longCharacterIsMember:[self longCharacterAtIndex:0]];
+}
+
+- (BOOL)endsWithWhitespace {
+    if (self.length == 0) {
+        return NO;
+    }
+    NSInteger i = self.length - 1;
+    return [[NSCharacterSet whitespaceAndNewlineCharacterSet] longCharacterIsMember:[self longCharacterAtIndex:i]];
+}
+
+- (NSRange)rangeOfLastWordFromIndex:(NSUInteger)index {
+    NSCharacterSet *whitespaceCharacterSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    const NSRange searchRange = NSMakeRange(0, index);
+    const NSRange nonWhitespaceRange = [self rangeOfCharacterFromSet:whitespaceCharacterSet.invertedSet
+                                                             options:NSBackwardsSearch
+                                                               range:searchRange];
+    if (nonWhitespaceRange.location == NSNotFound) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+
+    const NSRange whitespaceRange = [self rangeOfCharacterFromSet:whitespaceCharacterSet
+                                                           options:NSBackwardsSearch
+                                                             range:NSMakeRange(0, nonWhitespaceRange.location)];
+    const NSUInteger startIndex = whitespaceRange.location == NSNotFound ? 0 : NSMaxRange(whitespaceRange);
+    const NSUInteger endIndex = NSMaxRange(nonWhitespaceRange);
+    return NSMakeRange(startIndex, endIndex - startIndex);
+}
+
+- (NSArray<NSString *> *)lastWords:(NSUInteger)count {
+    NSMutableArray<NSString *> *words = [NSMutableArray arrayWithCapacity:count];
+    NSUInteger index = [self length];
+
+    while ([words count] < count && index > 0) {
+        const NSRange range = [self rangeOfLastWordFromIndex:index];
+        NSString *word = [self substringWithRange:range];
+        if (word.length > 0) {
+            [words insertObject:word atIndex:0];
+        }
+        index = range.location;
+    }
+
+    return words;
+}
+
+- (NSString *)firstNonEmptyLine {
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    const NSInteger indexOfFirstNonWhitespace = [self rangeOfCharacterFromSet:[whitespace invertedSet]].location;
+    if (indexOfFirstNonWhitespace == NSNotFound) {
+        return @"";
+    }
+
+    NSCharacterSet *newlines = [NSCharacterSet newlineCharacterSet];
+    const NSInteger indexOfSubsequentNewline =
+    [self rangeOfCharacterFromSet:newlines
+                          options:0
+                            range:NSMakeRange(indexOfFirstNonWhitespace,
+                                              self.length - indexOfFirstNonWhitespace)].location;
+    if (indexOfSubsequentNewline == NSNotFound) {
+        return [self substringFromIndex:indexOfFirstNonWhitespace];
+    }
+    return [self substringWithRange:NSMakeRange(indexOfFirstNonWhitespace,
+                                                indexOfSubsequentNewline - indexOfFirstNonWhitespace)];
+}
+
+- (NSString *)truncatedToLength:(NSInteger)maxLength ellipsis:(NSString *)ellipsis {
+    if (self.length <= maxLength) {
+        return self;
+    }
+    return [[self substringToIndex:maxLength - 1] stringByAppendingString:ellipsis];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

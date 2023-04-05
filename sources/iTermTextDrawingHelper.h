@@ -27,6 +27,12 @@
 @class ScreenCharArray;
 @protocol VT100ScreenMarkReading;
 
+typedef NS_ENUM(NSUInteger, iTermMarkIndicatorType) {
+    iTermMarkIndicatorTypeSuccess,
+    iTermMarkIndicatorTypeError,
+    iTermMarkIndicatorTypeOther
+};
+
 BOOL CheckFindMatchAtIndex(NSData *findMatches, int index);
 extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 
@@ -136,7 +142,7 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 @property(nonatomic, assign) double transparencyAlpha;
 
 // Is the cursor visible?
-@property(nonatomic, assign) BOOL cursorVisible;
+@property(nonatomic, assign) BOOL isCursorVisible;
 
 // What kind of cursor to draw.
 @property(nonatomic, assign) ITermCursorType cursorType;
@@ -269,6 +275,10 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 @property (nonatomic, readonly) NSColor *offscreenCommandLineOutlineColor;
 @property (nonatomic) BOOL useSelectedTextColor;
 @property (nonatomic, strong) iTermFontTable *fontTable;
+@property (nonatomic) VT100GridRange linesToSuppress;
+
++ (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type;
++ (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor;
 
 + (NSRect)offscreenCommandLineFrameForVisibleRect:(NSRect)visibleRect
                                          cellSize:(NSSize)cellSize

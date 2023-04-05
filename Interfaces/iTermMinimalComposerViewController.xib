@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="20037" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21507" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="20037"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21507"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermMinimalComposerViewController">
             <connections>
+                <outlet property="_bottomDragHandle" destination="qgr-df-T1R" id="ZPK-PO-IEr"/>
+                <outlet property="_closeButton" destination="HtE-d6-osy" id="UNc-wx-Ec4"/>
                 <outlet property="_containerView" destination="e5I-6K-jFS" id="BFE-4L-wYZ"/>
                 <outlet property="_largeComposerViewController" destination="PWM-zh-xQE" id="q92-OG-K2c"/>
+                <outlet property="_separator" destination="jko-Ex-oYr" id="mOH-XC-3h0"/>
+                <outlet property="_topDragHandle" destination="A5g-cR-4IK" id="MOG-NE-3eo"/>
                 <outlet property="_vev" destination="lMe-mB-AB7" id="JJi-4A-rZ3"/>
+                <outlet property="_wrapper" destination="0ma-Hp-gbn" id="0qb-o4-3nJ"/>
                 <outlet property="view" destination="T0w-dU-yl9" id="xFt-uZ-ncb"/>
             </connections>
         </customObject>
@@ -20,17 +25,37 @@
             <rect key="frame" x="0.0" y="0.0" width="573" height="312"/>
             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
             <subviews>
-                <visualEffectView wantsLayer="YES" fixedFrame="YES" blendingMode="withinWindow" material="sheet" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="lMe-mB-AB7">
-                    <rect key="frame" x="9" y="9" width="555" height="294"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                </visualEffectView>
-                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="e5I-6K-jFS" userLabel="Large Composer View">
-                    <rect key="frame" x="9" y="9" width="555" height="294"/>
-                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jko-Ex-oYr" userLabel="Separator">
+                    <rect key="frame" x="0.0" y="311" width="573" height="1"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                 </customView>
-                <customView id="qgr-df-T1R" customClass="iTermDragHandleView">
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0ma-Hp-gbn" userLabel="Wrapper">
+                    <rect key="frame" x="9" y="9" width="555" height="294"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                    <subviews>
+                        <visualEffectView wantsLayer="YES" fixedFrame="YES" blendingMode="withinWindow" material="sheet" state="followsWindowActiveState" translatesAutoresizingMaskIntoConstraints="NO" id="lMe-mB-AB7">
+                            <rect key="frame" x="0.0" y="0.0" width="555" height="294"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        </visualEffectView>
+                        <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="e5I-6K-jFS" userLabel="Large Composer View">
+                            <rect key="frame" x="0.0" y="0.0" width="555" height="294"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        </customView>
+                    </subviews>
+                </customView>
+                <customView id="A5g-cR-4IK" userLabel="Top drag handle" customClass="iTermDragHandleView">
+                    <rect key="frame" x="10" y="302" width="552" height="10"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                    <userDefinedRuntimeAttributes>
+                        <userDefinedRuntimeAttribute type="boolean" keyPath="isVertical" value="YES"/>
+                    </userDefinedRuntimeAttributes>
+                    <connections>
+                        <outlet property="delegate" destination="-2" id="uS4-yN-3JX"/>
+                    </connections>
+                </customView>
+                <customView id="qgr-df-T1R" userLabel="Bottom drag handle" customClass="iTermDragHandleView">
                     <rect key="frame" x="8" y="6" width="553" height="10"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                     <userDefinedRuntimeAttributes>
                         <userDefinedRuntimeAttribute type="boolean" keyPath="isVertical" value="YES"/>
                     </userDefinedRuntimeAttributes>
@@ -55,7 +80,11 @@ Gw
             </subviews>
             <point key="canvasLocation" x="246.5" y="284"/>
         </customView>
-        <viewController id="PWM-zh-xQE" userLabel=" Large Composer View Controller" customClass="iTermStatusBarLargeComposerViewController"/>
+        <viewController id="PWM-zh-xQE" userLabel=" Large Composer View Controller" customClass="iTermStatusBarLargeComposerViewController">
+            <connections>
+                <outlet property="delegate" destination="-2" id="ETQ-7x-fzV"/>
+            </connections>
+        </viewController>
     </objects>
     <resources>
         <image name="TabClose_Front" width="16" height="16"/>

@@ -412,7 +412,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalSetHighlightCursorLine:(BOOL)highlight;
 
 // FinalTerm features
-- (void)terminalPromptDidStart;
+- (void)terminalPromptDidStart:(BOOL)wasInCommand;
 - (void)terminalCommandDidStart;
 - (void)terminalCommandDidEnd;
 - (void)terminalSemanticTextDidStartOfType:(VT100TerminalSemanticTextType)type;
@@ -529,5 +529,8 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalBeginFramerRecoveryForChildOfConductorAtDepth:(int)parentDepth;
 - (void)terminalHandleFramerRecoveryString:(NSString *)string;
 - (void)terminalDidResynchronizeSSH;
+
+- (void)terminalDidExecuteToken:(VT100Token *)token;
+- (void)terminalWillExecuteToken:(VT100Token *)token;
 
 @end

@@ -28,6 +28,10 @@
     return @{ @"code": @(_code) };
 }
 
+- (NSString *)shortDebugDescription {
+    return [NSString stringWithFormat:@"[URL %@]", [[iTermURLStore sharedInstance] urlForCode:_code]];
+}
+
 - (void)dealloc {
     if (_code) {
         [[iTermURLStore sharedInstance] releaseCode:_code];

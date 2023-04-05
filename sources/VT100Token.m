@@ -32,6 +32,41 @@
     return token;
 }
 
+void iTermAsciiDataFree(AsciiData *asciiData) {
+    if (asciiData->buffer != asciiData->staticBuffer) {
+        free(asciiData->buffer);
+    }
+    if (asciiData->screenChars &&
+        asciiData->screenChars->buffer != asciiData->screenChars->staticBuffer) {
+        free(asciiData->screenChars->buffer);
+    }
+}
+
+void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, ScreenChars *screenChars) {
+    assert(asciiData->buffer == NULL);
+
+    asciiData->length = length;
+    if (length > sizeof(asciiData->staticBuffer)) {
+        asciiData->buffer = iTermMalloc(length);
+    } else {
+        asciiData->buffer = asciiData->staticBuffer;
+    }
+    memcpy(asciiData->buffer, bytes, length);
+
+    if (asciiData->length > kStaticScreenCharsCount) {
+        screenChars->buffer = iTermCalloc(asciiData->length, sizeof(screen_char_t));
+    } else {
+        screenChars->buffer = screenChars->staticBuffer;
+        memset(screenChars->buffer, 0, asciiData->length * sizeof(screen_char_t));
+    }
+    for (NSInteger i = 0; i < length; i++) {
+        screenChars->buffer[i].code = asciiData->buffer[i];
+    }
+    screenChars->length = asciiData->length;
+    asciiData->screenChars = screenChars;
+}
+
+
 - (void)dealloc {
     if (_csi) {
         free(_csi);
@@ -42,13 +77,7 @@
     [_kvpValue release];
     [_savedData release];
 
-    if (_asciiData.buffer != _asciiData.staticBuffer) {
-        free(_asciiData.buffer);
-    }
-    if (_asciiData.screenChars &&
-        _asciiData.screenChars->buffer != _asciiData.screenChars->staticBuffer) {
-        free(_asciiData.screenChars->buffer);
-    }
+    iTermAsciiDataFree(&_asciiData);
 
     [super dealloc];
 }
@@ -313,17 +342,7 @@
 }
 
 - (void)setAsciiBytes:(char *)bytes length:(int)length {
-    assert(_asciiData.buffer == NULL);
-
-    _asciiData.length = length;
-    if (length > sizeof(_asciiData.staticBuffer)) {
-        _asciiData.buffer = iTermMalloc(length);
-    } else {
-        _asciiData.buffer = _asciiData.staticBuffer;
-    }
-    memcpy(_asciiData.buffer, bytes, length);
-
-    [self preInitializeScreenChars];
+    iTermAsciiDataSet(&_asciiData, bytes, length, &_screenChars);
 }
 
 - (AsciiData *)asciiData {
@@ -338,22 +357,6 @@
 
 - (ScreenChars *)screenChars {
     return &_screenChars;
-}
-
-- (void)preInitializeScreenChars {
-    // TODO: Expand this beyond just ascii characters.
-    if (_asciiData.length > kStaticScreenCharsCount) {
-        _screenChars.buffer = iTermCalloc(_asciiData.length, sizeof(screen_char_t));
-    } else {
-        _screenChars.buffer = _screenChars.staticBuffer;
-        memset(_screenChars.buffer, 0, _asciiData.length * sizeof(screen_char_t));
-    }
-    const NSInteger length = _asciiData.length;
-    for (NSInteger i = 0; i < length; i++) {
-        _screenChars.buffer[i].code = _asciiData.buffer[i];
-    }
-    _screenChars.length = _asciiData.length;
-    _asciiData.screenChars = &_screenChars;
 }
 
 - (void)translateFromScreenTerminal {

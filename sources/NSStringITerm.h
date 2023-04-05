@@ -186,6 +186,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Expands a vim-style string's special characters
 - (NSString *)stringByExpandingVimSpecialCharacters;
+- (NSString *)stringByExpandingTildeInPathPreservingSlash;
 
 // How tall is this string when rendered within a fixed width?
 - (CGFloat)heightWithAttributes:(NSDictionary *)attributes constrainedToWidth:(CGFloat)maxWidth;
@@ -349,6 +350,13 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 - (UTF32Char)longCharacterAtIndex:(NSInteger)i;
 - (NSString *)stringByReplacingBaseCharacterWith:(UTF32Char)base;
+
+@property (nonatomic, readonly) BOOL beginsWithWhitespace;
+@property (nonatomic, readonly) BOOL endsWithWhitespace;
+
+- (NSArray<NSString *> *)lastWords:(NSUInteger)count;
+@property (nonatomic, readonly) NSString *firstNonEmptyLine;
+- (NSString *)truncatedToLength:(NSInteger)maxLength ellipsis:(NSString *)ellipsis;
 
 @end
 

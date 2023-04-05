@@ -20,13 +20,11 @@ extension NSRect {
     var terminus: NSPoint {
         return NSPoint(x: maxX, y: maxY)
     }
-    var neighborBelow: NSRect {
-        // A same-size rect just under us (larger Y)
-        return NSRect(x: minX, y: maxY, width: width, height: height)
+    var neighborBelow: NSPoint {
+        return NSPoint(x: midX, y: maxY)
     }
-    var neighborAbove: NSRect {
-        // A same-size rect just under us (larger Y)
-        return NSRect(x: minX, y: minY - height, width: width, height: height)
+    var neighborAbove: NSPoint {
+        return NSPoint(x: midX, y: minY - 1)
     }
     var maxPointWithinRect: NSPoint {
         return NSPoint(x: maxX - 1, y: maxY - 1)

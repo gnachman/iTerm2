@@ -111,6 +111,30 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     return backgroundColorRuns;
 }
 
++ (instancetype)defaultRunOfLength:(int)width
+                               row:(int)row
+                                 y:(CGFloat)y {
+    const screen_char_t defaultCharacter = { 0 };
+
+    iTermBackgroundColorRun run;
+    iTermMakeBackgroundColorRun(&run,
+                                &defaultCharacter,
+                                VT100GridCoordMake(0, 0),
+                                nil,
+                                nil,
+                                width);
+    run.range = NSMakeRange(0, width);
+    NSMutableArray *runs = [NSMutableArray array];
+    [self addBackgroundRun:&run toArray:runs endingAt:width];
+
+    iTermBackgroundColorRunsInLine *backgroundColorRuns =
+    [[[iTermBackgroundColorRunsInLine alloc] init] autorelease];
+    backgroundColorRuns.array = runs;
+    backgroundColorRuns.y = y;
+    backgroundColorRuns.line = row;
+    return backgroundColorRuns;
+}
+
 - (void)dealloc {
     [_array release];
     [super dealloc];

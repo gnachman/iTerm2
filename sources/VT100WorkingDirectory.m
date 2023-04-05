@@ -47,6 +47,10 @@ static NSString *const kWorkingDirectoryStateWorkingDirectoryKey = @"Working Dir
     }
 }
 
+- (NSString *)shortDebugDescription {
+    return [NSString stringWithFormat:@"[Dir %@]", self.workingDirectory];
+}
+
 - (nonnull id<IntervalTreeObject>)doppelganger {
     @synchronized ([VT100WorkingDirectory class]) {
         assert(!_isDoppelganger);

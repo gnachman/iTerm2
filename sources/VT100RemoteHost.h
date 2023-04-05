@@ -15,6 +15,7 @@
 
 // Tries to guess if this is the local host.
 @property(nonatomic, readonly) BOOL isLocalhost;
+@property(nonatomic, readonly) BOOL isRemoteHost;
 
 - (BOOL)isEqualToRemoteHost:(id<VT100RemoteHostReading>)other;
 

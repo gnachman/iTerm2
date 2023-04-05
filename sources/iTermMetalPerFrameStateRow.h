@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermMetalPerFrameStateRow : NSObject {
 @public
     NSNumber *_markStyle;
+    BOOL _lineStyleMark;
     ScreenCharArray *_screenCharLine;
     NSIndexSet *_selectedIndexSet;
     NSDate *_date;
