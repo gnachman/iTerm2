@@ -61,16 +61,7 @@ workingDirectory:(NSString *)pwd
 }
 
 - (NSRect)frameForHeight:(CGFloat)desiredHeight {
-    NSRect newFrame = self.view.frame;
-    newFrame.origin.y = self.view.superview.frame.size.height;
-
-    newFrame.origin.y += newFrame.size.height;
-    const CGFloat maxWidth = self.view.superview.bounds.size.width - newFrame.origin.x - 19;
-    newFrame = NSMakeRect(newFrame.origin.x,
-                          self.view.superview.frame.size.height - desiredHeight,
-                          MAX(217, maxWidth),
-                          desiredHeight);
-    return newFrame;
+    return [self.delegate minimalComposer:self frameForHeight:desiredHeight];
 }
 
 - (CGFloat)minHeight {
@@ -78,7 +69,8 @@ workingDirectory:(NSString *)pwd
 }
 
 - (CGFloat)maxHeight {
-    return MAX(self.minHeight, NSHeight(self.view.superview.bounds) - 8);
+    const CGFloat maximumHeight = [self.delegate minimalComposerMaximumHeight:self];
+    return MAX(self.minHeight, maximumHeight);
 }
 
 - (void)updateFrame {

@@ -218,6 +218,23 @@
                sendToAdvancedPaste:[content stringByAppendingString:@"\n"]];
 }
 
+- (NSRect)minimalComposer:(iTermMinimalComposerViewController *)composer frameForHeight:(CGFloat)desiredHeight {
+    NSRect newFrame = composer.view.frame;
+    newFrame.origin.y = composer.view.superview.frame.size.height;
+
+    newFrame.origin.y += newFrame.size.height;
+    const CGFloat maxWidth = composer.view.superview.bounds.size.width - newFrame.origin.x - 19;
+    newFrame = NSMakeRect(newFrame.origin.x,
+                          composer.view.superview.frame.size.height - desiredHeight,
+                          MAX(217, maxWidth),
+                          desiredHeight);
+    return newFrame;
+}
+
+- (CGFloat)minimalComposerMaximumHeight:(iTermMinimalComposerViewController *)composer {
+    return NSHeight(composer.view.superview.bounds) - 8;
+}
+
 - (void)dismissMinimalView {
     NSViewController *vc = _minimalViewController;
     [NSView animateWithDuration:0.125
