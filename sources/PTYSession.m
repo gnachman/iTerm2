@@ -14919,6 +14919,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self.composerManager reveal];
 }
 
+- (BOOL)textViewIsAutoComposerOpen {
+    return [_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer;
+}
+
 #pragma mark - iTermHotkeyNavigableSession
 
 - (void)sessionHotkeyDidNavigateToSession:(iTermShortcut *)shortcut {

@@ -794,7 +794,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 - (void)drawCursorGuideForColumns:(NSRange)range
                                 y:(CGFloat)yOrigin
                     virtualOffset:(CGFloat)virtualOffset {
-    if (!_cursorVisible) {
+    if (!_isCursorVisible) {
         return;
     }
     [_cursorGuideColor set];
@@ -3566,16 +3566,16 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     // own cursor. Also, it must be not blinked-out, and it must be within the expected bounds of
     // the screen (which is just a sanity check, really).
     BOOL result = (![self hasMarkedText] &&
-                   _cursorVisible &&
+                   _isCursorVisible &&
                    shouldShowCursor &&
                    column <= width &&
                    column >= 0 &&
                    row >= 0 &&
                    row < height &&
                    !copyMode);
-    DLog(@"shouldDrawCursor: hasMarkedText=%d, cursorVisible=%d, showCursor=%d, column=%d, row=%d"
+    DLog(@"shouldDrawCursor: hasMarkedText=%d, isCursorVisible=%d, showCursor=%d, column=%d, row=%d"
          @"width=%d, height=%d, copyMode=%@. Result=%@",
-         (int)[self hasMarkedText], (int)_cursorVisible, (int)shouldShowCursor, column, row,
+         (int)[self hasMarkedText], (int)_isCursorVisible, (int)shouldShowCursor, column, row,
          width, height, @(copyMode), @(result));
     return result;
 }

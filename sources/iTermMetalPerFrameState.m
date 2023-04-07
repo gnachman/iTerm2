@@ -238,7 +238,7 @@ typedef struct {
 
 - (void)loadCursorInfoWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                                textView:(PTYTextView *)textView {
-    _cursorVisible = drawingHelper.cursorVisible;
+    _cursorVisible = drawingHelper.isCursorVisible;
     const int offset = _visibleRange.start.y - _numberOfScrollbackLines;
     _cursorInfo = [[iTermMetalCursorInfo alloc] init];
     _cursorInfo.password = drawingHelper.passwordInput;

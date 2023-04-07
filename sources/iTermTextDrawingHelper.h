@@ -136,7 +136,7 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 @property(nonatomic, assign) double transparencyAlpha;
 
 // Is the cursor visible?
-@property(nonatomic, assign) BOOL cursorVisible;
+@property(nonatomic, assign) BOOL isCursorVisible;
 
 // What kind of cursor to draw.
 @property(nonatomic, assign) ITermCursorType cursorType;

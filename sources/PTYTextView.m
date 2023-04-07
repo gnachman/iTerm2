@@ -177,6 +177,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     iTermRateLimitedUpdate *_shadowRateLimit;
     NSMutableArray<PTYNoteViewController *> *_notes;
     iTermScrollAccumulator *_horizontalScrollAccumulator;
+    BOOL _cursorVisible;
 }
 
 
@@ -255,7 +256,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         _drawingHelper.delegate = self;
 
         [self updateMarkedTextAttributes];
-        _drawingHelper.cursorVisible = YES;
+        _cursorVisible = YES;
         _selection = [[iTermSelection alloc] init];
         _selection.delegate = self;
         _oldSelection = [_selection copy];
@@ -1355,10 +1356,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     [_dataSource performBlockWithSavedGrid:^(id<PTYTextViewSynchronousUpdateStateReading>  _Nullable savedState) {
         if (savedState) {
             originalState = [self syncUpdateState];
-            DLog(@"PTYTextView.performBlockWithFlickerFixerGrid: set cusrorVisible=%@", _drawingHelper.cursorVisible ? @"true": @"false");
+            DLog(@"PTYTextView.performBlockWithFlickerFixerGrid: set cusrorVisible=%@", _cursorVisible ? @"true": @"false");
             [self loadSyncUpdateState:savedState];
         } else {
-            DLog(@"PTYTextView.performBlockWithFlickerFixerGrid: (no saved grid) cusrorVisible=%@", _drawingHelper.cursorVisible ? @"true": @"false");
+            DLog(@"PTYTextView.performBlockWithFlickerFixerGrid: (no saved grid) cusrorVisible=%@", _cursorVisible ? @"true": @"false");
         }
 
         block();
@@ -1369,7 +1370,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 }
 
 - (void)loadSyncUpdateState:(id<PTYTextViewSynchronousUpdateStateReading>)savedState {
-    _drawingHelper.cursorVisible = savedState.cursorVisible;
+    _cursorVisible = savedState.cursorVisible;
     _drawingHelper.colorMap = savedState.colorMap;
     [_colorMap autorelease];
     _colorMap = [savedState.colorMap retain];
@@ -1378,7 +1379,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (PTYTextViewSynchronousUpdateState *)syncUpdateState {
     PTYTextViewSynchronousUpdateState *originalState = [[[PTYTextViewSynchronousUpdateState alloc] init] autorelease];
     originalState.colorMap = _colorMap;
-    originalState.cursorVisible = _drawingHelper.cursorVisible;
+    originalState.cursorVisible = _cursorVisible;
     return originalState;
 }
 
@@ -1455,6 +1456,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _drawingHelper.softAlternateScreenMode = self.dataSource.terminalSoftAlternateScreenMode;
     _drawingHelper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
     _drawingHelper.fontTable = self.fontTable;
+    _drawingHelper.isCursorVisible = _cursorVisible && ![self.delegate textViewIsAutoComposerOpen];
 
     const VT100GridRange range = [self rangeOfVisibleLines];
     if ([_delegate textViewShouldShowOffscreenCommandLine]) {
@@ -1878,11 +1880,11 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
 - (void)setCursorVisible:(BOOL)cursorVisible {
     DLog(@"setCursorVisible:%@", cursorVisible ? @"true" : @"false");
     [self markCursorDirty];
-    _drawingHelper.cursorVisible = cursorVisible;
+    _cursorVisible = cursorVisible;
 }
 
 - (BOOL)cursorVisible {
-    return _drawingHelper.cursorVisible;
+    return _cursorVisible;
 }
 
 - (CGFloat)minimumBaselineOffset {
@@ -4386,7 +4388,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)beginFindCursor:(BOOL)hold forceFireworks:(BOOL)forceFireworks {
-    _drawingHelper.cursorVisible = YES;
+    _cursorVisible = YES;
     [self setNeedsDisplayInRect:self.cursorFrame];
     if (!_findCursorView) {
         [self createFindCursorWindowWithFireworks:forceFireworks];
