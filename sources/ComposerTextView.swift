@@ -23,6 +23,11 @@ protocol ComposerTextViewDelegate: AnyObject {
 class ComposerTextView: MultiCursorTextView {
     @IBOutlet weak var composerDelegate: ComposerTextViewDelegate?
     @objc private(set) var isSettingSuggestion = false
+    // autoMode will be true for auto-composer, in which case it tries to blend in to the terminal
+    // by not requiring shift+enter to send, handling certain control characters like a terminal,
+    // etc.
+    @objc var autoMode = false
+
     private var _suggestion: String?
     private var linkRange: NSRange? = nil
     @objc var suggestion: String? {
@@ -101,6 +106,66 @@ class ComposerTextView: MultiCursorTextView {
         super.performFindPanelAction(sender)
     }
 
+    private struct Action {
+        var modifiers: NSEvent.ModifierFlags
+        var characters: String
+        // Return true if you handled it and don't want super.keyDown(with:) called.
+        var closure: (ComposerTextView) -> (Bool)
+    }
+
+    private let standardActions = [
+        Action(modifiers: [.shift], characters: "\r", closure: { textView in
+            textView.sendAction()
+            return true
+        }),
+        Action(modifiers: [.shift, .option], characters: "\r", closure: { textView in
+            textView.sendEachAction()
+            return true
+        }),
+        Action(modifiers: [.option], characters: "\r", closure: { textView in
+            textView.enqueueEachAction()
+            return true
+        })
+    ]
+
+    private let autoModeActions = [
+        Action(modifiers: [], characters: "\r", closure: { textView in
+            textView.sendAction()
+            return true
+        }),
+        Action(modifiers: [.shift, .option], characters: "\r", closure: { textView in
+            textView.sendEachAction()
+            return true
+        }),
+        Action(modifiers: [.option], characters: "\r", closure: { textView in
+            textView.enqueueEachAction()
+            return true
+        })
+    ]
+
+    private var actionsForCurrentMode: [Action] {
+        return autoMode ? autoModeActions : standardActions
+    }
+
+    private func sendAction() {
+        suggestion = nil
+        composerDelegate?.composerTextViewDidFinish(cancel: false)
+    }
+
+    private func sendEachAction() {
+        suggestion = nil
+        for command in take() {
+            composerDelegate?.composerTextViewSend(string: command)
+        }
+    }
+
+    private func enqueueEachAction() {
+        suggestion = nil
+        for command in take() {
+            composerDelegate?.composerTextViewEnqueue(string: command)
+        }
+    }
+
     override func keyDown(with event: NSEvent) {
         let pressedEsc = event.characters == "\u{1b}"
         if pressedEsc {
@@ -109,31 +174,14 @@ class ComposerTextView: MultiCursorTextView {
             return
         }
 
-        let enter = event.characters == "\r"
-        if enter {
-            let flags = event.it_modifierFlags
-            let mask: NSEvent.ModifierFlags = [.command, .option, .shift, .control]
-            let justShift = flags.intersection(mask) == [.shift]
-            if justShift {
-                suggestion = nil
-                composerDelegate?.composerTextViewDidFinish(cancel: false)
-                return
-            }
-            let justShiftOption = flags.intersection(mask) == [.shift, .option]
-            if justShiftOption {
-                suggestion = nil
-                for command in take() {
-                    composerDelegate?.composerTextViewSend(string: command)
-                }
-                return
-            }
-            let justOption = flags.intersection(mask) == [.option]
-            if justOption {
-                suggestion = nil
-                for command in take() {
-                    composerDelegate?.composerTextViewEnqueue(string: command)
-                }
-            }
+        let mask: NSEvent.ModifierFlags = [.command, .option, .shift, .control]
+        let maskedModifiers = event.it_modifierFlags.intersection(mask)
+
+        let action = actionsForCurrentMode.first { action in
+            action.characters == event.characters && action.modifiers == maskedModifiers
+        }
+        if let action, action.closure(self) {
+            return
         }
         super.keyDown(with: event)
     }
@@ -356,8 +404,27 @@ class ComposerTextView: MultiCursorTextView {
         return NSAttributedString(string: suggestion, attributes: typingAttributes)
     }
 
+    private var cursorAtEnd: Bool {
+        guard let textStorage else {
+            return false
+        }
+        let endLocation = textStorage.string.count
+        return multiCursorSelectedRanges.anySatisfies { range in
+            range.location == endLocation
+        }
+    }
+
     private func reallySetSuggestion(_ suggestion: String?) {
         guard let textStorage else {
+            return
+        }
+        if !cursorAtEnd, let suggestion, suggestion.contains(" ") {
+            let truncated = suggestion.substringUpToFirstSpace
+            if truncated.isEmpty {
+                reallySetSuggestion(nil)
+            } else {
+                reallySetSuggestion(String(truncated))
+            }
             return
         }
         if let suggestion = suggestion {
@@ -449,3 +516,16 @@ extension NSRange {
     }
 }
 
+
+extension NSEvent.ModifierFlags: Hashable {
+
+}
+
+extension String {
+    var substringUpToFirstSpace: Substring {
+        guard let index = self.firstIndex(of: " ") else {
+            return Substring(self)
+        }
+        return self[..<index]
+    }
+}

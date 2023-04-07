@@ -476,6 +476,7 @@
 - (void)setHideAccessories:(BOOL)hideAccessories {
     _hideAccessories = hideAccessories;
     _accessories.hidden = hideAccessories;
+    _textView.autoMode = hideAccessories;
 
     if (hideAccessories) {
         const CGFloat sideMargin = 0;
