@@ -44,6 +44,7 @@ workingDirectory:(NSString *)pwd
           scope:(iTermVariableScope *)scope
  tmuxController:(TmuxController *)tmuxController;
 - (void)setFont:(NSFont *)font;
+- (BOOL)composerIsFirstResponder;
 
 @end
 

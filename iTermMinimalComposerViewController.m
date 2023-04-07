@@ -78,6 +78,14 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     _largeComposerViewController.textView.font = font;
 }
 
+- (BOOL)composerIsFirstResponder {
+    NSWindow *window = _largeComposerViewController.textView.window;
+    if (!window) {
+        return NO;
+    }
+    return window.firstResponder == _largeComposerViewController.textView;
+}
+
 - (void)setHost:(id<VT100RemoteHostReading>)host
 workingDirectory:(NSString *)pwd
           scope:(iTermVariableScope *)scope
@@ -123,6 +131,9 @@ workingDirectory:(NSString *)pwd
         if (NSMaxRange(lineRange) == NSMaxRange(glyphRange)) {
             break;
         }
+    }
+    if ([textView.textStorage.string hasSuffix:@"\n"]) {
+        numberOfLines += 1;
     }
     return numberOfLines;
 }
