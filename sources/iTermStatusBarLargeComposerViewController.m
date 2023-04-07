@@ -89,6 +89,8 @@
 
 @implementation iTermStatusBarLargeComposerViewController {
     IBOutlet NSButton *_help;
+    IBOutlet NSView *_accessories;
+    IBOutlet NSScrollView *_scrollView;
     CommandHistoryPopupWindowController *_historyWindowController;
     NSInteger _completionGeneration;
     iTermTextPopoverViewController *_popoverVC;
@@ -366,6 +368,7 @@
 // NOTE: This must not change the suggestion directly. It has to do it in dispatch_async because
 // otherwise NSTextView throws exceptions.
 - (void)textDidChange:(NSNotification *)notification {
+    [_delegate largeComposerViewControllerTextDidChange:self];
     _completionGeneration += 1;
     if (self.textView.isSettingSuggestion) {
         return;
@@ -468,6 +471,28 @@
     }
 
     return NO;
+}
+
+- (void)setHideAccessories:(BOOL)hideAccessories {
+    _hideAccessories = hideAccessories;
+    _accessories.hidden = hideAccessories;
+
+    if (hideAccessories) {
+        const CGFloat sideMargin = 0;
+        const CGFloat topMargin = 0;
+        _scrollView.frame = NSMakeRect(sideMargin,
+                                       topMargin,
+                                       self.view.frame.size.width - sideMargin * 2,
+                                       self.view.frame.size.height - topMargin * 2);
+    } else {
+        const CGFloat sideMargin = 5;
+        const CGFloat topMargin = 11;
+        const CGFloat bottomMargin = 19;
+        _scrollView.frame = NSMakeRect(sideMargin,
+                                       bottomMargin,
+                                       self.view.frame.size.width - sideMargin * 2,
+                                       self.view.frame.size.height - topMargin - bottomMargin);
+    }
 }
 
 @end

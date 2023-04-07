@@ -5502,7 +5502,7 @@ ITERM_WEAKLY_REFERENCEABLE
         [self stopTailFind];
     }
 
-    const BOOL passwordInput = _shell.passwordInput;
+    const BOOL passwordInput = _shell.passwordInput || _conductor.atPasswordPrompt;
     DLog(@"passwordInput=%@", @(passwordInput));
     if (passwordInput != _passwordInput) {
         _passwordInput = passwordInput;
@@ -5718,10 +5718,7 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_screen.isAtCommandPrompt) {
         return YES;
     }
-    if (_conductor) {
-        return _conductor.isTTYCooked;
-    }
-    return _shell.isTTYCooked;
+    return NO;
 }
 
 - (void)dismissComposerIfEmpty {
@@ -16532,7 +16529,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)composerManager:(iTermComposerManager *)composerManager minimalFrameDidChangeTo:(NSRect)newFrame {
-    _view.composerHeight = NSMaxY(newFrame);
+    _view.composerHeight = NSHeight(newFrame);
     [self.delegate sessionDidChangeComposerFrame:self];
 }
 
@@ -16543,12 +16540,38 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     newFrame.origin.y = _view.frame.size.height;
 
     newFrame.origin.y += newFrame.size.height;
-    const CGFloat maxWidth = _view.bounds.size.width - newFrame.origin.x - 19;
+    const CGFloat maxWidth = _view.bounds.size.width - newFrame.origin.x * 2;
+    const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
+    const NSSize contentSize = self.view.contentRect.size;
+    const NSSize paneSize = self.view.frame.size;
+    CGFloat y = 0;
+    CGFloat width = 0;
+    CGFloat height = 0;
+
+    if (composerManager.isAutoComposer) {
+        // Place at bottom, but leave excess space below it so it abuts the terminal view.
+        height = MIN(desiredHeight, 0.5 * paneSize.height);
+        const CGFloat bottomDecorations = self.view.showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
+        const CGFloat usableTerminalHeight = contentSize.height - height - bottomDecorations - vmargin * 2;
+        const CGFloat excess = fmod(usableTerminalHeight, _textview.lineHeight);
+        y = bottomDecorations + vmargin + excess;
+        width = maxWidth;
+    } else {
+        // Place at top. Includes decoration so a minimum width must be enforced.
+        
+        y = paneSize.height - desiredHeight;
+        width = MAX(217, maxWidth);
+        height = desiredHeight;
+    }
     newFrame = NSMakeRect(newFrame.origin.x,
-                          0,
-                          MAX(217, maxWidth),
-                          desiredHeight);
+                          y,
+                          width,
+                          height);
     return newFrame;
+}
+
+- (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager {
+    return _textview.lineHeight;
 }
 
 - (void)composerManagerDidRemoveTemporaryStatusBarComponent:(iTermComposerManager *)composerManager {

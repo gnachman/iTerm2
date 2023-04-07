@@ -28,12 +28,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (CGFloat)minimalComposerMaximumHeight:(iTermMinimalComposerViewController *)composer;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
        frameDidChangeTo:(NSRect)newFrame;
+- (CGFloat)minimalComposerLineHeight:(iTermMinimalComposerViewController *)composer;
 
 @end
 
 @interface iTermMinimalComposerViewController : NSViewController
 @property (nonatomic, weak) id<iTermMinimalComposerViewControllerDelegate> delegate;
 @property (nonatomic, copy) NSString *stringValue;
+@property (nonatomic) BOOL isAutoComposer;
 
 - (void)updateFrame;
 - (void)makeFirstResponder;

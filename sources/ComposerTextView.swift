@@ -82,8 +82,11 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     override func viewDidMoveToWindow() {
+        guard let textStorage else {
+            return
+        }
         if window == nil {
-            undoManager?.removeAllActions(withTarget: textStorage!)
+            undoManager?.removeAllActions(withTarget: textStorage)
         }
     }
 
@@ -145,14 +148,17 @@ class ComposerTextView: MultiCursorTextView {
     // Returns nil if the range is invalid.
     // range: A glyph range.
     private func take(range: NSRange) -> String? {
-        let string = textStorage!.string as NSString
+        guard let layoutManager, let textStorage else {
+            return nil
+        }
+        let string = textStorage.string as NSString
         let stringToTake: String
         var rangeToTake: NSRange
         if range.length > 0 {
             stringToTake = string.substring(with: range)
             rangeToTake = range
         } else {
-            let characterIndex = layoutManager!.characterRange(forGlyphRange: range,
+            let characterIndex = layoutManager.characterRange(forGlyphRange: range,
                                                                actualGlyphRange: nil)
             guard let tuple = characterRangeOfCommand(
                 atCharacterIndex: characterIndex.location) else {
@@ -219,12 +225,15 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     private func removeLink() {
+        guard let textStorage else {
+            return
+        }
         if let range = linkRange {
             NSCursor.pop()
             let safeRange = range.intersection(NSRange(location: 0,
-                                                       length: (textStorage!.string as NSString).length))
+                                                       length: (textStorage.string as NSString).length))
             if let safeRange = safeRange, safeRange.length > 0 {
-                textStorage?.removeAttribute(.link, range: safeRange)
+                textStorage.removeAttribute(.link, range: safeRange)
             }
             linkRange = nil
         }
@@ -233,12 +242,15 @@ class ComposerTextView: MultiCursorTextView {
     private let suggestionAttribute =  NSAttributedString.Key("iTerm2 Suggestion")
 
     private func characterRangeOfCommand(at point: NSPoint) -> (NSRange, String)? {
-        let characterIndex = layoutManager!.characterIndex(
+        guard let layoutManager, let textContainer else {
+            return nil
+        }
+        let characterIndex = layoutManager.characterIndex(
             for: point,
-            in: textContainer!,
+            in: textContainer,
             fractionOfDistanceBetweenInsertionPoints: nil)
-        let glyphIndex = layoutManager!.glyphIndexForCharacter(at: characterIndex)
-        let boundingRect = layoutManager!.lineFragmentUsedRect(forGlyphAt: glyphIndex, effectiveRange: nil)
+        let glyphIndex = layoutManager.glyphIndexForCharacter(at: characterIndex)
+        let boundingRect = layoutManager.lineFragmentUsedRect(forGlyphAt: glyphIndex, effectiveRange: nil)
         if !boundingRect.contains(point) {
             return nil
         }
@@ -246,6 +258,9 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     private func characterRangeOfCommand(atCharacterIndex unsafeIndex: Int) -> (NSRange, String)? {
+        guard let textStorage else {
+            return nil
+        }
         var characterIndex = unsafeIndex
 
         // This dense chunk of code finds the range of the command under the cursor, chasing down
@@ -255,7 +270,7 @@ class ComposerTextView: MultiCursorTextView {
         var characterIndexesToDrop = Set<Int>()
         // Search forwards
         while true {
-            let string = (textStorage!.string as NSString)
+            let string = (textStorage.string as NSString)
             let paragraphRange = string.paragraphRange(for: NSRange(location: characterIndex, length: 0))
             if paragraphRange.location == NSNotFound || paragraphRange.length == 0 {
                 return nil
@@ -286,7 +301,7 @@ class ComposerTextView: MultiCursorTextView {
         if let suffixRange = spanningRange, suffixRange.location > 0 {
             characterIndex = max(0, suffixRange.location - 1)
             while spanningRange!.location > 0 {
-                let string = (textStorage!.string as NSString)
+                let string = (textStorage.string as NSString)
                 let paragraphRange = string.paragraphRange(for: NSRange(location: characterIndex, length: 0))
                 if paragraphRange.location == NSNotFound || paragraphRange.length == 0 {
                     return nil
@@ -313,7 +328,7 @@ class ComposerTextView: MultiCursorTextView {
         }
 
         var rangeExcludingSuggestion = NSRange(location: spanningRange.location, length: 0)
-        textStorage!.enumerateAttributes(in: spanningRange) { attributes, range, stop in
+        textStorage.enumerateAttributes(in: spanningRange) { attributes, range, stop in
             if attributes[suggestionAttribute] != nil {
                 // Reached the start of the suggestion.
                 stop.pointee = ObjCBool(true)
@@ -323,7 +338,7 @@ class ComposerTextView: MultiCursorTextView {
                                                to: range.upperBound)
         }
         // Remove line continuation backslashes.
-        let temp = ((textStorage!.string as NSString).substring(with: rangeExcludingSuggestion) as NSString).mutableCopy() as! NSMutableString
+        let temp = ((textStorage.string as NSString).substring(with: rangeExcludingSuggestion) as NSString).mutableCopy() as! NSMutableString
         for index in characterIndexesToDrop.sorted().reversed() {
             temp.replaceCharacters(in: NSRange(location: index, length: 1), with: " ")
         }
@@ -342,11 +357,14 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     private func reallySetSuggestion(_ suggestion: String?) {
+        guard let textStorage else {
+            return
+        }
         if let suggestion = suggestion {
             if hasSuggestion {
                 // Replace existing suggestion with a different one.
-                textStorage?.replaceCharacters(in: suggestionRange,
-                                               with: attributedString(for: suggestion))
+                textStorage.replaceCharacters(in: suggestionRange,
+                                              with: attributedString(for: suggestion))
                 _suggestion = suggestion
                 suggestionRange = NSRange(location: suggestionRange.location,
                                           length: (suggestion as NSString).length);
@@ -356,8 +374,8 @@ class ComposerTextView: MultiCursorTextView {
 
             // Didn't have suggestion before but will have one now
             let location = selectedRange().upperBound
-            textStorage!.replaceCharacters(in: NSRange(location: location, length: 0),
-                                           with: attributedString(for: suggestion))
+            textStorage.replaceCharacters(in: NSRange(location: location, length: 0),
+                                          with: attributedString(for: suggestion))
             _suggestion = suggestion
             suggestionRange = NSRange(location: location, length: (suggestion as NSString).length)
             setSelectedRange(NSRange(location: suggestionRange.location, length: 0))
@@ -384,7 +402,7 @@ class ComposerTextView: MultiCursorTextView {
         var selectedRange = self.selectedRange()
         for range in rangesToRemove {
             selectedRange = selectedRange.minus(range)
-            textStorage?.deleteCharacters(in: range)
+            textStorage.deleteCharacters(in: range)
         }
 
         // 3. Position the cursor and clean up internal state.

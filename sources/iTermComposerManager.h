@@ -40,6 +40,7 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 - (NSRect)composerManager:(iTermComposerManager *)composerManager
 frameForDesiredHeight:(CGFloat)desiredHeight
 previousFrame:(NSRect)previousFrame;
+- (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager;
 
 @end
 

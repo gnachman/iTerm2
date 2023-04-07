@@ -24,6 +24,11 @@ NS_INLINE iTermParserContext iTermParserContextMake(unsigned char *datap, int le
     return context;
 }
 
+NS_INLINE NSString *iTermParserDebugString(iTermParserContext *context) {
+    NSData *data = [NSData dataWithBytes:context->datap length:context->datalen];
+    return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+}
+
 NS_INLINE BOOL iTermParserCanAdvance(iTermParserContext *context) {
     return context->datalen > 0;
 }

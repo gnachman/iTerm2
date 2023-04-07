@@ -521,6 +521,7 @@ static NSRange MakeCharacterRange(unsigned char first, unsigned char lastInclusi
     while (result->type == VT100_WAIT && iTermParserCanAdvance(context) && !blocked) {
         if (_hook && !_hookFinished) {
             DLog(@"Sending input to hook %@", _hook);
+            NSLog(@"DCS: Parse %@", iTermParserDebugString(context));
             const VT100DCSParserHookResult hookResult = [_hook handleInput:context
                                               support8BitControlCharacters:_support8BitControlCharacters
                                                                      token:result];

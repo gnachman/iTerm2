@@ -693,7 +693,7 @@ extension MultiCursorTextView {
 
     private func extendRight(_ range: NSRange, by: NSString.EnumerationOptions) -> NSRange {
         let nsstring = textStorage!.string as NSString
-        if range.upperBound == nsstring.length {
+        if range.upperBound >= nsstring.length {
             return range
         }
         var result = range
@@ -746,8 +746,7 @@ extension MultiCursorTextView {
         var count = 0
         for unadjustedRange in ranges {
             let glyphRange: NSRange
-            let adjustedRange = NSRange(location: unadjustedRange.location - count,
-                                        length: unadjustedRange.length)
+            let adjustedRange = unadjustedRange.shiftedDown(by: count)
             if unadjustedRange.length > 0 {
                 glyphRange = adjustedRange
             } else {
@@ -1957,3 +1956,12 @@ extension MultiCursorTextView {
     }
 }
 
+
+extension NSRange {
+    func shiftedDown(by n: Int) -> NSRange {
+        if n > location {
+            return shiftedDown(by: location)
+        }
+        return NSRange(location: location - n, length: length)
+    }
+}

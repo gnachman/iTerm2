@@ -759,7 +759,10 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
     }
 
     static func == (lhs: CompressibleCharacterBuffer, rhs: CompressibleCharacterBuffer) -> Bool {
-        earlierInMemory(lhs, rhs).read { lstate in
+        if lhs === rhs {
+            return true
+        }
+        return earlierInMemory(lhs, rhs).read { lstate in
             laterInMemory(lhs, rhs).read { rstate in
                 return lstate == rstate
             }

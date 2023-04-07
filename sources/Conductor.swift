@@ -109,8 +109,8 @@ class Conductor: NSObject, Codable {
         var echo = true
         var icanon = true
 
-        var isCooked: Bool {
-            return echo && icanon
+        var atPasswordPrompt: Bool {
+            return !echo && icanon
         }
     }
 
@@ -710,7 +710,7 @@ class Conductor: NSObject, Codable {
     @objc let clientUniqueID: String  // provided by client when hooking dcs
     @objc var currentDirectory: String?
 
-    private let superVerbose = false
+    private let superVerbose = true
     private var verbose: Bool {
         return superVerbose || gDebugLogging.boolValue
     }
@@ -1517,9 +1517,9 @@ class Conductor: NSObject, Codable {
     }
 
     private func handleNotif(_ message: String) {
-        let tty = "tty "
-        if message.hasPrefix(tty) {
-            handleTTYNotif(String(message.dropFirst(tty.count)))
+        let notifTTY = "%notif tty "
+        if message.hasPrefix(notifTTY) {
+            handleTTYNotif(String(message.dropFirst(notifTTY.count)))
         }
     }
 
@@ -1553,8 +1553,8 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    @objc var isTTYCooked: Bool {
-        return ttyState.isCooked
+    @objc var atPasswordPrompt: Bool {
+        return ttyState.atPasswordPrompt
     }
 
     private var nesting: [Nesting] {

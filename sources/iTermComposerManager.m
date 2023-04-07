@@ -141,6 +141,10 @@
     return _minimalViewController != nil;
 }
 
+- (CGFloat)sideMargin {
+    return self.isAutoComposer ? 0 : 20;
+}
+
 - (void)showMinimalComposerInView:(NSView *)superview {
     if (_minimalViewController) {
         _saved = _minimalViewController.stringValue;
@@ -149,7 +153,8 @@
     }
     _minimalViewController = [[iTermMinimalComposerViewController alloc] init];
     _minimalViewController.delegate = self;
-    _minimalViewController.view.frame = NSMakeRect(20,
+    _minimalViewController.isAutoComposer = self.isAutoComposer;
+    _minimalViewController.view.frame = NSMakeRect(self.sideMargin,
                                                     superview.frame.size.height - _minimalViewController.view.frame.size.height,
                                                     _minimalViewController.view.frame.size.width,
                                                     _minimalViewController.view.frame.size.height);
@@ -263,6 +268,10 @@
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
        frameDidChangeTo:(NSRect)newFrame {
     [self.delegate composerManager:self minimalFrameDidChangeTo:newFrame];
+}
+
+- (CGFloat)minimalComposerLineHeight:(iTermMinimalComposerViewController *)composer {
+    return [self.delegate composerManagerLineHeight:self];
 }
 
 - (void)dismissMinimalViewAnimated:(BOOL)animated {

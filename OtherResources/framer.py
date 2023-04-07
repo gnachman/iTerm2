@@ -23,7 +23,7 @@ import traceback
 PROCESSES = {}
 # List of pids that are completed. Their tasks can be awaited and removed.
 COMPLETED = []
-VERBOSE=0
+VERBOSE=1
 LOGFILE=None
 RUNLOOP=None
 TASKS=[]
@@ -293,10 +293,10 @@ async def autopoll(delay):
 
 def get_echo_icanon(tty):
     try:
-        fd = tty.fileno()
-        attrs = termios.tcgetattr(fd)
+        attrs = termios.tcgetattr(tty)
         return (bool(attrs[3] & termios.ECHO), bool(attrs[3] & termios.ICANON))
-    except:
+    except Exception as e:
+        log(f'get_echo_icanon threw {e}: {traceback.format_exc()}')
         return (False, False)
 
 async def watch_tty(proc, delay):
@@ -314,9 +314,10 @@ def poll_tty(proc):
     log("Check TTY")
     new_echo, new_icanon = get_echo_icanon(proc.master)
     if new_echo != proc.echo or new_icanon != proc.icanon:
+        log(f'echo: {proc.echo}->{new_echo}, icanon: {proc.icanon}->{new_icanon}')
         parts = [
-            ('+' if echo else '-') + 'echo',
-            ('+' if icanon else '-') + 'icanon']
+            ('+' if new_echo else '-') + 'echo',
+            ('+' if new_icanon else '-') + 'icanon']
         print_tty(" ".join(parts))
     proc.echo = new_echo
     proc.icanon = new_icanon
@@ -528,9 +529,8 @@ async def handle_run(identifier, args):
         end(identifier, 1)
     return False
 
-func start_tty_task(identifier, proc):
+def start_tty_task(identifier, proc):
     proc.tty_task = asyncio.create_task(watch_tty(proc.master, 1))
-
 
 def reset():
     global REGISTERED
