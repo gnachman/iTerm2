@@ -606,6 +606,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     return anyChange;
 }
 
+- (void)sessionDidChangeComposerFrame:(PTYSession *)session {
+    [self fitSessionToCurrentViewSize:session];
+    // TODO: In tmux mode we need to do something like [TmuxController windowDidResize:]. See -[PseudoTerminal refreshTerminal:] in the `if (needResize)` block.
+}
+
 - (void)numberOfSessionsDidChange {
     if ([self updatePaneTitles] && [self isTmuxTab]) {
         DLog(@"PTYTab numberOfSessionsDidChange triggering windowDidResize");
@@ -2091,6 +2096,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                         dimensions:(NSSize)dimensions
                         showTitles:(BOOL)showTitles
                showBottomStatusBar:(BOOL)showBottomStatusBar
+                    composerHeight:(CGFloat)composerHeight
                         inTerminal:(id<WindowControllerInterface>)term {
     int rows = dimensions.height;
     int columns = dimensions.width;
@@ -2117,6 +2123,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     if (showBottomStatusBar) {
         outerSize.height += iTermGetStatusBarHeight();
     }
+    outerSize.height += composerHeight;
     DLog(@"session size, including space for the scrollview's decoration, is %@", NSStringFromSize(outerSize));
     return outerSize;
 }
@@ -2128,6 +2135,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                                  dimensions:NSMakeSize([session columns], [session rows])
                                  showTitles:[sessionView showTitle]
                         showBottomStatusBar:sessionView.showBottomStatusBar
+                             composerHeight:sessionView.composerHeight
                                  inTerminal:parentWindow_];
 }
 
@@ -3443,10 +3451,10 @@ typedef struct {
 } iTermSizeRange;
 
 + (iTermSizeRange)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
-                                 showTitles:(BOOL)showTitles
-                        showBottomStatusBar:(BOOL)showBottomStatusBar
-                                   bookmark:(Profile *)profile
-                                 inTerminal:(NSWindowController<iTermWindowController> *)term {
+                                         showTitles:(BOOL)showTitles
+                                showBottomStatusBar:(BOOL)showBottomStatusBar
+                                           bookmark:(Profile *)profile
+                                         inTerminal:(NSWindowController<iTermWindowController> *)term {
     CGFloat splitterSize = 1;  // hack: should use -[NSSplitView dividerThickness], but don't have an instance yet.
     iTermSizeRange totalSize = { NSZeroSize, NSZeroSize };
 
@@ -3462,6 +3470,7 @@ typedef struct {
                                                                             [parseTree[kLayoutDictHeightKey] intValue])
                                                       showTitles:showTitles
                                              showBottomStatusBar:showBottomStatusBar
+                                                  composerHeight:0
                                                       inTerminal:term];
             parseTree[kLayoutDictPixelWidthKey] = @(size.width);
             parseTree[kLayoutDictPixelHeightKey] = @(size.height);
@@ -3944,7 +3953,7 @@ typedef struct {
                                           [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
         return (PTYTabDecorationSize) {
             .points = NSMakeSize(scrollViewDecorationSize.width + margins.width,
-                                 titleBarHeight + statusBarHeight + margins.height),
+                                 titleBarHeight + statusBarHeight + sessionView.composerHeight + margins.height),
             .cells = VT100GridSizeMake(0, 0)
         };
     }
@@ -4082,13 +4091,13 @@ typedef struct {
 
         NSArray<NSNumber *> *decorationSizes =
         [sessionViewsInSlice mapWithBlock:^id(SessionView *sessionView) {
-            DLog(@"%@ showTitle=%@ showBototmStatusBar=%@",
-                 sessionView, @(sessionView.showTitle), @(sessionView.showBottomStatusBar));
+            DLog(@"%@ showTitle=%@ showBottomStatusBar=%@ composerHeight=%@",
+                 sessionView, @(sessionView.showTitle), @(sessionView.showBottomStatusBar), @(sessionView.composerHeight));
             const CGFloat titleBarHeight = sessionView.showTitle ? SessionView.titleHeight : 0;
             // NOTE: At the time of writing tmux tabs can’t have per-pane status bars. Should that ever
             // change, this line of code might prevent a bug.
             const CGFloat statusBarHeight = sessionView.showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
-            return @(titleBarHeight + statusBarHeight + margins.height);
+            return @(titleBarHeight + statusBarHeight + sessionView.composerHeight + margins.height);
         }];
         DLog(@"Decoration sizes are %@", decorationSizes);
         const CGFloat totalDecorationSize = [decorationSizes sumOfNumbers] + numberOfDividers * dividerThickness;
@@ -4451,6 +4460,7 @@ typedef struct {
                                                                          link.session.gridSize.height)
                                                    showTitles:sessionView.showTitle
                                           showBottomStatusBar:sessionView.showBottomStatusBar
+                                               composerHeight:sessionView.composerHeight
                                                    inTerminal:realParentWindow_];
         } else {
             assert(false);
@@ -4973,6 +4983,7 @@ typedef struct {
                                         dimensions:NSMakeSize(gridSize.width, gridSize.height)
                                         showTitles:showTitles
                                showBottomStatusBar:NO
+                                    composerHeight:0
                                         inTerminal:self.realParentWindow];
     NSRect frame = {
         .origin = sessionView.frame.origin,
@@ -6619,6 +6630,7 @@ typedef struct {
 - (void)sessionDidUpdatePreferencesFromProfile:(PTYSession *)session {
     if (session == self.activeSession) {
         [self.delegate tabActiveSessionDidUpdatePreferencesFromProfile:self];
+        [self updatePaneTitles];
     }
 }
 

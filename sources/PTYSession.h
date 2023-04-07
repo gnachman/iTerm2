@@ -284,6 +284,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)sessionClose:(PTYSession *)session;
 - (void)sessionProcessInfoProviderDidChange:(PTYSession *)session;
 - (void)sessionSwapWithSessionInDirection:(int)direction;
+- (void)sessionDidChangeComposerFrame:(PTYSession *)session;
 
 @end
 

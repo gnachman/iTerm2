@@ -10249,6 +10249,15 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         } else {
             [item setState:NSControlStateValueOff];
         }
+    } else if ([item action] == @selector(toggleAutoComposer:)) {
+        result = [[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed];
+        if (result) {
+            if ([item respondsToSelector:@selector(setState:)]) {
+                [item setState:[iTermPreferences boolForKey:kPreferenceAutoCommandHistory] ? NSControlStateValueOn : NSControlStateValueOff];
+            }
+        } else {
+            [item setState:NSControlStateValueOff];
+        }
     } else if ([item action] == @selector(toggleAlertOnNextMark:)) {
         PTYSession *currentSession = [self currentSession];
         if ([item respondsToSelector:@selector(setState:)]) {
@@ -10379,10 +10388,16 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
                                      resetRowsCols:[sender isAlternate]];
 }
 
-- (IBAction)toggleAutoCommandHistory:(id)sender
-{
+- (IBAction)toggleAutoCommandHistory:(id)sender {
     [iTermPreferences setBool:![iTermPreferences boolForKey:kPreferenceAutoCommandHistory]
                        forKey:kPreferenceAutoCommandHistory];
+}
+
+- (IBAction)toggleAutoComposer:(id)sender {
+    [iTermPreferences setBool:![iTermPreferences boolForKey:kPreferenceAutoComposer]
+                       forKey:kPreferenceAutoComposer];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermAutoComposerDidChangeNotification
+                                                        object:nil];
 }
 
 // Turn on/off sending of input to all sessions. This causes a bunch of UI

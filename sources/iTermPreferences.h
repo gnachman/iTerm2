@@ -10,6 +10,7 @@
 #import "PreferenceInfo.h"
 
 extern NSString *const iTermMetalSettingsDidChangeNotification;
+extern NSString *const iTermAutoComposerDidChangeNotification;
 
 // Values for kPreferenceKeyOpenTmuxWindowsIn (corresponds to tags in control).
 typedef NS_ENUM(NSInteger, iTermOpenTmuxWindowsMode) {
@@ -206,6 +207,7 @@ extern NSString *const kPreferenceKeyAllAppVersions;
 
 // Auto-command history (set through menu)
 extern NSString *const kPreferenceAutoCommandHistory;
+extern NSString *const kPreferenceAutoComposer;
 
 extern NSString *const kPreferenceKeyPasteSpecialChunkSize;
 extern NSString *const kPreferenceKeyPasteSpecialChunkDelay;

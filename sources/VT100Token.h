@@ -294,6 +294,8 @@ typedef struct {
 } AsciiData;
 
 #define SSH_OUTPUT_AUTOPOLL_PID -1000
+#define SSH_OUTPUT_NOTIF_PID -1001
+
 typedef struct {
     int8_t channel;
     int32_t pid;

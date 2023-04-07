@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="20037" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21507" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="20037"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21507"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="iTermMinimalComposerViewController">
             <connections>
+                <outlet property="_bottomDragHandle" destination="qgr-df-T1R" id="ZPK-PO-IEr"/>
                 <outlet property="_containerView" destination="e5I-6K-jFS" id="BFE-4L-wYZ"/>
                 <outlet property="_largeComposerViewController" destination="PWM-zh-xQE" id="q92-OG-K2c"/>
+                <outlet property="_topDragHandle" destination="A5g-cR-4IK" id="MOG-NE-3eo"/>
                 <outlet property="_vev" destination="lMe-mB-AB7" id="JJi-4A-rZ3"/>
                 <outlet property="view" destination="T0w-dU-yl9" id="xFt-uZ-ncb"/>
             </connections>
@@ -28,9 +30,19 @@
                     <rect key="frame" x="9" y="9" width="555" height="294"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                 </customView>
-                <customView id="qgr-df-T1R" customClass="iTermDragHandleView">
+                <customView id="A5g-cR-4IK" userLabel="Top drag handle" customClass="iTermDragHandleView">
+                    <rect key="frame" x="10" y="302" width="552" height="10"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
+                    <userDefinedRuntimeAttributes>
+                        <userDefinedRuntimeAttribute type="boolean" keyPath="isVertical" value="YES"/>
+                    </userDefinedRuntimeAttributes>
+                    <connections>
+                        <outlet property="delegate" destination="-2" id="uS4-yN-3JX"/>
+                    </connections>
+                </customView>
+                <customView id="qgr-df-T1R" userLabel="Bottom drag handle" customClass="iTermDragHandleView">
                     <rect key="frame" x="8" y="6" width="553" height="10"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMinX="YES" widthSizable="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>
                     <userDefinedRuntimeAttributes>
                         <userDefinedRuntimeAttribute type="boolean" keyPath="isVertical" value="YES"/>
                     </userDefinedRuntimeAttributes>

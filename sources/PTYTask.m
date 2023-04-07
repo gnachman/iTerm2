@@ -242,6 +242,18 @@ static void HandleSigChld(int n) {
     }
 }
 
+- (BOOL)isTTYCooked {
+    struct termios termAttributes;
+    const int fd = self.fd;
+    if (fd > 0 &&
+        isatty(fd) &&
+        tcgetattr(fd, &termAttributes) == 0) {
+        return !!(termAttributes.c_lflag & ECHO) && !!(termAttributes.c_lflag & ICANON);
+    } else {
+        return YES;
+    }
+}
+
 - (BOOL)hasBrokenPipe {
     @synchronized(self) {
         return brokenPipe_;

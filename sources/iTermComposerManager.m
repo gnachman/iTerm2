@@ -25,6 +25,7 @@
     iTermMinimalComposerViewController *_minimalViewController;
     NSString *_saved;
     BOOL _preserveSaved;
+    BOOL _dismissCanceled;
 }
 
 - (void)setCommand:(NSString *)command {
@@ -41,24 +42,39 @@
     }
     [_minimalViewController makeFirstResponder];
 }
-- (void)showWithCommand:(NSString *)command {
-    _saved = [command copy];
-    if (_dropDownComposerViewIsVisible) {
-        // Put into already-visible drop-down view.
-        _minimalViewController.stringValue = command;
-        [_minimalViewController makeFirstResponder];
-        return;
-    }
+
+- (iTermStatusBarComposerComponent *)currentComponent {
     iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
     if (statusBarViewController) {
         iTermStatusBarComposerComponent *component = [statusBarViewController visibleComponentWithIdentifier:[iTermStatusBarComposerComponent statusBarComponentIdentifier]];
-        if (component) {
-            // Put into already-visible status bar component.
-            component.stringValue = command;
-            [component makeFirstResponder];
-            [component deselect];
-            return;
-        }
+        return component;
+    }
+    return nil;
+}
+
+- (void)setStringValue:(NSString *)command {
+    _saved = [command copy];
+    if (_dropDownComposerViewIsVisible) {
+        _minimalViewController.stringValue = command;
+    } else {
+        iTermStatusBarComposerComponent *component = [self currentComponent];
+        component.stringValue = command;
+    }
+}
+
+- (void)showWithCommand:(NSString *)command {
+    [self setStringValue:command];
+    if (_dropDownComposerViewIsVisible) {
+        // Put into already-visible drop-down view.
+        [_minimalViewController makeFirstResponder];
+        return;
+    }
+    iTermStatusBarComposerComponent *component = [self currentComponent];
+    if (component) {
+        // Put into already-visible status bar component.
+        [component makeFirstResponder];
+        [component deselect];
+        return;
     }
     // Nothing is currently visible. Reveal as usual.
     [self reveal];
@@ -69,7 +85,7 @@
     if (statusBarViewController && [self shouldRevealStatusBarComposerInViewController:statusBarViewController]) {
         if (_dropDownComposerViewIsVisible) {
             _saved = _minimalViewController.stringValue;
-            [self dismissMinimalView];
+            [self dismissMinimalViewAnimated:YES];
         } else {
             [self showComposerInStatusBar:statusBarViewController];
         }
@@ -128,7 +144,7 @@
 - (void)showMinimalComposerInView:(NSView *)superview {
     if (_minimalViewController) {
         _saved = _minimalViewController.stringValue;
-        [self dismissMinimalView];
+        [self dismissMinimalViewAnimated:YES];
         return;
     }
     _minimalViewController = [[iTermMinimalComposerViewController alloc] init];
@@ -151,19 +167,33 @@
     [_minimalViewController updateFrame];
     [_minimalViewController makeFirstResponder];
     _dropDownComposerViewIsVisible = YES;
+    _dismissCanceled = YES;
 }
 
 - (BOOL)dismiss {
+    return [self dismissAnimated:YES];
+}
+
+- (BOOL)dismissAnimated:(BOOL)animated {
+    self.isAutoComposer = NO;
+
     if (!_dropDownComposerViewIsVisible) {
         return NO;
     }
     _saved = _minimalViewController.stringValue;
-    [self dismissMinimalView];
+    [self dismissMinimalViewAnimated:animated];
     return YES;
 }
 
 - (void)layout {
     [_minimalViewController updateFrame];
+}
+
+- (BOOL)isEmpty {
+    if (_minimalViewController) {
+        return _minimalViewController.stringValue.length == 0;
+    }
+    return _component.stringValue.length == 0;
 }
 
 #pragma mark - iTermStatusBarComposerComponentDelegate
@@ -185,7 +215,7 @@
                 dismiss:(BOOL)dismiss {
     NSString *string = composer.stringValue;
     if (dismiss) {
-        [self dismissMinimalView];
+        [self dismissMinimalViewAnimated:YES];
     }
     if (command.length == 0) {
         _saved = string;
@@ -199,8 +229,9 @@
             sendCommand:(nonnull NSString *)command
                 dismiss:(BOOL)dismiss {
     NSString *string = composer.stringValue;
-    if (dismiss) {
-        [self dismissMinimalView];
+    const BOOL reset = dismiss && self.isAutoComposer;
+    if (dismiss && !reset) {
+        [self dismissMinimalViewAnimated:NO];
     }
     if (command.length == 0) {
         _saved = string;
@@ -208,11 +239,14 @@
     }
     _saved = nil;
     [self.delegate composerManager:self sendCommand:[command stringByAppendingString:@"\n"]];
+    if (reset) {
+        [self setStringValue:@""];
+    }
 }
 
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
     sendToAdvancedPaste:(NSString *)content {
-    [self dismissMinimalView];
+    [self dismissMinimalViewAnimated:YES];
     _saved = nil;
     [self.delegate composerManager:self
                sendToAdvancedPaste:[content stringByAppendingString:@"\n"]];
@@ -231,22 +265,44 @@
     [self.delegate composerManager:self minimalFrameDidChangeTo:newFrame];
 }
 
-- (void)dismissMinimalView {
-    NSViewController *vc = _minimalViewController;
-    [NSView animateWithDuration:0.125
-                     animations:^{
-        vc.view.animator.alphaValue = 0;
+- (void)dismissMinimalViewAnimated:(BOOL)animated {
+    iTermMinimalComposerViewController *vc = _minimalViewController;
+    __weak __typeof(self) weakSelf = self;
+    _dismissCanceled = NO;
+    if (animated) {
+        [NSView animateWithDuration:0.125
+                         animations:^{
+            vc.view.animator.alphaValue = 0;
+        }
+                         completion:^(BOOL finished) {
+            [weakSelf finishDismissingMinimalView:vc];
+        }];
+        [self prepareToDismissMinimalView];
+        // You get into infinite recursion if you do ths inside resignFirstResponder.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.delegate composerManagerWillDismissMinimalView:self];
+        });
+    } else {
+        vc.view.alphaValue = 0;
+        [self.delegate composerManagerWillDismissMinimalView:self];
+        [self prepareToDismissMinimalView];
+        [self finishDismissingMinimalView:vc];
+        return;
     }
-                     completion:^(BOOL finished) {
-        [vc.view removeFromSuperview];
-    }];
-    _minimalViewController = nil;
-    _dropDownComposerViewIsVisible = NO;
-    // You get into infinite recursion if you do ths inside resignFirstResponder.
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.delegate composerManagerDidDismissMinimalView:self];
-    });
 }
 
+- (void)prepareToDismissMinimalView {
+    _minimalViewController = nil;
+    _dropDownComposerViewIsVisible = NO;
+}
+
+- (void)finishDismissingMinimalView:(iTermMinimalComposerViewController *)vc {
+    if (_dismissCanceled) {
+        DLog(@"Dismiss canceled");
+        return;
+    }
+    [vc.view removeFromSuperview];
+    [self.delegate composerManagerDidDismissMinimalView:self];
+}
 
 @end

@@ -172,6 +172,7 @@ typedef NS_OPTIONS(NSUInteger, iTermJobManagerAttachResults) {
 // for real. It is never assigned to by PTYTask.
 @property(nonatomic) BOOL ttySizeInitialized;
 @property (nonatomic, readonly) iTermWinSizeController *winSizeController;
+@property (nonatomic, readonly) BOOL isTTYCooked;
 
 - (instancetype)init;
 

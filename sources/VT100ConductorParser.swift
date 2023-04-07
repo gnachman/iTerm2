@@ -458,6 +458,7 @@ private class SSHOutputTokenBuilder {
     enum Flavor: String {
         case output = "%output"
         case autopoll = "%autopoll"
+        case tty = "%tty"
     }
     @objc private(set) var rawData = Data()
 
@@ -482,6 +483,13 @@ private class SSHOutputTokenBuilder {
                 return nil
             }
             self.pid = SSH_OUTPUT_AUTOPOLL_PID
+            self.channel = 1
+            self.depth = 0
+        case .tty:
+            guard parts.count >= 2 else {
+                return nil
+            }
+            self.pid = SSH_OUTPUT_NOTIF_PID
             self.channel = 1
             self.depth = 0
         }

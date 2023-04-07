@@ -53,6 +53,7 @@ NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileSelection = @"No
 NSString *const kPreferenceKeyNeverRemindPrefsChangesLostForFileHaveSelection = @"NoSyncNeverRemindPrefsChangesLostForFile";
 
 NSString *const iTermMetalSettingsDidChangeNotification = @"iTermMetalSettingsDidChangeNotification";
+NSString *const iTermAutoComposerDidChangeNotification = @"iTermAutoComposerDidChangeNotification";
 
 NSString *const kPreferenceKeyCustomFolder = @"PrefsCustomFolder";
 NSString *const kPreferenceKeyCustomScriptsFolder = @"CustomScriptsFolder";  // String
@@ -157,6 +158,7 @@ NSString *const kPreferenceKeyFocusOnRightOrMiddleClick = @"FocusOnRightOrMiddle
 NSString *const kPreferenceKeyAppVersion = @"iTerm Version";  // Excluded from syncing
 NSString *const kPreferenceKeyAllAppVersions = @"NoSyncAllAppVersions";  // Array of known iTerm2 versions this user has used on this machine.
 NSString *const kPreferenceAutoCommandHistory = @"AutoCommandHistory";
+NSString *const kPreferenceAutoComposer = @"AutoComposer";
 NSString *const kPreferenceKeyOSVersion = @"NoSyncLastOSVersion";
 
 NSString *const kPreferenceKeyPasteSpecialChunkSize = @"PasteSpecialChunkSize";
@@ -459,7 +461,8 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyEnterCopyModeAutomatically: @YES,
 
                   kPreferenceAutoCommandHistory: @NO,
-
+                  kPreferenceAutoComposer: @NO,
+                  
                   kPreferenceKeyPasteSpecialChunkSize: @1024,
                   kPreferenceKeyPasteSpecialChunkDelay: @0.01,
                   kPreferenceKeyPasteSpecialSpacesPerTab: @4,

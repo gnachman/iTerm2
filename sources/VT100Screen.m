@@ -139,7 +139,19 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.currentGrid.size;
 }
 
+- (VT100GridSize)sizeForTTY {
+    VT100GridSize size = _state.currentGrid.size;
+    size.height = [delegate_ screenHeightWithoutAutoComposer];
+    return size;
+}
+
 - (NSSize)viewSize {
+    NSSize cellSize = [delegate_ screenCellSize];
+    VT100GridSize gridSize = self.sizeForTTY;
+    return NSMakeSize(cellSize.width * gridSize.width, cellSize.height * gridSize.height);
+}
+
+- (NSSize)viewSizeForTTY {
     NSSize cellSize = [delegate_ screenCellSize];
     VT100GridSize gridSize = _state.currentGrid.size;
     return NSMakeSize(cellSize.width * gridSize.width, cellSize.height * gridSize.height);
@@ -578,6 +590,17 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         return VT100GridCoordRangeInvalid;
     }
     return [_state coordRangeForInterval:mark.entry.interval];
+}
+
+- (BOOL)isAtCommandPrompt {
+    id<VT100ScreenMarkReading> mark = [self screenMarkBeforeAbsLine:self.numberOfLines + _state.totalScrollbackOverflow + 1];
+    if (!mark) {
+        DLog(@"No preceding mark");
+        return NO;
+    }
+    const VT100GridAbsCoordRange zero = VT100GridAbsCoordRangeMake(0, 0, 0, 0);
+    const BOOL runningCommand = VT100GridAbsCoordRangeEquals(_state.currentPromptRange, zero);
+    return !runningCommand;
 }
 
 - (iTermOffscreenCommandLine *)offscreenCommandLineBefore:(int)line {

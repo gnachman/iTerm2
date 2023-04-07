@@ -104,6 +104,18 @@ class Conductor: NSObject, Codable {
             return _queueWrites
         }
     }
+
+    private struct TTYState {
+        var echo = true
+        var icanon = true
+
+        var isCooked: Bool {
+            return echo && icanon
+        }
+    }
+
+    private var ttyState = TTYState()
+
     @objc var framing: Bool {
         return framedPID != nil
     }
@@ -1484,6 +1496,8 @@ class Conductor: NSObject, Codable {
                 return
             }
             return
+        } else if pid == SSH_OUTPUT_NOTIF_PID {
+            handleNotif(string)
         }
         guard let jobState = backgroundJobs[pid] else {
             return
@@ -1500,6 +1514,47 @@ class Conductor: NSObject, Codable {
             update(executionContext: context,
                    result: .sideChannelLine(line: string, channel: channel, pid: pid))
         }
+    }
+
+    private func handleNotif(_ message: String) {
+        let tty = "tty "
+        if message.hasPrefix(tty) {
+            handleTTYNotif(String(message.dropFirst(tty.count)))
+        }
+    }
+
+    private func handleTTYNotif(_ message: String) {
+        let parts = message.components(separatedBy: " ")
+        struct Flag {
+            var enabled: Bool
+            var name: String
+            init?(_ string: String) {
+                if string.count <= 1 {
+                    return nil
+                }
+                if string.hasPrefix("-") {
+                    enabled = false
+                } else if string.hasPrefix("+") {
+                    enabled = true
+                } else {
+                    return nil
+                }
+                name = String(string.dropFirst())
+            }
+            var keyValueTuple: (String, Bool) { (name, enabled) }
+        }
+        let flagsArray = parts.compactMap { Flag($0) }
+        let flags = Dictionary.init(uniqueKeysWithValues: flagsArray.map { $0.keyValueTuple })
+        if let value = flags["echo"] {
+            ttyState.echo = value
+        }
+        if let value = flags["icanon"] {
+            ttyState.icanon = value
+        }
+    }
+
+    @objc var isTTYCooked: Bool {
+        return ttyState.isCooked
     }
 
     private var nesting: [Nesting] {

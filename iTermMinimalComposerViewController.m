@@ -21,6 +21,8 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     IBOutlet iTermStatusBarLargeComposerViewController *_largeComposerViewController;
     IBOutlet NSView *_containerView;
     IBOutlet NSVisualEffectView *_vev;
+    IBOutlet iTermDragHandleView *_bottomDragHandle;
+    IBOutlet iTermDragHandleView *_topDragHandle;
     CGFloat _desiredHeight;
 }
 
@@ -78,6 +80,10 @@ workingDirectory:(NSString *)pwd
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
     self.view.animator.alphaValue = 1;
     [self.delegate minimalComposer:self frameDidChangeTo:self.view.frame];
+
+    const BOOL onBottom = (self.view.frame.origin.y == 0);
+    _topDragHandle.hidden = !onBottom;
+    _bottomDragHandle.hidden = onBottom;
 }
 
 - (void)makeFirstResponder {
@@ -121,7 +127,11 @@ workingDirectory:(NSString *)pwd
 
 #pragma mark - iTermDragHandleViewDelegate
 
-- (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)delta {
+- (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)movement {
+    CGFloat delta = movement;
+    if (dragHandle == _topDragHandle) {
+        delta = -delta;
+    }
     const CGFloat originalHeight = NSHeight(self.view.frame);
     _desiredHeight -= delta;
     const CGFloat proposedHeight = NSHeight([self frameForHeight:_desiredHeight]);
@@ -138,7 +148,11 @@ workingDirectory:(NSString *)pwd
     [[NSUserDefaults standardUserDefaults] setDouble:_desiredHeight
                                               forKey:iTermMinimalComposerViewHeightUserDefaultsKey];
     [self updateFrame];
-    return originalHeight - NSHeight(self.view.frame);
+    CGFloat actual = originalHeight - NSHeight(self.view.frame);
+    if (dragHandle == _topDragHandle) {
+        actual = -actual;
+    }
+    return actual;
 }
 
 @end

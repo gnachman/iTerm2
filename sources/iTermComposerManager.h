@@ -27,6 +27,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)composerManager:(iTermComposerManager *)composerManager
     sendToAdvancedPaste:(NSString *)command;
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager;
+- (void)composerManagerWillDismissMinimalView:(iTermComposerManager *)composerManager;
 - (NSAppearance *_Nullable)composerManagerAppearance:(iTermComposerManager *)composerManager;
 - (id<VT100RemoteHostReading>)composerManagerRemoteHost:(iTermComposerManager *)composerManager;
 - (NSString *_Nullable)composerManagerWorkingDirectory:(iTermComposerManager *)composerManager;
@@ -45,6 +46,8 @@ previousFrame:(NSRect)previousFrame;
 @interface iTermComposerManager : NSObject
 @property (nonatomic, weak) id<iTermComposerManagerDelegate> delegate;
 @property (nonatomic, readonly) BOOL dropDownComposerViewIsVisible;
+@property (nonatomic, readonly) BOOL isEmpty;
+@property (nonatomic) BOOL isAutoComposer;
 
 - (void)setCommand:(NSString *)command;
 // Reveal appropriately (focus status bar, open popover, or open minimal)
@@ -52,6 +55,7 @@ previousFrame:(NSRect)previousFrame;
 // Reveal minimal composer.
 - (void)revealMinimal;
 - (BOOL)dismiss;
+- (BOOL)dismissAnimated:(BOOL)animated;
 - (void)layout;
 - (void)showWithCommand:(NSString *)command;
 - (void)showOrAppendToDropdownWithString:(NSString *)string;

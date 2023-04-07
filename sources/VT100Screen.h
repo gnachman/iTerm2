@@ -72,6 +72,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property(nonatomic, readonly) VT100GridAbsCoord startOfRunningCommandOutput;
 @property(nonatomic, readonly) int lineNumberOfCursor;
 @property(nonatomic, readonly) NSSize viewSize;
+@property(nonatomic, readonly) NSSize viewSizeForTTY;
 
 // Valid only if its x component is nonnegative.
 // Gives the coordinate where the current command begins.
@@ -80,6 +81,7 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 // Assigning to `size` resizes the session and tty. Its contents are reflowed. The alternate grid's
 // contents are reflowed, and the selection is updated. It is a little slow so be judicious.
 @property(nonatomic, assign) VT100GridSize size;
+@property(nonatomic, readonly) VT100GridSize sizeForTTY;
 
 @property(nonatomic, weak) id<iTermIntervalTreeObserver> intervalTreeObserver;
 
@@ -115,6 +117,8 @@ extern const NSInteger VT100ScreenBigFileDownloadThreshold;
 @property (nonatomic) long long savedFindContextAbsPos;
 @property (nonatomic, strong) FindContext *findContext;
 @property (nonatomic, readonly) BOOL sendingIsBlocked;
+
+@property (nonatomic, readonly) BOOL isAtCommandPrompt;
 
 // Indicates if line drawing mode is enabled for any character set, or if the current character set
 // is not G0.
