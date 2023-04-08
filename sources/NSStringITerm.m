@@ -2390,6 +2390,21 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return [baseString stringByAppendingString:[self substringFromIndex:1]];
 }
 
+- (BOOL)beginsWithWhitespace {
+    if (self.length == 0) {
+        return NO;
+    }
+    return [[NSCharacterSet whitespaceAndNewlineCharacterSet] longCharacterIsMember:[self longCharacterAtIndex:0]];
+}
+
+- (BOOL)endsWithWhitespace {
+    if (self.length == 0) {
+        return NO;
+    }
+    NSInteger i = self.length - 1;
+    return [[NSCharacterSet whitespaceAndNewlineCharacterSet] longCharacterIsMember:[self longCharacterAtIndex:i]];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

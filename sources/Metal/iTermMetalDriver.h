@@ -4,6 +4,7 @@
 #import "iTermCursor.h"
 #import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
+#import "iTermLineStyleMarkRenderer.h"
 #import "iTermMarkRenderer.h"
 #import "iTermMetalDebugInfo.h"
 #import "iTermMetalGlyphKey.h"
@@ -55,6 +56,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic, readonly) CGSize cellSizeWithoutSpacing;
 @property (nonatomic, readonly) vector_float4 defaultBackgroundColor;
 @property (nonatomic, readonly) vector_float4 processedDefaultBackgroundColor;
+@property (nonatomic, readonly) iTermLineStyleMarkColors lineStyleMarkColors;
 @property (nonatomic, readonly) NSImage *badgeImage;
 @property (nonatomic, readonly) CGRect badgeSourceRect;
 @property (nonatomic, readonly) CGRect badgeDestinationRect;

@@ -61,6 +61,7 @@ previousFrame:(NSRect)previousFrame;
 - (void)showWithCommand:(NSString *)command;
 - (void)showOrAppendToDropdownWithString:(NSString *)string;
 - (BOOL)dropDownComposerIsFirstResponder;
+- (void)updateFrame;
 
 @end
 

@@ -416,6 +416,10 @@ static double TimespecToSeconds(struct timespec* ts) {
             syslog(LOG_WARNING, "pidinfo wedged while searching for completions");
             return;
         }
+        if (prefix.length == 0) {
+            reply(@[]);
+            return;
+        }
         NSMutableArray<NSString *> *combined = [NSMutableArray array];
         for (NSString *relativeDirectory in directories) {
             NSString *directory;

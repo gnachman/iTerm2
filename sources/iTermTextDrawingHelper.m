@@ -946,21 +946,39 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                  virtualOffset:(CGFloat)virtualOffset {
     id<VT100ScreenMarkReading> mark = [self.delegate drawingHelperMarkOnLine:line];
     if (mark != nil && self.drawMarkIndicators) {
-        NSRect insetLeftMargin = leftMargin;
-        insetLeftMargin.origin.x += 1;
-        insetLeftMargin.size.width -= 1;
-        NSRect rect = [iTermTextDrawingHelper frameForMarkContainedInRect:insetLeftMargin
-                                                                 cellSize:_cellSize
-                                                   cellSizeWithoutSpacing:_cellSizeWithoutSpacing
-                                                                    scale:1];
-        const iTermMarkIndicatorType type = [self markIndicatorTypeForMark:mark];
-        NSImage *image = _cachedMarks[@(type)];
-        if (!image || !NSEqualSizes(image.size, rect.size)) {
-            image = [iTermTextDrawingHelper newImageWithMarkOfColor:[self colorForMark:mark]
-                                                               size:rect.size];
-            _cachedMarks[@(type)] = image;
+        BOOL drawArrow = NO;
+        if (drawArrow) {
+            NSRect insetLeftMargin = leftMargin;
+            insetLeftMargin.origin.x += 1;
+            insetLeftMargin.size.width -= 1;
+            NSRect rect = [iTermTextDrawingHelper frameForMarkContainedInRect:insetLeftMargin
+                                                                     cellSize:_cellSize
+                                                       cellSizeWithoutSpacing:_cellSizeWithoutSpacing
+                                                                        scale:1];
+            const iTermMarkIndicatorType type = [self markIndicatorTypeForMark:mark];
+            NSImage *image = _cachedMarks[@(type)];
+            if (!image || !NSEqualSizes(image.size, rect.size)) {
+                NSColor *markColor = [self colorForMark:mark];
+                image = [iTermTextDrawingHelper newImageWithMarkOfColor:markColor
+                                                                   size:rect.size];
+                _cachedMarks[@(type)] = image;
+            }
+            [image it_drawInRect:rect virtualOffset:virtualOffset];
         }
-        [image it_drawInRect:rect virtualOffset:virtualOffset];
+        BOOL drawLine = YES;
+        if (drawLine) {
+            NSColor *bgColor = [self defaultBackgroundColor];
+            NSColor *markColor = [self colorForMark:mark];
+            NSColor *merged = [bgColor blendedWithColor:markColor weight:0.5];
+            [merged set];
+            NSRect rect;
+            rect.origin.x = 0;
+            rect.size.width = _visibleRect.size.width;
+            rect.size.height = 1;
+            const CGFloat y = (((CGFloat)line) - 0.5) * _cellSize.height;
+            rect.origin.y = round(y);
+            iTermRectFill(rect, virtualOffset);
+        }
     }
 }
 

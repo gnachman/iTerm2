@@ -350,6 +350,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 - (UTF32Char)longCharacterAtIndex:(NSInteger)i;
 - (NSString *)stringByReplacingBaseCharacterWith:(UTF32Char)base;
 
+@property (nonatomic, readonly) BOOL beginsWithWhitespace;
+@property (nonatomic, readonly) BOOL endsWithWhitespace;
+
 @end
 
 @interface NSMutableString (iTerm)

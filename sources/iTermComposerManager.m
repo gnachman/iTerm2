@@ -318,4 +318,8 @@
     [self.delegate composerManagerDidDismissMinimalView:self];
 }
 
+- (void)updateFrame {
+    [_minimalViewController updateFrame];
+}
+
 @end

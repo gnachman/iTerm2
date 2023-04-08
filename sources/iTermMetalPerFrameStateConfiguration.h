@@ -9,6 +9,7 @@
 #import <simd/simd.h>
 #import "ITAddressBookMgr.h"
 #import "iTermTextRendererCommon.h"
+#import "iTermLineStyleMarkRenderer.h"
 #import "VT100GridTypes.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -32,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
     iTermColorMap *_colorMap;
     vector_float4 _fullScreenFlashColor;
     NSColor *_processedDefaultBackgroundColor;  // dimmed, etc.
+    iTermLineStyleMarkColors _lineStyleMarkColors;
     vector_float4 _unfocusedSelectionColor;
     CGFloat _transparencyAlpha;
     BOOL _transparencyAffectsOnlyDefaultBackgroundColor;

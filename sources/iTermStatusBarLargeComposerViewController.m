@@ -164,6 +164,17 @@
     return [content substringWithRange:NSMakeRange(lowerBound, upperBound - lowerBound)];
 }
 
+- (NSString *)textAfterCursor {
+    NSString *content = self.textView.string;
+    const NSRange selectedRange = [self.textView selectedRange];
+    if (selectedRange.location > content.length) {
+        return @"";
+    }
+
+    const NSInteger upperBound = self.textView.selectedRange.location;
+    return [content substringFromIndex:upperBound];
+}
+
 - (NSString *)lineAtCursor {
     NSString *content = self.textView.string;
     const NSRange selectedRange = [self.textView selectedRange];
@@ -379,7 +390,15 @@
     if (command.length == 0) {
         return;
     }
-    NSString *historySuggestion = [self historySuggestionForPrefix:command];
+    NSString *textAfterCursor = [self textAfterCursor];
+    if (command.length > 0 &&
+        ![command endsWithWhitespace] &&
+        textAfterCursor.length > 0 &&
+        ![textAfterCursor beginsWithWhitespace]) {
+        return;
+    }
+    NSString *historySuggestion = [[self historySuggestionForPrefix:command]stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]];
+    
     if (historySuggestion) {
         __weak __typeof(self) weakSelf = self;
         const NSInteger generation = ++_completionGeneration;
@@ -401,7 +420,7 @@
 
     NSArray<NSString *> *words = [command componentsInShellCommand];
     const BOOL onFirstWord = words.count < 2;
-    NSString *const prefix = words.lastObject;
+    NSString *const prefix = [command hasSuffix:@" "] ? @"" : words.lastObject;
     const NSInteger generation = ++_completionGeneration;
     NSArray<NSString *> *directories;
     if (onFirstWord) {

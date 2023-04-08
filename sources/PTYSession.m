@@ -12072,6 +12072,17 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                  toConnectionKey:key];
         }
     }];
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        // Can't just do it here because it may trigger a resize and this runs as a side-effect.
+        [weakSelf updateAutoComposerFrame];
+    });
+}
+
+- (void)updateAutoComposerFrame {
+    if (_composerManager.dropDownComposerViewIsVisible && _composerManager.isAutoComposer) {
+        [_composerManager updateFrame];
+    }
 }
 
 // Save the current scroll position
@@ -16555,14 +16566,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (composerManager.isAutoComposer) {
         // Place at bottom, but leave excess space below it so it abuts the terminal view.
         height = MIN(desiredHeight, 0.5 * paneSize.height);
-        const CGFloat bottomDecorations = self.view.showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
-        const CGFloat usableTerminalHeight = contentSize.height - height - bottomDecorations - vmargin * 2;
-        const CGFloat excess = fmod(usableTerminalHeight, _textview.lineHeight);
-        y = bottomDecorations + vmargin + excess;
+        const CGFloat distanceFromTop = (_view.showTitle ? SessionView.titleHeight : 0) + (_screen.currentGrid.cursor.y + 1) * _textview.lineHeight + vmargin;
+        y = paneSize.height - distanceFromTop - height;
         width = maxWidth;
     } else {
         // Place at top. Includes decoration so a minimum width must be enforced.
-        
+
         y = paneSize.height - desiredHeight;
         width = MAX(217, maxWidth);
         height = desiredHeight;

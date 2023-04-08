@@ -675,6 +675,10 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                             alpha);
 }
 
+- (iTermLineStyleMarkColors)lineStyleMarkColors {
+    return _configuration->_lineStyleMarkColors;
+}
+
 // Private queue
 - (nullable iTermMetalCursorInfo *)metalDriverCursorInfo {
     return _cursorInfo;

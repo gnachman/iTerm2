@@ -20,6 +20,7 @@
 #import "iTermHistogram.h"
 #import "iTermImageRenderer.h"
 #import "iTermIndicatorRenderer.h"
+#import "iTermLineStyleMarkRenderer.h"
 #import "iTermMarginRenderer.h"
 #import "iTermMetalDebugInfo.h"
 #import "iTermMetalFrameData.h"
@@ -112,6 +113,7 @@ typedef struct {
     iTermTextRenderer *_textRenderer;
     iTermOffscreenCommandLineTextRenderer *_offscreenCommandLineTextRenderer;
     iTermMarkRenderer *_markRenderer;
+    iTermLineStyleMarkRenderer *_lineStyleMarkRenderer;
     iTermBadgeRenderer *_badgeRenderer;
     iTermFullScreenFlashRenderer *_flashRenderer;
     iTermTimestampsRenderer *_timestampsRenderer;
@@ -193,6 +195,7 @@ typedef struct {
         _backgroundColorRenderer = [[iTermBackgroundColorRenderer alloc] initWithDevice:device];
         _offscreenCommandLineBackgroundRenderer = [[iTermOffscreenCommandLineBackgroundRenderer alloc] initWithDevice:device];
         _markRenderer = [[iTermMarkRenderer alloc] initWithDevice:device];
+        _lineStyleMarkRenderer = [[iTermLineStyleMarkRenderer alloc] initWithDevice:device];
         _badgeRenderer = [[iTermBadgeRenderer alloc] initWithDevice:device];
         _flashRenderer = [[iTermFullScreenFlashRenderer alloc] initWithDevice:device];
         _timestampsRenderer = [[iTermTimestampsRenderer alloc] initWithDevice:device];
@@ -922,10 +925,6 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
     [self drawCursorAfterTextWithFrameData:frameData];
 
-    [self drawCellRenderer:_markRenderer
-                 frameData:frameData
-                      stat:iTermMetalFrameDataStatPqEnqueueDrawMarks];
-
     [self drawRenderer:_indicatorRenderer
              frameData:frameData
                   stat:iTermMetalFrameDataStatPqEnqueueDrawIndicators];
@@ -953,6 +952,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
     [self finishDrawingWithCommandBuffer:commandBuffer
                                frameData:frameData];
+}
+
+- (id<iTermMetalCellRenderer>)markRenderer {
+    return _lineStyleMarkRenderer;
 }
 
 #pragma mark - Update Renderers
@@ -1386,10 +1389,23 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 }
 
 - (void)populateMarkRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+//    [self populateArrowStyleMarkRendererTransientStateWithFrameData:frameData];
+    [self populateLineStyleMarkRendererTransientStateWithFrameData:frameData];
+}
+
+- (void)populateArrowStyleMarkRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermMarkRendererTransientState *tState = [frameData transientStateForRenderer:_markRenderer];
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
         [tState setMarkStyle:rowData.markStyle row:idx];
     }];
+}
+
+- (void)populateLineStyleMarkRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
+    iTermLineStyleMarkRendererTransientState *tState = [frameData transientStateForRenderer:_lineStyleMarkRenderer];
+    [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
+        [tState setMarkStyle:rowData.markStyle row:idx];
+    }];
+    tState.colors = frameData.perFrameState.lineStyleMarkColors;
 }
 
 - (void)populateHighlightRowRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
@@ -1716,6 +1732,10 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
                  frameData:frameData
                       stat:iTermMetalFrameDataStatPqEnqueueDrawBackgroundColor];
 
+    [self drawCellRenderer:self.markRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawMarks];
+
     [self drawRenderer:_badgeRenderer
              frameData:frameData
                   stat:iTermMetalFrameDataStatPqEnqueueBadge];
@@ -1991,7 +2011,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
               _offscreenCommandLineTextRenderer,
               _backgroundColorRenderer,
               _broadcastStripesRenderer,
-              _markRenderer,
+              self.markRenderer,
               _cursorGuideRenderer,
               _highlightRowRenderer,
               _imageRenderer,

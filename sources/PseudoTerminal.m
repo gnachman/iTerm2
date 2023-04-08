@@ -10253,7 +10253,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
         result = [[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed];
         if (result) {
             if ([item respondsToSelector:@selector(setState:)]) {
-                [item setState:[iTermPreferences boolForKey:kPreferenceAutoCommandHistory] ? NSControlStateValueOn : NSControlStateValueOff];
+                [item setState:[iTermPreferences boolForKey:kPreferenceAutoComposer] ? NSControlStateValueOn : NSControlStateValueOff];
             }
         } else {
             [item setState:NSControlStateValueOff];
