@@ -16557,7 +16557,6 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     newFrame.origin.y += newFrame.size.height;
     const CGFloat maxWidth = _view.bounds.size.width - newFrame.origin.x * 2;
     const CGFloat vmargin = [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins];
-    const NSSize contentSize = self.view.contentRect.size;
     const NSSize paneSize = self.view.frame.size;
     CGFloat y = 0;
     CGFloat width = 0;
@@ -16585,6 +16584,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager {
     return _textview.lineHeight;
+}
+
+- (void)composerManagerOpenHistory:(iTermComposerManager *)composerManager {
+    [[_delegate realParentWindow] openCommandHistory:nil];
 }
 
 - (void)composerManagerDidRemoveTemporaryStatusBarComponent:(iTermComposerManager *)composerManager {
@@ -16620,6 +16623,30 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)composerManager:(iTermComposerManager *)composerManager
     sendToAdvancedPaste:(NSString *)command {
     [self openAdvancedPasteWithText:command escaping:iTermSendTextEscapingNone];
+}
+
+- (void)composerManager:(iTermComposerManager *)composerManager
+            sendControl:(NSString *)control {
+    [self writeTask:control];
+}
+
+- (BOOL)composerManager:(iTermComposerManager *)composerManager wantsKeyEquivalent:(NSEvent *)event {
+    const NSEventModifierFlags mask = (NSEventModifierFlagOption |
+                                       NSEventModifierFlagCommand |
+                                       NSEventModifierFlagShift |
+                                       NSEventModifierFlagControl);
+    const NSEventModifierFlags cmdShift = (NSEventModifierFlagCommand | NSEventModifierFlagShift);
+    if ((event.modifierFlags & mask) == cmdShift) {
+        // Shortcut for mark navigation.
+        if (event.keyCode == kVK_UpArrow) {
+            [[self.delegate realParentWindow] previousMark:nil];
+            return YES;
+        } else if (event.keyCode == kVK_DownArrow) {
+            [[self.delegate realParentWindow] nextMark:nil];
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (void)composerManagerWillDismissMinimalView:(iTermComposerManager *)composerManager {

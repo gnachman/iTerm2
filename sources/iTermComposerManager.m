@@ -261,6 +261,11 @@
                sendToAdvancedPaste:[content stringByAppendingString:@"\n"]];
 }
 
+- (void)minimalComposer:(iTermMinimalComposerViewController *)composer
+            sendControl:(NSString *)control {
+    [self.delegate composerManager:self sendControl:control];
+}
+
 - (NSRect)minimalComposer:(iTermMinimalComposerViewController *)composer frameForHeight:(CGFloat)desiredHeight {
     return [self.delegate composerManager:self frameForDesiredHeight:desiredHeight previousFrame:composer.view.frame];
 }
@@ -276,6 +281,14 @@
 
 - (CGFloat)minimalComposerLineHeight:(iTermMinimalComposerViewController *)composer {
     return [self.delegate composerManagerLineHeight:self];
+}
+
+- (void)minimalComposerOpenHistory:(iTermMinimalComposerViewController *)composer {
+    [self.delegate composerManagerOpenHistory:self];
+}
+
+- (BOOL)minimalComposer:(iTermMinimalComposerViewController *)composer wantsKeyEquivalent:(NSEvent *)event {
+    return [self.delegate composerManager:self wantsKeyEquivalent:event];
 }
 
 - (void)dismissMinimalViewAnimated:(BOOL)animated {

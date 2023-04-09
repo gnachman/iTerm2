@@ -14,6 +14,9 @@ protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerTextViewSend:) func composerTextViewSend(string: String)
     @objc(composerTextViewEnqueue:) func composerTextViewEnqueue(string: String)
     @objc(composerTextViewSendToAdvancedPaste:) func composerTextViewSendToAdvancedPaste(content: String)
+    @objc(composerTextViewSendControl:) func composerTextViewSendControl(_ control: String)
+    @objc(composerTextViewOpenHistory) func composerTextViewOpenHistory()
+    @objc(composerTextViewWantsKeyEquivalent:) func composerTextViewWantsKeyEquivalent(_ event: NSEvent) -> Bool
 
     // Optional
     @objc(composerTextViewDidResignFirstResponder) optional func composerTextViewDidResignFirstResponder()
@@ -110,37 +113,72 @@ class ComposerTextView: MultiCursorTextView {
         var modifiers: NSEvent.ModifierFlags
         var characters: String
         // Return true if you handled it and don't want super.keyDown(with:) called.
-        var closure: (ComposerTextView) -> (Bool)
+        var closure: (ComposerTextView, NSEvent) -> (Bool)
     }
 
     private let standardActions = [
-        Action(modifiers: [.shift], characters: "\r", closure: { textView in
+        Action(modifiers: [.shift], characters: "\r", closure: { textView, _ in
             textView.sendAction()
             return true
         }),
-        Action(modifiers: [.shift, .option], characters: "\r", closure: { textView in
+        Action(modifiers: [.shift, .option], characters: "\r", closure: { textView, _ in
             textView.sendEachAction()
             return true
         }),
-        Action(modifiers: [.option], characters: "\r", closure: { textView in
+        Action(modifiers: [.option], characters: "\r", closure: { textView, _ in
             textView.enqueueEachAction()
             return true
         })
     ]
 
     private let autoModeActions = [
-        Action(modifiers: [], characters: "\r", closure: { textView in
+        Action(modifiers: [], characters: "\r", closure: { textView, _ in
             textView.sendAction()
             return true
         }),
-        Action(modifiers: [.shift, .option], characters: "\r", closure: { textView in
+        Action(modifiers: [.shift, .option], characters: "\r", closure: { textView, _ in
             textView.sendEachAction()
             return true
         }),
-        Action(modifiers: [.option], characters: "\r", closure: { textView in
+        Action(modifiers: [.option], characters: "\r", closure: { textView, _ in
             textView.enqueueEachAction()
             return true
-        })
+        }),
+        // C-c
+        Action(modifiers: [.control], characters: "\u{3}", closure: { textView, event in
+            textView.sendKeystroke(event)
+            return true
+        }),
+        // C-d
+        Action(modifiers: [.control], characters: "\u{4}", closure: { textView, event in
+            guard let string = textView.textStorage?.string else {
+                return false
+            }
+            if !string.isEmpty {
+                // If you press C-d with text present it should do whatever C-D is bound to (normally
+                // delete forward).
+                return false
+            }
+
+            // If the textview is empty then send C-d to the shell, probably killing the session.
+            textView.sendKeystroke(event)
+            return true
+        }),
+        // C-l
+        Action(modifiers: [.control], characters: "\u{c}", closure: { textView, event in
+            textView.sendKeystroke(event)
+            return true
+        }),
+        // C-p
+        Action(modifiers: [.control], characters: "\u{10}", closure: { textView, event in
+            textView.composerDelegate?.composerTextViewOpenHistory()
+            return true
+        }),
+        // C-r
+        Action(modifiers: [.control], characters: "\u{12}", closure: { textView, event in
+            textView.composerDelegate?.composerTextViewOpenHistory()
+            return true
+        }),
     ]
 
     private var actionsForCurrentMode: [Action] {
@@ -166,6 +204,21 @@ class ComposerTextView: MultiCursorTextView {
         }
     }
 
+    private func sendKeystroke(_ event: NSEvent) {
+        if let characters = event.characters {
+            composerDelegate?.composerTextViewSendControl(characters)
+        }
+    }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if let composerDelegate,
+           composerDelegate.composerTextViewWantsKeyEquivalent(event) {
+            return true
+        }
+        // Allow NSTextView to handle it.
+        return super.performKeyEquivalent(with: event)
+    }
+
     override func keyDown(with event: NSEvent) {
         let pressedEsc = event.characters == "\u{1b}"
         if pressedEsc {
@@ -180,7 +233,7 @@ class ComposerTextView: MultiCursorTextView {
         let action = actionsForCurrentMode.first { action in
             action.characters == event.characters && action.modifiers == maskedModifiers
         }
-        if let action, action.closure(self) {
+        if let action, action.closure(self, event) {
             return
         }
         super.keyDown(with: event)

@@ -2663,6 +2663,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     DLog(@"FinalTerm: terminalReturnCodeOfLastCommandWas:%d", returnCode);
     id<VT100ScreenMarkReading> mark = self.lastCommandMark;
     id<VT100ScreenMarkReading> doppelganger = mark.doppelganger;
+    DLog(@"Set return code for mark %@ to %@", mark, @(returnCode));
     if (mark) {
         DLog(@"FinalTerm: setting code on mark %@", mark);
         const NSInteger line = [self coordRangeForInterval:mark.entry.interval].start.y + self.cumulativeScrollbackOverflow;
@@ -4042,7 +4043,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)markDidBecomeCommandMark:(id<VT100ScreenMarkReading>)mark {
     [self assertOnMutationThread];
+    DLog(@"mark %@ became command mark", mark);
     if (mark.entry.interval.location > self.lastCommandMark.entry.interval.location) {
+        DLog(@"Set last command mark to %@", mark);
         self.lastCommandMark = mark;
     }
 }

@@ -198,6 +198,18 @@ workingDirectory:(NSString *)pwd
     [self.delegate minimalComposer:self enqueueCommand:string dismiss:NO];
 }
 
+- (void)composerTextViewSendControl:(NSString *)control {
+    [self.delegate minimalComposer:self sendControl:control];
+}
+
+- (void)composerTextViewOpenHistory {
+    [self.delegate minimalComposerOpenHistory:self];
+}
+
+- (BOOL)composerTextViewWantsKeyEquivalent:(NSEvent *)event {
+    return [self.delegate minimalComposer:self wantsKeyEquivalent:event];
+}
+
 #pragma mark - iTermDragHandleViewDelegate
 
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)movement {

@@ -22,6 +22,8 @@ NS_ASSUME_NONNULL_BEGIN
          enqueueCommand:(NSString *)command
                 dismiss:(BOOL)dismiss;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
+            sendControl:(NSString *)control;
+- (void)minimalComposer:(iTermMinimalComposerViewController *)composer
     sendToAdvancedPaste:(NSString *)content;
 - (NSRect)minimalComposer:(iTermMinimalComposerViewController *)composer
            frameForHeight:(CGFloat)desiredHeight;
@@ -29,7 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
        frameDidChangeTo:(NSRect)newFrame;
 - (CGFloat)minimalComposerLineHeight:(iTermMinimalComposerViewController *)composer;
-
+- (void)minimalComposerOpenHistory:(iTermMinimalComposerViewController *)composer;
+- (BOOL)minimalComposer:(iTermMinimalComposerViewController *)composer wantsKeyEquivalent:(NSEvent *)event;
 @end
 
 @interface iTermMinimalComposerViewController : NSViewController

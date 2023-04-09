@@ -26,6 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
          enqueueCommand:(NSString *)command;
 - (void)composerManager:(iTermComposerManager *)composerManager
     sendToAdvancedPaste:(NSString *)command;
+- (void)composerManager:(iTermComposerManager *)composerManager
+            sendControl:(NSString *)control;
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager;
 - (void)composerManagerWillDismissMinimalView:(iTermComposerManager *)composerManager;
 - (NSAppearance *_Nullable)composerManagerAppearance:(iTermComposerManager *)composerManager;
@@ -41,7 +43,8 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 frameForDesiredHeight:(CGFloat)desiredHeight
 previousFrame:(NSRect)previousFrame;
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager;
-
+- (void)composerManagerOpenHistory:(iTermComposerManager *)composerManager;
+- (BOOL)composerManager:(iTermComposerManager *)composerManager wantsKeyEquivalent:(NSEvent *)event;
 @end
 
 @interface iTermComposerManager : NSObject
