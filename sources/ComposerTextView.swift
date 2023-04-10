@@ -17,6 +17,7 @@ protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerTextViewSendControl:) func composerTextViewSendControl(_ control: String)
     @objc(composerTextViewOpenHistory) func composerTextViewOpenHistory()
     @objc(composerTextViewWantsKeyEquivalent:) func composerTextViewWantsKeyEquivalent(_ event: NSEvent) -> Bool
+    @objc(composerTextViewPerformFindPanelAction:) func composerTextViewPerformFindPanelAction(_ sender: Any?)
 
     // Optional
     @objc(composerTextViewDidResignFirstResponder) optional func composerTextViewDidResignFirstResponder()
@@ -103,6 +104,10 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     override func performFindPanelAction(_ sender: Any?) {
+        if autoMode {
+            composerDelegate?.composerTextViewPerformFindPanelAction(sender)
+            return
+        }
         if let tag = (sender as? NSMenuItem)?.tag, tag == NSFindPanelAction.selectAll.rawValue {
             window?.makeFirstResponder(self)
         }

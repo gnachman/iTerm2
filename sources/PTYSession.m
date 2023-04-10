@@ -2234,7 +2234,6 @@ ITERM_WEAKLY_REFERENCEABLE
         if (_view.showBottomStatusBar) {
             result -= iTermGetStatusBarHeight();
         }
-        result -= _view.composerHeight;
         result -= [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2;
         int iLineHeight = [_textview lineHeight];
         if (iLineHeight == 0) {
@@ -13143,6 +13142,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         dirty = YES;
         _profileDidChange = NO;
     }
+
+    NSNumber *desiredComposerRows = self.haveAutoComposer ? @(_composerManager.desiredHeight / _textview.lineHeight) : nil;
+    if (![NSObject object:desiredComposerRows isEqualToObject:_config.desiredComposerRows]) {
+        _config.desiredComposerRows = desiredComposerRows;
+        dirty = YES;
+    }
+
     if (dirty) {
         _config.isDirty = dirty;
     }
@@ -14431,10 +14437,6 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self resetMode];
 }
 
-- (int)screenHeightWithoutAutoComposer {
-    return _view.contentHeightIgnoringComposer / _textview.lineHeight;
-}
-
 - (void)resetMode {
     _modeHandler.mode = iTermSessionModeDefault;
 }
@@ -14806,6 +14808,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (BOOL)textViewShouldShowOffscreenCommandLine {
+    if (_screen.height < 5) {
+        return NO;
+    }
     return [iTermProfilePreferences boolForKey:KEY_SHOW_OFFSCREEN_COMMANDLINE inProfile:self.profile];
 }
 
@@ -14916,8 +14921,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (BOOL)updateTTYSize {
     DLog(@"%@\n%@", self, [NSThread callStackSymbols]);
-    return [_shell.winSizeController setGridSize:_screen.sizeForTTY
-                                        viewSize:_screen.viewSizeForTTY
+    return [_shell.winSizeController setGridSize:_screen.size
+                                        viewSize:_screen.viewSize
                                      scaleFactor:self.backingScaleFactor];
 }
 
@@ -14932,6 +14937,19 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (BOOL)textViewIsAutoComposerOpen {
     return [_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer && _composerManager.dropDownComposerIsFirstResponder;
+}
+
+- (VT100GridRange)textViewLinesToSuppressDrawing {
+    if ([_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer) {
+        const NSRect rect = _composerManager.dropDownFrame;
+        const NSRect textViewRect = [_textview convertRect:rect fromView:_view];
+        const VT100GridCoord topLeft = [_textview coordForPoint:textViewRect.origin allowRightMarginOverflow:NO];
+        const VT100GridCoord bottomRight = [_textview coordForPoint:NSMakePoint(NSMaxX(textViewRect) - 1,
+                                                                                NSMaxY(textViewRect) - 1)
+                                           allowRightMarginOverflow:NO];
+        return VT100GridRangeMake(topLeft.y, bottomRight.y - topLeft.y + 1);
+    }
+    return VT100GridRangeMake(0, 0);
 }
 
 #pragma mark - iTermHotkeyNavigableSession
@@ -16544,8 +16562,8 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)composerManager:(iTermComposerManager *)composerManager minimalFrameDidChangeTo:(NSRect)newFrame {
-    _view.composerHeight = NSHeight(newFrame);
-    [self.delegate sessionDidChangeComposerFrame:self];
+    [_textview setNeedsDisplay:YES];
+    DLog(@"Composer frame changed to %@", NSStringFromRect(newFrame));
 }
 
 - (NSRect)composerManager:(iTermComposerManager *)composerManager
@@ -16564,10 +16582,18 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
     if (composerManager.isAutoComposer) {
         // Place at bottom, but leave excess space below it so it abuts the terminal view.
-        height = MIN(desiredHeight, 0.5 * paneSize.height);
-        const CGFloat distanceFromTop = (_view.showTitle ? SessionView.titleHeight : 0) + (_screen.currentGrid.cursor.y + 1) * _textview.lineHeight + vmargin;
-        y = paneSize.height - distanceFromTop - height;
         width = maxWidth;
+        const int actualLinesFree = MAX(1, _screen.height - _screen.cursorY);
+        const int gridOffsetInRows = _screen.cursorY;
+        const CGFloat lineHeight = _textview.lineHeight;
+        const CGFloat titleBarHeight = (_view.showTitle ? SessionView.titleHeight : 0);
+        height = MAX(lineHeight, actualLinesFree * lineHeight);
+        const CGFloat gridOffsetInPoints = gridOffsetInRows * lineHeight;
+        const CGFloat top = vmargin + titleBarHeight + gridOffsetInPoints;
+        y = MAX(0, paneSize.height - top - height);
+
+        DLog(@"width=%@ actualLinesFree=%@ gridOffsetInRows=%@ lineHeight=%@ titleBarHeight=%@ height=%@ gridOffsetInPoints=%@ top=%@ y=%@",
+             @(width), @(actualLinesFree), @(gridOffsetInRows), @(lineHeight), @(titleBarHeight), @(height), @(gridOffsetInPoints), @(top), @(y));
     } else {
         // Place at top. Includes decoration so a minimum width must be enforced.
 
@@ -16580,6 +16606,22 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                           width,
                           height);
     return newFrame;
+}
+
+- (void)composerManager:(iTermComposerManager *)composerManager desiredHeightDidChange:(CGFloat)desiredHeight {
+    DLog(@"Desired height changed to %@", @(desiredHeight));
+    [self sync];
+}
+
+- (BOOL)haveAutoComposer {
+    return _composerManager.dropDownComposerViewIsVisible && _composerManager.isAutoComposer;
+}
+
+- (void)screenWillSynchronize {
+}
+
+- (void)screenDidSynchronize {
+    [self updateAutoComposerFrame];
 }
 
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager {
@@ -16649,13 +16691,16 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return NO;
 }
 
+- (void)composerManager:(iTermComposerManager *)composerManager performFindPanelAction:(id)sender {
+    [_textview performFindPanelAction:sender];
+}
+
 - (void)composerManagerWillDismissMinimalView:(iTermComposerManager *)composerManager {
     [_textview.window makeFirstResponder:_textview];
 }
 
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager {
     _view.composerHeight = 0;
-    [self.delegate sessionDidChangeComposerFrame:self];
 }
 
 - (NSAppearance *)composerManagerAppearance:(iTermComposerManager *)composerManager {

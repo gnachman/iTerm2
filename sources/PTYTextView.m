@@ -1456,8 +1456,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     _drawingHelper.softAlternateScreenMode = self.dataSource.terminalSoftAlternateScreenMode;
     _drawingHelper.useSelectedTextColor = self.delegate.textViewShouldUseSelectedTextColor;
     _drawingHelper.fontTable = self.fontTable;
-    _drawingHelper.isCursorVisible = _cursorVisible && ![self.delegate textViewIsAutoComposerOpen];
-
+    const BOOL autoComposerOpen = [self.delegate textViewIsAutoComposerOpen];
+    _drawingHelper.isCursorVisible = _cursorVisible && !autoComposerOpen;
+    _drawingHelper.linesToSuppress = self.delegate.textViewLinesToSuppressDrawing;
+    
     const VT100GridRange range = [self rangeOfVisibleLines];
     if ([_delegate textViewShouldShowOffscreenCommandLine]) {
         _drawingHelper.offscreenCommandLine = [self.dataSource offscreenCommandLineBefore:range.location];

@@ -7,6 +7,7 @@
 
 #import "VT100ScreenConfiguration.h"
 #import "NSArray+iTerm.h"
+#import "NSDictionary+iTerm.h"
 
 @interface VT100ScreenConfiguration()
 @property (nonatomic, readwrite) BOOL shouldPlacePromptAtFirstColumn;
@@ -47,6 +48,7 @@
 @property (nonatomic, readwrite) double dimmingAmount;
 @property (nonatomic, readwrite) BOOL publishing;
 @property (nonatomic, readwrite) BOOL terminalCanChangeBlink;
+@property (nonatomic, strong, readwrite, nullable) NSNumber *desiredComposerRows;
 @end
 
 @implementation VT100ScreenConfiguration
@@ -87,6 +89,7 @@
 @synthesize dimmingAmount = _dimmingAmount;
 @synthesize publishing = _publishing;
 @synthesize terminalCanChangeBlink = _terminalCanChangeBlink;
+@synthesize desiredComposerRows = _desiredComposerRows;
 
 @synthesize isDirty = _isDirty;
 @synthesize stringForKeypress = _stringForKeypress;
@@ -131,6 +134,7 @@
         _dimmingAmount = other.dimmingAmount;
         _publishing = other.publishing;
         _terminalCanChangeBlink = other.terminalCanChangeBlink;
+        _desiredComposerRows = other.desiredComposerRows;
 
         _isDirty = other.isDirty;
     }
@@ -183,9 +187,12 @@
                             @"dimmingAmount": @(_dimmingAmount),
                             @"publishing": @(_publishing),
                             @"terminalCanChangeBlink": @(_terminalCanChangeBlink),
+                            @"desiredComposerRows": _desiredComposerRows ?: [NSNull null],
 
                             @"isDirty": @(_isDirty),
     };
+    dict = [dict dictionaryByRemovingNullValues];
+
     NSArray<NSString *> *keys = [dict.allKeys sortedArrayUsingSelector:@selector(compare:)];
     NSArray<NSString *> *kvps = [keys mapWithBlock:^id(NSString *key) {
         return [NSString stringWithFormat:@"    %@=%@", key, dict[key]];
@@ -236,6 +243,7 @@
 @dynamic dimmingAmount;
 @dynamic publishing;
 @dynamic terminalCanChangeBlink;
+@dynamic desiredComposerRows;
 
 @dynamic isDirty;
 

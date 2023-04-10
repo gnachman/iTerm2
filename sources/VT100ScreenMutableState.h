@@ -89,6 +89,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)backTab:(int)n;
 - (void)advanceCursorPastLastColumn;
 
+- (int)ensureContentEndsAt:(int)line;
+
 #pragma mark Alternate Screen
 
 - (void)showAltBuffer;

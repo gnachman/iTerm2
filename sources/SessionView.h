@@ -189,8 +189,6 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 @property(nonatomic, readonly) double adjustedDimmingAmount;
 @property(nonatomic, readonly) iTermLegacyView *legacyView;
 
-// This much space is reserved at the bottom for a composer. If there's a bottom status bar, the
-// composer goes above it. PTYScrollView shrinks to accomodate.
 @property(nonatomic) CGFloat composerHeight;
 
 // For macOS 10.14+ when subpixel AA is OFF, this draws the default background color. When there's
@@ -203,9 +201,6 @@ typedef NS_ENUM(NSUInteger, iTermSessionViewFindDriver) {
 // How far the metal view extends beyond the visible part of the viewport, such as under the title
 // bar or bottom per-pane status bar.
 @property(nonatomic, readonly) NSEdgeInsets extraMargins;
-
-// Height in points including space used by composerHeight but excluding title bar and bottom status bar.
-@property(nonatomic, readonly) int contentHeightIgnoringComposer;
 
 - (void)setTerminalBackgroundColor:(NSColor *)color;
 

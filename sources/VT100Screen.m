@@ -139,21 +139,9 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return _state.currentGrid.size;
 }
 
-- (VT100GridSize)sizeForTTY {
-    VT100GridSize size = _state.currentGrid.size;
-    size.height = [delegate_ screenHeightWithoutAutoComposer];
-    return size;
-}
-
 - (NSSize)viewSize {
     NSSize cellSize = [delegate_ screenCellSize];
-    VT100GridSize gridSize = self.sizeForTTY;
-    return NSMakeSize(cellSize.width * gridSize.width, cellSize.height * gridSize.height);
-}
-
-- (NSSize)viewSizeForTTY {
-    NSSize cellSize = [delegate_ screenCellSize];
-    VT100GridSize gridSize = _state.currentGrid.size;
+    VT100GridSize gridSize = self.size;
     return NSMakeSize(cellSize.width * gridSize.width, cellSize.height * gridSize.height);
 }
 
@@ -225,6 +213,17 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState changeHeightOfMark:mark.progenitor to:newHeight];
     }];
+}
+
+- (int)ensureContentEndsAt:(int)gridLine {
+    __block int result = 1;
+    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        if (terminal.softAlternateScreenMode) {
+            return;
+        }
+        result = [mutableState ensureContentEndsAt:gridLine];
+    }];
+    return result;
 }
 
 - (void)resetDirty {
@@ -1287,6 +1286,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         };
     }
     DLog(@"Begin %@", self);
+    [self.delegate screenWillSynchronize];
     [mutableState willSynchronize];
     switch (checkTriggers) {
         case VT100ScreenTriggerCheckTypeNone:
@@ -1339,6 +1339,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         }
     }
     _wantsSearchBuffer = NO;
+    [self.delegate screenDidSynchronize];
     [mutableState didSynchronize:resetOverflow];
     DLog(@"%@: End overflow=%@ haveScrolled=%@", self, @(overflow), @(_state.currentGrid.haveScrolled));
     return (VT100SyncResult) {

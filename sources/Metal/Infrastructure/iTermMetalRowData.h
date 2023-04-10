@@ -15,7 +15,8 @@
 
 NS_CLASS_AVAILABLE(10_11, NA)
 @interface iTermMetalRowData : NSObject
-@property (nonatomic) int y;
+@property (nonatomic) int y;  // 0 = top of screen
+@property (nonatomic) int line;  // 0 = top of history
 
 // iTermMetalGlyphKey
 @property (nonatomic, strong) iTermGlyphKeyData *keysData;

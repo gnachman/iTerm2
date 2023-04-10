@@ -400,7 +400,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         NSIndexSet *selectedIndexes =
             [_selection selectedIndexesIncludingTabFillersInAbsoluteLine:line + _totalScrollbackOverflow];
 
-        iTermBackgroundColorRunsInLine *runsInLine =
+        if ([self canDrawLine:line]) {
+            iTermBackgroundColorRunsInLine *runsInLine =
             [iTermBackgroundColorRunsInLine backgroundRunsInLine:theLine
                                                       lineLength:_gridSize.width
                                                              row:line
@@ -409,7 +410,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                          matches:matches
                                                         anyBlink:&_blinkingFound
                                                                y:y];
-        [backgroundRunArrays addObject:runsInLine];
+            [backgroundRunArrays addObject:runsInLine];
+        } else {
+            [backgroundRunArrays addObject:[iTermBackgroundColorRunsInLine defaultRunOfLength:_gridSize.width row:line y:y]];
+        }
         iTermPreciseTimerStatsMeasureAndAccumulate(&_stats[TIMER_CONSTRUCT_BACKGROUND_RUNS]);
     }
 
@@ -941,9 +945,17 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     }
 }
 
+- (BOOL)canDrawLine:(int)line {
+    return (line < _linesToSuppress.location ||
+            line >= _linesToSuppress.location + _linesToSuppress.length);
+}
+
 - (void)drawMarkIfNeededOnLine:(int)line
                 leftMarginRect:(NSRect)leftMargin
                  virtualOffset:(CGFloat)virtualOffset {
+    if (![self canDrawLine:line]) {
+        return;
+    }
     id<VT100ScreenMarkReading> mark = [self.delegate drawingHelperMarkOnLine:line];
     if (mark != nil && self.drawMarkIndicators) {
         BOOL drawArrow = NO;
@@ -984,6 +996,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
 
 - (void)drawNoteRangesOnLine:(int)line
                virtualOffset:(CGFloat)virtualOffset {
+    if (![self canDrawLine:line]) {
+        return;
+    }
     NSArray *noteRanges = [self.delegate drawingHelperCharactersWithNotesOnLine:line];
     if (noteRanges.count) {
         for (NSValue *value in noteRanges) {
@@ -1253,6 +1268,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                      backgroundRuns:(NSArray<iTermBoxedBackgroundColorRun *> *)backgroundRuns
                             context:(CGContextRef)ctx
                       virtualOffset:(CGFloat)virtualOffset {
+    if (![self canDrawLine:line]) {
+        return;
+    }
     [self drawCharactersForLine:line
                             atY:y
                  backgroundRuns:backgroundRuns

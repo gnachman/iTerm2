@@ -554,7 +554,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_showBottomStatusBar) {
         size.height += iTermGetStatusBarHeight();
     }
-    size.height += _composerHeight;
     return size;
 }
 
@@ -1052,7 +1051,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 
 - (void)updateLegacyViewFrame {
     NSRect rect = NSZeroRect;
-    rect.origin.y = (self.showBottomStatusBar ? iTermGetStatusBarHeight() : 0) + _composerHeight;
+    rect.origin.y = self.showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
     rect.size.width = NSWidth(_scrollview.documentVisibleRect);
     rect.size.height = NSHeight(_scrollview.documentVisibleRect);
     _legacyView.frame = rect;
@@ -1365,12 +1364,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (self.showBottomStatusBar) {
         insets.bottom = iTermGetStatusBarHeight();
     }
-    insets.bottom += _composerHeight;
     return insets;
-}
-
-- (int)contentHeightIgnoringComposer {
-    return _scrollview.frame.size.height + _composerHeight;
 }
 
 - (NSRect)insetRect:(NSRect)rect flipped:(BOOL)flipped includeBottomStatusBar:(BOOL)includeBottomStatusBar {
@@ -1628,14 +1622,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     return YES;
 }
 
-- (void)setComposerHeight:(CGFloat)composerHeight {
-    if (composerHeight == _composerHeight) {
-        return;
-    }
-    _composerHeight = composerHeight;
-    [self updateScrollViewFrame];
-}
-
 - (void)invalidateStatusBar {
     iTermStatusBarViewController *newVC = nil;
     if ([_delegate sessionViewUseSeparateStatusBarsPerPane]) {
@@ -1700,7 +1686,6 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     if (_showBottomStatusBar) {
         size.height += iTermGetStatusBarHeight();
     }
-    size.height += _composerHeight;
     DLog(@"Smallest such frame is %@", NSStringFromSize(size));
     return size;
 }
@@ -1716,8 +1701,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
         size.height -= iTermGetStatusBarHeight();
         DLog(@"maximumPossibleScrollViewContentSize: sub bottom status bar height. size=%@", NSStringFromSize(size));
     }
-    size.height -= _composerHeight;
-    DLog(@"maximumPossibleScrollViewContentSize: sub composer height of %@. size=%@", @(_composerHeight), NSStringFromSize(size));
+    DLog(@"maximumPossibleScrollViewContentSize: size=%@", NSStringFromSize(size));
     Class verticalScrollerClass = [[[self scrollview] verticalScroller] class];
     if (![[self scrollview] hasVerticalScroller]) {
         verticalScrollerClass = nil;
@@ -1771,7 +1755,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 - (void)updateScrollViewFrame {
     DLog(@"update scrollview frame");
     CGFloat titleHeight = _showTitle ? _title.frame.size.height : 0;
-    CGFloat reservedSpaceOnBottom = (_showBottomStatusBar ? iTermGetStatusBarHeight() : 0) + _composerHeight;
+    CGFloat reservedSpaceOnBottom = _showBottomStatusBar ? iTermGetStatusBarHeight() : 0;
     NSSize proposedSize = NSMakeSize(self.frame.size.width,
                                      self.frame.size.height - titleHeight - reservedSpaceOnBottom);
     NSSize size = [_delegate sessionViewScrollViewWillResize:proposedSize];

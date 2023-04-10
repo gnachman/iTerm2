@@ -392,6 +392,18 @@ static _Atomic int gPerformingJoinedBlock;
             [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:self.currentGrid.size.width]];
         }
     }
+    const int minimumNumberOfRowsToKeepBeforeComposer = 1;
+    if (config.desiredComposerRows && self.height > minimumNumberOfRowsToKeepBeforeComposer) {
+        int end = MAX(minimumNumberOfRowsToKeepBeforeComposer,
+                      self.height - config.desiredComposerRows.intValue - 1);
+        if (end >= self.height) {
+            end = self.height - 2;
+        }
+        if (end < 1) {
+            end = 1;
+        }
+        [self ensureContentEndsAt:end];
+    }
     _terminal.stringForKeypress = config.stringForKeypress;
     _alertOnNextMark = config.alertOnNextMark;
 }
@@ -920,6 +932,29 @@ static _Atomic int gPerformingJoinedBlock;
     if (self.currentGrid.cursorX == self.width - 1) {
         self.currentGrid.cursorX = self.width;
     }
+}
+
+- (int)ensureContentEndsAt:(int)line {
+    if (line < 0 || line >= self.height || self.terminalSoftAlternateScreenMode) {
+        return self.height - self.currentGrid.cursor.y - 1;
+    }
+    const int numberOfLinesToClawBack = line - self.currentGrid.cursor.y;
+    const int cursorX = self.currentGrid.cursor.x;
+    if (numberOfLinesToClawBack < 0) {
+        const int delta = -numberOfLinesToClawBack;
+        for (int i = 0; i < delta; i++) {
+            [self incrementOverflowBy:
+             [self.currentGrid scrollWholeScreenUpIntoLineBuffer:self.linebuffer unlimitedScrollback:self.unlimitedScrollback]];
+            [self.currentGrid setCursor:VT100GridCoordMake(cursorX, self.currentGrid.cursor.y - 1)];
+        }
+        return self.height - self.currentGrid.cursor.y;
+    } else if (numberOfLinesToClawBack > 0) {
+        const int count = [self.currentGrid scrollWholeScreenDownByLines:numberOfLinesToClawBack
+                                                   poppingFromLineBuffer:self.linebuffer];
+        const int newCursorY = self.currentGrid.cursor.y + count;
+        [self.currentGrid setCursor:VT100GridCoordMake(cursorX, newCursorY)];
+    }
+    return self.height - self.currentGrid.cursor.y - 1;
 }
 
 - (void)setScrollRegionTop:(int)top bottom:(int)bottom {

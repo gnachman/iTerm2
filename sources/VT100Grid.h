@@ -288,6 +288,10 @@
                   metadataArray:(iTermMetadata *)sourceMetadataArray
                            info:(DVRFrameInfo)info;
 
+// Scroll backwards, pulling content from history back in to the grid. The lowest lines of the grid
+// will be lost.
+- (int)scrollWholeScreenDownByLines:(int)count poppingFromLineBuffer:(LineBuffer *)lineBuffer;
+
 // Returns a grid-owned empty line.
 - (NSMutableData *)defaultLineOfWidth:(int)width;
 

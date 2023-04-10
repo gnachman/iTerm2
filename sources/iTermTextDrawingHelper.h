@@ -269,6 +269,7 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 @property (nonatomic, readonly) NSColor *offscreenCommandLineOutlineColor;
 @property (nonatomic) BOOL useSelectedTextColor;
 @property (nonatomic, strong) iTermFontTable *fontTable;
+@property (nonatomic) VT100GridRange linesToSuppress;
 
 + (NSRect)offscreenCommandLineFrameForVisibleRect:(NSRect)visibleRect
                                          cellSize:(NSSize)cellSize

@@ -422,6 +422,7 @@ typedef NS_ENUM(NSUInteger, VT100ScreenWorkingDirectoryPushType) {
 - (void)screenFramerRecoveryDidFinish;
 - (void)screenDidResynchronizeSSH;
 - (void)screenEnsureDefaultMode;
-- (int)screenHeightWithoutAutoComposer;
+- (void)screenWillSynchronize;
+- (void)screenDidSynchronize;
 
 @end

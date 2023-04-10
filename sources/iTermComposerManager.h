@@ -45,6 +45,10 @@ previousFrame:(NSRect)previousFrame;
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager;
 - (void)composerManagerOpenHistory:(iTermComposerManager *)composerManager;
 - (BOOL)composerManager:(iTermComposerManager *)composerManager wantsKeyEquivalent:(NSEvent *)event;
+- (void)composerManager:(iTermComposerManager *)composerManager performFindPanelAction:(id)sender;
+- (void)composerManager:(iTermComposerManager *)composerManager
+ desiredHeightDidChange:(CGFloat)desiredHeight;
+
 @end
 
 @interface iTermComposerManager : NSObject
@@ -52,6 +56,8 @@ previousFrame:(NSRect)previousFrame;
 @property (nonatomic, readonly) BOOL dropDownComposerViewIsVisible;
 @property (nonatomic, readonly) BOOL isEmpty;
 @property (nonatomic) BOOL isAutoComposer;
+@property (nonatomic, readonly) CGFloat desiredHeight;
+@property (nonatomic, readonly) NSRect dropDownFrame;
 
 - (void)setCommand:(NSString *)command;
 // Reveal appropriately (focus status bar, open popover, or open minimal)

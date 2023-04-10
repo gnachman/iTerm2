@@ -26,6 +26,7 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     IBOutlet NSButton *_closeButton;
     IBOutlet NSView *_wrapper;
     CGFloat _manualHeight;
+    CGFloat _desiredHeight;
 }
 
 - (instancetype)init {
@@ -149,7 +150,11 @@ workingDirectory:(NSString *)pwd
 }
 
 - (void)updateFrame {
-    self.view.frame = [self frameForHeight:MAX(MIN(self.maxHeight, [self desiredHeight]), self.minHeight)];
+    const NSRect desiredFrame = [self frameForHeight:MAX(MIN(self.maxHeight, [self desiredHeight]), self.minHeight)];
+    if (NSEqualRects(desiredFrame, self.view.frame)) {
+        return;
+    }
+    self.view.frame = desiredFrame;
     [[NSAnimationContext currentContext] setDuration:kAnimationDuration];
     self.view.animator.alphaValue = 1;
     [self.delegate minimalComposer:self frameDidChangeTo:self.view.frame];
@@ -210,6 +215,10 @@ workingDirectory:(NSString *)pwd
     return [self.delegate minimalComposer:self wantsKeyEquivalent:event];
 }
 
+- (void)composerTextViewPerformFindPanelAction:(id)sender {
+    [self.delegate minimalComposer:self performFindPanelAction:sender];
+}
+
 #pragma mark - iTermDragHandleViewDelegate
 
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)movement {
@@ -244,7 +253,12 @@ workingDirectory:(NSString *)pwd
     if (!self.isAutoComposer) {
         return;
     }
-    [self updateFrame];
+    const CGFloat desiredHeight = [self desiredHeight];
+    if (desiredHeight == _desiredHeight) {
+        return;
+    }
+    _desiredHeight = desiredHeight;
+    [self.delegate minimalComposer:self desiredHeightDidChange:desiredHeight];
 }
 
 @end

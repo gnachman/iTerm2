@@ -279,6 +279,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewShouldUseSelectedTextColor;
 - (void)textViewOpenComposer:(NSString *)string;
 - (BOOL)textViewIsAutoComposerOpen;
+- (VT100GridRange)textViewLinesToSuppressDrawing;
 @end
 
 @interface iTermHighlightedRow : NSObject

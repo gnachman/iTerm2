@@ -1607,6 +1607,45 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
                             adjustedLength);
 }
 
+- (int)scrollWholeScreenDownByLines:(int)count poppingFromLineBuffer:(LineBuffer *)lineBuffer {
+    int result = 0;
+    for (int i = 0; i < count; i++) {
+        if ([self scrollWholeScreenDownPoppingFromLineBuffer:lineBuffer]) {
+            result += 1;
+        } else {
+            break;
+        }
+    }
+    return result;
+}
+
+- (BOOL)scrollWholeScreenDownPoppingFromLineBuffer:(LineBuffer *)lineBuffer {
+    const int width = self.size.width;
+    if ([lineBuffer numLinesWithWidth:width] == 0 || width < 1) {
+        return NO;
+    }
+    [self scrollRect:VT100GridRectMake(0, 0, width, self.size.height)
+              downBy:1
+           softBreak:NO];
+    screen_char_t *line = [self screenCharsAtLineNumber:0];
+    int eol = 0;
+    iTermImmutableMetadata metadata;
+    screen_char_t continuation;
+    const BOOL ok = [lineBuffer popAndCopyLastLineInto:line
+                                                 width:width
+                                     includesEndOfLine:&eol
+                                              metadata:&metadata
+                                          continuation:&continuation];
+    assert(ok);
+    [[self lineInfoAtLineNumber:0] setMetadataFromImmutable:metadata];
+    line[width] = continuation;
+    line[width].code = eol;
+    if (eol == EOL_DWC) {
+        ScreenCharSetDWC_SKIP(&line[width - 1]);
+    }
+    return YES;
+}
+
 - (BOOL)restoreScreenFromLineBuffer:(LineBuffer *)lineBuffer
                     withDefaultChar:(screen_char_t)defaultChar
                   maxLinesToRestore:(int)maxLines {

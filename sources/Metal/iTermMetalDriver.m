@@ -1403,6 +1403,9 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 - (void)populateLineStyleMarkRendererTransientStateWithFrameData:(iTermMetalFrameData *)frameData {
     iTermLineStyleMarkRendererTransientState *tState = [frameData transientStateForRenderer:_lineStyleMarkRenderer];
     [frameData.rows enumerateObjectsUsingBlock:^(iTermMetalRowData * _Nonnull rowData, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (VT100GridRangeContains(frameData.perFrameState.linesToSuppressDrawing, rowData.y)) {
+            return;
+        }
         [tState setMarkStyle:rowData.markStyle row:idx];
     }];
     tState.colors = frameData.perFrameState.lineStyleMarkColors;

@@ -379,7 +379,9 @@
 // NOTE: This must not change the suggestion directly. It has to do it in dispatch_async because
 // otherwise NSTextView throws exceptions.
 - (void)textDidChange:(NSNotification *)notification {
+    DLog(@"textDidChange - pre");
     [_delegate largeComposerViewControllerTextDidChange:self];
+    DLog(@"textDidChange - post");
     _completionGeneration += 1;
     if (self.textView.isSettingSuggestion) {
         return;

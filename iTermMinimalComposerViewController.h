@@ -33,12 +33,17 @@ NS_ASSUME_NONNULL_BEGIN
 - (CGFloat)minimalComposerLineHeight:(iTermMinimalComposerViewController *)composer;
 - (void)minimalComposerOpenHistory:(iTermMinimalComposerViewController *)composer;
 - (BOOL)minimalComposer:(iTermMinimalComposerViewController *)composer wantsKeyEquivalent:(NSEvent *)event;
+- (void)minimalComposer:(iTermMinimalComposerViewController *)composer performFindPanelAction:(id)sender;
+- (void)minimalComposer:(iTermMinimalComposerViewController *)composer
+ desiredHeightDidChange:(CGFloat)desiredHeight;
+
 @end
 
 @interface iTermMinimalComposerViewController : NSViewController
 @property (nonatomic, weak) id<iTermMinimalComposerViewControllerDelegate> delegate;
 @property (nonatomic, copy) NSString *stringValue;
 @property (nonatomic) BOOL isAutoComposer;
+@property (nonatomic, readonly) CGFloat desiredHeight;
 
 - (void)updateFrame;
 - (void)makeFirstResponder;

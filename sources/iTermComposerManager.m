@@ -267,7 +267,9 @@
 }
 
 - (NSRect)minimalComposer:(iTermMinimalComposerViewController *)composer frameForHeight:(CGFloat)desiredHeight {
-    return [self.delegate composerManager:self frameForDesiredHeight:desiredHeight previousFrame:composer.view.frame];
+    return [self.delegate composerManager:self
+                    frameForDesiredHeight:desiredHeight
+                            previousFrame:composer.view.frame];
 }
 
 - (CGFloat)minimalComposerMaximumHeight:(iTermMinimalComposerViewController *)composer {
@@ -289,6 +291,14 @@
 
 - (BOOL)minimalComposer:(iTermMinimalComposerViewController *)composer wantsKeyEquivalent:(NSEvent *)event {
     return [self.delegate composerManager:self wantsKeyEquivalent:event];
+}
+
+- (void)minimalComposer:(iTermMinimalComposerViewController *)composer performFindPanelAction:(id)sender {
+    return [self.delegate composerManager:self performFindPanelAction:sender];
+}
+
+- (void)minimalComposer:(iTermMinimalComposerViewController *)composer desiredHeightDidChange:(CGFloat)desiredHeight {
+    [self.delegate composerManager:self desiredHeightDidChange:desiredHeight];
 }
 
 - (void)dismissMinimalViewAnimated:(BOOL)animated {
@@ -333,6 +343,14 @@
 
 - (void)updateFrame {
     [_minimalViewController updateFrame];
+}
+
+- (CGFloat)desiredHeight {
+    return _minimalViewController.desiredHeight;
+}
+
+- (NSRect)dropDownFrame {
+    return _minimalViewController.view.frame;
 }
 
 @end

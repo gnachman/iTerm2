@@ -63,6 +63,10 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
                             anyBlink:(BOOL *)anyBlinkPtr
                                    y:(CGFloat)y;  // Value for self.y
 
++ (instancetype)defaultRunOfLength:(int)width
+                               row:(int)row
+                                 y:(CGFloat)y;
+
 @end
 
 // An NSObject wrapper for a color run with an optional NSColor.
