@@ -242,7 +242,7 @@
     if (dismiss && !reset) {
         [self dismissMinimalViewAnimated:NO];
     }
-    if (command.length == 0) {
+    if (command.length == 0 && !self.isAutoComposer) {
         _saved = string;
         return;
     }
