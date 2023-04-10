@@ -10015,10 +10015,14 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate setActiveSession:self];
     [_view setNeedsDisplay:YES];
     [_view.findDriver owningViewDidBecomeFirstResponder];
+    if (!self.copyMode && self.haveAutoComposer) {
+        [_composerManager makeDropDownComposerFirstResponder];
+    }
 }
 
 - (void)textViewDidResignFirstResponder {
     [_view setNeedsDisplay:YES];
+    self.copyMode = false;
 }
 
 - (void)setReportingMouseDownForEventType:(NSEventType)eventType {
@@ -14936,7 +14940,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (BOOL)textViewIsAutoComposerOpen {
-    return [_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer && _composerManager.dropDownComposerIsFirstResponder;
+    return [_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer && !self.copyMode;
 }
 
 - (VT100GridRange)textViewLinesToSuppressDrawing {
