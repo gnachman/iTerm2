@@ -47,6 +47,10 @@
     return _dropDownComposerViewIsVisible && _minimalViewController.composerIsFirstResponder;
 }
 
+- (void)makeDropDownComposerFirstResponder {
+    [_minimalViewController makeFirstResponder];
+}
+
 - (iTermStatusBarComposerComponent *)currentComponent {
     iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
     if (statusBarViewController) {

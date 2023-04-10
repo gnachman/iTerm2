@@ -16067,7 +16067,13 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 - (void)copyModeHandlerDidChangeEnabledState:(iTermCopyModeHandler *)handler NOT_COPY_FAMILY {
     [_textview setNeedsDisplay:YES];
     const BOOL enabled = handler.enabled;
-    if (!enabled) {
+    if (enabled) {
+        [_textview.window makeFirstResponder:_textview];
+    } else {
+        if (self.haveAutoComposer) {
+            [_composerManager makeDropDownComposerFirstResponder];
+        }
+
         if (_textview.selection.live) {
             [_textview.selection endLiveSelection];
         }
