@@ -149,12 +149,6 @@ typedef struct iTermTextColorContext {
     NSColor *previousForegroundColor;
 } iTermTextColorContext;
 
-typedef NS_ENUM(NSUInteger, iTermMarkIndicatorType) {
-    iTermMarkIndicatorTypeSuccess,
-    iTermMarkIndicatorTypeError,
-    iTermMarkIndicatorTypeOther
-};
-
 static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL hasBackgroundImage,
                                                                          BOOL enableBlending,
                                                                          BOOL reverseVideo,
@@ -922,7 +916,7 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return img;
 }
 
-- (iTermMarkIndicatorType)markIndicatorTypeForMark:(id<VT100ScreenMarkReading>)mark {
++ (iTermMarkIndicatorType)markIndicatorTypeForMark:(id<VT100ScreenMarkReading>)mark {
     if (mark.code == 0) {
         return iTermMarkIndicatorTypeSuccess;
     }
@@ -934,8 +928,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     return iTermMarkIndicatorTypeError;
 }
 
-- (NSColor *)colorForMark:(id<VT100ScreenMarkReading>)mark {
-    switch ([self markIndicatorTypeForMark:mark]) {
++ (NSColor *)colorForMark:(id<VT100ScreenMarkReading>)mark {
+    return [self colorForMarkType:[iTermTextDrawingHelper markIndicatorTypeForMark:mark]];
+}
+
++ (NSColor *)colorForMarkType:(iTermMarkIndicatorType)type {
+    switch (type) {
         case iTermMarkIndicatorTypeSuccess:
             return [iTermTextDrawingHelper successMarkColor];
         case iTermMarkIndicatorTypeOther:
@@ -967,10 +965,10 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                                      cellSize:_cellSize
                                                        cellSizeWithoutSpacing:_cellSizeWithoutSpacing
                                                                         scale:1];
-            const iTermMarkIndicatorType type = [self markIndicatorTypeForMark:mark];
+            const iTermMarkIndicatorType type = [iTermTextDrawingHelper markIndicatorTypeForMark:mark];
             NSImage *image = _cachedMarks[@(type)];
             if (!image || !NSEqualSizes(image.size, rect.size)) {
-                NSColor *markColor = [self colorForMark:mark];
+                NSColor *markColor = [iTermTextDrawingHelper colorForMark:mark];
                 image = [iTermTextDrawingHelper newImageWithMarkOfColor:markColor
                                                                    size:rect.size];
                 _cachedMarks[@(type)] = image;
@@ -980,8 +978,8 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
         BOOL drawLine = YES;
         if (drawLine) {
             NSColor *bgColor = [self defaultBackgroundColor];
-            NSColor *markColor = [self colorForMark:mark];
-            NSColor *merged = [bgColor blendedWithColor:markColor weight:0.5];
+            NSColor *merged = [iTermTextDrawingHelper colorForLineStyleMark:[iTermTextDrawingHelper markIndicatorTypeForMark:mark]
+                                                            backgroundColor:bgColor];
             [merged set];
             NSRect rect;
             rect.origin.x = 0;
@@ -992,6 +990,12 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
             iTermRectFill(rect, virtualOffset);
         }
     }
+}
+
++ (NSColor *)colorForLineStyleMark:(iTermMarkIndicatorType)type backgroundColor:(NSColor *)bgColor {
+    NSColor *markColor = [iTermTextDrawingHelper colorForMarkType:type];
+    NSColor *merged = [bgColor blendedWithColor:markColor weight:0.5];
+    return merged;
 }
 
 - (void)drawNoteRangesOnLine:(int)line

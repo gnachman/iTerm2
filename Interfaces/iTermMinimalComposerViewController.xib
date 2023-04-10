@@ -12,6 +12,7 @@
                 <outlet property="_closeButton" destination="HtE-d6-osy" id="UNc-wx-Ec4"/>
                 <outlet property="_containerView" destination="e5I-6K-jFS" id="BFE-4L-wYZ"/>
                 <outlet property="_largeComposerViewController" destination="PWM-zh-xQE" id="q92-OG-K2c"/>
+                <outlet property="_separator" destination="jko-Ex-oYr" id="mOH-XC-3h0"/>
                 <outlet property="_topDragHandle" destination="A5g-cR-4IK" id="MOG-NE-3eo"/>
                 <outlet property="_vev" destination="lMe-mB-AB7" id="JJi-4A-rZ3"/>
                 <outlet property="_wrapper" destination="0ma-Hp-gbn" id="0qb-o4-3nJ"/>
@@ -24,6 +25,10 @@
             <rect key="frame" x="0.0" y="0.0" width="573" height="312"/>
             <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
             <subviews>
+                <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jko-Ex-oYr" userLabel="Separator">
+                    <rect key="frame" x="0.0" y="311" width="573" height="1"/>
+                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                </customView>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0ma-Hp-gbn" userLabel="Wrapper">
                     <rect key="frame" x="9" y="9" width="555" height="294"/>
                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>

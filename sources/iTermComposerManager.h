@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
             sendControl:(NSString *)control;
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager;
 - (void)composerManagerWillDismissMinimalView:(iTermComposerManager *)composerManager;
+- (void)composerManagerDidDisplayMinimalView:(iTermComposerManager *)composerManager;
 - (NSAppearance *_Nullable)composerManagerAppearance:(iTermComposerManager *)composerManager;
 - (id<VT100RemoteHostReading>)composerManagerRemoteHost:(iTermComposerManager *)composerManager;
 - (NSString *_Nullable)composerManagerWorkingDirectory:(iTermComposerManager *)composerManager;
@@ -58,6 +59,10 @@ previousFrame:(NSRect)previousFrame;
 @property (nonatomic) BOOL isAutoComposer;
 @property (nonatomic, readonly) CGFloat desiredHeight;
 @property (nonatomic, readonly) NSRect dropDownFrame;
+
+// Only used by dropdown composer
+@property (nonatomic) BOOL isSeparatorVisible;
+@property (nonatomic, strong) NSColor *separatorColor;
 
 - (void)setCommand:(NSString *)command;
 // Reveal appropriately (focus status bar, open popover, or open minimal)

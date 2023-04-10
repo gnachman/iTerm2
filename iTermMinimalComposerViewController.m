@@ -25,6 +25,7 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     IBOutlet iTermDragHandleView *_topDragHandle;
     IBOutlet NSButton *_closeButton;
     IBOutlet NSView *_wrapper;
+    IBOutlet NSView *_separator;
     CGFloat _manualHeight;
     CGFloat _desiredHeight;
 }
@@ -48,6 +49,10 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     _vev.layer.cornerRadius = 6;
     _vev.layer.borderColor = [[NSColor grayColor] CGColor];
     _vev.layer.borderWidth = 1;
+
+    _separator.wantsLayer = YES;
+    _separator.layer = [[CALayer alloc] init];
+    _separator.layer.backgroundColor = [[NSColor redColor] CGColor];
 
     [self setIsAutoComposer:_isAutoComposer];
 }
@@ -85,6 +90,15 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
         return NO;
     }
     return window.firstResponder == _largeComposerViewController.textView;
+}
+
+- (void)setIsSeparatorVisible:(BOOL)isSeparatorVisible {
+    _separator.hidden = !isSeparatorVisible;
+}
+
+- (void)setSeparatorColor:(NSColor *)separatorColor {
+    _separator.layer.backgroundColor = separatorColor.CGColor;
+    _separatorColor = separatorColor;
 }
 
 - (void)setHost:(id<VT100RemoteHostReading>)host

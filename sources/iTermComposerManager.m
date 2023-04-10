@@ -163,9 +163,9 @@
     _minimalViewController.delegate = self;
     _minimalViewController.isAutoComposer = self.isAutoComposer;
     _minimalViewController.view.frame = NSMakeRect(self.sideMargin,
-                                                    superview.frame.size.height - _minimalViewController.view.frame.size.height,
-                                                    _minimalViewController.view.frame.size.width,
-                                                    _minimalViewController.view.frame.size.height);
+                                                   superview.frame.size.height - _minimalViewController.view.frame.size.height,
+                                                   _minimalViewController.view.frame.size.width,
+                                                   _minimalViewController.view.frame.size.height);
     _minimalViewController.view.appearance = [self.delegate composerManagerAppearance:self];
     [_minimalViewController setHost:[self.delegate composerManagerRemoteHost:self]
                    workingDirectory:[self.delegate composerManagerWorkingDirectory:self]
@@ -181,6 +181,7 @@
     [_minimalViewController makeFirstResponder];
     _dropDownComposerViewIsVisible = YES;
     _dismissCanceled = YES;
+    [_delegate composerManagerDidDisplayMinimalView:self];
 }
 
 - (BOOL)dismiss {
@@ -355,6 +356,22 @@
 
 - (NSRect)dropDownFrame {
     return _minimalViewController.view.frame;
+}
+
+- (void)setIsSeparatorVisible:(BOOL)isSeparatorVisible {
+    _minimalViewController.isSeparatorVisible = isSeparatorVisible;
+}
+
+- (BOOL)isSeparatorVisible {
+    return _minimalViewController.isSeparatorVisible;
+}
+
+- (void)setSeparatorColor:(NSColor *)separatorColor {
+    _minimalViewController.separatorColor = separatorColor;
+}
+
+- (NSColor *)separatorColor {
+    return _minimalViewController.separatorColor;
 }
 
 @end

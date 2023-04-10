@@ -10471,6 +10471,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)textViewBackgroundColorDidChangeFrom:(NSColor *)before to:(NSColor *)after {
     DLog(@"%@", [NSThread callStackSymbols]);
     [self backgroundColorDidChangeJigglingIfNeeded:before.isDark != after.isDark];
+    [self updateAutoComposerSeparatorVisibility];
 }
 
 - (void)textViewTransparencyDidChange {
@@ -15110,6 +15111,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)sessionViewUserScrollDidChange:(BOOL)userScroll {
     [self.delegate sessionUpdateMetalAllowed];
+    [self updateAutoComposerSeparatorVisibility];
 }
 
 - (void)sessionViewDidChangeHoverURLVisible:(BOOL)visible {
@@ -16707,6 +16709,21 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)composerManagerWillDismissMinimalView:(iTermComposerManager *)composerManager {
     [_textview.window makeFirstResponder:_textview];
+    _composerManager.isSeparatorVisible = NO;
+}
+
+- (void)composerManagerDidDisplayMinimalView:(iTermComposerManager *)composerManager {
+    [self updateAutoComposerSeparatorVisibility];
+}
+
+- (void)updateAutoComposerSeparatorVisibility {
+    _composerManager.isSeparatorVisible = [self shouldShowAutoComposerSeparator];
+    _composerManager.separatorColor = [iTermTextDrawingHelper colorForLineStyleMark:iTermMarkIndicatorTypeSuccess
+                                                                    backgroundColor:[_screen.colorMap colorForKey:kColorMapBackground]];
+}
+
+- (BOOL)shouldShowAutoComposerSeparator {
+    return self.haveAutoComposer && _view.scrollview.ptyVerticalScroller.userScroll;
 }
 
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager {

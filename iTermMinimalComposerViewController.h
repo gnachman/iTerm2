@@ -44,6 +44,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSString *stringValue;
 @property (nonatomic) BOOL isAutoComposer;
 @property (nonatomic, readonly) CGFloat desiredHeight;
+@property (nonatomic) BOOL isSeparatorVisible;
+@property (nonatomic, strong) NSColor *separatorColor;
 
 - (void)updateFrame;
 - (void)makeFirstResponder;
