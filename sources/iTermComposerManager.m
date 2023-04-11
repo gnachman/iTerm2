@@ -172,6 +172,8 @@
                               scope:[self.delegate composerManagerScope:self]
                      tmuxController:[self.delegate composerManagerTmuxController:self]];
     [_minimalViewController setFont:[self.delegate composerManagerFont:self]];
+    [_minimalViewController setTextColor:[self.delegate composerManagerTextColor:self]
+                             cursorColor:[self.delegate composerManagerCursorColor:self]];
     [superview addSubview:_minimalViewController.view];
     if (_saved.length) {
         _minimalViewController.stringValue = _saved ?: @"";
@@ -372,6 +374,13 @@
 
 - (NSColor *)separatorColor {
     return _minimalViewController.separatorColor;
+}
+
+- (void)updateFont {
+    [_minimalViewController setFont:[self.delegate composerManagerFont:self]];
+    [_minimalViewController setTextColor:[self.delegate composerManagerTextColor:self]
+                             cursorColor:[self.delegate composerManagerCursorColor:self]];
+    [self updateFrame];
 }
 
 @end

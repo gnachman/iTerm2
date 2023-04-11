@@ -4652,6 +4652,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else if (theKey == kColorMapForeground) {
         [self recomputeBadgeLabel];
         [_delegate textViewForegroundColorDidChangeFrom:before to:after];
+    } else if (theKey == kColorMapCursor) {
+        [_delegate textViewCursorColorDidChangeFrom:before to:after];
     } else if (theKey == kColorMapSelection) {
         _drawingHelper.unfocusedSelectionColor = [[_colorMap colorForKey:theKey] colorDimmedBy:2.0/3.0
                                                                               towardsGrayLevel:0.5];

@@ -38,6 +38,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)composerManagerUName:(iTermComposerManager *)composerManager;
 - (TmuxController * _Nullable)composerManagerTmuxController:(iTermComposerManager *)composerManager;
 - (NSFont *)composerManagerFont:(iTermComposerManager *)composerManager;
+- (NSColor *)composerManagerTextColor:(iTermComposerManager *)composerManager;
+- (NSColor *)composerManagerCursorColor:(iTermComposerManager *)composerManager;
 - (void)composerManager:(iTermComposerManager *)composerManager
 minimalFrameDidChangeTo:(NSRect)newFrame;
 - (NSRect)composerManager:(iTermComposerManager *)composerManager
@@ -77,6 +79,7 @@ previousFrame:(NSRect)previousFrame;
 - (BOOL)dropDownComposerIsFirstResponder;
 - (void)updateFrame;
 - (void)makeDropDownComposerFirstResponder;
+- (void)updateFont;
 
 @end
 

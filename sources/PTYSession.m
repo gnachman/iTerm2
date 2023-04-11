@@ -5703,6 +5703,7 @@ ITERM_WEAKLY_REFERENCEABLE
             verticalSpacing:verticalSpacing];
     DLog(@"Line height is now %f", [_textview lineHeight]);
     [_delegate sessionDidChangeFontSize:self adjustWindow:!_windowAdjustmentDisabled];
+    [_composerManager updateFont];
     DLog(@"After:\n%@", [window.contentView iterm_recursiveDescription]);
     DLog(@"Window frame: %@", window);
 
@@ -10494,6 +10495,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (_profileInitialized && before.isDark != after.isDark) {
         self.needsJiggle = YES;
     }
+    [_composerManager updateFont];
+}
+
+- (void)textViewCursorColorDidChangeFrom:(NSColor *)before to:(NSColor *)after {
+    [_composerManager updateFont];
 }
 
 - (void)setNeedsJiggle:(BOOL)needsJiggle {
@@ -16763,6 +16769,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (NSFont *)composerManagerFont:(iTermComposerManager *)composerManager {
     return self.textview.fontTable.asciiFont.font;
+}
+
+- (NSColor *)composerManagerTextColor:(iTermComposerManager *)composerManager {
+    return [self.textview.colorMap colorForKey:kColorMapForeground];
+}
+
+- (NSColor *)composerManagerCursorColor:(iTermComposerManager *)composerManager {
+    return [self.textview.colorMap colorForKey:kColorMapCursor];
 }
 
 #pragma mark - iTermIntervalTreeObserver

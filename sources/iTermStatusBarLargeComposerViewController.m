@@ -100,6 +100,7 @@
 - (void)awakeFromNib {
     [super awakeFromNib];
     self.textView.textColor = [NSColor textColor];
+    self.textView.insertionPointColor = [NSColor textColor];
     self.textView.font = [NSFont fontWithName:@"Menlo" size:11];
 }
 

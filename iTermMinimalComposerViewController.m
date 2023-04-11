@@ -84,6 +84,11 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     _largeComposerViewController.textView.font = font;
 }
 
+- (void)setTextColor:(NSColor *)textColor cursorColor:(nonnull NSColor *)cursorColor {
+    _largeComposerViewController.textView.textColor = textColor;
+    _largeComposerViewController.textView.insertionPointColor = cursorColor;
+}
+
 - (BOOL)composerIsFirstResponder {
     NSWindow *window = _largeComposerViewController.textView.window;
     if (!window) {
@@ -94,6 +99,7 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
 
 - (void)setIsSeparatorVisible:(BOOL)isSeparatorVisible {
     _separator.hidden = !isSeparatorVisible;
+    _isSeparatorVisible = isSeparatorVisible;
 }
 
 - (void)setSeparatorColor:(NSColor *)separatorColor {

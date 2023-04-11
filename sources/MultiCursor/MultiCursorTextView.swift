@@ -899,17 +899,20 @@ extension MultiCursorTextView {
 
     private func glyphIndexOnLineBelow(glyphIndex: Int) -> Int? {
         let rect = self.rect(for: NSRange(location: glyphIndex, length: 0))!
-        let i = layoutManager!.glyphIndex(for: rect.neighborBelow.origin, in: textContainer!, fractionOfDistanceThroughGlyph: nil)
+        let i = layoutManager!.glyphIndex(for: rect.neighborBelow, in: textContainer!, fractionOfDistanceThroughGlyph: nil)
         let sanityCheckRect = layoutManager!.boundingRect(forGlyphRange: NSRange(location: i, length: 1), in: textContainer!)
         if sanityCheckRect.minY == rect.minY {
             return nil
+        }
+        if sanityCheckRect.minX < rect.maxX && i + 1 == layoutManager!.numberOfGlyphs {
+            return i + 1
         }
         return i
     }
 
     private func glyphIndexOnLineAbove(glyphIndex: Int) -> Int? {
         let rect = self.rect(for: NSRange(location: glyphIndex, length: 0))!
-        let i = layoutManager!.glyphIndex(for: rect.neighborAbove.maxPointWithinRect, in: textContainer!, fractionOfDistanceThroughGlyph: nil)
+        let i = layoutManager!.glyphIndex(for: rect.neighborAbove, in: textContainer!, fractionOfDistanceThroughGlyph: nil)
         let sanityCheckRect = layoutManager!.boundingRect(forGlyphRange: NSRange(location: i, length: 1), in: textContainer!)
         if sanityCheckRect.minY == rect.minY {
             return nil

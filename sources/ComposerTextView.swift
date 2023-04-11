@@ -61,6 +61,32 @@ class ComposerTextView: MultiCursorTextView {
         usesFindBar = true
     }
 
+    @objc
+    override var textColor: NSColor? {
+        didSet {
+            guard let mutableAttributedString = self.textStorage else {
+                return
+            }
+            let suggestionKey = NSAttributedString.Key.suggestionKey
+
+            mutableAttributedString.enumerateAttribute(suggestionKey,
+                                                       in: NSRange(location: 0,
+                                                                   length: mutableAttributedString.length),
+                                                       options: []) { value, range, _ in
+                let newColor = value != nil ? suggestionTextColor : justTextColor
+                mutableAttributedString.addAttribute(.foregroundColor, value: newColor, range: range)
+            }
+        }
+    }
+
+    private var justTextColor: NSColor {
+        return textColor ?? .textColor
+    }
+
+    private var suggestionTextColor: NSColor {
+        return justTextColor.withAlphaComponent(0.5)
+    }
+
     @objc var hasSuggestion: Bool {
         return suggestion != nil
     }
@@ -345,8 +371,6 @@ class ComposerTextView: MultiCursorTextView {
         }
     }
 
-    private let suggestionAttribute =  NSAttributedString.Key("iTerm2 Suggestion")
-
     private func characterRangeOfCommand(at point: NSPoint) -> (NSRange, String)? {
         guard let layoutManager, let textContainer else {
             return nil
@@ -435,7 +459,7 @@ class ComposerTextView: MultiCursorTextView {
 
         var rangeExcludingSuggestion = NSRange(location: spanningRange.location, length: 0)
         textStorage.enumerateAttributes(in: spanningRange) { attributes, range, stop in
-            if attributes[suggestionAttribute] != nil {
+            if attributes[NSAttributedString.Key.suggestionKey] != nil {
                 // Reached the start of the suggestion.
                 stop.pointee = ObjCBool(true)
                 return
@@ -453,8 +477,8 @@ class ComposerTextView: MultiCursorTextView {
 
     private func attributedString(for suggestion: String) -> NSAttributedString {
         var attributes = self.typingAttributes
-        attributes[.foregroundColor] = NSColor(white: 0.5, alpha: 1.0)
-        attributes[suggestionAttribute] = true
+        attributes[.foregroundColor] = suggestionTextColor
+        attributes[NSAttributedString.Key.suggestionKey] = true
         return NSAttributedString(string: suggestion, attributes: attributes)
     }
 
@@ -515,10 +539,10 @@ class ComposerTextView: MultiCursorTextView {
         // 1. Find the ranges of suggestion-looking text by examining the color.
         let temp = self.attributedString()
         var rangesToRemove = [NSRange]()
-        temp.enumerateAttribute(.foregroundColor,
+        temp.enumerateAttribute(NSAttributedString.Key.suggestionKey,
                                 in: NSRange(location: 0, length: temp.length),
-                                options: [.reverse]) { color, range, _ in
-            if color as? NSColor != NSColor.textColor {
+                                options: [.reverse]) { value, range, _ in
+            if value != nil {
                 rangesToRemove.append(range)
             }
         }
@@ -586,4 +610,8 @@ extension String {
         }
         return self[..<index]
     }
+}
+
+extension NSAttributedString.Key {
+    static let suggestionKey = NSAttributedString.Key(rawValue: "com.googlecode.iterm2.ComposerTextView.suggestionKey")
 }

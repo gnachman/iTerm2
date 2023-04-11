@@ -201,6 +201,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 // The background color in the color map changed.
 - (void)textViewBackgroundColorDidChangeFrom:(NSColor *)before to:(NSColor *)after;
 - (void)textViewForegroundColorDidChangeFrom:(NSColor *)before to:(NSColor *)after;
+- (void)textViewCursorColorDidChangeFrom:(NSColor *)before to:(NSColor *)after;
 - (void)textViewTransparencyDidChange;
 - (void)textViewProcessedBackgroundColorDidChange;
 
