@@ -938,7 +938,7 @@ static _Atomic int gPerformingJoinedBlock;
     if (line < 0 || line >= self.height || self.terminalSoftAlternateScreenMode) {
         return self.height - self.currentGrid.cursor.y - 1;
     }
-    const int numberOfLinesToClawBack = line - self.currentGrid.cursor.y;
+    const int numberOfLinesToClawBack = MIN(0, line - self.currentGrid.cursor.y);
     const int cursorX = self.currentGrid.cursor.x;
     if (numberOfLinesToClawBack < 0) {
         const int delta = -numberOfLinesToClawBack;

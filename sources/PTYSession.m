@@ -16602,10 +16602,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         // Place at bottom, but leave excess space below it so it abuts the terminal view.
         width = maxWidth;
         const int actualLinesFree = MAX(1, _screen.height - _screen.cursorY);
-        const int gridOffsetInRows = _screen.cursorY;
         const CGFloat lineHeight = _textview.lineHeight;
+        const int desiredLines = ceil(desiredHeight / lineHeight);
+        const int linesOfHeight = MIN(actualLinesFree, desiredLines);
+        const int gridOffsetInRows = _screen.height - linesOfHeight - 1;
         const CGFloat titleBarHeight = (_view.showTitle ? SessionView.titleHeight : 0);
-        height = MAX(lineHeight, actualLinesFree * lineHeight);
+        height = linesOfHeight * lineHeight;
         const CGFloat gridOffsetInPoints = gridOffsetInRows * lineHeight;
         const CGFloat top = vmargin + titleBarHeight + gridOffsetInPoints;
         y = MAX(0, paneSize.height - top - height);

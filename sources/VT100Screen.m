@@ -623,6 +623,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (absLine - _state.totalScrollbackOverflow == line) {
         return nil;
     }
+    if (VT100GridCoordRangeHeight([self rangeOfOutputForCommandMark:mark]) <= 3) {
+        // The UI will cover up the command output so it's counterproductive to show it.
+        return nil;
+    }
     const int commandLineNumber = absLine - _state.totalScrollbackOverflow;
     ScreenCharArray *sca = [_state screenCharArrayForLine:commandLineNumber];
     NSDate *date = nil;
@@ -998,6 +1002,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 }
 
 - (VT100GridCoordRange)textViewRangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
+    return [self rangeOfOutputForCommandMark:mark];
+}
+
+- (VT100GridCoordRange)rangeOfOutputForCommandMark:(id<VT100ScreenMarkReading>)mark {
     NSEnumerator *enumerator = [_state.intervalTree forwardLimitEnumeratorAt:mark.entry.interval.limit];
     NSArray *objects;
     do {

@@ -596,6 +596,10 @@ NS_INLINE long long VT100GridCoordRangeLength(VT100GridCoordRange range, int gri
     return VT100GridCoordDistance(range.start, range.end, gridWidth);
 }
 
+NS_INLINE long long VT100GridCoordRangeHeight(VT100GridCoordRange range) {
+    return range.end.y - range.start.y + 1;
+}
+
 NS_INLINE long long VT100GridAbsCoordRangeLength(VT100GridAbsCoordRange range, int gridWidth) {
     return VT100GridAbsCoordDistance(range.start, range.end, gridWidth);
 }
