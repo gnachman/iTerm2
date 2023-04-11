@@ -20,6 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) screen_char_t continuation;
 @property (nonatomic, readonly) iTermImmutableMetadata metadata;
 @property (nonatomic, readonly) NSDictionary *dictionaryValue;
+@property (nonatomic, readonly) NSString *stringValue;
+@property (nonatomic, readonly) NSInteger lengthExcludingTrailingWhitespaceAndNulls;
 
 + (instancetype)emptyLineOfLength:(int)length;
 

@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class CapturedOutput;
 @protocol CapturedOutputReading;
+@class ScreenCharArray;
 @protocol VT100ScreenMarkReading;
 @class iTermPromise<T>;
 
@@ -46,6 +47,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong, readonly, nullable) NSString *sessionGuid;
 
 @property(nonatomic, readonly) VT100GridAbsCoordRange promptRange;
+@property(nonatomic, copy, readonly, nullable) NSArray<ScreenCharArray *> *promptText;
 @property(nonatomic, readonly) VT100GridAbsCoordRange commandRange;
 @property(nonatomic, readonly) VT100GridAbsCoord outputStart;
 @property(nonatomic, readonly) iTermPromise<NSNumber *> *returnCodePromise;
@@ -79,6 +81,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong, readwrite) NSString *sessionGuid;
 
 @property(nonatomic, readwrite) VT100GridAbsCoordRange promptRange;
+@property(nonatomic, copy, nullable) NSArray<ScreenCharArray *> *promptText;
 @property(nonatomic, readwrite) VT100GridAbsCoordRange commandRange;
 @property(nonatomic, readwrite) VT100GridAbsCoord outputStart;
 

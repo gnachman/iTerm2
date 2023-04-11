@@ -27,7 +27,7 @@
             <subviews>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="jko-Ex-oYr" userLabel="Separator">
                     <rect key="frame" x="0.0" y="311" width="573" height="1"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                 </customView>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="0ma-Hp-gbn" userLabel="Wrapper">
                     <rect key="frame" x="9" y="9" width="555" height="294"/>

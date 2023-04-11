@@ -12,6 +12,7 @@
 #import "NSDictionary+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
+#import "ScreenCharArray.h"
 #import "iTermPromise.h"
 
 static NSString *const kScreenMarkIsPrompt = @"Is Prompt";
@@ -24,6 +25,7 @@ static NSString *const kMarkStartDateKey = @"Start Date";
 static NSString *const kMarkEndDateKey = @"End Date";
 static NSString *const kMarkSessionGuidKey = @"Session Guid";
 static NSString *const kMarkPromptRange = @"Prompt Range";
+static NSString *const kMarkPromptText = @"Prompt Text";
 static NSString *const kMarkCommandRange = @"Command Range";
 static NSString *const kMarkOutputStart = @"Output Start";
 
@@ -44,6 +46,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
 @synthesize endDate = _endDate;
 @synthesize sessionGuid = _sessionGuid;
 @synthesize promptRange = _promptRange;
+@synthesize promptText = _promptText;
 @synthesize commandRange = _commandRange;
 @synthesize outputStart = _outputStart;
 
@@ -129,6 +132,14 @@ static NSString *const kMarkOutputStart = @"Output Start";
         } else {
             _promptRange = VT100GridAbsCoordRangeMake(-1, -1, -1, -1);
         }
+        if (dict[kMarkPromptText]) {
+            NSArray<NSDictionary *> *dicts = dict[kMarkPromptText];
+            _promptText = [dicts mapWithBlock:^id _Nullable(NSDictionary * _Nonnull dict) {
+                return [[ScreenCharArray alloc] initWithDictionary:dict];
+            }];
+        } else {
+            _promptText = nil;
+        }
         if (dict[kMarkCommandRange]) {
             _commandRange = [dict[kMarkCommandRange] gridAbsCoordRange];
         } else {
@@ -167,6 +178,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
     }] mutableCopy];
     mark->_command = [_command copy];
     mark->_promptRange = _promptRange;
+    mark->_promptText = [_promptText copy];
     mark->_commandRange = _commandRange;
     mark->_outputStart = _outputStart;
 
@@ -217,6 +229,9 @@ static NSString *const kMarkOutputStart = @"Output Start";
     dict[kMarkEndDateKey] = @([self.endDate timeIntervalSinceReferenceDate]);
     dict[kMarkSessionGuidKey] = self.sessionGuid ?: [NSNull null];
     dict[kMarkPromptRange] = [NSDictionary dictionaryWithGridAbsCoordRange:_promptRange];
+    dict[kMarkPromptText] = [_promptText mapWithBlock:^id _Nullable(ScreenCharArray *sca) {
+        return sca.dictionaryValue;
+    }];
     dict[kMarkCommandRange] = [NSDictionary dictionaryWithGridAbsCoordRange:_commandRange];
     dict[kMarkOutputStart] = [NSDictionary dictionaryWithGridAbsCoord:_outputStart];
 

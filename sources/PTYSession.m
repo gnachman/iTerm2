@@ -5768,13 +5768,18 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!mark) {
         return nil;
     }
+    if (mark.promptText) {
+        return [[[mark.promptText mapWithBlock:^id _Nullable(ScreenCharArray *sca) {
+            return sca.stringValue;
+        }] componentsJoinedByString:@"\n"] stringByAppendingString:@" "];
+    }
     const VT100GridAbsCoordRange absRange = mark.promptRange;
     iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
     const VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, _screen.totalScrollbackOverflow);
     const VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range, 0, 0);
     NSString *text = [extractor contentInRange:windowedRange
                              attributeProvider:nil
-                                    nullPolicy:kiTermTextExtractorNullPolicyFromLastToEnd
+                                    nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
                                            pad:NO
                             includeLastNewline:NO
                         trimTrailingWhitespace:YES
@@ -12086,12 +12091,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 - (void)screenPromptDidStartAtLine:(int)line {
     [_pasteHelper unblock];
-
-    // This runs in a side effect and cannot safely resize the view.
-    __weak __typeof(self) weakSelf = self;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [weakSelf revealAutoComposerIfNeeded];
-    });
 }
 
 - (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading>)mark {
@@ -12113,6 +12112,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         // Can't just do it here because it may trigger a resize and this runs as a side-effect.
+        [weakSelf revealAutoComposerIfNeeded];
         [weakSelf updateAutoComposerFrame];
     });
 }
@@ -16629,19 +16629,25 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (composerManager.isAutoComposer) {
         // Place at bottom, but leave excess space below it so it abuts the terminal view.
         width = maxWidth;
-        const int actualLinesFree = MAX(1, _screen.height - _screen.cursorY);
+        int lineAbove = _screen.currentGrid.cursor.y + 1;
+        id<VT100ScreenMarkReading> mark = _screen.lastPromptMark;
+        if (mark.promptRange.start.y >= 0) {
+            lineAbove = mark.promptRange.start.y - _screen.totalScrollbackOverflow - _screen.numberOfScrollbackLines;
+            lineAbove = MAX(1, lineAbove);
+        }
+        const int actualLinesAboveComposer = MAX(1, _screen.height - lineAbove);
         const CGFloat lineHeight = _textview.lineHeight;
         const int desiredLines = ceil(desiredHeight / lineHeight);
-        const int linesOfHeight = MIN(actualLinesFree, desiredLines);
+        const int linesOfHeight = MIN(actualLinesAboveComposer, desiredLines);
         const int gridOffsetInRows = _screen.height - linesOfHeight;
         const CGFloat titleBarHeight = (_view.showTitle ? SessionView.titleHeight : 0);
-        height = linesOfHeight * lineHeight;
+        height = (linesOfHeight + 0.5) * lineHeight;
         const CGFloat gridOffsetInPoints = gridOffsetInRows * lineHeight;
         const CGFloat top = vmargin + titleBarHeight + gridOffsetInPoints;
         y = MAX(0, paneSize.height - top - height);
 
         DLog(@"width=%@ actualLinesFree=%@ gridOffsetInRows=%@ lineHeight=%@ titleBarHeight=%@ height=%@ gridOffsetInPoints=%@ top=%@ y=%@",
-             @(width), @(actualLinesFree), @(gridOffsetInRows), @(lineHeight), @(titleBarHeight), @(height), @(gridOffsetInPoints), @(top), @(y));
+             @(width), @(actualLinesAboveComposer), @(gridOffsetInRows), @(lineHeight), @(titleBarHeight), @(height), @(gridOffsetInPoints), @(top), @(y));
     } else {
         // Place at top. Includes decoration so a minimum width must be enforced.
 
@@ -16707,7 +16713,38 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                      inDirectory:[_screen workingDirectoryOnLine:_screen.commandRange.start.y]
                                                         withMark:nil];
     }
+    if ([self haveAutoComposer]) {
+        id<VT100ScreenMarkReading> mark = [_screen lastPromptMark];
+        if (mark.promptText) {
+            NSArray<ScreenCharArray *> *promptText = [mark.promptText copy];
+            __weak __typeof(self) weakSelf = self;
+            [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+                BOOL first = YES;
+                for (ScreenCharArray *sca in promptText) {
+                    if (!first) {
+                        [mutableState appendCarriageReturnLineFeed];
+                    }
+                    [mutableState.currentGrid setCursorX:0];
+                    [mutableState appendScreenCharArrayAtCursor:sca.line
+                                                         length:sca.lengthExcludingTrailingWhitespaceAndNulls
+                                         externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(sca.metadata)];
+                    [mutableState appendStringAtCursor:@" "];
+                    first = NO;
+                }
+                [promptText release];
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [weakSelf reallySendCommand:command];
+                });
+            }];
+            return;
+        }
+    }
+    [self reallySendCommand:command];
+}
+
+- (void)reallySendCommand:(NSString *)command {
     [self writeTask:command];
+    [_screen userDidPressReturn];
 }
 
 - (void)composerManager:(iTermComposerManager *)composerManager
@@ -16759,7 +16796,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (BOOL)shouldShowAutoComposerSeparator {
-    return self.haveAutoComposer && _view.scrollview.ptyVerticalScroller.userScroll;
+    return self.haveAutoComposer;
 }
 
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager {

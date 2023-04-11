@@ -80,8 +80,14 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     _vev.hidden = isAutoComposer;
 }
 
+- (void)viewWillLayout {
+    [super viewWillLayout];
+    [self layoutSubviews];
+}
+
 - (void)setFont:(NSFont *)font {
     _largeComposerViewController.textView.font = font;
+    [self layoutSubviews];
 }
 
 - (void)setTextColor:(NSColor *)textColor cursorColor:(nonnull NSColor *)cursorColor {
@@ -105,6 +111,16 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
 - (void)setIsSeparatorVisible:(BOOL)isSeparatorVisible {
     _separator.hidden = !isSeparatorVisible;
     _isSeparatorVisible = isSeparatorVisible;
+    [self layoutSubviews];
+}
+
+- (void)layoutSubviews {
+    if (self.isSeparatorVisible) {
+        const CGFloat offset = self.lineHeight / 2.0;
+        _largeComposerViewController.view.frame = NSMakeRect(0, 0, self.view.bounds.size.width, self.view.bounds.size.height - offset);
+    } else {
+        _largeComposerViewController.view.frame = _containerView.bounds;
+    }
 }
 
 - (void)setSeparatorColor:(NSColor *)separatorColor {

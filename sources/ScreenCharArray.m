@@ -168,6 +168,30 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
             NSStringFromClass([self class]), self, ScreenCharArrayToStringDebug(_line, _length), @(self.eol)];
 }
 
+- (NSString *)stringValue {
+    NSMutableString *result = [NSMutableString string];
+    const screen_char_t *line = self.line;
+    for (int i = 0; i < self.length; i++) {
+        const screen_char_t c = line[i];
+        if (c.image) {
+            continue;
+        }
+        if (!c.complexChar) {
+            if (c.code == DWC_SKIP || c.code == DWC_RIGHT) {
+                continue;
+            }
+            if (!c.code) {
+                // Stop on the first null.
+                break;
+            }
+            [result appendCharacter:c.code];
+            continue;
+        }
+        [result appendString:ScreenCharToStr(&c)];
+    }
+    return result;
+}
+
 - (BOOL)isEqual:(id)object {
     ScreenCharArray *other = [ScreenCharArray castFrom:object];
     return [self isEqualToScreenCharArray:other];
@@ -230,10 +254,10 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
     id<iTermExternalAttributeIndexReading> originalIndex = iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
     id<iTermExternalAttributeIndexReading> appendage = iTermImmutableMetadataGetExternalAttributesIndex(other->_metadata);
     iTermExternalAttributeIndex *eaIndex =
-        [iTermExternalAttributeIndex concatenationOf:originalIndex
-                                              length:_length
-                                                with:appendage
-                                              length:other->_length];
+    [iTermExternalAttributeIndex concatenationOf:originalIndex
+                                          length:_length
+                                            with:appendage
+                                          length:other->_length];
     iTermMetadata combined;
     iTermMetadataInit(&combined, _metadata.timestamp, eaIndex);
     ScreenCharArray *result = [[ScreenCharArray alloc] initWithLine:copy
@@ -368,6 +392,29 @@ static BOOL ScreenCharIsNull(screen_char_t c) {
     memmove(&screenChars[_length], &eol, sizeof(eol));
     _line = _data.bytes;
     _shouldFreeOnRelease = NO;
+}
+
+const BOOL ScreenCharIsNullOrWhitespace(const screen_char_t c) {
+    if (ScreenCharIsNull(c)) {
+        return YES;
+    }
+    if (c.image) {
+        return NO;
+    }
+    if (!c.complexChar && c.code == TAB_FILLER) {
+        return YES;
+    }
+    NSString *s = ScreenCharToStr(&c);;
+    return [s rangeOfCharacterFromSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]].length > 0;
+}
+
+- (NSInteger)lengthExcludingTrailingWhitespaceAndNulls {
+    NSInteger length = self.length;
+    const screen_char_t *line = self.line;
+    while (length > 0 && ScreenCharIsNullOrWhitespace(line[length - 1])) {
+        length -= 1;
+    }
+    return length;
 }
 
 @end
