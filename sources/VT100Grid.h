@@ -129,6 +129,8 @@
 // How many used cells exist in the range of lines?
 - (NSInteger)numberOfCellsUsedInRange:(VT100GridRange)range;
 
+- (BOOL)lineIsEmpty:(int)n;
+
 @end
 
 @interface VT100Grid : NSObject<VT100GridReading>

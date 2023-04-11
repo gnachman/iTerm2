@@ -209,7 +209,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 // This is like setPromptStartLine: but with lots of side effects that are desirable for the
 // regular shell integration flow.
-- (void)promptDidStartAt:(VT100GridAbsCoord)coord;
+- (void)promptDidStartAt:(VT100GridAbsCoord)coord wasInCommand:(BOOL)wasInCommand;
 
 - (void)setPromptStartLine:(int)line;
 - (void)didUpdatePromptLocation;

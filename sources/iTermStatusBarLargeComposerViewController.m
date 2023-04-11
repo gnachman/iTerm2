@@ -147,7 +147,7 @@
 }
 
 - (NSString *)lineBeforeCursor {
-    NSString *content = self.textView.string;
+    NSString *content = self.textView.stringExcludingPrefix;
     const NSRange selectedRange = [self.textView selectedRange];
     if (selectedRange.location > content.length) {
         return @"";

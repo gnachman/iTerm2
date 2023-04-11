@@ -1526,10 +1526,11 @@
     }];
 }
 
-- (void)terminalPromptDidStart {
+- (void)terminalPromptDidStart:(BOOL)wasInCommand {
     DLog(@"begin");
     [self promptDidStartAt:VT100GridAbsCoordMake(self.currentGrid.cursor.x,
-                                                 self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)];
+                                                 self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)
+              wasInCommand:wasInCommand];
 }
 
 - (NSArray<NSNumber *> *)terminalTabStops {

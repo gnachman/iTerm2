@@ -2367,9 +2367,18 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
-- (void)promptDidStartAt:(VT100GridAbsCoord)coord {
+- (void)promptDidStartAt:(VT100GridAbsCoord)coord wasInCommand:(BOOL)wasInCommand {
     DLog(@"FinalTerm: promptDidStartAt");
     if (coord.x > 0 && self.config.shouldPlacePromptAtFirstColumn) {
+        [self appendCarriageReturnLineFeed];
+    }
+    if (!wasInCommand) {
+        // The shell may opt to redraw the prompt & command before running it, meaning you
+        // get final term codes: ABABCD. Don't want to add a new linefeed if we don't need
+        // to.
+        if (![self.currentGrid lineIsEmpty:self.currentGrid.cursor.y]) {
+            [self appendCarriageReturnLineFeed];
+        }
         [self appendCarriageReturnLineFeed];
     }
     self.shellIntegrationInstalled = YES;
@@ -4669,7 +4678,7 @@ launchCoprocessWithCommand:(NSString *)command
     }
     // Use 0 here to avoid the screen inserting a newline.
     range.start.x = 0;
-    [self promptDidStartAt:range.start];
+    [self promptDidStartAt:range.start wasInCommand:NO];
     self.fakePromptDetectedAbsLine = range.start.y;
 
     [self setCoordinateOfCommandStart:range.end];

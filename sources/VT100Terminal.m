@@ -4312,16 +4312,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             // Sequence marking the start of the command prompt (FTCS_PROMPT_START)
             self.softAlternateScreenMode = NO;  // We can reasonably assume alternate screen mode has ended if there's a prompt. Could be ssh dying, etc.
             self.dirty = YES;
-#warning do not submit!
-            if (!inCommand_) {
-                // The shell may opt to redraw the prompt & command before running it, meaning you
-                // get final term codes: ABABCD. Don't want to add a new linefeed if we don't need
-                // to.
-                [_delegate terminalLineFeed];
-            }
+            const BOOL wasInCommand = inCommand_;
             inCommand_ = NO;  // Issue 7954
             self.alternateScrollMode = NO;  // Avoid leaving it on when ssh dies.
-            [_delegate terminalPromptDidStart];
+            [_delegate terminalPromptDidStart:wasInCommand];
             break;
 
         case 'B':

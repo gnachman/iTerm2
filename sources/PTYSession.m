@@ -5755,7 +5755,35 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     DLog(@"Reveal auto composer");
     self.composerManager.isAutoComposer = YES;
+    NSString *prompt = [self promptText] ?: @"";
     [self.composerManager reveal];
+    [self.composerManager setPrefix:prompt];
+}
+
+- (NSString *)promptText {
+    if (!self.isAtShellPrompt) {
+        return nil;
+    }
+    id<VT100ScreenMarkReading> mark = _screen.lastPromptMark;
+    if (!mark) {
+        return nil;
+    }
+    const VT100GridAbsCoordRange absRange = mark.promptRange;
+    iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
+    const VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, _screen.totalScrollbackOverflow);
+    const VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range, 0, 0);
+    NSString *text = [extractor contentInRange:windowedRange
+                             attributeProvider:nil
+                                    nullPolicy:kiTermTextExtractorNullPolicyFromLastToEnd
+                                           pad:NO
+                            includeLastNewline:NO
+                        trimTrailingWhitespace:YES
+                                  cappedAtSize:_screen.width
+                                  truncateTail:YES
+                             continuationChars:nil
+                                        coords:nil];
+    text = [text stringByTrimmingTrailingWhitespace];
+    return [text stringByAppendingString:@" "];
 }
 
 - (void)terminalFileShouldStop:(NSNotification *)notification {
@@ -16605,7 +16633,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         const CGFloat lineHeight = _textview.lineHeight;
         const int desiredLines = ceil(desiredHeight / lineHeight);
         const int linesOfHeight = MIN(actualLinesFree, desiredLines);
-        const int gridOffsetInRows = _screen.height - linesOfHeight - 1;
+        const int gridOffsetInRows = _screen.height - linesOfHeight;
         const CGFloat titleBarHeight = (_view.showTitle ? SessionView.titleHeight : 0);
         height = linesOfHeight * lineHeight;
         const CGFloat gridOffsetInPoints = gridOffsetInRows * lineHeight;

@@ -385,6 +385,18 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
     return numberOfLinesUsed;
 }
 
+- (BOOL)lineIsEmpty:(int)n {
+    const screen_char_t *line = [self screenCharsAtLineNumber:n];
+    for (int i = 0; i < size_.width; i++) {
+        if (line[i].complexChar ||
+            line[i].image ||
+            line[i].code) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 - (int)numberOfLinesUsed {
     return MAX(MIN(size_.height, cursor_.y + 1), [self numberOfNonEmptyLinesIncludingWhitespaceAsEmpty:NO]);
 }

@@ -403,7 +403,13 @@ extension MultiCursorTextView {
         safelySetSelectedRanges(newCursors)
     }
 
-    private func safelySetSelectedRanges(_ ranges: [NSRange]) {
+    @objc
+    func valid(ranges: [NSRange]) -> [NSRange] {
+        return ranges
+    }
+
+    private func safelySetSelectedRanges(_ proposedRanges: [NSRange]) {
+        let ranges = valid(ranges: proposedRanges)
         if ranges.isEmpty {
             _multiCursorSelectedRanges = nil
             selectedRanges = [NSValue(range: selectedRange())]
@@ -613,17 +619,6 @@ extension MultiCursorTextView {
                                      options: [.byParagraphs, .reverse]) { maybeString, paragraphRange, enclosingRange, stop in
             result.append(paragraphRange.location)
             stop.pointee = ObjCBool(paragraphRange.location <= range.location)
-        }
-        return result
-    }
-
-    private func glyphIndexOfStartOfParagraphContainingGlyphIndex(_ index: Int) -> Int {
-        let nsstring = textStorage!.string as NSString
-        var result: Int = index
-        nsstring.enumerateSubstrings(in: NSRange(location: 0, length: min(nsstring.length, index + 1)),
-                                     options: [.byParagraphs, .reverse]) { maybeString, paragraphRange, enclosingRange, stop in
-            result = paragraphRange.location
-            stop.pointee = true
         }
         return result
     }

@@ -412,7 +412,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalSetHighlightCursorLine:(BOOL)highlight;
 
 // FinalTerm features
-- (void)terminalPromptDidStart;
+- (void)terminalPromptDidStart:(BOOL)wasInCommand;
 - (void)terminalCommandDidStart;
 - (void)terminalCommandDidEnd;
 - (void)terminalSemanticTextDidStartOfType:(VT100TerminalSemanticTextType)type;

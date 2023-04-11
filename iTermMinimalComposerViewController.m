@@ -86,7 +86,12 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
 
 - (void)setTextColor:(NSColor *)textColor cursorColor:(nonnull NSColor *)cursorColor {
     _largeComposerViewController.textView.textColor = textColor;
+    _largeComposerViewController.textView.prefixColor = textColor;
     _largeComposerViewController.textView.insertionPointColor = cursorColor;
+}
+
+- (void)setPrefix:(NSString *)prefix {
+    _largeComposerViewController.textView.prefix = prefix;
 }
 
 - (BOOL)composerIsFirstResponder {
@@ -138,7 +143,7 @@ workingDirectory:(NSString *)pwd
     return MAX(self.minHeight, maximumHeight);
 }
 
-- (NSUInteger)numberOfLinesInTextView:(NSTextView *)textView {
+- (NSUInteger)numberOfLinesInTextView:(iTermComposerTextView *)textView {
     NSLayoutManager *layoutManager = [textView layoutManager];
     const NSUInteger numberOfGlyphs = [layoutManager numberOfGlyphs];
     const NSRange glyphRange = NSMakeRange(0, numberOfGlyphs);
@@ -153,7 +158,7 @@ workingDirectory:(NSString *)pwd
             break;
         }
     }
-    if ([textView.textStorage.string hasSuffix:@"\n"]) {
+    if ([textView.stringExcludingPrefix hasSuffix:@"\n"]) {
         numberOfLines += 1;
     }
     return numberOfLines;
@@ -161,7 +166,7 @@ workingDirectory:(NSString *)pwd
 
 - (CGFloat)desiredHeight {
     if (self.isAutoComposer) {
-        NSTextView *textView = _largeComposerViewController.textView;
+        iTermComposerTextView *textView = _largeComposerViewController.textView;
         const NSUInteger numberOfLines = [self numberOfLinesInTextView:textView];
         const CGFloat lineHeight = [self.delegate minimalComposerLineHeight:self];
         return MAX(1, numberOfLines) * lineHeight;
@@ -193,18 +198,18 @@ workingDirectory:(NSString *)pwd
 }
 
 - (NSString *)stringValue {
-    return _largeComposerViewController.textView.string;
+    return _largeComposerViewController.textView.stringExcludingPrefix;
 }
 
 - (void)setStringValue:(NSString *)stringValue {
-    _largeComposerViewController.textView.string = stringValue;
+    _largeComposerViewController.textView.stringExcludingPrefix = stringValue;
     [_largeComposerViewController.textView it_scrollCursorToVisible];
 }
 
 #pragma mark - iTermComposerTextViewDelegate
 
 - (void)composerTextViewDidFinishWithCancel:(BOOL)cancel {
-    NSString *string = cancel ? @"" : _largeComposerViewController.textView.string;
+    NSString *string = cancel ? @"" : _largeComposerViewController.textView.stringExcludingPrefix;
     [self.delegate minimalComposer:self sendCommand:string ?: @"" dismiss:YES];
 }
 
