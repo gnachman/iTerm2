@@ -353,6 +353,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 @property (nonatomic, readonly) BOOL beginsWithWhitespace;
 @property (nonatomic, readonly) BOOL endsWithWhitespace;
 
+- (NSArray<NSString *> *)lastWords:(NSUInteger)count;
 @end
 
 @interface NSMutableString (iTerm)

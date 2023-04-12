@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)makeFirstResponder;
 - (void)deselect;
+- (void)insertText:(NSString *)text;
 
 @end
 

@@ -277,6 +277,12 @@ class ComposerTextView: MultiCursorTextView {
             textView.composerDelegate?.composerTextViewOpenHistory()
             return true
         }),
+        // C-u
+        Action(modifiers: [.control], characters: "\u{15}", closure: { textView, event in
+            textView.selectAll(nil)
+            textView.delete(nil)
+            return true
+        })
     ]
 
     private var actionsForCurrentMode: [Action] {

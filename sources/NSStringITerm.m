@@ -2405,6 +2405,42 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return [[NSCharacterSet whitespaceAndNewlineCharacterSet] longCharacterIsMember:[self longCharacterAtIndex:i]];
 }
 
+- (NSRange)rangeOfLastWordFromIndex:(NSUInteger)index {
+    const NSUInteger length = self.length;
+
+    NSCharacterSet *whitespaceCharacterSet = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    const NSRange searchRange = NSMakeRange(0, index);
+    const NSRange nonWhitespaceRange = [self rangeOfCharacterFromSet:whitespaceCharacterSet.invertedSet
+                                                             options:NSBackwardsSearch
+                                                               range:searchRange];
+    if (nonWhitespaceRange.location == NSNotFound) {
+        return NSMakeRange(NSNotFound, 0);
+    }
+
+    const NSRange whitespaceRange = [self rangeOfCharacterFromSet:whitespaceCharacterSet
+                                                           options:NSBackwardsSearch
+                                                             range:NSMakeRange(0, nonWhitespaceRange.location)];
+    const NSUInteger startIndex = whitespaceRange.location == NSNotFound ? 0 : NSMaxRange(whitespaceRange);
+    const NSUInteger endIndex = NSMaxRange(nonWhitespaceRange);
+    return NSMakeRange(startIndex, endIndex - startIndex);
+}
+
+- (NSArray<NSString *> *)lastWords:(NSUInteger)count {
+    NSMutableArray<NSString *> *words = [NSMutableArray arrayWithCapacity:count];
+    NSUInteger index = [self length];
+
+    while ([words count] < count && index > 0) {
+        const NSRange range = [self rangeOfLastWordFromIndex:index];
+        NSString *word = [self substringWithRange:range];
+        if (word.length > 0) {
+            [words insertObject:word atIndex:0];
+        }
+        index = range.location;
+    }
+
+    return words;
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

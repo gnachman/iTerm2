@@ -58,6 +58,7 @@ workingDirectory:(NSString *)pwd
 - (void)setPrefix:(NSMutableAttributedString *)prefix;
 
 - (BOOL)composerIsFirstResponder;
+- (void)insertText:(NSString *)text;
 
 @end
 

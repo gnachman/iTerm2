@@ -34,6 +34,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)makeFirstResponder;
 - (void)setHost:(id<VT100RemoteHostReading>)host;
 - (void)deselect;
+- (void)insertText:(NSString *)text;
 
 @end
 

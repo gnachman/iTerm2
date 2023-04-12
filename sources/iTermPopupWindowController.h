@@ -30,7 +30,9 @@
 - (void)popupWillClose:(iTermPopupWindowController *)popup;
 - (BOOL)popupWindowIsInFloatingHotkeyWindow;
 - (void)popupIsSearching:(BOOL)searching;
-
+- (BOOL)isComposerOpen;
+// If the cursor is preceded by whitespace the last word will be empty. Words go in reverse order.
+- (NSArray<NSString *> *)wordsBeforeCursorInComposer:(int)count;
 @end
 
 @interface iTermPopupWindowController : NSWindowController

@@ -222,6 +222,10 @@ workingDirectory:(NSString *)pwd
     [_largeComposerViewController.textView it_scrollCursorToVisible];
 }
 
+- (void)insertText:(NSString *)text {
+    [_largeComposerViewController.textView insertText:text];
+}
+
 #pragma mark - iTermComposerTextViewDelegate
 
 - (void)composerTextViewDidFinishWithCancel:(BOOL)cancel {

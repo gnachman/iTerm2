@@ -14030,6 +14030,20 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 #pragma mark - PopupDelegate
 
+- (BOOL)isComposerOpen {
+    return [_composerManager dropDownComposerViewIsVisible];
+}
+
+// If the cursor is preceded by whitespace the last word will be empty. Words go in reverse order.
+- (NSArray<NSString *> *)wordsBeforeCursorInComposer:(int)count {
+    NSString *text = _composerManager.contents ?: @"";
+    NSArray<NSString *> *words = [[text lastWords:count] reversed];
+    if ([text endsWithWhitespace]) {
+        return [words arrayByAddingObject:@""];
+    }
+    return words;
+}
+
 - (void)popupIsSearching:(BOOL)searching {
     _textview.showSearchingCursor = searching;
     [_textview setNeedsDisplayInRect:_textview.cursorFrame];
@@ -14519,6 +14533,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)popupInsertText:(NSString *)string {
+    if (_composerManager.dropDownComposerViewIsVisible) {
+        [_composerManager insertText:string];
+        return;
+    }
     [self insertText:string];
 }
 

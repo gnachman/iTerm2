@@ -61,6 +61,7 @@ previousFrame:(NSRect)previousFrame;
 @property (nonatomic) BOOL isAutoComposer;
 @property (nonatomic, readonly) CGFloat desiredHeight;
 @property (nonatomic, readonly) NSRect dropDownFrame;
+@property (nonatomic, readonly) NSString *contents;
 
 // Only used by dropdown composer
 @property (nonatomic) BOOL isSeparatorVisible;
@@ -81,6 +82,7 @@ previousFrame:(NSRect)previousFrame;
 - (void)makeDropDownComposerFirstResponder;
 - (void)updateFont;
 - (void)setPrefix:(NSMutableAttributedString *)prefix;
+- (void)insertText:(NSString *)string;
 
 @end
 

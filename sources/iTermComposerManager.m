@@ -212,6 +212,13 @@
     return _component.stringValue.length == 0;
 }
 
+- (NSString *)contents {
+    if (_minimalViewController) {
+        return _minimalViewController.stringValue;
+    }
+    return _component.stringValue;
+}
+
 #pragma mark - iTermStatusBarComposerComponentDelegate
 
 - (void)statusBarComposerComponentDidEndEditing:(iTermStatusBarComposerComponent *)component {
@@ -385,6 +392,14 @@
 
 - (void)setPrefix:(NSMutableAttributedString *)prefix {
     [_minimalViewController setPrefix:prefix];
+}
+
+- (void)insertText:(NSString *)string {
+    if (_minimalViewController) {
+        [_minimalViewController insertText:string];
+    } else {
+        [_component insertText:string];
+    }
 }
 
 @end
