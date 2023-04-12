@@ -2996,13 +2996,19 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                                                     self.currentPromptRange.start.y,
                                                                     commandStartLocation.x,
                                                                     commandStartLocation.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
-    NSArray<ScreenCharArray *> *promptText = [[self take:promptRange] filteredArrayUsingBlock:^BOOL(ScreenCharArray *sca) {
-        return [[sca.stringValue stringByTrimmingTrailingWhitespace] length] > 0;
-    }];
-    self.currentPromptRange = VT100GridAbsCoordRangeMake(0,
-                                                         self.currentPromptRange.start.y,
-                                                         0,
-                                                         self.currentPromptRange.start.y);
+    NSArray<ScreenCharArray *> *promptText = nil;
+    if (self.config.desiredComposerRows != nil) {
+        // Move prompt into mark for auto composer.
+        promptText = [[self take:promptRange] filteredArrayUsingBlock:^BOOL(ScreenCharArray *sca) {
+            return [[sca.stringValue stringByTrimmingTrailingWhitespace] length] > 0;
+        }];
+        self.currentPromptRange = VT100GridAbsCoordRangeMake(0,
+                                                             self.currentPromptRange.start.y,
+                                                             0,
+                                                             self.currentPromptRange.start.y);
+    } else {
+        self.currentPromptRange = promptRange;
+    }
     [self commandDidStartAtScreenCoord:commandStartLocation];
     const int line = self.numberOfScrollbackLines + commandStartLocation.y;
     id<VT100ScreenMarkReading> mark = [[self updatePromptMarkRangesForPromptEndingOnLine:line

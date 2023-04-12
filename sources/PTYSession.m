@@ -5728,7 +5728,18 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)autoComposerDidChange:(NSNotification *)notification {
-    [self revealAutoComposerIfNeeded];
+    if ([iTermPreferences boolForKey:kPreferenceAutoComposer]) {
+        [self revealAutoComposerIfNeeded];
+    } else {
+        NSString *command = [[[_composerManager contents] stringByTrimmingTrailingWhitespace] stringByReplacingOccurrencesOfString:@"\n" withString:@"; "];
+
+        [self appendPromptFromAutoComposer:nil];
+        self.composerManager.isAutoComposer = NO;
+        [self.composerManager dismissAnimated:NO];
+        if (command.length) {
+            [self sendCommand:command];
+        }
+    }
 }
 
 - (void)revealAutoComposerIfNeeded {
@@ -16740,6 +16751,35 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self sendCommand:command];
 }
 
+- (BOOL)appendPromptFromAutoComposer:(void (^)(void))completion {
+    id<VT100ScreenMarkReading> mark = [_screen lastPromptMark];
+    if (!mark.promptText) {
+        return NO;
+    }
+    NSArray<ScreenCharArray *> *promptText = [mark.promptText copy];
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        BOOL first = YES;
+        for (ScreenCharArray *sca in promptText) {
+            if (!first) {
+                [mutableState appendCarriageReturnLineFeed];
+            }
+            [mutableState.currentGrid setCursorX:0];
+            [mutableState appendScreenCharArrayAtCursor:sca.line
+                                                 length:sca.lengthExcludingTrailingWhitespaceAndNulls
+                                 externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(sca.metadata)];
+            [mutableState appendStringAtCursor:@" "];
+            first = NO;
+        }
+        [promptText release];
+        if (completion) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completion();
+            });
+        }
+    }];
+    return YES;
+}
+
 - (void)sendCommand:(NSString *)command {
     if (_screen.commandRange.start.x < 0) {
         id<VT100RemoteHostReading> host = [self currentHost] ?: [VT100RemoteHost localhost];
@@ -16748,29 +16788,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                                      inDirectory:[_screen workingDirectoryOnLine:_screen.commandRange.start.y]
                                                         withMark:nil];
     }
+    __weak __typeof(self) weakSelf = self;
     if ([self haveAutoComposer]) {
-        id<VT100ScreenMarkReading> mark = [_screen lastPromptMark];
-        if (mark.promptText) {
-            NSArray<ScreenCharArray *> *promptText = [mark.promptText copy];
-            __weak __typeof(self) weakSelf = self;
-            [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-                BOOL first = YES;
-                for (ScreenCharArray *sca in promptText) {
-                    if (!first) {
-                        [mutableState appendCarriageReturnLineFeed];
-                    }
-                    [mutableState.currentGrid setCursorX:0];
-                    [mutableState appendScreenCharArrayAtCursor:sca.line
-                                                         length:sca.lengthExcludingTrailingWhitespaceAndNulls
-                                         externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(sca.metadata)];
-                    [mutableState appendStringAtCursor:@" "];
-                    first = NO;
-                }
-                [promptText release];
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [weakSelf reallySendCommand:command];
-                });
-            }];
+        const BOOL done = [self appendPromptFromAutoComposer:^{
+            [weakSelf reallySendCommand:command];
+        }];
+        if (done) {
             return;
         }
     }
