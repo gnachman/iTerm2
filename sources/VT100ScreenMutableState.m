@@ -938,21 +938,15 @@ static _Atomic int gPerformingJoinedBlock;
     if (line < 0 || line >= self.height || self.terminalSoftAlternateScreenMode) {
         return self.height - self.currentGrid.cursor.y - 1;
     }
-    int numberOfLinesToClawBack = MIN(0, line - self.currentGrid.cursor.y) + 1;
+    const int delta = -(MIN(0, line - self.currentGrid.cursor.y) + 1);
     const int cursorX = self.currentGrid.cursor.x;
-    if (numberOfLinesToClawBack < 0) {
-        const int delta = -numberOfLinesToClawBack;
+    if (delta > 0) {
         for (int i = 0; i < delta; i++) {
             [self incrementOverflowBy:
              [self.currentGrid scrollWholeScreenUpIntoLineBuffer:self.linebuffer unlimitedScrollback:self.unlimitedScrollback]];
             [self.currentGrid setCursor:VT100GridCoordMake(cursorX, self.currentGrid.cursor.y - 1)];
         }
         return self.height - self.currentGrid.cursor.y;
-    } else if (numberOfLinesToClawBack > 0) {
-        const int count = [self.currentGrid scrollWholeScreenDownByLines:numberOfLinesToClawBack
-                                                   poppingFromLineBuffer:self.linebuffer];
-        const int newCursorY = self.currentGrid.cursor.y + count;
-        [self.currentGrid setCursor:VT100GridCoordMake(cursorX, newCursorY)];
     }
     return self.height - self.currentGrid.cursor.y - 1;
 }

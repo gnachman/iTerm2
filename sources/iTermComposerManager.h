@@ -62,6 +62,7 @@ previousFrame:(NSRect)previousFrame;
 @property (nonatomic, readonly) CGFloat desiredHeight;
 @property (nonatomic, readonly) NSRect dropDownFrame;
 @property (nonatomic, readonly) NSString *contents;
+@property (nonatomic) BOOL temporarilyHidden;
 
 // Only used by dropdown composer
 @property (nonatomic) BOOL isSeparatorVisible;

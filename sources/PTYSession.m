@@ -15009,11 +15009,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (BOOL)textViewIsAutoComposerOpen {
-    return [_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer && !self.copyMode;
+    return [_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer && !_composerManager.temporarilyHidden;
 }
 
 - (VT100GridRange)textViewLinesToSuppressDrawing {
-    if ([_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer) {
+    if ([_composerManager dropDownComposerViewIsVisible] && _composerManager.isAutoComposer && !_composerManager.temporarilyHidden) {
         const NSRect rect = _composerManager.dropDownFrame;
         const NSRect textViewRect = [_textview convertRect:rect fromView:_view];
         const VT100GridCoord topLeft = [_textview coordForPoint:textViewRect.origin allowRightMarginOverflow:NO];
@@ -16155,6 +16155,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             [mutableState scheduleTokenExecution];
         }];
     }
+    [_composerManager setTemporarilyHidden:handler.enabled];
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         mutableState.copyMode = enabled;
     }];

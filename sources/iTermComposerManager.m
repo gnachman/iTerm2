@@ -181,6 +181,7 @@
     }
     [_minimalViewController updateFrame];
     [_minimalViewController makeFirstResponder];
+    _minimalViewController.view.hidden = _temporarilyHidden;
     _dropDownComposerViewIsVisible = YES;
     _dismissCanceled = YES;
     [_delegate composerManagerDidDisplayMinimalView:self];
@@ -400,6 +401,11 @@
     } else {
         [_component insertText:string];
     }
+}
+
+- (void)setTemporarilyHidden:(BOOL)temporarilyHidden {
+    _temporarilyHidden = temporarilyHidden;
+    _minimalViewController.view.hidden = temporarilyHidden;
 }
 
 @end
