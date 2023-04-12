@@ -5755,12 +5755,17 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     DLog(@"Reveal auto composer");
     self.composerManager.isAutoComposer = YES;
-    NSString *prompt = [self promptText] ?: @"";
+    NSMutableAttributedString *prompt = [self promptText] ?: [NSMutableAttributedString attributedStringWithString:@"" attributes:@{}];
+    const CGFloat kern = [NSMutableAttributedString kernForString:@"W"
+                                                      toHaveWidth:_textview.charWidth
+                                                         withFont:_textview.fontTable.asciiFont.font];
+    [prompt addAttributes:@{ NSKernAttributeName: @(kern) }
+                    range:NSMakeRange(0, prompt.length)];
     [self.composerManager reveal];
     [self.composerManager setPrefix:prompt];
 }
 
-- (NSString *)promptText {
+- (NSMutableAttributedString *)promptText {
     if (!self.isAtShellPrompt) {
         return nil;
     }
@@ -5768,27 +5773,38 @@ ITERM_WEAKLY_REFERENCEABLE
     if (!mark) {
         return nil;
     }
+    NSDictionary *defaultAttributes = [_textview attributeProvider]((screen_char_t){}, nil);
+    NSAttributedString *space = [NSAttributedString attributedStringWithString:@" "
+                                                                      attributes:defaultAttributes];
     if (mark.promptText) {
-        return [[[mark.promptText mapWithBlock:^id _Nullable(ScreenCharArray *sca) {
-            return sca.stringValue;
-        }] componentsJoinedByString:@"\n"] stringByAppendingString:@" "];
+        NSAttributedString *newline = [NSAttributedString attributedStringWithString:@"\n"
+                                                                          attributes:defaultAttributes];
+
+        NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
+        NSAttributedString *body = [[mark.promptText mapWithBlock:^id _Nullable(ScreenCharArray *sca) {
+            return [sca attributedStringValueWithAttributeProvider:_textview.attributeProvider];
+        }] attributedComponentsJoinedByAttributedString:newline];
+        [result appendAttributedString:body];
+        [result appendAttributedString:space];
+        return result;
     }
     const VT100GridAbsCoordRange absRange = mark.promptRange;
     iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
     const VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, _screen.totalScrollbackOverflow);
     const VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range, 0, 0);
-    NSString *text = [extractor contentInRange:windowedRange
-                             attributeProvider:nil
-                                    nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
-                                           pad:NO
-                            includeLastNewline:NO
-                        trimTrailingWhitespace:YES
-                                  cappedAtSize:_screen.width
-                                  truncateTail:YES
-                             continuationChars:nil
-                                        coords:nil];
-    text = [text stringByTrimmingTrailingWhitespace];
-    return [text stringByAppendingString:@" "];
+    NSMutableAttributedString *text = [extractor contentInRange:windowedRange
+                                              attributeProvider:[_textview attributeProvider]
+                                                     nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
+                                                            pad:NO
+                                             includeLastNewline:NO
+                                         trimTrailingWhitespace:YES
+                                                   cappedAtSize:_screen.width
+                                                   truncateTail:YES
+                                              continuationChars:nil
+                                                         coords:nil];
+    [text trimTrailingWhitespace];
+    [text appendAttributedString:space];
+    return text;
 }
 
 - (void)terminalFileShouldStop:(NSNotification *)notification {

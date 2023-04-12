@@ -6,6 +6,7 @@
 //
 
 #import "ScreenCharArray.h"
+#import "NSMutableAttributedString+iTerm.h"
 
 static NSString *const ScreenCharArrayKeyData = @"data";
 static NSString *const ScreenCharArrayKeyEOL = @"eol";
@@ -188,6 +189,34 @@ static NSString *const ScreenCharArrayKeyContinuation = @"continuation";
             continue;
         }
         [result appendString:ScreenCharToStr(&c)];
+    }
+    return result;
+}
+
+- (NSAttributedString *)attributedStringValueWithAttributeProvider:(NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider {
+    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] init];
+    const screen_char_t *line = self.line;
+    id<iTermExternalAttributeIndexReading> eaindex = iTermImmutableMetadataGetExternalAttributesIndex(_metadata);
+    for (int i = 0; i < self.length; i++) {
+        const screen_char_t c = line[i];
+        if (c.image) {
+            continue;
+        }
+        NSString *string = nil;
+        if (!c.complexChar) {
+            if (c.code == DWC_SKIP || c.code == DWC_RIGHT) {
+                continue;
+            }
+            if (!c.code) {
+                // Stop on the first null.
+                break;
+            }
+            string = [NSString stringWithLongCharacter:c.code];
+        } else {
+            string = ScreenCharToStr(&c);
+        }
+        [result iterm_appendString:string
+                    withAttributes:attributeProvider(c, eaindex[i])];
     }
     return result;
 }

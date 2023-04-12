@@ -12,6 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 extern NSAttributedStringKey iTermReplacementBaseCharacterAttributeName;
 
+@class NSFont;
+
 @interface NSMutableAttributedString (iTerm)
 
 - (void)iterm_appendString:(NSString *)string;
@@ -29,6 +31,8 @@ extern NSAttributedStringKey iTermReplacementBaseCharacterAttributeName;
 - (NSArray *)attributedComponentsSeparatedByString:(NSString *)separator;
 - (CGFloat)heightForWidth:(CGFloat)maxWidth;
 - (NSAttributedString *)attributedStringByRemovingColor;
++ (CGFloat)kernForString:(NSString *)string toHaveWidth:(CGFloat)width withFont:(NSFont *)font;
+
 
 @end
 

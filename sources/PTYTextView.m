@@ -2907,6 +2907,12 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return [self contentWithAttributes:NO timestamps:NO];
 }
 
+- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider {
+    return [[^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
+        return [self charAttributes:theChar externalAttributes:ea];
+    } copy] autorelease];
+}
+
 - (id)contentWithAttributes:(BOOL)attributes timestamps:(BOOL)timestamps {
     iTermTextExtractor *extractor = [iTermTextExtractor textExtractorWithDataSource:_dataSource];
     extractor.addTimestamps = timestamps;
@@ -2916,9 +2922,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                                            [_dataSource numberOfLines] - 1);
     NSDictionary *(^attributeProvider)(screen_char_t, iTermExternalAttribute *) = nil;
     if (attributes) {
-        attributeProvider =^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-            return [self charAttributes:theChar externalAttributes:ea];
-        };
+        attributeProvider = [self attributeProvider];
     }
     return [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
                    attributeProvider:attributeProvider

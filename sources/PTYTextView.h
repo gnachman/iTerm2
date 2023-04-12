@@ -698,6 +698,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult;
 - (void)setAlphaValue:(CGFloat)alphaValue NS_UNAVAILABLE;
 - (NSRect)rectForCoord:(VT100GridCoord)coord;
 - (void)updateSubviewFrames;
+- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider;
 
 #pragma mark - Testing only
 

@@ -16,6 +16,16 @@ NSAttributedStringKey iTermReplacementBaseCharacterAttributeName = @"iTermReplac
 
 @implementation NSMutableAttributedString (iTerm)
 
++ (CGFloat)kernForString:(NSString *)string
+             toHaveWidth:(CGFloat)desiredWidth
+                withFont:(NSFont *)font {
+    const CGFloat actualWidth = [string sizeWithAttributes:@{NSFontAttributeName: font}].width;
+    if (actualWidth <= 0 || desiredWidth <= 0) {
+        return 0;
+    }
+    return desiredWidth - actualWidth;
+}
+
 - (void)iterm_appendString:(NSString *)string {
     NSDictionary *attributes;
     if (self.length > 0) {

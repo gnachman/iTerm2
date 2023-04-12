@@ -96,7 +96,7 @@ static NSString *const iTermMinimalComposerViewHeightUserDefaultsKey = @"Compose
     _largeComposerViewController.textView.insertionPointColor = cursorColor;
 }
 
-- (void)setPrefix:(NSString *)prefix {
+- (void)setPrefix:(NSMutableAttributedString *)prefix {
     _largeComposerViewController.textView.prefix = prefix;
 }
 

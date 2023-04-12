@@ -62,8 +62,11 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     @objc
-    var prefix: String? {
+    var prefix: NSMutableAttributedString? {
         didSet {
+            if let prefix {
+                prefix.addAttribute(.promptKey, value: true, range: prefix.wholeRange)
+            }
             updatePrefix()
         }
     }
@@ -71,7 +74,7 @@ class ComposerTextView: MultiCursorTextView {
     @objc
     var stringExcludingPrefix: String {
         get {
-            return String(string.dropFirst(prefix?.count ?? 0))
+            return String(string.dropFirst(prefix?.string.count ?? 0))
         }
         set {
             string = newValue
@@ -104,14 +107,8 @@ class ComposerTextView: MultiCursorTextView {
             }
         })
         if !done, let prefix {
-            let attrs: [NSAttributedString.Key: Any] = [
-                .foregroundColor: self.prefixColor ?? self.justTextColor,
-                .font: self.font ?? NSFont.systemFont(ofSize: NSFont.systemFontSize),
-                .promptKey: true
-            ]
             actions.append({
-                textStorage.insert(NSAttributedString(string: prefix, attributes: attrs),
-                                   at: 0)
+                textStorage.insert(prefix, at: 0)
             })
         }
         for action in actions {
@@ -472,7 +469,7 @@ class ComposerTextView: MultiCursorTextView {
         guard let textStorage else {
             return nil
         }
-        if let prefixLength = prefix?.count, prefixLength > 0 {
+        if let prefixLength = prefix?.string.count, prefixLength > 0 {
             if var (range, string) = withoutPrefix({
                 return characterRangeOfCommand(atCharacterIndex: unsafeIndex - prefixLength)
             }) {
@@ -652,7 +649,7 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     private var prefixLength: Int {
-        return prefix?.utf16.count ?? 0
+        return prefix?.string.utf16.count ?? 0
     }
 
     private var prefixRange: NSRange {

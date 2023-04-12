@@ -383,7 +383,7 @@
     [self updateFrame];
 }
 
-- (void)setPrefix:(NSString *)prefix {
+- (void)setPrefix:(NSMutableAttributedString *)prefix {
     [_minimalViewController setPrefix:prefix];
 }
 

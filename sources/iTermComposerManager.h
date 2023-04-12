@@ -80,7 +80,7 @@ previousFrame:(NSRect)previousFrame;
 - (void)updateFrame;
 - (void)makeDropDownComposerFirstResponder;
 - (void)updateFont;
-- (void)setPrefix:(NSString *)prefix;
+- (void)setPrefix:(NSMutableAttributedString *)prefix;
 
 @end
 
