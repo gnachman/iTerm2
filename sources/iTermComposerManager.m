@@ -409,4 +409,10 @@
     _minimalViewController.view.hidden = temporarilyHidden;
 }
 
+- (NSRect)cursorFrameInScreenCoordinates {
+    if (_minimalViewController) {
+        return _minimalViewController.cursorFrameInScreenCoordinates;
+    }
+    return _component.cursorFrameInScreenCoordinates;
+}
 @end

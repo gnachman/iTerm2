@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface iTermStatusBarComposerComponent : iTermStatusBarBaseComponent
 @property (nonatomic, weak) id<iTermStatusBarComposerComponentDelegate> composerDelegate;
 @property (nonatomic, copy) NSString *stringValue;
+@property (nonatomic, readonly) NSRect cursorFrameInScreenCoordinates;
 
 - (void)makeFirstResponder;
 - (void)deselect;

@@ -82,6 +82,18 @@ class ComposerTextView: MultiCursorTextView {
         }
     }
 
+    @objc
+    var selectedRangeExcludingPrefix: NSRange {
+        let range = selectedRange()
+        if range.location == NSNotFound {
+            return range
+        }
+        guard let prefixLength = prefix?.string.count else {
+            return range
+        }
+        return range.shiftedDown(by: prefixLength)
+    }
+
     private func updatePrefix() {
         guard let textStorage else {
             return

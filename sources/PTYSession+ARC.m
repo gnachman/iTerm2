@@ -13,6 +13,7 @@
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermAnnouncementViewController.h"
+#import "iTermComposerManager.h"
 #import "iTermExpect.h"
 #import "iTermExpressionEvaluator.h"
 #import "iTermMultiServerJobManager.h"
@@ -220,6 +221,9 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
 }
 
 - (NSRect)popupWindowOriginRectInScreenCoords {
+    if (self.haveAutoComposer) {
+        return _composerManager.cursorFrameInScreenCoordinates;
+    }
     const int cx = [self.screen cursorX] - 1;
     const int cy = [self.screen cursorY];
     const CGFloat charWidth = [self.textview charWidth];

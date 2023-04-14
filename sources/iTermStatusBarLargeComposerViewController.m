@@ -207,8 +207,8 @@
     }
     if ([[iTermShellHistoryController sharedInstance] commandHistoryHasEverBeenUsed]) {
         NSString *prefix;
-        NSString *content = self.textView.string;
-        const NSRange selectedRange = [self.textView selectedRange];
+        NSString *content = self.textView.stringExcludingPrefix;
+        const NSRange selectedRange = self.textView.selectedRangeExcludingPrefix;
         if (selectedRange.location > content.length) {
             return;
         }

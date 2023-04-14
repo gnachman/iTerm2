@@ -115,6 +115,10 @@
     [[self viewController] setStringValue:stringValue];
 }
 
+- (NSRect)cursorFrameInScreenCoordinates {
+    return [[self viewController] cursorFrameInScreenCoordinates];
+}
+
 #pragma mark - iTermStatusBarComponent
 
 - (nullable NSImage *)statusBarComponentIcon {

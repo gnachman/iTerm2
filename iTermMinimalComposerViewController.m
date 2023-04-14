@@ -226,6 +226,10 @@ workingDirectory:(NSString *)pwd
     [_largeComposerViewController.textView insertText:text];
 }
 
+- (NSRect)cursorFrameInScreenCoordinates {
+    return _largeComposerViewController.textView.cursorFrameInScreenCoordinates;
+}
+
 #pragma mark - iTermComposerTextViewDelegate
 
 - (void)composerTextViewDidFinishWithCancel:(BOOL)cancel {

@@ -571,7 +571,6 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     iTermProcessInfo *_lastProcessInfo;
     iTermLoggingHelper *_logging;
     iTermNaggingController *_naggingController;
-    iTermComposerManager *_composerManager;
     BOOL _tmuxTTLHasThresholds;
     NSTimeInterval _tmuxTTLLowerThreshold;
     NSTimeInterval _tmuxTTLUpperThreshold;
@@ -5733,7 +5732,12 @@ ITERM_WEAKLY_REFERENCEABLE
     } else {
         NSString *command = [[[_composerManager contents] stringByTrimmingTrailingWhitespace] stringByReplacingOccurrencesOfString:@"\n" withString:@"; "];
 
-        [self appendPromptFromAutoComposer:nil];
+        if (_composerManager.prefixUserData) {
+            NSArray<ScreenCharArray *> *promptText = _composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyPrompt];
+            const BOOL detectedByTrigger = [_composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyDetectedByTrigger] boolValue];
+            [self appendPrompt:promptText detectedByTrigger:detectedByTrigger fromAutoComposer:^{}];
+        }
+
         self.composerManager.isAutoComposer = NO;
         [self.composerManager dismissAnimated:NO];
         if (command.length) {

@@ -635,6 +635,7 @@
         int rowNum = [tableView_ selectedRow];
         NSString* s = nil;
         if (rowNum >= 0) {
+            [tableView_ scrollRowToVisible:rowNum];
             s = [[model_ objectAtIndex:[self convertIndex:rowNum]] mainValue];
         }
         if (!s) {

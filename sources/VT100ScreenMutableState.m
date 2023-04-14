@@ -3024,7 +3024,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 // End of command prompt, will start accepting command to run as the user types at the prompt.
 - (void)commandDidStart {
-    [self promptEndedAndCommandStartedAt:self.currentGrid.cursor];
+    VT100GridCoord coord = self.currentGrid.cursor;
+    coord.y += self.numberOfScrollbackLines;
+    [self promptEndedAndCommandStartedAt:coord];
 }
 
 - (void)didSendCommand {

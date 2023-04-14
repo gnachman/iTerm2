@@ -94,6 +94,15 @@ static NSString *const iTermComposerComboBoxDidBecomeFirstResponder = @"iTermCom
 - (void)setHost:(id<VT100RemoteHostReading>)host {
 }
 
+- (NSRect)cursorFrameInScreenCoordinates {
+    NSTextView *const textEditor = [_comboBox.currentEditor isKindOfClass:[NSTextView class]] ? (NSTextView *)_comboBox.currentEditor : nil;
+    if (!textEditor) {
+        DLog(@"No text editor for %@", _comboBox);
+        return NSZeroRect;
+    }
+    return textEditor.cursorFrameInScreenCoordinates;
+}
+
 #pragma mark - Private
 
 - (IBAction)send:(id)sender {
