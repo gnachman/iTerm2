@@ -1445,7 +1445,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 - (void)clearBuffer {
     [self.delegate screenEnsureDefaultMode];
     [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState clearBufferSavingPrompt:YES];
+        [mutableState clearBufferWithoutTriggersSavingPrompt:YES];
     }];
 }
 

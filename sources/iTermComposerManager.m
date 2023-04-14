@@ -391,8 +391,9 @@
     [self updateFrame];
 }
 
-- (void)setPrefix:(NSMutableAttributedString *)prefix {
+- (void)setPrefix:(NSMutableAttributedString *)prefix userData:(nonnull id)userData {
     [_minimalViewController setPrefix:prefix];
+    _prefixUserData = userData;
 }
 
 - (void)insertText:(NSString *)string {

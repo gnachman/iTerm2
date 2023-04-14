@@ -128,6 +128,7 @@ typedef NS_OPTIONS(int, VT100TerminalKeyReportingFlags) {
 @property(nonatomic, readonly) VT100TerminalProtectedMode protectedMode;
 @property(nonatomic, strong, readonly) VT100Token *lastToken;
 @property(nonatomic, copy) NSDictionary<NSNumber *, id> *stringForKeypress;
+@property(nonatomic) BOOL wantsDidExecuteCallback;
 @property(atomic) BOOL dirty;
 typedef NS_ENUM(NSUInteger, VT100TerminalFramerRecoveryMode) {
     VT100TerminalFramerRecoveryModeNone,

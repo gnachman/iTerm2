@@ -930,11 +930,11 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         [NSMutableString stringWithString:[self.linebuffer compactLineDumpWithWidth:self.width andContinuationMarks:YES]];
     NSMutableArray *lines = [[string componentsSeparatedByString:@"\n"] mutableCopy];
     long long absoluteLineNumber = self.totalScrollbackOverflow;
-    for (int i = 0; i < lines.count; i++) {
-        lines[i] = [NSString stringWithFormat:@"%8lld:        %@", absoluteLineNumber++, lines[i]];
-    }
+    if (string.length) {
+        for (int i = 0; i < lines.count; i++) {
+            lines[i] = [NSString stringWithFormat:@"%8lld:        %@", absoluteLineNumber++, lines[i]];
+        }
 
-    if ([string length]) {
         [lines addObject:@"- end of history -"];
     }
     NSString *gridDump = [self.currentGrid compactLineDumpWithContinuationMarks];

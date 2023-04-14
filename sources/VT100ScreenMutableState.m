@@ -67,6 +67,7 @@ static const NSInteger VT100ScreenMutableStateSideEffectFlagLineBufferDidDropLin
     BOOL _screenNeedsUpdate;
     BOOL _alertOnNextMark;
     BOOL _runSideEffectAfterTopJoinFinishes;
+    NSMutableArray<void (^)(void)> *_postTriggerActions;
 }
 
 static _Atomic int gPerformingJoinedBlock;
@@ -106,6 +107,7 @@ static _Atomic int gPerformingJoinedBlock;
         _currentDirectoryDidChangeOrderEnforcer = [[iTermOrderEnforcer alloc] init];
         _previousCommandRange = VT100GridCoordRangeMake(-1, -1, -1, -1);
         _triggerEvaluator = [[PTYTriggerEvaluator alloc] initWithQueue:queue];
+        _postTriggerActions = [NSMutableArray array];
         _triggerEvaluator.delegate = self;
         _triggerEvaluator.dataSource = self;
         const int defaultWidth = 80;
@@ -594,17 +596,26 @@ static _Atomic int gPerformingJoinedBlock;
     }];
 }
 
+- (void)performBlockWithoutTriggers:(void (^)(void))block {
+    assert(!_triggerEvaluator.disableExecution);
+    _triggerEvaluator.disableExecution = YES;
+    block();
+    _triggerEvaluator.disableExecution = NO;
+}
+
 - (void)appendScreenChars:(const screen_char_t *)line
                    length:(int)length
    externalAttributeIndex:(id<iTermExternalAttributeIndexReading>)externalAttributeIndex
              continuation:(screen_char_t)continuation {
-    [self appendScreenCharArrayAtCursor:line
-                                 length:length
-                 externalAttributeIndex:externalAttributeIndex];
-    if (continuation.code == EOL_HARD) {
-        [self carriageReturn];
-        [self appendLineFeed];
-    }
+    [self performBlockWithoutTriggers:^{
+        [self appendScreenCharArrayAtCursor:line
+                                     length:length
+                     externalAttributeIndex:externalAttributeIndex];
+        if (continuation.code == EOL_HARD) {
+            [self carriageReturn];
+            [self appendLineFeed];
+        }
+    }];
 }
 
 - (void)appendStringAtCursor:(NSString *)string {
@@ -1348,11 +1359,19 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
+- (void)clearBufferWithoutTriggersSavingPrompt:(BOOL)savePrompt {
+    [self performBlockWithoutTriggers:^{
+        [self clearBufferSavingPrompt:savePrompt];
+    }];
+}
+
 - (void)clearBufferSavingPrompt:(BOOL)savePrompt {
     // Cancel out the current command if shell integration is in use and we are
     // at the shell prompt.
     DLog(@"clear buffer saving prompt");
     const int linesToSave = savePrompt ? [self numberOfLinesToPreserveWhenClearingScreen] : 0;
+    id<VT100ScreenMarkReading> mark = [self lastPromptMark];
+    const BOOL detectedByTrigger = mark.promptDetectedByTrigger;
     // NOTE: This is in screen coords (y=0 is the top)
     VT100GridCoord newCommandStart = VT100GridCoordMake(-1, -1);
     if (self.commandStartCoord.x >= 0) {
@@ -1385,7 +1404,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     if (savePrompt && newCommandStart.x >= 0) {
         // Create a new mark and inform the delegate that there's new command start coord.
-        [self setPromptStartLine:self.numberOfScrollbackLines];
+        [self setPromptStartLine:self.numberOfScrollbackLines detectedByTrigger:detectedByTrigger];
         [self commandDidStartAtScreenCoord:newCommandStart];
     }
     [self.terminal resetSavedCursorPositions];
@@ -1437,6 +1456,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 - (void)clearFromAbsoluteLineToEnd:(long long)unsafeAbsLine {
+    [self performBlockWithoutTriggers:^{
+        [self reallyClearFromAbsoluteLineToEnd:unsafeAbsLine];
+    }];
+}
+
+- (void)reallyClearFromAbsoluteLineToEnd:(long long)unsafeAbsLine {
     const VT100GridCoord cursorCoord = VT100GridCoordMake(self.currentGrid.cursor.x,
                                                           self.currentGrid.cursor.y + self.numberOfScrollbackLines);
     const long long totalScrollbackOverflow = self.cumulativeScrollbackOverflow;
@@ -2347,29 +2372,33 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     self.shouldExpectPromptMarks = YES;
 }
 
-- (void)setPromptStartLine:(int)line {
+- (VT100ScreenMark *)setPromptStartLine:(int)line detectedByTrigger:(BOOL)detectedByTrigger {
     DLog(@"FinalTerm: prompt started on line %d. Add a mark there. Save it as lastPromptLine.", line);
     // Reset this in case it's taking the "real" shell integration path.
     self.fakePromptDetectedAbsLine = -1;
     const long long lastPromptLine = (long long)line + self.cumulativeScrollbackOverflow;
     self.lastPromptLine = lastPromptLine;
     [self assignCurrentCommandEndDate];
-    id<VT100ScreenMarkReading> mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
+    VT100ScreenMark *mark = (VT100ScreenMark *)[self addMarkOnLine:line ofClass:[VT100ScreenMark class]];
     if (mark) {
         const VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(0, lastPromptLine, 0, lastPromptLine);
         [self.mutableIntervalTree mutateObject:mark block:^(id<IntervalTreeObject> _Nonnull obj) {
             VT100ScreenMark *mark = (VT100ScreenMark *)obj;
             [mark setIsPrompt:YES];
             mark.promptRange = promptRange;
+            mark.promptDetectedByTrigger = detectedByTrigger;
         }];
     }
     [self didUpdatePromptLocation];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
         [delegate screenPromptDidStartAtLine:line];
     }];
+    return mark;
 }
 
-- (void)promptDidStartAt:(VT100GridAbsCoord)initialCoord wasInCommand:(BOOL)wasInCommand {
+- (VT100ScreenMark *)promptDidStartAt:(VT100GridAbsCoord)initialCoord
+                         wasInCommand:(BOOL)wasInCommand
+                    detectedByTrigger:(BOOL)detectedByTrigger {
     DLog(@"FinalTerm: promptDidStartAt");
     VT100GridAbsCoord coord = initialCoord;
     if (initialCoord.x > 0 && self.config.shouldPlacePromptAtFirstColumn) {
@@ -2403,10 +2432,12 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
     // FinalTerm uses this to define the start of a collapsible region. That would be a nightmare
     // to add to iTerm, and our answer to this is marks, which already existed anyway.
-    [self setPromptStartLine:self.numberOfScrollbackLines + self.cursorY - 1];
+    VT100ScreenMark *mark = [self setPromptStartLine:self.numberOfScrollbackLines + self.cursorY - 1
+                                   detectedByTrigger:detectedByTrigger];
     if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
         [self.terminal resetGraphicRendition];
     }
+    return mark;
 }
 
 - (void)commandRangeDidChange {
@@ -2953,7 +2984,14 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         if (!strongSelf) {
             return;
         }
-        [strongSelf setPromptStartLine:strongSelf.numberOfScrollbackLines + strongSelf.cursorY - 1];
+        // Note that the prompt must precede the OSC 7 code in order to be moved into the composer properly.
+        const long long y = self.cumulativeScrollbackOverflow + strongSelf.numberOfScrollbackLines + strongSelf.cursorY - 1;
+        const VT100GridAbsCoordRange range =
+        VT100GridAbsCoordRangeMake(0,
+                                   y,
+                                   strongSelf.currentGrid.cursor.x,
+                                   y);
+        [strongSelf handleTriggerDetectedPromptAt:range];
     }];
 }
 
@@ -2989,13 +3027,18 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self promptEndedAndCommandStartedAt:self.currentGrid.cursor];
 }
 
+- (void)didSendCommand {
+    DLog(@"didSendCommand (trigger-detected prompt path)");
+    [self commandDidEnd];
+}
+
 - (void)promptEndedAndCommandStartedAt:(VT100GridCoord)commandStartLocation {
     DLog(@"FinalTerm: terminalCommandDidStart");
 
     VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(self.currentPromptRange.start.x,
                                                                     self.currentPromptRange.start.y,
                                                                     commandStartLocation.x,
-                                                                    commandStartLocation.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
+                                                                    commandStartLocation.y + self.cumulativeScrollbackOverflow);
     NSArray<ScreenCharArray *> *promptText = nil;
     if (self.config.desiredComposerRows != nil) {
         // Move prompt into mark for auto composer.
@@ -3276,6 +3319,15 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 - (VT100GridAbsCoordRange)replaceRange:(VT100GridAbsCoordRange)absRange
                              withLines:(NSArray<ScreenCharArray *> *)replacementLines {
+    __block VT100GridAbsCoordRange result;
+    [self performBlockWithoutTriggers:^{
+        result = [self reallyReplaceRange:absRange withLines:replacementLines];
+    }];
+    return result;
+}
+
+- (VT100GridAbsCoordRange)reallyReplaceRange:(VT100GridAbsCoordRange)absRange
+                                   withLines:(NSArray<ScreenCharArray *> *)replacementLines {
     VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, self.cumulativeScrollbackOverflow);
     if (range.start.y < 0) {
         // Already scrolled into the dustbin.
@@ -3568,21 +3620,56 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 #pragma mark - Triggers
 
+- (void)evaluateTriggers:(void (^ NS_NOESCAPE)(PTYTriggerEvaluator *triggerEvaluator))block {
+    block(_triggerEvaluator);
+    if (_tokenExecutor.isExecutingToken) {
+        return;
+    }
+    [self executePostTriggerActions];
+}
+
+- (void)executePostTriggerActions {
+    if (_postTriggerActions.count == 0) {
+        return;
+    }
+    NSArray<void (^)(void)> *actions = [_postTriggerActions copy];
+    [_postTriggerActions removeAllObjects];
+    for (void (^block)(void) in actions) {
+        block();
+    }
+}
+
 - (void)performPeriodicTriggerCheck {
     DLog(@"begin");
-    [_triggerEvaluator checkPartialLineTriggers];
-    [_triggerEvaluator checkIdempotentTriggersIfAllowed];
+    [self evaluateTriggers:^(PTYTriggerEvaluator *triggerEvaluator) {
+        [triggerEvaluator checkPartialLineTriggers];
+        [triggerEvaluator checkIdempotentTriggersIfAllowed];
+    }];
 }
 
 - (void)clearTriggerLine {
-    [_triggerEvaluator clearTriggerLine];
+    [self evaluateTriggers:^(PTYTriggerEvaluator *triggerEvaluator) {
+        [triggerEvaluator clearTriggerLine];
+    }];
 }
 
 - (void)appendStringToTriggerLine:(NSString *)string {
-    [_triggerEvaluator appendStringToTriggerLine:string];
+    [self evaluateTriggers:^(PTYTriggerEvaluator *triggerEvaluator) {
+        [triggerEvaluator appendStringToTriggerLine:string];
+    }];
 }
 
 - (BOOL)appendAsciiDataToTriggerLine:(AsciiData *)asciiData {
+    __block BOOL result = NO;
+    [self evaluateTriggers:^(PTYTriggerEvaluator *triggerEvaluator) {
+        result = [self reallyAppendAsciiDataToTriggerLine:asciiData
+                                         triggerEvaluator:(PTYTriggerEvaluator *)triggerEvaluator];
+    }];
+    return result;
+}
+
+- (BOOL)reallyAppendAsciiDataToTriggerLine:(AsciiData *)asciiData
+                          triggerEvaluator:(PTYTriggerEvaluator *)triggerEvaluator {
     if (!_triggerEvaluator.haveTriggersOrExpectations && !self.config.loggingEnabled) {
         // Avoid making the string, which could be slow.
         return YES;
@@ -3606,7 +3693,9 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
 - (void)forceCheckTriggers {
     DLog(@"begin");
-    [_triggerEvaluator forceCheck];
+    [self evaluateTriggers:^(PTYTriggerEvaluator *triggerEvaluator) {
+        [triggerEvaluator forceCheck];
+    }];
 }
 
 #pragma mark - Color
@@ -3994,6 +4083,12 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 }
 
 - (void)appendBannerMessage:(NSString *)message {
+    [self performBlockWithoutTriggers:^{
+        [self reallyAppendBannerMessage:message];
+    }];
+}
+
+- (void)reallyAppendBannerMessage:(NSString *)message {
     // Save graphic rendition. Set to system message color.
     const VT100GraphicRendition saved = self.terminal.graphicRendition;
 
@@ -4210,7 +4305,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
     // screen contents around on resize. So we take the history from tmux, append it to a temporary
     // line buffer, grab each wrapped line and trim spaces from it, and then append those modified
     // line (excluding empty ones at the end) to the real line buffer.
-    [self clearBufferSavingPrompt:YES];
+    [self clearBufferWithoutTriggersSavingPrompt:YES];
     LineBuffer *temp = [[LineBuffer alloc] init];
     temp.mayHaveDoubleWidthCharacter = YES;
     self.linebuffer.mayHaveDoubleWidthCharacter = YES;
@@ -4731,26 +4826,77 @@ launchCoprocessWithCommand:(NSString *)command
     }];
 }
 
-- (void)triggerSession:(Trigger *)trigger didDetectPromptAt:(VT100GridAbsCoordRange)range {
-    DLog(@"Trigger detected prompt at %@", VT100GridAbsCoordRangeDescription(range));
-
+- (void)handleTriggerDetectedPromptAt:(VT100GridAbsCoordRange)range {
+    DLog(@"handleTriggerDetectedPromptAt: %@", VT100GridAbsCoordRangeDescription(range));
     if (self.fakePromptDetectedAbsLine == -2) {
         // Infer the end of the preceding command. Set a return status of 0 since we don't know what it was.
         [self setReturnCodeOfLastCommand:0];
     }
+
+
+    // Insert an empty line above the prompt.
+    if (range.start.y == self.numberOfLines + self.cumulativeScrollbackOverflow - 1) {
+        // Make room at the bottom of the grid.
+        [self incrementOverflowBy:
+         [self.currentGrid scrollWholeScreenUpIntoLineBuffer:self.linebuffer
+                                         unlimitedScrollback:self.unlimitedScrollback]];
+    } else {
+        // The prompt will be one line lower so move the cursor to stay with it.
+        [self.currentGrid moveCursorDown:1];
+    }
+    // Move the prompt and anything below it down by 1
+    const int scrollbackLines = self.numberOfScrollbackLines;
+    const int gridRow = range.start.y - scrollbackLines - self.cumulativeScrollbackOverflow;
+    [self.currentGrid scrollRect:VT100GridRectMake(0,
+                                                   gridRow,
+                                                   self.width,
+                                                   self.height - gridRow)
+                          downBy:1
+                       softBreak:NO];
+    range.start.y += 1;
+    range.end.y += 1;
+
     // Use 0 here to avoid the screen inserting a newline.
     range.start.x = 0;
-    // FinalTerm A:
-    [self promptDidStartAt:range.start wasInCommand:NO];
+
+    // Simulate FinalTerm A:
+    // We pass YES for wasInCommand to avoid getting an extra newline added at the cursor.
+    VT100ScreenMark *mark = [self promptDidStartAt:range.start wasInCommand:YES detectedByTrigger:YES];
+    mark.promptDetectedByTrigger = YES;
     self.fakePromptDetectedAbsLine = range.start.y;
 
     BOOL ok = NO;
-    VT100GridCoord coord = coord;
+    VT100GridCoord coord = VT100GridCoordFromAbsCoord(range.end, self.cumulativeScrollbackOverflow, &ok);
     if (ok) {
+        // Simulate FinalTerm B:
         [self promptEndedAndCommandStartedAt:coord];
     } else {
         DLog(@"Range end is invalid %@, overflow=%@", VT100GridAbsCoordRangeDescription(range),
              @(self.cumulativeScrollbackOverflow));
+    }
+}
+
+- (void)triggerSession:(Trigger *)trigger didDetectPromptAt:(VT100GridAbsCoordRange)range {
+    DLog(@"Trigger detected prompt at %@", VT100GridAbsCoordRangeDescription(range));
+
+    id<VT100ScreenMarkReading> lastPromptMark = [self lastPromptMark];
+    if (lastPromptMark) {
+        const VT100GridAbsCoordRange existingRange = [self absCoordRangeForInterval:lastPromptMark.entry.interval];
+        if (existingRange.start.y == range.start.y) {
+            DLog(@"There's already a prompt at this line. Ignore. existing=%@ proposed=%@",
+                 VT100GridAbsCoordRangeDescription(existingRange),
+                 VT100GridAbsCoordRangeDescription(range));
+            return;
+        }
+    }
+    // We can't mutate the session at this point. Wait until trigger processing is done and the
+    // current token (if any) is executed and then do the prompt handling.
+    __weak __typeof(self) weakSelf = self;
+    [_postTriggerActions addObject:[^{
+        [weakSelf handleTriggerDetectedPromptAt:range];
+    } copy]];
+    if (_tokenExecutor.isExecutingToken) {
+        self.terminal.wantsDidExecuteCallback = YES;
     }
 }
 

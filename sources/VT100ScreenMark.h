@@ -51,6 +51,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) VT100GridAbsCoordRange commandRange;
 @property(nonatomic, readonly) VT100GridAbsCoord outputStart;
 @property(nonatomic, readonly) iTermPromise<NSNumber *> *returnCodePromise;
+@property(nonatomic, readonly) BOOL promptDetectedByTrigger;
 
 - (id<VT100ScreenMarkReading>)progenitor;
 - (id<VT100ScreenMarkReading>)doppelganger;
@@ -84,6 +85,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy, nullable) NSArray<ScreenCharArray *> *promptText;
 @property(nonatomic, readwrite) VT100GridAbsCoordRange commandRange;
 @property(nonatomic, readwrite) VT100GridAbsCoord outputStart;
+@property(nonatomic) BOOL promptDetectedByTrigger;
 
 // Returns a reference to an existing mark with the given GUID.
 + (id<VT100ScreenMarkReading>)markWithGuid:(NSString *)guid

@@ -126,6 +126,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)clearAndResetScreenSavingLines:(int)linesToSave;
 - (void)clearScrollbackBuffer;
 - (void)clearBufferSavingPrompt:(BOOL)savePrompt;
+- (void)clearBufferWithoutTriggersSavingPrompt:(BOOL)savePrompt;
 - (void)eraseCharactersAfterCursor:(int)j;
 - (void)eraseScreenAndRemoveSelection;
 - (void)clearFromAbsoluteLineToEnd:(long long)absLine;
@@ -209,15 +210,18 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 // This is like setPromptStartLine: but with lots of side effects that are desirable for the
 // regular shell integration flow.
-- (void)promptDidStartAt:(VT100GridAbsCoord)coord wasInCommand:(BOOL)wasInCommand;
+- (VT100ScreenMark *)promptDidStartAt:(VT100GridAbsCoord)coord wasInCommand:(BOOL)wasInCommand detectedByTrigger:(BOOL)detectedByTrigger;
 
-- (void)setPromptStartLine:(int)line;
+- (VT100ScreenMark *)setPromptStartLine:(int)line detectedByTrigger:(BOOL)detectedByTrigger;
 - (void)didUpdatePromptLocation;
 - (void)incrementClearCountForCommandMark:(id<VT100ScreenMarkReading>)screenMarkDoppelganger;
 
 #pragma mark Command
 
 - (void)commandDidStart;
+// This is used when sending a command when the previous prompt was detected by a trigger since
+// we won't get any indication of the start/end of a running command.
+- (void)didSendCommand;
 - (void)setCoordinateOfCommandStart:(VT100GridAbsCoord)coord;
 - (void)setCommandStartCoordWithoutSideEffects:(VT100GridAbsCoord)coord;
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord;

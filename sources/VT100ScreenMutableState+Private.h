@@ -76,4 +76,7 @@ iTermTriggerScopeProvider> {
 - (void)willSendReport;
 - (void)didSendReport:(id<VT100ScreenDelegate>)delegate;
 
+- (void)executePostTriggerActions;
+- (void)performBlockWithoutTriggers:(void (^)(void))block;
+
 @end

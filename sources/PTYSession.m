@@ -5085,7 +5085,7 @@ ITERM_WEAKLY_REFERENCEABLE
 - (void)clearBuffer {
     _modeHandler.mode = iTermSessionModeDefault;
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        [mutableState clearBufferSavingPrompt:YES];
+        [mutableState clearBufferWithoutTriggersSavingPrompt:YES];
         if (self.isTmuxClient) {
             [_tmuxController clearHistoryForWindowPane:self.tmuxPane];
         }
@@ -5512,7 +5512,7 @@ ITERM_WEAKLY_REFERENCEABLE
     }
     if (_composerManager.dropDownComposerViewIsVisible &&
         _composerManager.isAutoComposer &&
-        ![self autoComposerAllowed]) {
+        ![self autoComposerAllowed:NO]) {
         [self dismissComposerIfEmpty];
     } else {
         [self revealAutoComposerIfNeeded];
@@ -5710,12 +5710,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view updateTrackingAreas];
 }
 
-- (BOOL)autoComposerAllowed {
+- (BOOL)autoComposerAllowed:(BOOL)assumeAtCommandPrompt {
     if (_screen.terminalSoftAlternateScreenMode) {
         DLog(@"Soft alternate screen mode");
         return NO;
     }
-    if (_screen.isAtCommandPrompt) {
+    if (assumeAtCommandPrompt || _screen.isAtCommandPrompt) {
         return YES;
     }
     return NO;
@@ -5742,21 +5742,27 @@ ITERM_WEAKLY_REFERENCEABLE
     }
 }
 
+// Would we show a composer if given a prompt?
+- (BOOL)wantAutoComposer {
+    if (![iTermPreferences boolForKey:kPreferenceAutoComposer]) {
+        DLog(@"wantAutoComposer: Disabled by setting");
+        return NO;
+    }
+    if (![self autoComposerAllowed:YES]) {
+        DLog(@"wantAutoComposer: Not allowed");
+        return NO;
+    }
+    DLog(@"wantAutoComposer: yes");
+    return YES;
+}
+
+static NSString *const PTYSessionComposerPrefixUserDataKeyPrompt = @"prompt";
+static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"detected by trigger";
+
 - (void)revealAutoComposerIfNeeded {
     DLog(@"revealAutoComposerIfNeeded");
-    if (![iTermPreferences boolForKey:kPreferenceAutoComposer]) {
-        DLog(@"Disabled by setting");
-        return;
-    }
-    if (![self autoComposerAllowed]) {
-        DLog(@"Not allowed");
-        return;
-    }
-    if (self.composerManager.dropDownComposerViewIsVisible) {
-        DLog(@"Already open");
-        return;
-    }
     if (!_initializationFinished) {
+        DLog(@"revealAutoComposerIfNeeded: initialization not finished");
         DLog(@"Try again later, not initialized");
         __weak __typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -5764,16 +5770,36 @@ ITERM_WEAKLY_REFERENCEABLE
         });
         return;
     }
+    if (self.composerManager.dropDownComposerViewIsVisible) {
+        DLog(@"revealAutoComposerIfNeeded: Already open");
+        return;
+    }
+    if (![iTermPreferences boolForKey:kPreferenceAutoComposer]) {
+        DLog(@"revealAutoComposerIfNeeded: Disabled by setting");
+        return;
+    }
+    if (![self autoComposerAllowed:NO]) {
+        DLog(@"revealAutoComposerIfNeeded: Not allowed");
+        return;
+    }
     DLog(@"Reveal auto composer");
     self.composerManager.isAutoComposer = YES;
-    NSMutableAttributedString *prompt = [self promptText] ?: [NSMutableAttributedString attributedStringWithString:@"" attributes:@{}];
+    NSMutableAttributedString *prompt = [self promptText] ?: [[[NSMutableAttributedString alloc] initWithString:@"" attributes:@{}] autorelease];
     const CGFloat kern = [NSMutableAttributedString kernForString:@"W"
                                                       toHaveWidth:_textview.charWidth
                                                          withFont:_textview.fontTable.asciiFont.font];
     [prompt addAttributes:@{ NSKernAttributeName: @(kern) }
                     range:NSMakeRange(0, prompt.length)];
     [self.composerManager reveal];
-    [self.composerManager setPrefix:prompt];
+    NSDictionary *userData = nil;
+    if (_screen.lastPromptMark.promptText) {
+        userData = @{
+            PTYSessionComposerPrefixUserDataKeyPrompt: [[_screen.lastPromptMark.promptText copy] autorelease],
+            PTYSessionComposerPrefixUserDataKeyDetectedByTrigger: @(_screen.lastPromptMark.promptDetectedByTrigger)
+        };
+    }
+    [self.composerManager setPrefix:prompt
+                           userData:userData];
 }
 
 - (NSMutableAttributedString *)promptText {
@@ -5796,6 +5822,7 @@ ITERM_WEAKLY_REFERENCEABLE
             return [sca attributedStringValueWithAttributeProvider:_textview.attributeProvider];
         }] attributedComponentsJoinedByAttributedString:newline];
         [result appendAttributedString:body];
+        [result trimTrailingWhitespace];
         [result appendAttributedString:space];
         return result;
     }
@@ -6445,7 +6472,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     if (replacingFilter) {
         DLog(@"Clear buffer because there is a pre-existing filter");
         [self.screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-            [mutableState clearBufferSavingPrompt:NO];
+            [mutableState clearBufferWithoutTriggersSavingPrompt:NO];
         }];
     }
     [_asyncFilter start];
@@ -13039,7 +13066,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     // This runs in a side effect and cannot safely resize the view.
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (![weakSelf autoComposerAllowed]) {
+        if (![weakSelf autoComposerAllowed:NO]) {
             [weakSelf dismissComposerIfEmpty];
         }
     });
@@ -13209,7 +13236,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _profileDidChange = NO;
     }
 
-    NSNumber *desiredComposerRows = self.haveAutoComposer ? @(_composerManager.desiredHeight / _textview.lineHeight) : nil;
+    NSNumber *desiredComposerRows = nil;
+    if (self.wantAutoComposer) {
+        const int desiredRows = MAX(1, _composerManager.desiredHeight / _textview.lineHeight);
+        desiredComposerRows = @(desiredRows);
+    }
     if (![NSObject object:desiredComposerRows isEqualToObject:_config.desiredComposerRows]) {
         _config.desiredComposerRows = desiredComposerRows;
         dirty = YES;
@@ -16751,12 +16782,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self sendCommand:command];
 }
 
-- (BOOL)appendPromptFromAutoComposer:(void (^)(void))completion {
-    id<VT100ScreenMarkReading> mark = [_screen lastPromptMark];
-    if (!mark.promptText) {
+- (BOOL)appendPrompt:(NSArray<ScreenCharArray *> *)promptText
+   detectedByTrigger:(BOOL)detectedByTrigger
+    fromAutoComposer:(void (^)(void))completion {
+    if (!promptText) {
         return NO;
     }
-    NSArray<ScreenCharArray *> *promptText = [mark.promptText copy];
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         BOOL first = YES;
         for (ScreenCharArray *sca in promptText) {
@@ -16770,7 +16801,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             [mutableState appendStringAtCursor:@" "];
             first = NO;
         }
-        [promptText release];
+        if (detectedByTrigger) {
+            [mutableState didSendCommand];
+        }
         if (completion) {
             dispatch_async(dispatch_get_main_queue(), ^{
                 completion();
@@ -16790,7 +16823,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     __weak __typeof(self) weakSelf = self;
     if ([self haveAutoComposer]) {
-        const BOOL done = [self appendPromptFromAutoComposer:^{
+        const BOOL done = [self appendPrompt:_composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyPrompt]
+                            detectedByTrigger:[_composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyDetectedByTrigger] boolValue]
+                            fromAutoComposer:^{
             [weakSelf reallySendCommand:command];
         }];
         if (done) {

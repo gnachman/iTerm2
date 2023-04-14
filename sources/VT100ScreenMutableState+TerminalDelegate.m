@@ -430,7 +430,9 @@
          VT100GridCoordDescription(newCursorCoord));;
     if (didResize && !preserveScreen) {
         DLog(@"erase screen");
-        [self eraseInDisplayBeforeCursor:YES afterCursor:YES decProtect:NO];  // erase the screen
+        [self performBlockWithoutTriggers:^{
+            [self eraseInDisplayBeforeCursor:YES afterCursor:YES decProtect:NO];  // erase the screen
+        }];
         self.currentGrid.cursorX = 0;
         self.currentGrid.cursorY = 0;
     }
@@ -1530,7 +1532,8 @@
     DLog(@"begin");
     [self promptDidStartAt:VT100GridAbsCoordMake(self.currentGrid.cursor.x,
                                                  self.currentGrid.cursor.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow)
-              wasInCommand:wasInCommand];
+              wasInCommand:wasInCommand
+         detectedByTrigger:NO];
 }
 
 - (NSArray<NSNumber *> *)terminalTabStops {
@@ -2667,6 +2670,10 @@
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenDidResynchronizeSSH];
     }];
+}
+
+- (void)terminalDidExecuteToken:(VT100Token *)token {
+    [self executePostTriggerActions];
 }
 
 @end

@@ -239,6 +239,10 @@ class TokenExecutor: NSObject {
     private var onExecutorQueue: Bool {
         return DispatchQueue.getSpecific(key: Self.isTokenExecutorSpecificKey) == true
     }
+    @objc var isExecutingToken: Bool {
+        iTermGCD.assertMutationQueueSafe()
+        return impl.isExecutingToken
+    }
 
     @objc(initWithTerminal:slownessDetector:queue:)
     init(_ terminal: VT100Terminal,
@@ -506,6 +510,8 @@ private class TokenExecutorImpl {
     private let throughputEstimator = iTermThroughputEstimator(historyOfDuration: 5.0 / 30.0,
                                                                secondsPerBucket: 1.0 / 30.0)
     private var commit = true
+    // Access on mutation queue only
+    private(set) var isExecutingToken = false
     weak var delegate: TokenExecutorDelegate?
 
     init(_ terminal: VT100Terminal,
@@ -761,7 +767,9 @@ private class TokenExecutorImpl {
         }
         DLog("Execute token \(token) cursor=\(delegate.tokenExecutorCursorCoordString())")
 
+        isExecutingToken = true
         terminal.execute(token)
+        isExecutingToken = false
 
         // Return true if we need to switch to a high priority queue.
         return (priority > 0) && tokenQueue.hasHighPriorityToken

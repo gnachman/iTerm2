@@ -1934,6 +1934,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         DLog(@"Not unwrapping. token info=%@", SSHInfoDescription(token.sshInfo));
     }
     [self reallyExecuteToken:token];
+    if (_wantsDidExecuteCallback) {
+        _wantsDidExecuteCallback = NO;
+        [_delegate terminalDidExecuteToken:token];
+    }
     _lastToken = token;
 }
 

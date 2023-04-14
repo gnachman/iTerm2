@@ -20,6 +20,7 @@ static NSString *const kMarkGuidKey = @"Guid";
 static NSString *const kMarkCapturedOutputKey = @"Captured Output";
 static NSString *const kMarkCommandKey = @"Command";
 static NSString *const kMarkCodeKey = @"Code";
+static NSString *const kMarkPromptDetectedByTrigger = @"Prompt Detected by Trigger";
 static NSString *const kMarkHasCode = @"Has Code";
 static NSString *const kMarkStartDateKey = @"Start Date";
 static NSString *const kMarkEndDateKey = @"End Date";
@@ -40,6 +41,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
 @synthesize clearCount = _clearCount;
 @synthesize capturedOutput = _capturedOutput;
 @synthesize code = _code;
+@synthesize promptDetectedByTrigger = _promptDetectedByTrigger;
 @synthesize hasCode = _hasCode;
 @synthesize command = _command;
 @synthesize startDate = _startDate;
@@ -99,6 +101,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
     self = [super initWithDictionary:dict];
     if (self) {
         _code = [dict[kMarkCodeKey] intValue];
+        _promptDetectedByTrigger = [dict[kMarkPromptDetectedByTrigger] boolValue];
         _hasCode = [dict[kMarkHasCode] boolValue];
         if (_code && !_hasCode) {
             // Not so great way of migrating old marks. Misses those with a value of 0 :(
@@ -167,6 +170,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
     VT100ScreenMark *mark = [[VT100ScreenMark alloc] initRegistered:NO];
 
     mark->_code = _code;
+    mark->_promptDetectedByTrigger = _promptDetectedByTrigger;
     mark->_hasCode = _hasCode;
     mark->_isPrompt = _isPrompt;
     mark->_guid = [_guid copy];
@@ -224,6 +228,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
     dict[kMarkCapturedOutputKey] = [self capturedOutputDictionaries];
     dict[kMarkHasCode] = @(_hasCode);
     dict[kMarkCodeKey] = @(_code);
+    dict[kMarkPromptDetectedByTrigger] = @(_promptDetectedByTrigger);
     dict[kMarkCommandKey] = _command ?: [NSNull null];
     dict[kMarkStartDateKey] = @([self.startDate timeIntervalSinceReferenceDate]);
     dict[kMarkEndDateKey] = @([self.endDate timeIntervalSinceReferenceDate]);
@@ -287,5 +292,5 @@ static NSString *const kMarkOutputStart = @"Output Start";
     }
     return _returnCodePromise;
 }
-@end
 
+@end

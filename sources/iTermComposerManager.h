@@ -63,6 +63,7 @@ previousFrame:(NSRect)previousFrame;
 @property (nonatomic, readonly) NSRect dropDownFrame;
 @property (nonatomic, readonly) NSString *contents;
 @property (nonatomic) BOOL temporarilyHidden;
+@property (nonatomic, strong, readonly) id prefixUserData;
 
 // Only used by dropdown composer
 @property (nonatomic) BOOL isSeparatorVisible;
@@ -82,7 +83,7 @@ previousFrame:(NSRect)previousFrame;
 - (void)updateFrame;
 - (void)makeDropDownComposerFirstResponder;
 - (void)updateFont;
-- (void)setPrefix:(NSMutableAttributedString *)prefix;
+- (void)setPrefix:(NSMutableAttributedString *)prefix userData:(id)userData;
 - (void)insertText:(NSString *)string;
 
 @end
