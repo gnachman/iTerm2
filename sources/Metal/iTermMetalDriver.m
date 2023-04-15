@@ -1424,7 +1424,12 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     iTermMetalCursorInfo *cursorInfo = frameData.perFrameState.metalDriverCursorInfo;
     if (cursorInfo.coord.y >= 0 &&
         cursorInfo.coord.y < frameData.gridSize.height) {
-        [tState setRow:frameData.perFrameState.metalDriverCursorInfo.coord.y];
+        const int row = frameData.perFrameState.metalDriverCursorInfo.coord.y;
+        if (VT100GridRangeContains(frameData.perFrameState.linesToSuppressDrawing, row)) {
+            [tState setRow:-1];
+        } else {
+            [tState setRow:row];
+        }
     } else {
         [tState setRow:-1];
     }
