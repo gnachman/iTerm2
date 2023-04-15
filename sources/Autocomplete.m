@@ -169,8 +169,8 @@ const int kMaxResultContextWords = 4;
 
     [context_ removeAllObjects];
 
-    if ([self.delegate isComposerOpen]) {
-        [self loadPrefixFromComposer:screen];
+    if (![self.delegate popupShouldTakePrefixFromScreen]) {
+        [self loadPrefixFromHost:screen];
     } else {
         [self loadPrefixFromScreen:screen];
     }
@@ -189,7 +189,7 @@ const int kMaxResultContextWords = 4;
     return ([charBeforeCursor rangeOfCharacterFromSet:[NSCharacterSet whitespaceCharacterSet]].location != NSNotFound);
 }
 
-- (void)loadPrefixFromComposer:(VT100Screen *)screen {
+- (void)loadPrefixFromHost:(VT100Screen *)screen {
     const VT100GridCoordRange range =
     VT100GridCoordRangeMake(screen.cursorX - 1,
                             screen.cursorY - 1 + screen.numberOfScrollbackLines,
@@ -197,11 +197,10 @@ const int kMaxResultContextWords = 4;
                             screen.cursorY - 1 + screen.numberOfScrollbackLines);
 
     BOOL precededByWhitespace = NO;
-    NSArray<NSString *> *words = [self.delegate wordsBeforeCursorInComposer:kMaxQueryContextWords + 1];
+    NSArray<NSString *> *words = [self.delegate popupWordsBeforeInsertionPoint:kMaxQueryContextWords + 1];
 
     NSString *prefix = words.firstObject ?: @"";
     const BOOL prefixIsWhitespaceOnly = [self wordIsAllWhitespace:prefix];
-    const int maxWords = [self numberOfContextWordsForWhitespaceOnlyPrefix:prefixIsWhitespaceOnly];
     [self setPrefix:prefix
 precededByWhitespace:precededByWhitespace
               range:VT100GridWindowedRangeMake(range, -1, -1)

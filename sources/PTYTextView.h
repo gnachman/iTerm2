@@ -11,6 +11,7 @@
 #import "iTermKeyboardHandler.h"
 #import "iTermLogicalMovementHelper.h"
 #import "iTermObject.h"
+#import "iTermPopupWindowController.h"
 #import "iTermSemanticHistoryController.h"
 #import "iTermTextDrawingHelper.h"
 #import "LineBuffer.h"
@@ -281,6 +282,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (void)textViewOpenComposer:(NSString *)string;
 - (BOOL)textViewIsAutoComposerOpen;
 - (VT100GridRange)textViewLinesToSuppressDrawing;
+- (NSRect)textViewCursorFrameInScreenCoords;
 @end
 
 @interface iTermHighlightedRow : NSObject

@@ -771,3 +771,4 @@ extension NSAttributedString.Key {
 extension NSAttributedString {
     var wholeRange: NSRange { NSRange(location: 0, length: length) }
 }
+

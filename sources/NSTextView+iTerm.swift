@@ -28,8 +28,27 @@ extension NSTextView {
             actualCharacterRange: nil)
         let insertionPointRect = layoutManager.boundingRect(forGlyphRange: glyphRange,
                                                             in: textContainer)
-        let screenRect = self.window?.convertToScreen(insertionPointRect) ?? .zero
+        let screenRect = window?.convertToScreen(convert(insertionPointRect, to: nil)) ?? .zero
 
         return screenRect
+    }
+}
+
+extension NSTextView: iTermPopupWindowHosting {
+    public func popupWindowHostingInsertionPointFrameInScreenCoordinates() -> NSRect {
+        return cursorFrameInScreenCoordinates
+    }
+
+    public func words(beforeInsertionPoint count: Int) -> [String]! {
+        let text = (textStorage?.string ?? "") as NSString
+        let words = text.lastWords(UInt(count)).reversed()
+        if text.endsWithWhitespace {
+            return words + [""]
+        }
+        return Array(words)
+    }
+
+    public func popupWindowHostingInsertText(_ string: String!) {
+        insertText(string ?? "", replacementRange: selectedRange())
     }
 }

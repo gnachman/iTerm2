@@ -8,9 +8,11 @@
 #import "PTYSession.h"
 #import "iTermMetadata.h"
 
+@protocol iTermPopupWindowHosting;
+
 NS_ASSUME_NONNULL_BEGIN
 
-@interface PTYSession (ARC)<iTermPopupWindowPresenter>
+@interface PTYSession (ARC)<iTermPopupWindowPresenter, iTermPopupWindowHosting>
 
 + (void)openPartialAttachmentsForArrangement:(NSDictionary *)arrangement
                                   completion:(void (^)(NSDictionary *))completion;
@@ -35,7 +37,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)publishScreenCharArray:(ScreenCharArray *)array
                       metadata:(iTermImmutableMetadata)metadata;
 - (void)maybeTurnOffPasteBracketing;
-
+- (id<iTermPopupWindowHosting>)popupHost;
 
 @end
 

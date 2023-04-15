@@ -1743,4 +1743,14 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [_contextMenuHelper selectOutputOfCommandMark:mark];
 }
 
+#pragma mark - iTermPopupWindowHosting
+
+- (NSRect)popupWindowHostingInsertionPointFrameInScreenCoordinates {
+    return [self.delegate textViewCursorFrameInScreenCoords];
+}
+
+- (void)popupWindowHostingInsertText:(NSString *)string {
+    [self.delegate insertText:string];
+}
+
 @end

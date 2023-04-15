@@ -220,21 +220,24 @@ extern NSString *const SESSION_ARRANGEMENT_SERVER_DICT;
     [self.textview scrollEnd];
 }
 
-- (NSRect)popupWindowOriginRectInScreenCoords {
-    if (self.haveAutoComposer) {
-        return _composerManager.cursorFrameInScreenCoordinates;
+- (id<iTermPopupWindowHosting>)popupHost {
+    NSResponder *responder = [self.view.window firstResponder];
+    while (responder) {
+        if ([responder conformsToProtocol:@protocol(iTermPopupWindowHosting)]) {
+            id<iTermPopupWindowHosting> host = (id<iTermPopupWindowHosting>)responder;
+            return host;
+        }
+        responder = responder.nextResponder;
     }
-    const int cx = [self.screen cursorX] - 1;
-    const int cy = [self.screen cursorY];
-    const CGFloat charWidth = [self.textview charWidth];
-    const CGFloat lineHeight = [self.textview lineHeight];
-    NSPoint p = NSMakePoint([iTermPreferences doubleForKey:kPreferenceKeySideMargins] + cx * charWidth,
-                            ([self.screen numberOfLines] - [self.screen height] + cy) * lineHeight);
-    const NSPoint origin = [self.textview.window pointToScreenCoords:[self.textview convertPoint:p toView:nil]];
-    return NSMakeRect(origin.x,
-                      origin.y,
-                      charWidth,
-                      lineHeight);
+    return nil;
+}
+
+- (NSRect)popupWindowOriginRectInScreenCoords {
+    id<iTermPopupWindowHosting> host = [self popupHost];
+    if (!host) {
+        return [self textViewCursorFrameInScreenCoords];
+    }
+    return [host popupWindowHostingInsertionPointFrameInScreenCoordinates];
 }
 
 #pragma mark - Content Subscriptions

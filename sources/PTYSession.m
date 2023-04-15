@@ -7150,7 +7150,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"delta=%@ count %@->%@\n%@", @(delta), @(_disableFocusReporting), @(_disableFocusReporting + delta), self);
     _disableFocusReporting += delta;
     if (_disableFocusReporting == 0) {
-        [self setFocused:[self textViewIsFirstResponder]];
+        [self setFocused:[self textViewOrComposerIsFirstResponder]];
     }
 }
 
@@ -14076,22 +14076,19 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 #pragma mark - PopupDelegate
 
-- (BOOL)isComposerOpen {
-    return [_composerManager dropDownComposerViewIsVisible];
+- (BOOL)popupShouldTakePrefixFromScreen {
+    return _textview.window.firstResponder == _textview;
 }
 
 // If the cursor is preceded by whitespace the last word will be empty. Words go in reverse order.
-- (NSArray<NSString *> *)wordsBeforeCursorInComposer:(int)count {
-    NSString *text = _composerManager.contents ?: @"";
-    NSArray<NSString *> *words = [[text lastWords:count] reversed];
-    if ([text endsWithWhitespace]) {
-        return [words arrayByAddingObject:@""];
-    }
-    return words;
+- (NSArray<NSString *> *)popupWordsBeforeInsertionPoint:(int)count {
+    id<iTermPopupWindowHosting> host = [self popupHost];
+    return [host wordsBeforeInsertionPoint:count] ?: @[@""];
 }
 
 - (void)popupIsSearching:(BOOL)searching {
     _textview.showSearchingCursor = searching;
+#warning TODO: update for auto composer
     [_textview setNeedsDisplayInRect:_textview.cursorFrame];
 }
 
@@ -14579,6 +14576,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)popupInsertText:(NSString *)string {
+    id<iTermPopupWindowHosting> host = [self popupHost];
+    if (host) {
+        [host popupWindowHostingInsertText:string];
+        return;
+    }
     if (_composerManager.dropDownComposerViewIsVisible) {
         [_composerManager insertText:string];
         return;
@@ -14830,8 +14832,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return [_screen.colorMap colorForKey:kColorMapBackground];
 }
 
-- (BOOL)textViewIsFirstResponder {
-    return (_textview.window.firstResponder == _textview &&
+- (BOOL)textViewOrComposerIsFirstResponder {
+    return ((_textview.window.firstResponder == _textview ||
+             [_composerManager dropDownComposerIsFirstResponder]) &&
             [NSApp isActive] &&
             _textview.window.isKeyWindow);
 }
@@ -15069,6 +15072,20 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return VT100GridRangeMake(topLeft.y, bottomRight.y - topLeft.y + 1);
     }
     return VT100GridRangeMake(0, 0);
+}
+
+- (NSRect)textViewCursorFrameInScreenCoords {
+    const int cx = [self.screen cursorX] - 1;
+    const int cy = [self.screen cursorY];
+    const CGFloat charWidth = [self.textview charWidth];
+    const CGFloat lineHeight = [self.textview lineHeight];
+    NSPoint p = NSMakePoint([iTermPreferences doubleForKey:kPreferenceKeySideMargins] + cx * charWidth,
+                            ([self.screen numberOfLines] - [self.screen height] + cy) * lineHeight);
+    const NSPoint origin = [self.textview.window pointToScreenCoords:[self.textview convertPoint:p toView:nil]];
+    return NSMakeRect(origin.x,
+                      origin.y,
+                      charWidth,
+                      lineHeight);
 }
 
 #pragma mark - iTermHotkeyNavigableSession

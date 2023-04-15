@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface PTYTextView (ARC)<
 iTermContextMenuHelperDelegate,
 iTermMouseReportingFrustrationDetectorDelegate,
+iTermPopupWindowHosting,
 iTermURLActionHelperDelegate>
 
 - (void)initARC;

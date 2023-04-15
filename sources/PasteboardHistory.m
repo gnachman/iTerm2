@@ -320,7 +320,10 @@
         NSPasteboard *thePasteboard = [NSPasteboard generalPasteboard];
         [thePasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
         [thePasteboard setString:[entry mainValue] forType:NSPasteboardTypeString];
-        [[[iTermController sharedInstance] frontTextView] paste:nil];
+        NSResponder *responder = [[[[iTermController sharedInstance] frontTextView] window] firstResponder];
+        if ([responder respondsToSelector:@selector(paste:)]) {
+            [responder it_performNonObjectReturningSelector:@selector(paste:) withObject:nil];
+        }
         [super rowSelected:sender];
     }
 }

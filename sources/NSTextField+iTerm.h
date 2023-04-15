@@ -7,10 +7,11 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "iTermPopupWindowController.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface NSTextField (iTerm)
+@interface NSTextField (iTerm) <iTermPopupWindowHosting>
 
 // NOTE: this one uses a small font
 + (instancetype)it_textFieldForTableViewWithIdentifier:(NSString *)identifier;
