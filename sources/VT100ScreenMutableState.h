@@ -238,6 +238,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (void)commandWasAborted;
 - (void)assignCurrentCommandEndDate;
 - (void)didInferEndOfCommand;
+// Anything we read from here until FinalTerm C can be assumed to be the shell echoing back the command.
+- (void)composerWillSendCommand;
+- (void)appendPrompt:(NSArray<ScreenCharArray *> *)promptText;
 
 #pragma mark Working Directory
 

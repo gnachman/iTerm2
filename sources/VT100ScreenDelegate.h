@@ -93,6 +93,8 @@
                                    foreground:(screen_char_t)fg
                                    background:(screen_char_t)bg;
 
+- (void)screenAppendStringToComposer:(NSString *)string;
+
 // Change the cursor's appearance.
 - (void)screenSetCursorBlinking:(BOOL)blink;
 - (BOOL)screenCursorIsBlinking;

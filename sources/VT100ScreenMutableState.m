@@ -127,6 +127,7 @@ static _Atomic int gPerformingJoinedBlock;
         self.unconditionalTemporaryDoubleBuffer.delegate = self;
         _sanitizingAdapter = (VT100ScreenState *)[[VT100ScreenStateSanitizingAdapter alloc] initWithSource:self];
         self.linebuffer.delegate = self;
+        _redirectedActions = [NSMutableArray array];
     }
     return self;
 }
@@ -355,6 +356,9 @@ static _Atomic int gPerformingJoinedBlock;
 - (void)setConfig:(VT100MutableScreenConfiguration *)config {
     DLog(@"%@ begin %@", self, config);
     assert(VT100ScreenMutableState.performingJoinedBlock);
+    if (config.desiredComposerRows.intValue != self.config.desiredComposerRows.intValue) {
+        NSLog(@"desiredComopserRows <- %@", config.desiredComposerRows);
+    }
     [super setConfig:config];
     NSSet<NSString *> *dirty = [config dirtyKeyPaths];
     if ([dirty containsObject:@"triggerProfileDicts"]) {
@@ -2274,6 +2278,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return marksToMove;
 }
 
+// FTCS C
 - (void)commandDidEndWithRange:(VT100GridCoordRange)range {
     NSString *command = [self commandInRange:range];
     DLog(@"FinalTerm: Command <<%@>> ended with range %@",
@@ -2308,14 +2313,63 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     mark = [mark doppelganger];
     // Pause because delegate will change variables.
+    __weak __typeof(self) weakSelf = self;
+    NSLog(@"commandDidEndWithRange: add paused side effect");
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        __strong __typeof(self) strongSelf = weakSelf;
+        if (!strongSelf) {
+            return;
+        }
+        NSLog(@"commandDidEndWithRange: side effect calling screenDidExecuteCommand");
         [delegate screenDidExecuteCommand:command
                                     range:range
                                    onHost:remoteHost
                               inDirectory:workingDirectory
                                      mark:mark];
+        if (strongSelf->_redirectedActions.count) {
+            [strongSelf->_tokenExecutor scheduleHighPriorityTask:^{
+                [weakSelf doPostCommandDidEndWithRange];
+            }];
+        }
+        strongSelf->_haveIgnoredLeadingSpace = NO;
+        NSLog(@"commandDidEndWithRange: unpause");
         [unpauser unpause];
     }];
+}
+
+- (void)doPostCommandDidEndWithRange {
+    id<VT100ScreenMarkReading> mark = [self lastPromptMark];
+    NSLog(@"doPostCommandDidEndWithRange: append prompt text %@", mark.promptText);
+    [self appendPrompt:mark.promptText];
+    [self executeRedirectedActions];
+}
+
+- (void)executeRedirectedActions {
+    while (_redirectedActions.count) {
+        NSLog(@"Begin executing redirected actions");
+        NSArray<void (^)(VT100ScreenMutableState *)> *actions = [_redirectedActions copy];
+        [_redirectedActions removeAllObjects];
+        for (void (^block)(VT100ScreenMutableState *) in actions) {
+            block(self);
+        }
+        NSLog(@"Finished executing redirected actions");
+    }
+}
+
+- (void)appendPrompt:(NSArray<ScreenCharArray *> *)promptText {
+    BOOL first = YES;
+    for (ScreenCharArray *sca in promptText) {
+        NSLog(@"Append prompt text: %@", sca.stringValue);
+        if (!first) {
+            [self appendCarriageReturnLineFeed];
+        }
+        [self.currentGrid setCursorX:0];
+        [self appendScreenCharArrayAtCursor:sca.line
+                                             length:sca.lengthExcludingTrailingWhitespaceAndNulls
+                             externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(sca.metadata)];
+        [self appendStringAtCursor:@" "];
+        first = NO;
+    }
 }
 
 - (void)removeInaccessibleIntervalTreeObjects {
@@ -2437,6 +2491,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     if ([iTermAdvancedSettingsModel resetSGROnPrompt]) {
         [self.terminal resetGraphicRendition];
     }
+    NSLog(@"promtState <- receiving prompt");
+    _promptState = VT100ScreenPromptStateReceivingPrompt;
     return mark;
 }
 
@@ -2736,7 +2792,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self commandRangeDidChange];
 }
 
-
 - (void)saveCursorLine {
     const int scrollbackLines = [self.linebuffer numLinesWithWidth:self.currentGrid.size.width];
     [self addMarkOnLine:scrollbackLines + self.currentGrid.cursor.y
@@ -3011,6 +3066,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self invalidateCommandStartCoordWithoutSideEffects];
     [self didUpdatePromptLocation];
     [self commandDidEndWithRange:VT100GridCoordRangeMake(-1, -1, -1, -1)];
+    NSLog(@"promtState <- none");
+    _promptState = VT100ScreenPromptStateNone;
 }
 
 - (void)commandDidStartAtScreenCoord:(VT100GridCoord)coord {
@@ -3034,6 +3091,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self commandDidEnd];
 }
 
+// FTCS B
 - (void)promptEndedAndCommandStartedAt:(VT100GridCoord)commandStartLocation {
     DLog(@"FinalTerm: terminalCommandDidStart");
 
@@ -3056,6 +3114,8 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }
     [self commandDidStartAtScreenCoord:commandStartLocation];
     const int line = self.numberOfScrollbackLines + commandStartLocation.y;
+    NSLog(@"promtState <- entering command");
+    _promptState = VT100ScreenPromptStateEnteringCommand;
     id<VT100ScreenMarkReading> mark = [[self updatePromptMarkRangesForPromptEndingOnLine:line
                                                                               promptText:promptText] doppelganger];
     [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
@@ -3131,11 +3191,31 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [self commandDidEndWithRange:self.commandRange];
         [self invalidateCommandStartCoord];
         self.startOfRunningCommandOutput = coord;
+        NSLog(@"promtState <- running command");
+        _promptState = VT100ScreenPromptStateRunningCommand;
         return YES;
     }
     return NO;
 }
 
+- (void)composerWillAppendPrompt {
+    // The composer is on this thread and will now append the prompt and its command. It will then invoke
+    // composerWillSendCommand and possibly composerDidSendCommand.
+    [_redirectedActions removeAllObjects];
+}
+
+- (void)addRedirectedAction:(void (^)(VT100ScreenMutableState *))block {
+    [iTermGCD assertMutationQueueSafe];
+    [_redirectedActions addObject:[block copy]];
+}
+
+- (void)composerWillSendCommand {
+    if (_promptState == VT100ScreenPromptStateEnteringCommand) {
+        NSLog(@"promtState <- echoing compser-sent command");
+        _promptState = VT100ScreenPromptStateEchoingComposerSentCommand;
+        [_redirectedActions removeAllObjects];
+    }
+}
 - (void)didInferEndOfCommand {
     DLog(@"Inferring end of command");
     VT100GridAbsCoord coord;

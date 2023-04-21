@@ -70,6 +70,10 @@ previousFrame:(NSRect)previousFrame;
 @property (nonatomic) BOOL isSeparatorVisible;
 @property (nonatomic, strong) NSColor *separatorColor;
 
+// In auto-composer mode did we get some typed-ahead text (entered during a previous command) that
+// got automatically inserted into the composer?
+@property (nonatomic) BOOL haveShellProvidedText;
+
 - (void)setCommand:(NSString *)command;
 // Reveal appropriately (focus status bar, open popover, or open minimal)
 - (void)reveal;
@@ -84,8 +88,9 @@ previousFrame:(NSRect)previousFrame;
 - (void)updateFrame;
 - (void)makeDropDownComposerFirstResponder;
 - (void)updateFont;
-- (void)setPrefix:(NSMutableAttributedString *)prefix userData:(id)userData;
+- (void)setPrefix:(NSMutableAttributedString * _Nullable)prefix userData:(id _Nullable)userData;
 - (void)insertText:(NSString *)string;
+- (void)reset;
 
 @end
 

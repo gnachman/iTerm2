@@ -21,6 +21,21 @@
 
 extern const NSInteger VT100ScreenMutableStateSideEffectFlagDidReceiveLineFeed;
 
+//                                             .--------------------------------.
+//                                            /                                  \
+//                                           /                                    V
+// none -> receivingPrompt -> enteringCommand -> echoingComposerSentCommand -> runningCommand
+//   ^                                                                               |
+//   |                                                                               |
+//   `-------------------------------------------------------------------------------'
+typedef NS_ENUM(NSUInteger, VT100ScreenPromptState) {
+    VT100ScreenPromptStateNone,  // No command executing. No prompt received yet but one will come eventually.
+    VT100ScreenPromptStateReceivingPrompt,  // Have started receiving prompt
+    VT100ScreenPromptStateEnteringCommand,  // Have finished receiving prompt. User can type a command.
+    VT100ScreenPromptStateEchoingComposerSentCommand,  // We are sending a command to the shell. Skipped when not using composer.
+    VT100ScreenPromptStateRunningCommand  // Command began executing.
+};
+
 @interface VT100ScreenMutableState()<
 PTYAnnotationDelegate,
 PTYTriggerEvaluatorDelegate,
@@ -44,6 +59,9 @@ iTermTriggerScopeProvider> {
     NSArray<NSString *> *_sshIntegrationFlags;
     _Atomic int _pendingReportCount;
     BOOL _compressionScheduled;
+    VT100ScreenPromptState _promptState;
+    NSMutableArray<void (^)(VT100ScreenMutableState *)> *_redirectedActions;
+    BOOL _haveIgnoredLeadingSpace;
 }
 
 @property (atomic) BOOL hadCommand;
@@ -78,5 +96,7 @@ iTermTriggerScopeProvider> {
 
 - (void)executePostTriggerActions;
 - (void)performBlockWithoutTriggers:(void (^)(void))block;
+- (void)addRedirectedAction:(void (^)(VT100ScreenMutableState *))block;
+- (void)executeRedirectedActions;
 
 @end

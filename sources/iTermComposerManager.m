@@ -192,9 +192,11 @@
 }
 
 - (BOOL)dismissAnimated:(BOOL)animated {
+    NSLog(@"dismissAnimated. isAutoComposer <- NO");
     self.isAutoComposer = NO;
 
     if (!_dropDownComposerViewIsVisible) {
+        NSLog(@"dismissAnimated: returning because dropdown not visible");
         return NO;
     }
     _saved = _minimalViewController.stringValue;
@@ -208,8 +210,10 @@
 
 - (BOOL)isEmpty {
     if (_minimalViewController) {
+        NSLog(@"isEmpty minimal stringValue=%@", _minimalViewController.stringValue);
         return _minimalViewController.stringValue.length == 0;
     }
+    NSLog(@"isEmpty status bar stringvalue=%@", _component.stringValue);
     return _component.stringValue.length == 0;
 }
 
@@ -264,6 +268,7 @@
     _saved = nil;
     [self.delegate composerManager:self sendCommand:[command stringByAppendingString:@"\n"]];
     if (reset) {
+        NSLog(@"Erase composer content after sending command");
         [self setStringValue:@""];
     }
 }
@@ -317,15 +322,18 @@
 }
 
 - (void)dismissMinimalViewAnimated:(BOOL)animated {
+    NSLog(@"dismissMinimalViewAnimated:%@", @(animated));
     iTermMinimalComposerViewController *vc = _minimalViewController;
     __weak __typeof(self) weakSelf = self;
     _dismissCanceled = NO;
     if (animated) {
+        NSLog(@"Begin animated dismissal");
         [NSView animateWithDuration:0.125
                          animations:^{
             vc.view.animator.alphaValue = 0;
         }
                          completion:^(BOOL finished) {
+            NSLog(@"Animated dismissal did finish");
             [weakSelf finishDismissingMinimalView:vc];
         }];
         [self prepareToDismissMinimalView];
@@ -334,15 +342,18 @@
             [self.delegate composerManagerWillDismissMinimalView:self];
         });
     } else {
+        NSLog(@"Do non-animated dismissal");
         vc.view.alphaValue = 0;
         [self.delegate composerManagerWillDismissMinimalView:self];
         [self prepareToDismissMinimalView];
         [self finishDismissingMinimalView:vc];
         return;
     }
+    NSLog(@"dismissMinimalViewAnimated returning");
 }
 
 - (void)prepareToDismissMinimalView {
+    NSLog(@"Dismissing composer from\n%@", [NSThread callStackSymbols]);
     _minimalViewController = nil;
     _dropDownComposerViewIsVisible = NO;
 }
@@ -391,16 +402,26 @@
     [self updateFrame];
 }
 
-- (void)setPrefix:(NSMutableAttributedString *)prefix userData:(nonnull id)userData {
+- (void)setPrefix:(NSMutableAttributedString *)prefix userData:(id)userData {
+    self.haveShellProvidedText = NO;
     [_minimalViewController setPrefix:prefix];
     _prefixUserData = userData;
+}
+
+- (void)reset {
+    NSLog(@"Reset composer from\n%@", [NSThread callStackSymbols]);
+    [_minimalViewController setPrefix:nil];
+    [_minimalViewController setStringValue:@""];
+    _prefixUserData = nil;
 }
 
 - (void)insertText:(NSString *)string {
     if (_minimalViewController) {
         [_minimalViewController insertText:string];
+        NSLog(@"Minimal composer now has %@", _minimalViewController.stringValue);
     } else {
         [_component insertText:string];
+        NSLog(@"Appending to status bar composer");
     }
 }
 

@@ -56,7 +56,7 @@ workingDirectory:(NSString *)pwd
  tmuxController:(TmuxController *)tmuxController;
 - (void)setFont:(NSFont *)font;
 - (void)setTextColor:(NSColor *)textColor cursorColor:(NSColor *)cursorColor;
-- (void)setPrefix:(NSMutableAttributedString *)prefix;
+- (void)setPrefix:(NSMutableAttributedString * _Nullable)prefix;
 
 - (BOOL)composerIsFirstResponder;
 - (void)insertText:(NSString *)text;

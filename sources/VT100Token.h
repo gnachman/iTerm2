@@ -293,6 +293,20 @@ typedef struct {
     ScreenChars *screenChars;
 } AsciiData;
 
+typedef struct {
+    AsciiData asciiData;
+    ScreenChars screenChars;
+} BundledAsciiData;
+
+NS_INLINE NSString *iTermCreateStringFromAsciiData(AsciiData *asciiData) {
+    return [[NSString alloc] initWithBytes:asciiData->buffer
+                                    length:asciiData->length
+                                  encoding:NSASCIIStringEncoding];
+}
+
+void iTermAsciiDataSet(AsciiData *asciiData, const char *bytes, int length, ScreenChars *screenChars);
+void iTermAsciiDataFree(AsciiData *asciiData);
+
 #define SSH_OUTPUT_AUTOPOLL_PID -1000
 #define SSH_OUTPUT_NOTIF_PID -1001
 

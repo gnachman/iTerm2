@@ -3065,6 +3065,7 @@ ITERM_WEAKLY_REFERENCEABLE
         forceEncoding:(BOOL)forceEncoding
          canBroadcast:(BOOL)canBroadcast
             reporting:(BOOL)reporting {
+    NSLog(@"write: %@", string);
     const NSStringEncoding encoding = forceEncoding ? optionalEncoding : _screen.terminalEncoding;
     if (gDebugLogging) {
         NSArray *stack = [NSThread callStackSymbols];
@@ -5721,9 +5722,12 @@ ITERM_WEAKLY_REFERENCEABLE
 }
 
 - (void)dismissComposerIfEmpty {
+    NSLog(@"dismissComposerIfEmpty called on %@", [NSThread currentThread]);
     if (self.composerManager.isEmpty) {
+        NSLog(@"dismissComposerifEmpty calling dismissAnimated");
         [self.composerManager dismissAnimated:NO];
     }
+    NSLog(@"dismissComposerIfEmpty returning");
 }
 
 - (void)autoComposerDidChange:(NSNotification *)notification {
@@ -5736,8 +5740,9 @@ ITERM_WEAKLY_REFERENCEABLE
             NSArray<ScreenCharArray *> *promptText = _composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyPrompt];
             const BOOL detectedByTrigger = [_composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyDetectedByTrigger] boolValue];
             [self appendPrompt:promptText detectedByTrigger:detectedByTrigger fromAutoComposer:^{}];
+            [_composerManager setPrefix:nil userData:nil];
         }
-
+        NSLog(@"autoComposerDidChange (disallowed). isAutoComposer <- NO");
         self.composerManager.isAutoComposer = NO;
         [self.composerManager dismissAnimated:NO];
         if (command.length) {
@@ -5766,8 +5771,8 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 - (void)revealAutoComposerIfNeeded {
     DLog(@"revealAutoComposerIfNeeded");
     if (!_initializationFinished) {
-        DLog(@"revealAutoComposerIfNeeded: initialization not finished");
-        DLog(@"Try again later, not initialized");
+        NSLog(@"revealAutoComposerIfNeeded: initialization not finished");
+        NSLog(@"Try again later, not initialized");
         __weak __typeof(self) weakSelf = self;
         dispatch_async(dispatch_get_main_queue(), ^{
             [weakSelf revealAutoComposerIfNeeded];
@@ -5775,18 +5780,21 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
         return;
     }
     if (self.composerManager.dropDownComposerViewIsVisible) {
-        DLog(@"revealAutoComposerIfNeeded: Already open");
+        if (!_composerManager.isAutoComposer) {
+            NSLog(@"revealAutoComposerIfNeeded: Already open. isAutoComposer <- YES");
+        }
+        _composerManager.isAutoComposer = YES;
         return;
     }
     if (![iTermPreferences boolForKey:kPreferenceAutoComposer]) {
-        DLog(@"revealAutoComposerIfNeeded: Disabled by setting");
+        NSLog(@"revealAutoComposerIfNeeded: Disabled by setting");
         return;
     }
     if (![self autoComposerAllowed:NO]) {
-        DLog(@"revealAutoComposerIfNeeded: Not allowed");
+        NSLog(@"revealAutoComposerIfNeeded: Not allowed");
         return;
     }
-    DLog(@"Reveal auto composer");
+    NSLog(@"Reveal auto composer. isAutoComposer <- YES");
     self.composerManager.isAutoComposer = YES;
     NSMutableAttributedString *prompt = [self promptText] ?: [[[NSMutableAttributedString alloc] initWithString:@"" attributes:@{}] autorelease];
     const CGFloat kern = [NSMutableAttributedString kernForString:@"W"
@@ -5796,7 +5804,9 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
                     range:NSMakeRange(0, prompt.length)];
     [self.composerManager reveal];
     NSDictionary *userData = nil;
+    NSLog(@"revealing auto composer");
     if (_screen.lastPromptMark.promptText) {
+        NSLog(@"Set prefix to %@", prompt.string);
         userData = @{
             PTYSessionComposerPrefixUserDataKeyPrompt: [[_screen.lastPromptMark.promptText copy] autorelease],
             PTYSessionComposerPrefixUserDataKeyDetectedByTrigger: @(_screen.lastPromptMark.promptDetectedByTrigger)
@@ -11622,6 +11632,19 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)screenAppendStringToComposer:(NSString *)string {
+    [self revealAutoComposerIfNeeded];
+    if (self.haveAutoComposer) {
+        NSLog(@"Append to composer: %@", string);
+        [_composerManager insertText:string];
+        _composerManager.haveShellProvidedText = YES;
+    } else {
+        NSLog(@"No composer for %@, ddcviv=%@ iac=%@", string, @(_composerManager.dropDownComposerViewIsVisible), @(_composerManager.isAutoComposer));
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            [mutableState appendStringAtCursor:string];
+        }];
+    }
+}
 - (void)screenSetCursorType:(ITermCursorType)newType {
     ITermCursorType type = newType;
     if (type == CURSOR_DEFAULT) {
@@ -12152,6 +12175,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenPromptDidEndWithMark:(id<VT100ScreenMarkReading>)mark {
+    _composerManager.haveShellProvidedText = NO;
     [_promptSubscriptions enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, ITMNotificationRequest * _Nonnull obj, BOOL * _Nonnull stop) {
         if (obj.argumentsOneOfCase == ITMNotificationRequest_Arguments_OneOfCase_GPBUnsetOneOfCase ||
             [obj.promptMonitorRequest.modesArray it_contains:ITMPromptMonitorMode_Prompt]) {
@@ -13067,6 +13091,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         }
     }];
 
+    [_composerManager reset];
     // This runs in a side effect and cannot safely resize the view.
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -14961,7 +14986,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (BOOL)sessionViewTerminalIsFirstResponder {
-    return [self textViewIsFirstResponder];
+    return [self textViewOrComposerIsFirstResponder];
 }
 
 - (BOOL)sessionViewShouldDimOnlyText {
@@ -16810,18 +16835,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return NO;
     }
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        BOOL first = YES;
-        for (ScreenCharArray *sca in promptText) {
-            if (!first) {
-                [mutableState appendCarriageReturnLineFeed];
-            }
-            [mutableState.currentGrid setCursorX:0];
-            [mutableState appendScreenCharArrayAtCursor:sca.line
-                                                 length:sca.lengthExcludingTrailingWhitespaceAndNulls
-                                 externalAttributeIndex:iTermImmutableMetadataGetExternalAttributesIndex(sca.metadata)];
-            [mutableState appendStringAtCursor:@" "];
-            first = NO;
-        }
+        NSLog(@"PTYSession.appendPrompt:detectedByTrigger:fromAutoComposer: append %@", promptText);
+        [mutableState appendPrompt:promptText];
+        [mutableState composerWillSendCommand];
         if (detectedByTrigger) {
             [mutableState didSendCommand];
         }
@@ -16844,11 +16860,17 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
     __weak __typeof(self) weakSelf = self;
     if ([self haveAutoComposer]) {
+        if (_composerManager.haveShellProvidedText) {
+            // Send ^U first to erase what's already there.
+            // TODO: This may wreak havoc if the shell decides to redraw itself.
+            command = [[NSString stringWithLongCharacter:'U' - '@'] stringByAppendingString:command];
+        }
         const BOOL done = [self appendPrompt:_composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyPrompt]
                             detectedByTrigger:[_composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyDetectedByTrigger] boolValue]
                             fromAutoComposer:^{
             [weakSelf reallySendCommand:command];
         }];
+        [_composerManager setPrefix:nil userData:nil];
         if (done) {
             return;
         }

@@ -12,6 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface VT100ScreenMutableState (TerminalDelegate)<VT100TerminalDelegate>
 
+- (BOOL)isRedirectingToComposer;
+
 @end
 
 NS_ASSUME_NONNULL_END
