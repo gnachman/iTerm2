@@ -215,17 +215,6 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     }];
 }
 
-- (int)ensureContentEndsAt:(int)gridLine {
-    __block int result = 1;
-    [self performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        if (terminal.softAlternateScreenMode) {
-            return;
-        }
-        result = [mutableState ensureContentEndsAt:gridLine];
-    }];
-    return result;
-}
-
 - (void)resetDirty {
     if (_sharedStateCount && !_forceMergeGrids && _state.currentGrid.isAnyCharDirty) {
         // We're resetting dirty in a grid shared by mutable & immutable state. That means when sync

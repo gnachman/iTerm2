@@ -950,21 +950,31 @@ static _Atomic int gPerformingJoinedBlock;
     }
 }
 
-- (int)ensureContentEndsAt:(int)line {
+- (void)ensureContentEndsAt:(int)line {
     if (line < 0 || line >= self.height || self.terminalSoftAlternateScreenMode) {
-        return self.height - self.currentGrid.cursor.y - 1;
+        return;
     }
-    const int delta = -(MIN(0, line - self.currentGrid.cursor.y) + 1);
+    const int delta = -(line - self.currentGrid.cursor.y + 1);
+    if (delta == 0) {
+        return;
+    }
     const int cursorX = self.currentGrid.cursor.x;
     if (delta > 0) {
-        for (int i = 0; i < delta; i++) {
+        for (int i = 0; i < delta && self.currentGrid.cursor.y > 0; i++) {
             [self incrementOverflowBy:
              [self.currentGrid scrollWholeScreenUpIntoLineBuffer:self.linebuffer unlimitedScrollback:self.unlimitedScrollback]];
             [self.currentGrid setCursor:VT100GridCoordMake(cursorX, self.currentGrid.cursor.y - 1)];
         }
-        return self.height - self.currentGrid.cursor.y;
+    } else if (self.currentGrid.cursor.y - delta < self.height){
+        const int count = [self.currentGrid scrollWholeScreenDownByLines:-delta poppingFromLineBuffer:self.linebuffer];
+        if (count < -delta) {
+            const int marginalDelta = -delta - count;
+            [self.currentGrid scrollRect:VT100GridRectMake(0, 0, self.width, self.height)
+                                  downBy:marginalDelta
+                               softBreak:NO];
+        }
+        [self.currentGrid setCursor:VT100GridCoordMake(cursorX, self.currentGrid.cursor.y - delta)];
     }
-    return self.height - self.currentGrid.cursor.y - 1;
 }
 
 - (void)setScrollRegionTop:(int)top bottom:(int)bottom {

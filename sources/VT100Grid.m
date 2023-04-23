@@ -1367,6 +1367,7 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
     }
 }
 
+// NOTE: `rect` is *not* inclusive of rect.end.y, unlike most uses of VT100GridRect.
 - (void)scrollRect:(VT100GridRect)rect downBy:(int)distance softBreak:(BOOL)softBreak {
     DLog(@"scrollRect:%d,%d %dx%d downBy:%d",
              rect.origin.x, rect.origin.y, rect.size.width, rect.size.height, distance);
