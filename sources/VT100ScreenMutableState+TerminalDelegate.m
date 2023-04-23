@@ -35,15 +35,7 @@
     if (self.collectInputForPrinting) {
         [self.printBuffer appendString:string];
     } else {
-        // else display string on screen
-        if (self.isRedirectingToComposer) {
-            [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-                [state terminalAppendString:string];
-            }];
-            [self appendStringToComposer:string];
-        } else {
-            [self appendStringAtCursor:string];
-        }
+        [self appendStringAtCursor:string];
     }
     [self appendStringToTriggerLine:string];
     if (self.config.loggingEnabled) {
@@ -67,36 +59,8 @@
         return;
     }
     // else display string on screen
-    if (self.isRedirectingToComposer) {
-        NSLog(@"Send ASCII data to composer: %.*s", asciiData->length, asciiData->buffer);
-        // AsciiData must be used synchronously. Since we plan to access it later, we must make a
-        // copy of the ASCII bytes and re-create it just before use.
-
-        size_t offset = 0;
-        if (_redirectedActions.count == 0 &&
-            !_haveIgnoredLeadingSpace &&
-            asciiData->length > 0 &&
-            asciiData->buffer[0] == ' ') {
-            _haveIgnoredLeadingSpace = YES;
-            // Tcsh can't have a control sequence at the very end, so it always has a leading space just after the prompt.
-            offset = 1;
-        }
-        if (asciiData->length > offset) {
-            NSData *data = [NSData dataWithBytes:asciiData->buffer + offset length:asciiData->length - offset];
-            [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-                AsciiData internalAsciiData = { 0 };
-                ScreenChars internalScreenChars = { 0 };
-                iTermAsciiDataSet(&internalAsciiData, (const char *)data.bytes, data.length, &internalScreenChars);
-                [state terminalAppendAsciiData:&internalAsciiData];
-                iTermAsciiDataFree(&internalAsciiData);
-            }];
-            NSString *string = [data stringWithEncoding:self.terminal.encoding];
-            [self appendStringToComposer:string];
-        }
-    } else {
-        NSLog(@"Append ASCII data to terminal: %.*s", asciiData->length, asciiData->buffer);
-        [self appendAsciiDataAtCursor:asciiData];
-    }
+    NSLog(@"Append ASCII data to terminal: %.*s", asciiData->length, asciiData->buffer);
+    [self appendAsciiDataAtCursor:asciiData];
 
     if (![self appendAsciiDataToTriggerLine:asciiData] && self.config.loggingEnabled) {
         const screen_char_t foregroundColorCode = self.terminal.foregroundColorCode;
@@ -131,22 +95,8 @@
     }
 }
 
-- (BOOL)isRedirectingToComposer {
-    const BOOL result = (_promptState == VT100ScreenPromptStateEnteringCommand && self.config.desiredComposerRows != nil);
-    if (result) {
-        DLog(@"Am redirecting to composer");
-    }
-    return result;
-}
-
 - (void)terminalBackspace {
     DLog(@"begin");
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalBackspace];
-        }];
-        return;
-    }
     const int cursorX = self.currentGrid.cursorX;
     const int cursorY = self.currentGrid.cursorY;
 
@@ -166,24 +116,11 @@
 
 - (void)terminalCarriageReturn {
     DLog(@"begin");
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalCarriageReturn];
-        }];
-        return;
-    }
     [self carriageReturn];
 }
 
 - (void)terminalLineFeed {
     DLog(@"begin");
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalLineFeed];
-        }];
-        [self appendStringToComposer:@"\n"];
-        return;
-    }
     if (self.currentGrid.cursor.y == VT100GridRangeMax(self.currentGrid.scrollRegionRows) &&
         self.cursorOutsideLeftRightMargin) {
         DLog(@"Ignore linefeed/formfeed/index because cursor outside left-right margin.");
@@ -200,56 +137,26 @@
 
 - (void)terminalCursorLeft:(int)n {
     DLog(@"begin %@", @(n));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalCursorLeft:n];
-        }];
-        return;
-    }
     [self cursorLeft:n];
 }
 
 - (void)terminalCursorDown:(int)n andToStartOfLine:(BOOL)toStart {
     DLog(@"begin n=%@ toStart=%@", @(n), @(toStart));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalCursorDown:n andToStartOfLine:toStart];
-        }];
-        return;
-    }
     [self cursorDown:n andToStartOfLine:toStart];
 }
 
 - (void)terminalCursorRight:(int)n {
     DLog(@"begin %@", @(n));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalCursorRight:n];
-        }];
-        return;
-    }
     [self cursorRight:n];
 }
 
 - (void)terminalCursorUp:(int)n andToStartOfLine:(BOOL)toStart {
     DLog(@"begin n=%@ toStart=%@", @(n), @(toStart));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalCursorUp:n andToStartOfLine:toStart];
-        }];
-        return;
-    }
     [self cursorUp:n andToStartOfLine:toStart];
 }
 
 - (void)terminalMoveCursorToX:(int)x y:(int)y {
     DLog(@"begin x=%@ y=%@", @(x), @(y));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalMoveCursorToX:x y:y];
-        }];
-        return;
-    }
     [self cursorToX:x Y:y];
     [self clearTriggerLine];
     if (self.commandStartCoord.x != -1) {
@@ -356,12 +263,6 @@
 
 - (void)terminalEraseLineBeforeCursor:(BOOL)before afterCursor:(BOOL)after {
     DLog(@"begin before=%@ after=%@", @(before), @(after));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalEraseLineBeforeCursor:before afterCursor:after];
-        }];
-        return;
-    }
     [self eraseLineBeforeCursor:before afterCursor:after decProtect:NO];
 }
 
@@ -372,34 +273,16 @@
 
 - (void)terminalReverseIndex {
     DLog(@"begin");
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalReverseIndex];
-        }];
-        return;
-    }
     [self reverseIndex];
 }
 
 - (void)terminalForwardIndex {
     DLog(@"begin");
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalForwardIndex];
-        }];
-        return;
-    }
     [self forwardIndex];
 }
 
 - (void)terminalBackIndex {
     DLog(@"begin");
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalBackIndex];
-        }];
-        return;
-    }
     [self backIndex];
 }
 
@@ -596,24 +479,12 @@
 
 - (void)terminalSetCursorX:(int)x {
     DLog(@"begin %@", @(x));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalSetCursorX:x];
-        }];
-        return;
-    }
     [self cursorToX:x];
     [self clearTriggerLine];
 }
 
 - (void)terminalSetCursorY:(int)y {
     DLog(@"begin %@", @(y));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalSetCursorY:y];
-        }];
-        return;
-    }
     [self cursorToY:y];
     [self clearTriggerLine];
 }
@@ -625,12 +496,6 @@
 
 - (void)terminalBackTab:(int)n {
     DLog(@"begin %@", @(n));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalBackTab:n];
-        }];
-        return;
-    }
     [self backTab:n];
 }
 
@@ -816,12 +681,6 @@
 
 - (void)terminalInsertEmptyCharsAtCursor:(int)n {
     DLog(@"begin %@", @(n));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalInsertEmptyCharsAtCursor:n];
-        }];
-        return;
-    }
     [self.currentGrid insertChar:[self.currentGrid defaultChar]
               externalAttributes:nil
                               at:self.currentGrid.cursor
@@ -830,12 +689,6 @@
 
 - (void)terminalShiftLeft:(int)n {
     DLog(@"begin %@", @(n));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalShiftLeft:n];
-        }];
-        return;
-    }
     if (n < 1) {
         return;
     }
@@ -848,12 +701,6 @@
 
 - (void)terminalShiftRight:(int)n {
     DLog(@"begin %@", @(n));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalShiftRight:n];
-        }];
-        return;
-    }
     if (n < 1) {
         return;
     }
@@ -866,12 +713,6 @@
 
 - (void)terminalInsertBlankLinesAfterCursor:(int)n {
     DLog(@"begin %@", @(n));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalInsertBlankLinesAfterCursor:n];
-        }];
-        return;
-    }
     VT100GridRect scrollRegionRect = [self.currentGrid scrollRegionRect];
     if (scrollRegionRect.origin.x + scrollRegionRect.size.width == self.currentGrid.size.width) {
         // Cursor can be in right margin and still be considered in the scroll region if the
@@ -897,24 +738,12 @@
 
 - (void)terminalDeleteCharactersAtCursor:(int)n {
     DLog(@"begin %@", @(n));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalDeleteCharactersAtCursor:n];
-        }];
-        return;
-    }
     [self.currentGrid deleteChars:n startingAt:self.currentGrid.cursor];
     [self clearTriggerLine];
 }
 
 - (void)terminalDeleteLinesAtCursor:(int)n {
     DLog(@"begin %@", @(n));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalDeleteLinesAtCursor:n];
-        }];
-        return;
-    }
     if (n <= 0) {
         return;
     }
@@ -2431,23 +2260,11 @@
 
 - (void)terminalInsertColumns:(int)n {
     DLog(@"begin %@", @(n));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalInsertColumns:n];
-        }];
-        return;
-    }
     [self insertColumns:n];
 }
 
 - (void)terminalDeleteColumns:(int)n {
     DLog(@"begin %@", @(n));
-    if (self.isRedirectingToComposer) {
-        [self addRedirectedAction:^(VT100ScreenMutableState *state) {
-            [state terminalDeleteColumns:n];
-        }];
-        return;
-    }
     [self deleteColumns:n];
 }
 
@@ -2869,6 +2686,10 @@
 
 - (void)terminalDidExecuteToken:(VT100Token *)token {
     [self executePostTriggerActions];
+}
+
+- (void)terminalWillExecuteToken:(VT100Token *)token {
+    [_promptStateMachine handleToken:token withEncoding:self.terminal.encoding];
 }
 
 @end

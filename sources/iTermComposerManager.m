@@ -412,6 +412,7 @@
     NSLog(@"Reset composer from\n%@", [NSThread callStackSymbols]);
     [_minimalViewController setPrefix:nil];
     [_minimalViewController setStringValue:@""];
+    _saved = nil;
     _prefixUserData = nil;
 }
 

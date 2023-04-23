@@ -46,6 +46,7 @@ iTermEchoProbeDelegate,
 iTermEventuallyConsistentIntervalTreeSideEffectPerformer,
 iTermLineBufferDelegate,
 iTermMarkDelegate,
+iTermPromptStateMachineDelegate,
 iTermTemporaryDoubleBufferedGridControllerDelegate,
 iTermTokenExecutorDelegate,
 iTermTriggerCallbackScheduler,
@@ -60,8 +61,7 @@ iTermTriggerScopeProvider> {
     _Atomic int _pendingReportCount;
     BOOL _compressionScheduled;
     VT100ScreenPromptState _promptState;
-    NSMutableArray<void (^)(VT100ScreenMutableState *)> *_redirectedActions;
-    BOOL _haveIgnoredLeadingSpace;
+    iTermPromptStateMachine *_promptStateMachine;
 }
 
 @property (atomic) BOOL hadCommand;
@@ -96,7 +96,5 @@ iTermTriggerScopeProvider> {
 
 - (void)executePostTriggerActions;
 - (void)performBlockWithoutTriggers:(void (^)(void))block;
-- (void)addRedirectedAction:(void (^)(VT100ScreenMutableState *))block;
-- (void)executeRedirectedActions;
 
 @end

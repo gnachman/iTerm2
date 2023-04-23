@@ -1943,6 +1943,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
 
 - (void)reallyExecuteToken:(VT100Token *)token {
     NSLog(@"Execute: %@", token);
+    [_delegate terminalWillExecuteToken:token];
     // Handle tmux stuff, which completely bypasses all other normal execution steps.
     if (token->type == DCS_TMUX_HOOK) {
         [_delegate terminalStartTmuxModeWithDCSIdentifier:token.string];

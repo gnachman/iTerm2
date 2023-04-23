@@ -98,7 +98,6 @@ class ComposerTextView: MultiCursorTextView {
         guard let textStorage else {
             return
         }
-        let temp = NSMutableAttributedString(attributedString: textStorage)
         var done = false
         var actions = [() -> ()]()
         textStorage.enumerateAttribute(.promptKey,

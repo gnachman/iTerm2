@@ -614,6 +614,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     // If true the session was just created and an offscreen mark alert would be annoying.
     BOOL _temporarilySuspendOffscreenMarkAlerts;
     NSMutableArray<NSData *> *_dataQueue;
+
+    BOOL _promptStateAllowsAutoComposer;
 }
 
 @synthesize isDivorced = _divorced;
@@ -5510,13 +5512,6 @@ ITERM_WEAKLY_REFERENCEABLE
             [self didBeginPasswordInput];
         }
     }
-    if (_composerManager.dropDownComposerViewIsVisible &&
-        _composerManager.isAutoComposer &&
-        ![self autoComposerAllowed:NO]) {
-        [self dismissComposerIfEmpty];
-    } else {
-        [self revealAutoComposerIfNeeded];
-    }
     _timerRunning = NO;
 }
 
@@ -5710,15 +5705,12 @@ ITERM_WEAKLY_REFERENCEABLE
     [_view updateTrackingAreas];
 }
 
-- (BOOL)autoComposerAllowed:(BOOL)assumeAtCommandPrompt {
-    if (_screen.terminalSoftAlternateScreenMode) {
-        DLog(@"Soft alternate screen mode");
+- (BOOL)shouldShowAutoComposer {
+    if (![iTermPreferences boolForKey:kPreferenceAutoComposer]) {
+        DLog(@"wantAutoComposer: Disabled by setting");
         return NO;
     }
-    if (assumeAtCommandPrompt || _screen.isAtCommandPrompt) {
-        return YES;
-    }
-    return NO;
+    return _promptStateAllowsAutoComposer;
 }
 
 - (void)dismissComposerIfEmpty {
@@ -5732,71 +5724,21 @@ ITERM_WEAKLY_REFERENCEABLE
 
 - (void)autoComposerDidChange:(NSNotification *)notification {
     if ([iTermPreferences boolForKey:kPreferenceAutoComposer]) {
-        [self revealAutoComposerIfNeeded];
+#warning TODO: This should cause the composer to be shown if appropriate
     } else {
-        NSString *command = [[[_composerManager contents] stringByTrimmingTrailingWhitespace] stringByReplacingOccurrencesOfString:@"\n" withString:@"; "];
-
-        if (_composerManager.prefixUserData) {
-            NSArray<ScreenCharArray *> *promptText = _composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyPrompt];
-            const BOOL detectedByTrigger = [_composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyDetectedByTrigger] boolValue];
-            [self appendPrompt:promptText detectedByTrigger:detectedByTrigger fromAutoComposer:^{}];
-            [_composerManager setPrefix:nil userData:nil];
-        }
-        NSLog(@"autoComposerDidChange (disallowed). isAutoComposer <- NO");
-        self.composerManager.isAutoComposer = NO;
         [self.composerManager dismissAnimated:NO];
-        if (command.length) {
-            [self sendCommand:command];
-        }
     }
-}
-
-// Would we show a composer if given a prompt?
-- (BOOL)wantAutoComposer {
-    if (![iTermPreferences boolForKey:kPreferenceAutoComposer]) {
-        DLog(@"wantAutoComposer: Disabled by setting");
-        return NO;
-    }
-    if (![self autoComposerAllowed:YES]) {
-        DLog(@"wantAutoComposer: Not allowed");
-        return NO;
-    }
-    DLog(@"wantAutoComposer: yes");
-    return YES;
 }
 
 static NSString *const PTYSessionComposerPrefixUserDataKeyPrompt = @"prompt";
 static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"detected by trigger";
 
-- (void)revealAutoComposerIfNeeded {
+- (void)revealAutoComposerWithPrompt:(NSArray<ScreenCharArray *> *)promptText {
     DLog(@"revealAutoComposerIfNeeded");
-    if (!_initializationFinished) {
-        NSLog(@"revealAutoComposerIfNeeded: initialization not finished");
-        NSLog(@"Try again later, not initialized");
-        __weak __typeof(self) weakSelf = self;
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf revealAutoComposerIfNeeded];
-        });
-        return;
-    }
-    if (self.composerManager.dropDownComposerViewIsVisible) {
-        if (!_composerManager.isAutoComposer) {
-            NSLog(@"revealAutoComposerIfNeeded: Already open. isAutoComposer <- YES");
-        }
-        _composerManager.isAutoComposer = YES;
-        return;
-    }
-    if (![iTermPreferences boolForKey:kPreferenceAutoComposer]) {
-        NSLog(@"revealAutoComposerIfNeeded: Disabled by setting");
-        return;
-    }
-    if (![self autoComposerAllowed:NO]) {
-        NSLog(@"revealAutoComposerIfNeeded: Not allowed");
-        return;
-    }
+    assert(_initializationFinished);
     NSLog(@"Reveal auto composer. isAutoComposer <- YES");
     self.composerManager.isAutoComposer = YES;
-    NSMutableAttributedString *prompt = [self promptText] ?: [[[NSMutableAttributedString alloc] initWithString:@"" attributes:@{}] autorelease];
+    NSMutableAttributedString *prompt = [self attributedStringForScreenChars:promptText];
     const CGFloat kern = [NSMutableAttributedString kernForString:@"W"
                                                       toHaveWidth:_textview.charWidth
                                                          withFont:_textview.fontTable.asciiFont.font];
@@ -5816,47 +5758,22 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
                            userData:userData];
 }
 
-- (NSMutableAttributedString *)promptText {
-    if (!self.isAtShellPrompt) {
-        return nil;
-    }
-    id<VT100ScreenMarkReading> mark = _screen.lastPromptMark;
-    if (!mark) {
-        return nil;
-    }
+- (NSMutableAttributedString *)attributedStringForScreenChars:(NSArray<ScreenCharArray *> *)promptText {
     NSDictionary *defaultAttributes = [_textview attributeProvider]((screen_char_t){}, nil);
     NSAttributedString *space = [NSAttributedString attributedStringWithString:@" "
                                                                       attributes:defaultAttributes];
-    if (mark.promptText) {
-        NSAttributedString *newline = [NSAttributedString attributedStringWithString:@"\n"
-                                                                          attributes:defaultAttributes];
 
-        NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
-        NSAttributedString *body = [[mark.promptText mapWithBlock:^id _Nullable(ScreenCharArray *sca) {
-            return [sca attributedStringValueWithAttributeProvider:_textview.attributeProvider];
-        }] attributedComponentsJoinedByAttributedString:newline];
-        [result appendAttributedString:body];
-        [result trimTrailingWhitespace];
-        [result appendAttributedString:space];
-        return result;
-    }
-    const VT100GridAbsCoordRange absRange = mark.promptRange;
-    iTermTextExtractor *extractor = [[[iTermTextExtractor alloc] initWithDataSource:_screen] autorelease];
-    const VT100GridCoordRange range = VT100GridCoordRangeFromAbsCoordRange(absRange, _screen.totalScrollbackOverflow);
-    const VT100GridWindowedRange windowedRange = VT100GridWindowedRangeMake(range, 0, 0);
-    NSMutableAttributedString *text = [extractor contentInRange:windowedRange
-                                              attributeProvider:[_textview attributeProvider]
-                                                     nullPolicy:kiTermTextExtractorNullPolicyFromStartToFirst
-                                                            pad:NO
-                                             includeLastNewline:NO
-                                         trimTrailingWhitespace:YES
-                                                   cappedAtSize:_screen.width
-                                                   truncateTail:YES
-                                              continuationChars:nil
-                                                         coords:nil];
-    [text trimTrailingWhitespace];
-    [text appendAttributedString:space];
-    return text;
+    NSAttributedString *newline = [NSAttributedString attributedStringWithString:@"\n"
+                                                                      attributes:defaultAttributes];
+
+    NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
+    NSAttributedString *body = [[promptText mapWithBlock:^id _Nullable(ScreenCharArray *sca) {
+        return [sca attributedStringValueWithAttributeProvider:_textview.attributeProvider];
+    }] attributedComponentsJoinedByAttributedString:newline];
+    [result appendAttributedString:body];
+    [result trimTrailingWhitespace];
+    [result appendAttributedString:space];
+    return result;
 }
 
 - (void)terminalFileShouldStop:(NSNotification *)notification {
@@ -11632,19 +11549,27 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)screenRevealComposerWithPrompt:(NSArray<ScreenCharArray *> *)prompt {
+    _promptStateAllowsAutoComposer = YES;
+    if ([iTermPreferences boolForKey:kPreferenceAutoComposer]) {
+        [_composerManager reset];
+        [self revealAutoComposerWithPrompt:prompt];
+    }
+}
+
+- (void)screenDismissComposer {
+    _promptStateAllowsAutoComposer = NO;
+    [self.composerManager dismissAnimated:NO];
+}
+
 - (void)screenAppendStringToComposer:(NSString *)string {
-    [self revealAutoComposerIfNeeded];
     if (self.haveAutoComposer) {
         NSLog(@"Append to composer: %@", string);
         [_composerManager insertText:string];
         _composerManager.haveShellProvidedText = YES;
-    } else {
-        NSLog(@"No composer for %@, ddcviv=%@ iac=%@", string, @(_composerManager.dropDownComposerViewIsVisible), @(_composerManager.isAutoComposer));
-        [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-            [mutableState appendStringAtCursor:string];
-        }];
     }
 }
+
 - (void)screenSetCursorType:(ITermCursorType)newType {
     ITermCursorType type = newType;
     if (type == CURSOR_DEFAULT) {
@@ -12194,7 +12119,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     __weak __typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
         // Can't just do it here because it may trigger a resize and this runs as a side-effect.
-        [weakSelf revealAutoComposerIfNeeded];
         [weakSelf updateAutoComposerFrame];
     });
 }
@@ -13092,13 +13016,6 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }];
 
     [_composerManager reset];
-    // This runs in a side effect and cannot safely resize the view.
-    __weak __typeof(self) weakSelf = self;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (![weakSelf autoComposerAllowed:NO]) {
-            [weakSelf dismissComposerIfEmpty];
-        }
-    });
 }
 
 - (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading>)maybeMark {
@@ -13266,7 +13183,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 
     NSNumber *desiredComposerRows = nil;
-    if (self.wantAutoComposer) {
+    if ([iTermPreferences boolForKey:kPreferenceAutoComposer] && _promptStateAllowsAutoComposer) {
         const int desiredRows = MAX(1, _composerManager.desiredHeight / _textview.lineHeight);
         desiredComposerRows = @(desiredRows);
     }
@@ -16828,28 +16745,6 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self sendCommand:command];
 }
 
-- (BOOL)appendPrompt:(NSArray<ScreenCharArray *> *)promptText
-   detectedByTrigger:(BOOL)detectedByTrigger
-    fromAutoComposer:(void (^)(void))completion {
-    if (!promptText) {
-        return NO;
-    }
-    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
-        NSLog(@"PTYSession.appendPrompt:detectedByTrigger:fromAutoComposer: append %@", promptText);
-        [mutableState appendPrompt:promptText];
-        [mutableState composerWillSendCommand];
-        if (detectedByTrigger) {
-            [mutableState didSendCommand];
-        }
-        if (completion) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                completion();
-            });
-        }
-    }];
-    return YES;
-}
-
 - (void)sendCommand:(NSString *)command {
     if (_screen.commandRange.start.x < 0) {
         id<VT100RemoteHostReading> host = [self currentHost] ?: [VT100RemoteHost localhost];
@@ -16865,20 +16760,25 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
             // TODO: This may wreak havoc if the shell decides to redraw itself.
             command = [[NSString stringWithLongCharacter:'U' - '@'] stringByAppendingString:command];
         }
-        const BOOL done = [self appendPrompt:_composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyPrompt]
-                            detectedByTrigger:[_composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyDetectedByTrigger] boolValue]
-                            fromAutoComposer:^{
-            [weakSelf reallySendCommand:command];
-        }];
+        const BOOL detectedByTrigger = [_composerManager.prefixUserData[PTYSessionComposerPrefixUserDataKeyDetectedByTrigger] boolValue];
         [_composerManager setPrefix:nil userData:nil];
-        if (done) {
-            return;
-        }
+        [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+            NSLog(@"willSendCommand:%@", command);
+            [mutableState composerWillSendCommand];
+            if (detectedByTrigger) {
+                [mutableState didSendCommand];
+            }
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf reallySendCommand:command];
+            });
+        }];
+        return;
     }
     [self reallySendCommand:command];
 }
 
 - (void)reallySendCommand:(NSString *)command {
+    NSLog(@"reallySendCommand: %@", command);
     [self writeTask:command];
     [_screen userDidPressReturn];
 }

@@ -93,6 +93,8 @@
                                    foreground:(screen_char_t)fg
                                    background:(screen_char_t)bg;
 
+- (void)screenRevealComposerWithPrompt:(NSArray<ScreenCharArray *> *)prompt;
+- (void)screenDismissComposer;
 - (void)screenAppendStringToComposer:(NSString *)string;
 
 // Change the cursor's appearance.

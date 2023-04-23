@@ -531,4 +531,6 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
 - (void)terminalDidResynchronizeSSH;
 
 - (void)terminalDidExecuteToken:(VT100Token *)token;
+- (void)terminalWillExecuteToken:(VT100Token *)token;
+
 @end
