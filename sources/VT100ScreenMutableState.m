@@ -2487,6 +2487,27 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return mark;
 }
 
+- (BOOL)currentLineIsEmptyAndIsPrecededByPromptMark {
+    if (![self.currentGrid lineIsEmpty:self.currentGrid.cursorY]) {
+        return NO;
+    }
+    const int y = self.numberOfScrollbackLines + self.currentGrid.cursorY - 1;
+    if (y == 0) {
+        return NO;
+    }
+    const VT100GridCoordRange range = VT100GridCoordRangeMake(0, y, self.width, y);
+    for (id<IntervalTreeImmutableObject> object in [self.intervalTree objectsInInterval:[self intervalForGridCoordRange:range]]) {
+        if (![object conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
+            continue;
+        }
+        id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)object;
+        if (mark.isPrompt) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (VT100ScreenMark *)promptDidStartAt:(VT100GridAbsCoord)initialCoord
                          wasInCommand:(BOOL)wasInCommand
                     detectedByTrigger:(BOOL)detectedByTrigger {
@@ -2506,9 +2527,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             coord.x = 0;
             coord.y += 1;
         }
-        [self appendCarriageReturnLineFeed];
-        coord.x = 0;
-        coord.y += 1;
+        if (![self currentLineIsEmptyAndIsPrecededByPromptMark]) {
+            [self appendCarriageReturnLineFeed];
+            coord.x = 0;
+            coord.y += 1;
+        }
     }
     self.shellIntegrationInstalled = YES;
 
