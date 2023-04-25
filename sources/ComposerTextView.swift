@@ -360,7 +360,8 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     override func moveUp(_ sender: Any?) {
-        if cursorAtEnd && !canMoveUp && multiCursorSelectedRanges.count <= 1 {
+        if cursorAtEndExcludingSuggestion && !canMoveUp && multiCursorSelectedRanges.count <= 1 {
+            suggestion = nil
             composerDelegate?.composerTextViewOpenHistory(prefix: stringExcludingPrefix)
         } else {
             super.moveUp(sender)
@@ -368,7 +369,8 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     override func moveDown(_ sender: Any?) {
-        if cursorAtEnd && !canMoveDown && multiCursorSelectedRanges.count <= 1 {
+        if cursorAtEndExcludingSuggestion && !canMoveDown && multiCursorSelectedRanges.count <= 1 {
+            suggestion = nil
             composerDelegate?.composerTextViewOpenHistory(prefix: stringExcludingPrefix)
         } else {
             super.moveDown(sender)
@@ -620,6 +622,17 @@ class ComposerTextView: MultiCursorTextView {
         return multiCursorSelectedRanges.anySatisfies { range in
             range.location == endLocation
         }
+    }
+
+    private var cursorAtEndExcludingSuggestion: Bool {
+        guard let saved = suggestion else {
+            return cursorAtEnd
+        }
+        suggestion = nil
+        defer {
+            suggestion = saved
+        }
+        return cursorAtEnd
     }
 
     private func reallySetSuggestion(_ suggestion: String?) {
