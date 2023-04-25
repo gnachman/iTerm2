@@ -11578,6 +11578,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         [_desiredComposerPrompt release];
         _desiredComposerPrompt = nil;
     }
+    [_textview setNeedsDisplay:YES];
 }
 
 - (void)screenAppendStringToComposer:(NSString *)string {
