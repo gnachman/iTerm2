@@ -249,7 +249,6 @@ typedef NS_ENUM(NSUInteger, VT100ScreenTriggerCheckType) {
 
 // These record the state that should be restored when ssh ends.
 - (void)restoreSavedState:(NSDictionary *)savedState;
-- (int)ensureContentEndsAt:(int)gridLine;
 
 @end
 

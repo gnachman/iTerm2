@@ -200,7 +200,6 @@ const int kMaxResultContextWords = 4;
     NSArray<NSString *> *words = [self.delegate popupWordsBeforeInsertionPoint:kMaxQueryContextWords + 1];
 
     NSString *prefix = words.firstObject ?: @"";
-    const BOOL prefixIsWhitespaceOnly = [self wordIsAllWhitespace:prefix];
     [self setPrefix:prefix
 precededByWhitespace:precededByWhitespace
               range:VT100GridWindowedRangeMake(range, -1, -1)

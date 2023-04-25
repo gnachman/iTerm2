@@ -138,5 +138,9 @@
     return words;
 }
 
+- (void)popupWindowHostingInsertText:(NSString *)string {
+    [self insertText:string];
+}
+
 @end
 

@@ -171,7 +171,7 @@
         [self dismissMinimalViewAnimated:YES];
         return;
     }
-    [self toggleMinimalComposerInView:superview];
+    [self showMinimalComposerInView:superview];
 }
 
 - (void)showMinimalComposerInView:(NSView *)superview {

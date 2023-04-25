@@ -148,7 +148,7 @@
 
 - (NSString *)lineBeforeCursor {
     NSString *content = self.textView.stringExcludingPrefix;
-    const NSRange selectedRange = [self.textView selectedRange];
+    const NSRange selectedRange = [self.textView selectedRangeExcludingPrefix];
     if (selectedRange.location > content.length) {
         return @"";
     }
@@ -161,7 +161,7 @@
     } else {
         lowerBound += 1;
     }
-    const NSInteger upperBound = self.textView.selectedRange.location;
+    const NSInteger upperBound = selectedRange.location;
     return [content substringWithRange:NSMakeRange(lowerBound, upperBound - lowerBound)];
 }
 
@@ -344,6 +344,16 @@
 }
 
 - (void)popupIsSearching:(BOOL)searching {
+}
+
+- (BOOL)popupShouldTakePrefixFromScreen {
+    return NO;
+}
+
+- (NSArray<NSString *> *)popupWordsBeforeInsertionPoint:(int)count {
+    const NSRange insertionPoint = self.textView.selectedRangeExcludingPrefix;
+    NSString *string = [[self.textView stringExcludingPrefix] substringToIndex:insertionPoint.location];
+    return [string componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 }
 
 #pragma mark - iTermPopupWindowPresenter
