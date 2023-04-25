@@ -1630,7 +1630,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 // Move everything above the prompt mark into history.
 - (void)clearForComposer {
-    if (_promptState != VT100ScreenPromptStateEnteringCommand) {
+    if (!_promptStateMachine.isEnteringCommand) {
         return;
     }
     if (self.terminal.softAlternateScreenMode) {
@@ -1667,7 +1667,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     // Move the interval tree objects to be next to the prompt again.
     [self shiftIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
                                                                   self.numberOfScrollbackLines - count,
-                                                                  self.width, 
+                                                                  self.width,
                                                                   self.numberOfScrollbackLines)
                             startingAfter:self.numberOfScrollbackLines - count - 1
                               downByLines:count];

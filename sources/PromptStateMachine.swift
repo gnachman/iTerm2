@@ -140,6 +140,15 @@ class PromptStateMachine: NSObject {
         _state = newValue
     }
 
+    @objc var isEnteringCommand: Bool {
+        switch state {
+        case .enteringCommand, .accruingAlreadyEnteredCommand:
+            return true
+        case .executing, .echoingBack, .receivingPrompt, .ground, .disabled:
+            return false
+        }
+    }
+
     @objc(setAllowed:)
     func setAllowed(_ allowed: Bool) {
         currentEvent = "setAllowed"
