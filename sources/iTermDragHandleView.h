@@ -27,6 +27,6 @@
 @interface iTermDragHandleView : NSView
 @property (nonatomic) IBInspectable BOOL isVertical;
 
-@property(nonatomic, assign) IBOutlet id<iTermDragHandleViewDelegate> delegate;
+@property(nonatomic, weak) IBOutlet id<iTermDragHandleViewDelegate> delegate;
 
 @end

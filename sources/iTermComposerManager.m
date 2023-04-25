@@ -175,8 +175,10 @@
 }
 
 - (void)showMinimalComposerInView:(NSView *)superview {
-    _minimalViewController = [[iTermMinimalComposerViewController alloc] init];
-    _minimalViewController.delegate = self;
+    if (_minimalViewController == nil) {
+        _minimalViewController = [[iTermMinimalComposerViewController alloc] init];
+        _minimalViewController.delegate = self;
+    }
     _minimalViewController.isAutoComposer = self.isAutoComposer;
     _minimalViewController.view.frame = NSMakeRect(self.sideMargin,
                                                    superview.frame.size.height - _minimalViewController.view.frame.size.height,
@@ -190,7 +192,10 @@
     [_minimalViewController setFont:[self.delegate composerManagerFont:self]];
     [_minimalViewController setTextColor:[self.delegate composerManagerTextColor:self]
                              cursorColor:[self.delegate composerManagerCursorColor:self]];
-    [superview addSubview:_minimalViewController.view];
+    if (_minimalViewController.view.superview == nil) {
+        [superview addSubview:_minimalViewController.view];
+    }
+    NSLog(@"Add %@ to view hierarchy", _minimalViewController.view);
     if (_saved.length) {
         _minimalViewController.stringValue = _saved ?: @"";
         _saved = nil;
@@ -363,7 +368,7 @@
             [self.delegate composerManagerWillDismissMinimalView:self];
         });
     } else {
-        NSLog(@"Do non-animated dismissal");
+        NSLog(@"Do non-animated dismissal of %@", vc);
         vc.view.alphaValue = 0;
         [self.delegate composerManagerWillDismissMinimalView:self];
         [self prepareToDismissMinimalView];
@@ -384,6 +389,7 @@
         DLog(@"Dismiss canceled");
         return;
     }
+    NSLog(@"Remove view %@ from hierarchy", vc.view);
     [vc.view removeFromSuperview];
     [self.delegate composerManagerDidDismissMinimalView:self];
 }
