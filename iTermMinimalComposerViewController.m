@@ -256,8 +256,8 @@ workingDirectory:(NSString *)pwd
     [self.delegate minimalComposer:self sendControl:control];
 }
 
-- (void)composerTextViewOpenHistory {
-    [self.delegate minimalComposerOpenHistory:self];
+- (void)composerTextViewOpenHistoryWithPrefix:(NSString *)prefix {
+    [self.delegate minimalComposerOpenHistory:self prefix:prefix];
 }
 
 - (BOOL)composerTextViewWantsKeyEquivalent:(NSEvent *)event {

@@ -15,7 +15,7 @@ protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerTextViewEnqueue:) func composerTextViewEnqueue(string: String)
     @objc(composerTextViewSendToAdvancedPaste:) func composerTextViewSendToAdvancedPaste(content: String)
     @objc(composerTextViewSendControl:) func composerTextViewSendControl(_ control: String)
-    @objc(composerTextViewOpenHistory) func composerTextViewOpenHistory()
+    @objc(composerTextViewOpenHistoryWithPrefix:) func composerTextViewOpenHistory(prefix: String)
     @objc(composerTextViewWantsKeyEquivalent:) func composerTextViewWantsKeyEquivalent(_ event: NSEvent) -> Bool
     @objc(composerTextViewPerformFindPanelAction:) func composerTextViewPerformFindPanelAction(_ sender: Any?)
     @objc(composerTextViewClear) func composerTextViewClear()
@@ -279,14 +279,10 @@ class ComposerTextView: MultiCursorTextView {
             textView.composerDelegate?.composerTextViewClear()
             return true
         }),
-        // C-p
-        Action(modifiers: [.control], characters: "\u{10}", closure: { textView, event in
-            textView.composerDelegate?.composerTextViewOpenHistory()
-            return true
-        }),
         // C-r
         Action(modifiers: [.control], characters: "\u{12}", closure: { textView, event in
-            textView.composerDelegate?.composerTextViewOpenHistory()
+            textView.selectAll(nil)
+            textView.composerDelegate?.composerTextViewOpenHistory(prefix: "")
             return true
         }),
         // C-u
@@ -353,6 +349,30 @@ class ComposerTextView: MultiCursorTextView {
             return
         }
         super.keyDown(with: event)
+    }
+
+    private var canMoveUp: Bool {
+        return glyphRangeAbove(glyphRange: selectedRange()) != nil
+    }
+
+    private var canMoveDown: Bool {
+        return glyphRangeBelow(glyphRange: selectedRange()) != nil
+    }
+
+    override func moveUp(_ sender: Any?) {
+        if cursorAtEnd && !canMoveUp && multiCursorSelectedRanges.count <= 1 {
+            composerDelegate?.composerTextViewOpenHistory(prefix: stringExcludingPrefix)
+        } else {
+            super.moveUp(sender)
+        }
+    }
+
+    override func moveDown(_ sender: Any?) {
+        if cursorAtEnd && !canMoveDown && multiCursorSelectedRanges.count <= 1 {
+            composerDelegate?.composerTextViewOpenHistory(prefix: stringExcludingPrefix)
+        } else {
+            super.moveDown(sender)
+        }
     }
 
     private func withoutPrefix<T>(_ closure: () throws -> (T)) rethrows -> T {

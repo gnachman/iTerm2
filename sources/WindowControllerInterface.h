@@ -421,6 +421,7 @@
 - (BOOL)autoCommandHistoryIsOpenForSession:(PTYSession *)session;
 
 - (void)openCommandHistory:(id)sender;
+- (void)openCommandHistoryWithPrefix:(NSString *)prefix;
 - (void)nextMark:(id)sender;
 - (void)previousMark:(id)sender;
 

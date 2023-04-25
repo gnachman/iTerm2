@@ -325,8 +325,9 @@
     [self.delegate composerManagerClear:self];
 }
 
-- (void)minimalComposerOpenHistory:(iTermMinimalComposerViewController *)composer {
-    [self.delegate composerManagerOpenHistory:self];
+- (void)minimalComposerOpenHistory:(iTermMinimalComposerViewController *)composer
+                            prefix:(nonnull NSString *)prefix {
+    [self.delegate composerManagerOpenHistory:self prefix:prefix];
 }
 
 - (BOOL)minimalComposer:(iTermMinimalComposerViewController *)composer wantsKeyEquivalent:(NSEvent *)event {

@@ -31,7 +31,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
        frameDidChangeTo:(NSRect)newFrame;
 - (CGFloat)minimalComposerLineHeight:(iTermMinimalComposerViewController *)composer;
-- (void)minimalComposerOpenHistory:(iTermMinimalComposerViewController *)composer;
+- (void)minimalComposerOpenHistory:(iTermMinimalComposerViewController *)composer
+                            prefix:(NSString *)prefix;
 - (BOOL)minimalComposer:(iTermMinimalComposerViewController *)composer wantsKeyEquivalent:(NSEvent *)event;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer performFindPanelAction:(id)sender;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer

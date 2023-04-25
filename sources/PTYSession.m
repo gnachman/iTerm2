@@ -16745,8 +16745,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }];
 }
 
-- (void)composerManagerOpenHistory:(iTermComposerManager *)composerManager {
-    [[_delegate realParentWindow] openCommandHistory:nil];
+- (void)composerManagerOpenHistory:(iTermComposerManager *)composerManager
+                            prefix:(nonnull NSString *)prefix {
+    [[_delegate realParentWindow] openCommandHistoryWithPrefix:prefix];
 }
 
 - (void)composerManagerDidRemoveTemporaryStatusBarComponent:(iTermComposerManager *)composerManager {

@@ -1122,18 +1122,22 @@ extension MultiCursorTextView {
             return
         }
         modifyRanges { glyphRange in
-            guard let glyphRangeRect = self.rect(for: glyphRange) else {
-                return glyphRange
-            }
-            if glyphRangeRect.minY - 1 < 0 {
-                return nil
-            }
-            let glyphIndex = self.layoutManager!.glyphIndex(for: NSPoint(x: glyphRangeRect.minX,
-                                                                         y: glyphRangeRect.minY - 1),
-                                                            in: textContainer!,
-                                                            fractionOfDistanceThroughGlyph: nil)
-            return NSRange(location: glyphIndex, length: 0)
+            return glyphRangeAbove(glyphRange: glyphRange)
         }
+    }
+
+    func glyphRangeAbove(glyphRange: NSRange) -> NSRange? {
+        guard let glyphRangeRect = self.rect(for: glyphRange) else {
+            return glyphRange
+        }
+        if glyphRangeRect.minY - 1 < 0 {
+            return nil
+        }
+        let glyphIndex = self.layoutManager!.glyphIndex(for: NSPoint(x: glyphRangeRect.minX,
+                                                                     y: glyphRangeRect.minY - 1),
+                                                        in: textContainer!,
+                                                        fractionOfDistanceThroughGlyph: nil)
+        return NSRange(location: glyphIndex, length: 0)
     }
 
     private func eventIsAddCursorBelow(_ event: NSEvent) -> Bool {
@@ -1180,26 +1184,31 @@ extension MultiCursorTextView {
         }
         super.keyDown(with: event)
     }
+
     open override func moveDown(_ sender: Any?) {
         guard _multiCursorSelectedRanges != nil else {
             super.moveDown(sender)
             return
         }
+        modifyRanges { glyphRange in
+            return glyphRangeBelow(glyphRange: glyphRange)
+        }
+    }
+
+    func glyphRangeBelow(glyphRange: NSRange) -> NSRange? {
+        guard let glyphRangeRect = self.rect(for: glyphRange) else {
+            return glyphRange
+        }
         let limit = layoutManager!.boundingRect(forGlyphRange: NSMakeRange(0, layoutManager!.numberOfGlyphs),
                                                 in: textContainer!).maxY
-        modifyRanges { glyphRange in
-            guard let glyphRangeRect = self.rect(for: glyphRange) else {
-                return glyphRange
-            }
-            if glyphRangeRect.maxY + 1 >= limit {
-                return nil
-            }
-            let glyphIndex = self.layoutManager!.glyphIndex(for: NSPoint(x: glyphRangeRect.minX,
-                                                                         y: glyphRangeRect.maxY + 1),
-                                                            in: textContainer!,
-                                                            fractionOfDistanceThroughGlyph: nil)
-            return NSRange(location: glyphIndex, length: 0)
+        if glyphRangeRect.maxY + 1 >= limit {
+            return nil
         }
+        let glyphIndex = self.layoutManager!.glyphIndex(for: NSPoint(x: glyphRangeRect.minX,
+                                                                     y: glyphRangeRect.maxY + 1),
+                                                        in: textContainer!,
+                                                        fractionOfDistanceThroughGlyph: nil)
+        return NSRange(location: glyphIndex, length: 0)
     }
 
     open override func moveToBeginningOfLine(_ sender: Any?) {
