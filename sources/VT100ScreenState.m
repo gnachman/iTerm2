@@ -44,6 +44,7 @@ NSString *const kScreenStateAlternateGridStateKey = @"Alternate Grid State";
 NSString *const kScreenStateCursorCoord = @"Cursor Coord";
 NSString *const kScreenStateProtectedMode = @"Protected Mode";
 NSString *const kScreenStateExfiltratedEnvironmentKey = @"Client Environment";
+NSString *const kScreenStatePromptStateKey = @"Prompt State";
 
 NSString *VT100ScreenTerminalStateKeyVT100Terminal = @"VT100Terminal";
 NSString *VT100ScreenTerminalStateKeySavedColors = @"SavedColors";
@@ -129,6 +130,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 @synthesize terminalState = _terminalState;
 @synthesize config = _config;
 @synthesize exfiltratedEnvironment = _exfiltratedEnvironment;
+@synthesize promptStateDictionary = _promptStateDictionary;
 
 - (instancetype)initForMutationOnQueue:(dispatch_queue_t)queue {
     self = [super init];
@@ -217,6 +219,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     _charsetUsesLineDrawingMode = [source.charsetUsesLineDrawingMode copy];
     _config = source.config;
     _exfiltratedEnvironment = [source.exfiltratedEnvironment copy];
+    _promptStateDictionary = [source.promptStateDictionary copy];
 }
 
 - (void)copySlowStuffFrom:(VT100ScreenMutableState *)source {

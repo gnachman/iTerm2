@@ -77,6 +77,7 @@ previousFrame:(NSRect)previousFrame;
 - (void)setCommand:(NSString *)command;
 // Reveal appropriately (focus status bar, open popover, or open minimal)
 - (void)reveal;
+- (void)toggle;
 // Reveal minimal composer.
 - (void)revealMinimal;
 - (BOOL)dismiss;

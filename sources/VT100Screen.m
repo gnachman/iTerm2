@@ -1170,6 +1170,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
                kScreenStatePrimaryGridStateKey: _state.primaryGrid.dictionaryValue ?: @{},
                kScreenStateAlternateGridStateKey: _state.altGrid.dictionaryValue ?: [NSNull null],
                kScreenStateProtectedMode: @(_state.protectedMode),
+               kScreenStatePromptStateKey: _state.promptStateDictionary,
             };
             dict = [dict dictionaryByRemovingNullValues];
             [encoder mergeDictionary:dict];

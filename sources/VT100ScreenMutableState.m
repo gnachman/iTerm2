@@ -595,7 +595,7 @@ static _Atomic int gPerformingJoinedBlock;
     const BOOL enabled = self.terminal.softAlternateScreenMode;
     const BOOL showing = self.currentGrid == self.altGrid;;
     _triggerEvaluator.triggersSlownessDetector.enabled = enabled;
-
+    [_promptStateMachine setAllowed:!enabled];
     [self addSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate) {
         [delegate screenSoftAlternateScreenModeDidChangeTo:enabled showingAltScreen:showing];
     }];
@@ -972,6 +972,9 @@ static _Atomic int gPerformingJoinedBlock;
             [self.currentGrid scrollRect:VT100GridRectMake(0, 0, self.width, self.height)
                                   downBy:marginalDelta
                                softBreak:NO];
+            [self shiftIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0, 0, self.width, self.height)
+                                    startingAfter:-1
+                                      downByLines:marginalDelta];
         }
         [self.currentGrid setCursor:VT100GridCoordMake(cursorX, self.currentGrid.cursor.y - delta)];
     }
@@ -2361,6 +2364,10 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 #pragma mark - Shell Integration
 
+- (NSDictionary *)promptStateDictionary {
+    return _promptStateMachine.dictionaryValue;
+}
+
 - (void)assignCurrentCommandEndDate {
     id<VT100ScreenMarkReading> screenMark = self.lastCommandMark;
     NSDate *now = [NSDate date];
@@ -3099,16 +3106,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return result;
 }
 
-- (void)moveCursorUpClawingBackIfNeeded {
-    if (self.currentGrid.cursor.y > 0) {
-        self.currentGrid.cursor = VT100GridCoordMake(self.currentGrid.cursor.x,
-                                                     self.currentGrid.cursor.y - 1);
-        return;
-    }
-    [self.currentGrid scrollWholeScreenDownByLines:1
-                             poppingFromLineBuffer:self.linebuffer];
-}
-
 - (id<VT100ScreenMarkReading>)updatePromptMarkRangesForPromptEndingOnLine:(int)line
                                                                promptText:(NSArray<ScreenCharArray *> *)promptText {
     id<VT100ScreenMarkReading> mark = [self lastPromptMark];
@@ -3474,8 +3471,26 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                             replacementRange.start.y,
                             gridSize.width,
                             originalNumLines);
+    [self shiftIntervalTreeObjectsInRange:rangeFromPortholeToEnd
+                            startingAfter:range.end.y
+                              downByLines:deltaLines];
+
+    [self.linebuffer setMaxLines:savedMaxLines];
+    if (!self.config.unlimitedScrollback) {
+        [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:gridSize.width]];
+    }
+
+    return resultingRange;
+}
+
+// If an object starts on or before the line `startingAfter` then its start stays put but its end
+// moves (the end always moves). This is useful when inserting lines into the middle of an interval.
+// If you just want to shift everything in inputRange down, use a startingAfter of -1.
+- (void)shiftIntervalTreeObjectsInRange:(VT100GridCoordRange)inputRange
+                          startingAfter:(int)startingAfter
+                            downByLines:(int)deltaLines {
     Interval *intervalToMove =
-    [self intervalForGridCoordRange:rangeFromPortholeToEnd];
+    [self intervalForGridCoordRange:inputRange];
 
     NSArray<id<IntervalTreeImmutableObject>> *objects =
     [self.intervalTree objectsInInterval:intervalToMove];
@@ -3483,7 +3498,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     [self.mutableIntervalTree bulkMoveObjects:objects
                                         block:^Interval*(id<IntervalTreeObject> object) {
         VT100GridCoordRange itoRange = [self coordRangeForInterval:object.entry.interval];
-        if (itoRange.start.y > range.end.y) {
+        if (itoRange.start.y > startingAfter) {
             itoRange.start.y += deltaLines;
         }
         itoRange.end.y += deltaLines;
@@ -3496,13 +3511,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         [observer intervalTreeDidMoveObjects:doppelgangers];
     }];
     [self reloadMarkCache];
-
-    [self.linebuffer setMaxLines:savedMaxLines];
-    if (!self.config.unlimitedScrollback) {
-        [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:gridSize.width]];
-    }
-
-    return resultingRange;
 }
 
 #pragma mark - URLs
@@ -4032,6 +4040,7 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
 
     if (screenState) {
         self.protectedMode = [screenState[kScreenStateProtectedMode] unsignedIntegerValue];
+        [_promptStateMachine loadPromptStateDictionary:screenState[kScreenStatePromptStateKey]];
         [self.tabStops removeAllObjects];
         [self.tabStops addObjectsFromArray:screenState[kScreenStateTabStopsKey]];
         DLog(@"Restored tabstops: %@", self.tabStops);

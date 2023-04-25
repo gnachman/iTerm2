@@ -616,6 +616,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     NSMutableArray<NSData *> *_dataQueue;
 
     BOOL _promptStateAllowsAutoComposer;
+    NSArray<ScreenCharArray *> *_desiredComposerPrompt;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1030,6 +1031,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_pendingJumps release];
     [_dataQueue release];
     [_pendingPublishRequests release];
+    [_desiredComposerPrompt release];
 
     [super dealloc];
 }
@@ -1052,6 +1054,12 @@ ITERM_WEAKLY_REFERENCEABLE
         if ([self.variablesScope valueForVariableName:iTermVariableKeySessionHostname] == nil) {
             [self.variablesScope setValue:name forVariableNamed:iTermVariableKeySessionHostname];
         }
+    }
+    if (_desiredComposerPrompt) {
+        NSLog(@"Delayed reveal of prompt");
+        NSArray<ScreenCharArray *> *prompt = [_desiredComposerPrompt autorelease];
+        _desiredComposerPrompt = nil;
+        [self screenRevealComposerWithPrompt:prompt];
     }
 }
 
@@ -6266,7 +6274,7 @@ DLog(args); \
     if (self.currentCommand.length > 0) {
         [self setComposerString:self.currentCommand];
     }
-    [self.composerManager reveal];
+    [self.composerManager toggle];
 }
 
 - (void)setComposerString:(NSString *)string {
@@ -11552,14 +11560,23 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)screenRevealComposerWithPrompt:(NSArray<ScreenCharArray *> *)prompt {
     _promptStateAllowsAutoComposer = YES;
     if ([iTermPreferences boolForKey:kPreferenceAutoComposer]) {
-        [_composerManager reset];
-        [self revealAutoComposerWithPrompt:prompt];
+        if (_initializationFinished) {
+            [_composerManager reset];
+            [self revealAutoComposerWithPrompt:prompt];
+        } else {
+            _desiredComposerPrompt = [prompt copy];
+        }
     }
 }
 
 - (void)screenDismissComposer {
     _promptStateAllowsAutoComposer = NO;
-    [self.composerManager dismissAnimated:NO];
+    if (_initializationFinished) {
+        [self.composerManager dismissAnimated:NO];
+    } else {
+        [_desiredComposerPrompt release];
+        _desiredComposerPrompt = nil;
+    }
 }
 
 - (void)screenAppendStringToComposer:(NSString *)string {
@@ -14899,7 +14916,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
         return;
     }
     [self setComposerString:choices[0]];
-    [self.composerManager reveal];
+    [self.composerManager toggle];
 }
 
 - (BOOL)sessionViewTerminalIsFirstResponder {
@@ -14996,7 +15013,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)textViewOpenComposer:(NSString *)string {
     [self setComposerString:string];
-    [self.composerManager reveal];
+    [self.composerManager toggle];
 }
 
 - (BOOL)textViewIsAutoComposerOpen {

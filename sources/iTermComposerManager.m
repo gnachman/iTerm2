@@ -35,7 +35,7 @@
 - (void)showOrAppendToDropdownWithString:(NSString *)string {
     if (!_dropDownComposerViewIsVisible) {
         _saved = [string copy];
-        [self showMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
+        [self toggleMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
     } else {
         _minimalViewController.stringValue = [NSString stringWithFormat:@"%@\n%@",
                                               _minimalViewController.stringValue, string];
@@ -85,10 +85,10 @@
         return;
     }
     // Nothing is currently visible. Reveal as usual.
-    [self reveal];
+    [self toggle];
 }
 
-- (void)reveal {
+- (void)toggle {
     iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
     if (statusBarViewController && [self shouldRevealStatusBarComposerInViewController:statusBarViewController]) {
         if (_dropDownComposerViewIsVisible) {
@@ -97,6 +97,18 @@
         } else {
             [self showComposerInStatusBar:statusBarViewController];
         }
+    } else {
+        [self toggleMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
+    }
+}
+
+- (void)reveal {
+    iTermStatusBarViewController *statusBarViewController = [self.delegate composerManagerStatusBarViewController:self];
+    if (statusBarViewController && [self shouldRevealStatusBarComposerInViewController:statusBarViewController]) {
+        if (_dropDownComposerViewIsVisible) {
+            return;
+        }
+        [self showComposerInStatusBar:statusBarViewController];
     } else {
         [self showMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
     }
@@ -117,7 +129,7 @@
             _saved = [component.stringValue copy];
         }
     }
-    [self showMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
+    [self toggleMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
 }
 
 - (void)showComposerInStatusBar:(iTermStatusBarViewController *)statusBarViewController {
@@ -153,12 +165,16 @@
     return self.isAutoComposer ? 0 : 20;
 }
 
-- (void)showMinimalComposerInView:(NSView *)superview {
+- (void)toggleMinimalComposerInView:(NSView *)superview {
     if (_minimalViewController) {
         _saved = _minimalViewController.stringValue;
         [self dismissMinimalViewAnimated:YES];
         return;
     }
+    [self toggleMinimalComposerInView:superview];
+}
+
+- (void)showMinimalComposerInView:(NSView *)superview {
     _minimalViewController = [[iTermMinimalComposerViewController alloc] init];
     _minimalViewController.delegate = self;
     _minimalViewController.isAutoComposer = self.isAutoComposer;
