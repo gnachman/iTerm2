@@ -104,4 +104,9 @@ NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
     }
 }
 
+- (NSString *)shortDebugDescription {
+    return @"[CapOut]";
+}
+
+
 @end

@@ -51,7 +51,7 @@ previousFrame:(NSRect)previousFrame;
 - (void)composerManager:(iTermComposerManager *)composerManager performFindPanelAction:(id)sender;
 - (void)composerManager:(iTermComposerManager *)composerManager
  desiredHeightDidChange:(CGFloat)desiredHeight;
-
+- (void)composerManagerClear:(iTermComposerManager *)composerManager;
 @end
 
 @interface iTermComposerManager : NSObject

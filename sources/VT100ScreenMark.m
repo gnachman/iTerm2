@@ -284,6 +284,12 @@ static NSString *const kMarkOutputStart = @"Output Start";
     return (id<VT100ScreenMarkReading>)[super doppelganger];
 }
 
+- (NSString *)shortDebugDescription {
+    return [NSString stringWithFormat:@"[ScreenMark prompt=%@ code=%@ cmd=%@]",
+            @(_isPrompt), @(_code), _command];
+}
+
+
 - (iTermPromise<NSNumber *> *)returnCodePromise {
     if (!_returnCodePromise) {
         _returnCodePromise = [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {

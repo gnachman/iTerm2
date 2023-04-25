@@ -399,10 +399,19 @@ static _Atomic int gPerformingJoinedBlock;
             [self incrementOverflowBy:[self.linebuffer dropExcessLinesWithWidth:self.currentGrid.size.width]];
         }
     }
+    [self movePromptUnderComposerIfNeeded];
+    _terminal.stringForKeypress = config.stringForKeypress;
+    _alertOnNextMark = config.alertOnNextMark;
+}
+
+- (void)movePromptUnderComposerIfNeeded {
+    if (self.terminal.softAlternateScreenMode) {
+        return;
+    }
     const int minimumNumberOfRowsToKeepBeforeComposer = 1;
-    if (config.desiredComposerRows && self.height > minimumNumberOfRowsToKeepBeforeComposer) {
+    if (self.config.desiredComposerRows && self.height > minimumNumberOfRowsToKeepBeforeComposer) {
         int end = MAX(minimumNumberOfRowsToKeepBeforeComposer,
-                      self.height - config.desiredComposerRows.intValue - 1);
+                      self.height - self.config.desiredComposerRows.intValue - 1);
         if (end >= self.height) {
             end = self.height - 2;
         }
@@ -411,8 +420,6 @@ static _Atomic int gPerformingJoinedBlock;
         }
         [self ensureContentEndsAt:end];
     }
-    _terminal.stringForKeypress = config.stringForKeypress;
-    _alertOnNextMark = config.alertOnNextMark;
 }
 
 - (void)setExited:(BOOL)exited {
@@ -968,14 +975,18 @@ static _Atomic int gPerformingJoinedBlock;
     } else if (self.currentGrid.cursor.y - delta < self.height){
         const int count = [self.currentGrid scrollWholeScreenDownByLines:-delta poppingFromLineBuffer:self.linebuffer];
         if (count < -delta) {
+            // Line buffer became empty
             const int marginalDelta = -delta - count;
             [self.currentGrid scrollRect:VT100GridRectMake(0, 0, self.width, self.height)
                                   downBy:marginalDelta
                                softBreak:NO];
-            [self shiftIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0, 0, self.width, self.height)
-                                    startingAfter:-1
-                                      downByLines:marginalDelta];
         }
+        [self shiftIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
+                                                                      0,
+                                                                      self.numberOfScrollbackLines + self.height + delta,
+                                                                      self.height)
+                                startingAfter:-1
+                                  downByLines:-delta];
         [self.currentGrid setCursor:VT100GridCoordMake(cursorX, self.currentGrid.cursor.y - delta)];
     }
 }
@@ -1615,6 +1626,55 @@ void VT100ScreenEraseCell(screen_char_t *sct,
          @(numberOfLinesAppended), @(numberOfLinesToPop), @(numberOfLinesRemoved), @(adjustment), @(y));
     self.currentGrid.cursorY = y;
     DLog(@"Cursor at %@", VT100GridCoordDescription(self.currentGrid.cursor));
+}
+
+// Move everything above the prompt mark into history.
+- (void)clearForComposer {
+    if (_promptState != VT100ScreenPromptStateEnteringCommand) {
+        return;
+    }
+    if (self.terminal.softAlternateScreenMode) {
+        return;
+    }
+    if (self.config.desiredComposerRows <= 0) {
+        return;
+    }
+    id<VT100ScreenMarkReading> mark = [self lastPromptMark];
+    Interval *interval = mark.entry.interval;
+    if (!interval) {
+        return;
+    }
+    const VT100GridAbsCoordRange absRange = [self absCoordRangeForInterval:interval];
+    if (absRange.end.y <= self.numberOfScrollbackLines + self.totalScrollbackOverflow) {
+        // Mark begins above screen.
+        return;
+    }
+
+    // Move the prompt mark to the top of the grid.
+    const int count = absRange.end.y - self.numberOfScrollbackLines - self.totalScrollbackOverflow - 1;
+    for (int i = 0; i < count; i++) {
+        [self incrementOverflowBy:
+         [self.currentGrid scrollWholeScreenUpIntoLineBuffer:self.linebuffer
+                                         unlimitedScrollback:self.unlimitedScrollback]];
+    }
+
+    // Add a bunch of blank lines to history so that it can then be moved down.
+    // Note that this causes the interval tree objects to be misaligned.
+    for (int i = 0; i < count; i++) {
+        [self.linebuffer appendScreenCharArray:[ScreenCharArray emptyLineOfLength:self.width] width:self.width];
+    }
+
+    // Move the interval tree objects to be next to the prompt again.
+    [self shiftIntervalTreeObjectsInRange:VT100GridCoordRangeMake(0,
+                                                                  self.numberOfScrollbackLines - count,
+                                                                  self.width, 
+                                                                  self.numberOfScrollbackLines)
+                            startingAfter:self.numberOfScrollbackLines - count - 1
+                              downByLines:count];
+     // Move content down so prompt ends at the bottom of the screen. This is based on the cursor's
+    // position.
+    self.currentGrid.cursorY -= count;
+    [self movePromptUnderComposerIfNeeded];
 }
 
 - (void)setUseColumnScrollRegion:(BOOL)mode {

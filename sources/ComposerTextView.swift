@@ -18,6 +18,7 @@ protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerTextViewOpenHistory) func composerTextViewOpenHistory()
     @objc(composerTextViewWantsKeyEquivalent:) func composerTextViewWantsKeyEquivalent(_ event: NSEvent) -> Bool
     @objc(composerTextViewPerformFindPanelAction:) func composerTextViewPerformFindPanelAction(_ sender: Any?)
+    @objc(composerTextViewClear) func composerTextViewClear()
 
     // Optional
     @objc(composerTextViewDidResignFirstResponder) optional func composerTextViewDidResignFirstResponder()
@@ -275,7 +276,7 @@ class ComposerTextView: MultiCursorTextView {
         }),
         // C-l
         Action(modifiers: [.control], characters: "\u{c}", closure: { textView, event in
-            textView.sendKeystroke(event)
+            textView.composerDelegate?.composerTextViewClear()
             return true
         }),
         // C-p

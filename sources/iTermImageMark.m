@@ -76,6 +76,11 @@
     }
 }
 
+- (NSString *)shortDebugDescription {
+    return [NSString stringWithFormat:@"[Image %@]", _imageCode];
+}
+
+
 - (id<iTermMark>)progenitor {
     @synchronized ([iTermImageMark class]) {
         return _progenitor;

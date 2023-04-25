@@ -16739,6 +16739,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     return _textview.lineHeight;
 }
 
+- (void)composerManagerClear:(iTermComposerManager *)composerManager {
+    [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState clearForComposer];
+    }];
+}
+
 - (void)composerManagerOpenHistory:(iTermComposerManager *)composerManager {
     [[_delegate realParentWindow] openCommandHistory:nil];
 }

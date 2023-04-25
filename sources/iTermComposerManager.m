@@ -321,6 +321,10 @@
     return [self.delegate composerManagerLineHeight:self];
 }
 
+- (void)minimalComposerClear:(iTermMinimalComposerViewController *)composer {
+    [self.delegate composerManagerClear:self];
+}
+
 - (void)minimalComposerOpenHistory:(iTermMinimalComposerViewController *)composer {
     [self.delegate composerManagerOpenHistory:self];
 }

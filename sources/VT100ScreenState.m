@@ -948,6 +948,42 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return [lines componentsJoinedByString:@"\n"];
 }
 
+- (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects {
+    NSMutableString *string =
+        [NSMutableString stringWithString:[self.linebuffer compactLineDumpWithWidth:self.width andContinuationMarks:YES]];
+    NSMutableArray *lines = [[string componentsSeparatedByString:@"\n"] mutableCopy];
+    long long absoluteLineNumber = self.totalScrollbackOverflow;
+    if (string.length) {
+        for (int i = 0; i < lines.count; i++) {
+            NSString *ito = [self debugStringForIntervalTreeObjectsOnLine:i];
+            lines[i] = [NSString stringWithFormat:@"%8lld:        %@%@", absoluteLineNumber++, lines[i], ito];
+        }
+
+        [lines addObject:@"- end of history -"];
+    }
+    NSString *gridDump = [self.currentGrid compactLineDumpWithContinuationMarks];
+    NSArray *gridLines = [gridDump componentsSeparatedByString:@"\n"];
+    for (int i = 0; i < gridLines.count; i++) {
+        NSString *ito = [self debugStringForIntervalTreeObjectsOnLine:i + self.numberOfScrollbackLines];
+        [lines addObject:[NSString stringWithFormat:@"%8lld (%04d): %@%@", absoluteLineNumber++, i, gridLines[i], ito]];
+    }
+    return [lines componentsJoinedByString:@"\n"];
+}
+
+- (NSString *)debugStringForIntervalTreeObjectsOnLine:(int)line {
+    const long long offset = self.cumulativeScrollbackOverflow;
+    NSMutableArray<NSString *> *strings = [NSMutableArray array];
+    const VT100GridAbsCoordRange absRange = VT100GridAbsCoordRangeMake(0, line + offset, self.width, line + offset);
+    Interval *interval = [self intervalForGridAbsCoordRange:absRange];
+    for (id<IntervalTreeImmutableObject> object in [_intervalTree objectsInInterval:interval]) {
+        [strings addObject:[object shortDebugDescription]];
+    }
+    if (strings.count == 0) {
+        return @"";
+    }
+    return [NSString stringWithFormat:@"ITOs: %@", [strings componentsJoinedByString:@", "]];
+}
+
 #pragma mark - iTermTextDataSource
 
 - (ScreenCharArray *)screenCharArrayForLine:(int)line {

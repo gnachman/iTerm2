@@ -82,6 +82,10 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
     return copy;
 }
 
+- (NSString *)shortDebugDescription {
+    return [NSString stringWithFormat:@"[RemoteHost %@@%@]", _username, _hostname];
+}
+
 - (id<IntervalTreeObject>)doppelganger {
     @synchronized ([VT100RemoteHost class]) {
         assert(!_isDoppelganger);

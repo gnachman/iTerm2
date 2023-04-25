@@ -268,6 +268,10 @@ workingDirectory:(NSString *)pwd
     [self.delegate minimalComposer:self performFindPanelAction:sender];
 }
 
+- (void)composerTextViewClear {
+    [self.delegate minimalComposerClear:self];
+}
+
 #pragma mark - iTermDragHandleViewDelegate
 
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)movement {

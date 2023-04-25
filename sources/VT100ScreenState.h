@@ -358,6 +358,7 @@ extern NSString *const kScreenStateExfiltratedEnvironmentKey;
 #pragma mark - Development
 
 - (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbers;
+- (NSString *)compactLineDumpWithHistoryAndContinuationMarksAndLineNumbersAndIntervalTreeObjects;
 
 #pragma mark - SSH State
 

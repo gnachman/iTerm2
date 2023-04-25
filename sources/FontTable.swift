@@ -41,6 +41,10 @@ class FontTable: NSObject {
             delta = dict["delta"] as? Int
         }
 
+        var shortDebugDescription: String {
+            return "[FontBox \(font.font.familyName ?? "unnamed")]"
+        }
+
         func fakeBold(italic: Bool) -> Bool {
             var fakeBold = ObjCBool(true)
             var fakeItalic = ObjCBool(italic)
