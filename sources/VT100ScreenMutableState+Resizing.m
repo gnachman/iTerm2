@@ -100,8 +100,8 @@
     DLog(@"Cursor at %d,%d", self.currentGrid.cursorX, self.currentGrid.cursorY);
     if (self.commandStartCoord.x != -1) {
         [self didUpdatePromptLocation];
-        [self commandDidEndWithRange:self.commandRange];
-        [self invalidateCommandStartCoordWithoutSideEffects];
+//        [self commandDidEndWithRange:self.commandRange];
+//        [self invalidateCommandStartCoordWithoutSideEffects];
     }
     self.lastCommandMark = nil;
 

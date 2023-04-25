@@ -129,7 +129,7 @@
             _saved = [component.stringValue copy];
         }
     }
-    [self toggleMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
+    [self showMinimalComposerInView:[self.delegate composerManagerContainerView:self]];
 }
 
 - (void)showComposerInStatusBar:(iTermStatusBarViewController *)statusBarViewController {

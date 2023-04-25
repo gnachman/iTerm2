@@ -2142,6 +2142,7 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"Before, range of visible lines is %@", VT100GridRangeDescription(_textview.rangeOfVisibleLines));
 
     [_screen setSize:size];
+
     // Sync so that we'll have an updated model as we go forward so that, for example, tail find
     // will be sane.
     [self sync];
