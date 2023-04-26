@@ -3142,7 +3142,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 // End of command prompt, will start accepting command to run as the user types at the prompt.
 - (void)commandDidStart {
     VT100GridCoord coord = self.currentGrid.cursor;
-    coord.y += self.numberOfScrollbackLines;
     [self promptEndedAndCommandStartedAt:coord];
 }
 
@@ -3158,7 +3157,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(self.currentPromptRange.start.x,
                                                                     self.currentPromptRange.start.y,
                                                                     commandStartLocation.x,
-                                                                    commandStartLocation.y + self.cumulativeScrollbackOverflow);
+                                                                    commandStartLocation.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
     NSArray<ScreenCharArray *> *promptText = [[self contentInRange:promptRange] filteredArrayUsingBlock:^BOOL(ScreenCharArray *sca) {
         return [[sca.stringValue stringByTrimmingTrailingWhitespace] length] > 0;
     }];

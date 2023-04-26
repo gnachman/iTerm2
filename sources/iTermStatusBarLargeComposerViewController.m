@@ -224,7 +224,8 @@
         [_historyWindowController loadCommands:[_historyWindowController commandsForHost:self.host
                                                                           partialCommand:prefix
                                                                                   expand:YES]
-                                partialCommand:prefix];
+                                partialCommand:prefix
+                           sortChronologically:NO];
     } else {
         [iTermShellHistoryController showInformationalMessage];
     }

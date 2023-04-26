@@ -421,7 +421,7 @@
 - (BOOL)autoCommandHistoryIsOpenForSession:(PTYSession *)session;
 
 - (void)openCommandHistory:(id)sender;
-- (void)openCommandHistoryWithPrefix:(NSString *)prefix;
+- (void)openCommandHistoryWithPrefix:(NSString *)prefix sortChronologically:(BOOL)sortChronologically;
 - (void)nextMark:(id)sender;
 - (void)previousMark:(id)sender;
 

@@ -32,7 +32,8 @@ NS_ASSUME_NONNULL_BEGIN
        frameDidChangeTo:(NSRect)newFrame;
 - (CGFloat)minimalComposerLineHeight:(iTermMinimalComposerViewController *)composer;
 - (void)minimalComposerOpenHistory:(iTermMinimalComposerViewController *)composer
-                            prefix:(NSString *)prefix;
+                            prefix:(NSString *)prefix
+                         forSearch:(BOOL)forSearch;
 - (BOOL)minimalComposer:(iTermMinimalComposerViewController *)composer wantsKeyEquivalent:(NSEvent *)event;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer performFindPanelAction:(id)sender;
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer

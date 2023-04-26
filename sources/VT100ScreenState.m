@@ -734,7 +734,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         return VT100GridCoordRangeMake(self.commandStartCoord.x,
                                        MAX(0, self.commandStartCoord.y - offset),
                                        self.currentGrid.cursorX,
-                                       self.currentGrid.cursorY + self.numberOfScrollbackLines);
+                                       self.currentGrid.cursorY + self.numberOfScrollbackLines - offset);
     }
 }
 

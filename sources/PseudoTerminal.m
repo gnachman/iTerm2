@@ -7747,10 +7747,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [iTermShellHistoryController showInformationalMessage];
         return;
     }
-    [self openCommandHistoryWithPrefix:[[self currentSession] currentCommand]];
+    [self openCommandHistoryWithPrefix:[[self currentSession] currentCommand] sortChronologically:NO];
 }
 
-- (void)openCommandHistoryWithPrefix:(NSString *)prefix {
+- (void)openCommandHistoryWithPrefix:(NSString *)prefix sortChronologically:(BOOL)sortChronologically {
     if (!commandHistoryPopup) {
         commandHistoryPopup = [[CommandHistoryPopupWindowController alloc] initForAutoComplete:NO];
     }
@@ -7758,7 +7758,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [commandHistoryPopup loadCommands:[commandHistoryPopup commandsForHost:[[self currentSession] currentHost]
                                                             partialCommand:prefix
                                                                     expand:YES]
-                       partialCommand:prefix];
+                       partialCommand:prefix
+                  sortChronologically:sortChronologically];
 }
 
 - (IBAction)openDirectories:(id)sender {

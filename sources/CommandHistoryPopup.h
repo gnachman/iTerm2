@@ -28,6 +28,8 @@
                       expand:(BOOL)expand;
 
 
-- (void)loadCommands:(NSArray *)commands partialCommand:(NSString *)partialCommand;
+- (void)loadCommands:(NSArray *)commands
+      partialCommand:(NSString *)partialCommand
+ sortChronologically:(BOOL)sortChronologically;
 
 @end

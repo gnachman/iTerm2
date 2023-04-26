@@ -15,7 +15,8 @@ protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerTextViewEnqueue:) func composerTextViewEnqueue(string: String)
     @objc(composerTextViewSendToAdvancedPaste:) func composerTextViewSendToAdvancedPaste(content: String)
     @objc(composerTextViewSendControl:) func composerTextViewSendControl(_ control: String)
-    @objc(composerTextViewOpenHistoryWithPrefix:) func composerTextViewOpenHistory(prefix: String)
+    @objc(composerTextViewOpenHistoryWithPrefix:forSearch:) func composerTextViewOpenHistory(prefix: String,
+                                                                                             forSearch: Bool)
     @objc(composerTextViewWantsKeyEquivalent:) func composerTextViewWantsKeyEquivalent(_ event: NSEvent) -> Bool
     @objc(composerTextViewPerformFindPanelAction:) func composerTextViewPerformFindPanelAction(_ sender: Any?)
     @objc(composerTextViewClear) func composerTextViewClear()
@@ -282,7 +283,7 @@ class ComposerTextView: MultiCursorTextView {
         // C-r
         Action(modifiers: [.control], characters: "\u{12}", closure: { textView, event in
             textView.selectAll(nil)
-            textView.composerDelegate?.composerTextViewOpenHistory(prefix: "")
+            textView.composerDelegate?.composerTextViewOpenHistory(prefix: "", forSearch: true)
             return true
         }),
         // C-u
@@ -362,7 +363,7 @@ class ComposerTextView: MultiCursorTextView {
     override func moveUp(_ sender: Any?) {
         if cursorAtEndExcludingSuggestion && !canMoveUp && multiCursorSelectedRanges.count <= 1 {
             suggestion = nil
-            composerDelegate?.composerTextViewOpenHistory(prefix: stringExcludingPrefix)
+            composerDelegate?.composerTextViewOpenHistory(prefix: stringExcludingPrefix, forSearch: false)
         } else {
             super.moveUp(sender)
         }
@@ -371,7 +372,7 @@ class ComposerTextView: MultiCursorTextView {
     override func moveDown(_ sender: Any?) {
         if cursorAtEndExcludingSuggestion && !canMoveDown && multiCursorSelectedRanges.count <= 1 {
             suggestion = nil
-            composerDelegate?.composerTextViewOpenHistory(prefix: stringExcludingPrefix)
+            composerDelegate?.composerTextViewOpenHistory(prefix: stringExcludingPrefix, forSearch: false)
         } else {
             super.moveDown(sender)
         }

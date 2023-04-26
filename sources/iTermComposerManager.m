@@ -331,8 +331,9 @@
 }
 
 - (void)minimalComposerOpenHistory:(iTermMinimalComposerViewController *)composer
-                            prefix:(nonnull NSString *)prefix {
-    [self.delegate composerManagerOpenHistory:self prefix:prefix];
+                            prefix:(nonnull NSString *)prefix
+                         forSearch:(BOOL)forSearch {
+    [self.delegate composerManagerOpenHistory:self prefix:prefix forSearch:forSearch];
 }
 
 - (BOOL)minimalComposer:(iTermMinimalComposerViewController *)composer wantsKeyEquivalent:(NSEvent *)event {

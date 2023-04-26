@@ -47,7 +47,8 @@ frameForDesiredHeight:(CGFloat)desiredHeight
 previousFrame:(NSRect)previousFrame;
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager;
 - (void)composerManagerOpenHistory:(iTermComposerManager *)composerManager
-                            prefix:(NSString *)prefix;
+                            prefix:(NSString *)prefix
+                         forSearch:(BOOL)forSearch;
 - (BOOL)composerManager:(iTermComposerManager *)composerManager wantsKeyEquivalent:(NSEvent *)event;
 - (void)composerManager:(iTermComposerManager *)composerManager performFindPanelAction:(id)sender;
 - (void)composerManager:(iTermComposerManager *)composerManager
