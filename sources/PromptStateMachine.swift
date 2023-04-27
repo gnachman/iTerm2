@@ -19,6 +19,9 @@ protocol PromptStateMachineDelegate: AnyObject {
 
 @objc(iTermPromptStateMachine)
 class PromptStateMachine: NSObject {
+    override var debugDescription: String {
+        return "<PromptStateMachine: \(self.it_addressString) state=\(state)>"
+    }
     @objc weak var delegate: PromptStateMachineDelegate?
 
     private enum State: CustomDebugStringConvertible {
@@ -149,6 +152,15 @@ class PromptStateMachine: NSObject {
         }
     }
 
+    @objc var isEchoingBackCommand: Bool {
+        switch state {
+        case .echoingBack:
+            return true
+        case .accruingAlreadyEnteredCommand, .executing, .receivingPrompt, .enteringCommand, .ground, .disabled:
+            return false
+        }
+    }
+
     @objc(setAllowed:)
     func setAllowed(_ allowed: Bool) {
         currentEvent = "setAllowed"
@@ -267,19 +279,28 @@ class PromptStateMachine: NSObject {
 
     // Command began executing
     private func handleFinalTermC() {
+        commandDidBeginExecution(reason: "C")
+    }
+
+    @objc
+    func triggerDetectedCommandDidBeginExecution() {
+        commandDidBeginExecution(reason: "Trigger")
+    }
+
+    func commandDidBeginExecution(reason: String) {
         switch state {
         case .disabled:
             break
         case .ground, .receivingPrompt, .executing:
             // Something crazy happened so continue without composer.
-            set(state: .ground, on: "C")
+            set(state: .ground, on: reason)
         case .enteringCommand:
             // TODO: Your work will be lost.
             dismissComposer()
-            set(state: .ground, on: "C")
+            set(state: .ground, on: reason)
         case .echoingBack, .accruingAlreadyEnteredCommand:
             dismissComposer()
-            set(state: .executing, on: "C")
+            set(state: .executing, on: reason)
         }
     }
 

@@ -126,7 +126,10 @@
         DLog(@"Ignore linefeed/formfeed/index because cursor outside left-right margin.");
         return;
     }
-
+    if (_promptStateMachine.isEchoingBackCommand && self.lastPromptMark.promptDetectedByTrigger) {
+        [_promptStateMachine triggerDetectedCommandDidBeginExecution];
+        [self commandDidEnd];
+    }
     if (self.collectInputForPrinting) {
         [self.printBuffer appendString:@"\n"];
     } else {
