@@ -1753,4 +1753,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [self.delegate insertText:string];
 }
 
+- (void)popupWindowHostSetPreview:(NSString *)string {
+}
+
 @end

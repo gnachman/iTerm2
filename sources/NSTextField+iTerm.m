@@ -142,5 +142,8 @@
     [self insertText:string];
 }
 
+- (void)popupWindowHostSetPreview:(NSString *)string {
+}
+
 @end
 

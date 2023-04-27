@@ -14555,6 +14555,14 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self insertText:string];
 }
 
+- (void)popupPreview:(NSString *)text {
+    id<iTermPopupWindowHosting> host = [self popupHost];
+    if (host) {
+        [host popupWindowHostSetPreview:[[text firstNonEmptyLine] truncatedToLength:_screen.width ellipsis:@"…"]];
+        return;
+    }
+}
+
 - (void)popupKeyDown:(NSEvent *)event {
     [_textview keyDown:event];
 }

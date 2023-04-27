@@ -357,6 +357,9 @@ int decode_utf8_char(const unsigned char * restrict datap,
 @property (nonatomic, readonly) BOOL endsWithWhitespace;
 
 - (NSArray<NSString *> *)lastWords:(NSUInteger)count;
+@property (nonatomic, readonly) NSString *firstNonEmptyLine;
+- (NSString *)truncatedToLength:(NSInteger)maxLength ellipsis:(NSString *)ellipsis;
+
 @end
 
 @interface NSMutableString (iTerm)

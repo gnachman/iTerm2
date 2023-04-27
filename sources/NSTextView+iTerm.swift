@@ -40,7 +40,11 @@ extension NSTextView: iTermPopupWindowHosting {
     }
 
     public func words(beforeInsertionPoint count: Int) -> [String]! {
-        let text = (textStorage?.string ?? "") as NSString
+        guard let textStorage else {
+            return []
+        }
+        let fullString = textStorage.string as NSString
+        let text = fullString.substring(to: selectedRange().location)
         let words = text.lastWords(UInt(count)).reversed()
         if text.endsWithWhitespace {
             return words + [""]
@@ -50,5 +54,11 @@ extension NSTextView: iTermPopupWindowHosting {
 
     public func popupWindowHostingInsertText(_ string: String!) {
         insertText(string ?? "", replacementRange: selectedRange())
+    }
+
+    public func popupWindowHostSetPreview(_ string: String!) {
+        let range = selectedRange()
+        replaceCharacters(in: range, with: string)
+        setSelectedRange(NSRange(from: range.location, to: range.location + string.utf16.count))
     }
 }

@@ -68,6 +68,10 @@ static NSString *const kRemoteHostUserNameKey = @"User name";
     return [localHostName isEqualToString:self.hostname];
 }
 
+- (BOOL)isRemoteHost {
+    return !self.isLocalhost;
+}
+
 #pragma mark - IntervalTreeObject
 
 - (NSDictionary *)dictionaryValue {

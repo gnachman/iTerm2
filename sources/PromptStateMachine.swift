@@ -338,6 +338,10 @@ class PromptStateMachine: NSObject {
     }
 
     private func accrue(part: String, commandSoFar: String, prompt: [ScreenCharArray]) {
+        let maxLength = 1024 * 4
+        if commandSoFar.count + part.count > maxLength {
+            return
+        }
         set(state: .accruingAlreadyEnteredCommand(commandSoFar: commandSoFar + part,
                                                   prompt: prompt),
             on: "token")

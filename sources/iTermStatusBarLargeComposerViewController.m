@@ -324,6 +324,9 @@
     [self.textView insertText:text replacementRange:self.textView.selectedRange];
 }
 
+- (void)popupPreview:(NSString *)text {
+}
+
 - (void)popupKeyDown:(NSEvent *)event {
     [self.textView keyDown:event];
 }
@@ -399,6 +402,9 @@
         return;
     }
     [self.textView setSuggestion:nil];
+    if (!self.textView.isDoingSyntaxHighlighting) {
+        [self.textView doSyntaxHighlighting];
+    }
 
     NSString *command = [self lineBeforeCursor];
     if (command.length == 0) {
@@ -424,7 +430,7 @@
         return;
     }
 
-    if (![self.host isLocalhost] || self.tmuxController) {
+    if (self.host.isRemoteHost || self.tmuxController) {
         // Don't try to complete filenames if not on localhost. Completion on tmux is possible in
         // theory but likely to be very slow because of the amount of data that would need to be
         // exchanged.
@@ -501,6 +507,7 @@
         commandSelector == @selector(deleteToEndOfParagraph:) ||
         commandSelector == @selector(deleteToMark:)) {
         [self.textView setSuggestion:nil];
+        [self.textView doSyntaxHighlighting];
     }
 
     return NO;

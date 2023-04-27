@@ -32,6 +32,8 @@ protocol ComposerTextViewDelegate: AnyObject {
 class ComposerTextView: MultiCursorTextView {
     @IBOutlet weak var composerDelegate: ComposerTextViewDelegate?
     @objc private(set) var isSettingSuggestion = false
+    @objc private(set) var isDoingSyntaxHighlighting = false
+
     // autoMode will be true for auto-composer, in which case it tries to blend in to the terminal
     // by not requiring shift+enter to send, handling certain control characters like a terminal,
     // etc.
@@ -655,8 +657,6 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     private func reallySetSuggestion(_ suggestion: String?) {
-        doSyntaxHighlighting()
-
         guard let textStorage else {
             return
         }
@@ -720,13 +720,16 @@ class ComposerTextView: MultiCursorTextView {
         suggestionRange = NSRange(location: NSNotFound, length: 0)
     }
 
-    private func doSyntaxHighlighting() {
+    @objc
+    func doSyntaxHighlighting() {
         guard let textStorage else {
             return
         }
+        isDoingSyntaxHighlighting = true
         composerDelegate?.composerSyntaxHighlighter(
             textStorage: textStorage).highlight(
                 range: NSRange(rangeExcludingPrefixAndSuggestion))
+        isDoingSyntaxHighlighting = false
     }
 
     private var prefixLength: Int {

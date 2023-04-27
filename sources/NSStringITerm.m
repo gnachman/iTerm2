@@ -2458,6 +2458,33 @@ static TECObjectRef CreateTECConverterForUTF8Variants(TextEncodingVariant varian
     return words;
 }
 
+- (NSString *)firstNonEmptyLine {
+    NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+    const NSInteger indexOfFirstNonWhitespace = [self rangeOfCharacterFromSet:[whitespace invertedSet]].location;
+    if (indexOfFirstNonWhitespace == NSNotFound) {
+        return @"";
+    }
+
+    NSCharacterSet *newlines = [NSCharacterSet newlineCharacterSet];
+    const NSInteger indexOfSubsequentNewline =
+    [self rangeOfCharacterFromSet:newlines
+                          options:0
+                            range:NSMakeRange(indexOfFirstNonWhitespace,
+                                              self.length - indexOfFirstNonWhitespace)].location;
+    if (indexOfSubsequentNewline == NSNotFound) {
+        return [self substringFromIndex:indexOfFirstNonWhitespace];
+    }
+    return [self substringWithRange:NSMakeRange(indexOfFirstNonWhitespace,
+                                                indexOfSubsequentNewline - indexOfFirstNonWhitespace)];
+}
+
+- (NSString *)truncatedToLength:(NSInteger)maxLength ellipsis:(NSString *)ellipsis {
+    if (self.length <= maxLength) {
+        return self;
+    }
+    return [[self substringToIndex:maxLength - 1] stringByAppendingString:ellipsis];
+}
+
 @end
 
 @implementation NSMutableString (iTerm)

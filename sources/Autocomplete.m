@@ -452,6 +452,12 @@ precededByWhitespace:(BOOL)precededByWhitespace
     [super onClose];
 }
 
+- (NSString *)insertableString {
+    PopupEntry* e = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];
+    NSString *result = moreText_ ?: @"";
+    return [result stringByAppendingString:e.mainValue];
+}
+
 - (void)rowSelected:(id)sender
 {
     if ([table_ selectedRow] >= 0) {
@@ -464,6 +470,12 @@ precededByWhitespace:(BOOL)precededByWhitespace
         }
         [[self delegate] popupInsertText:[e mainValue]];
         [super rowSelected:sender];
+    }
+}
+
+- (void)previewCurrentRow {
+    if ([table_ selectedRow] >= 0) {
+        [self.delegate popupPreview:self.insertableString];
     }
 }
 

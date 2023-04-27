@@ -115,6 +115,12 @@ class SyntaxHighlighter {
     }
 
     func highlight(range rangeToModify: Range<Int>) {
+        let maxLength = 1024
+        if rangeToModify.upperBound > 1024 {
+            removeForegroundColorAndFontAttributes(range: maxLength..<rangeToModify.upperBound)
+            highlight(range: rangeToModify.lowerBound..<maxLength)
+            return
+        }
         removeForegroundColorAndFontAttributes(range: rangeToModify)
         let escapes = [unichar(Character("n")): "\n",
                        unichar(Character("a")): "\u{7}",

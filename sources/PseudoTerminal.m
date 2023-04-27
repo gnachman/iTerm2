@@ -7837,7 +7837,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         }
         DLog(@"ACH load commands");
         [commandHistoryPopup loadCommands:commands
-                           partialCommand:prefix];
+                           partialCommand:prefix
+                      sortChronologically:NO];
     }
     if (_autocompleteCandidateListItem && session == self.currentSession) {
         iTermShellHistoryController *history = [iTermShellHistoryController sharedInstance];

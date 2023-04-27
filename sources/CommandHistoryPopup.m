@@ -104,12 +104,17 @@
     }
 }
 
+- (NSString *)insertableString {
+    CommandHistoryPopupEntry *entry = [[self model] objectAtIndex:[self convertIndex:[_tableView selectedRow]]];
+    NSString *const string = [entry.command substringFromIndex:_partialCommandLength];
+    return string;
+}
+
 - (void)rowSelected:(id)sender {
     if ([_tableView selectedRow] >= 0) {
+        NSString *const string = [self insertableString];
         const NSEventModifierFlags flags = [[NSApp currentEvent] modifierFlags];
-        CommandHistoryPopupEntry *entry = [[self model] objectAtIndex:[self convertIndex:[_tableView selectedRow]]];
         const NSEventModifierFlags mask = NSEventModifierFlagShift | NSEventModifierFlagOption;
-        NSString *const string = [entry.command substringFromIndex:_partialCommandLength];
         if (!_autocomplete || (flags & mask) == NSEventModifierFlagShift) {
             [self.delegate popupInsertText:string];
             [super rowSelected:sender];
@@ -122,6 +127,12 @@
     }
     [self.delegate popupInsertText:@"\n"];
     [super rowSelected:sender];
+}
+
+- (void)previewCurrentRow {
+    if ([_tableView selectedRow] >= 0) {
+        [self.delegate popupPreview:[self insertableString]];
+    }
 }
 
 // Called for option+return

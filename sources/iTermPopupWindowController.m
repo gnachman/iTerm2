@@ -643,6 +643,10 @@
         }
         [selectionMainValue_ setString:s];
     }
+    [self previewCurrentRow];
+}
+
+- (void)previewCurrentRow {
 }
 
 @end

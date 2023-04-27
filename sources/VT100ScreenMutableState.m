@@ -411,7 +411,7 @@ static _Atomic int gPerformingJoinedBlock;
     const int minimumNumberOfRowsToKeepBeforeComposer = 1;
     if (self.config.desiredComposerRows && self.height > minimumNumberOfRowsToKeepBeforeComposer) {
         int end = MAX(minimumNumberOfRowsToKeepBeforeComposer,
-                      self.height - self.config.desiredComposerRows.intValue - 1);
+                      self.height - self.config.desiredComposerRows.intValue);
         if (end >= self.height) {
             end = self.height - 2;
         }
@@ -961,7 +961,7 @@ static _Atomic int gPerformingJoinedBlock;
     if (line < 0 || line >= self.height || self.terminalSoftAlternateScreenMode) {
         return;
     }
-    const int delta = -(line - self.currentGrid.cursor.y + 1);
+    const int delta = self.currentGrid.cursor.y - line;
     if (delta == 0) {
         return;
     }
@@ -2487,27 +2487,6 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return mark;
 }
 
-- (BOOL)currentLineIsEmptyAndIsPrecededByPromptMark {
-    if (![self.currentGrid lineIsEmpty:self.currentGrid.cursorY]) {
-        return NO;
-    }
-    const int y = self.numberOfScrollbackLines + self.currentGrid.cursorY - 1;
-    if (y == 0) {
-        return NO;
-    }
-    const VT100GridCoordRange range = VT100GridCoordRangeMake(0, y, self.width, y);
-    for (id<IntervalTreeImmutableObject> object in [self.intervalTree objectsInInterval:[self intervalForGridCoordRange:range]]) {
-        if (![object conformsToProtocol:@protocol(VT100ScreenMarkReading)]) {
-            continue;
-        }
-        id<VT100ScreenMarkReading> mark = (id<VT100ScreenMarkReading>)object;
-        if (mark.isPrompt) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
 - (VT100ScreenMark *)promptDidStartAt:(VT100GridAbsCoord)initialCoord
                          wasInCommand:(BOOL)wasInCommand
                     detectedByTrigger:(BOOL)detectedByTrigger {
@@ -2527,11 +2506,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
             coord.x = 0;
             coord.y += 1;
         }
-        if (![self currentLineIsEmptyAndIsPrecededByPromptMark]) {
-            [self appendCarriageReturnLineFeed];
-            coord.x = 0;
-            coord.y += 1;
-        }
+
+        // Make room for the horizontal line above the line with the mark.
+        [self appendCarriageReturnLineFeed];
+        coord.x = 0;
+        coord.y += 1;
     }
     self.shellIntegrationInstalled = YES;
 
