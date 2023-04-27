@@ -617,6 +617,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     BOOL _promptStateAllowsAutoComposer;
     NSArray<ScreenCharArray *> *_desiredComposerPrompt;
+
+    iTermLocalFileChecker *_localFileChecker;
 }
 
 @synthesize isDivorced = _divorced;
@@ -1032,6 +1034,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_dataQueue release];
     [_pendingPublishRequests release];
     [_desiredComposerPrompt release];
+    [_localFileChecker release];
 
     [super dealloc];
 }
@@ -13567,6 +13570,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     DLog(@"lastLocalDirectory goes %@ -> %@ for %@\n%@", _lastLocalDirectory, lastLocalDirectory, self, [NSThread callStackSymbols]);
     [_lastLocalDirectory autorelease];
     _lastLocalDirectory = [lastLocalDirectory copy];
+    if (lastLocalDirectory) {
+        _localFileChecker.workingDirectory = lastLocalDirectory;
+    }
 }
 
 - (void)setLastLocalDirectoryWasPushed:(BOOL)lastLocalDirectoryWasPushed {
@@ -16772,6 +16778,29 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [self sendCommand:command];
 }
 
+- (id<iTermSyntaxHighlighting>)composerManager:(iTermComposerManager *)composerManager
+          syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString {
+    return [[[iTermSyntaxHighlighter alloc] init:attributedString
+                                        colorMap:_screen.colorMap
+                                        fontTable:_textview.fontTable
+                                     fileChecker:[self fileChecker]] autorelease];
+}
+
+- (iTermFileChecker *)fileChecker {
+    if (@available(macOS 11, *)) {
+        if (_conductor.canCheckFiles) {
+            return _conductor.fileChecker;
+        }
+    }
+    if (!_localFileChecker) {
+        _localFileChecker = [[iTermLocalFileChecker alloc] init];
+        if (self.lastLocalDirectory) {
+            _localFileChecker.workingDirectory = self.lastLocalDirectory;
+        }
+    }
+    return _localFileChecker;
+}
+
 - (void)sendCommand:(NSString *)command {
     if (_screen.commandRange.start.x < 0) {
         id<VT100RemoteHostReading> host = [self currentHost] ?: [VT100RemoteHost localhost];
@@ -16864,6 +16893,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)composerManagerDidDismissMinimalView:(iTermComposerManager *)composerManager {
     _view.composerHeight = 0;
+    [_localFileChecker reset];
+    if (@available(macOS 11, *)) {
+        [_conductor.fileChecker reset];
+    }
 }
 
 - (NSAppearance *)composerManagerAppearance:(iTermComposerManager *)composerManager {

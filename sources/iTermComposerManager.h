@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class TmuxController;
 @protocol VT100RemoteHostReading;
 @class iTermComposerManager;
+@protocol iTermSyntaxHighlighting;
 @class iTermVariableScope;
 @class iTermStatusBarViewController;
 
@@ -43,8 +44,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)composerManager:(iTermComposerManager *)composerManager
 minimalFrameDidChangeTo:(NSRect)newFrame;
 - (NSRect)composerManager:(iTermComposerManager *)composerManager
-frameForDesiredHeight:(CGFloat)desiredHeight
-previousFrame:(NSRect)previousFrame;
+    frameForDesiredHeight:(CGFloat)desiredHeight
+            previousFrame:(NSRect)previousFrame;
 - (CGFloat)composerManagerLineHeight:(iTermComposerManager *)composerManager;
 - (void)composerManagerOpenHistory:(iTermComposerManager *)composerManager
                             prefix:(NSString *)prefix
@@ -54,6 +55,8 @@ previousFrame:(NSRect)previousFrame;
 - (void)composerManager:(iTermComposerManager *)composerManager
  desiredHeightDidChange:(CGFloat)desiredHeight;
 - (void)composerManagerClear:(iTermComposerManager *)composerManager;
+- (id<iTermSyntaxHighlighting>)composerManager:(iTermComposerManager *)composerManager
+          syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString;
 @end
 
 @interface iTermComposerManager : NSObject

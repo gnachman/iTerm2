@@ -12,6 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class TmuxController;
 @protocol VT100RemoteHostReading;
 @class iTermMinimalComposerViewController;
+@protocol iTermSyntaxHighlighting;
 @class iTermVariableScope;
 
 @protocol iTermMinimalComposerViewControllerDelegate<NSObject>
@@ -39,6 +40,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
  desiredHeightDidChange:(CGFloat)desiredHeight;
 - (void)minimalComposerClear:(iTermMinimalComposerViewController *)composer;
+- (id<iTermSyntaxHighlighting>)minimalComposer:(iTermMinimalComposerViewController *)composer
+          syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString;
 
 @end
 

@@ -348,6 +348,11 @@
     [self.delegate composerManager:self desiredHeightDidChange:desiredHeight];
 }
 
+- (id<iTermSyntaxHighlighting>)minimalComposer:(iTermMinimalComposerViewController *)composer
+          syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString {
+    return [self.delegate composerManager:self syntaxHighlighterForAttributedString:attributedString];
+}
+
 - (void)dismissMinimalViewAnimated:(BOOL)animated {
     NSLog(@"dismissMinimalViewAnimated:%@", @(animated));
     iTermMinimalComposerViewController *vc = _minimalViewController;

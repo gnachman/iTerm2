@@ -21,6 +21,9 @@ protocol ComposerTextViewDelegate: AnyObject {
     @objc(composerTextViewPerformFindPanelAction:) func composerTextViewPerformFindPanelAction(_ sender: Any?)
     @objc(composerTextViewClear) func composerTextViewClear()
 
+    @objc(composerSyntaxHighlighterForAttributedString:)
+    func composerSyntaxHighlighter(textStorage: NSMutableAttributedString) -> SyntaxHighlighting
+
     // Optional
     @objc(composerTextViewDidResignFirstResponder) optional func composerTextViewDidResignFirstResponder()
 }
@@ -65,6 +68,9 @@ class ComposerTextView: MultiCursorTextView {
 
     @objc
     var prefix: NSMutableAttributedString? {
+        willSet {
+            suggestion = nil
+        }
         didSet {
             if let prefix {
                 prefix.addAttribute(.promptKey, value: true, range: prefix.wholeRange)
@@ -94,6 +100,15 @@ class ComposerTextView: MultiCursorTextView {
             return range
         }
         return range.shiftedDown(by: prefixLength)
+    }
+
+    var rangeExcludingPrefixAndSuggestion: Range<Int> {
+        let lowerBound = prefix?.string.count ?? 0
+        if suggestionRange.length > 0 {
+            return lowerBound..<suggestionRange.lowerBound
+        } else {
+            return lowerBound..<string.count
+        }
     }
 
     private func updatePrefix() {
@@ -511,6 +526,9 @@ class ComposerTextView: MultiCursorTextView {
             return nil
         }
         if let prefixLength = prefix?.string.count, prefixLength > 0 {
+            if unsafeIndex > prefixLength {
+                return nil
+            }
             if var (range, string) = withoutPrefix({
                 return characterRangeOfCommand(atCharacterIndex: unsafeIndex - prefixLength)
             }) {
@@ -637,6 +655,8 @@ class ComposerTextView: MultiCursorTextView {
     }
 
     private func reallySetSuggestion(_ suggestion: String?) {
+        doSyntaxHighlighting()
+
         guard let textStorage else {
             return
         }
@@ -698,6 +718,15 @@ class ComposerTextView: MultiCursorTextView {
         self.selectedRange = selectedRange
         _suggestion = nil
         suggestionRange = NSRange(location: NSNotFound, length: 0)
+    }
+
+    private func doSyntaxHighlighting() {
+        guard let textStorage else {
+            return
+        }
+        composerDelegate?.composerSyntaxHighlighter(
+            textStorage: textStorage).highlight(
+                range: NSRange(rangeExcludingPrefixAndSuggestion))
     }
 
     private var prefixLength: Int {

@@ -155,6 +155,18 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     }];
 }
 
+- (void)statFile:(NSString *)path
+      completion:(void (^)(struct stat, int))completion {
+    if (!self.ready) {
+        return;
+    }
+    [[_connectionToService remoteObjectProxy] statFile:path withReply:^(struct stat statbuf, int error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(statbuf, error);
+        });
+    }];
+}
+
 - (void)exfiltrateEnvironmentVariableNamed:(NSString *)name
                                      shell:(NSString *)shell
                                 completion:(void (^)(NSString * _Nonnull))completion {

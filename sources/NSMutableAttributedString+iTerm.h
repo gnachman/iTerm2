@@ -20,6 +20,7 @@ extern NSAttributedStringKey iTermReplacementBaseCharacterAttributeName;
 - (void)iterm_appendString:(NSString *)string withAttributes:(NSDictionary *)attributes;
 - (void)trimTrailingWhitespace;
 - (void)replaceAttributesInRange:(NSRange)range withAttributes:(NSDictionary *)newAttributes;
+- (void)appendCharacter:(unichar)c withAttributes:(NSDictionary *)attributes;
 
 @end
 

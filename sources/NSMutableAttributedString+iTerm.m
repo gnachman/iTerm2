@@ -65,6 +65,10 @@ NSAttributedStringKey iTermReplacementBaseCharacterAttributeName = @"iTermReplac
     }
 }
 
+- (void)appendCharacter:(unichar)c withAttributes:(NSDictionary *)attributes {
+    [self iterm_appendString:[NSString stringWithLongCharacter:c] withAttributes:attributes];
+}
+
 @end
 
 @implementation NSAttributedString (iTerm)

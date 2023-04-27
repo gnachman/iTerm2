@@ -89,6 +89,17 @@ class Conductor: NSObject, Codable {
     }
     // If non-nil, a jump that I haven't done yet.
     private var myJump: SSHReconnectionInfo?
+
+    @objc
+    lazy var fileChecker: FileChecker? = {
+        guard #available(macOS 11, *) else {
+            return nil
+        }
+        let checker = FileChecker()
+        checker.dataSource = self
+        return checker
+    }()
+
     @objc var queueWrites: Bool {
         if let parent = parent {
             return nontransitiveQueueWrites && parent.queueWrites
@@ -1066,9 +1077,13 @@ class Conductor: NSObject, Codable {
     }
 
     @available(macOS 11.0, *)
-    fileprivate func framerFile(_ subcommand: FileSubcommand, completion: @escaping (String, Int32) -> ()) {
+    fileprivate func framerFile(_ subcommand: FileSubcommand,
+                                highPriority: Bool = false,
+                                completion: @escaping (String, Int32) -> ()) {
         log("Sending framerFile request \(subcommand)")
-        send(.framerFile(subcommand), .handleFile(StringArray(), completion))
+        send(.framerFile(subcommand),
+             highPriority: highPriority,
+             .handleFile(StringArray(), completion))
     }
 
     private func framerSave(_ dict: [String: String]) {
@@ -1647,9 +1662,16 @@ class Conductor: NSObject, Codable {
         }
     }
 
-    private func send(_ command: Command, _ handler: ExecutionContext.Handler) {
+    private func send(_ command: Command,
+                      highPriority: Bool = false,
+                      _ handler: ExecutionContext.Handler) {
         log("append \(command) to queue in state \(state)")
-        queue.append(ExecutionContext(command: command, handler: handler))
+        let context = ExecutionContext(command: command, handler: handler)
+        if highPriority {
+            queue.insert(context, at: 0)
+        } else {
+            queue.append(context)
+        }
         switch state {
         case .ground, .recovery:
             dequeue()
@@ -1881,9 +1903,10 @@ extension Data {
 @available(macOS 11.0, *)
 extension Conductor: SSHEndpoint {
     @MainActor
-    private func performFileOperation(subcommand: FileSubcommand) async throws -> String {
+    private func performFileOperation(subcommand: FileSubcommand,
+                                      highPriority: Bool = false) async throws -> String {
         let (output, code) = await withCheckedContinuation { continuation in
-            framerFile(subcommand) { content, code in
+            framerFile(subcommand, highPriority: highPriority) { content, code in
                 continuation.resume(returning: (content, code))
             }
         }
@@ -1945,12 +1968,18 @@ extension Conductor: SSHEndpoint {
 
     @MainActor
     func stat(_ path: String) async throws -> RemoteFile {
+        return try await stat(path, highPriority: false)
+    }
+
+    @MainActor
+    func stat(_ path: String, highPriority: Bool = false) async throws -> RemoteFile {
         return try await logging("stat \(path)") {
             guard let pathData = path.data(using: .utf8) else {
                 throw iTermFileProviderServiceError.notFound(path)
             }
             log("perform file operation to stat \(path)")
-            let json = try await performFileOperation(subcommand: .stat(path: pathData))
+            let json = try await performFileOperation(subcommand: .stat(path: pathData),
+                                                      highPriority: highPriority)
             let result = try remoteFile(json)
             log("finished")
             return result
@@ -2256,6 +2285,44 @@ extension Conductor: ConductorFileTransferDelegate {
             // Delete the temp file
             try? await rm(tempfile, recursive: false)
             fileTransfer.fail(reason: error.localizedDescription)
+        }
+    }
+}
+
+@available(macOS 11, *)
+extension Conductor: FileCheckerDataSource {
+    func fileCheckerDataSourceDidReset() {
+        parent?.fileChecker?.reset()
+    }
+
+    @objc
+    var canCheckFiles: Bool {
+        guard framing && delegate != nil else {
+            return false
+        }
+        if case .unhooked = state {
+            return false
+        }
+        return true
+    }
+
+    var fileCheckerDataSourceCanPerformFileChecking: Bool {
+        return canCheckFiles
+    }
+
+    func fileCheckerDataSourceCheck(path: String, completion: @escaping (Bool) -> ()) {
+        Task {
+            let exists: Bool
+            do {
+                NSLog("Really stat \(path)")
+                _ = try await self.stat(path, highPriority: true)
+                exists = true
+            } catch {
+                exists = false
+            }
+            DispatchQueue.main.async {
+                completion(exists)
+            }
         }
     }
 }

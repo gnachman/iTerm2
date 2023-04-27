@@ -309,16 +309,34 @@
 
 - (NSArray<NSString *> *)componentsBySplittingStringWithQuotesAndBackslashEscaping:(NSDictionary *)escapes {
     NSMutableArray<NSString *> *result = [NSMutableArray array];
+    [self enumerateComponentsInShellCommandWithEscapes:escapes block:^(NSRange range, NSString *expanded, BOOL quoted, BOOL escaped) {
+        [result addObject:expanded];
+    }];
+    return result;
+}
 
+// TODO: Replace with CommandParser.swift
+- (void)enumerateComponentsInShellCommandWithEscapes:(NSDictionary *)escapes
+                                               block:(void (^ NS_NOESCAPE)(NSRange range, NSString *expanded, BOOL quoted, BOOL escaped))block {
     BOOL inSingleQuotes = NO;
     BOOL inDoubleQuotes = NO; // Are we inside double quotes?
     BOOL escape = NO;  // Should this char be escaped?
-    NSMutableString *currentValue = [NSMutableString string];
+    __block NSMutableString *currentValue = [NSMutableString string];
+    __block NSRange currentRange = NSMakeRange(0, 0);
     BOOL isFirstCharacterOfWord = YES;
     BOOL firstCharacterOfThisWordWasQuoted = YES;
 
+    void (^append)(int, NSString *) = ^(int index, NSString *suffix) {
+        if (currentRange.length == 0) {
+            currentRange.location = index;
+        }
+        currentRange.length += 1;
+        [currentValue appendString:suffix];
+    };
+
     for (NSInteger i = 0; i <= self.length; i++) {
         unichar c;
+        const BOOL wasEscaped = escape;
         if (i < self.length) {
             c = [self characterAtIndex:i];
             if (c == 0) {
@@ -340,25 +358,25 @@
             isFirstCharacterOfWord = NO;
             escape = NO;
             if (escapes[@(c)]) {
-                [currentValue appendString:escapes[@(c)]];
+                append(i, escapes[@(c)]);
             } else if (inDoubleQuotes) {
                 // Determined by testing with bash.
                 if (c == '"') {
-                    [currentValue appendString:@"\""];
+                    append(i, @"\"");
                 } else if (c == '\\') {
-                    [currentValue appendString:@"\\"];
+                    append(i, @"\\");
                 } else {
-                    [currentValue appendFormat:@"\\%C", c];
+                    append(i, [NSString stringWithFormat:@"\\%C", c]);
                 }
             } else if (inSingleQuotes) {
                 // Determined by testing with bash.
                 if (c == '\'') {
-                    [currentValue appendFormat:@"\\"];
+                    append(i, @"\\");
                 } else {
-                    [currentValue appendFormat:@"\\%C", c];
+                    append(i, [NSString stringWithFormat:@"\\%C", c]);
                 }
             } else {
-                [currentValue appendFormat:@"%C", c];
+                append(i, [NSString stringWithFormat:@"%C", c]);
             }
             continue;
         }
@@ -384,11 +402,12 @@
         if (!inSingleQuotes && !inDoubleQuotes && isWhitespace) {
             if (!isFirstCharacterOfWord) {
                 if (!firstCharacterOfThisWordWasQuoted) {
-                    [result addObject:[currentValue stringByExpandingTildeInPathPreservingSlash]];
+                    block(currentRange, [currentValue stringByExpandingTildeInPathPreservingSlash], NO, wasEscaped);
                 } else {
-                    [result addObject:currentValue];
+                    block(currentRange, currentValue, YES, wasEscaped);
                 }
                 currentValue = [NSMutableString string];
+                currentRange = NSMakeRange(i, 0);
                 firstCharacterOfThisWordWasQuoted = YES;
                 isFirstCharacterOfWord = YES;
             }
@@ -400,10 +419,8 @@
             firstCharacterOfThisWordWasQuoted = inDoubleQuotes || inSingleQuotes;
             isFirstCharacterOfWord = NO;
         }
-        [currentValue appendFormat:@"%C", c];
+        append(i, [NSString stringWithFormat:@"%C", c]);
     }
-
-    return result;
 }
 
 // For unknown reasons stringByExpandingTildeInPath removes terminal slashes. This method puts them

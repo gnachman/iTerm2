@@ -100,6 +100,8 @@ int decode_utf8_char(const unsigned char * restrict datap,
 // and returns an array like:
 //   @[ @"foo", @"/Users/root", @"~", @"bar baz", @"" ]
 - (NSArray<NSString *> *)componentsInShellCommand;
+- (void)enumerateComponentsInShellCommandWithEscapes:(NSDictionary *)escapes
+                                               block:(void (^ NS_NOESCAPE)(NSRange range, NSString *expanded, BOOL quoted, BOOL escaped))block;
 
 // Same as componentsInShellCommand but \r, \n, \t, and \a map to the letters r, n, t, and a,
 // not to controls.
@@ -186,6 +188,7 @@ int decode_utf8_char(const unsigned char * restrict datap,
 
 // Expands a vim-style string's special characters
 - (NSString *)stringByExpandingVimSpecialCharacters;
+- (NSString *)stringByExpandingTildeInPathPreservingSlash;
 
 // How tall is this string when rendered within a fixed width?
 - (CGFloat)heightWithAttributes:(NSDictionary *)attributes constrainedToWidth:(CGFloat)maxWidth;

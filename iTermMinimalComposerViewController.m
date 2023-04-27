@@ -272,6 +272,10 @@ workingDirectory:(NSString *)pwd
     [self.delegate minimalComposerClear:self];
 }
 
+- (id<iTermSyntaxHighlighting>)composerSyntaxHighlighterForAttributedString:(NSMutableAttributedString *)textStorage {
+    return [self.delegate minimalComposer:self syntaxHighlighterForAttributedString:textStorage];
+}
+
 #pragma mark - iTermDragHandleViewDelegate
 
 - (CGFloat)dragHandleView:(iTermDragHandleView *)dragHandle didMoveBy:(CGFloat)movement {

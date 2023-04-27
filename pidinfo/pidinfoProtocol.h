@@ -26,6 +26,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)checkIfDirectoryExists:(NSString *)directory
                      withReply:(void (^)(NSNumber * _Nullable exists))reply;
 
+- (void)statFile:(NSString *)path
+       withReply:(void (^)(struct stat statbuf, int error))reply;
+
 - (void)runShellScript:(NSString *)script
                  shell:(NSString *)shell
              withReply:(void (^)(NSData * _Nullable output,

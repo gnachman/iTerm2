@@ -4984,6 +4984,7 @@ launchCoprocessWithCommand:(NSString *)command
 
     BOOL ok = NO;
     VT100GridCoord coord = VT100GridCoordFromAbsCoord(range.end, self.cumulativeScrollbackOverflow, &ok);
+    coord.y -= self.numberOfScrollbackLines;
     if (ok) {
         // Simulate FinalTerm B:
         [self promptEndedAndCommandStartedAt:coord];
