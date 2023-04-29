@@ -16835,6 +16835,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                 [weakSelf reallySendCommand:command];
             });
         }];
+        DLoG(@"Dismiss composer and request redraw");
+        [_composerManager dismissAnimated:NO];
+        [_textview setNeedsDisplay:YES];
         return;
     }
     [self reallySendCommand:command];
