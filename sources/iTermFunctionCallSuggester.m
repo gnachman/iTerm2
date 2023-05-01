@@ -8,6 +8,7 @@
 #import "iTermFunctionCallSuggester.h"
 
 #import "CPParser+Cache.h"
+#import "DebugLogging.h"
 #import "iTermExpressionParser+Private.h"
 #import "iTermGrammarProcessor.h"
 #import "iTermSwiftyStringParser.h"
