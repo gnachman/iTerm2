@@ -15,6 +15,7 @@
 #import "PseudoTerminal.h"
 #import "iTermController.h"
 #import "iTermExpressionEvaluator.h"
+#import "iTermFindPasteboard.h"
 #import "iTermGCD.h"
 #import "iTermImageInfo.h"
 #import "iTermSearchFieldCell.h"

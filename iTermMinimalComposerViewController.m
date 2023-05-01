@@ -225,6 +225,10 @@ workingDirectory:(NSString *)pwd
     [_largeComposerViewController.textView insertText:text];
 }
 
+- (void)paste:(id)sender {
+    [_largeComposerViewController.textView paste:sender];
+}
+
 - (NSRect)cursorFrameInScreenCoordinates {
     return _largeComposerViewController.textView.cursorFrameInScreenCoordinates;
 }
@@ -237,6 +241,10 @@ workingDirectory:(NSString *)pwd
 }
 
 - (void)composerTextViewDidResignFirstResponder {
+}
+
+- (void)composerTextViewDidBecomeFirstResponder {
+    [self.delegate minimalComposerDidBecomeFirstResponder:self];
 }
 
 - (void)composerTextViewSendToAdvancedPaste:(NSString *)content {

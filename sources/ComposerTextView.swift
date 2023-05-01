@@ -26,6 +26,7 @@ protocol ComposerTextViewDelegate: AnyObject {
 
     // Optional
     @objc(composerTextViewDidResignFirstResponder) optional func composerTextViewDidResignFirstResponder()
+    @objc(composerTextViewDidBecomeFirstResponder) optional func composerTextViewDidBecomeFirstResponder()
 }
 
 @objc(iTermComposerTextView)
@@ -226,6 +227,25 @@ class ComposerTextView: MultiCursorTextView {
 
     override func performFindPanelAction(_ sender: Any?) {
         if autoMode {
+            if let menuItem = sender as? NSMenuItem {
+                switch NSFindPanelAction(rawValue: UInt(menuItem.tag)) {
+                case .setFindString:
+                    guard let textStorage else {
+                        return
+                    }
+                    let selection = multiCursorSelectedRanges.compactMap { nsrange -> Substring? in
+                        guard let range = Range(nsrange) else {
+                            return nil
+                        }
+                        return textStorage.string.substringWithUTF16Range(range)
+                    }.joined(separator: "\n")
+                    iTermFindPasteboard.sharedInstance().setStringValueUnconditionally(selection)
+                    iTermFindPasteboard.sharedInstance().updateObservers(self)
+                    return
+                default:
+                    break
+                }
+            }
             composerDelegate?.composerTextViewPerformFindPanelAction(sender)
             return
         }
@@ -440,6 +460,11 @@ class ComposerTextView: MultiCursorTextView {
         }
         safelyReplaceCharacters(in: rangeToTake, with: "")
         return stringToTake
+    }
+
+    override func becomeFirstResponder() -> Bool {
+        composerDelegate?.composerTextViewDidBecomeFirstResponder?()
+        return super.becomeFirstResponder()
     }
 
     override func resignFirstResponder() -> Bool {

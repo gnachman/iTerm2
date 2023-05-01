@@ -57,6 +57,7 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 - (void)composerManagerClear:(iTermComposerManager *)composerManager;
 - (id<iTermSyntaxHighlighting>)composerManager:(iTermComposerManager *)composerManager
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString;
+- (void)composerManagerDidBecomeFirstResponder:(iTermComposerManager *)composerManager;
 @end
 
 @interface iTermComposerManager : NSObject
@@ -97,6 +98,7 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 - (void)setPrefix:(NSMutableAttributedString * _Nullable)prefix userData:(id _Nullable)userData;
 - (void)insertText:(NSString *)string;
 - (void)reset;
+- (void)paste:(id)sender;
 
 @end
 

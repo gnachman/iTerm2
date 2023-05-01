@@ -5331,6 +5331,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)mouseHandlerMakeFirstResponder:(PTYMouseHandler *)handler {
+    [_delegate textViewDidReceiveSingleClick];
     [[self window] makeFirstResponder:self];
 }
 

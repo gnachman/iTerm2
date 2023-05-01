@@ -353,6 +353,10 @@
     return [self.delegate composerManager:self syntaxHighlighterForAttributedString:attributedString];
 }
 
+- (void)minimalComposerDidBecomeFirstResponder:(iTermMinimalComposerViewController *)composer {
+    [self.delegate composerManagerDidBecomeFirstResponder:self];
+}
+
 - (void)dismissMinimalViewAnimated:(BOOL)animated {
     DLog(@"dismissMinimalViewAnimated:%@", @(animated));
     iTermMinimalComposerViewController *vc = _minimalViewController;
@@ -469,6 +473,10 @@
         return _minimalViewController.cursorFrameInScreenCoordinates;
     }
     return _component.cursorFrameInScreenCoordinates;
+}
+
+- (void)paste:(id)sender {
+    [_minimalViewController paste:sender];
 }
 
 @end

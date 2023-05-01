@@ -620,6 +620,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 
     iTermLocalFileChecker *_localFileChecker;
     BOOL _needsComposerColorUpdate;
+    BOOL _textViewShouldTakeFirstResponder;
 }
 
 @synthesize isDivorced = _divorced;
@@ -9639,6 +9640,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 - (void)paste:(id)sender {
     DLog(@"PTYSession paste:");
 
+    if ([self haveAutoComposer]) {
+        _textViewShouldTakeFirstResponder = NO;
+        [self makeComposerFirstResponderIfAllowed];
+        [_composerManager paste:sender];
+        return;
+    }
     // If this class is used in a non-iTerm2 app (as a library), we might not
     // be called from a menu item so just use no flags in this case.
     [self pasteString:[PTYSession pasteboardString] flags:[sender isKindOfClass:NSMenuItem.class] ? [sender tag] : 0];
@@ -10049,7 +10056,11 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     [_delegate setActiveSession:self];
     [_view setNeedsDisplay:YES];
     [_view.findDriver owningViewDidBecomeFirstResponder];
-    if (!self.copyMode && self.haveAutoComposer) {
+    [self makeComposerFirstResponderIfAllowed];
+}
+
+- (void)makeComposerFirstResponderIfAllowed {
+    if (!self.copyMode && self.haveAutoComposer && !_textViewShouldTakeFirstResponder) {
         [_composerManager makeDropDownComposerFirstResponder];
     }
 }
@@ -15072,6 +15083,11 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                       lineHeight);
 }
 
+- (void)textViewDidReceiveSingleClick {
+    _textViewShouldTakeFirstResponder = YES;
+    [_textview.window makeFirstResponder:_textview];
+}
+
 #pragma mark - iTermHotkeyNavigableSession
 
 - (void)sessionHotkeyDidNavigateToSession:(iTermShortcut *)shortcut {
@@ -16801,6 +16817,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
                                         colorMap:_screen.colorMap
                                         fontTable:_textview.fontTable
                                      fileChecker:[self fileChecker]] autorelease];
+}
+
+- (void)composerManagerDidBecomeFirstResponder:(iTermComposerManager *)composerManager {
+    _textViewShouldTakeFirstResponder = NO;
 }
 
 - (iTermFileChecker *)fileChecker {

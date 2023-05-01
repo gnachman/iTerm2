@@ -42,7 +42,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)minimalComposerClear:(iTermMinimalComposerViewController *)composer;
 - (id<iTermSyntaxHighlighting>)minimalComposer:(iTermMinimalComposerViewController *)composer
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString;
-
+- (void)minimalComposerDidBecomeFirstResponder:(iTermMinimalComposerViewController *)composer;
 @end
 
 @interface iTermMinimalComposerViewController : NSViewController
@@ -66,6 +66,7 @@ workingDirectory:(NSString *)pwd
 
 - (BOOL)composerIsFirstResponder;
 - (void)insertText:(NSString *)text;
+- (void)paste:(id)sender;
 
 @end
 

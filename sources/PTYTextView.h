@@ -284,6 +284,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (BOOL)textViewIsAutoComposerOpen;
 - (VT100GridRange)textViewLinesToSuppressDrawing;
 - (NSRect)textViewCursorFrameInScreenCoords;
+- (void)textViewDidReceiveSingleClick;
 @end
 
 @interface iTermHighlightedRow : NSObject
