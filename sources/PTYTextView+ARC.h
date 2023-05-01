@@ -86,7 +86,9 @@ iTermURLActionHelperDelegate>
 #pragma mark - Copy to Pasteboard
 
 // Returns a dictionary to pass to NSAttributedString.
-- (NSDictionary *)charAttributes:(screen_char_t)c externalAttributes:(iTermExternalAttribute *)ea;
+- (NSDictionary *)charAttributes:(screen_char_t)c
+              externalAttributes:(iTermExternalAttribute *)ea
+                       processed:(BOOL)processed;
 
 #pragma mark - Install Shell Integration
 
