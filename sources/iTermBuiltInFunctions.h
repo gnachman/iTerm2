@@ -13,6 +13,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 NSString *iTermFunctionSignatureFromNamespaceAndNameAndArguments(NSString * _Nullable namespace_, NSString *name, NSArray<NSString *> *argumentNames);
 
+// Returns all combinations of valid arguments. Of size pow(2,optionalArguments.count).
+NSArray<NSString *> *
+iTermAllFunctionSignaturesFromNamespaceAndNameAndArguments(NSString *namespace,
+                                                           NSString *name,
+                                                           NSArray<NSString *> *argumentNames,
+                                                           NSSet<NSString *> *optionalArguments);
+
 typedef void (^iTermBuiltInFunctionCompletionBlock)(id _Nullable result, NSError * _Nullable error);
 typedef void (^iTermBuiltInFunctionsExecutionBlock)(NSDictionary * _Nonnull parameters, _Nonnull  iTermBuiltInFunctionCompletionBlock completion);
 
@@ -27,6 +34,7 @@ NS_SWIFT_NAME(iTermBuiltInFunctionProtocol)
 @property (nonatomic, readonly) NSDictionary<NSString *, Class> *argumentsAndTypes;
 @property (nonatomic, readonly) NSDictionary<NSString *, NSString *> *defaultValues;
 @property (nonatomic, readonly) iTermBuiltInFunctionsExecutionBlock block;
+@property (nonatomic, readonly) NSSet<NSString *> *optionalArguments;
 
 // All arguments must always be passed, even if they are optional.
 // Optional arguments may take a value of NSNull but must be specified regardless.

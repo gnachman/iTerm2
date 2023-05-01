@@ -12,6 +12,7 @@
 #import "NSPopUpButton+iTerm.h"
 #import "iTerm2SharedARC-Swift.h"
 #import "iTermApplicationDelegate.h"
+#import "iTermFunctionCallTextFieldDelegate.h"
 #import "iTermPasteSpecialViewController.h"
 #import "ITAddressBookMgr.h"
 #import "FutureMethods.h"
@@ -64,6 +65,7 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
 NSString *kSendEscapeSequencePointerAction = @"kSendEscapeSequencePointerAction";
 NSString *kSendHexCodePointerAction = @"kSendHexCodePointerAction";
 NSString *kSendTextPointerAction = @"kSendTextPointerAction";
+NSString *kInvokeScriptFunction = @"kInvokeScriptFunction";
 NSString *kSelectPaneLeftPointerAction = @"kSelectPaneLeftPointerAction";
 NSString *kSelectPaneRightPointerAction = @"kSelectPaneRightPointerAction";
 NSString *kSelectPaneAbovePointerAction = @"kSelectPaneAbovePointerAction";
@@ -86,7 +88,8 @@ typedef enum {
     kTextArg,
     kProfileArg,
     kAdvancedPasteArg,
-    kMenuItemArg
+    kMenuItemArg,
+    kScriptFunctionArg
 } ArgumentType;
 
 @interface NSString (PointerPrefsController)
@@ -155,6 +158,8 @@ typedef enum {
     IBOutlet NSView *_pasteSpecialViewContainer;
 
     IBOutlet iTermMenuItemPopupView *_menuItemPopupView;
+
+    iTermFunctionCallTextFieldDelegate *_invocationDelegate;
 
     NSRect _initialFrame;
     NSRect _initialPasteContainerFrame;
@@ -399,6 +404,7 @@ typedef enum {
 {
     NSDictionary *names = [NSDictionary dictionaryWithObjectsAndKeys:
                            @"Ignore", kIgnoreAction,
+                           @"Invoke Script Function…", kInvokeScriptFunction,
                            @"Paste from Clipboard…", kPasteFromClipboardPointerAction,
                            @"Paste from Selection…", kPasteFromSelectionPointerAction,
                            @"Extend Selection", kExtendSelectionPointerAction,
@@ -438,6 +444,7 @@ typedef enum {
                           @(kEscPlusArg), kSendEscapeSequencePointerAction,
                           @(kHexCodeArg), kSendHexCodePointerAction,
                           @(kTextArg), kSendTextPointerAction,
+                          @(kScriptFunctionArg), kInvokeScriptFunction,
                           @(kProfileArg), kNewWindowWithProfilePointerAction,
                           @(kProfileArg), kNewTabWithProfilePointerAction,
                           @(kProfileArg), kNewVerticalSplitWithProfilePointerAction,
@@ -488,6 +495,7 @@ typedef enum {
                                                        withString:[NSString stringWithFormat:@" Esc + %@", argument]];
             case kHexCodeArg:
             case kTextArg:
+            case kScriptFunctionArg:
                 return [name stringByReplacingOccurrencesOfString:@"…"
                                                        withString:[NSString stringWithFormat:@" \"%@\"", argument]];
             case kProfileArg: {
@@ -908,6 +916,7 @@ typedef enum {
             [editArgumentField_ setRefusesFirstResponder:NO];
             [editArgumentField_ setSelectable:YES];
             _pasteSpecialViewContainer.hidden = YES;
+            editArgumentField_.delegate = nil;
             break;
 
         case kHexCodeArg:
@@ -920,6 +929,7 @@ typedef enum {
             [[editArgumentField_ cell] setPlaceholderString:@"ex: 0x7f 0x20"];
             [editArgumentField_ setStringValue:currentArg];
             _pasteSpecialViewContainer.hidden = YES;
+            editArgumentField_.delegate = nil;
             break;
 
         case kTextArg:
@@ -932,6 +942,23 @@ typedef enum {
             [[editArgumentField_ cell] setPlaceholderString:@"Enter value to send"];
             [editArgumentField_ setStringValue:currentArg];
             _pasteSpecialViewContainer.hidden = YES;
+            editArgumentField_.delegate = nil;
+            break;
+
+        case kScriptFunctionArg:
+            [editArgumentLabel_ setHidden:NO];
+            [editArgumentField_ setHidden:NO];
+            [editArgumentField_ setEnabled:YES];
+            [editArgumentButton_ setHidden:YES];
+            _menuItemPopupView.hidden = YES;
+            [editArgumentLabel_ setStringValue:@"Text:"];
+            [[editArgumentField_ cell] setPlaceholderString:@"Enter function invocation"];
+            [editArgumentField_ setStringValue:currentArg];
+            _pasteSpecialViewContainer.hidden = YES;
+            _invocationDelegate = [[iTermFunctionCallTextFieldDelegate alloc] initWithPathSource:[iTermVariableHistory pathSourceForContext:iTermVariablesSuggestionContextSession]
+                                                                                     passthrough:nil
+                                                                                   functionsOnly:YES];
+            editArgumentField_.delegate = _invocationDelegate;
             break;
 
         case kProfileArg:

@@ -70,6 +70,8 @@ compatibilityEscaping:(BOOL)compatibilityEscaping {
         [delegate_ sendHexCode:argument withEvent:event];
     } else if ([action isEqualToString:kSendTextPointerAction]) {
         [delegate_ sendText:argument withEvent:event escaping:compatibilityEscaping ? iTermSendTextEscapingCompatibility : iTermSendTextEscapingCommon];
+    } else if ([action isEqualToString:kInvokeScriptFunction]) {
+        [delegate_ invokeScriptFunction:argument withEvent:event];
     } else if ([action isEqualToString:kSelectPaneLeftPointerAction]) {
         [delegate_ selectPaneLeftWithEvent:event];
     } else if ([action isEqualToString:kSelectPaneRightPointerAction]) {

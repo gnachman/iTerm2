@@ -32,4 +32,10 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
                            retainSelf:(BOOL)retainSelf  // YES to keep it alive until it's complete
                            completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
 
++ (void)executeFunctionCalls:(NSArray<iTermScriptFunctionCall *> *)calls
+                  invocation:(NSString *)invocation
+                    receiver:(NSString *)receiver
+                     timeout:(NSTimeInterval)timeout
+                       scope:(iTermVariableScope *)scope
+                  completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion;
 @end

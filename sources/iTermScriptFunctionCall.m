@@ -172,20 +172,20 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
             return nil;
         }
         case iTermParsedExpressionTypeFunctionCall:
-            if (receiver) {
-                [expression.functionCall performMethodCallFromInvocation:invocation
-                                                                receiver:receiver
-                                                                 timeout:timeout
-                                                              completion:completion];
-                return expression;
-            }
-
-            assert(expression.functionCall);
-            [expression.functionCall performFunctionCallFromInvocation:invocation
-                                                              receiver:nil
-                                                                 scope:scope
-                                                               timeout:timeout
-                                                            completion:completion];
+            [self executeFunctionCalls:@[expression.functionCall]
+                            invocation:invocation
+                              receiver:receiver
+                               timeout:timeout
+                                 scope:scope
+                            completion:completion];
+            return expression;
+        case iTermParsedExpressionTypeFunctionCalls:
+            [self executeFunctionCalls:expression.functionCalls
+                            invocation:invocation
+                              receiver:receiver
+                               timeout:timeout
+                                 scope:scope
+                            completion:completion];
             return expression;
         case iTermParsedExpressionTypeInterpolatedString: {
             NSString *reason = @"interpolated string not allowed";
@@ -199,6 +199,62 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
     }
     assert(NO);
     return nil;
+}
+
++ (void)executeFunctionCalls:(NSArray<iTermScriptFunctionCall *> *)calls
+                  invocation:(NSString *)invocation
+                    receiver:(NSString *)receiver
+                     timeout:(NSTimeInterval)timeout
+                       scope:(iTermVariableScope *)scope
+                  completion:(void (^)(id, NSError *, NSSet<NSString *> *))completion {
+    if (calls.count == 0) {
+        completion(nil, nil, nil);
+        return;
+    }
+    iTermScriptFunctionCall *call = calls[0];
+    __weak __typeof(self) weakSelf = self;
+    if (receiver) {
+        [call performMethodCallFromInvocation:invocation
+                                     receiver:receiver
+                                      timeout:timeout
+                                   completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
+            if (error) {
+                completion(nil, error, missing);
+                return;
+            }
+            if (calls.count < 2) {
+                completion(result, error, missing);
+                return;
+            }
+            [weakSelf executeFunctionCalls:[calls subarrayFromIndex:1]
+                                invocation:invocation
+                                  receiver:receiver
+                                   timeout:timeout
+                                     scope:scope
+                                completion:completion];
+        }];
+    } else {
+        [call performFunctionCallFromInvocation:invocation
+                                       receiver:nil
+                                          scope:scope
+                                        timeout:timeout
+                                     completion:^(id result, NSError *error, NSSet<NSString *> *missing) {
+            if (error) {
+                completion(nil, error, missing);
+                return;
+            }
+            if (calls.count < 2) {
+                completion(result, error, missing);
+                return;
+            }
+            [weakSelf executeFunctionCalls:[calls subarrayFromIndex:1]
+                                invocation:invocation
+                                  receiver:receiver
+                                   timeout:timeout
+                                     scope:scope
+                                completion:completion];
+        }];
+    }
 }
 
 #pragma mark - Function Calls

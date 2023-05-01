@@ -106,6 +106,7 @@
         case iTermParsedExpressionTypeArrayOfExpressions:
         case iTermParsedExpressionTypeInterpolatedString:
         case iTermParsedExpressionTypeFunctionCall:
+        case iTermParsedExpressionTypeFunctionCalls:
             sync = NO;
             break;
     }

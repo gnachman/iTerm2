@@ -225,6 +225,17 @@ static NSMutableArray *iTermExpressionEvaluatorGlobalStore(void) {
             return;
         }
 
+        case iTermParsedExpressionTypeFunctionCalls: {
+            assert(parsedExpression.functionCalls);
+            [iTermScriptFunctionCall executeFunctionCalls:parsedExpression.functionCalls
+                                               invocation:invocation
+                                                 receiver:nil
+                                                  timeout:timeout
+                                                    scope:_scope
+                                               completion:completion];
+            return;
+        }
+
         case iTermParsedExpressionTypeInterpolatedString: {
             [self evaluateInterpolatedStringParts:parsedExpression.interpolatedStringParts
                                        invocation:invocation

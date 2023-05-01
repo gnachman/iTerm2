@@ -63,6 +63,14 @@
         case iTermParsedExpressionTypeFunctionCall:
             return expression.functionCall.signature;
 
+        case iTermParsedExpressionTypeFunctionCalls:
+            if (error) {
+                *error = [NSError errorWithDomain:@"com.iterm2.call"
+                                             code:3
+                                         userInfo:@{ NSLocalizedDescriptionKey: @"Expected single function call" }];
+            }
+            return nil;
+
         case iTermParsedExpressionTypeNil:
             if (error) {
                 *error = [NSError errorWithDomain:@"com.iterm2.call"
@@ -95,7 +103,7 @@
     static iTermExpressionParser *sCachedInstance;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        sCachedInstance = [[iTermExpressionParser alloc] initWithStart:@"call"];
+        sCachedInstance = [[iTermExpressionParser alloc] initWithStart:@"callsequence"];
     });
     return sCachedInstance;
 }
@@ -151,6 +159,7 @@
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"?"]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"["]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"]"]];
+    [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@";"]];
     [tokenizer addTokenRecogniser:[CPNumberRecogniser numberRecogniser]];
     [tokenizer addTokenRecogniser:[CPWhiteSpaceRecogniser whiteSpaceRecogniser]];
     [tokenizer addTokenRecogniser:[CPIdentifierRecogniser identifierRecogniser]];
@@ -191,6 +200,11 @@
     [self.class setEscapeReplacerInStringRecognizer:left];
     [_tokenizer addTokenRecogniser:left];
 }
+
+- (iTermParsedExpression *)callSequenceWithCalls:(NSArray *)calls {
+    return [[iTermParsedExpression alloc] initWithFunctionCalls:calls];
+}
+
 
 - (iTermParsedExpression *)parsedExpressionForFunctionCallWithFullyQualifiedName:(NSString *)fqName
                                                                          arglist:(NSArray<iTermFunctionArgument *> *)argsArray
@@ -371,108 +385,121 @@
 
 - (void)loadRulesAndTransforms {
     __weak __typeof(self) weakSelf = self;
+
+    [_grammarProcessor addProductionRule:@"callsequence ::= <callsequence> ';' <call>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+        iTermParsedExpression *callSequence = syntaxTree.children[0];
+        iTermParsedExpression *call = syntaxTree.children[2];
+        return [weakSelf callSequenceWithCalls:[callSequence.functionCalls arrayByAddingObject:call.functionCall]];
+    }];
+    [_grammarProcessor addProductionRule:@"callsequence ::= <call>"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+        iTermParsedExpression *call = syntaxTree.children[0];
+        return [weakSelf callSequenceWithCalls:@[call.functionCall]];
+    }];
+
     [_grammarProcessor addProductionRule:@"call ::= <path> <arglist>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               NSError *error = nil;
-                               iTermParsedExpression *result = [weakSelf parsedExpressionForFunctionCallWithFullyQualifiedName:(NSString *)syntaxTree.children[0]
-                                                                                                                       arglist:syntaxTree.children[1]
-                                                                                                                         error:&error];
-                               if (error) {
-                                   return [[iTermParsedExpression alloc] initWithError:error];
-                               }
-                               return result;
-                           }];
+        NSError *error = nil;
+        iTermParsedExpression *result = [weakSelf parsedExpressionForFunctionCallWithFullyQualifiedName:(NSString *)syntaxTree.children[0]
+                                                                                                arglist:syntaxTree.children[1]
+                                                                                                  error:&error];
+        if (error) {
+            return [[iTermParsedExpression alloc] initWithError:error];
+        }
+        return result;
+    }];
     [_grammarProcessor addProductionRule:@"arglist ::= '(' <args> ')'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return syntaxTree.children[1];
-                           }];
+        return syntaxTree.children[1];
+    }];
     [_grammarProcessor addProductionRule:@"arglist ::= '(' ')'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @[];
-                           }];
+        return @[];
+    }];
     [_grammarProcessor addProductionRule:@"args ::= <arg>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @[ syntaxTree.children[0] ];
-                           }];
+        return @[ syntaxTree.children[0] ];
+    }];
     [_grammarProcessor addProductionRule:@"args ::= <arg> ',' <args>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [@[ syntaxTree.children[0] ] arrayByAddingObjectsFromArray:syntaxTree.children[2]];
-                           }];
+        return [@[ syntaxTree.children[0] ] arrayByAddingObjectsFromArray:syntaxTree.children[2]];
+    }];
     [_grammarProcessor addProductionRule:@"arg ::= 'Identifier' ':' <expression>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [weakSelf newFunctionArgumentWithName:[(CPIdentifierToken *)syntaxTree.children[0] identifier]
-                                                                 expression:syntaxTree.children[2]];
-                           }];
+        return [weakSelf newFunctionArgumentWithName:[(CPIdentifierToken *)syntaxTree.children[0] identifier]
+                                          expression:syntaxTree.children[2]];
+    }];
     [_grammarProcessor addProductionRule:@"expression ::= <path_or_dereferenced_array>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               iTermTriple *triple = syntaxTree.children[0];
-                               // Explicit nulls must be optional to signal the caller intended them to be null.
-                               return [weakSelf parsedExpressionWithValue:triple.firstObject
-                                                              errorReason:triple.secondObject
-                                                                     path:triple.thirdObject
-                                                                 optional:[triple.thirdObject isEqualToString:@"null"]];
-                           }];
+        iTermTriple *triple = syntaxTree.children[0];
+        // Explicit nulls must be optional to signal the caller intended them to be null.
+        return [weakSelf parsedExpressionWithValue:triple.firstObject
+                                       errorReason:triple.secondObject
+                                              path:triple.thirdObject
+                                          optional:[triple.thirdObject isEqualToString:@"null"]];
+    }];
     [_grammarProcessor addProductionRule:@"expression ::= <path_or_dereferenced_array> '?'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               iTermTriple *triple = syntaxTree.children[0];
-                               return [weakSelf parsedExpressionWithValue:triple.firstObject
-                                                              errorReason:triple.secondObject
-                                                                     path:triple.thirdObject
-                                                                 optional:YES];
-                           }];
+        iTermTriple *triple = syntaxTree.children[0];
+        return [weakSelf parsedExpressionWithValue:triple.firstObject
+                                       errorReason:triple.secondObject
+                                              path:triple.thirdObject
+                                          optional:YES];
+    }];
     [_grammarProcessor addProductionRule:@"expression ::= 'Number'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [[iTermParsedExpression alloc] initWithNumber:[(CPNumberToken *)syntaxTree.children[0] number]];
-                           }];
+        return [[iTermParsedExpression alloc] initWithNumber:[(CPNumberToken *)syntaxTree.children[0] number]];
+    }];
     [_grammarProcessor addProductionRule:@"expression ::= '[' ']'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [[iTermParsedExpression alloc] initWithArrayOfExpressions:@[]];
-                           }];
+        return [[iTermParsedExpression alloc] initWithArrayOfExpressions:@[]];
+    }];
     [_grammarProcessor addProductionRule:@"expression ::= '[' <comma_delimited_expressions> ']'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [[iTermParsedExpression alloc] initWithArrayOfExpressions:syntaxTree.children[1]];
-                           }];
+        return [[iTermParsedExpression alloc] initWithArrayOfExpressions:syntaxTree.children[1]];
+    }];
     [_grammarProcessor addProductionRule:@"comma_delimited_expressions ::= <expression>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return @[ syntaxTree.children[0] ];
-                           }];
+        return @[ syntaxTree.children[0] ];
+    }];
     [_grammarProcessor addProductionRule:@"comma_delimited_expressions ::= <expression> ',' <comma_delimited_expressions>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               id firstExpression = syntaxTree.children[0];
-                               NSArray *tail = syntaxTree.children[2];
-                               return [@[firstExpression] arrayByAddingObjectsFromArray:tail];
-                           }];
+        id firstExpression = syntaxTree.children[0];
+        NSArray *tail = syntaxTree.children[2];
+        return [@[firstExpression] arrayByAddingObjectsFromArray:tail];
+    }];
     [_grammarProcessor addProductionRule:@"expression ::= 'SwiftyString'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               NSString *swifty = [(CPQuotedToken *)syntaxTree.children[0] content];
-                               return [weakSelf parsedExpressionWithInterpolatedString:swifty];
-                           }];
+        NSString *swifty = [(CPQuotedToken *)syntaxTree.children[0] content];
+        return [weakSelf parsedExpressionWithInterpolatedString:swifty];
+    }];
 
     [_grammarProcessor addProductionRule:@"expression ::= <call>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return syntaxTree.children[0];
-                           }];
+        return syntaxTree.children[0];
+    }];
     [_grammarProcessor addProductionRule:@"path_or_dereferenced_array ::= <path>"  // -> (value, error string, path); value of NSNull means undefined.
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [weakSelf pathOrDereferencedArrayFromPath:syntaxTree.children[0]
-                                                                          index:nil];
-                           }];
+        return [weakSelf pathOrDereferencedArrayFromPath:syntaxTree.children[0]
+                                                   index:nil];
+    }];
     [_grammarProcessor addProductionRule:@"path_or_dereferenced_array ::= <path> '[' 'Number' ']'"  // -> (value, error string, path); value of NSNull means undefined.
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               CPNumberToken *numberToken = syntaxTree.children[2];
-                               return [weakSelf pathOrDereferencedArrayFromPath:syntaxTree.children[0]
-                                                                          index:numberToken.number];
-                           }];
+        CPNumberToken *numberToken = syntaxTree.children[2];
+        return [weakSelf pathOrDereferencedArrayFromPath:syntaxTree.children[0]
+                                                   index:numberToken.number];
+    }];
     [_grammarProcessor addProductionRule:@"path ::= 'Identifier'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [(CPIdentifierToken *)syntaxTree.children[0] identifier];
-                           }];
+        return [(CPIdentifierToken *)syntaxTree.children[0] identifier];
+    }];
     [_grammarProcessor addProductionRule:@"path ::= 'Identifier' '.' <path>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
-                               return [NSString stringWithFormat:@"%@.%@",
-                                       [(CPIdentifierToken *)syntaxTree.children[0] identifier],
-                                       syntaxTree.children[2]];
-                           }];
+        return [NSString stringWithFormat:@"%@.%@",
+                [(CPIdentifierToken *)syntaxTree.children[0] identifier],
+                syntaxTree.children[2]];
+    }];
 }
 
 - (iTermParsedExpression *)parse:(NSString *)invocation scope:(iTermVariableScope *)scope {

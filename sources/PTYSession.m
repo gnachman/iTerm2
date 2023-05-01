@@ -9967,6 +9967,10 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                  stringConfig:configuration];
 }
 
+- (void)textViewInvokeScriptFunction:(NSString *)function {
+    [self invokeFunctionCall:function scope:self.variablesScope origin:@"Pointer action"];
+}
+
 - (void)textViewEditSession {
     [[_delegate realParentWindow] editSession:self makeKey:YES];
 }

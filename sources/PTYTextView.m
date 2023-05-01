@@ -3449,6 +3449,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return [_contextMenuHelper titleBarMenu];
 }
 
+- (void)invokeScriptFunction:(NSString *)function withEvent:(NSEvent *)event {
+    [self.delegate textViewInvokeScriptFunction:function];
+}
+
 #pragma mark - Drag and Drop
 
 //

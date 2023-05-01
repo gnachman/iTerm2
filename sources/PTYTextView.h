@@ -136,6 +136,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
                                        title:(NSString *)title;
 - (void)textViewPasteSpecialWithStringConfiguration:(NSString *)configuration
                                       fromSelection:(BOOL)fromSelection;
+- (void)textViewInvokeScriptFunction:(NSString *)function;
 - (void)textViewEditSession;
 - (void)textViewToggleBroadcastingInput;
 - (void)textViewCloseWithConfirmation;
