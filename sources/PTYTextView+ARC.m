@@ -547,7 +547,8 @@ iTermCommandInfoViewControllerDelegate>
     NSAttributedString *word = [extractor contentInRange:range
                                        attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
         return [self charAttributes:theChar
-                 externalAttributes:ea];
+                 externalAttributes:ea
+                          processed:NO];
     }
                                               nullPolicy:kiTermTextExtractorNullPolicyMidlineAsSpaceIgnoreTerminal
                                                      pad:NO
@@ -604,7 +605,8 @@ iTermCommandInfoViewControllerDelegate>
 
 // Returns a dictionary to pass to NSAttributedString.
 - (NSDictionary *)charAttributes:(screen_char_t)c
-              externalAttributes:(iTermExternalAttribute *)ea {
+              externalAttributes:(iTermExternalAttribute *)ea
+                       processed:(BOOL)processed {
     BOOL isBold = c.bold;
     BOOL isFaint = c.faint;
     NSColor *fgColor;
@@ -625,9 +627,14 @@ iTermCommandInfoViewControllerDelegate>
                                 bold:isBold
                                faint:isFaint
                         isBackground:NO];
+    }
+    if (processed) {
+        fgColor = [self.colorMap processedTextColorForTextColor:fgColor overBackgroundColor:bgColor disableMinimumContrast:NO];
+        bgColor = [self.colorMap processedBackgroundColorForBackgroundColor:bgColor];
+    }
+    if (!c.invisible) {
         fgColor = [fgColor colorByPremultiplyingAlphaWithColor:bgColor];
     }
-
     int underlineStyle = (ea.urlCode || c.underline) ? (NSUnderlineStyleSingle | NSUnderlineByWord) : 0;
 
     BOOL isItalic = c.italic;

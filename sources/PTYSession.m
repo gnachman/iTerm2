@@ -619,6 +619,7 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
     NSArray<ScreenCharArray *> *_desiredComposerPrompt;
 
     iTermLocalFileChecker *_localFileChecker;
+    BOOL _needsComposerColorUpdate;
 }
 
 @synthesize isDivorced = _divorced;
@@ -5739,16 +5740,21 @@ ITERM_WEAKLY_REFERENCEABLE
 static NSString *const PTYSessionComposerPrefixUserDataKeyPrompt = @"prompt";
 static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"detected by trigger";
 
-- (void)revealAutoComposerWithPrompt:(NSArray<ScreenCharArray *> *)promptText {
-    assert(_initializationFinished);
-    DLog(@"Reveal auto composer. isAutoComposer <- YES");
-    self.composerManager.isAutoComposer = YES;
+- (NSMutableAttributedString *)kernedAttributedStringForScreenChars:(NSArray<ScreenCharArray *> *)promptText {
     NSMutableAttributedString *prompt = [self attributedStringForScreenChars:promptText];
     const CGFloat kern = [NSMutableAttributedString kernForString:@"W"
                                                       toHaveWidth:_textview.charWidth
                                                          withFont:_textview.fontTable.asciiFont.font];
     [prompt addAttributes:@{ NSKernAttributeName: @(kern) }
                     range:NSMakeRange(0, prompt.length)];
+    return prompt;
+}
+
+- (void)revealAutoComposerWithPrompt:(NSArray<ScreenCharArray *> *)promptText {
+    assert(_initializationFinished);
+    DLog(@"Reveal auto composer. isAutoComposer <- YES");
+    self.composerManager.isAutoComposer = YES;
+    NSMutableAttributedString *prompt = [self kernedAttributedStringForScreenChars:promptText];
     [self.composerManager reveal];
     NSDictionary *userData = nil;
     DLog(@"revealing auto composer");
@@ -5764,7 +5770,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 }
 
 - (NSMutableAttributedString *)attributedStringForScreenChars:(NSArray<ScreenCharArray *> *)promptText {
-    NSDictionary *defaultAttributes = [_textview attributeProvider]((screen_char_t){}, nil);
+    NSDictionary *defaultAttributes = [_textview attributeProviderUsingProcessedColors:YES]((screen_char_t){}, nil);
     NSAttributedString *space = [NSAttributedString attributedStringWithString:@" "
                                                                       attributes:defaultAttributes];
 
@@ -5773,7 +5779,7 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 
     NSMutableAttributedString *result = [[[NSMutableAttributedString alloc] init] autorelease];
     NSAttributedString *body = [[promptText mapWithBlock:^id _Nullable(ScreenCharArray *sca) {
-        return [sca attributedStringValueWithAttributeProvider:_textview.attributeProvider];
+        return [sca attributedStringValueWithAttributeProvider:[_textview attributeProviderUsingProcessedColors:YES]];
     }] attributedComponentsJoinedByAttributedString:newline];
     [result appendAttributedString:body];
     [result trimTrailingWhitespace];
@@ -17240,14 +17246,47 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 
 - (void)immutableColorMap:(id<iTermColorMapReading>)colorMap didChangeColorForKey:(iTermColorMapKey)theKey from:(NSColor *)before to:(NSColor *)after {
     [_textview immutableColorMap:colorMap didChangeColorForKey:theKey from:before to:after];
+    [self setNeedsComposerColorUpdate:YES];
 }
 
 - (void)immutableColorMap:(id<iTermColorMapReading>)colorMap dimmingAmountDidChangeTo:(double)dimmingAmount {
     [_textview immutableColorMap:colorMap dimmingAmountDidChangeTo:dimmingAmount];
+    [self setNeedsComposerColorUpdate:YES];
 
 }
 - (void)immutableColorMap:(id<iTermColorMapReading>)colorMap mutingAmountDidChangeTo:(double)mutingAmount {
     [_textview immutableColorMap:colorMap mutingAmountDidChangeTo:mutingAmount];
+    [self setNeedsComposerColorUpdate:YES];
+}
+
+- (void)setNeedsComposerColorUpdate:(BOOL)needed {
+    if (_needsComposerColorUpdate && needed) {
+        return;
+    }
+    _needsComposerColorUpdate = needed;
+    if (needed) {
+        __weak __typeof(self) weakSelf = self;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [weakSelf updateComposerColors];
+        });
+    }
+}
+
+- (void)updateComposerColors {
+    [self setNeedsComposerColorUpdate:NO];
+    if (![self haveAutoComposer]) {
+        return;
+    }
+    NSDictionary *userData = [NSDictionary castFrom:[_composerManager prefixUserData]];
+    if (!userData) {
+        return;
+    }
+    NSArray<ScreenCharArray *> *promptText = [NSArray castFrom:userData[PTYSessionComposerPrefixUserDataKeyPrompt]];
+    if (!promptText) {
+        return;
+    }
+    NSMutableAttributedString *prompt = [self kernedAttributedStringForScreenChars:promptText];
+    [_composerManager setPrefix:prompt userData:[_composerManager prefixUserData]];
 }
 
 // This can be completely async

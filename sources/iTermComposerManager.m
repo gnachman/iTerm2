@@ -470,4 +470,5 @@
     }
     return _component.cursorFrameInScreenCoordinates;
 }
+
 @end

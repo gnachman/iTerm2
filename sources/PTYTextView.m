@@ -2907,9 +2907,9 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     return [self contentWithAttributes:NO timestamps:NO];
 }
 
-- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProvider {
+- (NSDictionary *(^)(screen_char_t, iTermExternalAttribute *))attributeProviderUsingProcessedColors:(BOOL)processed {
     return [[^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-        return [self charAttributes:theChar externalAttributes:ea];
+        return [self charAttributes:theChar externalAttributes:ea processed:processed];
     } copy] autorelease];
 }
 
@@ -2922,7 +2922,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                                            [_dataSource numberOfLines] - 1);
     NSDictionary *(^attributeProvider)(screen_char_t, iTermExternalAttribute *) = nil;
     if (attributes) {
-        attributeProvider = [self attributeProvider];
+        attributeProvider = [self attributeProviderUsingProcessedColors:NO];
     }
     return [extractor contentInRange:VT100GridWindowedRangeMake(theRange, 0, 0)
                    attributeProvider:attributeProvider
@@ -3790,7 +3790,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
                                                                      lineOffset + numLines - 1);
             [self printContent:[extractor contentInRange:VT100GridWindowedRangeMake(coordRange, 0, 0)
                                        attributeProvider:^NSDictionary *(screen_char_t theChar, iTermExternalAttribute *ea) {
-                return [self charAttributes:theChar externalAttributes:ea];
+                return [self charAttributes:theChar externalAttributes:ea processed:NO];
             }
                                               nullPolicy:kiTermTextExtractorNullPolicyTreatAsSpace
                                                      pad:NO
