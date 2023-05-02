@@ -413,13 +413,14 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)addDismissOnKeyDownLabel {
-    NSMutableAttributedString *string = [_textView.attributedString mutableCopy];
+    NSMutableAttributedString *string = [_textView.originalAttributedString mutableCopy];
     NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:10],
                                   NSForegroundColorAttributeName: [NSColor darkGrayColor] };
     NSAttributedString *notice = [[NSAttributedString alloc] initWithString:@"\nPress any key to dismiss this message."
                                                                  attributes:attributes];
     [string appendAttributedString:notice];
     _textView.textStorage.attributedString = string;
+    _textView.originalAttributedString = string;
 }
 
 @end
