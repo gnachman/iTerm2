@@ -137,8 +137,34 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
 
 - (void)fail {
     DLog(@"Phase failed");
-    self.phase = self.phase + 1;
+    self.phase = [self phaseAfter:self.phase];
     [self tryCurrentPhase];
+}
+
+- (iTermURLActionFactoryPhase)phaseAfter:(iTermURLActionFactoryPhase)phase {
+    if ([iTermAdvancedSettingsModel prioritizeSmartSelectionActions]) {
+        switch (phase) {
+            case iTermURLActionFactoryPhaseHypertextLink:
+                return iTermURLActionFactoryPhaseSmartSelectionAction;
+            case iTermURLActionFactoryPhaseSmartSelectionAction:
+                return iTermURLActionFactoryPhaseExistingFile;
+            case iTermURLActionFactoryPhaseExistingFile:
+                return iTermURLActionFactoryPhaseExistingFileRespectingHardNewlines;
+            case iTermURLActionFactoryPhaseExistingFileRespectingHardNewlines:
+                return iTermURLActionFactoryPhaseAnyStringSemanticHistory;
+            case iTermURLActionFactoryPhaseAnyStringSemanticHistory:
+                return iTermURLActionFactoryPhaseURLLike;
+            case iTermURLActionFactoryPhaseURLLike:
+                return iTermURLActionFactoryPhaseSecureCopy;
+            case iTermURLActionFactoryPhaseSecureCopy:
+                return iTermURLActionFactoryPhaseFailed;
+            case iTermURLActionFactoryPhaseFailed:
+                return iTermURLActionFactoryPhaseFailed;
+            default:
+                return iTermURLActionFactoryPhaseFailed;
+        }
+    }
+    return phase + 1;
 }
 
 - (void)tryCurrentPhase {

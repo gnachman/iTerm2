@@ -268,6 +268,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)preferSpeedToFullLigatureSupport;
 + (NSString *)preferredBaseDir;
 + (const BOOL *)preventEscapeSequenceFromClearingHistory;
++ (BOOL)prioritizeSmartSelectionActions;
 + (BOOL)saveScrollBufferWhenClearing;
 + (void)setPreventEscapeSequenceFromClearingHistory:(const BOOL *)value;
 + (const BOOL *)preventEscapeSequenceFromChangingProfile;
