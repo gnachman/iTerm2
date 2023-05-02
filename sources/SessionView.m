@@ -1150,41 +1150,81 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
     }
 }
 
+static const NSInteger SessionViewNumberOfTrackingAreas = 2;
+
+typedef struct {
+    NSRect rect;
+    NSTrackingAreaOptions options;
+} iTermTrackingAreaSpec;
+
+// specs points at space for SessionViewNumberOfTrackingAreas values.
+- (void)getDesiredTrackingRectFrames:(iTermTrackingAreaSpec *)specs {
+    NSTrackingAreaOptions trackingOptions;
+    trackingOptions = (NSTrackingMouseEnteredAndExited |
+                       NSTrackingActiveAlways |
+                       NSTrackingEnabledDuringMouseDrag);
+    if ([self.delegate sessionViewCaresAboutMouseMovement]) {
+        DLog(@"Track mouse moved events");
+        trackingOptions |= NSTrackingMouseMoved;
+    } else {
+        DLog(@"Do not track mouse moved events");
+    }
+    const iTermTrackingAreaSpec value[SessionViewNumberOfTrackingAreas] = {
+        {
+            .rect = self.bounds,
+            .options=trackingOptions
+        },
+        {
+            .rect = [self offscreenCommandLineFrame],
+            .options = NSTrackingActiveInActiveApp | NSTrackingMouseEnteredAndExited
+        }
+    };
+    memmove(specs, value, sizeof(value));
+}
+
+
 // It's very expensive for PTYTextView to own its own tracking events because its frame changes
 // constantly, plus it can miss mouse exit events and spurious mouse enter events (issue 3345).
 // I believe it also caused hangs (issue 3974).
 - (void)updateTrackingAreas {
     [super updateTrackingAreas];
-    DLog(@"updateTrackingAreas\n%@", [NSThread callStackSymbols]);
-    if ([self window]) {
-        NSTrackingAreaOptions trackingOptions;
-        trackingOptions = (NSTrackingMouseEnteredAndExited |
-                           NSTrackingActiveAlways |
-                           NSTrackingEnabledDuringMouseDrag);
-        if ([self.delegate sessionViewCaresAboutMouseMovement]) {
-            DLog(@"Track mouse moved events");
-            trackingOptions |= NSTrackingMouseMoved;
-        } else {
-            DLog(@"Do not track mouse moved events");
-        }
+    if ([self window] && [self shouldUpdateTrackingAreas]) {
         while (self.trackingAreas.count) {
             [self removeTrackingArea:self.trackingAreas[0]];
         }
-        NSTrackingArea *trackingArea = [[NSTrackingArea alloc] initWithRect:self.bounds
-                                                                    options:trackingOptions
-                                                                      owner:self
-                                                                   userInfo:nil];
-        [self addTrackingArea:trackingArea];
 
-        // Tracking area for offscreen command line
-        NSRect frame = [self offscreenCommandLineFrame];
-        DLog(@"Add OCL tracking area %@", NSStringFromRect(frame));
-        trackingArea = [[NSTrackingArea alloc] initWithRect:frame
-                                                    options:(NSTrackingActiveInActiveApp | NSTrackingMouseEnteredAndExited)
-                                                      owner:self
-                                                   userInfo:nil];
-        [self addTrackingArea:trackingArea];
+        iTermTrackingAreaSpec specs[SessionViewNumberOfTrackingAreas];
+        [self getDesiredTrackingRectFrames:specs];
+        for (NSInteger i = 0; i < SessionViewNumberOfTrackingAreas; i++) {
+            NSTrackingArea *trackingArea = [[NSTrackingArea alloc] initWithRect:specs[i].rect
+                                                                        options:specs[i].options
+                                                                          owner:self
+                                                                       userInfo:nil];
+            [self addTrackingArea:trackingArea];
+        }
     }
+}
+
+- (BOOL)shouldUpdateTrackingAreas {
+    iTermTrackingAreaSpec specs[SessionViewNumberOfTrackingAreas];
+    if (self.trackingAreas.count != SessionViewNumberOfTrackingAreas) {
+        DLog(@"Must initialize tracking areas");
+        return YES;
+    }
+    [self getDesiredTrackingRectFrames:specs];
+    for (NSInteger i = 0; i < SessionViewNumberOfTrackingAreas; i++) {
+        NSTrackingArea *area = self.trackingAreas[i];
+        if (!NSEqualRects(area.rect, specs[i].rect)) {
+            DLog(@"Found unequal rect");
+            return YES;
+        }
+        if (area.options != specs[i].options) {
+            DLog(@"Found unequal options");
+            return YES;
+        }
+    }
+    DLog(@"Existing tracking areas are just fine");
+    return NO;
 }
 
 - (NSRect)offscreenCommandLineFrame {
@@ -1202,6 +1242,7 @@ NSString *const SessionViewWasSelectedForInspectionNotification = @"SessionViewW
 }
 
 - (void)mouseMoved:(NSEvent *)theEvent {
+    DLog(@"Mouse moved");
     [_delegate sessionViewMouseMoved:theEvent];
 }
 

@@ -10631,6 +10631,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)textViewNeedsDisplayInRect:(NSRect)rect {
+    DLog(@"text view needs display");
     NSRect visibleRect = NSIntersectionRect(rect, _textview.enclosingScrollView.documentVisibleRect);
     [_view setMetalViewNeedsDisplayInTextViewRect:visibleRect];
 }
