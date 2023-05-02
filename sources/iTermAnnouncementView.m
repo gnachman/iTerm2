@@ -7,6 +7,7 @@
 //
 
 #import "iTermAnnouncementView.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "DebugLogging.h"
 #import "NSMutableAttributedString+iTerm.h"
 #import "NSStringITerm.h"
@@ -59,7 +60,7 @@ static const CGFloat kMargin = 8;
 
 @implementation iTermAnnouncementView {
     CGFloat _buttonWidth;
-    NSTextView *_textView;
+    iTermAutoResizingTextView *_textView;
     NSImageView *_icon;
     NSButton *_closeButton;
     NSMutableArray *_actionButtons;
@@ -269,7 +270,7 @@ static const CGFloat kMargin = 8;
         rect.size.width -= rect.origin.x;
 
         rect.size.width -= _buttonWidth;
-        NSTextView *textView = [[NSTextView alloc] initWithFrame:rect];
+        iTermAutoResizingTextView *textView = [[iTermAutoResizingTextView alloc] initWithFrame:rect];
         NSDictionary *attributes = @{ NSFontAttributeName: [NSFont systemFontOfSize:12] };
         NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:title
                                                                                attributes:attributes];
@@ -294,6 +295,10 @@ static const CGFloat kMargin = 8;
         [self updateTextViewFrame];
 
         [_internalView addSubview:textView];
+
+        _textView.toolTip = title;
+        _textView.enableAutoResizing = YES;
+        [_textView adjustFontSizes];
     }
 }
 
@@ -345,8 +350,12 @@ static const CGFloat kMargin = 8;
 }
 
 - (void)updateTextViewFrame {
-    NSRect rect = _textView.frame;
-    CGFloat height = [_textView.attributedString heightForWidth:rect.size.width];
+    NSRect rect = _internalView.frame;
+    rect.origin.x += kMargin + _icon.frame.size.width + _icon.frame.origin.x;
+    rect.size.width -= rect.origin.x;
+    rect.size.width -= _buttonWidth;
+
+    CGFloat height = [_textView.originalAttributedString heightForWidth:rect.size.width];
     CGFloat maxHeight = [self maximumHeightForWidth:rect.size.width];
     CGFloat minHeight = [self minimumHeightForWidth:rect.size.width];
     height = MAX(minHeight, MIN(height, maxHeight));

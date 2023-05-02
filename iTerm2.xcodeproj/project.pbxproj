@@ -2152,6 +2152,7 @@
 		A67A515126CCD56100281693 /* xterm-256color in CopyFiles */ = {isa = PBXBuildFile; fileRef = A67A503326CCD3E200281693 /* xterm-256color */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A67A515226CCD56100281693 /* xterm in CopyFiles */ = {isa = PBXBuildFile; fileRef = A67A504026CCD3E200281693 /* xterm */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		A67A515326CCD56100281693 /* xterm-new in CopyFiles */ = {isa = PBXBuildFile; fileRef = A67A505026CCD3E200281693 /* xterm-new */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A67A69002A00930F0027B550 /* AutoResizingTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A67A68FF2A00930F0027B550 /* AutoResizingTextView.swift */; };
 		A67BCFE8270E702C00636983 /* VT100SavedColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = A67BCFE7270E702C00636983 /* VT100SavedColors.swift */; };
 		A67BCFEA270F893300636983 /* CodableColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A67BCFE9270F893300636983 /* CodableColor.swift */; };
 		A67C44E7211E24F6004EDB1C /* PSMMinimalTabStyle.h in Headers */ = {isa = PBXBuildFile; fileRef = A67C44E5211E24F6004EDB1C /* PSMMinimalTabStyle.h */; };
@@ -6217,6 +6218,7 @@
 		A67A503326CCD3E200281693 /* xterm-256color */ = {isa = PBXFileReference; lastKnownFileType = file; path = "xterm-256color"; sourceTree = "<group>"; };
 		A67A504026CCD3E200281693 /* xterm */ = {isa = PBXFileReference; lastKnownFileType = file; path = xterm; sourceTree = "<group>"; };
 		A67A505026CCD3E200281693 /* xterm-new */ = {isa = PBXFileReference; lastKnownFileType = file; path = "xterm-new"; sourceTree = "<group>"; };
+		A67A68FF2A00930F0027B550 /* AutoResizingTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoResizingTextView.swift; sourceTree = "<group>"; };
 		A67BCFE7270E702C00636983 /* VT100SavedColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VT100SavedColors.swift; sourceTree = "<group>"; };
 		A67BCFE9270F893300636983 /* CodableColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableColor.swift; sourceTree = "<group>"; };
 		A67C44E5211E24F6004EDB1C /* PSMMinimalTabStyle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PSMMinimalTabStyle.h; sourceTree = "<group>"; };
@@ -8580,6 +8582,7 @@
 				A691693C281345AF00083F99 /* SaneButton.swift */,
 				A6916940281346A400083F99 /* ExclusiveSelectionTextView.swift */,
 				A6D1C41D2861430D00B68526 /* FindIndicatorWindow.swift */,
+				A67A68FF2A00930F0027B550 /* AutoResizingTextView.swift */,
 			);
 			name = "Misc. Views";
 			sourceTree = "<group>";
@@ -15905,6 +15908,7 @@
 				5370678621C9D2780088D0F3 /* SIGError.m in Sources */,
 				A618FFC62245F6A300B8FD88 /* iTermStatusBarActionComponent.m in Sources */,
 				A64511C823806FBA00EB6ADF /* iTermLegacyJobManager.m in Sources */,
+				A67A69002A00930F0027B550 /* AutoResizingTextView.swift in Sources */,
 				A6B147612133395500D0814F /* iTermStatusBarLayout+tmux.m in Sources */,
 				A68400B91FF97138008D3EE2 /* iTermTimestampDrawHelper.m in Sources */,
 				A62EED9320DF5B2F00943DE3 /* iTermScriptChooser.m in Sources */,
