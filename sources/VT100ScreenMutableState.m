@@ -614,10 +614,10 @@ static _Atomic int gPerformingJoinedBlock;
 }
 
 - (void)performBlockWithoutTriggers:(void (^)(void))block {
-    assert(!_triggerEvaluator.disableExecution);
+    const BOOL saved = _triggerEvaluator.disableExecution;
     _triggerEvaluator.disableExecution = YES;
     block();
-    _triggerEvaluator.disableExecution = NO;
+    _triggerEvaluator.disableExecution = saved;
 }
 
 - (void)appendScreenChars:(const screen_char_t *)line
