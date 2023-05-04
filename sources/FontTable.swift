@@ -382,13 +382,23 @@ class FontTable: NSObject {
     static func fontTable(forProfile profile: [AnyHashable : Any]) -> FontTable {
         let asciiFont = iTermProfilePreferences.font(forKey: KEY_NORMAL_FONT,
                                                      inProfile: profile) ?? NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize, weight: .regular)
+        let useNonASCIIFont = iTermProfilePreferences.bool(forKey: KEY_USE_NONASCII_FONT,
+                                                           inProfile: profile)
+        if !useNonASCIIFont {
+            return FontTable(
+                defaultFont: PTYFontInfo(font: asciiFont),
+                nonAsciiFont: nil,
+                configString: nil)
+        }
+
         let nonASCIIFont = iTermProfilePreferences.font(forKey: KEY_NON_ASCII_FONT,
                                                         inProfile: profile)
-
+        let config = iTermProfilePreferences.string(forKey: KEY_FONT_CONFIG,
+                                                    inProfile: profile)
         return FontTable(
             defaultFont: PTYFontInfo(font: asciiFont),
             nonAsciiFont: nonASCIIFont.map { PTYFontInfo(font: $0) },
-            configString: iTermProfilePreferences.string(forKey: KEY_FONT_CONFIG, inProfile: profile))
+            configString: config)
     }
 
     @objc
