@@ -210,6 +210,7 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(addNote:) ||
         [item action] == @selector(mail:) ||
         [item action] == @selector(browse:) ||
+        [item action] == @selector(quickLook:) ||
         [item action] == @selector(searchInBrowser:) ||
         [item action] == @selector(addTrigger:) ||
         [item action] == @selector(saveSelectionAsSnippet:)) {
@@ -480,7 +481,11 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     };
     add(scpTitle, @selector(downloadWithSCP:));
     add(@"Open Selection as URL", @selector(browse:));
+    if (shortSelectedText && [self.delegate contextMenu:self canQuickLookURL:[NSURL URLWithUserSuppliedString:shortSelectedText]]) {
+        add(@"Quick Look Link", @selector(quickLook:));
+    }
     add(@"Search the Web for Selection", @selector(searchInBrowser:));
+
     add(@"Send Email to Selected Address", @selector(mail:));
     add(@"Add Trigger…", @selector(addTrigger:));
 
@@ -929,6 +934,17 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
 - (void)browse:(id)sender {
     [_urlActionHelper findUrlInString:[self.delegate contextMenuSelectedText:self capped:0] andOpenInBackground:NO];
+}
+
+- (void)quickLook:(id)sender {
+    NSString *string = [self.delegate contextMenuSelectedText:self capped:0];
+    NSURL *url = [NSURL URLWithUserSuppliedString:string];
+    if (!url) {
+        return;
+    }
+    [self.delegate contextMenuHandleQuickLook:self
+                                          url:url
+                             windowCoordinate:NSApp.currentEvent.locationInWindow];
 }
 
 - (void)searchInBrowser:(id)sender {

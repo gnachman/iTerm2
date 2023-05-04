@@ -142,7 +142,11 @@ runCommandInBackground:(NSString *)command;
 - (id<iTermObject>)contextMenuOwner:(iTermTextViewContextMenuHelper *)contextMenu;
 - (BOOL)contextMenuSmartSelectionActionsShouldUseInterpolatedStrings:(iTermTextViewContextMenuHelper *)contextMenu;
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu showCommandInfoForMark:(id<VT100ScreenMarkReading>)mark;
-
+- (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+    canQuickLookURL:(NSURL *)url;
+- (void)contextMenuHandleQuickLook:(iTermTextViewContextMenuHelper *)contextMenu
+                               url:(NSURL *)url
+                  windowCoordinate:(NSPoint)windowCoordinate;
 @end
 
 @interface iTermTextViewContextMenuHelper : NSObject<NSMenuDelegate>

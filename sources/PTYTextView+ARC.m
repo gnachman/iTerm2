@@ -509,7 +509,7 @@ iTermCommandInfoViewControllerDelegate>
                 break;
             }
             url = [NSURL URLWithUserSuppliedString:urlAction.string];
-            if (![@[ @"http", @"https" ] containsObject:url.scheme]) {
+            if (![[self allowedQuickLookURLSchemes] containsObject:url.scheme]) {
                 return;
             }
             if (url && [self showWebkitPopoverAtPoint:event.locationInWindow url:url]) {
@@ -1508,6 +1508,21 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                  absoluteLineNumber:absRange.start.y
                                date:mark.startDate
                               point:windowPoint];
+}
+
+- (NSArray<NSString *> *)allowedQuickLookURLSchemes {
+    return @[ @"http", @"https" ];
+}
+
+- (BOOL)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+    canQuickLookURL:(NSURL *)url {
+    return [[self allowedQuickLookURLSchemes] containsObject:url.scheme];
+}
+
+- (void)contextMenuHandleQuickLook:(iTermTextViewContextMenuHelper *)contextMenu
+                         url:(NSURL *)url
+                  windowCoordinate:(NSPoint)windowCoordinate {
+    [self showWebkitPopoverAtPoint:windowCoordinate url:url];
 }
 
 #pragma mark - NSResponder Additions
