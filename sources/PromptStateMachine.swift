@@ -353,7 +353,8 @@ class PromptStateMachine: NSObject {
 
     private func accrue(part: String, commandSoFar: String, prompt: [ScreenCharArray]) {
         let maxLength = 1024 * 4
-        if commandSoFar.count + part.count > maxLength {
+        // String.count is O(n) and this becomes accidentally quadratic but counting UTF-16 seems to be fast.
+        if commandSoFar.utf16.count + part.utf16.count > maxLength {
             return
         }
         set(state: .accruingAlreadyEnteredCommand(commandSoFar: commandSoFar + part,

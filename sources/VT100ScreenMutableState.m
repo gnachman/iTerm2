@@ -2490,6 +2490,28 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     return mark;
 }
 
+// Line-style marks need an extra newline injected.
+- (int)insertNewlinesBeforeAddingPromptMarkAfterPrompt:(BOOL)afterPrompt {
+    if (!self.config.useLineStyleMarks) {
+        return 0;
+    }
+    int count = 0;
+    if (!afterPrompt) {
+        // The shell may opt to redraw the prompt & command before running it, meaning you
+        // get final term codes: ABABCD. Don't want to add a new linefeed if we don't need
+        // to.
+        if (![self.currentGrid lineIsEmpty:self.currentGrid.cursor.y]) {
+            [self appendCarriageReturnLineFeed];
+            count += 1;
+        }
+    }
+
+    // Make room for the horizontal line above the line with the mark.
+    [self appendCarriageReturnLineFeed];
+    count += 1;
+    return count;
+}
+
 - (VT100ScreenMark *)promptDidStartAt:(VT100GridAbsCoord)initialCoord
                          wasInCommand:(BOOL)wasInCommand
                     detectedByTrigger:(BOOL)detectedByTrigger {
@@ -2500,21 +2522,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         coord.x = 0;
         coord.y += 1;
     }
-    if (self.config.useLineStyleMarks) {
-        if (!wasInCommand) {
-            // The shell may opt to redraw the prompt & command before running it, meaning you
-            // get final term codes: ABABCD. Don't want to add a new linefeed if we don't need
-            // to.
-            if (![self.currentGrid lineIsEmpty:self.currentGrid.cursor.y]) {
-                [self appendCarriageReturnLineFeed];
-                coord.x = 0;
-                coord.y += 1;
-            }
-
-            // Make room for the horizontal line above the line with the mark.
-            [self appendCarriageReturnLineFeed];
+    if (!wasInCommand) {
+        const int newlines = [self insertNewlinesBeforeAddingPromptMarkAfterPrompt:NO];
+        if (newlines) {
             coord.x = 0;
-            coord.y += 1;
+            coord.y += newlines;
         }
     }
     self.shellIntegrationInstalled = YES;
@@ -3081,14 +3093,9 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         if (!strongSelf) {
             return;
         }
-        // Note that the prompt must precede the OSC 7 code in order to be moved into the composer properly.
-        const long long y = self.cumulativeScrollbackOverflow + strongSelf.numberOfScrollbackLines + strongSelf.cursorY - 1;
-        const VT100GridAbsCoordRange range =
-        VT100GridAbsCoordRangeMake(0,
-                                   y,
-                                   strongSelf.currentGrid.cursor.x,
-                                   y);
-        [strongSelf handleTriggerDetectedPromptAt:range];
+        [strongSelf insertNewlinesBeforeAddingPromptMarkAfterPrompt:YES];
+        [strongSelf setPromptStartLine:strongSelf.numberOfScrollbackLines + strongSelf.cursorY - 1
+                     detectedByTrigger:NO];
     }];
 }
 
