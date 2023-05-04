@@ -403,6 +403,12 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
 
 - (int)appendLines:(int)numLines
       toLineBuffer:(LineBuffer *)lineBuffer {
+    return [self appendLines:numLines toLineBuffer:lineBuffer makeCursorLineSoft:NO];
+}
+
+- (int)appendLines:(int)numLines
+      toLineBuffer:(LineBuffer *)lineBuffer
+makeCursorLineSoft:(BOOL)makeCursorLineSoft {
     assert(numLines <= size_.height);
 
     // Set numLines to the number of lines on the screen that are in use.
@@ -441,10 +447,12 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
         // an '|| (i == size.height)' conjunction. It caused issue 3788 so I
         // removed it. Unfortunately, I can't recall why it was added in the
         // first place.
-        const BOOL isPartial = ((continuation != EOL_HARD) ||
-                                (i + 1 == numLines &&
-                                 self.cursor.y == i &&
-                                 self.cursor.x == [self lengthOfLineNumber:i]));
+        BOOL isPartial = (continuation != EOL_HARD);
+        if (makeCursorLineSoft && !isPartial) {
+            isPartial = (i + 1 == numLines &&
+                         self.cursor.y == i &&
+                         self.cursor.x == [self lengthOfLineNumber:i]);
+        }
         [lineBuffer appendLine:line
                         length:currentLineLength
                        partial:isPartial

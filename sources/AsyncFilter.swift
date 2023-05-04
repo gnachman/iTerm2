@@ -138,7 +138,7 @@ class AsyncFilter: NSObject {
          progress: ((Double) -> (Void))?) {
         lineBufferCopy = lineBuffer.copy()
         lineBufferCopy.setMaxLines(-1)
-        grid.appendLines(grid.numberOfLinesUsed(), to: lineBufferCopy)
+        grid.appendLines(grid.numberOfLinesUsed(), to: lineBufferCopy, makeCursorLineSoft: true)
         let numberOfLines = lineBufferCopy.numLines(withWidth: grid.size.width)
         let width = grid.size.width
         self.width = width

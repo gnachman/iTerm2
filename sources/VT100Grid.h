@@ -120,6 +120,11 @@
 
 // Append the first numLines to the given line buffer. Returns the number of lines appended.
 - (int)appendLines:(int)numLines
+      toLineBuffer:(LineBuffer *)lineBuffer
+makeCursorLineSoft:(BOOL)makeCursorLineSoft;
+
+// Defaults makeCursorLineSoft=NO
+- (int)appendLines:(int)numLines
       toLineBuffer:(LineBuffer *)lineBuffer;
 
 // This is the sole mutation method. We need it to track which lines need to be redrawn and to reduce
