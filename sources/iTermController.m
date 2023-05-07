@@ -326,6 +326,15 @@ static iTermController *gSharedInstance;
 - (void)newSessionWithSameProfile:(id)sender newWindow:(BOOL)newWindow {
     Profile *bookmark = nil;
     if (_frontTerminalWindowController) {
+        const BOOL tmux = [[_frontTerminalWindowController currentSession] isTmuxClient];
+        if (tmux) {
+            if (newWindow) {
+                [_frontTerminalWindowController newTmuxWindow:sender];
+            } else {
+                [_frontTerminalWindowController newTmuxTabAtIndex:nil];
+            }
+            return;
+        }
         bookmark = [[_frontTerminalWindowController currentSession] profile];
     }
     BOOL divorced = ([[ProfileModel sessionsInstance] bookmarkWithGuid:bookmark[KEY_GUID]] != nil);
