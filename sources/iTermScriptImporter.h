@@ -16,7 +16,11 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)importScriptFromURL:(NSURL *)url
               userInitiated:(BOOL)userInitiated
             offerAutoLaunch:(BOOL)offerAutoLaunch
-                 completion:(void (^)(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location))completion;
+              callbackQueue:(dispatch_queue_t)callbackQueue
+                    avoidUI:(BOOL)avoidUI
+                 completion:(void (^)(NSString * _Nullable errorMessage,
+                                      BOOL quiet,
+                                      NSURL * _Nullable location))completion;
 
 @end
 

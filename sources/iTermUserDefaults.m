@@ -29,6 +29,7 @@ static NSString *const iTermUserDefaultsKeyAddTriggerInstant = @"NoSyncAddTrigge
 static NSString *const iTermUserDefaultsKeyAddTriggerUpdateProfile = @"NoSyncAddTriggerUpdateProfile";
 static NSString *const iTermUserDefaultsKeyLastSystemPythonVersionRequirement = @"NoSyncLastSystemPythonVersionRequirement";
 static NSString *const iTermUserDefaultsKeyProbeForPassword = @"ProbeForPassword";
+static NSString *const iTermUserDefaultsKeyImportPath = @"ImportPath";
 
 @implementation iTermUserDefaults
 
@@ -221,6 +222,14 @@ static NSUserDefaults *iTermPrivateUserDefaults(void) {
         [iTermAdvancedSettingsModel setEchoProbeDuration:0.5];
     }
     [self.userDefaults setBool:probeForPassword forKey:iTermUserDefaultsKeyProbeForPassword];
+}
+
++ (NSString *)importPath {
+    return [self.userDefaults objectForKey:iTermUserDefaultsKeyImportPath];
+}
+
++ (void)setImportPath:(NSString *)importPath {
+    [self.userDefaults setObject:importPath forKey:iTermUserDefaultsKeyImportPath];
 }
 
 @end

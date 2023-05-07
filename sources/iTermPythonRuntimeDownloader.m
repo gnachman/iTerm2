@@ -271,6 +271,7 @@ NSString *const iTermPythonRuntimeDownloaderDidInstallRuntimeNotification = @"iT
         [iTermCommandRunner unzipURL:zipFileURL
                        withArguments:@[ @"-o", @"-q" ]
                          destination:destination.path
+                       callbackQueue:dispatch_get_main_queue()
                           completion:^(NSError *error) {
             DLog(@"%@", error);
             completion(error);

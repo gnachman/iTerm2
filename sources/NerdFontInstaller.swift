@@ -185,6 +185,7 @@ class NerdFontInstaller {
         iTermCommandRunner.unzipURL(location,
                                     withArguments: ["-q"],
                                     destination: destination.path,
+                                    callbackQueue: DispatchQueue.main,
                                     completion: { [weak self] error in
             if let error {
                 self?.state = .failed(.unzipFailed(reason: error.localizedDescription))

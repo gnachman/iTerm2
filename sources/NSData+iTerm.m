@@ -68,6 +68,34 @@
     return string;
 }
 
++ (int)untarFromArchive:(NSURL *)tarfile to:(NSURL *)destinationFolder {
+    NSArray<NSString *> *args = @[
+        @"-x",
+        @"-z",
+        @"-C",
+        destinationFolder.path,
+        @"-f",
+        tarfile.path ];
+    
+    NSTask *task = [[NSTask alloc] init];
+    NSMutableDictionary<NSString *, NSString *> *environment = [[[NSProcessInfo processInfo] environment] mutableCopy];
+    environment[@"COPYFILE_DISABLE"] = @"1";
+    [task setEnvironment:environment];
+    [task setLaunchPath:@"/usr/bin/tar"];
+    [task setArguments:args];
+    [task setStandardInput:[NSPipe pipe]];
+    [task setStandardOutput:[NSPipe pipe]];
+    [task setStandardError:[NSPipe pipe]];
+    [task launch];
+    NSData *data = [[[task standardOutput] fileHandleForReading] readDataToEndOfFile];
+    NSData *errorMessage = [[[task standardError] fileHandleForReading] readDataToEndOfFile];
+    if (errorMessage.length) {
+        DLog(@"%@ %@: %@", task.launchPath, [task.arguments componentsJoinedByString:@" "], [errorMessage stringWithEncoding:NSUTF8StringEncoding]);
+    }
+    [task waitUntilExit];
+    return task.terminationStatus;
+}
+
 + (NSData *)dataWithTGZContainingFiles:(NSArray<NSString *> *)files
                         relativeToPath:(NSString *)basePath
                   includeExtendedAttrs:(BOOL)includeExtendedAttrs

@@ -10,6 +10,7 @@
 #import "BulkCopyProfilePreferencesWindowController.h"
 #import "DebugLogging.h"
 #import "ITAddressBookMgr.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermController.h"
 #import "iTermDynamicProfileManager.h"
 #import "iTermFlippedView.h"

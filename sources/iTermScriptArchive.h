@@ -23,6 +23,7 @@ extern NSString *const iTermScriptSetupCfgName;
 // If offerAutoLaunch is set, then even non-trusted scripts will prompt to move to autolaunch.
 - (void)installTrusted:(BOOL)trusted
        offerAutoLaunch:(BOOL)offerAutoLaunch
+               avoidUI:(BOOL)avoidUI
         withCompletion:(void (^)(NSError *, NSURL *location))completion;
 
 @end

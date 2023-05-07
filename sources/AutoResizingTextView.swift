@@ -82,12 +82,11 @@ class AutoResizingTextView: NSTextView {
             originalAttributedString = (attributedString.copy() as! NSAttributedString)
         }
         NSLog("attributedString is \(attributedString.string)")
-        var maxFontSize = userFont!.pointSize
-        let range = NSRange(location: 0, length: attributedString.length)
+        let maxFontSize = userFont!.pointSize
         // Find max font size that fits in the text view for each font run
 
         // Search to find the maximum font size that fits in the text view
-        var minFontSize: CGFloat = minimumFontSize
+        let minFontSize: CGFloat = minimumFontSize
         var delta = 0.0
         while maxFontSize + delta >= minFontSize {
             let newAttributedString = originalAttributedString!.mutableCopy() as! NSMutableAttributedString

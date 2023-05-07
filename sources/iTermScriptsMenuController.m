@@ -313,6 +313,8 @@ NS_ASSUME_NONNULL_BEGIN
             [iTermScriptImporter importScriptFromURL:url
                                        userInitiated:YES
                                      offerAutoLaunch:autolaunch
+                                       callbackQueue:dispatch_get_main_queue()
+                                             avoidUI:NO
                                           completion:^(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location) {
                                               if (quiet) {
                                                   return;
@@ -401,7 +403,11 @@ NS_ASSUME_NONNULL_BEGIN
             return;
         }
         for (NSURL *url in urls) {
-            [iTermScriptExporter exportScriptAtURL:url signingIdentity:signingIdentity completion:^(NSString *errorMessage, NSURL *zipURL) {
+            [iTermScriptExporter exportScriptAtURL:url
+                                   signingIdentity:signingIdentity
+                                     callbackQueue:dispatch_get_main_queue()
+                                       destination:nil
+                                        completion:^(NSString *errorMessage, NSURL *zipURL) {
                 if (errorMessage || !zipURL) {
                     NSAlert *alert = [[NSAlert alloc] init];
                     alert.messageText = @"Export Failed";
@@ -440,6 +446,8 @@ NS_ASSUME_NONNULL_BEGIN
     [iTermScriptImporter importScriptFromURL:url
                                userInitiated:YES
                              offerAutoLaunch:NO
+                               callbackQueue:dispatch_get_main_queue()
+                                     avoidUI:NO
                                   completion:^(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location) {
                                       // Mojave deadlocks if you do this without the dispatch_async
                                       dispatch_async(dispatch_get_main_queue(), ^{

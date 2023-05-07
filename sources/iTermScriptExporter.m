@@ -35,6 +35,8 @@
 
 + (void)exportScriptAtURL:(NSURL *)fullURL
           signingIdentity:(SIGIdentity *)sigIdentity
+            callbackQueue:(dispatch_queue_t)callbackQueue
+              destination:(NSURL *)destination
                completion:(void (^)(NSString *errorMessage, NSURL *zipURL))completion {
     NSURL *relativeURL = [self relativeURLFromFullURL:fullURL];
     if (!relativeURL) {
@@ -61,6 +63,8 @@
                                    relativeURL:[NSURL fileURLWithPath:scriptName]
                                           name:scriptName
                                signingIdentity:sigIdentity
+                                 callbackQueue:callbackQueue
+                                   destination:destination
                                     completion:^(NSString *errorMessage, NSURL *zipURL) {
                                         [[NSFileManager defaultManager] removeItemAtPath:temp error:nil];
                                         completion(errorMessage, zipURL);
@@ -75,6 +79,8 @@
                                relativeURL:relativeURL
                                       name:name
                            signingIdentity:sigIdentity
+                             callbackQueue:callbackQueue
+                               destination:destination
                                 completion:completion];
 }
 
@@ -92,6 +98,8 @@
                              relativeURL:(NSURL *)relativeURL
                                     name:(NSString *)name
                          signingIdentity:(SIGIdentity *)signingIdentity
+                           callbackQueue:(dispatch_queue_t)callbackQueue
+                             destination:(NSURL *)destination
                               completion:(void (^)(NSString *errorMessage, NSURL *zipURL))completion {
     NSArray<NSURL *> *sourceURLs;
     NSURL *destinationFolder = [NSURL fileURLWithPath:[[NSFileManager defaultManager] desktopDirectory]];
@@ -111,11 +119,12 @@
     }
 
     NSString *extension = signingIdentity ? @"its" : @"zip";
-    NSURL *zipURL = [self urlForNewZipFileInFolder:destinationFolder name:name extension:extension];
+    NSURL *zipURL = destination ?: [self urlForNewZipFileInFolder:destinationFolder name:name extension:extension];
     [iTermCommandRunner zipURLs:sourceURLs
                       arguments:@[ @"-r" ]
                        toZipURL:zipURL
                      relativeTo:fullURL.URLByDeletingLastPathComponent
+                  callbackQueue:callbackQueue
                      completion:^(BOOL ok) {
                          if (!ok) {
                              completion(@"Failed to create zip file.", nil);

@@ -50,10 +50,36 @@ extension Bool: SecureUserDefaultStringTranscodable {
     }
 }
 
+protocol SerializableUserDefault {
+    var key: String { get }
+    func encode(to: inout [String: String])
+    func setFromSerialized(value: String)
+}
+
 struct SecureUserDefaults {
     static var instance = SecureUserDefaults()
+
+    mutating func serializeAll() -> [String: String] {
+        var result = [String: String]()
+        for serializable in serializables() {
+            serializable.encode(to: &result)
+        }
+        return result
+    }
+
+    mutating func deserializeAll(dict: [String: String]) {
+        for serializable in serializables() {
+            if let json = dict[serializable.key] {
+                serializable.setFromSerialized(value: json)
+            }
+        }
+    }
+
     lazy var allowPaste = { SecureUserDefault<Bool>("AllowPaste", defaultValue: false) }()
     lazy var requireAuthToOpenPasswordmanager = { SecureUserDefault<Bool>("RequireAuthenticationToOpenPasswordManager", defaultValue: true) }()
+    private mutating func serializables() -> [any SerializableUserDefault] {
+        [allowPaste, requireAuthToOpenPasswordmanager]
+    }
 }
 
 @objc
@@ -80,8 +106,8 @@ class iTermSecureUserDefaults: NSObject {
 //   * <encoded path> is the path to the file as hex-encoded UTF-8.
 //   * <sha of key> is the hex-encoded SHA-256 of the user defaults key. The key is the same as the filename minus directory and extension.
 //   * <value> is a hex-encoded UTF8 string representation of the value (e.g., "true" or "false" for a boolean). It is hex encoded to avoid injection bugs during writing.
-class SecureUserDefault<T: SecureUserDefaultStringTranscodable> {
-    private let key: String
+class SecureUserDefault<T: SecureUserDefaultStringTranscodable & Codable & Equatable> {
+    let key: String
     let defaultValue: T
 
     enum SecureUserDefaultError: Error {
@@ -188,7 +214,7 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable> {
                 chmod a+r \\"$TF\\" && \
                 mv \\"$TF\\" \\"\(path)\\" || \
                 rm -f \\"$TF\\"
-        " with administrator privileges
+        " with prompt "iTerm2 needs to modify a secure setting." with administrator privileges
         """
         let script = NSAppleScript(source: code)
         var error: NSDictionary? = nil
@@ -200,3 +226,26 @@ class SecureUserDefault<T: SecureUserDefaultStringTranscodable> {
     }
 }
 
+extension SecureUserDefault: SerializableUserDefault {
+    func setFromSerialized(value: String) {
+        let decoder = JSONDecoder()
+        guard let savedValue = try? decoder.decode(T.self, from: value.data(using: .utf8) ?? Data()) else {
+            DLog("Failed to decode \(value)")
+            return
+        }
+        if savedValue != self.value {
+            try? set(savedValue)
+        }
+    }
+
+    func encode(to dictionary: inout [String: String]) {
+        let encoder = JSONEncoder()
+        guard let data = try? encoder.encode(value) else {
+            DLog("Failed to encode \(value) as JSON")
+            return
+        }
+        if let jsonString = String(data: data, encoding: .utf8) {
+            dictionary[key] = jsonString
+        }
+    }
+}

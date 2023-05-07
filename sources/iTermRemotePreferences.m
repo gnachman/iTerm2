@@ -284,7 +284,7 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
     }
 
     NSString *filename = [self prefsFilenameWithBaseDir:folder];
-    NSDictionary *myDict = iTermRemotePreferencesSave(filename, self.preservedKeys);
+    NSDictionary *myDict = iTermRemotePreferencesSave(iTermUserDefaultsDictionary(self.preservedKeys), filename);
     if (!myDict) {
         NSAlert *alert = [[NSAlert alloc] init];
         alert.messageText = @"Failed to copy preferences to custom directory.";
@@ -316,18 +316,21 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
     });
 }
 
-// Runs either on a background queue or on the main thread. Synchronous. Returns the saved values.
-static NSDictionary *iTermRemotePreferencesSave(NSString *filename, NSArray<NSString *> *preservedKeys) {
+static NSDictionary *iTermUserDefaultsDictionary(NSArray<NSString *> *preservedKeys) {
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     NSDictionary *myDict =
         [userDefaults persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
-    myDict = [myDict filteredWithBlock:^BOOL(id key, id value) {
+    return [myDict filteredWithBlock:^BOOL(id key, id value) {
         NSString *stringKey = [NSString castFrom:key];
         if (!stringKey) {
             return YES;
         }
         return iTermRemotePreferencesKeyIsSyncable(key, preservedKeys);
     }];
+}
+
+// Runs either on a background queue or on the main thread. Synchronous. Returns the saved values.
+static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *filename) {
     NSData *data = [myDict it_xmlPropertyList];
     if (!data) {
         DLog(@"Failed to encode %@", myDict);
@@ -340,6 +343,10 @@ static NSDictionary *iTermRemotePreferencesSave(NSString *filename, NSArray<NSSt
         return nil;
     }
     return myDict;
+}
+
+- (NSDictionary *)userDefaultsDictionary {
+    return iTermUserDefaultsDictionary([self preservedKeys]);
 }
 
 - (void)saveIfNeeded {
@@ -358,7 +365,7 @@ static NSDictionary *iTermRemotePreferencesSave(NSString *filename, NSArray<NSSt
     _needsSave = NO;
     dispatch_async(_queue, ^{
         DLog(@"Save prefs to %@", filename);
-        NSDictionary *dict = iTermRemotePreferencesSave(filename, preservedKeys);
+        NSDictionary *dict = iTermRemotePreferencesSave(iTermUserDefaultsDictionary(preservedKeys), filename);
         DLog(@"Finished saving prefs to %@", filename);
         if (dict) {
             self.savedRemotePrefs = dict;

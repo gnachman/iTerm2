@@ -61,6 +61,13 @@ typedef void (^iTermServerOriginatedRPCCompletionBlock)(id, NSError *);
 + (BOOL)requireApplescriptAuth;
 + (void)setRequireApplescriptAuth:(BOOL)requireApplescriptAuth
                            window:(NSWindow *)window;
+typedef NS_ENUM(NSUInteger, iTermNoAuthStatus) {
+    iTermNoAuthStatusNone,
+    iTermNoAuthStatusValid,
+    iTermNoAuthStatusCorrupt
+};
+
++ (iTermNoAuthStatus)noAuthStatus:(out NSString **)contentsPtr;
 
 + (NSString *)invocationWithFullyQualifiedName:(NSString *)fqname
                                       defaults:(NSArray<ITMRPCRegistrationRequest_RPCArgument*> *)defaultsArray;

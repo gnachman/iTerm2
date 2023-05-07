@@ -22,16 +22,19 @@
 // This gives backpressure to the background process.
 @property (nonatomic, copy) void (^outputHandler)(NSData *, void (^)(void));
 @property (nonatomic, copy) NSDictionary<NSString *, NSString *> *environment;
+@property (nonatomic, strong) dispatch_queue_t callbackQueue;
 
 + (void)unzipURL:(NSURL *)zipURL
    withArguments:(NSArray<NSString *> *)arguments
      destination:(NSString *)destination
+   callbackQueue:(dispatch_queue_t)callbackQueue
       completion:(void (^)(NSError *))completion;
 
 + (void)zipURLs:(NSArray<NSURL *> *)URLs
       arguments:(NSArray<NSString *> *)arguments
        toZipURL:(NSURL *)zipURL
      relativeTo:(NSURL *)baseURL
+callbackQueue:(dispatch_queue_t)callbackQueue
      completion:(void (^)(BOOL))completion;
 
 - (instancetype)initWithCommand:(NSString *)command

@@ -25,6 +25,8 @@ static BOOL sInstallingScript;
 + (void)importScriptFromURL:(NSURL *)downloadedURL
               userInitiated:(BOOL)userInitiated
             offerAutoLaunch:(BOOL)offerAutoLaunch
+              callbackQueue:(dispatch_queue_t)callbackQueue
+                    avoidUI:(BOOL)avoidUI
                  completion:(void (^)(NSString *errorMessage, BOOL quiet, NSURL *location))completion {
     DLog(@"dowloadedURL=%@ userInitiated=%@ offerAutoLaunch=%@", downloadedURL, @(userInitiated), @(offerAutoLaunch));
     static dispatch_queue_t queue;
@@ -39,6 +41,8 @@ static BOOL sInstallingScript;
             [self reallyImportScriptFromURL:downloadedURL
                               userInitiated:userInitiated
                             offerAutoLaunch:offerAutoLaunch
+                              callbackQueue:callbackQueue
+                                    avoidUI:avoidUI
                                  completion:^(NSString *errorMessage, BOOL quiet, NSURL *location) {
                 DLog(@"errorMessage=%@ quiet=%@ location=%@", errorMessage, @(quiet), location);
                 dispatch_group_leave(group);
@@ -52,7 +56,8 @@ static BOOL sInstallingScript;
 + (void)reallyImportScriptFromURL:(NSURL *)downloadedURL
                     userInitiated:(BOOL)userInitiated
                   offerAutoLaunch:(BOOL)offerAutoLaunch
-                       completion:(void (^)(NSString *errorMessage, BOOL quiet, NSURL *location))completion {
+                    callbackQueue:(dispatch_queue_t)callbackQueue
+                          avoidUI:(BOOL)avoidUI                       completion:(void (^)(NSString *errorMessage, BOOL quiet, NSURL *location))completion {
     DLog(@"downloadedURL=%@ userInitiated=%@ offerAutoLauch=%@", downloadedURL, @(userInitiated), @(offerAutoLaunch));
     if (sInstallingScript) {
         DLog(@"already installing");
@@ -95,6 +100,7 @@ static BOOL sInstallingScript;
         [iTermCommandRunner unzipURL:url
                        withArguments:@[ @"-q" ]
                          destination:tempDir
+                       callbackQueue:callbackQueue
                           completion:^(NSError *error) {
             DLog(@"Unzip finished with %@", error);
             if (error) {
@@ -107,6 +113,7 @@ static BOOL sInstallingScript;
                                  trusted:trusted
                          offerAutoLaunch:offerAutoLaunch
                                   reveal:reveal
+                                 avoidUI:avoidUI
                           withCompletion:
              ^(NSString *errorMessage, BOOL quiet, NSURL *location) {
                 DLog(@"All done! errorMessage=%@", errorMessage);
@@ -248,6 +255,7 @@ static BOOL sInstallingScript;
                        trusted:(BOOL)trusted
                offerAutoLaunch:(BOOL)offerAutoLaunch
                         reveal:(BOOL)reveal
+                       avoidUI:(BOOL)avoidUI
                 withCompletion:(void (^)(NSString *errorMessage, BOOL, NSURL *location))completion {
     if (reveal) {
         DLog(@"Reveal in finder");
@@ -273,13 +281,16 @@ static BOOL sInstallingScript;
 
     if ([self haveScriptNamed:archive.name]) {
         DLog(@"Already have a script named %@", archive.name);
-        iTermWarningSelection selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"A script named “%@” is already installed", archive.name]
-                                                                     actions:@[ @"Replace Script", @"Cancel" ]
-                                                                   accessory:nil
-                                                                  identifier:nil
-                                                                 silenceable:kiTermWarningTypePersistent
-                                                                     heading:@"Script Already Exists"
-                                                                      window:nil];
+        iTermWarningSelection selection = kiTermWarningSelection0;
+        if (!avoidUI) {
+            selection = [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"A script named “%@” is already installed", archive.name]
+                                                   actions:@[ @"Replace Script", @"Cancel" ]
+                                                 accessory:nil
+                                                identifier:nil
+                                               silenceable:kiTermWarningTypePersistent
+                                                   heading:@"Script Already Exists"
+                                                    window:nil];
+        }
         if (selection == kiTermWarningSelection0) {
             DLog(@"Remove and retry");
             [self removeScriptNamed:archive.name];
@@ -287,6 +298,7 @@ static BOOL sInstallingScript;
                                  trusted:trusted
                          offerAutoLaunch:offerAutoLaunch
                                   reveal:reveal
+                                 avoidUI:avoidUI
                           withCompletion:completion];
             return;
         }
@@ -295,7 +307,10 @@ static BOOL sInstallingScript;
         return;
     }
 
-    [archive installTrusted:trusted offerAutoLaunch:offerAutoLaunch withCompletion:^(NSError *error, NSURL *location) {
+    [archive installTrusted:trusted
+            offerAutoLaunch:offerAutoLaunch
+                    avoidUI:avoidUI
+             withCompletion:^(NSError *error, NSURL *location) {
         DLog(@"Install finished with %@", error);
         completion(error.localizedDescription, NO, location);
     }];

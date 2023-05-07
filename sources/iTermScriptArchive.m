@@ -163,25 +163,29 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 
 - (void)installTrusted:(BOOL)trusted
        offerAutoLaunch:(BOOL)offerAutoLaunch
+               avoidUI:(BOOL)avoidUI
         withCompletion:(void (^)(NSError *, NSURL *location))completion {
     DLog(@"trusted=%@ offerAutoLaunch=%@", @(trusted), @(offerAutoLaunch));
     if (self.fullEnvironment) {
         [self installFullEnvironmentTrusted:trusted
                             offerAutoLaunch:offerAutoLaunch
+                                    avoidUI:avoidUI
                                  completion:completion];
     } else {
         [self installBasicTrusted:trusted
                   offerAutoLaunch:offerAutoLaunch
+                          avoidUI:avoidUI
                        completion:completion];
     }
 }
 
 - (void)installBasicTrusted:(BOOL)trusted
             offerAutoLaunch:(BOOL)offerAutoLaunch
+                    avoidUI:(BOOL)avoidUI
                  completion:(void (^)(NSError *, NSURL *location))completion {
     NSString *from = [self.container stringByAppendingPathComponent:self.name];
     NSString *to;
-    if ([self shouldAutoLaunchWhenTrusted:trusted offerAutoLaunch:offerAutoLaunch]) {
+    if ([self shouldAutoLaunchWhenTrusted:trusted offerAutoLaunch:offerAutoLaunch avoidUI:avoidUI]) {
         to = [[[NSFileManager defaultManager] autolaunchScriptPathCreatingLink] stringByAppendingPathComponent:self.name];
     } else {
         to = [[[NSFileManager defaultManager] scriptsPathWithoutSpaces] stringByAppendingPathComponent:self.name];
@@ -205,9 +209,13 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 }
 
 - (BOOL)shouldAutoLaunchWhenTrusted:(BOOL)trusted
-                    offerAutoLaunch:(BOOL)offerAutoLaunch {
+                    offerAutoLaunch:(BOOL)offerAutoLaunch
+                            avoidUI:(BOOL)avoidUI {
     if (![self shouldOfferAutoLaunchWhenTrusted:trusted offerAutoLaunch:offerAutoLaunch]) {
         return NO;
+    }
+    if (avoidUI) {
+        return YES;
     }
     if (offerAutoLaunch) {
         return [self userAcceptsExplicitAutoLaunchInstall];
@@ -218,6 +226,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 
 - (void)installFullEnvironmentTrusted:(BOOL)trusted
                       offerAutoLaunch:(BOOL)offerAutoLaunch
+                              avoidUI:(BOOL)avoidUI
                            completion:(void (^)(NSError *, NSURL *location))completion {
     DLog(@"trusted=%@ offerAutoLaunch=%@", @(trusted), @(offerAutoLaunch));
     NSString *from = [self.container stringByAppendingPathComponent:self.name];
@@ -244,7 +253,7 @@ NSString *const iTermScriptMetadataName = @"metadata.json";
 
     // Decide where to put it and make the directory if needed.
     NSString *containingFolder;
-    if ([self shouldAutoLaunchWhenTrusted:trusted offerAutoLaunch:offerAutoLaunch]) {
+    if ([self shouldAutoLaunchWhenTrusted:trusted offerAutoLaunch:offerAutoLaunch avoidUI:avoidUI]) {
         containingFolder = [[NSFileManager defaultManager] autolaunchScriptPathCreatingLink];
     } else {
         containingFolder = [[NSFileManager defaultManager] scriptsPathWithoutSpaces];

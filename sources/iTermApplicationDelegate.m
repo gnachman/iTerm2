@@ -611,6 +611,8 @@ static BOOL hasBecomeActive = NO;
         [iTermScriptImporter importScriptFromURL:[NSURL fileURLWithPath:filename]
                                    userInitiated:NO
                                  offerAutoLaunch:NO
+                                   callbackQueue:dispatch_get_main_queue()
+                                         avoidUI:NO
                                       completion:^(NSString * _Nullable errorMessage, BOOL quiet, NSURL *location) {
                                           if (quiet) {
                                               return;
@@ -1063,6 +1065,10 @@ void TurnOnDebugLoggingAutomatically(void) {
 
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification {
     DLog(@"Begin");
+    if ([iTermUserDefaults importPath]) {
+        [iTerm2ImportExport finishImporting];
+        assert(NO);
+    }
     [iTermMenuBarObserver sharedInstance];
     // Cleanly crash on uncaught exceptions, such as during actions.
     [[NSUserDefaults standardUserDefaults] registerDefaults:@{ @"NSApplicationCrashOnExceptions": @YES }];

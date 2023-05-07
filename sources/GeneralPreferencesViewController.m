@@ -747,6 +747,27 @@ enum {
 
 #pragma mark - Actions
 
+- (IBAction)exportAllSettingsAndData:(id)sender {
+    [self showMessage:[iTerm2ImportExport exportAll] title:@"Problem Exporting"];
+}
+
+- (IBAction)importAllSettingsAndData:(id)sender {
+    [self showMessage:[iTerm2ImportExport importAll] title:@"Problem Importing"];
+}
+
+- (void)showMessage:(NSString *)message title:(NSString *)title {
+    if (!message) {
+        return;
+    }
+    [iTermWarning showWarningWithTitle:message
+                               actions:@[ @"OK" ]
+                             accessory:nil
+                            identifier:nil
+                           silenceable:kiTermWarningTypePersistent
+                               heading:title
+                                window:self.view.window];
+}
+
 - (IBAction)warning:(id)sender {
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:@"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable System Preferences > General > Close windows when quitting an app to enable window restoration."
