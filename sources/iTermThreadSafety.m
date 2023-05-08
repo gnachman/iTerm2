@@ -270,7 +270,7 @@ NSPointerArray *gThreads;
 }
 
 - (iTermCallback *)newCallbackWithBlock:(void (^)(id, id))callback {
-    return [iTermCallback onThread:self block:callback];
+    return [[iTermCallback onThread:self block:callback] retain];
 }
 
 - (iTermCallback *)newCallbackWithWeakTarget:(id)target selector:(SEL)selector userInfo:(id)userInfo {
@@ -301,7 +301,7 @@ NSPointerArray *gThreads;
 }
 
 + (instancetype)onThread:(iTermThread *)thread block:(void (^)(id, id))block {
-    return [[self alloc] initWithThread:thread block:block];
+    return [[[self alloc] initWithThread:thread block:block] autorelease];
 }
 
 - (instancetype)initWithThread:(iTermThread *)thread block:(void (^)(id, id))block {
