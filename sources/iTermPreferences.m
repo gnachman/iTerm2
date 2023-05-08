@@ -192,10 +192,9 @@ NSString *const kPreferenceKeyAIPrompt = @"AI Prompt";
 NSString *const kPreferenceKeyAlertOnMarksInOffscreenSessions = @"Alert On Marks in Offscreen Sessions";
 
 NSString *const iTermDefaultAIPrompt =
-@"You are going to translate a natural language description to a series of commands for the \\(shell) shell.\n"
-@"Here is some information about the environment: \\(uname)\n"
-@"Respond with one or more commands. Do not include any explanation or additional text besides the commands."
-@"Request: \\(ai.prompt)\n";
+@"#!/usr/bin/\\(shell)\n"
+@"# Note this command runs on systems like this: \\(uname)\n"
+@"# The next line will do this: \\(ai.prompt)\n";
 
 // NOTE: If you update this list, also update preferences.py.
 
