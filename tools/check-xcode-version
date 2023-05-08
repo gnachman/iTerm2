@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ -f last-xcode-version ]; then
+  if [ "$(xcodebuild -version)" != "$(cat last-xcode-version)" ]; then
+      # Versions differ so rebuild
+      exit 0
+  else
+      # Versions match so do not rebuild
+      exit 1
+  fi
+else
+  # Missing version file so rebuild
+  echo 0
+fi

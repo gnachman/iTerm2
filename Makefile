@@ -87,14 +87,17 @@ preview:
 
 x86libsixel: force
 	cd submodules/libsixel && make clean
-	cd submodules/libsixel && CFLAGS="-target x86_64-apple-macos10.14" ./configure --prefix=${PWD}/ThirdParty/libsixel --without-libcurl --without-jpeg --without-png --disable-python && make && make install
+	cd submodules/libsixel && CC="/usr/bin/clang -target x86_64-apple-macos10.14" LDFLAGS="-target x86_64-apple-macos10.14" CFLAGS="-target x86_64-apple-macos10.14" ./configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel --without-libcurl --without-jpeg --without-png --disable-python
+	cd submodules/libsixel && CC="/usr/bin/clang -target x86_64-apple-macos10.14" LDFLAGS="-target x86_64-apple-macos10.14" CFLAGS="-target x86_64-apple-macos10.14" make
+	cd submodules/libsixel && make install
+
 	rm ThirdParty/libsixel/lib/*dylib* ThirdParty/libsixel/bin/*
 	mv ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel/lib/libsixel-x86.a
 
 armsixel: force
 	cd submodules/libsixel && ./configure
 	cd submodules/libsixel && make clean
-	cd submodules/libsixel && CFLAGS="-target arm64-apple-macos10.14" ./configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && CFLAGS="-target arm64-apple-macos10.14" make && make install
+	cd submodules/libsixel && LDFLAGS="-target arm64-apple-macos10.14" CFLAGS="-target arm64-apple-macos10.14" LIBTOOLFLAGS="-target arm64-apple-macos10.14" ./configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && CFLAGS="-target arm64-apple-macos10.14" make && make install
 	rm ThirdParty/libsixel-arm/bin/*
 
 # Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
@@ -153,7 +156,7 @@ deps: force
 	make libgit2
        
 DepsIfNeeded: force
-	tools/check-xcode-version && make deps && xcodebuild -version > last-xcode-version
+	tools/rebuild-deps-if-needed
 
 powerline-extra-symbols: force
 	cp submodules/powerline-extra-symbols/src/*eps ThirdParty/PowerlineExtraSymbols/
