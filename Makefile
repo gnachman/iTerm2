@@ -149,7 +149,12 @@ deps: force
 	make fatlibssh2
 	make CoreParse
 	make NMSSH
+	make bindeps
+	make libgit2
        
+DepsIfNeeded: force
+	tools/check-xcode-version && make deps && xcodebuild -version > last-xcode-version
+
 powerline-extra-symbols: force
 	cp submodules/powerline-extra-symbols/src/*eps ThirdParty/PowerlineExtraSymbols/
 
