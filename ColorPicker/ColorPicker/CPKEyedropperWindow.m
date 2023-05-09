@@ -35,17 +35,7 @@ const NSTimeInterval kUpdateInterval = 1.0 / 60.0;
     if (@available(macOS 10.16, *)) {
       return CGPreflightScreenCaptureAccess();
     }
-    CGDisplayStreamRef streamRef =
-    CGDisplayStreamCreateWithDispatchQueue(CGMainDisplayID(),  // display
-                                           1,  // outputWidth
-                                           1,  // outputHeight
-                                           'BGRA',  // pixelFormat
-                                           nil,  // properties
-                                           dispatch_get_main_queue(),  // queue
-                                           ^(CGDisplayStreamFrameStatus status, uint64_t time, IOSurfaceRef frame, CGDisplayStreamUpdateRef ref) {});
-    const BOOL result = (streamRef != nil);
-    CFRelease(streamRef);
-    return result;
+    return YES;
 }
 
 + (void)complainAboutScreenCapturePermission {
