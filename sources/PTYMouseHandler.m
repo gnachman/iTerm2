@@ -914,7 +914,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (event.momentumPhase == NSEventPhaseBegan) {
         DLog(@"set scrolling=YES for %@\n%@", self, [NSThread callStackSymbols]);
         _scrolling = YES;
-    } else if (event.momentumPhase == NSEventPhaseEnded |
+    } else if (event.momentumPhase == NSEventPhaseEnded ||
                event.momentumPhase == NSEventPhaseCancelled ||
                event.momentumPhase == NSEventPhaseStationary) {
         DLog(@"set scrolling=NO for %@\n%@", self, [NSThread callStackSymbols]);

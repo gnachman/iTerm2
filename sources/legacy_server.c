@@ -54,7 +54,7 @@ static void ExecChild(int argc, char *const *argv) {
     }
 }
 
-static void CreateProcessGroup() {
+static void CreateProcessGroup(void) {
     pid_t pid = getpid();
     if (setpgid(pid, pid) < 0) {
         syslog(LOG_ERR, "setpgid(%d) failed: %s", pid, strerror(errno));

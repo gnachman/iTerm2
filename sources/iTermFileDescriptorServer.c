@@ -19,7 +19,7 @@ static pid_t gChildPid;
 static char *gPath;
 static int gPipe[2];
 
-static pid_t Wait() {
+static pid_t Wait(void) {
     pid_t pid;
     do {
         int status;

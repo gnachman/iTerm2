@@ -1685,7 +1685,6 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
 
     BOOL foundCursor = NO;
     BOOL prevLineStartsWithDoubleWidth = NO;
-    int numPopped = 0;
     while (destLineNumber >= 0) {
         screen_char_t *dest = [self screenCharsAtLineNumber:destLineNumber];
         memcpy(dest, defaultLine, sizeof(screen_char_t) * size_.width);
@@ -1706,7 +1705,6 @@ externalAttributeIndex:(iTermExternalAttributeIndex *)ea {
         int cont;
         iTermImmutableMetadata metadata;
         screen_char_t continuation;
-        ++numPopped;
         assert([lineBuffer popAndCopyLastLineInto:dest
                                             width:size_.width
                                 includesEndOfLine:&cont

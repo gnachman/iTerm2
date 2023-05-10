@@ -22,7 +22,7 @@ const CGFloat iTermStatusBarViewControllerIconWidth = 17;
 
 NS_ASSUME_NONNULL_BEGIN
 
-const CGFloat iTermGetStatusBarHeight() {
+const CGFloat iTermGetStatusBarHeight(void) {
     static CGFloat height;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{

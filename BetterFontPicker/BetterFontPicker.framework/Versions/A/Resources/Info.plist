@@ -27,21 +27,21 @@
 	<key>DTCompiler</key>
 	<string>com.apple.compilers.llvm.clang.1_0</string>
 	<key>DTPlatformBuild</key>
-	<string>14C18</string>
+	<string></string>
 	<key>DTPlatformName</key>
 	<string>macosx</string>
 	<key>DTPlatformVersion</key>
-	<string>13.1</string>
+	<string>13.3</string>
 	<key>DTSDKBuild</key>
-	<string>22C55</string>
+	<string>22E245</string>
 	<key>DTSDKName</key>
-	<string>macosx13.1</string>
+	<string>macosx13.3</string>
 	<key>DTXcode</key>
-	<string>1420</string>
+	<string>1430</string>
 	<key>DTXcodeBuild</key>
-	<string>14C18</string>
+	<string>14E222b</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.12</string>
+	<string>10.13</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2019 George Nachman. All rights reserved.</string>
 </dict>

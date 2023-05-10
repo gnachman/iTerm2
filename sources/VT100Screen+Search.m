@@ -314,7 +314,7 @@
                     context.progress = 1;
                     break;
             }
-            // NSLog(@"Did %d iterations in %dms. Average time per block was %dms", iterations, ms_diff, ms_diff/iterations);
+            DLog(@"Did %d iterations in %dms. Average time per block was %dms", iterations, ms_diff, ms_diff/iterations);
 
             if (rangeSearched) {
                 rangeSearched->end = [self absCoordOfFindContext:context lineBuffer:temporaryLineBuffer];

@@ -639,7 +639,7 @@ static int gSignalsToList[] = {
 @implementation iTermJobTreeTextTableCellView
 
 + (instancetype)viewWithString:(NSString *)string font:(NSFont *)font from:(NSTableView *)tableView owner:(id)owner {
-    iTermJobTreeImageTableCellView *view = [tableView makeViewWithIdentifier:NSStringFromClass(self) owner:owner];
+    iTermJobTreeTextTableCellView *view = [tableView makeViewWithIdentifier:NSStringFromClass(self) owner:owner];
     if (!view) {
         view = [[self alloc] init];
         view.autoresizesSubviews = NO;

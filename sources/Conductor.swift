@@ -856,13 +856,16 @@ class Conductor: NSObject, Codable {
         guard let framedPID = framedPID else {
             return [:]
         }
-        return [framedPID: [dcsID, [:]]]
+        let children: [AnyHashable: Any] = [:]
+        let rhs: [Any] =  [dcsID, children] as [Any]
+        return [framedPID: rhs]
     }
+
     private func treeWithChildTree(_ childTree: NSDictionary) -> NSDictionary {
         guard let framedPID = framedPID else {
-            return [0: [dcsID, childTree]]
+            return [0: [dcsID, childTree] as [Any]]
         }
-        return [framedPID: [dcsID, childTree]]
+        return [framedPID: [dcsID, childTree] as [Any]]
     }
 
     func encode(to encoder: Encoder) throws {

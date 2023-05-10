@@ -3420,13 +3420,6 @@ ITERM_WEAKLY_REFERENCEABLE
                   includingContents:(BOOL)includeContents
                             encoder:(id<iTermEncoderAdapter>)result {
     NSRect rect = [[self window] frame];
-    int screenNumber = 0;
-    for (NSScreen* screen in [NSScreen screens]) {
-        if (screen == [[self window] screen]) {
-            break;
-        }
-        ++screenNumber;
-    }
 
     [result setObject:self.terminalGuid forKey:TERMINAL_GUID];
 

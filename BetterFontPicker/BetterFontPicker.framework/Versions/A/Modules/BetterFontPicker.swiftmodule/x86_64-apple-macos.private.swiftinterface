@@ -1,6 +1,6 @@
 // swift-interface-format-version: 1.0
-// swift-compiler-version: Apple Swift version 5.7.2 (swiftlang-5.7.2.135.5 clang-1400.0.29.51)
-// swift-module-flags: -target x86_64-apple-macos10.12 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -module-name BetterFontPicker
+// swift-compiler-version: Apple Swift version 5.8 (swiftlang-5.8.0.124.2 clang-1403.0.22.11.100)
+// swift-module-flags: -target x86_64-apple-macos10.13 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -module-name BetterFontPicker
 // swift-module-flags-ignorable: -enable-bare-slash-regex
 @_exported import BetterFontPicker
 import Cocoa
@@ -12,7 +12,7 @@ import _StringProcessing
   @objc func sizePickerView(_ sizePickerView: BetterFontPicker.SizePickerView, didChangeSizeTo size: Swift.Double)
 }
 @_inheritsConvenienceInitializers @objc(BFPSizePickerView) @_Concurrency.MainActor(unsafe) public class SizePickerView : AppKit.NSView, AppKit.NSTextFieldDelegate {
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: BetterFontPicker.SizePickerViewDelegate?
+  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any BetterFontPicker.SizePickerViewDelegate)?
   @objc @_Concurrency.MainActor(unsafe) public var size: Swift.Double {
     @objc get
     @objc set
@@ -47,7 +47,7 @@ import _StringProcessing
   @objc func affordance(_ affordance: BetterFontPicker.Affordance, didSelectFontFamily fontFamily: Swift.String)
 }
 @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objc(BFPAffordance) @_Concurrency.MainActor(unsafe) public class Affordance : AppKit.NSPopUpButton, BetterFontPicker.MainViewControllerDelegate {
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: BetterFontPicker.AffordanceDelegate?
+  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any BetterFontPicker.AffordanceDelegate)?
   @objc @_Concurrency.MainActor(unsafe) public var familyName: Swift.String? {
     @objc get
     @objc set
@@ -88,7 +88,7 @@ import _StringProcessing
   @objc func fontPickerCompositeView(_ view: BetterFontPicker.FontPickerCompositeView, didSelectFont font: AppKit.NSFont)
 }
 @_inheritsConvenienceInitializers @objc(BFPCompositeView) @_Concurrency.MainActor(unsafe) public class FontPickerCompositeView : AppKit.NSView, BetterFontPicker.AffordanceDelegate, BetterFontPicker.FontFamilyMemberPickerViewDelegate, BetterFontPicker.SizePickerViewDelegate {
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: BetterFontPicker.FontPickerCompositeViewDelegate?
+  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any BetterFontPicker.FontPickerCompositeViewDelegate)?
   @objc @_Concurrency.MainActor(unsafe) final public let affordance: BetterFontPicker.Affordance
   @objc @_Concurrency.MainActor(unsafe) public var horizontalSpacing: BetterFontPicker.SizePickerView? {
     get
@@ -132,7 +132,7 @@ import _StringProcessing
   @objc func fontFamilyMemberPickerView(_ fontFamilyMemberPickerView: BetterFontPicker.FontFamilyMemberPickerView, didSelectFontName name: Swift.String)
 }
 @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objc(BFPFontFamilyMemberPickerView) @_Concurrency.MainActor(unsafe) public class FontFamilyMemberPickerView : AppKit.NSPopUpButton {
-  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: BetterFontPicker.FontFamilyMemberPickerViewDelegate?
+  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: (any BetterFontPicker.FontFamilyMemberPickerViewDelegate)?
   @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame buttonFrame: Foundation.NSRect, pullsDown flag: Swift.Bool)
   @objc @_Concurrency.MainActor(unsafe) public func didChange(_ sender: Any?)
   @objc deinit
@@ -143,8 +143,8 @@ import _StringProcessing
 @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objc(BFPMainViewController) @_Concurrency.MainActor(unsafe) public class MainViewController : AppKit.NSViewController, AppKit.NSTextFieldDelegate {
   @objc @IBOutlet @_Concurrency.MainActor(unsafe) weak public var tableView: BetterFontPicker.FontListTableView!
   @objc @IBOutlet @_Concurrency.MainActor(unsafe) weak public var searchField: AppKit.NSSearchField!
-  @objc(delegate) @IBOutlet @_Concurrency.MainActor(unsafe) weak public var delegate: BetterFontPicker.MainViewControllerDelegate?
-  @objc @_Concurrency.MainActor(unsafe) public var systemFontDataSources: [BetterFontPicker.FontListDataSource] {
+  @objc(delegate) @IBOutlet @_Concurrency.MainActor(unsafe) weak public var delegate: (any BetterFontPicker.MainViewControllerDelegate)?
+  @objc @_Concurrency.MainActor(unsafe) public var systemFontDataSources: [any BetterFontPicker.FontListDataSource] {
     @objc get
     @objc set
   }

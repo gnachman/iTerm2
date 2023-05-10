@@ -352,9 +352,16 @@
     if (!unarchiver) {
         return nil;
     }
-    NSDictionary *dictionary = [unarchiver decodeObjectOfClass:[self class] forKey:@"root"];
+    NSArray *classes = @[
+        [NSArray class],
+        [NSDictionary class],
+        [NSString class],
+        [NSNumber class],
+        [NSDate class]
+    ];
+    id object = [self castFrom:[unarchiver decodeObjectOfClasses:[NSSet setWithArray:classes] forKey:@"root"]];
     [unarchiver finishDecoding];
-    return dictionary;
+    return object;
 }
 
 @end

@@ -38,12 +38,11 @@ actor SSHFileGateway {
                                                queue: nil) { _ in
             Task {
                 log("Remove file provider requested")
-                NSFileProviderManager.remove(Self.domain) { removeError in
-                    if let removeError = removeError {
-                        log("Failed to remove file provider per request: \(removeError.localizedDescription)")
-                    } else {
-                        log("Succeeded in removing file provider")
-                    }
+                do {
+                    try await NSFileProviderManager.remove(Self.domain)
+                    log("Succeeded in removing file provider")
+                } catch {
+                    log("Failed to remove file provider per request: \(error.localizedDescription)")
                 }
             }
         }
@@ -52,12 +51,11 @@ actor SSHFileGateway {
                                                queue: nil) { _ in
             Task {
                 log("Add file provider requested")
-                NSFileProviderManager.add(Self.domain) { addError in
-                    if let addError = addError {
-                        log("Failed to add file provider per request: \(addError.localizedDescription)")
-                    } else {
-                        log("Succeeded in adding file provider")
-                    }
+                do {
+                    try await NSFileProviderManager.add(Self.domain)
+                    log("Succeeded in adding file provider")
+                } catch {
+                    log("Failed to add file provider per request: \(error.localizedDescription)")
                 }
             }
         }

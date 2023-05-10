@@ -45,7 +45,7 @@
 
 static int nextViewId;
 
-static const CGFloat iTermGetSessionViewTitleHeight() {
+static const CGFloat iTermGetSessionViewTitleHeight(void) {
     return iTermGetStatusBarHeight() + 1;
 }
 

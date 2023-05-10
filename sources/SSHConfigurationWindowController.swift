@@ -19,11 +19,13 @@ fileprivate struct Config {
     }
 
     var dictionaryValue: [String: AnyObject] {
-        let result: [String: AnyObject] =
-        [Keys.sshIntegration.rawValue: NSNumber(value: sshIntegration),
-         Keys.environmentVariablesToCopy.rawValue: environmentVariablesToCopy,
-         Keys.filesToCopy.rawValue: filesToCopy.map { [$0.0, $0.1] }].mapValues { $0 as AnyObject }
-        return result
+        let filesArrays = filesToCopy.map { [$0.0, $0.1] }
+        let dict: [String : AnyObject] = [
+            Keys.sshIntegration.rawValue: NSNumber(value: sshIntegration) as AnyObject,
+            Keys.environmentVariablesToCopy.rawValue: environmentVariablesToCopy as AnyObject,
+            Keys.filesToCopy.rawValue: filesArrays as AnyObject
+        ]
+        return dict.mapValues { $0 as AnyObject }
     }
 
     init(dictionary: [String: AnyObject]) {

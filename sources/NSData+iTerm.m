@@ -88,6 +88,7 @@
     [task setStandardError:[NSPipe pipe]];
     [task launch];
     NSData *data = [[[task standardOutput] fileHandleForReading] readDataToEndOfFile];
+    DLog(@"%@", data);
     NSData *errorMessage = [[[task standardError] fileHandleForReading] readDataToEndOfFile];
     if (errorMessage.length) {
         DLog(@"%@ %@: %@", task.launchPath, [task.arguments componentsJoinedByString:@" "], [errorMessage stringWithEncoding:NSUTF8StringEncoding]);
