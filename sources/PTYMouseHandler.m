@@ -1282,7 +1282,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         case NSEventTypeScrollWheel:
             if (fabs(event.scrollingDeltaX) > fabs(event.scrollingDeltaY)) {
-                if ([event scrollingDeltaX] > 0) {
+                BOOL scrollLeft = [event scrollingDeltaX] > 0;
+                if (![iTermAdvancedSettingsModel naturalScrollingAffectsHorizontalMouseReporting]) {
+                    // macOS reverses direction for horizontal scrolls when natural mouse reporting
+                    // is on. This is what the user wants if it moves the window contents but in
+                    // a terminal it will often send arrow keys and that is total chaos. Issue 10881
+                    const BOOL natural = [[[NSUserDefaults standardUserDefaults] objectForKey:@"com.apple.swipescrolldirection"] boolValue];
+                    if (natural) {
+                        DLog(@"Natural mouse reporting is on so swap left/right scroll wheel button");
+                        scrollLeft = !scrollLeft;
+                    }
+                }
+                if (scrollLeft) {
                     return MOUSE_BUTTON_SCROLLLEFT;
                 } else {
                     return MOUSE_BUTTON_SCROLLRIGHT;

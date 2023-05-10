@@ -210,6 +210,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)multiserver;
 + (NSString *)nativeRenderingCSSLight;
 + (NSString *)nativeRenderingCSSDark;
++ (BOOL)naturalScrollingAffectsHorizontalMouseReporting;
 + (BOOL)navigatePanesInReadingOrder;
 + (BOOL)neverWarnAboutMeta;
 + (BOOL)neverWarnAboutOverrides;
