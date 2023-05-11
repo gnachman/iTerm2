@@ -72,6 +72,7 @@
 
 @interface VT100InlineImageHelper()
 @property (nonatomic, copy) NSString *name;
+@property (nonatomic) BOOL forceWide;  // For text documents only
 @property (nonatomic) int width;
 @property (nonatomic) VT100TerminalUnits widthUnits;
 @property (nonatomic) int height;
@@ -96,10 +97,12 @@
          preserveAspectRatio:(BOOL)preserveAspectRatio
                        inset:(NSEdgeInsets)inset
                         type:(NSString *)type
-                preconfirmed:(BOOL)preconfirmed {
+                preconfirmed:(BOOL)preconfirmed
+                   forceWide:(BOOL)forceWide {
     self = [super init];
     if (self) {
         _name = [name copy];
+        _forceWide = forceWide;
         _width = width;
         _widthUnits = widthUnits;
         _height = height;
@@ -128,7 +131,8 @@
           preserveAspectRatio:YES
                         inset:NSEdgeInsetsZero
                          type:nil
-                 preconfirmed:YES];
+                 preconfirmed:YES
+                    forceWide:NO];
     if (self) {
         _sixelData = [data copy];
     }
@@ -147,7 +151,8 @@
           preserveAspectRatio:NO
                         inset:NSEdgeInsetsZero
                          type:nil
-                 preconfirmed:YES];
+                 preconfirmed:YES
+                    forceWide:NO];
     if (self) {
         _nativeImage = [NSImage it_imageNamed:name forClass:self.class];
     }
@@ -250,7 +255,8 @@
 
     [self.delegate inlineImageDidCreateTextDocumentInRange:range
                                                       type:self.type
-                                                  filename:_name];
+                                                  filename:_name
+                                                 forceWide:_forceWide];
     return YES;
 }
 

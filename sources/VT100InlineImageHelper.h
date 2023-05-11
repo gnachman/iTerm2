@@ -30,7 +30,8 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
                                   code:(unichar)code;
 - (void)inlineImageDidCreateTextDocumentInRange:(VT100GridAbsCoordRange)range
                                            type:(NSString *)type
-                                       filename:(NSString * _Nullable)filename;
+                                       filename:(NSString * _Nullable)filename
+                                      forceWide:(BOOL)forceWide;
 - (void)inlineImageDidFinishWithImageData:(NSData *)imageData;
 - (VT100GridAbsCoord)inlineImageCursorAbsoluteCoord;
 - (void)inlineImageAppendStringAtCursor:(NSString *)string;
@@ -55,7 +56,8 @@ typedef NS_ENUM(NSInteger, VT100TerminalUnits) {
          preserveAspectRatio:(BOOL)preserveAspectRatio
                        inset:(NSEdgeInsets)inset
                         type:(NSString * _Nullable)type
-                preconfirmed:(BOOL)preconfirmed;
+                preconfirmed:(BOOL)preconfirmed
+                   forceWide:(BOOL)forceWide;
 
 - (instancetype)initWithSixelData:(NSData *)data
                       scaleFactor:(CGFloat)scaleFactor;

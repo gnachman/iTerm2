@@ -12,8 +12,7 @@ import CoreText
 class PortholeFactory: NSObject {
     static func textViewPorthole(config: PortholeConfig) -> Porthole {
         let porthole = TextViewPorthole(config,
-                                        renderer: textViewPortholeRenderer(config: config),
-                                        wideMode: iTermAdvancedSettingsModel.defaultWideMode())
+                                        renderer: textViewPortholeRenderer(config: config))
         PortholeRegistry.instance.add(porthole)
         return porthole
     }
@@ -34,7 +33,7 @@ class PortholeFactory: NSObject {
         }
         switch type {
         case .text:
-            guard let (config, uuid, savedLines, language, languages, wideMode) = TextViewPorthole.config(
+            guard let (config, uuid, savedLines, language, languages) = TextViewPorthole.config(
                 fromDictionary: info,
                 colorMap: colorMap,
                 useSelectedTextColor: useSelectedTextColor,
@@ -47,8 +46,7 @@ class PortholeFactory: NSObject {
             return TextViewPorthole(config,
                                     renderer: renderer,
                                     uuid: uuid,
-                                    savedLines: savedLines,
-                                    wideMode: wideMode)
+                                    savedLines: savedLines)
         }
     }
 }

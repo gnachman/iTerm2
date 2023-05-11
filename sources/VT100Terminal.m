@@ -3738,6 +3738,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     //   preserveAspectRatio=<bool>        Default: yes
     //   inline=<bool>                     Default: no
     //   type=<string>                     Default: auto-detect; otherwise gives a mime type ("text/plain"), file extension preceded by dot (".txt"), or language name ("plaintext").
+    //   mode=regular|wide                 Default: regular (only relevant for text documents)
     NSArray *parts = [value componentsSeparatedByString:@";"];
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     dict[@"size"] = @(0);
@@ -3788,6 +3789,9 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     if (!name) {
         name = @"Unnamed file";
     }
+
+    const BOOL forceWide = [dict[@"mode"] isEqualToString:@"wide"];
+
     __weak __typeof(self) weakSelf = self;
     if ([dict[@"inline"] boolValue]) {
         NSEdgeInsets inset = {
@@ -3805,6 +3809,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
                                   preserveAspectRatio:[dict[@"preserveAspectRatio"] boolValue]
                                                 inset:inset
                                                  type:type
+                                            forceWide:forceWide
                                            completion:^(BOOL ok) {
                   if (ok) {
                       [weakSelf startReceivingFile];

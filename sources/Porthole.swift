@@ -77,9 +77,10 @@ struct PortholeConfig: CustomDebugStringConvertible {
     var type: String?
     var filename: String?
     var useSelectedTextColor: Bool
+    var forceWide: Bool
 
     var debugDescription: String {
-        "PortholeConfig(text=\(text) baseDirectory=\(String(describing: baseDirectory)) font=\(font) type=\(String(describing: type)) filename=\(String(describing: filename)) useSelectedTextColor=\(useSelectedTextColor)"
+        "PortholeConfig(text=\(text) baseDirectory=\(String(describing: baseDirectory)) font=\(font) type=\(String(describing: type)) filename=\(String(describing: filename)) useSelectedTextColor=\(useSelectedTextColor) forceWide=\(forceWide)"
     }
 }
 

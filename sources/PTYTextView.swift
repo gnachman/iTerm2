@@ -40,10 +40,11 @@ extension PTYTextView: ExternalSearchResultsController {
         portholeWithSelection?.copy(as: .controlSequences)
     }
 
-    @objc(renderRange:type:filename:)
+    @objc(renderRange:type:filename:forceWide:)
     func render(range originalRange: VT100GridAbsCoordRange,
                 type: String?,
-                filename: String?) {
+                filename: String?,
+                forceWide: Bool) {
         DLog("render(range:\(VT100GridAbsCoordRangeDescription(originalRange)), type:\(String(describing: type)), filename:\(String(describing: filename)))")
         guard let dataSource = dataSource else {
             DLog("nil datasource")
@@ -64,7 +65,8 @@ extension PTYTextView: ExternalSearchResultsController {
                             text: text,
                             baseDirectory: baseDirectory,
                             type: type,
-                            filename: filename)
+                            filename: filename,
+                            forceWide: forceWide)
     }
 
     func text(inRange range: VT100GridCoordRange) -> String {
@@ -85,12 +87,13 @@ extension PTYTextView: ExternalSearchResultsController {
         return text
     }
 
-    @objc(replaceWithPortholeInRange:havingText:baseDirectory:type:filename:)
+    @objc(replaceWithPortholeInRange:havingText:baseDirectory:type:filename:forceWide:)
     func replaceWithPorthole(inRange absRange: VT100GridAbsCoordRange,
                              text: String,
                              baseDirectory: URL?,
                              type: String?,
-                             filename: String?) {
+                             filename: String?,
+                             forceWide: Bool) {
         DLog("replaceWithPorthole(inRange:\(VT100GridAbsCoordRangeDescription(absRange)), text:\(String(describing: text)), baseDirectory:\(String(describing: baseDirectory)), type:\(String(describing: type)), filename:\(String(describing: filename))")
 
         guard dataSource != nil else {
@@ -103,7 +106,8 @@ extension PTYTextView: ExternalSearchResultsController {
                                     font: self.fontTable.asciiFont.font,
                                     type: type,
                                     filename: filename,
-                                    useSelectedTextColor: delegate?.textViewShouldUseSelectedTextColor() ?? true)
+                                    useSelectedTextColor: delegate?.textViewShouldUseSelectedTextColor() ?? true,
+                                    forceWide: iTermAdvancedSettingsModel.defaultWideMode() || forceWide)
         let porthole = makePorthole(for: config)
         replace(range: absRange, withPorthole: porthole)
     }

@@ -85,8 +85,7 @@ class TextViewPorthole: NSObject {
     init(_ config: PortholeConfig,
          renderer: TextViewPortholeRenderer,
          uuid: String? = nil,
-         savedLines: [ScreenCharArray]? = nil,
-         wideMode: Bool = false) {
+         savedLines: [ScreenCharArray]? = nil) {
         if let savedLines = savedLines {
             self.savedLines = savedLines
         }
@@ -143,7 +142,7 @@ class TextViewPorthole: NSObject {
         self.renderer = renderer
         textStorage.setAttributedString(renderer.render(visualAttributes: savedVisualAttributes))
 
-        if wideMode {
+        if config.forceWide {
             containerView.makeWide()
         }
         super.init()
@@ -381,8 +380,7 @@ extension TextViewPorthole: Porthole {
                                          uuid: String,
                                          savedLines: [ScreenCharArray],
                                          language: String?,
-                                         languages: [String]?,
-                                         wideMode: Bool)?  {
+                                         languages: [String]?)?  {
         guard let uuid = dict[Self.uuidDictionaryKey],
               let text = dict[Self.textDictionaryKey],
               let savedLines = dict[self.savedLinesKey] as? [[AnyHashable: Any]] else {
@@ -406,12 +404,12 @@ extension TextViewPorthole: Porthole {
                                        font: font,
                                        type: type,
                                        filename: filename,
-                                       useSelectedTextColor: useSelectedTextColor),
+                                       useSelectedTextColor: useSelectedTextColor,
+                                       forceWide: dict[Self.wideKey] as? Bool ?? false),
                 uuid: uuid,
                 savedLines: savedLines.compactMap { ScreenCharArray(dictionary: $0) },
                 language: dict[Self.languageKey] as? String,
-                languages: dict[Self.languagesKey] as? [String],
-                wideMode: dict[Self.wideKey] as? Bool ?? false)
+                languages: dict[Self.languagesKey] as? [String])
 
     }
     func removeSelection() {

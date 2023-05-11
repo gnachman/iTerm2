@@ -358,6 +358,7 @@ typedef NS_ENUM(NSUInteger, VT100TerminalProtectedMode) {
                        preserveAspectRatio:(BOOL)preserveAspectRatio
                                      inset:(NSEdgeInsets)inset
                                       type:(NSString *)type
+                                 forceWide:(BOOL)forceWide
                                 completion:(void (^)(BOOL ok))completion;
 
 // Download completed normally

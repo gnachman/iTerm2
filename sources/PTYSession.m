@@ -14340,8 +14340,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)screenConvertAbsoluteRange:(VT100GridAbsCoordRange)range
               toTextDocumentOfType:(NSString *)type
-                          filename:(NSString *)filename {
-    [_textview renderRange:range type:type filename:filename];
+                          filename:(NSString *)filename
+                         forceWide:(BOOL)forceWide {
+    [_textview renderRange:range type:type filename:filename forceWide:forceWide];
 }
 
 - (void)screenDidHookSSHConductorWithToken:(NSString *)token

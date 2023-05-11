@@ -1792,6 +1792,7 @@
                        preserveAspectRatio:(BOOL)preserveAspectRatio
                                      inset:(NSEdgeInsets)inset
                                       type:(NSString *)type
+                                 forceWide:(BOOL)forceWide
                                 completion:(void (^)(BOOL ok))completion {
     DLog(@"begin name=%@ size=%@ width=%@ widthUnits=%@ height=%@ heightUnits=%@ preserveAR=%@ inset=%f,%f,%f,%f type=%@",
          name, @(size), @(width), @(widthUnits), @(height), @(heightUnits), @(preserveAspectRatio), inset.top, inset.bottom, inset.left, inset.right, type);
@@ -1815,6 +1816,7 @@
                                preserveAspectRatio:preserveAspectRatio
                                              inset:inset
                                               type:type
+                                         forceWide:forceWide
                                           delegate:delegate
                                              queue:queue
                                         completion:^(BOOL ok) {
@@ -1835,6 +1837,7 @@
                      preserveAspectRatio:(BOOL)preserveAspectRatio
                                    inset:(NSEdgeInsets)inset
                                     type:(NSString *)type
+                               forceWide:(BOOL)forceWide
                                 delegate:(id<VT100ScreenDelegate>)delegate
                                    queue:(dispatch_queue_t)queue
                               completion:(void (^)(BOOL ok))completion {
@@ -1865,7 +1868,8 @@
                                                                 preserveAspectRatio:preserveAspectRatio
                                                                               inset:inset
                                                                                type:type
-                                                                       preconfirmed:!promptIfBig];
+                                                                       preconfirmed:!promptIfBig
+                                                                          forceWide:forceWide];
         strongSelf.inlineImageHelper.delegate = self;
         completion(YES);
     });

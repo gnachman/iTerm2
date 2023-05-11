@@ -5168,11 +5168,13 @@ launchCoprocessWithCommand:(NSString *)command
 
 - (void)inlineImageDidCreateTextDocumentInRange:(VT100GridAbsCoordRange)range
                                            type:(NSString *)type
-                                       filename:(NSString *)filename {
+                                       filename:(NSString *)filename
+                                      forceWide:(BOOL)forceWide {
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenConvertAbsoluteRange:range
                         toTextDocumentOfType:type
-                                    filename:filename];
+                                    filename:filename
+                                   forceWide:forceWide];
         [unpauser unpause];
     }];
 }

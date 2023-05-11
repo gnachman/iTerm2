@@ -110,7 +110,7 @@ iTermCommandInfoViewControllerDelegate>
 - (IBAction)renderSelection:(id)sender {
     VT100GridAbsCoordRange absRange = self.selection.spanningAbsRange;
     [self.selection.allSubSelections[0] setAbsRange:VT100GridAbsWindowedRangeMake(absRange, 0, self.dataSource.width)];
-    [self renderRange:absRange type:nil filename:nil];
+    [self renderRange:absRange type:nil filename:nil forceWide:NO];
     [self.selection clearSelection];
 }
 
