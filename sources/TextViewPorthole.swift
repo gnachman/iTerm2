@@ -218,17 +218,14 @@ extension TextViewPorthole: Porthole {
     }
 
     func desiredHeight(forWidth width: CGFloat) -> CGFloat {
-        if let scrollView = containerView.scrollView {
-            textContainer.widthTracksTextView = false
-            textContainer.containerSize = CGSize(width: CGFloat.greatestFiniteMagnitude,
-                                                 height: scrollView.contentSize.height)
-            _ = layoutManager.glyphRange(for: textContainer)
-            let textViewHeight = layoutManager.usedRect(for: textContainer).height
-            return containerView.scrollViewOverhead + textViewHeight + (outerMargin + innerMargin) * 2
+        let fakeWidth :CGFloat
+        if containerView.scrollView != nil {
+            fakeWidth = .infinity
+        } else {
+        // Set the width so the height calculation will be based on it. The height here is arbitrary.
+            fakeWidth = width
         }
-
-        // Set the width so the height calculation will be based on it. The height here is = arbitrary.
-        let textViewHeight = textContainer.withFakeSize(NSSize(width: width, height: .infinity)) { () -> CGFloat in 
+        let textViewHeight = textContainer.withFakeSize(NSSize(width: fakeWidth, height: .infinity)) { () -> CGFloat in
             // forces layout
             // This is obviously indefensible but I just can't get it to work with a single call to glyphRange.
             // 😘 AppKit

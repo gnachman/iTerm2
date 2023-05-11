@@ -12,7 +12,8 @@ import CoreText
 class PortholeFactory: NSObject {
     static func textViewPorthole(config: PortholeConfig) -> Porthole {
         let porthole = TextViewPorthole(config,
-                                        renderer: textViewPortholeRenderer(config: config))
+                                        renderer: textViewPortholeRenderer(config: config),
+                                        wideMode: iTermAdvancedSettingsModel.defaultWideMode())
         PortholeRegistry.instance.add(porthole)
         return porthole
     }

@@ -334,6 +334,7 @@ DEFINE_INT(xtermVersion, 2500, SECTION_TERMINAL @"xterm version for secondary de
 DEFINE_BOOL(p3, YES, SECTION_TERMINAL @"Use P3 as default color space? If No, sRGB will be used.");
 DEFINE_STRING(fileDropCoprocess, @"", SECTION_TERMINAL @"When files are dropped into a terminal window, execute a silent coprocess.\nThis is an interpolated string. Use \\(filenames) to reference the shell-quoted, space-delimited full paths to the dropped files. If this preference is empty, the filenames get pasted instead.")
 DEFINE_INT(maxURLLength, 2097152, SECTION_TERMINAL @"Maximum length for OSC 8 URLs");
+DEFINE_BOOL(defaultWideMode, NO, SECTION_TERMINAL @"When rendering natively, use wide mode by default?");
 
 #pragma mark Hotkey
 
