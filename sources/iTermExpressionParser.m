@@ -390,11 +390,20 @@
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
         iTermParsedExpression *callSequence = syntaxTree.children[0];
         iTermParsedExpression *call = syntaxTree.children[2];
+        if (call.expressionType == iTermParsedExpressionTypeError) {
+            return call;
+        }
+        if (callSequence.expressionType == iTermParsedExpressionTypeError) {
+            return callSequence;
+        }
         return [weakSelf callSequenceWithCalls:[callSequence.functionCalls arrayByAddingObject:call.functionCall]];
     }];
     [_grammarProcessor addProductionRule:@"callsequence ::= <call>"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
         iTermParsedExpression *call = syntaxTree.children[0];
+        if (call.expressionType == iTermParsedExpressionTypeError) {
+            return call;
+        }
         return [weakSelf callSequenceWithCalls:@[call.functionCall]];
     }];
 
