@@ -19,7 +19,7 @@ Menu Item                                                                       
 ======================================================================================= ==============================================================================
 iTerm2 > About iTerm2                                                                   `About iTerm2`                                                                
 iTerm2 > Show Tip of the Day                                                            `Show Tip of the Day`                                                         
-iTerm2 > Check For Updates…                                                             `Check For Updates…`                                                          
+iTerm2 > Check for Updates…                                                             `Check For Updates…`                                                          
 iTerm2 > Toggle Debug Logging                                                           `Toggle Debug Logging`                                                        
 iTerm2 > Copy Performance Stats                                                         `Copy Performance Stats`                                                      
 iTerm2 > Capture GPU Frame                                                              `Capture Metal Frame`                                                         
@@ -58,6 +58,7 @@ Shell > tmux > New Tmux Window                                                  
 Shell > tmux > New Tmux Tab                                                             `tmux.New Tmux Tab`                                                           
 Shell > tmux > Pause Pane                                                               `trmux.Pause Pane`                                                            
 Shell > tmux > Dashboard                                                                `tmux.Dashboard`                                                              
+Shell > ssh > Disconnect                                                                `ssh.Disconnect`                                                              
 Shell > Page Setup...                                                                   `Page Setup...`                                                               
 Shell > Print > Screen                                                                  `Print.Screen`                                                                
 Shell > Print > Selection                                                               `Print.Selection`                                                             
@@ -82,20 +83,23 @@ Edit > Paste Special > Warn Before Multi-Line Paste                             
 Edit > Paste Special > Prompt to Convert Tabs to Spaces when Pasting                    `Paste Special.Prompt to Convert Tabs to Spaces when Pasting`                 
 Edit > Paste Special > Limit Multi-Line Paste Warning to Shell Prompt                   `Paste Special.Limit Multi-Line Paste Warning to Shell Prompt`                
 Edit > Paste Special > Warn Before Pasting One Line Ending in a Newline at Shell Prompt `Paste Special.Warn Before Pasting One Line Ending in a Newline at Shell Prompt`
+Edit > Render Selection                                                                 `Render Selection Natively`                                                   
+Edit > Engage Artificial Intelligence                                                   `Engage Artificial Intelligence`                                              
 Edit > Open Selection                                                                   `Open Selection`                                                              
 Edit > Jump to Selection                                                                `Find.Jump to Selection`                                                      
 Edit > Select All                                                                       `Select All`                                                                  
 Edit > Selection Respects Soft Boundaries                                               `Selection Respects Soft Boundaries`                                          
 Edit > Select Output of Last Command                                                    `Select Output of Last Command`                                               
 Edit > Select Current Command                                                           `Select Current Command`                                                      
-Edit > Find > Find...                                                                   `Find.Find...`                                                                
+Edit > Find > Find…                                                                     `Find.Find...`                                                                
 Edit > Find > Find Next                                                                 `Find.Find Next`                                                              
 Edit > Find > Find Previous                                                             `Find.Find Previous`                                                          
 Edit > Find > Use Selection for Find                                                    `Find.Use Selection for Find`                                                 
 Edit > Find > Find Globally...                                                          `Find.Find Globally...`                                                       
+Edit > Find > Select Matches                                                            `Find.ConvertMatchesToSelections`                                             
 Edit > Find > Find URLs                                                                 `Find.Find URLs`                                                              
+Edit > Find > Pick Result to Open                                                       `Find.Pick Result To Open`                                                    
 Edit > Find > Filter                                                                    `Find.Filter`                                                                 
-Edit > Find > Convert Matches to Selections                                             `Find.ConvertMatchesToSelections`                                             
 Edit > Marks and Annotations > Set Mark                                                 `Marks and Annotations.Set Mark`                                              
 Edit > Marks and Annotations > Jump to Mark                                             `Marks and Annotations.Jump to Mark`                                          
 Edit > Marks and Annotations > Next Mark                                                `Marks and Annotations.Next Mark`                                             
@@ -104,9 +108,11 @@ Edit > Marks and Annotations > Add Annotation at Cursor                         
 Edit > Marks and Annotations > Next Annotation                                          `Marks and Annotations.Next  Annotation`                                      
 Edit > Marks and Annotations > Previous Annotation                                      `Marks and Annotations.Previous  Annotation`                                  
 Edit > Marks and Annotations > Alerts > Alert on Next Mark                              `Marks and Annotations.Alerts.Alert on Next Mark`                             
+Edit > Marks and Annotations > Alerts > Alert on Marks in Offscreen Sessions            `Marks and Alerts.Alerts.Alert on Marks in Offscreen Sessions`                
 Edit > Marks and Annotations > Alerts > Show Modal Alert Box                            `Marks and Annotations.Alerts.Show Modal Alert Box`                           
 Edit > Marks and Annotations > Alerts > Post Notification                               `Marks and Annotations.Alerts.Post Notification`                              
 Edit > Clear Buffer                                                                     `Clear Buffer`                                                                
+Edit > Clear Instant Replay                                                             `Clear Instant Replay`                                                        
 Edit > Clear Scrollback Buffer                                                          `Clear Scrollback Buffer`                                                     
 Edit > Clear to Start of Selection                                                      `Clear to Start of Selection`                                                 
 Edit > Clear to Last Mark                                                               `Clear to Last Mark`                                                          
@@ -122,6 +128,7 @@ View > Show Timestamps                                                          
 View > Show Annotations                                                                 `Show Annotations`                                                            
 View > Show Composer                                                                    `Composer`                                                                    
 View > Auto Command Completion                                                          `Auto Command Completion`                                                     
+View > Auto Composer                                                                    `Auto Composer`                                                               
 View > Open Quickly                                                                     `Open Quickly`                                                                
 View > Maximize Active Pane                                                             `Maximize Active Pane`                                                        
 View > Make Text Bigger                                                                 `Make Text Bigger`                                                            
@@ -134,6 +141,7 @@ Session > Edit Session…                                                       
 Session > Run Coprocess…                                                                `Run Coprocess…`                                                              
 Session > Stop Coprocess                                                                `Stop Coprocess`                                                              
 Session > Restart Session                                                               `Restart Session`                                                             
+Session > Duplicate Session                                                             `Duplicate Session`                                                           
 Session > Open Autocomplete…                                                            `Open Autocomplete…`                                                          
 Session > Open Command History…                                                         `Open Command History…`                                                       
 Session > Open Recent Directories…                                                      `Open Recent Directories…`                                                    
@@ -165,6 +173,7 @@ Scripts > Manage > New Python Script                                            
 Scripts > Manage > Open Python REPL                                                     `Open Interactive Window`                                                     
 Scripts > Manage > Manage Dependencies…                                                 `Manage Dependencies`                                                         
 Scripts > Manage > Install Python Runtime                                               `Install Python Runtime`                                                      
+Scripts > Manage > Install Already-Downloaded Python Runtime                            `Install Already-Downloaded Python Runtime`                                   
 Scripts > Manage > Reveal Scripts in Finder                                             `Reveal in Finder`                                                            
 Scripts > Manage > Import…                                                              `Import Script`                                                               
 Scripts > Manage > Export…                                                              `Export Script`                                                               
@@ -194,6 +203,7 @@ Window > Merge All Windows                                                      
 Window > Arrange Windows Horizontally                                                   `Arrange Windows Horizontally`                                                
 Window > Arrange Split Panes Evenly                                                     `Arrange Split Panes Evenly`                                                  
 Window > Move Session to Window                                                         `Move Session to Window`                                                      
+Window > Move Session to Tab                                                            `Move Session to Tab`                                                         
 Window > Save Window Arrangement                                                        `Save Window Arrangement`                                                     
 Window > Save Current Window as Arrangement                                             `Save Current Window as Arrangement`                                          
 Window > Select Split Pane > Select Pane Above                                          `Select Split Pane.Select Pane Above`                                         
