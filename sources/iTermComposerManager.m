@@ -463,6 +463,11 @@
     }
 }
 
+- (void)deleteLastCharacter {
+    // Not implemented for status bar, but it's not a bad idea to add later.
+    [_minimalViewController deleteLastCharacter];
+}
+
 - (void)setTemporarilyHidden:(BOOL)temporarilyHidden {
     _temporarilyHidden = temporarilyHidden;
     _minimalViewController.view.hidden = temporarilyHidden;

@@ -7755,6 +7755,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
                   sortChronologically:sortChronologically];
 }
 
+- (BOOL)commandHistoryIsOpenForSession:(PTYSession *)session {
+    return self.currentSession == session && [[commandHistoryPopup window] isVisible];
+}
+
+- (void)closeCommandHistory {
+    [commandHistoryPopup close];
+}
+
 - (IBAction)openDirectories:(id)sender {
     if (!_directoriesPopupWindowController) {
         _directoriesPopupWindowController = [[DirectoriesPopupWindowController alloc] init];

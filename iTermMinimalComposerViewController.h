@@ -67,6 +67,7 @@ workingDirectory:(NSString *)pwd
 - (BOOL)composerIsFirstResponder;
 - (void)insertText:(NSString *)text;
 - (void)paste:(id)sender;
+- (void)deleteLastCharacter;
 
 @end
 

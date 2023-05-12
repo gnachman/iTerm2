@@ -14589,9 +14589,24 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [_textview keyDown:event];
 }
 
+- (BOOL)composerCommandHistoryIsOpen {
+    if (!_composerManager.dropDownComposerViewIsVisible) {
+        return NO;
+    }
+    return [[_delegate realParentWindow] commandHistoryIsOpenForSession:self];
+}
+
 - (BOOL)popupHandleSelector:(SEL)selector
                      string:(NSString *)string
                currentValue:(NSString *)currentValue {
+    if ([self composerCommandHistoryIsOpen]) {
+        if (selector == @selector(deleteBackward:)) {
+            [[_delegate realParentWindow] closeCommandHistory];
+            [_composerManager deleteLastCharacter];
+            return YES;
+        }
+        return NO;
+    }
     if (![[_delegate realParentWindow] autoCommandHistoryIsOpenForSession:self]) {
         return NO;
     }

@@ -225,6 +225,12 @@ workingDirectory:(NSString *)pwd
     [_largeComposerViewController.textView insertText:text];
 }
 
+- (void)deleteLastCharacter {
+    NSTextView *textView = _largeComposerViewController.textView;
+    [textView setSelectedRange:NSMakeRange(textView.string.length, 0)];
+    [textView deleteBackward:nil];
+}
+
 - (void)paste:(id)sender {
     [_largeComposerViewController.textView paste:sender];
 }

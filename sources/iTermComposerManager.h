@@ -99,6 +99,7 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 - (void)insertText:(NSString *)string;
 - (void)reset;
 - (void)paste:(id)sender;
+- (void)deleteLastCharacter;
 
 @end
 

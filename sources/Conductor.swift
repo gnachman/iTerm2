@@ -2318,7 +2318,7 @@ extension Conductor: FileCheckerDataSource {
         Task {
             let exists: Bool
             do {
-                NSLog("Really stat \(path)")
+                DLog("Really stat \(path)")
                 _ = try await self.stat(path, highPriority: true)
                 exists = true
             } catch {
