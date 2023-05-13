@@ -357,6 +357,17 @@
     [self.delegate composerManagerDidBecomeFirstResponder:self];
 }
 
+- (BOOL)minimalComposerShouldFetchSuggestions:(iTermMinimalComposerViewController *)composer
+                                      forHost:(id<VT100RemoteHostReading>)remoteHost
+                               tmuxController:(TmuxController *)tmuxController {
+    return [self.delegate composerManagerShouldFetchSuggestions:self forHost:remoteHost tmuxController:tmuxController];
+}
+
+- (void)minimalComposer:(iTermMinimalComposerViewController *)composer
+       fetchSuggestions:(iTermSuggestionRequest *)request {
+    [self.delegate composerManager:self fetchSuggestions:request];
+}
+
 - (void)dismissMinimalViewAnimated:(BOOL)animated {
     DLog(@"dismissMinimalViewAnimated:%@", @(animated));
     iTermMinimalComposerViewController *vc = _minimalViewController;

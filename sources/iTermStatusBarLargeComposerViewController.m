@@ -417,8 +417,8 @@
         ![textAfterCursor beginsWithWhitespace]) {
         return;
     }
-    NSString *historySuggestion = [[self historySuggestionForPrefix:command]stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]];
-    
+    NSString *historySuggestion = [[self historySuggestionForPrefix:command] stringByTrimmingTrailingCharactersFromCharacterSet:[NSCharacterSet newlineCharacterSet]];
+
     if (historySuggestion) {
         __weak __typeof(self) weakSelf = self;
         const NSInteger generation = ++_completionGeneration;
@@ -430,10 +430,7 @@
         return;
     }
 
-    if (self.host.isRemoteHost || self.tmuxController) {
-        // Don't try to complete filenames if not on localhost. Completion on tmux is possible in
-        // theory but likely to be very slow because of the amount of data that would need to be
-        // exchanged.
+    if (![self.delegate largeComposerViewControllerShouldFetchSuggestions:self forHost:self.host tmuxController:self.tmuxController]) {
         [self.textView setSuggestion:nil];
         return;
     }
@@ -456,18 +453,16 @@
         directories = @[self.workingDirectory ?: NSHomeDirectory()];
     }
     __weak __typeof(self) weakSelf = self;
-    [[iTermSlowOperationGateway sharedInstance] findCompletionsWithPrefix:prefix
-                                                            inDirectories:directories
-                                                                      pwd:self.workingDirectory
-                                                                 maxCount:1
-                                                               executable:onFirstWord
-                                                               completion:^(NSArray<NSString *> * _Nonnull completions) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf didFindCompletions:completions
-                           forGeneration:generation
-                                  escape:YES];
-        });
+    iTermSuggestionRequest *request = [[iTermSuggestionRequest alloc] initWithPrefix:prefix
+                                                                         directories:directories
+                                                                    workingDirectory:self.workingDirectory
+                                                                          executable:onFirstWord
+                                                                          completion:^(NSArray<NSString *> *completions) {
+        [weakSelf didFindCompletions:completions
+                       forGeneration:generation
+                              escape:YES];
     }];
+    [self.delegate largeComposerViewController:self fetchSuggestions:request];
 }
 
 - (void)didFindCompletions:(NSArray<NSString *> *)completions

@@ -555,6 +555,9 @@ class ComposerTextView: MultiCursorTextView {
         guard let textStorage else {
             return nil
         }
+        if unsafeIndex < 0 {
+            return nil
+        }
         if let prefixLength = prefix?.string.count, prefixLength > 0 {
             if unsafeIndex > prefixLength {
                 return nil

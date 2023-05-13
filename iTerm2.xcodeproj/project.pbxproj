@@ -2439,6 +2439,7 @@
 		A68227412805E5C8005DF0B4 /* LineBufferSorting.mm in Sources */ = {isa = PBXBuildFile; fileRef = A68227402805E5C8005DF0B4 /* LineBufferSorting.mm */; };
 		A682274628078434005DF0B4 /* PTYTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A682274528078434005DF0B4 /* PTYTextView.swift */; };
 		A6822748280786A5005DF0B4 /* Porthole.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6822747280786A5005DF0B4 /* Porthole.swift */; };
+		A682CCC22A0EBD110099E762 /* SuggestionRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = A682CCC12A0EBD110099E762 /* SuggestionRequest.swift */; };
 		A682DE96190C5E7000BE8758 /* iTermProgressIndicator.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */; };
 		A682DE9B1915DB1F00BE8758 /* iTermFlippedView.h in Headers */ = {isa = PBXBuildFile; fileRef = A682DE991915DB1F00BE8758 /* iTermFlippedView.h */; };
 		A68400A61FF82424008D3EE2 /* iTermIndicatorRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = A68400A41FF82424008D3EE2 /* iTermIndicatorRenderer.h */; };
@@ -6369,6 +6370,7 @@
 		A682278C280E26F3005DF0B4 /* Token.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Token.swift; sourceTree = "<group>"; };
 		A682278D280E26F3005DF0B4 /* SwiftyMarkdown+iOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SwiftyMarkdown+iOS.swift"; sourceTree = "<group>"; };
 		A682278E280E26F3005DF0B4 /* String+SwiftyMarkdown.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "String+SwiftyMarkdown.swift"; sourceTree = "<group>"; };
+		A682CCC12A0EBD110099E762 /* SuggestionRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuggestionRequest.swift; sourceTree = "<group>"; };
 		A682DE94190C5E7000BE8758 /* iTermProgressIndicator.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermProgressIndicator.h; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE95190C5E7000BE8758 /* iTermProgressIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermProgressIndicator.m; sourceTree = "<group>"; tabWidth = 4; };
 		A682DE991915DB1F00BE8758 /* iTermFlippedView.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = iTermFlippedView.h; sourceTree = "<group>"; tabWidth = 4; };
@@ -10778,6 +10780,7 @@
 				A6253D6A29F98636007AEDE9 /* SyntaxHighlighter.swift */,
 				A6E2B49229F9954F002737AD /* CommandParser.swift */,
 				A6E2B49429FA3DB4002737AD /* FileChecker.swift */,
+				A682CCC12A0EBD110099E762 /* SuggestionRequest.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -15660,6 +15663,7 @@
 				A68ADA0D29D4B2560008E092 /* GridCoordArray.swift in Sources */,
 				A6E5D2101FA3C57900EDD002 /* iTermMetalFrameData.m in Sources */,
 				530AB7BA20A638A600D2AA08 /* iTermDisclosableView.m in Sources */,
+				A682CCC22A0EBD110099E762 /* SuggestionRequest.swift in Sources */,
 				A65429AC20C4880300CE71B1 /* iTermSessionFactory.m in Sources */,
 				537BFDD62101B2500098C91F /* iTermStatusBarCPUUtilizationComponent.m in Sources */,
 				A6BD5A722745D5710098594E /* NSTextView+iTerm.swift in Sources */,

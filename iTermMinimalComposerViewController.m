@@ -331,4 +331,15 @@ workingDirectory:(NSString *)pwd
     [self.delegate minimalComposer:self desiredHeightDidChange:desiredHeight];
 }
 
+- (BOOL)largeComposerViewControllerShouldFetchSuggestions:(iTermStatusBarLargeComposerViewController *)controller
+                                                  forHost:(id<VT100RemoteHostReading>)remoteHost
+                                           tmuxController:(TmuxController *)tmuxController {
+    return [self.delegate minimalComposerShouldFetchSuggestions:self forHost:remoteHost tmuxController:tmuxController];
+}
+
+- (void)largeComposerViewController:(iTermStatusBarLargeComposerViewController *)controller
+                   fetchSuggestions:(iTermSuggestionRequest *)request {
+    [self.delegate minimalComposer:self fetchSuggestions:request];
+}
+
 @end

@@ -16840,6 +16840,44 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _textViewShouldTakeFirstResponder = NO;
 }
 
+- (BOOL)composerManagerShouldFetchSuggestions:(iTermComposerManager *)composerManager
+                                      forHost:(id<VT100RemoteHostReading>)remoteHost
+                               tmuxController:(TmuxController *)tmuxController {
+    if (remoteHost.isRemoteHost) {
+        // Don't try to complete filenames if not on localhost unless we can ask the conductor.
+        if (@available(macOS 11, *)) {
+            return [_conductor framing];
+        } else {
+            return NO;
+        }
+    }
+    if (tmuxController) {
+        // I haven't implemented this on tmux because it's probably gonna be slow and knowing the
+        // working directory is rare.
+        return NO;
+    }
+    return YES;
+}
+
+- (void)composerManager:(iTermComposerManager *)composerManager
+       fetchSuggestions:(iTermSuggestionRequest *)request {
+    if (@available(macOS 11, *)) {
+        if ([_conductor framing]) {
+            [_conductor fetchSuggestions:request];
+        }
+    }
+    [[iTermSlowOperationGateway sharedInstance] findCompletionsWithPrefix:request.prefix
+                                                            inDirectories:request.directories
+                                                                      pwd:request.workingDirectory
+                                                                 maxCount:1
+                                                               executable:request.executable
+                                                               completion:^(NSArray<NSString *> * _Nonnull completions) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            request.completion(completions);
+        });
+    }];
+}
+
 - (iTermFileChecker *)fileChecker {
     if (@available(macOS 11, *)) {
         if (_conductor.canCheckFiles) {

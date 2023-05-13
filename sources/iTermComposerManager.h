@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @protocol iTermSyntaxHighlighting;
 @class iTermVariableScope;
 @class iTermStatusBarViewController;
+@class iTermSuggestionRequest;
 
 @protocol iTermComposerManagerDelegate<NSObject>
 - (iTermStatusBarViewController *)composerManagerStatusBarViewController:(iTermComposerManager *)composerManager;
@@ -58,6 +59,12 @@ minimalFrameDidChangeTo:(NSRect)newFrame;
 - (id<iTermSyntaxHighlighting>)composerManager:(iTermComposerManager *)composerManager
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString;
 - (void)composerManagerDidBecomeFirstResponder:(iTermComposerManager *)composerManager;
+- (BOOL)composerManagerShouldFetchSuggestions:(iTermComposerManager *)composerManager
+                                      forHost:(id<VT100RemoteHostReading>)remoteHost
+                               tmuxController:(TmuxController *)tmuxController;
+- (void)composerManager:(iTermComposerManager *)composerManager
+       fetchSuggestions:(iTermSuggestionRequest *)request;
+
 @end
 
 @interface iTermComposerManager : NSObject

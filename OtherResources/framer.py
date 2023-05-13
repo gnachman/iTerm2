@@ -582,6 +582,13 @@ async def handle_file(identifier, args):
     if sub == "stat":
         await handle_file_stat(identifier, base64.b64decode(args[1]).decode('latin1'))
         return
+    if sub == "suggest":
+        await handle_file_suggest(identifier,
+                                  base64.b64decode(args[1]).decode('latin1'),
+                                  args[2],
+                                  base64.b64decode(args[3]).decode('latin1'),
+                                  args[4])
+        return
     if sub == "rm":
         i = 1
         recursive = False
@@ -717,6 +724,73 @@ async def handle_file_stat(identifier, path):
         end(identifier, 0)
     except Exception as e:
         file_error(identifier, e, path)
+
+async def handle_file_suggest(identifier, prefix, directories, pwd, permissions):
+    log(f'handle_file_suggest({identifier}, {prefix}, {directories}, {pwd}, {permissions})')
+    combined = []
+    max_count = 1
+    for relative_directory in decode_base64_directories(directories):
+        if relative_directory.startswith('/'):
+            directory = relative_directory
+        else:
+            if not pwd:
+                continue
+            directory = os.path.join(pwd, relative_directory)
+        temp = await really_find_completions_with_prefix(prefix, directory, max_count, 'x' in permissions)
+        temp.sort()
+        combined.extend([entry.removeprefix(prefix) for entry in temp])
+        if len(combined) > max_count:
+            break
+    send_esc(json.dumps(combined))
+    end(identifier, 0)
+
+def decode_base64_directories(encoded_directories):
+    decoded_directories = []
+    directories = encoded_directories.split()
+
+    for directory in directories:
+        decoded_directory = base64.b64decode(directory).decode('utf-8')
+        decoded_directories.append(decoded_directory)
+
+    return decoded_directories
+
+async def really_find_completions_with_prefix(prefix, directory, max_count, executable):
+    if not prefix.startswith('/') and directory.startswith('/'):
+        temp = await really_find_completions_with_prefix(
+            os.path.join(directory, prefix), '', max_count, executable)
+        prefix_to_remove = directory if directory.endswith('/') else directory + '/'
+        return [entry.removeprefix(prefix_to_remove) for entry in temp]
+
+    if prefix.endswith('/'):
+        return await contents_of_directory(prefix, '', executable, max_count)
+
+    results = []
+    is_directory = False
+    exists = os.path.exists(prefix)
+    if exists:
+        is_directory = os.path.isdir(prefix)
+        if is_directory:
+            results.append(prefix + '/')
+
+    container = os.path.dirname(prefix)
+    if len(container) == 0:
+        return results
+
+    results.extend(await contents_of_directory(container, os.path.basename(prefix), executable, max_count))
+    return results
+
+async def contents_of_directory(directory, prefix, executable, max_count):
+    relative = await asyncio.get_event_loop().run_in_executor(None, lambda: os.listdir(directory))
+    result = []
+    for path in relative:
+        if len(result) >= max_count:
+            break
+        file_name = os.path.basename(path)
+        if len(prefix) == 0 or file_name.startswith(prefix):
+            full_path = os.path.join(directory, path)
+            if not executable or os.access(full_path, os.X_OK):
+                result.append(full_path)
+    return result
 
 async def handle_file_fetch(identifier, path, offset, size):
     log(f'handle_file_fetch {identifier} {path}')

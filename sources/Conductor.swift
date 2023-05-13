@@ -89,6 +89,7 @@ class Conductor: NSObject, Codable {
     }
     // If non-nil, a jump that I haven't done yet.
     private var myJump: SSHReconnectionInfo?
+    private var suggestionCache = SuggestionCache()
 
     @objc
     lazy var fileChecker: FileChecker? = {
@@ -194,6 +195,7 @@ class Conductor: NSObject, Codable {
         case ls(path: Data, sorting: FileSorting)
         case fetch(path: Data, chunk: DownloadChunk?)
         case stat(path: Data)
+        case fetchSuggestions(request: SuggestionRequest.Inputs)
         case rm(path: Data, recursive: Bool)
         case ln(source: Data, symlink: Data)
         case mv(source: Data, dest: Data)
@@ -224,6 +226,14 @@ class Conductor: NSObject, Codable {
 
             case .stat(let path):
                 return "stat\n\(path.base64EncodedString())"
+
+            case .fetchSuggestions(let request):
+                return ["suggest",
+                        request.prefix.base64Encoded,
+                        request.directories.map { $0.base64Encoded }.joined(separator: " "),
+                        (request.workingDirectory ?? "//").base64Encoded,
+                        request.executable ? "rx" : "r"
+                ].joined(separator: "\n")
 
             case .rm(let path, let recursive):
                 let args = ["rm"] + (recursive ? ["-r"] : []) + [path.base64EncodedString()]
@@ -276,6 +286,8 @@ class Conductor: NSObject, Codable {
                 }
             case .stat(let path):
                 return "stat \(path.stringOrHex)"
+            case .fetchSuggestions(request: let request):
+                return "fetchSuggestions \(request)"
             case .rm(path: let path, recursive: let recursive):
                 return "rm " + (recursive ? "-r " : "") + path.stringOrHex
             case .ln(source: let source, symlink: let symlink):
@@ -458,7 +470,7 @@ class Conductor: NSObject, Codable {
 
     struct ExecutionContext: Codable, CustomDebugStringConvertible {
         var debugDescription: String {
-            return "<ExecutionContext: command=\(command) handler=\(handler)>"
+            return "<ExecutionContext: command=\(command) handler=\(handler)\(canceled ? " CANCELED": ""))>"
         }
 
         let command: Command
@@ -604,6 +616,7 @@ class Conductor: NSObject, Codable {
             }
         }
         let handler: Handler
+        var canceled = false
     }
 
     struct Nesting: Codable {
@@ -698,6 +711,7 @@ class Conductor: NSObject, Codable {
         case line(String)
         case end(UInt8)  // arg is exit status
         case abort  // couldn't even send the command
+        case canceled
     }
 
     private var state: State = .ground {
@@ -1038,6 +1052,40 @@ class Conductor: NSObject, Codable {
         framerSend(data: data, pid: pid)
     }
 
+    @available(macOS 11, *)
+    @objc
+    func fetchSuggestions(_ request: SuggestionRequest) {
+        // Always run the completion block after a spin of the mainloop because
+        // iTermStatusBarLargeComposerViewController will erase the suggestion asynchronously :(
+        guard framing else {
+            DispatchQueue.main.async {
+                request.completion([])
+            }
+            return
+        }
+        if let cached = suggestionCache.get(request.inputs) {
+            DispatchQueue.main.async {
+                request.completion(cached)
+            }
+            return
+        }
+        Task {
+            do {
+                DLog("Request suggestions \(request)")
+                let suggestions = try await self.suggestions(request.inputs)
+                DispatchQueue.main.async { [weak self] in
+                    self?.suggestionCache.insert(inputs: request.inputs, suggestions: suggestions)
+                    request.completion(suggestions)
+                }
+            } catch {
+                DispatchQueue.main.async { [weak self] in
+                    self?.suggestionCache.insert(inputs: request.inputs, suggestions: [])
+                    request.completion([])
+                }
+            }
+        }
+    }
+
     private func doFraming() {
         execFramer()
         framerSave(["dcsID": dcsID,
@@ -1199,7 +1247,7 @@ class Conductor: NSObject, Codable {
                 if status != 0 {
                     fail("\(executionContext.command.stringValue): Unepected status \(status)")
                 }
-            case .abort, .line(_), .sideChannelLine(line: _, channel: _, pid: _):
+            case .abort, .line(_), .sideChannelLine(line: _, channel: _, pid: _), .canceled:
                 break
             }
             return
@@ -1208,7 +1256,7 @@ class Conductor: NSObject, Codable {
             case .line(let output), .sideChannelLine(line: let output, channel: 1, pid: _):
                 lines.strings.append(output)
                 return
-            case .abort, .sideChannelLine(_, _, _):
+            case .abort, .sideChannelLine(_, _, _), .canceled:
                 execLoginShell()
                 return
             case .end(let status):
@@ -1246,7 +1294,7 @@ class Conductor: NSObject, Codable {
             case .end(let status):
                 finalizeFraming(status: status, lines: lines)
                 return
-            case .abort, .sideChannelLine(_, _, _):
+            case .abort, .sideChannelLine(_, _, _), .canceled:
                 return
             }
         case .handleJump(let lines):
@@ -1257,12 +1305,12 @@ class Conductor: NSObject, Codable {
             case .end(let status):
                 finalizeFraming(status: status, lines: lines)
                 return
-            case .abort, .sideChannelLine:
+            case .abort, .sideChannelLine, .canceled:
                 break
             }
         case .writeOnSuccess(let code):
             switch result {
-            case .line(_), .abort, .sideChannelLine(_, _, _):
+            case .line(_), .abort, .sideChannelLine(_, _, _), .canceled:
                 return
             case .end(let status):
                 if status == 0 {
@@ -1281,7 +1329,7 @@ class Conductor: NSObject, Codable {
                 addBackgroundJob(pid,
                                  command: .framerRun(commandLine),
                                  completion: completion)
-            case .sideChannelLine(_, _, _), .abort, .end(_):
+            case .sideChannelLine(_, _, _), .abort, .end(_), .canceled:
                 break
             }
             return
@@ -1289,7 +1337,7 @@ class Conductor: NSObject, Codable {
             switch result {
             case .line(let line):
                 lines.strings.append(line)
-            case .abort:
+            case .abort, .canceled:
                 completion("", -1)
             case .sideChannelLine(line: _, channel: _, pid: _):
                 break
@@ -1300,7 +1348,7 @@ class Conductor: NSObject, Codable {
             switch result {
             case .line(let line):
                 output.strings.append(line)
-            case .sideChannelLine(_, _, _), .abort:
+            case .sideChannelLine(_, _, _), .abort, .canceled:
                 break
             case .end(_):
                 if let data = output.strings.joined(separator: "\n").data(using: .utf8) {
@@ -1313,11 +1361,11 @@ class Conductor: NSObject, Codable {
             case .line(let output), .sideChannelLine(line: let output, channel: 1, pid: _):
                 lines.strings.append(output)
                 return
-            case .abort, .sideChannelLine(_, _, _):
+            case .abort, .sideChannelLine(_, _, _), .canceled:
                 return
             case .end(let status):
                 if status != 0 {
-                    print("Failed to get shell")
+                    DLog("Failed to get shell")
                     return
                 }
                 // If you ran `it2ssh localhost /usr/local/bin/bash` then the shell is /usr/local/bin/bash.
@@ -1363,7 +1411,7 @@ class Conductor: NSObject, Codable {
                 fail("Unexpected output from \(executionContext.command.stringValue)")
             case .sideChannelLine(line: let line, channel: 1, pid: _):
                 output.strings.append(line)
-            case .abort, .sideChannelLine(_, _, _):
+            case .abort, .sideChannelLine(_, _, _), .canceled:
                 completion(Data(), -2)
             case .end(let status):
                 let combined = output.strings.joined(separator: "")
@@ -1684,8 +1732,29 @@ class Conductor: NSObject, Codable {
         }
     }
 
+    private func cancelEnqueuedRequests(where predicate: (Command) -> (Bool)) {
+        let indexes = queue.indexes {
+            predicate($0.command)
+        }
+        for i in indexes {
+            if !queue[i].canceled {
+                DLog("cancel \(queue[i])")
+                queue[i].canceled = true
+            }
+        }
+    }
+
     private func dequeue() {
         log("dequeue")
+        guard let pending = takeNextContext() else {
+            return
+        }
+        state = .willExecute(pending)
+        let chunked = pending.command.stringValue.chunk(128, continuation: pending.command.isFramer ? "\\" : "").joined(separator: "\n") + "\n"
+        write(chunked)
+    }
+
+    private func takeNextContext() -> ExecutionContext? {
         guard delegate != nil else {
             log("delegate is nil. clear queue and reset state.")
             while let pending = queue.first {
@@ -1693,19 +1762,23 @@ class Conductor: NSObject, Codable {
                 update(executionContext: pending, result: .abort)
             }
             state = .ground
-            return
+            return nil
+        }
+        while let pending = queue.first, pending.canceled {
+            log("cancel \(pending)")
+            queue.removeFirst()
+            update(executionContext: pending, result: .canceled)
         }
         guard let pending = queue.first else {
             log("queue is empty")
-            return
+            return nil
         }
         queue.removeFirst()
-        state = .willExecute(pending)
-        let chunked = pending.command.stringValue.chunk(128, continuation: pending.command.isFramer ? "\\" : "").joined(separator: "\n") + "\n"
-        write(chunked)
+        return pending
     }
 
     private func write(_ string: String, end: String = "\n") {
+        log("write: \(string)")
         let savedQueueWrites = _queueWrites
         _queueWrites = false
         if let parent = parent {
@@ -1911,6 +1984,7 @@ extension Conductor: SSHEndpoint {
                                       highPriority: Bool = false) async throws -> String {
         let (output, code) = await withCheckedContinuation { continuation in
             framerFile(subcommand, highPriority: highPriority) { content, code in
+                DLog("File subcommand \(subcommand) finished with code \(code)")
                 continuation.resume(returning: (content, code))
             }
         }
@@ -1987,6 +2061,33 @@ extension Conductor: SSHEndpoint {
             let result = try remoteFile(json)
             log("finished")
             return result
+        }
+    }
+
+    @MainActor
+    func suggestions(_ requestInputs: SuggestionRequest.Inputs) async throws -> [String] {
+        log("Request suggestions for inputs \(requestInputs)")
+        return try await logging("suggestions \(requestInputs)") {
+            cancelEnqueuedRequests { request in
+                switch request {
+                case .framerFile(let sub):
+                    switch sub {
+                    case .fetchSuggestions:
+                        return true
+                    default:
+                        return false
+                    }
+                default:
+                    return false
+                }
+            }
+            let json = try await performFileOperation(subcommand: .fetchSuggestions(request: requestInputs),
+                                                      highPriority: true)
+            log("Suggestions for \(requestInputs) are: \(json)")
+            guard let data = json.data(using: .utf8) else {
+                return []
+            }
+            return try JSONDecoder().decode([String].self, from: data)
         }
     }
 

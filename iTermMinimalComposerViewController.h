@@ -12,8 +12,10 @@ NS_ASSUME_NONNULL_BEGIN
 @class TmuxController;
 @protocol VT100RemoteHostReading;
 @class iTermMinimalComposerViewController;
+@class iTermSuggestionRequest;
 @protocol iTermSyntaxHighlighting;
 @class iTermVariableScope;
+@protocol VT100RemoteHostReading;
 
 @protocol iTermMinimalComposerViewControllerDelegate<NSObject>
 - (void)minimalComposer:(iTermMinimalComposerViewController *)composer
@@ -43,6 +45,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (id<iTermSyntaxHighlighting>)minimalComposer:(iTermMinimalComposerViewController *)composer
           syntaxHighlighterForAttributedString:(NSMutableAttributedString *)attributedString;
 - (void)minimalComposerDidBecomeFirstResponder:(iTermMinimalComposerViewController *)composer;
+- (BOOL)minimalComposerShouldFetchSuggestions:(iTermMinimalComposerViewController *)composer
+                                      forHost:(id<VT100RemoteHostReading>)remoteHost
+                               tmuxController:(TmuxController *)tmuxController;
+- (void)minimalComposer:(iTermMinimalComposerViewController *)composer
+       fetchSuggestions:(iTermSuggestionRequest *)request;
+
 @end
 
 @interface iTermMinimalComposerViewController : NSViewController
