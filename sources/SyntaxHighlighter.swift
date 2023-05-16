@@ -86,9 +86,9 @@ class SyntaxHighlighter {
 
     func highlight(range rangeToModify: Range<Int>) {
         let maxLength = 1024
-        if rangeToModify.upperBound > 1024 {
+        if rangeToModify.count > 1024 {
             removeForegroundColorAndFontAttributes(range: maxLength..<rangeToModify.upperBound)
-            highlight(range: rangeToModify.lowerBound..<maxLength)
+            highlight(range: rangeToModify.lowerBound..<(rangeToModify.lowerBound + maxLength))
             return
         }
         removeForegroundColorAndFontAttributes(range: rangeToModify)
