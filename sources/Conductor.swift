@@ -1984,7 +1984,7 @@ extension Conductor: SSHEndpoint {
                                       highPriority: Bool = false) async throws -> String {
         let (output, code) = await withCheckedContinuation { continuation in
             framerFile(subcommand, highPriority: highPriority) { content, code in
-                DLog("File subcommand \(subcommand) finished with code \(code)")
+                log("File subcommand \(subcommand) finished with code \(code)")
                 continuation.resume(returning: (content, code))
             }
         }
