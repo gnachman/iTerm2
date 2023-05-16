@@ -5771,6 +5771,9 @@ static NSString *const PTYSessionComposerPrefixUserDataKeyDetectedByTrigger = @"
 }
 
 - (NSMutableAttributedString *)attributedStringForScreenChars:(NSArray<ScreenCharArray *> *)promptText {
+    if (!_textview) {
+        return nil;
+    }
     NSDictionary *defaultAttributes = [_textview attributeProviderUsingProcessedColors:YES]((screen_char_t){}, nil);
     NSAttributedString *space = [NSAttributedString attributedStringWithString:@" "
                                                                       attributes:defaultAttributes];
@@ -17348,6 +17351,9 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)updateComposerColors {
+    if (!_textview) {
+        return;
+    }
     [self setNeedsComposerColorUpdate:NO];
     if (![self haveAutoComposer]) {
         return;
