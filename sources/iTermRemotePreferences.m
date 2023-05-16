@@ -229,14 +229,6 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
     return remotePrefs;
 }
 
-- (NSString *)localPrefsFilename {
-    NSString *prefDir = [[NSHomeDirectory()
-                          stringByAppendingPathComponent:@"Library"]
-                         stringByAppendingPathComponent:@"Preferences"];
-    return [prefDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.plist",
-                                                    [[NSBundle mainBundle] bundleIdentifier]]];
-}
-
 - (BOOL)folderIsWritable:(NSString *)path {
     NSString *fullPath = [path stringByExpandingTildeInPath];
     return [[NSFileManager defaultManager] directoryIsWritable:fullPath];
@@ -400,21 +392,23 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
     if (![remotePrefs count]) {
         return;
     }
-    NSString *theFilename = [self localPrefsFilename];
-    NSDictionary *localPrefs = [NSDictionary dictionaryWithContentsOfFile:theFilename];
+    DLog(@"Load local prefs");
+    NSDictionary *localPrefs = [[NSUserDefaults standardUserDefaults] persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
     // Empty out the current prefs
+    DLog(@"Remove non-syncable values");
     for (NSString *key in localPrefs) {
         if ([self preferenceKeyIsSyncable:key]) {
             [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
         }
     }
-
+    DLog(@"Copy remote values to user defaults");
     for (NSString *key in remotePrefs) {
         if ([self preferenceKeyIsSyncable:key]) {
             [[NSUserDefaults standardUserDefaults] setObject:[remotePrefs objectForKey:key]
                                                       forKey:key];
         }
     }
+    DLog(@"Finished");
     return;
 }
 
