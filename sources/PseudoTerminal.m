@@ -10047,7 +10047,9 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 // Reset all state associated with the terminal.
 - (void)reset:(id)sender {
-    [[self currentSession] userInitiatedReset];
+    for (PTYSession *session in [self sessionsToSendCommand:iTermBroadcastCommandReset]) {
+        [session userInitiatedReset];
+    }
 }
 
 - (IBAction)resetCharset:(id)sender {
@@ -10056,20 +10058,37 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
     }];
 }
 
-- (NSArray<PTYSession *> *)sessionsToSendClearTo {
+typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
+    iTermBroadcastCommandClear,
+    iTermBroadcastCommandReset
+};
+
+- (NSArray<PTYSession *> *)sessionsToSendCommand:(iTermBroadcastCommand)command {
     NSArray<PTYSession *> *broadcast = [self broadcastSessions];
     if (broadcast.count < 2) {
         return @[ self.currentSession ];
     }
-    NSString *title = [NSString stringWithFormat:@"Clear all sessions to which input is broadcast? This will affect %@ sessions.",
+    NSString *action;
+    switch (command) {
+    case iTermBroadcastCommandClear:
+        action = @"Clear";
+        break;
+    case iTermBroadcastCommandReset:
+            action = @"Reset";
+        break;
+    }
+    NSString *title = [NSString stringWithFormat:@"%@ all sessions to which input is broadcast? This will affect %@ sessions.",
+                       action,
                        @(broadcast.count)];
     const iTermWarningSelection selection =
     [iTermWarning showWarningWithTitle:title
-                               actions:@[ @"Clear All", @"Clear Current Session Only", @"Cancel" ]
+                               actions:@[ [NSString stringWithFormat:@"%@ All", action],
+                                          [NSString stringWithFormat:@"%@ Current Session Only", action],
+                                          @"Cancel" ]
                              accessory:nil
-                            identifier:@"NoSyncClearAllBroadcast"
+                            identifier:[NSString stringWithFormat:@"NoSync%@AllBroadcast", action]
                            silenceable:kiTermWarningTypePermanentlySilenceable
-                               heading:@"Clear in All Broadcasted-to Sessions?"
+                               heading:[NSString stringWithFormat:@"%@ in All Broadcasted-to Sessions?", action]
                                 window:self.window];
     if (selection == kiTermWarningSelection0) {
         return broadcast;
@@ -10082,7 +10101,7 @@ static BOOL iTermApproximatelyEqualRects(NSRect lhs, NSRect rhs, double epsilon)
 
 // Clear the buffer of the current session (Edit>Clear Buffer).
 - (void)clearBuffer:(id)sender {
-    for (PTYSession *session in [self sessionsToSendClearTo]) {
+    for (PTYSession *session in [self sessionsToSendCommand:iTermBroadcastCommandClear]) {
         [session clearBuffer];
     }
 }
