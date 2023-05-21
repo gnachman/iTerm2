@@ -251,8 +251,16 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         // I don't expect this to ever happen.
         return;
     }
-    NSString *identifier = codium ? kVSCodiumIdentifier : kVSCodeIdentifier;
-    NSString *bundlePath = [self absolutePathForAppBundleWithIdentifier:identifier];
+    NSArray<NSString *> *possibleIdentifiers = codium ? @[ kVSCodiumIdentifier1, kVSCodiumIdentifier2 ] : @[kVSCodeIdentifier];
+    NSString *identifier;
+    NSString *bundlePath = nil;
+    for (NSString *candidate in possibleIdentifiers) {
+        identifier = candidate;
+        bundlePath = [self absolutePathForAppBundleWithIdentifier:identifier];
+        if (bundlePath) {
+            break;
+        }
+    }
     if (bundlePath) {
         NSString *codeExecutable =
         [bundlePath stringByAppendingPathComponent:@"Contents/Resources/app/bin/code"];
@@ -352,7 +360,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
 + (NSArray *)bundleIdsThatSupportOpeningToLineNumber {
     return @[ kAtomIdentifier,
               kVSCodeIdentifier,
-              kVSCodiumIdentifier,
+              kVSCodiumIdentifier1,
+              kVSCodiumIdentifier2,
               kSublimeText2Identifier,
               kSublimeText3Identifier,
               kSublimeText4Identifier,
@@ -386,7 +395,8 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
         return;
     }
     if ([identifier isEqualToString:kVSCodeIdentifier] ||
-        [identifier isEqualToString:kVSCodiumIdentifier]) {
+        [identifier isEqualToString:kVSCodiumIdentifier1] ||
+        [identifier isEqualToString:kVSCodiumIdentifier2]) {
         if (lineNumber != nil) {
             path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
         }
@@ -394,7 +404,7 @@ NSString *const kSemanticHistoryColumnNumberKey = @"semanticHistory.columnNumber
             path = [path stringByAppendingFormat:@":%@", columnNumber];
         }
         [self launchVSCodeWithPath:path
-                            codium:[identifier isEqualToString:kVSCodiumIdentifier]];
+                            codium:([identifier isEqualToString:kVSCodiumIdentifier1] || [identifier isEqualToString:kVSCodiumIdentifier2])];
         return;
     }
     if ([identifier isEqualToString:kSublimeText2Identifier] ||

@@ -30,7 +30,8 @@ NSString *kTextmate2Identifier = @"com.macromates.TextMate.preview";
 NSString *kBBEditIdentifier = @"com.barebones.bbedit";
 NSString *kAtomIdentifier = @"com.github.atom";
 NSString *kVSCodeIdentifier = @"com.microsoft.VSCode";
-NSString *kVSCodiumIdentifier = @"com.visualstudio.code.oss";
+NSString *kVSCodiumIdentifier1 = @"com.visualstudio.code.oss";
+NSString *kVSCodiumIdentifier2 = @"com.vscodium";
 NSString *kVSCodeInsidersIdentifier = @"com.microsoft.VSCodeInsiders";
 NSString *kEmacsAppIdentifier = @"org.gnu.Emacs";
 NSString *kIntelliJIDEAIdentifier = @"com.jetbrains.intellij.ce";
@@ -84,11 +85,13 @@ enum {
     kVSCodeTag,
     kVSCodeInsidersTag,
     kEmacsAppTag,
-    kVSCodiumTag,
+    kVSCodium1Tag,
     kIntelliJTag,
     kWebStormTag,
     kRiderTag,
-    kNovaTag
+    kNovaTag,
+    kVSCodium2Tag,
+
     // Only append to the end of the list; never delete or change.
 };
 
@@ -133,7 +136,8 @@ enum {
                                kBBEditIdentifier: @"txmt",
                                kAtomIdentifier: @"atom",
                                kVSCodeIdentifier: @"vscode",
-                               kVSCodiumIdentifier: @"vscodium",
+                               kVSCodiumIdentifier1: @"vscodium",
+                               kVSCodiumIdentifier2: @"vscodium",
                                kVSCodeInsidersIdentifier: @"vscode",
                                kEmacsAppIdentifier: @"",
                                kIntelliJIDEAIdentifier: @"",
@@ -156,7 +160,8 @@ enum {
               kNovaAppIdentifier,
               kAtomIdentifier,
               kVSCodeIdentifier,
-              kVSCodiumIdentifier,
+              kVSCodiumIdentifier1,
+              kVSCodiumIdentifier2,
               kVSCodeInsidersIdentifier,
               kEmacsAppIdentifier,
               kIntelliJIDEAIdentifier,
@@ -183,7 +188,8 @@ enum {
                                   kBBEditIdentifier,
                                   kAtomIdentifier,
                                   kVSCodeIdentifier,
-                                  kVSCodiumIdentifier,
+                                  kVSCodiumIdentifier1,
+                                  kVSCodiumIdentifier2,
                                   kVSCodeInsidersIdentifier,
                                   kEmacsAppIdentifier,
                                   kIntelliJIDEAIdentifier,
@@ -203,7 +209,8 @@ enum {
                                   kBBEditIdentifier: @(kBBEditTag),
                                     kAtomIdentifier: @(kAtomTag),
                                   kVSCodeIdentifier: @(kVSCodeTag),
-                                kVSCodiumIdentifier: @(kVSCodiumTag),
+                               kVSCodiumIdentifier1: @(kVSCodium1Tag),
+                               kVSCodiumIdentifier2: @(kVSCodium2Tag),
                           kVSCodeInsidersIdentifier: @(kVSCodeInsidersTag),
                                 kEmacsAppIdentifier: @(kEmacsAppTag),
                             kIntelliJIDEAIdentifier: @(kIntelliJTag),
@@ -247,7 +254,8 @@ enum {
                                    kBBEditIdentifier: @"BBEdit",
                                      kAtomIdentifier: @"Atom",
                                    kVSCodeIdentifier: @"VS Code",
-                                 kVSCodiumIdentifier: @"VS Codium",
+                                kVSCodiumIdentifier1: @"VS Codium (Flatpak)",
+                                kVSCodiumIdentifier2: @"VS Codium",
                            kVSCodeInsidersIdentifier: @"VS Code Insiders",
                                  kEmacsAppIdentifier: @"Emacs.app",
                              kIntelliJIDEAIdentifier: @"IntelliJ IDEA",
@@ -319,7 +327,8 @@ enum {
                                  @(kBBEditTag): kBBEditIdentifier,
                                    @(kAtomTag): kAtomIdentifier,
                                  @(kVSCodeTag): kVSCodeIdentifier,
-                               @(kVSCodiumTag): kVSCodiumIdentifier,
+                              @(kVSCodium1Tag): kVSCodiumIdentifier1,
+                              @(kVSCodium2Tag): kVSCodiumIdentifier2,
                          @(kVSCodeInsidersTag): kVSCodeInsidersIdentifier,
                                @(kEmacsAppTag): kEmacsAppIdentifier,
                                @(kIntelliJTag): kIntelliJIDEAIdentifier,
