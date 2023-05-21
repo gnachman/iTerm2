@@ -149,6 +149,7 @@
 #import "NSStringITerm.h"
 #import "NSThread+iTerm.h"
 #import "NSURL+iTerm.h"
+#import "NSUserDefaults+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSView+RecursiveDescription.h"
 #import "NSWindow+PSM.h"
@@ -869,6 +870,10 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
                                                                selector:@selector(activeSpaceDidChange:)
                                                                    name:NSWorkspaceActiveSpaceDidChangeNotification
                                                                  object:nil];
+        [[NSUserDefaults standardUserDefaults] it_addObserverForKey:kPreferenceKeyTabStyle
+                                                              block:^(id _Nonnull newValue) {
+                                                                  [weakSelf themeDidChange];
+                                                              }];
 
         [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString * _Nonnull newValue) {
             if (!weakSelf.view.window.isKeyWindow) {
@@ -10520,6 +10525,20 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"%@", [NSThread callStackSymbols]);
     [self backgroundColorDidChangeJigglingIfNeeded:before.isDark != after.isDark];
     [self updateAutoComposerSeparatorVisibility];
+    [self updateAppearanceForMinimalTheme];
+}
+
+- (void)themeDidChange {
+    [self updateAppearanceForMinimalTheme];
+}
+
+- (void)updateAppearanceForMinimalTheme {
+    const BOOL minimal = [iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
+    if (minimal) {
+        _view.appearance = [_screen.colorMap colorForKey:kColorMapBackground].isDark ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+    } else {
+        _view.appearance = nil;
+    }
 }
 
 - (void)textViewTransparencyDidChange {
