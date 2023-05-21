@@ -10,9 +10,14 @@
 
 // TODO: FB7781183
 @interface iTermHackAroundBigSurBugView: NSView
+- (instancetype)init API_DEPRECATED("Bug supposedly fixed in macOS 12.", macosx(10.16, 11));
 @end
 
 @implementation iTermHackAroundBigSurBugView: NSView
+
+- (instancetype)init {
+    return [super init];
+}
 - (BOOL)isFlipped {
     return YES;
 }
@@ -41,9 +46,13 @@
 - (instancetype)initWithView:(NSView *)view {
     self = [super initWithNibName:nil bundle:nil];
     if (self) {
-        if ([iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
-            if (@available(macOS 10.16, *)) {
-                _hack = [[iTermHackAroundBigSurBugView alloc] init];
+        if (@available(macOS 12.0, *)) {
+            // Apple says they fixed the bug in Monterey (macOS 12)
+        } else {
+            if ([iTermAdvancedSettingsModel allowTabbarInTitlebarAccessoryBigSur]) {
+                if (@available(macOS 10.16, *)) {
+                    _hack = [[iTermHackAroundBigSurBugView alloc] init];
+                }
             }
         }
         _view = view;
