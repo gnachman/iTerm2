@@ -7924,6 +7924,7 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
 - (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile *)theBookmark {
     if ([self inInstantReplay]) {
         // Things get very complicated in this case. Just disallow it.
+        DLog(@"In instant replay");
         return NO;
     }
     NSFont* asciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NORMAL_FONT]];
@@ -8107,6 +8108,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
           addingSession:(PTYSession *)newSession
           targetSession:(PTYSession *)targetSession
            performSetup:(BOOL)performSetup {
+    DLog(@"splitVertically:%@ before:%@ addingSession:%@ targetSession:%@ performSetup:%@ self=%@",
+         @(isVertical), @(before), newSession, targetSession, @(performSetup), self);
     [self.currentSession.textview refuseFirstResponderAtCurrentMouseLocation];
     NSView *scrollView;
     NSColor *tabColor;

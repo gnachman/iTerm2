@@ -1554,6 +1554,7 @@ typedef struct {
 }
 
 - (BOOL)performDragOperation:(id<NSDraggingInfo>)sender {
+    DLog(@"performDragOperation: %@", sender);
     BOOL result = [_delegate sessionViewPerformDragOperation:sender];
     [_delegate sessionViewDraggingExited:sender];
     return result;

@@ -1673,6 +1673,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 //   Remove splitView from its parent
 
 - (void)checkInvariants:(NSSplitView *)node when:(NSString *)when {
+    DLog(@"checkInvariants for %@", when);
     if (node != root_) {
         if ([node isKindOfClass:[NSSplitView class]]) {
             // 1. A non-root splitview must have at least two children.
@@ -1939,9 +1940,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
                 minSize = [self _minSessionSize:sessionView];
             }
             if (isVertical && actualSize.width < minSize.width) {
+                DLog(@"Not enough width for vertical split");
                 return NO;
             }
             if (!isVertical && actualSize.height < minSize.height) {
+                DLog(@"Not enough height for horizontal split");
                 return NO;
             }
         }
@@ -1953,9 +1956,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
         NSSize actualSize = [[activeSession_ view] frame].size;
         NSSize minSize = [self _minSessionSize:[activeSession_ view]];
         if (isVertical && actualSize.width < minSize.width) {
+            DLog(@"Not enough width for vertical split");
             return NO;
         }
         if (!isVertical && actualSize.height < minSize.height) {
+            DLog(@"Not enough height for horizontal split");
             return NO;
         }
         return YES;
@@ -5167,6 +5172,7 @@ typedef struct {
 }
 
 - (void)swapSession:(PTYSession *)session1 withSession:(PTYSession *)session2 {
+    DLog(@"swapSession:%@ withSession:%@", session1, session2);
     assert(session1.delegate == self);
     if (isMaximized_) {
         [self unmaximize];
@@ -5176,11 +5182,13 @@ typedef struct {
     }
 
     if (((PTYTab *)session1.delegate)->lockedSession_ || ((PTYTab *)session2.delegate)->lockedSession_) {
+        DLog(@"One or both is locked");
         return;
     }
     if (session1.isTmuxClient &&
         session2.isTmuxClient &&
         session1.tmuxController == session2.tmuxController) {
+        DLog(@"Use tmux to swap");
         [session1.tmuxController swapPane:session1.tmuxPane withPane:session2.tmuxPane];
         return;
     }
@@ -6341,6 +6349,8 @@ typedef struct {
 }
 
 - (BOOL)session:(PTYSession *)session performDragOperation:(id<NSDraggingInfo>)sender {
+    DLog(@"session:%@ performDragOperation:%@", session, sender);
+
     // self is the destination tab. session is the session that's moving.
     if ([[[sender draggingPasteboard] types] indexOfObject:iTermMovePaneDragType] != NSNotFound) {
         if ([[MovePaneController sharedInstance] isMovingSession:session]) {
