@@ -8,4 +8,5 @@
 typedef struct {
     int overflow;
     BOOL haveScrolled;
+    BOOL namedMarksChanged;
 } VT100SyncResult;

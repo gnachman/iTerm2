@@ -715,6 +715,15 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     return nil;
 }
 
+- (id<VT100ScreenMarkReading>)namedMarkWithGUID:(NSString *)guid {
+    for (id<VT100ScreenMarkReading> mark in _state.namedMarks) {
+        if ([mark.guid isEqualToString:guid]) {
+            return mark;
+        }
+    }
+    return nil;
+}
+
 - (void)enumerateObservableMarks:(void (^ NS_NOESCAPE)(iTermIntervalTreeObjectType, NSInteger))block {
     const NSInteger overflow = _state.cumulativeScrollbackOverflow;
     for (NSArray *objects in _state.intervalTree.forwardLimitEnumerator) {
@@ -835,6 +844,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
 
 - (id<VT100ScreenMarkReading>)markOnLine:(int)line {
     return [_state markOnLine:line];
+}
+
+- (void)removeNamedMark:(id<VT100ScreenMarkReading>)mark {
+    [self mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [mutableState removeNamedMark:(VT100ScreenMark *)mark.progenitor];
+    }];
 }
 
 - (NSArray<id<VT100ScreenMarkReading>> *)lastMarks {
@@ -1316,10 +1331,12 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (resetOverflow) {
         [mutableState resetScrollbackOverflow];
     }
+    const BOOL namedMarksChanged = mutableState.namedMarksDirty;
     if (_state) {
         DLog(@"%@: merge state", self);
         const BOOL mutableStateLineBufferWasDirty = mutableState.linebuffer.dirty;
         [_state mergeFrom:mutableState];
+        mutableState.namedMarksDirty = NO;
 
         [self updateSearchBuffer:mutableStateLineBufferWasDirty];
     } else {
@@ -1342,7 +1359,8 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     DLog(@"%@: End overflow=%@ haveScrolled=%@", self, @(overflow), @(_state.currentGrid.haveScrolled));
     return (VT100SyncResult) {
         .overflow = overflow,
-        .haveScrolled = _state.currentGrid.haveScrolled
+        .haveScrolled = _state.currentGrid.haveScrolled,
+        .namedMarksChanged = namedMarksChanged
     };
 }
 
@@ -1497,6 +1515,10 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
         }
     }];
     return result;
+}
+
+- (NSArray<id<VT100ScreenMarkReading>> *)namedMarks {
+    return _state.namedMarks.strongObjects;
 }
 
 #pragma mark - Accessors

@@ -146,6 +146,17 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
 
     id<VT100ScreenMarkReading> mark = [self.delegate contextMenu:self markOnLine:y];
     DLog(@"contextMenuWithEvent:%@ x=%d, mark=%@, mark command=%@", event, x, mark, [mark command]);
+    if (mark.name) {
+        NSMenuItem *nameItem = [[NSMenuItem alloc] initWithTitle:mark.name action:nil keyEquivalent:@""];
+
+        NSMenuItem *removeItem = [[NSMenuItem alloc] initWithTitle:@"Remove Named Mark" action:@selector(removeNamedMark:) keyEquivalent:@""];
+        removeItem.target = self;
+        removeItem.representedObject = mark;
+
+        [contextMenu insertItem:nameItem atIndex:0];
+        [contextMenu insertItem:removeItem atIndex:1];
+        [contextMenu insertItem:[NSMenuItem separatorItem] atIndex:2];
+    }
     if (mark && mark.command.length) {
         NSMenuItem *markItem = [[NSMenuItem alloc] initWithTitle:@"Command Info"
                                                           action:@selector(revealCommandInfo:)
@@ -193,7 +204,8 @@ static const int kMaxSelectedTextLengthForCustomActions = 400;
         [item action] == @selector(apiMenuItem:) ||
         [item action] == @selector(copyLinkAddress:) ||
         [item action] == @selector(copyString:) ||
-        [item action] == @selector(revealCommandInfo:)) {
+        [item action] == @selector(revealCommandInfo:) ||
+        [item action] == @selector(removeNamedMark:)) {
         return YES;
     }
     if ([item action] == @selector(stopCoprocess:)) {
@@ -804,6 +816,14 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 }
 
 #pragma mark - Context Menu Actions
+
+- (void)removeNamedMark:(id)sender {
+    id<VT100ScreenMarkReading> mark = [sender representedObject];
+    DLog(@"Remove named mark %@", mark);
+    if (mark.name) {
+        [_delegate contextMenu:self removeNamedMark:mark];
+    }
+}
 
 - (void)revealCommandInfo:(id)sender {
     id<VT100ScreenMarkReading> mark = [sender representedObject];

@@ -131,6 +131,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
 @synthesize config = _config;
 @synthesize exfiltratedEnvironment = _exfiltratedEnvironment;
 @synthesize promptStateDictionary = _promptStateDictionary;
+@synthesize namedMarks = _namedMarks;
 
 - (instancetype)initForMutationOnQueue:(dispatch_queue_t)queue {
     self = [super init];
@@ -147,6 +148,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         _linebuffer = [[LineBuffer alloc] init];
         _colorMap = [[iTermColorMap alloc] init];
         _temporaryDoubleBuffer = [[iTermTemporaryDoubleBufferedGridController alloc] initWithQueue:queue];
+        _namedMarks = [[iTermAtomicMutableArrayOfWeakObjects alloc] init];
         _fakePromptDetectedAbsLine = -1;
     }
     return self;
@@ -220,6 +222,11 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     _config = source.config;
     _exfiltratedEnvironment = [source.exfiltratedEnvironment copy];
     _promptStateDictionary = [source.promptStateDictionary copy];
+    if (source.namedMarksDirty) {
+        _namedMarks = [source.namedMarks compactMap:^id _Nonnull(id<VT100ScreenMarkReading>  _Nonnull mark) {
+            return [mark doppelganger];
+        }];
+    }
 }
 
 - (void)copySlowStuffFrom:(VT100ScreenMutableState *)source {

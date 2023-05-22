@@ -2245,7 +2245,17 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 - (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass {
+    return [self addMarkStartingAtAbsoluteLine:line oneLine:oneLine ofClass:markClass modifier:nil];
+}
+
+- (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
+                                       oneLine:(BOOL)oneLine
+                                       ofClass:(Class)markClass
+                                      modifier:(void (^ NS_NOESCAPE)(id<iTermMark>))modifier {
     iTermMark *mark = [[markClass alloc] init];
+    if (modifier) {
+        modifier(mark);
+    }
     return [self addMark:mark onLine:line singleLine:oneLine];
 }
 
@@ -2285,6 +2295,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                           onLine:absLine];
     }];
     [self setNeedsRedraw];
+    VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:mark];
+    if (screenMark.name) {
+        [self.namedMarks addObject:screenMark];
+        self.namedMarksDirty = YES;
+    }
     return mark;
 }
 
@@ -2296,6 +2311,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                             [self coordRangeForInterval:obj.entry.interval].end.y);
         [self.markCache remove:theKey];
         self.lastCommandMark = nil;
+        VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:obj];
+        if (screenMark.name) {
+            [self.namedMarks removeObjectsPassingTest:^BOOL(id<VT100ScreenMarkReading>  _Nullable anObject) {
+                return anObject == screenMark;
+            }];
+            self.namedMarksDirty = YES;
+        }
     }
     if ([obj isKindOfClass:[PTYAnnotation class]]) {
         [self.mutableIntervalTree mutateObject:obj block:^(id<IntervalTreeObject> _Nonnull mutableObj) {
@@ -2457,6 +2479,18 @@ void VT100ScreenEraseCell(screen_char_t *sct,
         }];
     }
     return newMark;
+}
+
+- (void)removeNamedMark:(VT100ScreenMark *)mark {
+    VT100GridAbsCoordRange range = [self absCoordRangeForInterval:mark.entry.interval];
+    [self.mutableIntervalTree removeObject:mark];
+    [self.namedMarks removeObjectsPassingTest:^BOOL(id<VT100ScreenMarkReading>  _Nullable anObject) {
+        return anObject == mark;
+    }];
+    self.namedMarksDirty = YES;
+    if (self.markCache[range.end.y] == mark) {
+        [self.markCache remove:range.end.y];
+    }
 }
 
 - (void)didUpdatePromptLocation {
@@ -4247,6 +4281,10 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
                 }
                 if ([screenMark.guid isEqualToString:guidOfLastCommandMark]) {
                     self.lastCommandMark = screenMark;
+                }
+                if (screenMark.name) {
+                    [self.namedMarks addObject:screenMark];
+                    self.namedMarksDirty = YES;
                 }
             } else if ([object isKindOfClass:[iTermCapturedOutputMark class]]) {
                 // This mark represents a line whose output was captured. Find the preceding command

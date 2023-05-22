@@ -819,6 +819,11 @@ typedef NS_ENUM(int, iTermShouldHaveTitleSeparator) {
                                                            selector:@selector(activeSpaceDidChange:)
                                                                name:NSWorkspaceActiveSpaceDidChangeNotification
                                                              object:nil];
+    [iTermNamedMarksDidChangeNotification subscribeWithOwner:self block:^(iTermNamedMarksDidChangeNotification * _Nonnull notif) {
+        if ([notif.sessionGuid isEqualToString:weakSelf.currentSession.guid]) {
+            [weakSelf refreshNamedMarks];
+        }
+    }];
     PtyLog(@"set window inited");
     self.windowInitialized = YES;
     useTransparency_ = [iTermProfilePreferences boolForKey:KEY_INITIAL_USE_TRANSPARENCY inProfile:profile];
@@ -2069,6 +2074,15 @@ ITERM_WEAKLY_REFERENCEABLE
 - (IBAction)saveScrollPosition:(id)sender
 {
     [[self currentSession] screenSaveScrollPosition];
+}
+
+- (IBAction)addNamedMark:(id)sender
+{
+    __weak PTYSession *session = self.currentSession;
+    [iTermBookmarkDialogViewController showInWindow:self.window
+                                     withCompletion:^(NSString * _Nonnull name) {
+        [session saveScrollPositionWithName:name];
+    }];
 }
 
 // Jump to the saved scroll position
@@ -3552,6 +3566,11 @@ ITERM_WEAKLY_REFERENCEABLE
     [[_contentView.toolbelt capturedOutputView] updateCapturedOutput];
     [[_contentView.toolbelt directoriesView] updateDirectories];
     [[_contentView.toolbelt jobsView] updateJobs];
+    [self refreshNamedMarks];
+}
+
+- (void)refreshNamedMarks {
+    [[_contentView.toolbelt namedMarksView] setNamedMarks:self.currentSession.screen.namedMarks];
 }
 
 - (int)numRunningSessions
@@ -11585,6 +11604,27 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
 
 - (NSArray<iTermCommandHistoryCommandUseMO *> *)toolbeltCommandUsesForCurrentSession {
     return [self.currentSession commandUses];
+}
+
+- (void)toolbeltAddNamedMark {
+    [self addNamedMark:nil];
+}
+
+- (void)toolbeltRemoveNamedMark:(id<VT100ScreenMarkReading>)mark {
+    [self.currentSession.screen removeNamedMark:mark];
+}
+
+- (void)toolbeltRenameNamedMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName {
+    __weak PTYSession *session = self.currentSession;
+    if (!newName) {
+        [iTermBookmarkDialogViewController showInWindow:self.window
+                                        withDefaultName:mark.name ?: @""
+                                             completion:^(NSString * _Nonnull name) {
+            [session renameMark:mark to:name];
+        }];
+    } else {
+        [session renameMark:mark to:newName];
+    }
 }
 
 #pragma mark - Quick Look panel support

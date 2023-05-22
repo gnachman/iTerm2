@@ -18,6 +18,7 @@
 @protocol VT100ScreenMarkReading;
 @protocol VT100RemoteHostReading;
 @class iTermCommandHistoryCommandUseMO;
+@class ToolNamedMarks;
 @class iTermToolWrapper;
 
 @protocol iTermToolbeltViewDelegate<NSObject>
@@ -38,6 +39,9 @@
 - (void)toolbeltApplyActionToCurrentSession:(iTermAction *)action;
 - (void)toolbeltOpenAdvancedPasteWithString:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
 - (void)toolbeltOpenComposerWithString:(NSString *)text escaping:(iTermSendTextEscaping)escaping;
+- (void)toolbeltAddNamedMark;
+- (void)toolbeltRemoveNamedMark:(id<VT100ScreenMarkReading>)mark;
+- (void)toolbeltRenameNamedMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName;
 
 @end
 
@@ -46,6 +50,7 @@
 @property(nonatomic, assign) id<iTermToolbeltViewDelegate> delegate;
 @property(nonatomic, readonly) BOOL haveOnlyOneTool;
 @property(nonatomic, readonly) ToolCommandHistoryView *commandHistoryView;
+@property(nonatomic, readonly) ToolNamedMarks *namedMarksView;
 
 - (void)hideToolbelt;
 - (void)toggleShowToolWithName:(NSString *)theName;
@@ -56,6 +61,7 @@
 - (CGFloat)minimumHeight;
 
 @optional
++ (BOOL)isDynamic;
 - (NSDictionary *)restorableState;
 - (void)restoreFromState:(NSDictionary *)state;
 - (instancetype)initWithFrame:(NSRect)frame URL:(NSURL *)url identifier:(NSString *)identifier;

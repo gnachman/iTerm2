@@ -25,6 +25,7 @@ static NSString *const kMarkLineStyleKey = @"Line Style";
 static NSString *const kMarkHasCode = @"Has Code";
 static NSString *const kMarkStartDateKey = @"Start Date";
 static NSString *const kMarkEndDateKey = @"End Date";
+static NSString *const kMarkNameKey = @"Name";
 static NSString *const kMarkSessionGuidKey = @"Session Guid";
 static NSString *const kMarkPromptRange = @"Prompt Range";
 static NSString *const kMarkPromptText = @"Prompt Text";
@@ -47,6 +48,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
 @synthesize hasCode = _hasCode;
 @synthesize command = _command;
 @synthesize startDate = _startDate;
+@synthesize name = _name;
 @synthesize endDate = _endDate;
 @synthesize sessionGuid = _sessionGuid;
 @synthesize promptRange = _promptRange;
@@ -125,6 +127,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
         if (end > 0) {
             _endDate = [NSDate dateWithTimeIntervalSinceReferenceDate:end];
         }
+        _name = [dict[kMarkNameKey] copy];
         NSMutableArray *array = [NSMutableArray array];
         _capturedOutput = array;
         for (NSDictionary *capturedOutputDict in dict[kMarkCapturedOutputKey]) {
@@ -180,6 +183,7 @@ static NSString *const kMarkOutputStart = @"Output Start";
     mark->_guid = [_guid copy];
     mark->_sessionGuid = [_sessionGuid copy];
     mark->_startDate = _startDate;
+    mark->_name = [_name copy];
     mark->_endDate = _endDate;
     mark->_capturedOutput = [[_capturedOutput mapWithBlock:^id(CapturedOutput *capturedOutput) {
         return [capturedOutput doppelganger];
@@ -202,10 +206,11 @@ static NSString *const kMarkOutputStart = @"Output Start";
 }
 
 - (NSString *)description {
-    return [NSString stringWithFormat:@"<%@: %p guid=%@ command=%@ %@>",
+    return [NSString stringWithFormat:@"<%@: %p guid=%@ name=%@ command=%@ %@>",
             NSStringFromClass([self class]),
             self,
             _guid,
+            _name,
             _command,
             self.isDoppelganger ? @"IsDop" : @"NotDop"];
 }
@@ -236,6 +241,9 @@ static NSString *const kMarkOutputStart = @"Output Start";
     dict[kMarkLineStyleKey] = @(_lineStyle);
     dict[kMarkCommandKey] = _command ?: [NSNull null];
     dict[kMarkStartDateKey] = @([self.startDate timeIntervalSinceReferenceDate]);
+    if (_name) {
+        dict[kMarkNameKey] = _name;
+    }
     dict[kMarkEndDateKey] = @([self.endDate timeIntervalSinceReferenceDate]);
     dict[kMarkSessionGuidKey] = self.sessionGuid ?: [NSNull null];
     dict[kMarkPromptRange] = [NSDictionary dictionaryWithGridAbsCoordRange:_promptRange];

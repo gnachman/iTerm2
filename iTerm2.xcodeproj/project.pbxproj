@@ -1473,6 +1473,9 @@
 		A6352253238CA23100FED5BC /* iTermOpenQuicklyItem.m in Sources */ = {isa = PBXBuildFile; fileRef = A69B45A819731B4900F5444D /* iTermOpenQuicklyItem.m */; };
 		A6352256238CA38A00FED5BC /* iTermMultiServerJobManager.h in Headers */ = {isa = PBXBuildFile; fileRef = A6352254238CA38A00FED5BC /* iTermMultiServerJobManager.h */; };
 		A6352257238CA38A00FED5BC /* iTermMultiServerJobManager.m in Sources */ = {isa = PBXBuildFile; fileRef = A6352255238CA38A00FED5BC /* iTermMultiServerJobManager.m */; };
+		A6354B942A1A8828002836A3 /* BookmarkDialogViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6354B932A1A8828002836A3 /* BookmarkDialogViewController.swift */; };
+		A6354B962A1B269A002836A3 /* ToolNamedMarks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6354B952A1B269A002836A3 /* ToolNamedMarks.swift */; };
+		A6354B982A1B27BF002836A3 /* NamedMarksDidChangeNotification.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6354B972A1B27BF002836A3 /* NamedMarksDidChangeNotification.swift */; };
 		A6358646184BEA57009ED690 /* AATree.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358642184BEA57009ED690 /* AATree.h */; };
 		A6358649184BEA57009ED690 /* AATreeNode.h in Headers */ = {isa = PBXBuildFile; fileRef = A6358644184BEA57009ED690 /* AATreeNode.h */; };
 		A635F1DC25075E8D008C3038 /* iTermShortcutsViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = A635F1DA25075E8D008C3038 /* iTermShortcutsViewController.h */; };
@@ -5759,6 +5762,9 @@
 		A635029B229B5F8B0042B779 /* YosemiteAddTab@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "YosemiteAddTab@2x.png"; path = "images/YosemiteAddTab@2x.png"; sourceTree = SOURCE_ROOT; };
 		A6352254238CA38A00FED5BC /* iTermMultiServerJobManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMultiServerJobManager.h; sourceTree = "<group>"; };
 		A6352255238CA38A00FED5BC /* iTermMultiServerJobManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermMultiServerJobManager.m; sourceTree = "<group>"; };
+		A6354B932A1A8828002836A3 /* BookmarkDialogViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarkDialogViewController.swift; sourceTree = "<group>"; };
+		A6354B952A1B269A002836A3 /* ToolNamedMarks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolNamedMarks.swift; sourceTree = "<group>"; };
+		A6354B972A1B27BF002836A3 /* NamedMarksDidChangeNotification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NamedMarksDidChangeNotification.swift; sourceTree = "<group>"; };
 		A6358642184BEA57009ED690 /* AATree.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATree.h; path = "objc-aatree-master/AATree.h"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358643184BEA57009ED690 /* AATree.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; name = AATree.m; path = "objc-aatree-master/AATree.m"; sourceTree = "<group>"; tabWidth = 4; };
 		A6358644184BEA57009ED690 /* AATreeNode.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; name = AATreeNode.h; path = "objc-aatree-master/AATreeNode.h"; sourceTree = "<group>"; tabWidth = 4; };
@@ -8766,6 +8772,7 @@
 				A618FFC02243E91900B8FD88 /* iTermToolActions.m */,
 				A6EC936924E7868D00EEADEF /* iTermToolSnippets.h */,
 				A6EC936A24E7868D00EEADEF /* iTermToolSnippets.m */,
+				A6354B952A1B269A002836A3 /* ToolNamedMarks.swift */,
 			);
 			name = Toolbelt;
 			sourceTree = "<group>";
@@ -10781,6 +10788,8 @@
 				A6E2B49229F9954F002737AD /* CommandParser.swift */,
 				A6E2B49429FA3DB4002737AD /* FileChecker.swift */,
 				A682CCC12A0EBD110099E762 /* SuggestionRequest.swift */,
+				A6354B932A1A8828002836A3 /* BookmarkDialogViewController.swift */,
+				A6354B972A1B27BF002836A3 /* NamedMarksDidChangeNotification.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -15323,6 +15332,7 @@
 				A6153D5121F30FF4002976FC /* iTermStatusBarJobComponent.m in Sources */,
 				537BFDDF2102B4060098C91F /* iTermPublisher.m in Sources */,
 				A61A85A224F1A70500B03880 /* iTermGlobalSearchWindowController.m in Sources */,
+				A6354B942A1A8828002836A3 /* BookmarkDialogViewController.swift in Sources */,
 				A691AACF2618DDCA0049B619 /* iTermSlownessDetector.m in Sources */,
 				A6916941281346A400083F99 /* ExclusiveSelectionTextView.swift in Sources */,
 				A6566750219EA46E005FE60E /* NSNumber+iTerm.m in Sources */,
@@ -15669,6 +15679,7 @@
 				A6BD5A722745D5710098594E /* NSTextView+iTerm.swift in Sources */,
 				A673A62B23A2096B00869A95 /* iTermNaggingController.m in Sources */,
 				A65429B920CE3C8A00CE71B1 /* SessionView.m in Sources */,
+				A6354B962A1B269A002836A3 /* ToolNamedMarks.swift in Sources */,
 				A62EEDA320E012DA00943DE3 /* iTermScriptExporter.m in Sources */,
 				A603831E294BBA9200FE11C2 /* iTermNSKeyBindingEmulator.m in Sources */,
 				A66719681DCE3772000CE608 /* iTermWebSocketConnection.m in Sources */,
@@ -15965,6 +15976,7 @@
 				A66319892312312600C502BD /* iTermRule.m in Sources */,
 				A6F718B12263CC3C0053488E /* ITAddressBookMgr.m in Sources */,
 				A675271E213DB6E800035F2B /* NSImageView+iTerm.m in Sources */,
+				A6354B982A1B27BF002836A3 /* NamedMarksDidChangeNotification.swift in Sources */,
 				A6A4867020B67A3B00493302 /* iTermSizeRememberingView.m in Sources */,
 				A66F52B22105ABCA00571168 /* iTermStatusBarAttributedTextComponent.m in Sources */,
 				A61ED2AE20E9FA230035BECD /* iTermStatusBarSearchFieldComponent.m in Sources */,

@@ -21,6 +21,7 @@
 #import "iTermIntervalTreeObserver.h"
 #import "iTermMark.h"
 #import "iTermTemporaryDoubleBufferedGridController.h"
+#import "iTermAtomicMutableArrayOfWeakObjects.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -188,6 +189,7 @@ extern NSString *const kScreenStateExfiltratedEnvironmentKey;
 @property (nonatomic, copy, readonly) id<VT100ScreenConfiguration> config;
 @property (nullable, nonatomic, strong, readonly) NSArray<iTermTuple<NSString *, NSString *> *> *exfiltratedEnvironment;
 @property (nonatomic, readonly) NSDictionary *promptStateDictionary;
+@property (nonatomic, readonly) iTermAtomicMutableArrayOfWeakObjects<id<VT100ScreenMarkReading>> *namedMarks;
 
 @end
 

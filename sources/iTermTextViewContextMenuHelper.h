@@ -147,6 +147,8 @@ runCommandInBackground:(NSString *)command;
 - (void)contextMenuHandleQuickLook:(iTermTextViewContextMenuHelper *)contextMenu
                                url:(NSURL *)url
                   windowCoordinate:(NSPoint)windowCoordinate;
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+    removeNamedMark:(id<VT100ScreenMarkReading>)mark;
 @end
 
 @interface iTermTextViewContextMenuHelper : NSObject<NSMenuDelegate>

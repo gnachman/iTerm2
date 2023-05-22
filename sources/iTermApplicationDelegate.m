@@ -207,6 +207,7 @@ static BOOL hasBecomeActive = NO;
     IBOutlet NSMenuItem *_enterFullScreenMenuItem;
     IBOutlet NSMenu *_iterm2Menu;
     IBOutlet NSMenuItem *_captureGPUFrameMenuItem;
+    IBOutlet NSMenuItem *_namedMarksMenuItem;
 
     // If set, skip performing launch actions.
     BOOL quiet_;
@@ -348,6 +349,7 @@ static BOOL hasBecomeActive = NO;
 
     [[iTermBuriedSessions sharedInstance] setMenus:[NSArray arrayWithObjects:_buriedSessions, _statusIconBuriedSessions, nil]];
     _triggers.submenu.delegate = self;
+    _namedMarksMenuItem.submenu.delegate = self;
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
@@ -2893,35 +2895,55 @@ void TurnOnDebugLoggingAutomatically(void) {
 #pragma mark - NSMenuDelegate
 
 - (void)menuNeedsUpdate:(NSMenu *)menu {
-    // Remove all tagged items. This includes the last separator and items for triggers.
-    while (_triggers.submenu.itemArray.lastObject.tag != 0) {
-        [_triggers.submenu removeItemAtIndex:_triggers.submenu.itemArray.count - 1];
-    }
+    if (menu == _triggers.submenu) {
+        // Remove all tagged items. This includes the last separator and items for triggers.
+        while (_triggers.submenu.itemArray.lastObject.tag != 0) {
+            [_triggers.submenu removeItemAtIndex:_triggers.submenu.itemArray.count - 1];
+        }
 
-    PTYSession *currentSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
-    if (!currentSession) {
-        return;
-    }
+        PTYSession *currentSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
+        if (!currentSession) {
+            return;
+        }
 
-    NSArray<iTermTuple<NSString *, NSNumber *> *> *triggers = [currentSession triggerTuples];
-    if (triggers.count) {
-        [_triggers.submenu addItem:[NSMenuItem separatorItem]];
-        _triggers.submenu.itemArray.lastObject.tag = 1;
+        NSArray<iTermTuple<NSString *, NSNumber *> *> *triggers = [currentSession triggerTuples];
+        if (triggers.count) {
+            [_triggers.submenu addItem:[NSMenuItem separatorItem]];
+            _triggers.submenu.itemArray.lastObject.tag = 1;
+        }
+        [triggers enumerateObjectsUsingBlock:^(iTermTuple<NSString *,NSNumber *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
+            [_triggers.submenu addItemWithTitle:tuple.firstObject
+                                         action:@selector(toggleTriggerEnabled:)
+                                  keyEquivalent:@""];
+            NSMenuItem *item = _triggers.submenu.itemArray.lastObject;
+            item.representedObject = @(idx);
+            item.tag = 1;
+            item.state = tuple.secondObject.boolValue ? NSControlStateValueOn : NSControlStateValueOff;
+            item.target = self;
+        }];
+    } else if (menu == _namedMarksMenuItem.submenu) {
+        [menu removeAllItems];
+
+        // Populate the submenu with dynamic menu items
+        NSArray<id<VT100ScreenMarkReading>> *namedMarks = [[[[[[iTermController sharedInstance] currentTerminal] currentSession] screen] namedMarks] sortedArrayUsingComparator:^NSComparisonResult(id<VT100ScreenMarkReading> lhs, id<VT100ScreenMarkReading> rhs) {
+            return [@(lhs.entry.interval.location) compare:@(rhs.entry.interval.location)];
+        }];
+        for (id<VT100ScreenMarkReading> mark in namedMarks) {
+            NSMenuItem *menuItem = [[NSMenuItem alloc] initWithTitle:mark.name ?: @"Unnamed Mark"
+                                                              action:@selector(navigateToNamedMark:)
+                                                       keyEquivalent:@""];
+            menuItem.representedObject = mark.guid;
+            [menu addItem:menuItem];
+        }
     }
-    [triggers enumerateObjectsUsingBlock:^(iTermTuple<NSString *,NSNumber *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
-        [_triggers.submenu addItemWithTitle:tuple.firstObject
-                                     action:@selector(toggleTriggerEnabled:)
-                              keyEquivalent:@""];
-        NSMenuItem *item = _triggers.submenu.itemArray.lastObject;
-        item.representedObject = @(idx);
-        item.tag = 1;
-        item.state = tuple.secondObject.boolValue ? NSControlStateValueOn : NSControlStateValueOff;
-        item.target = self;
-    }];
+}
+
+- (void)navigateToNamedMark:(NSMenuItem *)menuItem {
+    [[[[iTermController sharedInstance] currentTerminal] currentSession] scrollToMarkWithGUID:menuItem.representedObject ?: @""];
 }
 
 - (void)menuWillOpen:(NSMenu *)menu {
-    NSLog(@"menu will open");
+    DLog(@"menu will open");
 }
 
 - (void)toggleTriggerEnabled:(id)sender {

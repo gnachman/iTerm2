@@ -1510,6 +1510,11 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
                               point:windowPoint];
 }
 
+- (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
+    removeNamedMark:(id<VT100ScreenMarkReading>)mark {
+    [self.dataSource removeNamedMark:mark];
+}
+
 - (NSArray<NSString *> *)allowedQuickLookURLSchemes {
     return @[ @"http", @"https" ];
 }

@@ -838,6 +838,9 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)previousAnnotation;
 - (void)nextAnnotation;
 - (void)scrollToMark:(id<iTermMark>)mark;
+- (void)scrollToMarkWithGUID:(NSString *)guid;
+- (void)saveScrollPositionWithName:(NSString *)name;
+- (void)renameMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName;
 
 // Select this session and tab and bring window to foreground.
 - (void)reveal;

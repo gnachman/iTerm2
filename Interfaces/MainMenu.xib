@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21507" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21701" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21507"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21701"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="NSApplication">
@@ -708,6 +708,16 @@ DQ
                                         </menuItem>
                                     </items>
                                 </menu>
+                            </menuItem>
+                            <menuItem title="Set Named Mark" keyEquivalent="M" identifier="Set Named Mark" id="8d7-qE-wpn">
+                                <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                <connections>
+                                    <action selector="addNamedMark:" target="-1" id="Zg2-RM-lft"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Named Marks" id="bWZ-Rb-J4D">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Named Marks" id="ZSr-qC-BlG"/>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="1238">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
@@ -1638,6 +1648,7 @@ DQ
                 <outlet property="_enterFullScreenMenuItem" destination="914" id="pbn-Hb-GK3"/>
                 <outlet property="_installPythonRuntime" destination="0D0-tt-wlA" id="nad-Fp-mh8"/>
                 <outlet property="_iterm2Menu" destination="57" id="xrG-8D-NNQ"/>
+                <outlet property="_namedMarksMenuItem" destination="bWZ-Rb-J4D" id="M8H-RD-WYb"/>
                 <outlet property="_scriptsMenu" destination="CZD-7u-bch" id="2Q5-aI-74T"/>
                 <outlet property="_showTipOfTheDay" destination="ft3-BP-igZ" id="WZt-qp-iuC"/>
                 <outlet property="_splitHorizontally" destination="1289" id="Arv-ON-Put"/>

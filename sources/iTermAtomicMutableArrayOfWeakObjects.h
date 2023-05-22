@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface iTermAtomicMutableArrayOfWeakObjects<ObjectType>: NSObject
+@interface iTermAtomicMutableArrayOfWeakObjects<ObjectType>: NSObject<NSFastEnumeration>
 @property (atomic, readonly) NSArray<ObjectType> *strongObjects;
 @property (atomic, readonly) NSUInteger count;
 
@@ -19,6 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)removeAllObjects;
 - (void)addObject:(ObjectType)object;
 - (void)prune;
+- (iTermAtomicMutableArrayOfWeakObjects *)compactMap:(id (^)(ObjectType value))block;
+
 @end
 
 NS_ASSUME_NONNULL_END

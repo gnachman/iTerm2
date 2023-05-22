@@ -9,6 +9,7 @@
 @class ToolCommandHistoryView;
 @class ToolDirectoriesView;
 @class ToolJobs;
+@class ToolNamedMarks;
 @class ToolbeltSplitView;
 
 extern NSString *const kActionsToolName;

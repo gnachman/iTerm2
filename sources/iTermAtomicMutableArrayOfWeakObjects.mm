@@ -107,5 +107,20 @@ static void iTermAtomicMutableArrayOfWeakObjectsLockUnlock(void) {
     }];
 }
 
+- (iTermAtomicMutableArrayOfWeakObjects *)compactMap:(id (^)(id))block {
+    iTermAtomicMutableArrayOfWeakObjects *result = [[iTermAtomicMutableArrayOfWeakObjects alloc] init];
+    for (id object in [self strongObjects]) {
+        id mapped = block(object);
+        if (mapped) {
+            [result addObject:mapped];
+        }
+    }
+    return result;
+}
+
+- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id __unsafe_unretained _Nullable *)buffer count:(NSUInteger)len {
+    return [self.strongObjects countByEnumeratingWithState:state objects:buffer count:len];
+}
+
 @end
 

@@ -25,6 +25,7 @@
 #import "iTermMetadata.h"
 #import "iTermMetalDisabling.h"
 #import "iTermMiniSearchFieldViewController.h"
+#import "iTermNotificationCenter.h"
 #import "iTermObject.h"
 #import "iTermOrderEnforcer.h"
 #import "iTermPreferences.h"

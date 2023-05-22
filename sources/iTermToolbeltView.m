@@ -1,6 +1,7 @@
 #import "iTermToolbeltView.h"
 
 #import "FutureMethods.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermApplication.h"
 #import "iTermApplicationDelegate.h"
@@ -36,6 +37,7 @@ NSString *const kNotesToolName = @"Notes";
 NSString *const kPasteHistoryToolName = @"Paste History";
 NSString *const kProfilesToolName = @"Profiles";
 NSString *const kSnippetsToolName = @"Snippets";
+NSString *const kNamedMarksToolName = @"Named Marks";
 
 NSString *const kToolbeltShouldHide = @"kToolbeltShouldHide";
 
@@ -78,6 +80,7 @@ static NSString *const kDynamicToolURL = @"URL";
     [iTermToolbeltView registerToolWithName:kActionsToolName withClass:[iTermToolActions class]];
     [iTermToolbeltView registerToolWithName:kCapturedOutputToolName withClass:[ToolCapturedOutputView class]];
     [iTermToolbeltView registerToolWithName:kCommandHistoryToolName withClass:[ToolCommandHistoryView class]];
+    [iTermToolbeltView registerToolWithName:kNamedMarksToolName withClass:[ToolNamedMarks class]];
     [iTermToolbeltView registerToolWithName:kRecentDirectoriesToolName withClass:[ToolDirectoriesView class]];
     [iTermToolbeltView registerToolWithName:kJobsToolName withClass:[ToolJobs class]];
     [iTermToolbeltView registerToolWithName:kNotesToolName withClass:[ToolNotes class]];
@@ -495,7 +498,8 @@ static NSString *const kDynamicToolURL = @"URL";
                                   0,
                                   wrapper.container.frame.size.width,
                                   wrapper.container.frame.size.height);
-        if ([c instancesRespondToSelector:@selector(initWithFrame:URL:identifier:)]) {
+        ;
+        if ([self classIsDynamic:c]) {
             NSDictionary *registry = [[NSUserDefaults standardUserDefaults] objectForKey:kDynamicToolsKey];
             NSString *identifier = [registry.allKeys objectPassingTest:^BOOL(NSString *key, NSUInteger index, BOOL *stop) {
                 NSDictionary *dict = registry[key];
@@ -513,6 +517,16 @@ static NSString *const kDynamicToolURL = @"URL";
             [self addTool:theTool toWrapper:wrapper];
         }
     }
+}
+
+- (BOOL)classIsDynamic:(Class)c {
+    if (![c instancesRespondToSelector:@selector(initWithFrame:URL:identifier:)]) {
+        return NO;
+    }
+    if ([c respondsToSelector:@selector(isDynamic)]) {
+        return [c isDynamic];
+    }
+    return YES;
 }
 
 - (void)relayoutAllTools {
@@ -567,6 +581,11 @@ static NSString *const kDynamicToolURL = @"URL";
 - (ToolCommandHistoryView *)commandHistoryView {
     iTermToolWrapper *wrapper = [_tools objectForKey:kCommandHistoryToolName];
     return (ToolCommandHistoryView *)wrapper.tool;
+}
+
+- (ToolNamedMarks *)namedMarksView {
+    iTermToolWrapper *wrapper = _tools[kNamedMarksToolName];
+    return (ToolNamedMarks *)wrapper.tool;
 }
 
 #pragma mark - NSSplitViewDelegate

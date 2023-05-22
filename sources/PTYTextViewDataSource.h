@@ -110,6 +110,7 @@
 - (VT100GridCoordRange)coordRangeOfAnnotation:(id<IntervalTreeImmutableObject>)note;
 - (NSArray *)charactersWithNotesOnLine:(int)line;
 - (id<VT100ScreenMarkReading>)markOnLine:(int)line;
+- (void)removeNamedMark:(id<VT100ScreenMarkReading>)mark;
 
 - (NSString *)workingDirectoryOnLine:(int)line;
 

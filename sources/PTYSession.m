@@ -7764,6 +7764,13 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }
 }
 
+- (void)scrollToMarkWithGUID:(NSString *)guid {
+    id<VT100ScreenMarkReading> mark = [_screen namedMarkWithGUID:guid];
+    if (mark) {
+        [self scrollToMark:mark];
+    }
+}
+
 - (void)setCurrentHost:(id<VT100RemoteHostReading>)remoteHost {
     [_currentHost autorelease];
     _currentHost = [remoteHost retain];
@@ -8363,9 +8370,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)screenSync:(VT100ScreenMutableState *)mutableState {
-    [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
-                 resetOverflow:NO
-                  mutableState:mutableState];
+    const VT100SyncResult result = [self syncCheckingTriggers:VT100ScreenTriggerCheckTypeNone
+                                                resetOverflow:NO
+                                                 mutableState:mutableState];
+    if (result.namedMarksChanged) {
+        [[[[iTermNamedMarksDidChangeNotification alloc] initWithSessionGuid:self.guid] autorelease] post];
+    }
 }
 
 - (void)screenSyncExpect:(VT100ScreenMutableState *)mutableState {
@@ -8398,6 +8408,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                               resetOverflow:resetOverflow
                                mutableState:mutableState];
     }];
+    if (result.namedMarksChanged) {
+        [[[[iTermNamedMarksDidChangeNotification alloc] initWithSessionGuid:self.guid] autorelease] post];
+    }
     return result;
 }
 
@@ -12192,7 +12205,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 
 // Save the current scroll position
 - (void)screenSaveScrollPosition {
-    DLog(@"Session %@ calling refresh", self);
+    [self saveScrollPositionWithName:nil];
     [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [_textview refresh];  // Handle scrollback overflow so we have the most recent scroll position
         id<iTermMark> mark = [mutableState addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
@@ -12202,6 +12215,38 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     }];
 }
 
+- (void)saveScrollPositionWithName:(NSString *)name {
+    DLog(@"saveScrollPositionWithName:%@", name);
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        [_textview refresh];  // Handle scrollback overflow so we have the most recent scroll position
+        id<iTermMark> mark = [mutableState addMarkStartingAtAbsoluteLine:[_textview absoluteScrollPosition]
+                                                                 oneLine:NO
+                                                                 ofClass:[VT100ScreenMark class]
+                                                                modifier:^(id<iTermMark> mark) {
+            VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:mark];
+            screenMark.name = name;
+        }];
+        self.currentMarkOrNotePosition = mark.doppelganger.entry.interval;
+    }];
+}
+
+- (void)renameMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName {
+    [_screen performBlockWithJoinedThreads:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
+        VT100ScreenMark *screenMark = (VT100ScreenMark *)[mark progenitor];
+        if (!screenMark.entry.interval || !screenMark.name) {
+            return;
+        }
+        const VT100GridAbsCoordRange range = [mutableState absCoordRangeForInterval:screenMark.entry.interval];
+        [mutableState removeNamedMark:screenMark];
+        [mutableState addMarkStartingAtAbsoluteLine:range.start.y
+                                            oneLine:NO
+                                            ofClass:[VT100ScreenMark class]
+                                           modifier:^(id<iTermMark> mark) {
+            VT100ScreenMark *screenMark = [VT100ScreenMark castFrom:mark];
+            screenMark.name = newName;
+        }];
+    }];
+}
 - (void)screenStealFocus {
     // Dispatch because you can't have a runloop in a side-effect.
     dispatch_async(dispatch_get_main_queue(), ^{

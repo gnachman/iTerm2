@@ -53,6 +53,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, readonly) iTermPromise<NSNumber *> *returnCodePromise;
 @property(nonatomic, readonly) BOOL promptDetectedByTrigger;
 @property(nonatomic, readonly) BOOL lineStyle;
+@property(nonatomic, readonly, copy, nullable) NSString *name;
 
 - (id<VT100ScreenMarkReading>)progenitor;
 - (id<VT100ScreenMarkReading>)doppelganger;
@@ -81,6 +82,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 // The session this mark belongs to.
 @property(nonatomic, strong, readwrite) NSString *sessionGuid;
+
+@property(nonatomic, copy, readwrite, nullable) NSString *name;
 
 @property(nonatomic, readwrite) VT100GridAbsCoordRange promptRange;
 @property(nonatomic, copy, nullable) NSArray<ScreenCharArray *> *promptText;

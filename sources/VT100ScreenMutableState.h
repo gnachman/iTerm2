@@ -174,6 +174,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                                        oneLine:(BOOL)oneLine
                                        ofClass:(Class)markClass;
 
+- (id<iTermMark>)addMarkStartingAtAbsoluteLine:(long long)line
+                                       oneLine:(BOOL)oneLine
+                                       ofClass:(Class)markClass
+                                      modifier:(void (^ NS_NOESCAPE _Nullable)(id<iTermMark>))modifier;
+
 // Returns nil if it was not accepted, otherwise it returns `mark`.
 - (id<iTermMark>)addMark:(iTermMark *)mark
                   onLine:(long long)line
@@ -200,10 +205,13 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 
 #pragma mark Marks
 
+@property (nonatomic) BOOL namedMarksDirty;
+
 // This is like addMarkStartingAtAbsoluteLine:oneLine:ofClass: but it notifies the delegate of a new mark.
 - (id<iTermMark>)addMarkOnLine:(int)line ofClass:(Class)markClass;
 - (void)saveCursorLine;
 - (void)reloadMarkCache;
+- (void)removeNamedMark:(VT100ScreenMark *)mark;
 
 #pragma mark Prompt
 
