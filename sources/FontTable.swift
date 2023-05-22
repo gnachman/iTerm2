@@ -244,6 +244,16 @@ class FontTable: NSObject {
     private init(defaultFont: PTYFontInfo,
                  nonAsciiFont: PTYFontInfo?,
                  config tuple: (String, Config)?) {
+        defaultFont.boldVersion = defaultFont.computedBoldVersion()
+        defaultFont.italicVersion = defaultFont.computedItalicVersion()
+        defaultFont.boldItalicVersion = defaultFont.computedBoldItalicVersion()
+
+        if let nonAsciiFont {
+            nonAsciiFont.boldVersion = nonAsciiFont.computedBoldVersion()
+            nonAsciiFont.italicVersion = nonAsciiFont.computedItalicVersion()
+            nonAsciiFont.boldItalicVersion = nonAsciiFont.computedBoldItalicVersion()
+        }
+
         if let tuple {
             configString = tuple.0
             config = tuple.1
