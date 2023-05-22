@@ -333,6 +333,9 @@ NS_ASSUME_NONNULL_BEGIN
     // Initialize a new session
     aSession = [[PTYSession alloc] initSynthetic:NO];
 
+    if ([[NSNumber castFrom:profile[KEY_SHORT_LIVED_SINGLE_USE]] boolValue]) {
+        aSession.shortLivedSingleUse = YES;
+    }
     // set our preferences
     [aSession setProfile:profile];
     if (parent) {

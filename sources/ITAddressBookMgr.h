@@ -284,6 +284,14 @@
 // window should not use auto-saved frames (see -loadAutoSave). Takes a boolean.
 #define KEY_DISABLE_AUTO_FRAME               @"Disable Auto Frame"
 
+// This is not a real setting. It's used to make a session short-lived single use, such as when
+// showing a man url. It takes a NSNumber boolean.
+#define KEY_SHORT_LIVED_SINGLE_USE           @"Short-Lived Single Use"
+
+// This is not a real setting. It's used to keep the session scrolled to the top until the user
+// moves it to the bottom. This is useful for showing man pages. It's a NSNumber boolean.
+#define KEY_LOCK_SCROLL_ON_LAUNCH            @"Lock Scroll on Launch"
+
 @class iTermVariableScope;
 
 // Posted when a session's unicode version changes.

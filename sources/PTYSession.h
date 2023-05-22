@@ -739,6 +739,7 @@ backgroundColor:(NSColor *)backgroundColor;
 // of this session based on rows/cols, and taking into account the presence of
 // a scrollbar.
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle;
+- (void)lockScroll;
 
 // Update the scrollbar's visibility and style. Returns YES if a change was made.
 // This is the one and only way that scrollbars should be changed after initialization. It ensures

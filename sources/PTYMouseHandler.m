@@ -1324,6 +1324,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"Not in alt screen");
         return NO;
     }
+    if (![self.mouseDelegate mouseHandlerCanWriteToTTY:self]) {
+        DLog(@"TTY is not writable");
+        return NO;
+    }
     if ([self shouldReportMouseEvent:event at:point] &&
         [self.mouseDelegate mouseHandlerMouseMode:self] != MOUSE_REPORTING_NONE) {
         // Prefer to report the scroll than to send arrow keys in this mouse reporting mode.

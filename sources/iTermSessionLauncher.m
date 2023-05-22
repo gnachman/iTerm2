@@ -13,6 +13,7 @@
 #import "iTermController.h"
 #import "iTermSessionFactory.h"
 #import "iTermWarning.h"
+#import "NSArray+iTerm.h"
 #import "NSDictionary+iTerm.h"
 #import "ProfileModel.h"
 #import "PTYSession.h"
@@ -231,6 +232,11 @@
     [windowController addSessionInNewTab:session];
     __weak __typeof(self) weakSelf = self;
 
+    if ([[NSNumber castFrom:profile[KEY_LOCK_SCROLL_ON_LAUNCH]] boolValue]) {
+        // This is the earliest we can do this because the session needs to have a view for it to work.
+        [session lockScroll];
+    }
+
     iTermSessionAttachOrLaunchRequest *launchRequest =
     [iTermSessionAttachOrLaunchRequest launchRequestWithSession:session
                                                       canPrompt:YES
@@ -282,11 +288,10 @@
         modifiedToOpenURL:(NSString *)url
             forObjectType:(iTermObjectType)objectType {
     const BOOL custom = [aDict[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeCustomValue];
-    const BOOL ssh = [aDict[KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue];
     if (aDict == nil ||
         [[ITAddressBookMgr bookmarkCommandSwiftyString:aDict
                                          forObjectType:objectType] isEqualToString:@"$$"] ||
-        (!custom && !ssh)) {
+        !custom) {
         Profile *prototype = aDict;
         if (!prototype) {
             prototype = [[iTermController sharedInstance] defaultBookmark];
@@ -301,6 +306,8 @@
             return [self profileByModifyingProfile:prototype toFtpTo:url];
         } else if ([urlType compare:@"telnet" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
             return [self profileByModifyingProfile:prototype toTelnetTo:urlRep];
+        } else if ([urlType compare:@"x-man-page" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+            return [self profileByModifyingProfile:prototype toShowManPage:urlRep];
         } else if (!aDict) {
             return [prototype copy];
         } else {
@@ -335,6 +342,44 @@
         return nil;
     }
     return [hostname stringWithEscapedShellCharactersIncludingNewlines:YES];
+}
+
+- (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toShowManPage:(NSURL *)url {
+    DLog(@"Modify profile to show man page for url %@", url);
+    // https://github.com/ouspg/urlhandlers/blob/master/cases/x-man-page.md
+    // host = section, path = page         -> login -pfq fenris /usr/bin/man -P ul -S mysection mypage
+    // host = section, path = page; type=a -> login -pfq fenris /usr/bin/man -P cat -k -S mysection pattern
+    NSArray<NSString *> *parts = [url.path componentsSeparatedByString:@";"];
+    NSString *command = nil;
+    if ([parts.lastObject isEqualToString:@"type=a"]) {
+        // x-man-page:///<query>;type=a
+        // Apropos
+        command = [NSString stringWithFormat:@"login -pfq %@ /usr/bin/man -P cat -k %@",
+                   NSUserName(),
+                   [parts[0] stringByRemovingPrefix:@"/"]];
+    } else {
+        if (url.host.length) {
+            // x-man-page://<section>/<command>
+            command = [NSString stringWithFormat:@"login -pfq %@ /usr/bin/man -P ul -S %@ %@",
+                       NSUserName(),
+                       url.host,
+                       url.path];
+        } else {
+            // x-man-page:///<command>
+            command = [NSString stringWithFormat:@"login -pfq %@ /usr/bin/man -P ul %@",
+                       NSUserName(),
+                       url.path];
+        }
+    }
+    return [prototype dictionaryByMergingDictionary:@{ KEY_COMMAND_LINE: command,
+                                                       KEY_CUSTOM_COMMAND: kProfilePreferenceCommandTypeCustomValue,
+                                                       KEY_SESSION_END_ACTION: @(iTermSessionEndActionDefault),
+                                                       KEY_INITIAL_TEXT: @"",
+                                                       KEY_SHORT_LIVED_SINGLE_USE: @YES,
+                                                       KEY_LOCK_SCROLL_ON_LAUNCH: @YES,
+                                                       KEY_UNLIMITED_SCROLLBACK: @YES,
+                                                       KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS: @YES
+                                                    }];
 }
 
 - (Profile *)profileByModifyingProfile:(NSDictionary *)prototype toSshTo:(NSURL *)url {

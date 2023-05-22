@@ -3635,6 +3635,11 @@ ITERM_WEAKLY_REFERENCEABLE
     DLog(@"  replaceTerminatedShellWithNewInstance: return with terminalEnabled=%@", @(_screen.terminalEnabled));
 }
 
+- (void)lockScroll {
+    PTYScroller *scroller = [PTYScroller castFrom:self.view.scrollview.verticalScroller];
+    scroller.userScroll = YES;
+}
+
 - (NSSize)idealScrollViewSizeWithStyle:(NSScrollerStyle)scrollerStyle {
     NSSize innerSize = NSMakeSize([_screen width] * [_textview charWidth] + [iTermPreferences intForKey:kPreferenceKeySideMargins] * 2,
                                   [_screen height] * [_textview lineHeight] + [iTermPreferences intForKey:kPreferenceKeyTopBottomMargins] * 2);
@@ -9306,14 +9311,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 }
 
 - (void)regularKeyDown:(NSEvent *)event {
-    if (_exited) {
-        DLog(@"Terminal already dead");
-        return;
-    }
-
     DLog(@"PTYSession keyDown not short-circuted by special handler");
-
     const NSEventModifierFlags mask = (NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagShift | NSEventModifierFlagControl);
+
     if (!_screen.terminalSoftAlternateScreenMode &&
         (event.modifierFlags & mask) == 0 &&
         [iTermProfilePreferences boolForKey:KEY_MOVEMENT_KEYS_SCROLL_OUTSIDE_INTERACTIVE_APPS inProfile:self.profile]) {
@@ -9338,10 +9338,31 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
                 return;
 
+            case kVK_UpArrow:
+                if (!_exited) {
+                    break;
+                }
+                [_textview scrollLineUp:nil];
+                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+                break;
+
+            case kVK_DownArrow:
+                if (!_exited) {
+                    break;
+                }
+                [_textview scrollLineDown:nil];
+                [(PTYScrollView *)[_textview enclosingScrollView] detectUserScroll];
+
             default:
                 break;
         }
     }
+
+    if (_exited) {
+        DLog(@"Terminal already dead");
+        return;
+    }
+
     NSData *const dataToSend = [_keyMapper keyMapperDataForPostCocoaEvent:event];
     DLog(@"dataToSend=%@", dataToSend);
     if (dataToSend) {
