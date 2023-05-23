@@ -33,11 +33,14 @@ static CGFloat TransferrableFileMenuItemViewRightMargin(void) {
 @property(nonatomic, assign) BOOL drawPending;
 @end
 
-@implementation TransferrableFileMenuItemView
+@implementation TransferrableFileMenuItemView {
+    __weak NSVisualEffectView *_effectView;
+}
 
-- (instancetype)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect effectView:(NSVisualEffectView *)effectView {
     self = [super initWithFrame:frameRect];
     if (self) {
+        _effectView = effectView;
         _progressIndicator = [[iTermProgressIndicator alloc] initWithFrame:NSMakeRect(TransferrableFileMenuItemViewLeftMargin(),
                                                                                       17,
                                                                                       frameRect.size.width - TransferrableFileMenuItemViewLeftMargin() - TransferrableFileMenuItemViewRightMargin(),
@@ -83,26 +86,21 @@ static CGFloat TransferrableFileMenuItemViewRightMargin(void) {
 
     [self sanityCheckSiblings];
     self.drawPending = NO;
-    BOOL drawBackground = YES;
+
     if ([[self enclosingMenuItem] isHighlighted]) {
         self.lastDrawnHighlighted = YES;
         [[NSColor selectedMenuItemColor] set];
         textColor = [NSColor selectedMenuItemTextColor];
         grayColor = [NSColor alternateSelectedControlTextColor];
+        _effectView.state = NSVisualEffectStateActive;
+        _effectView.hidden = NO;
     } else {
         self.lastDrawnHighlighted = NO;
-        if (@available(macOS 10.15, *)) {
-            textColor = [NSColor textColor];
-            grayColor = [[NSColor textColor] colorWithAlphaComponent:0.8];
-            [[NSColor clearColor] set];
-        } else {
-            textColor = [NSColor textColor];
-            grayColor = [[NSColor textColor] colorWithAlphaComponent:0.8];
-            drawBackground = NO;
-        }
-    }
-    if (drawBackground) {
-        NSRectFill(dirtyRect);
+        textColor = [NSColor textColor];
+        grayColor = [[NSColor textColor] colorWithAlphaComponent:0.8];
+        [[NSColor clearColor] set];
+        _effectView.state = NSVisualEffectStateInactive;
+        _effectView.hidden = YES;
     }
 
     NSMutableParagraphStyle *leftAlignStyle =
@@ -140,9 +138,9 @@ static CGFloat TransferrableFileMenuItemViewRightMargin(void) {
 
     [textColor set];
 
-    CGFloat topMargin = 1;
+    CGFloat topMargin = 3;
     CGFloat topY = self.bounds.size.height - textHeight - topMargin;
-    CGFloat bottomY = 1;
+    CGFloat bottomY = 3;
 
     // Draw file name
     NSRect filenameRect = NSMakeRect(TransferrableFileMenuItemViewLeftMargin(),

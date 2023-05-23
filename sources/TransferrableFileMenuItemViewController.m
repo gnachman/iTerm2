@@ -11,37 +11,50 @@
 #import "TransferrableFileMenuItemView.h"
 
 static const CGFloat kWidth = 300;
-static const CGFloat kHeight = 59;
+static const CGFloat kHeight = 63;
 static const CGFloat kCollapsedHeight = 51;
 
 @implementation TransferrableFileMenuItemViewController {
     BOOL _hasOpenedMenu;
+    NSVisualEffectView *_effectView;
+    TransferrableFileMenuItemView *_contentView;
 }
 
 - (instancetype)initWithTransferrableFile:(TransferrableFile *)transferrableFile {
     self = [super init];
     if (self) {
-        _transferrableFile = [transferrableFile retain];
-        [self view];
+        _transferrableFile = transferrableFile;
+        _effectView = [[NSVisualEffectView alloc] initWithFrame:NSMakeRect(5,
+                                                                           0,
+                                                                           kWidth - 10,
+                                                                           kHeight)];
+        _effectView.material = NSVisualEffectMaterialSelection;
+        _effectView.wantsLayer = YES;
+        _effectView.autoresizingMask = NSViewWidthSizable;
+        _effectView.blendingMode = NSVisualEffectBlendingModeBehindWindow;
+        _effectView.emphasized = YES;
+        _effectView.layer.cornerRadius = 4;
+        _effectView.layer.masksToBounds = YES;
+        _effectView.state = NSVisualEffectStateActive;
+        _effectView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        self.view.autoresizesSubviews = YES;
+        [self.view addSubview:_effectView];
+        _contentView = [[TransferrableFileMenuItemView alloc] initWithFrame:NSMakeRect(0,
+                                                                                       0,
+                                                                                       kWidth,
+                                                                                       kHeight)
+                                                                 effectView:_effectView];
+        _contentView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
+        [self.view addSubview:_contentView];
     }
     return self;
 }
 
 - (void)loadView {
-    self.view = [[[TransferrableFileMenuItemView alloc] initWithFrame:NSMakeRect(0,
-                                                                                 0,
-                                                                                 kWidth,
-                                                                                 kHeight)] autorelease];
-}
-
-- (void)dealloc {
-    [_transferrableFile release];
-    [_stopSubItem release];
-    [_showInFinderSubItem release];
-    [_removeFromListSubItem release];
-    [_openSubItem release];
-
-    [super dealloc];
+    self.view = [[NSView alloc] initWithFrame:NSMakeRect(0,
+                                                         0,
+                                                         kWidth,
+                                                         kHeight)];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem {
@@ -86,7 +99,7 @@ static const CGFloat kCollapsedHeight = 51;
 }
 
 - (void)update {
-    TransferrableFileMenuItemView *view = (TransferrableFileMenuItemView *)[self view];
+    TransferrableFileMenuItemView *view = _contentView;
     view.filename = [_transferrableFile shortName];
     view.subheading = [_transferrableFile subheading];
     double fileSize = [_transferrableFile fileSize];
@@ -141,15 +154,13 @@ static const CGFloat kCollapsedHeight = 51;
 }
 
 - (void)collapse {
-    TransferrableFileMenuItemView *view = (TransferrableFileMenuItemView *)[self view];
-    [view.progressIndicator setHidden:YES];
-    view.frame = NSMakeRect(0, 0, view.frame.size.width, kCollapsedHeight);
+    [_contentView.progressIndicator setHidden:YES];
+    self.view.frame = NSMakeRect(0, 0, self.view.frame.size.width, kCollapsedHeight);
 }
 
 - (void)expand {
-    TransferrableFileMenuItemView *view = (TransferrableFileMenuItemView *)[self view];
-    [view.progressIndicator setHidden:NO];
-    view.frame = NSMakeRect(0, 0, view.frame.size.width, kHeight);
+    [_contentView.progressIndicator setHidden:NO];
+    self.view.frame = NSMakeRect(0, 0, self.view.frame.size.width, kHeight);
 }
 
 - (void)itemSelected:(id)sender {
@@ -207,7 +218,7 @@ static const CGFloat kCollapsedHeight = 51;
                       [_transferrableFile displayName],
                       [self stringForStatus:_transferrableFile.status],
                       extra];
-    NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+    NSAlert *alert = [[NSAlert alloc] init];
     alert.messageText = @"File Transfer Summary";
     alert.informativeText = text;
     [alert layout];

@@ -19,4 +19,8 @@
 @property(nonatomic, retain) iTermProgressIndicator *progressIndicator;
 @property(nonatomic, assign) BOOL lastDrawnHighlighted;
 
+- (instancetype)initWithFrame:(NSRect)frame effectView:(NSVisualEffectView *)effectView NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithFrame:(NSRect)frameRect NS_UNAVAILABLE;
+- (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
+
 @end
