@@ -4736,7 +4736,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     } else {
         color = [self.colorMap colorForKey:key];
         if (isFaint) {
-            color = [color colorWithAlphaComponent:0.5];
+            color = [color colorWithAlphaComponent:self.colorMap.faintTextAlpha];
         }
     }
     return color;

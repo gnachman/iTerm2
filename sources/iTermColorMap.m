@@ -78,6 +78,7 @@ const int kColorMapAnsiBrightModifier = 8;
     if (self) {
         _map = [[NSMutableDictionary alloc] init];
         _fastMap = [[NSMutableDictionary alloc] init];
+        _faintTextAlpha = 0.5;
     }
     return self;
 }
@@ -567,7 +568,8 @@ const int kColorMapAnsiBrightModifier = 8;
     other->_fastMap = [_fastMap mutableCopy];
     other->_useSeparateColorsForLightAndDarkMode = _useSeparateColorsForLightAndDarkMode;
     other->_darkMode = _darkMode;
-    
+    other->_faintTextAlpha = _faintTextAlpha;
+
     return other;
 }
 
@@ -702,6 +704,7 @@ const int kColorMapAnsiBrightModifier = 8;
 
 @dynamic dimOnlyText;
 @dynamic dimmingAmount;
+@dynamic faintTextAlpha;
 @dynamic mutingAmount;
 @dynamic minimumContrast;
 @dynamic useSeparateColorsForLightAndDarkMode;

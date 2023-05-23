@@ -83,6 +83,8 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
     IBOutlet NSButton *_useSmartCursorColor;
 
     IBOutlet NSSlider *_minimumContrast;
+    IBOutlet NSTextField *_faintTextAlphaLabel;
+    IBOutlet NSSlider *_faintTextAlpha;
     IBOutlet NSSlider *_cursorBoost;
     IBOutlet NSTextField *_minimumContrastLabel;
     IBOutlet NSTextField *_cursorBoostLabel;
@@ -238,6 +240,11 @@ static NSString * const kColorGalleryURL = @"https://www.iterm2.com/colorgallery
                    relatedView:_minimumContrastLabel
                           type:kPreferenceInfoTypeSlider];
     info.observer = ^() { [weakSelf maybeWarnAboutExcessiveContrast]; };
+
+    [self defineControl:_faintTextAlpha
+                    key:KEY_FAINT_TEXT_ALPHA
+            relatedView:_faintTextAlphaLabel
+                   type:kPreferenceInfoTypeSlider];
 
     [self defineControl:_cursorBoost
                     key:KEY_CURSOR_BOOST

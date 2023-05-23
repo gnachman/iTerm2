@@ -13289,6 +13289,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
              iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, self.profile, darkMode));
         _config.minimumContrast = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_MINIMUM_CONTRAST, self.profile, darkMode)
                                                              inProfile:self.profile];
+        _config.faintTextAlpha = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_FAINT_TEXT_ALPHA, self.profile, darkMode)
+                                                            inProfile:self.profile];
         _config.mutingAmount = [iTermProfilePreferences floatForKey:iTermAmendedColorKey(KEY_CURSOR_BOOST, self.profile, darkMode)
                                                           inProfile:self.profile];
         _config.normalization = [iTermProfilePreferences integerForKey:KEY_UNICODE_NORMALIZATION

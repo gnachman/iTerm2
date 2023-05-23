@@ -376,6 +376,7 @@ static _Atomic int gPerformingJoinedBlock;
             @"darkMode",
             @"useSeparateColorsForLightAndDarkMode",
             @"minimumContrast",
+            @"faintTextAlpha",
             @"mutingAmount",
             @"dimmingAmount"
         ]];
@@ -386,10 +387,11 @@ static _Atomic int gPerformingJoinedBlock;
             colorMap.dimOnlyText = config.dimOnlyText;
             colorMap.darkMode = config.darkMode;
             colorMap.useSeparateColorsForLightAndDarkMode = config.useSeparateColorsForLightAndDarkMode;
-            DLog(@"mutable state setting min contrast of colormap=%p to %f", colorMap, config.minimumContrast);
+            DLog(@"mutable state setting min contrast of colormap=%p to %f, faint=%f", colorMap, config.minimumContrast, config.faintTextAlpha);
             colorMap.minimumContrast = config.minimumContrast;
             colorMap.mutingAmount = config.mutingAmount;
             colorMap.dimmingAmount = config.dimmingAmount;
+            colorMap.faintTextAlpha = config.faintTextAlpha;
         }];
     }
     if (config.maxScrollbackLines != self.maxScrollbackLines) {

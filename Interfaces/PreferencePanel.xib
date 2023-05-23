@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21507" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21701" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21507"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21701"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -1366,6 +1366,8 @@ DQ
                 <outlet property="_cursorColorLabel" destination="2283" id="wkr-Fv-k2e"/>
                 <outlet property="_cursorTextColor" destination="2278" id="aw0-Y7-lPM"/>
                 <outlet property="_cursorTextColorLabel" destination="2279" id="1Nj-oR-Nwa"/>
+                <outlet property="_faintTextAlpha" destination="mOt-Fp-WpW" id="Qj5-1H-aJe"/>
+                <outlet property="_faintTextAlphaLabel" destination="aEH-8h-TQm" id="0vZ-a4-rrS"/>
                 <outlet property="_foregroundColor" destination="2273" id="PXI-YU-2u7"/>
                 <outlet property="_foregroundColorLabel" destination="2276" id="Zs5-3K-56e"/>
                 <outlet property="_guideColor" destination="Yny-j0-8Wk" id="eF1-gy-5fc"/>
@@ -2094,11 +2096,11 @@ DQ
             <point key="canvasLocation" x="977.5" y="-794"/>
         </customView>
         <customView id="SCN-fS-hNB" userLabel="Prefs - Profiles - Colors" customClass="iTermSizeRememberingView">
-            <rect key="frame" x="0.0" y="0.0" width="569" height="378"/>
+            <rect key="frame" x="0.0" y="0.0" width="569" height="409"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <subviews>
                 <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NXm-yR-tAj" userLabel="Regular">
-                    <rect key="frame" x="10" y="20" width="529" height="301"/>
+                    <rect key="frame" x="10" y="20" width="529" height="332"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <subviews>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4889">
@@ -2114,19 +2116,19 @@ DQ
                             </connections>
                         </button>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2285" customClass="CPKColorWell">
-                            <rect key="frame" x="103" y="229" width="32" height="21"/>
+                            <rect key="frame" x="103" y="260" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="O31-5M-Une" customClass="CPKColorWell">
-                            <rect key="frame" x="103" y="177" width="32" height="21"/>
+                            <rect key="frame" x="103" y="208" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2287" customClass="CPKColorWell">
-                            <rect key="frame" x="432" y="186" width="32" height="21"/>
+                            <rect key="frame" x="432" y="213" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2350">
-                            <rect key="frame" x="383" y="163" width="43" height="16"/>
+                            <rect key="frame" x="383" y="190" width="43" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Yellow" id="2351">
                                 <font key="font" metaFont="system"/>
@@ -2135,7 +2137,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2348">
-                            <rect key="frame" x="385" y="189" width="41" height="16"/>
+                            <rect key="frame" x="385" y="217" width="41" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Green" id="2349">
                                 <font key="font" metaFont="system"/>
@@ -2144,11 +2146,11 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2292" customClass="CPKColorWell">
-                            <rect key="frame" x="497" y="238" width="32" height="21"/>
+                            <rect key="frame" x="497" y="265" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="urr-Bn-iH4">
-                            <rect key="frame" x="0.0" y="285" width="85" height="16"/>
+                            <rect key="frame" x="0.0" y="316" width="85" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Basic Colors" id="hj3-F7-Kze">
                                 <font key="font" metaFont="systemBold"/>
@@ -2157,7 +2159,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2344">
-                            <rect key="frame" x="389" y="241" width="37" height="16"/>
+                            <rect key="frame" x="389" y="268" width="37" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Black" id="2345">
                                 <font key="font" metaFont="system"/>
@@ -2166,7 +2168,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2295" customClass="CPKColorWell">
-                            <rect key="frame" x="497" y="212" width="32" height="21"/>
+                            <rect key="frame" x="497" y="239" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2283">
@@ -2179,11 +2181,11 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2301" customClass="CPKColorWell">
-                            <rect key="frame" x="497" y="56" width="32" height="21"/>
+                            <rect key="frame" x="497" y="83" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Cqf-RZ-UnO">
-                            <rect key="frame" x="169" y="151" width="119" height="18"/>
+                            <rect key="frame" x="169" y="182" width="119" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Underline color" bezelStyle="regularSquare" imagePosition="left" alignment="right" inset="2" id="FlU-a8-6X7">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2195,7 +2197,7 @@ DQ
                             </connections>
                         </button>
                         <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4899">
-                            <rect key="frame" x="9" y="121" width="119" height="16"/>
+                            <rect key="frame" x="18" y="131" width="119" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Minimum Contrast:" id="4900">
                                 <font key="font" metaFont="system"/>
@@ -2204,15 +2206,15 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2289" customClass="CPKColorWell">
-                            <rect key="frame" x="432" y="160" width="32" height="21"/>
+                            <rect key="frame" x="432" y="187" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2282" customClass="CPKColorWell">
-                            <rect key="frame" x="294" y="255" width="32" height="21"/>
+                            <rect key="frame" x="294" y="286" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2356">
-                            <rect key="frame" x="391" y="85" width="35" height="16"/>
+                            <rect key="frame" x="391" y="112" width="35" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Cyan" id="2357">
                                 <font key="font" metaFont="system"/>
@@ -2221,7 +2223,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2288" customClass="CPKColorWell">
-                            <rect key="frame" x="432" y="134" width="32" height="21"/>
+                            <rect key="frame" x="432" y="161" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2280" customClass="CPKColorWell">
@@ -2229,7 +2231,7 @@ DQ
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2354">
-                            <rect key="frame" x="369" y="111" width="57" height="16"/>
+                            <rect key="frame" x="369" y="138" width="57" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Magenta" id="2355">
                                 <font key="font" metaFont="system"/>
@@ -2238,7 +2240,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5Ut-Hc-7rY" customClass="iTermSlider">
-                            <rect key="frame" x="133" y="119" width="193" height="20"/>
+                            <rect key="frame" x="147" y="129" width="179" height="20"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <subviews>
                                 <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="4896">
@@ -2254,11 +2256,11 @@ DQ
                             </subviews>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2273" customClass="CPKColorWell">
-                            <rect key="frame" x="103" y="255" width="32" height="21"/>
+                            <rect key="frame" x="103" y="286" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="inA-QL-S7K">
-                            <rect key="frame" x="57" y="180" width="36" height="16"/>
+                            <rect key="frame" x="57" y="211" width="36" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Links" id="Tt3-3r-Gt8">
                                 <font key="font" metaFont="system"/>
@@ -2267,18 +2269,18 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2297" customClass="CPKColorWell">
-                            <rect key="frame" x="432" y="238" width="32" height="21"/>
+                            <rect key="frame" x="432" y="265" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="A9a-sA-67D" customClass="CPKColorWell">
-                            <rect key="frame" x="294" y="203" width="32" height="21"/>
+                            <rect key="frame" x="294" y="234" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <userDefinedRuntimeAttributes>
                                 <userDefinedRuntimeAttribute type="boolean" keyPath="alphaAllowed" value="YES"/>
                             </userDefinedRuntimeAttributes>
                         </customView>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="X0w-pC-g9j">
-                            <rect key="frame" x="39" y="204" width="54" height="18"/>
+                            <rect key="frame" x="39" y="235" width="54" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <string key="toolTip">Enables the specified color for bold text. Also has the side-effect of using the bright version of ANSI colors for bold text in a ”normal“ ANSI color.</string>
                             <buttonCell key="cell" type="check" title="Bold" bezelStyle="regularSquare" imagePosition="left" alignment="right" inset="2" id="KKT-Zg-ilT">
@@ -2291,7 +2293,7 @@ DQ
                             </connections>
                         </button>
                         <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2346">
-                            <rect key="frame" x="398" y="215" width="28" height="16"/>
+                            <rect key="frame" x="398" y="242" width="28" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Red" id="2347">
                                 <font key="font" metaFont="system"/>
@@ -2300,11 +2302,11 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="rSL-fL-hpc" customClass="CPKColorWell">
-                            <rect key="frame" x="294" y="150" width="32" height="21"/>
+                            <rect key="frame" x="294" y="181" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2276">
-                            <rect key="frame" x="18" y="258" width="75" height="16"/>
+                            <rect key="frame" x="18" y="289" width="75" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Foreground" id="2320">
                                 <font key="font" metaFont="system"/>
@@ -2313,11 +2315,11 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2272" customClass="CPKColorWell">
-                            <rect key="frame" x="103" y="203" width="32" height="21"/>
+                            <rect key="frame" x="103" y="234" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField hidden="YES" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="CJu-FZ-K1D">
-                            <rect key="frame" x="145" y="101" width="20" height="14"/>
+                            <rect key="frame" x="145" y="111" width="20" height="14"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="⚠️" id="zNa-1V-sCK">
                                 <font key="font" metaFont="menu" size="11"/>
@@ -2326,15 +2328,15 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2298" customClass="CPKColorWell">
-                            <rect key="frame" x="497" y="108" width="32" height="21"/>
+                            <rect key="frame" x="497" y="135" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2290" customClass="CPKColorWell">
-                            <rect key="frame" x="432" y="108" width="32" height="21"/>
+                            <rect key="frame" x="432" y="135" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2352">
-                            <rect key="frame" x="395" y="137" width="31" height="16"/>
+                            <rect key="frame" x="395" y="164" width="31" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Blue" id="2353">
                                 <font key="font" metaFont="system"/>
@@ -2343,15 +2345,15 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2293" customClass="CPKColorWell">
-                            <rect key="frame" x="432" y="56" width="32" height="21"/>
+                            <rect key="frame" x="432" y="83" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2294" customClass="CPKColorWell">
-                            <rect key="frame" x="497" y="160" width="32" height="21"/>
+                            <rect key="frame" x="497" y="187" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2300" customClass="CPKColorWell">
-                            <rect key="frame" x="497" y="186" width="32" height="21"/>
+                            <rect key="frame" x="497" y="213" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2279">
@@ -2364,11 +2366,11 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2286" customClass="CPKColorWell">
-                            <rect key="frame" x="432" y="212" width="32" height="21"/>
+                            <rect key="frame" x="432" y="239" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2360">
-                            <rect key="frame" x="430" y="263" width="39" height="13"/>
+                            <rect key="frame" x="430" y="294" width="39" height="13"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Normal" id="2361">
                                 <font key="font" metaFont="menu" size="10"/>
@@ -2377,19 +2379,19 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2291" customClass="CPKColorWell">
-                            <rect key="frame" x="432" y="82" width="32" height="21"/>
+                            <rect key="frame" x="432" y="109" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2299" customClass="CPKColorWell">
-                            <rect key="frame" x="497" y="134" width="32" height="21"/>
+                            <rect key="frame" x="497" y="161" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Wzz-9B-zqB" customClass="CPKColorWell">
-                            <rect key="frame" x="294" y="177" width="32" height="21"/>
+                            <rect key="frame" x="294" y="208" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KWy-PJ-O0E">
-                            <rect key="frame" x="0.0" y="151" width="135" height="18"/>
+                            <rect key="frame" x="0.0" y="182" width="135" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <string key="toolTip">Brightens text for "normal" ANSI colors. Does not affect "bright" ANSI colors, 8-bit colors, 24-bit colors, or the default foreground color.</string>
                             <buttonCell key="cell" type="check" title="Brighten bold text" bezelStyle="regularSquare" imagePosition="left" alignment="right" inset="2" id="2NE-9l-ZRK">
@@ -2414,7 +2416,7 @@ DQ
                             </connections>
                         </button>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="j7F-r8-oes">
-                            <rect key="frame" x="206" y="178" width="82" height="18"/>
+                            <rect key="frame" x="206" y="209" width="82" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Tab color" bezelStyle="regularSquare" imagePosition="left" alignment="right" state="on" inset="2" id="k6J-9z-fqf">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2426,7 +2428,7 @@ DQ
                             </connections>
                         </button>
                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2275">
-                            <rect key="frame" x="227" y="258" width="61" height="16"/>
+                            <rect key="frame" x="227" y="289" width="61" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Selection" id="2321">
                                 <font key="font" metaFont="system"/>
@@ -2444,7 +2446,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2362">
-                            <rect key="frame" x="495" y="263" width="34" height="13"/>
+                            <rect key="frame" x="495" y="294" width="34" height="13"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Bright" id="2363">
                                 <font key="font" metaFont="menu" size="10"/>
@@ -2453,7 +2455,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Pyw-da-Q1y">
-                            <rect key="frame" x="245" y="206" width="43" height="16"/>
+                            <rect key="frame" x="245" y="237" width="43" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Badge" id="iUy-lI-rM5">
                                 <font key="font" metaFont="system"/>
@@ -2462,7 +2464,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <textField hidden="YES" horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="eve-jv-6xP">
-                            <rect key="frame" x="163" y="101" width="165" height="14"/>
+                            <rect key="frame" x="163" y="111" width="165" height="14"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" controlSize="small" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="All text will be black or white" id="9wh-0G-sEv">
                                 <font key="font" metaFont="smallSystemBold"/>
@@ -2482,11 +2484,11 @@ DQ
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2277" customClass="CPKColorWell">
-                            <rect key="frame" x="294" y="229" width="32" height="21"/>
+                            <rect key="frame" x="294" y="260" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2281">
-                            <rect key="frame" x="16" y="232" width="77" height="16"/>
+                            <rect key="frame" x="16" y="263" width="77" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="right" title="Background" id="2318">
                                 <font key="font" metaFont="system"/>
@@ -2495,11 +2497,11 @@ DQ
                             </textFieldCell>
                         </textField>
                         <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2296" customClass="CPKColorWell">
-                            <rect key="frame" x="497" y="82" width="32" height="21"/>
+                            <rect key="frame" x="497" y="109" width="32" height="21"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         </customView>
                         <textField verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2358">
-                            <rect key="frame" x="386" y="59" width="40" height="16"/>
+                            <rect key="frame" x="386" y="86" width="40" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="White" id="2359">
                                 <font key="font" metaFont="system"/>
@@ -2508,7 +2510,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" allowsCharacterPickerTouchBarItem="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TVh-BH-zfu">
-                            <rect key="frame" x="430" y="285" width="82" height="16"/>
+                            <rect key="frame" x="430" y="316" width="82" height="16"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="ANSI Colors" id="ppm-XY-sSR">
                                 <font key="font" metaFont="systemBold"/>
@@ -2542,7 +2544,7 @@ DQ
                             </textFieldCell>
                         </textField>
                         <button fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="xjF-xd-y84">
-                            <rect key="frame" x="180" y="231" width="106" height="18"/>
+                            <rect key="frame" x="180" y="262" width="106" height="18"/>
                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                             <buttonCell key="cell" type="check" title="Selected text" bezelStyle="regularSquare" imagePosition="left" alignment="right" state="on" inset="2" id="9RW-QS-5ee">
                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2553,26 +2555,51 @@ DQ
                                 <outlet property="nextKeyView" destination="4896" id="HWh-m4-Plh"/>
                             </connections>
                         </button>
+                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aEH-8h-TQm">
+                            <rect key="frame" x="7" y="157" width="130" height="16"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Faint Text Opacity:" id="daT-ns-Xv5">
+                                <font key="font" usesAppearanceFont="YES"/>
+                                <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                            </textFieldCell>
+                        </textField>
+                        <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3213">
+                            <rect key="frame" x="365" y="-2" width="166" height="26"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <popUpButtonCell key="cell" type="push" title="Color Presets…" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3214">
+                                <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                <font key="font" metaFont="menu"/>
+                                <menu key="menu" title="OtherViews" id="3215">
+                                    <items>
+                                        <menuItem title="Color Presets…" state="on" hidden="YES" id="3218"/>
+                                    </items>
+                                </menu>
+                            </popUpButtonCell>
+                            <connections>
+                                <outlet property="nextKeyView" destination="2297" id="5229"/>
+                            </connections>
+                        </popUpButton>
+                        <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ytt-2J-CSu" customClass="iTermSlider">
+                            <rect key="frame" x="147" y="155" width="179" height="20"/>
+                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                            <subviews>
+                                <slider verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="mOt-Fp-WpW">
+                                    <rect key="frame" x="18" y="-6" width="177" height="28"/>
+                                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                    <string key="toolTip">This boosts the contrast of text when its color is close to that of the background color by moving the text color towards black or white.</string>
+                                    <sliderCell key="cell" continuous="YES" alignment="left" maxValue="1" tickMarkPosition="above" sliderType="linear" id="YLV-ns-HxW"/>
+                                    <connections>
+                                        <action selector="settingChanged:" target="p8i-eM-oBc" id="ldW-64-Ybf"/>
+                                        <outlet property="nextKeyView" destination="3213" id="bsS-GE-yhF"/>
+                                    </connections>
+                                </slider>
+                            </subviews>
+                        </customView>
                     </subviews>
                 </customView>
-                <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3213">
-                    <rect key="frame" x="377" y="24" width="166" height="26"/>
-                    <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                    <popUpButtonCell key="cell" type="push" title="Color Presets…" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" pullsDown="YES" id="3214">
-                        <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
-                        <font key="font" metaFont="menu"/>
-                        <menu key="menu" title="OtherViews" id="3215">
-                            <items>
-                                <menuItem title="Color Presets…" state="on" hidden="YES" id="3218"/>
-                            </items>
-                        </menu>
-                    </popUpButtonCell>
-                    <connections>
-                        <outlet property="nextKeyView" destination="2297" id="5229"/>
-                    </connections>
-                </popUpButton>
                 <button verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="2Zz-se-prd">
-                    <rect key="frame" x="10" y="340" width="328" height="18"/>
+                    <rect key="frame" x="10" y="371" width="328" height="18"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <buttonCell key="cell" type="check" title="Use different colors for light mode and dark mode" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="ZF1-Nv-83x">
                         <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -2583,7 +2610,7 @@ DQ
                     </connections>
                 </button>
                 <popUpButton verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="3x1-gZ-174">
-                    <rect key="frame" x="427" y="334" width="116" height="25"/>
+                    <rect key="frame" x="427" y="365" width="116" height="25"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <popUpButtonCell key="cell" type="push" title="Light Mode" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="xFU-tm-alS" id="jfH-m9-DvC">
                         <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -2600,7 +2627,7 @@ DQ
                     </connections>
                 </popUpButton>
                 <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ZNy-wl-Zrf">
-                    <rect key="frame" x="374" y="341" width="50" height="16"/>
+                    <rect key="frame" x="374" y="372" width="50" height="16"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                     <textFieldCell key="cell" lineBreakMode="clipping" title="Editing:" id="O5b-oW-Jw9">
                         <font key="font" metaFont="system"/>
@@ -2609,12 +2636,12 @@ DQ
                     </textFieldCell>
                 </textField>
                 <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="Qbc-4g-CqH">
-                    <rect key="frame" x="12" y="327" width="527" height="5"/>
+                    <rect key="frame" x="12" y="358" width="527" height="5"/>
                     <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                 </box>
             </subviews>
             <accessibility identifier="prefsProfilesColors"/>
-            <point key="canvasLocation" x="2350.5" y="422"/>
+            <point key="canvasLocation" x="2348.5" y="492.5"/>
         </customView>
         <customView id="G2G-W6-kWa" userLabel="Prefs - Profiles - Text" customClass="iTermSizeRememberingView">
             <rect key="frame" x="0.0" y="0.0" width="584" height="471"/>

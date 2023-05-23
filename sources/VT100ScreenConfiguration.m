@@ -35,6 +35,7 @@
 @property (nonatomic, readwrite) BOOL darkMode;
 @property (nonatomic, readwrite) BOOL useSeparateColorsForLightAndDarkMode;
 @property (nonatomic, readwrite) float minimumContrast;
+@property (nonatomic, readwrite) float faintTextAlpha;
 @property (nonatomic, readwrite) double mutingAmount;
 @property (nonatomic, readwrite) iTermUnicodeNormalization normalization;
 @property (nonatomic, readwrite) BOOL appendToScrollbackWithStatusBar;
@@ -78,6 +79,7 @@
 @synthesize darkMode = _darkMode;
 @synthesize useSeparateColorsForLightAndDarkMode = _useSeparateColorsForLightAndDarkMode;
 @synthesize minimumContrast = _minimumContrast;
+@synthesize faintTextAlpha = _faintTextAlpha;
 @synthesize mutingAmount = _mutingAmount;
 @synthesize normalization = _normalization;
 @synthesize appendToScrollbackWithStatusBar = _appendToScrollbackWithStatusBar;
@@ -123,6 +125,7 @@
         _darkMode = other.darkMode;
         _useSeparateColorsForLightAndDarkMode = other.useSeparateColorsForLightAndDarkMode;
         _minimumContrast = other.minimumContrast;
+        _faintTextAlpha = other.faintTextAlpha;
         _mutingAmount = other.mutingAmount;
         _normalization = other.normalization;
         _appendToScrollbackWithStatusBar = other.appendToScrollbackWithStatusBar;
@@ -177,6 +180,7 @@
                             @"darkMode": @(_darkMode),
                             @"useSeparateColorsForLightAndDarkMode": @(_useSeparateColorsForLightAndDarkMode),
                             @"minimumContrast": @(_minimumContrast),
+                            @"faintTextAlpha": @(_faintTextAlpha),
                             @"mutingAmount": @(_mutingAmount),
                             @"normalization": @(_normalization),
                             @"appendToScrollbackWithStatusBar": @(_appendToScrollbackWithStatusBar),
@@ -234,6 +238,7 @@
 @dynamic darkMode;
 @dynamic useSeparateColorsForLightAndDarkMode;
 @dynamic minimumContrast;
+@dynamic faintTextAlpha;
 @dynamic mutingAmount;
 @dynamic normalization;
 @dynamic appendToScrollbackWithStatusBar;

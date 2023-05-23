@@ -402,6 +402,9 @@ static NSString *const ProfilesSessionPreferencesViewControllerPhonyShortLivedSe
     colorMap.minimumContrast = [iTermProfilePreferences floatForColorKey:KEY_MINIMUM_CONTRAST
                                                                     dark:dark
                                                                  profile:profile];
+    colorMap.faintTextAlpha = [iTermProfilePreferences floatForColorKey:KEY_FAINT_TEXT_ALPHA
+                                                                   dark:dark
+                                                                profile:profile];
     return colorMap;
 }
 

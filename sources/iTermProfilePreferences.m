@@ -237,6 +237,10 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_MINIMUM_CONTRAST COLORS_DARK_MODE_SUFFIX,
                              KEY_MINIMUM_CONTRAST,
 
+                             KEY_FAINT_TEXT_ALPHA COLORS_LIGHT_MODE_SUFFIX,
+                             KEY_FAINT_TEXT_ALPHA COLORS_DARK_MODE_SUFFIX,
+                             KEY_FAINT_TEXT_ALPHA,
+
                              KEY_CURSOR_BOOST COLORS_LIGHT_MODE_SUFFIX,
                              KEY_CURSOR_BOOST COLORS_DARK_MODE_SUFFIX,
                              KEY_CURSOR_BOOST,
@@ -484,6 +488,10 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_MINIMUM_CONTRAST: @0.0,
                   KEY_MINIMUM_CONTRAST COLORS_LIGHT_MODE_SUFFIX: @0.0,
                   KEY_MINIMUM_CONTRAST COLORS_DARK_MODE_SUFFIX: @0.0,
+
+                  KEY_FAINT_TEXT_ALPHA: @0.5,
+                  KEY_FAINT_TEXT_ALPHA COLORS_LIGHT_MODE_SUFFIX: @0.5,
+                  KEY_FAINT_TEXT_ALPHA COLORS_DARK_MODE_SUFFIX: @0.5,
 
                   KEY_CURSOR_BOOST: @0.0,
                   KEY_CURSOR_BOOST COLORS_LIGHT_MODE_SUFFIX: @0.0,

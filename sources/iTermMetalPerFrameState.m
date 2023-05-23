@@ -1101,7 +1101,7 @@ ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
                                              _configuration->_colorSpace);
         if (isFaint) {
             // TODO: I think this is wrong and the color components need premultiplied alpha.
-            color.w = 0.5;
+            color.w = _configuration->_colorMap.faintTextAlpha;
         }
         return color;
     }
