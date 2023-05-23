@@ -286,7 +286,6 @@
 - (void)screenSetTabColorGreenComponentTo:(CGFloat)color;
 - (void)screenSetTabColorBlueComponentTo:(CGFloat)color;
 - (BOOL)screenSetColor:(NSColor * _Nullable)color
-                forKey:(int)key
             profileKey:(NSString * _Nullable)profileKey;
 - (NSDictionary<NSNumber *, id> * _Nonnull)screenResetColorWithColorMapKey:(int)key
                                                                 profileKey:(NSString * _Nonnull)profileKey

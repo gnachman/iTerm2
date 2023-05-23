@@ -459,6 +459,10 @@ const int kColorMapAnsiBrightModifier = 8;
 
 - (NSString *)profileKeyForColorMapKey:(int)theKey {
     NSString *baseKey = [self baseProfileKeyForColorMapKey:theKey];
+    return [self profileKeyForBaseKey:baseKey];
+}
+
+- (NSString *)profileKeyForBaseKey:(NSString *)baseKey {
     if (!self.useSeparateColorsForLightAndDarkMode) {
         return baseKey;
     }

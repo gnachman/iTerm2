@@ -1417,7 +1417,7 @@
     VT100ScreenState *state = self.mainThreadCopy;
     [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate, iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         NSString *profileKey = [state.colorMap profileKeyForColorMapKey:key];
-        [delegate screenSetColor:color forKey:key profileKey:profileKey];
+        [delegate screenSetColor:color profileKey:profileKey];
         [unpauser unpause];
     }];
 }
@@ -1435,7 +1435,7 @@
     [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
         NSString *profileKey = [state.colorMap profileKeyForColorMapKey:key];
-        const BOOL assign = [delegate screenSetColor:color forKey:key profileKey:profileKey];
+        const BOOL assign = [delegate screenSetColor:color profileKey:profileKey];
         if (assign) {
             [weakSelf setColor:color forKey:key];
         }
@@ -2085,14 +2085,16 @@
                              @"br_cyan": @(kColorMapAnsiCyan + kColorMapAnsiBrightModifier),
                              @"br_white": @(kColorMapAnsiWhite + kColorMapAnsiBrightModifier) };
 
+    // These are profile keys but they have no corresponding value in the color map.
+    NSDictionary *names2 = @{ @"badge": KEY_BADGE_COLOR };
+
     NSNumber *keyNumber = names[name];
     DLog(@"name=%@", name);
-    if (!keyNumber) {
+    if (!keyNumber && !names2[name]) {
         DLog(@"fail");
         return;
     }
-    NSInteger key = [keyNumber integerValue];
-    DLog(@"key=%@", @(key));
+    DLog(@"key=%@", keyNumber);
     __weak __typeof(self) weakSelf = self;
     [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {
@@ -2101,10 +2103,15 @@
             DLog(@"dealloced");
             return;
         }
-        DLog(@"set %@ aka %@=%@", @(key), [strongSelf.mainThreadCopy.colorMap profileKeyForColorMapKey:key], color);
+        NSString *profileKey;
+        if (keyNumber) {
+            profileKey = [strongSelf.mainThreadCopy.colorMap profileKeyForColorMapKey:keyNumber.integerValue];
+        } else {
+            profileKey = [strongSelf.mainThreadCopy.colorMap profileKeyForBaseKey:names2[name]];
+        }
+        DLog(@"set %@=%@", profileKey, color);
         [delegate screenSetColor:color
-                          forKey:key
-                      profileKey:[strongSelf.mainThreadCopy.colorMap profileKeyForColorMapKey:key]];
+                      profileKey:profileKey];
         [unpauser unpause];
     }];
 }

@@ -12703,7 +12703,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                               dark:dark];
 }
 
-- (BOOL)screenSetColor:(NSColor *)color forKey:(int)key profileKey:(NSString *)profileKey {
+- (BOOL)screenSetColor:(NSColor *)color profileKey:(NSString *)profileKey {
     if (!color) {
         return NO;
     }
