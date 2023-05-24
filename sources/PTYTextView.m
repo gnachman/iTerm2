@@ -813,6 +813,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     }];
 }
 
+- (void)lockScroll {
+    [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+}
+
 - (void)_scrollToLine:(int)line {
     NSRect aFrame;
     aFrame.origin.x = 0;

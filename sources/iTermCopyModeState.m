@@ -59,6 +59,14 @@
     return [self moveInDirection:kPTYTextViewSelectionExtensionDirectionDown unit:kPTYTextViewSelectionExtensionUnitCharacter];
 }
 
+- (BOOL)scrollUpIfPossible {
+    return [self scroll:kPTYTextViewSelectionExtensionDirectionUp];
+}
+
+- (BOOL)scrollDownIfPossible {
+    return [self scroll:kPTYTextViewSelectionExtensionDirectionDown];
+}
+
 - (BOOL)moveToStartOfNextLine {
     BOOL moved = [self moveDown];
     if (moved) {
@@ -85,12 +93,65 @@
     return moved;
 }
 
+- (BOOL)pageUpHalfScreen {
+    BOOL moved = NO;
+    for (int i = 0; i < _textView.dataSource.height / 2; i++) {
+        [self scrollUpIfPossible];
+        if ([self moveUp]) {
+            moved = YES;
+        }
+    }
+    return moved;
+}
+
 - (BOOL)pageDown {
     BOOL moved = NO;
     for (int i = 0; i < _textView.dataSource.height; i++) {
         if ([self moveDown]) {
             moved = YES;
         }
+    }
+    return moved;
+}
+
+- (BOOL)pageDownHalfScreen {
+    BOOL moved = NO;
+    for (int i = 0; i < _textView.dataSource.height; i++) {
+        [self scrollUpIfPossible];
+        if ([self moveDown]) {
+            moved = YES;
+        }
+    }
+    return moved;
+}
+
+- (BOOL)scrollUp {
+    if ([_textView rangeOfVisibleLines].location == 0) {
+        // Can't scroll up.
+        return NO;
+    }
+    if ([self scrollUpIfPossible]) {
+        return NO;
+    }
+    const BOOL moved = [self moveUp];
+    if (moved) {
+        [self scrollUpIfPossible];
+    }
+    return moved;
+}
+
+- (BOOL)scrollDown {
+    const VT100GridRange visibleLines = [_textView rangeOfVisibleLines];
+    if (visibleLines.location + visibleLines.length == _textView.dataSource.numberOfLines) {
+        // Can't scroll down.
+        return NO;
+    }
+    if ([self scrollDownIfPossible]) {
+        return NO;
+    }
+    const BOOL moved = [self moveDown];
+    if (moved) {
+        [self scrollDownIfPossible];
     }
     return moved;
 }
@@ -223,6 +284,38 @@
     } else {
         return VT100GridCoordFromAbsCoord(sub.absRange.coordRange.start, overflow, NULL);
     }
+}
+
+- (BOOL)scroll:(PTYTextViewSelectionExtensionDirection)direction {
+    const VT100GridRange visibleLines = _textView.rangeOfVisibleLines;
+    switch (direction) {
+        case kPTYTextViewSelectionExtensionDirectionUp:
+            if (_coord.y + 1 == visibleLines.location + visibleLines.length) {
+                return NO;
+            }
+            [_textView lockScroll];
+            [_textView scrollLineUp:nil];
+            return YES;
+
+        case kPTYTextViewSelectionExtensionDirectionDown:
+            if (_coord.y == visibleLines.location) {
+                return NO;
+            }
+            [_textView lockScroll];
+            [_textView scrollLineDown:nil];
+            return YES;
+
+        case kPTYTextViewSelectionExtensionDirectionLeft:
+        case kPTYTextViewSelectionExtensionDirectionRight:
+        case kPTYTextViewSelectionExtensionDirectionStartOfLine:
+        case kPTYTextViewSelectionExtensionDirectionEndOfLine:
+        case kPTYTextViewSelectionExtensionDirectionTop:
+        case kPTYTextViewSelectionExtensionDirectionBottom:
+        case kPTYTextViewSelectionExtensionDirectionStartOfIndentation:
+            assert(NO);
+            break;
+    }
+    return NO;
 }
 
 - (BOOL)moveInDirection:(PTYTextViewSelectionExtensionDirection)direction

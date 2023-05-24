@@ -38,6 +38,8 @@
 
 - (BOOL)pageUp;
 - (BOOL)pageDown;
+- (BOOL)pageUpHalfScreen;
+- (BOOL)pageDownHalfScreen;
 
 - (BOOL)previousMark;
 - (BOOL)nextMark;
@@ -55,5 +57,8 @@
 - (BOOL)moveToEndOfLine;
 
 - (void)swap;
+
+- (BOOL)scrollUp;
+- (BOOL)scrollDown;
 
 @end

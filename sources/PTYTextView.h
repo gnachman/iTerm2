@@ -559,6 +559,7 @@ typedef void (^PTYTextViewDrawingHookBlock)(iTermTextDrawingHelper *);
 - (void)scrollEnd;
 - (void)scrollToAbsoluteOffset:(long long)absOff height:(int)height;
 - (void)scrollToSelection;
+- (void)lockScroll;
 
 // Saving/printing
 - (void)saveDocumentAs:(id)sender;

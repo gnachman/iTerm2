@@ -3,9 +3,13 @@
             "^f"       = ("PageDown");
             "^\U0020"  = ("ToggleCharacterSelection");
             "^c"       = ("ExitCopyMode");
+            "^e"       = ("ScrollDown");
             "^g"       = ("ExitCopyMode");
             "^k"       = ("CopySelection");
+            "^d"       = ("PageDownHalfScreen");
+            "^u"       = ("PageUpHalfScreen");
             "^v"       = ("ToggleBoxSelection");
+            "^y"       = ("ScrollUp");
             "~b"       = ("MoveBackwardWord");
             "~\UF702"  = ("MoveBackwardWord");
             "~f"       = ("MoveForwardWord");
@@ -29,7 +33,7 @@
             "v"        = ("ToggleCharacterSelection");
             "b"        = ("MoveBackwardWord");
             "B"        = ("MoveBackwardBigWord");
-            "0"        = ("MoveToStartOfLine");
+            "0"        = ("MoveToStartOfLineOrAccrue0");
             "H"        = ("MoveToTopOfVisibleArea");
             "G"        = ("MoveToEnd");
             "\UF72B"   = ("MoveToEnd");
@@ -55,4 +59,13 @@
             "]"        = ("NextMark");
             "^"        = ("MoveToStartOfIndentation");
             "$"        = ("MoveToEndOfLine");
+            "1"        = ("AccrueCount");
+            "2"        = ("AccrueCount");
+            "3"        = ("AccrueCount");
+            "4"        = ("AccrueCount");
+            "5"        = ("AccrueCount");
+            "6"        = ("AccrueCount");
+            "7"        = ("AccrueCount");
+            "8"        = ("AccrueCount");
+            "9"        = ("AccrueCount");
 }

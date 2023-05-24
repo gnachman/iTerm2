@@ -47,6 +47,12 @@ typedef NS_ENUM(NSUInteger, iTermCopyModeAction) {
     iTermCopyModeActionToggleBoxSelection,
     iTermCopyModeActionToggleCharacterSelection,
     iTermCopyModeActionToggleLineSelection,
+    iTermCopyModeActionAccrueCount,
+    iTermCopyModeActionMoveToStartOfLineOrAccrue0,
+    iTermCopyModeActionPageDownHalfScreen,
+    iTermCopyModeActionPageUpHalfScreen,
+    iTermCopyModeActionScrollUp,
+    iTermCopyModeActionScrollDown,
 
     iTermCopyModeAction_Count
 };
@@ -113,6 +119,19 @@ static NSString *iTermCopyModeActionName(iTermCopyModeAction action) {
             return @"ToggleCharacterSelection";
         case iTermCopyModeActionToggleLineSelection:
             return @"ToggleLineSelection";
+        case iTermCopyModeActionAccrueCount:
+            return @"AccrueCount";
+        case iTermCopyModeActionMoveToStartOfLineOrAccrue0:
+            return @"MoveToStartOfLineOrAccrue0";
+        case iTermCopyModeActionPageDownHalfScreen:
+            return @"PageDownHalfScreen";
+        case iTermCopyModeActionPageUpHalfScreen:
+            return @"PageUpHalfScreen";
+        case iTermCopyModeActionScrollUp:
+            return @"ScrollUp";
+        case iTermCopyModeActionScrollDown:
+            return @"ScrollDown";
+
         case iTermCopyModeAction_Count:
             break;
     }
@@ -132,11 +151,15 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
 
 @implementation iTermCopyModeHandler {
     iTermNSKeyBindingEmulator *_keyBindingEmulator;
+    // 0: Regular state, perform action once. "MoveToStartOfLineOrAccrue0" moves to start of line.
+    // 1..inf: Perform action this many times. "MoveToStartOfLineOrAccrue0" accrues a digit.
+    NSInteger _count;
 }
 
 - (instancetype)init {
     self = [super init];
     if (self) {
+        _count = 0;
         NSString *path;
         path = [[[NSFileManager defaultManager] applicationSupportDirectoryWithoutCreating] stringByAppendingPathComponent:@"CopyModeKeyBindings.dict"];
         if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
@@ -168,7 +191,7 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
     }
 
     _enabled = copyMode;
-
+    _count = 0;
     if (copyMode) {
         _state = [self.delegate copyModeHandlerCreateState:self];
     } else {
@@ -260,22 +283,60 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
 
     const iTermCopyModeAction action = [self actionForEvent:event];
     if (![self wouldHandleEvent:event]) {
+        _count = 0;
         return NO;
     }
 
-    const BOOL moved = [self performAction:action];
+    const int countAccrued = [self countAccruedByAction:action event:event];
+    if (countAccrued >= 0) {
+        _count *= 10;
+        _count += countAccrued;
+        return YES;
+    }
 
-    if (moved || (_state.selecting != wasSelecting)) {
-        if (self.enabled) {
-            [self.delegate copyModeHandler:self revealLine:_state.coord.y];
+    const NSInteger count = MAX(1, _count);
+    _count = 0;
+    for (int i = 0; i < count; i++) {
+        const BOOL moved = [self performAction:action event:event];
+
+        if (moved || (_state.selecting != wasSelecting)) {
+            if (self.enabled) {
+                [self.delegate copyModeHandler:self revealLine:_state.coord.y];
+            }
+            [self.delegate copyModeHandler:self redrawLine:_state.coord.y];
         }
-        [self.delegate copyModeHandler:self redrawLine:_state.coord.y];
     }
     return YES;
 }
 
-- (BOOL)performAction:(iTermCopyModeAction)action {
+// Returns -1 to indicate none
+- (int)countAccruedByAction:(iTermCopyModeAction)action event:(NSEvent *)event {
     switch (action) {
+        case iTermCopyModeActionAccrueCount:
+            return [event.characters characterAtIndex:0] - '0';
+        case iTermCopyModeActionMoveToStartOfLineOrAccrue0:
+            if (_count == 0) {
+                return -1;
+            }
+            return 0;
+        default:
+            return -1;
+    }
+}
+
+- (BOOL)performAction:(iTermCopyModeAction)action event:(NSEvent *)event {
+    switch (action) {
+        case iTermCopyModeActionAccrueCount:
+            assert(NO);
+            break;
+        case iTermCopyModeActionPageDownHalfScreen:
+            return [_state pageDownHalfScreen];
+        case iTermCopyModeActionPageUpHalfScreen:
+            return [_state pageUpHalfScreen];
+        case iTermCopyModeActionScrollUp:
+            return [_state scrollUp];
+        case iTermCopyModeActionScrollDown:
+            return [_state scrollDown];
         case iTermCopyModeActionPageUp:
             return [_state pageUp];
         case iTermCopyModeActionPageDown:
@@ -312,6 +373,7 @@ iTermCopyModeAction iTermCopyModeActionFromName(NSString *name, BOOL *ok) {
             _state.selecting = NO;
             return YES;
         case iTermCopyModeActionMoveToStartOfLine:
+        case iTermCopyModeActionMoveToStartOfLineOrAccrue0:
             return [_state moveToStartOfLine];
         case iTermCopyModeActionMoveToTopOfVisibleArea:
             return [_state moveToTopOfVisibleArea];

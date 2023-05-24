@@ -15035,6 +15035,9 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     if (_screen.height < 5) {
         return NO;
     }
+    if (_modeHandler.mode == iTermSessionModeCopy) {
+        return NO;
+    }
     return [iTermProfilePreferences boolForKey:KEY_SHOW_OFFSCREEN_COMMANDLINE inProfile:self.profile];
 }
 
