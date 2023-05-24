@@ -975,6 +975,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
     }
 }
 
+- (BOOL)sessionBelongsToHotkeyWindow:(PTYSession *)session {
+    return [self.delegate tabBelongsToHotkeyWindow:self];
+}
+
 - (void)sessionSwapWithSessionInDirection:(int)direction {
     PTYSession *session = [self sessionInDirection:direction];
     if (session == self.activeSession || !session) {

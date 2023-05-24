@@ -4,6 +4,7 @@
 #import "DebugLogging.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermPreferences.h"
+#import "NSObject+iTerm.h"
 #import "NSTextField+iTerm.h"
 #import "NSView+iTerm.h"
 #import "NSWindow+PSM.h"
@@ -416,7 +417,20 @@
 }
 
 - (void)closePopupWindow {
-    [[self window] close];
+    if ([self.delegate popupWindowShouldAvoidChangingWindowOrderOnClose]) {
+        // Weird code path for non-hotkey windows with focus follows mouse when the popup is in a
+        // non-front window. We don't want it to order front when the popup closes. This goes
+        // against nature so it's a bit of a mess.
+        PopupWindow *window = [PopupWindow castFrom:self.window];
+        NSWindow *parent = [window owningWindow];
+        [window closeWithoutAdjustingWindowOrder];
+        // If I call makeKeyWindow synchronously then it orders itself front.
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [parent makeKeyWindow];
+        });
+    } else {
+        [[self window] close];
+    }
     [self onClose];
 }
 
@@ -460,10 +474,8 @@
     return NO;
 }
 
-- (void)rowSelected:(id)sender
-{
-    [[self window] close];
-    [self onClose];
+- (void)rowSelected:(id)sender {
+    [self closePopupWindow];
 }
 
 - (NSString *)truncatedMainValueForEntry:(PopupEntry *)entry {
@@ -572,10 +584,8 @@
 }
 
 // Delegate methods
-- (void)windowDidResignKey:(NSNotification *)aNotification
-{
-    [[self window] close];
-    [self onClose];
+- (void)windowDidResignKey:(NSNotification *)aNotification {
+    [self closePopupWindow];
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification

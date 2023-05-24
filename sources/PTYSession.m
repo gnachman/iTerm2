@@ -14646,6 +14646,10 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     }
 }
 
+- (BOOL)popupWindowShouldAvoidChangingWindowOrderOnClose {
+    return [iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] && ![self.delegate sessionBelongsToHotkeyWindow:self];
+}
+
 - (VT100Screen *)popupVT100Screen {
     return _screen;
 }

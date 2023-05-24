@@ -16,5 +16,6 @@
 @property (nonatomic, retain) NSWindow *owningWindow;
 
 - (void)shutdown;
+- (void)closeWithoutAdjustingWindowOrder;
 
 @end

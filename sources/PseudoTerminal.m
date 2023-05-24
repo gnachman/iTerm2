@@ -1913,6 +1913,10 @@ ITERM_WEAKLY_REFERENCEABLE
     [self refreshTools];
 }
 
+- (BOOL)tabBelongsToHotkeyWindow:(PTYTab *)tab {
+    return [self isHotKeyWindow];
+}
+
 - (NSUInteger)numberOfTabsWithTmuxController:(TmuxController *)tmuxController {
     return [[self.tabs filteredArrayUsingBlock:^BOOL(PTYTab *tab) {
         return tab.tmuxController == tmuxController;

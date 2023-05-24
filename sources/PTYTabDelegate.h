@@ -74,5 +74,5 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)tab:(PTYTab *)tab sessionDidRestart:(PTYSession *)session;
 - (void)tab:(PTYTab *)tab closeSession:(PTYSession *)session;
 - (void)tabProcessInfoProviderDidChange:(PTYTab *)tab;
-
+- (BOOL)tabBelongsToHotkeyWindow:(PTYTab *)tab;
 @end

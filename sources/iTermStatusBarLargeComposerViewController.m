@@ -308,6 +308,10 @@
 
 #pragma mark - PopupDelegate
 
+- (BOOL)popupWindowShouldAvoidChangingWindowOrderOnClose {
+    return NO;
+}
+
 - (NSRect)popupScreenVisibleFrame {
     return self.view.window.screen.visibleFrame;
 }

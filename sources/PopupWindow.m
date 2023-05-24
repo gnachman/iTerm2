@@ -60,10 +60,13 @@
     _owningWindow = [owningWindow retain];
 }
 
-- (void)close
-{
+- (void)closeWithoutAdjustingWindowOrder {
+    [super close];
+}
+
+- (void)close {
     if (shutdown_) {
-        [super close];
+        [self closeWithoutAdjustingWindowOrder];
     } else {
         // The OS will send a hotkey window to the background if it's open and in
         // all spaces. Make it key before closing. This has to be done later because if you do it

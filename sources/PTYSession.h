@@ -284,7 +284,7 @@ backgroundColor:(NSColor *)backgroundColor;
 - (void)sessionClose:(PTYSession *)session;
 - (void)sessionProcessInfoProviderDidChange:(PTYSession *)session;
 - (void)sessionSwapWithSessionInDirection:(int)direction;
-
+- (BOOL)sessionBelongsToHotkeyWindow:(PTYSession *)session;
 @end
 
 @class SessionView;
