@@ -502,7 +502,7 @@
         return [NSColor clearColor];
     }
     // `base` gives how much darker the unselected tab is as an alpha value.
-    const CGFloat base = 0.07;
+    CGFloat base = [[_tabBar.delegate tabView:_tabBar valueOfOption:PSMTabBarControlOptionLightModeInactiveTabDarkness] doubleValue];
     return [NSColor colorWithWhite:0 alpha:base + (1 - base) * (highlightAmount * 0.05)];
 }
 

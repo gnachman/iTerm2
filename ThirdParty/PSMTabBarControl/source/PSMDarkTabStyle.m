@@ -85,7 +85,8 @@
     if (selected) {
         return [NSColor clearColor];
     }
-    const CGFloat base = 0.5;
+    CGFloat base = [[self.tabBar.delegate tabView:self.tabBar
+                                    valueOfOption:PSMTabBarControlOptionDarkModeInactiveTabDarkness] doubleValue];
     return [NSColor colorWithWhite:0 alpha:base - (highlightAmount * 0.3)];
 }
 

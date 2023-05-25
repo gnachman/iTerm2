@@ -7169,6 +7169,10 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         return @([iTermAdvancedSettingsModel minimalDeslectedColoredTabAlpha]);
     } else if ([option isEqualToString:PSMTabBarControlOptionTextColor]) {
         return [self.currentSession.textview.colorMap colorForKey:kColorMapForeground];
+    } else if ([option isEqualToString:PSMTabBarControlOptionLightModeInactiveTabDarkness]) {
+        return @([iTermAdvancedSettingsModel lightModeInactiveTabDarkness]);
+    } else if ([option isEqualToString:PSMTabBarControlOptionDarkModeInactiveTabDarkness]) {
+        return @([iTermAdvancedSettingsModel darkModeInactiveTabDarkness]);
     }
     return nil;
 }

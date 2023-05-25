@@ -248,7 +248,8 @@ DEFINE_BOOL(selectsTabsOnMouseDown, YES, SECTION_TABS @"Select tabs on mouse-dow
 DEFINE_FLOAT(minimalDeslectedColoredTabAlpha, 0.5, SECTION_TABS @"Alpha value for tab color for non-selected colored tabs in the Minimal theme.\nMust be between 0 and 1.");
 DEFINE_STRING(tabColorMenuOptions, @"#fb6b62 #f6ac47 #f0dc4f #b5d749 #5fa3f8 #c18ed9 #787878", SECTION_TABS @"Colors for tab color menu item.\nSpace delimited strings like #rrggbb or #rgb in sRGB color space. If the P3 color space is available, you can use strings like: color(p3 1 0.5 0.25)");
 DEFINE_BOOL(removeAddTabButton, NO, SECTION_TABS @"Remove the “new tab” button from horizontal tab bars?");
-
+DEFINE_FLOAT(lightModeInactiveTabDarkness, 0.07, SECTION_TABS @"Darkness (in [0…1]) for non-selected tabs in non-Minimal theme in light mode.");
+DEFINE_FLOAT(darkModeInactiveTabDarkness, 0.5, SECTION_TABS @"Darkness (in [0…1]) for non-selected tabs in non-Minimal theme in dark mode.");
 #pragma mark Mouse
 
 #define SECTION_MOUSE @"Mouse: "
