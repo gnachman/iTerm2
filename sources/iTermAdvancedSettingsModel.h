@@ -317,6 +317,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)showTimestampsByDefault;
 + (BOOL)showWindowTitleWhenTabBarInvisible;
 + (BOOL)showYellowMarkForJobStoppedBySignal;
++ (BOOL)silentUserNotifications;
 + (double)slowFrameRate;
 + (int)slowPasteBytesPerCall;
 + (double)slowPasteDelayBetweenCalls;

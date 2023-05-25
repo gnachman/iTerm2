@@ -28,6 +28,7 @@
 #import "iTermNotificationController.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermImage.h"
 #import "iTermAdvancedSettingsModel.h"
@@ -151,7 +152,7 @@
     notification.title = title;
     notification.informativeText = description;
     notification.userInfo = context;
-    notification.soundName = NSUserNotificationDefaultSoundName;
+    notification.soundName = [iTermAdvancedSettingsModel silentUserNotifications] ? nil : NSUserNotificationDefaultSoundName;
     DLog(@"Post notification %@", notification);
     [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
 
@@ -164,7 +165,7 @@
     notification.informativeText = detail;
     NSDictionary *context = @{ @"URL": url.absoluteString };
     notification.userInfo = context;
-    notification.soundName = NSUserNotificationDefaultSoundName;
+    notification.soundName = [iTermAdvancedSettingsModel silentUserNotifications] ? nil : NSUserNotificationDefaultSoundName;
     DLog(@"Post notification %@", notification);
     [[NSUserNotificationCenter defaultUserNotificationCenter] deliverNotification:notification];
 }
@@ -187,7 +188,7 @@
     NSDictionary *context = @{ @"CallbackNotificationName": name,
                                @"CallbackUserInfo": userInfo ?: @{} };
     notification.userInfo = context;
-    notification.soundName = NSUserNotificationDefaultSoundName;
+    notification.soundName = [iTermAdvancedSettingsModel silentUserNotifications] ? nil : NSUserNotificationDefaultSoundName;
     if (actionButtonTitle) {
         notification.actionButtonTitle = actionButtonTitle;
     }
