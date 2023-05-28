@@ -101,6 +101,18 @@ static NSString *const iTermTupleValueKey = @"value";
     return [self.secondObject compare:other.secondObject];
 }
 
+- (NSString *)jsonEncoded {
+    NSDictionary *dict = @{ @"first": self.firstObject ?: [NSNull null],
+                            @"second": self.secondObject ?: [NSNull null] };
+    return [dict jsonEncoded];
+}
+
++ (instancetype)fromJsonEncodedString:(NSString *)string {
+    NSDictionary *dict = [NSDictionary fromJsonEncodedString:string];
+    return [iTermTuple tupleWithObject:dict[@"first"] andObject:dict[@"second"]];
+}
+
+
 @end
 
 @implementation iTermTriple
@@ -189,5 +201,19 @@ static NSString *const iTermTupleValueKey = @"value";
     }
     return [self.thirdObject compare:other.thirdObject];
 }
+
+- (NSString *)jsonEncoded {
+    NSDictionary *dict = @{ @"first": self.firstObject ?: [NSNull null],
+                            @"second": self.secondObject ?: [NSNull null],
+                            @"third": self.thirdObject ?: [NSNull null],
+    };
+    return [dict jsonEncoded];
+}
+
++ (instancetype)fromJsonEncodedString:(NSString *)string {
+    NSDictionary *dict = [NSDictionary fromJsonEncodedString:string];
+    return [iTermTriple tripleWithObject:dict[@"first"] andObject:dict[@"second"] object:dict[@"third"]];
+}
+
 
 @end

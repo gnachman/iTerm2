@@ -8,6 +8,7 @@
 #import "iTermEncoderGraphRecord.h"
 
 #import "DebugLogging.h"
+#import "iTermChangeTrackingDictionary.h"
 #import "iTermTuple.h"
 #import "NSArray+iTerm.h"
 #import "NSData+iTerm.h"
@@ -155,6 +156,11 @@
         return ([element.key isEqualToString:key] &&
                 [identifier isEqualToString:element.identifier]);
     }];
+}
+
+- (NSMutableDictionary<iTermTuple<NSString *, NSString *> *, iTermEncoderGraphRecord *> *)index {
+    [self ensureIndexOfGraphRecords];
+    return _index;
 }
 
 - (void)ensureIndexOfGraphRecords {

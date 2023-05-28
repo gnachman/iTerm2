@@ -2808,7 +2808,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                          identifier:@""
                          generation:[[iTermURLStore sharedInstance] generation]
                               block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
-            [subencoder mergeDictionary:[[iTermURLStore sharedInstance] dictionaryValue]];
+            [[iTermURLStore sharedInstance] encodeGraphWithEncoder:subencoder];
             return YES;
         }];
 
@@ -2854,9 +2854,9 @@ void TurnOnDebugLoggingAutomatically(void) {
         [PortholeRegistry.instance decodeRecord:portholeRecord];
     }
 
-    NSDictionary *urlStoreState = [NSDictionary castFrom:[[app childRecordWithKey:kURLStoreRestorableStateKey identifier:@""] propertyListValue]];
-    if (urlStoreState) {
-        [[iTermURLStore sharedInstance] loadFromDictionary:urlStoreState];
+    iTermEncoderGraphRecord *urlStoreRecord = [app childRecordWithKey:kURLStoreRestorableStateKey identifier:@""];
+    if (urlStoreRecord) {
+        [[iTermURLStore sharedInstance] loadFromGraphRecord:urlStoreRecord];
     }
 
     iTermEncoderGraphRecord *hotkeyWindowsStates = [app childRecordWithKey:kHotkeyWindowsRestorableStates identifier:@""];
@@ -2877,7 +2877,7 @@ void TurnOnDebugLoggingAutomatically(void) {
     if ([iTermAdvancedSettingsModel logRestorableStateSize]) {
         NSDictionary *dict = @{ kScreenCharRestorableStateKey: screenCharState ?: @{},
                                 kPortholeRestorableStateKey: [PortholeRegistry.instance dictionaryValue] ?: @{},
-                                kURLStoreRestorableStateKey: urlStoreState ?: @{},
+                                kURLStoreRestorableStateKey: urlStoreRecord.propertyListValue ?: @{},
                                 iTermBuriedSessionState: _buriedSessionsState ?: @[] };
         NSString *log = [dict sizeInfo];
         [log writeToFile:[NSString stringWithFormat:@"/tmp/statesize.app-%p.txt", self] atomically:NO encoding:NSUTF8StringEncoding error:nil];

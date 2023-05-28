@@ -9,6 +9,7 @@
 #import "NSObject+iTerm.h"
 
 #import "iTermWeakProxy.h"
+#import "NSJSONSerialization+iTerm.h"
 
 #import <objc/runtime.h>
 
@@ -362,6 +363,14 @@
     id object = [self castFrom:[unarchiver decodeObjectOfClasses:[NSSet setWithArray:classes] forKey:@"root"]];
     [unarchiver finishDecoding];
     return object;
+}
+
+- (NSString *)jsonEncoded {
+    return [NSJSONSerialization it_jsonStringForObject:self];
+}
+
++ (instancetype)fromJsonEncodedString:(NSString *)string {
+    return [self castFrom:[NSJSONSerialization it_objectForJsonString:string]];
 }
 
 @end

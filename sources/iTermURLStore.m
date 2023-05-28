@@ -10,18 +10,20 @@
 
 #import "DebugLogging.h"
 #import "NSObject+iTerm.h"
+#import "iTermChangeTrackingDictionary.h"
+#import "iTermGraphEncoder.h"
 #import "iTermTuple.h"
 
 #import <Cocoa/Cocoa.h>
 
 @implementation iTermURLStore {
     // { "url": NSURL.absoluteString, "params": NSString } -> @(NSInteger)
-    NSMutableDictionary<iTermTuple<NSString *, NSString *> *, NSNumber *> *_store;
+    iTermChangeTrackingDictionary<iTermTuple<NSString *, NSString *> *, NSNumber *> *_store;
 
     // @(unsigned int) -> { "url": NSURL, "params": NSString }
     NSMutableDictionary<NSNumber *, iTermTuple<NSURL *, NSString *> *> *_reverseStore;
 
-    NSCountedSet<NSNumber *> *_referenceCounts;
+    iTermChangeTrackingDictionary<NSNumber *, NSNumber *> *_referenceCounts;
 
     // Will never be zero.
     NSInteger _nextCode;
@@ -46,9 +48,9 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        _store = [NSMutableDictionary dictionary];
+        _store = [[iTermChangeTrackingDictionary alloc] init];
         _reverseStore = [NSMutableDictionary dictionary];
-        _referenceCounts = [NSCountedSet set];
+        _referenceCounts = [[iTermChangeTrackingDictionary alloc] init];
         _nextCode = 1;
     }
     return self;
@@ -60,7 +62,7 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             [NSApp invalidateRestorableState];
         });
-        [_referenceCounts addObject:@(code)];
+        _referenceCounts[@(code)] = @(_referenceCounts[@(code)].integerValue + 1);
     }
 }
 
@@ -70,8 +72,8 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             [NSApp invalidateRestorableState];
         });
-        [_referenceCounts removeObject:@(code)];
-        if (![_referenceCounts containsObject:@(code)]) {
+        [_referenceCounts removeObjectForKey:@(code)];
+        if (!_referenceCounts[@(code)]) {
             iTermTuple<NSURL *, NSString *> *tuple = _reverseStore[@(code)];
             [_reverseStore removeObjectForKey:@(code)];
             NSString *url = [tuple.firstObject absoluteString];
@@ -164,14 +166,41 @@ static NSString *iTermURLStoreGetParamForKey(NSString *params, NSString *key) {
 - (NSDictionary *)dictionaryValue {
     @synchronized (self) {
         NSMutableArray<NSNumber *> *encodedRefcounts = [NSMutableArray array];
-        [_referenceCounts enumerateObjectsUsingBlock:^(NSNumber * _Nonnull obj, BOOL * _Nonnull stop) {
+        for (NSNumber *obj in _referenceCounts.allKeys) {
             [encodedRefcounts addObject:obj];
-            [encodedRefcounts addObject:@([_referenceCounts countForObject:obj])];
-        }];
+            [encodedRefcounts addObject:_referenceCounts[obj]];
+        };
 
-        return @{ @"store": _store,
+        return @{ @"store": _store.dictionary,
                   @"refcounts3": encodedRefcounts };
     }
+}
+
+- (BOOL)encodeGraphWithEncoder:(iTermGraphEncoder *)encoder {
+    [encoder encodeChildWithKey:@"store" identifier:@"" generation:_generation block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+        [_store encodeGraphWithEncoder:subencoder];
+        return YES;
+    }];
+    [encoder encodeChildWithKey:@"referenceCounts" identifier:@"" generation:_generation block:^BOOL(iTermGraphEncoder * _Nonnull subencoder) {
+        [_referenceCounts encodeGraphWithEncoder:subencoder];
+        return YES;
+    }];
+    return YES;
+}
+
+- (void)loadFromGraphRecord:(iTermEncoderGraphRecord *)record {
+    [_store loadFromRecord:[record childRecordWithKey:@"store" identifier:@""]
+                  keyClass:[iTermTuple class]
+                valueClass:[NSNumber class]];
+    [_store enumerateKeysAndObjectsUsingBlock:^(iTermTuple<NSString *,NSString *> *key,
+                                                NSNumber *obj,
+                                                BOOL *stop) {
+        _reverseStore[obj] = [iTermTuple tupleWithObject:[NSURL URLWithString:key.firstObject]
+                                               andObject:key.secondObject];
+    }];
+    [_referenceCounts loadFromRecord:[record childRecordWithKey:@"referenceCounts" identifier:@""]
+                            keyClass:[NSNumber class]
+                          valueClass:[NSNumber class]];
 }
 
 - (iTermTuple<NSString *, NSString *> *)migratedKey:(id)unknownKey {
@@ -218,23 +247,25 @@ static NSString *iTermURLStoreGetParamForKey(NSString *params, NSString *key) {
 
         NSError *error = nil;
         if (refcounts2) {
-            _referenceCounts = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithArray:@[ [NSCountedSet class], [NSNumber class] ]]
+            NSCountedSet *countedSet = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithArray:@[ [NSCountedSet class], [NSNumber class] ]]
                                                                    fromData:refcounts2
                                                                       error:&error] ?: [[NSCountedSet alloc] init];
             if (error) {
-                _referenceCounts = [self legacyDecodedRefcounts:dictionary];
+                countedSet = [self legacyDecodedRefcounts:dictionary];
                 NSLog(@"Failed to decode refcounts from data %@", refcounts2);
-                return;
             }
+            if (countedSet) {
+                [countedSet enumerateObjectsUsingBlock:^(id  _Nonnull obj, BOOL * _Nonnull stop) {
+                    _referenceCounts[obj] = @([countedSet countForObject:obj]);
+                }];
+            }
+            return;
         }
         if (refcounts3) {
             const NSInteger count = refcounts3.count;
             for (NSInteger i = 0; i + 1 < count; i += 2) {
                 NSNumber *obj = refcounts3[i];
-                NSInteger rc = [refcounts3[i+1] integerValue];
-                for (NSInteger j = 0; j < rc; j++) {
-                    [_referenceCounts addObject:obj];
-                }
+                _referenceCounts[obj] = refcounts3[i+1];
             }
         }
     }

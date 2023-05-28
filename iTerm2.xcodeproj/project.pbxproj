@@ -2062,6 +2062,8 @@
 		A66F52D92106F6F100571168 /* gitup@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66F52BF2106F6F000571168 /* gitup@2x.png */; };
 		A66F52DA2106F6F100571168 /* gitup@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66F52BF2106F6F000571168 /* gitup@2x.png */; };
 		A66F52DB2106F6F100571168 /* gitup@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A66F52BF2106F6F000571168 /* gitup@2x.png */; };
+		A670F0C32A1FDA6100C740AC /* iTermChangeTrackingDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = A670F0C12A1FDA6100C740AC /* iTermChangeTrackingDictionary.h */; };
+		A670F0C42A1FDA6100C740AC /* iTermChangeTrackingDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = A670F0C22A1FDA6100C740AC /* iTermChangeTrackingDictionary.m */; };
 		A67109AC240C677D0018631A /* NSEvent+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E77F8E1A2449EF009B1CB6 /* NSEvent+iTerm.m */; };
 		A671AC6026D95C0400B23C95 /* HTMLEncoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = A671AC5F26D95C0400B23C95 /* HTMLEncoding.swift */; };
 		A6725AD223D639C2001CA48A /* iTermProfilesMenuController.h in Headers */ = {isa = PBXBuildFile; fileRef = A6725AD023D639C2001CA48A /* iTermProfilesMenuController.h */; };
@@ -6169,6 +6171,8 @@
 		A66F52BA2106F6EF00571168 /* gitup.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = gitup.png; path = images/gitup.png; sourceTree = "<group>"; };
 		A66F52BD2106F6EF00571168 /* gitdown@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "gitdown@2x.png"; path = "images/gitdown@2x.png"; sourceTree = "<group>"; };
 		A66F52BF2106F6F000571168 /* gitup@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "gitup@2x.png"; path = "images/gitup@2x.png"; sourceTree = "<group>"; };
+		A670F0C12A1FDA6100C740AC /* iTermChangeTrackingDictionary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermChangeTrackingDictionary.h; sourceTree = "<group>"; };
+		A670F0C22A1FDA6100C740AC /* iTermChangeTrackingDictionary.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermChangeTrackingDictionary.m; sourceTree = "<group>"; };
 		A671AC5F26D95C0400B23C95 /* HTMLEncoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLEncoding.swift; sourceTree = "<group>"; };
 		A6725AD023D639C2001CA48A /* iTermProfilesMenuController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermProfilesMenuController.h; sourceTree = "<group>"; };
 		A6725AD123D639C2001CA48A /* iTermProfilesMenuController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermProfilesMenuController.m; sourceTree = "<group>"; };
@@ -10790,6 +10794,8 @@
 				A682CCC12A0EBD110099E762 /* SuggestionRequest.swift */,
 				A6354B932A1A8828002836A3 /* BookmarkDialogViewController.swift */,
 				A6354B972A1B27BF002836A3 /* NamedMarksDidChangeNotification.swift */,
+				A670F0C12A1FDA6100C740AC /* iTermChangeTrackingDictionary.h */,
+				A670F0C22A1FDA6100C740AC /* iTermChangeTrackingDictionary.m */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -12501,6 +12507,7 @@
 				5365207521433F00003C58FD /* iTermGitPollWorker.h in Headers */,
 				A6C3005F247117A9002BC672 /* iTermLocatedString.h in Headers */,
 				A6EF57D121994DDC00C76698 /* iTermUserDefaultsObserver.h in Headers */,
+				A670F0C32A1FDA6100C740AC /* iTermChangeTrackingDictionary.h in Headers */,
 				A667191D1DCE36C3000CE608 /* iTermHotKeyMigrationHelper.h in Headers */,
 				A648165F2290773A008E7E0C /* iTermReflection.h in Headers */,
 				A667191E1DCE36C3000CE608 /* iTermCPS.h in Headers */,
@@ -15579,6 +15586,7 @@
 				A6D10E3827F7C2BC0026DB56 /* NSEvent+MultiCursor.swift in Sources */,
 				A653F6B524D1437B0062377E /* iTermEncoderAdapter.m in Sources */,
 				A653F66424CD6A7E0062377E /* iTermRestorableStateSaver.m in Sources */,
+				A670F0C42A1FDA6100C740AC /* iTermChangeTrackingDictionary.m in Sources */,
 				A68400A71FF82424008D3EE2 /* iTermIndicatorRenderer.m in Sources */,
 				A6A9839727E68092003319D1 /* CommandLinePasswordDataSource.swift in Sources */,
 				A6EE7F34234082BE00D0F724 /* iTermMalloc.m in Sources */,

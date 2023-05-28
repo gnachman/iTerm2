@@ -6,8 +6,11 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermTuple.h"
 
 NS_ASSUME_NONNULL_BEGIN
+
+@class iTermChangeTrackingDictionary;
 
 @interface iTermEncoderGraphRecord: NSObject
 @property (nonatomic, readonly) NSDictionary<NSString *, id> *pod;
@@ -47,6 +50,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)stringWithKey:(NSString *)key;
 - (nullable id)objectWithKey:(NSString *)key class:(Class)theClass;
 - (void)eraseRowIDs;
+
+- (NSMutableDictionary<iTermTuple<NSString *, NSString *> *, iTermEncoderGraphRecord *> *)index;
+
 @end
 
 @interface NSObject (iTermEncoderGraphRecord)

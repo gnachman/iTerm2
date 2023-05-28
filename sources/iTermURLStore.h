@@ -7,11 +7,12 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "iTermEncoderAdapter.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 // See https://bugzilla.gnome.org/show_bug.cgi?id=779734 for the original discussion.
-@interface iTermURLStore : NSObject
+@interface iTermURLStore : NSObject<iTermGraphCodable>
 @property(nonatomic, readonly) NSInteger generation;
 
 + (instancetype)sharedInstance;
@@ -23,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (NSDictionary *)dictionaryValue;
 - (void)loadFromDictionary:(NSDictionary *)dictionary;
+- (void)loadFromGraphRecord:(iTermEncoderGraphRecord *)record;
 
 @end
 
