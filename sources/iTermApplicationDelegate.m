@@ -1181,6 +1181,18 @@ void TurnOnDebugLoggingAutomatically(void) {
     }];
 }
 
+- (void)turnOffMetalCaptureEnabledIfNeeded {
+    NSString *key = @"MetalCaptureEnabledDate";
+    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:key];
+    if (!n) {
+        return;
+    }
+    if (n.doubleValue < [NSDate timeIntervalSinceReferenceDate]) {
+        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MetalCaptureEnabled"];
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+    }
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     DLog(@"didFinishLaunching");
     [iTermLaunchExperienceController applicationDidFinishLaunching];
@@ -1196,6 +1208,7 @@ void TurnOnDebugLoggingAutomatically(void) {
                 [[[NSProcessInfo processInfo] beginActivityWithOptions:NSActivityUserInitiatedAllowingIdleSystemSleep
                                                                 reason:@"User Preference"] retain];
     }
+    [self turnOffMetalCaptureEnabledIfNeeded];
     [iTermFontPanel makeDefault];
 
     finishedLaunching_ = YES;

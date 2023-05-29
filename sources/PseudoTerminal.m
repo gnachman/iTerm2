@@ -7544,7 +7544,28 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     }
 }
 
+- (void)turnOnMetalCaptureInInfoPlist {
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:@"You must restart iTerm2 to turn on this feature."
+                               actions:@[ @"Restart Now", @"Cancel"]
+                            identifier:@"RestartAfterMetalCaptureEnabled"
+                           silenceable:kiTermWarningTypePersistent
+                                window:self.window];
+    if (selection == kiTermWarningSelection0) {
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MetalCaptureEnabled"];
+        [[NSUserDefaults standardUserDefaults] setDouble:[NSDate timeIntervalSinceReferenceDate] + 24 * 60 * 60
+                                                  forKey:@"MetalCaptureEnabledDate"];
+        [NSApp relaunch];
+    }
+}
+
 - (IBAction)captureNextMetalFrame:(id)sender {
+    NSDictionary *infoPlist = [[NSBundle mainBundle] infoDictionary];
+    NSNumber *metalCaptureEnabled = infoPlist[@"MetalCaptureEnabled"];
+    if (!metalCaptureEnabled.boolValue && ![[NSUserDefaults standardUserDefaults] boolForKey:@"MetalCaptureEnabled"]) {
+        [self turnOnMetalCaptureInInfoPlist];
+        return;
+    }
     self.currentSession.overrideGlobalDisableMetalWhenIdleSetting = YES;
     [self.currentTab updateUseMetal];
     self.currentSession.view.driver.captureDebugInfoForNextFrame = YES;

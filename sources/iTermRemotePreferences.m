@@ -91,7 +91,9 @@ static BOOL iTermRemotePreferencesKeyIsSyncable(NSString *key,
                              @"CGFontRenderingFontSmoothingDisabled",
                              @"PreventEscapeSequenceFromChangingProfile",
                              @"PreventEscapeSequenceFromClearingHistory",
-                             @"Coprocess MRU"];
+                             @"Coprocess MRU",
+                             @"MetalCaptureEnabled",
+                             @"MetalCaptureEnabledDate"];
     return ![exemptKeys containsObject:key] &&
             ![key hasPrefix:@"NS"] &&
             ![key hasPrefix:@"SU"] &&

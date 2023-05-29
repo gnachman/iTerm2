@@ -584,6 +584,7 @@ private struct UserDefaultsImporterExporter {
 }
 
 extension NSApplication {
+    @objc
     func relaunch() -> Never {
         DLog("Relaunch")
         let pid = ProcessInfo().processIdentifier
