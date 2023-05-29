@@ -81,7 +81,7 @@ class AutoResizingTextView: NSTextView {
         if originalAttributedString == nil {
             originalAttributedString = (attributedString.copy() as! NSAttributedString)
         }
-        NSLog("attributedString is \(attributedString.string)")
+        DLog("attributedString is \(attributedString.string)")
         let maxFontSize = userFont!.pointSize
         // Find max font size that fits in the text view for each font run
 
@@ -102,7 +102,7 @@ class AutoResizingTextView: NSTextView {
         // Apply the maximum font size that fits
         attributedString.setAttributedString(originalAttributedString!.copy() as! NSAttributedString)
         resizeFonts(in: attributedString, delta: delta)
-        NSLog("Resize by \(delta) -> \(attributedString)")
+        DLog("Resize by \(delta) -> \(attributedString)")
 
         // Set attributed string and update layout
         truncateTextIfNeeded()
