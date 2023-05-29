@@ -20,6 +20,7 @@ NSString *const kCapturedOutputValuesKey = @"Values";
 NSString *const kCaputredOutputCommandKey = @"Command";
 NSString *const kCapturedOutputStateKey = @"State";
 NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
+NSString *const kCapturedOutputAbsoluteLineNumberKey = @"Absolute Line Number";
 
 @implementation CapturedOutput {
     CapturedOutput *_doppelganger;
@@ -38,6 +39,7 @@ NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
     if (capturedOutput) {
         capturedOutput.line = dict[kCapturedOutputLineKey];
         capturedOutput.values = dict[kCapturedOutputValuesKey];
+        capturedOutput.absoluteLineNumber = [dict[kCapturedOutputAbsoluteLineNumberKey] longLongValue];
         capturedOutput.promisedCommand = [iTermPromise promise:^(id<iTermPromiseSeal>  _Nonnull seal) {
             NSString *value = [NSString castFrom:dict[kCaputredOutputCommandKey]];
             if (value) {
@@ -65,6 +67,7 @@ NSString *const kCapturedOutputMarkGuidKey = @"Mark Guid";
 - (NSDictionary *)dictionaryValue {
     NSDictionary *dict =
     @{ kCapturedOutputLineKey: _line ?: [NSNull null],
+       kCapturedOutputAbsoluteLineNumberKey: @(_absoluteLineNumber),
        kCapturedOutputValuesKey: _values ?: @[],
        kCaputredOutputCommandKey: _promisedCommand.maybeValue ?: [NSNull null],
        kCapturedOutputStateKey: @(_state),

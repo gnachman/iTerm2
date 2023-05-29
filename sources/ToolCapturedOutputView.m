@@ -16,6 +16,7 @@
 #import "iTermSearchField.h"
 #import "iTermToolbeltView.h"
 #import "iTermToolWrapper.h"
+#import "NSArray+iTerm.h"
 #import "NSFont+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSTableColumn+iTerm.h"
@@ -49,6 +50,8 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     NSButton *_clearButton;
     NSArray *filteredEntries_;
     BOOL _ignoreClick;
+    NSString *_clearedMark;
+    long long _clearedAbsLineNumber;
 }
 
 @synthesize tableView = tableView_;
@@ -112,6 +115,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
 
         tableView_.menu = [[NSMenu alloc] init];
         tableView_.menu.delegate = self;
+        tableView_.intercellSpacing = NSMakeSize(0, 2);
         NSMenuItem *item;
         item = [[NSMenuItem alloc] initWithTitle:@"Toggle Checkmark"
                                           action:@selector(toggleCheckmark:)
@@ -149,6 +153,14 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
         mark = [wrapper.delegate.delegate toolbeltLastCommandMark];
     }
     theArray = mark.capturedOutput;
+    if ([_clearedMark isEqualToString:mark.guid]) {
+        theArray = [theArray filteredArrayUsingBlock:^BOOL(id<CapturedOutputReading> co) {
+            return co.absoluteLineNumber > _clearedAbsLineNumber;
+        }];
+    } else {
+        _clearedMark = nil;
+        _clearedAbsLineNumber = 0;
+    }
     if (mark != mark_) {
         [tableView_ selectRowIndexes:[NSIndexSet indexSet] byExtendingSelection:NO];
         mark_ = mark;
@@ -245,6 +257,8 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
 }
 
 - (void)clear:(id)sender {
+    _clearedAbsLineNumber = mark_.capturedOutput.lastObject.absoluteLineNumber;
+    _clearedMark = mark_.guid;
     allCapturedOutput_ = [[NSMutableArray alloc] init];
     filteredEntries_ = [[NSMutableArray alloc] init];
 
@@ -303,7 +317,7 @@ static NSString *const iTermCapturedOutputToolTableViewCellIdentifier = @"ToolCa
     _measuringCellView.needsLayout = YES;
     [_measuringCellView layoutSubtreeIfNeeded];
     NSSize naturalSize = [_measuringCellView fittingSize];
-    return naturalSize.height > tableView_.rowHeight ? naturalSize.height : tableView_.rowHeight;
+    return naturalSize.height;
 }
 
 - (NSCell *)tableView:(NSTableView *)tableView
