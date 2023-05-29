@@ -704,6 +704,9 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         // Contains a slash but does not start with it.
         return YES;
     }
+    if ([iTermAdvancedSettingsModel requireSlashInURLGuess] && slashRange.location == NSNotFound) {
+        return NO;
+    }
 
     NSString *ipRegex = @"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$";
     if ([s rangeOfRegex:ipRegex].location != NSNotFound) {

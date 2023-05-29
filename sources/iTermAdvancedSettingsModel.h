@@ -293,6 +293,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)removeAddTabButton;
 + (BOOL)restrictSemanticHistoryPrefixAndSuffixToLogicalWindow;
 + (BOOL)requireCmdForDraggingText;
++ (BOOL)requireSlashInURLGuess;
 + (BOOL)resetSGROnPrompt;
 + (BOOL)restoreWindowContents;
 + (BOOL)restoreWindowsWithinScreens;
