@@ -329,10 +329,17 @@
 - (void)putStreamData:(const char *)buffer length:(int)length {
     @synchronized(self) {
         if (_currentStreamLength + length > _totalStreamLength) {
-            // Grow the stream if needed.
-            int n = (length + _currentStreamLength) / kDefaultStreamSize;
+            // Grow the stream if needed. Don't grow too fast so the xterm parser can catch overflow.
+            int n = MIN(500, (length + _currentStreamLength) / kDefaultStreamSize);
 
-            _totalStreamLength += n * kDefaultStreamSize;
+            // Make sure it grows enough to hold this.
+            NSInteger proposedSize = _totalStreamLength;
+            proposedSize += MAX(n * kDefaultStreamSize, length);
+            if (proposedSize >= INT_MAX) {
+                DLog(@"Stream too big!");
+                return;
+            }
+            _totalStreamLength = proposedSize;
             _stream = iTermRealloc(_stream, _totalStreamLength, 1);
         }
 

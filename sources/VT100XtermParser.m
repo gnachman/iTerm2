@@ -371,6 +371,9 @@ typedef enum {
 
     iTermXtermParserState previousState = state;
 
+    if (iTermParserLength(context) + iTermParserNumberOfBytesConsumed(context) > 0x7f000000) {
+        state = kXtermParserFailedState;
+    }
     // Run the state machine.
     while (1) {
         iTermXtermParserState stateSwitchedOn = state;
