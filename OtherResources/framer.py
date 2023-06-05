@@ -5,6 +5,7 @@ import errno
 import fcntl
 import json
 import os
+import platform
 import pty
 import pwd
 import random
@@ -23,7 +24,7 @@ import traceback
 PROCESSES = {}
 # List of pids that are completed. Their tasks can be awaited and removed.
 COMPLETED = []
-VERBOSE=0
+VERBOSE=1
 LOGFILE=None
 RUNLOOP=None
 TASKS=[]
@@ -268,8 +269,8 @@ async def autopoll(delay):
         global AUTOPOLL
         while True:
             log('autopoll: call poll()')
-            output = await poll()
-            if not len(output):
+            cats = await poll()
+            if not cats:
                 log(f'autopoll: sleep for {delay}')
                 await asyncio.sleep(delay)
                 log(f'autopoll: awoke')
@@ -277,8 +278,7 @@ async def autopoll(delay):
             # Send poll output and sleep until client requests autopolling again.
             identifier = makeid()
             send_esc(f'%autopoll {identifier}')
-            for line in output:
-                send(line.encode("utf-8") + b'\n')
+            send_poll_output(cats)
             send_esc(f'%end {identifier}')
             AUTOPOLL = 0
             while not AUTOPOLL:
@@ -290,6 +290,13 @@ async def autopoll(delay):
         raise
     except Exception as e:
         log(f'autopoll threw {e}: {traceback.format_exc()}')
+
+def send_poll_output(cats):
+    for catname in cats:
+        output = cats[catname]
+        send(f'$begin {catname}'.encode("utf-8") + b'\n')
+        for line in output:
+            send(line.encode("utf-8") + b'\n')
 
 def get_echo_icanon(tty):
     try:
@@ -303,7 +310,7 @@ async def watch_tty(proc, delay):
     try:
         while True:
             poll_tty(proc)
-            time.sleep(delay)
+            await asyncio.sleep(delay)
     except asyncio.CancelledError:
         log('watch_tty canceled')
         raise
@@ -323,6 +330,67 @@ def poll_tty(proc):
     proc.icanon = new_icanon
 
 async def poll():
+    result = {}
+    ps_out = await poll_ps()
+    if ps_out is not None:
+        result["ps"] = ps_out
+    cpu_time_diff = await poll_cpu()
+    if cpu_time_diff is not None:
+        result["cpu"] = cpu_time_diff
+    return result
+
+mpstat_exists = None  # Global variable to cache the mpstat existence check
+
+async def check_mpstat_exists():
+    global mpstat_exists
+    if mpstat_exists is None:
+        try:
+            log("Checking if mpstat exists")
+            proc = await asyncio.create_subprocess_shell(
+                "mpstat -V",
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            output, _ = await proc.communicate()
+            log(f'return code is {proc.returncode}')
+            mpstat_exists = proc.returncode == 0
+        except FileNotFoundError:
+            log("mpstat: file not found")
+            mpstat_exists = False
+
+
+async def poll_cpu():
+    operating_system = platform.system()
+    if operating_system == 'Darwin':  # macOS
+        command = "top -l 1 -n 0 | awk '/CPU usage/ {print $3}'"
+    elif operating_system == 'Linux':  # Linux
+        await check_mpstat_exists()
+        if not mpstat_exists:
+            return None
+        command = "mpstat -P ALL 1 1 | awk '/Average:/ && $2 == \"all\" {print 100 - $NF}'"
+    else:
+        return None
+    env = dict(os.environ)
+    env["LANG"] = "C"
+    proc = await asyncio.create_subprocess_shell(
+        command,
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        env=env)
+    log(f'poll_cpu: run {command} {proc}')
+    output, erroutput = await proc.communicate()
+    if proc.returncode == 0:
+        log(f'poll_cpu: successful return')
+        # Parse the output here
+        final = "=" + output.decode("utf-8").strip()
+        log(f'poll_cpu: return parsed output')
+        return [final]
+    log(f'poll_cpu: {command} failed with {proc.returncode}')
+    return None
+
+async def poll_ps():
     env = dict(os.environ)
     env["LANG"] = "C"
     proc = await asyncio.create_subprocess_shell(
@@ -331,14 +399,14 @@ async def poll():
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         env=env)
-    log(f'poll: run ps {proc}')
+    log(f'poll_ps: run ps {proc}')
     output, erroutput = await proc.communicate()
     if proc.returncode == 0:
-        log(f'poll: successful return')
+        log(f'poll_ps: successful return')
         final = procmon_parse(output)
-        log(f'poll: return parsed output')
+        log(f'poll_ps: return parsed output')
         return final
-    log(f'poll: ps failed with {proc.returncode}')
+    log(f'poll_ps: ps failed with {proc.returncode}')
     return None
 
 async def register(pid):
@@ -530,7 +598,7 @@ async def handle_run(identifier, args):
     return False
 
 def start_tty_task(identifier, proc):
-    proc.tty_task = asyncio.create_task(watch_tty(proc.master, 1))
+    proc.tty_task = asyncio.create_task(watch_tty(proc, 1))
 
 def reset():
     global REGISTERED
@@ -958,11 +1026,10 @@ async def handle_autopoll(identifier, args):
 async def handle_poll(identifier, args):
     log(f'handle_poll({identifier}, {args})')
     output = await poll()
-    log(f'handle_poll({identifier}, {args}): read {len(output)} bytes of output')
+    log(f'handle_poll({identifier}, {args}): read {len(output)} categories of output')
     begin(identifier)
     if output is not None:
-        for line in output:
-            send_esc(line)
+        send_poll_output(output)
         end(identifier, 0)
     else:
         end(identifier, 1)

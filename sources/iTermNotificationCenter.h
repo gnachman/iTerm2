@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermBaseNotification : NSObject
 + (void)subscribe:(NSObject *)owner selector:(SEL)selector;
-- (nullable instancetype)init NS_UNAVAILABLE;
+- (instancetype)init NS_UNAVAILABLE;
 - (void)post;
 
 // For subclassesonly

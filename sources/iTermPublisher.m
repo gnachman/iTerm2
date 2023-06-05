@@ -80,7 +80,6 @@ static const char* siTermPublisherAttachment = "siTermPublisherAttachment";
     // be a dumpster fire I'll go my own way.
     NSMutableArray<iTermSubscriber *> *_subscribers;
     uint64_t _updateTime;
-    NSInteger _capacity;
     NSMutableArray *_historicalValues;
 }
 
@@ -89,6 +88,7 @@ static const char* siTermPublisherAttachment = "siTermPublisherAttachment";
     if (self) {
         _subscribers = [NSMutableArray array];
         _capacity = capacity;
+        _historicalValues = [NSMutableArray array];
     }
     return self;
 }
@@ -98,9 +98,10 @@ static const char* siTermPublisherAttachment = "siTermPublisherAttachment";
     __weak __typeof(self) weakSelf = self;
     iTermSubscriber *subscriber = [[iTermSubscriber alloc] initWithWeakReferenceToObject:object
                                                                                    block:block];
+    __weak iTermSubscriber *weakSubscriber = subscriber;
     attachment.willDealloc = ^{
         dispatch_async(dispatch_get_main_queue(), ^{
-            [weakSelf didDeallocObjectForSubscriber:subscriber];
+            [weakSelf didDeallocObjectForSubscriber:weakSubscriber];
         });
     };
     [object it_setAssociatedObject:attachment
@@ -110,8 +111,10 @@ static const char* siTermPublisherAttachment = "siTermPublisherAttachment";
 }
 
 - (void)didDeallocObjectForSubscriber:(iTermSubscriber *)subscriber {
-    [_subscribers removeObject:subscriber];
-    [self countDidChange];
+    if (subscriber) {
+        [_subscribers removeObject:subscriber];
+        [self countDidChange];
+    }
 }
 
 - (BOOL)haveSubscribers {
@@ -123,13 +126,6 @@ static const char* siTermPublisherAttachment = "siTermPublisherAttachment";
     if (hasAnySubscribers != _hasAnySubscribers) {
         _hasAnySubscribers = hasAnySubscribers;
         [self.delegate publisherDidChangeNumberOfSubscribers:self];
-        
-        
-        if (!_historicalValues && hasAnySubscribers) {
-            _historicalValues = [NSMutableArray array];
-        } else if (_historicalValues && !hasAnySubscribers) {
-            _historicalValues = nil;
-        }
     }
 }
 

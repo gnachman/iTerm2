@@ -106,7 +106,7 @@ class SyntaxHighlighter {
             guard let range = Range(nsrange) else {
                 return
             }
-            let shiftedRange = range.shifted(by: rangeToModify.lowerBound)
+            let shiftedRange = range.shifted(by: rangeToModify.lowerBound).clamped(to: rangeToModify)
             DLog("Consider <<\(String(value.string.substringWithUTF16Range(shiftedRange)!))>> with role \(role)")
             switch role {
             case .command:

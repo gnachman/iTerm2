@@ -120,6 +120,8 @@ class SSHProcessInfoProvider {
     private let rootPID: pid_t
     private var haveBumped = false
     private var lastRows = [pid_t: PSRow]()
+    private(set) var cpuUtilization: Double?
+    let cpuUtilizationPublisher = iTermPublisher<NSNumber>(capacity: 120)
 
     init(rootPID: pid_t,
          runner: SSHCommandRunning) {
@@ -138,6 +140,16 @@ class SSHProcessInfoProvider {
                 self?.rateLimit.minimumInterval = 5
             }
         needsUpdate = true
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+            guard let self else {
+                timer.invalidate()
+                return
+            }
+            // We must publish once a second for the status bar component to draw properly.
+            if let cpuUtilization {
+                cpuUtilizationPublisher.publish(NSNumber(value: cpuUtilization))
+            }
+        }
     }
 
     var needsUpdate: Bool {
@@ -190,9 +202,38 @@ class SSHProcessInfoProvider {
         handle(psout)
     }
 
-    func handle(_ psout: String) {
+    func handle(_ output: String) {
+        let lines = output.components(separatedBy: "\n")
+        // $begin name1
+        // [lines of ouptut]
+        // $begin name2
+        // [lines of output]
+        var cats = [String: [String]]()
+        var key: String? = nil
+        for line in lines {
+            if line.isEmpty {
+                continue
+            }
+            let beginPrefix = "$begin "
+            if line.hasPrefix(beginPrefix) {
+                key = String(line.dropFirst(beginPrefix.count))
+                continue
+            }
+            if let key {
+                cats[key] = cats[key, default: []] + [line]
+            }
+        }
+        if let psLines = cats["ps"] {
+            handlePS(psLines)
+        }
+        if let cpuLines = cats["cpu"] {
+            handleCPU(cpuLines)
+        }
+    }
+
+    func handlePS(_ lines: [String]) {
         // Parse output of poll
-        let edits = psout.components(separatedBy: "\n").compactMap { line in
+        let edits = lines.compactMap { line in
             ProcessEdit(line)
         }
 
@@ -209,6 +250,26 @@ class SSHProcessInfoProvider {
         cachedDeepestForegroundJob = newDeepestForegroundJobCache()
         _needsUpdate = false
         rootInfo = collection.info(forProcessID: rootPID)
+    }
+
+    func handleCPU(_ lines: [String]) {
+        guard let firstLine = lines.first, firstLine.hasPrefix("=") else {
+            return
+        }
+
+        let trimmedLine = firstLine.dropFirst().trimmingCharacters(in: .whitespacesAndNewlines)
+
+        let percentage: Double?
+        if trimmedLine.hasSuffix("%") {
+            let percentageString = trimmedLine.dropLast()
+            percentage = Double(percentageString)
+        } else {
+            percentage = Double(trimmedLine)
+        }
+        guard let percentage else {
+            return
+        }
+        cpuUtilization = percentage / 100.0
     }
 
     private func apply(_ edits: [ProcessEdit], to original: [pid_t: PSRow]) -> [pid_t: PSRow] {

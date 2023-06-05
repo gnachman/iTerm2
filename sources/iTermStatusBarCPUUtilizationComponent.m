@@ -8,6 +8,8 @@
 #import "iTermStatusBarCPUUtilizationComponent.h"
 
 #import "iTermCPUUtilization.h"
+#import "iTermVariableReference.h"
+#import "iTermVariableScope+Session.h"
 #import "NSDictionary+iTerm.h"
 #import "NSImage+iTerm.h"
 #import "NSStringITerm.h"
@@ -17,16 +19,25 @@ static const CGFloat iTermCPUUtilizationWidth = 120;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@implementation iTermStatusBarCPUUtilizationComponent
+@implementation iTermStatusBarCPUUtilizationComponent {
+    iTermVariableReference *_sshRef;
+    NSArray<NSNumber *> *_previousValues;
+}
 
 - (instancetype)initWithConfiguration:(NSDictionary<iTermStatusBarComponentConfigurationKey,id> *)configuration
                                 scope:(nullable iTermVariableScope *)scope {
     self = [super initWithConfiguration:configuration scope:scope];
     if (self) {
         __weak __typeof(self) weakSelf = self;
-        [[iTermCPUUtilization sharedInstance] addSubscriber:self block:^(double value) {
-            [weakSelf update:value];
-        }];
+        // scope will be nil in status bar configuration UI but not during normal use.
+        if (scope.ID) {
+            [[iTermCPUUtilization instanceForSessionID:scope.ID] addSubscriber:self block:^(double value) {
+                [weakSelf update:value];
+            }];
+            _sshRef.onChangeBlock = ^{
+                [weakSelf sshLevelDidChange];
+            };
+        }
     }
     return self;
 }
@@ -61,7 +72,14 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 - (iTermStatusBarSparklinesModel *)sparklinesModel {
-    NSArray<NSNumber *> *values = [[iTermCPUUtilization sharedInstance] samples];
+    NSMutableArray<NSNumber *> *values = [[[iTermCPUUtilization instanceForSessionID:self.scope.ID] samples] mutableCopy];
+    // The data source may change when sshing but the drawing code doesn't expect retroactive changes.
+    NSInteger i = _previousValues.count;
+    while (i > 0 && values.count < _previousValues.count) {
+        i -= 1;
+        [values insertObject:_previousValues[i] atIndex:0];
+    }
+    _previousValues = values;
     iTermStatusBarTimeSeries *timeSeries = [[iTermStatusBarTimeSeries alloc] initWithValues:values];
     iTermStatusBarTimeSeriesRendition *rendition =
     [[iTermStatusBarTimeSeriesRendition alloc] initWithTimeSeries:timeSeries
@@ -71,7 +89,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (int)currentEstimate {
     double alpha = 0.7;
-    NSArray<NSNumber *> *const samples = [[iTermCPUUtilization sharedInstance] samples];
+    NSArray<NSNumber *> *const samples = [[iTermCPUUtilization instanceForSessionID:self.scope.ID] samples];
     NSArray<NSNumber *> *lastSamples = samples;
     const NSInteger maxSamplesToUse = 4;
     double x = samples.lastObject.doubleValue;
@@ -131,6 +149,10 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Private
 
 - (void)update:(double)value {
+    [self invalidate];
+}
+
+- (void)sshLevelDidChange {
     [self invalidate];
 }
 

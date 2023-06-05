@@ -21,36 +21,104 @@ typedef struct {
 } iTermCPUTicks;
 
 
-@interface iTermCPUUtilization()<iTermPublisherDelegate>
+@implementation iTermLocalCPUUtilizationPublisher
++ (instancetype)sharedInstance {
+    static iTermLocalCPUUtilizationPublisher *instance;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[iTermLocalCPUUtilizationPublisher alloc] initWithCapacity:120];
+    });
+    return instance;
+}
 @end
 
+#pragma mark -
+
+@interface iTermCPUUtilization()
+@end
+
+
+// The design:
+//
+// Source publisher:                  Router:            Consumer:
+// One per data source                One per session    One per data sink
+//
+// [Local publisher singleton] -----> router ----------> consumer
+//                              \             `--------> consumer
+//                               `--> router ----------> consumer
+//                                            `--------> consumer
+// [example1.com publisher] --------> router ----------> consumer
+//                                            `--------> consumer
+// [example2.com publisher] --------> router ----------> consumer
+//                                            `--------> consumer
 @implementation iTermCPUUtilization {
     iTermCPUTicks _last;
     NSTimer *_timer;
     iTermPublisher<NSNumber *> *_publisher;
+    iTermPublisher<NSNumber *> *_router;
 }
 
-+ (instancetype)sharedInstance {
++ (NSMutableDictionary<NSString *, iTermCPUUtilization *> *)sessionInstances {
+    static NSMutableDictionary<NSString *, iTermCPUUtilization *> *gSessionInstances;
     static dispatch_once_t onceToken;
-    static id instance;
     dispatch_once(&onceToken, ^{
-        instance = [[self alloc] init];
+        gSessionInstances = [NSMutableDictionary dictionary];
     });
+    return gSessionInstances;
+}
+
++ (instancetype)instanceForSessionID:(NSString *)sessionID {
+    iTermCPUUtilization *instance = self.sessionInstances[sessionID];
+    if (instance) {
+        return instance;
+    }
+    instance = [[iTermCPUUtilization alloc] initWithPublisher:[iTermLocalCPUUtilizationPublisher sharedInstance]];
+    [self setInstance:instance forSessionID:sessionID];
     return instance;
 }
 
-- (instancetype)init {
++ (void)setInstance:(iTermCPUUtilization *)instance forSessionID:(NSString *)sessionID {
+    if (instance) {
+        self.sessionInstances[sessionID] = instance;
+    } else {
+        [self.sessionInstances removeObjectForKey:sessionID];
+    }
+}
+
+- (instancetype)initWithPublisher:(iTermPublisher<NSNumber *> *)publisher {
     self = [super init];
     if (self) {
         _cadence = 1;
-        _publisher = [[iTermPublisher alloc] initWithCapacity:120];
-        _publisher.delegate = self;
+        _router = [[iTermPublisher alloc] initWithCapacity:publisher.capacity];
+        [self setPublisher:publisher];
     }
     return self;
 }
 
+- (instancetype)init {
+    return [self initWithPublisher:[iTermLocalCPUUtilizationPublisher sharedInstance]];
+}
+
+- (void)setPublisher:(iTermPublisher<NSNumber *> *)publisher {
+    if (publisher == _publisher) {
+        return;
+    }
+    [_publisher removeSubscriber:self];
+    __weak __typeof(self) weakSelf = self;
+    _publisher = publisher;
+    [publisher addSubscriber:self block:^(NSNumber * _Nonnull payload) {
+        [weakSelf republish:payload];
+    }];
+    [self updateTimer];
+}
+
+// publisher -> router
+- (void)republish:(NSNumber *)payload {
+    [_router publish:payload];
+}
+
 - (void)addSubscriber:(id)subscriber block:(iTermCPUUtilizationObserver)block {
-    [_publisher addSubscriber:subscriber block:^(NSNumber * _Nonnull payload) {
+    [_router addSubscriber:subscriber block:^(NSNumber * _Nonnull payload) {
         block(payload.doubleValue);
     }];
     NSNumber *last = _publisher.historicalValues.lastObject;
@@ -59,6 +127,7 @@ typedef struct {
     } else {
         [self update];
     }
+    [self updateTimer];
 }
 
 #pragma mark - Private
@@ -72,6 +141,10 @@ typedef struct {
 }
 
 - (void)update {
+    const BOOL isLocal = [_publisher isKindOfClass:[iTermLocalCPUUtilizationPublisher class]];
+    if (!isLocal) {
+        return;
+    }
     iTermCPUTicks current = [self sample];
     iTermCPUTicks delta = current;
     delta.idle -= _last.idle;
@@ -108,13 +181,12 @@ typedef struct {
     return result;
 }
 
-#pragma mark - iTermPublisherDelegate
-
-- (void)publisherDidChangeNumberOfSubscribers:(iTermPublisher *)publisher {
-    if (!_publisher.hasAnySubscribers) {
+- (void)updateTimer {
+    const BOOL isLocal = [_publisher isKindOfClass:[iTermLocalCPUUtilizationPublisher class]];
+    if (!_router.hasAnySubscribers || (_timer != nil && !isLocal)) {
         [_timer invalidate];
         _timer = nil;
-    } else if (!_timer) {
+    } else if (!_timer && isLocal) {
         _timer = [NSTimer scheduledTimerWithTimeInterval:self.cadence
                                                   target:self
                                                 selector:@selector(update)

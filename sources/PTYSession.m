@@ -786,6 +786,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
         }];
         _expect = [[iTermExpect alloc] initDry:YES];
         _sshState = iTermSSHStateNone;
+        [iTermCPUUtilization instanceForSessionID:_guid];
+
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(coprocessChanged)
                                                      name:kCoprocessStatusChangeNotification
@@ -948,6 +950,7 @@ ITERM_WEAKLY_REFERENCEABLE
     [_directories release];
     [_hosts release];
     [_bellRate release];
+    [iTermCPUUtilization setInstance:nil forSessionID:_guid];
     [_guid release];
     [_lastCommand release];
     [_substitutions release];
@@ -1080,8 +1083,10 @@ ITERM_WEAKLY_REFERENCEABLE
     if (_guid) {
         [[PTYSession sessionMap] removeObjectForKey:_guid];
     }
+    iTermPublisher<NSNumber *> *previousPublisher = [[[[iTermCPUUtilization instanceForSessionID:_guid] publisher] retain] autorelease];
     [_guid autorelease];
     _guid = [guid copy];
+    [[iTermCPUUtilization instanceForSessionID:_guid] setPublisher:previousPublisher];
     [self sync];
     [[PTYSession sessionMap] setObject:self forKey:_guid];
     [self.variablesScope setValue:_guid forVariableNamed:iTermVariableKeySessionID];
@@ -14493,7 +14498,6 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 }
 
 - (void)screenDidUnhookSSHConductor {
-    // You get here when you're using it2ssh but python isn't available on the remote.
     [_conductor handleUnhook];
     [self writeData:_sshWriteQueue];
     [_sshWriteQueue release];
@@ -14502,6 +14506,7 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
 
 - (void)unhookSSHConductor {
     DLog(@"Unhook %@", _conductor);
+    [self conductorWillDie];
     NSDictionary *config = _conductor.terminalConfiguration;
     if (config) {
         [_screen restoreSavedState:config];
@@ -17802,8 +17807,23 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
     [self writeTaskNoBroadcast:string];
 }
 
+- (void)conductorWillDie {
+    DLog(@"conductorWillDie");
+    iTermPublisher<NSNumber *> *replacement = _conductor.parent.cpuUtilizationPublisher;
+    if (!replacement) {
+        replacement = [iTermLocalCPUUtilizationPublisher sharedInstance];
+    }
+    [[iTermCPUUtilization instanceForSessionID:_guid] setPublisher:replacement];
+}
+
+- (void)conductorDidUnhook {
+    [self conductorWillDie];
+}
+
 - (void)conductorAbortWithReason:(NSString *)reason {
     XLog(@"conductor aborted: %@", reason);
+    [self conductorWillDie];
+
     NSString *location = _conductor.parent.sshIdentity.compactDescription;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState appendStringAtCursor:@"An error occurred while setting up the SSH environment:"];
@@ -17817,6 +17837,8 @@ getOptionKeyBehaviorLeft:(iTermOptionKeyBehavior *)left
 }
 
 - (void)conductorQuit {
+    DLog(@"conductorQuit");
+    [self conductorWillDie];
     NSString *identity = _conductor.sshIdentity.description;
     [_screen mutateAsynchronously:^(VT100Terminal *terminal, VT100ScreenMutableState *mutableState, id<VT100ScreenDelegate> delegate) {
         [mutableState appendBannerMessage:[NSString stringWithFormat:@"Disconnected from %@", identity]];

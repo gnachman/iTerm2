@@ -23,6 +23,7 @@ protocol ConductorDelegate: Any {
     func conductorAbort(reason: String)
     func conductorQuit()
     func conductorStateDidChange()
+    var guid: String { get }
 }
 
 struct SSHReconnectionInfo: Codable {
@@ -158,8 +159,19 @@ class Conductor: NSObject, Codable {
     private lazy var _processInfoProvider: SSHProcessInfoProvider = {
         let provider = SSHProcessInfoProvider(rootPID: framedPID!, runner: self)
         provider.register(trackedPID: framedPID!)
+        if let sessionID = delegate?.guid {
+            let instance = iTermCPUUtilization.instance(forSessionID: sessionID)
+            instance.publisher = provider.cpuUtilizationPublisher
+        }
         return provider
     }()
+    @objc var cpuUtilizationPublisher: iTermPublisher<NSNumber> {
+        if let remote = sshProcessInfoProvider?.cpuUtilizationPublisher {
+            return remote
+        }
+        return iTermLocalCPUUtilizationPublisher.sharedInstance()
+    }
+
     private var sshProcessInfoProvider: SSHProcessInfoProvider? {
         if framedPID == nil && autopollEnabled {
             return nil
