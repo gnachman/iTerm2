@@ -39,9 +39,9 @@
 	<key>DTSDKName</key>
 	<string>macosx13.3</string>
 	<key>DTXcode</key>
-	<string>1430</string>
+	<string>1431</string>
 	<key>DTXcodeBuild</key>
-	<string>14E222b</string>
+	<string>14E300c</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.15</string>
 	<key>NSHumanReadableCopyright</key>
