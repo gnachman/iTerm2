@@ -41,6 +41,7 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
 - (instancetype)init {
     if (self = [super init]) {
         _isVertical = YES;
+        _sensitivity = 1.0;
     }
     return self;
 }
@@ -87,12 +88,16 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
 // Non-trackpad code path
 - (CGFloat)accumulatedDeltaForMouseWheelEvent:(NSEvent *)event {
     const CGFloat delta = [self adjustedDeltaForEvent:event];
-    const int roundDelta = round(delta);
-    if (roundDelta == 0 && delta != 0) {
-        return delta > 0 ? 1 : -1;
-    } else {
-        return roundDelta;
+    if (_sensitivity == 1.0) {
+        const int roundDelta = round(delta);
+        if (roundDelta == 0 && delta != 0) {
+            return delta > 0 ? 1 : -1;
+        } else {
+            return roundDelta;
+        }
     }
+    _accumulatedDelta += delta * _sensitivity;
+    return [self takeWholePortionWithDelta:delta];
 }
 
 - (BOOL)shouldBeginAccumulatingForEvent:(NSEvent *)event {
@@ -108,8 +113,12 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
     if ([self shouldBeginAccumulatingForEvent:event]) {
         _accumulatedDelta = 0;
     }
-    const CGFloat delta = [self adjustedDeltaForEvent:event];
+    const CGFloat delta = [self adjustedDeltaForEvent:event] * _sensitivity;
     _accumulatedDelta += delta;
+    return [self takeWholePortionWithDelta:delta];
+}
+
+- (CGFloat)takeWholePortionWithDelta:(CGFloat)delta {
     const CGFloat absAccumulatedDelta = fabs(_accumulatedDelta);
     int roundDelta;
     
@@ -122,6 +131,7 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
         _accumulatedDelta -= roundDelta;
     } else if (delta * _accumulatedDelta < 0) {
         roundDelta = round(delta);
+        _accumulatedDelta = 0;
     } else {
         roundDelta = 0;
     }
@@ -143,7 +153,7 @@ static CGFloat RoundAwayFromZero(CGFloat value) {
 }
 
 - (CGFloat)legacyDeltaForEvent:(NSEvent *)theEvent increment:(CGFloat)increment {
-    CGFloat delta = [self scrollingDelta:theEvent];
+    CGFloat delta = [self scrollingDelta:theEvent] * _sensitivity;
     if (theEvent.hasPreciseScrollingDeltas) {
         delta /= increment;
     }

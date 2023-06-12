@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Defaults to YES.
 @property (nonatomic) BOOL isVertical;
 
+// Defaults to 1. Use a smaller number to reduce sensitivity. Scrolling delta is multiplied by this value.
+@property (nonatomic) double sensitivity;
+
 // Add scrolling delta to the accumulator if needed and return the number of cells to scroll by.
 - (CGFloat)deltaForEvent:(NSEvent *)event increment:(CGFloat)increment;
 
