@@ -83,6 +83,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     iTermSwipeTracker *_swipeTracker;
     BOOL _scrolling;
+
+    // If mouse reporting was off when momentum scrolling began, the rest of the momentum scroll
+    // should not be reported. Issue 10960.
+    BOOL _disableScrollReportingUntilMomentumEnds;
 }
 
 - (instancetype)initWithSelectionScrollHelper:(iTermSelectionScrollHelper *)selectionScrollHelper
@@ -932,9 +936,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         _haveSeenScrollWheelEvent = YES;
         [self.mouseDelegate mouseHandlerJiggle:self];
     }
+    if (event.momentumPhase == NSEventPhaseNone ||
+        event.momentumPhase == NSEventPhaseBegan) {
+        DLog(@"disableScrollReportingUntilMomentumEnds <- NO");
+        _disableScrollReportingUntilMomentumEnds = NO;
+    }
     if ([self scrollWheelShouldSendDataForEvent:event at:point]) {
-        [self sendDataForScrollEvent:event];
-        return NO;
+        DLog(@"disableScrollReportingUntilMomentumEnds=%@", @(_disableScrollReportingUntilMomentumEnds));
+        if (!_disableScrollReportingUntilMomentumEnds) {
+            [self sendDataForScrollEvent:event];
+            return NO;
+        }
+    } else if (event.momentumPhase == NSEventPhaseBegan) {
+        DLog(@"disableScrollReportingUntilMomentumEnds <- YES");
+        _disableScrollReportingUntilMomentumEnds = YES;
+    }
+    if (event.momentumPhase == NSEventPhaseEnded) {
+        DLog(@"disableScrollReportingUntilMomentumEnds <- NO");
+        _disableScrollReportingUntilMomentumEnds = NO;
     }
     BOOL reportable = NO;
     if ([self handleMouseEvent:event testOnly:NO deltaOut:NULL reportableOut:&reportable]) {
