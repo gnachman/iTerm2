@@ -298,7 +298,9 @@
     if (self.currentGrid.cursor.x < self.currentGrid.size.width) {
         [self.currentGrid markCharDirty:YES at:self.currentGrid.cursor updateTimestamp:NO];
     }
-    [self addSideEffect:^(id<VT100ScreenDelegate> delegate) {
+    // Use a deferred side effect because the delegate doesn't do anything very important here and
+    // programs like changing the cursor type all the time.
+    [self addDeferredSideEffect:^(id<VT100ScreenDelegate> delegate) {
         DLog(@"begin side-effect");
         [delegate screenSetCursorType:cursorType];
     }];
@@ -1930,6 +1932,10 @@
 
 - (void)terminalSetUnicodeVersion:(NSInteger)unicodeVersion {
     DLog(@"begin %@", @(unicodeVersion));
+    if (unicodeVersion == self.config.unicodeVersion) {
+        DLog(@"Short-circuit unicode version update with no change");
+        return;
+    }
     // This will change the profile. Use unmanaged+paused to avoid reentrancy.
     [self addUnmanagedPausedSideEffect:^(id<VT100ScreenDelegate>  _Nonnull delegate,
                                          iTermTokenExecutorUnpauser * _Nonnull unpauser) {

@@ -820,7 +820,9 @@ extension TokenExecutorImpl: UnpauserDelegate {
 
 extension TokenExecutor: IdempotentOperationScheduler {
     func scheduleIdempotentOperation(_ closure: @escaping () -> Void) {
-        addSideEffect(closure)
+        // Use a deferred side effect because this might happen during a prompt redraw and we want
+        // to give it a chance to finish so we can avoid syncing with a half-finished prompt.
+        addDeferredSideEffect(closure)
     }
 }
 

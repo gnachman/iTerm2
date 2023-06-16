@@ -2553,17 +2553,29 @@ void VT100ScreenEraseCell(screen_char_t *sct,
                     detectedByTrigger:(BOOL)detectedByTrigger {
     DLog(@"FinalTerm: promptDidStartAt");
     VT100GridAbsCoord coord = initialCoord;
+    BOOL didAnything = NO;
     if (initialCoord.x > 0 && self.config.shouldPlacePromptAtFirstColumn) {
         [self appendCarriageReturnLineFeed];
         coord.x = 0;
         coord.y += 1;
+        didAnything = YES;
     }
     if (!wasInCommand) {
+        didAnything = YES;
         const int newlines = [self insertNewlinesBeforeAddingPromptMarkAfterPrompt:NO];
         if (newlines) {
             coord.x = 0;
             coord.y += newlines;
         }
+    }
+    if (!didAnything &&
+        !detectedByTrigger &&
+        VT100GridAbsCoordEquals(self.currentPromptRange.start, coord)) {
+        // Some shells will redraw the prompt including shell integration marks on every keystroke.
+        // We want to avoid running a side effect in that case because it is very slow.
+        // Issue 10963.
+        DLog(@"Re-setting prompt mark. Short circuit.");
+        return nil;
     }
     self.shellIntegrationInstalled = YES;
 
@@ -3165,7 +3177,7 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 // End of command prompt, will start accepting command to run as the user types at the prompt.
 - (void)commandDidStart {
     VT100GridCoord coord = self.currentGrid.cursor;
-    [self promptEndedAndCommandStartedAt:coord];
+    [self promptEndedAndCommandStartedAt:coord shortCircuitDups:YES];
 }
 
 - (void)didSendCommand {
@@ -3174,13 +3186,20 @@ void VT100ScreenEraseCell(screen_char_t *sct,
 }
 
 // FTCS B
-- (void)promptEndedAndCommandStartedAt:(VT100GridCoord)commandStartLocation {
+- (void)promptEndedAndCommandStartedAt:(VT100GridCoord)commandStartLocation
+                      shortCircuitDups:(BOOL)shortCircuitDups {
     DLog(@"FinalTerm: terminalCommandDidStart");
 
     VT100GridAbsCoordRange promptRange = VT100GridAbsCoordRangeMake(self.currentPromptRange.start.x,
                                                                     self.currentPromptRange.start.y,
                                                                     commandStartLocation.x,
                                                                     commandStartLocation.y + self.numberOfScrollbackLines + self.cumulativeScrollbackOverflow);
+    if (shortCircuitDups &&
+        VT100GridAbsCoordRangeEquals(self.currentPromptRange, promptRange)) {
+        // See note in promptDidStartAt:wasInCommand:detectedByTrigger:.
+        DLog(@"Re-setting end-of-prompt. Short circuit.");
+        return;
+    }
     NSArray<ScreenCharArray *> *promptText = [[self contentInRange:promptRange] filteredArrayUsingBlock:^BOOL(ScreenCharArray *sca) {
         return [[sca.stringValue stringByTrimmingTrailingWhitespace] length] > 0;
     }];
@@ -5006,7 +5025,7 @@ launchCoprocessWithCommand:(NSString *)command
     coord.y -= self.numberOfScrollbackLines;
     if (ok) {
         // Simulate FinalTerm B:
-        [self promptEndedAndCommandStartedAt:coord];
+        [self promptEndedAndCommandStartedAt:coord shortCircuitDups:NO];
     } else {
         DLog(@"Range end is invalid %@, overflow=%@", VT100GridAbsCoordRangeDescription(range),
              @(self.cumulativeScrollbackOverflow));
