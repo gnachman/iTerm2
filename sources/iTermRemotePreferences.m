@@ -398,11 +398,14 @@ static NSDictionary *iTermRemotePreferencesSave(NSDictionary *myDict, NSString *
     NSDictionary *localPrefs = [[NSUserDefaults standardUserDefaults] persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
     // Empty out the current prefs
     DLog(@"Remove non-syncable values");
+    int count = 0;
     for (NSString *key in localPrefs) {
         if ([self preferenceKeyIsSyncable:key]) {
+            count += 1;
             [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
         }
     }
+    DLog(@"Removed %d keys", count);
     DLog(@"Copy remote values to user defaults");
     for (NSString *key in remotePrefs) {
         if ([self preferenceKeyIsSyncable:key]) {
