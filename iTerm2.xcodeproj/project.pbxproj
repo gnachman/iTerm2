@@ -7692,7 +7692,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				A6EC8072281F2C2900493544 /* ExternalSearchResult.swift */,
 				A63F2A3A23FA5951008DDEA4 /* it2run */,
 				5370676121C9D2390088D0F3 /* SignedArchive */,
 				530AB7EC20AE85DE00D2AA08 /* api */,
@@ -10473,6 +10472,7 @@
 		A68A30C9186D101C007F550F /* Helpers */ = {
 			isa = PBXGroup;
 			children = (
+				A6EC8072281F2C2900493544 /* ExternalSearchResult.swift */,
 				1DA26ABF15007507004B5792 /* BackgroundThread.m */,
 				A67F57D31B11882900B4F135 /* CapturedOutput.m */,
 				A67F57D21B11882900B4F135 /* CapturedOutput.h */,
