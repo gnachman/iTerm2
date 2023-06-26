@@ -1143,6 +1143,7 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     if (cursorInfo.cursorVisible && cursorInfo.password) {
         iTermCursorRendererTransientState *tState = [frameData transientStateForRenderer:_keyCursorRenderer];
         tState.coord = cursorInfo.coord;
+        tState.backgroundIsDark = SIMDPerceivedBrightness(cursorInfo.backgroundColor) < 0.5;
     } else if (cursorInfo.cursorVisible) {
         switch (cursorInfo.type) {
             case CURSOR_UNDERLINE: {

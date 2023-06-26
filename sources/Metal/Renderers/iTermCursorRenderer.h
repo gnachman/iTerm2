@@ -10,6 +10,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSColor *color;
 @property (nonatomic) VT100GridCoord coord;
 @property (nonatomic) BOOL doubleWidth;
+@property (nonatomic) BOOL backgroundIsDark;
 @end
 
 @interface iTermCursorRenderer : NSObject<iTermMetalCellRenderer>

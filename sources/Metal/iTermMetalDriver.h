@@ -36,6 +36,7 @@ NS_CLASS_AVAILABLE(10_11, NA)
 @property (nonatomic) BOOL password;
 @property (nonatomic) BOOL copyModeCursorSelecting;
 @property (nonatomic) VT100GridCoord copyModeCursorCoord;
+@property (nonatomic) vector_float4 backgroundColor;
 @end
 
 @interface iTermMetalIMEInfo : NSObject

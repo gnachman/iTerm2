@@ -419,11 +419,19 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
                                                 virtualOffset:virtualOffset];
     }
 
+    NSColor *cursorBackgroundColor = nil;
+    const int cursorY = self.cursorCoord.y + origin.y;
     // Now iterate over the lines and paint the backgrounds.
     for (NSInteger i = 0; i < backgroundRunArrays.count; ) {
         NSInteger rows = [self numberOfEquivalentBackgroundColorLinesInRunArrays:backgroundRunArrays fromIndex:i];
         iTermBackgroundColorRunsInLine *runArray = backgroundRunArrays[i];
         runArray.numberOfEquivalentRows = rows;
+        if (cursorY >= runArray.line &&
+            cursorY < runArray.line + runArray.numberOfEquivalentRows) {
+            NSColor *color = [self unprocessedColorForBackgroundRun:[runArray runAtIndex:self.cursorCoord.x] ?: runArray.lastRun
+                                                     enableBlending:NO];
+            cursorBackgroundColor = [_colorMap processedBackgroundColorForBackgroundColor:color];
+        }
         [self drawBackgroundForLine:runArray.line
                                 atY:runArray.y
                                runs:runArray.array
@@ -453,7 +461,9 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     const BOOL drawCursorBeforeText = (_cursorType == CURSOR_UNDERLINE || _cursorType == CURSOR_VERTICAL);
     iTermCursor *cursor = nil;
     if (drawCursorBeforeText) {
-        cursor = [self drawCursor:NO virtualOffset:virtualOffset];
+        cursor = [self drawCursor:NO
+            cursorBackgroundColor:cursorBackgroundColor
+                    virtualOffset:virtualOffset];
     }
 
     // Now iterate over the lines and paint the characters.
@@ -483,17 +493,22 @@ static CGFloat iTermTextDrawingHelperAlphaValueForDefaultBackgroundColor(BOOL ha
     _blinkingFound |= self.cursorBlinking;
     if (drawCursorBeforeText) {
         if ([iTermAdvancedSettingsModel drawOutlineAroundCursor]) {
-            [self drawCursor:YES virtualOffset:virtualOffset];
+            [self drawCursor:YES
+       cursorBackgroundColor:cursorBackgroundColor
+               virtualOffset:virtualOffset];
         }
     } else {
-        cursor = [self drawCursor:NO virtualOffset:virtualOffset];
+        cursor = [self drawCursor:NO
+            cursorBackgroundColor:cursorBackgroundColor
+                    virtualOffset:virtualOffset];
     }
     if (self.cursorShadow) {
         [cursor drawShadow];
     }
 
     if (self.copyMode) {
-        [self drawCopyModeCursorWithVirtualOffset:virtualOffset];
+        [self drawCopyModeCursorWithBackgroundColor:cursorBackgroundColor
+                                      virtualOffset:virtualOffset];
     }
 }
 
@@ -3351,17 +3366,21 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     return [self frameForCursorAt:_cursorCoord];
 }
 
-- (void)drawCopyModeCursorWithVirtualOffset:(CGFloat)virtualOffset {
+- (void)drawCopyModeCursorWithBackgroundColor:(NSColor *)cursorBackgroundColor
+                                virtualOffset:(CGFloat)virtualOffset {
     iTermCursor *cursor = [iTermCursor itermCopyModeCursorInSelectionState:self.copyModeSelecting];
     cursor.delegate = self;
 
     [self reallyDrawCursor:cursor
+           backgroundColor:cursorBackgroundColor
                         at:VT100GridCoordMake(_copyModeCursorCoord.x, _copyModeCursorCoord.y - _numberOfScrollbackLines)
                    outline:NO
              virtualOffset:virtualOffset];
 }
 
-- (iTermCursor *)drawCursor:(BOOL)outline virtualOffset:(CGFloat)virtualOffset {
+- (iTermCursor *)drawCursor:(BOOL)outline
+      cursorBackgroundColor:(NSColor *)cursorBackgroundColor
+              virtualOffset:(CGFloat)virtualOffset {
     DLog(@"drawCursor:%@", @(outline));
 
     // Update the last time the cursor moved.
@@ -3375,6 +3394,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
         cursor = [iTermCursor cursorOfType:_cursorType];
         cursor.delegate = self;
         NSRect rect = [self reallyDrawCursor:cursor
+                             backgroundColor:cursorBackgroundColor
                                           at:_cursorCoord
                                      outline:outline
                                virtualOffset:virtualOffset];
@@ -3428,6 +3448,7 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
 }
 
 - (NSRect)reallyDrawCursor:(iTermCursor *)cursor
+           backgroundColor:(NSColor *)backgroundColor
                         at:(VT100GridCoord)cursorCoord
                    outline:(BOOL)outline
              virtualOffset:(CGFloat)virtualOffset {
@@ -3459,7 +3480,12 @@ withExtendedAttributes:(iTermExternalAttribute *)ea2 {
     }
 
     if (_passwordInput) {
-        NSImage *keyImage = [NSImage it_imageNamed:@"key" forClass:self.class];
+        NSImage *keyImage;
+        if (backgroundColor.isDark) {
+            keyImage = [NSImage it_imageNamed:@"key-light" forClass:self.class];
+        } else {
+            keyImage = [NSImage it_imageNamed:@"key-dark" forClass:self.class];
+        }
         CGPoint point = rect.origin;
         [keyImage it_drawInRect:NSMakeRect(point.x, point.y, _cellSize.width, _cellSize.height)
                        fromRect:NSZeroRect

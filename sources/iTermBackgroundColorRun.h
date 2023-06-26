@@ -67,6 +67,9 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
                                row:(int)row
                                  y:(CGFloat)y;
 
+- (iTermBackgroundColorRun *)runAtIndex:(int)i;
+- (iTermBackgroundColorRun *)lastRun;
+
 @end
 
 // An NSObject wrapper for a color run with an optional NSColor.

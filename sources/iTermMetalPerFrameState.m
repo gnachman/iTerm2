@@ -241,6 +241,24 @@ typedef struct {
     glue.oldCursorScreenCoord = cursorScreenCoord;
 }
 
+- (vector_float4)backgroundColorForCharacter:(screen_char_t)c
+                                selected:(BOOL)selected
+                               findMatch:(BOOL)findMatch{
+    iTermBackgroundColorKey backgroundKey = {
+        .bgColor = c.backgroundColor,
+        .bgGreen = c.bgGreen,
+        .bgBlue = c.bgBlue,
+        .bgColorMode = c.backgroundColorMode,
+        .selected = selected,
+        .isMatch = findMatch,
+        .image = c.image != 0
+    };
+    BOOL isDefaultBackgroundColor = NO;
+    const vector_float4 unprocessedBackgroundColor = [self unprocessedColorForBackgroundColorKey:&backgroundKey
+                                                                   isDefault:&isDefaultBackgroundColor];
+    return [_configuration->_colorMap fastProcessedBackgroundColorForBackgroundColor:unprocessedBackgroundColor];
+
+}
 - (void)loadCursorInfoWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
                                textView:(PTYTextView *)textView {
     _cursorVisible = drawingHelper.isCursorVisible;
@@ -277,7 +295,10 @@ typedef struct {
             } else {
                 _cursorInfo.doubleWidth = NO;
             }
-
+            iTermMetalPerFrameStateRow *row = _rows[_cursorInfo.coord.y];
+            _cursorInfo.backgroundColor = [self backgroundColorForCharacter:screenChar
+                                                                   selected:[row->_selectedIndexSet containsIndex:_cursorInfo.coord.x]
+                                                                  findMatch:row->_matches && CheckFindMatchAtIndex(row->_matches, _cursorInfo.coord.x)];
             if (_cursorInfo.type == CURSOR_BOX) {
                 _cursorInfo.shouldDrawText = YES;
                 const BOOL focused = ((_configuration->_isInKeyWindow && _configuration->_textViewIsActiveSession) || _configuration->_shouldDrawFilledInCursor);

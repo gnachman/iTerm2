@@ -145,6 +145,19 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
             self.class, self, @(self.line), @(self.numberOfEquivalentRows), self.array];
 }
 
+- (iTermBackgroundColorRun *)runAtIndex:(int)x {
+    for (iTermBoxedBackgroundColorRun *box in self.array) {
+        if (x >= box.valuePointer->range.location && x < NSMaxRange(box.valuePointer->range)) {
+            return box.valuePointer;
+        }
+    }
+    return nil;
+}
+
+- (iTermBackgroundColorRun *)lastRun {
+    return self.array.lastObject.valuePointer;
+}
+
 @end
 
 @implementation iTermBoxedBackgroundColorRun {

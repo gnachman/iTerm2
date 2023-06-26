@@ -583,7 +583,8 @@ static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRenderer
 @end
 
 @implementation iTermKeyCursorRenderer {
-    id<MTLTexture> _texture;
+    id<MTLTexture> _lightTexture;
+    id<MTLTexture> _darkTexture;
     CGSize _textureSize;
 }
 
@@ -615,12 +616,19 @@ static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRenderer
     ITAssertWithMessage(tState.vertexBuffer != nil, @"Nil vertex buffer");
     ITAssertWithMessage(tState.offsetBuffer != nil, @"Nil offset buffer");
 
-    if (!_texture || ![NSObject object:self.colorSpace isEqualToObject:tState.configuration.colorSpace]) {
-        _texture = [self.cellRenderer textureFromImage:[iTermImageWrapper withImage:[[[NSBundle bundleForClass:self.class] imageForResource:@"key"] it_verticallyFlippedImage]]
+    if (!_lightTexture ||
+        ![NSObject object:self.colorSpace isEqualToObject:tState.configuration.colorSpace] ||
+        !CGSizeEqualToSize(_textureSize, tState.cellConfiguration.cellSize)) {
+        _lightTexture = [self.cellRenderer textureFromImage:[iTermImageWrapper withImage:[[[[NSBundle bundleForClass:self.class] imageForResource:@"key-light"] it_imageOfSize:tState.cellConfiguration.cellSize] it_verticallyFlippedImage]]
                                                context:nil
                                             colorSpace:tState.configuration.colorSpace];
+        ITAssertWithMessage(_lightTexture != nil, @"Failed to load key-light image");
+        _darkTexture = [self.cellRenderer textureFromImage:[iTermImageWrapper withImage:[[[[NSBundle bundleForClass:self.class] imageForResource:@"key-dark"] it_imageOfSize:tState.cellConfiguration.cellSize] it_verticallyFlippedImage]]
+                                               context:nil
+                                            colorSpace:tState.configuration.colorSpace];
+        ITAssertWithMessage(_darkTexture != nil, @"Failed to load key-dark image");
         self.colorSpace = tState.configuration.colorSpace;
-        ITAssertWithMessage(_texture != nil, @"Failed to load key image");
+        _textureSize = tState.cellConfiguration.cellSize;
     }
     [_cellRenderer drawWithTransientState:tState
                             renderEncoder:frameData.renderEncoder
@@ -630,7 +638,7 @@ static id<MTLBuffer> iTermNewVertexBufferWithBlockCursorQuad(iTermCursorRenderer
                                              @(iTermVertexInputIndexCursorDescription): descriptionBuffer,
                                              @(iTermVertexInputIndexOffset): tState.offsetBuffer }
                           fragmentBuffers:@{}
-                                 textures:@{ @(iTermTextureIndexPrimary): _texture } ];
+                                 textures:@{ @(iTermTextureIndexPrimary): tState.backgroundIsDark ? _lightTexture : _darkTexture } ];
 }
 
 @end
