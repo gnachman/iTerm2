@@ -564,6 +564,7 @@ function __iterm2_prompt_command () {
     then
         # This code path is taken when you press ^C while entering a command.
         # I observed this behavior in CentOS 7.2 and macOS "GNU bash, version 5.0.18(1)-release".
+        ( exit $__iterm2_last_ret_value )
         __iterm2_preexec ""
         __bp_set_ret_value "$__iterm2_last_ret_value" "$__bp_last_argument_prev_command"
     fi

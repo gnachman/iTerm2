@@ -1,1 +1,1 @@
-imgcat imgls it2api it2attention it2check it2copy it2dl it2getvar it2git it2profile it2setcolor it2setkeylabel it2tip it2ul it2universion
+imgcat imgls it2api it2attention it2check it2copy it2dl it2getvar it2git it2profile it2setcolor it2setkeylabel it2ssh it2tip it2ul it2universion
