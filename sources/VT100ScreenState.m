@@ -154,6 +154,10 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     return self;
 }
 
+- (id<VT100ScreenMarkReading>)cachedLastCommandMark {
+    return _lastCommandMark;
+}
+
 - (void)copyFastStuffFrom:(VT100ScreenMutableState *)source {
     _audibleBell = source.audibleBell;
     _showBellIndicator = source.showBellIndicator;
@@ -189,7 +193,7 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     _fakePromptDetectedAbsLine = source.fakePromptDetectedAbsLine;
     _lastPromptLine = source.lastPromptLine;
     _intervalTreeObserver = source.intervalTreeObserver;
-    _lastCommandMark = [source.lastCommandMark doppelganger];
+    _lastCommandMark = [source.cachedLastCommandMark doppelganger];
     _shouldExpectPromptMarks = source.shouldExpectPromptMarks;
     _echoProbeIsActive = source.echoProbe.isActive;
     _terminalSoftAlternateScreenMode = source.terminalSoftAlternateScreenMode;
@@ -347,9 +351,9 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
     } else {
         DLog(@"line buffer not dirty");
     }
-//  NSString *mine = [_linebuffer debugString];
-//  NSString *theirs = [source.linebuffer debugString];
-//  assert([mine isEqual:theirs]);
+    //  NSString *mine = [_linebuffer debugString];
+    //  NSString *theirs = [source.linebuffer debugString];
+    //  assert([mine isEqual:theirs]);
 
     [_primaryGrid copyDirtyFromGrid:source.primaryGrid didScroll:source.primaryGrid.haveScrolled];
     [source.primaryGrid markAllCharsDirty:NO updateTimestamps:NO];
