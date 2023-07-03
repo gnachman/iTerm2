@@ -33,7 +33,7 @@
 static const int kMaxSelectedTextLengthForCustomActions = 400;
 
 @interface NSString(ContextMenu)
-- (NSArray<NSString *> *)helpfulSynonyms;
+- (NSArray<iTermTuple<NSString *, NSString *> *> *)helpfulSynonyms;
 @end
 
 @implementation iTermTextViewContextMenuHelper
@@ -350,11 +350,14 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
         BOOL needSeparator = NO;
         if (haveShortSelection) {
             shortSelectedText = [self.delegate contextMenuSelectedText:self capped:0];
-            NSArray<NSString *> *synonyms = [shortSelectedText helpfulSynonyms];
+            NSArray<iTermTuple<NSString *, NSString *> *> *synonyms = [shortSelectedText helpfulSynonyms];
             needSeparator = synonyms.count > 0;
-            for (NSString *conversion in synonyms) {
+            for (iTermTuple<NSString *, NSString *> *tuple in synonyms) {
                 NSMenuItem *theItem = [[NSMenuItem alloc] init];
-                theItem.title = conversion;
+                theItem.title = tuple.firstObject;
+                theItem.representedObject = tuple.secondObject;
+                theItem.target = self;
+                theItem.action = @selector(copyString:);
                 [theMenu addItem:theItem];
             }
             NSArray *captures = [shortSelectedText captureComponentsMatchedByRegex:@"^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$"];
@@ -1167,21 +1170,21 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
 
 @implementation NSString(ContextMenu)
 
-- (NSArray<NSString *> *)helpfulSynonyms {
+- (NSArray<iTermTuple<NSString *, NSString *> *> *)helpfulSynonyms {
     NSMutableArray *array = [NSMutableArray array];
-    NSString *hexOrDecimalConversion = [self hexOrDecimalConversionHelp];
+    iTermTuple<NSString *, NSString *> *hexOrDecimalConversion = [self hexOrDecimalConversionHelp];
     if (hexOrDecimalConversion) {
         [array addObject:hexOrDecimalConversion];
     }
-    NSString *scientificNotationConversion = [self scientificNotationConversionHelp];
+    iTermTuple<NSString *, NSString *> *scientificNotationConversion = [self scientificNotationConversionHelp];
     if (scientificNotationConversion) {
         [array addObject:scientificNotationConversion];
     }
-    NSString *timestampConversion = [self timestampConversionHelp];
+    iTermTuple<NSString *, NSString *> *timestampConversion = [self timestampConversionHelp];
     if (timestampConversion) {
         [array addObject:timestampConversion];
     }
-    NSString *utf8Help = [self utf8Help];
+    iTermTuple<NSString *, NSString *> *utf8Help = [self utf8Help];
     if (utf8Help) {
         [array addObject:utf8Help];
     }
@@ -1192,7 +1195,7 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     }
 }
 
-- (NSString *)hexOrDecimalConversionHelp {
+- (iTermTuple<NSString *, NSString *> *)hexOrDecimalConversionHelp {
     unsigned long long value;
     BOOL mustBePositive = NO;
     BOOL decToHex;
@@ -1253,18 +1256,25 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
             if (intValue < 0) {
                 humanReadableSize = @"";
             }
-            return [NSString stringWithFormat:@"%@ = 0x%x%@",
-                       formattedDecimalValue, intValue, humanReadableSize];
+            NSString *converted = [NSString stringWithFormat:@"0x%x%@", intValue, humanReadableSize];
+            NSString *display = [NSString stringWithFormat:@"%@ = %@",
+                                 formattedDecimalValue, converted];
+            return [iTermTuple tupleWithObject:display andObject:converted];
         } else if (intValue >= 0) {
-            return [NSString stringWithFormat:@"0x%x = %@%@",
-                       intValue, formattedDecimalValue, humanReadableSize];
+            NSString *converted = [NSString stringWithFormat:@"%@%@",
+                                   formattedDecimalValue, humanReadableSize];
+            NSString *display = [NSString stringWithFormat:@"0x%x = %@%@",
+                                 intValue, formattedDecimalValue, humanReadableSize];
+            return [iTermTuple tupleWithObject:display andObject:converted];
         } else {
             unsigned int unsignedIntValue = (unsigned int)value;
             NSString *formattedUnsignedDecimalValue =
                 [numberFormatter stringFromNumber:@(unsignedIntValue)];
-            return [NSString stringWithFormat:@"0x%x = %@ or %@%@",
-                       intValue, formattedDecimalValue, formattedUnsignedDecimalValue,
-                       humanReadableSize];
+            NSString *converted = formattedDecimalValue;
+            NSString *display = [NSString stringWithFormat:@"0x%x = %@ or %@%@",
+                                 intValue, formattedDecimalValue, formattedUnsignedDecimalValue,
+                                 humanReadableSize];
+            return [iTermTuple tupleWithObject:display andObject:converted];
         }
     } else {
         // 64-bit value
@@ -1284,11 +1294,16 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
             if (!mustBePositive && signedValue < 0) {
                 humanReadableSize = @"";
             }
-            return [NSString stringWithFormat:@"%@ = 0x%llx%@",
-                       formattedDecimalValue, value, humanReadableSize];
+            NSString *converted = [NSString stringWithFormat:@"0x%llx%@", value, humanReadableSize];
+            NSString *display = [NSString stringWithFormat:@"%@ = 0x%llx%@",
+                                 formattedDecimalValue, value, humanReadableSize];
+            return [iTermTuple tupleWithObject:display andObject:converted];
         } else if (signedValue >= 0) {
-            return [NSString stringWithFormat:@"0x%llx = %@%@",
-                       value, formattedDecimalValue, humanReadableSize];
+            NSString *converted = [NSString stringWithFormat:@"%@%@",
+                                   formattedDecimalValue, humanReadableSize];
+            NSString *display = [NSString stringWithFormat:@"0x%llx = %@%@",
+                                 value, formattedDecimalValue, humanReadableSize];
+            return [iTermTuple tupleWithObject:display andObject:converted];
         } else {
             // Value is negative and converting hex to decimal.
             NSDecimalNumber *unsignedDecimalNumber =
@@ -1297,14 +1312,17 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
                                                 isNegative:NO];
             NSString *formattedUnsignedDecimalValue =
                 [numberFormatter stringFromNumber:unsignedDecimalNumber];
-            return [NSString stringWithFormat:@"0x%llx = %@ or %@%@",
-                       value, formattedDecimalValue, formattedUnsignedDecimalValue,
-                       humanReadableSize];
+            NSString *converted = [NSString stringWithFormat:@"%@",
+                                   formattedDecimalValue];
+            NSString *display = [NSString stringWithFormat:@"0x%llx = %@ or %@%@",
+                                 value, formattedDecimalValue, formattedUnsignedDecimalValue,
+                                 humanReadableSize];
+            return [iTermTuple tupleWithObject:display andObject:converted];
         }
     }
 }
 
-- (NSString *)scientificNotationConversionHelp {
+- (iTermTuple<NSString *, NSString *> *)scientificNotationConversionHelp {
     NSString *scientificNotationRegex = @"^-?(0|[1-9]\\d*)?(\\.\\d+)?[eE][+\\-]?\\d+$";
     const BOOL isScientificNotation = [self isMatchedByRegex:scientificNotationRegex];
     if (!isScientificNotation) {
@@ -1321,10 +1339,11 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     numberFormatter.maximumFractionDigits = 1000;
     NSString *formattedNumber = [numberFormatter stringFromNumber:number];
 
-    return [NSString stringWithFormat:@"%@ = %@", self, formattedNumber];
+    return [iTermTuple tupleWithObject:[NSString stringWithFormat:@"%@ = %@", self, formattedNumber]
+                             andObject:formattedNumber];
 }
 
-- (NSString *)timestampConversionHelp {
+- (iTermTuple<NSString *, NSString *> *)timestampConversionHelp {
     NSDate *date;
     date = [self dateValueFromUnix];
     if (!date) {
@@ -1337,17 +1356,19 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
         } else {
             template = @"yyyyMMMd hh:mm:ss z";
         }
+        NSLocale *currentLocale = [NSLocale currentLocale];
         NSDateFormatter *fmt = [[NSDateFormatter alloc] init];
-        [fmt setDateFormat:[NSDateFormatter dateFormatFromTemplate:template
-                                                           options:0
-                                                            locale:[NSLocale currentLocale]]];
-        return [fmt stringFromDate:date];
+        NSString *dateFormat = [NSDateFormatter dateFormatFromTemplate:template
+                                                               options:0
+                                                                locale:currentLocale];
+        [fmt setDateFormat:dateFormat];
+        return [iTermTuple tupleWithObject:[fmt stringFromDate:date] andObject:[fmt stringFromDate:date]];
     } else {
         return nil;
     }
 }
 
-- (NSString *)utf8Help {
+- (iTermTuple<NSString *, NSString *> *)utf8Help {
     if (self.length == 0) {
         return nil;
     }
@@ -1388,7 +1409,8 @@ static uint64_t iTermInt64FromBytes(const unsigned char *bytes, BOOL bigEndian) 
     }
     NSString *ucs4String = [ucs4Strings componentsJoinedByString:@" "];
 
-    return [NSString stringWithFormat:@"“%@” = %@ = %@ (UTF-8)", self, ucs4String, utf8String];
+    return [iTermTuple tupleWithObject:[NSString stringWithFormat:@"“%@” = %@ = %@ (UTF-8)", self, ucs4String, utf8String]
+                             andObject:utf8String];
 }
 
 - (NSDate *)dateValueFromUnix {
