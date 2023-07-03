@@ -162,6 +162,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)hdrCursor;
 + (BOOL)hideStuckTooltips;
 + (BOOL)highVisibility;
++ (double)horizontalScrollingSensitivity;
 + (double)hotKeyDoubleTapMaxDelay;
 + (double)hotKeyDoubleTapMinDelay;
 + (double)hotkeyTermAnimationDuration;

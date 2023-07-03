@@ -321,7 +321,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         _scrollAccumulator = [[iTermScrollAccumulator alloc] init];
 
         _horizontalScrollAccumulator = [[iTermScrollAccumulator alloc] init];
-        _horizontalScrollAccumulator.sensitivity = 0.1;
+        _horizontalScrollAccumulator.sensitivity = [iTermAdvancedSettingsModel horizontalScrollingSensitivity];
         _horizontalScrollAccumulator.isVertical = NO;
 
         _keyboardHandler = [[iTermKeyboardHandler alloc] init];

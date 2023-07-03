@@ -284,6 +284,7 @@ DEFINE_FLOAT(scrollWheelAcceleration, 1, SECTION_MOUSE @"Speed up scroll gesture
 //   `-----'  :      :
 DEFINE_FLOAT(fractionOfCharacterSelectingNextNeighbor, 0.35, SECTION_MOUSE @"Fraction of character’s width on its right side that can be used to select the character to its right.");
 DEFINE_BOOL(naturalScrollingAffectsHorizontalMouseReporting, NO, SECTION_MOUSE @"Horizontal scrolling is reversed when “Natural scrolling” is enabled in system prefs");
+DEFINE_FLOAT(horizontalScrollingSensitivity, 0.1, SECTION_MOUSE @"Sensitivity of mouse wheel for horizontal scrolling.\nUse 0 to disable. Value should be between 0 and 1. Changes to this setting only affect new sessions.");
 
 #pragma mark Terminal
 
