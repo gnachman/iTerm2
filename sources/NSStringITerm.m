@@ -290,11 +290,25 @@
     for (NSInteger i = 0; i < self.length; i++) {
         unichar c = [self characterAtIndex:i];
         if (escape) {
-            NSNumber *replacement = escapes[@(c)];
-            if (replacement) {
-                [result appendString:[self substringWithRange:NSMakeRange(start, i - start - 1)]];
-                [result appendCharacter:replacement.shortValue];
-                start = i + 1;
+            if (c == 'u' && i + 4 < self.length) {
+                NSString *substring = [self substringWithRange:NSMakeRange(i + 1, 4)];
+                NSScanner *scanner = [NSScanner scannerWithString:substring];
+                unsigned int hexValue = 0;
+
+                if ([scanner scanHexInt:&hexValue] && scanner.scanLocation == 4) {
+                    NSString *replacement = [NSString stringWithLongCharacter:hexValue];
+                    [result appendString:[self substringWithRange:NSMakeRange(start, i - start - 1)]];
+                    [result appendString:replacement];
+                    i += 4;
+                    start = i + 1;
+                }
+            } else {
+                NSNumber *replacement = escapes[@(c)];
+                if (replacement) {
+                    [result appendString:[self substringWithRange:NSMakeRange(start, i - start - 1)]];
+                    [result appendCharacter:replacement.shortValue];
+                    start = i + 1;
+                }
             }
             escape = NO;
         } else if (c == '\\') {
