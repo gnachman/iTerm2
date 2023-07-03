@@ -435,7 +435,8 @@ static NSError *SCPFileError(NSString *description) {
                 } else {
                     [keyPaths addObjectsFromArray:@[ @"~/.ssh/id_rsa",
                                                      @"~/.ssh/id_dsa",
-                                                     @"~/.ssh/id_ecdsa" ]];
+                                                     @"~/.ssh/id_ecdsa",
+                                                     @"~/.ssh/id_ed25519" ]];
                 }
                 NSFileManager *fileManager = [NSFileManager defaultManager];
                 for (NSString *iteratedKeyPath in keyPaths) {
