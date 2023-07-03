@@ -3092,7 +3092,6 @@
 		A6C763371B45C52B00E3C992 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A66A1FA71A3A207900F4A3A7 /* iTermWindowShortcutLabelTitlebarAccessoryViewController.m */; };
 		A6C763381B45C52B00E3C992 /* PasteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F8B16F0328B00B7FCE9 /* PasteViewController.m */; };
 		A6C7633A1B45C52B00E3C992 /* SplitPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF8AF5713FD781700C8A435 /* SplitPanel.m */; };
-		A6C7633B1B45C52B00E3C992 /* ToastWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085FA116F138A000B7FCE9 /* ToastWindowController.m */; };
 		A6C7633E1B45C52B00E3C992 /* iTermAboutWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = A663010F19CFE41A004AF81C /* iTermAboutWindow.m */; };
 		A6C763411B45C52B00E3C992 /* iTermFindCursorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30C0186D0DC1007F550F /* iTermFindCursorView.m */; };
 		A6C763421B45C52B00E3C992 /* iTermFontPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */; };
@@ -3700,6 +3699,7 @@
 		A6E180E723D2E2B2003C4EB1 /* CoreParse.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 530AB89820AFF21200D2AA08 /* CoreParse.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A6E180EA23D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = A6E180E823D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.h */; };
 		A6E180EB23D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.m in Sources */ = {isa = PBXBuildFile; fileRef = A6E180E923D51BFA003C4EB1 /* iTermMouseReportingFrustrationDetector.m */; };
+		A6E1881D2A535EBB00416B1A /* ToastWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085FA116F138A000B7FCE9 /* ToastWindowController.m */; };
 		A6E20AF921FF9E1600D7CB3E /* iTermInstantReplayWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = A61B66CE18D51EAC009AC9D5 /* iTermInstantReplayWindowController.m */; };
 		A6E20BB51AC10A60000B18ED /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		A6E21CF92255CA4A0036C49D /* NSMutableAttributedString+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A60014F518550F3900CE38D8 /* NSMutableAttributedString+iTerm.m */; };
@@ -15763,6 +15763,7 @@
 				53E9DFE0220D518E0070C9C0 /* AlertTrigger.m in Sources */,
 				A6FE8D13209528F400B5C648 /* iTermPythonRuntimeDownloader.m in Sources */,
 				A63011CD20E851E0008114B7 /* iTermStatusBarSpringComponent.m in Sources */,
+				A6E1881D2A535EBB00416B1A /* ToastWindowController.m in Sources */,
 				539E4ECE22E172360084FE9A /* iTermAutomaticProfileSwitcher.m in Sources */,
 				A6866B6223C856A700ACD94C /* iTermAnnouncementViewController.m in Sources */,
 				A6E14D7B275AC0E600D0F41C /* PSMProgressIndicator.m in Sources */,
@@ -16374,7 +16375,6 @@
 				1D6578431CA5E90900358E62 /* PSMDarkHighContrastTabStyle.m in Sources */,
 				A6C762CB1B45C52B00E3C992 /* iTermController.m in Sources */,
 				A6C763BC1B45C52B00E3C992 /* iTermTipData.m in Sources */,
-				A6C7633B1B45C52B00E3C992 /* ToastWindowController.m in Sources */,
 				A6C7634E1B45C52B00E3C992 /* RoundedRectView.m in Sources */,
 				A6C763B21B45C52B00E3C992 /* MarkTrigger.m in Sources */,
 				A6C7632D1B45C52B00E3C992 /* ThreeFingerTapGestureRecognizer.m in Sources */,

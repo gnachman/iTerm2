@@ -49,6 +49,7 @@
 #import "PTYTextView+Private.h"
 #import "SCPPath.h"
 #import "SearchResult.h"
+#import "ToastWindowController.h"
 #import "URLAction.h"
 #import "VT100Terminal.h"
 
@@ -1344,7 +1345,13 @@ copyRangeAccordingToUserPreferences:(VT100GridWindowedRange)range {
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu
                copy:(NSString *)string {
-    [self copyString:string];
+    const BOOL copied = [self copyString:string];
+    if (copied) {
+        [ToastWindowController showToastWithMessage:@"Copied"
+                                           duration:1.5
+                                   screenCoordinate:[NSEvent mouseLocation]
+                                          pointSize:12];
+    }
 }
 
 - (void)contextMenu:(iTermTextViewContextMenuHelper *)contextMenu

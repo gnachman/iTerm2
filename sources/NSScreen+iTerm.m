@@ -457,4 +457,13 @@ static CGFloat iTermAreaOfIntersection(NSRect r1, NSRect r2) {
     return result;
 }
 
++ (NSScreen *)screenContainingCoordinate:(NSPoint)point {
+    for (NSScreen *screen in [NSScreen screens]) {
+        if (NSPointInRect(point, screen.frame)) {
+            return screen;
+        }
+    }
+    return nil;
+}
+
 @end

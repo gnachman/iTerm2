@@ -2729,10 +2729,10 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     [self copyString:copyString];
 }
 
-- (void)copyString:(NSString *)copyString {
+- (BOOL)copyString:(NSString *)copyString {
     if ([iTermAdvancedSettingsModel disallowCopyEmptyString] && copyString.length == 0) {
         DLog(@"Disallow copying empty string");
-        return;
+        return NO;
     }
     DLog(@"Will copy this string: “%@”. selection=%@", copyString, _selection);
     if (copyString) {
@@ -2742,6 +2742,7 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
     }
 
     [[PasteboardHistory sharedInstance] save:copyString];
+    return YES;
 }
 
 - (IBAction)copyWithStyles:(id)sender {

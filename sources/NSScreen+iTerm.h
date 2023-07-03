@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)it_stringLooksLikeUniqueKey:(NSString *)string;
 + (double)fractionOfFrameOnAnyScreen:(NSRect)frame
                    recommendedOrigin:(NSPoint *)recommendedOriginPtr;
++ (NSScreen *)screenContainingCoordinate:(NSPoint)point;
 
 // Returns the visible frame modified to not include the 4 pixel boundary given to a hidden dock.
 // Kind of a gross hack since the magic 4 pixel number could change in the future.

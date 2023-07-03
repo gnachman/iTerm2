@@ -8,9 +8,6 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface RoundedRectView : NSView {
-    NSColor *color_;
-    NSColor *borderColor_;
-}
+@interface RoundedRectView : NSView
 
 @end
