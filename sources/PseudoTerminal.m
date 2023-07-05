@@ -4467,6 +4467,10 @@ ITERM_WEAKLY_REFERENCEABLE
     return lionFullScreen_;
 }
 
+- (void)ptyWindowMakeCurrentSessionFirstResponder {
+    [self.window makeFirstResponder:self.currentSession.textview];
+}
+
 - (BOOL)toggleFullScreenShouldUseLionFullScreen {
     if ([self lionFullScreen]) {
         return YES;

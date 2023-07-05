@@ -60,11 +60,16 @@
 
 @dynamic delegate;
 
-- (BOOL)enclosingTerminalWindowIsBecomingKey {
+- (id<PTYWindow>)enclosingTerminalWindow {
     id<PTYWindow> window = (id<PTYWindow>)self.window;
     if (![window conformsToProtocol:@protocol(PTYWindow)]) {
-        return NO;
+        return nil;
     }
+    return window;
+}
+
+- (BOOL)enclosingTerminalWindowIsBecomingKey {
+    id<PTYWindow> window = [self enclosingTerminalWindow];
     return window.it_becomingKey;
 }
 
@@ -72,8 +77,21 @@
     return [super performKeyEquivalent:theEvent];
 }
 
+- (BOOL)isControlC:(NSEvent *)e {
+    const NSUInteger flags = (e.modifierFlags & NSEventModifierFlagDeviceIndependentFlagsMask);
+    const BOOL isControl = flags == NSEventModifierFlagControl;
+    const BOOL isC = [e.charactersIgnoringModifiers isEqualToString:@"c"];
+    return (isControl && isC);
+}
+
 - (void)doCommandBySelector:(SEL)selector {
-    [super doCommandBySelector:selector];
+    if ([NSStringFromSelector(selector) isEqualToString:@"noop:"] &&
+        [self isControlC:[NSApp currentEvent]]) {
+        id<PTYWindow> window = [self enclosingTerminalWindow];
+        [[window ptyDelegate] ptyWindowMakeCurrentSessionFirstResponder];
+    } else {
+        [super doCommandBySelector:selector];
+    }
 }
 
 - (BOOL)becomeFirstResponder {

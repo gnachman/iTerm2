@@ -73,6 +73,7 @@ typedef NS_ENUM(NSUInteger, PTYWindowTitleBarFlavor) {
 - (BOOL)ptyWindowIsDraggable:(id<PTYWindow>)window;
 - (void)ptyWindowDidMakeKeyAndOrderFront:(id<PTYWindow>)window;
 - (BOOL)toggleFullScreenShouldUseLionFullScreen;
+- (void)ptyWindowMakeCurrentSessionFirstResponder;
 @end
 
 // Common methods implemented by terminal windows of both kinds.
