@@ -769,8 +769,14 @@ enum {
 }
 
 - (IBAction)warning:(id)sender {
+    NSString *message;
+    if (@available(macOS 14, *)) {
+        message = @"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable ”System Settings > Desktop & Dock > Close windows when quitting an application“ to enable window restoration.";
+    } else {
+        message = @"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable System Preferences > General > Close windows when quitting an app to enable window restoration.";
+    }
     const iTermWarningSelection selection =
-    [iTermWarning showWarningWithTitle:@"System window restoration has been disabled, which prevents iTerm2 from respecting this setting. Disable System Preferences > General > Close windows when quitting an app to enable window restoration."
+    [iTermWarning showWarningWithTitle:message
                                actions:@[ @"Open System Preferences", @"OK" ]
                              accessory:nil
                             identifier:@"NoSyncWindowRestorationDisabled"
