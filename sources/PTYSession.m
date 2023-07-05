@@ -10564,7 +10564,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
     DLog(@"%@", [NSThread callStackSymbols]);
     [self backgroundColorDidChangeJigglingIfNeeded:before.isDark != after.isDark];
     [self updateAutoComposerSeparatorVisibility];
-    [self updateAppearanceForMinimalTheme];
+    // Can't call this synchronously because we could get here from a side effect and
+    // viewDidChangeEffectiveAppearance can cause performBlockWithJoinedThreads to be called.
+    __weak __typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [weakSelf updateAppearanceForMinimalTheme];
+    });
 }
 
 - (void)themeDidChange {
