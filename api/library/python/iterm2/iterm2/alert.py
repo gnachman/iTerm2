@@ -49,7 +49,7 @@ class Alert:
         """Shows the modal alert.
 
         :param connection: The connection to use.
-        :returns: The index of the selected button. If no buttons were defined
+        :returns: The index of the selected button, plus 1000. If no buttons were defined
             then a single button, "OK", is automatically added.
 
         :throws: :class:`~iterm2.rpc.RPCException` if something goes wrong.
