@@ -60,6 +60,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL publishing;
 @property (nonatomic, readonly) BOOL terminalCanChangeBlink;
 @property (nonatomic, strong, readonly, nullable) NSNumber *desiredComposerRows;
+@property (nonatomic, readonly) BOOL autoComposerEnabled;
 @property (nonatomic, readonly) BOOL useLineStyleMarks;
 
 @property (nonatomic, readonly) BOOL isDirty;
@@ -113,6 +114,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readwrite) BOOL publishing;
 @property (nonatomic, readwrite) BOOL terminalCanChangeBlink;
 @property (nonatomic, strong, readwrite, nullable) NSNumber *desiredComposerRows;
+@property (nonatomic, readwrite) BOOL autoComposerEnabled;
 @property (nonatomic, readwrite) BOOL useLineStyleMarks;
 
 @property (nonatomic, readwrite) BOOL isDirty;

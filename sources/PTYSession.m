@@ -13336,6 +13336,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         dirty = YES;
     }
 
+    const BOOL autoComposerEnabled = [iTermPreferences boolForKey:kPreferenceAutoComposer];
+    if (_config.autoComposerEnabled != autoComposerEnabled) {
+        _config.autoComposerEnabled = autoComposerEnabled;
+        dirty = YES;
+    }
+
     if (dirty) {
         _config.isDirty = dirty;
     }

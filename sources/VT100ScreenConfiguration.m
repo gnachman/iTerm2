@@ -50,6 +50,7 @@
 @property (nonatomic, readwrite) BOOL publishing;
 @property (nonatomic, readwrite) BOOL terminalCanChangeBlink;
 @property (nonatomic, strong, readwrite, nullable) NSNumber *desiredComposerRows;
+@property (nonatomic, readwrite) BOOL autoComposerEnabled;
 @property (nonatomic, readwrite) BOOL useLineStyleMarks;
 @end
 
@@ -93,6 +94,7 @@
 @synthesize publishing = _publishing;
 @synthesize terminalCanChangeBlink = _terminalCanChangeBlink;
 @synthesize desiredComposerRows = _desiredComposerRows;
+@synthesize autoComposerEnabled = _autoComposerEnabled;
 @synthesize useLineStyleMarks = _useLineStyleMarks;
 
 @synthesize isDirty = _isDirty;
@@ -140,6 +142,7 @@
         _publishing = other.publishing;
         _terminalCanChangeBlink = other.terminalCanChangeBlink;
         _desiredComposerRows = other.desiredComposerRows;
+        _autoComposerEnabled = other.autoComposerEnabled;
         _useLineStyleMarks = other.useLineStyleMarks;
 
         _isDirty = other.isDirty;
@@ -195,6 +198,7 @@
                             @"publishing": @(_publishing),
                             @"terminalCanChangeBlink": @(_terminalCanChangeBlink),
                             @"desiredComposerRows": _desiredComposerRows ?: [NSNull null],
+                            @"autoComposerEnabled": @(_autoComposerEnabled),
                             @"useLineStyleMarks": @(_useLineStyleMarks),
 
                             @"isDirty": @(_isDirty),
@@ -253,6 +257,7 @@
 @dynamic publishing;
 @dynamic terminalCanChangeBlink;
 @dynamic desiredComposerRows;
+@dynamic autoComposerEnabled;
 @dynamic useLineStyleMarks;
 
 @dynamic isDirty;
