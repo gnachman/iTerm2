@@ -15,6 +15,8 @@ protocol PromptStateMachineDelegate: AnyObject {
 
     @objc(promptStateMachineAppendCommandToComposer:)
     func promptStateMachineAppendCommandToComposer(command: String)
+
+    @objc var promptStateMachineCursorAbsCoord: VT100GridAbsCoord { get }
 }
 
 @objc(iTermPromptStateMachine)
@@ -34,7 +36,7 @@ class PromptStateMachine: NSObject {
         case enteringCommand(prompt: [ScreenCharArray])
 
         // Composer is always open in this state.
-        case accruingAlreadyEnteredCommand(commandSoFar: String, prompt: [ScreenCharArray])
+        case accruingAlreadyEnteredCommand(commandSoFar: String, prompt: [ScreenCharArray], cursorCoord: VT100GridAbsCoord)
 
         case echoingBack
         case executing
@@ -45,8 +47,8 @@ class PromptStateMachine: NSObject {
             case .ground: return "ground"
             case .receivingPrompt: return "receivingPrompt"
             case .enteringCommand: return "enteringCommand"
-            case let .accruingAlreadyEnteredCommand(commandSoFar: commandSoFar, prompt: prompt):
-                return "accruingAlreadyEnteredCommand(commandSoFar: \(commandSoFar), prompt: \(prompt))"
+            case let .accruingAlreadyEnteredCommand(commandSoFar: commandSoFar, prompt: prompt, cursorCoord: cursorCoord):
+                return "accruingAlreadyEnteredCommand(commandSoFar: \(commandSoFar), prompt: \(prompt), cursorCoord: \(cursorCoord))"
             case .echoingBack: return "echoingBack"
             case .executing: return "executing"
             }
@@ -84,6 +86,7 @@ class PromptStateMachine: NSObject {
         private static let nameKey = "name"
         private static let promptKey = "prompt"
         private static let commandSoFarKey = "commandSoFar"
+        private static let cursorCoordKey = "cursorCoord"
 
         var dictionaryValue: [String: Any] {
             var result: [String: Any] = [State.nameKey: name]
@@ -93,9 +96,11 @@ class PromptStateMachine: NSObject {
             case .enteringCommand(prompt: let prompt):
                 result[State.promptKey] = prompt.map { $0.dictionaryValue }
             case .accruingAlreadyEnteredCommand(commandSoFar: let commandSoFar,
-                                                prompt: let prompt):
+                                                prompt: let prompt,
+                                                cursorCoord: let cursorCoord):
                 result[State.promptKey] = prompt.map { $0.dictionaryValue }
                 result[State.commandSoFarKey] = commandSoFar
+                result[State.cursorCoordKey] = ["x": Int64(cursorCoord.x), "y": Int64(cursorCoord.y)]
             }
             return result
         }
@@ -122,8 +127,18 @@ class PromptStateMachine: NSObject {
                 self = .enteringCommand(prompt: Self.prompt(fromDictionary: dictionary))
             case .accruingAlreadyEnteredCommand:
                 let commandSoFar = dictionary[State.commandSoFarKey] as? String ?? ""
+                let cursorCoord: VT100GridAbsCoord
+                if let obj = dictionary[State.cursorCoordKey],
+                    let dict = obj as? [String: Int64],
+                    let x = dict["x"],
+                    let y = dict["y"] {
+                    cursorCoord = VT100GridAbsCoord(x: Int32(x), y: y)
+                } else {
+                    cursorCoord = VT100GridAbsCoord(x: 0, y: -1)
+                }
                 self = .accruingAlreadyEnteredCommand(commandSoFar: commandSoFar,
-                                                      prompt: Self.prompt(fromDictionary: dictionary))
+                                                      prompt: Self.prompt(fromDictionary: dictionary),
+                                                      cursorCoord: cursorCoord)
             case .echoingBack:
                 self = .echoingBack
             case .executing:
@@ -210,7 +225,7 @@ class PromptStateMachine: NSObject {
             dismissComposer()
 
         case let .enteringCommand(prompt: prompt),
-            let .accruingAlreadyEnteredCommand(_, prompt: prompt):
+            let .accruingAlreadyEnteredCommand(_, prompt: prompt, _):
             revealComposer(prompt: prompt)
         }
     }
@@ -342,23 +357,39 @@ class PromptStateMachine: NSObject {
                 // Allow stuff like focus reporting to go through.
                 return
             }
-            accrue(part: String(command.trimmingLeadingCharacters(in: .whitespaces)),
+            accrue(coord: delegate?.promptStateMachineCursorAbsCoord ?? VT100GridAbsCoord(x: 0, y: -1),
+                   previousCoord: VT100GridAbsCoord(x: 0, y: -1),
+                   part: String(command.trimmingLeadingCharacters(in: .whitespaces)),
                    commandSoFar: "",
                    prompt: prompt)
-        case .accruingAlreadyEnteredCommand(commandSoFar: let commandSoFar, let prompt):
+        case .accruingAlreadyEnteredCommand(commandSoFar: let commandSoFar, let prompt, let cursorCoord):
             let part = token.stringValue(encoding: String.Encoding(rawValue: encoding)) ?? ""
-            accrue(part: part, commandSoFar: commandSoFar, prompt: prompt)
+            accrue(coord: delegate?.promptStateMachineCursorAbsCoord ?? VT100GridAbsCoord(x: 0, y: -1),
+                   previousCoord: cursorCoord,
+                   part: part,
+                   commandSoFar: commandSoFar,
+                   prompt: prompt)
         }
     }
 
-    private func accrue(part: String, commandSoFar: String, prompt: [ScreenCharArray]) {
+    private func accrue(coord: VT100GridAbsCoord,
+                        previousCoord: VT100GridAbsCoord,
+                        part: String,
+                        commandSoFar: String,
+                        prompt: [ScreenCharArray]) {
+        if coord.y == previousCoord.y && coord.x <= previousCoord.x {
+            DLog("Reject \(part) at \(coord.x),\(coord.y)")
+            return
+        }
+        DLog("Accept \(part) at \(coord.x),\(coord.y)")
         let maxLength = 1024 * 4
         // String.count is O(n) and this becomes accidentally quadratic but counting UTF-16 seems to be fast.
         if commandSoFar.utf16.count + part.utf16.count > maxLength {
             return
         }
         set(state: .accruingAlreadyEnteredCommand(commandSoFar: commandSoFar + part,
-                                                  prompt: prompt),
+                                                  prompt: prompt,
+                                                  cursorCoord: coord),
             on: "token")
         if !part.isEmpty {
             appendCommandToComposer(command: part)
@@ -392,7 +423,7 @@ class PromptStateMachine: NSObject {
             dismissComposer()
         case .enteringCommand(let prompt):
             revealComposer(prompt: prompt)
-        case .accruingAlreadyEnteredCommand(commandSoFar: let commandSoFar, prompt: let prompt):
+        case .accruingAlreadyEnteredCommand(commandSoFar: let commandSoFar, prompt: let prompt, _):
             revealComposer(prompt: prompt)
             delegate?.promptStateMachineAppendCommandToComposer(command: commandSoFar)
         }

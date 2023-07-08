@@ -5478,6 +5478,11 @@ launchCoprocessWithCommand:(NSString *)command
 
 #pragma mark - iTermPromptStateMachineDelegate
 
+- (VT100GridAbsCoord)promptStateMachineCursorAbsCoord {
+    return VT100GridAbsCoordMake(self.currentGrid.cursor.x,
+                                 self.currentGrid.cursor.y + self.cumulativeScrollbackOverflow);
+}
+
 - (void)promptStateMachineRevealComposerWithPrompt:(NSArray<ScreenCharArray *> *)prompt {
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenRevealComposerWithPrompt:prompt];
