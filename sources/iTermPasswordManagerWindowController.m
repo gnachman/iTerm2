@@ -310,6 +310,7 @@ static NSArray<NSString *> *gCachedCombinedAccountNames;
     if (index != NSNotFound) {
         [_tableView selectRowIndexes:[NSIndexSet indexSetWithIndex:index]
                 byExtendingSelection:NO];
+        [_tableView scrollRowToVisible:index];
     } else if (!iTermPasswordManagerDataSourceProvider.authenticated) {
         _accountNameToSelectAfterAuthentication = [name copy];
     }

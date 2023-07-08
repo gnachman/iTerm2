@@ -9,9 +9,9 @@ import AppKit
 
 fileprivate let serviceName = "iTerm2"
 
-fileprivate class KeychainAccount: NSObject, PasswordManagerAccount {
+// Stores account name in label
+fileprivate class ModernKeychainAccount: NSObject, PasswordManagerAccount {
     private let accountNameUserNameSeparator = "\u{2002}—\u{2002}"
-
     let accountName: String
     let userName: String
     private let keychainAccountName: String
@@ -23,17 +23,91 @@ fileprivate class KeychainAccount: NSObject, PasswordManagerAccount {
     }
 
     fileprivate init?(_ dict: NSDictionary) {
-        guard let combinedAccountName = dict[kSecAttrAccount] as? String else {
+        if let accountName = dict[kSecAttrLabel] as? String {
+            self.accountName = accountName
+            userName = (dict[kSecAttrAccount] as? String) ?? ""
+            keychainAccountName = accountName + accountNameUserNameSeparator + userName
+        } else {
             return nil
         }
-        if let range = combinedAccountName.range(of: accountNameUserNameSeparator) {
-            accountName = String(combinedAccountName[..<range.lowerBound])
-            userName = String(combinedAccountName[range.upperBound...])
-        } else {
-            accountName = combinedAccountName
-            userName = ""
+    }
+
+    var displayString: String {
+        return keychainAccountName
+    }
+
+    func fetchPassword(_ completion: (String?, String?, Error?) -> ()) {
+        do {
+            completion(try password(), nil, nil)
+        } catch {
+            completion(nil, nil, error)
         }
-        keychainAccountName = combinedAccountName
+    }
+
+    func set(password: String, completion: (Error?) -> ()) {
+        do {
+            try set(password: password)
+            completion(nil)
+        } catch {
+            completion(error)
+        }
+    }
+
+    func delete(_ completion: (Error?) -> ()) {
+        do {
+            try delete()
+            completion(nil)
+        } catch {
+            completion(error)
+        }
+    }
+
+    private func password() throws -> String {
+        return try SSKeychain.password(forService: serviceName,
+                                       account: userName,
+                                       label: accountName)
+    }
+
+    private func set(password: String) throws {
+        try SSKeychain.setPassword(password,
+                                   forService: serviceName,
+                                   account: userName,
+                                   label: accountName)
+    }
+
+    private func delete() throws {
+        try SSKeychain.deletePassword(forService: serviceName,
+                                      account: userName,
+                                      label: accountName)
+    }
+
+    func matches(filter: String) -> Bool {
+        return _matches(filter: filter)
+    }
+}
+
+// Stores account name and user name together in account name and makes label "iTerm2"
+fileprivate class LegacyKeychainAccount: NSObject, PasswordManagerAccount {
+    private let accountNameUserNameSeparator = "\u{2002}—\u{2002}"
+
+    let accountName: String
+    let userName: String
+    private let keychainAccountName: String
+
+    fileprivate init?(_ dict: NSDictionary) {
+        if let combinedAccountName = dict[kSecAttrAccount] as? String,
+            dict[kSecAttrLabel] as? String == "iTerm2" {
+            if let range = combinedAccountName.range(of: accountNameUserNameSeparator) {
+                accountName = String(combinedAccountName[..<range.lowerBound])
+                userName = String(combinedAccountName[range.upperBound...])
+            } else {
+                accountName = combinedAccountName
+                userName = ""
+            }
+            keychainAccountName = combinedAccountName
+        } else {
+            return nil
+        }
     }
 
     var displayString: String {
@@ -98,7 +172,7 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
     }
 
     func add(userName: String, accountName: String, password: String, completion: (PasswordManagerAccount?, Error?) -> ()) {
-        let account = KeychainAccount(accountName: accountName, userName: userName)
+        let account = ModernKeychainAccount(accountName: accountName, userName: userName)
         account.set(password: password) { error in
             if let error = error {
                 completion(nil, error)
@@ -117,7 +191,7 @@ class KeychainPasswordDataSource: NSObject, PasswordManagerDataSource {
             return []
         }
         return dicts.compactMap {
-            KeychainAccount($0)
+            LegacyKeychainAccount($0) ?? ModernKeychainAccount($0)
         }
     }
 

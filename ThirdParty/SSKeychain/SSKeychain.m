@@ -31,7 +31,17 @@ static BOOL SSKeychainSynchronized = NO;
 }
 
 + (NSString *)passwordForService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing *)error {
+    return [self passwordForService:serviceName account:account label:nil error:error];
+}
+
++ (NSString *)passwordForService:(NSString *)serviceName
+                         account:(NSString *)account
+                           label:(NSString *)label
+                           error:(NSError *__autoreleasing *)error {
     SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
+    if (label) {
+        query.label = label;
+    }
     query.service = serviceName;
     query.account = account;
     [self updateQuery:query];
@@ -46,7 +56,14 @@ static BOOL SSKeychainSynchronized = NO;
 
 
 + (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing *)error {
+    return [self deletePasswordForService:serviceName account:account label:nil error:error];
+}
+
++ (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account label:(NSString *)label error:(NSError *__autoreleasing *)error {
     SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
+    if (label) {
+        query.label = label;
+    }
     query.service = serviceName;
     query.account = account;
     [self updateQuery:query];
@@ -60,7 +77,14 @@ static BOOL SSKeychainSynchronized = NO;
 
 
 + (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing *)error {
+    return [self setPassword:password forService:serviceName account:account label:nil error:error];
+}
+
++ (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account label:(NSString *)label error:(NSError *__autoreleasing *)error {
     SSKeychainQuery *query = [[SSKeychainQuery alloc] init];
+    if (label) {
+        query.label = label;
+    }
     query.service = serviceName;
     query.account = account;
     query.password = password;

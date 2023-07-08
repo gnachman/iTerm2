@@ -75,6 +75,10 @@ extern NSString *const kSSKeychainWhereKey;
  have a password for the given parameters.
  */
 + (NSString *)passwordForService:(NSString *)serviceName account:(NSString *)account error:(NSError **)error;
++ (NSString *)passwordForService:(NSString *)serviceName
+                         account:(NSString *)account
+                           label:(NSString *)label
+                           error:(NSError *__autoreleasing *)error;
 
 
 /**
@@ -87,8 +91,8 @@ extern NSString *const kSSKeychainWhereKey;
  @return Returns `YES` on success, or `NO` on failure.
  */
 + (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account;
-+ (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account error:(NSError **)error;
-
++ (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing*)error;
++ (BOOL)deletePasswordForService:(NSString *)serviceName account:(NSString *)account label:(NSString *)label error:(NSError *__autoreleasing *)error;
 
 /**
  Sets a password in the Keychain.
@@ -102,8 +106,8 @@ extern NSString *const kSSKeychainWhereKey;
  @return Returns `YES` on success, or `NO` on failure.
  */
 + (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account;
-+ (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account error:(NSError **)error;
-
++ (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account error:(NSError *__autoreleasing*)error;
++ (BOOL)setPassword:(NSString *)password forService:(NSString *)serviceName account:(NSString *)account label:(NSString *)label error:(NSError *__autoreleasing *)error;
 
 /**
  Returns an array containing the Keychain's accounts, or `nil` if the Keychain has no accounts.
