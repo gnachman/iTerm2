@@ -1335,6 +1335,10 @@ void TurnOnDebugLoggingAutomatically(void) {
                                 keyEquivalent:@""] autorelease];
     [menu addItem:item];
 
+    NSMenuItem *mainMenuItem = [[[NSMenuItem alloc] initWithTitle:@"Main Menu" action:nil keyEquivalent:@""] autorelease];
+    mainMenuItem.submenu = [NSApp mainMenu];
+    [menu addItem:mainMenuItem];
+    
     item = [[[NSMenuItem alloc] initWithTitle:@"Quit iTerm2"
                                        action:@selector(terminate:)
                                 keyEquivalent:@""] autorelease];
