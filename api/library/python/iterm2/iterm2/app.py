@@ -7,6 +7,7 @@ import json
 import typing
 
 import iterm2.broadcast
+import iterm2.capabilities
 import iterm2.connection
 import iterm2.notifications
 import iterm2.rpc
@@ -522,6 +523,7 @@ class App(
         :param split_vertically: If `True`, split the destination session vertically.
         :param before: If `True`, place `session` left of/above `destionation`.
         """
+        iterm2.capabilities.check_supports_move_session(self.connection)
         await async_invoke_function(
             self.connection,
             f'iterm2.move_session(session: {json.dumps(session.session_id)}, destination: {json.dumps(destination.session_id)}, vertical: {json.dumps(split_vertically)}, before: {json.dumps(before)})')

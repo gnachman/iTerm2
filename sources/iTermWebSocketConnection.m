@@ -460,7 +460,7 @@ typedef NS_ENUM(NSUInteger, iTermWebSocketConnectionState) {
                @"Connection": @"Upgrade",
                @"Sec-WebSocket-Accept": [sha1 stringWithBase64EncodingWithLineBreak:@""],
                @"Sec-WebSocket-Protocol": kProtocolName,
-               @"X-iTerm2-Protocol-Version": @"1.10"
+               @"X-iTerm2-Protocol-Version": @"1.11"
              };
         if (version > kWebSocketVersion) {
             NSMutableDictionary *temp = [headers mutableCopy];

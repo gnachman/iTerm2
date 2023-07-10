@@ -143,6 +143,16 @@ def check_supports_file_panels(connection):
     """"Die if you can't use open/save panels."""
     if not supports_file_panels(connection):
         raise AppVersionTooOld(
-            "This version of iTerm2 is too old to use open/save panels." +
+            "This version of iTerm2 is too old to use open/save panels. " +
             "You should upgrade to run this script.")
 
+def supports_move_session(connection):
+    """"Can you use move_session()?"""
+    min_ver = (1, 11)
+    return ge(connection.iterm2_protocol_version, min_ver)
+
+def check_supports_move_session(connection):
+    if not supports_move_session(connection):
+        raise AppVersionTooOld(
+            "This version of iTerm2 is too old to move sessions to split panes. " +
+            "You should upgrade to run this script.")
