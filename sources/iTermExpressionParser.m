@@ -44,6 +44,7 @@
         case iTermParsedExpressionTypeArrayLookup:
         case iTermParsedExpressionTypeVariableReference:
         case iTermParsedExpressionTypeNumber:
+        case iTermParsedExpressionTypeBoolean:
         case iTermParsedExpressionTypeString:
         case iTermParsedExpressionTypeArrayOfExpressions:
         case iTermParsedExpressionTypeArrayOfValues:
@@ -160,6 +161,8 @@
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"["]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"]"]];
     [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@";"]];
+    [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"true"]];
+    [tokenizer addTokenRecogniser:[CPKeywordRecogniser recogniserForKeyword:@"false"]];
     [tokenizer addTokenRecogniser:[CPNumberRecogniser numberRecogniser]];
     [tokenizer addTokenRecogniser:[CPWhiteSpaceRecogniser whiteSpaceRecogniser]];
     [tokenizer addTokenRecogniser:[CPIdentifierRecogniser identifierRecogniser]];
@@ -459,6 +462,14 @@
     [_grammarProcessor addProductionRule:@"expression ::= 'Number'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {
         return [[iTermParsedExpression alloc] initWithNumber:[(CPNumberToken *)syntaxTree.children[0] number]];
+    }];
+    [_grammarProcessor addProductionRule:@"expression ::= 'true'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+        return [[iTermParsedExpression alloc] initWithBoolean:YES];
+    }];
+    [_grammarProcessor addProductionRule:@"expression ::= 'false'"
+                           treeTransform:^id(CPSyntaxTree *syntaxTree) {
+        return [[iTermParsedExpression alloc] initWithBoolean:NO];
     }];
     [_grammarProcessor addProductionRule:@"expression ::= '[' ']'"
                            treeTransform:^id(CPSyntaxTree *syntaxTree) {

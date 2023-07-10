@@ -8146,14 +8146,14 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
     [self.currentSession.textview refuseFirstResponderAtCurrentMouseLocation];
     NSView *scrollView;
     NSColor *tabColor;
+    PTYTab *tab = [self tabForSession:targetSession] ?: [self currentTab];
     if (newSession.tabColor) {
         // The new session came with a tab color of its own so don't inherit.
         tabColor = newSession.tabColor;
     } else {
         // Inherit from tab.
-        tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[[self currentTab] tabViewItem]] retain] autorelease];
+        tabColor = [[[_contentView.tabBarControl tabColorForTabViewItem:[tab tabViewItem]] retain] autorelease];
     }
-    PTYTab *tab = [self tabForSession:targetSession] ?: [self currentTab];
     [tab splitVertically:isVertical
               newSession:newSession
                   before:before
@@ -8183,8 +8183,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
             [[self currentTab] setActiveSession:newSession];
         }
     }
-    [[self currentTab] recheckBlur];
-    [[self currentTab] numberOfSessionsDidChange];
+    [tab recheckBlur];
+    [tab numberOfSessionsDidChange];
     [self setDimmingForSessions];
     for (PTYSession *session in self.currentTab.sessions) {
         [session.view updateDim];

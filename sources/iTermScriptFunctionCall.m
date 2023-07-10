@@ -149,6 +149,7 @@ void iTermFunctionCallSplitFullyQualifiedName(NSString *fqName, NSString **names
         case iTermParsedExpressionTypeArrayOfValues:
         case iTermParsedExpressionTypeArrayOfExpressions:
         case iTermParsedExpressionTypeNumber:
+        case iTermParsedExpressionTypeBoolean:
         case iTermParsedExpressionTypeString: {
             NSString *reason = @"Expected a function call, not a literal";
             completion(nil,

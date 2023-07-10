@@ -64,6 +64,7 @@
 #import "IntervalTree.h"
 #import "LineBlock.h"
 #import "LineBufferHelpers.h"
+#import "MovePaneController.h"
 #import "NSAlert+iTerm.h"
 #import "NSBezierPath+iTerm.h"
 #import "NSCharacterSet+iTerm.h"

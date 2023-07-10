@@ -25,6 +25,7 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
     iTermParsedExpressionTypeVariableReference,
     iTermParsedExpressionTypeArrayLookup,
     iTermParsedExpressionTypeFunctionCalls,
+    iTermParsedExpressionTypeBoolean
 
     // Note: When adding new types, also update the Python function iterm2_encode().
 };
@@ -72,6 +73,7 @@ typedef NS_ENUM(NSUInteger, iTermParsedExpressionType) {
 - (instancetype)initWithObject:(id)object errorReason:(NSString *)errorReason;
 - (instancetype)initWithOptionalObject:(id)object;
 - (instancetype)initWithNumber:(NSNumber *)number;
+- (instancetype)initWithBoolean:(BOOL)value;
 - (instancetype)initWithError:(NSError *)error;
 - (instancetype)initWithInterpolatedStringParts:(NSArray<iTermParsedExpression *> *)parts;
 - (instancetype)initWithArrayOfExpressions:(NSArray<iTermParsedExpression *> *)array;

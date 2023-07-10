@@ -510,6 +510,22 @@ class App(
                     return window, tab
         return None, None
 
+    async def async_move_session(
+            self,
+            session: iterm2.session.Session,
+            destination: iterm2.session.Session,
+            split_vertically: bool,
+            before: bool):
+        """
+        Move a session to be a split pane by splitting another existing session.
+
+        :param split_vertically: If `True`, split the destination session vertically.
+        :param before: If `True`, place `session` left of/above `destionation`.
+        """
+        await async_invoke_function(
+            self.connection,
+            f'iterm2.move_session(session: {json.dumps(session.session_id)}, destination: {json.dumps(destination.session_id)}, vertical: {json.dumps(split_vertically)}, before: {json.dumps(before)})')
+
     async def _async_listen(self):
         """
         Subscribe to various notifications that keep this object's state

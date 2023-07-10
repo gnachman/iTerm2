@@ -75,6 +75,7 @@
             value = self.error.description;
             break;
         case iTermParsedExpressionTypeNumber:
+        case iTermParsedExpressionTypeBoolean:
             value = [self.number stringValue];
             break;
         case iTermParsedExpressionTypeString:
@@ -209,6 +210,15 @@
     return self;
 }
 
+- (instancetype)initWithBoolean:(BOOL)value {
+    self = [super init];
+    if (self) {
+        _expressionType = iTermParsedExpressionTypeBoolean;
+        _object = @(value);
+    }
+    return self;
+}
+
 - (instancetype)initWithError:(NSError *)error {
     self = [super init];
     if (self) {
@@ -294,6 +304,7 @@
         case iTermParsedExpressionTypeNil:
         case iTermParsedExpressionTypeError:
         case iTermParsedExpressionTypeNumber:
+        case iTermParsedExpressionTypeBoolean:
         case iTermParsedExpressionTypeString:
         case iTermParsedExpressionTypeArrayOfValues:
         case iTermParsedExpressionTypeVariableReference:

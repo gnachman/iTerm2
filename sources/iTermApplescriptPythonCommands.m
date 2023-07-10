@@ -100,6 +100,7 @@
         case iTermParsedExpressionTypeArrayLookup:
         case iTermParsedExpressionTypeArrayOfValues:
         case iTermParsedExpressionTypeVariableReference:
+        case iTermParsedExpressionTypeBoolean:
             sync = YES;
             break;
 

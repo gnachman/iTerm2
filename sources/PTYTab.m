@@ -303,6 +303,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize *dest, CGFloat value) {
 
 + (void)registerBuiltInFunctions {
     [iTermMoveTabToWindowBuiltInFunction registerBuiltInFunction];
+    [MoveSessionBuiltInFunction registerBuiltInFunction];
 }
 
 + (NSSize)cellSizeForBookmark:(Profile *)bookmark {
