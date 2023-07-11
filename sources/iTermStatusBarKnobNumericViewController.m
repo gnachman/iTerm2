@@ -20,6 +20,8 @@
 - (void)viewDidLoad {
     self.view.autoresizesSubviews = NO;
     self.value = _value;
+    _stepper.maxValue = INFINITY;
+    _stepper.minValue = -INFINITY;
 }
 
 - (void)setValue:(NSNumber *)value {
