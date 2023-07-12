@@ -1970,7 +1970,10 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             return;
         } else if (_receivingMultipartFile) {
             DLog(@"Receiving multipart file so allow %@ to proceed as usual", token);
-        } else {
+        } else if (token->type != SSH_OUTPUT &&
+                   token->type != SSH_BEGIN &&
+                   token->type != SSH_END &&
+                   token->type != SSH_LINE) {
             DLog(@"Unexpected field receipt end");
             [_delegate terminalFileReceiptEndedUnexpectedly];
             receivingFile_ = NO;

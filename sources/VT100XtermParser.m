@@ -7,6 +7,7 @@
 //
 
 #import "VT100XtermParser.h"
+#import "DebugLogging.h"
 #import "NSData+iTerm.h"
 
 static NSString *const kXtermParserSavedStateDataKey = @"kXtermParserSavedStateDataKey";
@@ -246,6 +247,11 @@ typedef enum {
             }
             if (append && nextState == kXtermParserParsingStringState) {
                 [data appendBytes:&c length:1];
+                const NSUInteger maxLength = 1048576;
+                if (data.length >= maxLength) {
+                    DLog(@"Truncate very long OSC");
+                    nextState = kXtermParserFinishedState;
+                }
             }
         }
     } while (nextState == kXtermParserParsingStringState);
