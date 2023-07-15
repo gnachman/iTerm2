@@ -169,7 +169,7 @@ CGFloat kiTermIndicatorStandardHeight = 20;
         kiTermIndicatorCopyMode: @"In copy mode.",
         kiTermIndicatorDebugLogging: @"Debug logging is enabled.",
         kiTermIndicatorSecureKeyboardEntry_User: @"Secure Keyboard Entry is enabled. Select iTerm2 > Secure Keyboard Entry to disable.",
-        kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled."
+        kiTermIndicatorSecureKeyboardEntry_Forced: @"Secure Keyboard Entry is enabled because another app has turned it on."
     };
     return messages[name];
 }
