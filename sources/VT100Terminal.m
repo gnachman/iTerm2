@@ -4197,6 +4197,22 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         if ([_delegate terminalIsTrusted] && value.length > 0) {
             [_delegate terminalEndSSH:value];
         }
+    } else if ([key isEqualToString:@"OpenURL"]) {
+        if ([_delegate terminalIsTrusted]) {
+            NSInteger colon = [value rangeOfString:@":"].location;
+            if (colon == NSNotFound) {
+                return;
+            }
+
+            NSString *encoded = [value substringFromIndex:colon + 1];
+            NSString *payload = [encoded stringByBase64DecodingStringWithEncoding:NSUTF8StringEncoding];
+            if (payload) {
+                NSURL *url = [NSURL URLWithString:payload];
+                if (url) {
+                    [_delegate terminalOpenURL:url];
+                }
+            }
+        }
     }
 }
 

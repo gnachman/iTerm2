@@ -219,6 +219,8 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)neverWarnAboutMeta;
 + (BOOL)neverWarnAboutOverrides;
 + (BOOL)neverWarnAboutPossibleOverrides;
++ (BOOL)noSyncDisableOpenURL;
++ (void)setNoSyncDisableOpenURL:(BOOL)value;
 + (BOOL)noSyncDontWarnAboutTmuxPause;
 + (void)setNoSyncDontWarnAboutTmuxPause:(BOOL)value;
 + (BOOL)noSyncSuppressDownloadConfirmation;

@@ -14648,6 +14648,12 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     _modeHandler.mode = iTermSessionModeDefault;
 }
 
+- (void)screenOpenURL:(NSURL *)url completion:(void (^)(void))completion {
+    DLog(@"url=%@", url);
+    [self.naggingController openURL:url];
+    completion();
+}
+
 - (void)enclosingTabWillBeDeselected {
     DLog(@"enclosingTabWillBeDeselected %@", self);
     if (_alertOnMarksinOffscreenSessions) {

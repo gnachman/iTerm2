@@ -2709,4 +2709,12 @@
     [_promptStateMachine handleToken:token withEncoding:self.terminal.encoding];
 }
 
+- (void)terminalOpenURL:(NSURL *)url {
+    [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
+        [delegate screenOpenURL:url completion:^{
+            [unpauser unpause];
+        }];
+    }];
+}
+
 @end

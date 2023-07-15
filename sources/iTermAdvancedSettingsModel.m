@@ -593,6 +593,7 @@ DEFINE_SETTABLE_BOOL(noSyncDontWarnAboutTmuxPause, NoSyncDontWarnAboutTmuxPause,
 DEFINE_OPTIONAL_BOOL(noSyncClearAllBroadcast, nil, SECTION_WARNINGS @"Send Clear Session to all broadcasted-to sessions?");
 DEFINE_BOOL(noSyncSuppressSendSignal, NO, SECTION_WARNINGS @"Suppress warning about sending a signal to terminate a job.\nThis is used in the process tree, which you can find the toolbelt or by clicking the Jobs status bar component.");
 DEFINE_BOOL(noSyncConfirmRemoveAnnotation, NO, SECTION_WARNINGS @"Suppress confirmation to remove annotation?");
+DEFINE_SETTABLE_BOOL(noSyncDisableOpenURL, NoSyncDisableOpenURL, NO, SECTION_WARNINGS @"Disable control sequence to open URLs?");
 
 #pragma mark Pasteboard
 

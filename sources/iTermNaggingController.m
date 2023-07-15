@@ -562,6 +562,48 @@ static NSString *const iTermNaggingControllerDidChangeTmuxWindowsShouldCloseAfte
     }
 }
 
+- (void)openURL:(NSURL *)url {
+    NSString *allowHostKey = [NSString stringWithFormat:@"NoSyncAllowOpenURL_host:%@", url.host];
+
+    if ([iTermAdvancedSettingsModel noSyncDisableOpenURL]) {
+        DLog(@"OpenUrl disabled");
+        return;
+    }
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:allowHostKey]) {
+        DLog(@"Always allow %@", url.host);
+        [[NSWorkspace sharedWorkspace] openURL:url];
+        return;
+    }
+
+    [_delegate naggingControllerShowMessage:[NSString stringWithFormat: @"Open this URL? %@", url.absoluteString]
+                                 isQuestion:YES
+                                  important:YES
+                                 identifier:allowHostKey
+                                    options:@[ @"Allow", @"Always allow for this host", @"Never allow" ]
+                                 completion:^(int selection) {
+        switch (selection) {
+            case -2:  // Dismiss programmatically
+                break;
+
+            case -1: // Closed
+                break;
+
+            case 0: // Allow
+                [[NSWorkspace sharedWorkspace] openURL:url];
+                break;
+
+            case 1:  // Allow for this host
+                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:allowHostKey];
+                [[NSWorkspace sharedWorkspace] openURL:url];
+                break;
+
+            case 2:  // Never allow
+                [iTermAdvancedSettingsModel setNoSyncDisableOpenURL:YES];
+                break;
+        }
+    }];
+}
+
 #pragma mark - Variable Reporting
 
 - (NSArray<NSString *> *)variablesToReportEntries {

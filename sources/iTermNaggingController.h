@@ -81,6 +81,7 @@ extern NSString *const kTurnOffBracketedPasteOnHostChangeAnnouncementIdentifier;
          forSessionWithGuid:(NSString *)sessionGUID;
 - (void)offerToDisableTriggersInInteractiveApps;
 - (void)tmuxDidUpdatePasteBuffer;
+- (void)openURL:(NSURL *)url;
 
 @end
 
