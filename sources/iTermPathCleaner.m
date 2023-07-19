@@ -175,6 +175,7 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
 
 #pragma mark - Column/Line Number
 
+// The input starts with the filename. Removing the matched range should leave behind just the filename. Trailing punctuation will be removed from the input before matching. See call site for how the input is mangled.
 - (NSArray<NSString *> *)lineAndColumnNumberRegexes {
     return @[ @":(\\d+):(\\d+)",
               @":(\\d+)",
@@ -182,7 +183,8 @@ static dispatch_queue_t iTermPathCleanerQueue(void) {
               @"\", line (\\d+), column (\\d+)",
               @"\", line (\\d+), in",
               @"\\((\\d+), ?(\\d+)\\)",
-              @"\\((\\d+)\\)"];
+              @"\\((\\d+)\\)",
+              @" line (\\d+)$"];
     // NOTE: If you change this also update regexes in iTermPathFinder.
 }
 
