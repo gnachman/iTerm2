@@ -226,6 +226,7 @@ __bp_precmd_invoke_cmd() {
     # prompt command" by another precmd execution loop. This avoids infinite
     # recursion.
     if (( __bp_inside_precmd > 0 )); then
+      (exit $__bp_last_ret_value)
       return
     fi
     local __bp_inside_precmd=1
@@ -242,6 +243,7 @@ __bp_precmd_invoke_cmd() {
             "$precmd_function"
         fi
     done
+    (exit $__bp_last_ret_value)
 }
 
 # Sets a return value in $?. We may want to get access to the $? variable in our
