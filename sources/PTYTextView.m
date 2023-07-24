@@ -1148,6 +1148,11 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         }
     }
     [self updateUnderlinedURLs:event];
+    if ([self hitTest:[self convertPoint:event.locationInWindow fromView:nil]] == nil) {
+        DLog(@"Event %@ at window coord %@ failed hit test for view with window coords %@",
+             event, NSStringFromPoint(event.locationInWindow), NSStringFromRect([self convertRect:self.bounds toView:nil]));
+        return;
+    }
     if ([iTermPreferences boolForKey:kPreferenceKeyFocusFollowsMouse] &&
         [[self window] alphaValue] > 0 &&
         ![NSApp modalWindow]) {
