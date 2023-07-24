@@ -409,10 +409,6 @@ static const NSTimeInterval iTermStatusBarGitComponentDefaultCadence = 2;
     [_session reveal];
 }
 
-- (void)statusBarComponentDidClickWithView:(NSView *)view {
-    [self openMenuWithView:view];
-}
-
 - (void)statusBarComponentMouseDownWithView:(NSView *)view {
     [self openMenuWithView:view];
 }
