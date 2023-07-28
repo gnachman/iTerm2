@@ -171,6 +171,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft;
 @property(nonatomic, readonly) NSArray<VT100LineInfo *> *metadataArray;
 // Time of last update. Used for setting timestamps.
 @property(nonatomic) NSTimeInterval currentDate;
+@property(nonatomic) BOOL hasChanged;
 
 + (VT100GridSize)sizeInStateDictionary:(NSDictionary *)dict;
 

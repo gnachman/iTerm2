@@ -3909,6 +3909,8 @@ basedAtAbsoluteLineNumber:(long long)absoluteLineNumber
         self.temporaryDoubleBuffer.drewSavedGrid = YES;
         self.currentGrid.haveScrolled = NO;
     }
+    self.primaryGrid.hasChanged = NO;
+    self.altGrid.hasChanged = NO;
     // We don't want to run side effects while joined because that causes syncing to be skipped if
     // one of the side effects adds a joined block.
     _runSideEffectAfterTopJoinFinishes = YES;

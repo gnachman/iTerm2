@@ -229,6 +229,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
     [lineInfo setDirty:dirty
                inRange:VT100GridRangeMake(coord.x, 1)
      updateTimestampTo:updateTimestamp ? self.currentDate : 0];
+    _hasChanged = YES;
 }
 
 - (void)markCharsDirty:(BOOL)dirty inRectFrom:(VT100GridCoord)from to:(VT100GridCoord)to {
@@ -248,6 +249,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
                             inRange:xrange
                   updateTimestampTo:dirty ? timestamp : 0];
     }
+    _hasChanged = YES;
 }
 
 - (void)markAllCharsDirty:(BOOL)dirty updateTimestamps:(BOOL)updateTimestamps {
@@ -270,6 +272,7 @@ static int VT100GridIndex(int screenTop, int lineNumber, int height) {
         }];
         return;
     }
+    _hasChanged = YES;
     allDirty_ = dirty;
     [self markCharsDirty:dirty
               inRectFrom:VT100GridCoordMake(0, 0)
@@ -904,6 +907,7 @@ makeCursorLineSoft:(BOOL)makeCursorLineSoft {
             [[self lineInfoAtLineNumber:i] setDirty:YES inRange:dirtyRange updateTimestampTo:0];
         }
     }
+    _hasChanged = YES;
     [otherGrid copyMiscellaneousStateTo:self];
 }
 

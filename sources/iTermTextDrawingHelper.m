@@ -2416,11 +2416,12 @@ static inline BOOL iTermCharacterAttributesUnderlineColorEqual(iTermCharacterAtt
     attributes->faint = c->faint;
     attributes->fakeBold = c->bold;  // default value
     attributes->fakeItalic = c->italic;  // default value
-    PTYFontInfo *fontInfo = [_delegate drawingHelperFontForChar:code
-                                                      isComplex:isComplex
-                                                     renderBold:&attributes->fakeBold
-                                                   renderItalic:&attributes->fakeItalic
-                                                       remapped:remapped];
+    PTYFontInfo *fontInfo = [_fontProvider fontForCharacter:isComplex ? [CharToStr(code, isComplex) longCharacterAtIndex:0] : code
+                                                useBoldFont:_boldAllowed
+                                              useItalicFont:_italicAllowed
+                                                 renderBold:&attributes->fakeBold
+                                               renderItalic:&attributes->fakeItalic
+                                                   remapped:remapped];
 
     attributes->font = fontInfo.font;
     attributes->ligatureLevel = fontInfo.ligatureLevel;

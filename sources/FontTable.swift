@@ -7,13 +7,87 @@
 
 import Foundation
 
-@objc(iTermFontTable)
-class FontTable: NSObject {
-    @objc static let unicodeLimit = 0x110000
-    private let tree = IntervalTree()
+@objc
+protocol FontProviderProtocol {
+    @objc
+    func fontForCharacter(_ char: UTF32Char,
+                          useBoldFont: Bool,
+                          useItalicFont: Bool,
+                          renderBold: UnsafeMutablePointer<ObjCBool>,
+                          renderItalic: UnsafeMutablePointer<ObjCBool>,
+                          remapped: UnsafeMutablePointer<UTF32Char>) -> PTYFontInfo
+}
 
-    private class FontBox: NSObject, IntervalTreeObject {
-        weak var entry: IntervalTreeEntry?
+extension RandomAccessCollection {
+    func binarySearch(predicate: (Element) -> Bool) -> Index {
+        var low = startIndex
+        var high = endIndex
+        while low != high {
+            let mid = index(low, offsetBy: distance(from: low, to: high)/2)
+            if predicate(self[mid]) {
+                low = index(after: mid)
+            } else {
+                high = mid
+            }
+        }
+        return low
+    }
+}
+
+struct RangeMap<Value>: Sequence {
+    struct Entry {
+        var range: Range<Int>
+        var value: Value
+    }
+
+    private var entries: [Entry] = []
+    var first: Entry? { entries.first }
+    var last: Entry? { entries.last }
+
+    var count: Int { entries.count }
+
+    mutating func insert(range: Range<Int>, value: Value) {
+        let newEntry = Entry(range: range, value: value)
+        let insertionIndex = entries.binarySearch { $0.range.lowerBound < range.lowerBound }
+        entries.insert(newEntry, at: insertionIndex)
+    }
+
+    subscript(_ key: Int) -> Entry? {
+        let foundIndex = entries.binarySearch { $0.range.upperBound <= key }
+        guard foundIndex != entries.endIndex, entries[foundIndex].range.contains(key) else {
+            return nil
+        }
+        return entries[foundIndex]
+    }
+
+    func makeIterator() -> AnyIterator<Entry> {
+        return AnyIterator<Entry>(entries.makeIterator())
+    }
+
+    func iterate(from key: Int) -> AnyIterator<Entry> {
+        let start = entries.binarySearch { $0.range.lowerBound < key }
+        return AnyIterator(entries[start...].makeIterator())
+    }
+
+    func reverseIterate(from key: Int) -> AnyIterator<Entry> {
+        let start = entries.binarySearch { $0.range.upperBound <= key }
+        var currentIndex = start
+        return AnyIterator {
+            guard currentIndex >= self.entries.startIndex else {
+                return nil
+            }
+            defer { currentIndex = self.entries.index(before: currentIndex) }
+            return self.entries[currentIndex]
+        }
+    }
+}
+
+@objc(iTermFontTable)
+class FontTable: NSObject, FontProviderProtocol {
+    @objc static let unicodeLimit = 0x110000
+    private var rangeMap = RangeMap<FontBox>()
+
+    private class FontBox: NSObject {
         var delta: Int?
         var font: PTYFontInfo {
             didSet {
@@ -85,14 +159,6 @@ class FontTable: NSObject {
             return FontBox(font, delta: delta) as! Self
         }
 
-        func doppelganger() -> IntervalTreeObject {
-            return FontBox(font, delta: delta)
-        }
-
-        func progenitor() -> IntervalTreeObject? {
-            return nil
-        }
-
         init(_ font: PTYFontInfo, delta: Int?) {
             self.font = font
             self.delta = delta
@@ -144,14 +210,7 @@ class FontTable: NSObject {
             return start - destination
         }
 
-        // Interval after remapping. These are the code points seen as input from the tty.
-        var interval: Interval {
-            if let delta {
-                return Interval(location: Int64(start - delta), length: Int64(count))
-            }
-            return Interval(location: Int64(start), length: Int64(count))
-        }
-
+        // Range after remapping. These are the code points seen as input from the tty.
         var range: Range<Int> {
             if let delta {
                 return (start - delta)..<(start - delta + count)
@@ -271,8 +330,8 @@ class FontTable: NSObject {
         if let config {
             for entry in config.entries {
                 let font = entry.font(defaultPointSize: defaultFont.font.pointSize)
-                tree.add(FontBox(font, delta: entry.delta),
-                         with: entry.interval)
+                rangeMap.insert(range: entry.range,
+                                value: FontBox(font, delta: entry.delta))
                 unassignedCodePoints.remove(integersIn: entry.range)
             }
         }
@@ -281,49 +340,72 @@ class FontTable: NSObject {
         for range in unassignedCodePoints.rangeView {
             let asciiRange = range.clamped(to: 0..<asciiLimit)
             if !asciiRange.isEmpty {
-                tree.add(FontBox(defaultFont, delta: nil),
-                         with: Interval(location: Int64(asciiRange.lowerBound),
-                                        length: Int64(asciiRange.count)))
+                rangeMap.insert(range: asciiRange,
+                                value: FontBox(defaultFont, delta: nil))
             }
             let nonASCIIRange = range.clamped(to: asciiLimit..<FontTable.unicodeLimit)
             if !nonASCIIRange.isEmpty {
-                tree.add(FontBox(nonAsciiFont ?? defaultFont, delta: nil),
-                         with: Interval(location: Int64(nonASCIIRange.lowerBound),
-                                        length: Int64(nonASCIIRange.count)))
+                rangeMap.insert(range: nonASCIIRange,
+                                value: FontBox(nonAsciiFont ?? defaultFont,
+                                               delta: nil))
             }
         }
-        anyASCIIDefaultLigatures = Self.treeHasLigatures(tree: tree, ascii: true)
-        anyNonASCIIDefaultLigatures = Self.treeHasLigatures(tree: tree, ascii: false)
+        anyASCIIDefaultLigatures = Self.rangeMapHasLigatures(rangeMap: rangeMap, ascii: true)
+        anyNonASCIIDefaultLigatures = Self.rangeMapHasLigatures(rangeMap: rangeMap, ascii: false)
 
         super.init()
     }
 
-    private static func treeHasLigatures(tree: IntervalTree, ascii: Bool) -> Bool {
-        let enumerator = ascii ? tree.forwardLimitEnumerator(at: 128) : tree.reverseLimitEnumerator(at: 127)
-        for entries in enumerator {
-            for box in (entries as! [FontBox]) {
-                if box.font.hasDefaultLigatures {
-                    return true
-                }
+    private static func rangeMapHasLigatures(rangeMap: RangeMap<FontBox>, ascii: Bool) -> Bool {
+        let iterator = ascii ? rangeMap.reverseIterate(from: 127) : rangeMap.iterate(from: 128)
+        for entry in iterator {
+            if entry.value.font.hasDefaultLigatures {
+                return true
             }
         }
         return false
     }
 
+    @objc var fontProvider: FontProviderProtocol {
+        if rangeMap.count == 1,
+           let box = rangeMap.first?.value {
+            return box.font;
+        }
+        if rangeMap.count == 2,
+           let first = rangeMap.first,
+           first.range == 0..<128,
+           let last = rangeMap.last,
+           last.range.lowerBound == 128 {
+            if first.value.font == last.value.font {
+                return first.value.font
+            }
+            return DualFontProvider(asciiFontInfo: first.value.font,
+                                    nonASCIIFontInfo: last.value.font)
+        }
+        return self
+    }
     private func font(for c: Character,
                       remapped: UnsafeMutablePointer<UTF32Char>) -> PTYFontInfo {
         return font(for: UTF32Char(c.unicodeScalars.first!.value), remapped: remapped)
     }
 
+    private var cachedRangeMapEntry: RangeMap<FontBox>.Entry?
+
     @objc
     func font(for codePoint: UTF32Char,
               remapped: UnsafeMutablePointer<UTF32Char>) -> PTYFontInfo {
-        let obj = tree.objects(in: Interval(location: Int64(codePoint),
-                                            length: 1)).first! as! FontBox
-        if let delta = obj.delta {
+        let fontBox: FontBox
+        if let cachedRangeMapEntry, cachedRangeMapEntry.range.contains(Int(codePoint)) {
+            fontBox = cachedRangeMapEntry.value
+        } else {
+            let entry = rangeMap[Int(codePoint)]!
+            cachedRangeMapEntry = entry
+            fontBox = entry.value
+        }
+        if let delta = fontBox.delta {
             remapped.pointee = UTF32Char(Int(codePoint) + delta)
         }
-        return obj.font
+        return fontBox.font
     }
 
     @objc
@@ -432,11 +514,58 @@ class FontTable: NSObject {
             if c.image != 0 {
                 continue
             }
-            let objects = tree.objects(in: Interval(location: Int64(c.baseCharacter), length: 1))
-            if !objects.isEmpty {
+            if rangeMap[Int(c.baseCharacter)] != nil {
                 return true
             }
         }
         return false
+    }
+}
+
+extension PTYFontInfo: FontProviderProtocol {
+    @objc
+    func fontForCharacter(_ char: UTF32Char,
+                          useBoldFont: Bool,
+                          useItalicFont: Bool,
+                          renderBold: UnsafeMutablePointer<ObjCBool>,
+                          renderItalic: UnsafeMutablePointer<ObjCBool>,
+                          remapped: UnsafeMutablePointer<UTF32Char>) -> PTYFontInfo {
+        return PTYFontInfo.font(forAsciiCharacter: true,
+                                asciiFont: self,
+                                nonAsciiFont: nil,
+                                useBoldFont: useBoldFont,
+                                useItalicFont: useItalicFont,
+                                usesNonAsciiFont: false,
+                                renderBold: renderBold,
+                                renderItalic: renderItalic)
+    }
+}
+
+@objc
+class DualFontProvider: NSObject, FontProviderProtocol {
+    private let asciiFontInfo: PTYFontInfo
+    private let nonASCIIFontInfo: PTYFontInfo
+
+    init(asciiFontInfo: PTYFontInfo,
+         nonASCIIFontInfo: PTYFontInfo) {
+        self.asciiFontInfo = asciiFontInfo
+        self.nonASCIIFontInfo = nonASCIIFontInfo
+    }
+
+    @objc
+    func fontForCharacter(_ char: UTF32Char,
+                          useBoldFont: Bool,
+                          useItalicFont: Bool,
+                          renderBold: UnsafeMutablePointer<ObjCBool>,
+                          renderItalic: UnsafeMutablePointer<ObjCBool>,
+                          remapped: UnsafeMutablePointer<UTF32Char>) -> PTYFontInfo {
+        return PTYFontInfo.font(forAsciiCharacter: char < 128,
+                                asciiFont: asciiFontInfo,
+                                nonAsciiFont: nonASCIIFontInfo,
+                                useBoldFont: useBoldFont,
+                                useItalicFont: useItalicFont,
+                                usesNonAsciiFont: true,
+                                renderBold: renderBold,
+                                renderItalic: renderItalic)
     }
 }

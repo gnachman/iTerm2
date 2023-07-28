@@ -23,6 +23,7 @@
 @class iTermOffscreenCommandLine;
 @class iTermSelection;
 @class iTermTextExtractor;
+@protocol FontProviderProtocol;
 @class PTYFontInfo;
 @class ScreenCharArray;
 @protocol VT100ScreenMarkReading;
@@ -239,6 +240,8 @@ extern const CGFloat iTermOffscreenCommandLineVerticalPadding;
 // Is bold text allowed? If so, then double struck text may be used when a bold version of the font
 // is not available.
 @property(nonatomic, assign) BOOL boldAllowed;
+@property(nonatomic, assign) BOOL italicAllowed;
+@property(nonatomic, strong) id<FontProviderProtocol> fontProvider;
 
 // Version of unicode. Determines character widths.
 @property(nonatomic, assign) NSInteger unicodeVersion;

@@ -94,6 +94,9 @@ NS_ASSUME_NONNULL_BEGIN
 // Serialize, adding offset to interval locations (useful for taking the tail
 // of an interval tree).
 - (NSDictionary *)dictionaryValueWithOffset:(long long)offset;
+- (void)enumerateLimitsAfter:(long long)minimumLimit
+                       block:(void (^)(id<IntervalTreeObject> object, BOOL *stop))block;
+
 @end
 
 

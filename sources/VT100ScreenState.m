@@ -263,35 +263,29 @@ NSString *VT100ScreenTerminalStateKeyPath = @"Path";
         DLog(@"Size changed %dx%d -> %dx%d", self.width, self.height, updated.width, updated.height);
         return;
     }
+    if (!updated.currentGrid.hasChanged) {
+        DLog(@"Don't scan for overwritten images because current grid remains unchanged");
+        return;
+    }
     Interval *topOfScreen = [self intervalForGridCoordRange:VT100GridCoordRangeMake(0, self.numberOfScrollbackLines, 0, self.numberOfScrollbackLines)];
     const int height = self.height;
     NSMutableArray<iTermMark *> *marksToRemove = [NSMutableArray array];
-    BOOL done = NO;
-    for (NSArray<id<IntervalTreeObject>> *objects in [_intervalTree reverseLimitEnumerator]) {
-        if (done) {
-            break;
+    [_intervalTree enumerateLimitsAfter:topOfScreen.location
+                                  block:^(id<IntervalTreeObject> object, BOOL *stop) {
+        DLog(@"Consider %@", object);
+        iTermImageMark *imageMark = [iTermImageMark castFrom:object];
+        if (!imageMark || !imageMark.imageCode) {
+            DLog(@"Not an image");
+            return;
         }
-        for (id<IntervalTreeObject> object in objects) {
-            DLog(@"Consider %@", object);
-            if (object.entry.interval.limit <= topOfScreen.location) {
-                DLog(@"Above top of screen");
-                done = YES;
-                break;
-            }
-            iTermImageMark *imageMark = [iTermImageMark castFrom:object];
-            if (!imageMark || !imageMark.imageCode) {
-                DLog(@"Not an image");
-                continue;
-            }
-            VT100GridAbsCoordRange coordRange = [self absCoordRangeForInterval:imageMark.entry.interval];
-            iTermMark *progenitor = imageMark.progenitor;
-            if (progenitor != nil &&
-                ![updated imageInUse:imageMark above:coordRange.end.y searchHeight:height]) {
-                DLog(@"Not in use. Add to delete list.");
-                [marksToRemove addObject:progenitor];
-            }
+        VT100GridAbsCoordRange coordRange = [self absCoordRangeForInterval:imageMark.entry.interval];
+        iTermMark *progenitor = imageMark.progenitor;
+        if (progenitor != nil &&
+            ![updated imageInUse:imageMark above:coordRange.end.y searchHeight:height]) {
+            DLog(@"Not in use. Add to delete list.");
+            [marksToRemove addObject:progenitor];
         }
-    }
+    }];
     for (iTermMark *mark in marksToRemove) {
         DLog(@"Remove %@", mark);
         [[updated mutableIntervalTree] removeObject:mark];

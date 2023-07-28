@@ -967,6 +967,48 @@ static NSString *const kIntervalLengthKey = @"Length";
     return [[[IntervalTreeForwardLimitEnumerator alloc] initWithTree:self] autorelease];
 }
 
+- (void)enumerateLimitsAfter:(long long)minimumLimit
+                       block:(void (^)(id<IntervalTreeObject> object, BOOL *stop))block {
+    [self enumerateLimitsAfter:minimumLimit atNode:_tree.root block:block];
+}
+
+// returns whether the block directed us to stop enumerating.
+- (BOOL)enumerateLimitsAfter:(long long)minimumLimit
+                      atNode:(AATreeNode *)node
+                       block:(void (^)(id<IntervalTreeObject> object, BOOL *stop))block {
+    if (!node) {
+        return NO;
+    }
+    IntervalTreeValue *value = node.data;
+    if (value.maxLimit < minimumLimit) {
+        return NO;
+    }
+    for (IntervalTreeEntry *entry in value.entries) {
+        if (entry.interval.limit < minimumLimit) {
+            continue;
+        }
+        BOOL stop = NO;
+        block(entry.object, &stop);
+        if (stop) {
+            return YES;
+        }
+    }
+    const long long leftMaxLimit = ((IntervalTreeValue *)node.left.data).maxLimitAtSubtree;
+    if (leftMaxLimit >= minimumLimit) {
+        if ([self enumerateLimitsAfter:minimumLimit atNode:node.left block:block]) {
+            return YES;
+        }
+    }
+
+    const long long rightMaxLimit = ((IntervalTreeValue *)node.right.data).maxLimitAtSubtree;
+    if (rightMaxLimit >= minimumLimit) {
+        if ([self enumerateLimitsAfter:minimumLimit atNode:node.right block:block]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (long long)bruteForceMaxLimitAtSubtree:(AATreeNode *)node {
     IntervalTreeValue *value = node.data;
     long long result = LLONG_MIN;
@@ -1120,6 +1162,12 @@ static NSString *const kIntervalLengthKey = @"Length";
 
 - (NSDictionary *)dictionaryValueWithOffset:(long long)offset {
     return [_source dictionaryValueWithOffset:offset];
+}
+
+- (void)enumerateLimitsAfter:(long long)minimumLimit block:(void (^)(id<IntervalTreeObject> _Nonnull, BOOL * _Nonnull))block {
+    [_source enumerateLimitsAfter:minimumLimit block:^(id<IntervalTreeObject>  _Nonnull object, BOOL * _Nonnull stop) {
+        block(object.doppelganger, stop);
+    }];
 }
 
 @end
