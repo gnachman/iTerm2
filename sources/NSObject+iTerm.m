@@ -222,6 +222,12 @@
     func(self, selector, object);
 }
 
+- (void)it_performNonObjectReturningSelector:(SEL)selector withObject:(id)object1 withObject:(id)object2 {
+    IMP imp = [self methodForSelector:selector];
+    void (*func)(id, SEL, id, id) = (void *)imp;
+    func(self, selector, object1, object2);
+}
+
 - (void)it_performNonObjectReturningSelector:(SEL)selector withObject:(id)object1 object:(id)object2 object:(id)object3 {
     IMP imp = [self methodForSelector:selector];
     void (*func)(id, SEL, id, id, id) = (void *)imp;

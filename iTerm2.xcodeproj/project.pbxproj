@@ -2091,6 +2091,8 @@
 		A67778B41CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.h in Headers */ = {isa = PBXBuildFile; fileRef = A67778B21CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.h */; };
 		A67778B51CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.m in Sources */ = {isa = PBXBuildFile; fileRef = A67778B31CFD4A7300DEED78 /* iTermHotKeyProfileBindingController.m */; };
 		A67778CD1CFFAE8D00DEED78 /* NSApplication+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = A667F38A1B48AEF200705186 /* NSApplication+iTerm.m */; };
+		A677EC6D2A785575000D7B5A /* TmuxController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D218F1482F18A00FAC8E7 /* TmuxController.m */; };
+		A677EC6E2A787A94000D7B5A /* TmuxGateway.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21861482E0E500FAC8E7 /* TmuxGateway.m */; };
 		A67875DA21D80363005AB938 /* iTermKeyboardHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = A67875D821D80362005AB938 /* iTermKeyboardHandler.h */; };
 		A67875DB21D80363005AB938 /* iTermKeyboardHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = A67875D921D80363005AB938 /* iTermKeyboardHandler.m */; };
 		A678C505279A2D3A00C59927 /* VT100WorkingDirectory.m in Sources */ = {isa = PBXBuildFile; fileRef = A68A30DB186D1429007F550F /* VT100WorkingDirectory.m */; };
@@ -3132,9 +3134,7 @@
 		A6C763921B45C52B00E3C992 /* iTermFileDescriptorClient.c in Sources */ = {isa = PBXBuildFile; fileRef = A67F57C61B0930CA00B4F135 /* iTermFileDescriptorClient.c */; };
 		A6C763931B45C52B00E3C992 /* iTermFileDescriptorServer.c in Sources */ = {isa = PBXBuildFile; fileRef = A67F57C41B0930CA00B4F135 /* iTermFileDescriptorServer.c */; };
 		A6C763941B45C52B00E3C992 /* iTermFileDescriptorSocketPath.c in Sources */ = {isa = PBXBuildFile; fileRef = A65B72681B23559A00F947A7 /* iTermFileDescriptorSocketPath.c */; };
-		A6C763971B45C52B00E3C992 /* TmuxController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D218F1482F18A00FAC8E7 /* TmuxController.m */; };
 		A6C763981B45C52B00E3C992 /* TmuxControllerRegistry.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */; };
-		A6C7639A1B45C52B00E3C992 /* TmuxGateway.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21861482E0E500FAC8E7 /* TmuxGateway.m */; };
 		A6C7639B1B45C52B00E3C992 /* TmuxHistoryParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB67CF01485C578005849A1 /* TmuxHistoryParser.m */; };
 		A6C7639C1B45C52B00E3C992 /* TmuxLayoutParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21AE14839AAB00FAC8E7 /* TmuxLayoutParser.m */; };
 		A6C7639D1B45C52B00E3C992 /* TmuxSessionsTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA9AEE914A51CA000BEB37B /* TmuxSessionsTable.m */; };
@@ -15468,6 +15468,7 @@
 				A6A4867420B67B2400493302 /* PreferenceInfo.m in Sources */,
 				A6A4B2BC2426C02800184EAC /* iTermPresetKeyMappings.m in Sources */,
 				A6BF035D21E179BD0097DA86 /* iTermWeakVariables.m in Sources */,
+				A677EC6D2A785575000D7B5A /* TmuxController.m in Sources */,
 				A6DBC9DA286399C6002911BE /* ContentNavigationShortcut.swift in Sources */,
 				A6B152DD29255ED600628436 /* iTermLocaleGuesser.swift in Sources */,
 				A6110C3B2526FFCF00D18F61 /* iTermModifyOtherKeysMapper1.m in Sources */,
@@ -15686,6 +15687,7 @@
 				A668E8A31E7EFEA5005F8758 /* iTermURLStore.m in Sources */,
 				A6A802E1226AD0D200BC70DC /* iTermSearchHistory.m in Sources */,
 				A6BCAADA21F6F53E0000CD29 /* iTermTextPopoverViewController.m in Sources */,
+				A677EC6E2A787A94000D7B5A /* TmuxGateway.m in Sources */,
 				A60C036F2089B29700FE2F1F /* iTermScriptHistory.m in Sources */,
 				A6121D2F2A04875C005D469C /* ImportExport.swift in Sources */,
 				A6667E91277BC5A900152678 /* iTermIntervalTreeObserver.m in Sources */,
@@ -16225,7 +16227,6 @@
 				A60593F3257DFBDC00CACEE6 /* legacy_server.c in Sources */,
 				A6C762BA1B45C52B00E3C992 /* NSMutableData+iTerm.m in Sources */,
 				A6C763941B45C52B00E3C992 /* iTermFileDescriptorSocketPath.c in Sources */,
-				A6C763971B45C52B00E3C992 /* TmuxController.m in Sources */,
 				A62C3B281BCC24AB00B5629D /* iTermHostRecordMO+CoreDataProperties.m in Sources */,
 				A6C763461B45C52B00E3C992 /* iTermProgressIndicator.m in Sources */,
 				A66C2E7D25B42BEA00C19523 /* iTermSelectorSwizzler.m in Sources */,
@@ -16328,7 +16329,6 @@
 				A6CEC1141DCE8146009F4FD2 /* GPBWireFormat.m in Sources */,
 				A6C762AD1B45C52B00E3C992 /* NSBezierPath+iTerm.m in Sources */,
 				A6DC8150285CF45C0050788C /* GPBTimestamp.pbobjc.m in Sources */,
-				A6C7639A1B45C52B00E3C992 /* TmuxGateway.m in Sources */,
 				A6E152612762CE2300D0F41C /* VT100Screen.m in Sources */,
 				A6C762B21B45C52B00E3C992 /* NSDateFormatterExtras.m in Sources */,
 				A6C763A01B45C52B00E3C992 /* TmuxWindowsTable.m in Sources */,
@@ -20526,6 +20526,7 @@
 					"-DITERM_DEBUG=1",
 					"-DBETA=1",
 				);
+				OTHER_CODE_SIGN_FLAGS = "";
 				OTHER_LDFLAGS = (
 					"-laprutil-1",
 					"-licucore",

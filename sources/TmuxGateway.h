@@ -81,7 +81,7 @@ typedef NS_ENUM(NSInteger, ControlCommand) {
 // Should all protocol-level input be logged to the gateway's session?
 @property(nonatomic, assign) BOOL tmuxLogging;
 @property(nonatomic, readonly) NSWindowController<iTermWindowController> *window;
-@property(nonatomic, readonly) id<TmuxGatewayDelegate> delegate;
+@property(nonatomic, weak) id<TmuxGatewayDelegate> delegate;
 @property(nonatomic, retain) NSDecimalNumber *minimumServerVersion;
 @property(nonatomic, retain) NSDecimalNumber *maximumServerVersion;
 @property(nonatomic, assign) BOOL acceptNotifications;
