@@ -953,8 +953,8 @@ static NSString *kCommandTimestamp = @"timestamp";
     NSString *command = [NSString stringWithFormat:@"send %@ %%%d %@",
                          asLiteralCharacters ? @"-lt" : @"-t", windowPane, value];
     NSDictionary *dict = [self dictionaryForCommand:command
-                                     responseTarget:self
-                                   responseSelector:@selector(noopResponseSelector:)
+                                     responseTarget:nil
+                                   responseSelector:nil
                                      responseObject:nil
                                               flags:kTmuxGatewayCommandShouldTolerateErrors];
     return dict;
@@ -969,15 +969,11 @@ static NSString *kCommandTimestamp = @"timestamp";
         }
     }
     [self sendCommand:command
-       responseTarget:self
-     responseSelector:@selector(noopResponseSelector:)
+       responseTarget:nil
+     responseSelector:nil
        responseObject:nil
                 flags:kTmuxGatewayCommandOfferToDetachIfLaggyDuplicate];
     detachSent_ = YES;
-}
-
-- (void)noopResponseSelector:(NSString *)response
-{
 }
 
 - (NSDictionary *)dictionaryForCommand:(NSString *)command
