@@ -11116,7 +11116,11 @@ preferredEscaping:(iTermSendTextEscaping)preferredEscaping {
                                  [self.upload didUploadBytes:progress];
                              }];
         } else {
-            [self writeTaskNoBroadcast:@"abort\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES];
+            // Send a Control-C to cancel the command. The protocol calls to send "abort\n" but this
+            // introduces a security risk because reports must not contain newlines.
+            [self writeTaskNoBroadcast:[NSString stringWithLongCharacter:3]
+                              encoding:NSISOLatin1StringEncoding
+                         forceEncoding:YES];
         }
     }];
 }
