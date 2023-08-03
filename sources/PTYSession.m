@@ -7890,6 +7890,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
 // opened. Initial window opening is always blocked on establishing the server version.
 - (void)kickOffTmux {
     _haveKickedOffTmux = YES;
+    [_tmuxController sendControlC];
     [_tmuxController ping];
     [_tmuxController validateOptions];
     [_tmuxController checkForUTF8];

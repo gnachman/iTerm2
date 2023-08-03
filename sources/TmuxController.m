@@ -1081,6 +1081,14 @@ static NSDictionary *iTermTmuxControllerDefaultFontOverridesFromProfile(Profile 
     [gateway_ sendCommandList:commands];
 }
 
+- (void)sendControlC {
+    [gateway_ sendCommand:[NSString stringWithFormat:@"%cphony-command", 3]
+           responseTarget:nil
+         responseSelector:nil
+           responseObject:nil
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];
+}
+
 - (void)ping {
     // This command requires tmux 3.2, but if it fails that's OK too.
     [gateway_ sendCommand:@"refresh-client -fpause-after=0,wait-exit"
