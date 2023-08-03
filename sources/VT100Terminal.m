@@ -2798,7 +2798,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
         }
         case XTERMCC_REPORT_ICON_TITLE: {
             NSString *s = [NSString stringWithFormat:@"\033]L%@\033\\",
-                           [_delegate terminalIconTitle]];
+                           [self reportSafeTitle:[_delegate terminalIconTitle]]];
             [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
@@ -2807,7 +2807,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
             // That was wrong and may cause bug reports due to breaking bugward compatibility.
             // (see xterm docs)
             NSString *s = [NSString stringWithFormat:@"\033]l%@\033\\",
-                           [_delegate terminalWindowTitle]];
+                           [self reportSafeTitle:[_delegate terminalWindowTitle]]];
             [_delegate terminalSendReport:[s dataUsingEncoding:NSUTF8StringEncoding]];
             break;
         }
@@ -3460,14 +3460,6 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     return [@(height) stringValue];
  }
 
-- (NSString *)decrqssDECSCPP {
-    return self.columnMode ? @"132" : @"80";
-}
-
-- (NSString *)decrqssDECNLS {
-    return [@([self.delegate terminalSizeInCells].height) stringValue];
-}
-
 - (iTermPromise<NSString *> *)decrqssPayloadPromise:(NSString *)pt {
     if ([pt isEqualToString:@"m"]) {
         return [iTermPromise promiseValue:[self decrqssSGR]];
@@ -3490,12 +3482,7 @@ static BOOL VT100TokenIsTmux(VT100Token *token) {
     if ([pt isEqualToString:@"t"]) {
         return [iTermPromise promiseValue:[self decrqssDECSLPP]];
     }
-    if ([pt isEqualToString:@"$|"]) {
-        return [iTermPromise promiseValue:[self decrqssDECSCPP]];
-    }
-    if ([pt isEqualToString:@"*|"]) {
-        return [iTermPromise promiseValue:[self decrqssDECNLS]];
-    }
+    // DECSCPP and DECNLS not supported for security reasons.
 
     return [iTermPromise promiseDefaultError];
 }
@@ -5303,6 +5290,20 @@ static iTermPromise<NSNumber *> *VT100TerminalPromiseOfDECRPMSettingFromBoolean(
     return [title substringFromIndex:NSMaxRange(newlineRange)];
 }
 
+// Convert a title into a string that is safe to transmit in a report.
+// The goal is to make it hard for an attacker to issue a report that could be part of a command.
+- (NSString *)reportSafeTitle:(NSString *)unsafeTitle {
+    NSCharacterSet *unsafeSet = [NSCharacterSet characterSetWithCharactersInString:@"|;\r\n\e"];
+    NSString *result = unsafeTitle;
+    NSRange range;
+    range = [result rangeOfCharacterFromSet:unsafeSet];
+    while (range.location != NSNotFound) {
+        result = [result stringByReplacingCharactersInRange:range withString:@" "];
+        range = [result rangeOfCharacterFromSet:unsafeSet];
+    }
+    return result;
+}
+// This is used for titles received from the remote host.
 - (NSString *)sanitizedTitle:(NSString *)unsafeTitle {
     // Very long titles are slow to draw in the tabs. Limit their length and
     // cut off anything after newline since it wouldn't be visible anyway.
