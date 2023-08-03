@@ -12611,7 +12611,12 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                 }
             }];
         } else {
-            [self writeTaskNoBroadcast:@"abort\n" encoding:NSISOLatin1StringEncoding forceEncoding:YES reporting:NO];
+            // Send a Control-C to cancel the command. The protocol calls to send "abort\n" but this
+            // introduces a security risk because reports must not contain newlines.
+            [self writeTaskNoBroadcast:[NSString stringWithLongCharacter:3]
+                              encoding:NSISOLatin1StringEncoding
+                         forceEncoding:YES
+                             reporting:NO];
         }
     }];
 }
