@@ -127,6 +127,7 @@ extern NSString *const kTmuxControllerDidChangeHiddenWindows;
 - (void)fitLayoutToWindows;
 - (void)validateOptions;
 - (void)ping;
+- (void)sendControlC;
 - (void)enablePauseModeIfPossible;
 - (void)unpausePanes:(NSArray<NSNumber *> *)wps;
 - (void)pausePanes:(NSArray<NSNumber *> *)wps;
