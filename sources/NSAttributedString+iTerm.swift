@@ -133,6 +133,19 @@ extension NSAttributedString {
         }
         return result
     }
+
+    @objc
+    func mapAttributes(_ transform: ([NSAttributedString.Key: Any]) -> [NSAttributedString.Key: Any]) -> NSAttributedString {
+        let mutableAttributedString = NSMutableAttributedString(attributedString: self)
+
+        let range = NSRange(location: 0, length: length)
+        mutableAttributedString.enumerateAttributes(in: range, options: []) { (attributes, range, _) in
+            let newAttributes = transform(attributes)
+            mutableAttributedString.setAttributes(newAttributes, range: range)
+        }
+
+        return NSAttributedString(attributedString: mutableAttributedString)
+    }
 }
 
 extension Array where Element: NSAttributedString {
@@ -157,6 +170,43 @@ extension NSMutableAttributedString {
         }
         for (range, attrs) in replacements {
             setAttributes(attrs, range: range)
+        }
+    }
+}
+
+@objc
+class iTermTableCellView: NSTableCellView {
+    @objc
+    var strongTextField: NSTextField? {
+        didSet {
+            self.textField = strongTextField
+        }
+    }
+
+    override var backgroundStyle: NSView.BackgroundStyle {
+        didSet {
+            if let textField = self.textField {
+                switch backgroundStyle {
+                case .normal:
+                    textField.attributedStringValue = textField.attributedStringValue.mapAttributes({ attrs in
+                        var result = attrs
+                        if result[.foregroundColor] as? NSColor == NSColor.selectedMenuItemTextColor {
+                            result[.foregroundColor] = NSColor.textColor
+                        }
+                        return result
+                    })
+                case .emphasized:
+                    textField.attributedStringValue = textField.attributedStringValue.mapAttributes({ attrs in
+                        var result = attrs
+                        if result[.foregroundColor] as? NSColor == NSColor.textColor {
+                            result[.foregroundColor] = NSColor.selectedMenuItemTextColor
+                        }
+                        return result
+                    })
+                default:
+                    break
+                }
+            }
         }
     }
 }

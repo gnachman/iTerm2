@@ -26,6 +26,7 @@
 - (instancetype)initWithTitle:(NSString *)title
                         value:(NSString *)value
                          guid:(NSString *)guid
+                         tags:(NSArray<NSString *> *)tags
                      escaping:(iTermSendTextEscaping)escaping
                       version:(int)version {
     if (self) {
@@ -33,6 +34,7 @@
         _value = [value copy];
         _guid = guid;
         _escaping = escaping;
+        _tags = [tags copy];
         _version = version;
     }
     return self;
@@ -68,6 +70,7 @@
     self = [self initWithTitle:title
                          value:value
                           guid:dictionary[@"guid"] ?: [[@[ [@(i) stringValue], title, value ] hashWithSHA256] it_hexEncoded]
+                          tags:dictionary[@"tags"] ?: @[]
                       escaping:escaping
                        version:version];
     if (self) {
@@ -83,6 +86,7 @@
     return @{ @"title": _title ?: @"",
               @"value": _value ?: @"",
               @"guid": _guid,
+              @"tags": _tags ?: @[],
               @"version": @(_version),
               @"escaping": @(_escaping)
     };
@@ -141,6 +145,15 @@
         return [self.value ellipsizedDescriptionNoLongerThan:30];
     }
     return self.title;
+}
+
+- (BOOL)hasTags:(NSArray<NSString *> *)tags {
+    for (NSString *tag in tags) {
+        if (![self.tags containsObject:tag]) {
+            return NO;
+        }
+    }
+    return YES;
 }
 
 @end

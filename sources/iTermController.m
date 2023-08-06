@@ -74,6 +74,8 @@
 
 @import Sparkle;
 
+NSString *const iTermSnippetsTagsDidChange = @"iTermSnippetsTagsDidChange";
+
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;
 @end
@@ -730,6 +732,10 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     for (PseudoTerminal *t in _terminalWindows) {
         [[t window] orderFront:nil];
     }
+}
+
+- (NSArray<NSString *> *)currentSnippetsFilter {
+    return self.currentTerminal.currentSnippetTags ?: @[];
 }
 
 - (PseudoTerminal *)currentTerminal {
@@ -1656,6 +1662,7 @@ replaceInitialDirectoryForSessionWithGUID:(NSString *)guid
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey"
                                                         object:thePseudoTerminal
                                                       userInfo:nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
 }
 
 #pragma mark - iTermPresentationControllerDelegate

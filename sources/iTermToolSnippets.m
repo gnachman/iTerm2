@@ -46,8 +46,10 @@ typedef NS_ENUM(NSUInteger, iTermToolSnippetsAction) {
     NSButton *_removeButton;
     NSButton *_editButton;
 
-    NSArray<iTermSnippet *> *_snippets;
+    NSArray<iTermSnippet *> *_unfilteredSnippets;
+    NSArray<iTermSnippet *> *_filteredSnippets;
     iTermEditSnippetWindowController *_windowController;
+    BOOL _haveTags;
 }
 
 static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title, id target, SEL selector, NSRect frame) {
@@ -106,7 +108,8 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
         _tableView.allowsMultipleSelection = YES;
         [_tableView registerForDraggedTypes:@[ iTermToolSnippetsPasteboardType ]];
         _tableView.doubleAction = @selector(doubleClickOnTableView:);
-        _snippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
+        _unfilteredSnippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
+        _filteredSnippets = [_unfilteredSnippets copy];
         [_tableView reloadData];
         __weak __typeof(self) weakSelf = self;
         [iTermSnippetsDidChangeNotification subscribe:self
@@ -248,10 +251,60 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     return [super performKeyEquivalent:event];
 }
 
+- (void)currentSessionDidChange {
+    [self updateModel];
+    [_tableView reloadData];
+}
+
 #pragma mark - Private
 
+- (void)updateModel {
+    _unfilteredSnippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
+    [self setFilteredSnippetsFrom:_unfilteredSnippets];
+}
+
+// Also updates _haveTags
+- (void)setFilteredSnippetsFrom:(NSArray<iTermSnippet *> *)unfilteredSnippets {
+    NSArray<NSString *> *tags = [self.toolWrapper.delegate.delegate toolbeltSnippetTags];
+    _filteredSnippets = [unfilteredSnippets filteredArrayUsingBlock:^BOOL(iTermSnippet *snippet) {
+        return [snippet hasTags:tags];
+    }];
+    _haveTags = [[self.toolWrapper.delegate.delegate toolbeltSnippetTags] count] > 0;
+}
+
+- (NSSet<NSString *> *)filteredGUIDs {
+    NSMutableSet<NSString *> *guids = [NSMutableSet set];
+    [_filteredSnippets enumerateObjectsUsingBlock:^(iTermSnippet * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [guids addObject:obj.guid];
+    }];
+    return guids;
+}
+
+- (NSIndexSet *)filteredIndexSet:(NSIndexSet *)input {
+    // Convert set of unfiltered indexes to a set of GUIDs.
+    NSMutableSet<NSString *> *guids = [NSMutableSet set];
+    [input enumerateIndexesUsingBlock:^(NSUInteger i, BOOL * _Nonnull stop) {
+        iTermSnippet *snippet = _unfilteredSnippets[i];
+        [guids addObject:snippet.guid];
+    }];
+
+    // Generate a set of filtered indexes from the set of GUIDs belonging to filtered snippets.
+    NSMutableIndexSet *output = [NSMutableIndexSet indexSet];
+    [_filteredSnippets enumerateObjectsUsingBlock:^(iTermSnippet * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([guids containsObject:obj.guid]) {
+            [output addIndex:idx];
+        }
+    }];
+    return output;
+}
+
 - (void)snippetsDidChange:(iTermSnippetsDidChangeNotification *)notif {
-    _snippets = [[[iTermSnippetsModel sharedInstance] snippets] copy];
+    const BOOL hadTags = _haveTags;
+    [self updateModel];
+    if (_haveTags || hadTags) {
+        [_tableView reloadData];
+        return;
+    }
     switch (notif.mutationType) {
         case iTermSnippetsDidChangeMutationTypeEdit: {
             [_tableView it_performUpdateBlock:^{
@@ -338,7 +391,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (NSString *)combinedStringForRow:(NSInteger)rowIndex {
-    iTermSnippet *snippet = _snippets[rowIndex];
+    iTermSnippet *snippet = _filteredSnippets[rowIndex];
     NSString *title = [snippet trimmedTitle:256];
     if (!title.length) {
         return [self valueStringForRow:rowIndex];
@@ -347,7 +400,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 }
 
 - (NSString *)valueStringForRow:(NSInteger)rowIndex {
-    return [_snippets[rowIndex] trimmedValue:40];
+    return [_filteredSnippets[rowIndex] trimmedValue:40];
 }
 
 - (void)update {
@@ -376,7 +429,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 #pragma mark - NSTableViewDelegate
 
 - (NSString *)stringForRow:(NSInteger)row {
-    iTermSnippet *snippet = _snippets[row];
+    iTermSnippet *snippet = _filteredSnippets[row];
     if ([snippet titleEqualsValueUpToLength:40]) {
         return [self valueStringForRow:row];
     }
@@ -400,15 +453,15 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 #pragma mark - NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
-    return _snippets.count;
+    return _filteredSnippets.count;
 }
 
 #pragma mark Drag-Drop
 
 - (id<NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
     NSPasteboardItem *pbItem = [[NSPasteboardItem alloc] init];
-    [pbItem setPropertyList:_snippets[row].guid forType:iTermToolSnippetsPasteboardType];
-    [pbItem setString:_snippets[row].value forType:NSPasteboardTypeString];
+    [pbItem setPropertyList:_filteredSnippets[row].guid forType:iTermToolSnippetsPasteboardType];
+    [pbItem setString:_filteredSnippets[row].value forType:NSPasteboardTypeString];
     return pbItem;
 }
 
@@ -461,7 +514,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
 - (void)pushUndo {
     [[self undoManager] registerUndoWithTarget:self
                                       selector:@selector(setSnippets:)
-                                        object:_snippets];
+                                        object:_unfilteredSnippets];
 }
 
 #pragma mark - NSDraggingDestination
@@ -488,6 +541,7 @@ static NSButton *iTermToolSnippetsNewButton(NSString *imageName, NSString *title
     iTermSnippet *snippet = [[iTermSnippet alloc] initWithTitle:title
                                                           value:string
                                                            guid:[[NSUUID UUID] UUIDString]
+                                                           tags:@[]
                                                        escaping:iTermSendTextEscapingNone
                                                         version:[iTermSnippet currentVersion]];
     [[iTermSnippetsModel sharedInstance] addSnippet:snippet];

@@ -71,6 +71,7 @@
 #import "iTermTabBarControlView.h"
 #import "iTermTheme.h"
 #import "iTermToolbeltView.h"
+#import "iTermToolSnippets.h"
 #import "iTermTouchBarButton.h"
 #import "iTermVariableReference.h"
 #import "iTermVariableScope.h"
@@ -3570,6 +3571,8 @@ ITERM_WEAKLY_REFERENCEABLE
     [[_contentView.toolbelt capturedOutputView] updateCapturedOutput];
     [[_contentView.toolbelt directoriesView] updateDirectories];
     [[_contentView.toolbelt jobsView] updateJobs];
+    [[_contentView.toolbelt snippetsView] currentSessionDidChange];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
     [self refreshNamedMarks];
 }
 
@@ -8409,6 +8412,8 @@ static CGFloat iTermDimmingAmount(PSMTabBarControl *tabView) {
         [self hideAutoCommandHistory];
     }
     [[_contentView.toolbelt commandHistoryView] updateCommands];
+    [[_contentView.toolbelt snippetsView] currentSessionDidChange];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
     [[_contentView.toolbelt jobsView] updateJobs];
     [[NSNotificationCenter defaultCenter] postNotificationName:kCurrentSessionDidChange object:nil];
     if ([[PreferencePanel sessionsInstance] isWindowLoaded] && ![iTermAdvancedSettingsModel pinEditSession]) {
@@ -10794,6 +10799,8 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
         }
     }
     [self updateTouchBarIfNeeded:NO];
+    [[_contentView.toolbelt snippetsView] currentSessionDidChange];
+    [[NSNotificationCenter defaultCenter] postNotificationName:iTermSnippetsTagsDidChange object:nil];
 }
 
 // Return the timestamp for a slider position in [0, 1] for the current session.
@@ -11661,6 +11668,14 @@ typedef NS_ENUM(NSUInteger, iTermBroadcastCommand) {
     } else {
         [session renameMark:mark to:newName];
     }
+}
+
+- (NSArray<NSString *> *)toolbeltSnippetTags {
+    return [self currentSnippetTags];
+}
+
+- (NSArray<NSString *> *)currentSnippetTags {
+    return [iTermProfilePreferences objectForKey:KEY_SNIPPETS_FILTER inProfile:self.currentSession.profile];
 }
 
 #pragma mark - Quick Look panel support

@@ -1484,6 +1484,7 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     iTermSnippet *snippet = [[iTermSnippet alloc] initWithTitle:selectedText
                                                           value:selectedText
                                                            guid:[[NSUUID UUID] UUIDString]
+                                                           tags:@[]
                                                        escaping:iTermSendTextEscapingNone
                                                         version:[iTermSnippet currentVersion]];
     [[iTermSnippetsModel sharedInstance] addSnippet:snippet];

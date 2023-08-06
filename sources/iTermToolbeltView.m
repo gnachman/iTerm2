@@ -588,6 +588,11 @@ static NSString *const kDynamicToolURL = @"URL";
     return (ToolNamedMarks *)wrapper.tool;
 }
 
+- (iTermToolSnippets *)snippetsView {
+    iTermToolWrapper *wrapper = _tools[kSnippetsToolName];
+    return (iTermToolSnippets *)wrapper.tool;
+}
+
 #pragma mark - NSSplitViewDelegate
 
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification {

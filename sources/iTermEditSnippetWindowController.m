@@ -8,7 +8,7 @@
 #import "iTermEditSnippetWindowController.h"
 #import "NSStringITerm.h"
 
-@interface iTermEditSnippetWindowController ()
+@interface iTermEditSnippetWindowController ()<NSTokenFieldDelegate>
 
 @end
 
@@ -16,9 +16,11 @@
     IBOutlet NSTextField *_titleView;
     IBOutlet NSTextView *_valueView;
     IBOutlet NSPopUpButton *_escapingButton;
+    IBOutlet NSTokenField *_tokenView;
     NSString *_title;
     NSString *_value;
     NSString *_guid;
+    NSArray<NSString *> *_tags;
     iTermSendTextEscaping _escaping;
     BOOL _canceled;
 }
@@ -30,6 +32,7 @@
         if (snippet) {
             _title = snippet.title;
             _value = snippet.value;
+            _tags = snippet.tags ?: @[];
             _guid = snippet.guid;
             _escaping = snippet.escaping;
         } else {
@@ -42,6 +45,7 @@
                 _value = @"";
             }
             _guid = [[NSUUID UUID] UUIDString];
+            _tags = @[];
             _escaping = iTermSendTextEscapingCommon;
         }
         _completion = [completion copy];
@@ -56,6 +60,7 @@
     return [[iTermSnippet alloc] initWithTitle:_title
                                          value:_value
                                           guid:_guid
+                                          tags:_tags
                                       escaping:_escaping
                                        version:[iTermSnippet currentVersion]];
 }
@@ -71,6 +76,9 @@
     _valueView.automaticTextReplacementEnabled = NO;
     _valueView.automaticSpellingCorrectionEnabled = NO;
 
+    _tokenView.objectValue = _tags ?: @[];
+    _tokenView.delegate = self;
+
     [_escapingButton selectItemWithTag:_escaping];
 }
 
@@ -78,6 +86,7 @@
     _canceled = NO;
     _title = _titleView.stringValue.copy ?: @"";
     _value = _valueView.string.copy ?: @"";
+    _tags = _tokenView.objectValue ?: @[];
     _escaping = _escapingButton.selectedTag;
 
     self.completion(self.snippet);
@@ -98,6 +107,14 @@
     @"Unescaped Literal Text does not have any special characters.\n\n"
     @"Backward Compatibility Escaping, which is not recommended for new snippets, supports: \\n (newline), \\e (escape), \\a (bell), and \\t (tab).\n\n";
     [alert runModal];
+}
+
+#pragma mark - NSTokenFieldDelegate
+
+- (NSArray *)tokenField:(NSTokenField *)tokenField
+       shouldAddObjects:(NSArray *)tokens
+                atIndex:(NSUInteger)index {
+    return tokens;
 }
 
 @end

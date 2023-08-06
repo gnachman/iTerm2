@@ -52,6 +52,9 @@
     IBOutlet NSTextField *_disabledTip;
     IBOutlet NSButton *_enableAPSLogging;
 
+    IBOutlet NSTokenField *_snippetsFilter;
+    IBOutlet NSTextField *_snippetsFilterLabel;
+
     BOOL _addingBoundHost;  // Don't remove empty-named hosts while this is set
 }
 
@@ -74,6 +77,11 @@
                     key:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS
             relatedView:nil
                    type:kPreferenceInfoTypeCheckbox];
+
+    [self defineControl:_snippetsFilter
+                    key:KEY_SNIPPETS_FILTER
+            relatedView:_snippetsFilterLabel
+                   type:kPreferenceInfoTypeTokenField];
 
     [self addViewToSearchIndex:_triggersButton
                    displayName:@"Triggers"

@@ -268,6 +268,7 @@
 #define KEY_SMART_SELECTION_ACTIONS_USE_INTERPOLATED_STRINGS @"Smart Selection Actions Use Interpolated Strings"  // Bool
 #define KEY_SEMANTIC_HISTORY                 @"Semantic History"
 #define KEY_BOUND_HOSTS                      @"Bound Hosts"
+#define KEY_SNIPPETS_FILTER                  @"Snippets Filter"
 
 // Dynamic Profiles (not in prefs ui)
 #define KEY_DYNAMIC_PROFILE_PARENT_NAME      @"Dynamic Profile Parent Name"

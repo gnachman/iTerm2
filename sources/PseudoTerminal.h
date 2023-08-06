@@ -389,5 +389,7 @@ extern NSString *const iTermDidCreateTerminalWindowNotification;
                completion:(void (^)(void))completion;
 - (void)ensureSaneFrame;
 
+- (NSArray<NSString *> *)currentSnippetTags;
+
 @end
 

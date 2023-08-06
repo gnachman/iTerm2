@@ -14,6 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface iTermToolSnippets : NSView <ToolbeltTool, NSTableViewDataSource, NSTableViewDelegate>
 
+- (void)currentSessionDidChange;
+
 @end
 
 NS_ASSUME_NONNULL_END

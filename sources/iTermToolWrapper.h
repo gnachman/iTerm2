@@ -13,6 +13,7 @@
 @class CapturedOutput;
 @class iTermAction;
 @protocol iTermMark;
+@class iTermToolSnippets;
 @protocol ProcessInfoProvider;
 @class ToolCommandHistoryView;
 @protocol VT100ScreenMarkReading;
@@ -42,6 +43,7 @@
 - (void)toolbeltAddNamedMark;
 - (void)toolbeltRemoveNamedMark:(id<VT100ScreenMarkReading>)mark;
 - (void)toolbeltRenameNamedMark:(id<VT100ScreenMarkReading>)mark to:(NSString *)newName;
+- (NSArray<NSString *> *)toolbeltSnippetTags;
 
 @end
 
@@ -51,6 +53,7 @@
 @property(nonatomic, readonly) BOOL haveOnlyOneTool;
 @property(nonatomic, readonly) ToolCommandHistoryView *commandHistoryView;
 @property(nonatomic, readonly) ToolNamedMarks *namedMarksView;
+@property(nonatomic, readonly) iTermToolSnippets *snippetsView;
 
 - (void)hideToolbelt;
 - (void)toggleShowToolWithName:(NSString *)theName;

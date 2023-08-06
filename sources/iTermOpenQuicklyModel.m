@@ -444,7 +444,11 @@ static const double kProfileNameMultiplierForWindowItem = 0.08;
 
 - (void)addSnippetsToItems:(NSMutableArray<iTermOpenQuicklyItem *> *)items
                withMatcher:(iTermMinimumSubsequenceMatcher *)matcher {
+    NSArray<NSString *> *tags = [[iTermController sharedInstance] currentSnippetsFilter];
     [[[iTermSnippetsModel sharedInstance] snippets] enumerateObjectsUsingBlock:^(iTermSnippet * _Nonnull snippet, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (![snippet hasTags:tags]) {
+            return;
+        }
         iTermOpenQuicklySnippetItem *snippetItem = [self snippetItemForSnippet:snippet
                                                                        matcher:matcher];
         if (snippetItem) {

@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) id actionKey;
 @property (nonatomic, readonly) iTermSendTextEscaping escaping;
 @property (nonatomic, readonly) int version;
+@property (nonatomic, readonly) NSArray<NSString *> *tags;
 
 // Title suitable for display. Works nicely if the title is empty by using a prefix of the value.
 @property (nonatomic, readonly) NSString *displayTitle;
@@ -29,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (instancetype)initWithTitle:(NSString *)title
                         value:(NSString *)value
                          guid:(NSString *)guid
+                         tags:(NSArray<NSString *> *)tags
                      escaping:(iTermSendTextEscaping)escaping
                       version:(int)version NS_DESIGNATED_INITIALIZER;
 
@@ -44,6 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)trimmedTitle:(NSInteger)maxLength;
 - (BOOL)titleEqualsValueUpToLength:(NSInteger)maxLength;
 - (BOOL)matchesActionKey:(id)actionKey;
+- (BOOL)hasTags:(NSArray<NSString *> *)tags;
 
 @end
 

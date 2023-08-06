@@ -294,7 +294,7 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                              KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY, KEY_SHOW_TIMESTAMPS,
                              KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE,
                              KEY_LOAD_SHELL_INTEGRATION_AUTOMATICALLY];
-        NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS ];
+        NSArray *stringArrays = @[ KEY_TAGS, KEY_JOBS, KEY_BOUND_HOSTS, KEY_SNIPPETS_FILTER ];
         NSArray *dictArrays = @[ KEY_HOTKEY_ALTERNATE_SHORTCUTS, KEY_TRIGGERS, KEY_SMART_SELECTION_RULES,
                                  ];
         NSArray *dict = @[ KEY_STATUS_BAR_LAYOUT, KEY_SESSION_HOTKEY, KEY_SEMANTIC_HISTORY,
@@ -624,6 +624,8 @@ NSString *const kProfilePreferenceInitialDirectoryAdvancedValue = @"Advanced";
                   KEY_OPEN_PASSWORD_MANAGER_AUTOMATICALLY: @NO,
                   KEY_SHOW_TIMESTAMPS: @([iTermAdvancedSettingsModel showTimestampsByDefault] ? iTermTimestampsModeOn : iTermTimestampsModeOff),
                   KEY_USE_SEPARATE_COLORS_FOR_LIGHT_AND_DARK_MODE: @NO,
+                  KEY_SNIPPETS_FILTER: @[],
+
                   // NOTES:
                   //   * Remove deprecated values from this list.
                   //   * Update validation blocks in preceding method.
