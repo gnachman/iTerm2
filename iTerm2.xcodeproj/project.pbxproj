@@ -3933,6 +3933,7 @@
 		A6EEAEDE283712070039E850 /* ProcessDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EEAEDD283712070039E850 /* ProcessDataSource.swift */; };
 		A6EEAEE128385A090039E850 /* PTYTask+ProcessInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EEAEDF28385A090039E850 /* PTYTask+ProcessInfo.h */; };
 		A6EEAEE228385A090039E850 /* PTYTask+ProcessInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EEAEE028385A090039E850 /* PTYTask+ProcessInfo.m */; };
+		A6EED4622A804A2E006F0DB4 /* InputSourceForcer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6EED4612A804A2E006F0DB4 /* InputSourceForcer.swift */; };
 		A6EF57D121994DDC00C76698 /* iTermUserDefaultsObserver.h in Headers */ = {isa = PBXBuildFile; fileRef = A6EF57CF21994DDC00C76698 /* iTermUserDefaultsObserver.h */; };
 		A6EF57D221994DDC00C76698 /* iTermUserDefaultsObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = A6EF57D021994DDC00C76698 /* iTermUserDefaultsObserver.m */; };
 		A6EF5BC625BCCC0900807157 /* PseudoTerminalRestorer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */; };
@@ -7306,6 +7307,7 @@
 		A6EEAEDF28385A090039E850 /* PTYTask+ProcessInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTask+ProcessInfo.h"; sourceTree = "<group>"; };
 		A6EEAEE028385A090039E850 /* PTYTask+ProcessInfo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "PTYTask+ProcessInfo.m"; sourceTree = "<group>"; };
 		A6EEAEE328385A3F0039E850 /* PTYTask+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "PTYTask+Private.h"; sourceTree = "<group>"; };
+		A6EED4612A804A2E006F0DB4 /* InputSourceForcer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputSourceForcer.swift; sourceTree = "<group>"; };
 		A6EF57CF21994DDC00C76698 /* iTermUserDefaultsObserver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermUserDefaultsObserver.h; sourceTree = "<group>"; };
 		A6EF57D021994DDC00C76698 /* iTermUserDefaultsObserver.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermUserDefaultsObserver.m; sourceTree = "<group>"; };
 		A6EFF21A1D1CA9F800806EEF /* NSLocale+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSLocale+iTerm.h"; sourceTree = "<group>"; };
@@ -10804,6 +10806,7 @@
 				A670F0C12A1FDA6100C740AC /* iTermChangeTrackingDictionary.h */,
 				A670F0C22A1FDA6100C740AC /* iTermChangeTrackingDictionary.m */,
 				A698BF482A5B8DCE0018EA84 /* MoveSessionBuiltInFunction.swift */,
+				A6EED4612A804A2E006F0DB4 /* InputSourceForcer.swift */,
 			);
 			name = Helpers;
 			sourceTree = "<group>";
@@ -15361,6 +15364,7 @@
 				A67960D71F81FCBB008A42BC /* iTermTextRenderer.mm in Sources */,
 				A630116E20E60C8E008114B7 /* iTermStatusBarContainerView.m in Sources */,
 				A61ED2AA20E9E92E0035BECD /* iTermStatusBarVariableBaseComponent.m in Sources */,
+				A6EED4622A804A2E006F0DB4 /* InputSourceForcer.swift in Sources */,
 				A6D10E3327F7C2BC0026DB56 /* MultiCursorTextView.swift in Sources */,
 				535EA4E720D04C2A00FC81E0 /* iTermTip.m in Sources */,
 				A6EC937A24E8545500EEADEF /* iTermPasteHelper.m in Sources */,

@@ -82,6 +82,9 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
     IBOutlet NSButton *_leaderHelpButton;
     iTermTextPopoverViewController *_popoverVC;
     IBOutlet NSButton *_languageAgnosticKeyBindings;
+
+    IBOutlet NSButton *_forceKeyboard;
+    IBOutlet NSPopUpButton *_keyboardLocale;
 }
 
 - (void)dealloc {
@@ -203,6 +206,21 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                           type:kPreferenceInfoTypeCheckbox];
     info.onChange = ^() { [weakSelf hotkeyEnabledDidChange]; };
     info.observer = ^() { [weakSelf updateHotkeyViews]; };
+
+
+    info = [self defineControl:_forceKeyboard
+                           key:kPreferenceKeyForceKeyboard
+                   relatedView:nil
+                          type:kPreferenceInfoTypeCheckbox];
+    info.observer = ^() { [weakSelf updateKeyboardLocaleEnabled]; };
+
+    info = [self defineControl:_keyboardLocale
+                           key:kPreferenceKeyKeyboardLocale
+                   displayName:@"Keyboard locale"
+                          type:kPreferenceInfoTypeStringPopup];
+    [self rebuildKeyboardLocales];
+    [self updateKeyboardLocaleEnabled];
+
     [self updateDuplicateWarning];
 
     [self defineControl:_emulateUSKeyboard
@@ -215,6 +233,53 @@ static NSString *const kHotkeyWindowGeneratedProfileNameKey = @"Hotkey Window";
                        phrases:@[ @"mapping", @"shortcuts", @"touch bar", @"preset", @"xterm", @"natural", @"terminal.app compatibility", @"numeric keypad" ]
                            key:nil];
 
+}
+
+- (void)rebuildKeyboardLocales {
+    while (_keyboardLocale.menu.numberOfItems > 0) {
+        [_keyboardLocale.menu removeItemAtIndex:0];
+    }
+
+    // Convert system input sources into (display name, identifier) tuples.
+    NSMutableArray<iTermTuple<NSString *, NSString *>  *> *items = [NSMutableArray array];
+    CFArrayRef inputSources = TISCreateInputSourceList(NULL, NO);
+    for (NSInteger i = 0; i < CFArrayGetCount(inputSources); i++) {
+        TISInputSourceRef inputSource = (TISInputSourceRef)CFArrayGetValueAtIndex(inputSources, i);
+        CFStringRef category = (CFStringRef)TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceCategory);
+        if (CFStringCompare(category, kTISCategoryKeyboardInputSource, 0) != kCFCompareEqualTo) {
+            continue;
+        }
+        CFStringRef inputSourceID = (CFStringRef)TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceID);
+        CFStringRef localizedName = (CFStringRef)TISGetInputSourceProperty(inputSource, kTISPropertyLocalizedName);
+        NSString *displayName = (__bridge NSString *)localizedName;
+        [items addObject:[iTermTuple tupleWithObject:displayName andObject:(__bridge NSString *)inputSourceID]];
+    }
+    CFRelease(inputSources);
+
+    // Sort by display name.
+    [items sortUsingComparator:^NSComparisonResult(iTermTuple *lhs, iTermTuple *rhs) {
+        return [lhs.firstObject localizedCaseInsensitiveCompare:rhs.firstObject];
+    }];
+
+    // Add each as a menu item.
+    [items enumerateObjectsUsingBlock:^(iTermTuple<NSString *,NSString *> * _Nonnull tuple, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSMenuItem *item = [[NSMenuItem alloc] initWithTitle:tuple.firstObject
+                                                      action:nil
+                                               keyEquivalent:@""];
+        item.representedObject = tuple.secondObject;
+        [_keyboardLocale.menu addItem:item];
+    }];
+
+    NSString *identifier = [self stringForKey:kPreferenceKeyKeyboardLocale];
+    NSInteger i = -1;
+    if (identifier) {
+        i = [_keyboardLocale indexOfItemWithRepresentedObject:identifier];
+    }
+    [_keyboardLocale selectItemAtIndex:i];
+}
+
+- (void)updateKeyboardLocaleEnabled {
+    _keyboardLocale.enabled = [self boolForKey:kPreferenceKeyForceKeyboard];
 }
 
 - (void)viewWillAppear {

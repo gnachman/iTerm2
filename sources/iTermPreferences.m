@@ -140,6 +140,8 @@ NSString *const kPreferenceKeyEnableHapticFeedbackForEsc = @"HapticFeedbackForEs
 NSString *const kPreferenceKeyEnableSoundForEsc = @"SoundForEsc";
 NSString *const kPreferenceKeyVisualIndicatorForEsc = @"VisualIndicatorForEsc";
 NSString *const kPreferenceKeyLanguageAgnosticKeyBindings = @"LanguageAgnosticKeyBindings";
+NSString *const kPreferenceKeyForceKeyboard = @"ForceKeyboard";  // bool
+NSString *const kPreferenceKeyKeyboardLocale = @"KeyboardLocale";  // string
 
 NSString *const kPreferenceKeyHotKeyTogglesWindow_Deprecated = @"HotKeyTogglesWindow";  // deprecated
 NSString *const kPreferenceKeyHotkeyProfileGuid_Deprecated = @"HotKeyBookmark";  // deprecated
@@ -427,7 +429,8 @@ static NSString *sPreviousVersion;
                   kPreferenceKeyControlRemapping_Deprecated: @(kPreferencesModifierTagLegacyRightControl),
                   kPreferenceKeyLeftControlRemapping: @(kPreferencesModifierTagLeftControl),
                   kPreferenceKeyRightControlRemapping: @(kPreferencesModifierTagRightControl),
-
+                  kPreferenceKeyKeyboardLocale: [NSNull null],
+                  
                   kPreferenceKeyLeftOptionRemapping: @(kPreferencesModifierTagLeftOption),
                   kPreferenceKeyRightOptionRemapping: @(kPreferencesModifierTagRightOption),
                   kPreferenceKeyLeftCommandRemapping: @(kPreferencesModifierTagLeftCommand),
@@ -438,6 +441,7 @@ static NSString *sPreviousVersion;
                   kPreferenceKeySwitchWindowModifier: @(kPreferencesModifierTagCommandAndOption),
                   kPreferenceKeyEmulateUSKeyboard: @NO,
                   kPreferenceKeyHotkeyEnabled: @NO,
+                  kPreferenceKeyForceKeyboard: @NO,
                   kPreferenceKeyHotKeyCode: @0,
                   kPreferenceKeyHotkeyCharacter: @0,
                   kPreferenceKeyHotkeyModifiers: @0,
@@ -520,6 +524,7 @@ static NSString *sPreviousVersion;
         case kPreferenceInfoTypeTokenField:
             return ([defaultValue isKindOfClass:[NSArray class]] ||
                     [defaultValue isKindOfClass:[NSNull class]]);
+        case kPreferenceInfoTypeStringPopup:
         case kPreferenceInfoTypeStringTextField:
             return ([defaultValue isKindOfClass:[NSString class]] ||
                     [defaultValue isKindOfClass:[NSNull class]]);

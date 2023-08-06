@@ -1170,6 +1170,8 @@ void TurnOnDebugLoggingAutomatically(void) {
     } else {
         [_untitledWindowStateMachine didFinishRestoringWindows];
     }
+
+    [[iTermInputSourceForcer sharedInstance] begin];
 }
 
 - (void)restoreWindows {

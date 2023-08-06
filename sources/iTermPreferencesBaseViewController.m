@@ -323,6 +323,10 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                 [self setInt:[sender selectedTag] forKey:info.key];
                 break;
 
+            case kPreferenceInfoTypeStringPopup:
+                [self setObject:[[sender selectedItem] representedObject] forKey:info.key];
+                break;
+
             case kPreferenceInfoTypeUnsignedIntegerPopup:
                 assert([sender selectedTag]>=0);
                 [self setUnsignedInteger:[sender selectedTag] forKey:info.key];
@@ -569,6 +573,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
     }
     switch (type) {
         case kPreferenceInfoTypePopup:
+        case kPreferenceInfoTypeStringPopup:
         case kPreferenceInfoTypeMatrix:
         case kPreferenceInfoTypeSlider:
         case kPreferenceInfoTypeInvertedCheckbox:
@@ -675,6 +680,19 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
             assert([info.control isKindOfClass:[NSPopUpButton class]]);
             NSPopUpButton *popup = (NSPopUpButton *)info.control;
             [popup selectItemWithTag:[self intForKey:info.key]];
+            break;
+        }
+
+        case kPreferenceInfoTypeStringPopup: {
+            assert([info.control isKindOfClass:[NSPopUpButton class]]);
+            NSPopUpButton *popup = (NSPopUpButton *)info.control;
+            id obj = [self objectForKey:info.key];
+            if (obj) {
+                const NSInteger i = [popup indexOfItemWithRepresentedObject:[self objectForKey:info.key]];
+                if (i != NSNotFound) {
+                    [popup selectItemAtIndex:i];
+                }
+            }
             break;
         }
 
@@ -793,6 +811,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
                 case kPreferenceInfoTypeDoubleTextField:
                 case kPreferenceInfoTypeStringTextField:
                 case kPreferenceInfoTypePopup:
+                case kPreferenceInfoTypeStringPopup:
                 case kPreferenceInfoTypeUnsignedIntegerPopup:
                 case kPreferenceInfoTypeSlider:
                 case kPreferenceInfoTypeTokenField:
@@ -878,6 +897,7 @@ NSString *const kPreferenceDidChangeFromOtherPanelKeyUserInfoKey = @"key";
             case kPreferenceInfoTypeMatrix:
             case kPreferenceInfoTypeRadioButton:
             case kPreferenceInfoTypePopup:
+            case kPreferenceInfoTypeStringPopup:
             case kPreferenceInfoTypeSlider:
             case kPreferenceInfoTypeStringTextField:
             case kPreferenceInfoTypeTokenField:
