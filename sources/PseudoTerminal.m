@@ -5403,7 +5403,12 @@ ITERM_WEAKLY_REFERENCEABLE
                 DLog(@"kPreferenceKeyFlashTabBarInFullscreen && !kPreferenceKeyShowFullscreenTabBar - return NO");
                 return NO;
             }
-            if (@available(macOS 10.16, *)) {
+            if (@available(macOS 13.0, *)) {
+                // Starting in macOS 16 and ending at or before Ventura (macOS 13) there was an ugly
+                // shadow under the full-screen titlebar if there was an accessory view. That does
+                // not seem to be a problem in Ventura, so we'll move the tabbar into an accessory
+                // once again! See issue 11038 for how we compare to Safari.
+            } else {
                 if ([iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
                     DLog(@"macOS 11 + kPreferenceKeyShowFullscreenTabBar - return NO");
                     // This prevents a shadow from being drawn between the tabbar and the rest of the window.
