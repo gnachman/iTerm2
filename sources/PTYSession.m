@@ -348,6 +348,8 @@ static NSString *const kSuppressCaptureOutputToolNotVisibleWarning =
 static NSString *const kTwoCoprocessesCanNotRunAtOnceAnnouncementIdentifier =
     @"NoSyncTwoCoprocessesCanNotRunAtOnceAnnouncmentIdentifier";
 
+static char iTermEffectiveAppearanceKey;
+
 @interface NSWindow (SessionPrivate)
 - (void)_moveToScreen:(NSScreen *)sender;
 @end
@@ -876,6 +878,10 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
                                                               block:^(id _Nonnull newValue) {
                                                                   [weakSelf themeDidChange];
                                                               }];
+        [NSApp addObserver:self
+                forKeyPath:@"effectiveAppearance"
+                   options:NSKeyValueObservingOptionNew
+                   context:&iTermEffectiveAppearanceKey];
 
         [[iTermFindPasteboard sharedInstance] addObserver:self block:^(id sender, NSString * _Nonnull newValue) {
             if (!weakSelf.view.window.isKeyWindow) {
@@ -901,6 +907,8 @@ typedef NS_ENUM(NSUInteger, iTermSSHState) {
 ITERM_WEAKLY_REFERENCEABLE
 
 - (void)dealloc {
+    [NSApp removeObserver:self forKeyPath:@"effectiveAppearance"];
+
     if (_textview.delegate == self) {
         _textview.delegate = nil;
     }
@@ -10584,6 +10592,43 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _view.appearance = nil;
     }
 }
+
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                      ofObject:(id)object
+                        change:(NSDictionary *)change
+                       context:(void *)context {
+    if (context == &iTermEffectiveAppearanceKey) {
+        DLog(@"System appearance changed to %@", [NSApp effectiveAppearance]);
+        const BOOL minimal = [iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
+        if (minimal && _screen.colorMap.useSeparateColorsForLightAndDarkMode) {
+            DLog(@"Manually update view appearance");
+            // The view's appearance determines which colors should be used. In minimal, we manually
+            // manage the appearance so that window chrome matches up with the background color. To
+            // break that dependency cycle, we manually update the appearance for minimal when the
+            // system theme changes.
+            self.view.appearance = [self colorMapShouldBeInDarkMode] ? [NSAppearance appearanceNamed:NSAppearanceNameDarkAqua] : [NSAppearance appearanceNamed:NSAppearanceNameAqua];
+        }
+    } else {
+        [super observeValueForKeyPath:keyPath
+                             ofObject:object
+                               change:change
+                              context:context];
+    }
+}
+
+- (BOOL)colorMapShouldBeInDarkMode {
+    const BOOL minimal = [iTermPreferences intForKey:kPreferenceKeyTabStyle] == TAB_STYLE_MINIMAL;
+    if (minimal) {
+        NSColor *backgroundColor = [iTermProfilePreferences colorForKey:KEY_BACKGROUND_COLOR
+                                                              dark:[NSApp effectiveAppearance].it_isDark
+                                                           profile:self.profile];
+        DLog(@"dark=%@", @(backgroundColor.isDark));
+        return backgroundColor.isDark;
+    }
+    DLog(@"Not minimal so fall back to view (%@)/app (%@) appearance", self.view.effectiveAppearance, [NSApp effectiveAppearance]);
+    return (self.view.effectiveAppearance ?: [NSApp effectiveAppearance]).it_isDark;
+}
+
 
 - (void)textViewTransparencyDidChange {
     [self backgroundColorDidChangeJigglingIfNeeded:NO];
