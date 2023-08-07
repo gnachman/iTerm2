@@ -178,7 +178,7 @@ extension MultiCursorTextView {
         if !caretVisible {
             return
         }
-        (savedInsertionPointColor ?? insertionPointColor)?.set()
+        (savedInsertionPointColor ?? insertionPointColor!).set()
         for rect in multiCursorRects {
             var temp = rect
             temp.size.width = 1

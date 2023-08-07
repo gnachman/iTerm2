@@ -18,7 +18,7 @@ extern NSString *const iTermWindowStateKeyGUID;
 - (instancetype)initWithDictionary:(NSDictionary *)arrangement;
 @end
 
-@interface PseudoTerminalRestorer : NSObject
+@interface PseudoTerminalRestorer : NSObject<NSWindowRestoration>
 
 @property(class, nonatomic) void (^postRestorationCompletionBlock)(void);
 

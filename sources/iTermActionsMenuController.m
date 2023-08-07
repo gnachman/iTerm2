@@ -7,6 +7,11 @@
 
 #import "iTermActionsMenuController.h"
 
+@interface NSResponder (ActionsMenu)
+// -representedObject of sender is an iTermAction
+- (void)applyAction:(id)sender;
+@end
+
 @implementation iTermActionsMenuController {
     IBOutlet NSMenuItem *_menu;
 }
