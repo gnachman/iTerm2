@@ -276,6 +276,7 @@ static BOOL gMonochromeText;
     tState.texturePageCollectionSharedPointer = _texturePageCollectionSharedPointer;
     tState.numberOfCells = tState.cellConfiguration.gridSize.width * tState.cellConfiguration.gridSize.height;
     tState.asciiOffset = _asciiOffset;
+    tState.verticalOffset = _verticalOffset;
 }
 
 - (id<MTLBuffer>)quadOfSize:(CGSize)size
@@ -403,6 +404,7 @@ static NSString *const VertexFunctionName(const BOOL &underlined,
     }
     textInfo.glyphWidth = tState.cellConfiguration.glyphSize.width;
     textInfo.numInstances = numInstances;
+    textInfo.verticalOffset = tState.verticalOffset;
     id<MTLBuffer> buffer = [self->_textInfoPool requestBufferFromContext:tState.poolContext
                                                                withBytes:&textInfo
                                                           checkIfChanged:YES];

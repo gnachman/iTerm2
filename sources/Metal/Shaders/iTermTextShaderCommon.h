@@ -27,6 +27,7 @@ typedef struct {
     int flags;  // copied from iTermVertexTextInfoStruct.flags
     bool predecessorWasUnderlined;
     bool successorWillBeUnderlined;
+    float verticalOffset;  // Used by offscreen command line to shift text so it is not grid-aligned.
 } iTermTextVertexFunctionOutput;
 
 typedef struct {

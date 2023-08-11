@@ -133,6 +133,7 @@ typedef struct {
     int flags;  // See iTermTextVertexInfoFlags defines
     float glyphWidth;
     unsigned int numInstances;
+    float verticalOffset;  // For non-grid-aligned text, such as offscreen command line.
 } iTermVertexTextInfoStruct;
 
 #endif

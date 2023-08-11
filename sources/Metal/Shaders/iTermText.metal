@@ -41,6 +41,7 @@ iTermTextVertexShader(uint vertexID [[ vertex_id ]],
     out.clipSpacePosition.xy = pixelSpacePosition / viewportSize;
     out.clipSpacePosition.z = 0.0;
     out.clipSpacePosition.w = 1;
+    out.verticalOffset = textInfo->verticalOffset;
     out.backgroundTextureCoordinate = pixelSpacePosition / viewportSize;
     out.backgroundTextureCoordinate.y = 1 - out.backgroundTextureCoordinate.y;
     out.textureOffset = perInstanceUniforms[iid].textureOffset;
@@ -197,9 +198,11 @@ iTermTextFragmentShaderWithBlendingUnderlinedEmoji(iTermTextVertexFunctionOutput
     float4 bwColor = texture.sample(textureSampler, in.textureCoordinate);
 
     float strikethroughWeight = 0;
+    float2 clipSpacePosition = in.clipSpacePosition.xy;
+    clipSpacePosition.y += in.verticalOffset;
     if (in.underlineStyle & iTermMetalGlyphAttributesUnderlineStrikethroughFlag) {
         strikethroughWeight = ComputeWeightOfUnderlineRegular(iTermMetalGlyphAttributesUnderlineStrikethrough,
-                                                              in.clipSpacePosition.xy,
+                                                              clipSpacePosition,
                                                               in.viewportSize,
                                                               in.cellOffset,
                                                               dimensions->strikethroughOffset,
@@ -219,7 +222,7 @@ iTermTextFragmentShaderWithBlendingUnderlinedEmoji(iTermTextVertexFunctionOutput
 
     // Underlined emoji code path
     const float underlineWeight = ComputeWeightOfUnderlineRegular((in.underlineStyle & iTermMetalGlyphAttributesUnderlineBitmask),
-                                                                  in.clipSpacePosition.xy,
+                                                                  clipSpacePosition,
                                                                   in.viewportSize,
                                                                   in.cellOffset,
                                                                   dimensions->underlineOffset,
@@ -254,9 +257,11 @@ iTermTextFragmentShaderWithBlendingUnderlined(iTermTextVertexFunctionOutput in [
 
     // Underlined not emoji.
     float strikethroughWeight = 0;
+    float2 clipSpacePosition = in.clipSpacePosition.xy;
+    clipSpacePosition.y += in.verticalOffset;
     if (in.underlineStyle & iTermMetalGlyphAttributesUnderlineStrikethroughFlag) {
         strikethroughWeight = ComputeWeightOfUnderlineInverted(iTermMetalGlyphAttributesUnderlineStrikethrough,
-                                                               in.clipSpacePosition.xy,
+                                                               clipSpacePosition,
                                                                in.viewportSize,
                                                                in.cellOffset,
                                                                dimensions->strikethroughOffset,
@@ -274,7 +279,7 @@ iTermTextFragmentShaderWithBlendingUnderlined(iTermTextVertexFunctionOutput in [
                                                                in.successorWillBeUnderlined);
     }
     const float underlineWeight = ComputeWeightOfUnderlineInverted(in.underlineStyle & iTermMetalGlyphAttributesUnderlineBitmask,
-                                                                   in.clipSpacePosition.xy,
+                                                                   clipSpacePosition,
                                                                    in.viewportSize,
                                                                    in.cellOffset,
                                                                    dimensions->underlineOffset,
@@ -330,9 +335,11 @@ iTermTextFragmentShaderMonochromeUnderlinedEmoji(iTermTextVertexFunctionOutput i
     float4 textureColor = texture.sample(textureSampler, in.textureCoordinate);
 
     float strikethroughWeight = 0;
+    float2 clipSpacePosition = in.clipSpacePosition.xy;
+    clipSpacePosition.y += in.verticalOffset;
     if (in.underlineStyle & iTermMetalGlyphAttributesUnderlineStrikethroughFlag) {
         strikethroughWeight = ComputeWeightOfUnderlineRegular(iTermMetalGlyphAttributesUnderlineStrikethrough,
-                                                              in.clipSpacePosition.xy,
+                                                              clipSpacePosition,
                                                               in.viewportSize,
                                                               in.cellOffset,
                                                               dimensions->strikethroughOffset,
@@ -352,7 +359,7 @@ iTermTextFragmentShaderMonochromeUnderlinedEmoji(iTermTextVertexFunctionOutput i
 
     // Underlined emoji code path
     const float underlineWeight = ComputeWeightOfUnderlineRegular((in.underlineStyle & iTermMetalGlyphAttributesUnderlineBitmask),
-                                                                 in.clipSpacePosition.xy,
+                                                                 clipSpacePosition,
                                                                  in.viewportSize,
                                                                  in.cellOffset,
                                                                  dimensions->underlineOffset,
@@ -387,9 +394,11 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
     float4 textureColor = texture.sample(textureSampler, in.textureCoordinate);
 
     float strikethroughWeight = 0;
+    float2 clipSpacePosition = in.clipSpacePosition.xy;
+    clipSpacePosition.y += in.verticalOffset;
     if (in.underlineStyle & iTermMetalGlyphAttributesUnderlineStrikethroughFlag) {
         strikethroughWeight = ComputeWeightOfUnderlineRegular(iTermMetalGlyphAttributesUnderlineStrikethrough,
-                                                              in.clipSpacePosition.xy,
+                                                              clipSpacePosition,
                                                               in.viewportSize,
                                                               in.cellOffset,
                                                               dimensions->strikethroughOffset,
@@ -408,7 +417,7 @@ iTermTextFragmentShaderMonochromeUnderlined(iTermTextVertexFunctionOutput in [[s
     }
     // Underlined not emoji.
     const float underlineWeight = ComputeWeightOfUnderlineRegular((in.underlineStyle & iTermMetalGlyphAttributesUnderlineBitmask),
-                                                                  in.clipSpacePosition.xy,
+                                                                  clipSpacePosition,
                                                                   in.viewportSize,
                                                                   in.cellOffset,
                                                                   dimensions->underlineOffset,
