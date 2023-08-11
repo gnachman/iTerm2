@@ -844,6 +844,20 @@ iTermWindowType iTermWindowTypeNormalized(iTermWindowType windowType) {
     [self updateForTransparency:self.ptyWindow];
     [self didFinishFullScreenTransitionSuccessfully:YES];
     [self updateVariables];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self bounceTitleBarAccessories];
+    });
+}
+
+- (void)bounceTitleBarAccessories {
+    DLog(@"Bounce title bar accessories");
+    NSArray *accessories = [self.window.titlebarAccessoryViewControllers copy];
+    while (self.window.titlebarAccessoryViewControllers.count) {
+        [self.window removeTitlebarAccessoryViewControllerAtIndex:0];
+    }
+    for (NSTitlebarAccessoryViewController *accessory in accessories) {
+        [self.window addTitlebarAccessoryViewController:accessory];
+    }
 }
 
 - (void)didFinishFullScreenTransitionSuccessfully:(BOOL)success {
