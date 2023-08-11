@@ -257,8 +257,8 @@ struct CompressedScreenCharBuffer: Equatable, CustomDebugStringConvertible {
     let count: Int
     let runs: [Run]
 
-    func decompressed() -> UnsafeReallocatableMutableBuffer<screen_char_t> {
-        let buffer = UnsafeReallocatableMutableBuffer<screen_char_t>(count: count)
+    func decompressed(capacity: Int) -> UnsafeReallocatableMutableBuffer<screen_char_t> {
+        let buffer = UnsafeReallocatableMutableBuffer<screen_char_t>(count: max(capacity, count))
         var offset = 0
         for run in runs {
             precondition(count >= offset)
@@ -569,7 +569,7 @@ class CompressibleCharacterBuffer: NSObject, UniqueWeakBoxable {
             case .uncompressed(let buffer), .superposition(_, let buffer):
                 return buffer
             case .compressed(let compressedBuffer):
-                let decompressed = compressedBuffer.decompressed()
+                let decompressed = compressedBuffer.decompressed(capacity: size)
                 buffer = .superposition(compressedBuffer, decompressed)
                 DLog("compressed -> superposition: \(buffer.debugDescription)")
                 return decompressed
