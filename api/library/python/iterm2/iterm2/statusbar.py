@@ -19,7 +19,6 @@ import iterm2.util
 # pylint: disable=too-many-instance-attributes
 class BaseKnob:
     """Represents a configuration setting on a status bar."""
-
     def __init__(self, knob_type, name, placeholder, json_default_value, key):
         self.__name = name
         self.__type = knob_type
@@ -29,9 +28,8 @@ class BaseKnob:
 
     def to_proto(self):
         """Returns a protobuf representation."""
-        proto = (
-            iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob()
-        )
+        proto = (iterm2.api_pb2.RPCRegistrationRequest.
+                 StatusBarComponentAttributes.Knob())
         proto.name = self.__name
         proto.type = self.__type
         proto.placeholder = self.__placeholder
@@ -56,17 +54,14 @@ class CheckboxKnob(Knob):
     :param default_value: Default value (Boolean).
     :param key: A unique string key identifying this knob.
     """
-
     def __init__(self, name: str, default_value: bool, key: str):
         super().__init__(
-            (
-                iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.Checkbox
-            ),
+            (iterm2.api_pb2.RPCRegistrationRequest.
+             StatusBarComponentAttributes.Knob.Checkbox),
             name,
             "",
             json.dumps(default_value),
-            key,
-        )
+            key)
 
 
 class StringKnob(Knob):
@@ -78,17 +73,15 @@ class StringKnob(Knob):
     :param default_value: Default value.
     :param key: A unique string key identifying this knob.
     """
-
-    def __init__(self, name: str, placeholder: str, default_value: str, key: str):
+    def __init__(
+            self, name: str, placeholder: str, default_value: str, key: str):
         super().__init__(
-            (
-                iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.String
-            ),
+            (iterm2.api_pb2.RPCRegistrationRequest.
+             StatusBarComponentAttributes.Knob.String),
             name,
             placeholder,
             json.dumps(default_value),
-            key,
-        )
+            key)
 
 
 class PositiveFloatingPointKnob(Knob):
@@ -100,17 +93,14 @@ class PositiveFloatingPointKnob(Knob):
     :param default_value: Default value.
     :param key: A unique string key identifying this knob.
     """
-
     def __init__(self, name: str, default_value: float, key: str):
         super().__init__(
-            (
-                iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.PositiveFloatingPoint
-            ),
+            (iterm2.api_pb2.RPCRegistrationRequest.
+             StatusBarComponentAttributes.Knob.PositiveFloatingPoint),
             name,
             "",
             json.dumps(default_value),
-            key,
-        )
+            key)
 
 
 class ColorKnob(Knob):
@@ -120,17 +110,13 @@ class ColorKnob(Knob):
     :param default_value: Default value.
     :param key: A unique string key identifying this knob
     """
-
     def __init__(self, name: str, default_value: iterm2.color.Color, key: str):
         super().__init__(
-            (
-                iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Knob.Color
-            ),
+            (iterm2.api_pb2.RPCRegistrationRequest.
+             StatusBarComponentAttributes.Knob.Color),
             name,
             "",
-            default_value.json,
-            key,
-        )
+            default_value.json, key)
 
 
 class StatusBarComponent:
@@ -159,16 +145,10 @@ class StatusBarComponent:
         * Example ":ref:`mousemode_example`"
         * Example ":ref:`statusbar_example`"
     """
-
     class Format(enum.Enum):
         """Describes how a status bar component's output is formatted."""
-
-        PLAIN_TEXT = (
-            iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Format.PLAIN_TEXT
-        )
-        HTML = (
-            iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Format.HTML
-        )  #: A very limited subset of HTML
+        PLAIN_TEXT = iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Format.PLAIN_TEXT
+        HTML = iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Format.HTML    #: A very limited subset of HTML
 
     class Icon:
         """Contains a status bar icon.
@@ -185,7 +165,6 @@ class StatusBarComponent:
         :param base64_data: Base64-encoded data with the icon's image in PNG
             format.
         """
-
         def __init__(self, scale: float, base64_data: str):
             self.__scale = scale
             self.__data = base64.b64decode(base64_data)
@@ -193,25 +172,23 @@ class StatusBarComponent:
 
         def to_status_bar_icon(self):
             """Returns a protobuf representation."""
-            proto = (
-                iterm2.api_pb2.RPCRegistrationRequest.StatusBarComponentAttributes.Icon()
-            )
+            proto = (iterm2.api_pb2.RPCRegistrationRequest.
+                     StatusBarComponentAttributes.Icon())
             proto.data = self.__data
             proto.scale = self.__scale
             return proto
 
     # pylint: disable=dangerous-default-value
     def __init__(
-        self,
-        short_description: str,
-        detailed_description: str,
-        knobs: typing.List[Knob],
-        exemplar: str,
-        update_cadence: typing.Union[float, None],
-        identifier: str,
-        icons: typing.List[Icon] = [],
-        format: Format = Format.PLAIN_TEXT,
-    ):
+            self,
+            short_description: str,
+            detailed_description: str,
+            knobs: typing.List[Knob],
+            exemplar: str,
+            update_cadence: typing.Union[float, None],
+            identifier: str,
+            icons: typing.List[Icon] = [],
+            format: Format = Format.PLAIN_TEXT):
         """Initializes a status bar component."""
         self.__short_description = short_description
         self.__detailed_description = detailed_description
@@ -238,8 +215,7 @@ class StatusBarComponent:
             proto.update_cadence = self.__update_cadence
 
     async def async_open_popover(
-        self, session_id: str, html: str, size: iterm2.util.Size
-    ):
+            self, session_id: str, html: str, size: iterm2.util.Size):
         """Open a popover with a webview.
 
         :param session_id: The session identifier.
@@ -250,12 +226,14 @@ class StatusBarComponent:
         .. seealso:: Example ":ref:`jsonpretty_example`"
         """
         await iterm2.rpc.async_open_status_bar_component_popover(
-            self.__connection, self.__identifier, session_id, html, size
-        )
+            self.__connection,
+            self.__identifier,
+            session_id,
+            html,
+            size)
 
     async def async_set_unread_count(
-        self, session_id: typing.Optional[str], count: int
-    ):
+            self, session_id: typing.Optional[str], count: int):
         """
         Sets the unread count that is displayed in the status bar component. If
         0, it is removed.
@@ -267,38 +245,33 @@ class StatusBarComponent:
         :param count: The number to show, or 0 to remove it.
         :raises: AppVersionTooOld if not supported by this version of iTerm2.
         """
-        if not iterm2.capabilities.supports_status_bar_unread_count(self.__connection):
+        if not iterm2.capabilities.supports_status_bar_unread_count(
+                self.__connection):
             raise iterm2.capabilities.AppVersionTooOld(
-                (
-                    "Unread count in status bar components is not "
-                    + "supported in this version of iTerm2. Please upgrade "
-                    + "to use this script."
-                )
-            )
+                ("Unread count in status bar components is not " +
+                 "supported in this version of iTerm2. Please upgrade " +
+                 "to use this script."))
 
         invocation = iterm2.util.invocation_string(
             "iterm2.set_status_bar_component_unread_count",
-            {"identifier": self.__identifier, "count": count},
-        )
+            {"identifier": self.__identifier,
+             "count": count})
         if session_id:
             await iterm2.rpc.async_invoke_method(
-                self.__connection, session_id, invocation, -1
-            )
+                self.__connection, session_id, invocation, -1)
         else:
             assert self.__connection
             await iterm2.async_invoke_function(self.__connection, invocation)
 
     async def async_register(
-        self,
-        connection: iterm2.connection.Connection,
-        coro,
-        timeout: typing.Union[None, float] = None,
-        onclick: typing.Optional[
-            typing.Callable[
-                [str, typing.Any], typing.Coroutine[typing.Any, typing.Any, None]
-            ]
-        ] = None,
-    ):
+            self,
+            connection: iterm2.connection.Connection,
+            coro,
+            timeout: typing.Union[None, float] = None,
+            onclick: typing.Optional[
+                typing.Callable[
+                    [str, typing.Any],
+                    typing.Coroutine[typing.Any, typing.Any, None]]] = None):
         """Registers the statusbar component.
 
         :param connection: A :class:`~iterm2.Connection`.
@@ -352,11 +325,8 @@ class StatusBarComponent:
         self.__connection = connection
         await coro.async_register(connection, self, timeout)
         if onclick:
-            magic_name = (
-                "__"
-                + self.__identifier.replace(".", "_").replace("-", "_")
-                + "__on_click"
-            )
+            magic_name = "__" + self.__identifier.replace(
+                ".", "_").replace("-", "_") + "__on_click"
 
             async def handle_rpc(session_id):
                 await onclick(session_id)
@@ -365,6 +335,5 @@ class StatusBarComponent:
             # This is an abuse of the RPC decorator, but it's a simple way to
             # register a function with a modified name.
             # pylint: disable=no-member
-            await iterm2.registration.RPC(handle_rpc).async_register(
-                connection, timeout=timeout
-            )
+            await (iterm2.registration.RPC(handle_rpc).
+                   async_register(connection, timeout=timeout))
