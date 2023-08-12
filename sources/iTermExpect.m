@@ -45,6 +45,7 @@
                                 completion:completion];
     if (self) {
         _original = original;
+        assert(_regex != nil);
     }
     return self;
 }
@@ -61,6 +62,7 @@
         _willExpect = [willExpect copy];
         _userWillExpectCallback = [userWillExpect copy];
         _regex = [regex copy];
+        assert(_regex != nil);
     }
     return self;
 }
@@ -156,6 +158,7 @@
                                      deadline:(nullable NSDate *)deadline
                                    willExpect:(void (^ _Nullable)(void))willExpect
                                    completion:(void (^ _Nullable)(NSArray<NSString *> * _Nonnull))completion {
+    assert(regex != nil);
     _dirty = YES;
     assert([NSThread isMainThread]);
     __weak __typeof(self) weakSelf = self;
@@ -231,6 +234,9 @@
 
 - (iTermExpectation *)copyOfExpectation:(iTermExpectation *)original copiedExpect:(iTermExpect *)copiedExpect {
     if (original.matchPending) {
+        if (!original.successor) {
+            return nil;
+        }
         return [self copyOfExpectation:original.successor copiedExpect:copiedExpect];
     }
 
@@ -242,6 +248,8 @@
                                                                       NSArray<NSString *> * _Nonnull captures) {
         [weakSelf removeExpectation:obj];
     };
+    assert(original != nil);
+    assert(original.regex != nil);
     iTermExpectation *theCopy = [[iTermExpectation alloc] initWithOriginal:original
                                                                 willExpect:willExpect
                                                             userWillExpect:original.userWillExpectCallback
