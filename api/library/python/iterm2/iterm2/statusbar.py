@@ -17,7 +17,7 @@ import iterm2.util
 # pylint: disable=too-few-public-methods
 # pylint: disable=too-many-arguments
 # pylint: disable=too-many-instance-attributes
-class Knob:
+class BaseKnob:
     """Represents a configuration setting on a status bar."""
     def __init__(self, knob_type, name, placeholder, json_default_value, key):
         self.__name = name
@@ -38,7 +38,16 @@ class Knob:
         return proto
 
 
-class CheckboxKnob:
+class Knob:
+    def __init__(self, knob_type, name, placeholder, json_default_value, key):
+        self.__knob = BaseKnob(knob_type, name, placeholder, json_default_value, key)
+
+    def to_proto(self):
+        """Returns a protobuf representation."""
+        return self.__knob.to_proto()
+
+
+class CheckboxKnob(Knob):
     """A status bar configuration knob to select a checkbox.
 
     :param name: Description of the knob.
@@ -46,7 +55,7 @@ class CheckboxKnob:
     :param key: A unique string key identifying this knob.
     """
     def __init__(self, name: str, default_value: bool, key: str):
-        self.__knob = Knob(
+        super().__init__(
             (iterm2.api_pb2.RPCRegistrationRequest.
              StatusBarComponentAttributes.Knob.Checkbox),
             name,
@@ -54,12 +63,8 @@ class CheckboxKnob:
             json.dumps(default_value),
             key)
 
-    def to_proto(self):
-        """Returns a protobuf representation."""
-        return self.__knob.to_proto()
 
-
-class StringKnob:
+class StringKnob(Knob):
     """A status bar configuration knob to select a string.
 
     :param name: Description of the knob.
@@ -70,7 +75,7 @@ class StringKnob:
     """
     def __init__(
             self, name: str, placeholder: str, default_value: str, key: str):
-        self.__knob = Knob(
+        super().__init__(
             (iterm2.api_pb2.RPCRegistrationRequest.
              StatusBarComponentAttributes.Knob.String),
             name,
@@ -78,12 +83,8 @@ class StringKnob:
             json.dumps(default_value),
             key)
 
-    def to_proto(self):
-        """Returns a protobuf representation."""
-        return self.__knob.to_proto()
 
-
-class PositiveFloatingPointKnob:
+class PositiveFloatingPointKnob(Knob):
     """
     A status bar configuration knob to select a positive floating point
     value.
@@ -93,7 +94,7 @@ class PositiveFloatingPointKnob:
     :param key: A unique string key identifying this knob.
     """
     def __init__(self, name: str, default_value: float, key: str):
-        self.__knob = Knob(
+        super().__init__(
             (iterm2.api_pb2.RPCRegistrationRequest.
              StatusBarComponentAttributes.Knob.PositiveFloatingPoint),
             name,
@@ -101,12 +102,8 @@ class PositiveFloatingPointKnob:
             json.dumps(default_value),
             key)
 
-    def to_proto(self):
-        """Returns a protobuf representation."""
-        return self.__knob.to_proto()
 
-
-class ColorKnob:
+class ColorKnob(Knob):
     """A status bar configuration knob to select color.
 
     :param name: Description of the knob.
@@ -114,16 +111,12 @@ class ColorKnob:
     :param key: A unique string key identifying this knob
     """
     def __init__(self, name: str, default_value: iterm2.color.Color, key: str):
-        self.__knob = Knob(
+        super().__init__(
             (iterm2.api_pb2.RPCRegistrationRequest.
              StatusBarComponentAttributes.Knob.Color),
             name,
             "",
             default_value.json, key)
-
-    def to_proto(self):
-        """Returns a protobuf representation."""
-        return self.__knob.to_proto()
 
 
 class StatusBarComponent:
