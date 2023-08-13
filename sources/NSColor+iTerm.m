@@ -685,7 +685,7 @@ CGFloat iTermLABDistance(iTermLABColor lhs, iTermLABColor rhs) {
         return self;
     }
     ciBlendedColor = [[[CIColor alloc] initWithColor:[NSColor colorWithCGColor:cgColor]] autorelease];
-
+    CGColorRelease(cgColor);
     CGColorSpaceRelease(labColorSpace);
 
     // Convert the blended LAB color to NSColor object for display
