@@ -7,6 +7,8 @@
 //
 
 #import "iTermAboutWindowController.h"
+
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermLaunchExperienceController.h"
 #import "NSArray+iTerm.h"
 #import "NSMutableAttributedString+iTerm.h"
@@ -20,6 +22,10 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
 
 @implementation iTermAboutWindowContentView {
     IBOutlet NSScrollView *_bottomAlignedScrollView;
+    IBOutlet NSTextView *_sponsorsHeading;
+    IBOutlet NSView *_blendbyte;
+    NSTrackingArea *_trackingArea;
+    IBOutlet NSTextField *_blendbyteText;
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
@@ -28,6 +34,54 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     CGFloat topMargin = oldSize.height - NSMaxY(frame);
     frame.origin.y = self.frame.size.height - topMargin - frame.size.height;
     _bottomAlignedScrollView.frame = frame;
+}
+
+- (void)awakeFromNib {
+    [super awakeFromNib];
+    NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle alloc] init];
+    paragraphStyle.alignment = NSTextAlignmentCenter;
+    _sponsorsHeading.selectable = YES;
+    _sponsorsHeading.editable = NO;
+    [_sponsorsHeading.textStorage setAttributedString:[NSAttributedString attributedStringWithHTML:_sponsorsHeading.textStorage.string
+                                                                                              font:_sponsorsHeading.font
+                                                                                    paragraphStyle:paragraphStyle]];
+
+    // Create a tracking area for the _blendbyte view
+    _trackingArea = [[NSTrackingArea alloc] initWithRect:_blendbyte.bounds
+                                                options:NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways
+                                                  owner:self
+                                               userInfo:nil];
+    [_blendbyte addTrackingArea:_trackingArea];
+    NSDictionary *underlineAttribute = @{NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle)};
+    NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:[_blendbyteText stringValue] attributes:underlineAttribute];
+    [_blendbyteText setAttributedStringValue:attributedString];
+}
+
+- (void)mouseEntered:(NSEvent *)theEvent {
+    [NSCursor.pointingHandCursor set];
+}
+
+- (void)mouseExited:(NSEvent *)theEvent {
+    [NSCursor.arrowCursor set];
+}
+
+- (void)mouseUp:(NSEvent *)theEvent {
+    NSPoint locationInView = [self convertPoint:theEvent.locationInWindow fromView:nil];
+    if (NSPointInRect(locationInView, _blendbyte.frame)) {
+        // Open the link
+        [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"https://www.blendbyte.com/"]];
+    }
+}
+
+// Don't forget to update the tracking area when the view resizes
+- (void)updateTrackingAreas {
+    [super updateTrackingAreas];
+    [_blendbyte removeTrackingArea:_trackingArea];
+    _trackingArea = [[NSTrackingArea alloc] initWithRect:_blendbyte.bounds
+                                                options:NSTrackingMouseEnteredAndExited | NSTrackingActiveAlways
+                                                  owner:self
+                                               userInfo:nil];
+    [_blendbyte addTrackingArea:_trackingArea];
 }
 
 @end
@@ -168,27 +222,11 @@ static NSString *iTermAboutWindowControllerWhatsNewURLString = @"iterm2://whats-
     }
 
     NSArray *sortedNames = [patronNames sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
-    NSString *patrons = [sortedNames componentsJoinedWithOxfordComma];
-    NSString *string = [NSString stringWithFormat:@"iTerm2 is generously supported by %@ on ", patrons];
+    NSString *string = [sortedNames componentsJoinedWithOxfordComma];
     NSDictionary *attributes = [self attributes];
     NSMutableAttributedString *attributedString =
         [[NSMutableAttributedString alloc] initWithString:string
                                                attributes:attributes];
-    NSAttributedString *patreonLink = [self attributedStringWithLinkToURL:@"https://patreon.com/gnachman"
-                                                                    title:@"Patreon"];
-    [attributedString appendAttributedString:patreonLink];
-
-    NSAttributedString *andAttributedString =
-        [[NSAttributedString alloc] initWithString:@" and "
-                                        attributes:attributes];
-
-    [attributedString appendAttributedString:andAttributedString];
-
-    NSAttributedString *gitHubSponsorsLink = [self attributedStringWithLinkToURL:@"https://github.com/sponsors/gnachman"
-                                                                    title:@"GitHub Sponsors"];
-    [attributedString appendAttributedString:gitHubSponsorsLink];
-
-
     NSAttributedString *period = [[NSAttributedString alloc] initWithString:@"."];
     [attributedString appendAttributedString:period];
 

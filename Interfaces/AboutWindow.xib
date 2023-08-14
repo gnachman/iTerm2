@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="15702" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="21701" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="15702"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21701"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
@@ -18,14 +18,14 @@
         <window allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" titlebarAppearsTransparent="YES" id="vXx-6Q-DX3" userLabel="About" customClass="iTermAboutWindow">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" fullSizeContentView="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-            <rect key="contentRect" x="386" y="524" width="588" height="295"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1536" height="937"/>
+            <rect key="contentRect" x="386" y="524" width="588" height="413"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="3008" height="1667"/>
             <view key="contentView" id="Y6E-dl-YZS" customClass="iTermAboutWindowContentView">
-                <rect key="frame" x="0.0" y="0.0" width="588" height="295"/>
+                <rect key="frame" x="0.0" y="0.0" width="588" height="413"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="GaD-UM-uz4">
-                        <rect key="frame" x="181" y="243" width="389" height="27"/>
+                        <rect key="frame" x="181" y="361" width="389" height="27"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" title="iTerm2" id="U4n-GV-8aZ">
                             <font key="font" metaFont="system" size="22"/>
@@ -34,13 +34,13 @@
                         </textFieldCell>
                     </textField>
                     <scrollView fixedFrame="YES" borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" hasVerticalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="591-57-qeA">
-                        <rect key="frame" x="169" y="142" width="399" height="66"/>
+                        <rect key="frame" x="169" y="260" width="399" height="66"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
-                        <clipView key="contentView" ambiguous="YES" drawsBackground="NO" copiesOnScroll="NO" id="aKk-Vf-QAt">
+                        <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="aKk-Vf-QAt">
                             <rect key="frame" x="0.0" y="0.0" width="399" height="66"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <textView ambiguous="YES" editable="NO" drawsBackground="NO" importsGraphics="NO" verticallyResizable="YES" usesFontPanel="YES" usesRuler="YES" spellingCorrection="YES" smartInsertDelete="YES" id="syc-QG-1mF">
+                                <textView editable="NO" drawsBackground="NO" importsGraphics="NO" verticallyResizable="YES" usesFontPanel="YES" usesRuler="YES" spellingCorrection="YES" smartInsertDelete="YES" id="syc-QG-1mF">
                                     <rect key="frame" x="0.0" y="0.0" width="399" height="66"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
@@ -65,18 +65,18 @@
                         </scroller>
                     </scrollView>
                     <scrollView fixedFrame="YES" borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" hasVerticalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="cIi-Dh-gHn">
-                        <rect key="frame" x="20" y="20" width="548" height="108"/>
+                        <rect key="frame" x="20" y="20" width="548" height="146"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <clipView key="contentView" ambiguous="YES" drawsBackground="NO" copiesOnScroll="NO" id="eAf-wk-9pT">
-                            <rect key="frame" x="0.0" y="0.0" width="548" height="108"/>
+                        <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="eAf-wk-9pT">
+                            <rect key="frame" x="0.0" y="0.0" width="548" height="146"/>
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
-                                <textView ambiguous="YES" editable="NO" drawsBackground="NO" importsGraphics="NO" verticallyResizable="YES" usesFontPanel="YES" usesRuler="YES" spellingCorrection="YES" smartInsertDelete="YES" id="cP7-fE-CE6">
-                                    <rect key="frame" x="0.0" y="0.0" width="548" height="108"/>
+                                <textView editable="NO" drawsBackground="NO" importsGraphics="NO" verticallyResizable="YES" usesFontPanel="YES" usesRuler="YES" spellingCorrection="YES" smartInsertDelete="YES" id="cP7-fE-CE6">
+                                    <rect key="frame" x="0.0" y="0.0" width="548" height="146"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                    <size key="minSize" width="548" height="108"/>
+                                    <size key="minSize" width="548" height="146"/>
                                     <size key="maxSize" width="548" height="10000000"/>
                                     <color key="insertionPointColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
                                 </textView>
@@ -93,7 +93,7 @@
                         </scroller>
                     </scrollView>
                     <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="fQo-xv-ggV">
-                        <rect key="frame" x="169" y="224" width="401" height="17"/>
+                        <rect key="frame" x="169" y="342" width="401" height="17"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                         <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" title="By George Nachman and Contributors" id="XAW-F5-RXa">
                             <font key="font" metaFont="system"/>
@@ -102,19 +102,92 @@
                         </textFieldCell>
                     </textField>
                     <imageView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gde-AT-nev">
-                        <rect key="frame" x="20" y="136" width="143" height="143"/>
+                        <rect key="frame" x="20" y="254" width="143" height="143"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" animates="YES" imageScaling="axesIndependently" image="NSApplicationIcon" id="b3m-Nh-0FF"/>
                     </imageView>
+                    <customView fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="1dy-hB-9aL">
+                        <rect key="frame" x="226" y="174" width="139" height="48"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <subviews>
+                            <imageView horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="AZQ-PW-Jiz">
+                                <rect key="frame" x="0.0" y="0.0" width="48" height="48"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="blendbyte_logo" id="Wks-Sn-8FU"/>
+                            </imageView>
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="SmU-Oj-xJT">
+                                <rect key="frame" x="56" y="12" width="65" height="16"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                                <textFieldCell key="cell" lineBreakMode="clipping" title="Blendbyte" id="mZ1-ny-qyf">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="linkColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                        </subviews>
+                    </customView>
+                    <box verticalHuggingPriority="750" fixedFrame="YES" boxType="separator" translatesAutoresizingMaskIntoConstraints="NO" id="qa2-RL-aD9">
+                        <rect key="frame" x="22" y="249" width="546" height="5"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                    </box>
+                    <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" id="wvf-9G-H1W">
+                        <rect key="frame" x="22" y="223" width="546" height="20"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMinY="YES"/>
+                        <clipView key="contentView" drawsBackground="NO" id="Y1k-vx-Mfh">
+                            <rect key="frame" x="0.0" y="0.0" width="546" height="20"/>
+                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                            <subviews>
+                                <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="NO" spellingCorrection="YES" smartInsertDelete="YES" id="XqE-kC-hnW">
+                                    <rect key="frame" x="0.0" y="0.0" width="546" height="48"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>
+                                    <size key="minSize" width="546" height="20"/>
+                                    <size key="maxSize" width="553" height="10000000"/>
+                                    <attributedString key="textStorage">
+                                        <fragment>
+                                            <string key="content">iTerm2 is supported by these backers on &lt;a href="https://patreon.com/gnachman"&gt;Patreon&lt;/a&gt; and &lt;a href="https://github.com/sponsors/gnachman"&gt;GitHub Sponsors&lt;/a&gt;</string>
+                                            <attributes>
+                                                <color key="NSColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                <font key="NSFont" metaFont="systemSemibold" size="13"/>
+                                                <font key="NSOriginalFont" size="12" name="Helvetica"/>
+                                                <paragraphStyle key="NSParagraphStyle" alignment="natural" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                            </attributes>
+                                        </fragment>
+                                        <fragment content=":">
+                                            <attributes>
+                                                <color key="NSColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                                <font key="NSFont" size="12" name="Helvetica"/>
+                                                <paragraphStyle key="NSParagraphStyle" alignment="natural" lineBreakMode="wordWrapping" baseWritingDirection="natural" tighteningFactorForTruncation="0.0"/>
+                                            </attributes>
+                                        </fragment>
+                                    </attributedString>
+                                    <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                </textView>
+                            </subviews>
+                        </clipView>
+                        <scroller key="horizontalScroller" hidden="YES" wantsLayer="YES" verticalHuggingPriority="750" horizontal="YES" id="ZHQ-ga-MMO">
+                            <rect key="frame" x="-100" y="-100" width="240" height="16"/>
+                            <autoresizingMask key="autoresizingMask"/>
+                        </scroller>
+                        <scroller key="verticalScroller" wantsLayer="YES" verticalHuggingPriority="750" horizontal="NO" id="n20-ME-3Ey">
+                            <rect key="frame" x="530" y="0.0" width="16" height="20"/>
+                            <autoresizingMask key="autoresizingMask"/>
+                        </scroller>
+                    </scrollView>
                 </subviews>
                 <connections>
+                    <outlet property="_blendbyte" destination="1dy-hB-9aL" id="0n6-Bv-kV6"/>
+                    <outlet property="_blendbyteText" destination="SmU-Oj-xJT" id="eVN-S4-Obz"/>
                     <outlet property="_bottomAlignedScrollView" destination="cIi-Dh-gHn" id="3ge-23-X50"/>
+                    <outlet property="_sponsorsHeading" destination="XqE-kC-hnW" id="pQL-Be-gdx"/>
                 </connections>
             </view>
-            <point key="canvasLocation" x="358" y="492.5"/>
+            <point key="canvasLocation" x="358" y="551.5"/>
         </window>
     </objects>
     <resources>
         <image name="NSApplicationIcon" width="32" height="32"/>
+        <image name="blendbyte_logo" width="22.079999923706055" height="22.079999923706055"/>
     </resources>
 </document>

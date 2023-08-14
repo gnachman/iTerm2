@@ -146,6 +146,49 @@ extension NSAttributedString {
 
         return NSAttributedString(attributedString: mutableAttributedString)
     }
+
+    // The HTML parser built in to NSAttributedString is unusable because it sets an sRGB color for
+    // the default text color, breaking light/dark mode. I <3 AppKit
+    @objc(attributedStringWithHTML:font:paragraphStyle:)
+    class func attributedString(html htmlString: String, font: NSFont, paragraphStyle: NSParagraphStyle) -> NSAttributedString? {
+        let attributedString = NSMutableAttributedString(string: "")
+        attributedString.addAttributes([.font: font, .paragraphStyle: paragraphStyle], range: NSRange(location: 0, length: 0))
+
+        var currentIndex = htmlString.startIndex
+
+        while currentIndex < htmlString.endIndex {
+            if htmlString[currentIndex] == "<", let endIndex = htmlString[currentIndex...].range(of: ">")?.upperBound, let tagRange = htmlString[currentIndex..<endIndex].range(of: "<a href=\""), tagRange.lowerBound == currentIndex {
+                let urlStart = htmlString.index(tagRange.upperBound, offsetBy: 0)
+                let urlEnd = htmlString[urlStart...].firstIndex(of: "\"") ?? htmlString.endIndex
+                let url = String(htmlString[urlStart..<urlEnd])
+
+                let textStart = htmlString.index(urlEnd, offsetBy: 2)
+                let textEnd = htmlString[textStart...].range(of: "</a>")?.lowerBound ?? htmlString.endIndex
+
+                let text = String(htmlString[textStart..<textEnd])
+
+                let linkAttributes: [NSAttributedString.Key: Any] = [
+                    .font: font,
+                    .paragraphStyle: paragraphStyle,
+                    .link: url,
+                    .cursor: NSCursor.pointingHand
+                ]
+
+                attributedString.append(NSAttributedString(string: text, attributes: linkAttributes))
+                currentIndex = htmlString.index(textEnd, offsetBy: 4)
+            } else {
+                let nextIndex = htmlString[currentIndex...].range(of: "<")?.lowerBound ?? htmlString.endIndex
+                let text = String(htmlString[currentIndex..<nextIndex])
+
+                attributedString.append(NSAttributedString(string: text, attributes: [.font: font,
+                                                                                      .paragraphStyle: paragraphStyle,
+                                                                                      .foregroundColor: NSColor.textColor]))
+                currentIndex = nextIndex
+            }
+        }
+
+        return attributedString
+    }
 }
 
 extension Array where Element: NSAttributedString {
