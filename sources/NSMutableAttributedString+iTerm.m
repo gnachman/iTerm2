@@ -151,4 +151,68 @@
     return result;
 }
 
+// The HTML parser built in to NSAttributedString is unusable because it sets an sRGB color for
+// the default text color, breaking light/dark mode. I <3 AppKit
++ (NSAttributedString *)attributedStringWithHTML:(NSString *)htmlString font:(NSFont *)font paragraphStyle:(NSParagraphStyle *)paragraphStyle {
+    NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] init];
+    [attributedString addAttributes:@{ NSFontAttributeName: font,
+                                       NSParagraphStyleAttributeName: paragraphStyle
+                                    }
+                              range:NSMakeRange(0, 0)];
+    NSInteger currentIndex = 0;
+    
+    while (currentIndex < htmlString.length) {
+        if ([htmlString characterAtIndex:currentIndex] == '<') {
+            NSRange endRange = [htmlString rangeOfString:@">"];
+            if (endRange.location != NSNotFound) {
+                NSRange tagRange = [htmlString rangeOfString:@"<a href=\"" options:0 range:NSMakeRange(currentIndex, htmlString.length - currentIndex)];
+                if (tagRange.location == currentIndex) {
+                    const NSInteger urlStart = NSMaxRange(tagRange);
+                    const NSRange endQuoteRange = [htmlString rangeOfString:@"\"" options:0 range:NSMakeRange(urlStart, htmlString.length - urlStart)];
+                    NSInteger urlEnd;
+                    if (endQuoteRange.location == NSNotFound) {
+                        urlEnd = htmlString.length;
+                    } else {
+                        urlEnd = endQuoteRange.location;
+                    }
+                    NSString *url = [htmlString substringWithRange:NSMakeRange(urlStart, urlEnd - urlStart)];
+                    const NSInteger textStart = urlEnd + 2;
+                    const NSRange endAnchorRange = [htmlString rangeOfString:@"</a>" options:0 range:NSMakeRange(textStart, htmlString.length - textStart)];
+                    NSInteger textEnd;
+                    if (endAnchorRange.location != NSNotFound) {
+                        textEnd = endAnchorRange.location;
+                    } else {
+                        textEnd = htmlString.length;
+                    }
+                    NSString *text = [htmlString substringWithRange:NSMakeRange(textStart, textEnd - textStart)];
+                    NSDictionary *linkAttributes = @{
+                        NSFontAttributeName: font,
+                        NSParagraphStyleAttributeName: paragraphStyle,
+                        NSLinkAttributeName: url,
+                        NSCursorAttributeName: NSCursor.pointingHandCursor
+                    };
+                    [attributedString appendAttributedString:[[NSAttributedString alloc] initWithString:text attributes:linkAttributes]];
+                    currentIndex = textEnd + 4;
+                    continue;
+                }
+            }
+        }
+        
+        NSInteger nextIndex;
+        const NSRange lessThanRange = [htmlString rangeOfString:@"<" options:0 range:NSMakeRange(currentIndex, htmlString.length - currentIndex)];
+        if (lessThanRange.location == NSNotFound) {
+            nextIndex = htmlString.length;
+        } else {
+            nextIndex = lessThanRange.location;
+        }
+        NSString *text = [htmlString substringWithRange:NSMakeRange(currentIndex, nextIndex - currentIndex)];
+        [attributedString appendAttributedString:[[NSAttributedString alloc] initWithString:text attributes:@{ NSFontAttributeName: font,
+                                                                                                               NSParagraphStyleAttributeName: paragraphStyle,
+                                                                                                               NSForegroundColorAttributeName: [NSColor textColor] }]];
+        currentIndex = nextIndex;
+    }
+    
+    return attributedString;
+}
+
 @end

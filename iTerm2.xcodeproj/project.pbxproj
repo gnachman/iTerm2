@@ -3208,6 +3208,12 @@
 		A6BDB0B11B45FC9E00F511E6 /* PTYTextViewTest-golden-testWindowedCharacterSelection.png in Resources */ = {isa = PBXBuildFile; fileRef = A686C1321ADA38EE00906FAE /* PTYTextViewTest-golden-testWindowedCharacterSelection.png */; };
 		A6BDB0B31B45FD8300F511E6 /* TestBackground.png in Resources */ = {isa = PBXBuildFile; fileRef = A6B3A7481AC8A9A3008E8D4E /* TestBackground.png */; };
 		A6BDB0BB1B470CBE00F511E6 /* iTermRootTerminalView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BDB0B91B470CBE00F511E6 /* iTermRootTerminalView.h */; };
+		A6BF02DF2A8AABD7003D205F /* blendbyte_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = A6BF02DD2A8AABD7003D205F /* blendbyte_logo.png */; };
+		A6BF02E02A8AABD7003D205F /* blendbyte_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = A6BF02DD2A8AABD7003D205F /* blendbyte_logo.png */; };
+		A6BF02E12A8AABD7003D205F /* blendbyte_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = A6BF02DD2A8AABD7003D205F /* blendbyte_logo.png */; };
+		A6BF02E22A8AABD7003D205F /* blendbyte_logo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6BF02DE2A8AABD7003D205F /* blendbyte_logo@2x.png */; };
+		A6BF02E32A8AABD7003D205F /* blendbyte_logo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6BF02DE2A8AABD7003D205F /* blendbyte_logo@2x.png */; };
+		A6BF02E42A8AABD7003D205F /* blendbyte_logo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A6BF02DE2A8AABD7003D205F /* blendbyte_logo@2x.png */; };
 		A6BF035021E176C30097DA86 /* iTermVariableScope.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BF034E21E176C30097DA86 /* iTermVariableScope.h */; };
 		A6BF035121E176C30097DA86 /* iTermVariableScope.m in Sources */ = {isa = PBXBuildFile; fileRef = A6BF034F21E176C30097DA86 /* iTermVariableScope.m */; };
 		A6BF035421E179380097DA86 /* iTermVariableHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = A6BF035221E179380097DA86 /* iTermVariableHistory.h */; };
@@ -6399,6 +6405,8 @@
 		A6BDB0B91B470CBE00F511E6 /* iTermRootTerminalView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermRootTerminalView.h; sourceTree = "<group>"; };
 		A6BDB0BA1B470CBE00F511E6 /* iTermRootTerminalView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermRootTerminalView.m; sourceTree = "<group>"; };
 		A6BEE47F26E7EE19009C0C2C /* iTermMetalDisabling.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermMetalDisabling.h; sourceTree = "<group>"; };
+		A6BF02DD2A8AABD7003D205F /* blendbyte_logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = blendbyte_logo.png; path = images/sponsors/blendbyte_logo.png; sourceTree = "<group>"; };
+		A6BF02DE2A8AABD7003D205F /* blendbyte_logo@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "blendbyte_logo@2x.png"; path = "images/sponsors/blendbyte_logo@2x.png"; sourceTree = "<group>"; };
 		A6BF034E21E176C30097DA86 /* iTermVariableScope.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVariableScope.h; sourceTree = "<group>"; };
 		A6BF034F21E176C30097DA86 /* iTermVariableScope.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermVariableScope.m; sourceTree = "<group>"; };
 		A6BF035221E179380097DA86 /* iTermVariableHistory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermVariableHistory.h; sourceTree = "<group>"; };
@@ -7595,6 +7603,8 @@
 		1D093C131217412B0029F9AD /* Images */ = {
 			isa = PBXGroup;
 			children = (
+				A6BF02DD2A8AABD7003D205F /* blendbyte_logo.png */,
+				A6BF02DE2A8AABD7003D205F /* blendbyte_logo@2x.png */,
 				A6F2B6DA2558BECC008D6BF1 /* TmuxFlowControl.png */,
 				A6F2B6D62558B8AC008D6BF1 /* Composer.png */,
 				A6F2B6D22558B51B008D6BF1 /* ScrollerHighlights.png */,
@@ -12266,6 +12276,7 @@
 				A6FE8D09209382C000B5C648 /* download@2x.png in Resources */,
 				A67F615D214395990093940A /* graphic_micro.png in Resources */,
 				A67F61A9214395B70093940A /* graphic_rails.png in Resources */,
+				A6BF02E12A8AABD7003D205F /* blendbyte_logo.png in Resources */,
 				5308BF5D227C02DE004BECAC /* InternetAccessPolicy.plist in Resources */,
 				A686C19A1ADF62F200906FAE /* Zoomed@2x.png in Resources */,
 				A67D0D461A2EE12A003A8B35 /* BulkCopyProfilePreferences.xib in Resources */,
@@ -12561,6 +12572,7 @@
 				1D8BBA7D1B30FD230005A852 /* Later@2x.png in Resources */,
 				1D6ED9EB19AEA20D005A7799 /* PrefsArrangements.png in Resources */,
 				A67F617D214395A70093940A /* graphic_nodejs.png in Resources */,
+				A6BF02E42A8AABD7003D205F /* blendbyte_logo@2x.png in Resources */,
 				A6E7AE6C214394CA00DE9F3B /* graphic_bower.png in Resources */,
 				1D6ED9EC19AEA20D005A7799 /* PrefsArrangements@2x.png in Resources */,
 			);
@@ -12728,6 +12740,7 @@
 				A65429A620BE7ECD00CE71B1 /* ScriptIcon@2x.png in Resources */,
 				A6F2B6DC2558BECC008D6BF1 /* TmuxFlowControl.png in Resources */,
 				A673BFE21E176AA300FA2386 /* PTYTextViewTest-golden-travis-testCustomUnderline.png in Resources */,
+				A6BF02E02A8AABD7003D205F /* blendbyte_logo.png in Resources */,
 				A629F58E23AF437400C2F16B /* utilities-manifest.txt in Resources */,
 				1D44CFF31CC7F5A600BE5630 /* PTYTextViewTest-golden-testBadge.png in Resources */,
 				5308BF91228283CE004BECAC /* StatusBarIconBattery@2x.png in Resources */,
@@ -13093,6 +13106,7 @@
 				1D44D0501CC7F5A600BE5630 /* PTYTextViewTest-golden-travis-testBackgroundImageWithGloballyInvertedColors.png in Resources */,
 				1D44D0361CC7F5A600BE5630 /* PTYTextViewTest-golden-testSmartCursorColor_manyGrayOneWhiteOneBlack.png in Resources */,
 				1D44CFD81CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testSmartCursorColor_reverseVideoNondefaultBackground.png in Resources */,
+				A6BF02E32A8AABD7003D205F /* blendbyte_logo@2x.png in Resources */,
 				1DB8FBD119468A40006BAF5C /* TabClose_Front_Rollover.png in Resources */,
 				1D44CF8E1CC7F5A600BE5630 /* PTYTextViewTest-golden-nonretina-testBackgroundImageWithGloballyInvertedColors.png in Resources */,
 				A697101518DFA7FC007E901D /* closebutton.png in Resources */,
@@ -13233,6 +13247,7 @@
 				A629F57923AF2DD900C2F16B /* iterm2_shell_integration.bash in Resources */,
 				A67D0D891A2EE12A003A8B35 /* PseudoTerminal.xib in Resources */,
 				A6614A2520958EDC00A10D97 /* iTermBuildingScriptWindowController.xib in Resources */,
+				A6BF02DF2A8AABD7003D205F /* blendbyte_logo.png in Resources */,
 				1DEDF56C19C917FD005B023A /* new-tab@2x.png in Resources */,
 				1DC2AF5319521CFF005769D5 /* QuestionMarkSign@2x.png in Resources */,
 				1DC2A1CC1949165D005769D5 /* Maximized.png in Resources */,
@@ -13531,6 +13546,7 @@
 				A67F61A7214395B70093940A /* graphic_rails.png in Resources */,
 				A67D0D6B1A2EE12A003A8B35 /* iTermPasteSpecialWindow.xib in Resources */,
 				A68BADFC1E0DD52F00E4BB7B /* Touch Bar Function Keys@2x.png in Resources */,
+				A6BF02E22A8AABD7003D205F /* blendbyte_logo@2x.png in Resources */,
 				A6E7AE8C214394DD00DE9F3B /* graphic_composer@2x.png in Resources */,
 				A67F618A214395A70093940A /* graphic_nginx@2x.png in Resources */,
 				1D4BAFEE1BFE77E4004FF52B /* iTermPrintAccessoryViewController.xib in Resources */,

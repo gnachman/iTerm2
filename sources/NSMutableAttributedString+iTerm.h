@@ -8,6 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
+@class NSFont;
+@class NSParagraphStyle;
+
 @interface NSMutableAttributedString (iTerm)
 
 - (void)iterm_appendString:(NSString *)string;
@@ -25,5 +28,6 @@
 - (NSArray *)attributedComponentsSeparatedByString:(NSString *)separator;
 - (CGFloat)heightForWidth:(CGFloat)maxWidth;
 - (NSAttributedString *)attributedStringByRemovingColor;
++ (NSAttributedString *)attributedStringWithHTML:(NSString *)htmlString font:(NSFont *)font paragraphStyle:(NSParagraphStyle *)paragraphStyle;
 
 @end
