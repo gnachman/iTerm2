@@ -8,6 +8,10 @@
 
 #import <Foundation/Foundation.h>
 
+#if ITERM2_SHARED_ARC
+#import "iTerm2SharedARC-Swift.h"
+#endif
+
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermUserDefaultsObserver.h"
 #import "NSApplication+iTerm.h"
@@ -19,6 +23,8 @@ NSString *const kAdvancedSettingIdentifier = @"kAdvancedSettingIdentifier";
 NSString *const kAdvancedSettingType = @"kAdvancedSettingType";
 NSString *const kAdvancedSettingDefaultValue = @"kAdvancedSettingDefaultValue";
 NSString *const kAdvancedSettingDescription = @"kAdvancedSettingDescription";
+NSString *const kAdvancedSettingSetter = @"kAdvancedSettingSetter";
+NSString *const kAdvancedSettingGetter = @"kAdvancedSettingGetter";
 
 NSString *const iTermAdvancedSettingsDidChange = @"iTermAdvancedSettingsDidChange";
 
@@ -120,6 +126,54 @@ DEFINE_BOILERPLATE(name, podtype, type, default, description, transformation, in
     sAdvancedSetting_##name = inverseTransformation(newValue); \
     [[NSUserDefaults standardUserDefaults] setObject:sAdvancedSetting_##name forKey:@#capitalizedName]; \
 }
+
+#if ITERM2_SHARED_ARC
+
+#define DEFINE_SECURE_BOILERPLATE(name, capitalizedName, podtype, type, description, transformation, inverseTransformation) \
+static podtype sAdvancedSetting_##name; \
++ (NSDictionary *)advancedSettingsModelDictionary_##name { \
+    podtype defaultValue = iTermSecureUserDefaults.instance.defaultValue_##name; \
+    return @{ kAdvancedSettingIdentifier: [@#name stringByCapitalizingFirstLetter], \
+              kAdvancedSettingType: @(type), \
+              kAdvancedSettingDefaultValue: inverseTransformation(defaultValue) ?: [NSNull null], \
+              kAdvancedSettingDescription: description, \
+              kAdvancedSettingSetter: [NSString stringWithFormat:@"setFromObject_%s:", #capitalizedName], \
+              kAdvancedSettingGetter: [NSString stringWithFormat:@"object_%s", #name], \
+            }; \
+} \
++ (NSString *)name##UserDefaultsKey { \
+    NSString *theIdentifier = [@#name stringByCapitalizingFirstLetter]; \
+    return theIdentifier; \
+} \
++ (NSString *)load_##name { \
+    NSString *key = [self name##UserDefaultsKey]; \
+    podtype valueFromUserDefaults = [[iTermSecureUserDefaults instance] name]; \
+    sAdvancedSetting_##name = valueFromUserDefaults; \
+    return key; \
+} \
++ (podtype)name { \
+    return sAdvancedSetting_##name; \
+} \
++ (id)object_##name { \
+    return inverseTransformation(sAdvancedSetting_##name); \
+} \
++ (void)set##capitalizedName :(podtype)newValue { \
+    [[iTermSecureUserDefaults instance] set##capitalizedName :newValue]; \
+    [self load_##name]; \
+} \
++ (id)setFromObject_##capitalizedName :(id)newValue { \
+    [[iTermSecureUserDefaults instance] set##capitalizedName :transformation(newValue)]; \
+    [self load_##name]; \
+    return inverseTransformation(sAdvancedSetting_##name); \
+}
+
+
+#define DEFINE_SECURE_BOOL(name, capitalizedName, theDescription) \
+DEFINE_SECURE_BOILERPLATE(name, capitalizedName, BOOL, kiTermAdvancedSettingTypeBoolean, theDescription, iTermAdvancedSettingsModelTransformBool, iTermAdvancedSettingsModelInverseTransformBool)
+// NOTE: To add more secure types, you'll need to modify iTermAdvancedSettingsViewController.m to
+// call the appropriate getter & setter and, afterwards, update the UI with the return value of the setter
+// since setting can fail.
+#endif  // ITERM2_SHARED_ARC
 
 #define DEFINE_BOOL(name, theDefault, theDescription) \
 DEFINE_BOILERPLATE(name, BOOL, kiTermAdvancedSettingTypeBoolean, theDefault, theDescription, iTermAdvancedSettingsModelTransformBool, iTermAdvancedSettingsModelInverseTransformBool)
@@ -337,6 +391,12 @@ DEFINE_BOOL(p3, YES, SECTION_TERMINAL @"Use P3 as default color space? If No, sR
 DEFINE_STRING(fileDropCoprocess, @"", SECTION_TERMINAL @"When files are dropped into a terminal window, execute a silent coprocess.\nThis is an interpolated string. Use \\(filenames) to reference the shell-quoted, space-delimited full paths to the dropped files. If this preference is empty, the filenames get pasted instead.")
 DEFINE_INT(maxURLLength, 2097152, SECTION_TERMINAL @"Maximum length for OSC 8 URLs");
 DEFINE_BOOL(defaultWideMode, NO, SECTION_TERMINAL @"When rendering natively, use wide mode by default?");
+
+#if ITERM2_SHARED_ARC
+
+DEFINE_SECURE_BOOL(enableSecureKeyboardEntryAutomatically, EnableSecureKeyboardEntryAutomatically, SECTION_TERMINAL @"Automatically enable secure keyboard entry at password prompts?");
+#endif  // ITERM2_SHARED_ARC
+
 
 #pragma mark Hotkey
 

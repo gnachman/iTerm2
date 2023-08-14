@@ -262,14 +262,22 @@ static NSDictionary *gIntrospection;
     NSArray *settings = [self filteredAdvancedSettings];
     NSDictionary *dict = settings[row];
     NSString *identifier = dict[kAdvancedSettingIdentifier];
-    [[NSUserDefaults standardUserDefaults] setBool:value
-                                            forKey:identifier];
+    NSString *selectorName = dict[kAdvancedSettingSetter];
+    if (selectorName) {
+        SEL selector = NSSelectorFromString(selectorName);
+        id newValue = [iTermAdvancedSettingsModel performSelector:selector withObject:@(value)];
+        [sender selectItemAtIndex:[newValue boolValue] ? 1 : 0];
+    } else {
+        [[NSUserDefaults standardUserDefaults] setBool:value
+                                                forKey:identifier];
+    }
 }
 
 - (id)objectForRow:(int)row {
     NSArray *settings = [self filteredAdvancedSettings];
     NSDictionary *dict = settings[row];
     NSString *identifier = dict[kAdvancedSettingIdentifier];
+    // TODO: Update this when there are tristate secure defaults.
     return [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
 }
 
@@ -300,6 +308,7 @@ static NSDictionary *gIntrospection;
     NSArray *settings = [self filteredAdvancedSettings];
     NSDictionary *dict = settings[row];
     NSString *identifier = dict[kAdvancedSettingIdentifier];
+    // TODO: Update this when there are tristate secure defaults.
     if (value == 0) {
         [[NSUserDefaults standardUserDefaults] removeObjectForKey:identifier];
     } else {
@@ -370,8 +379,7 @@ static NSDictionary *gIntrospection;
                     return YES;
                 }
                 id defaultValue = dict[kAdvancedSettingDefaultValue];
-                NSString *identifier = dict[kAdvancedSettingIdentifier];
-                NSObject *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
+                NSObject *value = [self valueInDictionary:dict];
                 if (value == nil || [NSObject object:defaultValue isApproximatelyEqualToObject:value epsilon:0.0001]) {
                     return NO;
                 }
@@ -460,6 +468,17 @@ static NSDictionary *gIntrospection;
     return [self attributedStringForSettingWithName:description subtitle:subtitle selected:selected];
 }
 
+- (id)valueInDictionary:(NSDictionary *)dict {
+    NSString *identifier = dict[kAdvancedSettingIdentifier];
+    NSString *getter = dict[kAdvancedSettingGetter];
+    if (getter) {
+        SEL selector = NSSelectorFromString(getter);
+        return [iTermAdvancedSettingsModel performSelector:selector];
+    } else {
+        return [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
+    }
+}
+
 - (NSView *)tableView:(NSTableView *)tableView viewForTableColumn:(NSTableColumn *)tableColumn row:(NSInteger)row {
     NSArray *settings = [self filteredAdvancedSettings];
     id obj = settings[row];
@@ -484,8 +503,7 @@ static NSDictionary *gIntrospection;
         return textField;
     } else if (tableColumn == _valueColumn) {
         NSDictionary *dict = settings[row];
-        NSString *identifier = dict[kAdvancedSettingIdentifier];
-        NSObject *value = [[NSUserDefaults standardUserDefaults] objectForKey:identifier];
+        NSObject *value = [self valueInDictionary:dict];
         if (!value) {
             value = dict[kAdvancedSettingDefaultValue];
         }
@@ -572,6 +590,7 @@ static NSDictionary *gIntrospection;
         NSArray *settings = [self filteredAdvancedSettings];
         NSDictionary *dict = settings[row];
         NSString *identifier = dict[kAdvancedSettingIdentifier];
+        // TODO: Update this when there are string/numeric secure defaults.
         switch ([dict advancedSettingType]) {
             case kiTermAdvancedSettingTypeBoolean:
             case kiTermAdvancedSettingTypeOptionalBoolean:

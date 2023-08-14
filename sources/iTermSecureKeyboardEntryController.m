@@ -8,6 +8,7 @@
 #import "iTermSecureKeyboardEntryController.h"
 
 #import "DebugLogging.h"
+#import "iTermAdvancedSettingsModel.h"
 #import "iTermUserDefaults.h"
 #import "iTermWarning.h"
 
@@ -134,6 +135,9 @@ NSString *const iTermDidToggleSecureInputNotification = @"iTermDidToggleSecureIn
 #pragma mark - Private
 
 - (BOOL)currentSessionAtPasswordPrompt {
+    if (![iTermAdvancedSettingsModel enableSecureKeyboardEntryAutomatically]) {
+        return NO;
+    }
     NSResponder *firstResponder = [[NSApp keyWindow] firstResponder];
     if (![firstResponder conformsToProtocol:@protocol(iTermSecureInputRequesting)]) {
         return NO;

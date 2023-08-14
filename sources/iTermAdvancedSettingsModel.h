@@ -22,6 +22,8 @@ extern NSString *const kAdvancedSettingIdentifier;
 extern NSString *const kAdvancedSettingType;
 extern NSString *const kAdvancedSettingDefaultValue;
 extern NSString *const kAdvancedSettingDescription;
+extern NSString *const kAdvancedSettingSetter;
+extern NSString *const kAdvancedSettingGetter;
 
 // The model posts this notification when it makes a change.
 extern NSString *const iTermAdvancedSettingsDidChange;
@@ -131,6 +133,11 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (double)echoProbeDuration;
 + (void)setEchoProbeDuration:(double)value;
 + (BOOL)enableCharacterAccentMenu;
+
+#if ITERM2_SHARED_ARC
++ (BOOL)enableSecureKeyboardEntryAutomatically;
+#endif  // ITERM2_SHARED_ARC
+
 + (BOOL)enableSemanticHistoryOnNetworkMounts;
 + (BOOL)enableSSHFileProvider;
 + (BOOL)enableUnderlineSemanticHistoryOnCmdHover;
