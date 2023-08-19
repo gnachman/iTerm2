@@ -1313,11 +1313,20 @@ NSNotificationName PTYTextViewWillChangeFontNotification = @"PTYTextViewWillChan
         [NSGraphicsContext saveGraphicsState];
         [_drawingHelper drawTextViewContentInRect:virtualRect rectsPtr:rectArray rectCount:rectCount virtualOffset:virtualOffset];
 
-        [_indicatorsHelper drawInFrame:NSRectSubtractingVirtualOffset(_drawingHelper.indicatorFrame, MAX(0, virtualOffset))];
         [NSGraphicsContext restoreGraphicsState];
+        const NSRect indicatorsRect = NSRectSubtractingVirtualOffset(_drawingHelper.indicatorFrame, MAX(0, virtualOffset));
+
+        if (!_drawingHelper.offscreenCommandLine) {
+            // Draw indicators under timestamps since they take precedence.
+            [_indicatorsHelper drawInFrame:indicatorsRect];
+        }
         [_drawingHelper drawTimestampsWithVirtualOffset:virtualOffset];
         [_drawingHelper drawOffscreenCommandLineWithVirtualOffset:virtualOffset];
-        
+        if (_drawingHelper.offscreenCommandLine) {
+            // Draw indicators over offscreen command line so it isn't completely obscured.
+            [_indicatorsHelper drawInFrame:indicatorsRect];
+        }
+
         // Not sure why this is needed, but for some reason this view draws over its subviews.
         for (NSView *subview in [self subviews]) {
             [subview setNeedsDisplay:YES];

@@ -138,7 +138,7 @@
                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             <subviews>
                                 <textView wantsLayer="YES" importsGraphics="NO" richText="NO" verticallyResizable="NO" spellingCorrection="YES" smartInsertDelete="YES" id="XqE-kC-hnW">
-                                    <rect key="frame" x="0.0" y="0.0" width="546" height="48"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="546" height="20"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" red="1" green="1" blue="1" alpha="0.0" colorSpace="custom" customColorSpace="sRGB"/>

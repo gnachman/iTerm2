@@ -928,9 +928,11 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
 
     [self drawCursorAfterTextWithFrameData:frameData];
 
-    [self drawRenderer:_indicatorRenderer
-             frameData:frameData
-                  stat:iTermMetalFrameDataStatPqEnqueueDrawIndicators];
+    if (!frameData.perFrameState.haveOffscreenCommandLine) {
+        [self drawRenderer:_indicatorRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawIndicators];
+    }
 
     [self drawCellRenderer:_timestampsRenderer
                  frameData:frameData
@@ -947,6 +949,12 @@ legacyScrollbarWidth:(unsigned int)legacyScrollbarWidth {
     [self drawRenderer:_offscreenCommandLineBackgroundRenderer
              frameData:frameData
                   stat:iTermMetalFrameDataStatPqEnqueueDrawOffscreenCommandLineBg];
+
+    if (	frameData.perFrameState.haveOffscreenCommandLine) {
+        [self drawRenderer:_indicatorRenderer
+                 frameData:frameData
+                      stat:iTermMetalFrameDataStatPqEnqueueDrawIndicators];
+    }
 
 
     [self drawCellRenderer:_offscreenCommandLineTextRenderer
