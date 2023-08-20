@@ -277,6 +277,7 @@ extern NSString *const iTermAdvancedSettingsDidChange;
 + (BOOL)performSQLiteIntegrityCheck;
 + (BOOL)pinEditSession;
 + (BOOL)pinchToChangeFontSizeDisabled;
++ (BOOL)placeTabsInTitlebarAccessoryInFullScreen;
 + (BOOL)pollForTmuxForegroundJob;
 + (BOOL)postFakeFlagsChangedEvents;
 + (BOOL)preferSpeedToFullLigatureSupport;

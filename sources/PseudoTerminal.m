@@ -5408,6 +5408,12 @@ ITERM_WEAKLY_REFERENCEABLE
                 // shadow under the full-screen titlebar if there was an accessory view. That does
                 // not seem to be a problem in Ventura, so we'll move the tabbar into an accessory
                 // once again! See issue 11038 for how we compare to Safari.
+                // However, it's apparently broken for some users. I have no idea how common of a
+                // problem this is and I don't know of a workaround, so there's an advanced setting
+                // in case it's widespread. Issue 11058.
+                if (![iTermAdvancedSettingsModel placeTabsInTitlebarAccessoryInFullScreen]) {
+                    return NO;
+                }
             } else {
                 if ([iTermPreferences boolForKey:kPreferenceKeyShowFullscreenTabBar]) {
                     DLog(@"macOS 11 + kPreferenceKeyShowFullscreenTabBar - return NO");
