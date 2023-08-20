@@ -3302,6 +3302,7 @@
 		A6D3205729C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
 		A6D3205829C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
 		A6D3205929C492410088BBE1 /* nerd.itse in Resources */ = {isa = PBXBuildFile; fileRef = A6D3205629C492410088BBE1 /* nerd.itse */; };
+		A6D441C72A91306400CA76E9 /* ProfileDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6D441C62A91306400CA76E9 /* ProfileDocument.swift */; };
 		A6D463E6240447AF005D073D /* iTermBackgroundColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */; };
 		A6D463E7240447AF005D073D /* iTermBackgroundColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = A6D463E5240447AF005D073D /* iTermBackgroundColorView.m */; };
 		A6D463EA2404482D005D073D /* iTermAlphaBlendingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = A6D463E82404482D005D073D /* iTermAlphaBlendingHelper.h */; };
@@ -7070,6 +7071,7 @@
 		A6D24D3C26BC5FA600CCE211 /* SwiftDebugLogging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDebugLogging.swift; sourceTree = "<group>"; };
 		A6D3205429C29EE30088BBE1 /* NerdFontInstaller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NerdFontInstaller.swift; sourceTree = "<group>"; };
 		A6D3205629C492410088BBE1 /* nerd.itse */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = nerd.itse; path = OtherResources/nerd.itse; sourceTree = "<group>"; };
+		A6D441C62A91306400CA76E9 /* ProfileDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileDocument.swift; sourceTree = "<group>"; };
 		A6D463E4240447AF005D073D /* iTermBackgroundColorView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermBackgroundColorView.h; sourceTree = "<group>"; };
 		A6D463E5240447AF005D073D /* iTermBackgroundColorView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = iTermBackgroundColorView.m; sourceTree = "<group>"; };
 		A6D463E82404482D005D073D /* iTermAlphaBlendingHelper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = iTermAlphaBlendingHelper.h; sourceTree = "<group>"; };
@@ -9792,6 +9794,7 @@
 				A64CA8AB29B525BA00DA4CBB /* LineBlock+SwiftInterop.m */,
 				A62D149729B869320020609D /* LineBlock+Private.h */,
 				A65105A129F24A4200657EB0 /* PromptStateMachine.swift */,
+				A6D441C62A91306400CA76E9 /* ProfileDocument.swift */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -15913,6 +15916,7 @@
 				53E9DFE1220D51D50070C9C0 /* CoprocessTrigger.m in Sources */,
 				A60C0373208A56AB00FE2F1F /* iTermAPIConnectionIdentifierController.m in Sources */,
 				5370679821C9D2780088D0F3 /* SIGSHA2SigningAlgorithm.m in Sources */,
+				A6D441C72A91306400CA76E9 /* ProfileDocument.swift in Sources */,
 				A6EEAED128306F350039E850 /* NSRegularExpression+iTerm.swift in Sources */,
 				A6F1B3AB268FCAC000546767 /* iTermStatusBarTriggersComponent.swift in Sources */,
 				A6556EAE1FD37ED6000CC89C /* iTermASCIITexture.m in Sources */,

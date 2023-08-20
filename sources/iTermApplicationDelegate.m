@@ -625,6 +625,10 @@ static BOOL hasBecomeActive = NO;
                                       }];
         return YES;
     }
+    if ([[filename pathExtension] isEqualToString:@"itermtab"]) {
+        [ProfileDocument openWithFilename:filename];
+        return YES;
+    }
     if ([filename hasSuffix:@".itermcolors"]) {
         DLog(@"Importing color presets from %@", filename);
         if ([iTermColorPresets importColorPresetFromFile:filename]) {

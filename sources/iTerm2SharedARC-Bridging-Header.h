@@ -41,6 +41,7 @@
 #import "iTermScriptImporter.h"
 #import "iTermSelection.h"
 #import "iTermSelectionExtraction.h"
+#import "iTermSessionLauncher.h"
 #import "iTermSetupCfgParser.h"
 #import "iTermSlowOperationGateway.h"
 #import "iTermSocket.h"

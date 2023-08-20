@@ -8,6 +8,7 @@
 #import "iTermSessionFactory.h"
 
 #import "DebugLogging.h"
+#import "iTerm2SharedARC-Swift.h"
 #import "iTermAdvancedSettingsModel.h"
 #import "iTermController.h"
 #import "iTermInitialDirectory.h"
@@ -340,6 +341,11 @@ NS_ASSUME_NONNULL_BEGIN
     [aSession setProfile:profile];
     if (parent) {
         [aSession setParentScope:parent.variablesScope];
+    }
+    NSString *guid = profile[KEY_GUID];
+    NSString *name = profile[KEY_NAME];
+    if (guid && name) {
+        [ProfileDocument addToRecentsWithGuid:guid name:name];
     }
     return aSession;
 }
