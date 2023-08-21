@@ -4990,28 +4990,29 @@ launchCoprocessWithCommand:(NSString *)command
         [self setReturnCodeOfLastCommand:0];
     }
 
-
-    // Insert an empty line above the prompt.
-    if (range.start.y == self.numberOfLines + self.cumulativeScrollbackOverflow - 1) {
-        // Make room at the bottom of the grid.
-        [self incrementOverflowBy:
-         [self.currentGrid scrollWholeScreenUpIntoLineBuffer:self.linebuffer
-                                         unlimitedScrollback:self.unlimitedScrollback]];
-    } else {
-        // The prompt will be one line lower so move the cursor to stay with it.
-        [self.currentGrid moveCursorDown:1];
+    if (self.config.useLineStyleMarks) {
+        // Insert an empty line above the prompt.
+        if (range.start.y == self.numberOfLines + self.cumulativeScrollbackOverflow - 1) {
+            // Make room at the bottom of the grid.
+            [self incrementOverflowBy:
+             [self.currentGrid scrollWholeScreenUpIntoLineBuffer:self.linebuffer
+                                             unlimitedScrollback:self.unlimitedScrollback]];
+        } else {
+            // The prompt will be one line lower so move the cursor to stay with it.
+            [self.currentGrid moveCursorDown:1];
+        }
+        // Move the prompt and anything below it down by 1
+        const int scrollbackLines = self.numberOfScrollbackLines;
+        const int gridRow = range.start.y - scrollbackLines - self.cumulativeScrollbackOverflow;
+        [self.currentGrid scrollRect:VT100GridRectMake(0,
+                                                       gridRow,
+                                                       self.width,
+                                                       self.height - gridRow)
+                              downBy:1
+                           softBreak:NO];
+        range.start.y += 1;
+        range.end.y += 1;
     }
-    // Move the prompt and anything below it down by 1
-    const int scrollbackLines = self.numberOfScrollbackLines;
-    const int gridRow = range.start.y - scrollbackLines - self.cumulativeScrollbackOverflow;
-    [self.currentGrid scrollRect:VT100GridRectMake(0,
-                                                   gridRow,
-                                                   self.width,
-                                                   self.height - gridRow)
-                          downBy:1
-                       softBreak:NO];
-    range.start.y += 1;
-    range.end.y += 1;
 
     // Use 0 here to avoid the screen inserting a newline.
     range.start.x = 0;
