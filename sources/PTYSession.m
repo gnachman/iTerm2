@@ -13303,7 +13303,8 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         dirty = YES;
     }
     const BOOL darkMode = (self.view.effectiveAppearance ?: [NSApp effectiveAppearance]).it_isDark;
-    if (_config.darkMode != darkMode) {
+    const BOOL darkModeDidChange = (_config.darkMode != darkMode);
+    if (darkModeDidChange) {
         _config.darkMode = darkMode;
         dirty = YES;
     }
@@ -13334,7 +13335,7 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
         _config.publishing = publishing;
         dirty = YES;
     }
-    if (_profileDidChange) {
+    if (_profileDidChange || darkModeDidChange) {
         _config.shouldPlacePromptAtFirstColumn = [iTermProfilePreferences boolForKey:KEY_PLACE_PROMPT_AT_FIRST_COLUMN
                                                                            inProfile:_profile];
         _config.enableTriggersInInteractiveApps = [iTermProfilePreferences boolForKey:KEY_ENABLE_TRIGGERS_IN_INTERACTIVE_APPS
