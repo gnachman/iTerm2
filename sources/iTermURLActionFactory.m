@@ -617,7 +617,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         VT100GridWindowedRange range;
         NSInteger j = self.locatedPrefix.string.length - prefixChars;
         DLog(@"j=%@-%@=%@", @(self.locatedPrefix.string.length), @(prefixChars), @(j));
-        if (j < self.locatedPrefix.gridCoords.count) {
+        if (j >= 0 && j < self.locatedPrefix.gridCoords.count) {
             DLog(@"j=%@ < self.locatedPrefix.gridCoords.count=%@", @(j), @(self.locatedPrefix.gridCoords.count));
             range.coordRange.start = [self.locatedPrefix.gridCoords coordAt:j];
             DLog(@"range.coordRange.start=%@", VT100GridCoordDescription(range.coordRange.start));
@@ -633,7 +633,7 @@ static NSMutableArray<iTermURLActionFactory *> *sFactories;
         }
         NSInteger i = stringRange.length - prefixChars;
         DLog(@"i=%@-%@=%@", @(stringRange.length), @(prefixChars), @(i));
-        if (i < self.locatedSuffix.gridCoords.count) {
+        if (i >= 0 && i < self.locatedSuffix.gridCoords.count) {
             DLog(@"i < suffixCoords.count=%@", @(self.locatedSuffix.gridCoords.count));
             range.coordRange.end = [self.locatedSuffix.gridCoords coordAt:i];
             DLog(@"range.coordRange.end=%@", VT100GridCoordDescription([self.locatedSuffix.gridCoords coordAt:i]));

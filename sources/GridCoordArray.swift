@@ -47,6 +47,8 @@ class GridCoordArray: NSObject {
     }
 
     @objc subscript(_ i: Int) -> VT100GridCoord {
+        precondition(i >= 0)
+        precondition(i < coords.count)
         return coords[i]
     }
 
