@@ -71,6 +71,10 @@ class InputSourceForcer: NSObject {
     }
 
     @objc private func appWillResignActive(notification: Notification) {
+        guard forcingEnabled else {
+            DLog("Resigning active but input source forcing is not enabled")
+            return
+        }
         active = false
         if let systemLocale {
             DLog("Switch to \(systemLocale) when resigining active")
@@ -80,14 +84,22 @@ class InputSourceForcer: NSObject {
         }
     }
 
+    private var forcingEnabled: Bool {
+        return iTermPreferences.bool(forKey: kPreferenceKeyForceKeyboard)
+    }
+
     private var desiredLocale: String? {
-        if !iTermPreferences.bool(forKey: kPreferenceKeyForceKeyboard) {
+        if !forcingEnabled {
             return nil
         }
         return iTermPreferences.string(forKey: kPreferenceKeyKeyboardLocale)
     }
 
     private func update() {
+        guard forcingEnabled else {
+            DLog("update: not enabled")
+            return
+        }
         guard active else {
             DLog("update: not active")
             return
@@ -101,6 +113,7 @@ class InputSourceForcer: NSObject {
     }
 
     private func setInputLocale(_ keyboardID: String) {
+        precondition(forcingEnabled)
         let inputSources = TISCreateInputSourceList(nil, false).takeRetainedValue() as! [TISInputSource]
         if let inputSource = inputSources.first(where: { inputSource in
             guard let idProperty = TISGetInputSourceProperty(inputSource, kTISPropertyInputSourceID) else {
