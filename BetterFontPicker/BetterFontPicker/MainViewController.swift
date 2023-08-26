@@ -67,6 +67,9 @@ public protocol MainViewControllerDelegate {
 public class MainViewController: NSViewController, NSTextFieldDelegate, TableViewControllerDelegate {
     @IBOutlet public weak var tableView: FontListTableView!
     @IBOutlet public weak var searchField: NSSearchField!
+    var desiredWidth: CGFloat {
+        tableViewController?.desiredWidth ?? 0.0
+    }
     @objc(delegate) @IBOutlet public weak var delegate: MainViewControllerDelegate?
     @objc public var systemFontDataSources: [FontListDataSource] = [SystemFontsDataSource()] {
         didSet {

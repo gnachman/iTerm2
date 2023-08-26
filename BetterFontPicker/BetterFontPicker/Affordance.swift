@@ -98,15 +98,15 @@ public class Affordance : NSPopUpButton, MainViewControllerDelegate {
 
     private func showPicker() {
         let insets = vc.insets
-        let initialSize = CGSize(width: bounds.width + insets.left + insets.right,
+        let size = CGSize(width: max(vc.desiredWidth, bounds.width + insets.left + insets.right),
                                  height: 340)
         let myFrameInWindowCoords = convert(bounds, to: nil)
         let myFrameInScreenCoords = window!.convertToScreen(myFrameInWindowCoords)
         vc.view.frame = panel.contentView!.bounds
         window?.addChildWindow(panel, ordered: .above)
         let panelFrame = NSRect(origin: CGPoint(x: myFrameInScreenCoords.minX - insets.left,
-                                                y: myFrameInScreenCoords.maxY - initialSize.height + insets.top),
-                                size: initialSize)
+                                                y: myFrameInScreenCoords.maxY - size.height + insets.top),
+                                size: size)
         panel.setFrame(panelFrame, display: true)
         panel.makeKeyAndOrderFront(nil)
     }

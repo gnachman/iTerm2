@@ -127,6 +127,11 @@ public class TableViewController: NSViewController, FavoritesDataSourceDelegate,
 
     // MARK:- Layout
 
+    var desiredWidth: CGFloat {
+        // Determined emprically by installing lots of fonts and adding some fudge.
+        return 320.0
+    }
+
     private func desiredTableViewFrame() -> CGRect {
         guard let scrollView = tableView.enclosingScrollView else {
             return tableView.frame

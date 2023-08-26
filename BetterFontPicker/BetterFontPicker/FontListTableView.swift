@@ -17,7 +17,6 @@ protocol FontListTableViewDelegate: NSObjectProtocol {
 @objc(BFPFontListTableView)
 public class FontListTableView: NSTableView {
     weak var fontListDelegate: FontListTableViewDelegate?
-
     @objc(keyDown:)
     public override func keyDown(with event: NSEvent) {
         if event.keyCode == NSUpArrowFunctionKey || event.keyCode == NSDownArrowFunctionKey {
