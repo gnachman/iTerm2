@@ -1,0 +1,178 @@
+#!/usr/bin/env python3
+import re
+import sys
+
+def utf16_surrogates_to_ucs4(high, low):
+    return 0x10000 + (int(high, 16) - 0xD800) * 0x400 + (int(low, 16) - 0xDC00)
+
+def utf16_hex_to_ucs4_and_utf8(utf16_group):
+    if len(utf16_group) == 2:
+        ucs4_int = utf16_surrogates_to_ucs4(utf16_group[0], utf16_group[1])
+    else:
+        ucs4_int = int(utf16_group[0], 16)
+    character = chr(ucs4_int)
+    utf8_bytes = character.encode('utf-8')
+    utf8_hex = ' '.join(['{:02x}'.format(b) for b in utf8_bytes])
+
+    return '{:04x}'.format(ucs4_int), utf8_hex, character
+
+def dump_utf16(utf16_input):
+    # Group surrogate pairs together
+    utf16_grouped = []
+    i = 0
+    while i < len(utf16_input):
+        if 0xD800 <= int(utf16_input[i], 16) <= 0xDBFF and i + 1 < len(utf16_input) and 0xDC00 <= int(utf16_input[i + 1], 16) <= 0xDFFF:
+            utf16_grouped.append([utf16_input[i], utf16_input[i + 1]])
+            i += 2
+        else:
+            utf16_grouped.append([utf16_input[i]])
+            i += 1
+
+    # Convert each UTF-16 code unit or surrogate pair
+    ucs4_output = []
+    utf8_output = []
+    characters = []
+    for utf16_group in utf16_grouped:
+        ucs4_hex, utf8_hex, character = utf16_hex_to_ucs4_and_utf8(utf16_group)
+        ucs4_output.append(f"({character}) {ucs4_hex}")
+        utf8_output.append(f"({character}) {''.join(utf8_hex)}")
+        characters.append(character)
+
+    # Output the UCS-4 code points, UTF-8 bytes as hexadecimal, and the characters
+    print("UCS-4:", ' '.join(ucs4_output))
+    print("UTF-8:", ' '.join(utf8_output))
+    print("Characters:", ''.join(characters))
+
+
+def dump_utf8(hex_bytes):
+    # Convert hex bytes to bytes object
+    bytes_object = bytes([int(b, 16) for b in hex_bytes])
+    
+    # Convert bytes to string
+    string_representation = bytes_object.decode('utf-8')
+
+    # Convert string to UCS-4/UTF-32 and output it
+    ucs4_values = string_representation.encode('utf-32-be')
+    ucs4_output = "UCS-4: "
+    for i in range(0, len(ucs4_values), 4):
+        char_repr = ucs4_values[i:i+4].decode('utf-32-be')
+        hex_repr = ucs4_values[i:i+4].hex().lstrip('0')
+        ucs4_output += f"({char_repr}) {hex_repr} "
+    print(ucs4_output.strip())
+
+    # Convert string to UTF-16 and output it
+    utf16_values = string_representation.encode('utf-16-be')
+    utf16_output = "UTF-16: "
+    i = 0
+    while i < len(utf16_values):
+        if 0xD800 <= int(utf16_values[i:i+2].hex(), 16) <= 0xDBFF:
+            # Surrogate pair
+            char_repr = utf16_values[i:i+4].decode('utf-16-be')
+            hex_repr = utf16_values[i:i+2].hex() + " " + utf16_values[i+2:i+4].hex()
+            utf16_output += f"({char_repr}) {hex_repr} "
+            i += 4
+        else:
+            char_repr = utf16_values[i:i+2].decode('utf-16-be')
+            hex_repr = utf16_values[i:i+2].hex()
+            utf16_output += f"({char_repr}) {hex_repr} "
+            i += 2
+    print(utf16_output.strip())
+
+    # Output the string representation
+    print(f"Characters: {string_representation}")
+
+
+def code_point_to_utf8_hex(code_point):
+    code_point_int = int(code_point, 16)
+    character = chr(code_point_int)
+    utf8_bytes = character.encode('utf-8')
+    utf8_hex = f"({character}) " + ' '.join(['{:02x}'.format(b) for b in utf8_bytes])
+    return utf8_hex, character
+
+def code_point_to_utf16_hex(code_point):
+    code_point_int = int(code_point, 16)
+    character = chr(code_point_int)
+    utf16_bytes = character.encode('utf-16-le')  # little endian for simplicity
+    utf16_hex = f"({character}) " + ' '.join(['{:04x}'.format(int(utf16_bytes[i:i+2][::-1].hex(), 16)) for i in range(0, len(utf16_bytes), 2)])
+    return utf16_hex
+
+def dump_ucs4(ucs4_list):
+    utf8_hexes = []
+    characters = []
+    utf16_hexes = []
+
+    for ucs4 in ucs4_list:
+        utf8_hex, character = code_point_to_utf8_hex(ucs4)
+        utf8_hexes.append(utf8_hex)
+        characters.append(character)
+        utf16_hexes.append(code_point_to_utf16_hex(ucs4))
+
+    print("UTF-8:", ' '.join(utf8_hexes))
+    print("UTF-16:", ' '.join(utf16_hexes))
+    print("Characters:", ''.join(characters))
+
+def dump_string(s):
+    # UCS-4 / UTF-32 code points
+    ucs4_code_points = [f"({char}) {hex(ord(char))[2:].zfill(4)}" for char in s]
+
+    # UTF-16 code points
+    utf16_encoded = s.encode('utf-16le')
+    utf16_segments = []
+    i = 0
+    j = 0
+    while i < len(utf16_encoded):
+        if 0xD800 <= (utf16_encoded[i+1] << 8 | utf16_encoded[i]) <= 0xDBFF:  # surrogate pair
+            utf16_segments.append(f"({s[j]}) {hex(utf16_encoded[i+1] << 8 | utf16_encoded[i])[2:].zfill(4)} {hex(utf16_encoded[i+3] << 8 | utf16_encoded[i+2])[2:].zfill(4)}")
+            i += 4
+        else:
+            utf16_segments.append(f"({s[j]}) {hex(utf16_encoded[i+1] << 8 | utf16_encoded[i])[2:].zfill(4)}")
+            i += 2
+        j += 1
+
+    # UTF-8 code points
+    utf8_encoded = s.encode('utf-8')
+    utf8_segments = []
+    i = 0
+    j = 0
+    while i < len(utf8_encoded):
+        char_len = 1
+        if (utf8_encoded[i] & 0xF0) == 0xF0:
+            char_len = 4
+        elif (utf8_encoded[i] & 0xE0) == 0xE0:
+            char_len = 3
+        elif (utf8_encoded[i] & 0xC0) == 0xC0:
+            char_len = 2
+        utf8_segments.append(f"({s[j]}) {' '.join(hex(utf8_encoded[i+k])[2:] for k in range(char_len))}")
+        i += char_len
+        j += 1
+
+    print(f'UCS-4: {" ".join(ucs4_code_points)}')
+    print(f'UTF-16: {" ".join(utf16_segments)}')
+    print(f'UTF-8: {" ".join(utf8_segments)}')
+
+def process_string(s):
+    # Regular expressions for different formats
+    utf8_pattern = r'^([0-9a-fA-F]{2}\s)*[0-9a-fA-F]{2}$'
+    utf16_pattern = r'^([0-9a-fA-F]{4}\s)*[0-9a-fA-F]{4}$'
+    ucs4_pattern = r'^(([0-9a-fA-F]{4,8}\s)*[0-9a-fA-F]{5,8}|[0-9a-fA-F]{4,8}\s)+'
+
+    if re.match(utf8_pattern, s):
+        print("Treating input as UTF-8 hex")
+        dump_utf8(s.split())
+    elif re.match(utf16_pattern, s):
+        print("Treating input as UTF-16 hex")
+        dump_utf16(s.split())
+    elif re.match(ucs4_pattern, s):
+        print("Treating input as UCS-4 hex")
+        dump_ucs4(s.split())
+    else:
+        print(f"Treating input as encoded characters in default encoding {sys.getdefaultencoding()}")
+        dump_string(s)
+
+if sys.stdin.isatty():
+    # stdin is interactive
+    string = input("Enter a sequence of UTF-8, UTF-16, or UCS-4 hex values separated by spaces: ")
+else:
+    # stdin is being piped or redirected
+    string = sys.stdin.readline()
+process_string(string)
