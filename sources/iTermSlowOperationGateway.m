@@ -167,6 +167,21 @@ typedef void (^iTermRecentBranchFetchCallback)(NSArray<NSString *> *);
     }];
 }
 
+- (void)checkIfExecutableRegularFile:(NSString *)filename
+                         searchPaths:(NSArray<NSString *> *)searchPaths
+                          completion:(void (^)(BOOL))completion {
+    if (!self.ready) {
+        return;
+    }
+    [[_connectionToService remoteObjectProxy] checkIfExecutableRegularFile:filename
+                                                               searchPaths:searchPaths
+                                                                 withReply:^(NSNumber * _Nullable exists) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            completion(exists.boolValue);
+        });
+    }];
+}
+
 - (void)exfiltrateEnvironmentVariableNamed:(NSString *)name
                                      shell:(NSString *)shell
                                 completion:(void (^)(NSString * _Nonnull))completion {

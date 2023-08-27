@@ -229,6 +229,65 @@ static int MakeNonBlocking(int fd) {
     }];
 }
 
+BOOL FileIsRegularExecutableFile(NSString *filename) {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+
+    // Resolve symbolic links
+    NSString *resolvedPath = [fileManager destinationOfSymbolicLinkAtPath:filename error:nil];
+    if (resolvedPath) {
+        if (![resolvedPath hasPrefix:@"/"]) {
+            // Make the resolved path absolute
+            NSString *symlinkDir = [filename stringByDeletingLastPathComponent];
+            resolvedPath = [symlinkDir stringByAppendingPathComponent:resolvedPath];
+            resolvedPath = [resolvedPath stringByStandardizingPath]; // Resolve ".." and "." path components
+        }
+        filename = resolvedPath;
+    }
+
+    NSDictionary *fileAttributes = [fileManager attributesOfItemAtPath:filename error:nil];
+    if (fileAttributes) {
+        NSString *fileType = [fileAttributes objectForKey:NSFileType];
+
+        if ([fileType isEqualToString:NSFileTypeRegular]) {
+            return [fileManager isExecutableFileAtPath:filename];
+        }
+    }
+    return NO;
+}
+
+static BOOL FileIsRegularExecutableFileUsingSearchPathsIfNeeded(NSString *filename,
+                                                                NSArray<NSString *> *paths) {
+    if ([filename hasPrefix:@"/"]) {
+        return FileIsRegularExecutableFile(filename);
+    }
+    // Search $PATH
+    for (NSString *path in paths) {
+        NSString *fullPath = [path stringByAppendingPathComponent:filename];
+
+        if (FileIsRegularExecutableFile(fullPath)) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)checkIfExecutableRegularFile:(NSString *)filename
+                         searchPaths:(NSArray<NSString *> *)searchPaths
+                           withReply:(void (^)(NSNumber * _Nullable exists))reply {
+    [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^ _Nullable completion)(void)) {
+        if (!shouldPerform) {
+            reply(nil);
+            return;
+        }
+        const BOOL exists = FileIsRegularExecutableFileUsingSearchPathsIfNeeded(filename, searchPaths);
+        if (!completion()) {
+            return;
+        }
+        NSNumber *result = @(exists);
+        reply(result);
+    }];
+}
+
 // Usage:
 // [self performRiskyBlock:^(BOOL shouldPerform, BOOL (^completion)(void)) {
 //   if (!shouldPerform) {

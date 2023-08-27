@@ -75,6 +75,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     IBOutlet NSTokenField *_tagsTokenField;
     IBOutlet NSPopUpButton *_commandType;  // Login shell vs custom command
     IBOutlet NSTextField *_customCommand;  // Command to use instead of login shell
+    IBOutlet NSImageView *_commandWarningImageView;
     IBOutlet NSTextField *_sendTextAtStart;
     IBOutlet NSMatrix *_initialDirectoryType;  // Home/Reuse/Custom/Advanced
     IBOutlet NSTextField *_customDirectory;  // Path to custom initial directory
@@ -409,6 +410,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                  name:kRefreshTerminalNotification
                                                object:nil];
     [self updateEditAdvancedConfigButton];
+    [self updateCommandWarningImageView];
 }
 
 - (void)updateSubtitlesAllowed {
@@ -710,6 +712,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
         [[self stringForKey:KEY_CUSTOM_COMMAND] isEqualToString:kProfilePreferenceCommandTypeSSHValue]) {
         _customCommand.hidden = NO;
         _customCommand.enabled = YES;
+        _customCommand.stringValue = [self stringForKey:KEY_COMMAND_LINE];
     } else {
         _customCommand.hidden = NO;
         _customCommand.enabled = NO;
@@ -935,6 +938,66 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 
 #pragma mark - Command Type
 
+- (NSString *)commandInCurrentCommandLine {
+    NSString *commandLine = [self stringForKey:KEY_COMMAND_LINE];
+    NSArray<NSString *> *components = [commandLine componentsInShellCommand];
+    if ([components count] == 0) {
+        return @"";
+    }
+    return components[0];
+}
+
+- (void)checkIfCommandLineIsValid {
+    NSString *commandLine = [self stringForKey:KEY_COMMAND_LINE];
+    const NSInteger mode = _commandType.selectedTag;
+    if (commandLine.length == 0) {
+        [self didDetermineThatFilename:commandLine isExecutableRegularFile:NO mode:mode];
+        return;
+    }
+    NSString *filename = [self commandInCurrentCommandLine];
+    NSString *pathEnv = [[[NSProcessInfo processInfo] environment] objectForKey:@"PATH"];
+    NSArray *paths = [pathEnv componentsSeparatedByString:@":"];
+    __weak __typeof(self) weakSelf = self;
+    [[iTermSlowOperationGateway sharedInstance] checkIfExecutableRegularFile:filename
+                                                                 searchPaths:paths
+                                                                  completion:^(BOOL isExecutableRegularFile) {
+        [weakSelf didDetermineThatFilename:filename
+                   isExecutableRegularFile:isExecutableRegularFile
+                                      mode:mode];
+    }];
+}
+
+- (void)didDetermineThatFilename:(NSString *)filename
+         isExecutableRegularFile:(BOOL)isExecutableRegularFile
+                            mode:(NSInteger)mode {
+    if (_commandType.selectedTag != mode){
+        return;
+    }
+    NSString *currentCommand = [self commandInCurrentCommandLine];
+    if (![NSObject object:filename isEqualToObject:currentCommand]) {
+        return;
+    }
+    _commandWarningImageView.hidden = isExecutableRegularFile;
+}
+
+- (void)updateCommandWarningImageView {
+    NSInteger tag = _commandType.selectedTag;
+    switch (tag) {
+        case iTermGeneralProfilePreferenceCustomCommandTagCustom:
+            [self checkIfCommandLineIsValid];
+            break;
+        case iTermGeneralProfilePreferenceCustomCommandTagLoginShell:
+            _commandWarningImageView.hidden = YES;
+            break;
+        case iTermGeneralProfilePreferenceCustomCommandTagCustomShell:
+            [self checkIfCommandLineIsValid];
+            break;
+        case iTermGeneralProfilePreferenceCustomCommandTagSSH:
+            _commandWarningImageView.hidden = YES;
+            break;
+    }
+}
+
 - (void)commandTypeDidChange {
     NSInteger tag = _commandType.selectedTag;
     NSString *value;
@@ -960,6 +1023,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     }
     [self setString:value forKey:KEY_CUSTOM_COMMAND];
     [self updateEnabledState];
+    [self updateCommandWarningImageView];
 }
 
 - (void)updateCommandType {
@@ -1276,6 +1340,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
     }
     [super controlTextDidChange:aNotification];
     [self updateEnabledState];
+    [self updateCommandWarningImageView];
 }
 
 - (void)removeWhitespaceFromCustomCommand {

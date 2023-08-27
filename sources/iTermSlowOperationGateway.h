@@ -80,6 +80,10 @@ NS_ASSUME_NONNULL_BEGIN
                                       uint8_t status,
                                       NSTaskTerminationReason reason))completion;
 
+- (void)checkIfExecutableRegularFile:(NSString *)filename
+                         searchPaths:(NSArray<NSString *> *)searchPaths  // from $PATH
+                          completion:(void (^)(BOOL isExecutableRegularFile))completion;
+
 @end
 
 NS_ASSUME_NONNULL_END
