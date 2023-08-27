@@ -28,6 +28,7 @@
 #import "iTermVariableScope+Session.h"
 #import "iTermVariableScope+Tab.h"
 #import "iTermVariableScope+Window.h"
+#import "NSArray+iTerm.h"
 #import "NSObject+iTerm.h"
 #import "NSStringITerm.h"
 #import "NSTextField+iTerm.h"
@@ -411,6 +412,7 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
                                                object:nil];
     [self updateEditAdvancedConfigButton];
     [self updateCommandWarningImageView];
+    [_commandWarningImageView addGestureRecognizer:[[NSClickGestureRecognizer alloc] initWithTarget:self action:@selector(handleCommandWarningClick:)]];
 }
 
 - (void)updateSubtitlesAllowed {
@@ -937,6 +939,13 @@ static NSString *const iTermProfilePreferencesUpdateSessionName = @"iTermProfile
 }
 
 #pragma mark - Command Type
+
+- (void)handleCommandWarningClick:(NSClickGestureRecognizer *)recognizer {
+    NSString *pathEnv = [[[NSProcessInfo processInfo] environment] objectForKey:@"PATH"];
+    NSArray *paths = [pathEnv componentsSeparatedByString:@":"];
+    NSString *message = [NSString stringWithFormat:@"Command not found. You may need to specify the full path because your shell is not used when running this command. The search path contains the following folders: %@.", [paths componentsJoinedWithOxfordComma]];
+    [_commandWarningImageView it_showWarning:message];
+}
 
 - (NSString *)commandInCurrentCommandLine {
     NSString *commandLine = [self stringForKey:KEY_COMMAND_LINE];
