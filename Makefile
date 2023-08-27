@@ -59,7 +59,17 @@ zip: Deployment
 
 clean:
 	rm -rf build
+	rm -rf submodules/*/build
+	rm -rf submodules/*/build-*
+	rm -rf submodules/*/build_*
+	rm -rf submodules/libssh2/libssh2.a
 	rm -f *~
+	git -C submodules/NMSSH/ checkout NMSSH-OSX/Libraries/lib/
+	rm -rf BetterFontPicker/BetterFontPicker.framework && git checkout BetterFontPicker/BetterFontPicker.framework
+	rm -rf ColorPicker/ColorPicker.framework && git checkout ColorPicker/ColorPicker.framework
+	rm -rf SearchableComboListView/SearchableComboListView.framework && git checkout SearchableComboListView/SearchableComboListView.framework
+	rm -rf ThirdParty && git checkout ThirdParty
+	git checkout last-xcode-version
 
 backup-old-iterm:
 	if [[ -d $(APPS)/iTerm2.app.bak ]] ; then rm -fr $(APPS)/iTerm2.app.bak ; fi
@@ -86,50 +96,48 @@ preview:
 	make Deployment
 
 x86libsixel: force
-	cd submodules/libsixel && make clean
-	cd submodules/libsixel && CC="/usr/bin/clang -target x86_64-apple-macos10.14" LDFLAGS="-ld_classic -target x86_64-apple-macos10.14" CFLAGS="-target x86_64-apple-macos10.14" ./configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel --without-libcurl --without-jpeg --without-png --disable-python
-	cd submodules/libsixel && CC="/usr/bin/clang -target x86_64-apple-macos10.14" LDFLAGS="-ld_classic -target x86_64-apple-macos10.14" CFLAGS="-target x86_64-apple-macos10.14" make
-	cd submodules/libsixel && make install
-
-	rm ThirdParty/libsixel/lib/*dylib* ThirdParty/libsixel/bin/*
-	mv ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel/lib/libsixel-x86.a
+	mkdir -p submodules/libsixel/build-x86
+	cd submodules/libsixel/build-x86 && CC="/usr/bin/clang -target x86_64-apple-macos10.14" LDFLAGS="-ld_classic -target x86_64-apple-macos10.14" CFLAGS="-target x86_64-apple-macos10.14" LIBTOOLFLAGS="-target x86_64-apple-macos10.14" ../configure -host=x86_64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-x86 --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 armsixel: force
-	cd submodules/libsixel && ./configure
-	cd submodules/libsixel && make clean
-	cd submodules/libsixel && LDFLAGS="-ld_classic -target arm64-apple-macos10.14" CFLAGS="-target arm64-apple-macos10.14" LIBTOOLFLAGS="-target arm64-apple-macos10.14" ./configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && CFLAGS="-target arm64-apple-macos10.14" make && make install
-	rm ThirdParty/libsixel-arm/bin/*
+	mkdir -p submodules/libsixel/build-arm
+	cd submodules/libsixel/build-arm && CC="/usr/bin/clang -target arm64-apple-macos10.14" LDFLAGS="-ld_classic -target arm64-apple-macos10.14" CFLAGS="-target arm64-apple-macos10.14" LIBTOOLFLAGS="-target arm64-apple-macos10.14" ../configure --host=aarch64-apple-darwin --prefix=${PWD}/ThirdParty/libsixel-arm --without-libcurl --without-jpeg --without-png --disable-python --disable-shared && $(MAKE) && $(MAKE) install
 
 # Usage: go to an intel mac and run make x86libsixel and commit it. Go to an arm mac and run make armsixel && make libsixel.
-fatlibsixel: force
-	make armsixel
-	make x86libsixel
-	lipo -create -output ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel/lib/libsixel-x86.a
+fatlibsixel: force armsixel x86libsixel
+	lipo -create -output ThirdParty/libsixel/lib/libsixel.a ThirdParty/libsixel-arm/lib/libsixel.a ThirdParty/libsixel-x86/lib/libsixel.a
 
-armopenssl: force
-	cd submodules/openssl && ./Configure darwin64-arm64-cc -Wl,-ld_classic && make clean && make build_generated && make libcrypto.a libssl.a -j4 && mv libcrypto.a libcrypto-arm64.a && mv libssl.a libssl-arm64.a
+# Unfortuately configuring these two can't be done in parallel, so force arm to
+# go first and have x86 depend on it. (The build is parallel.)
+configure-armopenssl: force
+	mkdir -p submodules/openssl/build-arm
+	cd submodules/openssl/build-arm && ../Configure darwin64-arm64-cc -Wl,-ld_classic && $(MAKE) build_generated
 
-x86openssl: force
-	cd submodules/openssl && ./Configure darwin64-x86_64-cc -Wl,-ld_classic && make clean && make build_generated && make libcrypto.a libssl.a -j4 && mv libcrypto.a libcrypto-x86_64.a && mv libssl.a libssl-x86_64.a
+armopenssl: force configure-armopenssl
+	cd submodules/openssl/build-arm && $(MAKE) libcrypto.a libssl.a
 
-fatopenssl: force
-	make x86openssl
-	make armopenssl
-	cd submodules/openssl/ && lipo -create -output libcrypto.a libcrypto-x86_64.a libcrypto-arm64.a
-	cd submodules/openssl/ && lipo -create -output libssl.a libssl-x86_64.a libssl-arm64.a
+configure-x86openssl: force configure-armopenssl
+	mkdir -p submodules/openssl/build-x86
+	cd submodules/openssl/build-x86 && ../Configure darwin64-x86_64-cc -Wl,-ld_classic && $(MAKE) build_generated
 
-x86libssh2: force
+x86openssl: force configure-x86openssl
+	cd submodules/openssl/build-x86 && $(MAKE) libcrypto.a libssl.a
+
+fatopenssl: force x86openssl armopenssl
+	cd submodules/openssl/ && lipo -create -output libcrypto.a build-x86/libcrypto.a build-arm/libcrypto.a
+	cd submodules/openssl/ && lipo -create -output libssl.a build-x86/libssl.a build-arm/libssl.a
+	# This is a bit of a hack but the files are identical across arches
+	ln -sf ../../build-arm/include/openssl/opensslconf.h submodules/openssl/include/openssl/opensslconf.h
+
+x86libssh2: force fatopenssl
 	mkdir -p submodules/libssh2/build_x86_64
-	# -target x86_64-apple-macos10.15 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
-	cd submodules/libssh2/build_x86_64 && /usr/local/bin/cmake -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" -DCMAKE_C_FLAGS="-target x86_64-apple-macos10.15 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" -DCMAKE_CXX_FLAGS="-target x86_64-apple-macos10.15 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" .. && make libssh2 -j4
+	cd submodules/libssh2/build_x86_64 && $(CMAKE) -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" .. && $(MAKE) libssh2
 
-armlibssh2: force
+armlibssh2: force fatopenssl
 	mkdir -p submodules/libssh2/build_arm64
-	cd submodules/libssh2/build_arm64 && /usr/local/bin/cmake -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL  -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" -DCMAKE_C_FLAGS="-target arm64-apple-macos10.15 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" -DCMAKE_CXX_FLAGS="-target arm64-apple-macos10.15 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" .. && make libssh2 -j4
+	cd submodules/libssh2/build_arm64 && $(CMAKE) -DOPENSSL_ROOT_DIR=${PWD}/submodules/openssl -DBUILD_EXAMPLES=NO -DBUILD_TESTING=NO -DCMAKE_OSX_ARCHITECTURES=arm64 -DCRYPTO_BACKEND=OpenSSL -DCMAKE_EXE_LINKER_FLAGS="-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="-ld_classic" -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 .. && $(MAKE) libssh2
 
-fatlibssh2: force fatopenssl
-	make x86libssh2
-	make armlibssh2
+fatlibssh2: force x86libssh2 armlibssh2
 	cd submodules/libssh2 && lipo -create -output libssh2.a build_arm64/src/libssh2.a build_x86_64/src/libssh2.a
 	cp submodules/libssh2/libssh2.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/libssh2.a
 	cp submodules/openssl/libcrypto.a submodules/openssl/libssl.a submodules/NMSSH/NMSSH-OSX/Libraries/lib/
@@ -145,23 +153,15 @@ NMSSH: force fatlibssh2
 
 libgit2: force
 	mkdir -p submodules/libgit2/build
-	MAKE=/usr/local/bin/cmake PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET="10.14" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF ..
-	MAKE=/usr/local/bin/cmake PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} --build .
-	MAKE=/usr/local/bin/cmake PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} --build . --target install
+	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} -DBUILD_SHARED_LIBS=OFF -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET="10.14" -DCMAKE_INSTALL_PREFIX=../../../ThirdParty/libgit2 -DUSE_SSH=OFF -DUSE_ICONV=OFF ..
+	PATH=/usr/local/bin:${PATH} cd submodules/libgit2/build && ${CMAKE} --build . --target install --parallel "$$(sysctl -n hw.ncpu)"
 
 paranoiddeps: force
-	/usr/bin/sandbox-exec -f deps.sb make deps
+	/usr/bin/sandbox-exec -f deps.sb $(MAKE) deps
 
 # You probably want make paranoiddeps to avoid depending on Hombrew stuff.
-deps: force
-	make fatlibsixel
-	make fatopenssl
-	make fatlibssh2
-	make CoreParse
-	make NMSSH
-	make bindeps
-	make libgit2
-       
+deps: force fatlibsixel fatopenssl fatlibssh2 CoreParse NMSSH bindeps libgit2 
+
 DepsIfNeeded: force
 	tools/rebuild-deps-if-needed
 
@@ -169,9 +169,9 @@ powerline-extra-symbols: force
 	cp submodules/powerline-extra-symbols/src/*eps ThirdParty/PowerlineExtraSymbols/
 
 bindeps: SwiftyMarkdown Highlightr
-	cd BetterFontPicker && make
-	cd ColorPicker && make
-	cd SearchableComboListView && make
+	cd BetterFontPicker && $(MAKE)
+	cd ColorPicker && $(MAKE)
+	cd SearchableComboListView && $(MAKE)
 
 SwiftyMarkdown: force
 	cd submodules/SwiftyMarkdown && xcodebuild
