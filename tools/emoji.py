@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import itertools
+import requests
 
 def get_ranges(i):
     def difference(pair):
@@ -49,9 +50,18 @@ def output_sequences():
 
     output("Emoji", "emoji", ranges)
 
+def download_file(url, filename):
+    """
+    Download a file from a given URL and save it locally.
+    """
+    response = requests.get(url)
+    with open(filename, "wb") as file:
+        file.write(response.content)
+
 def output_default_emoji_presentation():
     """Output emoji that have a default emoji presentation."""
     # https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt
+    download_file("https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt", "emoji-data.txt")
     f = open("emoji-data.txt", "r")
     ranges = []
     for line in f:
@@ -96,7 +106,7 @@ def output_default_text_presentation():
     when following a default-emoji presentation character."""
     # https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt
     emoji = list(get_all_emoji())
-
+    download_file("https://unicode.org/Public/UCD/latest/ucd/emoji/emoji-data.txt", "emoji-data.txt")
     f = open("emoji-data.txt", "r")
     for line in f:
         try:
@@ -146,4 +156,4 @@ def print_sequences_issue9185():
 #output_default_emoji_presentation()
 #print_sequences_issue9185()
 #output_upgradable_presentation()
-#output_default_text_presentation()
+output_default_text_presentation()
