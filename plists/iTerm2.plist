@@ -154,6 +154,8 @@
         <string>An application in iTerm2 wants to use speech recognition.</string>
         <key>NSRemindersUsageDescription</key>
         <string>An application in iTerm2 wants to use your reminders.</string>
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>An application in iTerm2 wants to use the photo library.</string>
         <key>NSServices</key>
         <array>
                 <dict>
