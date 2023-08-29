@@ -701,6 +701,34 @@ static NSError *SCPFileError(NSString *description) {
     return result;
 }
 
+static NSString *const SCPFileKnownHostsUserDefaultsKey = @"NoSyncKnownHosts";
+
+- (NSString *)userHostPort {
+    return [NSString stringWithFormat:@"%@@%@:%@", self.path.username, self.hostname, @(self.port)];
+}
+
+- (BOOL)hostnameIsKnown {
+    return [[[NSUserDefaults standardUserDefaults] objectForKey:SCPFileKnownHostsUserDefaultsKey] containsObject:self.userHostPort];
+}
+
+- (BOOL)shouldConnectToNewHostname {
+    const iTermWarningSelection selection =
+    [iTermWarning showWarningWithTitle:[NSString stringWithFormat:@"Connect to %@?", self.userHostPort]
+                               actions:@[ @"OK", @"Cancel" ]
+                             accessory:nil
+                            identifier:[@"NoSyncConnectTo_" stringByAppendingString:self.userHostPort]
+                           silenceable:kiTermWarningTypePermanentlySilenceable
+                               heading:@"Connect to New Host?"
+                                window:nil];
+    return selection == kiTermWarningSelection0;
+}
+
+- (void)addKnownHost {
+    NSArray<NSString *> *hosts = [[NSUserDefaults standardUserDefaults] objectForKey:SCPFileKnownHostsUserDefaultsKey] ?: @[];
+    hosts = [hosts arrayByAddingObject:self.userHostPort];
+    [[NSUserDefaults standardUserDefaults] setObject:hosts forKey:SCPFileKnownHostsUserDefaultsKey];
+}
+
 - (void)download {
     _downloading = YES;
     self.status = kTransferrableFileStatusStarting;
@@ -708,6 +736,15 @@ static NSError *SCPFileError(NSString *description) {
     [[FileTransferManager sharedInstance] transferrableFileDidStartTransfer:self];
 
     if (!self.hasPredecessor) {
+        if (![self hostnameIsKnown]) {
+            if (![self shouldConnectToNewHostname]) {
+                self.error = @"Canceled by user";
+                [[FileTransferManager sharedInstance] transferrableFile:self
+                                         didFinishTransmissionWithError:SCPFileError(@"Canceled by user")];
+                return;
+            }
+            [self addKnownHost];
+        }
         dispatch_async(_queue, ^() {
             [self performTransferWrapper:YES];
         });
@@ -722,6 +759,15 @@ static NSError *SCPFileError(NSString *description) {
     [[FileTransferManager sharedInstance] transferrableFileDidStartTransfer:self];
 
     if (!self.hasPredecessor) {
+        if (![self hostnameIsKnown]) {
+            if (![self shouldConnectToNewHostname]) {
+                self.error = @"Canceled by user";
+                [[FileTransferManager sharedInstance] transferrableFile:self
+                                         didFinishTransmissionWithError:SCPFileError(@"Canceled by user")];
+                return;
+            }
+            [self addKnownHost];
+        }
         dispatch_async(_queue, ^() {
             [self performTransferWrapper:NO];
         });

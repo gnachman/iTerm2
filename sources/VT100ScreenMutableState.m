@@ -2821,9 +2821,11 @@ void VT100ScreenEraseCell(screen_char_t *sct,
     }];
 }
 
-- (void)setRemoteHostFromString:(NSString *)remoteHost {
-    DLog(@"Set remote host to %@ %@", remoteHost, self);
+- (void)setRemoteHostFromString:(NSString *)unsafeRemoteHost {
+    DLog(@"Set remote host to %@ %@", unsafeRemoteHost, self);
     // Search backwards because Windows UPN format includes an @ in the user name. I don't think hostnames would ever have an @ sign.
+    NSCharacterSet *controlCharacters = [NSCharacterSet controlCharacterSet];
+    NSString *remoteHost = [[unsafeRemoteHost componentsSeparatedByCharactersInSet:controlCharacters] componentsJoinedByString:@""];
     NSRange atRange = [remoteHost rangeOfString:@"@" options:NSBackwardsSearch];
     NSString *user = nil;
     NSString *host = nil;
