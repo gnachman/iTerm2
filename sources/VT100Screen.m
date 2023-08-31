@@ -602,7 +602,7 @@ const NSInteger VT100ScreenBigFileDownloadThreshold = 1024 * 1024 * 1024;
     if (!mark.hasCode) {
         return nil;
     }
-    const long long absLine = [_state absCoordRangeForInterval:mark.entry.interval].start.y;
+    const long long absLine = mark.commandRange.start.y;
     if (absLine >= _state.totalScrollbackOverflow + _state.numberOfScrollbackLines) {
         return nil;
     }
