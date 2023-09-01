@@ -48,6 +48,9 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 
 // Line number to draw at (row - scrollbackOverflow)
 @property(nonatomic, assign) int line;
+// Line number the values came from. Usually the same as `line` except for
+// offscreen command lines.
+@property(nonatomic, assign) int sourceLine;
 
 @property(nonatomic, retain) NSArray<iTermBoxedBackgroundColorRun *> *array;
 @property(nonatomic, assign) NSInteger numberOfEquivalentRows;
@@ -56,7 +59,8 @@ NS_INLINE BOOL iTermBackgroundColorRunsEqual(iTermBackgroundColorRun *a,
 // Fills in *anyBlinkPtr with YES if some character in the range is blinking.
 + (instancetype)backgroundRunsInLine:(const screen_char_t *)theLine
                           lineLength:(int)width
-                                 row:(int)row  // Row number in datasource
+                    sourceLineNumber:(int)sourceLineNumber
+                   displayLineNumber:(int)displayLineNumber
                      selectedIndexes:(NSIndexSet *)selectedIndexes
                          withinRange:(NSRange)charRange
                              matches:(NSData *)matches

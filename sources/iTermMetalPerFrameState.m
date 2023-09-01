@@ -167,7 +167,7 @@ typedef struct {
     [self loadIndicatorsFromTextView:textView];
     [self loadHighlightedRowsFromTextView:textView];
     [self loadAnnotationRangesFromTextView:textView];
-    [self loadOffscreenCommandLine:textView];
+    [self loadOffscreenCommandLine:textView screen:screen];
 }
 
 - (void)loadSettingsWithDrawingHelper:(iTermTextDrawingHelper *)drawingHelper
@@ -461,13 +461,18 @@ typedef struct {
     }];
 }
 
-- (void)loadOffscreenCommandLine:(PTYTextView *)textView {
+// Replace the first entry in _rows with the offscren command line if we are showing one.
+- (void)loadOffscreenCommandLine:(PTYTextView *)textView
+                          screen:(VT100Screen *)screen {
     _haveOffscreenCommandLine = textView.drawingHelper.offscreenCommandLine != nil;
     if (_haveOffscreenCommandLine) {
         _rows[0]->_screenCharLine = textView.drawingHelper.offscreenCommandLine.characters;
         _rows[0]->_selectedIndexSet = [[NSIndexSet alloc] init];
         _rows[0]->_matches = nil;
         _rows[0]->_date = textView.drawingHelper.offscreenCommandLine.date;
+        const long long totalScrollbackOverflow = [screen totalScrollbackOverflow];
+        const int i = textView.drawingHelper.offscreenCommandLine.absoluteLineNumber - totalScrollbackOverflow;
+        _rows[0]->_eaIndex = [[screen externalAttributeIndexForLine:i] copy];
     }
 }
 

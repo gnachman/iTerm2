@@ -59,7 +59,8 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
 
 + (instancetype)backgroundRunsInLine:(const screen_char_t *)theLine
                           lineLength:(int)width
-                                 row:(int)row
+                    sourceLineNumber:(int)sourceLineNumber
+                   displayLineNumber:(int)displayLineNumber
                      selectedIndexes:(NSIndexSet *)selectedIndexes
                          withinRange:(NSRange)charRange
                              matches:(NSData *)matches
@@ -81,7 +82,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
         }
         iTermMakeBackgroundColorRun(&current,
                                     theLine,
-                                    VT100GridCoordMake(x, row),
+                                    VT100GridCoordMake(x, displayLineNumber),
                                     selectedIndexes,
                                     matches,
                                     width);
@@ -107,7 +108,8 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
         [[[iTermBackgroundColorRunsInLine alloc] init] autorelease];
     backgroundColorRuns.array = runs;
     backgroundColorRuns.y = y;
-    backgroundColorRuns.line = row;
+    backgroundColorRuns.line = displayLineNumber;
+    backgroundColorRuns.sourceLine = sourceLineNumber;
     return backgroundColorRuns;
 }
 
@@ -132,6 +134,7 @@ static void iTermMakeBackgroundColorRun(iTermBackgroundColorRun *run,
     backgroundColorRuns.array = runs;
     backgroundColorRuns.y = y;
     backgroundColorRuns.line = row;
+    backgroundColorRuns.sourceLine = row;
     return backgroundColorRuns;
 }
 
