@@ -6890,6 +6890,7 @@
 		A6B5134918E779BB00D249A5 /* iTermPasteHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = iTermPasteHelper.m; sourceTree = "<group>"; tabWidth = 4; };
 		A6B540F8224838A100D3AD14 /* NSColor+PSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "NSColor+PSM.h"; sourceTree = "<group>"; };
 		A6B540F9224838A100D3AD14 /* NSColor+PSM.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "NSColor+PSM.m"; sourceTree = "<group>"; };
+		A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Config.xcconfig; path = XCConfig/Config.xcconfig; sourceTree = SOURCE_ROOT; };
 		A6B60CA9245E33C200DBD6A7 /* PSMCachedTitle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PSMCachedTitle.h; sourceTree = "<group>"; };
 		A6B60CAA245E33C200DBD6A7 /* PSMCachedTitle.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PSMCachedTitle.m; sourceTree = "<group>"; };
 		A6B6178A287CC001008A0C54 /* iTermServerDeleter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iTermServerDeleter.swift; sourceTree = "<group>"; };
@@ -7710,6 +7711,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				A6B5E2EE2AA1424000500BA2 /* XCConfig */,
 				A63F2A3A23FA5951008DDEA4 /* it2run */,
 				5370676121C9D2390088D0F3 /* SignedArchive */,
 				530AB7EC20AE85DE00D2AA08 /* api */,
@@ -11166,6 +11168,14 @@
 			name = CompactWindowStyle;
 			sourceTree = "<group>";
 		};
+		A6B5E2EE2AA1424000500BA2 /* XCConfig */ = {
+			isa = PBXGroup;
+			children = (
+				A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */,
+			);
+			path = XCConfig;
+			sourceTree = "<group>";
+		};
 		A6BF034D21E1763D0097DA86 /* Language */ = {
 			isa = PBXGroup;
 			children = (
@@ -13380,10 +13390,6 @@
 				LastSwiftUpdateCheck = 1420;
 				LastUpgradeCheck = 1420;
 				TargetAttributes = {
-					1D6ED85219AEA20D005A7799 = {
-						DevelopmentTeam = H7V7XYVQ7D;
-						ProvisioningStyle = Automatic;
-					};
 					1DD39AD3180B8117004E56D5 = {
 						DevelopmentTeam = H7V7XYVQ7D;
 						ProvisioningStyle = Automatic;
@@ -13393,14 +13399,10 @@
 					};
 					759637992593AE0700E278CC = {
 						CreatedOnToolsVersion = 12.3;
-						DevelopmentTeam = H7V7XYVQ7D;
 						LastSwiftMigration = 1410;
-						ProvisioningStyle = Automatic;
 					};
 					874206460564169600CFC3F1 = {
-						DevelopmentTeam = H7V7XYVQ7D;
 						LastSwiftMigration = 1250;
-						ProvisioningStyle = Automatic;
 						SystemCapabilities = {
 							com.apple.HardenedRuntime = {
 								enabled = 1;
@@ -13409,19 +13411,13 @@
 					};
 					A60593B1257DF9A500CACEE6 = {
 						CreatedOnToolsVersion = 12.2;
-						DevelopmentTeam = H7V7XYVQ7D;
-						ProvisioningStyle = Automatic;
 					};
 					A63EB02C284D1A1F00B2AB89 = {
 						CreatedOnToolsVersion = 13.3;
-						DevelopmentTeam = H7V7XYVQ7D;
 						LastSwiftMigration = 1330;
-						ProvisioningStyle = Automatic;
 					};
 					A663197722FF349700C502BD = {
 						CreatedOnToolsVersion = 10.2;
-						DevelopmentTeam = H7V7XYVQ7D;
-						ProvisioningStyle = Automatic;
 					};
 					A66717851DCE36C3000CE608 = {
 						DevelopmentTeam = H7V7XYVQ7D;
@@ -13429,24 +13425,18 @@
 					};
 					A6866B6623CAA10A00ACD94C = {
 						CreatedOnToolsVersion = 11.3;
-						DevelopmentTeam = H7V7XYVQ7D;
-						ProvisioningStyle = Automatic;
 					};
 					A6A5BDF62A070C3800F5FD44 = {
 						CreatedOnToolsVersion = 14.2;
 					};
 					A6C1FE59284C1BF200EA8A3B = {
 						CreatedOnToolsVersion = 13.3;
-						DevelopmentTeam = H7V7XYVQ7D;
-						ProvisioningStyle = Automatic;
 					};
 					A6C7603F1B45C4CF00E3C992 = {
 						DevelopmentTeam = H7V7XYVQ7D;
 					};
 					A6C7641B1B45CB2800E3C992 = {
 						CreatedOnToolsVersion = 6.3;
-						DevelopmentTeam = H7V7XYVQ7D;
-						ProvisioningStyle = Automatic;
 						TestTargetID = 874206460564169600CFC3F1;
 					};
 				};
@@ -16661,6 +16651,7 @@
 /* Begin XCBuildConfiguration section */
 		1809E7B01665E2CB0069C439 /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-Nightly";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
@@ -16711,6 +16702,7 @@
 		};
 		1809E7B11665E2CB0069C439 /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -16719,11 +16711,14 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -16776,6 +16771,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
 				PRODUCT_NAME = iTerm2;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 5.0;
@@ -16798,6 +16794,7 @@
 		};
 		1D6EDB0619AEA20D005A7799 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -16806,6 +16803,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -16874,13 +16872,17 @@
 		};
 		1D6EDB0719AEA20D005A7799 /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -16929,6 +16931,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -16946,13 +16949,17 @@
 		};
 		1D6EDB0819AEA20D005A7799 /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -17000,6 +17007,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -17017,6 +17025,7 @@
 		};
 		1DD39B03180B812D004E56D5 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -17104,6 +17113,7 @@
 		};
 		1DD39B04180B812D004E56D5 /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -17185,6 +17195,7 @@
 		};
 		1DD39B06180B812D004E56D5 /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -17266,6 +17277,7 @@
 		};
 		1DFA7C821923E83700DF1410 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -17284,6 +17296,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -17312,6 +17325,7 @@
 		};
 		1DFA7C831923E83700DF1410 /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -17331,6 +17345,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -17352,6 +17367,7 @@
 		};
 		1DFA7C841923E83700DF1410 /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -17371,6 +17387,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -17392,6 +17409,7 @@
 		};
 		759637A62593AE0700E278CC /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -17427,6 +17445,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -17472,6 +17491,7 @@
 		};
 		759637A72593AE0700E278CC /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -17503,10 +17523,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -17534,6 +17557,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
@@ -17544,6 +17568,7 @@
 		};
 		759637A82593AE0700E278CC /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -17575,10 +17600,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -17606,6 +17634,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
@@ -17616,6 +17645,7 @@
 		};
 		759637A92593AE0700E278CC /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -17647,10 +17677,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -17678,6 +17711,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.sandboxed-worker";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "iTerm2SandboxedWorker/iTerm2SandboxedWorker-Bridging-Header.h";
@@ -17688,6 +17722,7 @@
 		};
 		A60593B6257DF9A500CACEE6 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -17722,6 +17757,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -17750,6 +17786,7 @@
 		};
 		A60593B7257DF9A500CACEE6 /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -17781,9 +17818,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -17798,6 +17838,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -17805,6 +17846,7 @@
 		};
 		A60593B8257DF9A500CACEE6 /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -17836,9 +17878,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -17853,6 +17898,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -17860,6 +17906,7 @@
 		};
 		A60593B9257DF9A500CACEE6 /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -17891,9 +17938,12 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -17908,6 +17958,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -17915,6 +17966,7 @@
 		};
 		A63EB036284D1A1F00B2AB89 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				APPLICATION_EXTENSION_API_ONLY = YES;
@@ -17952,6 +18004,7 @@
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -18000,6 +18053,7 @@
 		};
 		A63EB037284D1A1F00B2AB89 /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				APPLICATION_EXTENSION_API_ONLY = YES;
@@ -18031,12 +18085,15 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -18064,6 +18121,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.FileProviderService;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -18078,6 +18136,7 @@
 		};
 		A63EB038284D1A1F00B2AB89 /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				APPLICATION_EXTENSION_API_ONLY = YES;
@@ -18109,12 +18168,15 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -18142,6 +18204,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.FileProviderService;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -18156,6 +18219,7 @@
 		};
 		A63EB039284D1A1F00B2AB89 /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				APPLICATION_EXTENSION_API_ONLY = YES;
@@ -18187,12 +18251,15 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = "";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				DYLIB_INSTALL_NAME_BASE = "@rpath";
@@ -18220,6 +18287,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.FileProviderService;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -18234,6 +18302,7 @@
 		};
 		A656E9881F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-Beta";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
@@ -18284,6 +18353,7 @@
 		};
 		A656E9891F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -18292,11 +18362,14 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -18345,6 +18418,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
 				PRODUCT_NAME = iTerm2;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 5.0;
@@ -18367,6 +18441,7 @@
 		};
 		A656E98A1F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -18447,6 +18522,7 @@
 		};
 		A656E98B1F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -18466,6 +18542,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -18487,13 +18564,17 @@
 		};
 		A656E98C1F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)",
@@ -18541,6 +18622,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.applescript;
 				PRODUCT_NAME = iTerm2ForApplescriptTesting;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
@@ -18558,6 +18640,7 @@
 		};
 		A656E98D1F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -18578,6 +18661,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -18617,6 +18701,7 @@
 		};
 		A656E98E1F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -18635,10 +18720,13 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -18669,6 +18757,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "$PROJECT_DIR/sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -18684,6 +18773,7 @@
 		};
 		A656E9901F970C7200158128 /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -18703,6 +18793,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -18758,6 +18849,7 @@
 		};
 		A663197D22FF349800C502BD /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -18792,6 +18884,7 @@
 				CODE_SIGN_ENTITLEMENTS = plists/iTermServer.entitlements;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -18821,6 +18914,7 @@
 		};
 		A663197E22FF349800C502BD /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -18853,8 +18947,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = plists/iTermServer.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -18870,6 +18967,7 @@
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -18877,6 +18975,7 @@
 		};
 		A663197F22FF349800C502BD /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -18909,8 +19008,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = plists/iTermServer.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -18926,6 +19028,7 @@
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -18933,6 +19036,7 @@
 		};
 		A663198022FF349800C502BD /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -18965,8 +19069,11 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = plists/iTermServer.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -18982,6 +19089,7 @@
 				MTL_FAST_MATH = YES;
 				OTHER_CFLAGS = "-DITERM_SERVER=1";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				VALID_ARCHS = "$(ARCHS_STANDARD)";
 			};
@@ -18989,6 +19097,7 @@
 		};
 		A66719581DCE36C3000CE608 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -19007,6 +19116,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ColorPicker",
@@ -19071,6 +19181,7 @@
 		};
 		A66719591DCE36C3000CE608 /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -19090,6 +19201,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -19142,6 +19254,7 @@
 		};
 		A667195A1DCE36C3000CE608 /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -19161,6 +19274,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -19215,6 +19329,7 @@
 		};
 		A6866B7423CAA10A00ACD94C /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -19251,6 +19366,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -19297,6 +19413,7 @@
 		};
 		A6866B7523CAA10A00ACD94C /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -19329,10 +19446,13 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = pidinfo/pidinfo.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -19362,6 +19482,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -19372,6 +19493,7 @@
 		};
 		A6866B7623CAA10A00ACD94C /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -19404,10 +19526,13 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = pidinfo/pidinfo.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -19437,6 +19562,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -19447,6 +19573,7 @@
 		};
 		A6866B7723CAA10A00ACD94C /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -19479,10 +19606,13 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = pidinfo/pidinfo.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -19512,6 +19642,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.iterm2.pidinfo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -19522,6 +19653,7 @@
 		};
 		A6A5BE022A070C3D00F5FD44 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -19554,10 +19686,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -19590,6 +19725,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -19600,6 +19736,7 @@
 		};
 		A6A5BE032A070C3D00F5FD44 /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -19632,10 +19769,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -19661,6 +19801,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -19671,6 +19812,7 @@
 		};
 		A6A5BE042A070C3D00F5FD44 /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -19703,10 +19845,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -19732,6 +19877,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -19742,6 +19888,7 @@
 		};
 		A6A5BE052A070C3D00F5FD44 /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -19774,10 +19921,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -19803,6 +19953,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTerm2ImportStatus;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -19813,6 +19964,7 @@
 		};
 		A6C1FE6A284C1BF200EA8A3B /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -19847,6 +19999,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -19892,6 +20045,7 @@
 		};
 		A6C1FE6B284C1BF200EA8A3B /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -19922,10 +20076,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -19952,6 +20109,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTermFileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -19964,6 +20122,7 @@
 		};
 		A6C1FE6C284C1BF200EA8A3B /* Beta */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -19994,10 +20153,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -20024,6 +20186,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTermFileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -20036,6 +20199,7 @@
 		};
 		A6C1FE6D284C1BF200EA8A3B /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -20066,10 +20230,13 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -20096,6 +20263,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2.iTermFileProvider;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -20108,6 +20276,7 @@
 		};
 		A6C7604C1B45C4CF00E3C992 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -20127,6 +20296,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/ColorPicker",
@@ -20175,6 +20345,7 @@
 		};
 		A6C7604D1B45C4CF00E3C992 /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -20195,6 +20366,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -20233,6 +20405,7 @@
 		};
 		A6C7604E1B45C4CF00E3C992 /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -20253,6 +20426,7 @@
 				COPY_PHASE_STRIP = YES;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -20291,6 +20465,7 @@
 		};
 		A6C764251B45CB2800E3C992 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -20313,6 +20488,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(DEVELOPER_FRAMEWORKS_DIR)",
@@ -20366,6 +20542,7 @@
 		};
 		A6C764261B45CB2800E3C992 /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -20384,10 +20561,13 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -20418,6 +20598,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "$PROJECT_DIR/sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -20433,6 +20614,7 @@
 		};
 		A6C764271B45CB2800E3C992 /* Nightly */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -20451,10 +20633,13 @@
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -20485,6 +20670,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.iterm2.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "$PROJECT_DIR/sources/iTerm2SharedARC-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -20500,6 +20686,7 @@
 		};
 		BB024D36096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -20513,6 +20700,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -20591,6 +20779,7 @@
 		};
 		BB024D37096EE4080021E793 /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ARCHS = "$(ARCHS_STANDARD)";
@@ -20599,11 +20788,14 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CLANG_WARN_INT_CONVERSION = YES;
 				CODE_SIGN_ENTITLEMENTS = iTerm2.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -20652,6 +20844,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.googlecode.iterm2;
 				PRODUCT_NAME = iTerm2;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_OBJC_BRIDGING_HEADER = "";
 				SWIFT_VERSION = 5.0;
@@ -20674,6 +20867,7 @@
 		};
 		BB024D3A096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
@@ -20731,6 +20925,7 @@
 		};
 		BB024D3B096EE4080021E793 /* Deployment */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A6B5E2EF2AA1425400500BA2 /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
