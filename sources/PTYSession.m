@@ -15276,6 +15276,19 @@ static const NSTimeInterval PTYSessionFocusReportBellSquelchTimeIntervalThreshol
     [_textview.window makeFirstResponder:_textview];
 }
 
+- (void)textViewDisableOffscreenCommandLine {
+    if (self.isDivorced) {
+        [self setSessionSpecificProfileValues:@{
+            KEY_SHOW_OFFSCREEN_COMMANDLINE: @NO
+        }];
+        return;
+    }
+    [iTermProfilePreferences setBool:NO
+                              forKey:KEY_SHOW_OFFSCREEN_COMMANDLINE
+                           inProfile:self.profile
+                               model:[ProfileModel sharedInstance]];
+}
+
 #pragma mark - iTermHotkeyNavigableSession
 
 - (void)sessionHotkeyDidNavigateToSession:(iTermShortcut *)shortcut {

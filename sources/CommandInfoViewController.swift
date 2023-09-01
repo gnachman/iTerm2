@@ -12,6 +12,7 @@ protocol CommandInfoViewControllerDelegate: AnyObject {
     @objc func commandInfoSend(_ string: String)
     @objc func commandInfoOpenInCompose(_ string: String)
     @objc func commandInfoSelectOutput(_ mark: VT100ScreenMarkReading)
+    @objc func commandInfoDisable()
 }
 
 @objc(iTermCommandInfoViewController)
@@ -267,6 +268,10 @@ class CommandInfoViewController: NSViewController {
         return xs.max()!
     }
 
+    @IBAction func disableOffscrenCommandLine(_ sender: Any) {
+        enclosingPopover?.close()
+        delegate?.commandInfoDisable()
+    }
     @IBAction func selectOutput(_ sender: Any) {
         delegate?.commandInfoSelectOutput(_mark)
     }

@@ -285,6 +285,7 @@ extern NSNotificationName PTYTextViewWillChangeFontNotification;
 - (VT100GridRange)textViewLinesToSuppressDrawing;
 - (NSRect)textViewCursorFrameInScreenCoords;
 - (void)textViewDidReceiveSingleClick;
+- (void)textViewDisableOffscreenCommandLine;
 @end
 
 @interface iTermHighlightedRow : NSObject

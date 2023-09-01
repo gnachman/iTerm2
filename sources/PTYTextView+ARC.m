@@ -1778,4 +1778,8 @@ toggleAnimationOfImage:(id<iTermImageInfoReading>)imageInfo {
     [_contextMenuHelper selectOutputOfCommandMark:mark];
 }
 
+- (void)commandInfoDisable {
+    [self.delegate textViewDisableOffscreenCommandLine];
+}
+
 @end
