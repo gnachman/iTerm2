@@ -784,7 +784,11 @@ enum {
                                heading:@"Window Restoration Disabled"
                                 window:self.view.window];
     if (selection == kiTermWarningSelection0) {
-        [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:@"/System/Library/PreferencePanes/Appearance.prefPane"]];
+        if (@available(macOS 14, *)) {
+            [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:@"/System/Library/PreferencePanes/Dock.prefPane"]];
+        } else {
+            [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:@"/System/Library/PreferencePanes/Appearance.prefPane"]];
+        }
     }
 }
 
