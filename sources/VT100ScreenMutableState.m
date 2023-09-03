@@ -5496,6 +5496,9 @@ launchCoprocessWithCommand:(NSString *)command
 }
 
 - (void)promptStateMachineDismissComposer {
+    if (!self.config.autoComposerEnabled) {
+        return;
+    }
     [self addPausedSideEffect:^(id<VT100ScreenDelegate> delegate, iTermTokenExecutorUnpauser *unpauser) {
         [delegate screenDismissComposer];
         [unpauser unpause];

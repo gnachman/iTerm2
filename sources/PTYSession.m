@@ -13202,8 +13202,9 @@ scrollToFirstResult:(BOOL)scrollToFirstResult {
                                                  toConnectionKey:key];
         }
     }];
-
-    [_composerManager reset];
+    if ([iTermPreferences boolForKey:kPreferenceAutoComposer]) {
+        [_composerManager reset];
+    }
 }
 
 - (void)screenCommandDidExitWithCode:(int)code mark:(id<VT100ScreenMarkReading>)maybeMark {
